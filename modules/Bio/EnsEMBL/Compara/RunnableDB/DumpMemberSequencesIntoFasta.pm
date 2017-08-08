@@ -58,7 +58,7 @@ sub run {
                 " GROUP BY m.sequence_id ".
                 " ORDER BY m.sequence_id, m.stable_id";
 
-    open(FASTAFILE, '>', $fasta_name)
+    open(my $fasta_fh, '>', $fasta_name)
         or die "Could open $fasta_name for output\n";
 
     print("writing fasta to file '$fasta_name'\n");
@@ -78,12 +78,12 @@ sub run {
         $sequence =~ s/(.{$split_width})/$1\n/g if($split_width);
         chomp $sequence;
         my $nameprefix = $idprefixed ? ('seq_id_'.$sequence_id.'_') : '';
-        print FASTAFILE ">${nameprefix}${stable_id} $description\n$sequence\n";
+        print $fasta_fh ">${nameprefix}${stable_id} $description\n$sequence\n";
         $n_seq++;
     }
     $sth->finish();
 
-    close FASTAFILE;
+    close $fasta_fh;
 
     my $n_seq_in_file = $self->run_command(['grep', '-c', '^>', $fasta_name])->out;
     chomp $n_seq_in_file;

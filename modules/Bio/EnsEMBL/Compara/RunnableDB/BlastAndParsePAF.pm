@@ -195,11 +195,11 @@ sub parse_blast_table_into_paf {
     my @features = ();
     $self->param('num_query_member', {});
 
-    open(BLASTTABLE, '<', $filename) || die "Could not open the blast table file '$filename'";
+    open(my $blast_fh, '<', $filename) || die "Could not open the blast table file '$filename'";
     
     print "blast $qgenome_db_id $hgenome_db_id $filename\n" if $self->debug;
 
-    while(my $line = <BLASTTABLE>) {
+    while(my $line = <$blast_fh>) {
 
         #unless ($line =~ /^#/) {
         if ($line !~ /^#/) {
@@ -242,7 +242,7 @@ sub parse_blast_table_into_paf {
             }
         }
     }
-    close BLASTTABLE;
+    close $blast_fh;
     return \@features;
 }
 

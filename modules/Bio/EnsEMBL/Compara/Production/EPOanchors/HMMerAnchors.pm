@@ -79,13 +79,13 @@ sub fetch_input {
 	my $simple_align = $align_slice->get_SimpleAlign(); 
 	my $stockholm_file = $self->worker_temp_directory . "stockholm." . $genomic_align_block_id;
 	#print genomic_align_block in stockholm format
-	open(F, '>', $stockholm_file) || throw("Couldn't open $stockholm_file");
-	print F "# STOCKHOLM 1.0\n";
+	open(my $fh, '>', $stockholm_file) || throw("Couldn't open $stockholm_file");
+	print $fh "# STOCKHOLM 1.0\n";
 	foreach my $seq( $simple_align->each_seq) {
-		print F $genomic_align_block->dbID . "/" . $seq->display_id . "\t" . $seq->seq . "\n";
+		print $fh $genomic_align_block->dbID . "/" . $seq->display_id . "\t" . $seq->seq . "\n";
 	}
-	print F "//\n";
-	close(F);
+	print $fh "//\n";
+	close($fh);
 	#build the hmm from the stockholm format file
 	my $hmmbuild_outfile = $self->worker_temp_directory . "$genomic_align_block_id.hmm";
 	my $hmmbuild = $self->param_required('hmmbuild');

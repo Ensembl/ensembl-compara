@@ -139,7 +139,7 @@ sub store_hmmprofile {
 
     $multicm_file ||= $self->param('cm_file_or_directory');
     print STDERR "Opening file $multicm_file\n" if ($self->debug());
-    open(MULTICM, '<', $multicm_file) or die "$!\n";
+    open(my $multicm_fh, '<', $multicm_file) or die "$!\n";
     my ($name, $model_id) = ($hmm_name, $hmm_model_id);
     my $profile_content;
 
@@ -148,7 +148,7 @@ sub store_hmmprofile {
         $consensus = $self->get_consensus_from_HMMs($multicm_file);
     }
 
-    while(my $line = <MULTICM>) {
+    while(my $line = <$multicm_fh>) {
         $profile_content .= $line;
         if ($line =~ /NAME/) {
             my ($tag, $this_name) = split(/\s+/,$line);
@@ -176,6 +176,7 @@ sub store_hmmprofile {
         }
 
     }
+    close($multicm_fh);
 }
 
 =head2 store_infernalhmmprofile
@@ -195,7 +196,7 @@ sub store_infernalhmmprofile {
 
     $multicm_file ||= $self->param('cm_file_or_directory');
     print STDERR "Opening file $multicm_file\n" if ($self->debug());
-    open(MULTICM, '<', $multicm_file) or die "$!\n";
+    open(my $multicm_fh, '<', $multicm_file) or die "$!\n";
     my ($name, $model_id) = ($hmm_name, $hmm_model_id);
     my $profile_content;
 
@@ -204,7 +205,7 @@ sub store_infernalhmmprofile {
         $consensus = $self->get_consensus_from_HMMs($multicm_file);
     }
 
-    while(my $line = <MULTICM>) {
+    while(my $line = <$multicm_fh>) {
         if (   (($line =~ /INFERNAL/) && defined($model_id)) || (eof)) {
                 # End of profile, let's store it
 
@@ -236,7 +237,9 @@ sub store_infernalhmmprofile {
         } 
         $profile_content .= $line;
     }
+    close($multicm_fh);
 }
+
 =head2 get_consensus_from_HMMs
 
     Parameters:

@@ -374,16 +374,16 @@ sub parse_and_store_alignment_into_tree {
   #
   # parse SS_cons lines and store into nc_tree_tag
   #
-  open (STKFILE, '<', $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
+  open (my $stk_fh, '<', $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
   my $ss_cons_string = '';
-  while(<STKFILE>) {
+  while(<$stk_fh>) {
     next unless ($_ =~ /SS_cons/);
     my $line = $_;
     $line =~ /\#=GC\s+SS_cons\s+(\S+)\n/;
     $self->throw("Malformed SS_cons line") unless (defined($1));
     $ss_cons_string .= $1;
   }
-  close(STKFILE);
+  close($stk_fh);
 
   #
   # parse alignment file into hash: combine alignment lines

@@ -295,11 +295,11 @@ sub dump_to_fasta_file
   my $bioseq = $self->bioseq;
 
   #printf("  writing chunk %s\n", $self->display_id);
-  open(OUTSEQ, '>', $fastafile)
+  open(my $out_fh, '>', $fastafile)
     or $self->throw("Error opening $fastafile for write");
-  my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
+  my $output_seq = Bio::SeqIO->new( -fh => $out_fh, -format => 'Fasta');
   $output_seq->write_seq($bioseq);
-  close OUTSEQ;
+  close $out_fh;
 
   return $self;
 }
@@ -324,9 +324,9 @@ sub dump_chunks_to_fasta_file
      unlink $fastafile;
   }
 
-  open(OUTSEQ, '>>', $fastafile)
+  open(my $out_fh, '>>', $fastafile)
       or $self->throw("Error opening $fastafile for write");
-  print OUTSEQ ">" . $self->display_id . "\n";
+  print $out_fh ">" . $self->display_id . "\n";
       
   while ($start <= $total_length) {
 
@@ -351,9 +351,9 @@ sub dump_chunks_to_fasta_file
       my $seq = $bioseq->seq;
       $seq =~ s/(.{60})/$1\n/g;
       $seq =~ s/\n$//;
-      print OUTSEQ $seq, "\n";
+      print $out_fh $seq, "\n";
   }
-  close OUTSEQ;
+  close $out_fh;
   return $self;
 }
 

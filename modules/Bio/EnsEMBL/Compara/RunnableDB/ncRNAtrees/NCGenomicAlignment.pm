@@ -132,7 +132,7 @@ sub dump_sequences_to_workdir {
         $self->param('single_peptide_tree', 1);
         return 1;
     }
-    open (OUTSEQ, '>', $fastafile) or $self->throw("Error opening $fastafile for writing: $!");
+    open (my $outseq_fh, '>', $fastafile) or $self->throw("Error opening $fastafile for writing: $!");
 
     my $residues = 0;
     my $count = 0;
@@ -148,10 +148,10 @@ sub dump_sequences_to_workdir {
         chomp $seq;
         $count++;
         print STDERR $member->stable_id. "\n" if ($self->debug);
-        print OUTSEQ ">" . $member->seq_member_id . "\n$seq\n";
+        print $outseq_fh ">" . $member->seq_member_id . "\n$seq\n";
         print STDERR "sequences $count\n" if ($count % 50 == 0);
     }
-    close OUTSEQ;
+    close $outseq_fh;
 
     if ($max_length >= 1_000_000) {
         $self->param('no_flanking', 1);

@@ -49,8 +49,8 @@ sub write_output {
     my $sma           = $compara_dba->get_SeqMemberAdaptor();
     my $cluster_index = 1;
 
-    open (MCL, '<', $mcl_name) || die "could not open '$mcl_name' for reading: $!";
-    while (my $line = <MCL>) {
+    open (my $mcl_fh, '<', $mcl_name) || die "could not open '$mcl_name' for reading: $!";
+    while (my $line = <$mcl_fh>) {
         chomp $line;
 
         my @cluster_members = split(/\s+/, $line);
@@ -90,7 +90,7 @@ sub write_output {
 
         print STDERR "Done\n" if($self->debug);
     }
-    close MCL;
+    close $mcl_fh;
 }
 
 1;

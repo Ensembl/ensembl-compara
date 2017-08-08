@@ -128,8 +128,8 @@ sub load {
     $self->from(Bio::EnsEMBL::Compara::StableId::NamedClusterSet->new());
     $self->to(  Bio::EnsEMBL::Compara::StableId::NamedClusterSet->new());
 
-    open(LINKFILE, '<', $filename) || die "Cannot open '$filename' file: $@";
-    while (my ($from_clid, $from_clname, $from_size, $to_clid, $to_clname, $to_size, $contrib) = split(/\s/,<LINKFILE>)) {
+    open(my $linkfile_fh, '<', $filename) || die "Cannot open '$filename' file: $@";
+    while (my ($from_clid, $from_clname, $from_size, $to_clid, $to_clname, $to_size, $contrib) = split(/\s/,<$linkfile_fh>)) {
 
         next unless($contrib=~/^\d+$/); # skip the header line if present
 
@@ -151,14 +151,14 @@ sub load {
             $self->xfrom_size->{$from_clid}               = $from_size;
         }
     }
-    close LINKFILE;
+    close $linkfile_fh;
 }
 
 sub save {
     my $self     = shift @_;
     my $filename = shift @_;
 
-    open(LINKFILE, '>', $filename);
+    open(my $linkfile_fh, '>', $filename);
 
     foreach my $from_clid (sort {$a <=> $b} keys %{$self->direct_contrib}) {
         my $from_clname = $self->from->clid2clname($from_clid);
@@ -168,21 +168,21 @@ sub save {
             my $to_clname = $self->to->clid2clname($to_clid);
             my $cnt = $self->direct_contrib->{$from_clid}{$to_clid};
 
-            print LINKFILE join("\t", $from_clid, $from_clname, $self->from_size->{$from_clid}, $to_clid, $to_clname, $self->to_size->{$to_clid}, $cnt)."\n";
+            print $linkfile_fh join("\t", $from_clid, $from_clname, $self->from_size->{$from_clid}, $to_clid, $to_clname, $self->to_size->{$to_clid}, $cnt)."\n";
         }
     }
     foreach my $to_clid (sort {$a <=> $b} keys %{$self->xto_size}) { # iterate through families that contain new members
         my $to_clname = $self->to->clid2clname($to_clid);
 
-        print LINKFILE join("\t", 0, '-', 0, $to_clid, $to_clname, $self->xto_size->{$to_clid}, $self->xto_size->{$to_clid})."\n";
+        print $linkfile_fh join("\t", 0, '-', 0, $to_clid, $to_clname, $self->xto_size->{$to_clid}, $self->xto_size->{$to_clid})."\n";
     }
     foreach my $from_clid (sort {$a <=> $b} keys %{$self->xfrom_size}) { # iterate through families that lost some members
         my $from_clname = $self->from->clid2clname($from_clid);
 
-        print LINKFILE join("\t", $from_clid, $from_clname, $self->xfrom_size->{$from_clid}, 0, '-', 0, $self->xfrom_size->{$from_clid})."\n";
+        print $linkfile_fh join("\t", $from_clid, $from_clname, $self->xfrom_size->{$from_clid}, 0, '-', 0, $self->xfrom_size->{$from_clid})."\n";
     }
 
-    close LINKFILE;
+    close $linkfile_fh;
 }
 
 # Sort new families by size (desc)

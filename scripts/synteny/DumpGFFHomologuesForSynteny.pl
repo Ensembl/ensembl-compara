@@ -186,11 +186,11 @@ foreach my $ortho_type (@A_ortholog_types) {
   
     }
     foreach my $chr1 (sort keys %gff) {
-      open(SYN, '>>', "${output_dir}/${chr1}.syten.gff");
+      open(my $syn_fh, '>>', "${output_dir}/${chr1}.syten.gff");
       foreach my $chr2 (sort keys %{$gff{$chr1}}) {
-        print SYN $gff{$chr1}{$chr2};
+        print $syn_fh $gff{$chr1}{$chr2};
       }
-      close SYN;
+      close $syn_fh;
     }
 }
 exit 0;

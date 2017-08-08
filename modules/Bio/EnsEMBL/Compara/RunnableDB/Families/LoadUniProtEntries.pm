@@ -121,9 +121,9 @@ sub fetch_and_store_a_chunk {
 
 
     ## would be great to detect here the case of mole server being down, but it's tricky to peek into the stream parser
-  open(IN, '-|', $cmd) or die "Error running $seq_loader_name for ids ($id_string)";
+  open(my $cmd_fh, '-|', $cmd) or die "Error running $seq_loader_name for ids ($id_string)";
 
-  my $fh = Bio::SeqIO->new(-fh=>\*IN, -format=>"swiss");
+  my $fh = Bio::SeqIO->new(-fh=>$cmd_fh, -format=>"swiss");
   my $loaded_in_this_batch = 0;
   my $seen_in_this_batch = 0;
 
@@ -172,7 +172,7 @@ sub fetch_and_store_a_chunk {
         print STDERR "Member '$member_name' not stored.\n";
     }
   }
-  close IN;
+  close $cmd_fh;
   if ($self->debug and ($loaded_in_this_batch<$seen_in_this_batch or $seen_in_this_batch<$total_in_this_batch)) {
     print "Expected $total_in_this_batch seqs but seen only $seen_in_this_batch and loaded $loaded_in_this_batch from ($id_string)\n";
   }

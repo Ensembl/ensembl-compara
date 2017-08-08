@@ -134,8 +134,8 @@ sub parse_blast_table_into_matrix_hash {
     my $curr_name    = '';
     my $curr_index   = 0;
 
-    open(BLASTTABLE, '<', $filename) || die "Could not open the blast table file '$filename'";
-    while(my $line = <BLASTTABLE>) {
+    open(my $blast_fh, '<', $filename) || die "Could not open the blast table file '$filename'";
+    while(my $line = <$blast_fh>) {
 
         if($line=~/^#/) {
             if($line=~/^#\s+Query:\s+(\S+)/) {
@@ -161,7 +161,7 @@ sub parse_blast_table_into_matrix_hash {
             $matrix_hash{$curr_index}{$hit_index} = $new_similarity unless(defined($prev_similarity) && $new_similarity<$prev_similarity);
         }
     }
-    close BLASTTABLE;
+    close $blast_fh;
 
     return \%matrix_hash;
 }

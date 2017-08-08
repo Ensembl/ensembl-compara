@@ -57,8 +57,8 @@ sub load {
     my $self     = shift @_;
     my $filename = shift @_;
 
-    open(MAPFILE, '<', $filename) || die "Could not open mapfile '$filename': $@";
-    while(my $line=<MAPFILE>) {
+    open(my $mapfile_fh, '<', $filename) || die "Could not open mapfile '$filename': $@";
+    while(my $line=<$mapfile_fh>) {
         chomp $line;
             # support both formats during the switching period:
         my @syll = split(/\s+/, $line);
@@ -69,18 +69,18 @@ sub load {
         $self->clid2clname($clid, $clname);
         $self->clid2score($clid,  $score);
     }
-    close MAPFILE;
+    close $mapfile_fh;
 }
 
 sub save {
     my $self     = shift @_;
     my $filename = shift @_;
 
-    open(MAPFILE, '>', $filename) || die "Could not open mapfile '$filename' for writing: $@";
+    open(my $mapfile_fh, '>', $filename) || die "Could not open mapfile '$filename' for writing: $@";
     foreach my $clid (@{ $self->get_all_clids }) {
-        print MAPFILE join("\t", $clid, $self->clid2clname($clid), $self->clid2score($clid))."\n";
+        print $mapfile_fh join("\t", $clid, $self->clid2clname($clid), $self->clid2score($clid))."\n";
     }
-    close MAPFILE;
+    close $mapfile_fh;
 }
 
 sub type {

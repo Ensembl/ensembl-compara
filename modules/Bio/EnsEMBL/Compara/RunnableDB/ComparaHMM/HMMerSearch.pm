@@ -181,7 +181,7 @@ sub _run_HMM_search {
     }
 
     #Parsing outputs
-    open( HMM, '<', "$fastafile.out" );
+    open(my $hmm_fh, '<', "$fastafile.out" );
 
     if ( $self->param('store_all_hits') ) {
 
@@ -195,7 +195,7 @@ sub _run_HMM_search {
         my %stable_id_list;
 
         #Map of the stable_ids and root_id
-        while (<HMM>) {
+        while (<$hmm_fh>) {
 
             #get rid of the header lines
             next if $_ =~ /^#/;
@@ -228,7 +228,7 @@ sub _run_HMM_search {
     else {
         my %hmm_annot;
 
-        while (<HMM>) {
+        while (<$hmm_fh>) {
 
             #get rid of the header lines
             next if $_ =~ /^#/;
@@ -255,6 +255,7 @@ sub _run_HMM_search {
             $self->param('all_hmm_annots')->{$seq_id} = [ $seq_id, $hmm_annot{$seq_id}{'hmm_id'}, $hmm_annot{$seq_id}{'eval'} ];
         }
     } ## end else [ if ( $self->param('store_all_hits'...))]
+    close($hmm_fh);
 
 } ## end sub _run_HMM_search
 

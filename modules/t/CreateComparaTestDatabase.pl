@@ -722,9 +722,9 @@ foreach my $genome_db_id ($ref_genome_db_id, @$other_genome_db_ids) {
     $species_name =~ s/\s+/_/g;
     my $file = $species_name . ".seq_region_file";
     
-    open(F, '>', $file) or
+    open(my $fh, '>', $file) or
       die "can not open $file\n";
-    print F "[\n";
+    print $fh "[\n";
     
     $array_ref = $dbh->selectall_arrayref("select d.name,g.dnafrag_start,g.dnafrag_end from dnafrag d, genomic_align g where d.dnafrag_id=g.dnafrag_id and d.genome_db_id=$genome_db_id order by d.name, g.dnafrag_start,g.dnafrag_end");
     
@@ -739,13 +739,13 @@ foreach my $genome_db_id ($ref_genome_db_id, @$other_genome_db_ids) {
             $last_end = $end;
         } elsif (($name eq $last_name && $start - $last_end >= 100000) ||
                  $name ne $last_name) {
-            print F "[\"$last_name\", $last_start,$last_end],\n";
+            print $fh "[\"$last_name\", $last_start,$last_end],\n";
             ($last_name, $last_start,$last_end) = ($name,$start,$end);
         }
     }
-    print F "[\"$last_name\", $last_start,$last_end]\n]\n";
+    print $fh "[\"$last_name\", $last_start,$last_end]\n]\n";
     
-    close F;
+    close $fh;
 }
 $dbh->disconnect();
 

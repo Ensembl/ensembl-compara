@@ -181,7 +181,7 @@ sub base_age {
 
     #generate bed_file location
     my $bed_file = $self->param('bed_dir') . $ref_genome_db->get_short_name . "_ages_" . $mlss->dbID . "_" . $seq_region . ".bed";
-    open (BED, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
+    open (my $bed_fh, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
 
     foreach my $gat (@$genomic_align_trees) {
         my $tree_string = $gat->newick_format('simple');
@@ -314,14 +314,14 @@ sub base_age {
                 } else {
                     $name_field = $node_id;
                 }
-                printf BED "%s\t%d\t%d\t%s\t%d\t%s\n", $seq_region, ($base-1), $base, $name_field, $normalised_age, $rgb;
+                printf $bed_fh "%s\t%d\t%d\t%s\t%d\t%s\n", $seq_region, ($base-1), $base, $name_field, $normalised_age, $rgb;
             }
             
             $base++;
         }
         $gat->release_tree;
     }
-    close BED;
+    close $bed_fh;
 
     #Do not sort here in case the sort command fails, which means having to rerun the entire job
     #my $sorted_bed_file = sort_bed($bed_file);
@@ -365,16 +365,16 @@ sub quick_base_age {
     my $seq_region = $self->param('seq_region');
     my $bed_file = $self->param('bed_dir') . "Test_ages_" . $seq_region . ".bed";
 
-    open (BED, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
+    open (my $bed_fh, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
     my $base = 123;
     my $node_id = 61900000001;
     my $normalised_age = 500;
     my $strand = "+";
     my $rgb = "255,255,255";
 
-    printf BED "chr%s\t%d\t%d\t%s\t%d\t%s\t%d\t%d\t%s\n", $seq_region, ($base-1), $base, $node_id, $normalised_age, $strand, 0, 0, $rgb;
+    printf $bed_fh "chr%s\t%d\t%d\t%s\t%d\t%s\t%d\t%d\t%s\n", $seq_region, ($base-1), $base, $node_id, $normalised_age, $strand, 0, 0, $rgb;
 
-    close(BED);
+    close($bed_fh);
     my $output;
     %$output = ('bed_files' => $bed_file);
     $self->dataflow_output_id($output, 2);

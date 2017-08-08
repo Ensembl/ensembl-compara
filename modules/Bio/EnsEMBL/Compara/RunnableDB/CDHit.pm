@@ -94,12 +94,12 @@ sub parse_clusters {
     my $self = shift;
 
     my $cluster_file = $self->param_required('cluster_file');
-    open( CLSTR, '<', $cluster_file );
+    open( my $cluster_fh, '<', $cluster_file );
     
     my @seq_projections;
     my @this_cluster;
     my $c = 1;
-    while ( my $line = <CLSTR> ) {
+    while ( my $line = <$cluster_fh> ) {
         chomp $line;
 
         if ( $line =~ m/^>/ ) { # new cluster start
@@ -115,6 +115,7 @@ sub parse_clusters {
         }
         $c++;
     }
+    close $cluster_fh;
     # catch final cluster!
     push( @seq_projections, @{ $self->_cluster_to_seq_projection( \@this_cluster ) } );
 

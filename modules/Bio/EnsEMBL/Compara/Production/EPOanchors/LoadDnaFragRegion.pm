@@ -65,10 +65,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my ($self) = @_;
 	my (%DF,%SEG,%Zero_st,%StartEnd,@Zero_st,$synteny_region_id);
-	open(IN, '<', $self->param('enredo_output_file')) or die;
+	open(my $fh, '<', $self->param('enredo_output_file')) or die;
 	{
 		local $/ = "block";
-		while(<IN>){
+		while(<$fh>){
 			next if /#/;
 			$synteny_region_id++;
 			foreach my $seg(split("\n", $_)){
@@ -86,6 +86,7 @@ sub fetch_input {
 	    		}
 	   	}
 	}
+	close($fh);
 	# fix the start and ends of genomic coordinates with overlaps	
 	foreach my $species(sort keys %StartEnd){
 		foreach my $chromosome(sort keys %{ $StartEnd{$species} }){
