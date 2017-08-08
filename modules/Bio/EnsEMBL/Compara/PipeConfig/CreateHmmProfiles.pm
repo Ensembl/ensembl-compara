@@ -186,7 +186,7 @@ sub default_options {
         # HMM specific parameters
         # The location of the HMM library:
         'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
-        'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/',
+        'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
         'seed_hmm_library_basedir'      => '/hps/nobackup/production/ensembl/compara_ensembl/seed_hmms/',
         'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',
         'lustre_tmp_dir'                => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/tmp_hmmsearch/',
@@ -346,6 +346,8 @@ sub pipeline_create_commands {
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
+        'become -- compara_ensembl && lfs setstripe '.$self->o('panther_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
+        'become -- compara_ensembl && lfs setstripe '.$self->o('seed_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
 
     ];
 }
@@ -366,7 +368,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
         'panther_hmm_library_basedir'   => $self->o('panther_hmm_library_basedir'),
-        'seed_hmm_library_basedir'   => $self->o('seed_hmm_library_basedir'),
+        'seed_hmm_library_basedir'      => $self->o('seed_hmm_library_basedir'),
+        'seed_hmm_library_name'         => $self->o('seed_hmm_library_name'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
@@ -671,7 +674,8 @@ sub core_pipeline_analyses {
             -max_retry_count    => 0,
             -parameters         => {
                                     'library_name'      => $self->o('hmm_library_name'),
-                                    'hmm_lib'           => $self->o('panther_hmm_library_basedir'),
+                                    'hmmer_home'        => $self->o('hmmer3_home'),
+                                    'panther_hmm_lib'   => $self->o('panther_hmm_library_basedir'),
                                     'url'               => $self->o('panther_url'),
                                     'file'              => $self->o('panther_file'),
             },
@@ -803,7 +807,7 @@ sub core_pipeline_analyses {
              -flow_into      => [ 'dump_unannotated_members' ],
             },
 
-# -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
+# -------------------------------------------------[Blast unannotated members]-------------------------------------------------------
 
         {   -logic_name => 'dump_unannotated_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpUnannotatedMembersIntoFasta',
