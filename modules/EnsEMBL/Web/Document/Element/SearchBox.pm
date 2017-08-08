@@ -65,7 +65,7 @@ sub content {
     if ($_ % 2 == 0) {
       my $code    = $options->[$_];
       my $details = $options->[$_ + 1];
-      qq(<div class="$code"><img src="${img_url}$details->{'icon'}" alt="$details->{'label'}"/>$details->{'label'}<input type="hidden" value="$details->{'label'}&hellip;" /></div>\n);
+      qq(<div class="$code"><img class="no-sprite" src="${img_url}$details->{'icon'}" alt="$details->{'label'}"/>$details->{'label'}<input type="hidden" value="$details->{'label'}&hellip;" /></div>\n);
     }
   } 0..scalar @$options - 1;
 
@@ -75,7 +75,7 @@ sub content {
       <form action="$search_url">
         <div class="search print_hide">
           <div class="sites button">
-            <img class="search_image" src="${img_url}$options_hash{$search_code}{'icon'}" alt="" />
+            <img class="search_image no-sprite" src="${img_url}$options_hash{$search_code}{'icon'}" alt="" />
             <img src="${img_url}search/down.gif" style="width:7px" alt="" />
             <input type="hidden" name="site" value="$search_code" />
           </div>
