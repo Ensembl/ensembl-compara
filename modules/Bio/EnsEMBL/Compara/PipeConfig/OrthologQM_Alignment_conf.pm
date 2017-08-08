@@ -54,7 +54,7 @@ limitations under the License.
 
     Additional options:
     -compara_db         database containing relevant data (this is where final scores will be written)
-    -alt_aln_db         take alignment objects from a different source
+    -alt_aln_dbs        take alignment objects from different sources (arrayref of urls)
     -alt_homology_db    take homology objects from a different source
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
@@ -67,7 +67,7 @@ limitations under the License.
     ---------
     # scores go to homology db, alignments come from afar
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/homologies
-        -alt_aln_db mysql://ro_user@hosty_mchostface/alignments
+        -alt_aln_dbs [mysql://ro_user@hosty_mchostface/alignments]
 
     # scores go to alignment db
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/alignments
@@ -118,8 +118,7 @@ sub default_options {
         'reg_conf'         => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [
-            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
-            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_alignments_merged_90',
+            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
         ],
         'alt_homology_db'  => undef,
         'previous_rel_db'  => undef,

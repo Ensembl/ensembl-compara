@@ -68,37 +68,46 @@ sub default_options {
         #'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
         # All the source databases
-        #'src_db_aliases'    => {
-        #    'master_db'     => 'compara_master',
-        #    'protein_db'    => 'compara_ptrees',
-        #    'ncrna_db'      => 'compara_nctrees',
-        #    'family_db'     => 'compara_families',
-        #    'projection_db' => 'mysql://ensro@compara5/lg4_homology_projections_'.$self->o('ensembl_release'),
-        #},
+        'src_db_aliases'    => {
+           'master_db'      => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
+           'protein_db'     => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/muffato_protein_trees_90b",
+           'ncrna_db'       => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90",
+           'family_db'      => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-2:4522/carlac_families_90",
+           'mouse_prot_db'  => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-3:4523/carlac_murinae_protein_trees_90",
+           'mouse_ncrna_db' => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-4:4401/mateus_murinae_nctrees_90",
+           'projection_db'  => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/carlac_alt_allele_import_90",
+           'members_db'     => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-2:4522/muffato_load_members_90_ensembl",
+        },
+
         # The target database
-        #'curr_rel_db'   => 'compara_curr',
+        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/ensembl_compara_90",
 
         # From these databases, only copy these tables
-        #'only_tables'       => {
-        #    # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
-        #    'master_db'     => [qw(mapping_session)],
-        #},
+        'only_tables'       => {
+           # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
+           'master_db'     => [qw(mapping_session)],
+        },
 
         # These tables have a unique source. Content from other databases is ignored
-        #'exclusive_tables'  => {
-        #    'mapping_session'   => 'master_db',
-        #    'gene_member'       => 'projection_db',
-        #    'seq_member'        => 'projection_db',
-        #    'sequence'          => 'projection_db',
-        #    'peptide_align_feature_%' => 'protein_db',
-        #},
+        'exclusive_tables'  => {
+            'mapping_session'       => 'master_db',
+            'hmm_annot'             => 'family_db',
+            'gene_member'           => 'members_db',
+            'seq_member'            => 'members_db',
+            'other_member_sequence' => 'members_db',
+            'sequence'              => 'members_db',
+            'exon_boundaries'       => 'members_db',
+            'seq_member_projection_stable_id' => 'members_db',
+            'seq_member_projection' => 'protein_db',
+        },
 
         # In these databases, ignore these tables
-        #'ignored_tables'    => {
+        'ignored_tables'    => {
+            'members_db' => [qw(gene transcript)],
         #    #'protein_db'        => [qw(gene_tree_node)],
         #    'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
         #    #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
-        #},
+        },
 
    };
 }

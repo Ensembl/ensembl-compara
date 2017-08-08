@@ -65,6 +65,7 @@ sub default_options {
         # genome_db. You only have to set reg_conf if the locators
         # are missing.
         'registry' => '',
+        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
 
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
@@ -177,6 +178,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
             -parameters    => {
                 'method_link_types' => $self->o('method_link_types'),
+                'from_first_release' => $self->o('curr_release'),
             },
             -input_ids     => [
                 {

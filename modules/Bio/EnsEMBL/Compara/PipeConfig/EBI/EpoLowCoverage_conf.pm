@@ -35,56 +35,61 @@ sub default_options {
 
 
 
-	'rel_suffix'	=> '11way_fish_89',
-	'ensembl_release' => 89, 
-	'prev_release'  => 88,
+	'rel_suffix'	=> '55way_mammals_90',
+	'ensembl_release' => 90, 
+	'prev_release'  => 89,
 
-    'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+    'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
 
-        'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_Lc/' . 'release_' . $self->o('rel_with_suffix') . '/',
+    'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_LC/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
     'pipeline_db' => {
         -host   => $self->o('host'),
-        -port   => 4523,
+        -port   => 4401,
         -user   => 'ensadmin',
         -pass   => $self->o('password'),
         -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
-    -driver => 'mysql',
+        -driver => 'mysql',
     },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-        -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-        -port   => 4240,
-        -user   => 'anonymous',
+        -host   => 'mysql-ens-compara-prod-1',
+        -port   => 4485,
+        -user   => 'ensro',
         -pass   => '',
-		-dbname => 'ensembl_compara_88',
+		-dbname => 'ensembl_compara_90',
 		-driver => 'mysql',
     },
 
     #location of new pairwise mlss if not in the pairwise_default_location eg:
-	#'pairwise_exception_location' => { },
-	'pairwise_exception_location' => { 795 => 'mysql://anonymous@ensembldb.ensembl.org/ensembl_compara_88', #T.rub-O.lat
-									   }, #O.lat-M.mus
+	'pairwise_exception_location' => { },
+	# 'pairwise_exception_location' => { 
+ #        1004 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+ #        1007 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+ #        1021 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+ #        1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+	# },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/sf5_epo_5fish_79',
+	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_90b',
 
-	master_db => { 
-            -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-            -port   => 4485,
-            -user   => 'ensro',
-            -dbname => 'ensembl_compara_master',
+	'master_db' => { 
+        -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+        -port   => 4485,
+        -user   => 'ensro',
+        -pass   => '',
+        -dbname => 'ensembl_compara_master',
 	    -driver => 'mysql',
-        },
+    },
 
 	'staging_loc1' => {
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
-            -user   => 'ensro',
-            -pass   => '',
-	    -db_version => $self->o('ensembl_release'),
-        },
+        -host   => 'mysql-ens-sta-1',
+        -port   => 4519,
+        -user   => 'ensro',
+        -pass   => '',
+        -db_version => $self->o('ensembl_release'),
+    },
 
 	'livemirror_loc' => {
             -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
@@ -109,25 +114,26 @@ sub default_options {
 	    	#-db_version => 76,
 		#},
 
-#	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
-	'ref_species' => 'oryzias_latipes',
-#	'ref_species' => 'homo_sapiens',
+    #ref species for pairwise alignments
+ 	# 'ref_species' => 'gallus_gallus',    # sauropsids 
+	# 'ref_species' => 'oryzias_latipes',  # fish
+	'ref_species' => 'homo_sapiens',       # mammals
 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
-	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.11fish.branch_len.nw', #location of full species tree, will be pruned 
-        'species_to_skip' => undef,
+	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.55mammals.branch_len.nw', #location of full species tree, will be pruned 
+    'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
 	'gerp_exe_dir'    => $self->o('ensembl_cellar').'/gerp/20080211/bin',   #gerp program
-        'semphy_exe'      => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy', #semphy program
-        'treebest_exe'      => $self->o('ensembl_cellar').'/treebest/88/bin/treebest', #treebest program
+    'semphy_exe'      => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy', #semphy program
+    'treebest_exe'      => $self->o('ensembl_cellar').'/treebest/88/bin/treebest', #treebest program
 
-       # stats report email
-  	   'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
+    # stats report email
+  	'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
     };
 }
 
