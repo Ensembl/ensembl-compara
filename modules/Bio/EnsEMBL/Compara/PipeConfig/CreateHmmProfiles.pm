@@ -241,6 +241,12 @@ sub default_options {
         'loadmembers_capacity'      => 30,
         'HMMer_search_capacity'     => 100,
 
+    # Setting priorities
+        'mcoffee_himem_priority'    => 40,
+        'mafft_himem_priority'      => 35,
+        'mafft_priority'            => 30,
+        'mcoffee_priority'          => 20,
+
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
 
@@ -1103,6 +1109,7 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
+            -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1117,6 +1124,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
+            -priority   => $self->o('mafft_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
@@ -1133,6 +1141,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
+            -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
@@ -1146,6 +1155,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
+            -priority   => $self->o('mafft_himem_priority'),
         },
 
         {   -logic_name => 'filter_decision',
