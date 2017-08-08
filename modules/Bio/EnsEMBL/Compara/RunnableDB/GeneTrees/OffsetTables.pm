@@ -56,7 +56,6 @@ sub param_defaults {
                     'ALTER TABLE gene_align        AUTO_INCREMENT=#offset#',
                     'ALTER TABLE gene_tree_node    AUTO_INCREMENT=#offset#',
                     'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=#offset#',
-                    'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=#offset#',
                 ],
     }
 }
