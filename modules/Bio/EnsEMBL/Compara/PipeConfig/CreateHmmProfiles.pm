@@ -684,7 +684,7 @@ sub core_pipeline_analyses {
                             'sequence_limit'            => $self->o('sequence_limit'),
                             'max_chunk_length'          => $self->o('max_chunk_length'),
                             'input_format'              => 'fasta',
-                            'seq_filter'                => '^>TF',
+                            'seq_filter'                => '^TF',
                             'inputfile'                 => $self->o('treefam_hmm_library_basedir')."/globals/con.Fasta",
                             'output_dir'                => $self->o('lustre_tmp_dir'),
                             'output_prefix'             => $self->o('output_prefix'),
