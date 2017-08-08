@@ -69,6 +69,7 @@ foreach my $f (@source_files) {
         next unless $allowed_subdirs{$1};
     }
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\/conservation_score.txt$/;
+    next if $f =~ /\.png$/i;
     is_ascii($f);
 }
 
