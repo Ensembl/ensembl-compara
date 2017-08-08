@@ -194,7 +194,7 @@ sub default_options {
         'min_num_species'               => 2,
         'min_taxonomic_coverage'        => 0.5,
         'min_ratio_species_genes'       => 0.5,
-        'max_gappiness'                 => 0.95,
+        'max_gappiness'                 => 0.9,
 	    'sequence_limit'                => 50,
 	    'max_chunk_length'              => 100,
         'output_prefix'                 => "hmm_split_",
