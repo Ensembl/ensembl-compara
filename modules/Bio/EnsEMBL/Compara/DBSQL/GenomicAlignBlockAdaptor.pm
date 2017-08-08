@@ -1315,8 +1315,9 @@ sub _get_GenomicAlignBlocks_from_HAL {
       }
 
       # use open ':encoding(iso-8859-7)';
-      open( MAF, '<', \$maf_file_str) or die "Can't open MAF file in memory";
-      my @maf_lines = <MAF>;
+      open( my $maf_fh, '<', \$maf_file_str) or die "Can't open MAF file in memory";
+      my @maf_lines = <$maf_fh>;
+      close($maf_fh);
       my $maf_info = $self->_parse_maf( \@maf_lines );
       
       for my $aln_block ( @$maf_info ) {
