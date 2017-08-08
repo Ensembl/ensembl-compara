@@ -703,17 +703,6 @@ sub species_stats {
       'name' => '<b>Assembly</b>',
       'stat' => $a_id.', '.$sd->ASSEMBLY_DATE
   });
-  my $prov_name = $sd->PROVIDER_NAME;
-  if ($prov_name) {
-    $prov_name =~ s/_/ /;
-    my $prov_url  = $sd->PROVIDER_URL;
-    $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
-    my $provider = $prov_url ? sprintf('<a href="%s">%s</a>', $prov_url, $prov_name) : $prov_name;
-    $summary->add_row({
-      'name' => '<b>Provider</b>',
-      'stat' => $provider, 
-    });
-  }
   $summary->add_row({
       'name' => '<b>Database version</b>',
       'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION
@@ -727,15 +716,22 @@ sub species_stats {
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
   });
-  $summary->add_row({
-      'name' => '<b>Genebuild by</b>',
-      'stat' => $sd->GENEBUILD_BY
-  });
+  my $prov_name = $sd->PROVIDER_NAME;
+  if ($prov_name) {
+    $prov_name =~ s/_/ /;
+    my $prov_url  = $sd->PROVIDER_URL;
+    $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
+    my $provider = $prov_url && $prov_name ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $prov_name) : $prov_name;
+    $summary->add_row({
+      'name' => '<b>Annotation provider</b>',
+      'stat' => $provider, 
+    });
+  }
   my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
   my $method  = ucfirst($A[0]) || '';
   $method     =~ s/_/ /g;
   $summary->add_row({
-      'name' => '<b>Genebuild method</b>',
+      'name' => '<b>Annotation method</b>',
       'stat' => $method
   });
   $summary->add_row({
