@@ -1023,7 +1023,7 @@ sub core_pipeline_analyses {
             },
 
             -flow_into  => {
-                '2->A' => WHEN (
+                '1->A' => WHEN (
                     '(#tree_gene_count# <  #mcoffee_short_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_short',
                     '(#tree_gene_count# >= #mcoffee_short_gene_count# and #tree_gene_count# < #mcoffee_himem_gene_count#)   and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee',
                     '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)           and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'mcoffee_himem',
@@ -1157,11 +1157,12 @@ sub core_pipeline_analyses {
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
             -flow_into  => {
-                1 => WHEN(
+                '1->A' => WHEN(
                      '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'filter_level_2',
                      '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
                      ELSE 'noisy',
                 ),
+                'A->1' => [ 'filter_level_3_factory' ],
             },
             %decision_analysis_params,
         },
