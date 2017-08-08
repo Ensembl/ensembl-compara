@@ -704,10 +704,6 @@ sub species_stats {
       'stat' => $a_id.', '.$sd->ASSEMBLY_DATE
   });
   $summary->add_row({
-      'name' => '<b>Database version</b>',
-      'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION
-  });
-  $summary->add_row({
       'name' => '<b>Base Pairs</b>',
       'stat' => $self->thousandify($genome_container->get_total_length()),
   });
@@ -745,6 +741,10 @@ sub species_stats {
   $summary->add_row({
       'name' => '<b>Genebuild last updated/patched</b>',
       'stat' => $sd->GENEBUILD_LATEST
+  });
+  $summary->add_row({
+      'name' => '<b>Database version</b>',
+      'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION
   });
   my $gencode = $sd->GENCODE_VERSION;
   if ($gencode) {
