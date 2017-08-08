@@ -56,6 +56,9 @@ sub param_defaults {
         # There is too much cache to afford caching it client-side
         'append'        => [qw(-q)],
 
+        # By default empty, but can be used to filter on a genome_db_id
+        'extra_filter'  => '',
+
         # The base query
         'input_query'   => sprintf q|
                     SELECT
@@ -82,8 +85,6 @@ sub param_defaults {
                         #extra_filter#
                 |,
 
-        # By default empty, but can be used to filter on a genome_db_id
-        'extra_filter'  => '',
     }
 }
 

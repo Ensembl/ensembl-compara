@@ -37,7 +37,8 @@ sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
-        'species_priority'  => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
+        'species_priority'   => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
+        'from_first_release' => 40, # dump method_link_species_sets with a first_release > this option
     }
 }
 
@@ -58,6 +59,7 @@ sub run {
         # Get MethodLinkSpeciesSet Objects for required method_link_type
         my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
         foreach my $mlss (@$mlss_listref) {
+            next if ( defined $self->param('from_first_release') && $mlss->first_release < $self->param('from_first_release') );
             $self->_test_mlss($mlss);
         }
     }
