@@ -545,7 +545,7 @@ sub to_VCF {
   my $vcf_rep = $vf->to_VCF_record();
   return unless $vcf_rep && @$vcf_rep;
   
-  return '<span style="font-family: Courier, monospace; whitespace: nowrap;">&nbsp;&nbsp;'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
+  return '<span style="font-family:Courier,monospace;white-space:nowrap;margin-left:5px;padding:2px 4px;background-color:#F6F6F6">'.join("&nbsp;&nbsp;", map {encode_entities($_)} @{$vcf_rep}[0..4]).'</span>';
 }
 
 sub location {
@@ -576,10 +576,12 @@ sub location {
       $coord = "$region</b>: between <b>$end</b> and <b>$start";
     } 
     
-    $location = ucfirst(lc $type).' <b>'.$coord . '</b> (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
-    
+    $location = ucfirst(lc $type).' <b>'.$coord . '</b>';
+   
+    my $location_strand = ' (' . ($mappings{$vf}{'strand'} > 0 ? 'forward' : 'reverse') . ' strand)';
+ 
     $location_link = sprintf(
-      '<a href="%s" class="constant">%s</a>',
+      '<span style="white-space:nowrap"><a href="%s" class="constant">%s</a>%s</span>',
       $hub->url({
         type             => 'Location',
         action           => 'View',
@@ -589,7 +591,7 @@ sub location {
         source           => $object->source,
         contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_fail_all=normal' : '') . ',seq=normal'
       }),
-      $location
+      $location, $location_strand
     );
   }
   else {
