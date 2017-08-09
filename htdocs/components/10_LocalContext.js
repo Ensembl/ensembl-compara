@@ -113,7 +113,7 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       panel.shareOptions.species[this.id] = this.getSpecies();
     });
 
-    if (this.elLk.shareLink) {
+    if (this.elLk.shareLink.length > 0 && this.elLk.shareLink[0].href) {
       Ensembl.EventManager.deferTrigger('share', this.elLk.shareLink[0].href, this.elLk.shareLink[0]);
     }
     
