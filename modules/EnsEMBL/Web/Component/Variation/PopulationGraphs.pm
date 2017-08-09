@@ -42,6 +42,10 @@ sub content {
   my $large_width = 135;
   my $max_width   = 150;
   my (@graphs, $pop_tree, %sub_pops, @alleles);
+
+  my $vf         = $hub->param('vf');
+  my $vf_object  = $vf ? $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
+  my $ref_allele = $vf_object ? $vf_object->ref_allele_string : '';
   
   my @inputs = (
     q{<input class="graph_config" type="hidden" name="legendpos" value="'east'" />},
@@ -88,7 +92,7 @@ sub content {
     $pop_desc = $self->strip_HTML($pop_desc);
 
     # Constructs the array for the pie charts: [allele,frequency]
-    foreach my $al (@alleles) {
+    foreach my $al (sort { ($a !~ /$ref_allele/ cmp $b !~ /$ref_allele/) || $a cmp $b } @alleles) {
       foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
         my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$al};
         next unless $freq;
