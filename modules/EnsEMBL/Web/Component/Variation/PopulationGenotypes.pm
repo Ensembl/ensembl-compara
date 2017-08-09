@@ -145,23 +145,26 @@ sub format_frequencies {
 	    if( defined $priority_level){
 
 	      ### store frequency data
-	      $priority_data->{$priority_level}->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-	      $priority_data->{$priority_level}->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
+	      $priority_data->{$priority_level}->{$pop_id}{'ssid'}{$ssid}     = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+	      $priority_data->{$priority_level}->{$pop_id}{'pop_info'}        = $freq_data->{$pop_id}{'pop_info'};
+	      $priority_data->{$priority_level}->{$pop_id}{'missing_alleles'} = $freq_data->{$pop_id}{'missing_alleles'};
 	      ### pull out group display name for the group with this priority to use later
-	      $group_name{$priority_level} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'} unless defined $group_name{$priority_level};  
+	      $group_name{$priority_level} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'} unless defined $group_name{$priority_level};
 	    } 
 	  
 	  
 	    elsif ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
 
 	      ### hold failed data separately to display separately
-	      $fv_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-	      $fv_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
+	      $fv_data->{$pop_id}{'ssid'}{$ssid}     = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+	      $fv_data->{$pop_id}{'pop_info'}        = $freq_data->{$pop_id}{'pop_info'};
+	      $fv_data->{$pop_id}{'missing_alleles'} = $freq_data->{$pop_id}{'missing_alleles'};
 	      $fv_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
       } 
 	    else {
-	      $standard_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-	      $standard_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
+	      $standard_data->{$pop_id}{'ssid'}{$ssid}     = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+	      $standard_data->{$pop_id}{'pop_info'}        = $freq_data->{$pop_id}{'pop_info'};
+	      $standard_data->{$pop_id}{'missing_alleles'} = $freq_data->{$pop_id}{'missing_alleles'};
 	    }
     }
   }
@@ -205,8 +208,8 @@ sub format_table {
   my $is_somatic = $self->object->Obj->has_somatic_source;
   my $al_colours = $self->object->get_allele_genotype_colours;
   my $vf         = $hub->param('vf');
-  my $vf_object  = ($vf) ? $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
-  my $ref_allele = ($vf_object) ? (split('/',$vf_object->allele_string))[0] : '';
+  my $vf_object  = $vf ? $hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
+  my $ref_allele = $vf_object ? $vf_object->ref_allele_string : '';
 
   my $has_pop_with_samples = 0;
   my $bar_width = 100;
@@ -288,6 +291,15 @@ sub format_table {
 
       # Column "Allele: frequency (count)"
       my $allele_content = $self->format_allele_genotype_content($data,'Allele',$ref_allele,$is_somatic);
+      if($freq_data->{$pop_id}{'missing_alleles'} && scalar keys %{$freq_data->{$pop_id}{'missing_alleles'}}) {
+        $allele_content .= sprintf(
+          '<span style="float:right" class="_ht sprite info_icon" title="%s has data not shown for the following alleles: <ul>%s</ul>'.
+          'These alleles are not defined in %s but may be present in co-located variants listed above."></span>',
+          $pop_info->{'Name'},
+          join("", map {"<li>$_</li>"} sort {$a cmp $b} keys %{$freq_data->{$pop_id}{'missing_alleles'}}),
+          $self->object->name,
+        );
+      }
       $pop_row{'Allele'} = qq{<div>$allele_content<div style="clear:both"/></div>} if ($allele_content);
 
 
@@ -512,6 +524,8 @@ sub format_allele_genotype_content {
   my $is_somatic = shift;
 
   my $al_colours = $self->object->get_allele_genotype_colours;
+  my $raw_allele_colours = $self->object->raw_allele_colours();
+  my @other_colours = @{$self->other_colours};
 
   my %data_list;
   my @freqs = @{$data->{$type.'Frequency'} || []};
@@ -527,17 +541,44 @@ sub format_allele_genotype_content {
   my $regex = ($type eq 'Genotype') ? $ref_allele.'\|'.$ref_allele : $ref_allele;
   my @sorted_gts = sort { ($a !~ /$regex/ cmp $b !~ /$regex/) || $a cmp $b } keys %data_list;
 
+  my $any_long_alleles = grep {!/^[ACGT\-]$/} @sorted_gts;
+
   foreach my $gt (@sorted_gts) {
-    my $gt_label = (length($gt)>10) ? substr($gt,0,10).'...' : $gt;
-    foreach my $al (keys(%$al_colours)) {
-      $gt_label =~ s/$al/$al_colours->{$al}/g;
+
+    my ($gt_label, $trimmed);
+    if(length($gt) > 10) {
+      $gt_label = substr($gt, 0, 10).'...';
+      $trimmed = 1;
+    }
+    else {
+      $gt_label = $gt;
+    }
+
+    if(!$any_long_alleles) {
+      foreach my $al (keys(%$al_colours)) {
+        $gt_label =~ s/$al/$al_colours->{$al}/g;
+      }
+    }
+
+    # make a helptip showing the full allele if it is long
+    if($trimmed) {
+      my $ht_gt = $gt;
+      $ht_gt =~ s/(.{30})/$1\&\#8203\;/g;
+      $ht_gt =~ s/(\|)/ $1 /g;
+      $gt_label = sprintf('<span class="ht _ht" title="%s">%s</span>', $ht_gt, $gt_label);
     }
 
     $count_data ++;
     my $class;
     if ($type eq 'Allele') {
-     $class  = (length($gt) > 1) ? 'allele_long' : 'allele_short';
-     $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' allele_padding';
+      $class  = (length($gt) > 1) ? 'allele_long' : 'allele_short';
+      $class .= ($count_data == scalar(keys(%data_list))) ? '' : ' allele_padding';
+
+      $gt_label = sprintf(
+        '<span class="colour" style="background-color:%s">&nbsp;</span> %s',
+        $raw_allele_colours->{$gt} || shift @other_colours || 'grey',
+        $gt_label
+      ) if $any_long_alleles;
     }
     elsif ($type eq 'Genotype') {
       $class  = (length($gt) > 4) ? 'genotype_long' : 'genotype_short';
@@ -571,23 +612,38 @@ sub frequency_bar {
   $content .= '<div style="position:absolute; left: 0px; top: 0px; z-index: 3;">';
 
   my $raw_allele_colours = $self->object->raw_allele_colours();
-  my @other_colours = qw(#008080 pink purple cyan);
+  my @other_colours = @{$self->other_colours};
 
   my @alleles = @{$data->{'Alleles'}};
+  my $added_width = 0;
 
   for my $i(sort { ($alleles[$a] !~ /$ref_allele/ cmp $alleles[$b] !~ /$ref_allele/) || $alleles[$a] cmp $alleles[$b] } 0..$#alleles) {
     my $allele = $alleles[$i];
 
+    my $width = sprintf('%.0f', $data->{'AlleleFrequency'}->[$i] * $bar_width);
+    $added_width += $width;
+
     $content .= sprintf(
       '<div style="width:%.0fpx; background-color: %s; float: left; display: inline; height: 1em; "></div>',
-      $data->{'AlleleFrequency'}->[$i] * $bar_width,
+      $width,
       $raw_allele_colours->{$allele} || shift @other_colours || 'grey'
     );
   }
 
+  # sometimes the data we extract won't add to 1
+  # add an indicator at the end to fill up the bar
+  $content .= sprintf(
+    '<div style="width:%.0fpx; float: left; display: inline; height: 1em; border-right: 1px dotted black"></div>',
+    ($bar_width - $added_width)
+  ) if $added_width < $bar_width;
+
   $content .= '</div></div>';
 
   return $content;
+}
+
+sub other_colours {
+  return [qw(#008080 #FF00FF #7B68EE cyan)];
 }
 
 1;

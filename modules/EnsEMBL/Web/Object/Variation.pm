@@ -630,8 +630,11 @@ sub freqs {
     ## If frequency data is available, show frequency data submitter, else show observation submitter
     $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->frequency_subsnp_handle($pop_obj);
     unless (defined $data{$pop_id}{ssid}{$ssid}{submitter} ){
-    $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
+      $data{$pop_id}{ssid}{$ssid}{submitter}  = $allele_obj->subsnp_handle() ;
     }
+
+    # log missing alleles as recorded when reading data from VCF
+    $data{$pop_id}{missing_alleles}{$_} = 1 for keys %{$allele_obj->{_missing_alleles} || {}};
   }
   
   # Add genotype data;
