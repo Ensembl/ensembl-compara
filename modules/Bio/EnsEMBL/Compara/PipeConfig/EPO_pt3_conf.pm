@@ -444,7 +444,7 @@ return
             {   -logic_name => 'create_neighbour_nodes_jobs_alignment',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
-                                'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id = 0',
+                                'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id IS NULL',
                                },  
                 -flow_into => {
                                '2->A' => [ 'set_neighbour_nodes' ],
