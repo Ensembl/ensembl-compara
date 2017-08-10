@@ -49,6 +49,7 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf');
 
+
 sub default_options {
   my ($self) = @_;
   return {

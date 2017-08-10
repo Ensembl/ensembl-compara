@@ -18,13 +18,13 @@ limitations under the License.
 =cut
 
 
-=pod 
+=pod
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
 A pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees)
@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLU
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
-     
+
 sub default_options {
     my ($self) = @_;
     return {
@@ -69,44 +69,34 @@ sub default_options {
 
         # All the source databases
         'src_db_aliases'    => {
-           'master_db'      => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
-           'protein_db'     => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/muffato_protein_trees_90b",
-           'ncrna_db'       => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90",
-           'family_db'      => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-2:4522/carlac_families_90",
-           'mouse_prot_db'  => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-3:4523/carlac_murinae_protein_trees_90",
-           'mouse_ncrna_db' => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-4:4401/mateus_murinae_nctrees_90",
-           'projection_db'  => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/carlac_alt_allele_import_90",
-           'members_db'     => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-2:4522/muffato_load_members_90_ensembl",
+            # Mapping 'db_alias' => 'db_location':
+            #   'db_alias' is the alias used for the database within the config file
+            #   'db_location' is the actual location of the database. Can be a URL or a registry name
+            #   (if you use a registry name, you probably need to define "reg_conf" above)
         },
 
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . "@mysql-ens-compara-prod-1:4485/ensembl_compara_90",
+        #'curr_rel_db'   => "...",  # Again this is a URL or a registry name
 
-        # From these databases, only copy these tables
+        # From these databases, only copy these tables. Other tables are ignored
         'only_tables'       => {
-           # Cannot be copied by populate_new_database because it doesn't contain the new mapping_session_ids yet
-           'master_db'     => [qw(mapping_session)],
+            # Mapping 'db_alias' => Arrayref of table names
+            # Example:
+            #   'master_db'     => [qw(mapping_session)],
         },
 
-        # These tables have a unique source. Content from other databases is ignored
+        # These tables have a unique source database. They are ignored in the other databases
         'exclusive_tables'  => {
-            'mapping_session'       => 'master_db',
-            'hmm_annot'             => 'family_db',
-            'gene_member'           => 'members_db',
-            'seq_member'            => 'members_db',
-            'other_member_sequence' => 'members_db',
-            'sequence'              => 'members_db',
-            'exon_boundaries'       => 'members_db',
-            'seq_member_projection_stable_id' => 'members_db',
-            'seq_member_projection' => 'protein_db',
+            # Mapping 'table_name' => 'db_alias',
+            # Example:
+            #   'mapping_session'       => 'master_db',
         },
 
         # In these databases, ignore these tables
         'ignored_tables'    => {
-            'members_db' => [qw(gene transcript)],
-        #    #'protein_db'        => [qw(gene_tree_node)],
-        #    'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
-        #    #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
+            # Mapping 'db_alias' => Arrayref of table names
+            # Example:
+            #   'family_db' => [qw(gene_member seq_member sequence)],
         },
 
    };
