@@ -616,7 +616,7 @@ sub _run_left_and_right_links_in_gat_test {
   ## check the table is not empty
   my $count = $self->compara_dba->dbc->db_handle->selectrow_array(
       "SELECT count(*) FROM $table_name gat1 LEFT JOIN $table_name gat2 ON (gat1.node_id = gat2.root_id)".
-      " WHERE gat1.parent_id = 0 GROUP BY gat1.node_id".
+      " WHERE gat1.parent_id IS NULL GROUP BY gat1.node_id".
       " HAVING COUNT(gat2.left_node_id) = 0".
       "  AND COUNT(gat2.right_node_id) = 0");
 

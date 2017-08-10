@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WormProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -39,7 +39,7 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf \
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WormProteinTrees_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id> \
         -division <eg_division> -eg_release <egrelease>
 
@@ -59,7 +59,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::WormProteinTrees_conf;
 
 use strict;
 use warnings;
