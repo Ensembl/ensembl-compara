@@ -66,7 +66,7 @@ void _get_genome_names(int hal_fd) {
 }
 
 // Get a list of sequence names belonging to a genome.
-void _get_seqs_in_genome(int fileHandle, const char *genomeName) {
+void _get_seqs_in_genome(int fileHandle, char *genomeName) {
   Inline_Stack_Vars;
   Inline_Stack_Reset;
   char *errStr = NULL;
@@ -131,14 +131,14 @@ void _get_pairwise_blocks(int fileHandle, char *querySpecies, char *targetSpecie
         if (curBlock->qSequence != NULL) {
             qSequence = newSVpv(curBlock->qSequence, strlen(curBlock->qSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, qSequence);
         SV *tSequence;
         if (curBlock->tSequence != NULL) {
             tSequence = newSVpv(curBlock->tSequence, strlen(curBlock->tSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, tSequence);
 
@@ -199,14 +199,14 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
         if (curBlock->qSequence != NULL) {
             qSequence = newSVpv(curBlock->qSequence, strlen(curBlock->qSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, qSequence);
         SV *tSequence;
         if (curBlock->tSequence != NULL) {
             tSequence = newSVpv(curBlock->tSequence, strlen(curBlock->tSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, tSequence);
 
@@ -349,7 +349,7 @@ _get_genome_names (hal_fd)
 void
 _get_seqs_in_genome (fileHandle, genomeName)
 	int	fileHandle
-	const char *	genomeName
+	char *	genomeName
         PREINIT:
         I32* temp;
         PPCODE:
