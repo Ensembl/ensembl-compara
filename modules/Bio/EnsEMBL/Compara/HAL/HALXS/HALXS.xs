@@ -66,7 +66,7 @@ void _get_genome_names(int hal_fd) {
 }
 
 // Get a list of sequence names belonging to a genome.
-void _get_seqs_in_genome(int fileHandle, const char *genomeName) {
+void _get_seqs_in_genome(int fileHandle, char *genomeName) {
   Inline_Stack_Vars;
   Inline_Stack_Reset;
   char *errStr = NULL;
@@ -349,7 +349,7 @@ _get_genome_names (hal_fd)
 void
 _get_seqs_in_genome (fileHandle, genomeName)
 	int	fileHandle
-	const char *	genomeName
+	char *	genomeName
         PREINIT:
         I32* temp;
         PPCODE:
