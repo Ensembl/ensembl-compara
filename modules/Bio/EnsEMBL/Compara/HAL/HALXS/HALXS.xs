@@ -131,14 +131,14 @@ void _get_pairwise_blocks(int fileHandle, char *querySpecies, char *targetSpecie
         if (curBlock->qSequence != NULL) {
             qSequence = newSVpv(curBlock->qSequence, strlen(curBlock->qSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, qSequence);
         SV *tSequence;
         if (curBlock->tSequence != NULL) {
             tSequence = newSVpv(curBlock->tSequence, strlen(curBlock->tSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, tSequence);
 
@@ -199,14 +199,14 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
         if (curBlock->qSequence != NULL) {
             qSequence = newSVpv(curBlock->qSequence, strlen(curBlock->qSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, qSequence);
         SV *tSequence;
         if (curBlock->tSequence != NULL) {
             tSequence = newSVpv(curBlock->tSequence, strlen(curBlock->tSequence));
         } else {
-            av_push(blockInfo, newSV(NULL));
+            av_push(blockInfo, newSV(0));   // undef
         }
         av_push(blockInfo, tSequence);
 
