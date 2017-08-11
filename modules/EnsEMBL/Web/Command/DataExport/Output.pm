@@ -281,7 +281,7 @@ sub write_fasta {
       my $id  = $id_info[0] || $transcript->display_id;
       my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
                       ? $transcript->analysis->logic_name 
-                      : $transcript->status . '_' . $transcript->biotype;
+                      : $transcript->biotype;
 
       $intron_id = 1;
 
