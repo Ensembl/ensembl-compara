@@ -26,9 +26,14 @@ You will need both the [Core API
 dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
 [ours](cpanfile).
 
-## HAL alignments and progressiveCactus
+## HAL alignments and progressive-Cactus
 
-If working with HAL files, additional setup is required. First, install progressiveCactus:
+If working with HAL files, additional setup is required. There are two ways
+of installing the dependencies.
+
+### Complete installation of progressive-Cactus
+
+First, install progressive-Cactus:
 
 	git clone https://github.com/glennhickey/progressiveCactus.git
 	cd progressiveCactus
@@ -47,12 +52,28 @@ well
         cd progressiveCactus/submodules/sonLib
         # edit include.mk and add " -fPIC" at the end of the cflags_opt line (line 27) and make
 
-
 Now, we need to set up the Compara API:
 
 	cd ensembl-compara/xs/HALXS
 	perl Makefile.PL path/to/cactus
 	make
+
+If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you
+can skip `path/to/cactus` on the Makefile command-line.
+
+### Installation via Linuxbrew
+
+If you have a Linuxbrew installation of Ensembl that includes HAL, do this
+instead:
+
+	cd ensembl-compara/xs/HALXS
+	perl Makefile-Linuxbrew.PL path/to/linuxbrew_home
+	make
+
+If you have the `LINUXBREW_HOME` environment variable defined, you can skip
+`path/to/linuxbrew_home` on the Makefile command-line.
+
+### HAL files
 
 Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
 files to be downloaded from
@@ -61,9 +82,6 @@ API. The files must have the same name as on the FTP and must be placed
 under `multi/hal_files/` within your directory of choice.
 Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
 the latter.
-
-For production, you should define the `PROGRESSIVE_CACTUS_DIR` environment
-variable to the location of progressiveCactus.
 
 # Contact us
 
