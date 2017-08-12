@@ -139,7 +139,13 @@ sub load_registry {
 
 =head2 _slurp
 
-Reads the whole content of a file and returns it as a string
+  Arg[1]      : String $filename
+  Example     : my $content = $self->_slurp('/path/to/file');
+  Description : Reads the whole content of a file and returns it as a string
+  Returntype  : String
+  Exceptions  : Throws if the file cannot be open
+  Caller      : general
+  Status      : Stable
 
 =cut
 
@@ -158,7 +164,14 @@ sub _slurp {
 
 =head2 _spurt
 
-Prints $content to a file
+  Arg[1]      : String $filename
+  Arg[2]      : String $content
+  Example     : $self->_spurt('/path/to/file.fa', ">seq_name\nACGTAAAGCATCACAT\n");
+  Description : Create a file with the given content.
+  Returntype  : None
+  Exceptions  : Throws if the file cannot be open
+  Caller      : general
+  Status      : Stable
 
 =cut
 
