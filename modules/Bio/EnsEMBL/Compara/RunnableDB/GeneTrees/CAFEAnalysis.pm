@@ -127,9 +127,7 @@ sub run_cafe_script {
     $self->param('cafe_out_file', $cafe_out_file);
 
     my ($cafe_tree_str, $cafe_table) = $self->get_tree_and_table_from_db($fam_id);
-    open my $table_fh, ">", $cafe_table_file or die $!;
-    print $table_fh $cafe_table;
-    close($table_fh);
+    $self->_spurt($cafe_table_file, $cafe_table);
 
     # Populate the script file
     open my $sf, ">", $script_file or die $!;

@@ -196,9 +196,7 @@ sub run {
     my $blast_outfile = $worker_temp_directory . "/blast_${start_seq_id}.out";   # looks like inevitable evil (tried many hairy alternatives and failed)
 
     if($debug) {
-        open(FASTA, ">$blast_infile") || die "Could not open '$blast_infile' for writing";
-        print FASTA @$fasta_list;
-        close FASTA;
+        $self->_spurt($blast_infile, join('', @$fasta_list));
     }
 
     my $blastdb = ($blastdb_dir ? $blastdb_dir.'/' : '').$blastdb_name;

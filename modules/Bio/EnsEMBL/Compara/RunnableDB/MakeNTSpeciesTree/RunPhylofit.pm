@@ -115,9 +115,7 @@ sub write_output {
   }
  }
  my $species_tree_file = $self->worker_temp_directory."/species_tree.$block_id";
- open(TR, ">$species_tree_file") or throw("cant open $species_tree_file file\n");
- print TR $self->param('newick_tree');
- close(TR);
+ $self->_spurt($species_tree_file, $self->param('newick_tree'));
 # run phylofit 
  my @command = ($self->param('phylofit_exe'), '--tree', $species_tree_file, '--subst-mod', 'HKY85', '--out-root', $gab_file, $msa_fasta_file);
  $self->run_command(\@command, { die_on_failure => 1 });

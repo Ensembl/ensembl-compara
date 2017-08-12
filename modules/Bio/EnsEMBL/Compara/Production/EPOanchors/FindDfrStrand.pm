@@ -187,26 +187,25 @@ sub write_output {
 }
 
 sub write_files {
-        my ($queries, $targets, $file_stem) = @_; 
+        my ($self, $queries, $targets, $file_stem) = @_;
         my ($q_fh, $t_fh);
         foreach my $this_query (@$queries) {
-                push(@$q_fh, print_to_file($this_query, "Q", $file_stem));
+                push(@$q_fh, $self->print_to_file($this_query, "Q", $file_stem));
         }   
         foreach my $this_target (@$targets) {
-                push(@$t_fh, print_to_file($this_target, "T", $file_stem));
+                push(@$t_fh, $self->print_to_file($this_target, "T", $file_stem));
         }   
         return($q_fh, $t_fh);
 }
 
 sub print_to_file {
-    my($slice_info, $type, $file_stem) = @_; 
+    my($self, $slice_info, $type, $file_stem) = @_;
 	my $file_name = $file_stem . join("_", @{ $slice_info }[0..2] ) . ".$type";
 	my $slice = $slice_info->[3]; 
 	my $seq = $slice->seq;
 	# format the sequence 
 	$seq =~ s/(.{60})/$1\n/g;
-	open(FH, ">>$file_name") or die "cant open $file_name";
-	print FH ">" . $slice->name . "\n$seq";
+	$self->_spurt($file_name, ">" . $slice->name . "\n$seq", 'append');
 	return $file_name;
 }
 

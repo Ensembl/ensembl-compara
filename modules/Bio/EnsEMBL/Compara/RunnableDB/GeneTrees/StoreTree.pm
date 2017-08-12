@@ -44,10 +44,7 @@ sub _write_temp_tree_file {
     my ($self, $tree_name, $tree_content) = @_;
 
     my $filename = $self->worker_temp_directory . "/" . $tree_name;
-    open my $fh, ">", $filename or die "Could not open '$filename' for writing : $!";
-    print $fh $tree_content;
-    close $fh;
-
+    $self->_spurt($filename, $tree_content);
     return $filename;
 }
 

@@ -117,8 +117,7 @@ sub write_output {
    print IN ">".ucfirst($species_name)."\n", $exon_set->{$exon_id}->{$species_name}->{'seq'}, "\n";
   }
   my $tree_file = "$exon_dir/msa_species_tree";
-  open(TR, ">$tree_file") or throw("cant open $tree_file");
-  print TR $self->param('msa_species_tree_string');
+  $self->_spurt($tree_file, $self->param('msa_species_tree_string'));
   my $phylo_out_file = "$exon_dir/phylo$exon_id";
   my @command = ($self->param('phylofit_exe'), '--tree', $tree_file, '--subst-mod', 'HKY85', '--out-root', $phylo_out_file, $msa_fasta_file);
   $self->run_command(\@command, { die_on_failure => 1 });

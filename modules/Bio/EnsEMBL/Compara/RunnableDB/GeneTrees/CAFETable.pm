@@ -296,9 +296,7 @@ sub get_table_file {
     my $tmp_dir = $self->worker_temp_directory;
     my $mlss_id = $self->param('mlss_id');
     my $table_file = "${tmp_dir}/cafe_${mlss_id}_lambda.tbl";
-    open my $table_fh, ">", $table_file or die "$!: $table_file\n";
-    print $table_fh $table;
-    close ($table_fh);
+    $self->_spurt($table_file, $table);
     return $table_file;
 }
 

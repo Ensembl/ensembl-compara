@@ -158,9 +158,7 @@ sub fetch_input {
 
 	  $self->param('modified_tree_file', $self->worker_temp_directory . "/" . $TREE_FILE);
 
-          open (TREE, ">" . $self->param('modified_tree_file')) or throw "error writing alignment (" . $self->param('modified_tree_file') . ") file\n";
-          print TREE $tree_string;
-          close TREE;
+          $self->_spurt($self->param('modified_tree_file'), $tree_string);
 
           #write out multiple alignment as a mfa file.
           $self->_writeMultiFastaAlignment($gat);
@@ -202,10 +200,8 @@ sub fetch_input {
 	  #if param file doesn't have neutral rate, then append the calculated one
 	  if (!defined $neutral_rate) {
 	      $neutral_rate = _calculateNeutralRate($tree_string);
-	      open (PARAM_FILE_TMP, ">>".$self->param('param_file_tmp')) || throw "Could not open file " . $self->param('param_file_tmp') . " for writing";
-	      print PARAM_FILE_TMP "neutral_rate\t$neutral_rate\n";
+	      $self->_spurt($self->param('param_file_tmp'), "neutral_rate\t$neutral_rate\n", 'append');
 	  }
-	  close (PARAM_FILE_TMP);
       }
   } else {
       $self->complete_early('Less than 3 sequences aligned in this block. Cannot run GERP');

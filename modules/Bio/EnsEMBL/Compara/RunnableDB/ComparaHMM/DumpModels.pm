@@ -129,10 +129,8 @@ sub dump_models {
         my $path = "$bookDir/$model_id";
         $path =~ s/:/\//;
         make_path($path);
-        open my $fh, ">", "$path/hmmer.hmm" or die $!;
         my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id, $self->param('type'))->[0];
-        print $fh $hmm_object->profile;
-        close($fh);
+        $self->_spurt("$path/hmmer.hmm", $hmm_object->profile);
     }
 }
 

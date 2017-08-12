@@ -377,9 +377,8 @@ sub run_generic_command {
 
         # 4 - print structure to input_file
         # ovewrite the output_file with the binirized tree
-        open( my $genetree, '>', $self->param('output_file')) or die "Could not open '$self->param('tree_file')' for writing : $!";
         my $newick = $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}');
-        print $genetree $newick;
+        $self->_spurt($self->param('output_file'), $newick);
     }
 
     unless ($self->param('read_tags')) {
