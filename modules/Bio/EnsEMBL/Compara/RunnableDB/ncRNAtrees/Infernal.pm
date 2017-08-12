@@ -322,9 +322,7 @@ sub dump_model {
         return 1;
     }
     my $profile_file = $self->worker_temp_directory . "/" . $model_id . "_profile.cm";
-    open FILE, ">$profile_file" or die "$!";
-    print FILE $nc_profile;
-    close FILE;
+    $self->_spurt($profile_file, $nc_profile);
 
     $self->param('profile_file', $profile_file);
     return 0;

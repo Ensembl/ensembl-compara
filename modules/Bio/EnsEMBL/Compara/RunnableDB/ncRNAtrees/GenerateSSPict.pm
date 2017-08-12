@@ -149,19 +149,14 @@ sub get_plot {
     ## First we create the thumbnails
     my $meta_file_thumbnail = $aln_file . "-thumbnail.meta";
     my $svg_thumbnail_pic = "${out_aln_file}.thumbnail.svg";
-    open my $meta_thumbnail_fh, ">", $meta_file_thumbnail or die $!;
-    print $meta_thumbnail_fh "$out_aln_file\tskeleton-with-pairbonds\n";
-    close($meta_thumbnail_fh);
+    $self->_spurt($meta_file_thumbnail, "$out_aln_file\tskeleton-with-pairbonds\n");
     $self->run_r2r_and_check("", $meta_file_thumbnail, $svg_thumbnail_pic, "");
 
     my $meta_file = $aln_file . ".meta";
     ## One svg pic per member
     for my $member (@{$tree->get_all_Members}) {
         my $seq_member_id = $member->name();
-        open my $meta_fh, ">", $meta_file or die $!;
-        print $meta_fh "$out_aln_file\n";
-        print $meta_fh "$aln_file\toneseq\t$seq_member_id\n";
-        close($meta_fh);
+        $self->_spurt($meta_file, "$out_aln_file\n$aln_file\toneseq\t$seq_member_id\n");
         my $svg_pic_filename = "${out_aln_file}-${seq_member_id}.svg";
         $self->run_r2r_and_check("", $meta_file, $svg_pic_filename, "");
     }
@@ -193,9 +188,7 @@ sub fix_aln_file {
         }
     }
     close($aln_fh);
-    open $aln_fh, ">", $aln_file or die $!;
-    print $aln_fh $new_aln;
-    close($aln_fh);
+    $self->_spurt($aln_file, $new_aln);
     $self->param('fixed_aln', 1);
     $self->get_cons_aln();
 }
