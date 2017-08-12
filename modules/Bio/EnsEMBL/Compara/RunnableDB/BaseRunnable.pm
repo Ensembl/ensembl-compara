@@ -166,8 +166,9 @@ sub _slurp {
 
   Arg[1]      : String $filename
   Arg[2]      : String $content
+  Arg[3]      : Boolean $append (default: false)
   Example     : $self->_spurt('/path/to/file.fa', ">seq_name\nACGTAAAGCATCACAT\n");
-  Description : Create a file with the given content.
+  Description : Create a file with the given content. If $append is true, the file is open in ">>" mode
   Returntype  : None
   Exceptions  : Throws if the file cannot be open
   Caller      : general
@@ -176,8 +177,8 @@ sub _slurp {
 =cut
 
 sub _spurt {
-    my ($self, $file_name, $content) = @_;
-    open(my $fh, '>', $file_name) or $self->throw("Couldnt open file [$file_name]");
+    my ($self, $file_name, $content, $append) = @_;
+    open(my $fh, $append ? '>>' : '>', $file_name) or $self->throw("Couldnt open file [$file_name]");
     print $fh $content;
     close($fh);
 }
