@@ -23,7 +23,7 @@ use Getopt::Long;
 
 use Bio::AlignIO;
 
-use Bio::EnsEMBL::Utils::IO qw/:slurp/;
+use Bio::EnsEMBL::Utils::IO qw/:slurp :spurt/;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
@@ -197,18 +197,14 @@ unless($self->{'no_print_tree'}) {
     $newick_common =~ s/\ /\_/g;
 
     unless($self->{'no_other_files'}) {
-        open T,">newick_common.$outname.nh" or die "$!";
-        print T $newick_common;
-        close T;
+        spurt("newick_common.$outname.nh", $newick_common);
     }
   }
   my $newick = $root->newick_format;
   warn("\n\n$newick\n\n");
 
     unless($self->{'no_other_files'}) {
-        open T,">newick.$outname.nh" or die "$!";
-        print T $newick;
-        close T;
+        spurt("newick.$outname.nh", $newick);
     }
 
   my $newick_simple = $newick;
@@ -218,18 +214,14 @@ unless($self->{'no_print_tree'}) {
   warn "$newick_simple\n\n";
 
     unless($self->{'no_other_files'}) {
-        open T,">newick_simple.$outname.nh" or die "$!";
-        print T $newick_simple;
-        close T;
+        spurt("newick_simple.$outname.nh", $newick_simple);
     }
 
   my $species_short_name = $root->newick_format('species_short_name');
   warn("$species_short_name\n\n");
 
     unless($self->{'no_other_files'}) {
-        open T,">species_short_name.$outname.nh" or die "$!";
-        print T $species_short_name;
-        close T;
+        spurt("species_short_name.$outname.nh", $species_short_name);
     }
 
   my $njtree_tree = $root->newick_format('ncbi_taxon');
@@ -237,15 +229,11 @@ unless($self->{'no_print_tree'}) {
   warn "$njtree_tree\n\n";
 
     unless($self->{'no_other_files'}) {
-        open T,">njtree.$outname.nh" or die "$!";
-        print T $njtree_tree;
-        close T;
+        spurt("njtree.$outname.nh". $njtree_tree);
     }
 
     if($self->{'njtree_output_filename'}) {   # we need to feed the filename from outside for some automation
-        open(T,'>'.$self->{'njtree_output_filename'}) or die "$!";
-        print T $njtree_tree;
-        close T;
+        spurt($self->{'njtree_output_filename'}, $njtree_tree);
     }
 
   my $s = join (":", map {$_->name} (@{$root->get_all_leaves}));
