@@ -320,13 +320,7 @@ sub _parse_results {
     unless ($self->tree_string) {
 	if (-e $tree_file) {
 	    ## Estimated tree. Overwrite the order of the fasta files and get the tree
-	    open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
-
-	    my ($newick, $files);
-	    while (<F>) {
-		$newick .= $_;
-	    }
-	    close(F);
+	    my $newick = $self->_slurp($tree_file);
 	    $newick =~ s/[\r\n]+$//;
 	    $self->tree_string($newick);
 	    
