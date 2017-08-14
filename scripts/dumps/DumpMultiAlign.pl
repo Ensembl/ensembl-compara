@@ -334,6 +334,7 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Getopt::Long;
 use Pod::Usage;
 
@@ -416,6 +417,8 @@ if ($compara_url) {
 } else {
     $compara_dba = $reg->get_DBAdaptor($dbname, "compara");
 }
+
+Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
 
 warn "Connecting to compara_db ", $compara_dba->dbc->dbname, "\n" if $debug;
 

@@ -28,13 +28,12 @@ Questions may also be sent to the Ensembl help desk at
 =head1 DESCRIPTION
 
 This modules contains common methods used when dealing with Core DBAdaptor
-objects. Ideally, these methods should be included in the Core API:
+objects. The first section has methods that are general, whilst the second
+section has methods that pretend to be part of the Bio::EnsEMBL::DBSQL::DBAdaptor
+package (i.e. they can be called directly on $genome_db->db_adaptor):
 
 - assembly_name: returns the assembly name
 - locator: builds a Locator string
-
-They are all declared under the namespace Bio::EnsEMBL::DBSQL::DBAdaptor
-so that they can be called directly on $genome_db->db_adaptor
 
 =head1 METHODS
 
@@ -44,6 +43,45 @@ package Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::DBSQL::ProxyDBConnection;
+
+
+=head2 pool_all_DBConnections
+
+  Example     : $Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
+  Description : Create new ProxyDBConnections objects so that all the Core adaptors share
+                the same underlying connection
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub pool_all_DBConnections {
+    my $self = shift;
+
+    my %share_dbcs;
+
+    foreach my $dba (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors}) {
+        my $dbc = $dba->dbc;
+        # Skip if it has no dbname
+        next unless $dbc->dbname;
+        # Disconnect as the DBC is going to be superseded
+        $dbc->disconnect_if_idle;
+        my $signature = sprintf('%s://%s@%s:%s/', $dbc->driver, $dbc->username, $dbc->host, $dbc->port);
+        unless (exists $share_dbcs{$signature}) {
+            warn "Creating new shared DBC for $signature from ", $dbc->locator, "\n";
+            # EnsEMBL::REST::Model::Registry uses $dbc directly, but I feel it safer to make a new instance
+            $share_dbcs{$signature} = new Bio::EnsEMBL::DBSQL::DBConnection( -DBCONN => $dbc );
+        }
+        warn "Replacing ", $dbc->locator, " with a Proxy to $signature\n";
+        my $new_dbc = Bio::EnsEMBL::DBSQL::ProxyDBConnection->new(-DBC => $share_dbcs{$signature}, -DBNAME => $dbc->dbname);
+        $dba->dbc($new_dbc);
+    }
+}
 
 
 # We pretend that all the methods are directly accessible on DBAdaptor
