@@ -632,8 +632,8 @@ sub _set_env {
     push @_VERBOSE_LINES, "ENV variables added:\n" if $ENSEMBL_STARTUP_VERBOSE;
     for (sort keys %$ENSEMBL_SETENV) {
       if (defined $ENSEMBL_SETENV->{$_}) {
-        $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
         push @_VERBOSE_LINES, sprintf "%50s: %s\n", $_, $ENV{$_} if $ENSEMBL_STARTUP_VERBOSE;
+        $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"} if defined ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
       } else {
         delete $ENV{$_};
         push @_VERBOSE_LINES, sprintf "%50s deleted\n", $_ if $ENSEMBL_STARTUP_VERBOSE;
