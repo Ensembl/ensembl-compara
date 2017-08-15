@@ -67,6 +67,8 @@ sub pool_all_DBConnections {
 
     foreach my $dba (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors}) {
         my $dbc = $dba->dbc;
+        # Skip the eHive DBConnections as they are different from Core's ones
+        next if $dbc->isa('Bio::EnsEMBL::Hive::DBSQL::DBConnection');
         # Skip if it has no dbname
         next unless $dbc->dbname;
         # Disconnect as the DBC is going to be superseded
