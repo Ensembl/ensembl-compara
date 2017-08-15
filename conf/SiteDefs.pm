@@ -160,10 +160,10 @@ our $ENSEMBL_PIDFILE              = defer { "$ENSEMBL_LOGDIR/httpd.pid" };      
 our $ENSEMBL_ERRORLOG             = defer { "$ENSEMBL_LOGDIR/error_log" };                                    # Error log file
 our $ENSEMBL_CUSTOMLOG            = defer { "$ENSEMBL_LOGDIR/access_log ensembl_extended" };                  # Access log file
 our $ENSEMBL_FAILUREDIR           = defer { "$ENSEMBL_TMP_DIR/failure_dir" };                                 # Folder to save status of external resources (Check EnsEMBL::Web::Tools::FailOver)
-our $ENSEMBL_ROBOTS_TXT_DIR       = defer { $ENSEMBL_WEBROOT };                                               # Directory for saving robots.txt file
+our $ENSEMBL_ROBOTS_TXT_DIR       = defer { "$ENSEMBL_WEBROOT/htdocs" };                                      # Directory for saving robots.txt file
 our $ENSEMBL_MINIFIED_FILES_PATH  = defer { "$ENSEMBL_WEBROOT/minified" };                                    # Path for saving minified files
 our $ENSEMBL_OPENSEARCH_PATH      = defer { "$ENSEMBL_WEBROOT/opensearch" };                                  # Path for saving opensearch files
-our $GOOGLE_SITEMAPS_PATH         = defer { "$ENSEMBL_WEBROOT/sitemaps" };                                  # Path for saving Google Sitemap files
+our $GOOGLE_SITEMAPS_PATH         = defer { "$ENSEMBL_WEBROOT/sitemaps" };                                    # Path for saving Google Sitemap files
 our $UDC_CACHEDIR                 = defer { "$ENSEMBL_TMP_DIR/udcCache" };                                    # Directory to cache outgoing UDC requests (required for BAM files)
 our $ENSEMBL_TMP_MESSAGE_FILE     = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };                         # File location for the temporary message for the website
 
