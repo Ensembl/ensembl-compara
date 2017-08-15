@@ -1768,7 +1768,7 @@ CREATE TABLE gene_member_qc (
   status                      varchar(50) NOT NULL,
 
   FOREIGN KEY (gene_member_stable_id) REFERENCES gene_member(stable_id),
-  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
+  -- FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
 
   KEY (gene_member_stable_id)
