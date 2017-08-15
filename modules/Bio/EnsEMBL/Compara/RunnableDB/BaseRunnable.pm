@@ -143,7 +143,7 @@ sub load_registry {
   Example     : my $content = $self->_slurp('/path/to/file');
   Description : Reads the whole content of a file and returns it as a string
   Returntype  : String
-  Exceptions  : Throws if the file cannot be open
+  Exceptions  : Throws if the file cannot be open or closed
   Caller      : general
   Status      : Stable
 
@@ -156,7 +156,7 @@ sub _slurp {
     local $/ = undef;
     open(my $fh, '<', $file_name) or $self->throw("Couldnt open file [$file_name]");
     $slurped = <$fh>;
-    close($fh);
+    close($fh) or $self->throw("Couldnt close file [$file_name]");
   }
   return $slurped;
 }
@@ -170,7 +170,7 @@ sub _slurp {
   Example     : $self->_spurt('/path/to/file.fa', ">seq_name\nACGTAAAGCATCACAT\n");
   Description : Create a file with the given content. If $append is true, the file is open in ">>" mode
   Returntype  : None
-  Exceptions  : Throws if the file cannot be open
+  Exceptions  : Throws if the file cannot be open or closed
   Caller      : general
   Status      : Stable
 
@@ -180,7 +180,7 @@ sub _spurt {
     my ($self, $file_name, $content, $append) = @_;
     open(my $fh, $append ? '>>' : '>', $file_name) or $self->throw("Couldnt open file [$file_name]");
     print $fh $content;
-    close($fh);
+    close($fh) or $self->throw("Couldnt close file [$file_name]");
 }
 
 
