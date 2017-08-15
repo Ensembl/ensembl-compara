@@ -4,8 +4,9 @@ use ExtUtils::MakeMaker;
 my $linuxbrew_home = $ARGV[0] || $ENV{LINUXBREW_HOME};
 die "The path to the linuxbrew installation must be provided, either on the command-line or via the environment LINUXBREW_HOME" unless $linuxbrew_home;
 
-my $hal_location = $linuxbrew_home.'/Cellar/hal/451788f/lib';
-my $sonLib_location = $linuxbrew_home.'/Cellar/sonlib/0.1/lib';
+my $lib_location = $linuxbrew_home.'/lib';
+# We need a specific version of hdf5 that is not the default one
+my $hdf5_location = $linuxbrew_home.'/Cellar/hdf5@1.8/1.8.19';
 
 print "! Using linuxbrew installation at $ENV{LINUXBREW_HOME}\n";
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
@@ -19,9 +20,15 @@ WriteMakefile(
        AUTHOR         => 'Carla Cummins <carlac@ebi.ac.uk>') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
 
-    INC => "-I$hal_location",
-    LIBS => [ "-lstdc++ -lhdf5 -lhdf5_cpp" ],
-    MYEXTLIB => "$hal_location/halChain.a $hal_location/halLod.a $hal_location/halLiftover.a $hal_location/halLib.a $hal_location/halMaf.a $sonLib_location/sonLib.a",
+    # Since we don't use the default hdf5, we need to give the full paths
+    # here for 1) the header files and 2) the library.
+    # The headers from the version 1.10 seem to work, but I want to make
+    # sure the correct ones are in the path
+    INC => "-I$hdf5_location/include",
+    # Somehow, it needs both -L and -rpath !
+    LIBS => [ "-L$hdf5_location/lib -Wl,-rpath,$hdf5_location/lib -lhdf5 -lhdf5_cpp" ],
+    # HAL and sonLib .a files all are in linuxbrew's lib/
+    MYEXTLIB => "$lib_location/halChain.a $lib_location/halLod.a $lib_location/halLiftover.a $lib_location/halLib.a $lib_location/halMaf.a $lib_location/sonLib.a",
     # Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
 );
