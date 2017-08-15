@@ -34,6 +34,11 @@ sub create {
   my $map_dir   = $sd->GOOGLE_SITEMAPS_PATH || $sd->ENSEMBL_WEBROOT.'/htdocs/sitemaps';
   my @lines;
 
+  if ($SiteDefs::ENSEMBL_CUSTOM_ROBOTS_TXT) {
+    warn _box('Not creating robots.txt (a custom one in use)');
+    return;
+  }
+
   warn _box(sprintf 'Placing robots.txt into %s (Searchable: %s)', $root, $sd->ENSEMBL_EXTERNAL_SEARCHABLE ? 'Yes' : 'No');
 
   if ($sd->ENSEMBL_EXTERNAL_SEARCHABLE) {

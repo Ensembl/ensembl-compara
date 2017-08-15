@@ -92,7 +92,7 @@ sub handler {
     return FORBIDDEN if $file =~ /\.\./;
 
     ## Map robots.txt URL
-    if ($file =~ m#robots.txt#) {
+    if ($file eq '/robots.txt' && !$SiteDefs::ENSEMBL_CUSTOM_ROBOTS_TXT) { # if ENSEMBL_CUSTOM_ROBOTS_TXT is set, it uses one from plugin's htdocs
       $file = $SiteDefs::ENSEMBL_ROBOTS_TXT_DIR.'/robots.txt';
     }
 
