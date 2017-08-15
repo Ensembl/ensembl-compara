@@ -75,11 +75,11 @@ sub pool_all_DBConnections {
         $dbc->disconnect_if_idle;
         my $signature = sprintf('%s://%s@%s:%s/', $dbc->driver, $dbc->username, $dbc->host, $dbc->port);
         unless (exists $share_dbcs{$signature}) {
-            warn "Creating new shared DBC for $signature from ", $dbc->locator, "\n";
+            #warn "Creating new shared DBC for $signature from ", $dbc->locator, "\n";
             # EnsEMBL::REST::Model::Registry uses $dbc directly, but I feel it safer to make a new instance
             $share_dbcs{$signature} = new Bio::EnsEMBL::DBSQL::DBConnection( -DBCONN => $dbc );
         }
-        warn "Replacing ", $dbc->locator, " with a Proxy to $signature\n";
+        #warn "Replacing ", $dbc->locator, " with a Proxy to $signature\n";
         my $new_dbc = Bio::EnsEMBL::DBSQL::ProxyDBConnection->new(-DBC => $share_dbcs{$signature}, -DBNAME => $dbc->dbname);
         $dba->dbc($new_dbc);
     }
