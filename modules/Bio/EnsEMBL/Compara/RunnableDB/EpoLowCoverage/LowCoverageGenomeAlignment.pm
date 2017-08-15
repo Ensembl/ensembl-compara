@@ -979,9 +979,7 @@ sub get_taxon_tree {
   } elsif ($self->param('taxon_tree_file')) {
       print "Taking taxon tree from file\n";
       #read from file
-      open(TREE_FILE, $self->param('taxon_tree_file')) or throw("Cannot open file ".$self->param('taxon_tree_file'));
-      $newick_taxon_tree = join("", <TREE_FILE>);
-      close(TREE_FILE);
+      $newick_taxon_tree = $self->_slurp($self->param('taxon_tree_file'));
   } else {
       #read from mlss_tag table
       my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
