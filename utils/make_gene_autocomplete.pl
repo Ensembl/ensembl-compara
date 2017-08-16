@@ -64,7 +64,7 @@ if (!@ARGV and !$nodelete) {
   }
 }
 
-foreach my $dataset (@ARGV ? @ARGV : @{$sd->multi_hash->{'ENSEMBL_DATASETS'}}) {
+foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
   warn "$dataset\n";
   
   my $dbs = $sd->get_config($dataset, 'databases');
