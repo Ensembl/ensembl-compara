@@ -357,7 +357,6 @@ return
 		ortheus_mlssid => $self->o('epo_mlss_id'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-	-failed_job_tolerance => 1,
 	-hive_capacity => 50,
 	-max_retry_count => 3,
 	-flow_into => {
@@ -377,7 +376,6 @@ return
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
 	-rc_name => 'mem7500',
 	-max_retry_count => 2,
-	-failed_job_tolerance => 1,
 	-flow_into => { 
 #		1 => [ 'gerp' ], 
 		-1 => [ 'ortheus_huge_mem' ],
@@ -394,7 +392,6 @@ return
         -module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
         -rc_name => 'hugemem',
 	-max_retry_count => 1,
-	-failed_job_tolerance => 1,
 #        -flow_into => { 
 #		1 => [ 'gerp' ],
 #        },  
@@ -411,7 +408,6 @@ return
 #        },
 #	-max_retry_count => 3,
 #        -hive_capacity   => 50,
-#	-failed_job_tolerance => 1,
 #        -flow_into => { 
 #                -1 => [ 'gerp_high_mem' ],
 #        },
@@ -427,7 +423,6 @@ return
 #        },
 #        -hive_capacity   => 10,
 #	-rc_name => 'mem7500',
-#	-failed_job_tolerance => 100,
 #},
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
             {  -logic_name => 'update_max_alignment_length',
