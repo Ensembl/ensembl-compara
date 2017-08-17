@@ -55,7 +55,7 @@ use Getopt::Long;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
-my $r2r_exe = $ENV{ENSEMBL_SOFTWARE_HOME}.'/linuxbrew/Cellar/r2r/1.0.4/bin/r2r',
+my $r2r_exe = $ENV{'LINUXBREW_HOME'}.'/Cellar/r2r/1.0.4/bin/r2r',
 my $registry_file;
 my $url;
 my $compara_url;
