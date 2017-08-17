@@ -32,22 +32,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC
 
 =head1 DESCRIPTION
 
-This Analysis will take the sequences from a cluster, the cm from
-nc_profile and run a profiled alignment, storing the results as
-cigar_lines for each sequence.
-
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-$sillytemplate->fetch_input(); #reads from DB
-$sillytemplate->run();
-$sillytemplate->write_output(); #writes to DB
+This RunnableDB compares the clusters of this compara database to another one's
 
 =head1 AUTHORSHIP
 
@@ -90,6 +75,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    $self->complete_early('No reuse_db, cannot compare the clusters') unless $self->param('reuse_db');
     $self->param('groupset_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => 'default')->[0]) or die "Could not fetch groupset tree";
 
 }
@@ -108,9 +94,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    if(my $reuse_db = $self->param('reuse_db')) {
-        $self->overall_groupset_qc($reuse_db);
-    }
+    $self->overall_groupset_qc();
 }
 
 
@@ -134,9 +118,8 @@ sub generate_dbname {
 
 sub overall_groupset_qc {
     my $self     = shift @_;
-    my $reuse_db = shift @_;
 
-    my $reuse_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
+    my $reuse_compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('reuse_db'));    # may die if bad parameters
 
     my $xtb_filename = $self->join_one_pair( $reuse_compara_dba, $self->compara_dba );
 
