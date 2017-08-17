@@ -64,6 +64,7 @@ sub default_options {
         'hcluster_exe'              => $self->o('ensembl_cellar').'/hclustersg/0.5.0/bin/hcluster_sg',
         'mcoffee_home'              => $self->o('ensembl_cellar').'/t-coffee/9.03.r1336/',
         'mafft_home'                => $self->o('ensembl_cellar').'/mafft/7.305/',
+        'extaligners_exe_dir'       => $self->o('ensembl_cellar').'/../bin/',   # We expect the latest version of each aligner to be symlinked there
         'trimal_exe'                => $self->o('ensembl_cellar').'/trimal/1.4.1/bin/trimal',
         'noisy_exe'                 => $self->o('ensembl_cellar').'/noisy/1.5.12/bin/noisy',
         'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',

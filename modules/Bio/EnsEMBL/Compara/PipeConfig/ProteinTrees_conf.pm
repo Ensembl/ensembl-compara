@@ -1568,7 +1568,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
-                'mafft_home'            => $self->o('mafft_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
@@ -1585,7 +1585,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
-                'mafft_home'            => $self->o('mafft_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
@@ -1624,7 +1624,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
-                'mafft_home'            => $self->o('mafft_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),

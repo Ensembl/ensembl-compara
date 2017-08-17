@@ -61,7 +61,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'mafft_bin_dir'         => '/bin/',                 # where to find the mafft binaroes from $mafft_home
         'mcoffee_exe_name'      => 't_coffee',              # where to find the t_coffee executable from $mcoffee_home/$mcoffee_exe_dir
         'mcoffee_exe_dir'       => '/bin/',                 # where to find the t_coffee executable rirectory from $mcoffee_home
         'method'                => 'fmcoffee',              # the style of MCoffee to be run for this alignment
@@ -209,11 +208,8 @@ sub get_msa_command_line {
     my $mcoffee_home = $self->param_required('mcoffee_home');
     my $mcoffee_exe_name = $self->param_required('mcoffee_exe_name');
     my $mcoffee_exe_dir = $self->param_required('mcoffee_exe_dir');
+    my $extaligners_exe_dir = $self->param_required('extaligners_exe_dir');
     
-    my $mafft_home = $self->param_required('mafft_home');
-    my $mafft_bin_dir = $self->param_required('mafft_bin_dir');
-    die "Cannot find directory '$mafft_bin_dir' in '$mafft_home'" unless(-d $mafft_home.'/'.$mafft_bin_dir);
-
     $cmd = "$mcoffee_home/$mcoffee_exe_dir/$mcoffee_exe_name";
     if ($self->param('redo_alnname') and ($self->param('method') eq 'unalign') ) {
         $cmd .= ' '. $self->param('options');
@@ -231,8 +227,8 @@ sub get_msa_command_line {
     $prefix .= "export CACHE_4_TCOFFEE=\"$tempdir\";";
     $prefix .= "export NO_ERROR_REPORT_4_TCOFFEE=1;";
 
-    # Add the paths to the t_coffee built-in binaries + mafft (installed on its own)
-    $prefix .= "export PATH=$mafft_home/$mafft_bin_dir:\$PATH:$mcoffee_home/$mcoffee_exe_dir/;";
+    # Add the paths to itself and the other aligners
+    $prefix .= "export PATH=$mcoffee_home/$mcoffee_exe_dir/:$extaligners_exe_dir:\$PATH;";
 
     return "$prefix $cmd";
 }
