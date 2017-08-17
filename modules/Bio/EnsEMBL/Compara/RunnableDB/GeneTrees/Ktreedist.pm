@@ -225,9 +225,6 @@ sub run_ktreedist {
   print CTFILE "End;\n\n";
   close CTFILE;
 
-  open RTFILE,">$referencefilename" or die $!;
-  print RTFILE "#NEXUS\n\n";
-  print RTFILE "Begin TREES;\n\n";
   my $reference_string;
   my $ref_label;
  
@@ -240,9 +237,13 @@ sub run_ktreedist {
   }
   
   $self->throw("error with newick tree") unless (defined($reference_string));
-  print RTFILE "TREE    $ref_label = $reference_string\n";
-  print RTFILE "End;\n\n";
-  close RTFILE;
+
+  $self->_spurt($referencefilename, join("\n",
+          "#NEXUS\n",
+          "Begin TREES;\n",
+          "TREE    $ref_label = $reference_string",
+          "End;\n",
+      ));
 
   my $cmd = "$ktreedist_exe -a -rt $referencefilename -ct $comparisonfilename";
   my $runCmd = $self->run_command($cmd);

@@ -182,25 +182,21 @@ sub get_msa_command_line {
     #
     my $paramsfile = $tempdir. '/temp.params';
     $paramsfile =~ s/\/\//\//g;  # converts any // in path to /
-    open(OUTPARAMS, ">$paramsfile") or $self->throw("Error opening $paramsfile for write");
 
-    my $extra_output = '';
-    $method_string .= "\n";
-
-    print OUTPARAMS $method_string;
-    print OUTPARAMS "-mode=mcoffee\n";
-    print OUTPARAMS "-output=fasta_aln,score_ascii" . $extra_output . "\n";
-    print OUTPARAMS "-outfile=$msa_output\n";
-    print OUTPARAMS "-n_core=1\n";
-    print OUTPARAMS "-newtree=$tree_temp\n";
-    close OUTPARAMS;
+    $self->_spurt($paramsfile, join("\n",
+            $method_string,
+            '-mode=mcoffee',
+            '-output=fasta_aln,score_ascii',
+            "-outfile=$msa_output",
+            '-n_core=1',
+            "-newtree=$tree_temp",
+        ));
 
     my $t_env_filename = $tempdir . "/t_coffee_env";
-    open(TCOFFEE_ENV, ">$t_env_filename")
-        or $self->throw("Error opening $t_env_filename for write");
-    print TCOFFEE_ENV "http_proxy_4_TCOFFEE=\n";
-    print TCOFFEE_ENV "EMAIL_4_TCOFFEE=proteintrees\@compara.ensembl\n";
-    close TCOFFEE_ENV;
+    $self->_spurt($t_env_filename, join("\n",
+            'http_proxy_4_TCOFFEE=',
+            'EMAIL_4_TCOFFEE=proteintrees@compara.ensembl',
+        ));
 
     my $cmd       = '';
     my $prefix    = '';

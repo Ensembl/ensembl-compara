@@ -1384,9 +1384,6 @@ sub _dump_fasta_and_mfa {
     $file .= "_" . $ga->genome_db->taxon_id . ".fa";
     print "file $file\n" if $self->debug;
     
-    open F, ">$file" || throw("Couldn't open $file");
-
-    print F ">SeqID" . $seq_id . "\n";
     #print MFA ">SeqID" . $seq_id . "\n";
 
     #print MFA ">seq" . $seq_id . "\n";
@@ -1409,9 +1406,11 @@ sub _dump_fasta_and_mfa {
     $seq =~ s/(.{80})/$1\n/g;
 
     chomp $seq;
-    print F $seq,"\n";
 
-    close F;
+    $self->_spurt($file, join("\n",
+            '>SeqID'.$seq_id,
+            $seq,
+        ));
 
     my $aligned_seq = $ga->aligned_sequence;
     $aligned_seq =~ s/(.{60})/$1\n/g;
@@ -1823,17 +1822,17 @@ sub _dump_2x_fasta {
 
     $file .= "_" . $ga_frags->[0]->{taxon_id} . ".fa";
 
-    open F, ">$file" || throw("Couldn't open $file");
-
-    print F ">SeqID" . $seq_id . "\n";
     #print MFA ">SeqID" . $seq_id . "\n";
     #print MFA ">seq" . $seq_id . "\n";
     print MFA ">seq" . $seq_id . "_" . $ga_frags->[0]->{taxon_id} . "\n";
     my $aligned_seq = $ga_frags->[0]->{aligned_seq};
     my $seq = $aligned_seq;
     $seq =~ tr/-//d;
-    print F "$seq\n";
-    close F;
+
+    $self->_spurt($file, join("\n",
+            '>SeqID'.$seq_id,
+            $seq,
+        ));
 
     $aligned_seq =~ s/(.{60})/$1\n/g;
     $aligned_seq =~ s/\n$//;

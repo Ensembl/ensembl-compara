@@ -644,11 +644,6 @@ sub _dump_fasta {
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
 
-    open F, ">$file" || throw("Couldn't open $file");
-
-    print F ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, ".",
-        $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand,"\n";
-
     $dfr->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 
     my $slice = $dfr->slice;
@@ -660,9 +655,12 @@ sub _dump_fasta {
     }
     $seq =~ s/(.{80})/$1\n/g;
     chomp $seq;
-    print F $seq,"\n";
 
-    close F;
+    $self->_spurt($file, join("\n",
+            ">DnaFrag". $dfr->dnafrag_id . "|" . $dfr->dnafrag->name . "." . $dfr->dnafrag_start . "-" . $dfr->dnafrag_end . ":" . $dfr->dnafrag_strand,
+            $seq,
+        ));
+
     });
 
     $self->add_fasta_files($file);

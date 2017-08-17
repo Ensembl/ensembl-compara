@@ -795,9 +795,7 @@ sub _build_tree_string {
  
     $self->param('modified_tree_file', $self->worker_temp_directory . "/" . $TREE_FILE);
 
-    open (TREE, ">" . $self->param('modified_tree_file') ) or throw "error writing alignment (" . $self->param('modified_tree_file') . ") file\n";    
-    print TREE $tree_string;
-    close TREE;
+    $self->_spurt($self->param('modified_tree_file'), $tree_string);
 
     return $tree_string;
 }

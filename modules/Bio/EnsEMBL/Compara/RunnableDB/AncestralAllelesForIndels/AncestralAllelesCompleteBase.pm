@@ -393,7 +393,7 @@ sub run_cmd {
             my $ref_ga = $original_gat->reference_genomic_align;
             
             #Set up the files needed for running ortheus ie fasta_files and the tree_string
-            my ($ordered_fasta_files, $ga_lookup, $tree_string, $ordered_fasta_headers) = init_files($dump_dir, $original_gat);
+            my ($ordered_fasta_files, $ga_lookup, $tree_string, $ordered_fasta_headers) = $self->init_files($dump_dir, $original_gat);
             
             #Run ortheus to create the 'reference' alignment
             print OUT "\nREFERENCE\n" if ($verbose);
@@ -471,8 +471,8 @@ sub find_ancestral_alleles {
     my $variant_seq = get_variant_sequence($indel_type, $this_slice, $slice_start, $slice_end, $allele_seq, $allele_start, $allele_end); 
 
     #Create files ready for running with ortheus
-    my ($ordered_fasta_files, $ga_lookup, $tree_string, $ordered_fasta_headers) = init_files($dump_dir, $original_gat);
-    my ($var_ordered_fasta_files, $var_tree_string, $var_ordered_fasta_headers) = init_variant_files($dump_dir, $variant_seq, $ordered_fasta_files, $ordered_fasta_headers, $ga_lookup, $ref_ga, $tree_string);
+    my ($ordered_fasta_files, $ga_lookup, $tree_string, $ordered_fasta_headers) = $self->init_files($dump_dir, $original_gat);
+    my ($var_ordered_fasta_files, $var_tree_string, $var_ordered_fasta_headers) = $self->init_variant_files($dump_dir, $variant_seq, $ordered_fasta_files, $ordered_fasta_headers, $ga_lookup, $ref_ga, $tree_string);
     
     #Run ortheus and parse output 
     my ($modified_gat, $modified_score) = $self->run_ortheus($compara_dba, $dump_dir, $var_ordered_fasta_files, $var_ordered_fasta_headers, $ga_lookup, $var_tree_string, $mlss, $ref_ga, $left, $allele_end, $verbose);
@@ -617,7 +617,7 @@ sub print_gat {
 #Create files ready for running with Ortheus
 #
 sub init_files {
-    my ($dump_dir, $gat) = @_;
+    my ($self, $dump_dir, $gat) = @_;
 
     #Run dump_fasta first, to rename tree nodes. Create lookup between node name and genomic_align
     my $ga_lookup;
@@ -630,7 +630,7 @@ sub init_files {
     #print "gat_tree_string=$tree_string\n";
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_string);
     #Write fasta files and return array of fasta_files in the same order as the tree_string.
-    my ($ordered_fasta_files, $ordered_fasta_headers) = dump_fasta ($tree, $ga_lookup, $dump_dir);
+    my ($ordered_fasta_files, $ordered_fasta_headers) = $self->dump_fasta ($tree, $ga_lookup, $dump_dir);
 
     return ($ordered_fasta_files, $ga_lookup, $tree_string, $ordered_fasta_headers);
 }
@@ -639,7 +639,7 @@ sub init_files {
 #Create variant files ready for running with Ortheus
 #
 sub init_variant_files {
-    my ($dump_dir, $variant_seq, $ordered_fasta_files, $ordered_fasta_headers, $ga_lookup, $ref_ga, $tree_string) = @_;
+    my ($self, $dump_dir, $variant_seq, $ordered_fasta_files, $ordered_fasta_headers, $ga_lookup, $ref_ga, $tree_string) = @_;
 
     #Make copy of $ordered_fasta_files
     my $var_ordered_fasta_files;
@@ -664,7 +664,7 @@ sub init_variant_files {
 	    $ga_lookup->{$var_seq_id}{ga} = $var_ga;
 	    $ga_lookup->{$var_seq_id}{idx} = $idx;
 	    $var_tree_string =~ s/$seq_id:/$var_seq_id:/;
-	    my $header = write_fasta($file, $var_seq_id, $variant_seq);
+	    my $header = $self->write_fasta($file, $var_seq_id, $variant_seq);
 
 	    $var_ordered_fasta_files->[$idx] = $file;
 	    $var_ordered_fasta_headers->[$idx] = $header;
@@ -719,7 +719,7 @@ sub change_node_names {
 # Dump FASTA files in the order given by the tree string (needed by Pecan)
 #
 sub dump_fasta {
-    my ($tree, $ga_lookup, $dump_dir) = @_;
+    my ($self, $tree, $ga_lookup, $dump_dir) = @_;
 
     my $fasta_headers;
     my $fasta_files;
@@ -744,7 +744,7 @@ sub dump_fasta {
 
 	my $file = $dump_dir . "/kb3_seq" . $seq_id . ".fa";
 
-	my $header = write_fasta($file, $seq_id, $seq);
+	my $header = $self->write_fasta($file, $seq_id, $seq);
         push @$fasta_headers, $header;
 	push @$fasta_files, $file;
 	$idx++;
@@ -758,13 +758,10 @@ sub dump_fasta {
 #Write fasta file
 #
 sub write_fasta {
-    my ($file, $seq_id, $seq) = @_;
+    my ($self, $file, $seq_id, $seq) = @_;
 
     my $header = ">SeqID" . $seq_id;
-    open F, ">$file" || throw("Couldn't open $file");
-    print F "$header\n";
-    print F $seq . "\n";
-    close F;
+    $self->_spurt($file, "$header\n$seq\n");
 
     return $header;
 }

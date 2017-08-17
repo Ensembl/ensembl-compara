@@ -1083,9 +1083,6 @@ sub _dump_fasta {
         $self->_dump_2x_fasta($dfr, $file, $seq_id);
         next;
     }
-    open F, ">$file" || throw("Couldn't open $file");
-
-    print F ">SeqID" . $seq_id . "\n";
 
     print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, "|", $dfr->dnafrag->genome_db->name, "|", $dfr->dnafrag->genome_db_id, "|",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand," $seq_id***\n" if $self->debug;
@@ -1103,9 +1100,11 @@ sub _dump_fasta {
     }
     $seq =~ s/(.{80})/$1\n/g;
     chomp $seq;
-    print F $seq,"\n";
 
-    close F;
+    $self->_spurt($file, join("\n",
+            ">SeqID" . $seq_id,
+            $seq,
+        ));
 
     } );
 
@@ -1812,11 +1811,11 @@ sub _build_2x_composite_seq {
 sub _dump_2x_fasta {
     my ($self, $ga_frags, $file, $seq_id) = @_;
 
-    open F, ">$file" || throw("Couldn't open $file");
-    print F ">SeqID" . $seq_id . "\n";
     #stored concatenated mfa sequence on first frag
-    print F $ga_frags->[0]->{seq},"\n";
-    close F;
+    $self->_spurt($file, join("\n",
+            ">SeqID" . $seq_id,
+            $ga_frags->[0]->{seq},
+        ));
 
     push @{$self->param('fasta_files')}, $file;
     push @{$self->param('species_order')}, $ga_frags->[0]->{genome_db_id};

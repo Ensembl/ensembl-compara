@@ -311,12 +311,12 @@ sub get_script {
     $cafe_tree_string =~ s/:\d+$//; # remove last branch length
     my $script_file = "${tmp_dir}/cafe_${mlss_id}_lambda.sh";
 
-    open my $sf, ">", $script_file or die "$!: $script_file\n";
-    print $sf '#!' . $cafe_shell . "\n\n";
-    print $sf "tree $cafe_tree_string\n\n";
-    print $sf "load -i $table_file -t 1\n\n";
-    print $sf "lambda -s\n";
-    close ($sf);
+    $self->_spurt($script_file, join("\n",
+            "#!$cafe_shell\n",
+            "tree $cafe_tree_string\n",
+            "load -i $table_file -t 1\n",
+            'lambda -s',
+        ));
 
     return $script_file;
 }
