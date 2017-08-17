@@ -55,7 +55,7 @@ sub gene {
   if (@_) {
     $self->{'_gene'} = shift;
   } 
-  elsif (!$self->{'_gene'}) {
+  elsif (!$self->{'_gene'} || $hub->action eq 'Genome' ) {
     eval {
       my $db = $hub->param('db') || 'core';
       my $adaptor_call = $hub->param('gene_adaptor') || 'get_GeneAdaptor';
