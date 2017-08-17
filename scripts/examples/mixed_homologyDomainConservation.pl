@@ -176,9 +176,9 @@ foreach my $gene (@$genes) {
 
       $ranged_coverage->{$pfamid}{$range_id}{consensus_start} = $consensus_start;
       $ranged_coverage->{$pfamid}{$range_id}{consensus_end} = $consensus_end;
-      if ($consensus_end < $consensus_start) {
-        $DB::single=1;1;
-      }
+      #if ($consensus_end < $consensus_start) {
+        #$DB::single=1;1;
+      #}
       $global_domain_range->check_and_register( 'global', $consensus_start, $consensus_end, undef, undef, 1);
       $ranged_coverage->{$pfamid}{$range_id}{consensus_length} = $consensus_end - $consensus_start;
     }

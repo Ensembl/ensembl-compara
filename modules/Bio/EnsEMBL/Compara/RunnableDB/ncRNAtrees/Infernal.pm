@@ -225,7 +225,6 @@ sub update_single_peptide_tree {
   foreach my $member (@{$tree->get_all_leaves}) {
     next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
     next unless($member->sequence);
-    $DB::single=1;1;
     $member->cigar_line(length($member->sequence)."M");
     $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
     printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
@@ -262,7 +261,6 @@ sub run_infernal {
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $self->param('input_fasta');
 
-#  $DB::single=1;1;
   $self->run_command($cmd, { die_on_failure => 1 });
 
   # cmbuild --refine the alignment
@@ -536,7 +534,6 @@ sub _store_aln_tags {
 
     print STDERR "Storing Alignment tags...\n" if ($self->debug());
     my $sa = $tree->get_SimpleAlign;
-    $DB::single=1;1;
 
     # Alignment percent identity.
     my $aln_pi = $sa->average_percentage_identity;

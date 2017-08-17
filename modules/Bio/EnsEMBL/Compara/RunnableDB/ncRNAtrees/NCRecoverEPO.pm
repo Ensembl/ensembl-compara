@@ -413,7 +413,6 @@ sub run_low_coverage_best_in_alignment {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
-      # $DB::single=1;1;
       push @{ $self->param('low_cov_leaves_to_delete') }, $leaf;
       print STDERR $leaf->stable_id, " has no alignments -> will be removed\n" if $self->debug;
       next;
@@ -424,7 +423,6 @@ sub run_low_coverage_best_in_alignment {
         die unless $max_gabID;
       if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
-        # $DB::single=1;1;
         push @{ $self->param('low_cov_leaves_to_delete') }, $leaf;
         print STDERR $leaf->stable_id, " is not in GAB $max_gabID -> will be removed\n" if $self->debug;
         $deleted = 1;

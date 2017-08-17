@@ -363,7 +363,6 @@ sub store_ktreedist_score {
             my $symm_difference = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{symm_difference};
             my $n_partitions    = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{n_partitions};
             my $k_score_rank    = $count++;
-            $DB::single=1;1;
             $sth->execute($root_id,
                           $tag,
                           $k_score,
