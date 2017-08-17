@@ -133,10 +133,12 @@ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ances
 =cut
 
 
-use Bio::EnsEMBL::Registry;
-use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
+use Getopt::Long;
+
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::IO qw/:spurt/;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 no warnings 'uninitialized';
 
@@ -436,8 +438,7 @@ sub print_header {
   my $database = $compara_dbc->dbname . '@' . $compara_dbc->host . ':' . $compara_dbc->port;
   my $mlss_name = $mlss->name . " (" . $mlss->dbID . ")";
 
-  open(README, ">$dir/README") or die "Cannot open README file\n";
-  print README qq"This directory contains the ancestral sequences for $species_name ($species_assembly).
+  spurt("$dir/README", qq"This directory contains the ancestral sequences for $species_name ($species_assembly).
 
 The data have been extracted from the following alignment set:
 # Database: $database
@@ -462,6 +463,5 @@ N    : failure, the ancestral state is not supported by any other sequence
 
 You should find a summary.txt file, which contains statistics about the quality
 of the calls.
-";
-  close(README);
+");
 }

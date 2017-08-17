@@ -47,11 +47,13 @@ Internal methods are usually preceded with an underscore (_)
 
 use strict;
 use warnings;
+
 use Data::Dumper;
-#use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Getopt::Long;
 
 use Bio::EnsEMBL::Registry;
-use Getopt::Long;
+use Bio::EnsEMBL::Utils::IO qw/:spurt/;
+#use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $reg = "Bio::EnsEMBL::Registry";
 
@@ -181,9 +183,7 @@ sub thumbnail {
     my ($aln_file, $out_aln_file) = @_;
     my $meta_file_thumbnail = $aln_file . "-thumbnail.meta";
     my $svg_thumbnail_pic = "${out_aln_file}.thumbnail.svg";
-    open my $meta_thumbnail_fh, ">", $meta_file_thumbnail or die $!;
-    print $meta_thumbnail_fh "$out_aln_file\tskeleton-with-pairbonds\n";
-    close($meta_thumbnail_fh);
+    spurt($meta_file_thumbnail, "$out_aln_file\tskeleton-with-pairbonds\n");
     run_r2r_and_check("", $meta_file_thumbnail, $svg_thumbnail_pic, "");
     return;
 }
@@ -193,10 +193,7 @@ sub member_pic {
     my ($stable_id, $aln_file, $out_aln_file) = @_;
 
     my $meta_file = $aln_file . ".meta";
-    open my $meta_fh, ">", $meta_file or die $!;
-    print $meta_fh "$out_aln_file\n";
-    print $meta_fh "$aln_file\toneseq\t$stable_id\n";
-    close ($meta_fh);
+    spurt($meta_file, "$out_aln_file\n$aln_file\toneseq\t$stable_id\n");
     my $svg_pic_filename = "${out_aln_file}-${stable_id}.svg";
     run_r2r_and_check("", $meta_file, $svg_pic_filename, "");
     return;

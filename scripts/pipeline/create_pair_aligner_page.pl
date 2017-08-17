@@ -82,13 +82,16 @@ Directory to write image files. Default current working directory
 
 use warnings;
 use strict;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+
 use Getopt::Long;
 use DBI;
 use HTML::Template;
 use Number::Format qw(:subs :vars);
 use File::Basename;
+
+use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::IO qw/:spurt/;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $usage = qq{
 perl update_config_database.pl
@@ -511,15 +514,15 @@ sub create_pie_chart {
 
     my $perc = int(($num/$length*100)+0.5);
 
-    open FILE, ">$fileR" || die "Unable to open $fileR for writing";
-    print FILE "png(filename=\"$filePNG\", height=200, width =200, units=\"px\")\n";
-    print FILE "par(\"mai\"=c(0,0,0,0.3))\n";
-    print FILE "align<- c($perc, " . (100-$perc) . ")\n";
-    print FILE "labels <- c(\"$perc%\",\"\")\n";
-    print FILE "colours <- c(\"grey\", \"white\")\n";
-    print FILE "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)\n";
-    print FILE "dev.off()\n";
-    close $fileR;
+    spurt($fileR, join("\n",
+            "png(filename=\"$filePNG\", height=200, width =200, units=\"px\")",
+            "par(\"mai\"=c(0,0,0,0.3))",
+            "align<- c($perc, " . (100-$perc) . ")",
+            "labels <- c(\"$perc%\",\"\")",
+            "colours <- c(\"grey\", \"white\")",
+            "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)",
+            "dev.off()",
+        ));
 
     my $R_cmd = "$R_prog CMD BATCH $fileR";
     unless (system($R_cmd) ==0) {
@@ -539,15 +542,15 @@ sub create_coding_exon_pie_chart {
     my $ref_insertions_perc = int(($ref_insertions/$coding_exon_length*100)+0.5);
     my $uncovered_perc = int(($uncovered/$coding_exon_length*100)+0.5);
 
-    open FILE, ">$fileR" || die "Unable to open $fileR for writing";
-    print FILE "png(filename=\"$filePNG\", height=200, width =200, units=\"px\")\n";
-    print FILE "par(\"mai\"=c(0,0,0,0.3))\n";
-    print FILE "align<- c($matches_perc, $mis_matches_perc, $ref_insertions_perc, $uncovered_perc)\n";
-    print FILE "labels <- c(\"$matches_perc%\",\"$mis_matches_perc%\",\"$ref_insertions_perc%\",\"$uncovered_perc%\")\n";
-    print FILE "colours <- c(\"red\", \"blue\", \"green\", \"white\")\n";
-    print FILE "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)\n";
-    print FILE "dev.off()\n";
-    close $fileR;
+    spurt($fileR, join("\n",
+            "png(filename=\"$filePNG\", height=200, width =200, units=\"px\")",
+            "par(\"mai\"=c(0,0,0,0.3))",
+            "align<- c($matches_perc, $mis_matches_perc, $ref_insertions_perc, $uncovered_perc)",
+            "labels <- c(\"$matches_perc%\",\"$mis_matches_perc%\",\"$ref_insertions_perc%\",\"$uncovered_perc%\")",
+            "colours <- c(\"red\", \"blue\", \"green\", \"white\")",
+            "pie(align, labels=labels, clockwise=T, radius=0.9, col=colours)",
+            "dev.off()",
+        ));
 
     my $R_cmd = "$R_prog CMD BATCH $fileR";
     unless (system($R_cmd) ==0) {
