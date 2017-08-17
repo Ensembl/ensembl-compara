@@ -230,6 +230,12 @@ sub run_msa {
         $self->input_job->autoflow(0);
         $self->complete_early(sprintf("The command is taking more than %d seconds to complete.\n", $self->param('cmd_max_runtime')));
     } elsif ($cmd_out->exit_code) {
+        # I know ... The following should be in the sub-class MCoffee
+        if ($cmd_out->err =~ /The Program .* Needed by T-COFFEE Could not be found/) {
+            # If the path cannot be found, retrying the job won't help (and
+            # we won't risk the escape route being triggered)
+            $self->input_job->transient_error(0);
+        }
         $self->throw(sprintf("Failed to execute the MSA program [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
     }
 }
