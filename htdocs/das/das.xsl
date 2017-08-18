@@ -47,8 +47,7 @@ h3.boxed { margin: 0 0 0.5em 0; padding: 0.5em; background-color: #8fa0c4 }
 
   <div id="wide-footer">
     <div class="twocol-left left unpadded">Ensembl
-      &#169; <a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> /
-      <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>
+      &#169; <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EBI</a>
       </div>
     <div class="twocol-right right unpadded">
       <a href="http://www.ensembl.org/info/about/intro.html">About Ensembl</a> | 
