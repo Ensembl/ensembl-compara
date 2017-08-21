@@ -13,7 +13,7 @@ WriteMakefile(
     PREREQ_PM         => {}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/HALXS.pm', # retrieve abstract from module
-       AUTHOR         => 'Carla Cummins <carlac@ebi.ac.uk>') : ()),
+       AUTHOR         => 'Ensembl Compara') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
 
     INC => "-I$cactus/submodules/hdf5/include -I$cactus/submodules/hal/chain/inc/ -I$cactus/submodules/hal/maf/inc/ -I$cactus/submodules/sonLib/lib",
