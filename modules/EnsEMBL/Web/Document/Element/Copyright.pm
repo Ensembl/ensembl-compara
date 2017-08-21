@@ -40,9 +40,8 @@ sub content {
   
   return qq{
     <div class="column-two left">
-      <p>&copy; $year <span class="print_hide"><a href="http://www.sanger.ac.uk/" class="nowrap">WTSI</a> / 
-        <a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EMBL-EBI</a></span>
-        <span class="screen_hide_inline">WTSI / EMBL-EBI</span>.
+      <p>&copy; $year <span class="print_hide"><a href="http://www.ebi.ac.uk/" style="white-space:nowrap">EMBL-EBI</a></span>
+        <span class="screen_hide_inline">EMBL-EBI</span>.
         (<a href="http://www.ensembl.org/info/about/legal/privacy.html">Privacy policy</a>)
       </p>
     </div>
