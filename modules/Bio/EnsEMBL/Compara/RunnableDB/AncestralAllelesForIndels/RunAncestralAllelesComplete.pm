@@ -106,18 +106,12 @@ sub run_ortheus {
 
     my $ortheus_cmd = "$ortheus_exe -b '$tree_string' -a $fasta_str -u $tree_state_file -s 0 -j 0 -d $out_align -n $nuc_freq -x $out_score";
 
-    my @output = `$ortheus_cmd 2>&1`;
-
     #Capture error messages
-    #print "output=$output[0]\n";
-    if (0 == $?) {
+    my $cmd = $self->run_command($ortheus_cmd);
+    if (!$cmd->exit_code) {
         #print "OK\n";
     } else {
-        open ERR, "/tmp/kb3_ortheus_error_file" || die "Unable to open /tmp/kb3_ortheus_error_file";
-        while (<ERR>) {
-            print "ERR $_";
-        }
-        close ERR;
+        print "ERR: ", $cmd->err, "\n";
         print "Failed $!\n";
         $self->warning("ortheus execution failed at position $curr_pos\n$ortheus_cmd\n");
         return;
