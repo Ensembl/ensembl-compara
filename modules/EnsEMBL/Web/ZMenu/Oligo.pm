@@ -37,7 +37,7 @@ sub content {
   my $features     = [];
 
   # details of each probe within the probe set on the array that are found within the slice
-  my ($r_name, $r_start, $r_end) = $hub->param('r') =~ /(\w+):(\d+)-(\d+)/;
+  my ($r_name, $r_start, $r_end) = $hub->param('r') =~ /^([^:]+):(\d+)-(\d+)$/;
   my %probes;
   
   if ($hub->param('ptype') ne 'probe') {
@@ -83,7 +83,7 @@ sub content {
     $probes{$of_name}{'chr'}   = $of_sr_name;
     $probes{$of_name}{'start'} = $of_start;
     $probes{$of_name}{'end'}   = $of_end;
-    $probes{$of_name}{'loc'}   = $of_start . 'bp-' . $of_end . 'bp';
+    $probes{$of_name}{'loc'}   = $self->thousandify($of_start) . 'bp-' . $self->thousandify($of_end) . 'bp';
   }
   
   foreach my $probe (sort {
