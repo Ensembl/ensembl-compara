@@ -222,6 +222,8 @@ sub element_features {
   #  --dps
   my $mlss_ids = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'MLSS_IDS'};
   my $mlss_conf = $mlss_ids->{$id};
+  return [] unless keys %{$mlss_conf||{}};
+
   my $ss = eval {$db->get_adaptor('SpeciesSet')->_uncached_fetch_by_dbID($mlss_conf->{'SPECIES_SET'})};
   return [] if $@;
   my $ml = $db->get_adaptor('Method')->_uncached_fetch_by_dbID($mlss_conf->{'METHOD_LINK'});
