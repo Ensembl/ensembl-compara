@@ -110,7 +110,7 @@ sub _run_HMM_search {
     }
 
     #Parsing outputs
-    open my $hmm_fh, "$worker_temp_directory/treefam_hmm_search.out" || die "Could not open file: $worker_temp_directory/treefam_hmm_search.out";
+    open my $hmm_fh, '<', "$worker_temp_directory/treefam_hmm_search.out" || die "Could not open file: $worker_temp_directory/treefam_hmm_search.out";
     while (<$hmm_fh>) {
 
         #get rid of the header lines

@@ -54,9 +54,9 @@ if ($help || !$atac_in || !$reg_conf ||
   die usage();
 }
 
-open ATAC, $atac_in or die "couldn't open ATAC file $atac_in $!\n";
+open ATAC, '<', $atac_in or die "couldn't open ATAC file $atac_in $!\n";
 if ($logfile) {
-  open LOGFILE, ">$logfile" or die "couldn't open logfile $logfile $!\n";
+  open LOGFILE, '>', $logfile or die "couldn't open logfile $logfile $!\n";
   select((select(LOGFILE), $| = 1)[0]); #make LOGFILE unbuffered (a.k.a. "hot").
   #See http://perl.plover.com/FAQs/Buffering.html
 }

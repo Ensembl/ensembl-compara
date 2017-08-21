@@ -62,7 +62,7 @@ sub fetch_input {
   my $step = $self->param('step');
 
   #Open Ucsc chain file
-  open(FILE, $self->param('chain_file')) or die ("Unable to open " . $self->param('chain_file'));
+  open(FILE, '<', $self->param('chain_file')) or die ("Unable to open " . $self->param('chain_file'));
 
   my $seek_positions;
   my $prev_pos = 0;

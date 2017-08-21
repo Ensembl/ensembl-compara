@@ -235,7 +235,7 @@ sub _writeMultiFastaAlignment {
 
     #write out the alignment file
     $self->param('mfa_file', $self->worker_temp_directory . "/" . $ALIGN_FILE);
-    open (ALIGN, ">" . $self->param('mfa_file') ) or throw "error writing alignment (" . $self->param('mfa_file') . ") file\n";    
+    open (ALIGN, '>', $self->param('mfa_file') ) or throw "error writing alignment (" . $self->param('mfa_file') . ") file\n";
 
     
     #create mfa file of multiple alignment from genomic align block
@@ -401,7 +401,7 @@ sub _parse_cons_file {
 	throw("could not get a constrained_element_adaptor\n");
     }
 
-    open CONS, $cons_file || throw("Could not open $cons_file");
+    open CONS, '<', $cons_file || throw("Could not open $cons_file");
     my @constrained_elements;
     while (<CONS>) {
 	unless (/^#/) {
@@ -481,7 +481,7 @@ sub _parse_rates_file {
     my $max_called_dist = 1000;
 
     #read in rates file
-    open (RATES,$rates_file) or throw "Could not open rates ($rates_file) file\n";
+    open (RATES, '<', $rates_file) or throw "Could not open rates ($rates_file) file\n";
 
     while (<RATES>) {
 	if (/^#/) {

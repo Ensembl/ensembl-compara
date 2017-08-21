@@ -128,7 +128,7 @@ my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, '
 # }
 
 ## Open and read MAP file
-if (!open(MAVID_MAP, $mavid_dir."/map")) {
+if (!open(MAVID_MAP, '<', $mavid_dir."/map")) {
   print "ERROR: Cannot open <$mavid_dir/map> file!\n", $usage;
   exit(1);
 }

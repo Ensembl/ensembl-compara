@@ -68,9 +68,9 @@ $data=$outfile.".data";
 		my ($chr1, $seq_type1, $chr1_2, $offset1, $chr2,$seq_type2, $offset2);
 
 
-	open (FILE, $file) or die  "can't open $file: $!";
+	open (FILE, '<', $file) or die  "can't open $file: $!";
 print STDERR "opening $file\n";
-	open (DATA, ">$data") or die "can't open $data: $!"; 
+	open (DATA, '>', $data) or die "can't open $data: $!";
 	
 #	print OUT "track name=$track description=\"BLASTz of $sps1 with $sps2(GFF)\" useScore=1 color=333300\n";
 	my $c=0;

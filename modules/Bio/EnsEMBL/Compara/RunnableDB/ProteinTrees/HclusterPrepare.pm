@@ -164,7 +164,7 @@ sub fetch_distances {
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
   my $filename = $self->param('cluster_dir') . "/$table_name.hcluster.txt";
-  open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
+  open(FILE, '>', $filename) or die "Could not open '$filename' for writing : $!";
   my ($query_id, $hit_id, $score);
   $sth->bind_columns(\$query_id, \$hit_id, \$score);
   while ($sth->fetch) {
@@ -194,7 +194,7 @@ sub fetch_categories {
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
   my $filename = $self->param('cluster_dir') . "/$table_name.hcluster.cat";
-  open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
+  open(FILE, '>', $filename) or die "Could not open '$filename' for writing : $!";
   my $seq_member_id;
   $sth->bind_columns(\$seq_member_id);
   while ($sth->fetch) {

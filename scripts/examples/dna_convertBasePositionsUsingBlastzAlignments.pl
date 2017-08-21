@@ -51,7 +51,7 @@ my $method_link_species_set =
 
 die "need a file with human SNP positions \"chr:pos\" eg 6:136365469\n" unless ( scalar(@ARGV) and (-r $ARGV[0]) );
 
-open(IN, $ARGV[0]) or die;
+open(IN, '<', $ARGV[0]) or die;
 
 while(<IN>) {
 	chomp;

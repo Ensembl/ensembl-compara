@@ -305,7 +305,7 @@ if ($help) {
 }
 
 if ($output_file) {
-  open(STDOUT, ">$output_file") or die("Cannot open $output_file");
+  open(STDOUT, '>', $output_file) or die("Cannot open $output_file");
 }
 
 # Configure the Bio::EnsEMBL::Registry

@@ -575,7 +575,7 @@ if ($chunk_num and $split_size) {
 if (!$use_several_files) {
   ## Open file now and create the header if needed
   if ($output_file) {
-    open(STDOUT, ">$output_file") or die("Cannot open $output_file");
+    open(STDOUT, '>', $output_file) or die("Cannot open $output_file");
   }
   print_header($output_format, $method_link_species_set, $date, $release, 0);
 }
@@ -613,7 +613,7 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
 while(1) {
   my $genomic_align_blocks = [];
   if ($file_of_genomic_align_block_ids) {
-    open(FILE, $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
+    open(FILE, '<', $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
     while (<FILE>) {
 	chomp;
 	my $gab;
@@ -678,7 +678,7 @@ while(1) {
       } else {
         $this_output_file .= ".$num";
       }
-      open(STDOUT, ">$this_output_file") or die("Cannot open $this_output_file");
+      open(STDOUT, '>', $this_output_file) or die("Cannot open $this_output_file");
       print_header($output_format, $method_link_species_set, $date, $release, $num);
     }
 

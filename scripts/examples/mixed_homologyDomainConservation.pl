@@ -235,7 +235,7 @@ $tree->add_tag('pfam_domain_range_vector_string',$range_vector);
     warn ("error return value for program, $!\n");
   }
   print STDERR "Finished.\n";
-  open RES,"result.txt" or die $!;
+  open RES, '<', "result.txt" or die $!;
   my $pos = 1;
   my $scores;
   while (<RES>) {

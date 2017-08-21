@@ -71,7 +71,7 @@ die "Error in command line arguments [compara_url = mysql://user\@server/db] [sp
 #Prepare the list with the species names.
 #-----------------------------------------------------------------------------------------------------
 my @list_of_species;
-open my $fh_species_list, $species_set_file || die "Could not open file $species_set_file";
+open my $fh_species_list, '<', $species_set_file || die "Could not open file $species_set_file";
 while (<$fh_species_list>) {
     chomp($_);
     push( @list_of_species, $_ );

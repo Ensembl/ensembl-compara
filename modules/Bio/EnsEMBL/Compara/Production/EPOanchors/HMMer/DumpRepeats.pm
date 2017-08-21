@@ -41,7 +41,7 @@ sub write_output {
 	my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
 	my $dump_file = $dump_dir . '/' . $assembly . ".repeats";
 	return if (-e $dump_file && ! -z $dump_file);
-	open(IN, ">$dump_file") or die $!;
+	open(IN, '>', $dump_file) or die $!;
 	my $rfa = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "RepeatFeature");	
 	my $compara_dba = $self->compara_dba();
 	my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");

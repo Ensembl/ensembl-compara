@@ -193,17 +193,17 @@ sub run_cmd {
     $output->{'align_all_N'} = 0;
 
     if ($verbose) {
-        open OUT, ">$outfile" or die "Unable to open $outfile for writing";
+        open OUT, '>', $outfile or die "Unable to open $outfile for writing";
     }
     if ($show_time) {
-        open TIME, ">$time_file" or die "Unable to open $time_file for writing";
+        open TIME, '>', $time_file or die "Unable to open $time_file for writing";
     }
 
     #get 1bp variants from ancestor file (as opposed to 1bp insertions/deletions)
     my $ancestor_file = $ancestor_dir . $ref_species . "_ancestor_" . $seq_region . ".fa";
     my $original_anc_alleles = parse_ancestor_file($ancestor_file, $seq_region_start, $seq_region_end);
 
-    open VEP, ">$vepfile" or die "Unable to open $vepfile for writing";
+    open VEP, '>', $vepfile or die "Unable to open $vepfile for writing";
     my $concat_line;
 
     my $left = $flank;
@@ -777,7 +777,7 @@ sub parse_results {
     my $score_file = $dump_dir . "/output.$$.score";
 
     my $score;
-    open (SCORE, $score_file);
+    open (SCORE, '<', $score_file);
     $score = (<SCORE>);
     close SCORE;
 
@@ -789,7 +789,7 @@ sub parse_results {
     #if haven't provided ortheus with a tree_string, then read in the tree produced by ortheus
     if ($tree_file && -e $tree_file) {
 	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
-	open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
+	open(F, '<', $tree_file) || throw("Could not open tree file <$tree_file>");
 	my ($newick, $files) = <F>;
 	close(F);
 	$newick =~ s/[\r\n]+$//;
@@ -808,7 +808,7 @@ sub parse_results {
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
-    open(F, $alignment_file) || throw("Could not open $alignment_file");
+    open(F, '<', $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
 
@@ -1802,7 +1802,7 @@ sub print_summary {
 sub parse_ancestor_file {
     my ($file, $seq_region_start, $seq_region_end) = @_;
 
-    open FILE, $file or die "Unable to open $file";
+    open FILE, '<', $file or die "Unable to open $file";
     
     #Skip first line
     <FILE>;

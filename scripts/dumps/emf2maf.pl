@@ -48,8 +48,8 @@ foreach my $emf_file (@ARGV) {
   my $maf_file = $emf_file;
   $maf_file =~ s/(\.emf)?$//;
   $maf_file .= ".maf";
-  open(EMF, "$emf_file") or die "Cannot open EMF file <$emf_file>\n";
-  open(MAF, ">$maf_file") or die "Cannot open MAF file $maf_file\n";
+  open(EMF, '<', $emf_file) or die "Cannot open EMF file <$emf_file>\n";
+  open(MAF, '>', $maf_file) or die "Cannot open MAF file $maf_file\n";
   print MAF "##maf version=1\n";
   print MAF "# emf2maf.pl v$VERSION from file $emf_file\n";
   print MAF "# Here is the header from the orginal file:\n";

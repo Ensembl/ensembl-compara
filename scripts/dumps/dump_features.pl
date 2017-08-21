@@ -652,7 +652,7 @@ sub get_Slices_from_BED_file {
   my ($regions_file, $slice_adaptor) = @_;
   my $slices = [];
 
-  open(REGIONS, $regions_file) or die "Cannot open regions file <$regions_file>\n";
+  open(REGIONS, '<', $regions_file) or die "Cannot open regions file <$regions_file>\n";
   while (<REGIONS>) {
     next if (/^#/ or /^track/);
     chomp;

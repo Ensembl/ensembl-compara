@@ -287,7 +287,7 @@ sub read_bed_file {
   my ($file, $this_chr) = @_;
   my $features;
 
-  open(FILE, $file);
+  open(FILE, '<', $file);
   if ($this_chr) {
     while (<FILE>) {
       next if (/^#/ or /^track/);
@@ -341,7 +341,7 @@ sub get_chr_names {
   my ($file) = @_;
   my $names = {};
 
-  open(FILE, $file);
+  open(FILE, '<', $file);
   while (<FILE>) {
     next if (/^#/ or /^track/);
     my ($chr, $start, $end) = split(/\s/, $_);

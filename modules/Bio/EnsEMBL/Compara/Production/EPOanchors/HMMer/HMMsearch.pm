@@ -49,7 +49,7 @@ sub run {
 	$gab->get_all_GenomicAligns;
 	$self_dba->dbc->disconnect_if_idle;
 
-	open(IN, ">$stk_file") or throw("can not open stockholm file $stk_file for writing");
+	open(IN, '>', $stk_file) or throw("can not open stockholm file $stk_file for writing");
 	print IN "# STOCKHOLM 1.0\n";
 	foreach my $genomic_align( @{$gab->get_all_GenomicAligns} ){
 		my $aligned_seq = $genomic_align->aligned_sequence;

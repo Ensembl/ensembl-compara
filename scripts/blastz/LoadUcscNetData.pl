@@ -1465,7 +1465,7 @@ sub choose_matrix {
 
   if ($matrix_file) {
     my $matrix_string = "";
-    open M, $matrix_file ||
+    open M, '<', $matrix_file ||
       die "Can not open $matrix_file file\n";
     while (<M>) {
       next if (/^\s*$/);

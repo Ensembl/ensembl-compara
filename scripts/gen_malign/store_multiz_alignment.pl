@@ -280,11 +280,11 @@ foreach my $multiz_file (@multiz_files) {
 
   ## Open file, decompressing it on the fly if needed
   if ($multiz_file =~ /\.gz$/) {
-    open(MULTIZ, "gunzip -c $multiz_dir/$multiz_file |") || die;
+    open(MULTIZ, '-|', "gunzip -c $multiz_dir/$multiz_file") || die;
   } elsif ($multiz_file =~ /\.bz2$/) {
-    open(MULTIZ, "bzcat $multiz_dir/$multiz_file |");
+    open(MULTIZ, '-|', "bzcat $multiz_dir/$multiz_file");
   } else {
-    open(MULTIZ, "$multiz_dir/$multiz_file");
+    open(MULTIZ, '<', "$multiz_dir/$multiz_file");
   }
 
   my @all_these_genomic_aligns; # array of Bio::EnsEMBL::Compara::GenomicAlign objects to store as a single multiple alignment
@@ -584,7 +584,7 @@ sub get_this_dnafrag_mapper {
   my ($species, $name) = @_;
   my $dnafrag_mapper;
 
-  open(GOLD, "$multiz_dir/${species}_gold.txt") or return undef;
+  open(GOLD, '<', "$multiz_dir/${species}_gold.txt") or return undef;
   $dnafrag_mapper = new Bio::EnsEMBL::Mapper('frag', 'chromosome');
   while (<GOLD>) {
     next if (/^#/);

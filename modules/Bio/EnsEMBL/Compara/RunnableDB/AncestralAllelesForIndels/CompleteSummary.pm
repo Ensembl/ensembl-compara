@@ -53,7 +53,7 @@ sub run {
     my $outfile = $self->param('work_dir') . "/" . $self->param('seq_region') . "/" . $self->param('summary_file');
    print "Writing summary to $outfile\n";
 
-    open OUT, ">$outfile" or die "Unable to open $outfile for writing";
+    open OUT, '>', $outfile or die "Unable to open $outfile for writing";
 
     my $sql = "SELECT * FROM statistics";
 

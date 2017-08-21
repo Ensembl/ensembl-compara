@@ -71,7 +71,7 @@ my $tree_count = 0;
 
     use Data::Dumper;
 
-open my $fh, $input_file || die "Could not open file $input_file";
+open my $fh, '<', $input_file || die "Could not open file $input_file";
 while (<$fh>) {
     chomp($_);
     @{ $one2one{$tree_count} } = split( /\t/, $_ );

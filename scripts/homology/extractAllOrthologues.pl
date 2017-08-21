@@ -49,7 +49,7 @@ die "Error in command line arguments [compara_url = mysql://user\@server/db] [sp
 #Prepare the list with the species names.
 #-----------------------------------------------------------------------------------------------------
 my %species_list;
-open my $fh_species_list, $species_list_file || die "Could not open file $species_list_file";
+open my $fh_species_list, '<', $species_list_file || die "Could not open file $species_list_file";
 while (<$fh_species_list>) {
     chomp($_);
     $species_list{$_} = 1;

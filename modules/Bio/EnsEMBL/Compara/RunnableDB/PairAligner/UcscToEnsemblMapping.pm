@@ -87,7 +87,7 @@ sub fetch_input {
   }
   
   #Open UCSC chromInfo file
-  open UCSC, $self->param('chromInfo_file') or die ("Unable to open " . $self->param('chromInfo_file'));
+  open UCSC, '<', $self->param('chromInfo_file') or die ("Unable to open " . $self->param('chromInfo_file'));
   while (<UCSC>) {
       my ($ucsc_chr, $size, $file) = split " ";
       my $chr = $ucsc_chr;
@@ -121,7 +121,7 @@ sub fetch_input {
 sub read_ucsc_map {
     my ($ucsc_map, $ensembl_names, $ucsc_to_ensembl_mapping) = @_;
 
-    open MAP, $ucsc_map or die ("Unable to open " . $ucsc_map);
+    open MAP, '<', $ucsc_map or die ("Unable to open " . $ucsc_map);
 
     while (<MAP>) {
 	my ($contig, $size, $chrom, $chromStart, $chromEnd) = split " ";

@@ -235,7 +235,7 @@ sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   print STDERR "Number of common keys: $common_count\n" if ($self->debug);
 
   my $xtb_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.xtb';
-  open(OUT, ">$xtb_filename") or die "Could not open '$xtb_filename' for writing : $!";
+  open(OUT, '>', $xtb_filename) or die "Could not open '$xtb_filename' for writing : $!";
   foreach my $from_id (sort {$a <=> $b} keys %direct) {
     my $from_name = $from_clustername->{$from_id};
     my $subhash = $direct{$from_id};
@@ -288,7 +288,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   my $from2name;
   my $to2name;
 
-  open(LINKFILE, $link_filename) || die "Cannot open '$link_filename' file $@";
+  open(LINKFILE, '<', $link_filename) || die "Cannot open '$link_filename' file $@";
   while (my ($from_id, $from_name, $from_size, $to_id, $to_name, $to_size, $contrib) = split(/\s/,<LINKFILE>)) {
 
     next unless($contrib=~/^\d+$/); # skip the header line if present
@@ -321,7 +321,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   my $to_dbname     = $self->generate_dbname( $to_dba );
 
   my $map_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.map';
-  open(MAP, ">$map_filename") or die "Could not open '$map_filename' for writing : $!";
+  open(MAP, '>', $map_filename) or die "Could not open '$map_filename' for writing : $!";
 
  TOPAIR: foreach my $topair (sort { $b->[1] <=> $a->[1] } map { [$_,$to2size->{$_}] } keys %$to2size ) {
     my ($to_id, $to_size) = @$topair;
@@ -403,7 +403,7 @@ sub quantify_mapping {
 
   my %mapping_stats = ();
 
-  open(MAP, "$map_filename") or die "Could not open '$map_filename' for reading : $!";
+  open(MAP, '<', $map_filename) or die "Could not open '$map_filename' for reading : $!";
   my $tag_count = 0;
   while (<MAP>) {
     my ($cluster_id, $from_cluster_name, $to_cluster_name, $contribution) = split(" ",$_);

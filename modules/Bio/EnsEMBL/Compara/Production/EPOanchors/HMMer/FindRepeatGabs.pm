@@ -51,7 +51,7 @@ sub run {
 					'WHERE dnafrag_id = ? ORDER BY dnafrag_id, dnafrag_start');
 		$sth->execute($dnafrag_id);
 		my $gab_file = $comp_files . ".gabs.$dnafrag_id";
-		open(IN, ">$gab_file") or die $!;
+		open(IN, '>', $gab_file) or die $!;
 		foreach my $gab(@{ $sth->fetchall_arrayref }){
 			print join("\t", @$gab), "\n";
 			print IN join("\t", @$gab), "\n";

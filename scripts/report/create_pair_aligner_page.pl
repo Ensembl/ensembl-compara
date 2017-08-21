@@ -567,7 +567,7 @@ sub create_matrix_table {
     my ($file) = @_;
 
     my $matrix = "\n<table style=\"text-align: right;\" border=\"0\" cellpadding=\"0\" cellspacing=\"5\"> <tbody>\n";
-    open(FILE, $file) || die("Couldn't open " . $file);
+    open(FILE, '<', $file) || die("Couldn't open " . $file);
     while (<FILE>) {
 	$matrix .= "<tr>\n";
 	my @items = split " ";

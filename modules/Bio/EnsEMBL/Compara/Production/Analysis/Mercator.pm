@@ -62,7 +62,7 @@ sub run_mercator {
 
   my $map_file = $self->param('output_dir') . "/pre.map";
   my $genomes_file = $self->param('output_dir') . "/genomes";
-  open F, $genomes_file ||
+  open F, '<', $genomes_file ||
     throw("Can't open $genomes_file\n");
 
   my @species;
@@ -72,7 +72,7 @@ sub run_mercator {
   }
   close F;
 
-  open F, $map_file ||
+  open F, '<', $map_file ||
     throw("Can't open $map_file\n");
 
   my %hash;

@@ -794,7 +794,7 @@ sub _run_ortheus {
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {
 	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
-	open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
+	open(F, '<', $tree_file) || throw("Could not open tree file <$tree_file>");
 	my ($newick, $files) = <F>;
 	close(F);
 	$newick =~ s/[\r\n]+$//;

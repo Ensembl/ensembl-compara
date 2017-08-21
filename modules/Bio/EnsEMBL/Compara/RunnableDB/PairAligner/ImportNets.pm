@@ -213,7 +213,7 @@ sub fetch_input {
   # read the net file
   ##################################
   my $fh;
-  open $fh, $self->param('net_file') or $self->throw("Could not open net file '" . $self-param('net_file') . "' for reading\n");
+  open $fh, '<', $self->param('net_file') or throw("Could not open net file '" . $self-param('net_file') . "' for reading\n");
   my $res_chains = $self->parse_Net_file($fh);
   close($fh);
   
