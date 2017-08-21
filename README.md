@@ -28,12 +28,14 @@ dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
 
 ### HAL alignments and progressive-Cactus
 
-If working with HAL files, additional setup is required. There are two ways
+If working with HAL files, additional setup is required. There are several ways
 of installing the dependencies.
 
 #### Complete installation of progressive-Cactus
 
-First, install progressive-Cactus:
+Follow this procedure if you intend to run the cactus aligner. If Cactus is
+already installed on your system, you can directly jump to the section
+about setting up the API. Otherwise, do this:
 
 	git clone https://github.com/glennhickey/progressiveCactus.git
 	cd progressiveCactus
@@ -72,6 +74,20 @@ instead:
 
 If you have the `LINUXBREW_HOME` environment variable defined, you can skip
 `path/to/linuxbrew_home` on the Makefile command-line.
+
+### Separate installation of all dependencies
+
+For a light-weight setup, install the following three libraries:
+
+* [hdf5](https://support.hdfgroup.org/HDF5/)
+* [sonLib](https://github.com/benedictpaten/sonLib)
+* [hal](https://github.com/ComparativeGenomicsToolkit/hal)
+
+Then run this makefile
+
+	cd ensembl-compara/xs/HALXS
+	perl Makefile.PL path/to/hdf5 path/to/sonLib path/to/hal
+	make
 
 #### HAL files
 
