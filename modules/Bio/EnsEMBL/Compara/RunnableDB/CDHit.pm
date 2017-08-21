@@ -65,9 +65,8 @@ sub run {
         system("cat $fasta_dir/*.fasta > $fasta_db") == 0 or die "Error concatenating fasta files from $fasta_dir to $fasta_db";
         my $cdhit_mem = $self->param_required('cdhit_memory_in_mb');
         my $cdhit_num_threads = $self->param_required('cdhit_num_threads');
-        my $cmd = "$cdhit_exe -i $fasta_db -o $tmp_dir/blastdb -c $cdhit_threshold -M $cdhit_mem -T $cdhit_num_threads";
-        print " --- $cmd\n" if $self->debug;
-        system($cmd) == 0 or die "Error running command: $cmd";
+        my $cmd = [$cdhit_exe, -i => $fasta_db, -o => "$tmp_dir/blastdb", -c => $cdhit_threshold, -M => $cdhit_mem, -T => $cdhit_num_threads];
+        $self->run_command($cmd, { die_on_failure => 1 });
 
         my ($cluster_file, $cdhit_outfile) = ("$tmp_dir/blastdb.clstr", "$tmp_dir/cdhit.out");
         $self->param( 'cluster_file',  $cluster_file  );
