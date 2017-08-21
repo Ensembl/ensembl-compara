@@ -771,9 +771,12 @@ sub _parse {
     
     ## Rename the tree keys for easy data access via URLs
     ## (and backwards compatibility!)
-    $tree->{$url} = $tree->{$prodname};
+    if ($url ne $prodname) {
+      $tree->{$url} = $tree->{$prodname};
+      delete $tree->{$prodname};
+    }
     push @$datasets, $url;
-    delete $tree->{$prodname};
+    
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
