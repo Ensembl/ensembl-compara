@@ -17,12 +17,17 @@
 
 use strict;
 use warnings;
+
 use DBI;
 use Getopt::Long;
+
+use Bio::AlignIO;
+
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::AlignIO;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
@@ -281,13 +286,8 @@ sub fetch_protein_tree_with_gene {
 sub parse_newick {
   my $self = shift;
   
-  my $newick = '';
   warn "load from file ". $self->{'newick_file'}. "\n";
-  open (FH, $self->{'newick_file'}) or throw("Could not open newick file [$self->{'newick_file'}]");
-  while(<FH>) {
-    $newick .= $_;
-  }
-
+  my $newick = slurp( $self->{'newick_file'} );
   my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick);
   $tree->print_tree($self->{'scale'});
 
