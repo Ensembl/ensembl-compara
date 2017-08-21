@@ -102,7 +102,7 @@ push @sitemaps, "sitemap-common.xml";
 my @skip = split /,/, $skip_list;
 
 # create the sitemaps for each dataset
-foreach my $dataset (@ARGV ? @ARGV : @{$sd->multi_hash->{'ENSEMBL_DATASETS'}}) {
+foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
   next if grep { $_ eq $dataset } @skip;
   
   print "$dataset\n";
