@@ -17,7 +17,7 @@ WriteMakefile(
     PREREQ_PM         => {}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/HALXS.pm', # retrieve abstract from module
-       AUTHOR         => 'Carla Cummins <carlac@ebi.ac.uk>') : ()),
+       AUTHOR         => 'Ensembl Compara') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
 
     # Since we don't use the default hdf5, we need to give the full paths
