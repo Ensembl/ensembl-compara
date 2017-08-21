@@ -597,13 +597,16 @@ sub _add_trackhub_extras_options {
     $args{'options'}{'maxHeightPixels'} = $args{'menu'}{'maxHeightPixels'} || $args{'source'}{'maxHeightPixels'};
   }
 
-  # Alternative rendering order for genome segmentation and similar
+  # Alternative renderings for genome segmentation and similar
   if ($args{'source'}{'squish'}) {
     $args{'renderers'} = [
-      'off',     'Off',
-      'compact', 'Continuous',
-      'normal',  'Separate',
-      'labels',  'Separate with labels',
+      'off',          'Off',
+      'half_height',  'Half height',
+      'compact',      'Continuous',
+      'stack',        'Stacked',
+      'unlimited',    'Stacked unlimited',
+      'normal',       'Separate',
+      'labels',       'Separate with labels',
     ];
   }
 
