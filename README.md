@@ -55,7 +55,7 @@ well
 Now, we need to set up the Compara API:
 
 	cd ensembl-compara/xs/HALXS
-	perl Makefile.PL path/to/cactus
+	perl Makefile-progressiveCactus.PL path/to/cactus
 	make
 
 If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you

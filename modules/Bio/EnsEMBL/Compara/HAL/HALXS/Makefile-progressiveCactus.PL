@@ -16,9 +16,9 @@ WriteMakefile(
        AUTHOR         => 'Carla Cummins <carlac@ebi.ac.uk>') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
 
-    INC => "-I$cactus/submodules/hal/chain/inc/ -I$cactus/submodules/hal/maf/inc/",
+    INC => "-I$cactus/submodules/hdf5/include -I$cactus/submodules/hal/chain/inc/ -I$cactus/submodules/hal/maf/inc/ -I$cactus/submodules/sonLib/lib",
     LIBS => [ "-L$cactus/submodules/hdf5/lib -L$cactus/submodules/hal/lib -L$cactus/submodules/sonLib/lib -lstdc++ -lhdf5 -lhdf5_cpp" ],
-	MYEXTLIB => "$cactus/submodules/hal/lib/halChain.a $cactus/submodules/hal/lib/halLod.a $cactus/submodules/hal/lib/halLiftover.a $cactus/submodules/hal/lib/halLib.a $cactus/submodules/hal/lib/halMaf.a $cactus/submodules/sonLib/lib/sonLib.a",
+    MYEXTLIB => "$cactus/submodules/hal/lib/halChain.a $cactus/submodules/hal/lib/halLod.a $cactus/submodules/hal/lib/halLiftover.a $cactus/submodules/hal/lib/halLib.a $cactus/submodules/hal/lib/halMaf.a $cactus/submodules/sonLib/lib/sonLib.a",
     # Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
 );
