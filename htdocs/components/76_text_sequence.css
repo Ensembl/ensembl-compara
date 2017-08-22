@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-.adornment-key { background: #f9f9f9; margin: 0 0 24px; border: 1px solid [[PANEL_BORDER]]; display: inline-block; }
+.adornment-key { background: #f9f9f9; margin: 0 0 24px; border: 1px solid [[PALE_GREY]]; display: inline-block; }
 .adornment-key dl { display: inline-block; margin: 0; padding: 10px; }
 .adornment-key dl ul { max-width: 700px; margin: 0; display: inline-block; padding-left: 0; }
 .adornment-key dl li { list-style: none; display: inline-block; margin: 4px 0; line-height: 22px; }
 .adornment-key dl li span { display: inline-block; margin: 0 4px; padding: 0 4px; cursor: default; }
-.adornment-key dl li span span { display: inline; margin: 0; padding: 0; border-bottom: [[PAGE_TEXT]] dotted 1px; }
+.adornment-key dl li span span { display: inline; margin: 0; padding: 0; border-bottom: [[DARK_GREY]] dotted 1px; }
 .adornment-key dt { float: left; width: 100px; text-align: right; padding: 0; clear: both; line-height: 28px; }
 .adornment-key dd { width: 100%; margin: 0 0 0 110px; padding: 0; }
 .adornment-key .ad-loading { background: url("/i/loading-tiny.gif") no-repeat scroll 0 0 rgba(0, 0, 0, 0); display: inline-block; height: 20px; line-height: 20px; padding-left: 24px; text-align: center; }
 .adornment-key ul.alignment-key { margin: 1em; padding: 0 0 0 1em; }
 
 .adornment-key.collapsed                        { overflow: hidden; height: 35px; }
-.adornment-key div.toggler                      { background-color: [[PANEL_BORDER]]; height: 15px; position: absolute; bottom: 0; width: 100%; cursor: pointer; color: #f9f9f9; text-align: center; display: none; }
+.adornment-key div.toggler                      { background-color: [[PALE_GREY]]; height: 15px; position: absolute; bottom: 0; width: 100%; cursor: pointer; color: [[V_LIGHT_GREY]]; text-align: center; display: none; }
 .adornment-key div.toggler:hover                { background-color: #c5c5c5; }
 .adornment-key.fixed div.toggler                { display: block; }
 .adornment-key div.toggler span.open            { display: none; }

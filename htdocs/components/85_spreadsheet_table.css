@@ -19,13 +19,13 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; border-spacing: 0; }
+table.ss                { width: 100%; border: 1px [[PALE_GREY]] solid; margin: 0 0 16px; border-spacing: 0; }
 table.ss   th, 
-table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
+table.ss   tr.ss_header { background-color: [[PALE_GREY]]; line-height: 16px; }
 table.ss   th,
 table.ss   td           { padding: 4px; }
-table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
-table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
+table.ss   tr.bg1       { background-color: [[WHITE]];   }
+table.ss   tr.bg2       { background-color: [[V_LIGHT_GREY]]; } 
 table.tint tr.bg2,
 table.ss   tr.bg3       { background-color: [[TINT_BG]];    }
 table.ss   tr.highlight { background-color: [[HIGHLIGHT2]];   }
@@ -39,7 +39,7 @@ body.ienew table.fixed { table-layout: auto; }
 table.padded-cell td,
 table.padded-cell th   { padding: 8px; }
  
-table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; min-width: 421px; }
+table.data_table                     { border: 1px solid [[PALE_GREY]]; margin: 0; min-width: 421px; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 4px; }
 table.data_table th:first-child,
 table.data_table td:first-child.wrap { padding-left: 4px; }
@@ -50,7 +50,7 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_wrapper, .toggleTable_wrapper { margin: 0 0 16px; clear: both; }
 
 .dataTables_top,
-.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
+.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[PALE_GREY]]; background-color: [[TABLE_HEADER]]; color: [[WHITE]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
 .dataTables_info   { float: left; line-height: 20px; }
@@ -75,13 +75,13 @@ table.toggle_table th div            { padding: 0; }
 .list_paginate .paginate_button:hover,
 .dataTables_paginate .paginate_button:hover          { background-color: #BFD0FF; }
 .list_paginate .paginate_button_disabled,
-.dataTables_paginate .paginate_button_disabled       { color: [[NEUTRAL_BORDER]]; cursor: default; }
+.dataTables_paginate .paginate_button_disabled       { color: [[PALE_GREY]]; cursor: default; }
 .list_paginate .paginate_button_disabled:hover,
 .dataTables_paginate .paginate_button_disabled:hover { background-color: [[TINT_BG]] !important;   }
 
 
 .dataTables_length select,
-.dataTables_filter input    { border: 1px solid [[NEUTRAL_BORDER]]; }
+.dataTables_filter input    { border: 1px solid [[PALE_GREY]]; }
 .dataTables_filter input    { height: 16px; width: 140px; }
 .dataTables_filter .overlay { position: absolute; color: #999999; left: 2px; top: 2px; line-height: 16px; }
 
@@ -123,32 +123,32 @@ div.up_arrow   { width: 0; height: 0; border-left: 8px solid transparent; border
 div.down_arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top:    15px solid red;   }
 div.no_arrow   { width: 15px; height: 15px; background: grey; }
 
-td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[PANEL_BG]]; padding: 2px; }
-tr.bg2 td a.hover_show { background-color: [[NEUTRAL_BG]]; }
+td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[WHITE]]; padding: 2px; }
+tr.bg2 td a.hover_show { background-color: [[V_LIGHT_GREY]]; }
 td:hover a.hover_show  { display: inline; }
 
 tr.row-sub td { font-size: 85%; }
 tr.row-sub td:first-child { text-indent:24px; }
 
-.new_table { border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; }
+.new_table { border: 1px [[PALE_GREY]] solid; margin: 0 0 16px; }
 .new_table table    { table-layout: fixed;  width: 100%; border-spacing: 0; }
-.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
+.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[PALE_GREY]]; line-height: 16px; }
 .new_table tbody tr { background-color: #fff; }
-.new_table tbody tr:nth-child(odd) { background-color: #eee; }
-.new_table tbody tr:nth-child(even) { background-color: #fff; }
+.new_table tbody tr:nth-child(odd) { background-color: [[LIGHT_GREY]]; }
+.new_table tbody tr:nth-child(even) { background-color: [[WHITE]]; }
 .new_table .subtable { background: #f8f8f0;  }
 .new_table th,.new_table td { padding: 4px; word-wrap: break-word; }
 
 .newtable_controller { margin: 16px 0; }
 .new_table_wrapper { clear: both; margin: 0 0 16px; }
-.new_table_top     { background-color: #8b9bc1; border: 1px solid #ccc; color: #fff; height: 22px; padding: 7px 0 5px 10px; position: relative; }
+.new_table_top     { background-color: [[MAIN_MEDIUM]]; border: 1px solid #ccc; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
 .new_table_section { float: left; width: 33%; height: 100%; }
 .new_table_section_2 > * { float: right; }
 div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: center; }
 .new_table_section div { display: inline-block; }
 .new_table_pagesize select { border: 1px solid #ccc; }
-.new_table_thinking { background: white url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid #8b9bc1; border-radius: 5px; color: #8b9bc1; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
-.new_table .no_results { font-size: 128px; font-weight: bold; background-color: #ddd; text-align: center; color: #ccc; padding: 16px; display: none; }
+.new_table_thinking { background: white url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid [[MAIN_MEDIUM]]; border-radius: 5px; color: [[MAIN_MEDIUM]]; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
+.new_table .no_results { font-size: 128px; font-weight: bold; background-color: [[PALE_GREY]]; text-align: center; color: #ccc; padding: 16px; display: none; }
 
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
 .newtable_filter ul { display: inline-block; margin: 0; padding: 4px 2px; }
@@ -196,27 +196,27 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_toggle.open .newtable_toggle_short { display: none; }
 .newtable_toggle .newtable_toggle_long { display: none; }
 .newtable_toggle.open .newtable_toggle_long { display: block; }
-.new_table_loading { height: 64px; width: 100%; display: block; font-size: 32px; font-weight: bold; color: #aaa; vertical-align: middle; text-align: center; line-height: 61px; background: #ddd; }
+.new_table_loading { height: 64px; width: 100%; display: block; font-size: 32px; font-weight: bold; color: #aaa; vertical-align: middle; text-align: center; line-height: 61px; background: [[PALE_GREY]]; }
 .new_table_loading > div { display: inline-block; background: url(/i/table.gif) no-repeat 0 15px; padding: 0 0 0 42px; }
 .newtable_filter .m .head { border-bottom: 1px solid #ccc; overflow: auto; zoom: 1; margin: 4px; }
 .newtable_filter .m .title { float: left; }
-.newtable_filter .m .summary { float: right; margin: 0 4px; font-size: 80%; color: #777; }
-td.colour-swatch { border:2px solid #ffffff; }
-.newtable_ancient { background-color: #fee; margin: 8px 4px; border: 1px solid red; padding: 8px; display: none; }
+.newtable_filter .m .summary { float: right; margin: 0 4px; font-size: 80%; color: [[DARK_GREY]]; }
+td.colour-swatch { border:2px solid [[WHITE]]; }
+.newtable_ancient { background-color: [[SEVERE_LIGHT]]; margin: 8px 4px; border: 1px solid [[SEVERE_DARK]]; padding: 8px; display: none; }
 .newtable_filter .slider_main { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; }
 .newtable_filter .slider_left { text-align: left; height: 24px; line-height: 24px; }
 .newtable_filter .slider_right { text-align: right; height: 24px; line-height: 24px; }
 .newtable_pager { margin: 0; padding: 0; }
-.newtable_pager li { display: inline-block; padding: 2px 3px; color: black; }
-.newtable_pager a { color: white; }
+.newtable_pager li { display: inline-block; padding: 2px 3px; color: [[BLACK]]; }
+.newtable_pager a { color: [[WHITE]]; }
 body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5px 0; }
 .newtable_filtertype_class .baked { padding: 0; }
 .newtable_filter .newtable_filtertype_class .bakery { float: none; text-align: center; display: block; }
 .newtable_filtertype_class .bakery ul { padding-bottom: 0; }
 .newtable_filtertype_class .bakery li { width: auto; }
 .newtable_filtertype_class .bakery li.disabled { background: linear-gradient(to top,#ccc,#aaa) #ccc; }
-.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
-.newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
+.newtable_filtertype_class .bakery li { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]),[[MAIN_DARK]]; padding: 0; border: double [[WHITE]]; color: [[WHITE]]; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
+.newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_V_DARK]]),[[MAIN_DARK]]; }
 .newtable_filtertype_class .bakery li:before { visibility: hidden; }
 .newtable_filtertype_class .bakery .first { border-radius: 12px 0 0 12px; border-width: 3px 3px 3px 3px;  }
 .newtable_filtertype_class .bakery .last { border-radius: 0 12px 12px 0; }
@@ -224,15 +224,15 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_filtertype_class .body ul .coltab-text { margin-bottom: 1px; }
 .newtable_filtertype_class .bakefoot li { list-style-image: none; list-style: none; }
 .newtable_filtertype_class .body li .main { margin-right: 24px; }
-.newtable_filtertype_class .body li .more { float: right; color: #999; padding-right: 4px; }
-.newtable_filter .tail { border-top: 1px solid #ccc; margin: 8px 8px 0 8px; text-align: center; }
+.newtable_filtertype_class .body li .more { float: right; color: [[MEDIUM_GREY]]; padding-right: 4px; }
+.newtable_filter .tail { border-top: 1px solid [[PALE_GREY]]; margin: 8px 8px 0 8px; text-align: center; }
 .newtable_filter .tail ul { margin: 0; padding: 0; }
-.newtable_filter .tail li { list-style: none; display: inline-block; margin: 4px; background: linear-gradient(to top,#667aa6,#899ac6),#667aa6; border: 3px double white; padding: 6px; color: white; }
-.newtable_filter .tail li.cancel { background: none; color: #667aa6; font-size: 75%; }
-.newtable_filter .tail li.apply { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; }
-.newtable_filter .tail li.apply.unchanged { background: #bbb; }
-.newtable_filter .tail li.apply.unchanged:active { background: #bbb; }
-.newtable_filter .tail li.apply:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
+.newtable_filter .tail li { list-style: none; display: inline-block; margin: 4px; background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]),[[MAIN_DARK]]; border: 3px double [[WHITE]]; padding: 6px; color: [[WHITE]]; }
+.newtable_filter .tail li.cancel { background: none; color: [[MAIN_DARK]]; font-size: 75%; }
+.newtable_filter .tail li.apply { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]),[[MAIN_DARK]]; }
+.newtable_filter .tail li.apply.unchanged { background: [[PALE_GREY]]; }
+.newtable_filter .tail li.apply.unchanged:active { background: [[PALE_GREY]]; }
+.newtable_filter .tail li.apply:active { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_V_DARK]]),[[MAIN_DARK]]; }
 .newtable_filter .tail li.cancel:hover { text-decoration: underline; }
 .newtable_filter .none_present { display: block; margin: 16px; }
 .newtable_filter .m .summary .more { background: url(/i/table-small.gif) no-repeat 0 50%; display: inline-block; padding-left: 16px; margin-right: 8px; white-space: nowrap; }
