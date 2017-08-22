@@ -480,7 +480,6 @@ return
                 -flow_into  => {
                     '2->A' => [ 'multiplealigner_stats' ],
                     'A->1' => [ 'block_size_distribution' ],
-                    '3'    => [ 'email_stats_report' ],
                                },
             },
 
@@ -506,6 +505,7 @@ return
                 'mlss_id'   => $self->o('epo_mlss_id'),
                 'compara_db' => $self->pipeline_url,
             },
+            -flow_into  => [ 'email_stats_report' ],
         },
 
         {   -logic_name => 'email_stats_report',
