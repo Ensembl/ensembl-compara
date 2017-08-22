@@ -31,7 +31,7 @@ Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id> --ce_mlss_id <constrained_element_mlss_id> --cs_mlss_id <conservation_score_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -71,10 +71,6 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 	#pecan mlss_id
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #constrained element mlss_id
-#       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	#conservation score mlss_id
-#       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'species_set'           => '24amniotes',
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
@@ -177,16 +173,30 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
+# ---------------------------------------------[find out the other mlss_ids involved ]---------------------------------------------------
+#
+            {   -logic_name => 'find_gerp_mlss_ids',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -parameters => {
+                    'db_conn'       => $self->o('master_db'),
+                    'mlss_id'       => $self->o('low_epo_mlss_id'),
+                    'ce_ml_type'    => 'GERP_CONSTRAINED_ELEMENT',
+                    'cs_ml_type'    => 'GERP_CONSERVATION_SCORE',
+                    'inputquery'    => 'SELECT mlss_ce.method_link_species_set_id AS ce_mlss_id, mlss_cs.method_link_species_set_id AS cs_mlss_id FROM method_link_species_set mlss JOIN (method_link_species_set mlss_ce JOIN method_link ml_ce USING (method_link_id)) USING (species_set_id) JOIN (method_link_species_set mlss_cs JOIN method_link ml_cs USING (method_link_id)) USING (species_set_id) WHERE mlss.method_link_species_set_id = #mlss_id# AND ml_ce.type = "#ce_ml_type#" AND ml_cs.type = "#cs_ml_type#"',
+                },
+                -input_ids => [{}],
+                -flow_into => {
+                    2 => 'populate_new_database',
+                },
+	    },
+
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
 	    {  -logic_name => 'populate_new_database',
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
-				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
-				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
 				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
 				 },
-               -input_ids => [{}],
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
@@ -197,8 +207,8 @@ sub pipeline_analyses {
             { -logic_name => 'set_mlss_tag',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
               -parameters => {
-                  'sql' => [ 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('mlss_id') . ')',
-                             'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('ce_mlss_id') . ', "msa_mlss_id", ' . $self->o('mlss_id') . ')',
+                  'sql' => [ 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", ' . $self->o('mlss_id') . ')',
+                             'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", ' . $self->o('mlss_id') . ')',
                            ],
                              },
               -flow_into => {
@@ -657,7 +667,7 @@ sub pipeline_analyses {
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
              -parameters    => {
                                 'test' => 'conservation_scores',
-                                'method_link_species_set_id' => $self->o('cs_mlss_id'),
+                                'method_link_species_set_id' => '#cs_mlss_id#',
              },
 	    -rc_name => '100Mb',
 	},

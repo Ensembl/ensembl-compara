@@ -31,7 +31,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Sanger::MercatorPecan_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Sanger::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id> --ce_mlss_id <constrained_element_mlss_id> --cs_mlss_id <conservation_score_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Sanger::MercatorPecan_conf -password <your_password> -mlss_id <your_current_Pecan_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -71,10 +71,6 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 	#pecan mlss_id
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #constrained element mlss_id
-#       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	#conservation score mlss_id
-#       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	'pipeline_name'         => 'pecan_23way',
         'work_dir'              => '/lustre/scratch110/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
