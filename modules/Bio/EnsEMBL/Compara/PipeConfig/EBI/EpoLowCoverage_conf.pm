@@ -74,14 +74,7 @@ sub default_options {
 	#Location of compara db containing the high coverage alignments
 	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_90b',
 
-	'master_db' => { 
-        -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        -port   => 4485,
-        -user   => 'ensro',
-        -pass   => '',
-        -dbname => 'ensembl_compara_master',
-	    -driver => 'mysql',
-    },
+	'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
 	'staging_loc1' => {
         -host   => 'mysql-ens-sta-1',

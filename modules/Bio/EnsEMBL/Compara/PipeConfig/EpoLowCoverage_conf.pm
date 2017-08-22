@@ -115,7 +115,7 @@ sub pipeline_analyses {
 				  'mlss_id'        => $self->o('low_epo_mlss_id'),
 				  'ce_mlss_id'     => $self->o('ce_mlss_id'),
 				  'cs_mlss_id'     => $self->o('cs_mlss_id'),
-				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
+				  'cmd'            => "#program# --master '" . $self->o('master_db') . "' --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
 				 },
                -input_ids => [{}],
 	       -flow_into => {
