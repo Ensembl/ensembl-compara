@@ -184,7 +184,7 @@ sub get_structure {
   my ($bound_start, $start, @mf_loci) = @$loci;
   my $has_flanking = 0;;
   my $flank_different = 0;
-  if ($type eq 'promoter') {
+  if ($type eq 'promoter' && $activity eq 'active') {
     $appearance->{'colour'} = $self->my_colour('promoter_flanking');
     $flank_different = 1;
   }
