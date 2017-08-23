@@ -98,11 +98,11 @@ h4              { font-size: 1em;   }
 h1.light,
 h2.light,
 h3.light,
-h4.light        { color: #808080; }
+h4.light        { color: [[MEDIUM_GREY]]; }
 body.mac h1,
 body.mac h2     { padding-top: 4px; }
 
-.invisible      { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
+.invisible      { font-size: 1px; color:[[WHITE]]; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
 .mobile-only    { display:none; }
 a.mobile-link   { font-size: 15px; } /* footer mobile site link */
 
@@ -131,8 +131,8 @@ a.toggle.closed.new_icon { background: url(/i/close_1x.png) no-repeat right cent
 a.ajax_add            { background: none!important; padding-right: 0; }
 p.button a            { background-color: [[MAIN_DARK]]; border: 3px double [[WHITE]]; color: [[WHITE]]; padding: 3px 6px 1px; margin-right: 4px; text-decoration: none; display: inline-block; }
 p.warn a              { background-color: [[MODERATE_DARK]]; }
-a.pre_species         { color: #333333; }
-a.pre_species:visited { color: #333333; }
+a.pre_species         { color: [[V_DARK_GREY]]; }
+a.pre_species:visited { color: [[V_DARK_GREY]]; }
 a.pre_species:hover   { color: [[HOVER]]; }
 
 
@@ -203,7 +203,7 @@ div.syntax-error    { color: [[DARK_GREY]]; background-color: [[WHITE]]; }
 
 div.filter-error    { margin: 1em 1em 0; }
 
-.box-highlight      { background-color: #55aa55; font-weight: bold; border-radius: 4px; color: [[WHITE]]; padding: 2px 3px 1px; cursor: default; white-space: nowrap; } 
+.box-highlight      { background-color: [[OK_DARK]]; font-weight: bold; border-radius: 4px; color: [[WHITE]]; padding: 2px 3px 1px; cursor: default; white-space: nowrap; } 
 
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
@@ -221,7 +221,7 @@ div.notes p  { margin-bottom: 8px; }
 .screen_hide_inline, .screen_hide_block { display: none; }
 
 @media print {
-  body, h1, h2, h4                     { color: #000; }
+  body, h1, h2, h4                     { color: [[BLACK]]; }
   .print_hide, .error, .warning, .info { display: none !important; }
   .screen_hide_inline                  { display: inline; }
   .screen_hide_block                   { display: block ; }

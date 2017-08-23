@@ -35,7 +35,7 @@ div.portal div              { float:left; position:relative; }
 div.portal .portal_box, div.portal img      { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 div.portal .portal_box img { height: auto; width: auto; margin: auto; padding: 0; border: none; border-radius: 0; -moz-border-radius: 0; -webkit-border-radius: 0; }
 div.portal .portal_box a    { color: black; display: block; height: 100%; text-align: center; text-decoration: none; font-weight: bold; }
-div.portal .portal_box.navb-current { box-shadow: 0 0 8px #6f6; }
+div.portal .portal_box.navb-current { box-shadow: 0 0 8px [[OK_DARK]]; }
 div.portal .portal_box .text { line-height: 115%; width: 100%; }
 div.portal-small img        { height: 80px; width: 80px; }
 div.portal img.unavailable  { -webkit-filter: grayscale(100%); filter: grayscale(100%); filter: gray; filter: url("[[IMG:greyscale.svg]]#greyscale"); opacity: 0.4; }
@@ -73,8 +73,8 @@ body.ie .open .cell_detail { display: block; }
 
 .ts_flag { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
 .ts_biotype { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
-.appris_green { color:#006600; }
-.appris_yellow { color:#c19200; }
+.appris_green { color:[[OK_DARK]]; }
+.appris_yellow { color:[[MODERATE_DARK]]; }
 
 a.karyotype_link  { background-image: url(/i/view_on_karyotype.gif); background-position: -2px 50%; background-repeat: no-repeat; padding:2px 0 2px 20px }
 a.ld_plot_link    { background-image: url(/i/ld_plot.gif); background-position: 0px 50%; background-repeat: no-repeat; padding:2px 0 2px 22px }
@@ -175,7 +175,7 @@ div.coltab span.coltab-tab  { float: left; line-height: 110%; }
 div.coltab div.coltab-text  { margin: 0 0 4px 8px; }
 
 /* cookie message and temporary message */
-div.cookie-message, div.tmp-message               { background-color: [[MAIN_V_DARK]]; border-radius: 10px; color: #fff; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
+div.cookie-message, div.tmp-message               { background-color: [[MAIN_V_DARK]]; border-radius: 10px; color: [[WHITE]]; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px [[DARK_GREY]]; }
 div.tmp-message                                   { max-height: 500px; margin-left: -170px; left: 50%; top: 200px; overflow: auto; }
 div.cookie-message, div.tmp-message.tm-left       { left: 20px; margin-left: 0; right: auto; }
 div.cookie-message, div.tmp-message.tm-bottom     { bottom: 20px; top: auto; }
@@ -184,13 +184,13 @@ div.tmp-message.tm-right                          { left: auto; margin-left: 0; 
 div.tmp-message.tm-left                           { left: 20px; margin-left: 0; }
 div.tmp-message.tm-warning                        { background-color: [[MODERATE_DARK]]; }
 div.tmp-message.tm-error                          { background-color: [[SEVERE_DARK]];   }
-div.tmp-message.tm-info                           { background-color: [[PALE_GREY]]; color: #333; }
+div.tmp-message.tm-info                           { background-color: [[PALE_GREY]]; color: [[V_DARK_GREY]]; }
 div.cookie-message div,div.tmp-message div.close  { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
 div.cookie-message p, div.tmp-message p           { margin: 0; line-height: 30px; text-align: center; }
 div.cookie-message p a, div.tmp-message p a       { color: inherit; font-weight: bold; }
 
 /* 'redirecting to mirror' message*/
-div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
+div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: [[WHITE]]; background-color: [[BLACK]]; }
 div.redirect-message p        { width: 100%; margin: 0; text-align: center; padding: 12px 0px;}
 div.redirect-message p a      { color: inherit; font-weight: bold; }
 

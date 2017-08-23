@@ -52,14 +52,14 @@ form.std input.short  { width: 10em }
 form.std input.narrow { width: 20em }
 form.std input.vshort { width: 4em }
 
-form input.required { background-color: #FFEECC; }
-form input.invalid  { background-color: #FFCCCC; }
-form input.valid    { background-color: #CCFFCC; }
-form input.disabled { background-color: #999999; }
+form input.required { background-color: [[SEVERE_LIGHT]]; }
+form input.invalid  { background-color: [[MODERATE_LIGHT]]; }
+form input.valid    { background-color: [[OK_LIGHT]]; }
+form input.disabled { background-color: [[MEDIUM_GREY]]; }
 
-form label.invalid { color: #FF0000; font-weight: normal; font-style: italic; display: inline; white-space: nowrap; position: relative; top: 3px; left: 3px; vertical-align: top; }
+form label.invalid { color: [[SEVERE_DARK]]; font-weight: normal; font-style: italic; display: inline; white-space: nowrap; position: relative; top: 3px; left: 3px; vertical-align: top; }
 
-.hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
+.hi { border: solid 1px [[SEVERE_DARK]]; padding: 0 1px; font-weight: bold }
 
 /* new stuff */
 
@@ -160,7 +160,7 @@ input.fbutton:active, input.fbutton:hover {
   background-color:[[MAIN_V_DARK]];
 }
 input.fbutton.disabled, input.fbutton.disabled:active {
-  background-color:#999;
+  background-color:[[MEDIUM_GREY]];
   cursor: default;
 }
 .fselect {
@@ -457,7 +457,7 @@ form.freeform fieldset .form-field .ff-right {
 
 textarea.inactive {
   font-style: italic;
-  color: #999;
+  color: [[MEDIUM_GREY]];
 }
 
 /* Override standard layout - SelectToToggle compatible */

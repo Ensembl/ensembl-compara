@@ -144,7 +144,7 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .modal_nav ul.local_context li ul                  { clear: both; }
 .modal_content .modal_nav ul.local_context li .count              { float: right; margin: 0 3px 0 10px; color: [[MAIN_V_DARK]]; }
 .modal_content .modal_nav ul.local_context li.active a            { outline: 0; }
-.modal_content .modal_nav ul.local_context li.top_level           { margin: 3px; padding: 0; border: 1px solid #dddfff; line-height: 16px; } /* TODO - add colour to ini file */
+.modal_content .modal_nav ul.local_context li.top_level           { margin: 3px; padding: 0; border: 1px solid [[MAIN_LIGHT]]; line-height: 16px; } /* TODO - add colour to ini file */
 .modal_content .modal_nav ul.local_context li.top_level,
 .modal_content .modal_nav ul.local_context li.top_level ul,
 .modal_content .modal_nav ul.local_context li.top_level li        { background-color: [[MAIN_V_LIGHT]]; }
@@ -162,9 +162,9 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .modal_nav ul.local_context li.parent li.last      { background-image: url(/i/last.gif); background-repeat: no-repeat; padding-bottom: 1px; }
 .modal_content .modal_nav ul.local_context li.active              { font-weight: normal; background-color: [[MAIN_DARK]]!important; }
 .modal_content .modal_nav ul.local_context li.active a,
-.modal_content .modal_nav ul.local_context li.active .count       { color: #FFF; }
+.modal_content .modal_nav ul.local_context li.active .count       { color: [[WHITE]]; }
 .modal_content .modal_nav ul.local_context li.active li a,
-.modal_content .modal_nav ul.local_context li.active li .count    { color: #369; }
+.modal_content .modal_nav ul.local_context li.active li .count    { color: [[MAIN_V_DARK]]; }
 .modal_content .modal_nav ul.local_context li.active li           { background-color: [[MAIN_V_LIGHT]]; }
 
 body.ie7  .modal_content .modal_nav                                    { min-height: 99%; }
@@ -227,7 +227,7 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 }
 
 .modal_content .multi_selector_list span.unselected {
-  background-color: #EEE; 
+  background-color: [[LIGHT_GREY]]; 
   color: [[DARK_GREY]]; 
   border: 1px solid [[PALE_GREY]]; 
 }
@@ -263,4 +263,4 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .cloud_filter .ftext { border: 2px solid [[MAIN_DARK]]; font-size: 150%; width: 50%; }
 .cloud_all_none { text-align: center; margin: 8px 0 0 0; }
 .cloud_all_none .none { background: none repeat scroll 0 0 [[OK_DARK]]; border: 1px solid [[OK_DARK]]; color: [[WHITE]]; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
-.cloud_all_none .all { background: none repeat scroll 0 0 #8e4e62; border: 1px solid #8e4e62; color: [[WHITE]]; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
+.cloud_all_none .all { background: none repeat scroll 0 0 [[SEVERE_DARK]]; border: 1px solid [[SEVERE_DARK]]; color: [[WHITE]]; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
