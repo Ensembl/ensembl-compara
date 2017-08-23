@@ -121,26 +121,35 @@ sub create_species_tree {
 
 
     # build the tree taking the parents before the children
+    my @previous_right_idx;
     foreach my $taxon (sort {$a->left_index <=> $b->left_index} values %taxa_for_tree) {
+        #warn "Adding ", $taxon->toString, "\n";
         $taxon->no_autoload_children;
         if (not $root) {
             $root = $taxon->root;
+            @previous_right_idx = ( $taxon->right_index, $taxon );
             next;
         }
+
+        # Detection of species+subspecies mix
+        if ($previous_right_idx[0] > $taxon->left_index) {
+            # We're still under the previous taxon
+            my $anc = $previous_right_idx[1];
+            if ($allow_subtaxa) {
+                #warn sprintf('%s will be added later because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name);
+                push @{$gdbs_by_taxon_id{$anc->dbID}}, $taxon->{'_gdb'};
+                next;
+            } else {
+                throw(sprintf('Cannot add %s because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name));
+            }
+        }
+        @previous_right_idx = ( $taxon->right_index, $taxon );
+
         my $n1 = scalar(@{$root->get_all_leaves});
         $root->merge_node_via_shared_ancestor($taxon);
         my $n2 = scalar(@{$root->get_all_leaves});
         if ($n1 != ($n2-1)) {
-            my @anc = grep {$taxa_for_tree{$_->node_id}} @{$taxon->get_all_ancestors};
-            # @anc cannot be empty because we order the nodes by
-            # left_index, so we must have already processed a parent
-            if ($allow_subtaxa) {
-                $anc[0]->release_children;
-                push @{$gdbs_by_taxon_id{$anc[0]->dbID}}, $taxon->{'_gdb'};
-                #warn sprintf('%s will be added later because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name);
-            } else {
-                throw(sprintf('Cannot add %s because an ancestral node (%s) is already in the tree', $taxon->name, $anc[0]->name));
-            }
+            die "Should not happen any more !";
         }
     }
 
