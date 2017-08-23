@@ -138,7 +138,7 @@ body.ie67 .plain-box      { zoom: 100%; }
 .tinted-box   { background-color:[[MAIN_V_LIGHT]]; border-color: [[MAIN_LIGHT]]; }
 .tinted-box a       { color:[[MAIN_V_DARK]]; }
 .tinted-box a:hover { color: [[HOVER]];   }
-.info-box     { background-color:[[CONTRAST_LIGHT]]; border-color:[[CONTRAST_MEDIUM]]; }
+.info-box     { background-color:[[CONTRAST_V_LIGHT]]; border-color:[[CONTRAST_LIGHT]]; }
 .info-box a       { color:[[MAIN_DARK]]; }
 .info-box a:hover { color: [[HOVER]];   }
 .alert-box    { background-color:[[MODERATE_LIGHT]]; border-color:[[MODERATE_DARK]]; }
