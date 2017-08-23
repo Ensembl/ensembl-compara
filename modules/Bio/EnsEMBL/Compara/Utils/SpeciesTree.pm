@@ -178,6 +178,10 @@ sub create_species_tree {
         my $taxon_name = $taxon->name;
         my $taxon_id = $taxon->taxon_id;
         my $node_in_root = $root->find_node_by_node_id($taxon_id);
+        unless ($node_in_root) {
+            warn "Cannot flatten the taxon $taxon_id as it is not found in the tree\n";
+            next;
+        }
         foreach my $node ($node_in_root->get_all_subnodes) {
             next if ($node->is_leaf);
             my $node_children = $node->children;
