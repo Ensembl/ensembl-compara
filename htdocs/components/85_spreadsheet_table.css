@@ -69,11 +69,11 @@ table.toggle_table th div            { padding: 0; }
 .list_paginate .paginate_button,
 .list_paginate .paginate_active,
 .dataTables_paginate .paginate_button,
-.dataTables_paginate .paginate_active                { color: [[PAGE_TEXT]]; background-color: #99B3FF; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_active                { color: [[PAGE_TEXT]]; background-color: [[MAIN_MEDIUM]]; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
 .list_paginate .paginate_button,
 .dataTables_paginate .paginate_button                { background-color: [[TINT_BG]]; }
 .list_paginate .paginate_button:hover,
-.dataTables_paginate .paginate_button:hover          { background-color: #BFD0FF; }
+.dataTables_paginate .paginate_button:hover          { background-color: [[MAIN_LIGHT]]; }
 .list_paginate .paginate_button_disabled,
 .dataTables_paginate .paginate_button_disabled       { color: [[PALE_GREY]]; cursor: default; }
 .list_paginate .paginate_button_disabled:hover,
@@ -83,7 +83,7 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_length select,
 .dataTables_filter input    { border: 1px solid [[PALE_GREY]]; }
 .dataTables_filter input    { height: 16px; width: 140px; }
-.dataTables_filter .overlay { position: absolute; color: #999999; left: 2px; top: 2px; line-height: 16px; }
+.dataTables_filter .overlay { position: absolute; color: [[MEDIUM_GREY]]; left: 2px; top: 2px; line-height: 16px; }
 
 body.ie6 .dataTables_filter input { height: 20px; }
 
@@ -133,46 +133,46 @@ tr.row-sub td:first-child { text-indent:24px; }
 .new_table { border: 1px [[PALE_GREY]] solid; margin: 0 0 16px; }
 .new_table table    { table-layout: fixed;  width: 100%; border-spacing: 0; }
 .new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[PALE_GREY]]; line-height: 16px; }
-.new_table tbody tr { background-color: #fff; }
+.new_table tbody tr { background-color: [[WHITE]]; }
 .new_table tbody tr:nth-child(odd) { background-color: [[LIGHT_GREY]]; }
 .new_table tbody tr:nth-child(even) { background-color: [[WHITE]]; }
-.new_table .subtable { background: #f8f8f0;  }
+.new_table .subtable { background: [[CONTRAST_V_LIGHT]];  }
 .new_table th,.new_table td { padding: 4px; word-wrap: break-word; }
 
 .newtable_controller { margin: 16px 0; }
 .new_table_wrapper { clear: both; margin: 0 0 16px; }
-.new_table_top     { background-color: [[MAIN_MEDIUM]]; border: 1px solid #ccc; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
+.new_table_top     { background-color: [[MAIN_MEDIUM]]; border: 1px solid [[PALE_GREY]]; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
 .new_table_section { float: left; width: 33%; height: 100%; }
 .new_table_section_2 > * { float: right; }
 div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: center; }
 .new_table_section div { display: inline-block; }
-.new_table_pagesize select { border: 1px solid #ccc; }
-.new_table_thinking { background: white url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid [[MAIN_MEDIUM]]; border-radius: 5px; color: [[MAIN_MEDIUM]]; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
+.new_table_pagesize select { border: 1px solid [[PALE_GREY]]; }
+.new_table_thinking { background: [[WHITE]] url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid [[MAIN_MEDIUM]]; border-radius: 5px; color: [[MAIN_MEDIUM]]; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
 .new_table .no_results { font-size: 128px; font-weight: bold; background-color: [[PALE_GREY]]; text-align: center; color: #ccc; padding: 16px; display: none; }
 
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
 .newtable_filter ul { display: inline-block; margin: 0; padding: 4px 2px; }
-.newtable_filter li.t { list-style: none; background-color: white; line-height: 20px; display: inline-block; margin: 0; }
-.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: #cfc; }
-.newtable_filter .x:hover { border: 2px solid #999; text-shadow: 0 1px white; }
+.newtable_filter li.t { list-style: none; background-color: [[WHITE]]; line-height: 20px; display: inline-block; margin: 0; }
+.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: [[OK_LIGHT]]; }
+.newtable_filter .x:hover { border: 2px solid [[MEDIUM_GREY]]; text-shadow: 0 1px [[WHITE]]; }
 .newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
-.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: inline-block; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
-.newtable_filter li.t.more .b { background: #506099 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
+.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: [[WHITE]]; display: inline-block; border: 3px double [[WHITE]]; font-size: 14px; cursor: pointer; background: [[MAIN_MEDIUM]] url(/i/16/rev/filter.png) no-repeat 4px 50%; }
+.newtable_filter li.t.more .b { background: [[MAIN_V_DARK]] url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
 .newtable_filter li.t.more .b { display: inline-block; }
 .newtable_filter li.more .k:after { content: ""; }
 .newtable_filter li.t.more .v { display: none; }
-.newtable_filter li .b:hover { background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
-.newtable_filter { padding: 0 0px; margin: 0; background-color: white; font-size: 16px; color: #333; }
+.newtable_filter li .b:hover { background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]) [[MAIN_DARK]]; text-shadow: 0 1px [[MAIN_MEDIUM]]; }
+.newtable_filter { padding: 0 0px; margin: 0; background-color: [[WHITE]]; font-size: 16px; color: [[V_DARK_GREY]]; }
 .newtable_filter li .k:after { content: ": "; }
 .newtable_filter li { position: relative; }
-.newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: white; padding: 4px; border: 1px solid #999; display: none; z-index: 100; text-shadow: none; color: black; cursor: auto; }
+.newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: [[WHITE]]; padding: 4px; border: 1px solid [[MEDIUM_GREY]]; display: none; z-index: 100; text-shadow: none; color: [[BLACK]]; cursor: auto; }
 .newtable_filter .newtable_filtertype_class .body ul { margin: -3px 0; padding: 0; display: block; float: left; font-size: 75%; line-height: 1em; }
-.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,#444,#666),#666; color: #888; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 200px; border-radius: 8px; cursor: pointer; }
+.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,[[V_DARK_GREY]],[[DARK_GREY]]),[[DARK_GREY]]; color: [[MEDIUM_GREY]]; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid [[MEDIUM_GREY]]; display: block; width: 200px; border-radius: 8px; cursor: pointer; }
 .newtable_filter li .m .tail li { cursor: pointer; }
 .newtable_filter .newtable_filtertype_class .body li img { max-height: 12px; }
 .newtable_filter .newtable_filtertype_class .body li:before { content: "Off"; background: linear-gradient(to top,#422,#633), #633; position: absolute; right: 0; top: 0; bottom: 0; padding: 4px; width: 26px; display: inline-block; text-align: center; color: #999; overflow: hidden; border-radius: 0 8px 8px 0; }
-.newtable_filter .newtable_filtertype_class .body li.on:before { content: "On"; background: linear-gradient(to top,#174,#396) #396; border-radius: 0 8px 8px 0; color: black; }
+.newtable_filter .newtable_filtertype_class .body li.on:before { content: "On"; background: linear-gradient(to top,#174,#396) #396; border-radius: 0 8px 8px 0; color: [[BLACK]]; }
 .newtable_filtertype_class li img { display: inline-block; vertical-align: bottom; margin-right: 4px; }
 .newtable_filter .newtable_filtertype_class .body li.on { background: linear-gradient(to top,#cec,#efe),#cec; color: black; }
 .newtable_filter .newtable_filtertype_class div.use_cols { width: 750px; }
@@ -183,7 +183,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_range .slider_unspecified { padding: 0 6px; }
 .newtable_range .slider_unspecified input { vertical-align: bottom; }
 .newtable_filtertype_more ul { padding: 0; }
-.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double white; list-style: none; color: white; text-align: left; cursor: pointer; }
+.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double [[WHITE]]; list-style: none; color: [[WHITE]]; text-align: left; cursor: pointer; }
 .newtable_filtertype_more li:hover {  background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }

@@ -38,7 +38,7 @@ body.ie6 .floating_popup .spinner      { background-color: [[MAIN_V_LIGHT]]; bor
 .info_popup td                         { padding: 2px 3px; white-space: nowrap; }
 .info_popup tr.header                  { background-color: [[MAIN_DARK]]; cursor: default; }
 .info_popup tr.header th,
-.info_popup tr.header a                { color: #FFFFFF; }
+.info_popup tr.header a                { color: [[WHITE]]; }
 .info_popup span.close                 { position: absolute; top: -8px; right: -12px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; }
 .info_popup td.closed                  { background: url(/i/closed2.gif) 100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
 .info_popup td.opened                  { background: url(/i/open2.gif)   100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
@@ -70,7 +70,7 @@ body.ie6 .floating_popup .spinner      { background-color: [[MAIN_V_LIGHT]]; bor
 .zmenu_holder div.header,
 .zmenu_holder .container,
 .zmenu_holder .loading                 { border: 1px solid [[MAIN_V_LIGHT]]; }
-.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: #FFFFFF; background-color: [[MAIN_DARK]]; text-align: center; cursor: default; }
+.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: [[WHITE]]; background-color: [[MAIN_DARK]]; text-align: center; cursor: default; }
 .zmenu_holder .loading                 { width: 200px; }
 .zmenu_holder .loading div             { padding: 2px 3px; color: [[WHITE]]; background-color: [[MAIN_DARK]]; }
 .zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-table; vertical-align: top; }

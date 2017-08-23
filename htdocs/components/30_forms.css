@@ -438,7 +438,7 @@ div.filterable-dropdown p.filterable-dropdown-nomatch {
 }
 
 div.species-tag           { padding-left: 23px; width: 189px; background-repeat: no-repeat; background-position: 2px 2px; }
-div.species-tag.disabled  { background-color: #f0f0f0; border: 1px solid #cccccc; color: #cccccc; }
+div.species-tag.disabled  { background-color: [[V_LIGHT_GREY]]; border: 1px solid [[PALE_GREY]]; color: [[PALE_GREY]]; }
 div.species-tag img       { display: block; float: left; margin: 2px 5px 2px 2px; }
 
 /* Override the standard layout */

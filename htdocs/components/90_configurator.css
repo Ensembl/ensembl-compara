@@ -22,7 +22,7 @@ div.config_wrapper div.panel div.content form { margin: 0; }
 body.ie6 div.config_wrapper                   { border: 0 }
 
 div.modal_content div.configuration_search                          { padding: 3px 11px 0px 3px; }
-div.modal_content div.configuration_search input                    { color: #999999; width: 100%; padding: 3px; background-color: [[CONTRAST_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
+div.modal_content div.configuration_search input                    { color: [[MEDIUM_GREY]]; width: 100%; padding: 3px; background-color: [[CONTRAST_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
 
 div.modal_content div.species_select div.species_select_select      { float: left; margin-left: 0 !important; }
 div.modal_content div.species_select div.ff-right img               { vertical-align: middle; height: 24px; }
@@ -47,7 +47,7 @@ div.config_wrapper div.config div.select_all ul.popup_menu          { margin: 18
 div.config_wrapper div.config ul                                    { margin: 0; padding: 0; list-style: none; }
 div.config_wrapper div.config ul li                                 { margin: 0; list-style-image: none; background-repeat: no-repeat; background-position: 2px 2px; }
 
-div.config_wrapper div.config ul.config_menu li                     { font-weight: normal; clear: right; background-color: #FFF; }
+div.config_wrapper div.config ul.config_menu li                     { font-weight: normal; clear: right; background-color: [[WHITE]]; }
 div.config_wrapper div.config ul.config_menu li div.track_name      { padding: 3px 0 2px 25px; cursor: pointer; background: inherit; min-height: 16px;}
 div.config_wrapper div.config ul.config_menu li div.desc            { margin: 5px 0; padding: 5px 10px; display: none; background-color: [[MAIN_V_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
 div.config_wrapper div.config ul.config_menu li div.desc ul         { padding-left: 26px; }
@@ -67,8 +67,8 @@ div.config_wrapper div.config ul.config_menu li.r .strand           { background
 div.config_wrapper div.config ul.config_menu li.external:before     { background: url(/i/track-external.gif) no-repeat; width: 48px; height: 100%; margin: 2px 6px 0 24px; float: left; content: '\0000a0'; }
 div.config_wrapper div.config ul.config_menu li.user:before         { background-image: url(/i/track-user.gif); }
 div.config_wrapper div.config ul.popup_menu                         { background: [[MAIN_V_LIGHT]]; position: absolute; display: none; margin: 10px 0 0 10px; padding: 0; z-index: 3000; border: 1px solid; cursor: pointer; }
-div.config_wrapper div.config ul.popup_menu li                      { background-color: [[MAIN_V_LIGHT]]!important; color: #000; height: 22px; line-height: 22px; padding: 0 6px 0 28px; font-weight: bold; white-space: nowrap; }
-div.config_wrapper div.config ul.popup_menu li.header               { background: [[MAIN_DARK]]!important; color: #FFF; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[DARK_GREY]]; height: auto; line-height: 16px; }
+div.config_wrapper div.config ul.popup_menu li                      { background-color: [[MAIN_V_LIGHT]]!important; color: [[BLACK]]; height: 22px; line-height: 22px; padding: 0 6px 0 28px; font-weight: bold; white-space: nowrap; }
+div.config_wrapper div.config ul.popup_menu li.header               { background: [[MAIN_DARK]]!important; color: [[WHITE]]; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[DARK_GREY]]; height: auto; line-height: 16px; }
 div.config_wrapper div.config ul.popup_menu li.header img           { position: absolute; top: -10px; right: -10px; border: 0; padding: 0; height: 20px; width: 20px; margin: 0; }
 div.config_wrapper div.config ul.popup_menu li.subset img           { height: 16px; width: 16px; padding: 3px; margin-right: 3px; }
 div.config_wrapper div.config ul.popup_menu li.default              { border-bottom: 1px solid; }
@@ -201,7 +201,7 @@ div.config_save_as .groups h4  { color: [[DARK_GREY]]; margin-bottom: 8px; }
 div.config_save_as .desc,
 div.config_save_as .name       { width: 395px; margin-top: 3px; }
 div.config_save_as .desc       { height: 105px; }
-div.config_save_as .disabled   { background-color: #999; border-color: #999; cursor: default; }
+div.config_save_as .disabled   { background-color: [[MEDIUM_GREY]]; border-color: [[MEDIUM_GREY]]; cursor: default; }
 div.config_save_as .close      { position: absolute; top: -10px; right: -10px; cursor: pointer; }
 
 

@@ -153,7 +153,7 @@ ul.tree li.active li          { font-weight: normal; }
 ul.tree li.closed ul          { display: none; }
 ul.tree li .disabled          { color: [[DARK_GREY]]; }
 ul.tree a                     { color: [[MAIN_V_DARK]]; text-decoration: none; }
-ul.tree a.open                { font-weight: bold; color: #C00; }
+ul.tree a.open                { font-weight: bold; color: [[SEVERE_DARK]]; }
 
 
 
@@ -242,11 +242,11 @@ div.cookie-message a.more-info-link {
   cursor: pointer;
   text-decoration: none;
   padding: 8px;
-  background-color: #ccc;
+  background-color: [[PALE_GREY]];
   font-weight: 400;
 }
 div.cookie-message a.more-info-link:hover {
-  background-color: #fff;
+  background-color: [[WHITE]];
 }
 
 @media screen and (max-width: 1201px) {

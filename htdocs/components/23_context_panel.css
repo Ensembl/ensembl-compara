@@ -17,7 +17,7 @@
 
 #transcripts_table { clear: both; }
 #transcripts_table tr.ss_header,
-#transcripts_table tr.ss_header th { background-color: #FFF!important; }
+#transcripts_table tr.ss_header th { background-color: [[WHITE]]!important; }
 
 /******************************
         Summary panel
