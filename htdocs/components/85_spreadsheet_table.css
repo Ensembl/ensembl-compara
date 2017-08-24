@@ -69,7 +69,7 @@ table.toggle_table th div            { padding: 0; }
 .list_paginate .paginate_button,
 .list_paginate .paginate_active,
 .dataTables_paginate .paginate_button,
-.dataTables_paginate .paginate_active                { color: [[PAGE_TEXT]]; background-color: [[MAIN_MEDIUM]]; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_active                { color: [[PAGE_TEXT]]; background-color: [[MAIN_DARK]]; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
 .list_paginate .paginate_button,
 .dataTables_paginate .paginate_button                { background-color: [[TINT_BG]]; }
 .list_paginate .paginate_button:hover,
@@ -141,13 +141,13 @@ tr.row-sub td:first-child { text-indent:24px; }
 
 .newtable_controller { margin: 16px 0; }
 .new_table_wrapper { clear: both; margin: 0 0 16px; }
-.new_table_top     { background-color: [[MAIN_MEDIUM]]; border: 1px solid [[PALE_GREY]]; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
+.new_table_top     { background-color: [[MAIN_DARK]]; border: 1px solid [[PALE_GREY]]; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
 .new_table_section { float: left; width: 33%; height: 100%; }
 .new_table_section_2 > * { float: right; }
 div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: center; }
 .new_table_section div { display: inline-block; }
 .new_table_pagesize select { border: 1px solid [[PALE_GREY]]; }
-.new_table_thinking { background: [[WHITE]] url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid [[MAIN_MEDIUM]]; border-radius: 5px; color: [[MAIN_MEDIUM]]; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
+.new_table_thinking { background: [[WHITE]] url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid [[MAIN_DARK]]; border-radius: 5px; color: [[MAIN_DARK]]; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
 .new_table .no_results { font-size: 128px; font-weight: bold; background-color: [[PALE_GREY]]; text-align: center; color: #ccc; padding: 16px; display: none; }
 
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
@@ -156,7 +156,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: [[OK_LIGHT]]; }
 .newtable_filter .x:hover { border: 2px solid [[MEDIUM_GREY]]; text-shadow: 0 1px [[WHITE]]; }
 .newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
-.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: [[WHITE]]; display: inline-block; border: 3px double [[WHITE]]; font-size: 14px; cursor: pointer; background: [[MAIN_MEDIUM]] url(/i/16/rev/filter.png) no-repeat 4px 50%; }
+.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: [[WHITE]]; display: inline-block; border: 3px double [[WHITE]]; font-size: 14px; cursor: pointer; background: [[MAIN_DARK]] url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.more .b { background: [[MAIN_V_DARK]] url(/i/16/rev/filter.png) no-repeat 4px 50%; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
 .newtable_filter li.t.more .b { display: inline-block; }

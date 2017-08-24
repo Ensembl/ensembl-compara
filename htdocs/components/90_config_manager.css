@@ -31,7 +31,7 @@
 .config_manager table tr.disabled                         { background-color: [[MEDIUM_GREY]]!important; }
 .config_manager table tr.disabled *                       { color: [[DARK_GREY]]!important; }
 .config_manager table tr.disabled a.add_to_set            { display: none; }
-.config_manager table td.subheader                        { background: [[MAIN_MEDIUM]]; text-align: left!important; padding-left: 16px; font-weight: bold; }
+.config_manager table td.subheader                        { background: [[MAIN_DARK]]; text-align: left!important; padding-left: 16px; font-weight: bold; }
 .config_manager table td.details                          { padding-left: 26px; text-align: left; }
 .config_manager table td.details ul                       { margin: 0; }
 .config_manager table td.details h4                       { text-decoration: underline; margin-bottom: 8px; }

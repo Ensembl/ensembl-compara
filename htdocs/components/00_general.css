@@ -208,7 +208,7 @@ div.filter-error    { margin: 1em 1em 0; }
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
 
-div.notes    { padding: 1em 1em 8px; margin-bottom: 1em; background-color: [[CONTRAST_LIGHT]]; border: 1px [[CONTRAST_MEDIUM]] solid; }
+div.notes    { padding: 1em 1em 8px; margin-bottom: 1em; background-color: [[CONTRAST_MEDIUM]]; border: 1px [[CONTRAST_DARK]] solid; }
 div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 1em; line-height: 1em; padding-left: 24px; }
 div.notes p  { margin-bottom: 8px; }
 

@@ -22,7 +22,7 @@ div.config_wrapper div.panel div.content form { margin: 0; }
 body.ie6 div.config_wrapper                   { border: 0 }
 
 div.modal_content div.configuration_search                          { padding: 3px 11px 0px 3px; }
-div.modal_content div.configuration_search input                    { color: [[MEDIUM_GREY]]; width: 100%; padding: 3px; background-color: [[CONTRAST_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
+div.modal_content div.configuration_search input                    { color: [[MEDIUM_GREY]]; width: 100%; padding: 3px; background-color: [[MODERATE_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
 
 div.modal_content div.species_select div.species_select_select      { float: left; margin-left: 0 !important; }
 div.modal_content div.species_select div.ff-right img               { vertical-align: middle; height: 24px; }

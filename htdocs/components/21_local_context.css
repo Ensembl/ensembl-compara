@@ -27,7 +27,7 @@
 .nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
 .nav ul.local_context li.last      { background: [[WHITE]] url(/i/last.gif) no-repeat; }
 .nav ul.local_context li.last ul   { background: 0; }
-.nav ul.local_context li.active    { font-weight: bold; background-color: [[MAIN_V_LIGHT]]; }
+.nav ul.local_context li.active    { font-weight: bold; background-color: [[MAIN_LIGHT]]; }
 .nav ul.local_context li.active ul { background-color: [[WHITE]]; }
 .nav ul.local_context li.active li { font-weight: normal; }
 .nav ul.local_context li.closed ul { display: none; }

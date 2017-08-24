@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-.navbar                          { color: [[DARK_GREY]]; background-color: [[MAIN_V_LIGHT]]; margin: 0 0 16px; padding: 8px 0; font-weight: bold; border: 1px solid [[MAIN_MEDIUM]]; position: relative; }
+.navbar                          { color: [[DARK_GREY]]; background-color: [[MAIN_LIGHT]]; margin: 0 0 16px; padding: 8px 0; font-weight: bold; border: 1px solid [[MAIN_MEDIUM]]; position: relative; }
 .navbar a                        { text-decoration: none; }
 .navbar div                      { margin: 0 5px; }
 .navbar form                     { margin: 0; }
@@ -28,7 +28,7 @@
 
 .navbar .homolgy                 { font-size: 1.2em; }
 .navbar .relocate input          { border: 1px solid [[MAIN_LIGHT]]; height: 22px; padding: 0 4px; width: 248px; line-height: 22px; }
-.navbar .relocate input:hover    { background-color: [[CONTRAST_LIGHT]]; }
+.navbar .relocate input:hover    { background-color: [[MODERATE_LIGHT]]; }
 .navbar .relocate form           { float: left; padding: 2px 0; width: 370px; }
 .navbar .relocate form label     { float: left; display: block; width: 64px; margin-top: 5px; padding-right: 8px; text-align: right; }
 .navbar .navgene                 { float: left; margin: 0; }
@@ -108,7 +108,7 @@ body.ie67 .slider_wrapper .slider_right                      { z-index: -1; }
 
 ul.autocomplete               { position: absolute; display: none; margin: 0; padding: 0; width: 258px; background: [[WHITE]]; list-style: none; border: 1px solid [[MAIN_LIGHT]]; z-index: 9999999999999; }
 ul.autocomplete li            { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; height: 14px; cursor: pointer; clear: both; }
-ul.autocomplete li.focused    { background-color: [[CONTRAST_LIGHT]]; }
+ul.autocomplete li.focused    { background-color: [[MODERATE_LIGHT]]; }
 ul.autocomplete li .name      { float: left; }
 ul.autocomplete li .stable_id { float: right; }
 body.ie6 ul.autocomplete      { width: 250px; }
