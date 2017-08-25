@@ -86,14 +86,13 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    #delete tmp file
-    unlink($self->param('tmp_file')) if $self->param('tmp_file');
-
     $self->SUPER::write_output();
 
     #Check number of genomic_align_blocks written is correct
     $self->_healthcheck();
 
+    #delete tmp file
+    unlink($self->param('tmp_file')) if $self->param('tmp_file');
 }
 
 #
