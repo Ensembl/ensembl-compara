@@ -42,7 +42,6 @@ BEGIN {
     unshift @INC, "$volume$directory/blib/arch"; # path to built .so file
 }
 
-use Bio::EnsEMBL::Registry;
 use ExtUtils::testlib;
 use HALXS;
 
