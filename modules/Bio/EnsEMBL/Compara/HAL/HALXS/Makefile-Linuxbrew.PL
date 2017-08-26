@@ -19,6 +19,7 @@ WriteMakefile(
       (ABSTRACT_FROM  => 'lib/HALXS.pm', # retrieve abstract from module
        AUTHOR         => 'Ensembl Compara') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
+    PL_FILES          => {},
 
     # Since we don't use the default hdf5, we need to give the full paths
     # here for 1) the header files and 2) the library.

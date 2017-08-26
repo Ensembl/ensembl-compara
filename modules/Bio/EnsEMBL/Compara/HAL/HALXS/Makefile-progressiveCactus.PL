@@ -15,6 +15,7 @@ WriteMakefile(
       (ABSTRACT_FROM  => 'lib/HALXS.pm', # retrieve abstract from module
        AUTHOR         => 'Ensembl Compara') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
+    PL_FILES          => {},
 
     INC => "-I$cactus/submodules/hdf5/include -I$cactus/submodules/hal/chain/inc/ -I$cactus/submodules/hal/maf/inc/ -I$cactus/submodules/sonLib/lib",
     LIBS => [ "-L$cactus/submodules/hdf5/lib -L$cactus/submodules/hal/lib -L$cactus/submodules/sonLib/lib -lstdc++ -lhdf5 -lhdf5_cpp" ],
