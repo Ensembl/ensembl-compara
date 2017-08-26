@@ -1,0 +1,9 @@
+blib/
+HALXS.bs
+HALXS.c
+HALXS.o
+Makefile
+Makefile.old
+MYMETA.json
+MYMETA.yml
+pm_to_blib
