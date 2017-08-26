@@ -1289,7 +1289,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
         $mlss->{'_hal_adaptor'} = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($hal_file);
     }
     my $hal_adaptor = $mlss->{'_hal_adaptor'};
-    my $hal_fh = $hal_adaptor->hal_filehandle;
     my $e2u_mappings = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $dnafrag->genome_db_id };
     my $hal_seq_reg = $e2u_mappings->{ $dnafrag->name } || $dnafrag->name;
 
@@ -1306,7 +1305,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
       my $targets_str = join(',', @hal_targets);
 
       my $max_ref_gap = 50;
-      my $maf_file_str = $hal_adaptor->msa_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start-1, $end, $max_ref_gap );
+      my $maf_file_str = $hal_adaptor->msa_blocks( $targets_str, $ref, $hal_seq_reg, $start-1, $end, $max_ref_gap );
 
       # check if MAF is empty
       unless ( $maf_file_str =~ m/[A-Za-z]/ ){
@@ -1445,7 +1444,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # print "end is $end\n";
 
           my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
-          my $blocks = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
+          my $blocks = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->pairwise_blocks($target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
           
           foreach my $entry (@$blocks) {
   	        if (defined $entry) {

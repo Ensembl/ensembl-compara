@@ -109,20 +109,20 @@ sub genomes {
 }
 
 sub msa_blocks {
-    my ( $self, $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
+    my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
     $max_ref_gap ||= 0;
-    return HALXS::_get_multiple_aln_blocks( $hal_fh, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
+    return HALXS::_get_multiple_aln_blocks( $self->{'hal_fd'}, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
 }
 
 sub pairwise_blocks {
-    my ( $self, $hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg ) = @_;
+    my ( $self, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg ) = @_;
 
     my @blocks;
     if ( $target_seq_reg ){
-        @blocks = HALXS::_get_pairwise_blocks_filtered($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg);
+        @blocks = HALXS::_get_pairwise_blocks_filtered($self->{'hal_fd'}, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg);
     }
     else {
-        @blocks = HALXS::_get_pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end);
+        @blocks = HALXS::_get_pairwise_blocks($self->{'hal_fd'}, $target, $ref, $hal_seq_reg, $start, $end);
     }
 
     return \@blocks;
