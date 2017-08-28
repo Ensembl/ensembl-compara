@@ -310,4 +310,96 @@ sub get_timetree_estimate {
     return;
 }
 
+
+=head2 binarize_multifurcation_using_from_gene_trees
+
+    Function to binarize a multifurcation by selecting the most frequent
+    topology out of a set of gene-trees
+
+=cut
+
+sub binarize_multifurcation_using_from_gene_trees {
+    my ($species_tree_node, $gene_trees) = @_;
+
+    # Lookup tables
+    my %stn_id_2_child = ();
+    my %stn_id_2_stn = ();
+    my $n_child = 0;
+    foreach my $child (@{$species_tree_node->children}) {
+        $stn_id_2_stn{$child->node_id} = $child;
+        $stn_id_2_child{$child->node_id} = $child->node_id;
+        $n_child++;
+        foreach my $leaf (@{$child->get_all_nodes}) {
+            $stn_id_2_child{$leaf->node_id} = $child->node_id;
+        }
+    }
+
+    # Nothing to do if the node is not a multifurcation
+    return if $n_child < 3;
+
+    # Analyze all the trees
+    my %counts = ();
+    foreach my $gt (@$gene_trees) {
+        my $was_preloaded = $gt->{_preloaded};
+        $gt->preload;
+        my $s = _count_topologies($gt->root, $species_tree_node->node_id, \%stn_id_2_child, \%counts);
+        $counts{$s}++ if $s;
+        $gt->release_tree() unless $was_preloaded;
+    }
+
+    # sort the complete counts and take the highest one
+    my ($best_topology) = sort {$counts{$b} <=> $counts{$a}}
+                          grep {$n_child-1 == (my $this_count = () = $_ =~ /\(/g)}
+                          keys %counts;
+    unless ($best_topology) {
+        die "No topology found for ", $species_tree_node->node_name;
+    }
+
+    # Make a tree of SpeciesTreeNode objects from the Newick tree
+    my $internal_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $best_topology, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
+    # Give all the internal names the taxon information of the query node (the multifurcation)
+    foreach my $node (@{$internal_tree->get_all_nodes}) {
+        next if $node->is_leaf;
+        $node->taxon_id($species_tree_node->taxon_id);
+        $node->node_name($species_tree_node->node_name);
+    }
+    # Replace each leaf of the partial tree with the full sub-tree
+    foreach my $leaf (@{$internal_tree->get_all_leaves}) {
+        print $leaf->name, "\n";
+        my $orig_stn = $stn_id_2_stn{$leaf->name};
+        $leaf->parent->add_child($orig_stn, $orig_stn->distance_to_parent);
+        $leaf->disavow_parent;
+    }
+    # Replace the root of the partial tree with the query node
+    $species_tree_node->add_child($_, 0) for @{$internal_tree->children};
+}
+
+
+# The return value is the newick string with the tree topology
+# It selects all the sub-trees that link $ref_stn_id to its children
+#  and prints the topology
+sub _count_topologies {
+    my ($gene_tree_node, $ref_stn_id, $stn_id_2_child, $counts) = @_;
+
+    if ($stn_id_2_child->{$gene_tree_node->_species_tree_node_id}) {
+        return sprintf('%d', $stn_id_2_child->{$gene_tree_node->_species_tree_node_id});
+    }
+
+    unless ($gene_tree_node->is_leaf()) {
+        # If the current gene_tree_node is $internal_taxon_id speciation and if all the children are fine
+        my @child_strings = (map {_count_topologies($_, $ref_stn_id, $stn_id_2_child, $counts)} @{$gene_tree_node->children});
+        if ($gene_tree_node->_species_tree_node_id == $ref_stn_id and ($gene_tree_node->node_type eq 'speciation')) {
+            if (not grep {not defined $_} @child_strings) {
+                return sprintf('(%s,%s)', sort @child_strings);
+            }
+        }
+        # The current node is not good enough, but we still have to register the sub-nodes
+        $counts->{$_}++ for grep {defined $_} @child_strings;
+    }
+    # undef means that the gene-tree node is in a different part of the species-tree or
+    # something prevents an accurate prediction (duplication nodes, etc)
+    return undef;
+}
+
+
 1;
