@@ -382,7 +382,6 @@ sub content {
       }
       else {
         my $rest_url = $hub->species_defs->ENSEMBL_REST_URL;
-           $rest_url = sprintf('%s:%s', $SiteDefs::ENSEMBL_PROTOCOL, $server) if $server =~ /^\/\//;
 
         # Fall back to file generation if REST fails.
         # To make it work for e! archives
