@@ -72,7 +72,7 @@ our $ENSEMBL_SERVERADMIN          = 'webmaster&#064;mydomain.org';              
 ###############################################################################
 ## Other server settings
 our $ENSEMBL_SERVER               = Sys::Hostname::Long::hostname_long; # Local machine name
-our $ENSEMBL_PROTOCOL             = 'http';                             # Used for proxies and self-referential URLs
+our $ENSEMBL_PROXY_PROTOCOL       = 'http';                             # Used for proxy-forwarding
 our $ENSEMBL_PROXY_PORT           = undef;                              # Port used for self-referential URLs. Set to undef if not using proxy-forwarding
 our $ENSEMBL_LONGPROCESS_MINTIME  = 10;                                 # Warn extra info to logs if a process takes more than given time in seconds to serve request
 our $ENSEMBL_MAX_PROCESS_SIZE     = 1024 * 1024;                        # Value for Apache2::SizeLimit::MAX_PROCESS_SIZE
@@ -368,8 +368,8 @@ sub import {
   $ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
 
   $ENSEMBL_BASE_URL = "//$ENSEMBL_SERVERNAME" . (
-    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
-    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
+    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROXY_PROTOCOL eq 'http' ||
+    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROXY_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
   );
 
   $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
@@ -507,7 +507,7 @@ sub _update_conf {
 sub _set_dedicated_mart {
   ## Set ENSEMBL_MART_SERVERNAME if mart is running on a separate dedicated server
   if ($ENSEMBL_MART_ENABLED && !$ENSEMBL_MART_PLUGIN_ENABLED && $ENSEMBL_MART_SERVER) {
-    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROTOCOL, $ENSEMBL_MART_SERVER;
+    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROXY_PROTOCOL, $ENSEMBL_MART_SERVER;
     $ENSEMBL_SETENV->{'ENSEMBL_MART_SERVERNAME'} = 'ENSEMBL_MART_SERVERNAME';
   }
 }
