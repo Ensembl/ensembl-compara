@@ -75,7 +75,7 @@ sub content {
     if ($_->[0] eq 'BACend_flag') {
       $value = ('Interpolated', 'Start located', 'End located', 'Both ends located')[$value]; 
     } elsif ($_->[0] eq 'synonym' && $mf->get_scalar_attribute('organisation') eq 'SC') {
-      $value = "http://www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=$value";
+      $value = "//www.sanger.ac.uk/cgi-bin/humace/clone_status?clone_name=$value";
     }
     
     if ($value) {

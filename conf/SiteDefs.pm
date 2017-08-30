@@ -94,8 +94,8 @@ our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Set
 our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\W+/-/gr; # Unique string representing this machine/server
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
-our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
 our $PERL_RLIMIT_AS                   = '2048:4096';                      # linux does not honor RLIMIT_DATA, RLIMIT_AS (address space) will work to limit the size of a process
+our $ENSEMBL_REST_URL                 = '//rest.mydomain.org';            # url to your REST service (Add http or https if your REST server only supports one protocol)
 our $CGI_POST_MAX                     = 20 * 1024 * 1024; # 20MB file upload max limit
 our $UPLOAD_SIZELIMIT_WITHOUT_INDEX   = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing trackhub requests
@@ -367,14 +367,14 @@ sub import {
   $ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
   $ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
 
-  $ENSEMBL_BASE_URL = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME" . (
+  $ENSEMBL_BASE_URL = "//$ENSEMBL_SERVERNAME" . (
     $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
     $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
   );
 
   $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
   $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
-  $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
+  $ENSEMBL_STATIC_SERVER     = "//$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;

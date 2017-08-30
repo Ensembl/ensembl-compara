@@ -204,7 +204,7 @@ sub add_external_browsers {
     } else {
       $url = $hub->url({ r => '1:1-100000' });
     }
-    $url = 'http://'.$browsers{'EG'}.'.ensembl.org'.$url;
+    $url = '//'.$browsers{'EG'}.'.ensembl.org'.$url;
     
     $self->get_other_browsers_menu->append($self->create_node('EnsemblGenomes', 'Ensembl '.ucfirst($browsers{'EG'}), [], { url => $url, raw => 1, external => 1 }));
     
@@ -256,7 +256,7 @@ sub add_archive_link {
   return unless $alt_assembly;
   my $current_assembly = $hub->species_defs->ASSEMBLY_VERSION;
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
-  my $site = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+  my $site = '//'.$hub->species_defs->SWITCH_ARCHIVE_URL;
   my $external = 1;
   #my ($link, $title, $class);
 

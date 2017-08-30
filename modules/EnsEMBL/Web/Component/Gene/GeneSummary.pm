@@ -148,7 +148,7 @@ sub content {
 
   if ($alt_assembly) {
     my $txt;
-    my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+    my $url = '//'.$hub->species_defs->SWITCH_ARCHIVE_URL;
     my $mapping = grep sprintf('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly), @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]};
     ## get coordinates on other assembly if available
     if ($mapping) {
@@ -228,7 +228,7 @@ sub content {
   my $cv_terms = $object->get_cv_terms;
   if (@$cv_terms) {
     my $first = shift @$cv_terms;
-    my $text = qq(<p>$first [<a href="http://vega.sanger.ac.uk/info/about/annotation_attributes.html" target="external" class="constant">Definitions</a>]</p>);
+    my $text = qq(<p>$first [<a href="//vega.sanger.ac.uk/info/about/annotation_attributes.html" target="external" class="constant">Definitions</a>]</p>);
     foreach my $next (@$cv_terms) {
       $text .= "<p>$next</p>";
     }

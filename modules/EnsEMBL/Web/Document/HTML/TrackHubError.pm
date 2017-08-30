@@ -87,7 +87,7 @@ sub archive_only {
                           : $species eq 'Homo_sapiens' ? 'grch37' : 'e'.$archives{$species};
         my $r   = $hub->species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
         my $url = $subdomain.'.ensembl.org';
-        $message .= qq(<li><a href="http://$url/$species/Location/View?r=$r;contigviewbottom=url:$trackhub;format=DATAHUB#modal_user_data">$url</a>);
+        $message .= qq(<li><a href="//$url/$species/Location/View?r=$r;contigviewbottom=url:$trackhub;format=DATAHUB#modal_user_data">$url</a>);
       }
 
       $message .= '</ul>';
@@ -95,7 +95,7 @@ sub archive_only {
   
 =pod
     if ($hub->param('assembly_hg19') || $hub->param('assembly_')) {
-      $message .= qq( Try our <a href="http://grch37.ensembl.org">GRCh37 archive site</a>);
+      $message .= qq( Try our <a href="//grch37.ensembl.org">GRCh37 archive site</a>);
     }
 =cut
   }
@@ -128,7 +128,7 @@ sub unknown_species {
     next if $subdomain eq $_;
     my $name  = 'Ensembl';
     $name    .= ' '.ucfirst($_) unless $_ eq 'www';
-    $message .= sprintf('<li><a href="http://%s.ensembl.org">%s</a></li>', $_, $name);
+    $message .= sprintf('<li><a href="//%s.ensembl.org">%s</a></li>', $_, $name);
   }
 
   $message .= '</ul>';

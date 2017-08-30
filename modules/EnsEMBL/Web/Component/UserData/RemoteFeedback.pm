@@ -124,7 +124,7 @@ sub get_message {
     my $archive_site = $hub->species_defs->get_config($species, 'SWITCH_ARCHIVE_URL');
     if ($archive_site) {
       my $assembly = $hub->species_defs->get_config($species, 'SWITCH_ASSEMBLY');
-      $message .= sprintf('</p><p>If you wish to view data on assembly %s, please use archive site <a href="http://%s/%s">%s</a>.</p>', 
+      $message .= sprintf('</p><p>If you wish to view data on assembly %s, please use archive site <a href="//%s/%s">%s</a>.</p>', 
                             $assembly, $archive_site, $species, $archive_site,
                     );
     }

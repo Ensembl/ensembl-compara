@@ -173,7 +173,7 @@ sub render {
 
   }
   else {
-    $html .= '<p><b>No tools are available on this site. Please visit <a href="http://www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
+    $html .= '<p><b>No tools are available on this site. Please visit <a href="//www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
   }
 
   ## Table of other tools
@@ -216,7 +216,7 @@ sub render {
 
   ## REST
   if (my $rest_url = $sd->ENSEMBL_REST_URL) {
-    (my $rest_domain = $rest_url) =~ s/http:\/\///;
+    my $rest_domain = $rest_url =~ s/(https?:)?\/\///r;
     $table->add_row({
       "name" => sprintf("<b><a href=%s>$sitename REST server</a></b>", $rest_url),
       'desc' => 'Access Ensembl data using your favourite programming language',
