@@ -163,10 +163,11 @@ sub content {
 
   # send through JSON version of the container
   my $json = JSON->new();
-
+  my $params_to_client = {'protein_haplotypes' => $c->get_all_ProteinHaplotypes,
+                          'cds_haplotypes'     => $c->get_all_CDSHaplotypes };
   $html .= sprintf(
     '<input class="js_param" type="hidden" name="haplotype_data" value="%s" />',
-    encode_entities($json->allow_blessed->convert_blessed->encode($c))
+    encode_entities($json->allow_blessed->convert_blessed->encode($params_to_client))
   );
 
   # and send population stuff
