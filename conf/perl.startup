@@ -199,7 +199,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
  ORM Databases:      %s
 
- External address:   %s://%s/
+ External address:   %s:%s/
  Real address:       %s://%s:%s%s%s%s
 
  Search Server:      %s
