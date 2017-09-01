@@ -84,11 +84,12 @@ Bio::EnsEMBL::DensityType
 Bio::EnsEMBL::DnaPepAlignFeature
 Bio::EnsEMBL::Exon
 Bio::EnsEMBL::ExonTranscript
-Bio::EnsEMBL::Funcgen::DataSet
-Bio::EnsEMBL::Funcgen::DBSQL::DataSetAdaptor
-Bio::EnsEMBL::Funcgen::DBSQL::ResultSetAdaptor
-Bio::EnsEMBL::Funcgen::DBSQL::SliceAdaptor
-Bio::EnsEMBL::Funcgen::ResultSet
+Bio::EnsEMBL::Funcgen::DBSQL::AlignmentAdaptor
+Bio::EnsEMBL::Funcgen::Alignment
+Bio::EnsEMBL::Funcgen::DBSQL::PeakAdaptor
+Bio::EnsEMBL::Funcgen::Peak
+Bio::EnsEMBL::Funcgen::DBSQL::PeakCallingAdaptor
+Bio::EnsEMBL::Funcgen::PeakCalling
 Bio::EnsEMBL::IdentityXref
 Bio::EnsEMBL::IO::ColumnBasedParser
 Bio::EnsEMBL::IO::Object::ColumnBasedGeneric

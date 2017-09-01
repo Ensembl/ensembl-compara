@@ -61,15 +61,12 @@ sub get_data {
   ## OK, looking good - fetch data from db 
   my $cell_line = $self->my_config('cell_line');  
   my $config      = $self->{'config'};
-  my $fsets;
   if ($cell_line) {
-    my $fsa = $db->get_FeatureSetAdaptor;
-    $fsets  = $fsa->fetch_by_name($cell_line);
     my $ega = $db->get_EpigenomeAdaptor;
     my $epi = $ega->fetch_by_name($cell_line);
     $self->{'my_config'}->set('epigenome', $epi);
   }
-  my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
+  my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}); 
 
   my $drawable        = []; 
   my $entries         = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || {};

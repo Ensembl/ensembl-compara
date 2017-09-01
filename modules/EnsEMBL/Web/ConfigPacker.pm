@@ -792,12 +792,16 @@ sub _summarise_funcgen_db {
     'select vendor, name, array_id from array'
   );
   my $sth = $dbh->prepare(
-    'select pf.probe_feature_id
-       from array_chip ac, probe p, probe_feature pf, seq_region sr, coord_system cs
-       where ac.array_chip_id=p.array_chip_id and p.probe_id=pf.probe_id  
-       and pf.seq_region_id=sr.seq_region_id and sr.coord_system_id=cs.coord_system_id 
-       and cs.is_current=1 and ac.array_id = ?
-       limit 1 
+    '
+    select 
+        probe_feature_id
+    from 
+        array_chip 
+        join probe using (array_chip_id)
+        join probe_feature using (probe_id)
+    where
+         array_id = ?
+    limit 1
     '
   );
   foreach my $row (@$t_aref) {
@@ -901,16 +905,23 @@ sub _summarise_funcgen_db {
 
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
-      select 
-        epigenome.display_label, 
-        feature_set.feature_type_id, 
-        feature_set.feature_set_id
-      from 
-        epigenome 
-      join feature_set using (epigenome_id) 
-      join feature_type using (feature_type_id) 
-      where 
-        class in ($classes) 
+        select 
+            epigenome.display_label, 
+            peak_calling.feature_type_id, 
+            peak_calling.peak_calling_id
+        from 
+            peak_calling
+            join feature_type using (feature_type_id) 
+            join alignment_read_file using (alignment_id)
+            join read_file_experimental_configuration using (read_file_id)
+            join experiment using (experiment_id)
+            join epigenome using (epigenome_id)
+        where 
+            class in ($classes) 
+        group by
+            epigenome.display_label, 
+            peak_calling.feature_type_id, 
+            peak_calling.peak_calling_id
     ));
 
     my $data;
