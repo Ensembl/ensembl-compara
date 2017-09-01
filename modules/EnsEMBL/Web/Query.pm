@@ -126,8 +126,8 @@ sub source {
   return $self->{'store'}->_source($source);
 }
 
-sub precache {
-  my ($self,$kind,$i,$n,$subpart) = @_;
+sub precache_divide {
+  my ($self,$kind,$n,$subpart) = @_;
 
   my $conf = $self->{'impl'}->precache()->{$kind};
   my $fns = $conf->{'loop'};
@@ -145,20 +145,27 @@ sub precache {
     }
     @all = @next;
   }
-  my @parts;
-  for(my $k=0;$k<@all;$k++) {
-    next unless ($k % $n) == $i;
-    push @parts,$all[$k];
-  }
-  foreach my $p (@parts) {
+  foreach my $p (@all) {
     foreach my $k (keys %$p) {
       next unless ref($p->{$k}) eq 'CODE';
       $p->{$k} = $p->{$k}->($self->{'impl'},$p);
     }
   }
+  my @parts;
+  for(my $k=0;$k<@all;$k++) {
+    push @parts,[] if @parts <= $k % $n;
+    push @{$parts[$k % $n]},$all[$k];
+  }
+  return \@parts;
+}
+
+
+sub precache {
+  my ($self,$kind,$part) = @_;
+
   $self->{'store'}->open;
   my $start = time();
-  foreach my $args (@parts) {
+  foreach my $args (@$part) {
     my @args = ($args);
     $self->_run_phase(\@args,undef,'split');
     foreach my $a (@args) {
