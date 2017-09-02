@@ -32,10 +32,10 @@ sub default_options {
 
         #Location of executables
         'pair_aligner_exe'  => $self->o('ensembl_cellar').'/lastz/1.04.00/bin/lastz',
-        'faToNib_exe'       => $self->o('ensembl_cellar').'/kent/v335/bin/faToNib',
-        'lavToAxt_exe'      => $self->o('ensembl_cellar').'/kent/v335/bin/lavToAxt',
-        'axtChain_exe'      => $self->o('ensembl_cellar').'/kent/v335/bin/axtChain',
-        'chainNet_exe'      => $self->o('ensembl_cellar').'/kent/v335/bin/chainNet',
+        'faToNib_exe'       => $self->o('ensembl_cellar').'/kent/v335_1/bin/faToNib',
+        'lavToAxt_exe'      => $self->o('ensembl_cellar').'/kent/v335_1/bin/lavToAxt',
+        'axtChain_exe'      => $self->o('ensembl_cellar').'/kent/v335_1/bin/axtChain',
+        'chainNet_exe'      => $self->o('ensembl_cellar').'/kent/v335_1/bin/chainNet',
 
     };
 }
