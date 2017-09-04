@@ -391,10 +391,7 @@ sub get_data {
   my $is_image = keys %$filter ? 0 : 1;
 
   my $hub                 = $self->hub;
-#   my $dataset_adaptor     = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
-#   my $featureset_adaptor  = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
   my $peak_calling_adaptor  = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
-#   my $annotated_fsets     = $featureset_adaptor->fetch_all_by_feature_class('annotated');
   my $all_peak_calling     = $peak_calling_adaptor->fetch_all;
 
   my $count               = 0;
@@ -424,9 +421,7 @@ sub get_data {
     if ($filter->{'block_features'}
         || grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
       my $key = $unique_id.':'.$count;
-#       my $afa = $hub->get_adaptor('get_AnnotatedFeatureAdaptor', 'funcgen');
       my $peak_adaptor = $hub->get_adaptor('get_PeakAdaptor', 'funcgen');
-#       my $block_features = $afa->fetch_all_by_Slice_FeatureSets($self->Obj, [$peak_calling]);
       my $block_features = $peak_adaptor->fetch_all_by_Slice_PeakCalling($self->Obj, $peak_calling);
 
       $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features if scalar @$block_features;
@@ -434,19 +429,20 @@ sub get_data {
 
     ## Get path to bigWig file
     if (grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
-#       my $dataset = $dataset_adaptor->fetch_by_product_FeatureSet($peak_calling);
-#       my $ssets   = $dataset->get_supporting_sets('result');
-#       next if scalar @$ssets != 1;
       
-      my $alignment = $peak_calling->fetch_Alignment;
+      my $alignment        = $peak_calling->fetch_Alignment;
+      my $bigwig_file      = $alignment->fetch_BigWigFile;
+      my $bigwig_file_name = $bigwig_file->path;
       
-      # TODO: Actually fetch the bigwig belonging to the alignment
+      my $file_path = join '/', 
+        $hub->species_defs->DATAFILE_BASE_PATH, 
+        lc $hub->species, 
+        $hub->species_defs->ASSEMBLY_VERSION, 
+        $bigwig_file_name;
+
+      my $key = $unique_id.':'.$alignment->dbID;
       
-#       my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, lc $hub->species, $hub->species_defs->ASSEMBLY_VERSION;
-#       $file_path .= $ssets->[0]->dbfile_path;
-#       my $key = $unique_id.':'.$ssets->[0]->dbID;
-# 
-#       $data->{$cell_line}{$set}{'wiggle_features'}{$key} = $file_path;
+      $data->{$cell_line}{$set}{'wiggle_features'}{$key} = $file_path;
     }
   }
 
