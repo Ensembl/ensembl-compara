@@ -59,29 +59,33 @@ sub content {
     foreach my $features ($core_features, $non_core_features) {
       foreach my $f_set (sort { $features->{$a}[0]->start <=> $features->{$b}[0]->start } keys %$features) { 
         
-        foreach my $f (sort { $a->start <=> $b->start } @{$features->{$f_set}}) {
-          my $f_start = $object_slice->start + $f->start - 1;
-          my $f_end   = $object_slice->start + $f->end   - 1;
+        foreach my $peak (sort { $a->start <=> $b->start } @{$features->{$f_set}}) {
+          my $peak_start = $object_slice->start + $peak->start - 1;
+          my $peak_end   = $object_slice->start + $peak->end   - 1;
 
+          my $peak_calling = $peak->fetch_PeakCalling;
+          
           my $source_link = $self->hub->url({
             type => 'Experiment',
             action => 'Sources',
-            ex => 'name-'.$f->feature_set->name
+            ex => 'name-'.$peak_calling->dbID
           });
        
-          my $feature_name  = $f->feature_type->name;   
+          my $feature_type = $peak_calling->fetch_FeatureType;
+          my $feature_name = $feature_type->name;
+          
 
           push @rows, { 
-            type     => $f->feature_type->evidence_type_label,
-            location => $f->slice->seq_region_name . ":$f_start-$f_end",
+            type     => $feature_type->evidence_type_label,
+            location => $peak->slice->seq_region_name . ":$peak_start-$peak_end",
             feature  => $feature_name,
             cell     => $cell_line,
             source   => sprintf(q(<a href="%s">%s</a>),
                   $source_link,
-                  $f->feature_set->source_label),
+                  $peak_calling->fetch_source_label),
           };
           
-          push @rows, @{$self->get_motif_rows($f, $cell_line)} if $features == $core_features;
+          push @rows, @{$self->get_motif_rows($peak, $cell_line)} if $features == $core_features;
         }
       }
     }
