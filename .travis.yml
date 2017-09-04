@@ -9,7 +9,6 @@ env:
   - COVERALLS=true
   - COVERALLS=false
 
-dist: precise
 sudo: false
 
 before_install:
@@ -46,6 +45,7 @@ install:
     - cpanm --quiet --installdeps --with-recommends --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
+    - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
 
 script: "./travisci/harness.sh"
 
