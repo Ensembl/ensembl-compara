@@ -57,10 +57,10 @@ sub draw_wiggle {
     my $start   = $f->{'start'};
     my $end     = $f->{'end'};
     my $score   = $f->{'score'};
-    if ($c->{'cutoff_max'} && $score > $c->{'cutoff_max'}) {
+    if (defined($c->{'cutoff_max'}) && $score > $c->{'cutoff_max'}) {
       $score = $c->{'cutoff_max'};
     }
-    elsif ($c->{'cutoff_min'} && $score < $c->{'cutoff_min'}) {
+    elsif (defined($c->{'cutoff_min'}) && $score < $c->{'cutoff_min'}) {
       $score = $c->{'cutoff_min'};
     }
     my $href    = $f->{'href'};
