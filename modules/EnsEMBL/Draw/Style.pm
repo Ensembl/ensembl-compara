@@ -181,23 +181,33 @@ sub draw_graph_base {
   my $range; 
   if (defined($metadata->{'y_min'}) || defined($metadata->{'y_max'})) {
     ## User has defined scale, so use it!
+    my ($saved_min, $saved_max) = ($min_score, $max_score);
     $min_score = $metadata->{'y_min'} if (defined($metadata->{'y_min'}) && $metadata->{'y_min'} ne ''); 
     $max_score = $metadata->{'y_max'} if (defined($metadata->{'y_max'}) && $metadata->{'y_max'} ne ''); 
-  }
-  $range = $max_score - $min_score;
-  ## Try to calculate something sensible 
-  if ($range < 0.01) {
-    ## Oh dear, data all has pretty much same value ...
-    if ($max_score > 0.01) {
-      ## ... but it's not zero, so just move minimum down
-      $min_score = 0;
-    } else {
-      ## ... just create some sky
-      $max_score = 0.1;
-      $metadata->{'y_max'} = $max_score;
+    ## Sanity check - ignore these values if user settings are nonsense
+    $range = $max_score - $min_score;
+    if ($range == 0) {
+      $min_score = $saved_min;
+      $max_score = $saved_max;
     }
   }
-  $min_score = 0 if $min_score >= 0 && $baseline_zero;
+  else {
+    $range = $max_score - $min_score;
+    ## Try to calculate something sensible 
+    if ($range < 0.01) {
+      ## Oh dear, data all has pretty much same value ...
+      if ($max_score > 0.01) {
+        ## ... but it's not zero, so just move minimum down
+        $min_score = 0;
+      } 
+      else {
+        ## ... just create some sky
+        $max_score = 0.1;
+        $metadata->{'y_max'} = $max_score;
+      }
+    }
+    $min_score = 0 if $min_score >= 0 && $baseline_zero;
+  }
   $range = $max_score - $min_score;
 
   my $pix_per_score = $row_height/$range;
