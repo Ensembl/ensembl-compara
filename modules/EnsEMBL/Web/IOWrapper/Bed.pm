@@ -65,6 +65,7 @@ sub create_hash {
 ### @return Hashref
   my ($self, $slice, $metadata) = @_;
   return unless $slice;
+  my $slice_start = $slice->start;
 
   ## Start and end need to be relative to slice,
   ## as that is how the API returns coordinates
@@ -78,12 +79,12 @@ sub create_hash {
 
   return unless first {$seqname eq $_} @$seq_region_names;
 
-  my $feature_start = $self->parser->get_start;
-  my $feature_end   = $self->parser->get_end;
-  my $start         = $feature_start - $slice->start + 1;
-  my $end           = $feature_end - $slice->start + 1;
+  my $start_coord = $self->parser->get_start;
+  my $end_coord   = $self->parser->get_end;
+  my $drawn_start = $start_coord - $slice_start + 1;
+  my $drawn_end   = $end_coord - $slice_start + 1;
 
-  return if $end < 0 || $start > $slice->length;
+  return if $drawn_end < 0 || $drawn_start > $slice->length;
 
 
   $metadata         ||= {};
@@ -93,11 +94,11 @@ sub create_hash {
     $score = uc($score);
   }
   my $colour_params   = {
-                        'metadata'  => $metadata, 
-                        'strand'    => $strand, 
-                        'score'     => $score,
-                        'itemRgb'   => $self->parser->get_itemRgb,
-                        };
+    'metadata'  => $metadata, 
+    'strand'    => $strand, 
+    'score'     => $score,
+    'itemRgb'   => $self->parser->get_itemRgb,
+  };
   my $colour = $self->set_colour($colour_params);
 
   my $label = $self->parser->can('get_name') ? $self->parser->get_name : '';
@@ -105,18 +106,18 @@ sub create_hash {
 
   my $drawn_strand = $metadata->{'drawn_strand'} || $strand;
   ## Constrain click coords by viewport, so we don't fetch unnecessary data in zmenu
-  my $click_start = $feature_start < $slice->start ? $slice->start : $feature_start;
-  my $click_end   = $feature_end > $slice->end ? $slice->end : $feature_end;
+  my $click_start = $start_coord < $slice_start ? $slice_start : $start_coord;
+  my $click_end   = $end_coord > $slice->end ? $slice->end : $end_coord;
   my $href = $self->href({
-                        'action'        => $metadata->{'action'},
-                        'id'            => $id,
-                        'url'           => $metadata->{'url'},
-                        'seq_region'    => $seqname,
-                        'start'         => $click_start,
-                        'end'           => $click_end,
-                        'strand'        => $drawn_strand,
-                        'zmenu_extras'  => $metadata->{'zmenu_extras'},
-                        }) unless $metadata->{'omit_feature_links'};
+      'action'        => $metadata->{'action'},
+      'id'            => $id,
+      'url'           => $metadata->{'url'},
+      'seq_region'    => $seqname,
+      'start'         => $click_start,
+      'end'           => $click_end,
+      'strand'        => $drawn_strand,
+      'zmenu_extras'  => $metadata->{'zmenu_extras'},
+    }) unless $metadata->{'omit_feature_links'};
 
   ## Don't set start and end yet, as drawing code and zmenu want
   ## different values
@@ -134,17 +135,17 @@ sub create_hash {
 
   if ($metadata->{'display'} eq 'text') {
     ## Want the real coordinates, not relative to the slice
-    $feature->{'start'} = $feature_start;
-    $feature->{'end'}   = $feature_end;
+    $feature->{'start'} = $start_coord;
+    $feature->{'end'}   = $end_coord;
     ## This needs to deal with BigBed AutoSQL fields, so it's a bit complex
     if (keys %$column_map) {
       $feature->{'extra'} = [];
       ## Synonyms for standard columns used in zmenus
       my %skipped = (
-                    'chrom'       => 1,
-                    'chromStart'  => 1,
-                    'chromEnd'    => 1,
-                    );
+        'chrom'       => 1,
+        'chromStart'  => 1,
+        'chromEnd'    => 1,
+      );
       my %lookup = reverse %$column_map;
       for (sort {$a <=> $b} keys %lookup) {
         my $field   = $lookup{$_};
@@ -157,27 +158,27 @@ sub create_hash {
         }
         ## N.B. don't try to parse camelcase names - it's just a minefield!
         push @{$feature->{'extra'}}, {
-                                      'name'  => ucfirst($field),
-                                      'value' => $value, 
-                                      };
+          'name'  => ucfirst($field),
+          'value' => $value, 
+        };
       }
 
     }
     elsif ($self->parser->get_blockCount) {
       $feature->{'extra'} = [
-                            {'name' => 'Block count', 'value' => $self->parser->get_blockCount},
-                            {'name' => 'Block sizes', 'value' => join(', ', @{$self->parser->get_blockSizes||[]})},
-                            {'name' => 'Block starts', 'value' => join(', ', @{$self->parser->get_blockStarts||[]})},
-                            {'name' => 'Thick start', 'value' => $self->parser->get_thickStart},
-                            {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
-                            ];
+        {'name' => 'Block count', 'value' => $self->parser->get_blockCount},
+        {'name' => 'Block sizes', 'value' => join(', ', @{$self->parser->get_blockSizes||[]})},
+        {'name' => 'Block starts', 'value' => join(', ', @{$self->parser->get_blockStarts||[]})},
+        {'name' => 'Thick start', 'value' => $self->parser->get_thickStart},
+        {'name' => 'Thick end', 'value' => $self->parser->get_thickEnd},
+      ];
     }
     ## TODO Put RNAcentral link here
   }
   else {
-    $feature->{'start'}         = $start;
-    $feature->{'end'}           = $end;
-    $feature->{'structure'}     = $self->create_structure($feature_start, $feature_end, $slice->start);
+    $feature->{'start'}         = $drawn_start;
+    $feature->{'end'}           = $drawn_end;
+    $feature->{'structure'}     = $self->create_structure($feature, $start_coord, $end_coord, $slice_start);
     $feature->{'join_colour'}   = $metadata->{'join_colour'} || $colour;
     $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
     if ($column_map->{'name2'}) {
@@ -188,7 +189,7 @@ sub create_hash {
 }
 
 sub create_structure {
-  my ($self, $feature_start, $feature_end, $slice_start) = @_;
+  my ($self, $feature, $start_coord, $end_coord, $slice_start) = @_;
 
   my $thick_start   = $self->parser->get_thickStart;
   my $thick_end     = $self->parser->get_thickEnd;
@@ -203,11 +204,11 @@ sub create_structure {
   if ($self->parser->get_blockCount) {
     my @block_starts  = @{$self->parser->get_blockStarts};
     my @block_lengths = @{$self->parser->get_blockSizes};
+    my $offset        = $start_coord - $slice_start;
 
     foreach(0..($self->parser->get_blockCount - 1)) {
       my $start   = shift @block_starts; 
       ## Adjust to be relative to slice
-      my $offset  = $feature_start - $slice_start;
       $start      = $start + $offset;
       my $length  = shift @block_lengths;
       ## Adjust coordinates here to accommodate drawing code without 
@@ -219,9 +220,9 @@ sub create_structure {
   }
   else {
     ## Single-block feature
-    $structure = [{'start' => $feature_start - $slice_start, 'end' => $feature_end - $slice_start}];
+    $structure = [{'start' => $feature->{'start'}, 'end' => $feature->{'end'}}];
   }
-  
+
   ## Fix for non-intuitive configuration of non-coding transcripts
   if ($thick_start == $thick_end) {
     $thick_start  = 0;
@@ -229,11 +230,11 @@ sub create_structure {
   }
   else {
     ## Do we have any UTR?
-    $has_utr5 = 1 if ($thick_start && $thick_start > $feature_start);
-    $has_utr3 = 1 if ($thick_end && $thick_end < $feature_end);
+    $has_utr5 = 1 if ($thick_start && $thick_start > $start_coord);
+    $has_utr3 = 1 if ($thick_end && $thick_end < $end_coord);
     ## Adjust to make relative to slice 
-    $thick_start -= $slice_start;
-    $thick_end   -= $slice_start;
+    $thick_start -= ($slice_start - 1);
+    $thick_end   -= ($slice_start - 1);
   }
 
   ## Does this feature have any coding sequence?
