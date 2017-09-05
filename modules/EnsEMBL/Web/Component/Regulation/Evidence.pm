@@ -68,7 +68,7 @@ sub content {
           my $source_link = $self->hub->url({
             type => 'Experiment',
             action => 'Sources',
-            ex => 'name-'.$peak_calling->dbID
+            ex => 'name-'.$peak_calling->name
           });
        
           my $feature_type = $peak_calling->fetch_FeatureType;

@@ -28,7 +28,7 @@ sub content {
   my $hub                 = $self->hub;
   my $db_adaptor          = $hub->database($hub->param('fdb'));
   #my $feature_set         = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($hub->param('fs'));
-  my $peak_calling        = $db_adaptor->get_PeakCallingAdaptor->fetch_by_dbID($hub->param('fs')); 
+  my $peak_calling        = $db_adaptor->get_PeakCallingAdaptor->fetch_by_name($hub->param('fs')); 
   my ($chr, $start, $end) = split /\:|\-/, $hub->param('pos'); 
   my $length              = $end - $start + 1;
   my $slice               = $hub->database('core')->get_SliceAdaptor->fetch_by_region('toplevel', $chr, $start, $end);
@@ -61,7 +61,7 @@ sub content {
   $self->add_entry({
     type  => 'Feature',
     #label => $feature_set->display_label
-    label => $peak_calling->dbID
+    label => $peak_calling->display_label
   });
 
 
@@ -74,7 +74,7 @@ sub content {
       type        => 'Source',
       label_html  =>  sprintf '<a href="%s">%s</a> ',
                       #$hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$feature_set->name}),
-                      $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$peak_calling->dbID}),
+                      $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$peak_calling->name}),
                       $source_label
                      });
   }
