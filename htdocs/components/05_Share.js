@@ -19,7 +19,6 @@ Ensembl.Share = {
   shareInit: function (options) {
     var panel = this;
     
-    this.protocol = window.location.href.split('//');
     this.shareOptions = $.extend({
       species: {},
       type: 'page',
@@ -77,9 +76,7 @@ Ensembl.Share = {
         panel.elLk.shareSpinner.hide();
         
         if (json.url) {
-          if (json.url.match('^//')) {
-            json.url = panel.protocol[0] +  json.url;
-          }
+          json.url = $('<a>').attr('href', json.url).prop('href'); // in case protocol or domain is missing
 
           if (!$('.url', panel.elLk.share).val(json.url).add('.copy', panel.elLk.share).show().length) {
             panel.elLk.share.find('.fbutton').addClass('bottom-margin');
