@@ -39,10 +39,6 @@ sub draw_feature {
   }
 
   ## Basic parameters for all parts of the feature
-  my $feature_start = $feature->{'start'};
-  my $current_x     = $feature_start;
-  $current_x        = 0 if $current_x < 0;
-
   my $colour      = $feature->{'colour'};
   my $join_colour = $feature->{'join_colour'};
 
@@ -113,7 +109,6 @@ sub draw_feature {
       $params{'structure'}  = $_;
       $self->draw_block($composite, %params);
     }
-    $current_x += $width;
     %previous = %params;
   }
 
@@ -153,7 +148,7 @@ sub draw_block {
   ## not with respect to biology, because it makes the logic a lot simpler
   my $coding_start  = $structure->{'utr_5'} || $start;
   my $coding_end    = $structure->{'utr_3'} || $end;
-  my $coding_width  = $coding_end - $coding_start;
+  my $coding_width  = $coding_end - $coding_start + 1;
 
   if ($structure->{'non_coding'}) {
     $self->draw_noncoding_block($composite, %params);
@@ -173,7 +168,8 @@ sub draw_block {
     if (defined($structure->{'utr_3'})) {
       $params{'x'}      = $structure->{'utr_3'} - 1;
       $params{'x'}      = 0 if $params{'x'} < 0; 
-      $params{'width'}  = $end - $params{'x'};;
+      ## Don't add one here, because we're working backwards!
+      $params{'width'}  = $end - $params{'x'};
       $self->draw_noncoding_block($composite, %params);
     }
   }
