@@ -633,10 +633,19 @@ sub display_name {
 =cut
 
 sub get_scientific_name {
-    my $self = shift;
+    my ($self, $make_unique) = @_;
+
     my $n = $self->taxon_id ? (($self->{'_taxon'} || $self->adaptor) ? $self->taxon->scientific_name : 'Taxon ' . $self->taxon_id) : $self->name;
     $n .= " " . $self->strain_name if $self->strain_name;
     $n .= sprintf(' (component %s)', $self->genome_component) if $self->genome_component;
+
+    if ($make_unique and not ($self->strain_name or $self->genome_component)) {
+        # Try to make the name unique
+        my $competitors = $self->adaptor ? ($self->taxon_id ? $self->adaptor->fetch_all_by_taxon_id($self->taxon_id) : $self->adaptor->fetch_all_by_name($self->name)) : [];
+        if (scalar(grep {$_ ne $self} @$competitors)) {
+            return $n . " " . $self->assembly;
+        }
+    }
     return $n;
 }
 
