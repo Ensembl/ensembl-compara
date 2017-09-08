@@ -634,7 +634,7 @@ sub display_name {
 
 sub get_scientific_name {
     my $self = shift;
-    my $n = $self->taxon_id ? (($self->{'_taxon'} || $self->adaptor) ? $self->taxon->scientific_name : $self->taxon_id) : $self->name;
+    my $n = $self->taxon_id ? (($self->{'_taxon'} || $self->adaptor) ? $self->taxon->scientific_name : 'Taxon ' . $self->taxon_id) : $self->name;
     $n .= " " . $self->strain_name if $self->strain_name;
     $n .= sprintf(' (component %s)', $self->genome_component) if $self->genome_component;
     return $n;
