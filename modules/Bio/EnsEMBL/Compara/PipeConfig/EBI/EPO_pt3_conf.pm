@@ -92,7 +92,7 @@ sub default_options {
       'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.42mammals.branch_len.nw',
 
       'bl2seq' => undef,
-      'blastn' => $self->o('ensembl_cellar') . '/blast-2230/2.2.30/bin/blastn',
+      'blastn' => $self->o('ensembl_cellar') . '/blast/2.2.30/bin/blastn',
       'enredo_bin_dir' => '/nfs/ensembl/bin/enredo/', # location of enredo executable
 
       # Dump directory

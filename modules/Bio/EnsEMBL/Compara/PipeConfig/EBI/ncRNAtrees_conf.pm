@@ -77,9 +77,9 @@ sub default_options {
                                $self->o('rel_with_suffix'),
 
             # executable locations:
-            'cmalign_exe'           => $self->o('ensembl_cellar').'/infernal/1.1.1/bin/cmalign',
-            'cmbuild_exe'           => $self->o('ensembl_cellar').'/infernal/1.1.1/bin/cmbuild',
-            'cmsearch_exe'          => $self->o('ensembl_cellar').'/infernal/1.1.1/bin/cmsearch',
+            'cmalign_exe'           => $self->o('ensembl_cellar').'/infernal/1.1.2/bin/cmalign',
+            'cmbuild_exe'           => $self->o('ensembl_cellar').'/infernal/1.1.2/bin/cmbuild',
+            'cmsearch_exe'          => $self->o('ensembl_cellar').'/infernal/1.1.2/bin/cmsearch',
             'mafft_exe'             => $self->o('ensembl_cellar').'/mafft/7.305/bin/mafft',
 
             'raxml_pthread_exe_sse3'     => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-SSE3',
@@ -94,8 +94,8 @@ sub default_options {
             'ktreedist_exe'         => $self->o('ensembl_cellar').'/ktreedist/1.0.0/bin/Ktreedist.pl',
             'fasttree_exe'          => $self->o('ensembl_cellar').'/fasttree/2.1.8/bin/FastTree',
             'treebest_exe'          => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
-            'quicktree_exe'         => $self->o('ensembl_cellar').'/quicktree/1.1.0/bin/quicktree',
-            'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.4/bin/r2r',
+            'quicktree_exe'         => $self->o('ensembl_cellar').'/quicktree/2.0/bin/quicktree',
+            'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.5/bin/r2r',
             'cafe_shell'            => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
 
             # FIXME

@@ -88,7 +88,7 @@ sub default_options {
         'hmmer2_home'         => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
 
         # code directories:
-        'blast_bin_dir'  => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
+        'blast_bin_dir'  => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
         'mcl_bin_dir'    => $self->o('ensembl_cellar').'/mcl/14-137/bin/',
         'mafft_root_dir' => $self->o('ensembl_cellar').'/mafft/7.305/',
 

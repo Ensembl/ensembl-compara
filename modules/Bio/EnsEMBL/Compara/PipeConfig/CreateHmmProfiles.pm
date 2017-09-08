@@ -179,7 +179,7 @@ sub default_options {
         'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
         'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
         'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
-        'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
+        'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
 

@@ -94,7 +94,7 @@ sub default_options {
     #Location of executables (or paths to executables)
     'gerp_exe_dir'              => $self->o('ensembl_cellar').'/gerp/20080211/bin',
     'mercator_exe'              => $self->o('ensembl_cellar').'/cndsrc/2013.01.11/bin/mercator',
-    'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast-2230/2.2.30/bin/',
+    'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
     'exonerate_exe'             => $self->o('ensembl_cellar').'/exonerate22/2.2.0/bin/exonerate',
     'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-141/bin/java',
     'estimate_tree'             => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
