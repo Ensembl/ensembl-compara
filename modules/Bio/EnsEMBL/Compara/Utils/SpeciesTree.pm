@@ -311,6 +311,60 @@ sub get_timetree_estimate {
 }
 
 
+=head2 set_branch_lengths_from_gene_trees
+
+    Function to extract all the branch lengths from a set of gene-trees and
+    assign lengths to the branches of a species-tree .
+
+=cut
+
+sub set_branch_lengths_from_gene_trees {
+    my ($species_tree_root, $gene_trees) = @_;
+
+    # Analyze all the trees
+    my %distances = ();
+    foreach my $gt (@$gene_trees) {
+        my $was_preloaded = $gt->{_preloaded};
+        $gt->preload;
+        _extract_branch_lengths($gt->root, \%distances);
+        $gt->release_tree() unless $was_preloaded;
+    }
+
+    $species_tree_root->print_tree(5);
+    # Get the median value for each species-tree branch
+    foreach my $node ($species_tree_root->get_all_subnodes) {
+        my @allval = sort {$a <=> $b} @{$distances{$node->node_id}};
+        unless (scalar(@allval)) {
+            warn "no data for ", $node->toString, "\n";
+            next;
+        }
+        my $median = $allval[int(scalar(@allval)/2)];
+        $node->distance_to_parent( $median );
+    }
+}
+
+
+# Recursive method to extract the branch lengths of a gene-tree
+# It only considers the branches that are strictly between speciation nodes
+sub _extract_branch_lengths {
+    my ($gene_tree_node, $distances) = @_;
+
+    return if $gene_tree_node->is_leaf;
+    _extract_branch_lengths($_, $distances) for @{$gene_tree_node->children};
+
+    # Take the distances between speciation nodes, without any missing species-tree nodes
+    if ($gene_tree_node->node_type eq 'speciation') {
+        foreach my $child (@{$gene_tree_node->children})  {
+            if ($child->is_leaf || ($child->node_type eq 'speciation')) {
+                if ($child->species_tree_node->_parent_id == $gene_tree_node->_species_tree_node_id) {
+                    push @{$distances->{$child->_species_tree_node_id}}, $child->distance_to_parent;
+                }
+            }
+        }
+    }
+}
+
+
 =head2 binarize_multifurcation_using_from_gene_trees
 
     Function to binarize a multifurcation by selecting the most frequent
