@@ -287,9 +287,9 @@ sub read_bed_file {
   my ($file, $this_chr) = @_;
   my $features;
 
-  open(FILE, '<', $file);
+  open(my $fh, '<', $file);
   if ($this_chr) {
-    while (<FILE>) {
+    while (<$fh>) {
       next if (/^#/ or /^track/);
       my ($chr, $start, $end) = split(/\s+/, $_);
       $chr =~ s/^chr//;
@@ -300,7 +300,7 @@ sub read_bed_file {
       }
     }
   } else {
-    while (<FILE>) {
+    while (<$fh>) {
       next if (/^#/ or /^track/);
       my ($chr, $start, $end) = split(/\s/, $_);
       next if ($chr eq "");
@@ -313,7 +313,7 @@ sub read_bed_file {
       }
     }
   }
-  close(FILE);
+  close($fh);
 
   my $sorted_features;
   ## Merges overlapping features
@@ -341,8 +341,8 @@ sub get_chr_names {
   my ($file) = @_;
   my $names = {};
 
-  open(FILE, '<', $file);
-  while (<FILE>) {
+  open(my $fh, '<', $file);
+  while (<$fh>) {
     next if (/^#/ or /^track/);
     my ($chr, $start, $end) = split(/\s/, $_);
     $chr =~ s/^chr//;
@@ -351,7 +351,7 @@ sub get_chr_names {
     $contains_NT_contigs = 1 if ($chr =~ /NT/);
     $names->{$chr} = 1;
   }
-  close(FILE);
+  close($fh);
 
   return $names;
 }

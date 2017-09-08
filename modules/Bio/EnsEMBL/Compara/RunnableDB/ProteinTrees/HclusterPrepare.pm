@@ -164,14 +164,14 @@ sub fetch_distances {
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
   my $filename = $self->param('cluster_dir') . "/$table_name.hcluster.txt";
-  open(FILE, '>', $filename) or die "Could not open '$filename' for writing : $!";
+  open(my $out_fh, '>', $filename) or die "Could not open '$filename' for writing : $!";
   my ($query_id, $hit_id, $score);
   $sth->bind_columns(\$query_id, \$hit_id, \$score);
   while ($sth->fetch) {
-    print FILE "$query_id\t$hit_id\t$score\n";
+    print $out_fh "$query_id\t$hit_id\t$score\n";
   }
   $sth->finish;
-  close FILE;
+  close $out_fh;
   printf("%1.3f secs to fetch/process\n", (time()-$starttime));
 }
 
@@ -194,14 +194,14 @@ sub fetch_categories {
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
   my $filename = $self->param('cluster_dir') . "/$table_name.hcluster.cat";
-  open(FILE, '>', $filename) or die "Could not open '$filename' for writing : $!";
+  open(my $out_fh, '>', $filename) or die "Could not open '$filename' for writing : $!";
   my $seq_member_id;
   $sth->bind_columns(\$seq_member_id);
   while ($sth->fetch) {
-    print FILE "${seq_member_id}_${genome_db_id}\t${outgroup_category}\n";
+    print $out_fh "${seq_member_id}_${genome_db_id}\t${outgroup_category}\n";
   }
   $sth->finish();
-  close FILE;
+  close $out_fh;
   printf("%1.3f secs to fetch/process\n", (time()-$starttime));
 }
 

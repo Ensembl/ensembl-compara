@@ -41,17 +41,17 @@ sub write_output {
 	my $slice_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "Slice");
 	my $dump_file = $dump_dir . '/' . $assembly . ".repeats";
 	return if (-e $dump_file && ! -z $dump_file);
-	open(IN, '>', $dump_file) or die $!;
+	open(my $stk_fh, '>', $dump_file) or die $!;
 	my $rfa = Bio::EnsEMBL::Registry->get_adaptor($species, "core", "RepeatFeature");	
 	my $compara_dba = $self->compara_dba();
 	my $dnafrag_adaptor = $compara_dba->get_adaptor("DnaFrag");
 	foreach my $slice( @{ $slice_adaptor->fetch_all("toplevel") } ){
 		my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
 		foreach my $repeat( @{ $rfa->fetch_all_by_Slice($slice) } ){
-			print IN join("\t", $dnafrag->dbID, $repeat->start, $repeat->end), "\n";
+			print $stk_fh join("\t", $dnafrag->dbID, $repeat->start, $repeat->end), "\n";
 		}
 	}
-	close(IN);
+	close($stk_fh);
 }
 
 1;

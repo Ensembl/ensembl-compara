@@ -49,18 +49,18 @@ sub run {
 	$gab->get_all_GenomicAligns;
 	$self_dba->dbc->disconnect_if_idle;
 
-	open(IN, '>', $stk_file) or throw("can not open stockholm file $stk_file for writing");
-	print IN "# STOCKHOLM 1.0\n";
+	open(my $stk_fh, '>', $stk_file) or throw("can not open stockholm file $stk_file for writing");
+	print $stk_fh "# STOCKHOLM 1.0\n";
 	foreach my $genomic_align( @{$gab->get_all_GenomicAligns} ){
 		my $aligned_seq = $genomic_align->aligned_sequence;
 		next if($aligned_seq=~/^[N-]+[N-]$/);
 		$aligned_seq=~s/\./-/g;
-		print IN $gab_id, "\/", $genomic_align->dnafrag_start, ":", $genomic_align->dnafrag_end,
+		print $stk_fh $gab_id, "\/", $genomic_align->dnafrag_start, ":", $genomic_align->dnafrag_end,
 			"\/", $genomic_align->dnafrag->genome_db->name, "\t",
 			$aligned_seq, "\n"; 
 	}
-	print IN "//";
-	close(IN);
+	print $stk_fh "//";
+	close($stk_fh);
 
 	my $genome_seq_file = $self->param('target_genome')->{"genome_seq"};
 	#Copy genome_seq to local disk only if md5sum parameter is set. 

@@ -51,12 +51,12 @@ sub run {
 					'WHERE dnafrag_id = ? ORDER BY dnafrag_id, dnafrag_start');
 		$sth->execute($dnafrag_id);
 		my $gab_file = $comp_files . ".gabs.$dnafrag_id";
-		open(IN, '>', $gab_file) or die $!;
+		open(my $stk_fh, '>', $gab_file) or die $!;
 		foreach my $gab(@{ $sth->fetchall_arrayref }){
 			print join("\t", @$gab), "\n";
-			print IN join("\t", @$gab), "\n";
+			print $stk_fh join("\t", @$gab), "\n";
 		}
-		close(IN);
+		close($stk_fh);
 		my $subset_rep_file = $comp_files . ".reps.$dnafrag_id";
 		my $subset_repeats_cmd = "grep \"^$dnafrag_id\" $repeats_file > $subset_rep_file";
 		$self->run_command($subset_repeats_cmd);

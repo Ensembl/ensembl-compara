@@ -54,14 +54,15 @@ if ($help || !$atac_in || !$reg_conf ||
   die usage();
 }
 
-open ATAC, '<', $atac_in or die "couldn't open ATAC file $atac_in $!\n";
+open my $atac_fh, '<', $atac_in or die "couldn't open ATAC file $atac_in $!\n";
+my $logfile_fh;
 if ($logfile) {
-  open LOGFILE, '>', $logfile or die "couldn't open logfile $logfile $!\n";
-  select((select(LOGFILE), $| = 1)[0]); #make LOGFILE unbuffered (a.k.a. "hot").
+  open $logfile_fh, '>', $logfile or die "couldn't open logfile $logfile $!\n";
+  select((select($logfile_fh), $| = 1)[0]); #make $logfile_fh unbuffered (a.k.a. "hot").
   #See http://perl.plover.com/FAQs/Buffering.html
 }
 
-print LOGFILE "setting up adaptors\n" if $logfile;
+print $logfile_fh "setting up adaptors\n" if $logfile;
 my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_all($reg_conf);
 my $dfa = $reg->get_adaptor("Multi", "compara", "DnaFrag");
@@ -70,16 +71,16 @@ my $gaba = $reg->get_adaptor("Multi", "compara", "GenomicAlignBlock");
 my $mlssa = $reg->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
 
 my $mlss_o = $mlssa->fetch_by_dbID($mlss_id);
-print LOGFILE "fetched mlss " . $mlss_o->dbID() . "\n" if $logfile;
+print $logfile_fh "fetched mlss " . $mlss_o->dbID() . "\n" if $logfile;
 validate_mlss_and_species($r_gdbid, $q_gdbid, $mlss_o) or 
   die "mlss $mlss_id does not link genome_dbs $r_gdbid and $q_gdbid $!\n";
 my $next_ga_id = ($mlss_id * 10**10) + 1;
 my $next_gab_id = $next_ga_id;
-print LOGFILE "starting genomic align [block] ID will be $next_ga_id\n";
+print $logfile_fh "starting genomic align [block] ID will be $next_ga_id\n";
 
-print LOGFILE "starting to read atac file\n" if $logfile;
+print $logfile_fh "starting to read atac file\n" if $logfile;
 my $atac_lines = 1;
-while (<ATAC>) {
+while (<$atac_fh>) {
   next unless (/^M/);
   chomp;
   my @line = split;
@@ -96,7 +97,7 @@ while (<ATAC>) {
 			'q_strand' => $line[11]};
     push(@{$r_components{$line[3]}}, $ungapped_hit);
     if ($logfile && (($atac_lines % 10000) == 0)) {
-      print LOGFILE "read $atac_lines atac lines\n";
+      print $logfile_fh "read $atac_lines atac lines\n";
     }
     $atac_lines++;
   } elsif ($line[1] eq 'r') {
@@ -109,15 +110,17 @@ while (<ATAC>) {
 			    'q_length' => $line[10],
 			    'q_strand' => $line[11]};
     if ($logfile && (($atac_lines % 10000) == 0)) {
-      print LOGFILE "read $atac_lines atac lines\n";
+      print $logfile_fh "read $atac_lines atac lines\n";
     }
     $atac_lines++;
   } else {
     next;
   }
 }
+close($atac_fh);
 
-print LOGFILE "processing hsps\n" if $logfile;
+print $logfile_fh "processing hsps\n" if $logfile;
+close($logfile_fh) if $logfile;
 
 my $group_id = $starting_group_id;
 foreach my $run_id (keys(%r_components)) {
@@ -171,7 +174,7 @@ foreach my $run_id (keys(%r_components)) {
 
   if ($logfile) {
     if ((($group_id - $starting_group_id + 1) % 1000) == 0) {
-      print LOGFILE "processed " . ($group_id - $starting_group_id + 1) . " hsps\n";
+      print $logfile_fh "processed " . ($group_id - $starting_group_id + 1) . " hsps\n";
     }
   }
   $group_id++;
