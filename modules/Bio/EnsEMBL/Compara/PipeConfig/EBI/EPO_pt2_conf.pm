@@ -77,7 +77,7 @@ sub default_options {
 
 
 	# database containing the anchors for mapping
-	'compara_anchor_db' => 'mysql://ensadmin:ensembl@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_generate_anchors_sauropsids',
+	'compara_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_generate_anchors_sauropsids',
     'reuse_db' => undef,
 
 	'mapping_exe' => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate',
