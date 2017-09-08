@@ -94,9 +94,9 @@ sub object_class {
   Description: Retrieves a genome db using the name of the species and
                the assembly version.
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : thrown if GenomeDB of name $name and $assembly cannot be found
+  Exceptions : thrown if $name is not defined
   Caller     : general
-  Status      : Stable
+  Status     : Stable
 
 =cut
 
