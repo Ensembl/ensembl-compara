@@ -254,7 +254,7 @@ sub _write_genome_db {
   my $w = $self->_writer();
   $w->startTag('taxonomy');
   $w->dataElement('id', $gdb->taxon_id);
-  $w->dataElement('scientific_name', $gdb->get_scientific_name);
+  $w->dataElement('scientific_name', $gdb->get_scientific_name('unique'));
   $w->dataElement('common_name', $gdb->display_name);
   $w->endTag();
 }
