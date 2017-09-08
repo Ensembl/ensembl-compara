@@ -329,18 +329,12 @@ sub dumpTreeMultipleAlignment
     warn "clw_file = '$clw_file'\n";
   }
 
-  open(OUTSEQ, ">$clw_file")
-    or $self->throw("Error opening $clw_file for write");
-
-  my $sa = $tree->get_SimpleAlign(-id_type => 'MEMBER', $self->{'cdna'} ? (-seq_type => 'cds') : ());
-  
-  my $alignIO = Bio::AlignIO->newFh(-fh => \*OUTSEQ,
-                                    -interleaved => 1,
-                                    -format => "phylip"
-                                   );
-  print $alignIO $sa;
-
-  close OUTSEQ;
+  # "interleaved" is BioPerl's default way of printing phylip alignments
+  $tree->print_alignment_to_file($clw_file,
+      -FORMAT => 'phylip',
+      -ID_TYPE => 'MEMBER',
+      $self->{'cdna'} ? (-SEQ_TYPE => 'cds') : (),
+  );
 }
 
 
