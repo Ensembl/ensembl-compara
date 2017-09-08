@@ -48,17 +48,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan_mem_decision;
 
 use strict;
 use warnings;
-use Data::Dumper;
-use Bio::EnsEMBL::Registry;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-  my $self = shift;
-  return {
-    %{ $self->SUPER::param_defaults() },
-    'synteny_region_id'  => '1628',
-    };
-}
 
 sub fetch_input
 {
