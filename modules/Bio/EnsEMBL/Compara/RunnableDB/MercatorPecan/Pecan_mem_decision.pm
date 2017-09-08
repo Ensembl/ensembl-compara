@@ -56,7 +56,6 @@ sub param_defaults {
   my $self = shift;
   return {
     %{ $self->SUPER::param_defaults() },
-    'compara_db'  => 'mysql://ensadmin:ensembl@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_pecan_24way_90',
     'synteny_region_id'  => '1628',
     };
 }
