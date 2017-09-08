@@ -128,6 +128,27 @@ sub fetch_by_name_assembly {
 }
 
 
+=head2 fetch_all_by_name
+
+  Arg [1]    : string $name
+  Example    : $gdb = $gdba->fetch_all_by_name_assembly('homo_sapiens');
+  Description: Retrieves all the genome db using the name of the species
+  Returntype : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if $name is not defined
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub fetch_all_by_name {
+    my ($self, $name) = @_;
+
+    throw("name argument is required") unless($name);
+
+    return $self->_id_cache->get_all_by_additional_lookup('name', lc $name);
+}
+
+
 =head2 fetch_all_by_taxon_id
 
   Arg [1]    : number (taxon_id)
