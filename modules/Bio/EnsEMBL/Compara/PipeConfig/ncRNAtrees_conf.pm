@@ -306,9 +306,11 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'create_mlss_ss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
-                tree_method_link    => 'NC_TREES',
+                'whole_method_links'        => [ 'NC_TREES' ],
+                'singleton_method_links'    => [ 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES' ],
+                'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
             -flow_into => {
                 1 => [ 'make_species_tree', 'load_members_factory' ],

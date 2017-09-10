@@ -287,10 +287,10 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'create_mlss_ss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
                 'master_db' => $self->o('master_db'),
-				'tree_method_link' => 'PECAN',
+                'whole_method_links'    => [ 'PECAN' ],
             },
             -flow_into => [ 'make_species_tree' ],
         },

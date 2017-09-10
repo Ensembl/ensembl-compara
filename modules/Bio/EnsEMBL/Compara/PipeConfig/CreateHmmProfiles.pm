@@ -552,7 +552,10 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'create_mlss_ss',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
+            -parameters => {
+                'whole_method_links'    => [ 'PROTEIN_TREES' ],
+            },
             -rc_name => '2Gb_job',
             -flow_into => {
                 1 => [ 'make_treebest_species_tree', 'hc_members_globally' ],

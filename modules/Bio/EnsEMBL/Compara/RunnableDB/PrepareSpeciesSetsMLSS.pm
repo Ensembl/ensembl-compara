@@ -22,16 +22,18 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS
+Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS
 
 =head1 DESCRIPTION
 
-Used to create all the species set / MLSS objects needed for a gene-tree pipeline
+Used to create all the species set / MLSS objects needed for a pipeline.
 
- - the main MLSS of the pipeline
- - all the single-species paralogues MLSS
- - all the pairwise orthologues MLSS
- - two empty species sets for reuse / nonreuse lists
+Given a set of GenomeDBs, this Runnable can create
+
+ - main MLSSs (with all the genomes)
+ - singleton MLSSs
+ - pairwise MLSSs
+ - reuse and non-reuse species-sets
 
 If the master_db parameter is set, the Runnable will copy over the MLSS
 from the master database. Otherwise, it will create new ones from the list of
@@ -39,7 +41,7 @@ all the species.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS;
+package Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS;
 
 use strict;
 use warnings;
@@ -51,8 +53,9 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults },
-        'tree_method_link'  => 'PROTEIN_TREES',
-        'create_homology_mlss'  => 1,
+        'whole_method_links'        => [],
+        'singleton_method_links'    => [],
+        'pairwise_method_links'     => [],
     };
 }
 
@@ -62,10 +65,11 @@ sub fetch_input {
     $self->SUPER::fetch_input();
 
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
-    $self->param('ml_ortho', $method_adaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'));
-    $self->param('ml_para', $method_adaptor->fetch_by_type('ENSEMBL_PARALOGUES'));
-    $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
-    $self->param('ml_genetree', $method_adaptor->fetch_by_type($self->param('tree_method_link')));
+    foreach my $cat (qw(whole singleton pairwise)) {
+        my $param_name = "${cat}_method_links";
+        my @a = map {$method_adaptor->fetch_by_type($_) || die "Cannot find the method_link '$_'"} @{ $self->param($param_name) };
+        $self->param($param_name, \@a);
+    }
 }
 
 
@@ -73,28 +77,35 @@ sub write_output {
     my $self = shift;
 
     my $all_gdbs = $self->param('genome_dbs');
-    my $ss = $self->_write_ss($all_gdbs);
-    my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
+
+    if (@{$self->param('whole_method_links')}) {
+        my $ss = $self->_write_ss($all_gdbs);
+        foreach my $ml (@{$self->param('whole_method_links')}) {
+            my $mlss = $self->_write_mlss( $ss, $ml );
+        }
+    }
+    # FIXME
     $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
         'param_name' => 'mlss_id',
-        'param_value' => $mlss->dbID
+        #'param_value' => $mlss->dbID
     );
 
     my @noncomponent_gdbs = grep {not $_->genome_component} @$all_gdbs;
     foreach my $genome_db (@noncomponent_gdbs) {
-        last unless $self->param('create_homology_mlss');
+        last unless scalar(@{$self->param('singleton_method_links')});
 
         my $ssg = $self->_write_ss( [$genome_db] );
-        my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
 
-        if ($genome_db->is_polyploid) {
-            my $mlss_hg = $self->_write_mlss( $ssg, $self->param('ml_homoeo') );
+        foreach my $ml (@{$self->param('singleton_method_links')}) {
+            next if ($ml->type eq 'ENSEMBL_HOMOEOLOGUES') && !$genome_db->is_polyploid;
+            my $mlss = $self->_write_mlss( $ssg, $ml );
         }
     }
 
-    ## Since possible_ortholds have been removed, there are no between-species paralogs any more
-    ## Also, not that in theory, we could skip the orthologs between components of the same polyploid Genome
-    $self->_write_all_pairs( $self->param('ml_ortho'), [@noncomponent_gdbs]) if $self->param('create_homology_mlss');
+    ## In theory, we could skip the orthologs between components of the same polyploid Genome
+    foreach my $ml (@{$self->param('pairwise_method_links')}) {
+        $self->_write_all_pairs( $ml, [@noncomponent_gdbs]);
+    }
 
     # Finish with the call to SUPER which will save the pipeline-wide parameters
     $self->SUPER::write_output();
