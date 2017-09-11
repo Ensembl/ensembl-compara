@@ -84,7 +84,7 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
-use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
+use Bio::EnsEMBL::Analysis::Runnable::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
@@ -794,7 +794,7 @@ sub _run_ortheus {
     my ($self) = @_;
 
     $self->compara_dba->dbc->disconnect_if_idle;
-#    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
+    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     my $options = " -y";
@@ -804,7 +804,7 @@ sub _run_ortheus {
       #-tree_string => $self->tree_string,
       -species_tree => $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}'),
       -species_order => $self->param('species_order'),
-#      -analysis => $fake_analysis,
+      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
       -pecan_jar_file => $self->param('jar_file'),
       -pecan_java_class => $self->param('default_java_class'),
