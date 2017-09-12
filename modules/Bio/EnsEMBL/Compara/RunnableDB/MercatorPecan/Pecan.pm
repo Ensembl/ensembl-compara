@@ -58,7 +58,7 @@ Supported keys:
    'java_options' => <options>
       Options used to run Java, ie: '-server -Xmx1000M'
 
-   'exonerate' => <path>
+   'exonerate_exe' => <path>
       Path to exonerate
 
    'max_block_size' => <number>
@@ -153,7 +153,7 @@ sub run
 #  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
-  $self->require_executable('exonerate');
+  $self->require_executable('exonerate_exe');
 
   $self->compara_dba->dbc->disconnect_if_idle;
   my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Pecan(
@@ -162,11 +162,11 @@ sub run
       -tree_string => $self->param('pecan_tree_string'),
 #      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
-      -exonerate => $self->param_required('exonerate'),
+      -exonerate_exe => $self->param_required('exonerate_exe'),
       -pecan_jar_file => $self->param_required('pecan_jar_file'),
       -pecan_java_class => $self->param_required('default_java_class'),
-      -estimate_tree => $self->param_required('estimate_tree'),
-      -java_exe =>  $self->param_required('java'),
+      -estimate_tree_exe => $self->param_required('estimate_tree_exe'),
+      -java_exe =>  $self->param_required('java_exe'),
       );
   $self->param('runnable', $runnable);
 
@@ -809,10 +809,10 @@ sub _run_ortheus {
       -parameters => $self->param('java_options'),
       -pecan_jar_file => $self->param('jar_file'),
       -pecan_java_class => $self->param('default_java_class'),
-      -exonerate => $self->param('exonerate'),
-      -java_exe =>  $self->param('java'),
+      -exonerate_exe => $self->param('exonerate_exe'),
+      -java_exe =>  $self->param('java_exe'),
       -ortheus_exe =>  $self->param('ortheus_exe'),
-      -semphy =>  $self->param('semphy'),
+      -semphy_exe =>  $self->param('semphy_exe'),
       -options => $options,
       );
 

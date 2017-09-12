@@ -68,7 +68,6 @@ $uname =~ s/[\r\n]+//;
 #my $default_exonerate = $EXONERATE;
 #my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
 #my $default_java_class = "bp.pecan.Pecan";
-#my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
 
 =head2 new
 
@@ -89,22 +88,22 @@ $uname =~ s/[\r\n]+//;
 sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $tree_string, $parameters, $exonerate,
-      $pecan_jar_file, $pecan_java_class,  $estimate_tree, $java_exe) =
-        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS', 'EXONERATE',
-            'PECAN_JAR_FILE', 'PECAN_JAVA_CLASS', 'ESTIMATE_TREE', 'JAVA_EXE'], @args);
+  my ($workdir, $fasta_files, $tree_string, $parameters, $exonerate_exe,
+      $pecan_jar_file, $pecan_java_class,  $estimate_tree_exe, $java_exe) =
+        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS', 'EXONERATE_EXE',
+            'PECAN_JAR_FILE', 'PECAN_JAVA_CLASS', 'ESTIMATE_TREE_EXE', 'JAVA_EXE'], @args);
 
 
   $self->workdir($workdir) if (defined $workdir);      
   chdir $self->workdir;
-  unless (defined $estimate_tree) { die 'estimate_tree is not given'; }
+  unless (defined $estimate_tree_exe) { die 'estimate_tree_exe is not given'; }
 
   $self->fasta_files($fasta_files) if (defined $fasta_files);
   if (defined $tree_string) {
     $self->tree_string($tree_string)
   } else {
     # Use EstimateTree.py program to get a tree from the sequences
-    my $run_str = "python $estimate_tree " . join(" ", @$fasta_files);
+    my $run_str = "python $estimate_tree_exe " . join(" ", @$fasta_files);
     print "RUN $run_str\n";
     my @estimate = qx"$run_str";
     if (($estimate[0] !~ /^FINAL_TREE: \(.+\);/) or ($estimate[2] !~ /^ORDERED_SEQUENCES: (.+)/)) {
@@ -143,15 +142,14 @@ sub new {
 #    $self->jar_file($default_jar_file);
   }
   if (defined $pecan_java_class) {
-    $self->java_class($pecan_java_class);
+    $self->pecan_java_class($pecan_java_class);
   } else {
     die "\n pecan java_class  needed \n";
-#    $self->java_class($default_java_class);
+#    $self->pecan_java_class($default_java_class);
   }
-  if (defined $exonerate) {
-    $self->exonerate($exonerate);
+  if (defined $exonerate_exe) {
+    $self->exonerate_exe($exonerate_exe);
   } else {
-#    $self->exonerate($default_exonerate);
     die "\n exonerate executable needed \n";
   }
 
@@ -210,16 +208,16 @@ sub jar_file {
   return $self->{'_pecan_jar_file'};
 }
 
-sub java_class {
+sub pecan_java_class {
   my $self = shift;
   $self->{'_pecan_java_class'} = shift if(@_);
   return $self->{'_pecan_java_class'};
 }
 
-sub exonerate {
+sub exonerate_exe {
   my $self = shift;
-  $self->{'_exonerate'} = shift if(@_);
-  return $self->{'_exonerate'};
+  $self->{'_exonerate_exe'} = shift if(@_);
+  return $self->{'_exonerate_exe'};
 }
 
 sub options {
@@ -227,12 +225,6 @@ sub options {
   $self->{'_options'} = shift if(@_);
   return $self->{'_options'};
 }
-
-#sub estimate_tree {
-#  my $self = shift;
-#  $self->{'_estimate_tree'} = shift if(@_);
-#  return $self->{'_estimate_tree'};
-#}
 
 sub program {
   my $self = shift;
@@ -280,7 +272,7 @@ sub run_pecan {
   if ($self->parameters) {
     $command .= " " . $self->parameters;
   }
-  $command .= " -cp ".$self->jar_file." ".$self->java_class;
+  $command .= " -cp ".$self->jar_file." ".$self->pecan_java_class;
   if (@{$self->fasta_files}) {
     $command .= " -F";
     foreach my $fasta_file (@{$self->fasta_files}) {
@@ -289,8 +281,8 @@ sub run_pecan {
   }
 
   #Remove -X option. Transitive anchoring is now switched off by default
-  #$command .= " -J '" . $self->exonerate . "' -X";
-  $command .= " -J '" . $self->exonerate . "'";
+  #$command .= " -J '" . $self->exonerate_exe . "' -X";
+  $command .= " -J '" . $self->exonerate_exe . "'";
   if ($self->tree_string) {
     $command .= " -E '" . $self->tree_string . "'";
   }

@@ -97,9 +97,9 @@ sub default_options {
     'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
     'exonerate_exe'             => $self->o('ensembl_cellar').'/exonerate22/2.2.0/bin/exonerate',
     'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-141/bin/java',
-    'estimate_tree'             => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
+    'estimate_tree_exe'         => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
 
-    'semphy'                    => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy',
+    'semphy_exe'                => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy',
     'ortheus_exe'               => $self->o('ensembl_cellar').'/ortheus/0.5.0/bin/ortheus_core',
     'pecan_jar_file'            => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
 

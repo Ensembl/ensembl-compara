@@ -81,12 +81,10 @@ $uname =~ s/[\r\n]+//;
 # my $java_exe = "/nfs/acari/bpaten/bin/jre1.6.0/bin/java";
 # my $default_jar_file = "pecan.0.8.jar";
 # my $default_java_class = "bp.pecan.Pecan";
-# my $estimate_tree = "~/pecan/EstimateTree.py";
 
 #my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
 #my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
 #my $default_java_class = "bp.pecan.Pecan";
-#my $estimate_tree = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py";
 $ENV{'PYTHONPATH'} = $ENV{'LINUXBREW_HOME'}.'/Cellar/ortheus/0.5.0/';
 $ENV{'CLASSPATH'}  = $ENV{'LINUXBREW_HOME'}.'/Cellar/pecan/0.8.0/libexec/';
 
@@ -110,9 +108,9 @@ sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
   my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters, $pecan_jar_file, 
-    $pecan_java_class, $exonerate, $java_exe, $ortheus_exe, $semphy, $options,) =
+    $pecan_java_class, $exonerate_exe, $java_exe, $ortheus_exe, $semphy_exe, $options,) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
-            'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE', 'JAVA_EXE', 'ORTHEUS_EXE' , 'SEMPHY', 'OPTIONS'], @args);
+            'SPECIES_ORDER', 'PARAMETERS', 'JAR_FILE', 'JAVA_CLASS', 'EXONERATE_EXE', 'JAVA_EXE', 'ORTHEUS_EXE' , 'SEMPHY_EXE', 'OPTIONS'], @args);
 
   $self->workdir($workdir) if (defined $workdir);
   chdir $self->workdir;
@@ -126,9 +124,9 @@ sub new {
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
   $self->java_exe($java_exe) if (defined $java_exe);
-  $self->exonerate_exe($exonerate) if (defined $exonerate);
+  $self->exonerate_exe($exonerate_exe) if (defined $exonerate_exe);
 
-  $self->semphy($semphy) if (defined $semphy);
+  $self->semphy_exe($semphy_exe) if (defined $semphy_exe);
   #overwrite default $ORTHEUS location if defined.
 #  if (defined $analysis->program_file) {
 #      $ORTHEUS = $analysis->program_file;
@@ -248,10 +246,10 @@ sub ortheus_exe {
   return $self->{'_ortheus_exe'};
 }
 
-sub semphy {
+sub semphy_exe {
   my $self = shift;
-  $self->{'_semphy'} = shift if(@_);
-  return $self->{'_semphy'};
+  $self->{'_semphy_exe'} = shift if(@_);
+  return $self->{'_semphy_exe'};
 }
 
 sub options {
@@ -326,15 +324,10 @@ sub run_ortheus {
 
   if ($self->tree_string) {
     $command .= " -d '" . $self->tree_string . "'";
-
-# #   TODO Not sure which elsif is right. Need to check this!!
-#   } elsif ($self->species_tree and $self->species_order and @{$self->species_order} > 2) {
-#     $command .= " -s $SEMPHY -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
-
   } elsif ($self->species_tree and $self->species_order and @{$self->species_order}) {
-    $command .= " -s ". $self->semphy." -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
+    $command .= " -s ". $self->semphy_exe." -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
   } else {
-    $command .= " -s ".$self->semphy;
+    $command .= " -s ".$self->semphy_exe;
   }
   $command .= " -f output.$$.mfa -g output.$$.tree ";
 
