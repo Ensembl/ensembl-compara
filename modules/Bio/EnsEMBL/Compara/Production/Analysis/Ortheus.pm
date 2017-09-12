@@ -126,7 +126,7 @@ sub new {
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
   $self->java_exe($java_exe) if (defined $java_exe);
-  $self->exonerate($exonerate) if (defined $exonerate);
+  $self->exonerate_exe($exonerate) if (defined $exonerate);
 
   $self->semphy($semphy) if (defined $semphy);
   #overwrite default $ORTHEUS location if defined.
@@ -155,7 +155,7 @@ sub new {
 # #   unless (defined $self->java_class) {
 # #     $self->java_class($default_java_class);
 # #   }
-  unless (defined $self->exonerate) {
+  unless (defined $self->exonerate_exe) {
     die "\nexonerate exe is not defined\n";
   }
 # # 
@@ -230,10 +230,10 @@ sub java_class {
   return $self->{'_pecan_java_class'};
 }
 
-sub exonerate {
+sub exonerate_exe {
   my $self = shift;
-  $self->{'_exonerate'} = shift if(@_);
-  return $self->{'_exonerate'};
+  $self->{'_exonerate_exe'} = shift if(@_);
+  return $self->{'_exonerate_exe'};
 }
 
 sub java_exe {
@@ -322,7 +322,7 @@ sub run_ortheus {
   }
 
   #Add -X to fix -ve indices in array bug suggested by BP
-  $command .= " -m \"$JAVA " . $java_params . "\" -k \" -J " . $self->exonerate . " -X\"";
+  $command .= " -m \"$JAVA " . $java_params . "\" -k \" -J " . $self->exonerate_exe . " -X\"";
 
   if ($self->tree_string) {
     $command .= " -d '" . $self->tree_string . "'";
