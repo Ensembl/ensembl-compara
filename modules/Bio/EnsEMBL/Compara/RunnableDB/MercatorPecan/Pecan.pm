@@ -163,7 +163,7 @@ sub run
 #      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
       -exonerate_exe => $self->param_required('exonerate_exe'),
-      -pecan_jar_file => $self->param_required('pecan_jar_file'),
+      -pecan_exe_dir => $self->param_required('pecan_exe_dir'),
       -pecan_java_class => $self->param_required('default_java_class'),
       -estimate_tree_exe => $self->param_required('estimate_tree_exe'),
       -java_exe =>  $self->param_required('java_exe'),

@@ -532,7 +532,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options'),
-                 'pecan_jar_file'                   => $self->o('pecan_jar_file'),
+                 'pecan_exe_dir'              => $self->o('pecan_exe_dir'),
                  'exonerate_exe'              => $self->o('exonerate_exe'),
                  'java_exe'                   => $self->o('java_exe'),
                  'estimate_tree_exe'          => $self->o('estimate_tree_exe'),
@@ -556,7 +556,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem1'),
-                 'pecan_jar_file'             => $self->o('pecan_jar_file'),
+                 'pecan_exe_dir'              => $self->o('pecan_exe_dir'),
                  'exonerate_exe'              => $self->o('exonerate_exe'),
                  'java_exe'                   => $self->o('java_exe'),
                  'estimate_tree_exe'          => $self->o('estimate_tree_exe'),
@@ -579,7 +579,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem2'),
-                 'pecan_jar_file'                   => $self->o('pecan_jar_file'),
+                 'pecan_exe_dir'              => $self->o('pecan_exe_dir'),
                  'exonerate_exe'              => $self->o('exonerate_exe'),
                  'java_exe'                   => $self->o('java_exe'),
                  'estimate_tree_exe'          => $self->o('estimate_tree_exe'),
@@ -602,7 +602,7 @@ sub pipeline_analyses {
              -parameters => {
                  'max_block_size'             => $self->o('max_block_size'),
                  'java_options'               => $self->o('java_options_mem3'),
-                 'pecan_jar_file'                   => $self->o('pecan_jar_file'),
+                 'pecan_exe_dir'              => $self->o('pecan_exe_dir'),
                  'exonerate_exe'              => $self->o('exonerate_exe'),
                  'java_exe'                   => $self->o('java_exe'),
                  'estimate_tree_exe'          => $self->o('estimate_tree_exe'),

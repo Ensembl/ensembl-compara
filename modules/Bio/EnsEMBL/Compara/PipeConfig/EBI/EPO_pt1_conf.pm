@@ -117,7 +117,7 @@ sub default_options {
       	'core_db_urls' => [ 'mysql://ensro@mysql-ensembl-mirror.ebi.ac.uk:4240/'.$self->o('core_db_version') ],
       	'gerp_program_version' => "2.1",
         'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
-        'pecan_jar_file'  => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
+        'pecan_exe_dir'   => $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/',
         'java_exe'        => $self->o('ensembl_cellar') . '/jdk/1.8.0-141/bin/java',
         'exonerate_exe' => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
         'ortheus_c_exe' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',

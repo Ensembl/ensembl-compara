@@ -62,12 +62,6 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-#my $java_exe = "/nfs/software/ensembl/RHEL7/jenv/shims/java";
-my $uname = `uname`;
-$uname =~ s/[\r\n]+//;
-#my $default_exonerate = $EXONERATE;
-#my $default_jar_file = "/nfs/software/ensembl/RHEL7/linuxbrew/Cellar/pecan/0.8.0/pecan.jar";
-#my $default_java_class = "bp.pecan.Pecan";
 
 =head2 new
 
@@ -89,9 +83,9 @@ sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
   my ($workdir, $fasta_files, $tree_string, $parameters, $exonerate_exe,
-      $pecan_jar_file, $pecan_java_class,  $estimate_tree_exe, $java_exe) =
+      $pecan_exe_dir, $pecan_java_class,  $estimate_tree_exe, $java_exe) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS', 'EXONERATE_EXE',
-            'PECAN_JAR_FILE', 'PECAN_JAVA_CLASS', 'ESTIMATE_TREE_EXE', 'JAVA_EXE'], @args);
+            'PECAN_EXE_DIR', 'PECAN_JAVA_CLASS', 'ESTIMATE_TREE_EXE', 'JAVA_EXE'], @args);
 
 
   $self->workdir($workdir) if (defined $workdir);      
@@ -135,11 +129,10 @@ sub new {
       die  "\n java executable needed \n";
     }
   }
-  if (defined $pecan_jar_file) {
-    $self->jar_file($pecan_jar_file);
+  if (defined $pecan_exe_dir) {
+    $self->pecan_exe_dir($pecan_exe_dir);
   } else {
-    die "\n pecan jar_file  needed \n";
-#    $self->jar_file($default_jar_file);
+    die "\n pecan exe_dir  needed \n";
   }
   if (defined $pecan_java_class) {
     $self->pecan_java_class($pecan_java_class);
@@ -151,28 +144,6 @@ sub new {
     $self->exonerate_exe($exonerate_exe);
   } else {
     die "\n exonerate executable needed \n";
-  }
-
-  # Try to locate jar file in usual places...
-  if (!-e $self->jar_file) {
-    my $default_jar_file = $self->jar_file;
-    if (-e "/usr/local/pecan/$default_jar_file") {
-      $self->jar_file("/usr/local/pecan/$default_jar_file");
-    } elsif (-e "/usr/local/ensembl/pecan/$default_jar_file") {
-      $self->jar_file("/usr/local/ensembl/pecan/$default_jar_file");
-    } elsif (-e "/usr/local/ensembl/bin/$default_jar_file") {
-      $self->jar_file("/usr/local/ensembl/bin/$default_jar_file");
-    } elsif (-e "/usr/local/bin/pecan/$default_jar_file") {
-      $self->jar_file("/usr/local/bin/pecan/$default_jar_file");
-    } elsif (-e $ENV{HOME}."/pecan/$default_jar_file") {
-      $self->jar_file($ENV{HOME}."/pecan/$default_jar_file");
-    } elsif (-e $ENV{HOME}."/Downloads/$default_jar_file") {
-      $self->jar_file($ENV{HOME}."/Downloads/$default_jar_file");
-    } elsif (-e "/software/ensembl/compara/pecan/$default_jar_file") {
-      $self->jar_file("/software/ensembl/compara/pecan/$default_jar_file");
-    } else {
-      throw("Cannot find Pecan JAR file!");
-    }
   }
 
   return $self;
@@ -202,10 +173,10 @@ sub parameters {
   return $self->{'_parameters'};
 }
 
-sub jar_file {
+sub pecan_exe_dir {
   my $self = shift;
-  $self->{'_pecan_jar_file'} = shift if(@_);
-  return $self->{'_pecan_jar_file'};
+  $self->{'_pecan_exe_dir'} = shift if(@_);
+  return $self->{'_pecan_exe_dir'};
 }
 
 sub pecan_java_class {
@@ -272,7 +243,7 @@ sub run_pecan {
   if ($self->parameters) {
     $command .= " " . $self->parameters;
   }
-  $command .= " -cp ".$self->jar_file." ".$self->pecan_java_class;
+  $command .= " -cp ".$self->pecan_exe_dir." ".$self->pecan_java_class;
   if (@{$self->fasta_files}) {
     $command .= " -F";
     foreach my $fasta_file (@{$self->fasta_files}) {
