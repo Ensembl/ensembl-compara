@@ -125,7 +125,7 @@ sub new {
   }
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
-  $self->java($java_exe) if (defined $java_exe);
+  $self->java_exe($java_exe) if (defined $java_exe);
 
   $self->semphy($semphy) if (defined $semphy);
   #overwrite default $ORTHEUS location if defined.
@@ -134,7 +134,7 @@ sub new {
 #  }
 
  if (defined $ortheus_exe) {
-    $self->ortheus($ortheus_exe);
+    $self->ortheus_exe($ortheus_exe);
  } else {
   die "\northeus_exe is not defined\n";
  }
