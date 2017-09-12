@@ -162,11 +162,11 @@ sub run
       -tree_string => $self->param('pecan_tree_string'),
 #      -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
-      -exonerate => $self->param('exonerate'),
-      -pecan_jar_file => $self->param('pecan_jar_file'),
-      -pecan_java_class => $self->param('default_java_class'),
-      -estimate_tree => $self->param('estimate_tree'),
-      -java_exe =>  $self->param('java'),
+      -exonerate => $self->param_required('exonerate'),
+      -pecan_jar_file => $self->param_required('pecan_jar_file'),
+      -pecan_java_class => $self->param_required('default_java_class'),
+      -estimate_tree => $self->param_required('estimate_tree'),
+      -java_exe =>  $self->param_required('java'),
       );
   $self->param('runnable', $runnable);
 
