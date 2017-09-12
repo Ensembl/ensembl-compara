@@ -807,12 +807,12 @@ sub _run_ortheus {
       -species_order => $self->param('species_order'),
       -analysis => $fake_analysis,
       -parameters => $self->param('java_options'),
-      -pecan_jar_file => $self->param('jar_file'),
-      -pecan_java_class => $self->param('default_java_class'),
-      -exonerate_exe => $self->param('exonerate_exe'),
-      -java_exe =>  $self->param('java_exe'),
-      -ortheus_exe =>  $self->param('ortheus_exe'),
-      -semphy_exe =>  $self->param('semphy_exe'),
+      -pecan_jar_file => $self->param_required('jar_file'),
+      -pecan_java_class => $self->param_required('default_java_class'),
+      -exonerate_exe => $self->param_required('exonerate_exe'),
+      -java_exe =>  $self->param_required('java_exe'),
+      -ortheus_exe =>  $self->param_required('ortheus_exe'),
+      -semphy_exe =>  $self->param_required('semphy_exe'),
       -options => $options,
       );
 
