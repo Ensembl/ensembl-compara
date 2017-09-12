@@ -126,6 +126,7 @@ sub new {
   $self->parameters($parameters) if (defined $parameters);
   $self->options($options) if (defined $options);
   $self->java_exe($java_exe) if (defined $java_exe);
+  $self->exonerate($exonerate) if (defined $exonerate);
 
   $self->semphy($semphy) if (defined $semphy);
   #overwrite default $ORTHEUS location if defined.
