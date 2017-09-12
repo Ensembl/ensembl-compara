@@ -134,7 +134,6 @@ sub pipeline_wide_parameters {
 		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
 		'max_frag_diff' => $self->o('max_frag_diff'),
 	        'reference_genome_db_id' => $self->o('reference_genome_db_id'),
-		'exonerate' => $self->o('exonerate_exe'),
 	};
 	
 }
@@ -236,6 +235,11 @@ return [
   'mlss_id' => '#pecan_mlssid#',
   'max_block_size' => $self->o('pecan_block_size'),
   'java_options' => '-server -Xmx1000M',
+  'exonerate'           => $self->o('exonerate_exe'),
+  'pecan_jar_file'      => $self->o('pecan_jar_file'),
+  'estimate_tree'       => $self->o('estimate_tree_exe'),
+  'java'                => $self->o('java_exe'),
+  'ortheus'             => $self->o('ortheus_c_exe'),
    },
  -flow_into      => {
 		2 => [ 'pecan_high_mem' ],  # Pecan complained
@@ -252,6 +256,11 @@ return [
    'mlss_id' => '#pecan_mlssid#',
    'max_block_size' => $self->o('pecan_block_size'),
    java_options => '-server -Xmx6000M',
+   'exonerate'           => $self->o('exonerate_exe'),
+   'pecan_jar_file'      => $self->o('pecan_jar_file'),
+   'estimate_tree'       => $self->o('estimate_tree_exe'),
+   'java'                => $self->o('java_exe'),
+   'ortheus'             => $self->o('ortheus_c_exe'),
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 300,
