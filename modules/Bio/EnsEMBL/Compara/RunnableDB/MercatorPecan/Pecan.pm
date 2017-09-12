@@ -96,6 +96,7 @@ sub param_defaults {
             'trim' => undef,
             'species_order' => undef, #local
             'species_tree' => undef, #local
+            'default_java_class'    => 'bp.pecan.Pecan',
            };
 }
 

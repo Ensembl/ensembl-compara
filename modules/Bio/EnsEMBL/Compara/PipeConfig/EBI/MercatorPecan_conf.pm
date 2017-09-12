@@ -106,7 +106,6 @@ sub default_options {
     'semphy'                    => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy',
     'ortheus_exe'               => $self->o('ensembl_cellar').'/ortheus/0.5.0/bin/ortheus_core',
     'pecan_jar_file'            => $self->o('ensembl_cellar').'/pecan/0.8.0/pecan.jar',
-    'default_java_class'        => "bp.pecan.Pecan",
 
     'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     # connection parameters to various databases:
