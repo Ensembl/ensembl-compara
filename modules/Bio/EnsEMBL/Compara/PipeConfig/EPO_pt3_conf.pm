@@ -153,16 +153,6 @@ sub pipeline_analyses {
 return 
 [
 
-            {
-                -logic_name => 'check_pythonpath',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-                -parameters => {
-                        'cmd' => q{python -c 'import ortheus'},
-                },
-                -input_ids => [{}],
-                -flow_into => [ 'copy_table_factory' ],
-            },
-
             {   -logic_name => 'copy_table_factory',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
@@ -170,6 +160,7 @@ return
                     'inputlist'    => [ 'method_link', 'genome_db', 'species_set', 'species_set_header', 'method_link_species_set', 'anchor_align', 'dnafrag', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
                     'column_names' => [ 'table' ],
                 },
+                -input_ids => [{}],
                 -flow_into => {
                     '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
                     '1->A' => [ 'drop_ancestral_db', 'set_internal_ids' ],
@@ -353,7 +344,11 @@ return
 	-parameters => {
 		max_block_size => 1000000,
 		java_options => '-server -Xmx1000M',
-		jar_file => $self->o('pecan_jar'),
+                'pecan_exe_dir'     => $self->o('pecan_exe_dir'),
+                'exonerate_exe'     => $self->o('exonerate_exe'),
+                'java_exe'          => $self->o('java_exe'),
+                'ortheus_py'        => $self->o('ortheus_py'),
+                'ortheus_lib_dir'   => $self->o('ortheus_lib_dir'),
 		ortheus_mlssid => $self->o('epo_mlss_id'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
@@ -370,7 +365,11 @@ return
 	-parameters => {
 		max_block_size=>1000000,
 		java_options=>'-server -Xmx2500M -Xms2000m',
-		jar_file => $self->o('pecan_jar'),
+                'pecan_exe_dir'     => $self->o('pecan_exe_dir'),
+                'exonerate_exe'     => $self->o('exonerate_exe'),
+                'java_exe'          => $self->o('java_exe'),
+                'ortheus_py'        => $self->o('ortheus_py'),
+                'ortheus_lib_dir'   => $self->o('ortheus_lib_dir'),
 		ortheus_mlssid => $self->o('epo_mlss_id'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
@@ -386,7 +385,11 @@ return
         -parameters => {
                 max_block_size=>1000000,
                 java_options=>'-server -Xmx6500M -Xms6000m',
-		jar_file => $self->o('pecan_jar'),
+                'pecan_exe_dir'     => $self->o('pecan_exe_dir'),
+                'exonerate_exe'     => $self->o('exonerate_exe'),
+                'java_exe'          => $self->o('java_exe'),
+                'ortheus_py'        => $self->o('ortheus_py'),
+                'ortheus_lib_dir'   => $self->o('ortheus_lib_dir'),
                 ortheus_mlssid => $self->o('epo_mlss_id'),
         },  
         -module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',

@@ -119,8 +119,11 @@ sub default_options {
         'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
         'pecan_exe_dir'   => $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/',
         'java_exe'        => $self->o('ensembl_cellar') . '/jdk/1.8.0-141/bin/java',
-        'exonerate_exe' => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
-        'ortheus_c_exe' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',
+        'exonerate_exe'   => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
+        'ortheus_c_exe'   => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',
+        'ortheus_py'      => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/Ortheus.py',
+        'ortheus_lib_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/',
+        'semphy_exe'      => $self->o('ensembl_cellar') . '/semphy/2.0b3/bin/semphy',
         'estimate_tree_exe' => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
     };
 }

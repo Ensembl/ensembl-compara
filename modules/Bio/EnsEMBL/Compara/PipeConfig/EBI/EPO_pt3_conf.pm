@@ -74,10 +74,6 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf');
 sub default_options {
  my ($self) = @_;
 
-    # environment required by ortheus
-    $ENV{PYTHONPATH} = $self->o('ensembl_cellar') . '/ortheus/0.5.0/';
-    $ENV{CLASSPATH}  = $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/';
-
     return {
       %{$self->SUPER::default_options},
 
@@ -98,9 +94,13 @@ sub default_options {
       # Dump directory
       'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
-      'pecan_jar' => $self->o('ensembl_cellar') . '/pecan/0.8.0/pecan.jar',
+      'pecan_exe_dir'   => $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/',
       'gerp_version' => '2.1', #gerp program version
       'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
+      'java_exe'        => $self->o('ensembl_cellar') . '/jdk/1.8.0-141/bin/java',
+      'exonerate_exe'   => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
+      'ortheus_py'      => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/Ortheus.py',
+      'ortheus_lib_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/',
 
       'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 

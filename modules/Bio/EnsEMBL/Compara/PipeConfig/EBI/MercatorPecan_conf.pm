@@ -100,7 +100,8 @@ sub default_options {
     'estimate_tree_exe'         => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
 
     'semphy_exe'                => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy',
-    'ortheus_exe'               => $self->o('ensembl_cellar').'/ortheus/0.5.0/bin/ortheus_core',
+    'ortheus_py'                => $self->o('ensembl_cellar').'/ortheus/0.5.0/bin/Ortheus.py',
+    'ortheus_lib_dir'           => $self->o('ensembl_cellar').'/ortheus/0.5.0/',
     'pecan_exe_dir'             => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/',
 
     'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',

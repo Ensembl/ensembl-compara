@@ -239,7 +239,9 @@ return [
   'pecan_exe_dir'       => $self->o('pecan_exe_dir'),
   'estimate_tree_exe'   => $self->o('estimate_tree_exe'),
   'java_exe'            => $self->o('java_exe'),
-  'ortheus'             => $self->o('ortheus_c_exe'),
+  'ortheus_py'          => $self->o('ortheus_py'),
+  'ortheus_lib_dir'     => $self->o('ortheus_lib_dir'),
+  'semphy_exe'          => $self->o('semphy_exe'),
    },
  -flow_into      => {
 		2 => [ 'pecan_high_mem' ],  # Pecan complained
@@ -260,7 +262,9 @@ return [
    'pecan_exe_dir'       => $self->o('pecan_exe_dir'),
    'estimate_tree_exe'   => $self->o('estimate_tree_exe'),
    'java_exe'            => $self->o('java_exe'),
-   'ortheus'             => $self->o('ortheus_c_exe'),
+   'ortheus_py'          => $self->o('ortheus_py'),
+   'ortheus_lib_dir'     => $self->o('ortheus_lib_dir'),
+   'semphy_exe'          => $self->o('semphy_exe'),
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 300,
