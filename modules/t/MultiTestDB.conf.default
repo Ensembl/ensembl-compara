@@ -17,6 +17,7 @@
         'cc21_prev_orth_test' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     	'cc21_select_mlss'  => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
     },
+    'parse_pair_aligner_conf' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
     'homo_sapiens' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'felis_catus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },

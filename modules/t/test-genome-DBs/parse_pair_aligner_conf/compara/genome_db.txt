@@ -1,0 +1,5 @@
+150	9606	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	\N	\N	Human	\N	76	\N
+128	7719	ciona_intestinalis	KH	2011-08-Ensembl	1	1	\N	\N	C.intestinalis	\N	66	\N
+139	9685	felis_catus	Felis_catus_6.2	2011-12-Ensembl	1	1	\N	\N	Cat	\N	70	\N
+135	9615	canis_familiaris	CanFam3.1	2011-11-Ensembl	1	1	\N	\N	Dog	\N	68	\N
+221	9598	pan_troglodytes	Pan_tro_3.0	2017-08-Ensembl	0	1	\N	\N	Chimpanzee	\N	\N	\N

@@ -60,6 +60,9 @@ use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
+use Data::Dumper;
+$Data::Dumper::Maxdepth = 2;
+
 my $verbose = 0;
 
 #my $suffix_separator = '__cut_here__';
@@ -434,12 +437,14 @@ sub set_pair_aligner_options {
 	my ($self, $pair_aligner, $ref_genome_db, $non_ref_genome_db) = @_;
 
 	# legacy code - not willing to touch #
-	my $params = eval($pair_aligner->{'analysis_template'}{'-parameters'});
-	print "options " . $params->{'options'} . "\n" if ($self->debug);
-	if ($params->{'options'}) {
-	   $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $params->{'options'};
-	   return;
-    } 
+	if ( defined $pair_aligner->{'analysis_template'} ) {
+		my $params = eval($pair_aligner->{'analysis_template'}{'-parameters'});
+		print "options " . $params->{'options'} . "\n" if ($self->debug && $params->{'options'});
+		if ($params->{'options'}) {
+		   $pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $params->{'options'};
+		   return;
+	    } 
+	}
     #####################################
 
     # check master for species sets - only pairwise LASTZ species set is copied locally
@@ -465,21 +470,23 @@ sub set_pair_aligner_options {
 	my $this_clade_size = 1000; 
 	my $these_settings;
 	foreach my $tax_id ( keys %taxon_settings ) {
-		my @genome_db_ids = $gdb_adaptor->fetch_all_by_ancestral_taxon_id($tax_id);
+		my @clade_gdbs = @{$gdb_adaptor->fetch_all_by_ancestral_taxon_id($tax_id)};
 
 		 # ensure that the smallest taxonomic group settings are applied
 		 # when dealing with nested sets
-		next if ( defined $these_settings && scalar(@genome_db_ids) >= $this_clade_size );
+		next if ( defined $these_settings && scalar(@clade_gdbs) >= $this_clade_size );
+		$this_clade_size = scalar @clade_gdbs;
 
 		# if both ref and non-ref are present, use these settings
-		my $found_ref     = grep { $_ == $ref_genome_db->dbID } @genome_db_ids;
-		my $found_non_ref = grep { $_ == $non_ref_genome_db->dbID } @genome_db_ids;
+		my $found_ref     = grep { $_->dbID == $ref_genome_db->dbID } @clade_gdbs;
+		my $found_non_ref = grep { $_->dbID == $non_ref_genome_db->dbID } @clade_gdbs;
 		
 		$these_settings = $taxon_settings{$tax_id} if ( $found_ref && $found_non_ref );
 	}
 
 	$these_settings = $default_settings unless ( defined $these_settings );
-	print "!!! PAIR_ALIGNER SETTINGS: $these_settings\n" if ($self->debug);
+	my ($ref_name, $non_ref_name) = ( $ref_genome_db->name, $non_ref_genome_db->name );
+	print "!!! $ref_name - $non_ref_name PAIR_ALIGNER SETTINGS: $these_settings\n";
 	$pair_aligner->{'analysis_template'}{'parameters'}{'options'} = $these_settings;
 }
 
