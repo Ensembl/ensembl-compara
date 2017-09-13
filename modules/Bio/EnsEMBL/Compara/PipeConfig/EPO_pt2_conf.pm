@@ -305,6 +305,7 @@ sub pipeline_analyses {
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
 		-parameters => {
 			'mapping_exe' => $self->o('mapping_exe'),
+	                'mapping_params' => $self->o('mapping_params'),
 		},
 		-hive_capacity => 1000,
                 -rc_name => 'mem7500',
