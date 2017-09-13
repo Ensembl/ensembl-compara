@@ -61,6 +61,14 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub param_defaults {
+    return {
+        'window_size'   => 1000000,
+    }
+}
+
+
 =head2 fetch_input
 
     Title   :   fetch_input
@@ -73,10 +81,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
   my( $self) = @_;
-
-  unless (defined $self->param('window_size')) {
-      $self->param('window_size',1000000);  
-  }
 
   throw("No dnafrag_id specified") unless defined($self->param('dnafrag_id'));
   throw("Window size (".$self->param('window_size').")must be > 0") if (!$self->param('window_size') or $self->param('window_size') <= 0);
