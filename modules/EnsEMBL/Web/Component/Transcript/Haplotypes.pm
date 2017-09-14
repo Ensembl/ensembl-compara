@@ -161,6 +161,8 @@ sub content {
   
   $html .= $table->render;
 
+  $c->_prefetch_everything();
+
   # send through JSON version of the container
   my $json = JSON->new();
   my $params_to_client = {'protein_haplotypes' => $c->get_all_ProteinHaplotypes,
