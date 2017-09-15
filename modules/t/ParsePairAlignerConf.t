@@ -93,7 +93,7 @@ ok($pair_aligner_conf->set_pair_aligner_options(
 is_deeply( $prim_pa, $exp_prim_pa, 'correct primate settings registered' );
 
 # test ensembl genomes setting
-# c.int v human (can reuse gdb)
+# c.int v human (can reuse gdb)
 my $c_int_gdb = $gdb_adaptor->fetch_by_dbID(128);
 my $ens_pa = { %$pair_aligner };
 my $exp_ens_pa = {
