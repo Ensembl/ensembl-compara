@@ -35,15 +35,13 @@ sub _init {
 }
 
 sub content {
-  my $self               = shift;
-  my $hub                = $self->hub;
-  my $object             = $self->object;
-  my $variation          = $object->Obj;
-  my $vf                 = $hub->param('vf');
-  my $var_id             = $hub->param('v');
-  my $variation_features = $variation->get_all_VariationFeatures;
-  my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
-  my $avail              = $object->availability;  
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $object        = $self->object;
+  my $variation     = $object->Obj;
+  my $var_id        = $hub->param('v');
+  my $feature_slice = $object->slice;
+  my $avail         = $object->availability;  
 
   my ($info_box);
   if ($variation->failed_description || (scalar keys %{$object->variation_feature_mapping} > 1)) { 
@@ -54,7 +52,7 @@ sub content {
   my @str_array = $self->feature_summary($avail);
   
   my $summary_table = $self->new_twocol(    
-    $self->most_severe_consequence($variation_features),
+    $self->most_severe_consequence(),
     $self->alleles($feature_slice),
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
@@ -273,26 +271,36 @@ sub co_located {
     $slice = $feature_slice;
   }
 
+  my $c = $self->hub->species_defs->ENSEMBL_VCF_COLLECTIONS;
+  my $variation_db = $adaptor->db;
+
+  if($c && $variation_db->can('use_vcf')) {
+    $variation_db->vcf_config_file($c->{'CONFIG'});
+    $variation_db->vcf_root_dir($self->hub->species_defs->DATAFILE_BASE_PATH);
+    $variation_db->use_vcf($c->{'ENABLED'});
+  }
+
   my @variations = (@{$adaptor->fetch_all_by_Slice($slice)}, @{$adaptor->fetch_all_somatic_by_Slice($slice)});
 
   if (@variations) {
-    my $name  = $self->object->name;
-    my $start = $slice->start;
-    my $end   = $slice->end;
-    my $count = 0;
+    my $this_vl = $self->object->get_selected_variation_feature->location_identifier;
+    my $start   = $slice->start;
+    my $end     = $slice->end;
+    my $count   = 0;
     my %by_source;
     
     foreach (@variations) {
-      my $v_name = $_->variation_name; 
+      my $v_name = $_->variation_name;
+      my $vl     = $_->location_identifier;
       
-      next if $v_name eq $name;
+      next if $this_vl eq $vl;
       
       my $v_start = $_->start + $start - 1;
       my $v_end   = $_->end   + $start - 1;
 
       next unless $v_start == $feature_slice->start && $v_end == $feature_slice->end;
 
-      my $link      = $hub->url({ action => 'Explore', v => $v_name, vf => $_->dbID });
+      my $link      = $hub->url({ action => 'Explore', v => $v_name, vf => $_->dbID, vl => $vl });
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
       $count ++;
@@ -421,11 +429,8 @@ sub alleles {
   my $html;
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : '';
 
-  my $vf_id = $self->hub->param('vf');
-  my @vfs = @{$variation->get_all_VariationFeatures};
-  my ($vf) = grep {$_->dbID eq $vf_id} @vfs;
   my $max_f;
-  if($vf) {
+  if(my $vf = $object->get_selected_variation_feature) {
     my $max_alleles = $vf->get_all_highest_frequency_minor_Alleles;
 
     if($max_alleles && @$max_alleles) {
@@ -548,10 +553,7 @@ sub alleles {
 sub to_VCF {
   my $self = shift;
 
-  my $vf_id = $self->hub->param('vf');
-  my @vfs = @{$self->object->Obj->get_all_VariationFeatures};
-  my ($vf) = grep {$_->dbID eq $vf_id} @vfs;
-
+  my $vf = $self->object->get_selected_variation_feature;
   return () unless $vf;
 
   my $vcf_rep = $vf->to_VCF_record();
@@ -567,18 +569,19 @@ sub location {
   my $count    = scalar keys %mappings;
   
   return ['Location', 'This variant has not been mapped'] unless $count;
-  
+
+  my $vf  = $self->param('vf');
+  my $vl  = $self->param('vl');
   my $hub = $self->hub;
-  my $vf  = $hub->param('vf');
   my $id  = $object->name;
   my (@rows, $location, $location_link);
   
-  if ($vf) {
+  if(my $selected_mapping = $object->selected_variation_feature_mapping) {
     my $variation = $object->Obj;
-    my $type     = $mappings{$vf}{'Type'};
-    my $region   = $mappings{$vf}{'Chr'}; 
-    my $start    = $mappings{$vf}{'start'};
-    my $end      = $mappings{$vf}{'end'};
+    my $type      = $selected_mapping->{'Type'};
+    my $region    = $selected_mapping->{'Chr'}; 
+    my $start     = $selected_mapping->{'start'};
+    my $end       = $selected_mapping->{'end'};
 
 
     my $coord = "$region:$start-$end";
@@ -600,6 +603,7 @@ sub location {
         r                => $region . ':' . ($start - 50) . '-' . ($end + 50),
         v                => $id,
         vf               => $vf,
+        vl               => $vl,
         source           => $object->source,
         contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_fail_all=normal' : '') . ',seq=normal'
       }),
@@ -824,49 +828,41 @@ sub sets{
 }
 
 sub most_severe_consequence {
-  my ($self, $variation_features) = @_;
+  my $self = shift;
 
-  my $hub = $self->hub;
-  my $vf  = $hub->param('vf') || $hub->param('vl');
+  my $vf_object = $self->object->get_selected_variation_feature;
+  return () unless $vf_object;
 
-  return () if (!$vf);
+  my $url = $self->hub->url({
+     type   => 'Variation',
+     action => 'Mappings',
+     v      => $self->object->name,
+  });
 
-  foreach my $vf_object (@$variation_features) {
-    if (($vf_object->dbID || $vf_object->location_string) == $vf) {
+  my $html_consequence = $self->render_consequence_type($vf_object,1);
 
-      my $url = $hub->url({
-         type   => 'Variation',
-         action => 'Mappings',
-         v      => $self->object->name,
-      });
+  # Check if the variant overlaps at least one transcript or regulatory feature.
+  my $consequence_link = '';
 
-      my $html_consequence = $self->render_consequence_type($vf_object,1);
+  my $overlapping_features = $vf_object->get_all_TranscriptVariations;
+     $overlapping_features = $vf_object->get_all_RegulatoryFeatureVariations if (scalar(@$overlapping_features) == 0);
 
-      # Check if the variant overlaps at least one transcript or regulatory feature.
-      my $consequence_link = '';
-
-      my $overlapping_features = $vf_object->get_all_TranscriptVariations;
-         $overlapping_features = $vf_object->get_all_RegulatoryFeatureVariations if (scalar(@$overlapping_features) == 0);
-
-      if (scalar(@$overlapping_features) != 0) {
-        $consequence_link = sprintf(qq{
-          <div class="text-float-left">%s<a href="%s" title="'Genes and regulation' page">See all predicted consequences</a></div>
-        }, $self->text_separator(1), $url);
-      }
-
-      # Line display
-      my $html = sprintf(qq{
-         <div>
-           <div class="text-float-left bold">%s</div>%s
-           <div class="clear"></div>
-         </div>},
-         $html_consequence, $consequence_link
-      );
-
-      return [ 'Most severe consequence' , $html];
-    }
+  if (scalar(@$overlapping_features) != 0) {
+    $consequence_link = sprintf(qq{
+      <div class="text-float-left">%s<a href="%s" title="'Genes and regulation' page">See all predicted consequences</a></div>
+    }, $self->text_separator(1), $url);
   }
-  return ();
+
+  # Line display
+  my $html = sprintf(qq{
+     <div>
+       <div class="text-float-left bold">%s</div>%s
+       <div class="clear"></div>
+     </div>},
+     $html_consequence, $consequence_link
+  );
+
+  return [ 'Most severe consequence' , $html];
 }
 
 ## if an insertion/ deletion is described at its most 3' location 

@@ -569,7 +569,7 @@ sub variation_table {
           my $row;
 
           my $variation_name = $vf->variation_name;
-          my $url = $tv->{_variation_feature_id} ? ";vf=".$tv->{_variation_feature_id} : ";vl=".$vf->location_string;
+          my $url = $tv->{_variation_feature_id} ? ";vf=".$tv->{_variation_feature_id} : ";vl=".$vf->location_identifier;
           $row->{'ID'} = $variation_name;
           my $source = $vf->source_name;
           $row->{'Source'} = $source;
@@ -617,7 +617,7 @@ sub variation_table {
           
             my $more_row = {
               vf         => $vf->dbID,
-              vl         => $vf->location_string,
+              vl         => $vf->location_identifier,
               class      => $var_class,
               Alleles    => $allele_string,
               vf_allele  => $vf_allele,
@@ -696,7 +696,7 @@ sub _get_variation_features {
       $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
     );
 
-    $self->{_variation_features} = { map {($_->dbID || $_->location_string) => $_} (@{ $vfa->fetch_all_by_Slice($slice) }, @{ $vfa->fetch_all_somatic_by_Slice($slice) })};
+    $self->{_variation_features} = { map {($_->dbID || $_->location_identifier) => $_} (@{ $vfa->fetch_all_by_Slice($slice) }, @{ $vfa->fetch_all_somatic_by_Slice($slice) })};
 
     print STDERR "FETCHED ".(scalar keys %{$self->{_variation_features}})." VFs\n";
   }

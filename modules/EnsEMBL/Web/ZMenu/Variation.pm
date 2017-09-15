@@ -59,9 +59,6 @@ sub content {
           @{$v->get_all_VariationFeatures};
       }
       elsif($vl) {
-        my $sa = $hub->database($hub->param('db') || 'core')->get_SliceAdaptor;
-        my ($c, $s, $e) = split(/\:|\-/, $vl);
-        my $slice = $sa->fetch_by_region('chromosome', $c, $s, $e || $s);
         
         # find VCF config
         my $c = $hub->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
@@ -71,12 +68,13 @@ sub content {
          $ENV{ENSEMBL_VARIATION_VCF_CONFIG_FILE} = $c->{'CONFIG'};
          $vf_adaptor->db->use_vcf($c->{'ENABLED'});
         }
-        push @features, @{$vf_adaptor->fetch_all_by_Slice($slice)};
+
+        push @features, @{$vf_adaptor->fetch_all_by_location_identifier($vl)};
       }
     }
   }
 
-  @features = $vf_adaptor->fetch_by_dbID($vf) unless scalar @features;
+  @features = $vf_adaptor->fetch_by_dbID($vf) if $vf && !(scalar @features);
   
   $self->{'feature_count'} = scalar @features;
   
@@ -190,7 +188,7 @@ sub feature_content {
         type   => 'Variation',
         action => 'Explore',
         v      => $name,
-        vl     => sprintf("%s:%i-%i", $chr, $chr_start, $chr_end),
+        vl     => $feature->location_identifier,
         vf     => $dbID,
         source => $source
       })

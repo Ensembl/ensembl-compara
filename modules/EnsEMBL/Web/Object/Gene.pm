@@ -1175,14 +1175,14 @@ sub store_TransformedSNPS {
 
   if (!$self->need_consequence_check) {
     foreach my $tv (@$tvs) {
-      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID || $tv->variation_feature->location_string} = $tv;
+      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID || $tv->variation_feature->location_identifier} = $tv;
     }
   } else {
     foreach my $tv (@$tvs) {
       my $found = 0;
       foreach my $type(@{$tv->consequence_type || []}) {
         if (exists($valids->{'opt_'.lc($type)})) {
-          $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID || $tv->variation_feature->location_string} = $tv;
+          $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID || $tv->variation_feature->location_identifier} = $tv;
           $found=1;
           last;
         }

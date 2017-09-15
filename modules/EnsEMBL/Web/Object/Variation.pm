@@ -77,7 +77,7 @@ sub counts {
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
 
-  my $vf  = $hub->param('vf');
+  my $vf  = $hub->param('vf');# || $hub->param('vl');
   my $key = sprintf '::Counts::Variation::%s::%s::%s::', $self->species, $hub->param('vdb'), $hub->param('v');
   $key   .= $vf . '::' if $vf;
 
@@ -115,9 +115,7 @@ sub get_ega_links {
   my $self = shift;
   my @ega_links = @{$self->get_external_data};
 
-  my $vf = $self->param('vf');
-  my $vf_object = ($vf) ? $self->hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
-  if ($vf_object) {
+  if(my $vf_object = $self->get_selected_variation_feature) {
     my $chr   = $vf_object->seq_region_name;
     my $start = $vf_object->seq_region_start;
     my $end   = $vf_object->seq_region_end;
@@ -132,17 +130,7 @@ sub count_features {
 }
 
 sub count_transcripts {
-  my $self = shift;
-  my %mappings = %{ $self->variation_feature_mapping };
-  my $counts = 0;
-
-  foreach my $varif_id (keys %mappings) {
-    next unless ($varif_id  eq $self->param('vf'));
-    my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
-    $counts = scalar @transcript_variation_data;
-  }
-
-  return $counts;
+  return scalar @{$_[0]->selected_variation_feature_mapping->{transcript_vari} || []};
 }
 
 sub count_regfeats {
@@ -155,21 +143,8 @@ sub count_regfeats {
 }
 
 sub count_uniq_transcripts {
-  my $self = shift;
-  my %mappings = %{ $self->variation_feature_mapping };
-  my $count = 0;
-
-  foreach my $varif_id (keys %mappings) {
-    next unless ($varif_id  eq $self->param('vf'));
-    my %transcriptnames;
-    for ( @{ $mappings{$varif_id}{transcript_vari} } ) {
-        $transcriptnames{$_->{transcriptname}} += 1;
-    }
-    $count = scalar keys %transcriptnames;
-    last;
-  }
-
-  return $count;
+  my %transcriptnames = map {$_->{transcriptname} => 1} @{$_[0]->selected_variation_feature_mapping->{transcript_vari} || []};
+  return scalar keys %transcriptnames;
 }
 
 sub count_populations {
@@ -525,10 +500,8 @@ sub alleles {
   my $self = shift;
 
   # A selected variation feature
-  if ($self->hub->param('vf')) {
-    my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor();
-    my $vf_object  = $vf_adaptor->fetch_by_dbID($self->hub->param('vf'));
-    return $vf_object->allele_string if $vf_object;
+  if(my $vf_object = $self->get_selected_variation_feature) {
+    return $vf_object->allele_string;
   }
 
   # A unique variation feature
@@ -784,14 +757,13 @@ sub get_external_data {
 
 sub slice {
   my $self = shift;
-  my @vfs = @{$self->Obj->get_all_VariationFeatures};
+
   my $feature_slice;
-  return 1 unless $self->hub->param('vf');
-  foreach my $vf (@vfs){
-    if ($vf->dbID == $self->hub->core_param('vf')){
-      $feature_slice = $vf->feature_Slice;
-    }
+  
+  if(my $vf = $self->get_selected_variation_feature) {
+    $feature_slice = $vf->feature_Slice;
   }
+
   return $feature_slice;
 }
 
@@ -799,13 +771,7 @@ sub is_somatic_with_different_ref_base {
   my $self = shift;
   return unless $self->Obj->is_somatic;
   # get slice for variation feature
-  my @vfs = @{$self->Obj->get_all_VariationFeatures};
-  my $feature_slice;
-  foreach my $vf (@vfs){
-    if ($vf->dbID == $self->hub->core_param('vf')){
-      $feature_slice = $vf->feature_Slice;
-    }
-  }
+  my $feature_slice = $self->slice;
   return unless $feature_slice;
   my $ref_base = $feature_slice->seq();
   my ($a1, $a2) = split(//,$self->alleles);
@@ -1261,15 +1227,24 @@ sub variation_feature_mapping { ## used for snpview
  
   my %data;
   foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
-     my $varif_id = $vari_feature_obj->dbID;
-     $data{$varif_id}{Type}           = $self->region_type($vari_feature_obj);
-     $data{$varif_id}{Chr}            = $self->region_name($vari_feature_obj);
-     $data{$varif_id}{start}          = $self->start($vari_feature_obj);
-     $data{$varif_id}{end}            = $vari_feature_obj->end;
-     $data{$varif_id}{strand}         = $vari_feature_obj->strand;
+     my $varif_id = $vari_feature_obj->dbID || $vari_feature_obj->location_identifier;
+     $data{$varif_id}{Type}            = $self->region_type($vari_feature_obj);
+     $data{$varif_id}{Chr}             = $vari_feature_obj->seq_region_name;
+     $data{$varif_id}{start}           = $vari_feature_obj->seq_region_start;
+     $data{$varif_id}{end}             = $vari_feature_obj->seq_region_end;
+     $data{$varif_id}{strand}          = $vari_feature_obj->strand;
      $data{$varif_id}{transcript_vari} = $self->transcript_variation($vari_feature_obj, undef, $recalculate);
   }
   return \%data;
+}
+
+sub selected_variation_feature_mapping {
+  my $self = shift;
+
+  my $mappings = $self->variation_feature_mapping;
+  my $param = $self->param('vf') || $self->param('vl');
+
+  return $param ? $mappings->{$param} : {};
 }
 
 
@@ -1314,6 +1289,24 @@ sub get_variation_features {
 
    my $self = shift; 
    return $self->vari ? $self->vari->get_all_VariationFeatures : [];
+}
+
+sub get_selected_variation_feature {
+  my $self = shift;
+
+  my $variation_feature;
+
+  # have vf
+  if(my $vf_param = $self->param('vf')) {
+    ($variation_feature) = grep {$_->dbID eq $vf_param} @{$self->get_variation_features};
+  }
+
+  # have vl
+  elsif(my $vl_param = $self->param('vl')) {
+    ($variation_feature) = grep {$_->location_identifier eq $vl_param} @{$self->get_variation_features};
+  }
+
+  return $variation_feature;
 }
 
 sub region_type { 
@@ -1544,24 +1537,7 @@ sub hgvs {
   # skip if no mapping or somatic mutation with mutation ref base different to ensembl ref base
   return {} unless $mapping_count && !$self->is_somatic_with_different_ref_base; 
   
-  my $vl;
-  
-  if ($mapping_count == 1) {
-    ($vfid) = keys %$mappings;
-  } elsif (!$vfid) {
-    $vfid = $self->hub->param('vf');
-    $vl   = $self->hub->param('vl');
-  }
-  
-  my $vf;
-  
-  if($vfid) {
-    $vf = $self->Obj->get_VariationFeature_by_dbID($vfid);
-  }
-  else {
-    $vf = $self->vari->variation_feature;
-  }
-  
+  my $vf = $self->get_selected_variation_feature;  
   return {} unless $vf;
   
   # Get all transcript variations and put them in a hash with allele seq as key
