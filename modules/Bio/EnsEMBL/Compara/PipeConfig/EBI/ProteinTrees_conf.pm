@@ -91,11 +91,6 @@ sub default_options {
         # FIXME
         'cdhit_exe'                 => '/homes/carlac/software/cdhit/cd-hit',
         'mpirun_exe'                => '/nfs/production/mpi/mpich/mpich3/3.1-intel/bin/mpirun',
-
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
-        # 'master_db' => 'mysql://ensro@mysql-ens-compara-prod-',
-
     };
 }
 
