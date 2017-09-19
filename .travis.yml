@@ -12,13 +12,13 @@ env:
 sudo: false
 
 before_install:
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-vep.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl-rest.git ||git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl-variation.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl-io.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl-vep.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-vep.git
+    - git clone --branch release/90 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch version/2.4 --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
@@ -49,6 +49,13 @@ install:
 
 script: "./travisci/harness.sh"
 
+# Add build stage to trigger dependent builds, run sequentially after all test jobs
+# specified by the build matrix expansion have completed successfully
+jobs:
+  include:
+    - stage: trigger_dependent_builds
+      script: ./travisci/trigger-dependent-build.sh
+
 # Get the matrix to only build coveralls support when on 5.10
 matrix:
   exclude:
@@ -59,3 +66,9 @@ matrix:
     - perl: "5.24"
       env: COVERALLS=true
 
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+  slack:
+    secure: RCxjHQScwd9zMzydX/j7tFAcBFr/qUhuUJojrnNMP85pBImAhYGuZJnET+m2CPUQyRk5s6HgCC9N9uzFcTyJusM22ozUcavmmmGMvbMWL7OWTB9Mxg4iTzuGt1c4yEZFLzJ2i2ZRF4IBpPU2gt2qS29EcR1sjd2bftBjNduH78406tm0YZBZ+M4ORPJNRc8dS5h6SV3RYSuge/JUUmJGgUTBWcV5Fl8QootayfuxV+a/5DNNs5lUxj8YrV4VM++kmPkJzffV7vRl1iAvNGVGZHtQgzI+5+0Nsrc966XZkoQdsK+IXNpUfqCafJiqNk1xZ50qeOQeeAR/JtYtu3uYutWffenff+u0PH2hRl0LlHC0APzsSguav2IlXw3u1fl5y83uW56OzIrMW/QFbHfR/GANBa1FLgEBvmuRFd7MHcq3BRqPyzohKxrdQZh35ClinGu4X3C2TXADHXFr9QDaZBWpt5zylwO05i38XOIlrT1PkbUJsgOozGgkp2L1N5Xy/oHu7wuXib6U9k+p2GBQXu/alCIbjGY2+yf3aXM8MVxI4NpYt1rIavgxCMEe7p6j04LWXdhg2aoFTsMWM+kqXNx+HZhk0VkL0kFiq3AKkWvp2sWvrGR/0grngbCfzJgpvEDevPOqLgn/YMNygeocn5krckVD0XyvsdqkkVmoCpU=
