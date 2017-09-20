@@ -105,7 +105,6 @@ sub href {
     type     => 'Variation',
     v        => $var,
     vf       => $f->dbID,
-    vl       => $f->location_identifier,
     vdb      => $args->{'var_db'} || 'variation',
     snp_fake => 1,
     config   => $args->{'config_type'},

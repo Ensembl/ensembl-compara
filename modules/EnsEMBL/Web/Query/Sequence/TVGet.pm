@@ -49,7 +49,7 @@ sub _transcript_variation_to_variation_feature {
   my ($self,$tv,$vf_cache) = @_;
 
   my $vfid = $tv->_variation_feature_id;
-  my $val = ($vf_cache||{})->{$vfid} if $vfid;
+  my $val = ($vf_cache||{})->{$vfid};
   return $val if defined $val;
   return $tv->variation_feature;
 }
@@ -61,10 +61,10 @@ sub _build_vf_cache {
   my $vfa = $ad->variation_feature_adaptor($config->{'species'});
   my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
   return if @$vfs > 60000;
-  $cache->{$_->dbID || $_->location_identifier} = $_ for(@$vfs);
+  $cache->{$_->dbID} = $_ for(@$vfs);
   $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
   return if @$vfs > 60000;
-  $cache->{$_->dbID || $_->location_identifier} = $_ for(@$vfs);
+  $cache->{$_->dbID} = $_ for(@$vfs);
 }
 
 sub _get_transcript_variations {

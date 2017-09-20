@@ -104,7 +104,7 @@ sub _transcript_variation_to_variation_feature {
   my ($self,$tv) = @_;
 
   my $vfid = $tv->_variation_feature_id;
-  my $val = ($self->{'vf_cache'}||{})->{$vfid} if $vfid;
+  my $val = ($self->{'vf_cache'}||{})->{$vfid};
   return $val if defined $val;
   return $tv->variation_feature;
 }
@@ -345,7 +345,7 @@ sub get {
          
       foreach ($start..$end) {
         $mk->{'variants'}{$_}{'alleles'}   .= ($mk->{'variants'}{$_}{'alleles'} ? ', ' : '') . $alleles;
-        $mk->{'variants'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation', vl => $snp->{'vf'}->location_identifier };
+        $mk->{'variants'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
         $mk->{'variants'}{$_}{'transcript'} = 1;
           
         my $url = $mk->{'variants'}{$_}{'url_params'} ? { type => 'Variation', action => 'Explore', %{$mk->{'variants'}{$_}{'url_params'}} } : undef;
@@ -367,7 +367,6 @@ sub get {
         };    
             
         push @{$mk->{'variants'}{$_}{'href'}{'vf'}}, $dbID;
-        push @{$mk->{'variants'}{$_}{'href'}{'vl'}}, $snp->{'vf'}->location_identifier;
             
         $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
         $variation_seq->{'seq'}[$_]{'new_letter'} = $ambigcode;

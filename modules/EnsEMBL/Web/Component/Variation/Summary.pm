@@ -300,7 +300,7 @@ sub co_located {
 
       next unless $v_start == $feature_slice->start && $v_end == $feature_slice->end;
 
-      my $link      = $hub->url({ action => 'Explore', v => $v_name, vf => $_->dbID, vl => $vl });
+      my $link      = $hub->url({ action => 'Explore', v => $v_name, vf => $_->dbID });
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
       $count ++;
@@ -571,7 +571,6 @@ sub location {
   return ['Location', 'This variant has not been mapped'] unless $count;
 
   my $vf  = $self->param('vf');
-  my $vl  = $self->param('vl');
   my $hub = $self->hub;
   my $id  = $object->name;
   my (@rows, $location, $location_link);
@@ -603,7 +602,6 @@ sub location {
         r                => $region . ':' . ($start - 50) . '-' . ($end + 50),
         v                => $id,
         vf               => $vf,
-        vl               => $vl,
         source           => $object->source,
         contigviewbottom => ($variation->is_somatic ? 'somatic_mutation_COSMIC=normal' : 'variation_feature_variation=normal') . ($variation->failed_description ? ',variation_set_fail_all=normal' : '') . ',seq=normal'
       }),

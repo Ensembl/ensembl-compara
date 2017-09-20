@@ -51,7 +51,6 @@ sub content {
   my $name        = $object->name;
   my $show_scores = $hub->param('show_scores');
   my $vf          = $hub->param('vf');
-  my $vl          = $hub->param('vl');
   my $html        = qq{<a id="}.$self->{'id'}.qq{_top"></a>};
 
   # get variation feature object
@@ -283,7 +282,7 @@ sub content {
       codon     => $codon,
       sift      => $sift,
       polyphen  => $poly,
-      detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $vf, vl => $vl, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${vf}_${a}"),
+      detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $vf, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${vf}_${a}"),
     };
     
     $table->add_row($row);

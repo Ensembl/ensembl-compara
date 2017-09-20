@@ -445,11 +445,6 @@ sub _summarise_variation_db {
     };
   }
   
-  use Data::Dumper;
-  $Data::Dumper::Maxdepth = 3;
-  $Data::Dumper::Indent = 1;
-  print STDERR Dumper $self->db_details($db_name)->{'tables'};
-  
   my $t_aref = $dbh->selectall_arrayref( 'select source_id,name,description, if(somatic_status = "somatic", 1, 0), type from source' );
 #---------- Add in information about the sources from the source table
   my $temp = {map {$_->[0],[$_->[1],0]} @$t_aref};

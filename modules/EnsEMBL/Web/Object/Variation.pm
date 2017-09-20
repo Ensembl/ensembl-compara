@@ -55,7 +55,7 @@ sub availability {
       $availability->{'variation'} = 1;
       
       $availability->{"has_$_"} = $counts->{$_} for qw(uniq_transcripts transcripts regfeats features populations population_freqs samples ega citation locations);
-      if($self->param('vf') || $self->param('vl')){
+      if($self->param('vf')){
           ## only show these if a mapping available
           $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
       }
@@ -77,7 +77,7 @@ sub counts {
 
   return {} unless $obj->isa('Bio::EnsEMBL::Variation::Variation');
 
-  my $vf  = $hub->param('vf');# || $hub->param('vl');
+  my $vf  = $hub->param('vf');
   my $key = sprintf '::Counts::Variation::%s::%s::%s::', $self->species, $hub->param('vdb'), $hub->param('v');
   $key   .= $vf . '::' if $vf;
 
@@ -1242,7 +1242,7 @@ sub selected_variation_feature_mapping {
   my $self = shift;
 
   my $mappings = $self->variation_feature_mapping;
-  my $param = $self->param('vf') || $self->param('vl');
+  my $param = $self->param('vf');
 
   return $param ? $mappings->{$param} : {};
 }
@@ -1299,11 +1299,6 @@ sub get_selected_variation_feature {
   # have vf
   if(my $vf_param = $self->param('vf')) {
     ($variation_feature) = grep {$_->dbID eq $vf_param} @{$self->get_variation_features};
-  }
-
-  # have vl
-  elsif(my $vl_param = $self->param('vl')) {
-    ($variation_feature) = grep {$_->location_identifier eq $vl_param} @{$self->get_variation_features};
   }
 
   return $variation_feature;

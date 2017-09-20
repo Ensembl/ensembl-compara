@@ -1161,8 +1161,6 @@ sub store_TransformedSNPS {
 
     my @vfs_with_term = grep { scalar map { $term_hash{$_} ? 1 : () } @{$_->consequence_type('SO')} } @$vfs;
     $filtered_vfs = \@vfs_with_term;
-    
-    print STDERR (scalar @$filtered_vfs)." remain after filtering\n";
   }
 
   my $tvs;
@@ -1175,14 +1173,14 @@ sub store_TransformedSNPS {
 
   if (!$self->need_consequence_check) {
     foreach my $tv (@$tvs) {
-      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID || $tv->variation_feature->location_identifier} = $tv;
+      $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID} = $tv;
     }
   } else {
     foreach my $tv (@$tvs) {
       my $found = 0;
       foreach my $type(@{$tv->consequence_type || []}) {
         if (exists($valids->{'opt_'.lc($type)})) {
-          $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID || $tv->variation_feature->location_identifier} = $tv;
+          $tvs_by_tr->{$tv->transcript->stable_id}->{$tv->variation_feature->dbID} = $tv;
           $found=1;
           last;
         }
