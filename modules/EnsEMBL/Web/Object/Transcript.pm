@@ -1541,16 +1541,27 @@ sub get_genetic_variations {
 sub get_transcript_variations {
   my ($self,$vf_cache) = @_;
 
+  my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+  my $c = $self->species_defs->ENSEMBL_VCF_COLLECTIONS;
+  my $variation_db = $vfa->db;
+
+  if($c && $variation_db->can('use_vcf')) {
+    $variation_db->vcf_config_file($c->{'CONFIG'});
+    $variation_db->vcf_root_dir($self->hub->species_defs->DATAFILE_BASE_PATH);
+    $variation_db->use_vcf($c->{'ENABLED'});
+  }
+
   # Most VFs will be in slice for transcript, so cache them.
   if($vf_cache and !$self->__data->{'vf_cache'}) {
     my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
     $self->__data->{'vf_cache'} = {};
     my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice);
-    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    $self->__data->{'vf_cache'}{$_->dbID || $_->location_identifier} = $_ for(@$vfs);
     $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice);
-    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    $self->__data->{'vf_cache'}{$_->dbID || $_->location_identifier} = $_ for(@$vfs);
   }
-	return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
+
+	return $variation_db->get_TranscriptVariationAdaptor->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
 }
 
 sub transcript_variation_to_variation_feature {

@@ -37,11 +37,11 @@ sub content {
 
   my $vf_adaptor = $hub->database($db)->get_VariationFeatureAdaptor;
 
-  if ($click_data) {
-    @features = @{EnsEMBL::Draw::GlyphSet::_variation->new($click_data)->features};
-    @features = () unless grep $_->{'dbID'} eq $vf, @features;
-    @features = map { $vf_adaptor->fetch_by_dbID($_->{'dbID'}) } @features;
-  } elsif (!$vf) {
+  # if ($click_data) {
+  #   @features = @{EnsEMBL::Draw::GlyphSet::_variation->new($click_data)->features};
+  #   @features = () unless grep $_->{'dbID'} eq $vf, @features;
+  #   @features = map { $vf_adaptor->fetch_by_dbID($_->{'dbID'}) } @features;
+  # } elsif (!$vf) {
     my $var_adaptor     = $hub->database($db)->get_VariationAdaptor;
     my @variation_names = split ',', $hub->param('v');
     my @regions         = split ',', $hub->param('regions');
@@ -72,7 +72,7 @@ sub content {
         push @features, @{$vf_adaptor->fetch_all_by_location_identifier($vl)};
       }
     }
-  }
+  # }
 
   @features = $vf_adaptor->fetch_by_dbID($vf) if $vf && !(scalar @features);
   

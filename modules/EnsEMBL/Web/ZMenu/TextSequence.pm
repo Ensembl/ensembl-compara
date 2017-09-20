@@ -20,6 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
+use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
@@ -30,6 +31,7 @@ sub content {
   my $hub     = $self->hub;
   my $object  = $self->object;
   my @vf      = $hub->param('vf');
+  my @vl      = $hub->param('vl');
   my $lrg     = $hub->param('lrg');
   my $adaptor = $hub->get_adaptor('get_VariationAdaptor', 'variation');
   
@@ -41,10 +43,18 @@ sub content {
     $self->{'transcript'} = $hub->get_adaptor('get_TranscriptAdaptor')->fetch_by_stable_id($hub->param('_transcript') || $hub->param('t'));
   }
  
-  my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation'); 
-  foreach (@vf) {
-    my $feature = $vfa->fetch_by_dbID($_);
+  my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation');
+  foreach my $feature(
+    (
+      map {$vfa->fetch_by_dbID($_)}
+      grep {defined($_) && looks_like_number($_)} @vf
+    ),
+    (
+      map {@{$vfa->fetch_all_by_location_identifier($_)}} @vl
+    )
+  ) {
     my $variation = $feature->variation();
+    $variation->{variation_feature} = $feature;
     my $variation_object = $self->new_object('Variation', $variation, $object->__data);
     $self->variation_content($variation_object, $feature);
     $self->new_feature;
@@ -69,6 +79,7 @@ sub variation_content {
     type   => 'Variation',
     v      => $v,
     vf     => $feature->dbID(),
+    vl     => $feature->location_identifier,
     source => $feature->source_name,
   );
   

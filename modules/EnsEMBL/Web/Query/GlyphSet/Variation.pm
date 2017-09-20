@@ -187,6 +187,7 @@ sub fetch_features {
   my $set_name = $args->{'config'}{'set_name'};
   my $var_db = $args->{'var_db'} || 'variation';
   my $slice = $args->{'slice'};
+  my $slice_length = $args->{'slice_length'} || 0;
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);
   return [] unless $vdb;
@@ -230,7 +231,7 @@ sub fetch_features {
       my $vcf_id = $id;
       $vcf_id =~ s/^variation_vcf_//;
       if(my $vc = $vca->fetch_by_id($vcf_id)) {
-        @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice)};
+        @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice, $slice_length > 1e4 ? 1 : 0)};
       }
     } else {
       my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_SO_terms($slice) || []}; 
