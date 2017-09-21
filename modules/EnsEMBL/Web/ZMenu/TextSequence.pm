@@ -99,6 +99,7 @@ sub variation_content {
   my @entries = ({ type => 'Class', label => $feature->var_class });
 
   push @entries, { type => 'Location', label => $position };
+  push @entries, { type => 'Source',   label => $feature->source_name };
  
   if (scalar @failed) {
     push @entries, { type => 'Failed status', label_html => sprintf '<span style="color:red">%s</span>', shift @failed };
