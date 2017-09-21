@@ -130,7 +130,7 @@ sub count_features {
 }
 
 sub count_transcripts {
-  return scalar @{$_[0]->selected_variation_feature_mapping->{transcript_vari} || []};
+  return scalar @{($_[0]->selected_variation_feature_mapping || {})->{transcript_vari} || []};
 }
 
 sub count_regfeats {
