@@ -1,6 +1,7 @@
 language: perl
 
 perl:
+  - '5.14'
   - '5.10'
   - '5.24'
   
@@ -9,7 +10,7 @@ env:
   - COVERALLS=true
   - COVERALLS=false
   global:
-    secure: QcuA+WJG9OykHNwt3Zj5fpylpi8pgZDoGjWeU7ePK2dyFwIrGYIklW6si/vvMp+A5BJiAV+nXjLUUCW/AHt98s8yeq/HxL6CmK07ZCOnNAC+adlnbYRcuP6aQ3yANhpYiMmnJOKA7Axo5s+t+ouEFbW6bq4iz/sqfaocLGIJ3qw=
+    - secure: VwKa7XQnfsH0mTTNhUdoLhB5YZi3vhnvo6cg2IbwEdr0QQz3pC96hddy4LS81bpupt/rjR7MYnxU1afBpOv27U3OYPMkAypkEnuXw9BmoWcOiQxw5wDjwH6NrVcMKIOWneU6rPewazzoOWdVagVhjfZyOq8ahUEw//EfH4Uh9Ro=
     
 sudo: false
 
