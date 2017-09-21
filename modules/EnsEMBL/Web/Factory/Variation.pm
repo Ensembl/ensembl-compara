@@ -24,7 +24,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
-use Scalar::Util qw(weaken isweak);
+use Scalar::Util qw(isweak);
 
 use base qw(EnsEMBL::Web::Factory);
 
@@ -49,54 +49,19 @@ sub createObjects {
     
     $variation_db->dnadb($core_db);
 
-    my $vfid = $self->param('vf'); 
-    my $vl = $self->param('vl');
+    my $vfid = $self->param('vf');
 
-    if(!$identifier && $vfid) {
+    if($identifier) {
+      $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier);
+    }
+
+    if(!$variation && $vfid) {
       if(my $vf = $variation_db->get_VariationFeatureAdaptor->fetch_by_dbID($vfid)) {
         $identifier = $vf->variation_name;
         $self->param('v',$identifier);
         $variation = $vf->variation;
-      }
-    }
 
-    if($identifier) {
-      $variation ||= $variation_db->get_VariationAdaptor->fetch_by_name($identifier);
-    }
-    elsif(!$vl) {
-      return $self->problem('fatal', 'Variation ID required', $self->_help('A variation ID is required to build this page.'));
-    }
-  
-    if(!$variation && $vl) {  
-  
-      # find VCF config
-      my $c = $self->species_defs->ENSEMBL_VCF_COLLECTIONS;
-
-      if($c && $variation_db->can('use_vcf')) {
-        $variation_db->vcf_config_file($c->{'CONFIG'});
-        $variation_db->vcf_root_dir($self->hub->species_defs->DATAFILE_BASE_PATH);
-        $variation_db->use_vcf($c->{'ENABLED'});
-      }
-    
-      my $vfa = $variation_db->get_VariationFeatureAdaptor();
-    
-      if($core_db && $vfa) {
-        my $vfs = $vfa->fetch_all_by_location_identifier($vl);
-          
-        if(scalar @$vfs) {
-          $variation = $vfs->[0]->variation;
-
-          # "strengthen" this reference as otherwise it disappears when $vfs goes out of scope
-          $variation->{variation_feature} = $vfs->[0];
-        
-          # "reverse" weakening
-          # normally the ref from var->vf (child->parent) is weakened
-          # but since we are passing on var here, make var->vf strong and vf->var weak
-          # if(isweak($variation->{variation_feature})) {
-          #   $variation->{variation_feature} = $vfs->[0];
-          #   weaken($vfs->[0]->{variation});
-          # }
-        }
+        $variation->{variation_feature} = $vf if isweak($variation->{variation_feature});
       }
     }
   }
