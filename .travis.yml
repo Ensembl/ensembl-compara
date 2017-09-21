@@ -1,17 +1,14 @@
 language: perl
-
 perl:
-  - '5.14'
-  - '5.10'
-  - '5.24'
-  
+- '5.10'
+- '5.24'
 env:
   matrix:
   - COVERALLS=true
   - COVERALLS=false
   global:
-    - secure: VwKa7XQnfsH0mTTNhUdoLhB5YZi3vhnvo6cg2IbwEdr0QQz3pC96hddy4LS81bpupt/rjR7MYnxU1afBpOv27U3OYPMkAypkEnuXw9BmoWcOiQxw5wDjwH6NrVcMKIOWneU6rPewazzoOWdVagVhjfZyOq8ahUEw//EfH4Uh9Ro=
-    
+    secure: khcbQ+HhQVmIKmwxS04HK+8zqhDQqhIhITx4Y675rBHk7Qqq2Tg5CQO+Ss9aydWKlcFRNFx51pNr/ZdA+YKxdQFaLwICWg7m9Mt6khUOOxf8SQWd7Hi/Da2il6K+zTjV5q8utIdrlvrJcGPmjyseSLtn9hxPSoN83InzVDPwfj0SPCO4dlVNNfbtISIi/8o8tNjdL/NJwKp+8T06EYne01W1I7dYFeVHMNFGOSARpK9nN4a8FoBc/cBxefQ5s44SmLWpYu8Kzwg4XguKrd5WB5KbT+62okGrDSLkQFRe+GYeclX6NHCWr6iN67MibKG5pJ4SpyhGY8BxLl+W0KDg1AMcriG+HrM7aywynwT0n15LlZY6bLl0N5dr0SttfDyHN5l7OzXAMe+yb0DRID90cfTLzA9NaoYAzVuqLgFRQRBGJ85+RuVJE3KutS4PWxCrnuvaL5s4ndEtSMYvEjXJeKP/UCERs3Yf24jg85r+we8PbVlkzstuASUsOaZMzhHQQ+Ovg7OKGGZqCYbsYVhKlobFrgMv2lUjihiO9wmXxEqJVjbyHgbtsYVNERqF74DI1qb6oGz7Mk7SjVPX+lMZr+uC58jmMKveawMeJdCvthHfhE3DPO/DTK92kMvyccihLUMSiChn9qxYGvhsGUHJXwe0K2PVDbb5aqrUgiV9BDs=
+
 sudo: false
 
 before_install:
@@ -27,7 +24,7 @@ before_install:
   - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
   - git clone --branch master --depth 1 https://github.com/samtools/tabix.git
   - git clone  --branch 1.3.2 --depth 1 https://github.com/samtools/htslib.git
-  
+
 install:
   - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
   - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
