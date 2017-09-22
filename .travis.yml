@@ -6,8 +6,11 @@ perl:
   - "5.24"
 
 env:
+  matrix:
   - COVERALLS=true
   - COVERALLS=false
+  global:
+    secure: bGSZASCtRCcE2VZ3u4hdvjh6CDHe+Uo3MR7B4eobSFFhZVjIN3/DKaGrQYprEeSIB/vb75rveyTheO3qe3lHwq71e18cBk2ulQA6/L0eUJYsoR3u2y7d9whu8dS97IoLzize6hItxJFP8TmRaJBtWqOixyWHNW72X/fKF1a192E=
 
 sudo: false
 
@@ -48,6 +51,11 @@ install:
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
 
 script: "./travisci/harness.sh"
+
+jobs:
+  include:
+  - stage: trigger_dependent_builds
+    script: "./travisci/trigger-dependent-build.sh"
 
 # Get the matrix to only build coveralls support when on 5.10
 matrix:
