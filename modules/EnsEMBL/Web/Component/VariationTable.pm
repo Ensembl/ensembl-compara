@@ -30,6 +30,8 @@ use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
 
+use Scalar::Util qw(looks_like_number);
+
 use base qw(EnsEMBL::Web::Component::Variation);
 
 sub _init {
@@ -292,7 +294,6 @@ sub make_table {
       type   => 'Variation',
       action => 'Summary',
       vf     => ["vf"],
-      vl     => ["vl"],
       v      => undef # remove the 'v' param from the links if already present
     }
   },{
@@ -569,7 +570,7 @@ sub variation_table {
           my $row;
 
           my $variation_name = $vf->variation_name;
-          my $url = $tv->{_variation_feature_id} ? ";vf=".$tv->{_variation_feature_id} : ";vl=".$vf->location_identifier;
+          my $url = ";vf=".$tv->_variation_feature_id;
           $row->{'ID'} = $variation_name;
           my $source = $vf->source_name;
           $row->{'Source'} = $source;
@@ -617,7 +618,6 @@ sub variation_table {
           
             my $more_row = {
               vf         => $vf->dbID,
-              vl         => $vf->location_identifier,
               class      => $var_class,
               Alleles    => $allele_string,
               vf_allele  => $vf_allele,
@@ -666,7 +666,7 @@ sub _get_transcript_variations {
   # deal with VFs with (from database) and without dbID (from VCF)
   my $have_vfs_with_id = 0;
   foreach my $vf(values %$vfs) {
-    if($vf->dbID) {
+    if(looks_like_number($vf->dbID)) {
       $have_vfs_with_id = 1;
     }
     else {
@@ -696,7 +696,7 @@ sub _get_variation_features {
       $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
     );
 
-    $self->{_variation_features} = { map {($_->dbID || $_->location_identifier) => $_} (@{ $vfa->fetch_all_by_Slice($slice) }, @{ $vfa->fetch_all_somatic_by_Slice($slice) })};
+    $self->{_variation_features} = { map {$_->dbID => $_} (@{ $vfa->fetch_all_by_Slice($slice) }, @{ $vfa->fetch_all_somatic_by_Slice($slice) })};
 
     print STDERR "FETCHED ".(scalar keys %{$self->{_variation_features}})." VFs\n";
   }
