@@ -32,7 +32,7 @@ export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-vep/modules
 export PERL5LIB=$PERL5LIB:$PWD/Bio-HTS/lib:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS/Faidx:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS
 
-ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen,+ignore,ensembl-vep'
+ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen,+ignore,ensembl-vep,+ignore,Bio-HTS'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 COMPARA_SCRIPTS=("$PWD/modules/t")
 CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
