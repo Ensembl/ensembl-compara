@@ -23,7 +23,6 @@ use File::Basename qw/dirname/;
 use Test::More;
 use Test::Warnings;
 use Term::ANSIColor;
-use Bio::EnsEMBL::Test::TestUtils;
 
 if ( not $ENV{TEST_AUTHOR} ) {
   my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
@@ -40,6 +39,39 @@ my $cur_dir = cwd();
 chdir($original_dir);
 my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir());
 
+
+sub find_all_files {
+    my ($starting_dir) = @_;
+
+    my @queue;
+    my @files;
+
+    # First populate the top-level sub-dirctories
+    {
+        my %subdir_ok = map {$_ => 1} qw(modules scripts sql docs travisci xs);
+        opendir(my $dirh, $starting_dir);
+        my @dir_content = File::Spec->no_upwards(readdir $dirh);
+        foreach my $f (@dir_content) {
+            unless ((-d $f) and !$subdir_ok{$f}) {
+                push @queue, File::Spec->catfile($starting_dir, $f);
+            }
+        }
+        closedir $dirh;
+    }
+
+    # Recurse into the filesystem
+    while ( my $f = shift @queue ) {
+        if ( -d $f ) {
+            opendir(my $dirh, $f);
+            push @queue, map {File::Spec->catfile($f, $_)} File::Spec->no_upwards(readdir $dirh);
+            closedir $dirh;
+        } else {
+            push @files, $f;
+        }
+    }
+
+    return @files;
+}
 
 sub is_ascii {
     my $filename = shift;
@@ -61,15 +93,15 @@ sub is_ascii {
     }
 }
 
-my %allowed_subdirs = map {$_ => 1} qw(modules scripts docs sql travisci xs);
-my @source_files = all_source_code($root);
-#Find all files & run
+# The list of sub-directories must be kept up-to-date. This assumes that no
+# files in $root should be checked
+my @source_files = find_all_files($root, [qw(modules scripts sql docs travisci xs)]);
+
 foreach my $f (@source_files) {
-    if ($f =~ /ensembl-compara\/modules\/t\/..\/..\/([^\/]*)\//) {
-        next unless $allowed_subdirs{$1};
-    }
+    # The conservation_score table has scores compressed in binary form
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\/conservation_score.txt$/;
-    next if $f =~ /\.(png|hal)$/;
+    # These files are binary by nature
+    next if $f =~ /\.(pdf|png|dia|hal|jar|so|o)$/;
     is_ascii($f);
 }
 
