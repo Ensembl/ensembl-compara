@@ -44,13 +44,10 @@ my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir())
 my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modules scripts sql docs travisci xs);
 
 foreach my $f (@source_files) {
-    next if $f =~ /modules\/t\/test-genome-DBs\//;
-    next if $f =~ /modules\/t\/cdhit_data\//;
+    # Except the .sql of the test-database dumps
+    next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
+    # And Apollo's code
     next if $f =~ /scripts\/synteny\/(apollo|BuildSynteny|SyntenyManifest.txt)/;
-    next if $f =~ /\/blib\//;
-    next if $f =~ /\/HALXS\.c$/;
-    next if $f =~ /\.conf\b/;
-    next if $f =~ /\.(tmpl|hash|nw|ctl|txt|html|png|hal)$/;
     has_apache2_licence($f);
 }
 
