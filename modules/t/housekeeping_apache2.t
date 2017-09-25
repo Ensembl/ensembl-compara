@@ -39,8 +39,10 @@ my $cur_dir = cwd();
 chdir($original_dir);
 my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir());
 
-my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modules scripts sql docs);
-#Find all files & run
+# The list of sub-directories must be kept up-to-date. This assumes that no
+# files in $root should be checked
+my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modules scripts sql docs travisci xs);
+
 foreach my $f (@source_files) {
     next if $f =~ /modules\/t\/test-genome-DBs\//;
     next if $f =~ /modules\/t\/cdhit_data\//;

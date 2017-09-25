@@ -48,8 +48,11 @@ my $root = File::Spec->catdir($cur_dir, File::Spec->updir(),File::Spec->updir())
 # Configure critic
 Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'), -severity => 5, -verbose => 8);
 
-#Find all files & run
-my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts sql docs);
+# The list of sub-directories must be kept up-to-date. This assumes that no
+# files in $root should be checked
+# xs is excluded because the symlinks cause perlcritic to misunderstand the real path
+my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts sql docs travisci);
+
 foreach my $perl (@perl_files) {
   critic_ok($perl);
 }
