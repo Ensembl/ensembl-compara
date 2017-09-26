@@ -100,7 +100,7 @@ sub run {
 
 sub _load_biotype_groups {
     my $self = shift;
-    $self->param('biotype_groups', {'LRG_gene' => 'LRG'});
+    $self->param('biotype_groups', {'lrg_gene' => 'LRG'});
 }
 
 
