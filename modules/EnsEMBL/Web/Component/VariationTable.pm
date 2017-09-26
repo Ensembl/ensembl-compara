@@ -658,30 +658,36 @@ sub _get_transcript_variations {
   my $self = shift;
   my $tr   = shift;
 
-  my $vfs = $self->_get_variation_features();
+  my $tr_id = $tr ? $tr->dbID : 0;
+  my $cache = $self->{_transcript_variations} ||= {};
 
-  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-  my $tvs = [];
+  if(!exists($cache->{$tr_id})) {
 
-  # deal with VFs with (from database) and without dbID (from VCF)
-  my $have_vfs_with_id = 0;
-  foreach my $vf(values %$vfs) {
-    if(looks_like_number($vf->dbID)) {
-      $have_vfs_with_id = 1;
+    my $vfs = $self->_get_variation_features();
+
+    my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+    my @tvs = ();
+
+    # deal with VFs with (from database) and without dbID (from VCF)
+    my $have_vfs_with_id = 0;
+    foreach my $vf(values %$vfs) {
+      if(looks_like_number($vf->dbID)) {
+        $have_vfs_with_id = 1;
+      }
+      else {
+        push @tvs, @{$vf->get_all_TranscriptVariations([$tr])};
+      }
     }
-    else {
-      push @$tvs, @{$vf->get_all_TranscriptVariations([$tr])};
+    
+    if($have_vfs_with_id) {
+      push @tvs, @{$tva->fetch_all_by_Transcripts([$tr])};
+      push @tvs, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
     }
-  }
-  
-  if($have_vfs_with_id) {
-    push @$tvs, @{$tva->fetch_all_by_Transcripts([$tr])};
-    push @$tvs, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
-  }
-  
-  print STDERR "FETCHED ".(scalar @$tvs)." TVs\n";
 
-  return $tvs;
+    $cache->{$tr_id} = \@tvs;
+  }
+
+  return $cache->{$tr_id};
 }
 
 sub _get_variation_features {
@@ -697,8 +703,6 @@ sub _get_variation_features {
     );
 
     $self->{_variation_features} = { map {$_->dbID => $_} (@{ $vfa->fetch_all_by_Slice($slice) }, @{ $vfa->fetch_all_somatic_by_Slice($slice) })};
-
-    print STDERR "FETCHED ".(scalar keys %{$self->{_variation_features}})." VFs\n";
   }
 
   return $self->{_variation_features};
