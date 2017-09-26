@@ -1010,7 +1010,9 @@ CREATE TABLE gene_member (
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
-  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end),
+  KEY biotype_dnafrag_id_start_end (biotype_group,dnafrag_id,dnafrag_start,dnafrag_end),
+  KEY genome_db_id_biotype (genome_db_id, biotype_group)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
