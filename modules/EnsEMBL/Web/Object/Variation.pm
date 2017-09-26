@@ -279,40 +279,13 @@ sub _seq_region_ {
     if ($unique) {
       return (undef, undef, undef, "multiple") if $#vari_mappings > 0;
     }
-    $seq_region  = $self->region_name($vari_mappings[0]);
-    $start       = $self->start($vari_mappings[0]);
-    $seq_type    = $self->region_type($vari_mappings[0]);
+
+    my $vf = $vari_mappings[0];
+    $seq_region = $vf->seq_region_name;
+    $start      = $vf->seq_region_start;;
+    $seq_type   = $vf->slice->coord_system_name;
   }
   return ( $seq_region, $start, $seq_type );
-}
-
-
-sub seq_region_name    {
-
-  ### Variation_location 
-  ### a
-
-  my( $sr,$st) = $_[0]->_seq_region_; return $sr; 
-}
-sub seq_region_start   {
-  ### Variation_location 
-  ### a
-  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
-}
-sub seq_region_end     {
-  ### Variation_location 
-  ### a
-  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
-}
-sub seq_region_strand  {
-  ### Variation_location 
-  ### a
-  return 1; 
-}
-sub seq_region_type    { 
-  ### Variation_location
-  ### a
-  my($sr,$st,$type) = $_[0]->_seq_region_; return $type; 
 }
 
 sub seq_region_data {
@@ -1228,7 +1201,7 @@ sub variation_feature_mapping { ## used for snpview
   my %data;
   foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
      my $varif_id = $vari_feature_obj->dbID || $vari_feature_obj->location_identifier;
-     $data{$varif_id}{Type}            = $self->region_type($vari_feature_obj);
+     $data{$varif_id}{Type}            = $vari_feature_obj->slice->coord_system_name;
      $data{$varif_id}{Chr}             = $vari_feature_obj->seq_region_name;
      $data{$varif_id}{start}           = $vari_feature_obj->seq_region_start;
      $data{$varif_id}{end}             = $vari_feature_obj->seq_region_end;
@@ -1302,45 +1275,6 @@ sub get_selected_variation_feature {
   }
 
   return $variation_feature;
-}
-
-sub region_type { 
-
-  ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $type = $data->region_type($vari)
-  ### Description: gets the VariationFeature slice seq region type
-  ### Returns String
-
-  my ($self, $vari_feature) = @_;
-  my $slice =  $vari_feature->slice;
-  return $slice->coord_system_name if $slice;
-}
-
-sub region_name { 
-  ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $chr = $data->region_name($vari)
-  ### Description: gets the VariationFeature slice seq region name
-  ### Returns String
-  
-  my ($self, $vari_feature) = @_;
-  my $slice =  $vari_feature->slice;
-  return $slice->seq_region_name() if $slice;
-}
-
-
-
-sub start {
-
-  ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $vari_start = $object->start($vari);
-  ### Description: gets the Variation start coordinates
-  ### Returns String
-
-  my ($self, $vari_feature) = @_;
-  return $vari_feature->start;
 }
 
 
@@ -1426,15 +1360,15 @@ sub ld_pops_for_snp {
 
 sub ld_location {
   my $self = shift;
-  my $start = $self->seq_region_start;
-  my $end = $self->seq_region_end;
+  my ($sr, $start) = $self->_seq_region_;
+  my $end = $start;
   my $length = $end - $start +1;
   my $offset = (20000 - $length)/2;
   $start -= $offset;
   $end += $offset;
   $start =~s/\.5//;
   $end =~s/\.5//;
-  my $location = $self->seq_region_name .":". $start .'-'. $end;
+  my $location = $sr .":". $start .'-'. $end;
   return $location;
 }
 
