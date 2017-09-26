@@ -76,6 +76,7 @@ sub default_options {
         'examl_exe_avx'             => $self->o('ensembl_cellar').'/examl/3.0.17/bin/examl-AVX',
         'examl_exe_sse3'            => $self->o('ensembl_cellar').'/examl/3.0.17/bin/examl',
         'parse_examl_exe'           => $self->o('ensembl_cellar').'/examl/3.0.17/bin/parse-examl',
+        'mpirun_exe'                => $self->o('ensembl_cellar').'/open-mpi/2.1.1/bin/mpirun',
         'notung_jar'                => $self->o('ensembl_cellar').'/notung/2.6.0/libexec/Notung-2.6.jar',
         'quicktree_exe'             => $self->o('ensembl_cellar').'/quicktree/2.0/bin/quicktree',
         'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
@@ -91,7 +92,6 @@ sub default_options {
 
         # FIXME
         'cdhit_exe'                 => '/homes/carlac/software/cdhit/cd-hit',
-        'mpirun_exe'                => '/nfs/production/mpi/mpich/mpich3/3.1-intel/bin/mpirun',
     };
 }
 

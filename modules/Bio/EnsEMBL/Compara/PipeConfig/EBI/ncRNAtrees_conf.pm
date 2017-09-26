@@ -81,7 +81,7 @@ sub default_options {
             'cmbuild_exe'           => $self->o('ensembl_cellar').'/infernal/1.1.2/bin/cmbuild',
             'cmsearch_exe'          => $self->o('ensembl_cellar').'/infernal/1.1.2/bin/cmsearch',
             'mafft_exe'             => $self->o('ensembl_cellar').'/mafft/7.305/bin/mafft',
-
+            'mpirun_exe'            => $self->o('ensembl_cellar').'/open-mpi/2.1.1/bin/mpirun',
             'raxml_pthread_exe_sse3'     => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-SSE3',
             'raxml_pthread_exe_avx'      => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-PTHREADS-AVX',
             'raxml_exe_sse3'             => $self->o('ensembl_cellar').'/raxml/8.2.8/bin/raxmlHPC-SSE3',
@@ -97,9 +97,6 @@ sub default_options {
             'quicktree_exe'         => $self->o('ensembl_cellar').'/quicktree/2.0/bin/quicktree',
             'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.5/bin/r2r',
             'cafe_shell'            => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
-
-            # FIXME
-            'mpirun_exe'            => '/nfs/production/mpi/mpich/mpich3/3.1-intel/bin/mpirun',
 
             
             # Other parameters
