@@ -26,6 +26,8 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
@@ -96,7 +98,7 @@ sub resource_classes {
          '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
          '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
 	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
     };
 }
 
@@ -247,7 +249,7 @@ sub pipeline_analyses {
 			       '2->A' => [ 'low_coverage_genome_alignment' ],
 			       'A->1' => [ 'delete_alignment' ],
 			      },
-		-rc_name => '3.6Gb',
+		-rc_name => '3.5Gb',
 	    },
 	    {   -logic_name => 'low_coverage_genome_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
@@ -286,7 +288,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			      },
-		-rc_name => '3.6Gb',
+		-rc_name => '3.5Gb',
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
@@ -360,7 +362,7 @@ sub pipeline_analyses {
                                                                            {'test' => 'conservation_scores','method_link_species_set_id'=>'#cs_mlss_id#'},
                                                                 ],
                                     },
-                               'A->1' => ['stats_factory'],
+                               'A->1' => ['register_mlss'],
                               },
             },
 
@@ -369,54 +371,16 @@ sub pipeline_analyses {
 		-rc_name => '100Mb',
 	    },
 
-            {   -logic_name => 'stats_factory',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-                -flow_into  => {
-                    '2->A' => [ 'multiplealigner_stats' ],
-                    'A->1' => [ 'block_size_distribution' ],
-                    '3'    => [ 'email_stats_report' ],
-                },
-            },
-            
-            { -logic_name => 'multiplealigner_stats',
-	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
-	      -parameters => {
-			      'skip' => $self->o('skip_multiplealigner_stats'),
-			      'dump_features' => $self->o('dump_features_exe'),
-			      'compare_beds' => $self->o('compare_beds_exe'),
-			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('ensembl_release'),
-			      'output_dir' => $self->o('output_dir'),
-                              'mlss_id'   => $self->o('low_epo_mlss_id'),
-			     },
-	      -rc_name => '3.6Gb',             
-              -hive_capacity => 100,  
-            },
-
-        {   -logic_name => 'block_size_distribution',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-            -parameters => {
-                'mlss_id'   => $self->o('low_epo_mlss_id'),
-            },
-            -flow_into  => [ 'register_mlss' ],
-        },
-
-        {   -logic_name => 'email_stats_report',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::EmailStatsReport',
-            -parameters => {
-                'stats_exe' => $self->o('epo_stats_report_exe'),
-                'email'     => $self->o('epo_stats_report_email'),
-                'subject' => "EPO LOW Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Report: ",
-            }
-        },
-
         {   -logic_name => 'register_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
             -parameters => {
                 'mlss_id'       => $self->o('low_epo_mlss_id'),
                 'master_db'     => $self->o('master_db'),
             },
+            -flow_into  => [ 'multiplealigner_stats_factory' ],
         },
+
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
 
      ];
 }

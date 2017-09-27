@@ -59,6 +59,8 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -160,7 +162,7 @@ sub pipeline_create_commands {
 #         '100Mb' =>  { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
 #         '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
 #         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11]"' },
-#         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+#         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
 #         '7Gb' =>  { 'LSF' => '-C0 -M7000 -R"select[mem>7000] rusage[mem=7000]"' },
 #         '14Gb' => { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
 #         '30Gb' =>   { 'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
@@ -511,7 +513,7 @@ sub pipeline_analyses {
                              'mercator_exe' => $self->o('mercator_exe'),
 			    },
              -hive_capacity => 1,
-	     -rc_name => '3.6Gb',
+	     -rc_name => '3.5Gb',
              -flow_into => {
                  "2->A" => WHEN (
                     "(#total_residues_count# <= 3000000) || ( #dnafrag_count# <= 10 )"                          => "pecan",
@@ -656,7 +658,7 @@ sub pipeline_analyses {
 			   },
 	    -flow_into => { 
 			    '1->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
-			    'A->1' => ['stats_factory'],
+			    'A->1' => ['multiplealigner_stats_factory'],
 			   },
 
 	    -rc_name => '100Mb',
@@ -683,41 +685,7 @@ sub pipeline_analyses {
 	    -rc_name => '100Mb',
  	},
 
-        {   -logic_name => 'stats_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -flow_into  => {
-                '2->A' => [ 'multiplealigner_stats' ],
-                'A->1' => [ 'block_size_distribution' ],
-                '3'    => [ 'email_stats_report' ],
-            },
-        },
-
-        { -logic_name => 'multiplealigner_stats',
-	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
-	      -parameters => {
-			      'skip' => $self->o('skip_multiplealigner_stats'),
-			      'dump_features' => $self->o('dump_features_exe'),
-			      'compare_beds' => $self->o('compare_beds_exe'),
-			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('ensembl_release'),
-			      'output_dir' => $self->o('output_dir'),
-			     },
-	      -rc_name => '3.6Gb',             
-              -hive_capacity => 100,  
-	    },
-
-        {   -logic_name => 'block_size_distribution',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-        },
-
-        {   -logic_name => 'email_stats_report',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::EmailStatsReport',
-            -parameters => {
-                'stats_exe' => $self->o('epo_stats_report_exe'),
-                'email'     => $self->o('epo_stats_report_email'),
-                'subject' => "MercatorPecan Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Report:",
-            }
-        },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
 
     ];
 

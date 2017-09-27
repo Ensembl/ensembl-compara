@@ -74,7 +74,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my ($self) = @_;
 
-  return if ($self->param('skip'));
   #Default directory containing bed files.
   if (!defined $self->param('bed_dir')) {
       die ("Must define a location to dump the bed files using the parameter 'bed_dir'");
@@ -114,27 +113,9 @@ sub fetch_input {
   return 1;
 }
 
-=head2 run
-
-=cut
-
-sub run {
-  my $self = shift;
-
-  return if ($self->param('skip'));
-
-  return 1;
-}
-
-
-=head2 write_output
-
-=cut
 
 sub write_output {
   my ($self) = @_;
-
-  return if ($self->param('skip'));
 
   #Dump bed files if necessary
   my ($genome_bed, $coding_exon_bed) = $self->dump_bed_file($self->param('species'), $self->param('dbc_url'));

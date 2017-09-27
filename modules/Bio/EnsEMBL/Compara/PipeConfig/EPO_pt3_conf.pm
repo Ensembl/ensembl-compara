@@ -67,8 +67,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -94,7 +95,7 @@ sub default_options {
         # Dump directory
         'enredo_output_file' => $self->o('dump_dir').'enredo_#mlss_id#.out',
         'bed_dir' => $self->o('dump_dir').'bed_dir',
-        'feature_dumps' => $self->o('dump_dir').'feature_dumps',
+        'output_dir' => $self->o('dump_dir').'feature_dumps',
         'enredo_mapping_file' => $self->o('dump_dir').'enredo_friendly.mlssid_#mlss_id#_'.$self->o('rel_with_suffix'),
         'bl2seq_dump_dir' => $self->o('dump_dir').'bl2seq', # location for dumping sequences to determine strand (for bl2seq)
         'bl2seq_file_stem' => $self->o('bl2seq_dump_dir')."/bl2seq",
@@ -119,7 +120,7 @@ sub pipeline_create_commands {
 	'mkdir -p '.$self->o('dump_dir'),
 	'mkdir -p '.$self->o('bl2seq_dump_dir'),
         'mkdir -p '.$self->o('bed_dir'),
-        'mkdir -p '.$self->o('feature_dumps'),
+        'mkdir -p '.$self->o('output_dir'),
            ];  
 }
 
@@ -130,6 +131,7 @@ sub resource_classes {
         'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
         'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
         'hugemem' => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
+        '3.5Gb'   => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
     };  
 }
 
@@ -152,7 +154,6 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
 	my ($self) = @_;
-	print "pipeline_analyses\n";
 
 return 
 [
@@ -465,7 +466,7 @@ return
                                                                            {'test' => 'conservation_scores','method_link_species_set_id'=>$self->o('gerp_cs_mlss_id')},
                                                                 ],
                                     } ),
-                               'A->1' => ['stats_factory'],
+                               'A->1' => ['register_mlss'],
                               },
             },
 
@@ -473,51 +474,15 @@ return
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
             },
 
-            {   -logic_name => 'stats_factory',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-                -flow_into  => {
-                    '2->A' => [ 'multiplealigner_stats' ],
-                    'A->1' => [ 'block_size_distribution' ],
-                               },
-            },
-
-            { -logic_name => 'multiplealigner_stats',
-              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
-              -parameters => {
-                              'skip' => $self->o('skip_multiplealigner_stats'),
-                              'dump_features' => $self->o('dump_features_exe'),
-                              'compare_beds' => $self->o('compare_beds_exe'),
-                              'bed_dir' => $self->o('bed_dir'),
-                              'ensembl_release' => $self->o('ensembl_release'),
-                              'output_dir' => $self->o('feature_dumps'),
-                             },
-              -rc_name => 'mem3500',
-              -hive_capacity => 100,
-            },
-
-
-        {   -logic_name => 'block_size_distribution',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-            -flow_into  => [ 'email_stats_report' ],
-        },
-
-        {   -logic_name => 'email_stats_report',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::EmailStatsReport',
-            -parameters => {
-                'stats_exe' => $self->o('epo_stats_report_exe'),
-                'email'     => $self->o('epo_stats_report_email'),
-                'subject'   => "EPO Pipeline( #expr(\$self->hive_pipeline->display_name)expr# ) has completed", 
-            }
-            -flow_into  => [ 'register_mlss' ],
-        },
-
         {   -logic_name    => 'register_mlss',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
             -parameters    => {
                 'master_db'     => '#compara_master#',
             },
+            -flow_into     => [ 'multiplealigner_stats_factory' ],
         },
 
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
 ];
 }
 

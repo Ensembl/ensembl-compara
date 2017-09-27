@@ -43,7 +43,7 @@ rerun or the alignment has been imported
 This pipeline requires two arguments: a compara database (to read the alignment
 and store the stats) and a mlss_id.
 
-The first analysis ("stats_factory") can be re-seeded with extra parameters to
+The first analysis ("multiplealigner_stats_factory") can be re-seeded with extra parameters to
 compute stats on other alignments.
 
 =head1 AUTHORSHIP
@@ -62,7 +62,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
@@ -71,14 +71,17 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
+
         # Dump location
         'dump_dir'      => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
-        'feature_dumps' => $self->o('dump_dir').'feature_dumps',
+        'output_dir'    => $self->o('dump_dir').'feature_dumps',
 
         # Executable locations
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 
@@ -88,7 +91,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         'mkdir -p '.$self->o('bed_dir'),
-        'mkdir -p '.$self->o('feature_dumps'),
+        'mkdir -p '.$self->o('output_dir'),
     ];
 }
 
@@ -97,7 +100,7 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-        'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
+        '3.5Gb' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
     };
 }
 
@@ -122,36 +125,14 @@ sub pipeline_wide_parameters {
 sub pipeline_analyses {
     my ($self) = @_;
 
-    return [
-        {   -logic_name => 'stats_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -input_ids  => [
-                {
-                    'mlss_id'       => $self->o('mlss_id'),
-                }
-            ],
-            -flow_into  => {
-                '2->A' => [ 'multiplealigner_stats' ],
-                'A->1' => [ 'block_size_distribution' ],
-            },
-        },
-
-        {   -logic_name => 'multiplealigner_stats',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
-            -parameters => {
-                'dump_features'     => $self->o('dump_features_exe'),
-                'compare_beds'      => $self->o('compare_beds_exe'),
-                'bed_dir'           => $self->o('bed_dir'),
-                'ensembl_release'   => $self->o('ensembl_release'),
-                'output_dir'        => $self->o('feature_dumps'),
-            },
-            -rc_name => 'mem3500',
-        },
-
-        {   -logic_name => 'block_size_distribution',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-        },
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [
+        {
+            'mlss_id'       => $self->o('mlss_id'),
+        }
     ];
+
+    return $pipeline_analyses;
 }
 
 1;
