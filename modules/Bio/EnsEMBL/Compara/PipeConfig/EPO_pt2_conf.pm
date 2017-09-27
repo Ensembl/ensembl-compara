@@ -77,7 +77,7 @@ sub default_options {
         'mapping_params'    => { bestn=>11, gappedextension=>"no", softmasktarget=>"no", percent=>75, showalignment=>"no", model=>"affine:local", },
 
     	'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
-    	# 'epo_mlss_id' => 825, # epo mlss from master
+    	# 'mlss_id' => 825, # epo mlss from master
         'mapping_method_link_id' => 10000, # dummy value - should not need to change
     	'mapping_method_link_name' => 'MAP_ANCHORS', 
     	'mapping_mlssid' => 10000, # dummy value - should not need to change
@@ -166,7 +166,7 @@ sub pipeline_analyses {
             {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
-                    'mlss_id'               => $self->o('epo_mlss_id'),
+                    'mlss_id'               => $self->o('mlss_id'),
                     'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
                     'extra_parameters'      => [ 'locator' ],
                 },

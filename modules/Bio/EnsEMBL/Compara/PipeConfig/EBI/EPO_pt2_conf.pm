@@ -28,7 +28,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt2_conf
 
        'species_set_name'  - used in the naming of the database
 	   'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
-       'epo_mlss_id'       - mlss_id for the epo alignment (in master)
+       'mlss_id'       - mlss_id for the epo alignment (in master)
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:

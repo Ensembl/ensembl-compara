@@ -145,7 +145,7 @@ sub write_output {
 	my $sth1 = $self->dbc->prepare("INSERT INTO dnafrag_region VALUES (?,?,?,?,?)");
 	my $sth2 = $self->dbc->prepare("INSERT INTO synteny_region VALUES (?,?)");
 	foreach my $synteny_region_id(sort {$a <=> $b} keys %{ $self->param('synteny_regions') }){
-		$sth2->execute($synteny_region_id,$self->param('epo_mlss_id'));
+		$sth2->execute($synteny_region_id,$self->param('mlss_id'));
 		foreach my $dnafrag_region(keys %{ $self->param('synteny_regions')->{$synteny_region_id} }){
 			my($species_name,$dnafrag_name,$start,$end,$strand)=split(":", $dnafrag_region);
 			# we have the dnafrag_name from the file but we need the dnafrag_id from the db
@@ -164,7 +164,7 @@ sub write_output {
 	# add the MTs to the dnafrag_region table
 	if($self->param('add_non_nuclear_alignments')) {
 		my $max_synteny_region_id = $synteny_region_ids[-1]->{'synteny_region_id'} + 1;
-		$sth2->execute($max_synteny_region_id, $self->param('epo_mlss_id'));
+		$sth2->execute($max_synteny_region_id, $self->param('mlss_id'));
 		my $sth_mt = $self->dbc->prepare("SELECT dnafrag_id, length FROM dnafrag WHERE cellular_component =\"MT\"");
 		$sth_mt->execute;
 		foreach my $dnafrag_region ( @{ $sth_mt->fetchall_arrayref } ) {

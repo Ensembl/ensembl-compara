@@ -343,7 +343,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
 		-parameters => {
-				'method_link_species_set_id' => $self->o('low_epo_mlss_id')
+				'mlss_id' => $self->o('low_epo_mlss_id')
 			       },
 		-batch_size    => 10,
 		-hive_capacity => 15,

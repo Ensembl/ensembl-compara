@@ -135,10 +135,7 @@ my $create_block_frag_array = 1;
 sub fetch_input {
   my( $self) = @_;
   $self->param('ga_frag', []);
-  my $ortheus_mlssid = $self->param('ortheus_mlssid');
-  unless ($ortheus_mlssid) {
-    throw("MethodLinkSpeciesSet is not defined for this Ortheus job");
-  }
+  my $mlss_id = $self->param_required('mlss_id');
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->param('dnafrag_regions'). At this point the
   ## DnaFragRegions are in random order
@@ -266,7 +263,7 @@ sub _write_output {
   }
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss = $mlssa->fetch_by_dbID($self->param('ortheus_mlssid'));
+  my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
@@ -977,7 +974,7 @@ sub get_species_tree {
       return $self->param('species_tree');
   }
 
-  my $db_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('ortheus_mlssid'), 'default')->root;
+  my $db_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default')->root;
   my $species_tree = $db_species_tree->copy;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids

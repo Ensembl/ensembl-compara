@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt3_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt3_conf -password <your_password> -epo_mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -compara_master <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt3_conf -password <your_password> -mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -compara_master <>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 

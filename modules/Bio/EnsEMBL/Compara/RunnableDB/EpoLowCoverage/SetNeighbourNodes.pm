@@ -59,7 +59,7 @@ sub run {
 
     my $root_id = $self->param('root_id');
 
-    my $mlss_id = $self->param('method_link_species_set_id');
+    my $mlss_id = $self->param('mlss_id');
 
     my $method_link_species_set_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
     my $genomic_align_tree_adaptor = $self->compara_dba->get_GenomicAlignTreeAdaptor();
