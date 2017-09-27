@@ -708,9 +708,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-            -parameters => {
-              'db_conn' => undef,
-            }
         },
 
         {   -logic_name => 'email_stats_report',

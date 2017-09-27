@@ -28,36 +28,26 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables
+Bio::EnsEMBL::Compara::RunnableDB::SqlCmd
 
 =head1 SYNOPSIS
 
-Simple Runnable based on eHive's SqlCmd that offsets all the gene-related tables
+Specialized version of Bio::EnsEMBL::Hive::RunnableDB::SqlCmd
+that runs the query on the compara database.
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables;
+package Bio::EnsEMBL::Compara::RunnableDB::SqlCmd;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlCmd', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-sub param_defaults {
+sub fetch_input {
     my $self = shift;
-    return {
-        %{ $self->SUPER::param_defaults() },
-        'range_index'   => 1,
-        'offset'        => '#range_index#00000001',
-        'sql'           => [
-                    'ALTER TABLE homology          AUTO_INCREMENT=#offset#',
-                    'ALTER TABLE gene_align        AUTO_INCREMENT=#offset#',
-                    'ALTER TABLE gene_tree_node    AUTO_INCREMENT=#offset#',
-                    'ALTER TABLE CAFE_gene_family  AUTO_INCREMENT=#offset#',
-                ],
-    }
+    $self->param('db_conn', $self->compara_dba);    # eHive knows how to get a DBConnection from a DBAdaptor
 }
 
 1;

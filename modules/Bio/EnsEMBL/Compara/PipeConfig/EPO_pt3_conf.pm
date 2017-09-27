@@ -498,9 +498,6 @@ return
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-            -parameters => {
-                'compara_db' => $self->pipeline_url,
-            },
             -flow_into  => [ 'email_stats_report' ],
         },
 

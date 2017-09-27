@@ -42,7 +42,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlCmd');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
 
 
 sub param_defaults {

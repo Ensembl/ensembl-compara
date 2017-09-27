@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlo
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlCmd');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
 
 my $sql_num_blocks = q{
 INSERT IGNORE INTO method_link_species_set_tag
@@ -68,7 +68,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'db_conn'   => '#compara_db#',
         'sql'   => [ $sql_num_blocks, $sql_totlength ],
     }
 }
