@@ -1763,11 +1763,11 @@ sub max_distance {
   my $max_distance = 0;
   
   foreach my $child (@{$self->children}) {
-    my $distance = $child->max_distance;
+    my $distance = $child->distance_to_parent + $child->max_distance;
     $max_distance = $distance if($distance>$max_distance);
   }
 
-  return ($self->distance_to_parent + $max_distance);
+  return $max_distance;
 }
 
 
