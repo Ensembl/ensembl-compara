@@ -21,8 +21,10 @@
 # Foreign keys are only allowed between columns of identical types, but
 # gene_member_qc.seq_member_id was not set as "unsigned"
 
-ALTER TABLE gene_member_qc MODIFY COLUMN seq_member_id int(10) unsigned;
+ALTER TABLE gene_member_qc 
+      MODIFY COLUMN seq_member_id int(10) unsigned,
+      ADD FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_90_91_b.sql|gene_member_qc.seq_member_id.unsigned');
+  VALUES (NULL, 'patch', 'patch_90_91_b.sql|gene_member_qc.seq_member_id.unsigned.foreign_key');
