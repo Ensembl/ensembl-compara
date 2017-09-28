@@ -2253,25 +2253,20 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '90');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '91');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_89_90_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_90_91_a.sql|schema_version');
 
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_89_90_b.sql|genomic_align_tree_parent_id_null');
+  VALUES (NULL, 'patch', 'patch_90_91_b.sql|gene_member_qc.seq_member_id.unsigned.foreign_key');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_89_90_c.sql|constrained_element_pvalue_not_null');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_89_90_d.sql|genomic_align_tree_left_node_id_null');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_89_90_e.sql|seq_member_projection');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_89_90_f.sql|gene_member_missing_biotype_groups');
+  VALUES (NULL, 'patch', 'patch_90_91_c.sql|gene_member.biotype_group-index');
+
 
 
 
