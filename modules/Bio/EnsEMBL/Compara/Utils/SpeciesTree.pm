@@ -365,14 +365,14 @@ sub _extract_branch_lengths {
 }
 
 
-=head2 binarize_multifurcation_using_from_gene_trees
+=head2 binarize_multifurcation_using_gene_trees
 
     Function to binarize a multifurcation by selecting the most frequent
     topology out of a set of gene-trees
 
 =cut
 
-sub binarize_multifurcation_using_from_gene_trees {
+sub binarize_multifurcation_using_gene_trees {
     my ($species_tree_node, $gene_trees) = @_;
 
     # Lookup tables
