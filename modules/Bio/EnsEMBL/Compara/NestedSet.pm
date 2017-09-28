@@ -1658,49 +1658,6 @@ sub _recursive_get_all_leaves {
   }
 }
 
-=head2 random_binarize
-
- Title   : random_binarize
- Usage   : $tree->random_binarize;
- Function: Forces the resolution of multifurcations on a given tree. It resolves the nodes randomly.
- Example :
- Returns : none
- Args    : none
-
-=cut
-
-sub random_binarize {
-    my ($orig_tree) = @_;
-    my $newTree = $orig_tree->new();
-    $newTree->name('root');
-    $newTree->node_id('0');
-    _binarize($orig_tree, $newTree, {});
-    return $newTree;
-}
-
-sub _binarize {
-    my ($origTree, $binTree) = @_;
-    my $children = $origTree->children();
-    for my $child (@$children) {
-        my $newNode = $child->new();
-        $newNode->node_id($child->node_id());
-        $newNode->dbID($child->dbID());
-        $newNode->name($child->name());
-        $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
-        if (scalar @{$binTree->children()} > 1) {
-            #print "disavowing: |" . $child->name() . "|\n";
-            $child->disavow_parent();
-            my $newBranch = $child->new();
-            for my $c (@{$binTree->children()}) {
-                $c->distance_to_parent(0);
-                $newBranch->add_child($c);
-            }
-            $binTree->add_child($newBranch);
-        }
-        $binTree->add_child($newNode);
-        _binarize($child, $newNode);
-    }
-}
 
 =head2 random_binarize_node
 
