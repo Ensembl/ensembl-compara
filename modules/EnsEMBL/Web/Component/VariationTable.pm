@@ -570,8 +570,9 @@ sub variation_table {
           my $row;
 
           my $variation_name = $vf->variation_name;
-          my $url = ";vf=".$tv->_variation_feature_id;
-          $row->{'ID'} = $variation_name;
+          my $vf_dbID = $vf->dbID;
+          my $url = ";vf=".$vf_dbID;
+          $row->{'ID'} = $vf_dbID;
           my $source = $vf->source_name;
           $row->{'Source'} = $source;
 
@@ -588,7 +589,7 @@ sub variation_table {
             # Sort out consequence type string
             my $type = $self->new_consequence_type($tva);
             
-            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
+            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction, $tva->sift_score);
             my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
             
             # Adds LSDB/LRG sources
@@ -617,7 +618,7 @@ sub variation_table {
             my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript->version ? $transcript_stable_id.".".$transcript->version : $transcript_stable_id;
           
             my $more_row = {
-              vf         => $vf->dbID,
+              vf         => $vf_dbID,
               class      => $var_class,
               Alleles    => $allele_string,
               vf_allele  => $vf_allele,
