@@ -82,13 +82,14 @@ sub write_output {
         my $ss = $self->_write_ss($all_gdbs);
         foreach my $ml (@{$self->param('whole_method_links')}) {
             my $mlss = $self->_write_mlss( $ss, $ml );
+            # The last method_link listed in whole_method_links will make
+            # the pipeline-wide mlss_id
+            $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+                'param_name' => 'mlss_id',
+                'param_value' => $mlss->dbID
+            );
         }
     }
-    # FIXME
-    $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
-        'param_name' => 'mlss_id',
-        #'param_value' => $mlss->dbID
-    );
 
     my @noncomponent_gdbs = grep {not $_->genome_component} @$all_gdbs;
     foreach my $genome_db (@noncomponent_gdbs) {
