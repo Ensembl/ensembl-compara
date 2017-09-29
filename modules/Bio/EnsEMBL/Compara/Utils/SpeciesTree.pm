@@ -299,6 +299,7 @@ sub get_timetree_estimate {
     while (my $child1 = shift @children) {
         foreach my $child2 (@children) {
             next unless $child1->taxon_id && $child2->taxon_id;
+            return 0 if $child1->taxon_id == $child2->taxon_id;
             my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->taxon->name), uri_escape($child2->get_all_leaves()->[0]->taxon->name));
             $last_page = $url;
             my $timetree_page = get($url);
