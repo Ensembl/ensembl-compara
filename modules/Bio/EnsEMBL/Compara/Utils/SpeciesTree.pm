@@ -298,7 +298,8 @@ sub get_timetree_estimate {
     # For multifurcations, if a comparison fails, we can still try the other ones
     while (my $child1 = shift @children) {
         foreach my $child2 (@children) {
-            my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->node_name), uri_escape($child2->get_all_leaves()->[0]->node_name));
+            next unless $child1->taxon_id && $child2->taxon_id;
+            my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->taxon->name), uri_escape($child2->get_all_leaves()->[0]->taxon->name));
             $last_page = $url;
             my $timetree_page = get($url);
             next unless $timetree_page;
