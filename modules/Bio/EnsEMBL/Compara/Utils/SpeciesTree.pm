@@ -56,7 +56,7 @@ use URI::Escape;
 
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 
@@ -284,7 +284,9 @@ sub prune_tree {
 sub get_timetree_estimate {
     my ($self, $node) = @_;
 
-    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
+    check_ref($node, 'Bio::EnsEMBL::Compara::NCBITaxon', 'node') or
+        assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
+
     return 0 if $node->is_leaf();
     my @children = @{$node->children};
     if (scalar(@children) == 1) {
@@ -300,7 +302,11 @@ sub get_timetree_estimate {
         foreach my $child2 (@children) {
             next unless $child1->taxon_id && $child2->taxon_id;
             return 0 if $child1->taxon_id == $child2->taxon_id;
-            my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->taxon->name), uri_escape($child2->get_all_leaves()->[0]->taxon->name));
+            my $child1_rep = $child1->get_all_leaves()->[0];
+            my $child2_rep = $child2->get_all_leaves()->[0];
+            my $child1_name = $child1_rep->isa('Bio::EnsEMBL::Compara::NCBITaxon') ? $child1_rep->name : $child1_rep->taxon->name;
+            my $child2_name = $child2_rep->isa('Bio::EnsEMBL::Compara::NCBITaxon') ? $child2_rep->name : $child2_rep->taxon->name;
+            my $url = sprintf($url_template, uri_escape($child1_name), uri_escape($child2_name));
             $last_page = $url;
             my $timetree_page = get($url);
             next unless $timetree_page;
