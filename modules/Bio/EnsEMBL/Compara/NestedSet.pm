@@ -1451,7 +1451,7 @@ sub scale_max_to {
   my $self = shift;
   my $new_max = shift;
 
-  my $max_dist = $self->max_distance;
+  my $max_dist = $self->max_distance + $self->distance_to_parent;
   my $scale_factor = $new_max / $max_dist;
   return $self->scale($scale_factor);
 }
