@@ -49,6 +49,7 @@ package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use strict;
 use warnings;
 
+use List::Util qw(max);
 use Scalar::Util qw(weaken);
 
 use LWP::Simple;
@@ -356,6 +357,7 @@ sub set_branch_lengths_from_gene_trees {
         my $median = $allval[int(scalar(@allval)/2)];
         $node->distance_to_parent( $median );
     }
+    _fix_root_distance($species_tree_root);
 }
 
 
@@ -376,6 +378,28 @@ sub _extract_branch_lengths {
                 }
             }
         }
+    }
+}
+
+
+# Because of the way Treebest computes branch-lengths and the way we
+# extract branch-lengths from gene-trees, Opisthokonta -> Bilateria is 0,
+# but really this is an issue about rooting the branch.
+# Here we rebalance the root in order to align the Bilateria leaves to
+# S. cerevisiae
+sub _fix_root_distance {
+    my $species_tree_root = shift;
+    my @children_data;
+    my $sum_branches = 0;
+    my $children = $species_tree_root->children;
+    foreach my $child (@$children) {
+        my $h = $child->average_height;
+        push @children_data, [$child, $h];
+        $sum_branches += $child->distance_to_parent + $h;
+    }
+    my $avg_branch = $sum_branches / scalar(@$children);
+    foreach my $a (@children_data) {
+        $a->[0]->distance_to_parent( max($avg_branch - $a->[1], 0) );
     }
 }
 
