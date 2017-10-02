@@ -304,6 +304,11 @@ sub get_timetree_estimate {
             return 0 if $child1->taxon_id == $child2->taxon_id;
             my $child1_rep = $child1->get_all_leaves()->[0];
             my $child2_rep = $child2->get_all_leaves()->[0];
+            # We might need to do this if TimeTree doesn't return consistent data for all possible pairs of children
+            #foreach my $child1_rep (@{$child1->get_all_leaves()}) {
+                #foreach my $child2_rep (@{$child2->get_all_leaves()}) {
+                    #next unless $child1_rep->taxon_id && $child2_rep->taxon_id;
+                    #return 0 if $child1_rep->taxon_id == $child2_rep->taxon_id;
             my $child1_name = $child1_rep->isa('Bio::EnsEMBL::Compara::NCBITaxon') ? $child1_rep->name : $child1_rep->taxon->name;
             my $child2_name = $child2_rep->isa('Bio::EnsEMBL::Compara::NCBITaxon') ? $child2_rep->name : $child2_rep->taxon->name;
             my $url = sprintf($url_template, uri_escape($child1_name), uri_escape($child2_name));
@@ -312,6 +317,8 @@ sub get_timetree_estimate {
             next unless $timetree_page;
             $timetree_page =~ /<h1 style="margin-bottom: 0px;">(.*)<\/h1> Million Years Ago/;
             return $1 if $1;
+                #}
+            #}
         }
     }
     warn sprintf("Could not get a valid answer from timetree.org for '%s' (see %s).\n", $node->name, $last_page);
