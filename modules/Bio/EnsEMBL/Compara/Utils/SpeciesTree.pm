@@ -285,7 +285,7 @@ sub get_timetree_estimate {
     my ($self, $node) = @_;
 
     assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
-    return if $node->is_leaf();
+    return 0 if $node->is_leaf();
     my @children = @{$node->children};
     if (scalar(@children) == 1) {
         warn sprintf("'%s' has a single child. Cannot estimate the divergence time of a non-furcating node.\n", $node->name);
