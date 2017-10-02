@@ -50,6 +50,8 @@ package Bio::EnsEMBL::Compara::NestedSet;
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
@@ -1747,6 +1749,28 @@ sub max_depth {
     $max_depth=$depth if($depth>$max_depth);
   }
   return $max_depth;  
+}
+
+
+=head2 average_height
+
+  Example     : $tree_node->average_height();
+  Description : The average distance from the node to its leaves, computed in a recursive fashion.
+                Once flattened out, the formula is basically a weighted average of the distances to
+                the leaves, the weights being given by the degrees of each internal node.
+  Returntype  : Float
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub average_height {
+    my $self = shift;
+    return 0 if $self->is_leaf;
+    my $children = $self->children;
+    my $s = sum(map {$_->distance_to_parent + average_height($_)} @$children);
+    return $s/scalar(@$children);
 }
 
 
