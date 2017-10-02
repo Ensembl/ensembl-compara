@@ -76,12 +76,11 @@ sub fetch_input {
     my $self = shift @_;
 
     my $species_tree_root;
-    my $species_tree_string;
 
     if(my $species_tree_input_file = $self->param('species_tree_input_file')) {     # load the tree given from a file
         die "The file '$species_tree_input_file' cannot be open for reading" unless(-r $species_tree_input_file);
 
-        $species_tree_string = $self->_slurp($species_tree_input_file);
+        my $species_tree_string = $self->_slurp($species_tree_input_file);
 #        chomp $species_tree_string;
 
         $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
