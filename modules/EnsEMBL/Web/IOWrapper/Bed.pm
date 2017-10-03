@@ -37,9 +37,18 @@ sub validate {
   my $hub     = $self->hub;
   my $session = $hub->session;
   my $format  = $self->hub->param('format');
-  my $valid = $self->parser->validate($format);
+  my $errors  = $self->parser->validate($format);
 
-  if ($valid) {
+  if (keys %$errors) {
+    my $message = 'File did not validate as format '.$self->format;
+    $message .= '<ul>';
+    foreach (sort keys %$errors) {
+      $message .= sprintf('<li>%s: %s</li>', $_, $errors->{$_});
+    }
+    $message .= '</ul>';
+    return $message;
+  }
+  else {
     my $format_name = $self->parser->format->name;
     $format = $format_name if $format_name;
     $self->{'format'}       = $format;
@@ -51,9 +60,9 @@ sub validate {
       $record->{'column_count'} = $self->{'column_count'};
       $session->set_record_data($record);
     }
+    return undef;
   }
 
-  return $valid ? undef : 'File did not validate as format '.$format;
 }
 
 

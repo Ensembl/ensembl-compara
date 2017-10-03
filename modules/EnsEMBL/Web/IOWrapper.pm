@@ -464,11 +464,21 @@ sub create_hash {
 sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
-  my $valid = $self->parser->validate;
-  if ($valid && $self->parser->format) {
+  my $errors = $self->parser->validate;
+
+  if (! keys %$errors && $self->parser->format) {
     $self->format($self->parser->format->name);
+    return undef;
   }
-  return $valid ? undef : 'File did not validate as format '.$self->format;
+  else {
+    my $message = 'File did not validate as format '.$self->format;
+    $message .= '<ul>';
+    foreach (sort keys %$errors) {
+      $message .= sprintf('<li>%s: %s</li>', $_, $errors->{$_});
+    }
+    $message .= '</ul>';
+    return $message;
+  }
 }
 
 sub coords {
