@@ -113,33 +113,39 @@ sub content {
         ## Is this hub already attached?
         my ($ignore, $params) = check_attachment($hub, $_->{'hub'}{'url'});
         my $button;
-        if ($params->{'reattach'}) {
-          my $label;
-          if ($params->{'reattach'} eq 'preconfig') {
-            $label = 'Hub attached by default';
-          }
-          else {
-            $label = 'Hub already attached';
-          }
-          my $location      = $hub->param('r');
-          unless ($location) {
-            my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA');
-            $location       = $sample_data->{'LOCATION_PARAM'};
-          }
-          my $config_url = $hub->url({'species' => $species, 
+
+        if ($_->{'status'}{'message'} eq 'Remote Data Unavailable') {
+          $button = qq(<div class="float-right"><span class="button disabled-button">Currently unavailable</span></div>);
+        }
+        else {
+          if ($params->{'reattach'}) {
+            my $label;
+            if ($params->{'reattach'} eq 'preconfig') {
+              $label = 'Hub attached by default';
+            }
+            else {
+              $label = 'Hub already attached';
+            }
+            my $location      = $hub->param('r');
+            unless ($location) {
+              my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA');
+              $location       = $sample_data->{'LOCATION_PARAM'};
+            }
+            my $config_url = $hub->url({'species' => $species, 
                                       'type'    => 'Location',
                                       'action'  => 'View',
                                       'r'       => $location,
                                       });
-          my $anchor   = 'modal_config_viewbottom';
-          if ($params->{'menu'}) {
-            $anchor .= '-'.$params->{'menu'};
+            my $anchor   = 'modal_config_viewbottom';
+            if ($params->{'menu'}) {
+              $anchor .= '-'.$params->{'menu'};
+            }
+            $button = qq(<p class="warn button float-right"><a href="$config_url#$anchor">$label</a></p>);
           }
-          $button = qq(<p class="warn button float-right"><a href="$config_url#$anchor">$label</a></p>);
-        }
-        else {
-          my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s;registry=1', $species, $species, $_->{'hub'}{'url'});
-          $button = qq(<p class="button float-right"><a href="$attachment_url" class="modal_link">Attach this hub</a></p>);
+          else {
+            my $attachment_url = sprintf('/%s/UserData/AddFile?format=TRACKHUB;species=%s;text=%s;registry=1', $species, $species, $_->{'hub'}{'url'});
+             $button = qq(<p class="button float-right"><a href="$attachment_url" class="modal_link">Attach this hub</a></p>);
+          }
         }
 
         $html .= sprintf('<div class="plain-box">

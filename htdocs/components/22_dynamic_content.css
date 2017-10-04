@@ -102,7 +102,9 @@ a.ld_manplot_link { background-image: url(/i/ld_manplot.gif); background-positio
 .toggle.closed span.closed   { display: inline; }
 .toggle.open span.open       { display: inline; }
 a.toggle.no_img              { background-image:none; padding:0; }
-a.button                      { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]!important; padding: 3px 6px 1px!important; margin-right: 4px!important; text-decoration: none; display: inline-block; }
+a.button, span.button        { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]!important; padding: 3px 6px 1px!important; margin-right: 4px!important; text-decoration: none; }
+a.button                     { display: inline-block; }
+span.disabled-button         { background-color: [[BUTTON_DISABLED]]; } 
 
 div.reorder_species ul li          { cursor: n-resize; }
 body.mac div.reorder_species ul li { cursor: ns-resize; }
