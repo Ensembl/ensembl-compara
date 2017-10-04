@@ -204,7 +204,6 @@ sub _block_zmenu {
     action => 'FeatureEvidence',
     fdb    => 'funcgen',
     pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
-#     fs     => $f->fetch_PeakCalling->dbID,
     fs     => $f->fetch_PeakCalling->name,
 
     ps     => $f->summit || 'undetermined',
@@ -226,9 +225,6 @@ sub get_features {
 
     my @temp          = split /:/, $f_set;
     
-#     use Data::Dumper;
-#     print STDERR Dumper($f_set);
-#     
     pop @temp;
     my $feature_name  = pop @temp;
 
