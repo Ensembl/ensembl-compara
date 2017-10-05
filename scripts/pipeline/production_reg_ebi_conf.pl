@@ -280,16 +280,6 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -dbname => 'ensembl_ancestral_90',
 );
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -group => 'core',
-    -species => 'ancestral_sequences',
-    -dbname => 'ensembl_ancestral_90',
-);
-
 # ensembl production (maintained by production team):
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host => 'mysql-ens-sta-1',
