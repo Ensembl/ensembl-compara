@@ -650,7 +650,8 @@ sub single_insert {
     my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
     $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
     $insert_sql .= ' VALUES (' . ('?,'x($n_values-1)) . '?)';
-    return $dest_dbc->do($insert_sql, undef, @$data) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
+    my $nrows = $dest_dbc->do($insert_sql, undef, @$data) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
+    return $nrows;
 }
 
 
