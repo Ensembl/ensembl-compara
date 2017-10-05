@@ -30,7 +30,6 @@ use Bio::EnsEMBL::Utils::ConfigRegistry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 # -------------------------CORE DATABASES--------------------------------------
 
