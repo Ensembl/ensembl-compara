@@ -231,10 +231,10 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'             => [],  # this is the default default
         'goc_taxlevels_fungi'       => [],
-        'goc_taxlevels_metazoa'     => [],
+        'goc_taxlevels_metazoa'     => ['Diptera', 'Hymenoptera', 'Nematoda'],
         'goc_taxlevels_plants'      => [],
         'goc_taxlevels_protists'    => [],
-        'goc_taxlevels_vb'          => [],
+        'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
 
     # Extra analyses
         # Do we want the Gene QC part to run ?
