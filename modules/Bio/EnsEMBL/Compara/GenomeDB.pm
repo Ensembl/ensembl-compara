@@ -229,7 +229,7 @@ sub _check_equals {
     my $diffs = '';
     foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype is_high_coverage)) {
         if (($self->$field() xor $ref_genome_db->$field()) or ($self->$field() and $ref_genome_db->$field() and ($self->$field() ne $ref_genome_db->$field()))) {
-            $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field(), $ref_genome_db->$field());
+            $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field() // '<NULL>', $ref_genome_db->$field() // '<NULL>');
         }
     }
     return $diffs;
