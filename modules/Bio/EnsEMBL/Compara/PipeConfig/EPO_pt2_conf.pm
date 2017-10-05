@@ -132,7 +132,6 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
 	my ($self) = @_;
-	print "pipeline_analyses\n";
 
         return [
 
