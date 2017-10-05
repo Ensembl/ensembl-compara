@@ -75,6 +75,18 @@ sub default_options {
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
+                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+            {
+                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
+                'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
+                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+            {
                 'taxa'          => [ 'all' ],
                 'thresholds'    => [ undef, undef, 25 ],
             },
