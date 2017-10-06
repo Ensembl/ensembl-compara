@@ -289,7 +289,8 @@ sub run {
         my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
 
         unless($self->param('expected_members') == scalar(keys(%{$self->param('num_query_member')}))) {
-            die "Parsed " . scalar(keys(%{$self->param('num_query_member')})) . " out of ". $self->param('expected_members');
+            # Most likelly, this is happening due to MEMLIMIT, so make the job sleep if it parsed 0 sequences, to wait for MEMLIMIT to happen properly.
+            sleep(5);
         }
 
         push @$cross_pafs, @$features;

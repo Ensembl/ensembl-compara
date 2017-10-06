@@ -45,7 +45,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'step'               => 500,
+        'step'               => 250,
         'all_blast_params'   => [],   # a list of arrayrefs with the size ranges
     };
 }
