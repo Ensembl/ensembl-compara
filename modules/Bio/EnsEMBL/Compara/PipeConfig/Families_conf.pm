@@ -205,9 +205,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE sequence                   AUTO_INCREMENT=800000001',
-                    'ALTER TABLE seq_member                 AUTO_INCREMENT=800000001',
-                    'ALTER TABLE gene_member                AUTO_INCREMENT=800000001',
+                    'ALTER TABLE sequence                   AUTO_INCREMENT=900000001',
+                    'ALTER TABLE seq_member                 AUTO_INCREMENT=900000001',
+                    'ALTER TABLE gene_member                AUTO_INCREMENT=900000001',
                 ],
             },
             -flow_into => [ 'genomedb_factory' ],
