@@ -104,7 +104,7 @@ sub fetch_input {
 		$query_offset--;
 	}
 	my $file_stem = $self->param('bl2seq_file') . ".$synteny_region_id.";
-	($q_files, $t_files) = write_files($query_set, $target_set, $file_stem);
+	($q_files, $t_files) = $self->write_files($query_set, $target_set, $file_stem);
 	foreach my $query_file (@$q_files) {
 		foreach my $target_file (@$t_files) {
 			my $command = $self->_bl2seq_command( $query_file, $target_file );
