@@ -129,8 +129,8 @@ our $config = {
                 expected_size => '< 10',
             },
             {
-                description => 'The ncRNA sequences have to be only ACGTN',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND NOT (sequence REGEXP "^[ACGTN]*$")',
+                description => 'The ncRNA sequences have to be only ACGTN. Ambiguity codes have to be explicitly switched on',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^[ACGTN]*$" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]")',
             },
             {
                 description => 'ncRNA sequences cannot be entirely made of N',
