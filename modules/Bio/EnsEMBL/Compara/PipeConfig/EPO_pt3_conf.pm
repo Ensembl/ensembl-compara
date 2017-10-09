@@ -238,7 +238,7 @@ return
  -parameters => {
      'db_conn'      => '#compara_mapped_anchor_db#',
      'output_file'  => '#enredo_mapping_file#',
-     'append'       => [ '-N', '-B' ],
+     'append'       => [ '-N', '-B', '-q' ],
      'input_query'  => q{SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE
   aa.dnafrag_strand WHEN 1 THEN "+" ELSE "-" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN
   dnafrag df ON aa.dnafrag_id = df.dnafrag_id INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE
