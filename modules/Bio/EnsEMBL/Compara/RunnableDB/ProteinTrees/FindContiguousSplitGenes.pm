@@ -289,7 +289,7 @@ sub store_split_genes {
     my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');
 
     foreach my $comp (@{$connected_split_genes->get_components}) {
-        my $node1 = shift $comp;
+        my $node1 = shift @$comp;
         print STDERR "node1 $node1\n" if $self->debug;
         $sth1->execute($node1);
         my $gene_split_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'split_genes', 'gene_split_id');
