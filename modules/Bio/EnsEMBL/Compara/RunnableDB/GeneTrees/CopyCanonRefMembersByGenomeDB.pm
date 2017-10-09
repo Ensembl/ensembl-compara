@@ -86,7 +86,7 @@ sub _copy_data_wrapper_join {
     my ($self, $table, $extra_join) = @_;
 
     #If the parameter exclute_tables is defined in the pipeline configuration, the tables defined there will be excluded from the copy.
-    return if ( exists( $self->param('exclude_tables')->{$table} ) );
+    return if ( defined( $self->param('exclude_tables') ) && exists( $self->param('exclude_tables')->{$table} ) );
 
     my $biotype_filter  = $self->param('biotype_filter');
 
