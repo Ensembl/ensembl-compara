@@ -415,7 +415,7 @@ sub pipeline_analyses {
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
                 -flow_into     => [ 'cluster_qc_factory' ],
-                -rc_name       => '1Gb_job',
+                -rc_name       => '2Gb_job',
             },
 
             {   -logic_name    => 'clusterset_backup',
@@ -596,6 +596,22 @@ sub pipeline_analyses {
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
                 -rc_name        => '2Gb_job',
+                -priority       => 50,
+                -flow_into      => {
+                   1   => ['other_paralogs'],
+                   -1  => ['quick_tree_break_himem'], # MEMLIMIT
+                },
+            },
+
+            {   -logic_name => 'quick_tree_break_himem',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
+                -parameters => {
+                                'quicktree_exe'     => $self->o('quicktree_exe'),
+                                'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
+                                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
+                               },
+                -analysis_capacity  => $self->o('quick_tree_break_capacity'),
+                -rc_name        => '4Gb_job',
                 -priority       => 50,
                 -flow_into      => [ 'other_paralogs' ],
             },
