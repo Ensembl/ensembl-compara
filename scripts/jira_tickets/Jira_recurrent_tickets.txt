@@ -11,7 +11,6 @@ ENSCOMPARASW	Task	Update master DB		<RelCo>	Major	Ensembl <version>		Release pro
 ENSCOMPARASW	Sub-task	NCBI taxonomy 	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-NCBItaxonomydata
 ENSCOMPARASW	Sub-task	Add new entries to compara master database	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Addnewentriestocomparamasterdatabase
 ENSCOMPARASW	Sub-task	Add method_link_species_set entries to compara master database	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Addmethod_link_species_setentriestocomparamasterdatabase
-ENSCOMPARASW	Sub-task	Add new species to phylogenetic tree	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Addnewspeciestophylogenetictree
 ENSCOMPARASW	Sub-task	Final edits to compara master database	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Finaleditstocomparamasterdatabase
 ENSCOMPARASW	Task	Release <version> Production  pipelines main site		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Production
 ENSCOMPARASW	Sub-task	Run the member loading pipeline	Release <version> Production  pipelines main site		Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Production
