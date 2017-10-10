@@ -412,6 +412,24 @@ sub _fix_root_distance {
 }
 
 
+=head2 ultrametrize_from_branch_lengths
+
+    Function to make the tree ultrametric. It is based on the average height of
+    each sub-tree, which works better visually than max_distance
+
+=cut
+
+sub ultrametrize_from_branch_lengths {
+    my ($node, $node_ratio) = @_;
+    my $node_height = $node->average_height * ($node_ratio // 1);
+    foreach my $child (@{$node->children}) {
+        my $child_ratio = $node_height / ($child->distance_to_parent + $child->average_height);
+        $child->distance_to_parent( $child->distance_to_parent * $child_ratio );
+        ultrametrize_from_branch_lengths($child, $child_ratio);
+    }
+}
+
+
 =head2 binarize_multifurcation_using_gene_trees
 
     Function to binarize a multifurcation by selecting the most frequent
