@@ -333,6 +333,79 @@ sub get_timetree_estimate {
 }
 
 
+=head2 interpolate_timetree
+
+    Function to compute the missing divergence times, by interpolating (or
+    extrapolating) from the existing data
+
+=cut
+
+sub interpolate_timetree {
+    my $root = shift;
+    unless ($root->has_divergence_time) {
+        my @data;
+        # For Opisthokonta, average_height gives a more accurate estimate
+        # than max_distance
+        foreach my $node ($root->get_all_subnodes) {
+            if ($node->has_divergence_time) {
+                my $h = $node->average_height or next;
+                push @data, $node->get_divergence_time / $h;
+            }
+        }
+        unless (@data) {
+            die "Need at least 1 data-point to extrapolate divergence times\n";
+        }
+        @data = sort {$a <=> $b} @data;
+        my $median_ratio = $data[int(scalar(@data)/2)];
+        my $root_height = $root->average_height * $median_ratio;
+        print "Setting root mya to $root_height\n";
+        $root->set_divergence_time($root_height);
+    }
+    foreach my $node ($root->get_all_subnodes) {
+        if ($node->has_divergence_time and not $node->parent->has_divergence_time) {
+            # Find an ancestor with data. This is guaranteed to end since
+            # we've ensured that the root node has data
+            my $good_parent = $node;
+            my $total_length = 0;
+            do {
+                $total_length += $good_parent->distance_to_parent;
+                $good_parent = $good_parent->parent;
+            } until ($good_parent->has_divergence_time);
+            print "Fixing between ", $node->name, " and ", $good_parent->name, "\n";
+            my $ratio = ($good_parent->get_divergence_time - $node->get_divergence_time) / $total_length;
+            my $cur_node = $node;
+            my $interpolated_timetree = $node->get_divergence_time;
+            do {
+                $interpolated_timetree += $cur_node->distance_to_parent * $ratio;
+                $cur_node = $cur_node->parent;
+                print "Setting ", $cur_node->taxon->name, " = $interpolated_timetree mya\n";
+                $cur_node->set_divergence_time($interpolated_timetree);
+            } until ($cur_node->parent->has_divergence_time);
+        }
+    }
+    # Find subtrees that completely miss TimeTree data
+    foreach my $leaf (@{$root->get_all_leaves}) {
+        next if $leaf->parent->has_divergence_time;
+        my $root_missing_data = $leaf;
+        do {
+            $root_missing_data = $root_missing_data->parent;
+        } until ($root_missing_data->parent->has_divergence_time);
+        print "Fixing ", $root_missing_data->name, " and below (found from ", $leaf->name, ")\n";
+        my @todo = ([$root_missing_data, $root_missing_data->parent->get_divergence_time]);
+        while (@todo) {
+            my ($node, $parent_height) = @{shift @todo};
+            next if $node->is_leaf;
+            # This will ultrametrize and scale at the same time
+            my $child_ratio = $parent_height / ($node->distance_to_parent + $node->max_distance);
+            my $interpolated_timetree = $parent_height - $node->distance_to_parent * $child_ratio;
+            print "Setting ", $node->taxon->name, " = $interpolated_timetree mya\n";
+            $node->set_divergence_time($interpolated_timetree);
+            push @todo, map {[$_, $interpolated_timetree]} @{$node->children};
+        }
+    }
+}
+
+
 =head2 set_branch_lengths_from_timetree
 
     Function to compute all the branch lengths from the TimeTree divergence times
