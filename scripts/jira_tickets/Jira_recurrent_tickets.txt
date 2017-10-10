@@ -2,7 +2,6 @@ Project	IssueType	Summary	Parent_Summary	Assignee	Priority	FixVersion	DueDate	Co
 ENSCOMPARASW	Task	Release <version>  Preparation		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Preparation
 ENSCOMPARASW	Sub-task	Declaration of Intentions	Release <version>  Preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-DeclarationofIntentions
 ENSCOMPARASW	Sub-task	Update your checkouts	Release <version>  Preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Updateyourcheckouts
-ENSCOMPARASW	Sub-task	set Environment variables	Release <version>  Preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Environmentvariables
 ENSCOMPARASW	Sub-task	check Compara servers space	Release <version>  Preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Comparaservers
 ENSCOMPARASW	Sub-task	update Configuration file	Release <version>  Preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Configurationfile
 ENSCOMPARASW	Task	Release <version> Schema preparation		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Schemapreparation
