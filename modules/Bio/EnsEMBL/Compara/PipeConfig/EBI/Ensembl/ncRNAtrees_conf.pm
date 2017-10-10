@@ -122,7 +122,7 @@ sub default_options {
             'raxml_number_of_cores' => 4,
 
             # For the homology_id_mapping
-            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-3:4523/muffato_ensembl_ebinc_rna_trees_89c",
+            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90",
     };
 }   
 
