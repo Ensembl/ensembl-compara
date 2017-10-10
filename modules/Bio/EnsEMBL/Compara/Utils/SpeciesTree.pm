@@ -333,6 +333,23 @@ sub get_timetree_estimate {
 }
 
 
+=head2 set_branch_lengths_from_timetree
+
+    Function to compute all the branch lengths from the TimeTree divergence times
+
+=cut
+
+sub set_branch_lengths_from_timetree {
+    my $node = shift;
+
+    if ($node->has_parent) {
+        my $dist = $node->parent->get_divergence_time - ($node->is_leaf ? 0 : $node->get_divergence_time);
+        $node->distance_to_parent($dist);
+    }
+    set_branch_lengths_from_timetree($_) for @{$node->children};
+}
+
+
 =head2 set_branch_lengths_from_gene_trees
 
     Function to extract all the branch lengths from a set of gene-trees and
