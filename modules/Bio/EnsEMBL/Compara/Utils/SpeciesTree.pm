@@ -93,16 +93,22 @@ sub create_species_tree {
         foreach my $gdb (@sorted_gdbs) {
             my $taxon_id = $gdb->taxon_id;
             next unless $taxon_id;
+
+            # If we use $gdb->taxon here we'll alter it and further calls
+            # to $gdb->taxon will see the altered version. We take a fresh
+            # version instead
+            my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
+            next unless $taxon; # deprecated taxon
+
+            # Get the real taxon_id in case the GenomeDB is linked to a retired one
+            $taxon_id = $taxon->dbID;
+
             if ($taxa_for_tree{$taxon_id}) {
                 my $ogdb = $taxa_for_tree{$taxon_id}->{'_gdb'};
                 push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
                 #warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
                 next;
             }
-            # If we use $gdb->taxon here we'll alter it and further calls
-            # to $gdb->taxon will see the altered version. We take a fresh
-            # version instead
-            my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
             $taxon->{'_gdb'} = $gdb;
             weaken($taxon->{'_gdb'});
             $taxa_for_tree{$taxon_id} = $taxon;
