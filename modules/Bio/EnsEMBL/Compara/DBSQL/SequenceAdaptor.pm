@@ -73,13 +73,6 @@ sub fetch_all_by_dbID_list {
   return $self->_fetch_by_list($sequence_ids, $select_sql, 'sequence_id', SQL_INTEGER);
 }
 
-sub fetch_by_dbIDs {    ## DEPRECATED
-    my $self = shift;
-    deprecate("SequenceAdaptor::fetch_by_dbIDs() is deprecated and will be removed in Ensembl 89. Use fetch_all_by_dbID_list() instead\n");
-    return $self->fetch_all_by_dbID_list(@_);
-}
-
-
 sub _fetch_by_list {
   my ($self, $id_list, $select_sql, $column_name, $column_sql_type, @args) = @_;
 

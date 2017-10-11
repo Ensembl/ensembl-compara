@@ -324,13 +324,6 @@ sub get_original_url {
 }
 
 
-sub get_common_classification { ## DEPRECATED
-  my ($self) = @_;
-  deprecate('MethodLinkSpeciesSet::get_common_classification is deprecated and will be removed in e91. Use ->species_set->get_common_classification() instead');
-  return $self->species_set->get_common_classification;
-}
-
-
 =head2 max_alignment_length
 
   Arg [1]    : (opt.) int $max_alignment_length

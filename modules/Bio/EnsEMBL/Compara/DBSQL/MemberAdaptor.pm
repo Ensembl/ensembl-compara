@@ -116,44 +116,6 @@ sub fetch_all_by_stable_id_list {
 }
 
 
-
-=head2 fetch_all
-
-  Arg        : None
-  Example    : my $members = $ma->fetch_all;
-  Description: Fetch all the members in the db
-               WARNING: Depending on the database where this method is called,
-                        it can return a lot of data (objects) that has to be kept in memory.
-                        Make sure you don't ask for more data than you can handle.
-                        To access this data in a safer way, use fetch_all_Iterator instead.
-  Returntype : listref of Bio::EnsEMBL::Compara::Member objects
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub fetch_all {
-  my $self = shift;
-
-  return $self->generic_fetch();
-}
-
-
-sub fetch_all_Iterator {    ## DEPRECATED
-    my ($self, $cache_size) = @_;   # $cache_size is now ignored
-    deprecate('MemberAdaptor::fetch_all_Iterator() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
-    return $self->generic_fetch_Iterator();
-}
-
-
-sub fetch_all_by_source_Iterator {  ## DEPRECATED
-    my ($self, $source_name, $cache_size) = @_;     # $cache_size is now ignored
-    deprecate('MemberAdaptor::fetch_all_by_source_Iterator() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
-    throw("source_name arg is required\n") unless ($source_name);
-    return $self->generic_fetch_Iterator("source_name = '$source_name'");
-}
-
-
 =head2 fetch_all_by_source
 
   Arg [1]    : string $source_name
@@ -164,7 +126,7 @@ sub fetch_all_by_source_Iterator {  ## DEPRECATED
                 where this method is called, it can return a lot of data (objects)
                 that has to be kept in memory. Make sure you don't ask
                 for more data than you can handle.
-                To access this data in a safer way, use fetch_all_by_source_Iterator instead.
+                To access this data in a safer way, use generic_fetch_Iterator instead.
   Returntype : listref of Bio::EnsEMBL::Compara::Member objects
   Exceptions : throws if $source_name is undef
   Caller     :

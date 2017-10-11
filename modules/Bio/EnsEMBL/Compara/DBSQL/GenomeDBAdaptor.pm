@@ -170,30 +170,6 @@ sub fetch_all_by_taxon_id {
 }
 
 
-sub fetch_all_by_taxon_id_assembly {  ## DEPRECATED
-    my ($self, $taxon_id, $assembly) = @_;
-
-    deprecate('GenomeDBAdaptor::fetch_all_by_taxon_id_assembly() will be removed in e88');
-    throw("taxon_id argument is required") unless ($taxon_id);
-
-    if ($assembly) {
-        return [grep {$_->assembly eq $assembly} @{ $self->fetch_all_by_taxon_id($taxon_id) }];
-    } else {
-        return $self->fetch_all_by_taxon_id($taxon_id);
-    }
-}
-
-sub fetch_by_taxon_id { ## DEPRECATED
-    my ($self, $taxon_id) = @_;
-
-    deprecate('GenomeDBAdaptor::fetch_by_taxon_id() will be removed in e88');
-
-    throw("taxon_id argument is required") unless($taxon_id);
-
-    return $self->fetch_all_by_taxon_id($taxon_id)->[0];
-}
-
-
 =head2 fetch_by_registry_name
 
   Arg [1]    : string $name
@@ -308,13 +284,6 @@ sub fetch_all_by_ancestral_taxon_id {
     AND ntn2.taxon_id = gdb.taxon_id";
 
   return $self->_id_cache->get_by_sql($sql, [$taxon_id]);
-}
-
-
-sub fetch_all_by_low_coverage {  ## DEPRECATED
-    my ($self) = @_;
-    deprecate('GenomeDBAdaptor::fetch_all_by_low_coverage() will be removed in e88');
-    return [grep {$_->is_high_coverage} @{$self->fetch_all}];
 }
 
 

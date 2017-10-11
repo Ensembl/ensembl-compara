@@ -248,7 +248,7 @@ sub _to_text_classification {
     
     if($first) {
       if($species || $subspecies) {
-        my ($genus, $species, $subspecies) = split(q{ }, $node->binomial());
+        my ($genus, $species, $subspecies) = split(q{ }, $node->scientific_name());
         unshift @text_classification, $species;
         unshift @text_classification, $subspecies if (defined $subspecies);
       }
@@ -362,20 +362,6 @@ sub get_common_name {
 }
 
 
-sub common_name {   ## DEPRECATED
-    my $self = shift;
-    deprecate('NCBITaxon::ensembl_alias_name() is deprecated will be removed in e90. Use get_common_name() instead');
-    return $self->_getter_setter_for_tag('genbank common name', @_);
-}
-
-
-sub ensembl_alias_name {    ## DEPRECATED
-    my $self = shift;
-    deprecate('NCBITaxon::ensembl_alias_name() is deprecated will be removed in e90. Use get_common_name() instead');
-    return $self->_getter_setter_for_tag('ensembl alias name', @_);
-}
-
-
 =head2 scientific_name
 
   Example    : $ncbi->scientific_name;
@@ -396,17 +382,6 @@ sub name {
     return $self->scientific_name(@_);
 }
 
-
-sub binomial {  ## DEPRECATED
-  my $self = shift;
-  deprecate('NCBITaxon::binomial() is deprecated will be removed in e88. Use scientific_name) instead (and filter by rank="species" or "subspecies" if needed)');
-  if ($self->rank eq 'species' || $self->rank eq 'subspecies') {
-      return $self->scientific_name;
-  } else {
-    warning("taxon_id=",$self->node_id," is not a species or subspecies. So binomial is undef (try the scientific_name method)\n");
-    return undef;
-  }
-}
 
 =head2 get_short_name
 

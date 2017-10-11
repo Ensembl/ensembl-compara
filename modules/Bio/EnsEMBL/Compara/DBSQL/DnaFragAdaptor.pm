@@ -497,15 +497,6 @@ sub store {
 }
 
 
-sub is_already_stored {     ## DEPRECATED
-   my ($self,$dnafrag) = @_;
-
-   deprecate('DnaFragAdaptor::is_already_stored() is deprecated and will be removed in e91. Please use _synchronise() instead');
-   $self->_synchronise($dnafrag);
-   return $dnafrag->dbID;
-} 
-   
-
 =head2 store_if_needed
 
  Title   : store_if_needed

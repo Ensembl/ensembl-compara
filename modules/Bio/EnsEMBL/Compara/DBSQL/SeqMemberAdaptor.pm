@@ -441,36 +441,6 @@ sub store {
 }
 
 
-
-sub update_sequence {   ## DEPRECATED
-  my ($self, $member) = @_;
-
-  deprecate('SeqMemberAdaptor::update_sequence() is deprecated and will be removed in e91. Contact the Compara team if you need it.');
-
-  return 0 unless($member);
-  unless($member->dbID) {
-    throw("MemberAdapter::update_sequence member must have valid dbID\n");
-  }
-  unless(defined($member->sequence)) {
-    warning("MemberAdapter::update_sequence with undefined sequence\n");
-  }
-
-  if($member->sequence_id) {
-    my $sth = $self->prepare("UPDATE sequence SET sequence = ?, length=? WHERE sequence_id = ?");
-    $sth->execute($member->sequence, $member->seq_length, $member->sequence_id);
-    $sth->finish;
-  } else {
-    $member->sequence_id($self->db->get_SequenceAdaptor->store_no_redundancy($member->sequence));
-
-    my $sth3 = $self->prepare("UPDATE seq_member SET sequence_id=? WHERE seq_member_id=?");
-    $sth3->execute($member->sequence_id, $member->dbID);
-    $sth3->finish;
-  }
-  return 1;
-}
-
-
-
 sub _set_member_as_canonical {
     my ($self, $member) = @_;
 
