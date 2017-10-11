@@ -463,11 +463,11 @@ sub set_branch_lengths_from_gene_trees {
     my $epsilon = 0.0001;
     # Get the median value for each species-tree branch
     foreach my $node ($species_tree_root->get_all_subnodes) {
-        my @allval = sort {$a <=> $b} @{$distances{$node->node_id}};
-        unless (scalar(@allval)) {
+        unless ($distances{$node->node_id}) {
             warn "no data for ", $node->toString, "\n";
             next;
         }
+        my @allval = sort {$a <=> $b} @{$distances{$node->node_id}};
         my $median = $allval[int(scalar(@allval)/2)];
         $node->distance_to_parent( $median || $epsilon );
     }
