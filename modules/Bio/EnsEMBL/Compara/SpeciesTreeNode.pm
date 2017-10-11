@@ -63,6 +63,9 @@ sub _complete_cast_node {
         $self->genome_db_id($orig->{'_gdb'}->dbID);
         weaken($self->{'_genome_db'});
         $self->node_name($orig->{'_gdb'}->get_scientific_name('unique'));
+    } elsif ($orig->{'_genome_db_id'}) {
+        $self->genome_db_id($orig->{'_genome_db_id'});
+        $self->{'_genome_db'} = $orig->{'_genome_db'} if $orig->{'_genome_db'};
     }
     if ($orig->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
         $self->taxon($orig);
