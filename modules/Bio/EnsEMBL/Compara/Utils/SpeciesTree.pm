@@ -464,7 +464,7 @@ sub set_branch_lengths_from_gene_trees {
     # Get the median value for each species-tree branch
     foreach my $node ($species_tree_root->get_all_subnodes) {
         unless ($distances{$node->node_id}) {
-            warn "no data for ", $node->toString, "\n";
+            warn "no branch-length data for ", $node->toString, "\n";
             next;
         }
         my @allval = sort {$a <=> $b} @{$distances{$node->node_id}};
