@@ -408,18 +408,34 @@ sub interpolate_timetree {
 
 =head2 set_branch_lengths_from_timetree
 
-    Function to compute all the branch lengths from the TimeTree divergence times
+    Function to compute all the branch lengths from the TimeTree divergence times.
+    It also fixes the TimeTree data to make them monotonous (i.e. avoid negative branches)
 
 =cut
 
 sub set_branch_lengths_from_timetree {
     my $node = shift;
 
-    if ($node->has_parent) {
-        my $dist = $node->parent->get_divergence_time - ($node->is_leaf ? 0 : $node->get_divergence_time);
-        $node->distance_to_parent($dist);
+    return [0, $node] if $node->is_leaf;
+
+    my @children_data;
+    foreach my $child (@{$node->children}) {
+        push @children_data, set_branch_lengths_from_timetree($child);
     }
-    set_branch_lengths_from_timetree($_) for @{$node->children};
+    my $t = max(map {$_->[0]} @children_data);
+
+    # We make the parents as old as needed to go over their children
+    if (!$node->has_divergence_time or ($node->get_divergence_time < $t)) {
+        $t += 0.1;  # We work by increments of 0.1
+        printf("Fixing %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time // 'N/A', $t);
+        $node->set_divergence_time($t);
+    } else {
+        $t = $node->get_divergence_time;
+    }
+
+    $_->[1]->distance_to_parent($t - $_->[0]) for @children_data;
+
+    return [$t, $node];
 }
 
 
