@@ -58,7 +58,7 @@ sub run {
     foreach my $node (@{$species_tree_root->get_all_nodes}) {
         next if $node->is_leaf;
         print "Querying ", $node->name, " ..." if $self->debug;
-        my $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($node);
+        my $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($node);
         printf(" %s mya\n", $mya // 'N/A') if $self->debug;
         push @timetree_data, [$node, $mya];
     }

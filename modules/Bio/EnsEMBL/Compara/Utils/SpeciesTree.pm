@@ -280,7 +280,7 @@ sub prune_tree {
 }
 
 
-=head2 get_timetree_estimate
+=head2 get_timetree_estimate_for_node
 
     Web scraping of the divergence of two taxa from the timetree.org resource.
     Currently used to get the divergence of a new Ensembl species (see place_species.pl)
@@ -288,7 +288,7 @@ sub prune_tree {
 
 =cut
 
-sub get_timetree_estimate {
+sub get_timetree_estimate_for_node {
     my ($self, $node) = @_;
 
     check_ref($node, 'Bio::EnsEMBL::Compara::NCBITaxon', 'node') or
