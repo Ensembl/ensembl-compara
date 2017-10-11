@@ -585,6 +585,7 @@ sub binarize_multifurcation_using_gene_trees {
     # Give all the internal names the taxon information of the query node (the multifurcation)
     foreach my $node (@{$internal_tree->get_all_nodes}) {
         next if $node->is_leaf;
+        $node->adaptor($species_tree_node->adaptor);
         $node->taxon_id($species_tree_node->taxon_id);
         $node->node_name($species_tree_node->node_name);
     }
