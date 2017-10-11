@@ -201,14 +201,18 @@ sub get_common_name {
 
 
 sub get_divergence_time {
-    my ($self, $query_timetree) = @_;
-
-    require Bio::EnsEMBL::Compara::Utils::SpeciesTree;
-    if ($query_timetree && !$self->taxon->has_tag('ensembl timetree mya')) {
-        my $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($self);
-        $self->taxon->add_tag('ensembl timetree mya', $mya);
-    }
+    my ($self) = @_;
     return $self->taxon->get_value_for_tag('ensembl timetree mya');
+}
+
+sub has_divergence_time {
+    my $self = shift;
+    return $self->taxon->has_tag('ensembl timetree mya');
+}
+
+sub set_divergence_time {
+    my ($self, $mya) = @_;
+    return $self->taxon->add_tag('ensembl timetree mya', sprintf('%.1f', $mya)) if defined $mya;
 }
 
 
