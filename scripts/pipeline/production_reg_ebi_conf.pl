@@ -51,7 +51,7 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 # );
 
 #-------------------------HOMOLOGY DATABASES-----------------------------------
-
+=pod
 # Individual pipeline database for ProteinTrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-ens-compara-prod-1',
@@ -59,7 +59,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4485,
      -species => 'compara_ptrees',
-     -dbname => 'muffato_protein_trees_90b',
+     -dbname => 'muffato_protein_trees_91',
 );
 
 # Individual pipeline database for Families:
@@ -69,7 +69,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4522,
      -species => 'compara_families',
-     -dbname => 'carlac_families_90',
+     -dbname => 'carlac_families_91',
 );
 
 # Individual pipeline database for ncRNAtrees:
@@ -79,7 +79,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4401,
      -species => 'compara_nctrees',
-     -dbname => 'mateus_compara_nctrees_90',
+     -dbname => 'mateus_compara_nctrees_91',
  );
 
 # Mouse strains protein trees:
@@ -89,17 +89,17 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4523,
     -species => 'murinae_ptrees',
-    -dbname => 'carlac_murinae_protein_trees_90',
+    -dbname => 'waakanni_murinae_protein_trees_91',
 );
 
 # Mouse strains ncRNA trees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-4',
+    -host => 'mysql-ens-compara-prod-1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4401,
+    -port => 4485,
     -species => 'murinae_nctrees',
-    -dbname => 'mateus_murinae_nctrees_90',
+    -dbname => 'muffato_murinae_nctrees_91',
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
@@ -194,7 +194,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4523,
      -species => 'mammals_epo',
-     -dbname => 'muffato_mammals_epo_90b',
+     -dbname => 'waakanni_mammals_epo_91',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -203,18 +203,18 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4401,
      -species => 'mammals_epo2x',
-     -dbname => 'carlac_epo_low_55way_mammals_90',
+     -dbname => 'mateus_epo_low_mammals_91',
 );
 
 # -----------------------OTHER ALIGNMENTS-------------------------------
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-2',
+     -host => 'mysql-ens-compara-prod-3',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4522,
      -species => 'mammals_pecan',
-     -dbname => 'muffato_27mammals_pecan_90',
+     -dbname => 'waakanni_pecan_91',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -223,9 +223,9 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4485,
      -species => 'compara_syntenies',
-     -dbname => 'muffato_synteny_90',
+     -dbname => 'muffato_synteny_91',
 );
-
+=cut
 # ----------------------COMPARA DATABASES---------------------------
 
 # Compara Master database:
@@ -286,7 +286,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -user => 'ensro',
     -port => 4519,
     -species => 'ensembl_production',
-    -dbname => 'ensembl_production',
+    -dbname => 'ensembl_production_91',
     -group => 'production',
 );
 
