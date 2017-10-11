@@ -591,7 +591,7 @@ sub binarize_multifurcation_using_gene_trees {
     }
     # Replace each leaf of the partial tree with the full sub-tree
     foreach my $leaf (@{$internal_tree->get_all_leaves}) {
-        print $leaf->name, "\n";
+        #print $leaf->name, "\n";
         my $orig_stn = $stn_id_2_stn{$leaf->name};
         $leaf->parent->add_child($orig_stn, $orig_stn->distance_to_parent);
         $leaf->disavow_parent;
