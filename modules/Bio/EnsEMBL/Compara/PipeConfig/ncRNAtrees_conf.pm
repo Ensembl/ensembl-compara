@@ -176,10 +176,6 @@ sub pipeline_analyses {
         'mpirun_exe'            => $self->o('mpirun_exe'),
     );
 
-    my $analyses_full_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_full_species_tree($self);
-    my $analyses_binary_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self);
-    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self);
-
     return [
 
 # --------------------------------------------- [ backbone ]-----------------------------------------------------------------------------
@@ -388,7 +384,6 @@ sub pipeline_analyses {
                 binary          => 0,
                 n_missing_species_in_tree   => 0,
             },
-            -flow_into          => [ WHEN('#initialise_cafe_pipeline#', 'make_full_species_tree') ],
             %hc_params,
         },
 
@@ -482,7 +477,7 @@ sub pipeline_analyses {
                                      },
               -flow_into          => [ 'write_stn_tags',
                                         WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
-                                        WHEN('#initialise_cafe_pipeline#', 'CAFE_table'),
+                                        WHEN('#initialise_cafe_pipeline#', 'make_full_species_tree'),
                                     ],
               %hc_params,
             },
@@ -959,9 +954,7 @@ sub pipeline_analyses {
             -rc_name => '1Gb_job',
         },
 
-        @$analyses_full_species_tree,
-        @$analyses_binary_species_tree,
-        @$analyses_cafe,
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
     ];
 }
 

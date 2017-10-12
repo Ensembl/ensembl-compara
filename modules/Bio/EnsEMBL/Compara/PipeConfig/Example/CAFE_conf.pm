@@ -142,6 +142,7 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
     };
 }
 
@@ -149,15 +150,11 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     # Get the two parts
-    my $analyses_full_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_full_species_tree($self);
-    my $analyses_binary_species_tree = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self);
-    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self);;
+    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self);;
     # And connect them
-    $analyses_full_species_tree->[0]->{-input_ids} = [ {} ],
-    $analyses_full_species_tree->[0]->{-wait_for}  = [ $self->o('wait_for') ] if $self->o('wait_for');
-    $analyses_full_species_tree->[-1]->{-flow_into} = [ $analyses_binary_species_tree->[0]->{-logic_name} ];
-    $analyses_binary_species_tree->[-1]->{-flow_into} = [ $analyses_cafe->[0]->{-logic_name} ];
-    return [@$analyses_full_species_tree, @$analyses_binary_species_tree, @$analyses_cafe];
+    $analyses_cafe->[0]->{-input_ids} = [ {} ],
+    $analyses_cafe->[0]->{-wait_for}  = [ $self->o('wait_for') ] if $self->o('wait_for');
+    return $analyses_cafe;
 }
 
 1;

@@ -774,7 +774,6 @@ sub core_pipeline_analyses {
             -flow_into  => WHEN(
                 '#use_notung# and  #binary_species_tree_input_file#' => 'load_binary_species_tree',
                 '#use_notung# and !#binary_species_tree_input_file#' => 'make_binary_species_tree',
-                '!#use_notung# and #initialise_cafe_pipeline#' => 'CAFE_species_tree',
             ),
             %hc_analysis_params,
         },
@@ -810,9 +809,6 @@ sub core_pipeline_analyses {
                 n_missing_species_in_tree   => 0,
             },
             %hc_analysis_params,
-            -flow_into  => WHEN(
-                '#initialise_cafe_pipeline#' => 'CAFE_species_tree',
-            ),
         },
 
         {   -logic_name => 'copy_trees_from_previous_release',
@@ -2942,7 +2938,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_cafe',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN('#initialise_cafe_pipeline#' => 'CAFE_table'),
+                '1->A' => WHEN('#initialise_cafe_pipeline#' => 'CAFE_species_tree'),
                 'A->1' => 'rib_fire_homology_stats',
             },
         },
@@ -3201,7 +3197,6 @@ sub core_pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
         },
 
-            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_binary_species_tree($self) },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
 
             # initialise_goc_pipeline

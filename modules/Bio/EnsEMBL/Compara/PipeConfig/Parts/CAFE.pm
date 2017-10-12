@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use strict;
 use warnings;
 
-sub pipeline_analyses_full_species_tree {
+sub pipeline_analyses_cafe_with_full_species_tree {
     my ($self) = @_;
     return [
             {
@@ -67,11 +67,12 @@ sub pipeline_analyses_full_species_tree {
             },
             -flow_into          => [ 'CAFE_species_tree' ],
         },
+        @{pipeline_analyses_cafe($self)},
     ]
 }
 
 
-sub pipeline_analyses_binary_species_tree {
+sub pipeline_analyses_cafe {
     my ($self) = @_;
     return [
             {
@@ -81,6 +82,7 @@ sub pipeline_analyses_binary_species_tree {
                              'cafe_species' => $self->o('cafe_species'),
                              'label'        => $self->o('full_species_tree_label')
                             },
+             -rc_name => '4Gb_job',
              -flow_into     => {
                  2 => [ 'hc_cafe_species_tree' ],
              }
@@ -92,13 +94,9 @@ sub pipeline_analyses_binary_species_tree {
                 mode            => 'species_tree',
                 binary          => 1,
             },
+            -flow_into          => [ 'CAFE_table' ],
         },
-    ];
-}
 
-sub pipeline_analyses_cafe {
-    my ($self) = @_;
-    return [
 #            {
 #             -logic_name => 'BadiRate',
 #             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::BadiRate',
