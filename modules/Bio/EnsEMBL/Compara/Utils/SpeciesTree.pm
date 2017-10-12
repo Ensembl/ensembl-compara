@@ -434,7 +434,7 @@ sub set_branch_lengths_from_timetree {
         $t = $node->get_divergence_time;
     }
 
-    $_->[1]->distance_to_parent($t - $_->[0]) for @children_data;
+    $_->[1]->distance_to_parent(sprintf("%.1f", $t - $_->[0])) for @children_data;
 
     return [$t, $node];
 }
