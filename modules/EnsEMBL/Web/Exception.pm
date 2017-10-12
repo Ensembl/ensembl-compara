@@ -43,7 +43,7 @@ sub new {
   ## @param Hashref with keys: type, message and data
   my ($class, $params) = @_;
 
-  $params = {'message' => $params} unless ref $params;
+  $params = {'message' => "$params"} unless ref $params && ref $params eq 'HASH';
 
   # build and save stack trace
   my $i = 0;
