@@ -429,7 +429,6 @@ sub set_branch_lengths_from_timetree {
     if (!$node->has_divergence_time or ($node->get_divergence_time <= $t)) {
         $t += 0.1;  # We work by increments of 0.1
         printf("Fixing %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time // 'N/A', $t);
-        $node->set_divergence_time($t);
     } else {
         $t = $node->get_divergence_time;
     }
