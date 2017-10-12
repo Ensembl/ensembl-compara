@@ -34,7 +34,7 @@ my $method = 'PROTEIN_TREES';
 my $ss_name;
 my $label = 'default';
 my $with_distances;
-my $get_timetree_divergence_times;
+my $ascii_scale;
 
 GetOptions(
        'url=s'          => \$url,
@@ -43,7 +43,7 @@ GetOptions(
        'ss_name=s'      => \$ss_name,
        'label=s'        => \$label,
        'with_distances' => \$with_distances,
-       'timetree'       => \$get_timetree_divergence_times,
+       'ascii_scale=f'  => \$ascii_scale,
 );
 
 
@@ -63,15 +63,9 @@ die "Could not fetch a MLSS with these parameters. Check your mlss_id, method an
 
 my $species_tree = $mlss->species_tree($label);
 
-if ($get_timetree_divergence_times) {
-    foreach my $node (@{$species_tree->root->get_all_nodes}) {
-        next if $node->is_leaf;
-        my $d = $node->get_divergence_time();
-           $d = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($node) unless defined $d;
-        $node->node_name( sprintf("%s [%s]", $node->node_name, $d) ) if $d;
-    }
+if ($ascii_scale) {
+    $species_tree->root->print_tree($ascii_scale);
+} else {
+    print $species_tree->root->newick_format( 'ryo', $with_distances ? '%{n}:%{d}' : '%{n}' ), "\n";
 }
-
-print $species_tree->root->newick_format( 'ryo', $with_distances ? '%{n}:%{d}' : '%{n}' ), "\n";
-
 
