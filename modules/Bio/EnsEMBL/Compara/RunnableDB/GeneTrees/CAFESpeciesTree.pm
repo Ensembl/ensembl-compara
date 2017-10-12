@@ -59,7 +59,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'tree_fmt'   => '%{n}%{":"d}',
             'label'      => 'full_species_tree',
             'new_label'  => 'cafe',
            };
@@ -121,7 +120,6 @@ sub run {
     my $species_tree_root = $species_tree->root;
     $species_tree_root->print_tree(0.2);
     my $species = $self->param('cafe_species');
-    my $fmt = $self->param('tree_fmt');
     my $mlss_id = $self->param('mlss_id');
     print STDERR Dumper $species if ($self->debug());
 #    my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
@@ -149,7 +147,7 @@ sub run {
     # Store the tree (At this point, it is a species tree not a CAFE tree)
     my $speciesTree_Adaptor = $self->param('speciesTree_Adaptor');
 
-    my $cafe_tree_str = $cafe_tree_root->newick_format('ryo', $fmt);
+    my $cafe_tree_str = $cafe_tree_root->newick_format('full');
     print STDERR "Tree to store:\n$cafe_tree_str\n" if ($self->debug);
 
     $species_tree->label($self->param_required('new_label'));

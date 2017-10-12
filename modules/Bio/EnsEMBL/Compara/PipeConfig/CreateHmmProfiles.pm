@@ -615,7 +615,6 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
             -parameters    => {
                 'new_label'     => 'binary',
-                'tree_fmt'      => '%{-x"*"}:%{d}',
                 'label'         => 'default',
                 'use_timetree_times' => $self->o('use_timetree_times'),
             },
