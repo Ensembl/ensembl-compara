@@ -342,6 +342,8 @@ sub fix_zeros_1 {
     }
 }
 
+my $float_zero = 1e-7;
+
 sub prune_tree {
     my ($self, $tree, $species_to_keep) = @_;
 
@@ -360,10 +362,22 @@ sub check_tree {
       die "The tree is NOT ultrametric\n";
   }
 
+  no_zeros($tree);
+
   is_binary($tree);
   if ($self->debug()) {
     print STDERR "The tree is binary\n";
   }
+}
+
+sub no_zeros {
+    my ($node) = @_;
+    if ($node->has_parent) {
+        if ($node->distance_to_parent < $float_zero) {
+            die "The tree has a zero branch: ".$node->string_node;
+        }
+    }
+    no_zeros($_) for @{$node->children};
 }
 
 sub is_binary {
@@ -391,7 +405,7 @@ sub is_ultrametric {
       $path = $newpath;
       next;
     }
-    if (abs($path - $newpath) < 1e-7) {
+    if (abs($path - $newpath) < $float_zero) {
       $path = $newpath;
     } else {
       return 0
