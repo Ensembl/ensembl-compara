@@ -51,6 +51,8 @@ use warnings;
 
 use Data::Dumper;
 
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
+
 use base ('Bio::EnsEMBL::Compara::SpeciesTree');
 
 ######################################################
@@ -195,8 +197,7 @@ sub root {
     my ($self, $node) = @_;
     ## TODO: Cache root
     if (defined $node) {
-        throw("Expected Bio::EnsEMBL::Compara::CAFEGeneFamilyNode, not a $node")
-            unless ($node->isa("Bio::EnsEMBL::Compara::CAFEGeneFamilyNode"));
+        assert_ref($node, 'Bio::EnsEMBL::Compara::CAFEGeneFamilyNode', 'node');
          $self->{'_root'} = $node;
     }
 

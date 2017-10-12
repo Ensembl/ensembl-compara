@@ -116,6 +116,7 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -293,8 +294,7 @@ sub genome_db {
   my ($self, $genome_db) = @_;
    
   if (defined($genome_db)) {
-    throw("[$genome_db] must be a Bio::EnsEMBL::Compara::GenomeDB object")
-      unless ($genome_db and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
     if ($genome_db->dbID and defined($self->genome_db_id)) {
       throw("dbID of genome_db object does not match previously defined".
             " genome_db_id. If you want to override this".

@@ -51,6 +51,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::NestedSet;
 
 use base ('Bio::EnsEMBL::Storable');
@@ -149,8 +150,7 @@ sub root {
     my ($self, $node) = @_;
 
     if (defined $node) {
-        throw("Expected Bio::EnsEMBL::Compara::SpeciesTreeNode, not a $node")
-            unless ($node->isa("Bio::EnsEMBL::Compara::SpeciesTreeNode"));
+        assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
          $self->{'_root'} = $node;
     }
 

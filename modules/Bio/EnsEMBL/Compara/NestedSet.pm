@@ -1105,8 +1105,7 @@ sub _internal_newick_format_ryo {
 #sub equals {
 #  my $self = shift;
 #  my $other = shift;
-#  throw("arg must be a [Bio::EnsEMBL::Compara::NestedSet] not a [$other]")
-#        unless($other->isa('Bio::EnsEMBL::Compara::NestedSet'));
+#  assert_ref($other, 'Bio::EnsEMBL::Compara::NestedSet', 'other');
 #  return 1 if($self->node_id eq $other->node_id);
 #  foreach my $child (@{$self->children}) {
 #    return 0 unless($other->has_child($child));
