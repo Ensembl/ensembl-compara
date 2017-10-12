@@ -1693,7 +1693,8 @@ sub random_binarize_node {
         my $child_B = $children[1];
 
         # Create new internal node attached to N
-        my $newNode = $child_A->new();
+        my $newNode = $node->new();
+        $newNode->_complete_cast_node($node) if $newNode->can('_complete_cast_node');
 
         # Attach A & B to I
         # A & B will be automatically removed from previous parent
