@@ -137,7 +137,6 @@ sub pipeline_analyses_cafe {
              -flow_into => {
                  2 => 'CAFE_json',
              },
-             -priority => 10,
             },
 
         {   -logic_name    => 'CAFE_json',

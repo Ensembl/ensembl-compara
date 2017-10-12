@@ -2796,7 +2796,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -priority       => -20,
             -rc_name        => '250Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_aa_v3_himem'
@@ -2810,7 +2809,6 @@ sub core_pipeline_analyses {
                 'hmmer_version'     => 3,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -20,
             -rc_name        => '1Gb_job',
         },
 
@@ -2823,7 +2821,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -priority       => -20,
             -rc_name        => '500Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_cds_v3_himem'
@@ -2838,7 +2835,6 @@ sub core_pipeline_analyses {
                 'hmmer_version'     => 3,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -20,
             -rc_name        => '2Gb_job',
         },
 
