@@ -391,7 +391,7 @@ sub is_ultrametric {
       $path = $newpath;
       next;
     }
-    if ($path == $newpath) {
+    if (abs($path - $newpath) < 1e-7) {
       $path = $newpath;
     } else {
       return 0
