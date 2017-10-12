@@ -84,7 +84,7 @@ sub new_from_NestedSet {
     my $genomeDB_Adaptor = $self->db->get_GenomeDBAdaptor;
     my $NCBITaxon_Adaptor = $self->db->get_NCBITaxonAdaptor;
 
-    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $self);
     for my $node (@{$tree->get_all_nodes}) {
         if ($node->is_leaf && !$node->genome_db_id) {
             my $genomeDB;
