@@ -426,7 +426,7 @@ sub set_branch_lengths_from_timetree {
     my $t = max(map {$_->[0]} @children_data);
 
     # We make the parents as old as needed to go over their children
-    if (!$node->has_divergence_time or ($node->get_divergence_time < $t)) {
+    if (!$node->has_divergence_time or ($node->get_divergence_time <= $t)) {
         $t += 0.1;  # We work by increments of 0.1
         printf("Fixing %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time // 'N/A', $t);
         $node->set_divergence_time($t);
