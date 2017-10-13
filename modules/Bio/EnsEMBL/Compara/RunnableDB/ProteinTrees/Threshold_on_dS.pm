@@ -64,7 +64,7 @@ sub fetch_input {
     my $stats = new Statistics::Descriptive::Full;
 
     my $sql = 'SELECT ds FROM homology WHERE method_link_species_set_id = ? AND ds IS NOT NULL';
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
 
     $sth->execute($mlss_id);
 
