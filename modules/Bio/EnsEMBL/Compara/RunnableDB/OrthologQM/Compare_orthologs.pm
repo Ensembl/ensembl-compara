@@ -54,17 +54,6 @@ use List::MoreUtils qw(firstidx);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-=head2 new
-
-    A CONSTRUCTOR CLASS SO THAT IRT CAN BE USE AS A BASE CLASS
-
-=cut
-
-sub new {
-    my $class = shift;
-    return bless {}, $class;
-}
-
 sub param_defaults {
   my $self = shift;
   return {
