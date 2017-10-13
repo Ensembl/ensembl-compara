@@ -94,7 +94,7 @@ sub default_options {
             'ktreedist_exe'         => $self->o('ensembl_cellar').'/ktreedist/1.0.0/bin/Ktreedist.pl',
             'fasttree_exe'          => $self->o('ensembl_cellar').'/fasttree/2.1.8/bin/FastTree',
             'treebest_exe'          => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
-            'quicktree_exe'         => $self->o('ensembl_cellar').'/quicktree/2.0/bin/quicktree',
+            'quicktree_exe'         => $self->o('ensembl_cellar').'/quicktree/2.1/bin/quicktree',
             'r2r_exe'               => $self->o('ensembl_cellar').'/r2r/1.0.5/bin/r2r',
             'cafe_shell'            => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
 
