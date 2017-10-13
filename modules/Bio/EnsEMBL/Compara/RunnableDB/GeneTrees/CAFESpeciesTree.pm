@@ -126,8 +126,6 @@ sub run {
 
         my $all_pt_gene_trees = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-CLUSTERSET_ID => 'default', -TREE_TYPE => 'tree', -METHOD_LINK_SPECIES_SET => $mlss_id);
         if (@$all_pt_gene_trees) {
-            $all_pt_gene_trees = [grep {$_->has_tag('treebest_runtime_msec')} @$all_pt_gene_trees];
-            $all_pt_gene_trees = [$all_pt_gene_trees->[0 .. 1000 ]];
             $_->preload for @$all_pt_gene_trees;
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::set_branch_lengths_from_gene_trees($species_tree_root, $all_pt_gene_trees);
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::binarize_multifurcation_using_gene_trees($_, $all_pt_gene_trees) for @{$species_tree_root->get_all_nodes};
