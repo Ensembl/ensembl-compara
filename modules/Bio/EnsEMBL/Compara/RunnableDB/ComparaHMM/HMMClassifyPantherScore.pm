@@ -64,7 +64,7 @@ sub fetch_input {
 
     my $pantherScore_path = $self->param_required('pantherScore_path');
 
-    push @INC, "$pantherScore_path/lib";
+    push @INC, "$pantherScore_path/libexec";
     require FamLibBuilder;
 #   import FamLibBuilder;
 
@@ -149,7 +149,7 @@ sub run_HMM_search {
 
     my $fastafile         = $self->param('fastafile');
     my $pantherScore_path = $self->param('pantherScore_path');
-    my $pantherScore_exe  = "$pantherScore_path/pantherScore.pl";
+    my $pantherScore_exe  = "$pantherScore_path/bin/pantherScore.pl";
     my $hmmLibrary        = $self->param('hmmLibrary');
     my $blast_bin_dir     = $self->param('blast_bin_dir');
     my $hmmer_path        = $self->param('hmmer_path');
@@ -157,7 +157,7 @@ sub run_HMM_search {
     my $library_path      = $hmmLibrary->libDir();
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd = "PATH=$blast_bin_dir:$hmmer_path:\$PATH; PERL5LIB=$pantherScore_path/lib:\$PERL5LIB; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
+    my $cmd = "PATH=$blast_bin_dir:$hmmer_path:\$PATH; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
     my $cmd_out = $self->run_command($cmd);
 
     # Detection of failures

@@ -84,13 +84,13 @@ sub default_options {
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
         'hmm_library_basedir' => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
-        'pantherScore_path'   => '/nfs/panda/ensembl/compara/mateus/family_pipeline_binaries/pantherScore1.03',
-        'hmmer2_home'         => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
 
         # code directories:
         'blast_bin_dir'  => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
         'mcl_bin_dir'    => $self->o('ensembl_cellar').'/mcl/14-137/bin/',
         'mafft_root_dir' => $self->o('ensembl_cellar').'/mafft/7.305/',
+        'pantherScore_path'   => $self->o('ensembl_cellar').'/pantherscore/1.03/',
+        'hmmer2_home'         => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
 
         # data directories:
         'work_dir'      => '/hps/nobackup/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),

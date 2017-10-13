@@ -84,7 +84,7 @@ sub default_options {
         'codeml_exe'                => $self->o('ensembl_cellar').'/paml43/4.3.0/bin/codeml',
         'ktreedist_exe'             => $self->o('ensembl_cellar').'/ktreedist/1.0.0/bin/Ktreedist.pl',
         'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
-        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
+        'pantherScore_path'         => $self->o('ensembl_cellar').'/pantherscore/1.03/',
         'cafe_shell'                => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
         'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
