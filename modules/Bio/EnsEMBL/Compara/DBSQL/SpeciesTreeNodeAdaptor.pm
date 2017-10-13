@@ -121,7 +121,7 @@ sub store_node {
 ## This may fail in the case of CAFEGeneFamilyNodes
     assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode', 'node');
 
-    if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor') and $node->adaptor eq $self)) {
+    if (not($node->{_node_id} and $node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor') and $node->adaptor eq $self)) {
 
         my $count_current_rows = $self->dbc->db_handle->selectall_arrayref("SELECT COUNT(*) FROM species_tree_node")->[0]->[0];
 
