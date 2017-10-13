@@ -205,7 +205,7 @@ sub _compute_ortholog_score {
     }
     my $homology = $self->param('preloaded_homologs')->{$query};
 
-    my %result;
+    my $result;
     my $non_ref_gmembers_list={};
 
     my $query_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
@@ -243,7 +243,7 @@ sub _compute_ortholog_score {
 
     #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
     if ($strand == 1) {
-        $self->param('result', $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered')));
+        $result = $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered'));
     }
     else {
         my $temp_query = $non_ref_gmembers_list->{'query'};
@@ -251,28 +251,29 @@ sub _compute_ortholog_score {
         my $temp_left2 = $non_ref_gmembers_list->{'right2'};
         my $temp_right1 = $non_ref_gmembers_list->{'left1'};
         my $temp_right2 = $non_ref_gmembers_list->{'left2'};
-        $self->param('result_temp', $self->_compare( {'query' => $temp_query, 'left1' => $temp_left1, 'left2' => $temp_left2, 'right1' => $temp_right1, 'right2' => $temp_right2}, , $self->param('non_ref_gmembers_ordered')));
-        $result{'left1'} = $self->param('result_temp')->{right1};
-        $result{'left2'} = $self->param('result_temp')->{right2};
-        $result{'right1'} = $self->param('result_temp')->{left1};
-        $result{'right2'} = $self->param('result_temp')->{left2};
-        $self->param('result', \%result);
+        my $result_temp = $self->_compare( {'query' => $temp_query, 'left1' => $temp_left1, 'left2' => $temp_left2, 'right1' => $temp_right1, 'right2' => $temp_right2}, , $self->param('non_ref_gmembers_ordered'));
+        $result = {
+            'left1' => $result_temp->{right1},
+            'left2' => $result_temp->{right2},
+            'right1' => $result_temp->{left1},
+            'right2' => $result_temp->{left2},
+        };
     }
 
     #calculate the percentage of the goc score
-    my $percent = $self->param('result')->{'left1'} + $self->param('result')->{'left2'} + $self->param('result')->{'right1'} + $self->param('result')->{'right2'};
+    my $percent = $result->{'left1'} + $result->{'left2'} + $result->{'right1'} + $result->{'right2'};
     my $percentage = $percent * 25;
 
-    $self->param('result')->{'goc_score'} =$percentage;
-    $self->param('result')->{'dnafrag_id'} = $query_ref_gmem_obj->dnafrag_id();
-    $self->param('result')->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
-    $self->param('result')->{'homology_id'} = $query;
-    $self->param('result')->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
+    $result->{'goc_score'}      = $percentage;
+    $result->{'dnafrag_id'}     = $query_ref_gmem_obj->dnafrag_id();
+    $result->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
+    $result->{'homology_id'}    = $query;
+    $result->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
 
 #    print "RESULTS hash--------------->>>>>   \n" if ( $self->debug );
-#    print Dumper($self->param('result')) if ( $self->debug );
+#    print Dumper($result) if ( $self->debug );
 #    print  " mlss_id  ----->>>>  \n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
-    return $self->param('result');
+    return $result;
 
 }
 
