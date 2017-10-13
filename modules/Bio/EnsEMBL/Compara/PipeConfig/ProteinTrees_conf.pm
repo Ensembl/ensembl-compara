@@ -1526,27 +1526,14 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into  => {
-                '1->A' => [
+            -flow_into  => [
                     'write_stn_tags',
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                     WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies'),
                 ],
-                'A->1' => 'notify_homologies_completed',
-            },
             %hc_analysis_params,
         },
-
-        {   -logic_name => 'notify_homologies_completed',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
-            -parameters => {
-                'subject' => "Homologies (".$self->o('pipeline_name').") are ready for hand-over",
-                'text' => "This is an automatic message.\nHomologies for release ".$self->o('pipeline_name')." are done.",
-                'email' => $self->o('email'),
-            },
-        },
-
 
         {   -logic_name     => 'write_stn_tags',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
