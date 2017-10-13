@@ -214,9 +214,6 @@ sub _compute_ortholog_score {
         }
     }
     my $homology = $self->param('preloaded_homologs')->{$query};
-    if (@defined_positions) {
-        $self->param('defined_positions' , \@defined_positions);
-    }
 
     my %result;
     my $non_ref_gmembers_list={};
@@ -232,7 +229,7 @@ sub _compute_ortholog_score {
     #only use non ref gene members on the same chr as the query non ref gene member to get the start and end postions.
     #the extreme start and end will be used in the subroutine _get_non_ref_gmembers to define the section of the genome that we want to pull out
     #this will allow me to check if the non ref gene members of the defined positions are in order
-    foreach my $ortholog (@{$self->param('defined_positions')}) {
+    foreach my $ortholog (@defined_positions) {
         my $non_ref_gm = $self->param('preloaded_homologs')->{$input_hash{$ortholog}}->get_all_GeneMembers($self->param('non_ref_species_dbid'))->[0];
         $non_ref_gmembers_list->{$ortholog} = $non_ref_gm->dbID;
         if ($query_non_ref_dnafragID eq $non_ref_gm->dnafrag_id()) {
