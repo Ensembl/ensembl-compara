@@ -119,6 +119,8 @@ sub parse_clusters {
     # catch final cluster!
     push( @seq_projections, @{ $self->_cluster_to_seq_projection( \@this_cluster ) } );
 
+    warn "Found ", scalar(@seq_projections), " projections.\n" if $self->debug;
+
     $self->param('seq_projections', \@seq_projections);
 }
 
