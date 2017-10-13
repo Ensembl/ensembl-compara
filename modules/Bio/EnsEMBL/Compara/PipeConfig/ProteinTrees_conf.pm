@@ -3081,6 +3081,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name => '250Mb_job',
         },
 
         {   -logic_name => 'rib_fire_goc',
