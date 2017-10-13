@@ -134,6 +134,7 @@ sub run {
             $self->param('use_genetrees', 0);
         }
     }
+    $_->node_id(undef) for @{$species_tree_root->get_all_nodes};
     unless ($self->param('use_genetrees')) {
         $_->random_binarize_node for @{$species_tree_root->get_all_nodes};
         $species_tree_root->distance_to_parent(0);                              # NULL would be more accurate
