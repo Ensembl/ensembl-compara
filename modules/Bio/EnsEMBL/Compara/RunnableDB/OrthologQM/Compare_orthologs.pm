@@ -48,9 +48,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
 use List::MoreUtils qw(firstidx);
-#use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -138,38 +141,24 @@ sub run {
         }
     }
     print "\n\n This is how many homology ids were in the input : $count_homologs  \n\n" if ( $self->debug );
-    $self->_insert_all_goc_scores()
+    $self->_insert_goc_scores($self->param('all_goc_score_arrayref'));
 }
 
 #this method will create one sql insert statement out of the goc_scores array and insert it into the ortholog_goc_metric table
-sub _insert_all_goc_scores {
-  my $self = shift;
-  print "\n Starting ------  _update_ortholog_goc_table \n" if ( $self->debug );
+sub _insert_goc_scores {
+  my ($self, $goc_arrayref) = @_;
+  print "\n Starting ------  _insert_goc_scores\n" if ( $self->debug );
 
-  my $sql_insert_query = 'REPLACE INTO ortholog_goc_metric (method_link_species_set_id,homology_id,gene_member_id,dnafrag_id,goc_score,left1,left2,right1,right2) VALUES ' ;
-  my $size_goc_score_arrayref = scalar @{$self->param('all_goc_score_arrayref')};
-  #my @goc_data;
+  my $size_goc_score_arrayref = scalar @$goc_arrayref;
   print "\n\n This is the how many homology ids we have goc scores for and inserting into the ortholog goc table :  \n  $size_goc_score_arrayref \n\n " if ( $self->debug );
-  foreach ( @{$self->param('all_goc_score_arrayref')} ) {
-    my $l1 = defined $_->{'left1'} ? $_->{'left1'} : 'NULL';
-    my $l2 = defined $_->{'left2'} ? $_->{'left2'} : 'NULL';
-    my $r1 = defined $_->{'right1'} ? $_->{'right1'} : 'NULL';
-    my $r2 = defined $_->{'right2'} ? $_->{'right2'} : 'NULL';
+  my @goc_data;
+  foreach ( @$goc_arrayref ) {
     defined $_->{'goc_score'} or die " the goc score should atleast be 0. mlss id :  $_->{'method_link_species_set_id'} , homology_id : $_->{'homology_id'} ";
     defined $_->{'method_link_species_set_id'} or die " the method_link_species_set_id can not be empty. homology_id : $_->{'homology_id'} ";
-    my $tmp = ' (' . $_->{'method_link_species_set_id'} . ',' . $_->{'homology_id'} . ',' . $_->{'gene_member_id'} . ',' . $_->{'dnafrag_id'} .
-              ',' . $_->{'goc_score'} . ',' . $l1 . ',' . $l2 . ',' . $r1 . ',' . $r2 . '),' ;
-
-    $sql_insert_query .= $tmp ;
-    #push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}. $_->{'dnafrag_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
+    push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}, $_->{'dnafrag_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
   }
 
-  my $insert_query = substr($sql_insert_query, 0, -1);
-  print "\n this is the concatenated insert after clean up :    $insert_query   \n\n" if ( $self->debug >3);
-  my $goc_insert =  $self->compara_dba->dbc->db_handle->prepare($insert_query) or die "Couldn't prepare query: ".$self->compara_dba->dbc->db_handle->errstr;
-
-  $goc_insert->execute() or die "Couldn't execute query: ".$self->compara_dba->dbc->db_handle->errstr;
-  #bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id dnafrag_id goc_score left1 left2 right1 right2)]);
+  bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id dnafrag_id goc_score left1 left2 right1 right2)], 'INSERT IGNORE');
 }
 
 
