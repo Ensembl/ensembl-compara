@@ -175,12 +175,11 @@ sub run {
     print STDERR "Tree to store:\n$cafe_tree_str\n" if ($self->debug);
 
     $species_tree->label($self->param_required('new_label'));
-    $self->compara_dba->get_SpeciesTreeAdaptor->store($species_tree);
-
 }
 
 sub write_output {
     my ($self) = @_;
+    $self->compara_dba->get_SpeciesTreeAdaptor->store($self->param('full_species_tree'));
     $self->dataflow_output_id( {
         'species_tree_root_id' => $self->param('full_species_tree')->root_id,
         'n_missing_species_in_tree' => $self->param('n_missing_species_in_tree'),
