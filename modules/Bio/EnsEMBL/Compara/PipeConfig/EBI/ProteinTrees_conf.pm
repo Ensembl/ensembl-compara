@@ -89,9 +89,7 @@ sub default_options {
         'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
         'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-141/bin/java',
-
-        # FIXME
-        'cdhit_exe'                 => '/homes/carlac/software/cdhit/cd-hit',
+        'cdhit_exe'                 => $self->o('ensembl_cellar').'/cd-hit/4.6.8/bin/cd-hit',
     };
 }
 
