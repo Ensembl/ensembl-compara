@@ -460,20 +460,14 @@ sub get_all_GeneMembers {
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
 
     my %seen_gene_members = ();
-    foreach my $aligned_member (@{$self->get_all_Members}) {
-        next unless $aligned_member->gene_member_id;
-        if ($seen_gene_members{$aligned_member->gene_member_id}) {
-            $aligned_member->gene_member($seen_gene_members{$aligned_member->gene_member_id});
-        } else {
-          if (defined($genome_db_id)) {
-            if ( $aligned_member->genome_db_id() eq $genome_db_id) {
-              $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
-            }
-          } else {
-            $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
-          }
-        }
-        die "Cannot find the GeneMember of ".$aligned_member->stable_id unless $aligned_member->gene_member;
+    foreach my $member (@{$self->get_all_Members}) {
+        next unless $member->gene_member_id;
+        die "Cannot find the GeneMember of ".$member->stable_id unless $member->gene_member;
+
+        # The genome_db_id is not the one requested
+        next if ((defined $genome_db_id) and ($member->genome_db_id != $genome_db_id));
+
+        $seen_gene_members{$member->gene_member_id} = $member->gene_member;
     }
 
     return [values %seen_gene_members];
