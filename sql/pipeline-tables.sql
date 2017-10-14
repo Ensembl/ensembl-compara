@@ -323,7 +323,7 @@ CREATE TABLE `seq_member_id_current_reused_map` (
 
 CREATE TABLE homology_id_mapping (
 	curr_release_homology_id  INT UNSIGNED NOT NULL,
-	prev_release_homology_id  INT UNSIGNED,
+	prev_release_homology_id  INT UNSIGNED NOT NULL,
 	mlss_id                   INT UNSIGNED NOT NULL,
 	PRIMARY KEY (curr_release_homology_id),
 	UNIQUE KEY (prev_release_homology_id),

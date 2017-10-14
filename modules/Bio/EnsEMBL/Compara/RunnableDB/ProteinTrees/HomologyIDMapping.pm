@@ -88,7 +88,7 @@ sub fetch_input {
     if (defined $prev_mlss_id) {
         $self->_fetch_and_map_previous_homologies( $prev_mlss_id);
     } else {
-        $self->_write_empty_mapping();
+        $self->param( 'homology_mapping', [] );
     }
 }
 
@@ -125,22 +125,13 @@ sub _fetch_and_map_previous_homologies {
         my $prev_homology_id    = $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id}
                                    || $hash_previous_homologies{$gene_members[1]->stable_id . '_' . $gene_members[0]->stable_id};
 
-        push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] );
+        push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] ) if $prev_homology_id;
 
     }
 
     $self->param( 'homology_mapping', \@homology_mapping );
 }
 
-sub _write_empty_mapping {
-    my $self = shift;
-
-    my $mlss_id             = $self->param('mlss_id');
-    my $current_homologies  = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_id);
-    my @homology_mapping    = map { [$mlss_id, undef, $_->dbID] } @$current_homologies;
-
-    $self->param( 'homology_mapping', \@homology_mapping );
-}
 
 sub write_output {
 	my $self = shift;
