@@ -372,7 +372,7 @@ sub interpolate_timetree {
                 $total_length += $good_parent->distance_to_parent;
                 $good_parent = $good_parent->parent;
             } until ($good_parent->has_divergence_time);
-            print "Fixing between ", $node->name, " and ", $good_parent->name, "\n";
+            print "Interpolating values between ", $node->name, " and ", $good_parent->name, "\n";
             my $ratio = ($good_parent->get_divergence_time - $node->get_divergence_time) / $total_length;
             my $cur_node = $node;
             my $interpolated_timetree = $node->get_divergence_time;
@@ -391,7 +391,7 @@ sub interpolate_timetree {
         do {
             $root_missing_data = $root_missing_data->parent;
         } until ($root_missing_data->parent->has_divergence_time);
-        print "Fixing ", $root_missing_data->name, " and below (found from ", $leaf->name, ")\n";
+        print "Interpolating values under ", $root_missing_data->name, " (found from ", $leaf->name, ")\n";
         my @todo = ([$root_missing_data, $root_missing_data->parent->get_divergence_time]);
         while (@todo) {
             my ($node, $parent_height) = @{shift @todo};
@@ -428,7 +428,7 @@ sub set_branch_lengths_from_timetree {
     # We make the parents as old as needed to go over their children
     if (!$node->has_divergence_time or ($node->get_divergence_time <= $t)) {
         $t += 0.1;  # We work by increments of 0.1
-        printf("Fixing %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time // 'N/A', $t);
+        printf("Shifting %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time // 'N/A', $t);
     } else {
         $t = $node->get_divergence_time;
     }
@@ -458,7 +458,6 @@ sub set_branch_lengths_from_gene_trees {
         $gt->release_tree() unless $was_preloaded;
     }
 
-    $species_tree_root->print_tree(5);
     # To avoid zeros
     my $epsilon = 0.0001;
     # Get the median value for each species-tree branch
