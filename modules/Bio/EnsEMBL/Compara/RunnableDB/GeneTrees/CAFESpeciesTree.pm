@@ -112,6 +112,7 @@ sub run {
     my ($self) = @_;
     my $species_tree = $self->param('full_species_tree');
     my $species_tree_root = $species_tree->root;
+    print "INITIAL TREE:\n";
     $species_tree_root->print_tree(0.2);
     my $species = $self->param('cafe_species');
     my $mlss_id = $self->param('mlss_id');
@@ -128,7 +129,11 @@ sub run {
         if (@$all_pt_gene_trees) {
             $_->preload for @$all_pt_gene_trees;
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::set_branch_lengths_from_gene_trees($species_tree_root, $all_pt_gene_trees);
+            print "AFTER set_branch_lengths_from_gene_trees:\n";
+            $species_tree_root->print_tree(5);
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::binarize_multifurcation_using_gene_trees($_, $all_pt_gene_trees) for @{$species_tree_root->get_all_nodes};
+            print "AFTER binarize_multifurcation_using_gene_trees:\n";
+            $species_tree_root->print_tree(5);
             $_->release_tree for @$all_pt_gene_trees;
         } else {
             $self->param('use_genetrees', 0);
@@ -139,6 +144,8 @@ sub run {
         $_->random_binarize_node for @{$species_tree_root->get_all_nodes};
         $species_tree_root->distance_to_parent(0);                              # NULL would be more accurate
         $_->distance_to_parent(1000) for $species_tree_root->get_all_subnodes;  # Convention
+        print "AFTER random_binarize_node\n";
+        $species_tree_root->print_tree(0.002);
     }
 
     # 2. Use TimeTree to define divergence times (i.e. get an ultrametric tree)
@@ -147,13 +154,16 @@ sub run {
         if ($n_nodes_with_timetree) {
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::interpolate_timetree($species_tree_root);
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::set_branch_lengths_from_timetree($species_tree_root);
+            print "AFTER set_branch_lengths_from_timetree:\n";
         } else {
             $self->para('use_timetree', 0);
         }
     }
     unless ($self->param('use_timetree')) {
         Bio::EnsEMBL::Compara::Utils::SpeciesTree::ultrametrize_from_branch_lengths($species_tree_root);
+        print "AFTER ultrametrize_from_branch_lengths:\n";
     }
+    $species_tree_root->print_tree(0.08);
 
     my $binTree = $species_tree_root;
     my $cafe_tree_root;
