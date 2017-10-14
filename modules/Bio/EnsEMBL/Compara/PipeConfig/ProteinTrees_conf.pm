@@ -3090,7 +3090,7 @@ sub core_pipeline_analyses {
                 'taxlevels'             => $self->o('goc_taxlevels'),
             },
             -flow_into  => {
-                '1->A' => WHEN( '#expr(scalar(@{#taxlevels#}))expr#' => 'copy_prev_tables' ),
+                '1->A' => WHEN( 'scalar(@{#taxlevels#})' => 'copy_prev_tables' ),
                 'A->1' => ['floating_rib'],
             },
         },
