@@ -28,11 +28,10 @@ limitations under the License.
 
 =head1 NAME
 
-   Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance
 
 =head1 DESCRIPTION
+
 Take as input the mlss id of a pair of species
 use the mlss id to get the species genome db ids and then get their last common ancester node object and uses that to get their genetic distance
 

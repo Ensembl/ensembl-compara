@@ -29,9 +29,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs
 
 =head1 DESCRIPTION
 

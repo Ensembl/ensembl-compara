@@ -20,12 +20,8 @@ limitations under the License.
 =pod
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyFunnel
 
-=head1 SYNOPSIS
-
-	
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyFunnel
 
 =cut
 

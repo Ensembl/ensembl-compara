@@ -20,8 +20,8 @@ limitations under the License.
 =pod
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepTableCopy
+
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepTableCopy
 
 =head1 SYNOPSIS
 

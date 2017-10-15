@@ -20,8 +20,8 @@ limitations under the License.
 =pod
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore
+
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore
 
 =head1 SYNOPSIS
 

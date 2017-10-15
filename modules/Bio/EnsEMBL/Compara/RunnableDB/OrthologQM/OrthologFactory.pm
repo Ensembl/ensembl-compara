@@ -1,4 +1,3 @@
-=pod
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -28,12 +27,11 @@ limitations under the License.
   <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory
 
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory
 
 =head1 DESCRIPTION
+
 	Takes as input the mlss id of the lastz pairwise alignment. 
 	Grabs all the homologs 
 	from the homologs, only keeps the orthologs
@@ -42,6 +40,7 @@ limitations under the License.
     Example run
 
   standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory -goc_mlss_id <goc_mlss id> -compara_db <>
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory;
@@ -98,6 +97,7 @@ sub fetch_input {
 	of genes
 
 =cut
+
 sub run {
 	my $self = shift;
 

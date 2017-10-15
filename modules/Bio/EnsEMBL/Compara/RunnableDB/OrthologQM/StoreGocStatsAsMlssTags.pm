@@ -28,11 +28,10 @@ limitations under the License.
 
 =head1 NAME
 
-   Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags
 
 =head1 DESCRIPTION
+
 Take as input the mlss id of a pair of species
 use the mlss id to query homology table 
 store distribution of goc score as tags in the mlss_tag table

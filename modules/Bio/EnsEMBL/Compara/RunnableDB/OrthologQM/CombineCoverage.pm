@@ -20,15 +20,15 @@ limitations under the License.
 =pod
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage
+
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage
 
 =head1 SYNOPSIS
 
 	Calculate % alignment coverage over both exons and introns in the homologs
 
 =head1 DESCRIPTION
-	
+
 	Inputs:
 	orth_ranges		should be hash ref with genome_db_id as key and value of array ref [start, end] positions
 	orth_id			dbID of homology object in question
@@ -42,7 +42,7 @@ limitations under the License.
 	2 dataflows come from this runnable:
 	#1: summary of exon and intron coverage & lens for each member of the homology
 	#2: homology ID and final (averaged) score to write to homology table
-	
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CombineCoverage;

@@ -20,8 +20,8 @@ limitations under the License.
 =pod
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage
+
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage
 
 =head1 SYNOPSIS
 

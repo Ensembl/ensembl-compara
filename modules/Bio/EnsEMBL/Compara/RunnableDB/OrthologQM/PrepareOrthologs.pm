@@ -20,8 +20,8 @@ limitations under the License.
 =pod
 
 =head1 NAME
-    
-    Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs
+
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs
 
 =head1 SYNOPSIS
 
@@ -40,6 +40,7 @@ limitations under the License.
 
     Outputs:
         dataflows homology dbID and start/end positions in a fan
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs;

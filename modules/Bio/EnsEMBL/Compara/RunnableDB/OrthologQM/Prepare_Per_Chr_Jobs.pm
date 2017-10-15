@@ -30,11 +30,10 @@ limitations under the License.
 
 =head1 NAME
 
-        Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs
 
 =head1 DESCRIPTION
+
   Takes as input an hash of reference and non reference species DBIDs and  dnafrag DBIDs as keys and the list of homolog DBIDs as values.
   Unpacks the hash into seperate hashes each containing a single dnafrag DBID as the key to a list of ordered homologs.
   if the goc_reuse_db parameter is set,

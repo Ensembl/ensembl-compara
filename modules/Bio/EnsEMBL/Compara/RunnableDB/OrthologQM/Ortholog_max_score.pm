@@ -1,4 +1,3 @@
-=pod
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -28,12 +27,11 @@ limitations under the License.
   <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score
 
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score
 
 =head1 DESCRIPTION
+
 	Uses perl DBI to query the 'ortholog_quality_metric' table in the pipeline database 
 	there are two percentage scores for each homolog
 	the max percentage score is recorded and branched to a new table called 'ortholog_metric'

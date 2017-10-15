@@ -28,11 +28,10 @@ limitations under the License.
 
 =head1 NAME
 
-   Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Calculate_goc_perc_above_threshold
 
 =head1 DESCRIPTION
+
 use the genetic distance of a pair species to determine what the goc threshold should be. 
 
 Example run

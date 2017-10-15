@@ -20,8 +20,8 @@ limitations under the License.
 =pod
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::WriteThreshold
+
+Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::WriteThreshold
 
 =head1 SYNOPSIS
 
