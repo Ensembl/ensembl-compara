@@ -84,6 +84,8 @@ sub fetch_input {
 	my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
 	print "This is the returned homologs \n " if ( $self->debug >4);
 	print Dumper($homologs) if ( $self->debug >4); 
+	my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $homologs);
+	Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $sms);
 	$self->param('ref_species_dbid', $species1_dbid);
 	$self->param('non_ref_species_dbid', $species2_dbid);
 	$self->param( 'ortholog_objects', $homologs );
