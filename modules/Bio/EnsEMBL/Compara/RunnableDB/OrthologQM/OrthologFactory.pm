@@ -155,11 +155,17 @@ sub run {
 	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------non_ref_ortholog_info_hashref\n" if ( $self->debug );
 	print Dumper($non_ref_ortholog_info_hashref) if ( $self->debug >3 );
 
-	$self->dataflow_output_id( {'ortholog_info_hashref' => $ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid')} , 2 );
+        $self->param('ref_ortholog_info_hashref', $ref_ortholog_info_hashref);
+        $self->param('non_ref_ortholog_info_hashref', $non_ref_ortholog_info_hashref);
+}
 
-	$self->dataflow_output_id( {'ortholog_info_hashref' => $non_ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('non_ref_species_dbid'), 'non_ref_species_dbid' => $self->param('ref_species_dbid') } , 2 );
-#	$self->dataflow_output_id( {'goc_mlss_id' => $self->param('goc_mlss_id')} , 1);
 
+sub write_output {
+    my $self = shift;
+
+    $self->dataflow_output_id( {'ortholog_info_hashref' => $self->param('ref_ortholog_info_hashref'), 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid')} , 2 );
+    $self->dataflow_output_id( {'ortholog_info_hashref' => $self->param('non_ref_ortholog_info_hashref'), 'ref_species_dbid' => $self->param('non_ref_species_dbid'), 'non_ref_species_dbid' => $self->param('ref_species_dbid') } , 2 );
+    #$self->dataflow_output_id( {'goc_mlss_id' => $self->param('goc_mlss_id')} , 1);
 }
 
 1;
