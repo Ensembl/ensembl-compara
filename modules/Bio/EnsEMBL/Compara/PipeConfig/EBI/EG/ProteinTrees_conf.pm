@@ -157,6 +157,7 @@ sub default_options {
         'ortho_stats_capacity'      => 10,
         'copy_tree_capacity'        => 100,
         'cluster_tagging_capacity'  => 200,
+        'cafe_capacity'             => 50,
 
     # hive priority for non-LOCAL health_check analysis:
 

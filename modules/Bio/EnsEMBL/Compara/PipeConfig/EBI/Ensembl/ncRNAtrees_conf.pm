@@ -96,6 +96,7 @@ sub default_options {
             'ss_picts_capacity'               => 200,
             'ortho_stats_capacity'            => 10,
             'homology_dNdS_capacity'          => 10,
+            'cafe_capacity'                   => 50,
 
             # Setting priorities
             'genomic_alignment_priority'       => 35,

@@ -131,6 +131,7 @@ sub pipeline_analyses_cafe {
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
              -rc_name => '1Gb_job',
+             -hive_capacity => $self->o('cafe_capacity'),
              -meadow_type => 'LSF',
              -flow_into => {
                  2 => 'CAFE_json',
@@ -139,7 +140,7 @@ sub pipeline_analyses_cafe {
 
         {   -logic_name    => 'CAFE_json',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE',
-            -hive_capacity => 50,
+            -hive_capacity => $self->o('cafe_capacity'),
             -batch_size    => 20,
             -rc_name       => '1Gb_job',
         },

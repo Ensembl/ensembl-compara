@@ -133,6 +133,8 @@ sub default_options {
             'full_species_tree_label'  => 'full_species_tree',
 #            'badiRate_exe'            => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
 
+            'cafe_capacity'            => 50,
+
            };
 }
 
