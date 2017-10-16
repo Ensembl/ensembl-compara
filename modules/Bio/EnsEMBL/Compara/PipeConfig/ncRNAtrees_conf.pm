@@ -936,7 +936,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'mlss_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
-            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -hive_capacity => $self->o('homology_id_mapping_capacity'),
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
 
@@ -945,13 +945,13 @@ sub pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'homology_id_mapping_himem' ],
             },
-            -analysis_capacity => 100,
+            -hive_capacity => $self->o('homology_id_mapping_capacity'),
         },
 
         {   -logic_name => 'homology_id_mapping_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
-            -analysis_capacity => 20,
             -rc_name => '1Gb_job',
+            -hive_capacity => $self->o('homology_id_mapping_capacity'),
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
