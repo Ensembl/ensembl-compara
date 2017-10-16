@@ -407,21 +407,21 @@ sub interpolate_timetree {
 }
 
 
-=head2 set_branch_lengths_from_timetree
+=head2 ultrametrize_from_timetree
 
     Function to compute all the branch lengths from the TimeTree divergence times.
     It also fixes the TimeTree data to make them monotonous (i.e. avoid negative branches)
 
 =cut
 
-sub set_branch_lengths_from_timetree {
+sub ultrametrize_from_timetree {
     my $node = shift;
 
     return [0, $node] if $node->is_leaf;
 
     my @children_data;
     foreach my $child (@{$node->children}) {
-        push @children_data, set_branch_lengths_from_timetree($child);
+        push @children_data, ultrametrize_from_timetree($child);
     }
     my $t = max(map {$_->[0]} @children_data);
 

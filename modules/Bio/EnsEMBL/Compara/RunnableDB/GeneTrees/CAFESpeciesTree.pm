@@ -153,8 +153,8 @@ sub run {
         my $n_nodes_with_timetree = scalar(grep {$_->has_divergence_time} @{$species_tree_root->get_all_nodes});
         if ($n_nodes_with_timetree) {
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::interpolate_timetree($species_tree_root);
-            Bio::EnsEMBL::Compara::Utils::SpeciesTree::set_branch_lengths_from_timetree($species_tree_root);
-            print "AFTER set_branch_lengths_from_timetree:\n";
+            Bio::EnsEMBL::Compara::Utils::SpeciesTree::ultrametrize_from_timetree($species_tree_root);
+            print "AFTER ultrametrize_from_timetree:\n";
         } else {
             $self->para('use_timetree', 0);
         }
