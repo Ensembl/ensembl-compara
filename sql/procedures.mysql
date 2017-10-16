@@ -31,7 +31,7 @@ DROP PROCEDURE IF EXISTS print_tree;
 CREATE PROCEDURE print_tree(IN user_root_id INT)
 READS SQL DATA
 SELECT CONCAT(
-	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(parent.left_index-pip.left_index=1, '|', ' '),'     ')) ORDER BY parent.left_index SEPARATOR ''),
+	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(pip.right_index-parent.right_index=1, ' ', '|'),'     ')) ORDER BY parent.left_index SEPARATOR ''),
 	IF(node.node_id=node.root_id,
 		CONCAT(IFNULL(CONCAT(root.stable_id, ' '), ''), root.tree_type, '/', root.member_type, '/', root.clusterset_id, ': '),
 		CONCAT(IF(MIN(node.left_index-parent.left_index)=1, '+', '\\'), '----')
@@ -60,7 +60,7 @@ DROP PROCEDURE IF EXISTS print_species_tree;
 CREATE PROCEDURE print_species_tree(IN user_root_id INT)
 READS SQL DATA
 SELECT CONCAT(
-	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(parent.left_index-pip.left_index=1, '|', ' '),'     ')) ORDER BY parent.left_index SEPARATOR ''),
+	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(pip.right_index-parent.right_index=1, ' ', '|'),'     ')) ORDER BY parent.left_index SEPARATOR ''),
 	IF(node.node_id=node.root_id,
 		CONCAT(root.method_link_species_set_id, '/', root.label, ': '),
 		CONCAT(IF(MIN(node.left_index-parent.left_index)=1, '+', '\\'), '----')
