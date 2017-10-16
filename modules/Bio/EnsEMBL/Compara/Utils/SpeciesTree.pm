@@ -526,12 +526,34 @@ sub _fix_root_distance {
 
 sub ultrametrize_from_branch_lengths {
     my ($node, $node_ratio) = @_;
+
+    return [0, $node] if $node->is_leaf;
+
+    my $n_decimals = 4;
+    my $min_branch_length = "1e-$n_decimals";
+
+    # Target height for $node
     my $node_height = $node->average_height * ($node_ratio // 1);
+    my @children_data;
     foreach my $child (@{$node->children}) {
+        # Rescale the child's sub-tree and query its height
         my $child_ratio = $node_height / ($child->distance_to_parent + $child->average_height);
-        $child->distance_to_parent( $child->distance_to_parent * $child_ratio );
-        ultrametrize_from_branch_lengths($child, $child_ratio);
+        my $child_branch = max($min_branch_length, $child->distance_to_parent * $child_ratio);
+        my $child_height = ultrametrize_from_branch_lengths($child, $child_ratio);
+        push @children_data, [$child_height + $child_branch, $child_height, $child];
     }
+    # Get the height of $node as constrained by the children and their sub-trees
+    $node_height = sprintf("%.${n_decimals}f", max(map {$_->[0]} @children_data));
+    die "Rounding errors" unless $node_height;
+
+    # Set the distances according to $node_height (none should be zero)
+    foreach my $a (@children_data) {
+        # Final branch as an integer with $n_decimals significant digits
+        my $child_branch = sprintf("%.0f", "1e$n_decimals" * ($node_height - $a->[1]));
+        die "Rounding errors" unless $child_branch;
+        $a->[2]->distance_to_parent($child_branch);;
+    }
+    return $node_height;
 }
 
 
