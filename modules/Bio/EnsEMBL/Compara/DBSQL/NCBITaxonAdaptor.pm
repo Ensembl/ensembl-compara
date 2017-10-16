@@ -104,6 +104,7 @@ sub _uncached_fetch_by_dbID {
   unless ($node) {
     my $join = [[['ncbi_taxa_name', 'n'], 'n.name_class = "merged_taxon_id" AND t.taxon_id = n.taxon_id']];
     $constraint = 'n.name = ?';
+    $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
     $node = $self->generic_fetch_one($constraint, $join);
     if ($node) {
       warning("The given taxon_id=$taxon_id is now deprecated and has been merged with taxon_id=".$node->taxon_id."\n");
