@@ -94,6 +94,8 @@ sub default_options {
 
     # blast parameters:
         'num_sequences_per_blast_job'   => 5000,
+        # cdhit is used to filter out proteins that are too close to each other
+        'cdhit_identity_threshold' => 0.99,
 
     # clustering parameters:
 
