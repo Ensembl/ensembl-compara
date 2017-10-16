@@ -81,6 +81,7 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
   Arg [1]    : string $stable_id
   Example    : my $member = $ma->fetch_by_stable_id("O93279");
   Description: Fetches the member corresponding to this $stable_id.
+               This method accepts versionned stable IDs, such as ENSG00000157764.12
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions : throws if $stable_id is undef
   Caller     : 
@@ -94,6 +95,13 @@ sub fetch_by_stable_id {
 
     my $constraint = 'm.stable_id = ?';
     $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+    my $m = $self->generic_fetch_one($constraint);
+    return $m if $m;
+
+    my $vindex = rindex($stable_id, '.');
+    $constraint = 'm.stable_id = ? AND m.version = ?';
+    $self->bind_param_generic_fetch(substr($stable_id,0,$vindex), SQL_VARCHAR);
+    $self->bind_param_generic_fetch(substr($stable_id,$vindex+1), SQL_INTEGER);
     return $self->generic_fetch_one($constraint);
 }
 
@@ -103,6 +111,7 @@ sub fetch_by_stable_id {
   Arg [1]    : arrayref of string $stable_id
   Example    : my $members = $ma->fetch_all_by_stable_id_list(["O93279", "O62806"]);
   Description: Fetches the members corresponding to all the $stable_id.
+               This method des *not* accept versionned stable IDs (e.g. ENSG00000157764.12)
   Returntype : arrayref Bio::EnsEMBL::Compara::Member object
   Caller     : 
 
