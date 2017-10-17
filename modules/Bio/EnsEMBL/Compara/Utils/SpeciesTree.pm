@@ -126,6 +126,7 @@ sub create_species_tree {
         $taxa_for_tree{$extra_taxon} = $taxon;
     }
 
+    return undef unless %taxa_for_tree;
 
     # build the tree taking the parents before the children
     my @previous_right_idx;
@@ -160,7 +161,7 @@ sub create_species_tree {
         }
     }
 
-    $root = $root->minimize_tree if (defined($root));
+    $root = $root->minimize_tree;
 
         # Deleting nodes to further multifurcate:
     my @subnodes = $root->get_all_subnodes;
