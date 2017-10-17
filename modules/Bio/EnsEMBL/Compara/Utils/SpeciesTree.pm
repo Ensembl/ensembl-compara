@@ -535,7 +535,7 @@ sub _fix_root_distance {
 sub ultrametrize_from_branch_lengths {
     my ($node, $node_ratio) = @_;
 
-    return [0, $node] if $node->is_leaf;
+    return 0 if $node->is_leaf;
 
     my $n_decimals = 4;
     my $min_branch_length = "1e-$n_decimals";
