@@ -98,7 +98,7 @@ sub create_species_tree {
             # to $gdb->taxon will see the altered version. We take a fresh
             # version instead
             my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
-            next unless $taxon; # deprecated taxon
+            next unless $taxon; # unexisting taxon
 
             # Get the real taxon_id in case the GenomeDB is linked to a retired one
             $taxon_id = $taxon->dbID;
