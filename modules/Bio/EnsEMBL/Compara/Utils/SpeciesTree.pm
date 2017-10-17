@@ -271,10 +271,14 @@ sub prune_tree {
         if ($leaves_names{lc($leaf->name)}) {
             $leaf->genome_db_id( $leaves_names{lc($leaf->name)}->dbID );
             $leaf->taxon_id( $leaves_names{lc($leaf->name)}->taxon_id );
-        } else {
+        } elsif ($leaf->has_parent) {
+            # No match: disconnect the leaf
             #print $leaf->name," leaf disavowing parent\n";
             $leaf->disavow_parent;
             $input_tree = $input_tree->minimize_tree;
+        } else {
+            # We've removed everything in the tree
+            return undef;
         }
     }
 
