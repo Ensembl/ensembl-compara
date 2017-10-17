@@ -544,6 +544,10 @@ sub ultrametrize_from_branch_lengths {
     my $node_height = $node->average_height * ($node_ratio // 1);
     my @children_data;
     foreach my $child (@{$node->children}) {
+        unless ($child->distance_to_parent + $child->average_height) {
+            # Avoid dealing with 0s
+            $_->distance_to_parent($min_branch_length) for @{$child->get_all_nodes};
+        }
         # Rescale the child's sub-tree and query its height
         my $child_ratio = $node_height / ($child->distance_to_parent + $child->average_height);
         my $child_branch = max($min_branch_length, $child->distance_to_parent * $child_ratio);
