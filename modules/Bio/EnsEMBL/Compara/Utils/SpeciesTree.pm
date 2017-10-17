@@ -337,7 +337,11 @@ sub get_timetree_estimate_for_node {
             #}
         }
     }
-    warn sprintf("Could not get a valid answer from timetree.org for '%s' (see %s).\n", $node->name, $last_page);
+    if ($last_page) {
+        warn sprintf("Could not get a valid answer from timetree.org for '%s' (see %s).\n", $node->name, $last_page);
+    } else {
+        warn sprintf("The taxon_ids of '%s' and its children do not allow querying TimeTree.\n", $node->name);
+    }
     return;
 }
 
