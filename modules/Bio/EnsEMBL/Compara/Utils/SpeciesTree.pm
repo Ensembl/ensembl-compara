@@ -268,7 +268,10 @@ sub prune_tree {
     my %leaves_names = map { (lc $_->name => $_) } grep { $_->name !~ /ancestral/i } @$gdb_list;
 
     foreach my $leaf (@{$input_tree->get_all_leaves}) {
-        if ($leaves_names{lc($leaf->name)}) {
+        if ($leaf->genome_db_id and $leaves_names{lc($leaf->genome_db->name)}) {
+            # Match by genome_db_id: nothing to do
+        } elsif ($leaves_names{lc($leaf->name)}) {
+            # Match by name: fill in the other fields
             $leaf->genome_db_id( $leaves_names{lc($leaf->name)}->dbID );
             $leaf->taxon_id( $leaves_names{lc($leaf->name)}->taxon_id );
         } elsif ($leaf->has_parent) {
