@@ -767,6 +767,7 @@ sub release_tree {
 
     # Release all the references to the members
     $self->clear;
+    delete $self->{_preloaded};
 
     # Let's now release the alternative trees if they've been loaded
     return unless $self->{_alternative_trees};
