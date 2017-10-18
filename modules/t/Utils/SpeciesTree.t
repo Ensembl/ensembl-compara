@@ -377,7 +377,7 @@ done_testing();
 package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 # Overrides get from LWP::Simple
-sub get ($) {
+sub get ($) {   ## no critic
     my $url = shift;
     my $html_template = q{BLABLA
     <h1 style="margin-bottom: 0px;">%s</h1> Million Years Ago
