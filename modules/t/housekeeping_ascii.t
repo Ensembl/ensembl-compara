@@ -47,6 +47,8 @@ sub find_all_files {
     my @files;
 
     # First populate the top-level sub-dirctories
+    # The list of sub-directories must be kept up-to-date. This assumes that no
+    # files in $root should be checked
     {
         my %subdir_ok = map {$_ => 1} qw(modules scripts sql docs travisci xs);
         opendir(my $dirh, $starting_dir);
@@ -93,9 +95,7 @@ sub is_ascii {
     }
 }
 
-# The list of sub-directories must be kept up-to-date. This assumes that no
-# files in $root should be checked
-my @source_files = find_all_files($root, [qw(modules scripts sql docs travisci xs)]);
+my @source_files = find_all_files($root);
 
 foreach my $f (@source_files) {
     # The conservation_score table has scores compressed in binary form
