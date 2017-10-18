@@ -54,8 +54,9 @@ sub find_all_files {
         opendir(my $dirh, $starting_dir);
         my @dir_content = File::Spec->no_upwards(readdir $dirh);
         foreach my $f (@dir_content) {
-            unless ((-d $f) and !$subdir_ok{$f}) {
-                push @queue, File::Spec->catfile($starting_dir, $f);
+            my $af = File::Spec->catfile($starting_dir, $f);
+            unless ((-d $af) and !$subdir_ok{$f}) {
+                push @queue, $af;
             }
         }
         closedir $dirh;
