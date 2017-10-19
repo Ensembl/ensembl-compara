@@ -55,6 +55,10 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 
+#################
+# Fetch methods #
+#################
+
 sub cached_fetch_by_dbID {
     my ($self, $node_id) = @_;
     my $tree = $self->db->get_SpeciesTreeAdaptor->fetch_by_node_id($node_id);
@@ -112,6 +116,10 @@ sub new_from_NestedSet {
     return $tree;
 }
 
+
+########################
+# Store/update methods #
+########################
 
 ## TODO: This is very similar to GeneTreeNodeAdaptor's store_node, maybe we can
 ## abstract out this code in NestedSetAdaptor
