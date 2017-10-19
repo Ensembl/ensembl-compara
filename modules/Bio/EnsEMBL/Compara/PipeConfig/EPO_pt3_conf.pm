@@ -264,7 +264,7 @@ return
 	-logic_name    => 'make_species_tree',
 	-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 	-parameters    => {
-			'blength_tree_file' => $self->o('species_tree_file'),		
+			'species_tree_input_file' => $self->o('species_tree_file'),
 	},
         -flow_into     => [ 'dump_mappings_to_file' ],
 },

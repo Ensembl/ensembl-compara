@@ -191,7 +191,7 @@ return [
  -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
  -parameters    => {
    'mlss_id' => '#pecan_mlssid#',
-   'blength_tree_file' => $self->o('species_tree_file'),    
+   'species_tree_input_file' => $self->o('species_tree_file'),
  },
 },
 

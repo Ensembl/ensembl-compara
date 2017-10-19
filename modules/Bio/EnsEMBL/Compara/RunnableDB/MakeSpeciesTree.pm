@@ -64,7 +64,6 @@ sub param_defaults {
             'label'                 => 'default',
             'species_set_id'        => undef,
             'no_previous'           => undef,
-            'blength_tree_file'     => undef,
             'extrataxon_sequenced'  => undef,
             'multifurcation_deletes_node'           => undef,
             'multifurcation_deletes_all_subnodes'   => undef,
@@ -138,14 +137,7 @@ sub fetch_input {
             }
         }
 
-        if(my $blength_tree_file = $self->param('blength_tree_file')) {     # defines the mode
-            my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->_slurp($blength_tree_file), 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
-            $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->prune_tree( $blength_tree, $self->compara_dba );
-
-        } else {
-            $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree ( -compara_dba => $self->compara_dba, @tree_creation_args );
-        }
-
+        $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree ( -compara_dba => $self->compara_dba, @tree_creation_args );
 
     }
     $species_tree_root->build_leftright_indexing();

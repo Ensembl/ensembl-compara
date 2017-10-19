@@ -202,7 +202,7 @@ sub pipeline_analyses {
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
-                                   'blength_tree_file' => $self->o('species_tree_file'),
+                                   'species_tree_input_file' => $self->o('species_tree_file'),
 				  },
 		-rc_name => '100Mb',
 		-flow_into => [ 'create_default_pairwise_mlss'],

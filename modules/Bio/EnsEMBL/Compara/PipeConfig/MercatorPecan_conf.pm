@@ -300,7 +300,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'make_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => { 
-                               'blength_tree_file' => $self->o('species_tree_file'),
+                               'species_tree_input_file' => $self->o('species_tree_file'),
                               },
             -flow_into => {
                            1 => [ 'genome_reuse_factory' ],
