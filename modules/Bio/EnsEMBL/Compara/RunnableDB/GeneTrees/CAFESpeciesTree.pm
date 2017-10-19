@@ -53,9 +53,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Scalar::Util qw(looks_like_number);
 
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -85,7 +83,7 @@ sub fetch_input {
 
     # Get the species-tree and make a copy to work on it
     my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), $self->param('label'));
-    $full_species_tree->root( $self->compara_dba->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($full_species_tree->root) );
+    $full_species_tree->root( $full_species_tree->root->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $self->compara_dba->get_SpeciesTreeNodeAdaptor) );
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 
     my $cafe_species = $self->param('cafe_species') || [];

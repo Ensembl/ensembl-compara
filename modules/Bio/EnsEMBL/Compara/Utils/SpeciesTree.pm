@@ -209,7 +209,7 @@ sub create_species_tree {
 
     return $root if $return_ncbi_tree;
 
-    my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
+    my $stn_root = $root->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $compara_dba->get_SpeciesTreeNodeAdaptor);
 
     # We need to duplicate all the taxa that are supposed in several copies (several genome_dbs sharing the same taxon_id)
     # Currently, we only do that for component GenomeDBs
