@@ -130,11 +130,14 @@ sub create_species_tree {
 
     # build the tree taking the parents before the children
     my @previous_right_idx;
+    my %node_id_index = ();
     foreach my $taxon (sort {$a->left_index <=> $b->left_index} values %taxa_for_tree) {
         #warn "Adding ", $taxon->toString, "\n";
         $taxon->no_autoload_children;
         if (not $root) {
             $root = $taxon->root;
+            $node_id_index{$taxon->dbID} = $taxon;
+            $node_id_index{$_->dbID} = $_ for @{$taxon->get_all_ancestors};
             @previous_right_idx = ( $taxon->right_index, $taxon );
             next;
         }
@@ -153,7 +156,7 @@ sub create_species_tree {
         }
         @previous_right_idx = ( $taxon->right_index, $taxon );
 
-        $root->merge_node_via_shared_ancestor($taxon);
+        $root->merge_node_via_shared_ancestor($taxon, \%node_id_index);
     }
 
     $root = $root->minimize_tree;

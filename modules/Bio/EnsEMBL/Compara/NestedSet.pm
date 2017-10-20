@@ -1162,7 +1162,7 @@ sub merge_node_via_shared_ancestor {
   my $self = shift;
   my $node = shift;
 
-  my $node_id_index = $self->_make_search_index_on_nodes('node_id', 1);
+  my $node_id_index = shift or $self->_make_search_index_on_nodes('node_id', 1);
 
   my $node_dup = $node_id_index->{$node->node_id};
   if($node_dup) {
@@ -1177,6 +1177,7 @@ sub merge_node_via_shared_ancestor {
       #print("common ancestor at : "); $ancestor->print_node;
       return $ancestor;
     }
+    $node_id_index->{$node->parent->node_id} = $node->parent;
     $node = $node->parent;
   }
 }
