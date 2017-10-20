@@ -97,6 +97,8 @@ subtest 'new_from_newick' => sub {
     throws_ok {Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(triticum_aestivum_X)', $dba )}
                 qr/No component named 'X' in 'triticum_aestivum'/, 'Non-existing component';
 
+    my $new_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(genus_species)', $dba);
+    is($new_root, undef, 'No species found');
 };
 
 

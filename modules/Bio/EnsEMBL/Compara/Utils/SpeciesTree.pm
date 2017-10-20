@@ -289,6 +289,10 @@ sub new_from_newick {
             $node->{_tmp_gdb} = $gdb;
         } else {
             warn $node->name, " not found in the genome_db table";
+            unless ($node->has_parent) {
+                # Not a single leaf is found in the genome_db table
+                return undef;
+            }
             $node->disavow_parent();
             $species_tree_root = $species_tree_root->minimize_tree;
         }
