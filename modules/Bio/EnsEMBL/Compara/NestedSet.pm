@@ -1196,15 +1196,15 @@ sub merge_node_via_shared_ancestor {
     return $node_dup;
   }
 
-  while ($node->parent) {
-    my $ancestor = $node_id_index->{$node->parent->node_id};
+  while (my $parent = $node->parent) {
+    my $ancestor = $node_id_index->{$parent->node_id};
     if($ancestor) {
       $ancestor->add_child($node);
       #print("common ancestor at : "); $ancestor->print_node;
       return $ancestor;
     }
-    $node_id_index->{$node->parent->node_id} = $node->parent;
-    $node = $node->parent;
+    $node_id_index->{$parent->node_id} = $parent;
+    $node = $parent;
   }
 }
 
