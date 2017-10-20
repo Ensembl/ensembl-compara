@@ -1214,7 +1214,6 @@ sub extract_subtree_from_leaves {
     my $copy = $self->copy;
     my $node_ids = shift;	# Array ref of node_ids.
     my @keepers = @{$node_ids};
-    my @all = @{$copy->get_all_nodes};
 
     # Add all ancestors of kept nodes to the keep list.
     my @all_keepers = ();
@@ -1231,7 +1230,7 @@ sub extract_subtree_from_leaves {
     }
 
     my @remove_me = ();
-    foreach my $node (@all) {
+    foreach my $node (values %$node_id_index) {
 	push @remove_me, $node unless (grep {$node->node_id == $_} @all_keepers);
     }
     $copy->remove_nodes(\@remove_me);
