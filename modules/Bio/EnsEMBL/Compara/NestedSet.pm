@@ -400,6 +400,32 @@ sub each_child {
     };
 }
 
+
+=head2 traverse_tree
+
+  Arg[1]      : $callback: subroutine to call on each node
+  Arg[2]      : $sorted: boolean (false). Whether the children should be sorted or not
+  Arg[3]      : $postfix: boolean (false). Whether the parent's callback should be done after its children or not
+  Example     : $node->traverse_tree();
+  Description : Traverse the tree and call $callback on each node
+  Returntype  : None
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub traverse_tree {
+    my $self = shift;
+    my ($callback, $sorted, $postfix) = @_;
+    $callback->($self) unless $postfix;
+    foreach my $child (@{$sorted ? $self->sorted_children : $self->children}) {
+        $child->traverse_tree(@_);
+    }
+    $callback->($self) if $postfix;
+}
+
+
 =head2 sorted_children
 
   Overview   : returns a sorted list of NestedSet nodes directly under this parent node
@@ -1627,6 +1653,7 @@ sub _recursive_get_all_sorted_leaves {
   return $sorted_leaves;
 }
 
+
 =head2 get_all_leaves
 
  Title   : get_all_leaves
@@ -1658,6 +1685,28 @@ sub _recursive_get_all_leaves {
      no warnings 'recursion';
      $child->_recursive_get_all_leaves($leaves);
   }
+}
+
+
+=head2 traverse_tree_get_all_leaves
+
+  Arg[1]      : $callback: subroutine to call on each internal node with an array of its leaves
+  Example     : $node->traverse_tree_get_all_leaves(sub {my ($n, $l) = @_; print $n->name, " has ", scalar(@$l), " leaves\n"});
+  Description : Returns the leaves of the tree, but also calls a callback method. Useful to traverse the tree whilst being aware of the leaves
+  Returntype  : Arrayref of nodes (Bio::EnsEMBL::Compara::NestedSet)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub traverse_tree_get_all_leaves {
+    my ($self, $callback) = @_;
+    return [$self] if $self->is_leaf;
+    my @leaves;
+    push @leaves, @{$_->traverse_tree_get_all_leaves($callback)} for @{$self->children};
+    $callback->($self, \@leaves);
+    return \@leaves;
 }
 
 

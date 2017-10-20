@@ -299,13 +299,12 @@ sub new_from_newick {
     # Secondly, we can search the LCAs in the NCBI tree
     my $ncbi_taxa_a = $compara_dba->get_NCBITaxonAdaptor;
     $ncbi_taxa_a->_id_cache->clear_cache();
-    foreach my $node (reverse @{$species_tree_root->get_all_nodes}) {
-        if (not $node->is_leaf) {
-            my $int_taxon = $ncbi_taxa_a->fetch_first_shared_ancestor_indexed(map {$_->{_tmp_gdb}->taxon} @{$node->get_all_leaves});
+    $species_tree_root->traverse_tree_get_all_leaves( sub {
+            my ($node, $leaves) = @_;
+            my $int_taxon = $ncbi_taxa_a->fetch_first_shared_ancestor_indexed(map {$_->{_tmp_gdb}->taxon} @$leaves);
             $node->taxon_id($int_taxon->taxon_id);
             $node->node_name($int_taxon->name) unless $node->name;
-        }
-    }
+        } );
 
     return $species_tree_root;
 }
