@@ -76,3 +76,11 @@
 165	10091	mus_musculus_casteij	CAST_EiJ_v1	2016-07-External	1	1	\N	CASTEiJ	Mouse CAST/EiJ	\N	86	\N
 172	39442	mus_musculus_pwkphj	PWK_PhJ_v1	2016-07-External	1	1	\N	PWKPhJ	Mouse PWK/PhJ	\N	86	\N
 174	10096	mus_spretus_spreteij	SPRET_EiJ_v1	2016-07	1	1	\N	SPRETEiJ	Mouse SPRET/EiJ	\N	86	\N
+2080	4565	triticum_aestivum	TGACv1	2015-12-TGACv1	1	1	\N	Chinese Spring	Triticum aestivum	\N	85	\N
+2081	4565	triticum_aestivum	TGACv1	2015-12-TGACv1	1	1	A	Chinese Spring	Triticum aestivum	\N	85	\N
+2082	4565	triticum_aestivum	TGACv1	2015-12-TGACv1	1	1	B	Chinese Spring	Triticum aestivum	\N	85	\N
+2083	4565	triticum_aestivum	TGACv1	2015-12-TGACv1	1	1	D	Chinese Spring	Triticum aestivum	\N	85	\N
+2084	4565	triticum_aestivum	TGACv1	2015-12-TGACv1	1	1	U	Chinese Spring	Triticum aestivum	\N	85	\N
+1983	4572	triticum_urartu	ASM34745v1	2014-05-BGI	0	0	\N	\N	Triticum urartu	\N	73	\N
+1984	37682	aegilops_tauschii	ASM34733v1	2014-05-BGI	0	0	\N	\N	Aegilops tauschii	\N	73	\N
+2088	112509	hordeum_vulgare	Hv_IBSC_PGSB_v2	2016-05-IBSC_1.0	1	0	\N	\N	Hordeum vulgare	\N	89	\N

@@ -1396,3 +1396,52 @@
 39442	Mus musculus hortulanus	synonym
 39442	Mus musculus musculus	scientific name
 39442	eastern European house mouse	genbank common name
+4565	Canadian hard winter wheat	common name
+4565	Tricum aestivum	misspelling
+4565	Triticum aestivam	misspelling
+4565	Triticum aestivum	scientific name
+4565	Triticum aestivum L.	authority
+4565	Triticum aestivum subsp. aestivum	synonym
+4565	Triticum aestivum8	misspelling
+4565	Triticum vulgare	synonym
+4565	Triticum vulgare L.	authority
+4565	Triticum vulgare Vill., nom. illeg.	authority
+4565	bread wheat	genbank common name
+4565	common wheat	common name
+4565	wheat	common name
+4565	39424	merged_taxon_id
+4565	235075	merged_taxon_id
+4572	Triticum urartu	scientific name
+4572	Triticum urartu Tumanian ex Gandilyan	authority
+37682	Aegilops squarrosa	synonym
+37682	Aegilops squarrosa auct., non L.	synonym
+37682	Aegilops squarrosa subsp. squarrosa	synonym
+37682	Aegilops tauschii	scientific name
+37682	Aegilops tauschii Coss.	authority
+37682	Aegilopsm tauschii	misspelling
+37682	Patropyrum tauschii	synonym
+37682	Patropyrum tauschii (Coss.) A.Love	authority
+37682	Patropyrum tauschii subsp. tauschii	synonym
+37682	Triticum aegilops	synonym
+37682	Triticum aegilops P.Beauv. ex Roem. & Schult.	authority
+37682	Triticum tauschii	synonym
+37682	Triticum tauschii (Coss.) Schmalh.	authority
+37682	4482	merged_taxon_id
+37682	40669	merged_taxon_id
+37682	70688	merged_taxon_id
+112509	Hordeum sativum	synonym
+112509	Hordeum sativum Jess.	authority
+112509	Hordeum vulgare subsp. vulgare	scientific name
+112509	Hordeum vulgare var. nudum	synonym
+112509	Hordeum vulgare var. nudum Spenn.	authority
+112509	Hordeum vulgare var. vulgare	synonym
+112509	barley	common name
+112509	domesticated barley	genbank common name
+112509	two-rowed barley	common name
+112509	4514	merged_taxon_id
+4564	Triticum	scientific name
+4564	Triticum L., 1753	authority
+147389	Triticeae	scientific name
+147389	Triticeae Dumort., 1824	authority
+1648030	Triticinae	scientific name
+1648030	Triticinae Fr., 1835	authority
