@@ -413,11 +413,12 @@ sub get_timetree_estimate_for_node {
 
 sub interpolate_timetree {
     my $root = shift;
+    my @subnodes = $root->get_all_subnodes;
     unless ($root->has_divergence_time) {
         my @data;
         # For Opisthokonta, average_height gives a more accurate estimate
         # than max_distance
-        foreach my $node ($root->get_all_subnodes) {
+        foreach my $node (@subnodes) {
             if ($node->has_divergence_time) {
                 my $h = $node->average_height or next;
                 push @data, $node->get_divergence_time / $h;
@@ -432,7 +433,7 @@ sub interpolate_timetree {
         print "Setting root mya to $root_height\n";
         $root->set_divergence_time($root_height);
     }
-    foreach my $node ($root->get_all_subnodes) {
+    foreach my $node (@subnodes) {
         if ($node->has_divergence_time and not $node->parent->has_divergence_time) {
             # Find an ancestor with data. This is guaranteed to end since
             # we've ensured that the root node has data
@@ -455,7 +456,8 @@ sub interpolate_timetree {
         }
     }
     # Find subtrees that completely miss TimeTree data
-    foreach my $leaf (@{$root->get_all_leaves}) {
+    foreach my $leaf (@subnodes) {
+        next if !$leaf->is_leaf;
         next if $leaf->parent->has_divergence_time;
         my $root_missing_data = $leaf;
         do {
