@@ -71,52 +71,6 @@ sub cached_fetch_all_by_dbID_list {
 }
 
 
-=head2 new_from_NestedSet
-
-    Arg[1]      : An object that inherits from NestedSet
-    Example     : my $st_node = Bio::EnsEMBL::Compara::SpeciesTreeNode->new_from_NestedSet($tree);
-    Description : Constructor for species tree nodes. Given an object that inherits from NestedSet (possibly a tree), creates a new SpeciesTreeNode (possibly a tree).
-    ReturnType  : EnsEMBL::Compara::SpeciesTreeNode
-    Exceptions  : none
-    Caller      : General
-
-=cut
-
-sub new_from_NestedSet {
-    my ($self, $nestedSet_tree) = @_;
-
-    my $genomeDB_Adaptor = $self->db->get_GenomeDBAdaptor;
-    my $NCBITaxon_Adaptor = $self->db->get_NCBITaxonAdaptor;
-
-    my $tree = $nestedSet_tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $self);
-    for my $node (@{$tree->get_all_nodes}) {
-        if ($node->is_leaf && !$node->genome_db_id) {
-            my $genomeDB;
-            if ($node->genome_db_id) {
-                $genomeDB = $genomeDB_Adaptor->fetch_by_dbID($node->genome_db_id);
-            } elsif (defined $node->node_name) {
-                $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($node->node_name);
-            }
-            if (defined $genomeDB) {
-                $node->genome_db_id($genomeDB->dbID);
-            }
-        }
-        if (!$node->{_taxon} || !$node->{_taxon_id}) {
-            my $taxon_node;
-            if (defined $node->taxon_id) {
-                $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_taxon_id($node->taxon_id);
-            } elsif (defined $node->name) {
-                $taxon_node = $NCBITaxon_Adaptor->fetch_node_by_name($node->name);
-            }
-            if (defined $taxon_node) {
-                $node->taxon($taxon_node);
-            }
-        }
-    }
-    return $tree;
-}
-
-
 ########################
 # Store/update methods #
 ########################
