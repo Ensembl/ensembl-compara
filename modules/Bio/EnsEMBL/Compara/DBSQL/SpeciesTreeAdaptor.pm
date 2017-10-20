@@ -51,28 +51,8 @@ use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Compara::SpeciesTree;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
-
-
-###############
-# Constructor #
-###############
-
-sub new_from_newick {
-    my ($self, $newick, $label) = @_;
-
-    my $st = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
-
-    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st);
-
-    my $speciesTree = Bio::EnsEMBL::Compara::SpeciesTree->new();
-    $speciesTree->label($label);
-    $speciesTree->root($st_root);
-
-    return $speciesTree;
-}
 
 
 #################

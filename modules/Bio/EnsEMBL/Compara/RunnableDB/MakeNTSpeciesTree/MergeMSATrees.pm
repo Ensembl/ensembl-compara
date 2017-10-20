@@ -35,8 +35,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeMSATrees;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
+
 use Data::Dumper;
+
+use Bio::EnsEMBL::Utils::Exception qw(throw);
+
+use Bio::EnsEMBL::Compara::SpeciesTree;
+
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
@@ -47,7 +52,7 @@ sub fetch_input {
  my $tree_path = $self->param('species_tree_bl');
  my $full_species_tree = $self->_slurp($tree_path);
  chomp $full_species_tree;
- my $full_tree = $species_tree_adapt->new_from_newick($full_species_tree, "compara_species_tree");
+ my $full_tree = $self->_new_tree_from_newick($full_species_tree, "compara_species_tree");
  $full_tree->method_link_species_set_id($self->param('dummy_mlss_value'));
 
  eval {
@@ -105,7 +110,7 @@ sub fetch_input {
    }
   }
   # store the median branch length trees
-  my $median_tree = $species_tree_adapt->new_from_newick($median_newick, "median_species_tree");
+  my $median_tree = $self->_new_tree_from_newick($median_newick, "median_species_tree");
   $median_tree=~s/:0;/;/;
   $median_tree->method_link_species_set_id($mlss_id);
 
@@ -137,9 +142,22 @@ sub fetch_input {
  }
  my $merged_newick = $full_tree_root->newick_format("simple");
  $merged_newick=~s/:0;/;/;
- my $merged_tree = $species_tree_adapt->new_from_newick($merged_newick, "merged_branch_lengths");
+ my $merged_tree = $self->_new_tree_from_newick($merged_newick, "merged_branch_lengths");
  $merged_tree->method_link_species_set_id($self->param('dummy_mlss_value'));
  $species_tree_adapt->store($merged_tree);
+}
+
+
+sub _new_tree_from_newick {
+    my ($self, $newick, $label) = @_;
+
+    my $st_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( $newick, $self->compara_dba );
+
+    my $speciesTree = Bio::EnsEMBL::Compara::SpeciesTree->new();
+    $speciesTree->label($label);
+    $speciesTree->root($st_root);
+
+    return $speciesTree;
 }
 
 1;
