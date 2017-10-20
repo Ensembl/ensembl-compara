@@ -153,12 +153,7 @@ sub create_species_tree {
         }
         @previous_right_idx = ( $taxon->right_index, $taxon );
 
-        my $n1 = scalar(@{$root->get_all_leaves});
         $root->merge_node_via_shared_ancestor($taxon);
-        my $n2 = scalar(@{$root->get_all_leaves});
-        if ($n1 != ($n2-1)) {
-            die "Should not happen any more !";
-        }
     }
 
     $root = $root->minimize_tree;
