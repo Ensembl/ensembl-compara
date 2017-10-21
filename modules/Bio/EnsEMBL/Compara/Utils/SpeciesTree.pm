@@ -78,7 +78,8 @@ sub create_species_tree {
 
     my $root;                       # The root of the tree we're building
     my %taxa_for_tree = ();         # taxon_id -> NCBITaxon mapping
-    my %gdbs_by_taxon_id = ();      # taxon_id -> [GenomeDB objects] with the extra GenomeDB to attach
+    my %ref_gdb_by_taxon_id;        # taxon_id -> first GenomeDB object found for this taxon
+    my %extra_gdbs_by_taxon_id;     # taxon_id -> [GenomeDB objects] with the extra GenomeDB to attach
 
         # loading the initial set of taxa from genome_db:
     if(!$no_previous or $species_set) {
@@ -87,7 +88,7 @@ sub create_species_tree {
 
         # Process the polyploid genomes first so that:
         #  1) the default name is Triticum aestivum
-        #  2) all the components go to %gdbs_by_taxon_id and are added later with the component name added
+        #  2) all the components go to %extra_gdbs_by_taxon_id and are added later with the component name added
         my @sorted_gdbs = sort {$b->is_polyploid <=> $a->is_polyploid} @$gdb_list;
 
         foreach my $gdb (@sorted_gdbs) {
@@ -104,13 +105,12 @@ sub create_species_tree {
             $taxon_id = $taxon->dbID;
 
             if ($taxa_for_tree{$taxon_id}) {
-                my $ogdb = $taxa_for_tree{$taxon_id}->{'_gdb'};
-                push @{$gdbs_by_taxon_id{$taxon_id}}, $gdb;
+                push @{$extra_gdbs_by_taxon_id{$taxon_id}}, $gdb;
+                #my $ogdb = $ref_gdb_by_taxon_id{$taxon_id};
                 #warn sprintf("GenomeDB %d (%s) and %d (%s) have the same taxon_id: %d\n", $gdb->dbID, $gdb->name, $ogdb->dbID, $ogdb->name, $taxon_id);
                 next;
             }
-            $taxon->{'_gdb'} = $gdb;
-            weaken($taxon->{'_gdb'});
+            $ref_gdb_by_taxon_id{$taxon_id} = $gdb;
             $taxa_for_tree{$taxon_id} = $taxon;
         }
     }
@@ -148,7 +148,7 @@ sub create_species_tree {
             my $anc = $previous_right_idx[1];
             if ($allow_subtaxa) {
                 #warn sprintf('%s will be added later because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name);
-                push @{$gdbs_by_taxon_id{$anc->dbID}}, $taxon->{'_gdb'};
+                push @{$extra_gdbs_by_taxon_id{$anc->dbID}}, $ref_gdb_by_taxon_id{$taxon->dbID};
                 next;
             } else {
                 throw(sprintf('Cannot add %s because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name));
@@ -209,12 +209,22 @@ sub create_species_tree {
 
     my $stn_root = $root->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $compara_dba->get_SpeciesTreeNodeAdaptor);
 
+    my %leaf_by_taxon_id;
+    foreach my $leaf (@{$stn_root->get_all_leaves}) {
+        $leaf_by_taxon_id{$leaf->taxon_id} = $leaf;
+        if (my $gdb = $ref_gdb_by_taxon_id{$leaf->taxon_id}) {
+            $leaf->{'_genome_db'} = $gdb;
+            $leaf->{'_genome_db_id'} = $gdb->dbID;
+            weaken($leaf->{'_genome_db'});
+            $leaf->node_name($gdb->get_scientific_name('unique'));
+        }
+    }
+
     # We need to duplicate all the taxa that are supposed in several copies (several genome_dbs sharing the same taxon_id)
     # Currently, we only do that for component GenomeDBs
-    foreach my $taxon_id (keys %gdbs_by_taxon_id) {
-        my $current_nodes = $stn_root->find_nodes_by_field_value('taxon_id', $taxon_id);
-        throw("There should exactly 1 node with taxon_id $taxon_id") if scalar(@$current_nodes) != 1;
-        my $current_leaf = $current_nodes->[0];
+    foreach my $taxon_id (keys %extra_gdbs_by_taxon_id) {
+        my $current_leaf = $leaf_by_taxon_id{$taxon_id} or
+                            throw("Could not find the leaf with taxon_id $taxon_id");
         my $new_node = $current_leaf->copy();
         $new_node->_complete_cast_node($current_leaf);
         $new_node->node_id($taxon_id);
@@ -222,7 +232,7 @@ sub create_species_tree {
         $new_node->add_child($current_leaf);
         $new_node->{'_genome_db_id'} = undef;
         $new_node->name($current_leaf->taxon->name);
-        foreach my $genome_db (@{$gdbs_by_taxon_id{$taxon_id}}) {
+        foreach my $genome_db (@{$extra_gdbs_by_taxon_id{$taxon_id}}) {
             my $new_leaf = $current_leaf->copy();
             $new_leaf->_complete_cast_node($current_leaf);
             $new_leaf->genome_db_id($genome_db->dbID);

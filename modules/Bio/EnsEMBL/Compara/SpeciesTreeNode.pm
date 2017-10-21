@@ -58,12 +58,7 @@ use base ('Bio::EnsEMBL::Compara::NestedSet');
 sub _complete_cast_node {
     my ($self, $orig) = @_;
     $self->node_name($orig->name);
-    if (exists $orig->{'_gdb'}) {
-        $self->{'_genome_db'} = $orig->{'_gdb'};
-        $self->genome_db_id($orig->{'_gdb'}->dbID);
-        weaken($self->{'_genome_db'});
-        $self->node_name($orig->{'_gdb'}->get_scientific_name('unique'));
-    } elsif ($orig->{'_genome_db_id'}) {
+    if ($orig->{'_genome_db_id'}) {
         $self->genome_db_id($orig->{'_genome_db_id'});
         $self->{'_genome_db'} = $orig->{'_genome_db'} if $orig->{'_genome_db'};
     }
