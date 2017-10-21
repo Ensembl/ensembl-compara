@@ -33,7 +33,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Registry;
 
 sub write_output {
     my $self = shift;

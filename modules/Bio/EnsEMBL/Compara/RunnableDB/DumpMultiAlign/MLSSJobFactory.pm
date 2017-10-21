@@ -28,7 +28,6 @@ use warnings;
 
 use File::Path qw(make_path remove_tree);
 
-use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

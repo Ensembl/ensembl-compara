@@ -46,7 +46,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

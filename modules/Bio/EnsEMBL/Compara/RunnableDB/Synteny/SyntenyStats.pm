@@ -46,7 +46,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

@@ -53,7 +53,6 @@ use List::MoreUtils qw(firstidx);
 #use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Registry;
 
 =head2 new
 

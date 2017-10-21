@@ -45,7 +45,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Registry;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');

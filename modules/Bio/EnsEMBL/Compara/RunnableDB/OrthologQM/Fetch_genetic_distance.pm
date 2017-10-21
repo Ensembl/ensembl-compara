@@ -49,8 +49,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Registry;
-
 
 sub fetch_input {
 

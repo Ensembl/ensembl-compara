@@ -49,7 +49,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Registry;
 
 =head2 param_defaults
 

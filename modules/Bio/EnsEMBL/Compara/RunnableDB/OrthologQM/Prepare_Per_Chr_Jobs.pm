@@ -52,7 +52,6 @@ use warnings;
 use Data::Dumper;
 use base 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs';
 
-use Bio::EnsEMBL::Registry;
 
 sub param_defaults {
   my $self = shift;

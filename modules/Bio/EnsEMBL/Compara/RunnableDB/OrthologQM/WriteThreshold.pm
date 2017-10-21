@@ -43,7 +43,6 @@ use DBI;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Registry;
 
 =head2 write_output
 
