@@ -207,7 +207,7 @@ sub create_species_tree {
 
     return $root if $return_ncbi_tree;
 
-    my $stn_root = $root->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode', $compara_dba->get_SpeciesTreeNodeAdaptor);
+    my $stn_root = $root->copy('Bio::EnsEMBL::Compara::SpeciesTreeNode', $compara_dba->get_SpeciesTreeNodeAdaptor);
 
     my %leaf_by_taxon_id;
     foreach my $leaf (@{$stn_root->get_all_leaves}) {
@@ -225,16 +225,14 @@ sub create_species_tree {
     foreach my $taxon_id (keys %extra_gdbs_by_taxon_id) {
         my $current_leaf = $leaf_by_taxon_id{$taxon_id} or
                             throw("Could not find the leaf with taxon_id $taxon_id");
-        my $new_node = $current_leaf->copy();
-        $new_node->_complete_cast_node($current_leaf);
+        my $new_node = $current_leaf->copy_node();
         $new_node->node_id($taxon_id);
         $current_leaf->parent->add_child($new_node);
         $new_node->add_child($current_leaf);
         $new_node->{'_genome_db_id'} = undef;
         $new_node->name($current_leaf->taxon->name);
         foreach my $genome_db (@{$extra_gdbs_by_taxon_id{$taxon_id}}) {
-            my $new_leaf = $current_leaf->copy();
-            $new_leaf->_complete_cast_node($current_leaf);
+            my $new_leaf = $current_leaf->copy_node();
             $new_leaf->genome_db_id($genome_db->dbID);
             $new_leaf->{'_genome_db'} = $genome_db;
             $new_leaf->node_id($taxon_id);

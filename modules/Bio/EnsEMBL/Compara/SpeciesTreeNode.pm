@@ -73,15 +73,19 @@ sub _complete_cast_node {
 }
 
 
-sub copy {
+=head2 _attr_to_copy_list
+
+  Description: Returns the list of all the attributes to be copied by copy_node()
+  Returntype : Array of String
+  Caller     : General
+
+=cut
+
+sub _attr_to_copy_list {
     my $self = shift;
-
-    my $mycopy = $self->SUPER::copy(@_);
-
-    $mycopy->taxon_id($self->taxon_id);
-    $mycopy->genome_db_id($self->genome_db_id);
-    $mycopy->name($self->name);
-    return $mycopy;
+    my @sup_attr = $self->SUPER::_attr_to_copy_list();
+    push @sup_attr, qw(_genome_db_id _genome_db _taxon_id _taxon _node_name);
+    return @sup_attr;
 }
 
 

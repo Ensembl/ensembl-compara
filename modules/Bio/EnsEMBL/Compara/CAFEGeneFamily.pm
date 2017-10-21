@@ -74,7 +74,7 @@ sub new_from_SpeciesTree {
     $cafeTree->label($speciesTree->label);
     $cafeTree->root_id($speciesTree->root_id);
 
-    my $cafe_tree_root = $speciesTree->root->cast('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode', $cafeGeneFamilyNode_Adaptor);
+    my $cafe_tree_root = $speciesTree->root->copy('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode', $cafeGeneFamilyNode_Adaptor);
     $cafeTree->root($cafe_tree_root);
     return $cafeTree;
 }

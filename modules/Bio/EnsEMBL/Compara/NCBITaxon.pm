@@ -66,22 +66,20 @@ use Bio::EnsEMBL::Utils::Argument;
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
-=head2 copy
 
-  Description: returns copy of object, calling superclass copy method
+=head2 _attr_to_copy_list
+
+  Description: Returns the list of all the attributes to be copied by copy_node()
+  Returntype : Array of String
+  Caller     : General
 
 =cut
 
-sub copy {
-  my $self = shift;
-  
-  my $mycopy = $self->SUPER::copy;
-  
-  $mycopy->ncbi_taxid($self->ncbi_taxid);
-  $mycopy->rank($self->rank);
-  $mycopy->genbank_hidden_flag($self->genbank_hidden_flag);
-
-  return $mycopy;
+sub _attr_to_copy_list {
+    my $self = shift;
+    my @sup_attr = $self->SUPER::_attr_to_copy_list();
+    push @sup_attr, qw(_node_id _rank _genbank_hidden_flag);
+    return @sup_attr;
 }
 
 

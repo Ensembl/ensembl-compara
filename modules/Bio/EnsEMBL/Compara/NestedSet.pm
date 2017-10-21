@@ -70,42 +70,29 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node Bio::EnsEMBL::Storable);
 # Factory methods
 #################################################
 
-=head2 cast
+=head2 _attr_to_copy_list
 
-  Arg1          : class (string)
-  Description   : Creates a copy of tree casting the nodes to a given class
-  Example       : my $sp_tree = $tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
-  ReturnType    : An object of the specified class
-  Exceptions    : none
-  Caller        : general
+  Description: Returns the list of all the attributes to be copied by deep_copy()
+  Returntype : Array of String
+  Caller     : deep_copy()
+  Status     : Stable
 
 =cut
 
-## If this subroutine works we should merge it with copy
-sub cast {
-    my ($self, $class, $adaptor) = @_;
-
-    eval "require $class";
-
-    my $copy = $self->SUPER::copy;
-    bless $copy, $class;
-    $copy->adaptor($adaptor) if (defined $adaptor);
-
-    $copy->node_id($self->node_id) if ($copy->can('node_id'));
-    $copy->distance_to_parent($self->distance_to_parent);
-    $copy->left_index($self->left_index);
-    $copy->right_index($self->right_index);
-
-    $copy->{_children_loaded} = $self->{_children_loaded};
-
-    $copy->_complete_cast_node($self) if ($copy->can('_complete_cast_node'));
-
-    for my $child (@{$self->children}) {
-        $copy->add_child($child->cast($class, $adaptor));
-    }
-
-    return $copy;
+sub _attr_to_copy_list {
+    return qw(_distance_to_parent _left_index _right_index);
 }
+
+
+sub copy_node {
+    my $self = shift;
+    my $mycopy = $self->SUPER::copy(@_);
+    foreach my $attr ($self->_attr_to_copy_list) {
+        $mycopy->{$attr} = $self->{$attr} if exists $self->{$attr};;
+    }
+    return $mycopy;
+}
+
 
 =head2 copy
 
@@ -118,18 +105,26 @@ sub cast {
 =cut
 
 sub copy {
-  my $self = shift;
+    my ($self, $class, $adaptor) = @_;
 
-  my $mycopy = $self->SUPER::copy(@_);
+    my $mycopy = $self->copy_node();
 
-  $mycopy->distance_to_parent($self->distance_to_parent);
-  $mycopy->left_index($self->left_index);
-  $mycopy->right_index($self->right_index);
+    if ($adaptor) {
+        $mycopy->adaptor($adaptor);
+        $mycopy->node_id($self->node_id);
+    }
 
-  foreach my $child (@{$self->children}) {
-    $mycopy->add_child($child->copy);
-  }
-  return $mycopy;
+    if ($class) {
+        eval "require $class";
+        bless $mycopy, $class;
+        $mycopy->_complete_cast_node($self) if $mycopy->can('_complete_cast_node');
+    }
+
+    $mycopy->{'_children_loaded'} = 1;  # So that leaves know they are leaves
+    foreach my $child (@{$self->children}) {
+        $mycopy->add_child($child->copy($class, $adaptor));
+    }
+    return $mycopy;
 }
 
 
@@ -1742,8 +1737,7 @@ sub random_binarize_node {
         my $child_B = $children[1];
 
         # Create new internal node attached to N
-        my $newNode = $node->new();
-        $newNode->_complete_cast_node($node) if $newNode->can('_complete_cast_node');
+        my $newNode = $node->copy_node();
 
         # Attach A & B to I
         # A & B will be automatically removed from previous parent
