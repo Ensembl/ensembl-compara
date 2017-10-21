@@ -974,8 +974,7 @@ sub get_species_tree {
       return $self->param('species_tree');
   }
 
-  my $db_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default')->root;
-  my $species_tree = $db_species_tree->copy;
+  my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default')->root;
 
   #if the tree leaves are species names, need to convert these into genome_db_ids
   my $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
@@ -1127,11 +1126,10 @@ sub _dump_fasta {
 sub get_tree_string {
   my $self = shift;
 
-  # my $tree = $self->get_species_tree->copy;
   my $tree = $self->get_species_tree;
   return if (!$tree);
 
-  $tree = $self->_update_tree($tree);
+  $tree = $self->_update_tree($tree->copy);
 
   return if (!$tree);
 
@@ -1192,7 +1190,7 @@ sub _update_tree {
 	}
 	$index++;
     }
-    print "num " . @$these_dnafrag_regions . " " . @$these_2x_genomes . "\n" if $self->debug;
+    print $this_leaf->name, ": num " . @$these_dnafrag_regions . " " . @$these_2x_genomes . "\n" if $self->debug;
 
     if (@$these_dnafrag_regions == 1) {
       ## If only 1 has been found...
