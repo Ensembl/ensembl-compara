@@ -84,7 +84,7 @@ sub default_options {
 
       'bl2seq' => '/software/ensembl/compara/bl2seq', # location of ncbi bl2seq executable on farm3
       'blastn' => undef,
-      'enredo_bin_dir' => '/software/ensembl/compara/', # location of enredo executable
+      'enredo_exe' => '/software/ensembl/compara/enredo', # location of enredo executable
       
       # Dump directory
       'dump_dir' => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',

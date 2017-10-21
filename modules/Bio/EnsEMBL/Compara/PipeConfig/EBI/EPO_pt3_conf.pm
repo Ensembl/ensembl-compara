@@ -88,12 +88,11 @@ sub default_options {
       'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.42mammals.branch_len.nw',
 
       'bl2seq' => undef,
-      'blastn' => $self->o('ensembl_cellar') . '/blast/2.2.30/bin/blastn',
-      'enredo_bin_dir' => '/nfs/ensembl/bin/enredo/', # location of enredo executable
 
       # Dump directory
       'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
+      'blastn'          => $self->o('ensembl_cellar') . '/blast/2.2.30/bin/blastn',
       'pecan_exe_dir'   => $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/',
       'gerp_version' => '2.1', #gerp program version
       'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
@@ -101,6 +100,7 @@ sub default_options {
       'exonerate_exe'   => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
       'ortheus_py'      => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/Ortheus.py',
       'ortheus_lib_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/',
+      'enredo_exe'      => $self->o('ensembl_cellar') . '/enredo/0.5.0/bin/enredo',
 
       'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 

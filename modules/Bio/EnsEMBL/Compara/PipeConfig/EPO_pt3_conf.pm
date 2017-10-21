@@ -293,7 +293,7 @@ return
 	-logic_name => 'run_enredo',
 	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	-parameters => {
-		'cmd' => $self->o('enredo_bin_dir').'enredo '.$self->o('enredo_params').' #enredo_output_file# #enredo_mapping_file#',
+		'cmd' => $self->o('enredo_exe').' '.$self->o('enredo_params').' #enredo_output_file# #enredo_mapping_file#',
 	},
 	-rc_name => 'mem7500',
         -flow_into => [ 'load_dnafrag_region' ],
