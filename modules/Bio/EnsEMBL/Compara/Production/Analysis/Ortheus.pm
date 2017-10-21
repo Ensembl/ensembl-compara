@@ -92,9 +92,9 @@ sub new {
   my ($class,@args) = @_;
   my $self = $class->SUPER::new(@args);
   my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters, $pecan_exe_dir,
-    $exonerate_exe, $java_exe, $ortheus_py, $ortheus_lib_dir, $semphy_exe, $options,) =
+    $exonerate_exe, $java_exe, $ortheus_bin_dir, $ortheus_lib_dir, $semphy_exe, $options,) =
         rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
-            'SPECIES_ORDER', 'PARAMETERS', 'PECAN_EXE_DIR', 'EXONERATE_EXE', 'JAVA_EXE', 'ORTHEUS_PY', 'ORTHEUS_LIB_DIR', 'SEMPHY_EXE', 'OPTIONS'], @args);
+            'SPECIES_ORDER', 'PARAMETERS', 'PECAN_EXE_DIR', 'EXONERATE_EXE', 'JAVA_EXE', 'ORTHEUS_BIN_DIR', 'ORTHEUS_LIB_DIR', 'SEMPHY_EXE', 'OPTIONS'], @args);
 
   $self->workdir($workdir) if (defined $workdir);
   chdir $self->workdir;
@@ -118,10 +118,10 @@ sub new {
 #      $ORTHEUS = $analysis->program_file;
 #  }
 
- if (defined $ortheus_py) {
-    $self->ortheus_py($ortheus_py);
+ if (defined $ortheus_bin_dir) {
+    $self->ortheus_bin_dir($ortheus_bin_dir);
  } else {
-  die "\northeus_py is not defined\n";
+  die "\northeus_bin_dir is not defined\n";
  }
 
   unless (defined $self->exonerate_exe) {
@@ -185,10 +185,10 @@ sub java_exe {
   return $self->{'_java_exe'};
 }
 
-sub ortheus_py {
+sub ortheus_bin_dir {
   my $self = shift;
-  $self->{'_ortheus_py'} = shift if(@_);
-  return $self->{'_ortheus_py'};
+  $self->{'_ortheus_bin_dir'} = shift if(@_);
+  return $self->{'_ortheus_bin_dir'};
 }
 
 sub ortheus_lib_dir {
@@ -241,7 +241,7 @@ sub run_analysis {
 
 sub run_ortheus {
   my $self = shift;
-  my $ORTHEUS = $self->ortheus_py;
+  my $ORTHEUS = $self->ortheus_bin_dir . '/Ortheus.py';
   my $JAVA = $self->java_exe;
   chdir $self->workdir;
   #my $debug = " -a -b";
@@ -249,6 +249,7 @@ sub run_ortheus {
 #   throw("Python [$PYTHON] is not executable") unless ($PYTHON && -x $PYTHON);
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
 
+  $ENV{'PATH'} = $self->ortheus_bin_dir . ':' . $ENV{'PATH'};
   $ENV{'CLASSPATH'}  = $self->pecan_exe_dir;
   $ENV{'PYTHONPATH'} = $self->ortheus_lib_dir;
 

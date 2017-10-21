@@ -98,7 +98,7 @@ sub default_options {
       'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
       'java_exe'        => $self->o('ensembl_cellar') . '/jdk/1.8.0-141/bin/java',
       'exonerate_exe'   => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate', # path to exonerate executable
-      'ortheus_py'      => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/Ortheus.py',
+      'ortheus_bin_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/',
       'ortheus_lib_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/',
       'enredo_exe'      => $self->o('ensembl_cellar') . '/enredo/0.5.0/bin/enredo',
       'semphy_exe'      => $self->o('ensembl_cellar') . '/semphy/2.0b3/bin/semphy',

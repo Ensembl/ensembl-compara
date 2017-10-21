@@ -807,7 +807,7 @@ sub _run_ortheus {
       -pecan_exe_dir => $self->param_required('pecan_exe_dir'),
       -exonerate_exe => $self->param_required('exonerate_exe'),
       -java_exe =>  $self->param_required('java_exe'),
-      -ortheus_py =>  $self->param_required('ortheus_py'),
+      -ortheus_bin_dir =>  $self->param_required('ortheus_bin_dir'),
       -ortheus_lib_dir => $self->param_required('ortheus_lib_dir'),
       -semphy_exe =>  $self->param_required('semphy_exe'),
       -options => $options,
