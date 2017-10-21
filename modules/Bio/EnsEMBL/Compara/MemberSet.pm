@@ -310,7 +310,7 @@ sub deep_copy {
     bless $copy, ref($self);
 
     foreach my $attr ($self->_attr_to_copy_list) {
-        $copy->{$attr} = $self->{$attr};
+        $copy->{$attr} = $self->{$attr} if exists $self->{$attr};;
     }
 
     foreach my $member (@{$self->get_all_Members}) {
