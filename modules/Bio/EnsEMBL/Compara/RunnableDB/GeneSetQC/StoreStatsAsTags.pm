@@ -30,9 +30,8 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::StoreStatsAsTags
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
+
 Takes as input the genome db ids of species of interest and stores as tags the number genes shorter and longer than the average of their orthologs and the number of splits genes in the species tree node table.
     Example run
 
@@ -66,9 +65,6 @@ sub param_defaults {
     	};
 }
 
-=head2 fetch_input
-Description: 
-=cut
 
 sub fetch_input {
     my $self = shift;

@@ -30,13 +30,13 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
+
 Takes as input the genome db ids of species of interest and outputs the total number of and the stable ids of the genes identified as split genes 
     Example run
 
   standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::get_split_genes -genome_db_id <genome_db_id>
+
 =cut
 
 
@@ -64,9 +64,6 @@ sub param_defaults {
     	};
 }
 
-=head2 fetch_input
-Description: 
-=cut
 
 sub fetch_input {
     my $self = shift;
