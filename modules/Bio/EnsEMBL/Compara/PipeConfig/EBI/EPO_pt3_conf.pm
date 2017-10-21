@@ -101,6 +101,7 @@ sub default_options {
       'ortheus_py'      => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/Ortheus.py',
       'ortheus_lib_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/',
       'enredo_exe'      => $self->o('ensembl_cellar') . '/enredo/0.5.0/bin/enredo',
+      'semphy_exe'      => $self->o('ensembl_cellar') . '/semphy/2.0b3/bin/semphy',
 
       'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
