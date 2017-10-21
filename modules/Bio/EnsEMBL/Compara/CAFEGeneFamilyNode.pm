@@ -70,25 +70,6 @@ sub cafe_gene_family_id {
     return $self->{'_cafe_gene_family_id'};
 }
 
-=head2 taxon_id
-
-    Arg[1]      : (opt.) <int> Taxon ID
-    Example     : my $taxon_id = $tree->taxon_id
-    Description : Getter/Setter for the taxon_id of the node
-    ReturnType  : scalar
-    Exceptions  : none
-    Caller      : general
-
-=cut
-
-sub taxon_id {
-    my ($self, $taxon_id) = @_;
-    if (defined $taxon_id) {
-        $self->{'_taxon_id'} = $taxon_id;
-    }
-    return $self->{'_taxon_id'};
-}
-
 =head2 n_members
 
     Arg[1]      : (opt.) <int>
