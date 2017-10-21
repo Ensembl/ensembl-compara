@@ -252,7 +252,7 @@ sub run_ortheus {
   $ENV{'CLASSPATH'}  = $self->pecan_exe_dir;
   $ENV{'PYTHONPATH'} = $self->ortheus_lib_dir;
 
-  my $command = "python $ORTHEUS";
+  my $command = "python2 $ORTHEUS";
 
   #add debugging
   #$command .= $debug;

@@ -97,7 +97,7 @@ sub new {
     $self->tree_string($tree_string)
   } else {
     # Use EstimateTree.py program to get a tree from the sequences
-    my $run_str = "python $estimate_tree_exe " . join(" ", @$fasta_files);
+    my $run_str = "python2 $estimate_tree_exe " . join(" ", @$fasta_files);
     print "RUN $run_str\n";
     my @estimate = qx"$run_str";
     if (($estimate[0] !~ /^FINAL_TREE: \(.+\);/) or ($estimate[2] !~ /^ORDERED_SEQUENCES: (.+)/)) {
