@@ -659,7 +659,6 @@ sub binarize_multifurcation_using_gene_trees {
     my $n_child = 0;
     foreach my $child (@{$species_tree_node->children}) {
         $stn_id_2_stn{$child->node_id} = $child;
-        $stn_id_2_child{$child->node_id} = $child->node_id;
         $n_child++;
         foreach my $leaf (@{$child->get_all_nodes}) {
             $stn_id_2_child{$leaf->node_id} = $child->node_id;
