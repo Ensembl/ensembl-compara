@@ -813,7 +813,7 @@ sub _run_ortheus {
       -options => $options,
       );
 
-    $ortheus_runnable->run_analysis;
+    $ortheus_runnable->run_ortheus;
 
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {

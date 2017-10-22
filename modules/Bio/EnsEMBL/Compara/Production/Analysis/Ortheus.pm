@@ -40,7 +40,7 @@ Bio::EnsEMBL::Analysis::Runnable::Ortheus -
       -fasta_files => $fasta_files,
       -tree_string => $tree_string,
       -program => "/path/to/program");
-  $runnable->run;
+  $runnable->run_ortheus;
   my @output = @{$runnable->output};
 
 =head1 DESCRIPTION
@@ -215,29 +215,6 @@ sub output {
   return $self->{'_output'};
 }
 
-=head2 run_analysis
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Mlagan
-  Arg [2]   : string, program name
-  Function  : create and open a commandline for the program trf
-  Returntype: none
-  Exceptions: throws if the program in not executable or if the results
-  file doesnt exist
-  Example   : 
-
-=cut
-
-sub run_analysis {
-  my ($self, $program) = @_;
-
-  return $self->run_ortheus;
-
-  #move this to compara module instead because it is easier to keep track
-  #of the 2x composite fragments. And also it removes the need to create
-  #compara objects in analysis module.
-  #$self->parse_results;
-  #return 1;
-}
 
 sub run_ortheus {
   my $self = shift;

@@ -193,7 +193,7 @@ sub run {
 
   
   #Capture error message from ortheus and write it to the job_message table
-  my $ortheus_output = $runnable->run_analysis;
+  my $ortheus_output = $runnable->run_ortheus;
 
   print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
 
