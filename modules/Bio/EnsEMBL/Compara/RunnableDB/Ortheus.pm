@@ -256,12 +256,6 @@ sub _write_output {
 
   my $skip_left_right_index = 0;
 
-  if ($self->param('runnable')->{tree_to_save}) {
-    my $meta_container = $self->compara_dba->get_MetaContainer;
-    $meta_container->store_key_value("synteny_region_tree_".$self->param('synteny_region_id'),
-        $self->param('runnable')->{tree_to_save});
-  }
-
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
