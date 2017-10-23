@@ -60,7 +60,7 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'multiplealigner_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '2->A' => WHEN( $self->o('skip_multiplealigner_stats') => [ 'multiplealigner_stats' ] ),
+                '2->A' => WHEN( "not ".$self->o('skip_multiplealigner_stats') => [ 'multiplealigner_stats' ] ),
                 'A->1' => [ 'block_size_distribution' ],
             },
         },
