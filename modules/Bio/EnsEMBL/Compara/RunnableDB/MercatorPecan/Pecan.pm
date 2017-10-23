@@ -796,22 +796,8 @@ sub _run_ortheus {
     $self->compara_dba->dbc->disconnect_if_idle;
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
-    my $options = ['-y'];
-    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus->run_ortheus(
-      -workdir => $self->worker_temp_directory,
-      -fasta_files => $self->param('fasta_files'),
-      #-tree_string => $self->tree_string,
-      -species_tree => $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}'),
-      -species_order => $self->param('species_order'),
-      -parameters => $self->param('java_options'),
-      -pecan_exe_dir => $self->param_required('pecan_exe_dir'),
-      -exonerate_exe => $self->param_required('exonerate_exe'),
-      -java_exe =>  $self->param_required('java_exe'),
-      -ortheus_bin_dir =>  $self->param_required('ortheus_bin_dir'),
-      -ortheus_lib_dir => $self->param_required('ortheus_lib_dir'),
-      -semphy_exe =>  $self->param_required('semphy_exe'),
-      -options => $options,
-      );
+    $self->param('options', ['-y']);
+    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus->run_ortheus($self);
 
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {

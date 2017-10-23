@@ -25,22 +25,9 @@
 
 =cut
 
-=head1 AUTHORS
-
-Benedict Paten bjp@ebi.ac.uk
-
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Ortheus - 
-
-=head1 SYNOPSIS
-
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Ortheus
-     (-workdir => $workdir,
-      -fasta_files => $fasta_files,
-      -tree_string => $tree_string,
-      -program => "/path/to/program");
-  $runnable->run_ortheus;
+Bio::EnsEMBL::Analysis::Runnable::Ortheus
 
 =head1 DESCRIPTION
 
@@ -49,7 +36,6 @@ of a set of sequences. It is able to infer a tree (or one may be provided) and t
 create a tree alignment of the sequences that includes ML reconstructions of the
 ancestral sequences. Ortheus is based upon a probabilistic transducer model and handles
 the evolution of both substitutions, insertions and deletions.
-
 
 =head1 METHODS
 
@@ -69,41 +55,20 @@ use Bio::EnsEMBL::Utils::Argument;
 
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-=head2 run_ortheus
-
-  Arg [1]   : -workdir => "/path/to/working/directory"
-  Arg [2]   : -fasta_files => "/path/to/fasta/file"
-  Arg [3]   : -tree_string => "/path/to/tree/file" (optional)
-  Arg [4]   : -parameters => "parameter" (optional)
-
-=cut
 
 sub run_ortheus {
-  my ($class,@args) = @_;
-  my ($workdir, $fasta_files, $tree_string, $species_tree, $species_order, $parameters, $pecan_exe_dir,
-    $exonerate_exe, $java_exe, $ortheus_bin_dir, $ortheus_lib_dir, $semphy_exe, $options,) =
-        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING', 'SPECIES_TREE',
-            'SPECIES_ORDER', 'PARAMETERS', 'PECAN_EXE_DIR', 'EXONERATE_EXE', 'JAVA_EXE', 'ORTHEUS_BIN_DIR', 'ORTHEUS_LIB_DIR', 'SEMPHY_EXE', 'OPTIONS'], @args);
+  my $self = shift;
 
- unless (defined $ortheus_bin_dir) {
-  die "\northeus_bin_dir is not defined\n";
- }
+  local $ENV{'PATH'} = $self->param_required('ortheus_bin_dir') . ':' . $ENV{'PATH'};
+  local $ENV{'CLASSPATH'}  = $self->param_required('pecan_exe_dir');
+  local $ENV{'PYTHONPATH'} = $self->param_required('ortheus_lib_dir');
 
-  unless (defined $exonerate_exe) {
-    die "\nexonerate exe is not defined\n";
-  }
-
-  my $ORTHEUS = $ortheus_bin_dir . '/Ortheus.py';
-  chdir $workdir if $workdir;
+  my $ORTHEUS = $self->param('ortheus_bin_dir') . '/Ortheus.py';
   #my @debug = qw(-a -b);
 
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
-
-  local $ENV{'PATH'} = $ortheus_bin_dir . ':' . $ENV{'PATH'};
-  local $ENV{'CLASSPATH'}  = $pecan_exe_dir;
-  local $ENV{'PYTHONPATH'} = $ortheus_lib_dir;
 
   # Ortheus.py is executable but calls "python", which may be python3 on some systems
   my @command = ('python2', $ORTHEUS);
@@ -113,33 +78,34 @@ sub run_ortheus {
 
   push @command, '-l', '#-j 0';
 
-  if (@{$fasta_files}) {
-    push @command, '-e', @{$fasta_files};
+  if (@{$self->param('fasta_files')}) {
+    push @command, '-e', @{$self->param('fasta_files')};
   }
 
-  my $java_params = $parameters // '';
-
   #Add -X to fix -ve indices in array bug suggested by BP
-  push @command, '-m', "$java_exe $java_params", '-k', ' -J '.$exonerate_exe.' -X';
+  push @command, '-m', $self->require_executable('java_exe').' '.($self->param('java_options') // ''), '-k', ' -J '.$self->require_executable('exonerate_exe').' -X';
 
-  if (defined $tree_string) {
-    push @command, '-d', $tree_string;
-  } elsif ($species_tree and $species_order and @{$species_order}) {
-    push @command, '-s', $semphy_exe, '-z', $species_tree, '-A', @{$species_order};
+  if (defined $self->param('tree_string')) {
+    push @command, '-d', $self->param('tree_string');
+  } elsif ($self->param('species_order') and @{$self->param('species_order')}) {
+    my $species_tree = $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}');
+    push @command, '-s', $self->require_executable('semphy_exe'), '-z', $species_tree, '-A', @{$self->param('species_order')};
   } else {
-    push @command, '-s', $semphy_exe;
+    push @command, '-s', $self->require_executable('semphy_exe')
   }
   push @command, '-f', "output.$$.mfa", '-g', "output.$$.tree";
 
   #append any additional options to command
-  if ($options) {
-      push @command, @{$options};
+  if ($self->param('options')) {
+      push @command, @{$self->param('options')};
   }
 
   print "Running ortheus: " . Bio::EnsEMBL::Compara::Utils::RunCommand::join_command_args(@command) . "\n";
 
   #Capture output messages when running ortheus instead of throwing
+  my $prev_dir = chdir $self->worker_temp_directory;
   my $output = tee_merged { system(@command) };
+  chdir $prev_dir;
 
   #if ( $self->debug ) {
       #print "\nOUTPUT TREE:\n";

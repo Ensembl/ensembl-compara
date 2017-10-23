@@ -175,23 +175,7 @@ sub run {
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-
-  my $ortheus_output = Bio::EnsEMBL::Compara::Production::Analysis::Ortheus->run_ortheus(
-      -workdir => $self->worker_temp_directory,
-      -fasta_files => $self->param('fasta_files'),
-      -tree_string => $self->param('tree_string'),
-      -species_tree => $self->get_species_tree->newick_format('ryo', '%{^-g}:%{d}'),
-      -species_order => $self->param('species_order'),
-      -parameters => $self->param('java_options'),
-      -pecan_exe_dir => $self->param_required('pecan_exe_dir'),
-      -exonerate_exe => $self->param_required('exonerate_exe'),
-      -java_exe =>  $self->param_required('java_exe'),
-      -ortheus_bin_dir =>  $self->param_required('ortheus_bin_dir'),
-      -ortheus_lib_dir => $self->param_required('ortheus_lib_dir'),
-      -semphy_exe =>  $self->param_required('semphy_exe'),
-      -options => $self->param('options'),
-      );
-
+  my $ortheus_output = Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
   print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
 
   #Capture error message from ortheus and write it to the job_message table
