@@ -61,13 +61,14 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 use strict;
 use warnings;
 
+use Capture::Tiny qw(tee_merged);
+use Data::Dumper;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Compara::GenomicAlign;
-use Bio::EnsEMBL::Compara::GenomicAlignBlock;
-use Bio::EnsEMBL::Compara::GenomicAlignTree;
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -214,7 +215,7 @@ sub run_ortheus {
   my $ORTHEUS = $self->ortheus_bin_dir . '/Ortheus.py';
   my $JAVA = $self->java_exe;
   chdir $self->workdir;
-  #my $debug = " -a -b";
+  #my @debug = qw(-a -b);
 
 #   throw("Python [$PYTHON] is not executable") unless ($PYTHON && -x $PYTHON);
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
@@ -223,17 +224,17 @@ sub run_ortheus {
   $ENV{'CLASSPATH'}  = $self->pecan_exe_dir;
   $ENV{'PYTHONPATH'} = $self->ortheus_lib_dir;
 
-  my $command = "python2 $ORTHEUS";
+  my @command = ('python2', $ORTHEUS);
 
   #add debugging
-  #$command .= $debug;
+  #push @command, @debug;
 
-  $command .= " -l \"#-j 0\" "; #-R\"select[mem>6000] rusage[mem=6000]\" -M6000000 ";
+  push @command, '-l', '#-j 0';
 
   if (@{$self->fasta_files}) {
-    $command .= " -e";
+    push @command, '-e';
     foreach my $fasta_file (@{$self->fasta_files}) {
-      $command .= " $fasta_file";
+      push @command, $fasta_file;
     }
   }
 
@@ -244,31 +245,26 @@ sub run_ortheus {
   }
 
   #Add -X to fix -ve indices in array bug suggested by BP
-  $command .= " -m \"$JAVA " . $java_params . "\" -k \" -J " . $self->exonerate_exe . " -X\"";
+  push @command, '-m', "$JAVA $java_params", '-k', ' -J '.$self->exonerate_exe.' -X';
 
   if ($self->tree_string) {
-    $command .= " -d '" . $self->tree_string . "'";
+    push @command, '-d', $self->tree_string;
   } elsif ($self->species_tree and $self->species_order and @{$self->species_order}) {
-    $command .= " -s ". $self->semphy_exe." -z '".$self->species_tree."' -A ".join(" ", @{$self->species_order});
+    push @command, '-s', $self->semphy_exe, '-z', $self->species_tree, '-A', @{$self->species_order};
   } else {
-    $command .= " -s ".$self->semphy_exe;
+    push @command, '-s', $self->semphy_exe;
   }
-  $command .= " -f output.$$.mfa -g output.$$.tree ";
+  push @command, '-f', "output.$$.mfa", '-g', "output.$$.tree";
 
   #append any additional options to command
   if ($self->options) {
-      $command .= " " . $self->options;
+      push @command, @{$self->options};
   }
 
-  print "Running ortheus: " . $command . "\n";
+  print "Running ortheus: " . Bio::EnsEMBL::Compara::Utils::RunCommand::join_command_args(@command) . "\n";
 
   #Capture output messages when running ortheus instead of throwing
-  open(ORTHEUS, "$command 2>&1 |") or die "Failed: $!\n";
-  my $output = "";
-  while (<ORTHEUS>){
-      $output .= $_;
-  }
-  close ORTHEUS;
+  my $output = tee_merged { system(@command) };
 
   #if ( $self->debug ) {
       #print "\nOUTPUT TREE:\n";

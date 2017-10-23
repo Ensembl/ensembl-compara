@@ -796,7 +796,7 @@ sub _run_ortheus {
     $self->compara_dba->dbc->disconnect_if_idle;
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
-    my $options = " -y";
+    my $options = ['-y'];
     my $ortheus_runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Ortheus(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),

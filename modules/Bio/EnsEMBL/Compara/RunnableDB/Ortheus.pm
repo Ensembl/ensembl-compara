@@ -73,7 +73,7 @@ Optional. The reference species for the 2X genome LASTZ_NET alignments
 
 =item * options
 
-Additional pecan options eg "-p 15"
+Additional pecan options eg ['-p', 15]
 
 =item * max_block_size (int)
 
@@ -97,8 +97,10 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
+use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
