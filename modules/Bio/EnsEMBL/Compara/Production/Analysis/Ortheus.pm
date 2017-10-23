@@ -220,9 +220,9 @@ sub run_ortheus {
 #   throw("Python [$PYTHON] is not executable") unless ($PYTHON && -x $PYTHON);
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
 
-  $ENV{'PATH'} = $self->ortheus_bin_dir . ':' . $ENV{'PATH'};
-  $ENV{'CLASSPATH'}  = $self->pecan_exe_dir;
-  $ENV{'PYTHONPATH'} = $self->ortheus_lib_dir;
+  local $ENV{'PATH'} = $self->ortheus_bin_dir . ':' . $ENV{'PATH'};
+  local $ENV{'CLASSPATH'}  = $self->pecan_exe_dir;
+  local $ENV{'PYTHONPATH'} = $self->ortheus_lib_dir;
 
   my @command = ('python2', $ORTHEUS);
 
