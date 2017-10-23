@@ -41,7 +41,6 @@ Bio::EnsEMBL::Analysis::Runnable::Ortheus -
       -tree_string => $tree_string,
       -program => "/path/to/program");
   $runnable->run_ortheus;
-  my @output = @{$runnable->output};
 
 =head1 DESCRIPTION
 
@@ -207,12 +206,6 @@ sub options {
   my $self = shift;
   $self->{'_options'} = shift if(@_);
   return $self->{'_options'};
-}
-
-sub output {
-  my $self = shift;
-  $self->{'_output'} = shift if(@_);
-  return $self->{'_output'};
 }
 
 

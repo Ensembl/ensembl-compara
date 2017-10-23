@@ -287,7 +287,7 @@ sub _write_output {
   my $seq_region_sql = "UPDATE seq_region SET name = ? WHERE seq_region_id = ?";
   my $sth = $ancestor_coord_system_adaptor->prepare($seq_region_sql);
 
-  foreach my $genomic_align_tree (@{$self->param('runnable')->output}) {
+  foreach my $genomic_align_tree (@{$self->param('output')}) {
        foreach my $genomic_align_node (@{$genomic_align_tree->get_all_nodes}) {
 	   foreach my $genomic_align (@{$genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
  	      $genomic_align->adaptor($gaa);
@@ -829,8 +829,7 @@ sub parse_results {
     $self->remove_empty_cols($tree);
     print $tree->newick_format("simple"), "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
-    #$self->output([$tree]);
-    $self->param('runnable')->output([$tree]);
+    $self->param('output', [$tree]);
 
 #     foreach my $ga_node (@{$tree->get_all_nodes}) {
 # 	if ($ga_node) {
