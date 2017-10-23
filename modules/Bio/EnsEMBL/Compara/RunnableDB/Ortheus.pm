@@ -207,17 +207,19 @@ sub run {
           next if ($line =~ /^total_time/);
           next if ($line =~ /^alignment/);
 
-          # group python tracebacks into one error
-          $trace_open = 1 if ( $line =~ /^Traceback/ );
-          if ( $trace_open ) {
-              $traceback .= $line;
-              if ( $line =~ /Error:/ ) { # end of traceback
+          # group python and Java tracebacks into one error
+          if ( $line =~ /^Traceback/ || $line =~ /^Exception in thread/ ) {
+              $trace_open = 1;
+              $traceback = $line;
+          } elsif ($trace_open) {
+              $traceback .= "\n" . $line;
+              if ( $line =~ /^[^ \t]/ ) { # end of traceback
                   $trace_open = 0;
                   $err_msgs{$traceback} = 1;
               }
-              next;
+          } else {
+              $err_msgs{$line} = 1;
           }
-          $err_msgs{$line} = 1;
       }
 
       #Write to job_message table but without returing an error
