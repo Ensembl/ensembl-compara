@@ -210,6 +210,11 @@ sub run {
               # create a tree. Change when Ortheus.py reports a saner error
               $self->input_job->autoflow(0);
               $self->complete_early( "Ortheus failed to create a tree - dataset too small. Skipping." );
+          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException:  Total is unacceptable NaN/) {
+              # Not sure why this happens (the input data looked sensible)
+              # Let's discard this job.
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Pecan failed to align the sequences. Skipping." );
           }
       }
       return if %err_msgs;
