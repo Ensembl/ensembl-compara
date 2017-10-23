@@ -797,7 +797,7 @@ sub _run_ortheus {
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     my $options = ['-y'];
-    my $ortheus_runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Ortheus(
+    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus->run_ortheus(
       -workdir => $self->worker_temp_directory,
       -fasta_files => $self->param('fasta_files'),
       #-tree_string => $self->tree_string,
@@ -812,8 +812,6 @@ sub _run_ortheus {
       -semphy_exe =>  $self->param_required('semphy_exe'),
       -options => $options,
       );
-
-    $ortheus_runnable->run_ortheus;
 
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {
