@@ -63,3 +63,7 @@ in the Staden software suite
 
 Used at some point to load the species-tree in the EPO-2X pipeline. Now replaced with the MakeSpeciesTree runnable
 
+* scripts/pipeline/dump_genomes2fasta.pl
+
+Replaced with "standaloneJob.pl Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence"
+
