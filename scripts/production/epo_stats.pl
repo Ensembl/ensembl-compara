@@ -74,6 +74,7 @@ for my $m ( @$mlss ){
 
 		if ( $html ) {
 			$html_output .= '<tr>' . _html_tag_list( [ $stn->name, $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
+			$html_output .= "\n";
 		} else {
 			print join("\t", _pad_name($stn->name), $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
 			print "\n";
