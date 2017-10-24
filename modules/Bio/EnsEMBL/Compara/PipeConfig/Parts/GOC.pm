@@ -50,15 +50,68 @@ sub pipeline_analyses_goc {
     my ($self) = @_;
     return [
 
+        {   -logic_name => 'goc_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
+                'A->1' => WHEN( '#goc_mlss_id#' => 'get_orthologs',
+                                ELSE 'goc_group_genomes_under_taxa' ),
+            },
+        },
+
+        {   -logic_name => 'copy_prev_goc_score_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#goc_reuse_db#',
+                'mode'          => 'overwrite',
+                'table'         => 'ortholog_goc_metric',
+                'renamed_table' => 'prev_rel_goc_metric',
+            },
+        },
+
+        {   -logic_name => 'copy_prev_gene_member_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#goc_reuse_db#',
+                'mode'          => 'overwrite',
+                'table'         => 'gene_member',
+                'renamed_table' => 'prev_rel_gene_member'
+            },
+        },
+
+        {   -logic_name => 'goc_group_genomes_under_taxa',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
+            -parameters => {
+                'taxlevels'             => $self->o('goc_taxlevels'),
+                'filter_high_coverage'  => 0,
+            },
+            -flow_into => {
+                '2' => [ 'goc_mlss_factory' ],
+            },
+        },
+
+        {   -logic_name => 'goc_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -parameters => {
+                'methods'   => {
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                },
+            },
+            -flow_into => {
+                2 => {
+                    'get_orthologs' => { 'goc_mlss_id' => '#homo_mlss_id#' },
+                },
+            },
+        },
+
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
             -flow_into => {
                 '2->A' => { 'create_ordered_chr_based_job_arrays' => INPUT_PLUS },
-                'A->1' => { 'get_max_orth_percent' => INPUT_PLUS },     
+                'A->1' => { 'get_max_orth_percent' => INPUT_PLUS },
             },
             -rc_name => '2Gb_job',
             -hive_capacity  =>  $self->o('goc_capacity'),
-            -analysis_capacity => 30,
         },
 
         {   -logic_name =>  'create_ordered_chr_based_job_arrays',
@@ -67,10 +120,8 @@ sub pipeline_analyses_goc {
                 2   =>  ['check_ortholog_neighbors'],
             },
             -rc_name => '2Gb_job',
-            -hive_capacity     => 150,
-            -analysis_capacity => 150,
+            -hive_capacity     => $self->o('goc_capacity'),
             -batch_size        => 5,
-            
         },
 
         {
@@ -80,9 +131,8 @@ sub pipeline_analyses_goc {
                -1 => [ 'check_ortholog_neighbors_himem' ],  # MEMLIMIT
                3 => [ '?table_name=ortholog_goc_metric' ],
             },
-            -hive_capacity     => 90,
-            -analysis_capacity => 90,
-            -batch_size     => 50,
+            -hive_capacity  => $self->o('goc_capacity'),
+            -batch_size     => $self->o('goc_batch_size'),
         },
 
         {
@@ -92,8 +142,8 @@ sub pipeline_analyses_goc {
                3 => [ '?table_name=ortholog_goc_metric' ],
             },
             -rc_name => '1Gb_job',
-            -hive_capacity  => 50,
-            -batch_size     => 50,
+            -hive_capacity  => $self->o('goc_capacity'),
+            -batch_size     => $self->o('goc_batch_size'),
         },
 
         {
@@ -106,8 +156,7 @@ sub pipeline_analyses_goc {
 		    ),
             },
             -rc_name => '16Gb_job',
-            -hive_capacity      =>  $self->o('store_goc_capacity'),
-            -analysis_capacity  =>  $self->o('store_goc_capacity'),
+            -hive_capacity      =>  $self->o('goc_capacity'),
         },
 
         {
@@ -117,7 +166,7 @@ sub pipeline_analyses_goc {
                 1 =>    ['threshold_calculator'],
                -1 =>    [ 'get_genetic_distance_himem' ],  # MEMLIMIT
                 },
-            -hive_capacity  =>  $self->o('store_goc_capacity'),
+            -hive_capacity  =>  $self->o('goc_stats_capacity'),
         },
 
         {
@@ -126,7 +175,7 @@ sub pipeline_analyses_goc {
             -flow_into => {
                 1 =>    ['threshold_calculator'],
                 },
-            -hive_capacity  =>  $self->o('store_goc_capacity'),
+            -hive_capacity  =>  $self->o('goc_stats_capacity'),
             -rc_name        => '2Gb_job',
         },
         {
@@ -135,7 +184,7 @@ sub pipeline_analyses_goc {
             -flow_into => {
                 1 =>    ['get_perc_above_threshold'],
                 },
-            -hive_capacity  =>  $self->o('store_goc_capacity'),
+            -hive_capacity  =>  $self->o('goc_stats_capacity'),
         },
 
         {
@@ -144,13 +193,13 @@ sub pipeline_analyses_goc {
             -flow_into => {
                 1 =>    ['store_goc_dist_asTags'],
                 },
-            -hive_capacity  =>  $self->o('store_goc_capacity'),
+            -hive_capacity  =>  $self->o('goc_stats_capacity'),
         },
 
         {
             -logic_name => 'store_goc_dist_asTags',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
-            -analysis_capacity  => 5,
+            -hive_capacity  =>  $self->o('goc_stats_capacity'),
         },
 
         
