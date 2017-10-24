@@ -84,7 +84,7 @@ sub default_options {
     'ortheus_c_exe' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',
 
 	 # place to dump the genome sequences
-    'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
+    'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/genome_seq/' ,
     'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
      };
 }

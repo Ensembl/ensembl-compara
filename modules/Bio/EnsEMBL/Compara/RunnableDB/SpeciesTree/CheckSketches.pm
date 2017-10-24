@@ -79,7 +79,7 @@ sub run {
 
 	foreach my $gdb ( @{ $self->param_required('genome_dbs') } ) {
 		my $mash_path = $self->mash_file_from_gdb($gdb);
-		push( @gdb_ids_no_sketch, {genome_db_id => $gdb->dbID, outfile_prefix => $mash_path} ) unless -e $mash_path;
+		push( @gdb_ids_no_sketch, {genome_db_id => $gdb->dbID, genome_dump_file => "${mash_path}.fa"} ) unless -e $mash_path;
 		push( @path_list, $mash_path );
 	}
 	$self->param('missing_sketch_gdb_ids', \@gdb_ids_no_sketch);

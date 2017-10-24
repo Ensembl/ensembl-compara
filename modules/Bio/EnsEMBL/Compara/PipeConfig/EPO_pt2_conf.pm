@@ -256,10 +256,9 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
                     'species_set_id'    => '#nonreuse_ss_id#',
-                    'extra_parameters'      => [ 'name', 'assembly' ],
                 },
                 -flow_into => {
-                    '2->A' => { 'dump_genome_sequence' => { 'genome_db_name' => '#name#', 'genome_db_assembly' => '#assembly#', 'genome_db_id' => '#genome_db_id#' } },
+                    '2->A'  => [ 'dump_genome_sequence' ],
                     'A->1'  => [ 'remove_overlaps' ],
                 },
             },
@@ -267,7 +266,7 @@ sub pipeline_analyses {
 	    {	-logic_name     => 'dump_genome_sequence',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence',
 		-parameters => {
-			'only_nuclear_genome' => $self->o('only_nuclear_genome'),
+                    'cellular_components_only' => sprintf(q{#expr(%s ? ['NUC'] : [])expr#}, $self->o('only_nuclear_genome')),
 		},
 		-flow_into => { 1 => {'map_anchors_factory' => INPUT_PLUS() } },
 		-rc_name => 'mem7500',

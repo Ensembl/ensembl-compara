@@ -96,9 +96,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'dump_genome',
-        	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::DumpChrs2Multifasta',
+            -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence',
         	-flow_into  => {
-        		1 => [ 'mash_sketch' ],
+                    1 => { 'mash_sketch' => { 'input_file' => '#genome_dump_file#', } },
         	},
         	-parameters => {
         		'dump_genome_script' => $self->o('dump_genome_script'),
