@@ -109,7 +109,7 @@ sub default_options {
             -port   => 4519,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 90,
+            -db_version => 91,
         },
 
         'livemirror_loc' => {
@@ -117,7 +117,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 89,
+            -db_version => 90,
         },
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
@@ -134,11 +134,11 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
 
         # Production database (for the biotypes)
         #'production_db_url'     => 'mysql://anonymous@ensembldb.ensembl.org:5306/ensembl_production_89',
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_91',
     };
 }
 

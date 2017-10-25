@@ -829,7 +829,7 @@ sub pipeline_analyses {
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
                             },
-             -rc_name => '500Mb_job',
+             -rc_name => '1Gb_job',
             },
 
         {   -logic_name    => 'treebest_mmerge',
