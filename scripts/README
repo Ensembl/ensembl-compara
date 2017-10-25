@@ -59,3 +59,7 @@ They've been used in very old releases to load homology data into a Compara data
 This directory used to contain scripts to fetch Compara alignment and format them to be used
 in the Staden software suite
 
+* scripts/pipeline/prune_tree.pl
+
+Used at some point to load the species-tree in the EPO-2X pipeline. Now replaced with the MakeSpeciesTree runnable
+
