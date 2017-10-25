@@ -70,6 +70,7 @@ sub param_defaults {
 }
 
 
+## Make the tree (can be overriden in subclasses)
 sub fetch_input {
     my $self = shift @_;
 
@@ -98,22 +99,32 @@ sub fetch_input {
         $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree ( -compara_dba => $self->compara_dba, @tree_creation_args );
 
     }
-    $species_tree_root->build_leftright_indexing();
-    $species_tree_root->print_tree(0.3) if $self->debug;
     $self->param('species_tree_root', $species_tree_root);
 }
 
 
-sub write_output {
+## Further preparation of the objects (should be common to all trees)
+sub run {
     my $self = shift @_;
 
     my $species_tree_root = $self->param('species_tree_root');
+    $species_tree_root->build_leftright_indexing();
+    $species_tree_root->print_tree(0.3) if $self->debug;
 
     my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
     $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
     $species_tree->root($species_tree_root);
 
     $species_tree->label($self->param_required('label'));
+    $self->param('species_tree', $species_tree);
+}
+
+
+## Store the tree in the database
+sub write_output {
+    my $self = shift @_;
+
+    my $species_tree = $self->param('species_tree');
 
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 
