@@ -31,22 +31,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
-use Bio::EnsEMBL::Compara::SpeciesTree;
-use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree');
 
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{$self->SUPER::param_defaults},
-            'label'                 => 'default',
-            'newick_format'         => 'full',    # the desired output format
-            'mlss_id'               => undef,
-    };
-}
 
 sub fetch_input {
     my $self = shift;
@@ -71,36 +59,10 @@ sub fetch_input {
         $newick_tree =~ s/$hal_species/$ens_species/g;
     }
 
-    my $blength_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $newick_tree, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
-    my $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->prune_tree( $blength_tree, $self->compara_dba );
+    my $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick($newick_tree, $self->compara_dba);
     
-    $species_tree_root->build_leftright_indexing();
     $self->param('species_tree_root', $species_tree_root);
 }
 
-sub write_output {
-    my $self = shift;
-
-    my $species_tree_root = $self->param('species_tree_root');
-    my $newick_format = $self->param('newick_format');
-    my $species_tree_string = $species_tree_root->newick_format( $newick_format );
-
-    my $species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
-    $species_tree->method_link_species_set_id($self->param_required('mlss_id'));
-    $species_tree->root($species_tree_root);
-
-    $species_tree->label($self->param('label'));
-
-    my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
-
-    # To make sure we don't leave the database with a half-stored tree
-    $self->call_within_transaction(sub {
-        $speciesTree_adaptor->store($species_tree);
-    });
-
-    print "species_tree_root_id: " . $species_tree->root_id . "\n";
-
-    #$self->dataflow_output_id( {'species_tree_root_id' => $species_tree->root_id}, 2);
-}
 
 1;
