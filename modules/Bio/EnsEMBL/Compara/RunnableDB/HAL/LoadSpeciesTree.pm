@@ -50,8 +50,8 @@ sub fetch_input {
     die "Species name mapping missing from method_link_species_set_tag\n" unless (%species_map);
     die "$hal_path does not exist" unless ( -e $hal_path );
 
-    my $cmd = $self->require_executable('halStats_exe').' --tree '.$hal_path;
-    my $newick_tree =  `$cmd`;
+    my $cmd = $self->run_command([$self->require_executable('halStats_exe'), '--tree', $hal_path], {die_on_failure => 1});
+    my $newick_tree = $cmd->out;
     foreach my $gdb_id ( keys %species_map ) {
         my $hal_species = $species_map{$gdb_id};
         my $gdb = $gdb_adap->fetch_by_dbID($gdb_id);
