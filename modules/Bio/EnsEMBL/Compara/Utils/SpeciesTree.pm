@@ -208,6 +208,7 @@ sub create_species_tree {
     return $root if $return_ncbi_tree;
 
     my $stn_root = $root->copy('Bio::EnsEMBL::Compara::SpeciesTreeNode', $compara_dba->get_SpeciesTreeNodeAdaptor);
+    $root->release_tree;
 
     my %leaf_by_taxon_id;
     foreach my $leaf (@{$stn_root->get_all_leaves}) {
