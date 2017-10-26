@@ -217,6 +217,7 @@ sub pipeline_analyses {
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
             },
             -rc_name => '200M_job',
+            -analysis_capacity => 50,
         },
 
         {   -logic_name => 'copy_compara_tables',
