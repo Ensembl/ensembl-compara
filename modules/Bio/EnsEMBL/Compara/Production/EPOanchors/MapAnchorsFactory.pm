@@ -98,8 +98,7 @@ sub run {
 
 sub write_output {
 	my ($self) = @_;
-	return unless $self->param('query_and_target');
-	$self->dataflow_output_id( $self->param('query_and_target'), 2) if $self->param('query_and_target');
+	$self->dataflow_output_id( $self->param('query_and_target') );
 }
 
 1;
