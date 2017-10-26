@@ -122,8 +122,7 @@ sub _fetch_and_map_previous_homologies {
     my @homology_mapping;
     foreach my $curr_homology (@$current_homologies) {
         my @gene_members        = @{ $curr_homology->get_all_GeneMembers() };
-        my $prev_homology_id    = $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id}
-                                   || $hash_previous_homologies{$gene_members[1]->stable_id . '_' . $gene_members[0]->stable_id};
+        my $prev_homology_id    = $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id};
 
         push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] ) if $prev_homology_id;
 
