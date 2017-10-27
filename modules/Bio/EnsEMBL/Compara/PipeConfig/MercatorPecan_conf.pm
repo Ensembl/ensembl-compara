@@ -181,7 +181,7 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                     'db_conn'       => $self->o('master_db'),
-                    'mlss_id'       => $self->o('low_epo_mlss_id'),
+                    'mlss_id'       => $self->o('mlss_id'),
                     'ce_ml_type'    => 'GERP_CONSTRAINED_ELEMENT',
                     'cs_ml_type'    => 'GERP_CONSERVATION_SCORE',
                     'inputquery'    => 'SELECT mlss_ce.method_link_species_set_id AS ce_mlss_id, mlss_cs.method_link_species_set_id AS cs_mlss_id FROM method_link_species_set mlss JOIN (method_link_species_set mlss_ce JOIN method_link ml_ce USING (method_link_id)) USING (species_set_id) JOIN (method_link_species_set mlss_cs JOIN method_link ml_cs USING (method_link_id)) USING (species_set_id) WHERE mlss.method_link_species_set_id = #mlss_id# AND ml_ce.type = "#ce_ml_type#" AND ml_cs.type = "#cs_ml_type#"',
@@ -245,7 +245,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-                'A->1' => [ 'create_reuse_ss' ],
+                'A->1' => [ 'create_mlss_ss' ],
             },
 	    -rc_name => '100Mb',
 	},

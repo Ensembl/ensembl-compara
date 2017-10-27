@@ -73,11 +73,11 @@ sub default_options {
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'pipeline_name'         => 'pecan_27way',
         'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
-        'species_set'           => '27amniotes',
+        'species_set'           => '31amniotes',
         'do_not_reuse_list'     => [ ],
 
     #location of full species tree, will be pruned
-    'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.27amniotes.branch_len.nw',
+	'species_tree_file'     => '/homes/carlac/projects/release91/species_tree.31amniotes.branch_len.nwk',
 
     #master database
     'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
@@ -107,10 +107,10 @@ sub default_options {
     'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     # connection parameters to various databases:
 
-        'host'        => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'host'        => 'mysql-ens-compara-prod-3.ebi.ac.uk',
         'pipeline_db' => {                      # the production database itself (will be created)
             -host   => $self->o('host'),
-            -port   => 4522,
+            -port   => 4523,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),
@@ -129,7 +129,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => 89,
+            -db_version => 90,
         },
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
@@ -140,7 +140,7 @@ sub default_options {
            -port   => 4522,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'mm14_pecan_24way_86b',
+           -dbname => 'muffato_27mammals_pecan_90',
 	   -driver => 'mysql',
         },
 
@@ -150,7 +150,7 @@ sub default_options {
            -port   => 4519,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'ensembl_production',
+           -dbname => 'ensembl_production_91',
        -driver => 'mysql',
         },
 	#Testing mode

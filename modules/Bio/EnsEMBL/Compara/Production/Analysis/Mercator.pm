@@ -91,11 +91,11 @@ sub new {
   $self->input_dir($input_dir) if (defined $input_dir);
   $self->output_dir($output_dir) if (defined $output_dir);
   $self->genome_names($genome_names) if (defined $genome_names);
-  if (ref($genome_names) eq "ARRAY") {
-    print "GENOME_NAMES: ", join(", ", @{$genome_names}), "\n" if ($self->debug);
-  } else {
-    print "GENOME_NAMES: $genome_names\n" if ($self->debug);
-  }
+#  if (ref($genome_names) eq "ARRAY") {
+#   print "GENOME_NAMES: ", join(", ", @{$genome_names}), "\n" if ($self->debug);
+#  } else {
+#    print "GENOME_NAMES: $genome_names\n" if ($self->debug);
+#  }
    if (defined $pre_map){
      $self->pre_map($pre_map);
   } else {
@@ -168,11 +168,11 @@ sub run_analysis{
     unless($program && -x $program);
 
   my $command = "$program -i " . $self->input_dir . " -o " . $self->output_dir;
-  print "genome_names: ".join(", ", @{$self->genome_names})."\n" if ($self->debug);
+#  print "genome_names: ".join(", ", @{$self->genome_names})."\n" if ($self->debug);
   foreach my $species (@{$self->genome_names}) {
     $command .= " $species";
   }
-  print "Running analysis ".$command."\n" if ($self->debug);
+#  print "Running analysis ".$command."\n" if ($self->debug);
   unless (system($command) == 0) {
     throw("mercator execution failed\n");
   }
@@ -226,7 +226,7 @@ sub parse_results{
   }
   close F;
   my $output = [ values %hash ];
-  print "scalar output", scalar @{$output},"\n"  if($self->debug);
+#  print "scalar output", scalar @{$output},"\n"  if($self->debug);
   print "No synteny regions found" if (scalar @{$output} == 0);
   $self->output($output);
 }
