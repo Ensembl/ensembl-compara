@@ -99,6 +99,7 @@ sub resource_classes {
          '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
 	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
          '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
+        '8Gb' =>  { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
     };
 }
 
@@ -287,8 +288,29 @@ sub pipeline_analyses {
 		-hive_capacity   => 30,
 		-flow_into => {
 			       2 => [ 'gerp' ],
+			       -1 => [ 'low_coverage_genome_alignment_himem' ],
 			      },
 		-rc_name => '3.5Gb',
+	    },
+
+        #Super MEM analysis, there is a small amount of jobs still failing with current RAM limits
+        {   -logic_name => 'low_coverage_genome_alignment_himem',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
+		-parameters => {
+				'max_block_size' => $self->o('max_block_size'),
+				'mlss_id' => $self->o('low_epo_mlss_id'),
+				'reference_species' => $self->o('ref_species'),
+#				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
+				'pairwise_default_location' => $self->o('pairwise_default_location'),
+                                'semphy_exe' => $self->o('semphy_exe'),
+                                'treebest_exe' => $self->o('treebest_exe'),
+			       },
+		-batch_size      => 5,
+		-hive_capacity   => 30,
+		-flow_into => {
+			       2 => [ 'gerp' ],
+			      },
+		-rc_name => '8Gb',
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
