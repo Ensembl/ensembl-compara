@@ -97,6 +97,7 @@ sub fetch_input{
   }
 
     $self->param('preloaded_homologs', $preloaded_homologs_hashref);
+    $self->param('all_goc_score_arrayref', []);
 
 }
 
@@ -106,8 +107,6 @@ sub run {
 #    $self->dbc and $self->dbc->disconnect_if_idle();
     print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n" if ( $self->debug );
     print Dumper($chr_orth_hashref)if ( $self->debug >3 );
-    my @all_goc_score_array;
-    $self->param('all_goc_score_arrayref', \@all_goc_score_array);
     my $count_homologs = 0;
     while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
         my @ordered_orth_array = @$ordered_orth_arrayref;
@@ -140,6 +139,10 @@ sub run {
         }
     }
     print "\n\n This is how many homology ids were in the input : $count_homologs  \n\n" if ( $self->debug );
+}
+
+sub write_output {
+    my $self = shift;
     $self->_insert_goc_scores($self->param('all_goc_score_arrayref'));
 }
 

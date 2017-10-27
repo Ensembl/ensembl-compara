@@ -107,6 +107,7 @@ sub fetch_input {
       $self->param('preloaded_homologs', $preloaded_homologs_hashref);
 
       $self->fetch_reuse;
+      $self->param('goc_score_arrayref', []);
 }
 
 
@@ -148,7 +149,6 @@ sub run {
   print "the runnable Prepare_Per_Chr_Jobs ----------start \n mlss_id ---->   ", $self->param('goc_mlss_id')   if ( $self->debug >3);
   if ($self->param('prev_goc_hashref')) {
     $self->_reusable_species();
-    $self->_insert_goc_scores($self->param('goc_score_arrayref'));
   }
   else {
     $self->_non_reusable_species();
@@ -157,11 +157,14 @@ sub run {
   print "the runnable Prepare_Per_Chr_Jobs ----------END \n mlss_id \n", $self->param('goc_mlss_id') , if ( $self->debug >3);
 }
 
+sub write_output {
+    my $self = shift;
+    $self->_insert_goc_scores($self->param('goc_score_arrayref'));
+}
+
 sub _reusable_species {
   my $self = shift;
   print "\n Starting ------  _reusable_species \n" if ( $self->debug );
-  my @goc_score_array;
-  $self->param('goc_score_arrayref', \@goc_score_array);
   my $ortholog_hashref = $self->param_required('ortholog_info_hashref');
   my $count_homologs = 0;
   my $count_recal_homologs = 0;
