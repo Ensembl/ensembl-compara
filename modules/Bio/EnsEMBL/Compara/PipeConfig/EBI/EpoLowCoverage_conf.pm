@@ -35,9 +35,9 @@ sub default_options {
 
 
 
-	'rel_suffix'	=> '55way_mammals_90',
-	'ensembl_release' => 90, 
-	'prev_release'  => 89,
+	'rel_suffix'	=> '67_way_mammals_91',
+	'ensembl_release' => 91,
+	'prev_release'  => 90,
 
     'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
 
@@ -63,16 +63,33 @@ sub default_options {
     },
 
     #location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { },
-	# 'pairwise_exception_location' => { 
- #        1004 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
- #        1007 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
- #        1021 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+    #'pairwise_exception_location' => { },
+	 'pairwise_exception_location' => {
+         1026 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1027 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1028 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1029 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1030 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1031 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1032 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1033 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1034 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1035 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1036 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1037 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1094 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1095 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1096 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1098 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1099 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1100 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
+         1105 => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_human_cat_lastz_91',
+         1106 => 'mysql://ensro@mysql-ens-compara-prod-1:4485/carlac_cat_dog_lastz_91',
  #        1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
-	# },
+	 },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_90b',
+	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_mammals_epo_91',
 
 	'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
@@ -117,7 +134,8 @@ sub default_options {
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
-	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.55mammals.branch_len.nw', #location of full species tree, will be pruned 
+    #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.55mammals.branch_len.nw', #location of full species tree, will be pruned 
+	'species_tree_file' => '/homes/carlac/projects/release91/species_tree.67mammals.branch_len.nwk',
     'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
