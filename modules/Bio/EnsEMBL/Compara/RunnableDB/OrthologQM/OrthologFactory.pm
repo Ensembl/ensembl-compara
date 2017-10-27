@@ -104,7 +104,7 @@ sub run {
 	my $c = 0;
 	my $ref_species_dbid = $self->param('ref_species_dbid');
 	my $non_ref_species_dbid = $self->param('non_ref_species_dbid');
-	while ( my $ortholog = shift( @{ $self->param('ortholog_objects') } ) ) {
+	foreach my $ortholog ( @{ $self->param('ortholog_objects') } ) {
 		my $ortholog_dbID = $ortholog->dbID();
 		my $ref_gene_member = $ortholog->get_all_GeneMembers($ref_species_dbid)->[0];
 		print $ref_gene_member->dbID() , "\n\n" if ( $self->debug >3 );
