@@ -134,7 +134,7 @@ sub run {
 
             }
             $query = $ordered_orth_array[$index];
-            print $left1, " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
+            print $left1//'NA', " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
             my $goc_score_hashref = $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2);
             push @{$self->param('all_goc_score_arrayref')}, $goc_score_hashref ;
         }
@@ -165,7 +165,7 @@ sub _compute_ortholog_score {
     my $self = shift;
     my ($left1, $left2, $query, $right1, $right2) = @_;
     print " ------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
-#    print " \n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2\n\n" if ( $self->debug >1);
+#    print " \n ", $left1//'NA',  " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2\n\n" if ( $self->debug >1);
     my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2);
 
     #create an array of only the present neighbours
