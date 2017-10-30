@@ -57,8 +57,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.0;
+use Bio::EnsEMBL::Hive::Version 2.4;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
@@ -68,7 +69,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'host'                  => 'compara3',
+        'has_pafs'              => 1,
 
         'hc_capacity'           =>  10,
         'hc_batch_size'         =>  20,
@@ -84,6 +85,17 @@ sub hive_meta_table {
         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     };
 }
+
+
+sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'has_pafs'  => $self->o('has_pafs'),                # Can be redefined at the job level
+    }
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -128,7 +140,10 @@ sub pipeline_analyses {
                 'compara_db'    => '#db_conn#',
             },
             -flow_into  => {
-                2 => [ 'hc_members_per_genome', 'hc_pafs' ],
+                2 => [
+                    'hc_members_per_genome',
+                    WHEN( '#has_pafs#' => 'hc_pafs' ),
+                ],
             },
         },
 
