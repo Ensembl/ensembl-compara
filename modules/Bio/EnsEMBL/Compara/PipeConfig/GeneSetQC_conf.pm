@@ -61,47 +61,6 @@ sub hive_meta_table {
     };
 }
 
-=head2 pipeline_create_commands 
-	
-	Description: create tables for writing data to
-
-=cut
-
-#sub pipeline_create_commands {
-#	my $self = shift;
-
-	#!!! NOTE: replace column names with desired col names for report.
-	#          must be a param name!
-
-	#PRIMARY KEY (genomic_align_block_id))'
-
-#	return [
-#		@{ $self->SUPER::pipeline_create_commands },
-#		$self->db_cmd( 'CREATE TABLE long_orth_genes ( 
-#			genome_db_id int(10) NOT NULL,
- #           gene_member_stable_id varchar(128),
-#			n_species INT,
- #           n_orth INT,
-#		    avg_cov INT 		
-            
- #       )'),
-
-  #      $self->db_cmd( 'CREATE TABLE short_orth_genes ( 
-   #     	genome_db_id int(10) NOT NULL,
-    #        gene_member_stable_id varchar(128),
-#			n_species INT,
-#            n_orth INT,
-#		    avg_cov INT		
- #           
-  #      )'),
-
-   #     $self->db_cmd( 'CREATE TABLE QC_split_genes ( 
-    #    	genome_db_id int(10) NOT NULL,
-     #       gene_member_stable_id varchar(128),
-      #      seq_member_id int(10) NOT NULL
-       # )'),
-#    ];
-#}
 
 sub default_options {
     my $self = shift;

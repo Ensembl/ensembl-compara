@@ -55,9 +55,6 @@ SET session sql_mode='TRADITIONAL';
 
 @see species_tree_node
 @see species_tree_root
-@see QC_split_genes
-@see short_orth_genes
-@see long_orth_genes
 */
 
 

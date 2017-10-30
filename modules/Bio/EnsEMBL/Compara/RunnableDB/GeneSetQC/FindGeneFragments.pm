@@ -89,7 +89,6 @@ sub fetch_input {
   my $self = shift;
   print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% find gene fragment stat Runnable\n\n" if $self->debug(); 
   # get the seq_member_id of the split_genes
-#  my $query = "SELECT seq_member_id from QC_split_genes where genome_db_id= $self->param_required('genome_db_id')";
   unless($self->param_required('gene_status') eq 'orphaned') { 
     my %split_genes = map{$_ => 1} @{$self->data_dbc->db_handle->selectcol_arrayref('SELECT seq_member_id from gene_member_qc where status = "split-gene" AND genome_db_id= ?', undef, $self->param_required('genome_db_id') )};
     print Dumper(%split_genes) if $self->debug(); 
