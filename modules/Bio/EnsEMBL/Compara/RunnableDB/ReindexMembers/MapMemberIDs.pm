@@ -17,15 +17,14 @@ limitations under the License.
 
 =cut
 
-# POD documentation - main docs before the code
-
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs
 
-This runnable dumps all members into one big FASTA file.
+=head1 SYNOPSIS
+
+This runnable loads the members from the current database and a previous one, compares them
+and performs a list of rename operations to do on the gene-tree tables.
 
 =cut
 
@@ -35,6 +34,16 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    my $self = shift @_;
+    return {
+        %{ $self->SUPER::param_defaults },
+
+        'dry_run'   => 0,
+    }
+}
 
 
 sub fetch_input {
@@ -57,10 +66,10 @@ sub _fetch_members {
 
     my $sth = $dbc->prepare($sql);
     $sth->execute($self->param('genome_db_id'));
-    my $rows = $sth->fetchall_arrayref( {} );
+    my $rows = $sth->fetchall_arrayref( {} );   # Get an arrayref of hashrefs
     $sth->finish;
     $self->warning('Fetched ' . scalar(@$rows) . ' genes from '. $dbc->dbname);
-    return {map {$_->{'gene_member_stable_id'} => $_} @$rows};
+    return {map {$_->{'gene_member_stable_id'} => $_} @$rows};  # Returns the rows hashed by gene_member_stable_id
 }
 
 
@@ -70,10 +79,17 @@ sub run {
     my $current_members = $self->param('current_members');
     my $previous_members = $self->param('previous_members');
 
+    # NOTE: make sure you cover all the cases ! The best way is to make
+    #       sure each "if" has an "else", and comment out all the branches
+
+    # To accumulate the result of the comparison
     my @to_rename;
+    my @to_delete;
+    $self->param('to_rename', \@to_rename);
+    $self->param('to_delete', \@to_delete);
+
     my %lost_seq;
     my %gained_seq;
-
     while (my ($gene_member_stable_id, $prev_data) = each %$previous_members) {
         if (my $curr_data = $current_members->{$gene_member_stable_id}) {
             # Gene in both dbs
@@ -109,7 +125,6 @@ sub run {
         }
     }
 
-    my @to_delete;
     # Now we compare the lost and gained sequences, and hope to find further renames
     while (my ($md5sum, $lost_gene_member_stable_ids) = each %lost_seq) {
         if (my $gained_gene_member_stable_ids = $gained_seq{$md5sum}) {
@@ -131,6 +146,7 @@ sub run {
         }
     }
 
+    # "New" members are not needed, but they could be listed this way
     #my @new;
     #while (my ($gene_member_stable_id, $curr_data) = each %$current_members) {
     #    unless ($previous_members->{$gene_member_stable_id}) {
@@ -140,18 +156,23 @@ sub run {
 
     $self->warning( scalar(@to_rename) . " members to rename" );
     $self->warning( scalar(@to_delete) . " members to delete" );
-    $self->param('to_rename', \@to_rename);
-    $self->param('to_delete', \@to_delete);
 }
 
 
 sub write_output {
     my $self = shift @_;
+
     my $to_rename = $self->param('to_rename');
+    my $to_delete = $self->param('to_delete');
+
     my $dbc = $self->compara_dba->dbc;
     my $offset = 1_000_000_000;     # Must be higher than the max seq_member_id
+
     if (scalar(@$to_rename)) {
         $self->call_within_transaction( sub {
+            # Unfortunately we need to disable foreign-key checks in order to
+            # use an intermediate value (dbID+offset). Otherwise, we'd have to
+            # work out cycles of updates
             $dbc->do('SET FOREIGN_KEY_CHECKS=0');
             foreach my $r (@$to_rename) {
                 $dbc->do('UPDATE other_member_sequence SET seq_member_id = ? WHERE seq_member_id = ?',               undef, $offset+$r->{'curr'}->{'seq_member_id'}, $r->{'prev'}->{'seq_member_id'});
@@ -170,28 +191,25 @@ sub write_output {
                 $dbc->do('UPDATE gene_align_member SET seq_member_id = ? WHERE seq_member_id = ?',                   undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
                 $dbc->do('UPDATE homology_member SET seq_member_id = ? WHERE seq_member_id = ?',                     undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
             }
+            die "Dry-run requested" if $self->param('dry_run');
         } );
     }
 
     if (scalar(@$to_delete)) {
+        # Find all the trees that need to be deleted
         my %root_ids_to_delete;
         my $sql = 'SELECT root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE ref_root_id IS NULL AND seq_member_id = ?';
         my $sth = $dbc->prepare($sql);
-        foreach my $seq_member_id (@{$self->param('to_delete')}) {
+        foreach my $seq_member_id (@$to_delete) {
             $sth->execute($seq_member_id);
             my ($tree_id) = $sth->fetchrow_array;
             $sth->finish;
             $root_ids_to_delete{$tree_id} = 1 if defined $tree_id;
         }
+        # Delete them
         $self->warning( scalar(keys %root_ids_to_delete) . " trees to delete" );
-        my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
         foreach my $tree_id (keys %root_ids_to_delete) {
-            $self->call_within_transaction( sub {
-                my $tree = $gene_tree_adaptor->fetch_by_dbID($tree_id);
-                $tree->preload;
-                $gene_tree_adaptor->delete_tree($tree);
-                $tree->release_tree;
-            }
+            $self->dataflow_output_id( { 'gene_tree_id' => $tree_id }, 2 );
         }
     }
 }
