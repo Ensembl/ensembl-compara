@@ -299,11 +299,13 @@ sub _get_non_ref_gmembers {
         # Returns the rows as an array of hashes (Slice parameter)
     my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
 
-        #collapse tandem duplications
-    my @new_unsorted_mem=grep {$self->_collapse_tandem_repeats($_)} @$unsorted_mem;
 
     # And now we simply sort the genes by their coordinates and return the sorted list
-    my @sorted_mem= sort {$a->{dnafrag_start} <=> $b->{dnafrag_start}} @new_unsorted_mem;
+    my @sorted_all_mem = sort {($a->{dnafrag_start} <=> $b->{dnafrag_start}) || ($a->{gene_member_id} <=> $b->{gene_member_id}) || ($a->{homology_id} <=> $b->{homology_id})} @$unsorted_mem;
+
+        #collapse tandem duplications
+    my @sorted_mem=grep {$self->_collapse_tandem_repeats($_)} @sorted_all_mem;
+
     my @nr_gmem_sorted;
     foreach my $mem (@sorted_mem) {
         push (@nr_gmem_sorted, $mem->{gene_member_id});
