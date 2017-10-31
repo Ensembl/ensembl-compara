@@ -28,16 +28,46 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -password <your_password> -mlss_id <your_mlss_id>
+Pipeline to update the member_ids of a gene-tree database (in case the members
+have been reloaded).
+The pipeline also runs extensive healthchecks to make sure that the trees are
+still valid.
 
-=head1 DESCRIPTION  
+=over
 
-This is the Ensembl PipeConfig for the ncRNAtree pipeline.
-An example of use can be found in the Example folder.
+=item mlss_id
+
+The mlss_id of the gene-tree pipelines. Used to load the GenomeDBs and the MLSSs
+
+=item master_db
+
+The location of the master database, from which the NCBI taxonomy, the GenomeDBs
+and the MLSSs are copied over.
+
+=item curr_core_sources_locs
+
+Where to find the core databases. Although the pipeline doesn't need anything from
+them, the Runnable that loads the GenomeDBs needs them to check that the attributes
+of the GenomeDBs are all in sync.
+
+=item member_db
+
+The location of the freshest load of members
+
+=item member_type
+
+Either "protein" or "ncrna". The type of members to pull from the memebr database
+
+=item prev_rel_db
+
+The location of the gene-trees database. the pipeline will copy all the relevant
+tables from there, and reindex the member_ids to make them match the new members.
+
+=back
 
 =head1 AUTHORSHIP
 
@@ -50,7 +80,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::PatchMouseStrains_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::ReindexMembers_conf;
 
 use strict;
 use warnings;
@@ -62,89 +92,59 @@ use Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
 
-            # Copy from master db
-            'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+        # Must be "protein" or "ncrna"
+        #'member_type'   => undef,
 
-            #'gene_tree%', 'homology%', 'gene_align%'
+        # Copy from master db
+        'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
 
-            # ambiguity codes
-            'allow_ambiguity_codes'    => 0,
+        # ambiguity codes
+        'allow_ambiguity_codes'    => 0,
 
-            # Analyses usually don't fail
-            'hive_default_max_retry_count'  => 1,
+        # Analyses usually don't fail
+        'hive_default_max_retry_count'  => 1,
 
-            'copy_capacity'                 => 4,
+        # Main capacity for the pipeline
+        'copy_capacity'                 => 4,
 
-            # Params for healthchecks;
-            'hc_priority'                     => 10,
-            'hc_capacity'                     => 40,
-            'hc_batch_size'                   => 10,
-
-
-
-            'reg1' => {
-                       -host   => 'mysql-ens-sta-1',
-                       -port   => '4519',
-                       -user   => 'ensro',
-                      },
-
-            'master_db' => {
-                            -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-                            -port   => 4485,
-                            -user   => 'ensro',
-                            -pass   => '',
-                            -dbname => 'ensembl_compara_master',
-                           },
-
-
-
-
-           };
+        # Params for healthchecks;
+        'hc_capacity'                     => 40,
+        'hc_batch_size'                   => 10,
+    };
 }
 
 
-
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+        %{$self->SUPER::pipeline_wide_parameters},
 
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_rel_db'   => $self->o('prev_rel_db'),
+        'member_type'   => $self->o('member_type'),
     }
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::resource_classes() },
-        '250Mb_job'               => { 'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-        '500Mb_job'               => { 'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-        '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-        '2Gb_job'                 => { 'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-        '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-        '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
-        '32Gb_job'                 => { 'LSF' => '-C0 -M32000  -R"select[mem>32000]  rusage[mem=32000]"' },
-    };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
 
-    my %hc_params = (
-        -analysis_capacity => $self->o('hc_capacity'),
-        -priority          => $self->o('hc_priority'),
-        -batch_size        => $self->o('hc_batch_size'),
-    );
+    my $hc_analyses = Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::pipeline_analyses($self);
+    # Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf is meant
+    # to run on db_conn, but species_factory only understands compara_db.
+    # In this pipeline here, both default to the current db, so no need to
+    # set the parameter
+    delete $_->{'-parameters'}->{'compara_db'} for grep {$_->{'-logic_name'} eq 'species_factory'} @$hc_analyses;
+    # Give more memory to these guys
+    $_->{'-rc_name'} = '250Mb_job' for grep {$_->{'-logic_name'} =~ /trees_factory$/} @$hc_analyses;
 
     return [
 
@@ -158,8 +158,8 @@ sub pipeline_analyses {
             },
             -input_ids  => [ {} ],
             -flow_into  => {
-                '2->A' => [ 'copy_table_from_master'  ],
-                'A->1' => [ 'load_genomedb_factory' ],
+                '2->A' => 'copy_table_from_master',
+                'A->1' => 'load_genomedb_factory',
             },
         },
 
@@ -172,7 +172,7 @@ sub pipeline_analyses {
             },
         },
 
-# ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
+# -------------------------------------------[load GenomeDB entries and copy the other tables]------------------------------------------
 
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -183,14 +183,14 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
-                'A->1' => [ 'create_mlss_ss' ],
+                'A->1' => 'create_mlss_ss',
             },
         },
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_dbs'   => [ $self->o('reg1')],    # FIXME
+                'registry_dbs'   => $self->o('curr_core_sources_locs'),
             },
             -analysis_capacity => $self->o('copy_capacity'),
         },
@@ -203,7 +203,7 @@ sub pipeline_analyses {
                 'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
             -flow_into  => {
-                1 => [ 'load_members_factory' ],
+                1 => 'load_members_factory',
             },
         },
 
@@ -211,7 +211,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => 'genome_member_copy',
-                'A->1' => [ 'copy_gene_tree_tables' ],
+                'A->1' => 'gene_tree_tables_factory',
             },
         },
 
@@ -219,18 +219,17 @@ sub pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyCanonRefMembersByGenomeDB',
             -parameters        => {
                 'reuse_db'              => '#member_db#',
-                'biotype_filter'        => 'biotype_group LIKE "%noncoding"',
+                'biotype_filter'        => q{#expr(#member_type# eq "protein" ? 'biotype_group = "coding"' : 'biotype_group LIKE "%noncoding"')expr#},
             },
             -analysis_capacity => $self->o('copy_capacity'),
             -rc_name           => '250Mb_job',
-            #-flow_into          => [ 'map_member_ids' ],
         },
 
-        {   -logic_name => 'copy_gene_tree_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::TableFactory',
+        {   -logic_name => 'gene_tree_tables_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::TableFactory',
             -flow_into  => {
                 '2->A' => 'copy_table_from_prev_rel_db',
-                'A->1' => [ 'pipeline_entry' ],
+                'A->1' => 'map_members_factory',
             },
         },
 
@@ -244,15 +243,42 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('copy_capacity'),
         },
 
-        #{   -logic_name => 'map_members_factory',
-            #-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            #-flow_into  => {
-                #'2->A' => 'map_member_ids',
-                #'A->1' => [ 'pipeline_entry' ],
-            #},
-        #},
+# ---------------------------------------------[Update the gene-tree tables]---------------------------------------------
 
-        @{ Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::pipeline_analyses($self) },
+        {   -logic_name => 'map_members_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -flow_into  => {
+                '2->A' => 'map_member_ids',
+                'A->1' => 'delete_flat_trees_factory',
+            },
+        },
+
+        {   -logic_name        => 'map_member_ids',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
+            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+            -rc_name           => '250Mb_job',
+            -flow_into         => {
+                2 => 'delete_tree',
+            }
+        },
+
+        {   -logic_name        => 'delete_tree',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree',
+            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+        },
+
+        {   -logic_name => 'delete_flat_trees_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) GROUP BY root_id HAVING COUNT(*) = COUNT(seq_member_id)+1 AND COUNT(seq_member_id) > 2',
+            },
+            -flow_into  => {
+                '2->A' => 'delete_tree',
+                'A->1' => 'pipeline_entry',
+            },
+        },
+
+        @$hc_analyses,
     ];
 }
 
