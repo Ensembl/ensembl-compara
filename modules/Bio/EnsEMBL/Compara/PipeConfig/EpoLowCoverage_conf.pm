@@ -87,6 +87,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
             'pairwise_exception_location' => $self->o('pairwise_exception_location'),
+				'mlss_id' => $self->o('low_epo_mlss_id'),
     };
 }
 
@@ -115,7 +116,6 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                     'db_conn'       => $self->o('master_db'),
-                    'mlss_id'       => $self->o('low_epo_mlss_id'),
                     'ce_ml_type'    => 'GERP_CONSTRAINED_ELEMENT',
                     'cs_ml_type'    => 'GERP_CONSERVATION_SCORE',
                     'inputquery'    => 'SELECT mlss_ce.method_link_species_set_id AS ce_mlss_id, mlss_cs.method_link_species_set_id AS cs_mlss_id FROM method_link_species_set mlss JOIN (method_link_species_set mlss_ce JOIN method_link ml_ce USING (method_link_id)) USING (species_set_id) JOIN (method_link_species_set mlss_cs JOIN method_link ml_cs USING (method_link_id)) USING (species_set_id) WHERE mlss.method_link_species_set_id = #mlss_id# AND ml_ce.type = "#ce_ml_type#" AND ml_cs.type = "#cs_ml_type#"',
@@ -131,7 +131,6 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_program'),
-				  'mlss_id'        => $self->o('low_epo_mlss_id'),
 				  'cmd'            => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#'],
 				 },
 	       -flow_into => {
@@ -179,7 +178,6 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
 		-parameters => {
 				'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-				'mlss_id'       => $self->o('low_epo_mlss_id'),
                                 'extra_parameters'      => [ 'locator' ],
 			       },
 		-flow_into => {
@@ -202,7 +200,6 @@ sub pipeline_analyses {
 	    {   -logic_name    => 'make_species_tree',
 		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 		-parameters    => { 
-				   'mlss_id' => $self->o('low_epo_mlss_id'),
                                    'species_tree_input_file' => $self->o('species_tree_file'),
 				  },
 		-rc_name => '100Mb',
@@ -256,7 +253,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
 #				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
@@ -277,7 +273,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
 #				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
@@ -298,7 +293,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
 #				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
@@ -319,7 +313,6 @@ sub pipeline_analyses {
 				'program_version' => $self->o('gerp_version'),
 				'window_sizes' => $self->o('gerp_window_sizes'),
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
-				'mlss_id' => $self->o('low_epo_mlss_id'),
 			       },
 		-hive_capacity   => 600,
 		-rc_name => '1.8Gb',
@@ -366,9 +359,6 @@ sub pipeline_analyses {
 	    },
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
-		-parameters => {
-				'mlss_id' => $self->o('low_epo_mlss_id')
-			       },
 		-batch_size    => 10,
 		-hive_capacity => 15,
 		-rc_name => '1.8Gb',
@@ -396,7 +386,6 @@ sub pipeline_analyses {
         {   -logic_name => 'register_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
             -parameters => {
-                'mlss_id'       => $self->o('low_epo_mlss_id'),
                 'master_db'     => $self->o('master_db'),
             },
             -flow_into  => [ 'multiplealigner_stats_factory' ],
