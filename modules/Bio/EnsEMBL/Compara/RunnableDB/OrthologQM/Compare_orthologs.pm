@@ -278,13 +278,9 @@ sub _compute_ortholog_score {
 
 }
 
-
-#get all the gene members of in a chromosome coordinate range, filter only the ones that are protein-coding and order them based on their dnafrag start positions
-sub _get_non_ref_gmembers {
+sub _fetch_members_with_homology_by_range {
     my $self = shift;
-    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
     my ($dnafragID, $st, $ed)= @_;
-        print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
 
         # The query could do GROUP BY and ORDER BY, but the MySQL server would have to buffer the data, make temporary tables, etc
         # It is faster to have a straightforward query and do some processing in Perl
@@ -297,8 +293,18 @@ sub _get_non_ref_gmembers {
                 method_link_species_set_id = ? AND (m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND m.biotype_group = "coding"};
 
         # Returns the rows as an array of hashes (Slice parameter)
-    my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
+    return $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
+}
 
+
+#get all the gene members of in a chromosome coordinate range, filter only the ones that are protein-coding and order them based on their dnafrag start positions
+sub _get_non_ref_gmembers {
+    my $self = shift;
+    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
+    my ($dnafragID, $st, $ed)= @_;
+        print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
+
+    my $unsorted_mem = $self->_fetch_members_with_homology_by_range($dnafragID, $st, $ed);
 
     # And now we simply sort the genes by their coordinates and return the sorted list
     my @sorted_all_mem = sort {($a->{dnafrag_start} <=> $b->{dnafrag_start}) || ($a->{gene_member_id} <=> $b->{gene_member_id}) || ($a->{homology_id} <=> $b->{homology_id})} @$unsorted_mem;
