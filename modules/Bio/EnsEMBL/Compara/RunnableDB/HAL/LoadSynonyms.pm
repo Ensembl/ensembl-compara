@@ -52,6 +52,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
+use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
