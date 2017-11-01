@@ -1082,11 +1082,13 @@ sub load_mapping_from_mlss {
 
     return if $mlss->{'_chromosome_mapping_loaded'};
 
-    my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms');
+    my $alt_syn_tag = $mlss->get_value_for_tag('alt_synonyms', '{}');
     my $alt_synonyms = eval $alt_syn_tag;
-    foreach my $genome_db_id (keys %$alt_synonyms) {
+    foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
+        my $genome_db_id = $genome_db->dbID;
         $e2u_mappings->{$genome_db_id} = {} unless exists $e2u_mappings->{$genome_db_id};
         $u2e_mappings->{$genome_db_id} = {} unless exists $u2e_mappings->{$genome_db_id};
+        next unless $alt_synonyms->{$genome_db_id};
         foreach my $dnafrag_name (keys %{$alt_synonyms->{$genome_db_id}}) {
             my $alt_name = $alt_synonyms->{$genome_db_id}->{$dnafrag_name};
             $e2u_mappings->{$genome_db_id}->{ $dnafrag_name } = $alt_name;
