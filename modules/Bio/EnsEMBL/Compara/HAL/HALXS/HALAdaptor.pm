@@ -89,6 +89,11 @@ sub genomes {
     return HALXS::_get_genome_names($self->{'hal_fd'});
 }
 
+sub seqs_in_genome {
+    my ($self, $genome) = @_;
+    return HALXS::_get_seqs_in_genome($self->{'hal_fd'}, $genome);
+}
+
 sub msa_blocks {
     my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
     $max_ref_gap ||= 0;
