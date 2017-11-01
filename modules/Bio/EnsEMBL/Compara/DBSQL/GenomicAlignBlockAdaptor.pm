@@ -1255,24 +1255,26 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
 
     unless (defined $mlss->{'_hal_species_name_mapping'}) {
-      my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
-      if ($map_tag) {
-        Bio::EnsEMBL::Compara::HAL::UCSCMapping::load_mapping_from_mlss($mlss);
-      } else {
-        # check if there is an alternate mlss mapping to use
-        my $alt_mlss_id = $mlss->get_value_for_tag('alt_hal_mlss');
-        if ( defined $alt_mlss_id ) {
-            my $alt_mlss = $mlss->adaptor->fetch_by_dbID($alt_mlss_id);
-            $map_tag = $alt_mlss->get_value_for_tag('HAL_mapping');
-            Bio::EnsEMBL::Compara::HAL::UCSCMapping::load_mapping_from_mlss($alt_mlss);
-        } else {
-            my $msg = "Please define a mapping between genome_db_id and the species names from the HAL file. Example SQL:\n\n";
-            $msg .= "INSERT INTO method_link_species_set_tag VALUES (<mlss_id>, \"HAL_mapping\", '{ 1 => \"hal_species1\", 22 => \"hal_species7\" }')\n\n";
-            die $msg;
-        }
+
+      # Since pairwise HAL MLSSs are just proxies, find the overall MLSS
+      my $mlss_with_mapping = $mlss;
+      if (my $alt_mlss_id = $mlss->get_value_for_tag('alt_hal_mlss')) {
+          $mlss_with_mapping = $mlss->adaptor->fetch_by_dbID($alt_mlss_id);
       }
 
-      my $species_map = eval $map_tag;     # read species name mapping hash from mlss_tag
+      # Load the chromosome-names mapping
+      Bio::EnsEMBL::Compara::HAL::UCSCMapping::load_mapping_from_mlss($mlss_with_mapping);
+
+      # Load the genome-names mapping
+      my $species_map = {};
+      if (my $map_tag = $mlss_with_mapping->get_value_for_tag('HAL_mapping')) {
+          # Will contain more species than needed in case of a pairwise HAL MLSS
+          $species_map = eval $map_tag;
+      }
+      # Make sure that all the genomes that are needed for this MLSS are represented
+      foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
+          $species_map->{$genome_db->dbID} ||= $genome_db->name;    # By default we assume the HAL file is using the production names
+      }
       my %hal_species_map = reverse %$species_map;
       $mlss->{'_hal_species_name_mapping'} = $species_map;
       $mlss->{'_hal_species_name_mapping_reverse'} = \%hal_species_map;
