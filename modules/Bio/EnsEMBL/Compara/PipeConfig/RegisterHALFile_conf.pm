@@ -59,32 +59,6 @@ sub default_options {
 
         'halStats_exe'  => $ENV{'PROGRESSIVE_CACTUS_DIR'} . '/submodules/hal/bin/halStats',
         'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-
-        'staging_loc1' => {
-            -host   => 'ens-staging1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => $self->o('ensembl_release'),
-        },
-        'staging_loc2' => {
-            -host   => 'ens-staging2',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => $self->o('ensembl_release'),
-        },  
-        'livemirror_loc' => {
-            -host   => 'ens-livemirror',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => $self->o('ensembl_release'),
-        },
-
-        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-
     };
 }
 
@@ -148,8 +122,7 @@ sub pipeline_analyses {
         {   -logic_name => 'get_synonyms',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms',
             -parameters => {
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('ensembl_release'),
+                'registry_conf_file' => $self->o('registry_conf_file'),
             },
             -flow_into  => {
                 2 => [ '?accu_name=e2u_synonyms&accu_input_variable=synonym&accu_address={genome_db_id}{name}' ],

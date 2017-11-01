@@ -60,6 +60,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my( $self) = @_;
 
+    $self->load_registry($self->param_required('registry_conf_file'));
+
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
     $self->param('mlss', $mlss);
