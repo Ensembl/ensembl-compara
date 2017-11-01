@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id <mlss_id> -species_name_mapping "{134 => 'C57B6J', ... }"
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
 Mini-pipeline to load the species-tree and the chromosome-name mapping from a HAL file
 
