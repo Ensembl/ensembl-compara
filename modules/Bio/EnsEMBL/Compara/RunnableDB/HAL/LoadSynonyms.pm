@@ -51,7 +51,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor;
+use Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -70,9 +70,8 @@ sub fetch_input {
     my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
     my $species_map = eval $map_tag;     # read species name mapping hash from mlss_tag
 
-    require Bio::EnsEMBL::Compara::HAL::HALAdaptor;
-    my $hal_adaptor = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($mlss->url);
-    my @chrom_list = Bio::EnsEMBL::Compara::HAL::HALAdaptor::_get_seqs_in_genome( $hal_adaptor->hal_filehandle, $species_map->{ $genome_db->dbID } );
+    my $hal_adaptor = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($mlss->url);
+    my @chrom_list = $hal_adaptor->seqs_in_genome( $species_map->{ $genome_db->dbID } );
 
     my $existing_synonyms = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID} || {};
 
