@@ -79,28 +79,10 @@ sub hal_filehandle {
     return $self->{'hal_fd'};
 }
 
-# sub genome_name_from_species_and_assembly {
-#     my ($self, $species_name, $assembly_name) = @_;
-#     foreach my $genome (HALXS::_get_genome_names($self->{'hal_fd'})) {
-#         my $genome_metadata = HALXS::_get_genome_metadata($self->{'hal_fd'}, $genome);
-#         if ((exists $genome_metadata->{'ensembl_species'} && $genome_metadata->{'ensembl_species'} eq $species_name) &&
-#             (exists $genome_metadata->{'ensembl_assembly'} && $genome_metadata->{'ensembl_assembly'} eq $assembly_name)) {
-#             return $genome;
-#         }
-#     }
-#     die "Could not find genome with metadata indicating it corresponds to ensembl species='".$species_name."', ensembl_assembly='".$assembly_name."'"
-# }
-
 sub genome_metadata {
     my ($self, $genome) = @_;
     return HALXS::_get_genome_metadata($self->{'hal_fd'}, $genome);
 }
-
-# sub ensembl_genomes {
-#     my $self = shift;
-#     my @ensembl_genomes = grep { exists($self->genome_metadata($_)->{'ensembl_species'}) && exists($self->genome_metadata($_)->{'ensembl_assembly'}) } $self->genomes();
-#     return @ensembl_genomes;
-# }
 
 sub genomes {
     my $self = shift;
