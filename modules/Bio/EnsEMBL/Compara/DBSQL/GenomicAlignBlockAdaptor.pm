@@ -425,7 +425,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
   if ( $method_link_species_set->method->type =~ /CACTUS_HAL/ ) {
       throw( "fetch_all_by_MethodLinkSpeciesSet is not supported for this method type (CACTUS_HAL)\n" );
-  #       my @genome_dbs = @{ $method_link_species_set->species_set_obj->genome_dbs };
+  #       my @genome_dbs = @{ $method_link_species_set->species_set->genome_dbs };
   #       my $ref_gdb = pop( @genome_dbs );
 
   #       my $dnafrag_adaptor = $method_link_species_set->adaptor->db->get_DnaFragAdaptor;
