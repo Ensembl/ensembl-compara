@@ -49,19 +49,6 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
-sub default_options {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::default_options},
-
-        #Connection parameters for production database (the rest is defined in the base class)
-        'host' => 'compara1',
-
-        'halStats_exe'  => $ENV{'PROGRESSIVE_CACTUS_DIR'} . '/submodules/hal/bin/halStats',
-        'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-    };
-}
-
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
