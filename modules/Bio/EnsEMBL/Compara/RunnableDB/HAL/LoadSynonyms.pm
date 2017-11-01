@@ -63,7 +63,8 @@ sub fetch_input {
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
     $self->param('mlss', $mlss);
 
-    my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
+    my $genome_db_adaptor = $master_dba->get_GenomeDBAdaptor;
     my $genome_db = $genome_db_adaptor->fetch_by_dbID( $self->param_required('genome_db_id') );
 
     my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
@@ -82,7 +83,7 @@ sub fetch_input {
             push @names, { 'name' => $existing_synonyms->{$chr_name}, 'synonym' => $chr_name } if $existing_synonyms->{$chr_name} ne $chr_name;
             next;
         }
-        my $d = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_synonym($genome_db, $chr_name);
+        my $d = $master_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_synonym($genome_db, $chr_name);
         if ($d) {
             push @names, { 'name' => $d->name, 'synonym' => $chr_name } if $d->name ne $chr_name;
         } else {

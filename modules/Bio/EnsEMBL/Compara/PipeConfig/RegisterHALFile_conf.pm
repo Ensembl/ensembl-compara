@@ -150,7 +150,6 @@ sub pipeline_analyses {
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
-                'compara_db'    => '#master_db#',   # Where the DnaFrags are
             },
             -flow_into  => {
                 2 => [ '?accu_name=e2u_synonyms&accu_input_variable=synonym&accu_address={genome_db_id}{name}' ],
