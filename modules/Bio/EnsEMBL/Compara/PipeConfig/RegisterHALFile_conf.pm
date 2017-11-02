@@ -120,6 +120,7 @@ sub pipeline_analyses {
         {   -logic_name => 'aggregate_synonyms',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
+                'e2u_synonyms'  => {},  # default value, in case the accu is empty
                 'sql' => [ q/REPLACE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "alt_synonyms", '#expr(stringify(#e2u_synonyms#))expr#')/ ],
             },
 	    -rc_name    => '1Gb',
