@@ -64,6 +64,7 @@ sub _complete_cast_node {
     }
     if ($orig->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
         $self->taxon($orig);
+        delete $self->{'_node_id'};
     } elsif ($orig->{'_taxon'}) {
         $self->taxon($orig->{'_taxon'});
     } else {
