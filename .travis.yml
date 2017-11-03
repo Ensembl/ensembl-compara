@@ -50,7 +50,7 @@ install:
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
 
-script: travis_wait "./travisci/harness.sh"
+script: travis_wait 40min "./travisci/harness.sh"
 
 jobs:
   include:
