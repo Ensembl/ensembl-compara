@@ -338,10 +338,11 @@ sub copy_ancestral_data {
     #
     #Create temporary table in from_db to store mappings
     #
-    $sth = $from_dbc->prepare("CREATE TEMPORARY TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
+    $sth = $from_dbc->prepare("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
 
     $sth->execute();
     $sth->finish;
+    $from_dbc->do('DELETE FROM tmp_seq_region_mapping');
 
     #
     #Create mappings

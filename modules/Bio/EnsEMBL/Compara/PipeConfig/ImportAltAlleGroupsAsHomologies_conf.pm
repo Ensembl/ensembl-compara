@@ -55,7 +55,7 @@ sub default_options {
         # Source of MLSSs
         'master_db'       => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         # Source of GenomeDBs and members
-        'member_db'       => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
+        'member_db'       => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/mateus_load_members_91',
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',

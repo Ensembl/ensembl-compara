@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf
     #1. update all databases' names and locations
 
     #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf -password <your_password>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf -password <your_password> -host <> -port <>
 
     #3. run the beekeeper.pl
 
@@ -71,22 +71,22 @@ sub default_options {
         'die_if_unknown_table'      => 1,
 
         # A registry file to avoid having to use only URLs
-        #'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
 
         # All the source databases
         'src_db_aliases'    => {
            'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-           'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_protein_trees_90b',
-           'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90',
-           'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-2:4522/carlac_families_90',
-           'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_murinae_protein_trees_90',
-           'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_murinae_nctrees_90',
-           'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/carlac_alt_allele_import_90',
-           'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2:4522/muffato_load_members_90_ensembl',
+           'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_protein_trees_91b',
+           'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_91',
+           'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/carlac_families_91',
+           'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_murinae_protein_trees_91',
+           'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_murinae_nctrees_91',
+           'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_alt_allele_import_91',
+           'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/mateus_load_members_91',
         },
 
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
+        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_91',
 
         # From these databases, only copy these tables
         'only_tables'       => {

@@ -66,14 +66,14 @@ sub default_options {
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/waakanni_ensembl_ancestral_89',
+        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/ensembl_ancestral_90',
 
         # map EPO mlss_ids to their source ancestral db
         'epo_mlsses' => [ # this table needs to be edited prior to running the pipeline:
             [ '768'  => $self->o('prev_ancestral_db'), ], # 5 teleost fish
             [ '825'  => $self->o('prev_ancestral_db'), ], # 4 sauropsids
-            [ '822'  => $self->o('prev_ancestral_db'), ], # 8 primates            
-            [ '1086' => 'mysql://ensadmin:'.$self->o('password').'@mysql-ens-compara-prod-3:4523/muffato_mammals_ancestral_core_90b', ], # 21 eutherian mammals
+            [ '1101' => 'mysql://ensadmin:'.$self->o('password').'@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_primates_ancestral_core_91', ], # 12 primates
+	    [ '1102' => 'mysql://ensadmin:'.$self->o('password').'@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_mammals_ancestral_core_91',] # 25 mammals
         ],
 
         'pipeline_db'   => {
