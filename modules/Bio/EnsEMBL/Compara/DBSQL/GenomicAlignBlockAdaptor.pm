@@ -1331,13 +1331,13 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -length => $block_len,
           -method_link_species_set => $mlss,
-          -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
+          -adaptor => $self,
           # -dbID => $id_base + $gab_id_count,
         );
         $gab->reference_slice_strand( $dnafrag->slice->strand );
         $gab_id_count++;
 
-        my $ga_adaptor = $mlss->adaptor->db->get_GenomicAlignAdaptor;
+        my $ga_adaptor = $self->db->get_GenomicAlignAdaptor;
         my (@genomic_align_array, $ref_genomic_align);
         foreach my $seq (@$aln_block) {
           # find dnafrag for the region
@@ -1414,10 +1414,9 @@ sub _get_GenomicAlignBlocks_from_HAL {
             ##############
 
             # my $split_gabs = $self->_split_genomic_aligns( $gab, $min_gab_len );
-            # my $gab_adaptor = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
 
             # foreach my $this_gab ( @$split_gabs ) {
-            #     $this_gab->adaptor($gab_adaptor);
+            #     $this_gab->adaptor($self);
             #     $this_gab->dbID($id_base + $gab_id_count);
 
             #     push( @gabs, $this_gab );
@@ -1455,12 +1454,12 @@ sub _get_GenomicAlignBlocks_from_HAL {
               my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
                   -length => @$entry[3],
                   -method_link_species_set => $mlss,
-                  -adaptor => $mlss->adaptor->db->get_GenomicAlignBlockAdaptor,
+                  -adaptor => $self,
                   # -dbID => $id_base + $gab_id_count,
               );
               $gab_id_count++;
   		
-              my $ga_adaptor = $mlss->adaptor->db->get_GenomicAlignAdaptor;
+              my $ga_adaptor = $self->db->get_GenomicAlignAdaptor;
   		        # Create cigar strings
   		        my ($ref_aln_seq, $target_aln_seq) = ( $entry->[6], $entry->[5] );
   		        my $ref_cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($ref_aln_seq);
