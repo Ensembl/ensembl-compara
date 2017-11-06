@@ -346,6 +346,9 @@ sub synonyms {
     elsif ($db =~ /PhenCode/) {
       push @urls, $hub->get_ExtURL_link($_, 'PHENCODE', $_) for @ids;
     }
+    elsif ($db =~ /PharmGKB/) {
+      push @urls, $hub->get_ExtURL_link($_, 'PHARMGKB', $self->object->name) for @ids;
+    }
     ## these are LSDBs who submit to dbSNP, so we use the submitter name as a synonym & link to the original site
     elsif ($db =~ /OIVD|LMDD|KAT6BDB|HbVar|PAHdb|Infevers|LSDB/) {
       my $db_uc = uc($db);
