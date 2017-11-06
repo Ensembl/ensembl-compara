@@ -1446,7 +1446,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # print "end is $end\n";
 
           my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
-          my $blocks = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->pairwise_blocks($target, $ref, $hal_seq_reg, $start-1, $end, $t_hal_seq_reg);
+          my $blocks = $hal_adaptor->pairwise_blocks($target, $ref, $hal_seq_reg, $start-1, $end, $t_hal_seq_reg);
           
           foreach my $entry (@$blocks) {
   	        if (defined $entry) {
