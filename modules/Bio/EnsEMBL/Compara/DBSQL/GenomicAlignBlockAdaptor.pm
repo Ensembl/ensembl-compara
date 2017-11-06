@@ -938,11 +938,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
   assert_ref($dnafrag2, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag2');
   assert_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'method_link_species_set');
 
-  my $dnafrag_id1 = $dnafrag1->dbID;
-  my $dnafrag_id2 = $dnafrag2->dbID;
-  my $method_link_species_set_id = $method_link_species_set->dbID;
-  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
-
   if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
         #return $self->fetch_all_by_MethodLinkSpeciesSet_Slice( $method_link_species_set, $dnafrag->slice );
 
@@ -953,6 +948,11 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
         my $block_end   = defined $end ? $end : $dnafrag1->slice->end;
         return $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag1, $block_start, $block_end, $limit_number, $dnafrag2 );
   }
+
+  my $dnafrag_id1 = $dnafrag1->dbID;
+  my $dnafrag_id2 = $dnafrag2->dbID;
+  my $method_link_species_set_id = $method_link_species_set->dbID;
+  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
 
   #Create this here to pass into _create_GenomicAlign module
   my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor;
@@ -1251,15 +1251,16 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my @gabs = ();
     my $max_ref_gaps = 50;
 
-    my $dnafrag_adaptor = $mlss->adaptor->db->get_DnaFragAdaptor;
-    my $genome_db_adaptor = $mlss->adaptor->db->get_GenomeDBAdaptor;
+    my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
+    my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
 
     unless (defined $mlss->{'_hal_species_name_mapping'}) {
 
       # Since pairwise HAL MLSSs are just proxies, find the overall MLSS
       my $mlss_with_mapping = $mlss;
       if (my $alt_mlss_id = $mlss->get_value_for_tag('alt_hal_mlss')) {
-          $mlss_with_mapping = $mlss->adaptor->fetch_by_dbID($alt_mlss_id);
+          my $mlss_adaptor = $mlss->adaptor || $self->db->get_MethodLinkSpeciesSetAdaptor;
+          $mlss_with_mapping = $mlss_adaptor->fetch_by_dbID($alt_mlss_id);
       }
 
       # Load the chromosome-names mapping
