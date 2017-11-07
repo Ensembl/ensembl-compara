@@ -111,6 +111,21 @@ sub get_data {
       }
     }
 
+    ## Basic feature
+    my $feature = {
+        start         => $rf->start,
+        end           => $rf->end,
+        label         => $text,
+        colour        => $colour,
+        href          => $self->href($rf),
+    };
+
+    if ($pattern || $bordercolour) {
+      $feature->{'pattern'}        = $pattern;
+      $feature->{'patterncolour'}  = $patterncolour;
+      $feature->{'bordercolour'}   = $bordercolour;
+    }
+
     ## Add flanks and motif features
     my $appearance = {'colour' => $colour};
     if ($pattern) {
@@ -122,25 +137,10 @@ sub get_data {
     ## Extra legend items as required
     $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
     $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
+    $feature->{extra_blocks}  = $extra_blocks;
 
-    my $params = {
-      start         => $rf->start,
-      end           => $rf->end,
-      label         => $text,
-      href          => $self->href($rf),
-      extra_blocks  => $extra_blocks,
-    };
-    if ($pattern || $bordercolour) {
-      $params->{'pattern'}        = $pattern;
-      $params->{'patterncolour'}  = $patterncolour;
-      $params->{'colour'}         = $colour;
-      $params->{'bordercolour'}   = $bordercolour;
-    }
-    else {
-      $params->{'colour'} = $colour;
-    }
-
-    push @$drawable, $params;
+    ## OK, done
+    push @$drawable, $feature;
   }
 
 
@@ -159,6 +159,12 @@ sub get_data {
       display => 'normal'
     }
   }];
+}
+
+sub features {
+  my $self    = shift;
+  my $data = $self->get_data;
+  return $data->[0]{'features'};
 }
 
 sub get_structure {
