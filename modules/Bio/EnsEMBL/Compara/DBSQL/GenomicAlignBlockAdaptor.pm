@@ -1249,7 +1249,6 @@ sub _load_DnaFrags {
 sub _get_GenomicAlignBlocks_from_HAL {
     my ($self, $mlss, $ref_gdb, $targets_gdb, $dnafrag, $start, $end, $limit, $target_dnafrag) = @_;
     my @gabs = ();
-    my $max_ref_gaps = 50;
 
     my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
     my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
