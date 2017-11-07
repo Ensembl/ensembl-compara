@@ -1297,9 +1297,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
     my $num_targets  = scalar @$targets_gdb;
     my $id_base      = $mlss->dbID * 10000000000;
     my ($gab_id_count, $ga_id_count)  = (0, 0);
-    my $min_gab_len = int(abs($end-$start)/1000);
-    my $min_ga_len  = $min_gab_len/4;
-    # my ($min_gab_len, $min_ga_len) = (20, 5);
+    my $min_gab_len = !$mlss->has_tag('no_filter_small_blocks') && int(abs($end-$start)/1000);
+    my $min_ga_len  = !$mlss->has_tag('no_filter_small_blocks') && $min_gab_len/4;
 
     if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
       my @hal_targets = map { $mlss->{'_hal_species_name_mapping'}->{ $_->dbID } } @$targets_gdb;
