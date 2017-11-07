@@ -1358,7 +1358,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           }
 
           # check length of genomic align meets threshold
-          next if ( abs( $seq->{start} - $seq->{end} ) + 1 < $min_ga_len );
+          next if abs( $seq->{end} - $seq->{start} + 1) < $min_ga_len;
 
           if ( !$duplicates_found ){
             my $species_name = $this_dnafrag->genome_db->name;
@@ -1445,7 +1445,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
           # print "end is $end\n";
 
           my $t_hal_seq_reg = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::e2u_mappings->{ $target_dnafrag->genome_db_id }->{ $target_dnafrag->name } || $target_dnafrag->name;
-          my $blocks = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start, $end, $t_hal_seq_reg);
+          my $blocks = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->pairwise_blocks($hal_fh, $target, $ref, $hal_seq_reg, $start-1, $end, $t_hal_seq_reg);
           
           foreach my $entry (@$blocks) {
   	        if (defined $entry) {
@@ -1470,7 +1470,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
               die "Could not find a DnaFrag named '$df_name' for species '".$target_gdb->name."' ($target)" unless ( defined $target_dnafrag );
               
               # check that alignment falls within requested range
-              next if ( @$entry[2] + @$entry[3] > $end || @$entry[1] + @$entry[3] > $end );
+              next if ( @$entry[1] + 1 > $end || @$entry[1] + @$entry[3] < $start );
 
               # check length of genomic align meets threshold
               next if ( @$entry[3] < $min_ga_len );
@@ -1479,8 +1479,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
                   -genomic_align_block => $gab,
                   -aligned_sequence => $target_aln_seq, #@$entry[5],
                   -dnafrag => $target_dnafrag,
-                  -dnafrag_start => @$entry[2] + 1,
-                  -dnafrag_end => @$entry[2] + @$entry[3],
+                  -dnafrag_start => @$entry[2] + (@$entry[4] eq '+' ? 1 : 0),
+                  -dnafrag_end => @$entry[2] + @$entry[3] + (@$entry[4] eq '+' ? 0 : -1),
                   -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
                   -cigar_line => $target_cigar,
                   # -dbID => $id_base + $ga_id_count,
@@ -1501,7 +1501,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
                 -dnafrag => $dnafrag,
                 -dnafrag_start => @$entry[1] + 1,
                 -dnafrag_end => @$entry[1] + @$entry[3],
-                -dnafrag_strand => @$entry[4] eq '+' ? 1 : -1,
+                -dnafrag_strand => 1,
                 -cigar_line => $ref_cigar,
                 # -dbID => $id_base + $ga_id_count,
                 -visible => 1,
