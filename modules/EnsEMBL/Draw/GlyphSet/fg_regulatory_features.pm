@@ -57,7 +57,7 @@ sub get_data {
     warn ("Cannot get get adaptors: $rfa");
     return [];
   }
- 
+   
   ## OK, looking good - fetch data from db 
   my $cell_line = $self->my_config('cell_line');  
   my $config      = $self->{'config'};
@@ -126,18 +126,20 @@ sub get_data {
       $feature->{'bordercolour'}   = $bordercolour;
     }
 
-    ## Add flanks and motif features
-    my $appearance = {'colour' => $colour};
-    if ($pattern) {
-      $appearance->{'pattern'}        = $pattern;
-      $appearance->{'patterncolour'}  = $patterncolour;
+    ## Add flanks and motif features, except on Genoverse where it's currently way too slow
+    if ($self->{'container'}->length < 1000000) {
+      my $appearance = {'colour' => $colour};
+      if ($pattern) {
+        $appearance->{'pattern'}        = $pattern;
+        $appearance->{'patterncolour'}  = $patterncolour;
+      }
+      my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $appearance);
+    
+      ## Extra legend items as required
+      $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
+      $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
+      $feature->{extra_blocks}  = $extra_blocks;
     }
-    my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $appearance);
-
-    ## Extra legend items as required
-    $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
-    $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
-    $feature->{extra_blocks}  = $extra_blocks;
 
     ## OK, done
     push @$drawable, $feature;
