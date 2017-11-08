@@ -72,9 +72,9 @@ sub fetch_input {
 
   $self->param('mlss', $mlss);
 
-  my $seq_region = $self->param('seq_region');
+  my $seq_region = $self->param_required('seq_region');
 
-  my $species = $self->param('species');
+  my $species = $self->param_required('species');
 
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_registry_name($species);
