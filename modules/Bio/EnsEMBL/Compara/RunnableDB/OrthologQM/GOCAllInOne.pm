@@ -63,6 +63,7 @@ use Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs;
 use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs;
+use Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score;
 
 # Needs to be the base because its functions assume $self can run many things
 use base ('Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs');
@@ -116,6 +117,7 @@ sub run {
 
     my @goc_scores;
     # Both variable names are used for the same purpose: accumulating rows for the ortholog_goc_metric table
+    # List of array-refs: method_link_species_set_id homology_id gene_member_id dnafrag_id goc_score left1 left2 right1 right2
     $self->param('all_goc_score_arrayref', \@goc_scores);
     $self->param('goc_score_arrayref', \@goc_scores);
 
@@ -129,6 +131,11 @@ sub run {
     $self->param('ref_species_dbid', $self->param('non_ref_species_dbid'));
     $self->param('non_ref_species_dbid', $tmp_species_dbid);
     $self->run_one_direction;
+
+    # And prepare the array for Ortholog_max_score
+    # Select: homology_id, goc_score, method_link_species_set_id
+    my @quality_data = map {[$_->{'homology_id'}, $_->{'goc_score'}, $_->{'method_link_species_set_id'}]} @goc_scores;
+    $self->param('quality_data', \@quality_data);
 }
 
 sub run_one_direction {
@@ -172,6 +179,11 @@ sub write_output {
     # IN: (none)
     # OUT: (write in ortholog_goc_metric table)
     Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs::_insert_goc_scores($self, $self->param('goc_score_arrayref'));
+
+    # IN: quality_data
+    # IN: goc_mlss_id
+    # OUT: (write in homology table)
+    Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Ortholog_max_score::run($self);
 }
 
 
