@@ -68,7 +68,7 @@ sub fetch_input {
   my( $self) = @_;
 
   my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+  my $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name('EPO', $self->param_required('species_set_name'));
 
   $self->param('mlss', $mlss);
 
@@ -136,7 +136,7 @@ sub base_age {
     }
 
     #
-    my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('compara_url'));
+    my $compara_dba = $self->compara_dba;
     my $gat_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
     # Fetching all the GenomicAlignTrees corresponding to this Slice:
     my $genomic_align_trees =

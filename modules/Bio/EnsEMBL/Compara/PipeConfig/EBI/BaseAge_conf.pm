@@ -58,50 +58,30 @@ sub default_options {
             'port' => 4485,
 
             'ref_species' => 'homo_sapiens',
-            'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
+            #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Location url of database to get EPO GenomicAlignTree objects from
 #            'compara_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/ensembl_compara_' . $self->o('ensembl_release'),
-            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_mammals_epo_pt3_86',
+            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mammals_epo_91',
+
+            # The name of the alignment
+            'species_set_name'  => 'mammals',
+
+            # There is a different colour gradient for this clade
+            'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ensembl-mirror:4240/homo_sapiens_variation_86_38?group=variation',
-
-            #Location details of ancestral sequences database
-            #'anc_host'   => 'mysql-ensembl-mirror',
-            'anc_host'   => 'mysql-ens-compara-prod-2',
-            'anc_name'   => 'ancestral_sequences',
-            #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
-            'anc_dbname' => 'carlac_mammals_ancestral_core_86',
-            'anc_user'  => 'anonymous',
-            'anc_port'  => 4522,
-
-            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-
-            'staging_loc' => {
-                               -host   => 'mysql-ens-sta-1',
-                               -port   => 4519,
-                               -user   => 'ensro',
-                               -pass   => '',
-                               -db_version => $self->o('ensembl_release'),
-                              },
-            'livemirror_loc' => {
-                                 -host   => 'mysql-ensembl-mirror',
-                                 -port   => 4240,
-                                 -user   => 'anonymous',
-                                 -pass   => '',
-                                 -db_version => $self->o('ensembl_release'),
-                                },
-
-            'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-#            'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+            'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_91_38?group=variation',
 
             # executable locations:
-            'big_bed_exe' => $self->o('ensembl_cellar').'/kent/v335_1/bin/bedToBigBed',
+            'big_bed_exe'   => $self->o('ENV', 'LINUXBREW_HOME').'/Cellar/kent/v335_1/bin/bedToBigBed',
 
             #Locations to write output files
             'bed_dir'        => sprintf('/hps/nobackup/production/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
+
+            #Number of workers to run base_age analysis
+            'base_age_capacity'        => 100,
 
           };
 }

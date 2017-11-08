@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::BaseAge_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BaseAge_conf -password <your_password>
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
     Calculate the age of a base
 
@@ -46,14 +46,13 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
 
-            'ref_species' => 'homo_sapiens',
             'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Write either the node name or node_id in "name" field of the bed file
@@ -61,65 +60,20 @@ sub default_options {
             'name' => "name",
 
             #Location url of database to get EPO GenomicAlignTree objects from
-#            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('ensembl_release'),
-            'compara_url' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
-            'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
+            #'compara_url' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
 
             #Location url of database to get snps from
-            #'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('release'),
-            'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
+            #'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
             
-            #Location details of ancestral sequences database
-            #'anc_host'   => 'ens-livemirror',
-            'anc_host'   => 'compara4',
-            'anc_name'   => 'ancestral_sequences',
-            #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
-            'anc_dbname' => 'cc21_mammals_ancestral_core_86',
-            'anc_user'  => 'ensro',
-            'anc_port'  => 3306,
-
-            #Connection parameters for production database (the rest is defined in the base class)
-            'host' => 'compara1',
-
-            'master_db' => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
-
-            'staging_loc1' => {
-                               -host   => 'ens-staging1',
-                               -port   => 3306,
-                               -user   => 'ensro',
-                               -pass   => '',
-                               -db_version => $self->o('ensembl_release'),
-                              },
-            'staging_loc2' => {
-                               -host   => 'ens-staging2',
-                               -port   => 3306,
-                               -user   => 'ensro',
-                               -pass   => '',
-                               -db_version => $self->o('ensembl_release'),
-                              },  
-            'livemirror_loc' => {
-                                 -host   => 'ens-livemirror',
-                                 -port   => 3306,
-                                 -user   => 'ensro',
-                                 -pass   => '',
-                                 -db_version => $self->o('ensembl_release'),
-                                },
-
-            'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-#            'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-
             # executable locations:
             'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-            'big_bed_exe' => '/software/ensembl/funcgen/bedToBigBed',
+            #'big_bed_exe' => '/software/ensembl/funcgen/bedToBigBed',
             'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
 
             #Locations to write output files
-            'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
+            #'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
             'chr_sizes_file' => 'chrom.sizes',
             'big_bed_file'   => 'base_age'.$self->o('ensembl_release').'.bb',
-
-            #Number of workers to run base_age analysis
-            'base_age_capacity'        => 100,
 
           };
 }
@@ -134,14 +88,6 @@ sub pipeline_create_commands {
 	   ];
 }
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-
-    return {
-            %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-            'master_db'      => $self->o('master_db'),
-    };
-}
 
 sub resource_classes {
     my ($self) = @_;
@@ -159,68 +105,17 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-            # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
-	    {  -logic_name => 'populate_new_database',
-	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
-	       -parameters    => {
-				  'program'        => $self->o('populate_new_database_exe'),
-				  'mlss_id'        => $self->o('mlss_id'),
-                                  'pipeline_db'    => $self->pipeline_url(),
-				 },
-	       -flow_into => {
-			      1 => [ 'load_genomedb_factory' ],
-			     },
-               -input_ids => [{}],
-	       -rc_name => '1Gb',
-	    },
-
-            # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
-
-        {   -logic_name => 'load_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters => {
-                'compara_db'    => '#master_db#',   # that's where genome_db_ids come from
-                'mlss_id'       => $self->o('mlss_id'),
-                'extra_parameters'      => [ 'locator' ],
-            },
-            -flow_into => {
-                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-		'A->1' => [ 'load_ancestral_genomedb' ],
-            },
-	    -rc_name => '100Mb',
-	},
-
-        {   -logic_name => 'load_genomedb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters => {
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('ensembl_release'),
-            },
-	    -rc_name => '100Mb',
-        },
-        {   -logic_name => 'load_ancestral_genomedb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAncestralGenomeDB',
-            -parameters => {
-                'anc_host'      => $self->o('anc_host'),
-                'anc_port'      => $self->o('anc_port'),
-                'anc_user'      => $self->o('anc_user'),
-                'anc_dbname'    => $self->o('anc_dbname'),
-                           },
-            #                -input_ids => [ { } ],
-            -rc_name => '100Mb',
-            -flow_into => {
-                           '1' => [ 'chrom_sizes' ],
-                          },
-        },
             { -logic_name => 'chrom_sizes',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
               -parameters => {
+                              'db_conn' => $self->o('compara_url'),
                               'bed_dir' => $self->o('bed_dir'),
                               'append'  => [qw(-N -q)],
                               'input_query' => "SELECT concat('chr',dnafrag.name), length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'",
                               'chr_sizes_file' => $self->o('chr_sizes_file'),
                               'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
+               -input_ids => [{}],
               -flow_into => {
                              '1' => [ 'base_age_factory' ],
                             },
@@ -229,6 +124,7 @@ sub pipeline_analyses {
             {  -logic_name => 'base_age_factory',
                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                -parameters => {
+                               'db_conn'     => $self->o('compara_url'),
                                'ref_species' => $self->o('ref_species'),
                                'inputquery'    => "SELECT dnafrag.name as seq_region FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'",
                               },
@@ -242,9 +138,9 @@ sub pipeline_analyses {
             { -logic_name => 'base_age',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BaseAge',
               -parameters => {
-                              'compara_url' => $self->o('compara_url'),
+                              'compara_db' => $self->o('compara_url'),
                               'variation_url' => $self->o('variation_url'),
-                              'mlss_id' => $self->o('mlss_id'),
+                              'species_set_name' => $self->o('species_set_name'),
                               'species' => $self->o('ref_species'),
                               'bed_dir' => $self->o('bed_dir'),
                               'name' => $self->o('name'),
