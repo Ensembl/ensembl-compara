@@ -53,6 +53,7 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 =head2 fetch_input
 
@@ -67,6 +68,10 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 sub fetch_input {
   my( $self) = @_;
 
+  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+  Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
+  $genome_db_adaptor->dbc($self->compara_dba->dbc);
+
   my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name('EPO', $self->param_required('species_set_name'));
 
@@ -75,12 +80,12 @@ sub fetch_input {
   my $seq_region = $self->param_required('seq_region');
 
   my $species = $self->param_required('species');
-
-  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_registry_name($species);
-
-  $genome_db->db_adaptor->dbc->disconnect_when_inactive(1);
+  $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   $self->param('ref_genome_db', $genome_db);
+
+  my $anc_genome_db = $genome_db_adaptor->fetch_by_name_assembly('ancestral_sequences');
+  $anc_genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
 
   my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor;
 
@@ -123,6 +128,8 @@ sub write_output {
 sub base_age {
     my ($self) = @_;
     my $gap = "-"; #gap character
+
+    $self->dbc && $self->dbc->disconnect_if_idle;
 
     my $mlss = $self->param('mlss');
     my $slice = $self->param('slice');
