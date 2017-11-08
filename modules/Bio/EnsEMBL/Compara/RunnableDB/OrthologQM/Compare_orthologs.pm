@@ -262,7 +262,7 @@ sub _compute_ortholog_score {
     }
 
     #calculate the percentage of the goc score
-    my $percent = $result->{'left1'} + $result->{'left2'} + $result->{'right1'} + $result->{'right2'};
+    my $percent = ($result->{'left1'} // 0) + ($result->{'left2'} // 0) + ($result->{'right1'} // 0) + ($result->{'right2'} // 0);
     my $percentage = $percent * 25;
 
     $result->{'goc_score'}      = $percentage;
