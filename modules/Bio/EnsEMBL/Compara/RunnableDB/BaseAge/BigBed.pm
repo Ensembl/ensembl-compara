@@ -79,7 +79,7 @@ sub fetch_input {
 
   my @ordered_files;
   foreach my $seq_region (sort {$a cmp $b} keys %$bed_files) {
-      my $sorted_bed_file = sort_bed($bed_files->{$seq_region});
+      my $sorted_bed_file = $self->sort_bed($bed_files->{$seq_region});
       push @ordered_files, $sorted_bed_file;
   }
   my $file_list = join " ", @ordered_files;
@@ -110,7 +110,7 @@ sub write_output {
 }
 
 sub sort_bed {
-    my ($bed_file) = @_;
+    my ($self, $bed_file) = @_;
     my $sorted_bed_file = $bed_file . ".sort";
     return $sorted_bed_file if (-e $sorted_bed_file) and ((-s $sorted_bed_file) == (-s $bed_file));
     my $sort_cmd = "sort -k2,2n $bed_file > $sorted_bed_file";
