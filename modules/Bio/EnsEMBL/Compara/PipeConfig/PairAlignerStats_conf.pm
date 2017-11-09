@@ -55,6 +55,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
+example : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf -compara_db <> -mlss_id <> -host <> -port <> --reg_conf
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf;
@@ -70,10 +71,11 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Dump location
-        'dump_dir'      => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/pairalignerstats_'.$self->o('rel_with_suffix').'/',
+        'dump_dir'      => '/hps/nobackup/production/ensembl/'.$ENV{'USER'}.'/pairalignerstats_'.$self->o('rel_with_suffix').'/',
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'output_dir',
-
+	# A registry file to avoid having to use only URLs
+#        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
         # Executable locations
         'dump_features_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
@@ -110,7 +112,7 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-        '1Gb'   => {'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+        '1Gb'   => {'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', '--reg_conf '.$self->o('reg_conf')]},
     };
 }
 
