@@ -212,10 +212,10 @@ sub _create_exon_structure {
 
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
       ## Fix for unintuitive coding start/end in some transcripts
-      if ($e->{'coding_start'} == 0) {
+      if ($e->{'coding_start'} < 1) {
         $e->{'coding_start'} = $e->{'start'};
       }
-      if ($e->{'coding_end'} == 0) {
+      if ($e->{'coding_end'} < 1) {
         $e->{'coding_end'} = $e->{'end'};
       }
 
