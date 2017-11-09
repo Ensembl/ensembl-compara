@@ -143,7 +143,7 @@ sub run {
 sub run_one_direction {
     my $self = shift;
 
-    $self->warning(sprintf('Doing %s vs %s', $self->param('ref_species_dbid'), $self->param('non_ref_species_dbid')));
+    $self->say_with_header(sprintf('Doing %s vs %s', $self->param('ref_species_dbid'), $self->param('non_ref_species_dbid')));
 
     if ($self->param('prev_goc_hashref')) {
 
