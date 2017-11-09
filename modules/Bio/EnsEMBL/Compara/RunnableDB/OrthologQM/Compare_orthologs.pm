@@ -157,10 +157,10 @@ sub _insert_goc_scores {
   foreach ( @$goc_arrayref ) {
     defined $_->{'goc_score'} or die " the goc score should atleast be 0. mlss id :  $_->{'method_link_species_set_id'} , homology_id : $_->{'homology_id'} ";
     defined $_->{'method_link_species_set_id'} or die " the method_link_species_set_id can not be empty. homology_id : $_->{'homology_id'} ";
-    push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}, $_->{'dnafrag_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
+    push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
   }
 
-  bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id dnafrag_id goc_score left1 left2 right1 right2)], 'INSERT IGNORE');
+  bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id goc_score left1 left2 right1 right2)], 'INSERT IGNORE');
 }
 
 

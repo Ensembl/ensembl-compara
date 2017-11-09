@@ -272,19 +272,17 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   method_link_species_set_id int(10) unsigned NOT NULL,
   homology_id int(10) unsigned NOT NULL,
   gene_member_id int(10) unsigned NOT NULL,
-  dnafrag_id bigint(20) unsigned NOT NULL,
-  goc_score INT NOT NULL, 
-  left1 INT,
-  left2 INT,
-  right1 INT,
-  right2 INT,
+  goc_score TINYINT NOT NULL,
+  left1 TINYINT(1),
+  left2 TINYINT(1),
+  right1 TINYINT(1),
+  right2 TINYINT(1),
 
   PRIMARY KEY (homology_id, gene_member_id),
-  KEY method_link_species_set_id (method_link_species_set_id),
   
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set (method_link_species_set_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member (gene_member_id),
-  FOREIGN KEY (homology_id) REFERENCES homology (homology_id),
-  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag (dnafrag_id)
+  FOREIGN KEY (homology_id) REFERENCES homology (homology_id)
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
