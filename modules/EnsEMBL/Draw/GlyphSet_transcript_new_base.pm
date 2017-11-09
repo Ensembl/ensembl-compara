@@ -203,21 +203,28 @@ sub _create_exon_structure {
   my ($self, $f) = @_;
   my $structure = [];
   my $slice_length = $self->{'config'}->container_width;
+  #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+  #warn Dumper($f);
 
   foreach my $e (@{$f->{'exons'}}) {
     next unless ($e->{'start'} || $e->{'end'}); 
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
+
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
+      ## Fix for unintuitive coding start/end
+      $e->{'coding_start'}  = $e->{'start'} if ($e->{'coding_start'} == 0);
+      $e->{'coding_end'}    = $e->{'end'} if ($e->{'coding_end'} == 0);
+
       ## Use direction of drawing, not direction of transcript
       my ($coding_start, $coding_end) = ($e->{'coding_start'}, $e->{'coding_end'});
       if (($coding_end - $coding_start) < 0 || ($coding_end - $coding_start) > $slice_length) {
         $exon->{'non_coding'} = 1;
       }
       else {
-        if ($coding_start > 0) {
+        if ($coding_start > $e->{'start'}) {
           $exon->{'utr_5'} = $e->{'start'} + $coding_start;
         }
-        if ($coding_end < ($e->{'end'} - $e->{'start'})) {
+        if ($coding_end < $e->{'end'}) {
           $exon->{'utr_3'} = $e->{'end'} - $coding_end;
         }
       }

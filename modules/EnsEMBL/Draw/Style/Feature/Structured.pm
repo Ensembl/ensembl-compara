@@ -37,6 +37,8 @@ sub draw_feature {
   if (!$structure) {
     $self->SUPER::draw_feature($feature, $position);
   }
+  #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+  #warn Dumper($feature);
 
   ## Basic parameters for all parts of the feature
   my $colour      = $feature->{'colour'};
