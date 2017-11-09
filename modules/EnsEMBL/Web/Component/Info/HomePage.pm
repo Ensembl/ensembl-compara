@@ -46,6 +46,7 @@ sub content {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $common_name  = $species_defs->SPECIES_COMMON_NAME;
+  my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
   my $img_url      = $self->img_url;
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
@@ -59,7 +60,7 @@ sub content {
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     %s',
-    $common_name,
+    $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} ? '<div class="box-right"><div class="round-box info-box unbordered">' . $self->whats_new_text . '</div></div>' : '',
     $self->assembly_text,
