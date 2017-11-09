@@ -203,8 +203,6 @@ sub _create_exon_structure {
   my ($self, $f) = @_;
   my $structure = [];
   my $slice_length = $self->{'config'}->container_width;
-  #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-  #warn Dumper($f);
 
   foreach my $e (@{$f->{'exons'}}) {
     next unless ($e->{'start'} || $e->{'end'}); 
