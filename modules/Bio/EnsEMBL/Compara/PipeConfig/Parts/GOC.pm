@@ -54,7 +54,7 @@ sub pipeline_analyses_goc {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
-                'A->1' => WHEN( '#goc_mlss_id#' => 'get_orthologs',
+                'A->1' => WHEN( '#goc_mlss_id#' => 'compute_goc',
                                 ELSE 'goc_group_genomes_under_taxa' ),
             },
         },
@@ -99,11 +99,25 @@ sub pipeline_analyses_goc {
             },
             -flow_into => {
                 2 => {
-                    'get_orthologs' => { 'goc_mlss_id' => '#homo_mlss_id#' },
+                    #'get_orthologs' => { 'goc_mlss_id' => '#homo_mlss_id#' },
+                    'compute_goc' => { 'goc_mlss_id' => '#homo_mlss_id#' },
                 },
             },
         },
 
+        {   -logic_name => 'compute_goc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GOCAllInOne',
+            -flow_into => {
+                1 => WHEN(
+                    '#goc_threshold# and #calculate_goc_distribution#' => [ 'get_perc_above_threshold' ] ,
+                    '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
+                ),
+            },
+            -rc_name => '1Gb_job',
+            -hive_capacity  =>  $self->o('goc_capacity'),
+        },
+
+1 ? () : (
         {   -logic_name => 'get_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory',
             -flow_into => {
@@ -158,6 +172,7 @@ sub pipeline_analyses_goc {
             -rc_name => '16Gb_job',
             -hive_capacity      =>  $self->o('goc_capacity'),
         },
+    ),
 
         {
             -logic_name => 'get_genetic_distance',
