@@ -98,6 +98,8 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
+    $self->disconnect_from_databases;
+
     # Build a Set::IntervalTree for each dnafrag with its gene-members
     $self->build_intervaltrees;
 

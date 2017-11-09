@@ -166,6 +166,19 @@ sub load_registry {
 }
 
 
+=head2 disconnect_from_databases
+
+  Description : Disconnect from the eHive and Compara databases before running something offline
+
+=cut
+
+sub disconnect_from_databases {
+    my $self = shift;
+    $self->dbc->disconnect_if_idle() if ($self->dbc);
+    $self->compara_dba->dbc->disconnect_if_idle() if ($self->compara_dba and $self->compara_dba->dbc);
+}
+
+
 =head2 _slurp
 
   Arg[1]      : String $filename
@@ -253,8 +266,7 @@ sub run_command {
     $options //= {};
     $options->{debug} = $self->debug;
 
-    $self->dbc->disconnect_if_idle() if ($self->dbc);
-    $self->compara_dba->dbc->disconnect_if_idle() if ($self->compara_dba);
+    $self->disconnect_from_databases;
 
     return Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, $options);
 }
