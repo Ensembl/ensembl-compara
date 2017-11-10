@@ -54,7 +54,7 @@ sub get_data {
 
   if ($data) {
     ## Adjust max and min according to track settings
-    my $viewLimits = $self->my_config('viewLimits');
+    my @viewLimits = split(':', $self->my_config('viewLimits'));
     foreach (@$data) {
       my ($min_score, $max_score);
 
@@ -67,15 +67,17 @@ sub get_data {
 
       ## Otherwise constrain to configured view limits 
       unless(defined $min_score) {
-        if (defined $viewLimits) {
-          $min_score = [ split ':', $viewLimits ]->[0];
+        if (scalar @viewLimits) {
+          $min_score = $viewLimits[0];
+          $_->{'metadata'}{'y_min'} = $min_score;
         } else {
           $min_score = $_->{'metadata'}{'min_score'};
         }
       }
       unless(defined $max_score) {
-        if (defined $viewLimits) {
-          $max_score = [ split ':', $viewLimits ]->[1];
+        if (scalar @viewLimits) {
+          $max_score = $viewLimits[1];
+          $_->{'metadata'}{'y_max'} = $max_score;
         } else {
           $max_score = $_->{'metadata'}{'max_score'};
         }
