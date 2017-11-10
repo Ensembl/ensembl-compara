@@ -179,6 +179,19 @@ sub disconnect_from_databases {
 }
 
 
+=head2 disconnect_from_hive_database
+
+  Description : Disconnect from the eHive database if it is not the same as the Compara database
+
+=cut
+
+sub disconnect_from_hive_database {
+    my $self = shift;
+    return if ($self->dbc and $self->compara_dba and $self->compara_dba->dbc and ($self->dbc eq $self->compara_dba->dbc));
+    $self->dbc->disconnect_if_idle() if ($self->dbc);
+}
+
+
 =head2 _slurp
 
   Arg[1]      : String $filename

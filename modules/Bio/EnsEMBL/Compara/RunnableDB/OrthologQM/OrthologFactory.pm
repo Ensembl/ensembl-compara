@@ -76,7 +76,7 @@ sub fetch_input {
 		$species2_dbid = $speciesSet->[1]->dbID();
 	}
 
-    $self->dbc and $self->dbc->disconnect_if_idle();
+        $self->disconnect_from_hive_database;
 	my $homologs = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 	print "This is the returned homologs \n " if ( $self->debug >4);
 	print Dumper($homologs) if ( $self->debug >4); 
@@ -97,7 +97,7 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 
-    $self->dbc and $self->dbc->disconnect_if_idle();
+        $self->disconnect_from_hive_database;
 
 	my $ref_ortholog_info_hashref;
 	my $non_ref_ortholog_info_hashref;
