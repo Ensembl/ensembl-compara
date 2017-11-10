@@ -15,7 +15,7 @@ CREATE TABLE `genome_db` (
   PRIMARY KEY (`genome_db_id`),
   UNIQUE KEY `name` (`name`,`assembly`,`genome_component`),
   KEY `taxon_id` (`taxon_id`)
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM AUTO_INCREMENT=222 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `meta` (
   `meta_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -25,7 +25,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM  ;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `ncbi_taxa_node` (
   `taxon_id` int(10) unsigned NOT NULL,
@@ -40,5 +40,5 @@ CREATE TABLE `ncbi_taxa_node` (
   KEY `rank` (`rank`),
   KEY `left_index` (`left_index`),
   KEY `right_index` (`right_index`)
-) ENGINE=MyISAM ;
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
