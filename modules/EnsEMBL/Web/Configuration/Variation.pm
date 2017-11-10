@@ -58,7 +58,7 @@ sub populate_tree {
   
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation',
     [qw( mappings EnsEMBL::Web::Component::Variation::Mappings )],
-    { 'availability' => 'variation has_features', 'concise' => 'Genes and regulation' }
+    { 'availability' => 'variation', 'concise' => 'Genes and regulation' }
   ));
   $context_menu->append($self->create_node('Sequence', 'Flanking sequence',
     [qw( flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
