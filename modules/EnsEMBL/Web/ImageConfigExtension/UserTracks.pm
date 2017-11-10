@@ -383,9 +383,11 @@ sub _add_trackhub_node {
     my $data    = $n->data;
     my $config  = {};
     my @ok_keys = qw(visibility dimensions priority);
-    ## The only parameter we override from superTrack nodes is visibility
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-      $config->{'visibility'} = $data->{'visibility'};
+      my @inherited = qw(visibility viewLimits maxHeightPixels);
+      foreach (@inherited) {
+        $config->{$_} = $data->{$_};
+      }
     }
     else {
       for (keys %$data) {
@@ -553,6 +555,8 @@ sub _add_trackhub_tracks {
       no_titles       => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       squish          => $squish,
       signal_range    => $track->{'signal_range'},
+      viewLimits      => $track->{'viewLimits'} || $config->{'viewLimits'},
+      maxHeightPixels => $track->{'maxHeightPixels'} || $config->{'maxHeightPixels'},
       %options
     };
 
