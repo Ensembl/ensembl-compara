@@ -70,6 +70,8 @@ sub test_new_from_newick {
 }
 
 subtest 'new_from_newick' => sub {
+    #ok(1); return;
+
     test_new_from_newick(
         '((homo_sapiens,(genus_species,mus_musculus))my_name,danio_rerio)',
         '((134,150),154)',
