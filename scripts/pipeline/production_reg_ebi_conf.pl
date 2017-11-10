@@ -276,6 +276,16 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -group => 'core',
+    -species => 'ancestral_sequences',
+    -dbname => 'ensembl_ancestral_91',
+);
+
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -group => 'core',
     -species => 'ancestral_curr',
     -dbname => 'ensembl_ancestral_91',
 );
