@@ -138,7 +138,9 @@ use Getopt::Long;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 no warnings 'uninitialized';
 
@@ -221,6 +223,12 @@ else {
     );
     $compara_dba = $reg->get_DBAdaptor( $default_aln_alias, 'compara' );
 }
+
+# When run on a production database, the connections to the core databases
+# will have disconnect_when_inactive set to 1.
+map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+
+Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
 
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
 my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_production_name();
