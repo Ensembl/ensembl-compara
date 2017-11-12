@@ -271,9 +271,9 @@ foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
-  open(FASTA, ">$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
+  open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
   print FASTA ">ANCESTOR_for_", $slice->name, "\n";
-  open(BED, ">$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
+  open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   my $num_of_blocks = 0;
   for (my $start = 1; $start <= $length; $start += $step) {
     my $end = $start + $step - 1;
