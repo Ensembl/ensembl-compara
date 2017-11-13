@@ -46,29 +46,51 @@ package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CheckSketches;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use Data::Dumper;
 
 sub fetch_input {
 	my $self = shift;
 
 	my $collection = $self->param('collection');
 	my $species_set_id = $self->param('species_set_id');
+	my $genome_db_ids = $self->param('genome_db_ids');
 
-	die "Need either collection or species_set_id defined!" unless ( $collection || $species_set_id );
+	die "Need either collection, species_set_id or genome_db_ids defined!" unless ( $collection || $species_set_id || $genome_db_ids );
 
 	my $dba = $self->compara_dba;
+	my $gdb_adaptor = $dba->get_GenomeDBAdaptor;
 	my $ss_adaptor = $dba->get_SpeciesSetAdaptor;
-	my $species_set;
-	if ( $collection ) {
-		$species_set = $ss_adaptor->fetch_collection_by_name($collection);
-	} elsif ( $species_set_id ) {
-		$species_set = $ss_adaptor->fetch_by_dbID($species_set_id);
-		$self->param('collection', $species_set->name); # set this for file naming later
+
+	my @genome_dbs;
+	if ( $genome_db_ids ) {
+		foreach my $gdb_id ( @$genome_db_ids ) {
+			my $this_gdb = $gdb_adaptor->fetch_by_dbID( $gdb_id );
+			push( @genome_dbs, $this_gdb );
+		}
+	} else {
+		my $species_set;
+		if ( $collection ) {
+			$species_set = $ss_adaptor->fetch_collection_by_name($collection);
+		} elsif ( $species_set_id ) {
+			$species_set = $ss_adaptor->fetch_by_dbID($species_set_id);
+			$self->param('collection', $species_set->name); # set this for file naming later
+		}
+		@genome_dbs = @{ $species_set->genome_dbs };
 	}
 	
+	# # add any optional outgroups
+	# if ( $self->param('outgroup_gdbs') ) {
+	# 	foreach my $gdb_id ( @{ $self->param('outgroup_gdbs') } ) {
+	# 		my $this_gdb = $gdb_adaptor->fetch_by_dbID( $gdb_id );
+	# 		die "Outgroup species genome_db $gdb_id could not be found in the database" unless $this_gdb;
+	# 		push( @genome_dbs, $this_gdb );
+	# 	}
+	# }
 
+	# print "\n\nGENOME_DBS:\n";
+	# print Dumper \@genome_dbs;
 
-
-	$self->param( 'genome_dbs', $species_set->genome_dbs );
+	$self->param( 'genome_dbs', \@genome_dbs );
 }
 
 sub run {
@@ -79,8 +101,14 @@ sub run {
 
 	foreach my $gdb ( @{ $self->param_required('genome_dbs') } ) {
 		my $mash_path = $self->mash_file_from_gdb($gdb);
-		push( @gdb_ids_no_sketch, {genome_db_id => $gdb->dbID, genome_dump_file => "${mash_path}.fa"} ) unless -e $mash_path;
-		push( @path_list, $mash_path );
+
+		if ( -e $mash_path ) {
+			push( @path_list, $mash_path );
+		} else {
+			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, genome_dump_file => "$mash_path.fa"} ) unless -e $mash_path;
+			push( @path_list, "$mash_path.fa.msh" );
+		}
+		
 	}
 	$self->param('missing_sketch_gdb_ids', \@gdb_ids_no_sketch);
 	$self->param('mash_file_list', \@path_list);
@@ -89,9 +117,7 @@ sub run {
 sub write_output {
 	my $self = shift;
 
-	foreach my $gdb_id ( @{ $self->param('missing_sketch_gdb_ids') } ) {
-		$self->dataflow_output_id( { genome_db_id => $gdb_id }, 2 );
-	}
+	$self->dataflow_output_id( $self->param('missing_sketch_gdb_ids'), 2 );
 	my $input_file = join(' ', @{ $self->param('mash_file_list') });
 	$self->dataflow_output_id( { input_file => $input_file, out_prefix => $self->param('collection') }, 1 );
 }
@@ -102,7 +128,7 @@ sub mash_file_from_gdb {
 
 	my $sketch_dir = $self->param_required('sketch_dir');
 	my $prefix = $gdb->name . "." . $gdb->assembly;
-	my @found_files = glob "$sketch_dir/$prefix.*";
+	my @found_files = glob "$sketch_dir/$prefix.*msh";
 	return $found_files[0] if $found_files[0];
 	return "$sketch_dir/$prefix"; # to pass to dump_genome
 }

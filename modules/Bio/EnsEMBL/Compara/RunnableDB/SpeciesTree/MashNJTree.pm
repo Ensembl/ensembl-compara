@@ -43,6 +43,8 @@ Create a neighbour-joining tree from 'mash dist -t' output
 	   unique in our set of species (naked mole rat, for example)
 	2. run rapidnj
 	3. replace genome_db_ids with species names
+	4. check for and correct negative branch lengths
+	   http://www.sequentix.de/gelquest/help/neighbor_joining_method.htm
 
 =cut
 
@@ -50,6 +52,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::MashNJTree;
 
 use strict;
 use warnings;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use File::Basename;
+
+use Data::Dumper;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
@@ -68,33 +75,51 @@ sub run {
 
 	my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 	my $rapidnj_exe = $self->param_required('rapidnj_exe');
-	my $output_file = $self->param_required('output_file');
+	# my $output_file = $self->param_required('output_file');
 	my $phylip_file = $self->param_required('phylip_file');
 
 	# run rapidnj
-	my $gdb_tree = $self->worker_temp_directory . '/gdb_tree.nwk';
-	my $rapidnj_cmd = "$rapidnj_exe $phylip_file > $gdb_tree";
+	my $rapidnj_cmd = "$rapidnj_exe $phylip_file --no-negative-length";
 	print " --- CMD: $rapidnj_cmd\n";
-	system($rapidnj_cmd) == 0 or die "Error running cmd: $rapidnj_cmd";
+	my $tree = $self->run_command($rapidnj_cmd)->out;
+
 
 	# replace genome_db_ids with species names
-	open(TREE, '<', $gdb_tree);
-	my $tree = <TREE>;
 	while ( $tree =~ m/gdb([0-9]+)/g ) {
 		my $gdb = $genome_db_adaptor->fetch_by_dbID($1);
 		my $species_name = $gdb->name;
-		$tree =~ s/gdb$1/$species_name/;
+		$tree =~ s/'gdb$1'/$species_name/;
 	}
-	close TREE;
 
-	print "Writing species tree to $output_file...\n";
-	open(SPTREE, '>', $output_file);
-	print SPTREE $tree;
-	close SPTREE;
+	# set output file name based on whether this is the final tree
+	# or one to pass to a create_supertree analysis
+	my $output_file = $self->_output_file_name;
+
+	print "Writing species tree to $output_file...\n" if $self->debug;
+	$self->_spurt( $output_file, $tree );
 }
 
 sub write_output {
 
+}
+
+sub _output_file_name {
+	my $self = shift;
+
+	if ( $self->param('group_on_taxonomy') ) {
+		# this tree is part of a bigger group
+		# place it in the same dir as output_file, if it's defined
+		my ($opf_filename, $opf_dirs, $opf_suffix) = fileparse($self->param('output_file'), qr/\.[^.]*/);
+		my ($msh_filename, $msh_dirs, $msh_suffix) = fileparse($self->param('mash_output_file'), qr/\.[^.]*/);
+
+		my $output_file = '';
+		$output_file .= $opf_dirs || $msh_dirs;
+		$output_file .= "/$msh_filename.nwk";
+		return $output_file;
+	} else {
+		# this is the final tree
+		return $self->param_required('output_file');
+	}
 }
 
 sub phylip_from_mash {
@@ -111,30 +136,37 @@ sub phylip_from_mash {
 
 		my @cols = split( /\s+/, $line );
 		my $filename = shift @cols;
-		my ( $species_name, $assembly_name ) = get_species_info_from_filename($filename);
+		my ( $species_name, $assembly_name ) = $self->_get_species_info_from_filename($filename);
+		print "species_name: $species_name\tassembly_name: $assembly_name\tfilename: $filename\n";
 		my $gdb = $genome_db_adaptor->fetch_by_name_assembly($species_name, $assembly_name);
 
 		my @vals = map {sprintf("%.5f", $_)} @cols;
-		$reformatted_matrix .= padded('gdb' . $gdb->dbID, 10) . "\t";
+		$reformatted_matrix .= $self->_padded('gdb' . $gdb->dbID, 10) . "\t";
 		$reformatted_matrix .= join("\t", @vals) . "\n";
 	}
 	close DISTS;
 
+	# spurt
 	open( PHY, '>', $phylip_file );
 	print PHY "    $species_count\n" . $reformatted_matrix;
 	close PHY;
 }
 
-sub get_species_info_from_filename {
-	my $filename = shift;
+sub _get_species_info_from_filename {
+	my $self = shift;
+	my $basefile = shift;
 
+	my ($filename, $filepath) = fileparse($basefile);
+
+	# parse species name and assembly name from filename
+	# e.g. octodon_degus.OctDeg1.0.fa.gz.msh => (octodon_degus, OctDeg1.0)
 	$filename =~ m/(^[A-Za-z_0-9]+)\.([A-Za-z0-9_\-\.]+)\.fa/;
 	# print STDERR "filename: $filename; species name: $1; assembly: $2\n";
 	return ($1, $2);
 }
 
-sub padded {
-	my ( $str, $max_len ) = @_;
+sub _padded {
+	my ( $self, $str, $max_len ) = @_;
 
 	my $to_pad = $max_len - length($str);
 	return $str . (' 'x$to_pad);

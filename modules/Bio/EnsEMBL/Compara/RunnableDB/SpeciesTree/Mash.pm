@@ -42,9 +42,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::Mash;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+# use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
-sub run {
+sub fetch_input {
 	my $self = shift;
 
 	# for use when chaining multiple mash commands together in a pipeline
@@ -63,12 +64,17 @@ sub run {
 	$mash_cmd .= $self->mash_sketch_options if $mode eq 'sketch';	
 	
 	print "\nMASH CMD: $mash_cmd\n\n";
-	system($mash_cmd) == 0 or die "Error running command: $mash_cmd";
+	# replace with $self->run_command
+	# may need to spurt the output as using the arrayref input does not allow for redirection of STDOUT
+	# system($mash_cmd) == 0 or die "Error running command: $mash_cmd";
 	unlink $input_file if $self->param('cleanup_input_file');
+
+	$self->param( 'cmd', $mash_cmd );
 }
 
 sub write_output {
 	my $self = shift;
+	$self->SUPER::write_output;
 
 	return unless $self->param('dataflow_branch');
 	$self->dataflow_output_id( { mash_output_file => $self->param('mash_output_file') }, $self->param('dataflow_branch') );
@@ -118,7 +124,7 @@ sub mash_sketch_options {
 	
 	my $input_file = $self->param_required('input_file');
 	my $out_dir = $self->param('out_dir');
-	my $out_prefix = $self->param_required('out_prefix');
+	my $out_prefix = $self->param('out_prefix');
 
 	my $mash_cmd = '';
 	$mash_cmd .= '-s ' . $self->param('sketch_size') . ' ' if $self->param('sketch_size');
