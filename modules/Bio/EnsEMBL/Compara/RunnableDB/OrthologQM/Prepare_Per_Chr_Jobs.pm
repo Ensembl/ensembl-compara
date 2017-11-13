@@ -49,7 +49,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
+use DBI qw(:sql_types);
+
 use base 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs';
 
 
@@ -91,17 +94,7 @@ sub fetch_input {
   $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
   $self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
 
-  my $ref_species_dbid = $self->param('ref_species_dbid');
-  $self->param('mlss_check', 0); # will be use to check if the mlss exist the reuse db ortherwise the goc for this mlss will be recalculated
-  #this variables name was change to 'goc_reuse_db' as it was getting mixed up with another variable. The old name was left here to make it compatible with older runs of the runnable.
-
-  if ($self->param('goc_reuse_db') ) {
     my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
-    my $prev_release_mlss_id = $mlss->get_tagvalue('prev_release_mlss_id');
-    print "\n\n  curr_release_mlss_id   :  $mlss_id  , and , prev_release_mlss_id :  $prev_release_mlss_id\n\n" if ( $self->debug >3 );
-
-    if (defined $prev_release_mlss_id) {
-      $self->param('mlss_check', 1);
 
   #preload all gene members to make quering the homologs faster later on
       my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
@@ -115,26 +108,47 @@ sub fetch_input {
       }
       $self->param('preloaded_homologs', $preloaded_homologs_hashref);
 
+      $self->fetch_reuse;
+}
+
+
+sub fetch_reuse {
+    my $self = shift;
+    my $mlss_id = $self->param('goc_mlss_id');
+
+    # Is there a reuse_database to use ?
+    return unless $self->param('goc_reuse_db');
+
   # now we create a hash object of homology id mapping for this mlss id 
       my $query = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping where mlss_id = $mlss_id";
       my $hID_map = $self->compara_dba->dbc->db_handle->selectall_arrayref($query);
+      return unless @$hID_map;
+
+      print "\n\n  curr_release_mlss_id   :  $mlss_id : ".scalar(@$hID_map)." homologies mapped\n\n" if ( $self->debug >3 );
       my %homologyID_map = map { $_->[0] => $_->[1] } @{$hID_map} ;
       $self->param('homologyID_map', \%homologyID_map);
-    
+
     #now we will query the ortholog_goc_metric table uploaded from from the previous db using the prev mlss id that maps to the new mlss id
-      my $sql = "select homology_id, goc_score, left1, left2, right1, right2 from prev_rel_goc_metric ogm
-              join prev_rel_gene_member gm using (gene_member_id) where gm.genome_db_id = $ref_species_dbid and method_link_species_set_id = $prev_release_mlss_id";
-      my $prev_goc_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, "homology_id");
+    #since there are a lot of homology_ids to query, use split_and_callback to do it by manageable chunks
+    my $prev_goc_hashref = {};
+    $self->param('homolog_adaptor')->split_and_callback( [values %{$self->param('homologyID_map')}], 'homology_id', SQL_INTEGER, sub {
+            my $homology_id_constraint = shift;
+            # The homology_id mapping is done on gene_member stable_ids
+            my $sql = "SELECT homology_id, stable_id, goc_score, left1, left2, right1, right2 FROM prev_rel_goc_metric ogm
+                       JOIN prev_rel_gene_member gm USING (gene_member_id) WHERE $homology_id_constraint";
+            my $part_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, ['homology_id', 'stable_id']);
+            $prev_goc_hashref->{$_} = $part_hashref->{$_} for keys %$part_hashref;
+        });
       print Dumper($prev_goc_hashref) if ( $self->debug >5 );
+      # Will be used to check whether we have some reuse data
       $self->param('prev_goc_hashref', $prev_goc_hashref);
-    }
-  }
 }
+
 
 sub run {
   my $self = shift;
   print "the runnable Prepare_Per_Chr_Jobs ----------start \n mlss_id ---->   ", $self->param('goc_mlss_id')   if ( $self->debug >3);
-  if ($self->param('mlss_check')) {
+  if ($self->param('prev_goc_hashref')) {
     $self->_reusable_species();
     $self->_insert_goc_scores();
   }
@@ -165,10 +179,11 @@ sub _reusable_species {
 
       if ( defined $prev_homology_id) {
         my $curr_homology_obj = $self->param('preloaded_homologs')->{$curr_homology_id};
-        my $curr_ref_gmem_dbID = $curr_homology_obj->get_all_GeneMembers($self->param('ref_species_dbid'))->[0]->dbID;
+        my $curr_ref_gmem = $curr_homology_obj->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
+        my $curr_ref_gmem_dbID = $curr_ref_gmem->dbID;
 
         #now we will query the prev_goc_hashref gotten from the previous db using the prev homology id that maps to the new homology id
-        my $homology_goc_score = $self->param('prev_goc_hashref')->{$prev_homology_id};
+        my $homology_goc_score = $self->param('prev_goc_hashref')->{$prev_homology_id}->{$curr_ref_gmem->stable_id};
 
         if (! defined $homology_goc_score->{'goc_score'} ) {
           $count_new_homologs +=1;
