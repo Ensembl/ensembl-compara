@@ -1738,6 +1738,7 @@ sub random_binarize_node {
 
         # Create new internal node attached to N
         my $newNode = $node->copy_node();
+        $newNode->adaptor($node->adaptor) if $node->adaptor;
 
         # Attach A & B to I
         # A & B will be automatically removed from previous parent
