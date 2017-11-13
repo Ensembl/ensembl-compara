@@ -22,16 +22,21 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Getopt::Long;
+use File::Slurp;
 
-my ( $help, $reg_conf, $master, $new, $dry_run, @mlss_ids );
+my ( $help, $reg_conf, $master, $new, $dry_run, @mlss_ids, $mlss_file );
 GetOptions(
-    "help"       => \$help,
-    "reg_conf=s" => \$reg_conf,
-    "master=s"   => \$master,
-    "new=s"      => \$new,
-    "dry_run!"   => \$dry_run,
-    "mlss_id=i@" => \@mlss_ids,
+    "help"        => \$help,
+    "reg_conf=s"  => \$reg_conf,
+    "master=s"    => \$master,
+    "new=s"       => \$new,
+    "dry_run!"    => \$dry_run,
+    "mlss_id=i@"  => \@mlss_ids,
+    "mlss_file=s" => \$mlss_file,
 );
+
+@mlss_ids = read_file($mlss_file) if $mlss_file;
+die &helptext if ( $help || !($master && $new && @mlss_ids) );
 
 my @tables = (
 	'dnafrag',
@@ -53,8 +58,10 @@ my $new_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $n
 my (%mlss_ids, %ss_ids, %gdb_ids);
 
 my $master_mlss_adaptor = $master_dba->get_MethodLinkSpeciesSetAdaptor;
+chomp @mlss_ids;
 foreach my $mlss_id ( @mlss_ids ) {
 	my $master_mlss = $master_mlss_adaptor->fetch_by_dbID($mlss_id); 
+	print "Cannot find $mlss_id in master!\n" unless $master_mlss;
 	$mlss_ids{$mlss_id} = $master_mlss->name;
 	
 	my $master_ss   = $master_mlss->species_set;
@@ -80,17 +87,29 @@ $helper->transaction(
 sub summarise_copy_data {
 	# my ( $mlss_ids, $ss_ids, $gdb_ids ) = @_;
 
+	print "method_link_species_sets:\n";
+	my $mlss_count = 0;
 	foreach my $mlss_name ( values %mlss_ids ) {
-		print "Will be copying method_link_species_set '$mlss_name'\n";
+		print "\t- will be copying '$mlss_name'\n";
+		$mlss_count++;
 	}
+	print "total method_link_species_sets: $mlss_count\n\n";
 
+	print "species_sets:\n";
+	my $ss_count = 0;
 	foreach my $ss_name ( values %ss_ids ) {
-		print "Will be copying species_set '$ss_name'\n";
+		print "\t- will be copying '$ss_name'\n";
+		$ss_count++;
 	}
+	print "total species_sets: $ss_count\n\n";
 
+	print "genome_dbs:\n";
+	my $gdb_count = 0;
 	foreach my $gdb_name ( values %gdb_ids ) {
-		print "Will be copying genome_db '$gdb_name' + dnafrags\n";
+		print "\t- will be copying '$gdb_name' + dnafrags\n";
+		$gdb_count++;
 	}
+	print "total genome_dbs: $gdb_count\n\n";
 }
 
 sub perform_copy {
@@ -128,5 +147,19 @@ sub perform_copy {
 	    );
 	}
 	1;
+}
+
+sub helptext {
+	my $msg = <<HELPEND;
+
+Usage: populate_from_master_only.pl <options>
+	--reg_conf   registry config file
+	--master     registry alias or url to master database
+	--new        registry alias or url to the destination db
+	--mlss_id    method_link_species_set_id(s) to copy (--mlss_id 123 --mlss_id 456, etc)
+	--dry_run    don't write to the database
+
+HELPEND
+	return $msg;
 }
 

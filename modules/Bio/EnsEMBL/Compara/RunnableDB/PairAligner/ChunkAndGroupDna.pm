@@ -118,6 +118,7 @@ sub write_output
   #to parallelise the storing of sequences in the Sequence table.
   if ($self->param('flow_chunksets')) {
       my $dna_objects = $self->param('dna_collection')->get_all_DnaFragChunkSets;
+      die "No chunks were found" if ( scalar @$dna_objects < 1 );
       foreach my $dna_object (@$dna_objects) {
           my $hash_output = { 'chunkSetID' => $dna_object->dbID };
 	    # Use branch2 to send data to StoreSequence:
@@ -188,7 +189,8 @@ sub create_chunks
   my %single_fetch_components = ('PT' => 1, 'MT' => 1);
   if ($self->param('only_cellular_component') and $single_fetch_components{$self->param('only_cellular_component')}){
       # Optimization: for these components, we expect there is a single seq_region
-      push(@$chromosomes, $SliceAdaptor->fetch_by_region('toplevel', $self->param('only_cellular_component')));
+      my $this_slice = $SliceAdaptor->fetch_by_region('toplevel', $self->param('only_cellular_component'));
+      push(@$chromosomes, $this_slice);
 
   } elsif(defined $self->param('region')) {
     #Support list of regions
