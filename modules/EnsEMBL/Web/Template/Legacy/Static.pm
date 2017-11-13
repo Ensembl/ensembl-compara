@@ -43,6 +43,9 @@ sub init {
     $self->{'tabs'}           = 0;
   }
 
+  ## Elixir banner on home page
+  $self->{'show_banner'} = 1 if ($here eq '/index.html');
+
   $self->add_head;
   $self->add_body;
 }
@@ -91,6 +94,15 @@ sub add_body {
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
+  ));
+
+  if ($self->{'show_banner'}) {
+    $page->add_body_elements(qw(
+      bottom_banner  EnsEMBL::Web::Document::Element::BottomBanner
+    ));
+  }
+
+  $page->add_body_elements(qw(
     tmp_message      EnsEMBL::Web::Document::Element::TmpMessage
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));
