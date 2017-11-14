@@ -79,16 +79,14 @@ sub param_defaults {
 sub fetch_input{
     my $self = shift;
 #    $self->debug(1);
-    $self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
-    $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
-    $self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
 
     # Preload all the homologies
   my $preloaded_homologs_hashref;
+  my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
   while (my ($dnafrag_id, $homologies_dbID_list) = each(%{$self->param('chr_job')}) ) {
 
 #preload all gene members to make quering the homologs faster later on
-    my $homologs = $self->param('homolog_adaptor')->fetch_all_by_dbID_list($homologies_dbID_list);
+    my $homologs = $homology_adaptor->fetch_all_by_dbID_list($homologies_dbID_list);
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologs->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologs);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologs->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
 

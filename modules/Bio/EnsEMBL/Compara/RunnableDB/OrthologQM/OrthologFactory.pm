@@ -65,13 +65,9 @@ sub fetch_input {
 	print "mlss_id is ------------------  ", $self->param_required('goc_mlss_id'), " ------------- \n\n" if ( $self->debug );
 	print Dumper($self->compara_dba) if ( $self->debug );
 
-	$self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
-	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
-	$self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
-
 	my $species1_dbid;
 	my $species2_dbid;
-	my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($self->param_required('goc_mlss_id'));
+	my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('goc_mlss_id'));
 	my $speciesSet_obj= $mlss->species_set();
 	my $speciesSet = $speciesSet_obj->genome_dbs();
 	
@@ -81,7 +77,7 @@ sub fetch_input {
 	}
 
     $self->dbc and $self->dbc->disconnect_if_idle();
-	my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
+	my $homologs = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 	print "This is the returned homologs \n " if ( $self->debug >4);
 	print Dumper($homologs) if ( $self->debug >4); 
 	my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $homologs);

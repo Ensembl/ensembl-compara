@@ -90,14 +90,12 @@ sub fetch_input {
   my $self = shift;
   $self->debug(4);
   print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs --------------------------------START  \n  " if ( $self->debug );
-  my $mlss_id = $self->param_required('goc_mlss_id');
-  $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
-  $self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
 
-    my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
+  my $mlss_id = $self->param_required('goc_mlss_id');
+  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 
   #preload all gene members to make quering the homologs faster later on
-      my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
+      my $homologs = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
       my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologs->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologs);
       Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologs->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
       my $preloaded_homologs_hashref;
@@ -131,7 +129,7 @@ sub fetch_reuse {
     #now we will query the ortholog_goc_metric table uploaded from from the previous db using the prev mlss id that maps to the new mlss id
     #since there are a lot of homology_ids to query, use split_and_callback to do it by manageable chunks
     my $prev_goc_hashref = {};
-    $self->param('homolog_adaptor')->split_and_callback( [values %{$self->param('homologyID_map')}], 'homology_id', SQL_INTEGER, sub {
+    $self->compara_dba->get_HomologyAdaptor->split_and_callback( [values %{$self->param('homologyID_map')}], 'homology_id', SQL_INTEGER, sub {
             my $homology_id_constraint = shift;
             # The homology_id mapping is done on gene_member stable_ids
             my $sql = "SELECT homology_id, stable_id, goc_score, left1, left2, right1, right2 FROM prev_rel_goc_metric ogm
