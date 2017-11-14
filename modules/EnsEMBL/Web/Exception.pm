@@ -43,12 +43,12 @@ sub new {
   ## @param Hashref with keys: type, message and data
   my ($class, $params) = @_;
 
-  $params = {'message' => "$params"} unless ref $params && ref $params eq 'HASH';
+  $params = _normalize_exception_object($params || {});
 
   # build and save stack trace
   my $i = 0;
   my $stack = [];
-  while (my @caller = caller($i++)) { ## TODO - check rules followed by carp croak
+  while (my @caller = caller($i++)) {
     next if $caller[0] eq 'EnsEMBL::Web::Exceptions' || $caller[3] =~ /^EnsEMBL::Web::Exceptions::/ || UNIVERSAL::isa($caller[0], __PACKAGE__);
     push @$stack, [splice @caller, 0, 4];
   }
@@ -133,6 +133,46 @@ sub to_string {
     $self->{'_message'} ? sprintf(" '%s'", $self->{'_message'}) : '',
     $self->stack_trace
   );
+}
+
+sub _normalize_exception_object {
+  ## @private
+  ## Converts external exceptions caught by try/catch into arguments as excepted by EnsEMBL::Web::Exception->new
+  ## @param Object, possible an external exception object
+  ## @return Hashref (as excepted by EnsEMBL::Web::Exception->new)
+  my $object  = shift;
+  my $ref     = ref $object;
+
+  # string only
+  if (!$ref) {
+    if ($object =~ /\n\-+\s*EXCEPTION\s*\-+\n/) {
+      return {
+        'type'    => 'APIException',
+        'message' => $object
+      };
+    }
+
+    return {
+      'message' => $object
+    };
+  }
+
+  # standard hash as expected
+  if ($ref eq 'HASH') {
+    return $object;
+  }
+
+  # ORM exceptions
+  if (UNIVERSAL::isa($object, 'ORM::EnsEMBL::Utils::Exception')) {
+    return {
+      'type'    => $object->type,
+      'message' => $object->message,
+    };
+  }
+
+  # any other exception for which we don't have a rule
+  warn sprintf q(Recommendation: No rule found to convert exception of type %s to %s. To improve verbosity, add a rule to %2$s::_normalize_exception_object.%s), $ref, __PACKAGE__, "\n";
+  return {'message' => "$object"};
 }
 
 1;
