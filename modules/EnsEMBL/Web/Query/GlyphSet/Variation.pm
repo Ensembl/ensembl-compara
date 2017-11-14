@@ -192,6 +192,9 @@ sub fetch_features {
   return [] unless $vdb;
   my $orig_failed_flag = $vdb->include_failed_variations;
   $vdb->include_failed_variations(0);
+
+  # dont calculate consequences over a certain slice length
+  my $no_cons = $slice_length > 1e4 ? 1 : 0;
  
   my $snps;
   # different retrieval method for somatic mutations
@@ -230,10 +233,10 @@ sub fetch_features {
       my $vcf_id = $id;
       $vcf_id =~ s/^variation_vcf_//;
       if(my $vc = $vca->fetch_by_id($vcf_id)) {
-        @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice, $slice_length > 1e4 ? 1 : 0)};
+        @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice, $no_cons)};
       }
     } else {
-      my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_SO_terms($slice) || []}; 
+      my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_constraint($slice, undef, $no_cons) || []};
       
       ## Add a filtering step here
       # Make "most functional" snps appear first; filter by source/set
