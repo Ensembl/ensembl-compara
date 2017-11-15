@@ -40,9 +40,10 @@ sub initialize_new {
   my $v                 = $object->selected_variation_feature_mapping;
   my $variation_feature = $object->get_selected_variation_feature;
   my $variation_string  = $variation_feature->ambig_code || '[' . $variation_feature->allele_string . ']';
-  my $chr_end           = $variation_feature->slice->end;
+  my $chr_end           = $variation_feature->slice->seq_region_Slice->end;
   my $slice_start       = $v->{'start'} - $flank[0] > 1        ? $v->{'start'} - $flank[0] : 1;
   my $slice_end         = $v->{'end'}   + $flank[1] > $chr_end ? $chr_end                  : $v->{'end'} + $flank[1];
+
   my $slice_adaptor     = $hub->get_adaptor('get_SliceAdaptor');
   my @order             = $v->{'strand'} == 1 ? qw(up var down) : qw(down var up);
   my @sequence;
