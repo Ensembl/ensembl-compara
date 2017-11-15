@@ -346,6 +346,7 @@ sub add_variations {
     }
 
     my $vf    = $transcript_variation->variation_feature;
+    $vf       = $vf->transfer($slice) if ($vf->slice + 0) ne ($slice + 0);
     my $name  = $vf->variation_name;
     my $start = $vf->start - 1;
     my $end   = $vf->end   - 1;
