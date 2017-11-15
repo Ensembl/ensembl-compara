@@ -297,7 +297,7 @@ sub make_table {
       v      => undef # remove the 'v' param from the links if already present
     }
   },{
-    _key => 'vf', _type => 'numeric unshowable no_filter'
+    _key => 'vf', _type => 'string unshowable no_filter'
   },{
     _key => 'location', _type => 'position unshowable',
     label => 'Location', sort_for => 'chr',
@@ -571,8 +571,7 @@ sub variation_table {
 
           my $variation_name = $vf->variation_name;
           my $vf_dbID = $vf->dbID;
-          my $url = ";vf=".$vf_dbID;
-          $row->{'ID'} = $vf_dbID;
+          $row->{'ID'} = $variation_name;
           my $source = $vf->source_name;
           $row->{'Source'} = $source;
 
