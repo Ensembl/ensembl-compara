@@ -132,9 +132,7 @@ sub fetch_reuse {
     my $prev_goc_hashref = {};
     $self->compara_dba->get_HomologyAdaptor->split_and_callback( [values %{$self->param('homologyID_map')}], 'homology_id', SQL_INTEGER, sub {
             my $homology_id_constraint = shift;
-            # The homology_id mapping is done on gene_member stable_ids
-            my $sql = "SELECT homology_id, stable_id, goc_score, left1, left2, right1, right2 FROM prev_rel_goc_metric ogm
-                       JOIN prev_rel_gene_member gm USING (gene_member_id) WHERE $homology_id_constraint";
+            my $sql = "SELECT * FROM prev_ortholog_goc_metric WHERE $homology_id_constraint";
             my $part_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, ['homology_id', 'stable_id']);
             $prev_goc_hashref->{$_} = $part_hashref->{$_} for keys %$part_hashref;
         });

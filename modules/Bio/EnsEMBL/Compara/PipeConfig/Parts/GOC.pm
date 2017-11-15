@@ -53,29 +53,19 @@ sub pipeline_analyses_goc {
         {   -logic_name => 'goc_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
+                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table']),
                 'A->1' => WHEN( '#goc_mlss_id#' => 'compute_goc',
                                 ELSE 'goc_group_genomes_under_taxa' ),
             },
         },
 
         {   -logic_name => 'copy_prev_goc_score_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
             -parameters => {
-                'src_db_conn'   => '#goc_reuse_db#',
-                'mode'          => 'overwrite',
-                'table'         => 'ortholog_goc_metric',
-                'renamed_table' => 'prev_rel_goc_metric',
-            },
-        },
-
-        {   -logic_name => 'copy_prev_gene_member_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#goc_reuse_db#',
-                'mode'          => 'overwrite',
-                'table'         => 'gene_member',
-                'renamed_table' => 'prev_rel_gene_member'
+                'db_conn'       => '#goc_reuse_db#',
+                'table'         => 'prev_ortholog_goc_metric',
+                # This query will transform gene_member_id into stable_id
+                'inputquery'    => 'SELECT method_link_species_set_id, homology_id, stable_id, goc_score, left1, left2, right1, right2 FROM ortholog_goc_metric JOIN gene_member USING (gene_member_id)',
             },
         },
 
