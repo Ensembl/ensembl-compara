@@ -158,13 +158,7 @@ sub content_results {
     }
 
     # Population external links
-    my $pop_url;
-    if ($pop_name =~ /^1000GENOMES/) {
-      $pop_url = $self->hub->get_ExtURL_link($pop_label, '1KG_POP', $pop_name);
-    }
-    else {
-      $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_label, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
-    }
+    my $pop_url = $self->pop_link($pop_name, $pop_dbSNP, $pop_label);
 
     my @ld_values = @{$ldfca->fetch_by_VariationFeatures(\@vfs, $ld_population)->get_all_ld_values()};  
     foreach my $hash (@ld_values) {

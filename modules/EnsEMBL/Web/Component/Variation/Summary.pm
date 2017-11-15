@@ -212,7 +212,7 @@ sub variation_source {
   my $source_prefix = 'View in';
 
   # Source link
-  if ($source =~ /dbSNP/) {
+  if ($source =~ /dbSNP/ && $hub->species eq 'Homo_sapiens') {
     $sname       = 'DBSNP';
     $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
   } elsif ($source =~ /ClinVar/i) {
@@ -242,7 +242,7 @@ sub variation_source {
   }  elsif ($source =~ /PhenCode/) {
      $sname       = 'PHENCODE';
      $source_link = $hub->get_ExtURL_link("$source_prefix PhenCode", $sname, $name);
-} else {
+  } else {
     $source_link = $url ? qq{<a href="$url" class="constant">$source_prefix $source</a>} : "$source $version";
   }
   
@@ -324,18 +324,21 @@ sub synonyms {
 
     next if ($db =~ /(Affy|Illumina|HGVbase|TSC|dbSNP\sHGVS)/i);
 
-    if ($db =~ /dbsnp rs/i) { # Glovar stuff
-      @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
-    }
-    elsif ($db =~ /dbsnp hgvs/i) {
-      @urls = sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @ids;
-    }    
-    elsif ($db =~ /dbsnp/i) {
-      foreach (@ids) {
-        next if /^ss/; # don't display SSIDs - these are useless
-        push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
+    # dbSNP
+    if ($db =~ /dbsnp/i && $hub->species eq 'Homo_sapiens') {
+      if ($db =~ /dbsnp rs/i ) { # Glovar stuff
+        @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
       }
-      next unless @urls;
+      elsif ($db =~ /dbsnp hgvs/i) {
+        @urls = sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @ids;
+      }
+      elsif ($db =~ /dbsnp/i) {
+        foreach (@ids) {
+          next if /^ss/; # don't display SSIDs - these are useless
+          push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
+        }
+        next unless @urls;
+      }
     }
     elsif ($db =~ /clinvar/i) {
       @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
