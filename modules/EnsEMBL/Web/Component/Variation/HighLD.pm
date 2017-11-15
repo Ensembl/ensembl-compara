@@ -149,13 +149,7 @@ sub summary_table {
     }
 
     # Population external links
-    my $pop_url;
-    if ($pop_name =~ /^1000GENOMES/) { 
-      $pop_url = $self->hub->get_ExtURL_link($pop_label, '1KG_POP', $pop_name);
-    }
-    else {
-      $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_label, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
-    }
+    my $pop_url = $self->pop_link($pop_name, $pop_dbSNP, $pop_label);
     
     my $row = {
       name    => $pop_url,
