@@ -39,7 +39,6 @@ use HTML::Entities        qw(encode_entities);
 use JSON                  qw(to_json);
 use Text::Wrap;
 use Time::HiRes           qw(gettimeofday);
-use URI::Escape           qw(uri_escape uri_unescape);
 use Apache2::RequestUtil;
 
 use parent qw(EnsEMBL::Root);
