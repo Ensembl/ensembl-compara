@@ -539,13 +539,13 @@ sub get_all_sorted_nodes {
 sub get_all_nodes_by_tag_value {
   my $self  = shift;
   my $tag   = shift || die( "Need a tag name" );
+  my $test_value = scalar(@_);
   my $value = shift;
   my @found;
   foreach my $node( @{$self->get_all_nodes} ){
-    my $tval = $node->get_value_for_tag($tag);
-    if( defined $tval and $value ? $tval eq $value : 1 ){
-      push @found, $node;
-    }
+      if ($node->has_tag($tag) && (!$test_value || ($node->get_value_for_tag($tag) eq $value))) {
+          push @found, $node;
+      }
   }
   return [@found];
 }
