@@ -58,7 +58,7 @@ sub new {
     '_message' => $params->{'message'}  || '',
     '_data'    => $params->{'data'}     || undef,
     '_stack'   => $stack
-  }, $class;
+  }, $params->{'package'} || $class;
 }
 
 sub handle {
@@ -89,6 +89,7 @@ sub isa {
   ## @return True if the exception object contains the given type in its type string or if it is inherited from the given class, false otherwise
   my ($self, $type) = @_;
   return 1 if $self->type eq $type;
+  return 1 if ref($self) =~ /::$type$/;
   return $self->SUPER::isa($type);
 }
 
@@ -164,9 +165,11 @@ sub _normalize_exception_object {
 
   # ORM exceptions
   if (UNIVERSAL::isa($object, 'ORM::EnsEMBL::Utils::Exception')) {
+    require EnsEMBL::Web::Exception::ORMException;
     return {
       'type'    => $object->type,
       'message' => $object->message,
+      'package' => 'EnsEMBL::Web::Exception::ORMException',
     };
   }
 
