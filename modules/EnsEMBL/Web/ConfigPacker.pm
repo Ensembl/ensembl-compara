@@ -713,7 +713,7 @@ sub _summarise_funcgen_db {
   }
 
   ## Get analysis information about each feature type
-  foreach my $table (qw(probe_feature peak_calling alignment regulatory_build)) {
+  foreach my $table (qw(probe_feature peak_calling feature_set alignment regulatory_build)) {
     my $res_aref = $dbh->selectall_arrayref("select analysis_id, count(*) from $table group by analysis_id");
     
     foreach my $T (@$res_aref) {
