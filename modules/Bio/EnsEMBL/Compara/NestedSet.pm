@@ -487,6 +487,7 @@ sub get_all_nodes {
   my $self = shift;
   my $node_array = shift || [];
 
+  # The recursion is faster than traverse_tree
   push @$node_array, $self;
   foreach my $child (@{$self->children}) {
     no warnings 'recursion';
@@ -512,6 +513,7 @@ sub get_all_sorted_nodes {
   my $self = shift;
   my $node_array = shift || [];
 
+  # The recursion is faster than traverse_tree
   push @$node_array, $self;
   foreach my $child (@{$self->sorted_children}) {
     no warnings 'recursion';
@@ -542,11 +544,12 @@ sub get_all_nodes_by_tag_value {
   my $test_value = scalar(@_);
   my $value = shift;
   my @found;
-  foreach my $node( @{$self->get_all_nodes} ){
+  $self->traverse_tree(sub {
+      my $node = shift;
       if ($node->has_tag($tag) && (!$test_value || ($node->get_value_for_tag($tag) eq $value))) {
           push @found, $node;
       }
-  }
+  });
   return \@found;
 }
 
@@ -566,6 +569,7 @@ sub get_all_subnodes {
   my $self = shift;
 
   my @array;
+  # The recursion is faster than traverse_tree
   foreach my $child (@{$self->children}) {
     push @array, @{$child->get_all_nodes};
   }
@@ -1468,6 +1472,7 @@ sub scale {
   my $self = shift;
   my $scale = shift;
 
+  # This is faster than traverse_tree
   foreach my $node (@{$self->get_all_nodes}) {
     my $bl = $node->distance_to_parent;
     $bl = 0 unless (defined $bl);
@@ -1520,6 +1525,7 @@ sub find_nodes_by_field {
 sub _make_search_index_on_nodes {
     my ($self, $field, $keep_only_one) = @_;
     my %hash = ();
+    # This is faster than traverse_tree
     foreach my $node (@{$self->get_all_nodes}) {
         if ($node->can($field) and (defined $node->$field)) {
             if ($keep_only_one) {
@@ -1549,15 +1555,16 @@ sub find_node_by_node_id {
 sub find_leaves_by_field {
     my ($self, $field, $value) = @_;
 
-    my $acc = [];
-
-    my $leaves = $self->get_all_leaves;
-    for my $leaf (@$leaves) {
-        push @$acc, $leaf if(($leaf->can($field)) && (defined $leaf->$field) && ($leaf->$field eq $value));
-#        return $leaf if(($leaf->can($field)) && (defined $leaf->$field) && ($leaf->$field eq $value));
-    }
-
-    return $acc;
+    my @leaves;
+    $self->traverse_tree(sub {
+        my $node = shift;
+        if ($node->is_leaf && $node->can($field) && (defined $node->$field) && ($node->$field eq $value)) {
+            push @leaves, $node;
+        }
+    });
+    # The original implementation of find_leaves_by_field was calling
+    # get_all_leaves, which sorts the leaves by node_id
+    return [sort {$a->node_id <=> $b->node_id} @leaves];
 }
 
 sub find_leaf_by_name {
@@ -1671,6 +1678,7 @@ sub get_all_leaves {
   my $self = shift;
   
   my $leaves = [];
+  # The recursion is faster than traverse_tree
   $self->_recursive_get_all_leaves($leaves);
   my @leaf_list = sort {$a->node_id <=> $b->node_id} @{$leaves};
   return \@leaf_list;
