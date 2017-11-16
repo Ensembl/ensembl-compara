@@ -547,7 +547,7 @@ sub get_all_nodes_by_tag_value {
           push @found, $node;
       }
   }
-  return [@found];
+  return \@found;
 }
 
 
