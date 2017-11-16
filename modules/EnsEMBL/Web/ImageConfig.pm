@@ -26,6 +26,8 @@ use warnings;
 no warnings "uninitialized";
 
 use Digest::MD5 qw(md5_hex);
+use HTML::Entities qw(encode_entities decode_entities);
+use URI::Escape qw(uri_unescape);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Exceptions qw(WebException);
