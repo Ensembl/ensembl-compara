@@ -36,6 +36,16 @@ sub object {
   return $self->{'object'};
 }
 
+sub initialize {
+  my ($self, $export) = @_;
+  my $object = $self->object;
+  if (ref($object) !~ /Transcript/) {
+    ## Get transcript if not already one (e.g. when exporting)
+    $self->object($object->get_transcript);
+  }
+  return $self->SUPER::initialize($export);
+}
+
 sub content {
   my $self = shift;
   my $external_name = $self->object->Obj->external_name;
