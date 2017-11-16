@@ -44,7 +44,7 @@ sub new {
 
 sub fail_for          { return 60; }
 sub failure_dir       { return $SiteDefs::ENSEMBL_FAILUREDIR; }
-sub min_initial_dead  { return 1; }
+sub min_initial_dead  { return 0; }
 sub successful        { return $_[1]; }
 
 sub attempt {
