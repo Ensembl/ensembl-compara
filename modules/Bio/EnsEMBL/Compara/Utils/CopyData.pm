@@ -104,6 +104,7 @@ our @EXPORT_OK;
 );
 
 use constant MAX_ROWS_FOR_MYSQLIMPORT => 1_000_000;
+use constant MAX_STATEMENT_LENGTH => 1_000_000;             # Related to MySQL's "max_allowed_packet" parameter
 
 use Data::Dumper;
 use File::Temp qw/tempfile/;
@@ -645,7 +646,7 @@ sub bulk_insert {
         $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
         $insert_sql .= ' VALUES ';
         my $first = 1;
-        while (@$data and (length($insert_sql) < 1_000_000)) {
+        while (@$data and (length($insert_sql) < MAX_STATEMENT_LENGTH)) {
             $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {defined $_ ? '"'.$_.'"' : 'NULL'} @{shift @$data}) . ')';
             $first = 0;
         }
