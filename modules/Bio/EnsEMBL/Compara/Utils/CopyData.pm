@@ -44,7 +44,7 @@ For more advanced cases, copy_data() can run an arbitrary query and
 insert its result into another table. Use copy_data() when you need to
 join to another table.
 
-Both copy_data() and copy_table() automatically choose the optimal
+copy_data() automatically chooses the optimal
 transfer mode depending on the type of query and the data types.
 
 =head2 :row_copy export-tag
@@ -93,8 +93,6 @@ our @EXPORT_OK;
     copy_data_in_binary_mode
     copy_data_in_text_mode
     copy_table
-    copy_table_in_binary_mode
-    copy_table_in_text_mode
     bulk_insert
     single_insert
 );
@@ -483,7 +481,7 @@ sub copy_data_in_binary_mode {
 
     #all the data in the table needs to be copied and does not need fixing
     if (!defined $query) {
-        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
+        return copy_table($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
     }
 
     print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
@@ -527,7 +525,7 @@ sub copy_data_in_binary_mode {
         $from_dbc->db_handle->do("ALTER TABLE temp_$table_name RENAME $table_name");
 
         ## mysqldump data
-        copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
+        copy_table($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
         $total_rows += $count;
 
         ## Undo table names change
@@ -563,42 +561,6 @@ sub copy_table {
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     print "Copying data in table $table_name\n" if $debug;
-
-    if (_has_binary_column($from_dbc, $table_name)) {
-        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug);
-    } else {
-        return copy_table_in_text_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $debug);
-    }
-}
-
-
-=head2 copy_table_in_text_mode
-
-  Description : A specialized version of copy_table() for tables that don't have
-                any binary data and can be loaded with mysqlimport.
-
-=cut
-
-sub copy_table_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $debug) = @_;
-
-    my $query = 'SELECT * FROM '.$table_name.($where_filter ? ' WHERE '.$where_filter : '');
-    return copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, undef, undef, undef, undef, undef, $replace, $debug);
-}
-
-
-=head2 copy_table_in_binary_mode
-
-  Description : A specialized version of copy_table() for tables that have binary
-                data, using mysqldump.
-
-=cut
-
-sub copy_table_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug) = @_;
-
-    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
-    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     my $from_user = $from_dbc->username;
     my $from_pass = $from_dbc->password;
