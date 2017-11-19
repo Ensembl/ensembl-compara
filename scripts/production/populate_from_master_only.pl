@@ -117,9 +117,9 @@ sub perform_copy {
 	# copy tables with method_link_species_set_id field
 	my $mlss_id_list = join(',', keys %$mlss_ids);
 	foreach my $table ( 'method_link_species_set','method_link_species_set_tag','method_link_species_set_attr' ) {
-		my $mlss_where = "SELECT * FROM $table WHERE method_link_species_set_id IN ($mlss_id_list)";
+		my $mlss_where = "method_link_species_set_id IN ($mlss_id_list)";
 		# print "Will be copying : $mlss_where\n";
-		copy_data($master_dba->dbc, $new_dba->dbc,
+		copy_table($master_dba->dbc, $new_dba->dbc,
 	        $table,
 	        $mlss_where
 	    );
@@ -128,9 +128,9 @@ sub perform_copy {
 	# copy tables with species_set_id field
 	my $ss_id_list = join(',', keys %$ss_ids);
 	foreach my $table ( 'species_set','species_set_header','species_set_tag' ) {
-		my $ss_where = "SELECT * FROM $table WHERE species_set_id IN ($ss_id_list)";
+		my $ss_where = "species_set_id IN ($ss_id_list)";
 		# print "Will be copying : $ss_where\n";
-		copy_data($master_dba->dbc, $new_dba->dbc,
+		copy_table($master_dba->dbc, $new_dba->dbc,
 	        $table,
 	        $ss_where
 	    );
@@ -139,9 +139,9 @@ sub perform_copy {
 	# copy tables with genome_db_id field
 	my $gdb_id_list = join( ',', keys %$gdb_ids );
 	foreach my $table ( 'genome_db', 'dnafrag' ) {
-		my $gdb_where = "SELECT * FROM $table WHERE genome_db_id IN ($gdb_id_list)";
+		my $gdb_where = "genome_db_id IN ($gdb_id_list)";
 		# print "Will be copying : $gdb_where\n";
-		copy_data($master_dba->dbc, $new_dba->dbc,
+		copy_table($master_dba->dbc, $new_dba->dbc,
 	        $table,
 	        $gdb_where
 	    );

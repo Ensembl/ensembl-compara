@@ -161,9 +161,9 @@ sub importAlignment {
 	      "SELECT species_set_header.* FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE method_link_species_set_id = $mlss_id");
 
     #Copy the method_link_species_set
-    copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
+    copy_table($self->param('from_dbc'), $self->compara_dba->dbc,
 	      "method_link_species_set",
-	      "SELECT * FROM method_link_species_set WHERE method_link_species_set_id = $mlss_id");
+	      "method_link_species_set_id = $mlss_id");
 
     #Copy the species_set
     copy_data($self->param('from_dbc'), $self->compara_dba->dbc,

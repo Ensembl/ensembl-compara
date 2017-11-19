@@ -324,25 +324,19 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy the species_tree_root data if present
-  copy_data($from_dbc, $to_dbc,
+  copy_table($from_dbc, $to_dbc,
             "species_tree_root",
-            "SELECT * " .
-            " FROM species_tree_root" .
-            " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+            "method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_attr table for a method_link_speceies_set_id
-  copy_data($from_dbc, $to_dbc,
+  copy_table($from_dbc, $to_dbc,
           "method_link_species_set_attr",
-          "SELECT mlssa.* " .
-	  "FROM method_link_species_set_attr mlssa" .
-	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+	  "method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
-  copy_data($from_dbc, $to_dbc,
+  copy_table($from_dbc, $to_dbc,
 	  "method_link_species_set_tag",
-	  "SELECT method_link_species_set_id, tag, value" .
-	  " FROM method_link_species_set_tag " .
-	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+	  "method_link_species_set_id = $mlss_id") unless $dry_run;
 
   if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
     copy_genomic_align_blocks($from_dbc, $to_dbc, $method_link_species_set);

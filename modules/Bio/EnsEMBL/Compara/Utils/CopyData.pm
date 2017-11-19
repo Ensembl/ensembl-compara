@@ -41,8 +41,8 @@ without paying attention to the foreign-key constraints. If defined,
 the filter can only be a straight WHERE clause.
 
 For more advanced cases, copy_data() can run an arbitrary query and
-insert its result into another table. Use copy_data() when you cannot
-express the constraint with a WHERE and need a JOIN.
+insert its result into another table. Use copy_data() when you need to
+join to another table.
 
 Both copy_data() and copy_table() automatically choose the optimal
 transfer mode depending on the type of query and the data types.
