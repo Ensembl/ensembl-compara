@@ -641,13 +641,14 @@ sub bulk_insert {
     my ($dest_dbc, $table_name, $data, $col_names, $insertion_mode) = @_;
 
     my $insert_n   = 0;
+    my $to_dbh = $dest_dbc->db_handle;
     while (@$data) {
         my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
         $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
         $insert_sql .= ' VALUES ';
         my $first = 1;
         while (@$data and (length($insert_sql) < MAX_STATEMENT_LENGTH)) {
-            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {defined $_ ? '"'.$_.'"' : 'NULL'} @{shift @$data}) . ')';
+            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {$to_dbh->quote($_)} @{shift @$data}) . ')';
             $first = 0;
         }
         my $this_time = $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
