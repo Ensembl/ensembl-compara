@@ -141,9 +141,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist' => $self->o('epo_mlsses'),
+                'column_names' => [ 'mlss_id', 'from_url' ],
             },
             -flow_into => {
-                2 => { 'merge_an_ancestor' => { 'mlss_id' => '#_0#', 'from_url' => '#_1#' } },
+                2 => [ 'merge_an_ancestor' ],
             },
             -rc_name => 'urgent',
         },
