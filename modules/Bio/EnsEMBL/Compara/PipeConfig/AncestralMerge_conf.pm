@@ -76,6 +76,7 @@ sub default_options {
 	    [ '1102' => 'mysql://ensadmin:'.$self->o('password').'@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_mammals_ancestral_core_91',] # 25 mammals
         ],
 
+        # Redefined so that the database name is *not* prefixed with the user name
         'pipeline_db'   => {
             -driver => $self->o('hive_driver'),
             -host   => $self->o('host'),
