@@ -270,14 +270,14 @@ sub copy_ancestral_data {
     #
     my $name = "Ancestor_" . $mlss_id;
 
-    my $name_sql = "SELECT count(*) FROM seq_region WHERE name LIKE '$name" . "_%'";
+    my $name_sql = "SELECT COUNT(*) FROM seq_region WHERE name LIKE '${name}_%'";
     my $sth = $from_dbc->prepare($name_sql);
     $sth->execute();
     my ($num_sr) = $sth->fetchrow_array();
     $sth->finish;
 
     if ($num_sr == 0) {
-	throw("Invalid seq_region name. Should be of the form: $name" . "_%");
+	throw("Invalid seq_region name. Should be of the form: ${name}_%");
     }
     
     #
@@ -314,7 +314,7 @@ sub copy_ancestral_data {
     #
     #Find min and max seq_region_id
     #
-    my $range_sql = "SELECT min(seq_region_id), max(seq_region_id) FROM seq_region WHERE name LIKE '$name" . "_%'";
+    my $range_sql = "SELECT MIN(seq_region_id), MAX(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
 
     $sth = $from_dbc->prepare($range_sql);
     $sth->execute();
@@ -324,7 +324,7 @@ sub copy_ancestral_data {
     #
     #Create correct number of spaceholder rows in seq_region table in to_db 
     #
-    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region ss WHERE name like '$name" . "_%'";
+    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region ss WHERE name like '${name}_%'";
     copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr);
 
     #
@@ -364,7 +364,7 @@ sub copy_ancestral_data {
     #
     #Copy over the seq_region with new seq_region_ids
     #
-    $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '$name" . "_%'";
+    $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '${name}_%'";
 
     print "copying seq_region in replace mode\n";
     copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, undef, 1);
