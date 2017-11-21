@@ -271,11 +271,7 @@ sub copy_ancestral_data {
     my $name = "Ancestor_" . $mlss_id;
 
     my $name_sql = "SELECT COUNT(*) FROM seq_region WHERE name LIKE '${name}_%'";
-    my $sth = $from_dbc->prepare($name_sql);
-    $sth->execute();
-    my ($num_sr) = $sth->fetchrow_array();
-    $sth->finish;
-
+    my ($num_sr) = $from_dbc->db_handle->selectrow_array($name_sql);
     if ($num_sr == 0) {
 	throw("Invalid seq_region name. Should be of the form: ${name}_%");
     }
@@ -284,42 +280,26 @@ sub copy_ancestral_data {
     #Check coord_system_id the same in from_db and to_db
     #
     my $cs_sql = "SELECT coord_system_id FROM coord_system WHERE name = '$coord_system_name'";
-    $sth = $to_dbc->prepare($cs_sql);
-    $sth->execute();
-    my ($coord_system_id) = $sth->fetchrow_array();
-    $sth->finish;
+    my ($coord_system_id) = $to_dbc->db_handle->selectrow_array($cs_sql);
     #print "cs $coord_system_id\n";
 
     $cs_sql = "SELECT count(*) FROM seq_region WHERE coord_system_id = $coord_system_id";
-    $sth = $from_dbc->prepare($cs_sql);
-    $sth->execute();
-    my ($num_cs) = $sth->fetchrow_array();
-    $sth->finish;
-
+    my ($num_cs) = $from_dbc->db_handle->selectrow_array($cs_sql);
     if ($num_cs == 0) {
 	throw("coord_system_id $coord_system_id does not exist in the production database. This needs to be fixed.");
     }
     
     #Check no clashes in to_db
-    $sth = $to_dbc->prepare($name_sql);
-    $sth->execute();
-    my ($num_to_sr) = $sth->fetchrow_array();
-    $sth->finish;
-
+    my ($num_to_sr) = $to_dbc->db_handle->selectrow_array($name_sql);
     if ($num_to_sr != 0) {
 	throw("Already have names of $name in the production database. This needs to be fixed");
-
     }
 
     #
     #Find min and max seq_region_id
     #
     my $range_sql = "SELECT MIN(seq_region_id), MAX(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
-
-    $sth = $from_dbc->prepare($range_sql);
-    $sth->execute();
-    my ($min_sr, $max_sr) = $sth->fetchrow_array();
-    $sth->finish;
+    my ($min_sr, $max_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
 
     #
     #Create correct number of spaceholder rows in seq_region table in to_db 
@@ -330,18 +310,12 @@ sub copy_ancestral_data {
     #
     #Find min and max of new seq_region_ids
     #
-    $sth = $to_dbc->prepare($range_sql);
-    $sth->execute();
-    my ($new_min_sr, $new_max_sr) = $sth->fetchrow_array();
-    $sth->finish;
+    my ($new_min_sr, $new_max_sr) = $to_dbc->db_handle->selectrow_array($range_sql);
 
     #
     #Create temporary table in from_db to store mappings
     #
-    $sth = $from_dbc->prepare("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
-
-    $sth->execute();
-    $sth->finish;
+    $from_dbc->do("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
     $from_dbc->do('DELETE FROM tmp_seq_region_mapping');
 
     #
@@ -357,9 +331,7 @@ sub copy_ancestral_data {
     #remove final comma
     chop $values;
     #print "values $values\n";
-    $sth = $from_dbc->prepare("INSERT INTO tmp_seq_region_mapping \(seq_region_id, new_seq_region_id\) VALUES $values");
-    $sth->execute();
-    $sth->finish;
+    $from_dbc->do("INSERT INTO tmp_seq_region_mapping \(seq_region_id, new_seq_region_id\) VALUES $values");
 
     #
     #Copy over the seq_region with new seq_region_ids
@@ -380,9 +352,6 @@ sub copy_ancestral_data {
     #
     #Drop temporary table
     #
-    $sth = $from_dbc->prepare("DROP TABLE tmp_seq_region_mapping");
-    $sth->execute();
-    $sth->finish;
-
+    $from_dbc->do("DROP TABLE tmp_seq_region_mapping");
 }
 
