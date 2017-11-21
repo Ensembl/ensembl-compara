@@ -295,13 +295,20 @@ if($only_show_intentions) {
         print "\t".$genome_db->dbID.": ".$genome_db->_get_unique_name."\n";
     }
     print "MethodLinkSpeciesSet entries to be copied:\n";
+    my %counts;
     foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
+        $counts{$mlss->method->type}++;
         print "\t".$mlss->dbID.": ".$mlss->name."\n";
     }
     print "Additional SpeciesSet entries to be copied:\n";
     foreach my $ss (@$all_default_species_sets) {
         print "\t".$ss->dbID.": ".join(', ', map { $_->_get_unique_name} @{$ss->genome_dbs})."\n";
     }
+    print "\nSummary:\n";
+    print "\t", scalar(@$all_default_genome_dbs), " GenomeDBs\n";
+    print "\t", scalar(@$all_default_method_link_species_sets), " MethodLinkSpeciesSets\n";
+    printf("\t\t%5d %s\n", $counts{$_}, $_) for sort keys %counts;
+    print "\t", scalar(@$all_default_species_sets), " SpeciesSets\n";
     exit 0;
 }
 
