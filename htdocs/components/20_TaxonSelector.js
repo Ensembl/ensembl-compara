@@ -118,8 +118,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   initialize: function() {
     var panel = this;
-    this.elLk.tree.html('')
-    this.elLk.list.html('')
+    this.elLk.tree.html('');
+    this.elLk.list.html('');
+    this.updateCount();
     if (this.taxonTreeData) {
       this.initAutoComplete();
       // Create initial breadcrumb (All division)
