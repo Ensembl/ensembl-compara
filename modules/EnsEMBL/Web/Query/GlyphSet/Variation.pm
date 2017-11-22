@@ -194,7 +194,7 @@ sub fetch_features {
   $vdb->include_failed_variations(0);
 
   # dont calculate consequences over a certain slice length
-  my $no_cons = $slice_length > 1e4 ? 1 : 0;
+  my $no_cons = $slice_length > 1e5 ? 1 : 0;
  
   my $snps;
   # different retrieval method for somatic mutations
