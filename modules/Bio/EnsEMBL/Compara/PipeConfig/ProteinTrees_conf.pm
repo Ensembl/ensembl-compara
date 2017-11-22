@@ -250,6 +250,9 @@ sub default_options {
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
 
+    # prioriy for running TreeBest himem:
+        'treebest_long_himem_priority' => 20,
+
     #default maximum retry count:
         'hive_default_max_retry_count' => 1,
 
@@ -1957,6 +1960,7 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('treebest_capacity'),
+            -priority             => $self->o('treebest_long_himem_priority'),
             -rc_name    => '8Gb_job',
         },
 
@@ -2492,6 +2496,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity                  => $self->o('notung_capacity'),
             -batch_size    => 2,
+            -priority       => 1,
             -rc_name        => '2Gb_job',
             -flow_into      => {
                 1  => [ 'raxml_bl_decision' ],
@@ -2505,6 +2510,7 @@ sub core_pipeline_analyses {
                 'notung_memory'         => 7000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
+            -priority       => 10,
             -rc_name        => '8Gb_job',
             -flow_into      => [ 'raxml_bl_decision' ],
         },
@@ -2516,6 +2522,7 @@ sub core_pipeline_analyses {
                 'notung_memory'         => 14000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
+            -priority       => 15,
             -rc_name        => '16Gb_job',
             -flow_into      => [ 'raxml_bl_decision' ],
         },
@@ -2527,6 +2534,7 @@ sub core_pipeline_analyses {
                 'notung_memory'         => 28000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
+            -priority       => 20,
             -rc_name        => '32Gb_job',
             -flow_into      => [ 'raxml_bl_decision' ],
         },
@@ -2538,6 +2546,7 @@ sub core_pipeline_analyses {
                 'notung_memory'         => 56000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
+            -priority       => 25,
             -rc_name        => '64Gb_job',
             -flow_into      => [ 'raxml_bl_decision' ],
         },
@@ -2549,6 +2558,7 @@ sub core_pipeline_analyses {
                 'notung_memory'         => 448000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
+            -priority       => 30,
             -rc_name        => '512Gb_job',
             -flow_into      => [ 'raxml_bl_decision' ],
         },
@@ -2717,6 +2727,7 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'   => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
+            -priority       => 20,
             -rc_name        => '2Gb_job',
             -flow_into      => [ 'hc_tree_homologies' ],
         },
