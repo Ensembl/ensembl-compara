@@ -905,6 +905,7 @@ sub _summarise_funcgen_db {
 
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
+<<<<<<< HEAD
         select
             epigenome.display_label,
             peak_calling.feature_type_id,
@@ -918,6 +919,24 @@ sub _summarise_funcgen_db {
         group by
             epigenome.display_label,
             peak_calling.feature_type_id,
+=======
+        select 
+            epigenome.display_label, 
+            peak_calling.feature_type_id, 
+            peak_calling.peak_calling_id
+        from 
+            peak_calling
+            join feature_type using (feature_type_id) 
+            join alignment_read_file using (alignment_id)
+            join read_file_experimental_configuration using (read_file_id)
+            join experiment using (experiment_id)
+            join epigenome using (epigenome_id)
+        where 
+            class in ($classes) 
+        group by
+            epigenome.display_label, 
+            peak_calling.feature_type_id, 
+>>>>>>> 7843d28a5bac89c60f526b8eacb68312eed5b7de
             peak_calling.peak_calling_id
     ));
 
