@@ -244,8 +244,8 @@ sub set_variations {
       }
       else {
         my @snps_list = (
-          @{$vf_adaptor->fetch_all_by_Slice_SO_terms($config->{'consequence_filter'}, 1)},
-          @{$vf_adaptor->fetch_all_somatic_by_Slice_SO_terms($config->{'consequence_filter'}, 1)}
+          @{$vf_adaptor->fetch_all_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)},
+          @{$vf_adaptor->fetch_all_somatic_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)}
         );
         $snps = \@snps_list;
       }
