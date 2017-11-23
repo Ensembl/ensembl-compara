@@ -48,7 +48,7 @@ sub supporting_evidence_table {
   my $table_id = 'evidence';
   
   my $columns = [
-     { key => 'ssv', sort => 'string',        title => 'Supporting evidence' },
+     { key => 'ssv', sort => 'string',        title => 'Variant call ID' },
      { key => 'pos', sort => 'position_html', title => 'Chr:bp (strand)'     }, 
   ];
   my $sorting = 'pos';
@@ -235,7 +235,7 @@ sub supporting_evidence_table {
     };
 
     my $ssv_count   = scalar(@{$ssvs});
-    my $sub_header  = $object->name." has ".$self->thousandify($ssv_count)." supporting evidence";
+    my $sub_header  = $object->name." has ".$self->thousandify($ssv_count)." variant call";
        $sub_header .= 's' if ($ssv_count > 1);
     return "<h4>$sub_header</h4>".$self->new_table($columns, $rows, { data_table => 1, sorting => [ "$sorting asc" ] })->render;
   }
