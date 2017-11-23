@@ -406,12 +406,8 @@ sub content {
     }
   }
 
-  if ($flag) {
-    $html .= $self->render_tables($table, $reg_table, $motif_table);    
+    $html .= $self->render_tables($table, $reg_table, $motif_table, $flag);
     return $html;
-  } else { 
-    return $self->_info('', '<p>This variant has not been mapped to any Ensembl genes, transcripts or regulatory features</p>');
-  }
 }
 
 # Description: Return hash of columns, this can be overwritten in the mobile plugins to remove columns not required.
@@ -454,12 +450,12 @@ sub gene_action {
 # Description : just returning all the tables thats been rendered (overwritten in mobile plugins)
 # Returns     : html string
 sub render_tables {
-  my ($self, $table, $reg_table, $motif_table) = @_;
+  my ($self, $table, $reg_table, $motif_table, $flag) = @_;
 
-  my $table_html =  ($table->has_rows ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
+  my $table_html =  ($table->has_rows && $flag ? '<h2>Gene and Transcript consequences</h2>'.$table->render : '<h3>No Gene or Transcript consequences</h3>').
                     $self->_render_eqtl_table.
-                    ($reg_table->has_rows ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
-                    ($motif_table->has_rows ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
+                    ($reg_table->has_rows && $flag ? '<h2>Regulatory feature consequences</h2>'.$reg_table->render : '<h3>No overlap with Ensembl Regulatory features</h3>').
+                    ($motif_table->has_rows && $flag ? '<h2>Motif feature consequences</h2>'.$motif_table->render : '<h3>No overlap with Ensembl Motif features</h3>');
                     
   return $table_html;
 }
@@ -501,7 +497,6 @@ sub _render_eqtl_table {
       $eqtl_table->render
     );
   }
-
   return $eqtl_table_html;
 }
 

@@ -247,7 +247,7 @@ foreach my $index (@indexes) {
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
-#    next unless ($species =~ /^Mus/);
+ #    next unless ($species =~ /^mus/);
     my $single_species = 0;
     my %dbs = %{$PD->{$species}{'databases'}||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -737,38 +737,6 @@ sub dumpVariation {
     $quick_links = 'all:0';
   }
 
-  my $ssid_hash = on_disk_set('ssid');
-  my ($ssid_sth, $stmt);
-  # the human database is so big that that dumping in one go runs out of memory even with 128Gb!
-  if ($dbspecies ne 'omo_sapiens') {
-    print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
-    $stmt = qq{SELECT variation_id,
-                      GROUP_CONCAT('ss',subsnp_id) as ssid
-                 FROM subsnp_map
-             GROUP BY variation_id};
-    $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
-    $ssid_sth->execute();
-    print LOG "     ...executed SQL, now retrieving data ".&date_and_mem()."\n";
-
-    # Get a hashref of the results with the variation_id as key
-    #$ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
-    while ( my ($variation_id,$ssids) = $ssid_sth->fetchrow_array ) {
-      foreach my $ssid (split(/,/,$ssids)) {
-        set_add($ssid_hash,$variation_id,$ssid);
-      }
-    }
-
-    print LOG "     Retrieved extra ssID info ".&date_and_mem()."\n";
-  }
-  else {
-    #for human we need to get the extra allele info as we go along
-    print LOG "    Will get extra ssID info as we go along ".&date_and_mem()."\n";
-    $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
-                 FROM subsnp_map
-                WHERE variation_id = ?};
-    $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
-  }
-
   ## get synonym info
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
   my $synonyms;
@@ -815,44 +783,12 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       my $synonym_list       = $synonyms->{$variation_id};
       my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
-      my $ssids;
-      if ($ssid_hash) {
-        $ssids = [ set_get($ssid_hash,$variation_id) ];
-      }
-      else {
-        #comment out these three lines if time constraints mean you need to generate indices without extra allele info
-        my $timed_out = 1;
-        until ($ssid_sth->execute($variation_id) || $timed_out > 5) {
-          print LOG "Can't execute query to get extra allele info:\n".$conf->{'variation_dbh'}->errstr."\n. Retrying\n";
-          sleep 3;
-          $timed_out++;
-        }
-        if ($timed_out > 5) {
-          print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
-          return 0;
-        }
-
-        (my $res) = $ssid_sth->fetchrow_arrayref();
-        if ($conf->{'variation_dbh'}->err) {
-          print LOG "Data retrieval for $variation_name terminated early:\n".$conf->{'variation_dbh'}->errstr."\n";
-          print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
-          return 0;
-        }
-        $ssids = [ split(/,/,$res->[0]) ];
-      }
       my %synonyms;
       my $syn_c = 0;
       foreach my $syn (split /,/, $synonym_list) {
         my ($source_id,$sname) = split / /,$syn;
         $synonyms{$sname} = $sources->{$source_id};
         $syn_c++;
-      }
-      foreach my $ssid_syn (@$ssids) {
-        unless (exists $synonyms{$ssid_syn}) {
-          $synonyms{$ssid_syn} = 'dbSNP';
-          $syn_c++;
-          $new_syn_c++;
-        }
       }
       my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
       foreach my $syn (keys %synonyms) {
@@ -939,11 +875,9 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
   print LOG "  $new_syn_c synonyms added from the subsnp_map table\n";
 
   %snp_extra    = undef;
-  $ssid_hash = undef;
 
   off_disk('all_hgvs_names',$all_hgvs_names);
   off_disk('all_hgnc_names',$all_hgnc_names);
-  off_disk('ssid',$ssid_hash);
   return $c;
 }
 
@@ -1389,6 +1323,7 @@ sub dumpOligoProbe {
       join $FUNCDB.array using (array_id)
     GROUP BY
       probe_set.name,
+      probe_set.probe_set_id,
       array.name
 ));
   $sth->execute();
@@ -1442,9 +1377,12 @@ sub dumpOligoProbe {
       join $FUNCDB.array_chip using (array_chip_id)
       join $FUNCDB.array using (array_id)
     where
-      probe.probe_set_id is null
+      array.is_probeset_array = false
     group by
-      probe.name
+      probe.probe_id,
+      probe.name,
+      array.vendor,
+      array.name
   ));
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";

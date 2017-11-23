@@ -54,7 +54,7 @@ sub get_data {
 
   if ($data) {
     ## Adjust max and min according to track settings
-    my @viewLimits = split(':', $self->my_config('viewLimits'));
+    my @viewLimits = split(':', $self->my_config('viewLimits') || '');
     foreach (@$data) {
       my ($min_score, $max_score);
 

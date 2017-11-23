@@ -43,12 +43,12 @@ sub new {
   ## @param Hashref with keys: type, message and data
   my ($class, $params) = @_;
 
-  $params = {'message' => "$params"} unless ref $params && ref $params eq 'HASH';
+  $params = _normalize_exception_object($params || {});
 
   # build and save stack trace
   my $i = 0;
   my $stack = [];
-  while (my @caller = caller($i++)) { ## TODO - check rules followed by carp croak
+  while (my @caller = caller($i++)) {
     next if $caller[0] eq 'EnsEMBL::Web::Exceptions' || $caller[3] =~ /^EnsEMBL::Web::Exceptions::/ || UNIVERSAL::isa($caller[0], __PACKAGE__);
     push @$stack, [splice @caller, 0, 4];
   }
@@ -58,7 +58,7 @@ sub new {
     '_message' => $params->{'message'}  || '',
     '_data'    => $params->{'data'}     || undef,
     '_stack'   => $stack
-  }, $class;
+  }, $params->{'package'} || $class;
 }
 
 sub handle {
@@ -89,6 +89,7 @@ sub isa {
   ## @return True if the exception object contains the given type in its type string or if it is inherited from the given class, false otherwise
   my ($self, $type) = @_;
   return 1 if $self->type eq $type;
+  return 1 if ref($self) =~ /::$type$/;
   return $self->SUPER::isa($type);
 }
 
@@ -133,6 +134,48 @@ sub to_string {
     $self->{'_message'} ? sprintf(" '%s'", $self->{'_message'}) : '',
     $self->stack_trace
   );
+}
+
+sub _normalize_exception_object {
+  ## @private
+  ## Converts external exceptions caught by try/catch into arguments as excepted by EnsEMBL::Web::Exception->new
+  ## @param Object, possible an external exception object
+  ## @return Hashref (as excepted by EnsEMBL::Web::Exception->new)
+  my $object  = shift;
+  my $ref     = ref $object;
+
+  # string only
+  if (!$ref) {
+    if ($object =~ /\n\-+\s*EXCEPTION\s*\-+\n/) {
+      return {
+        'type'    => 'APIException',
+        'message' => $object
+      };
+    }
+
+    return {
+      'message' => $object
+    };
+  }
+
+  # standard hash as expected
+  if ($ref eq 'HASH') {
+    return $object;
+  }
+
+  # ORM exceptions
+  if (UNIVERSAL::isa($object, 'ORM::EnsEMBL::Utils::Exception')) {
+    require EnsEMBL::Web::Exception::ORMException;
+    return {
+      'type'    => $object->type,
+      'message' => $object->message,
+      'package' => 'EnsEMBL::Web::Exception::ORMException',
+    };
+  }
+
+  # any other exception for which we don't have a rule
+  warn sprintf q(Recommendation: No rule found to convert exception of type %s to %s. To improve verbosity, add a rule to %2$s::_normalize_exception_object.%s), $ref, __PACKAGE__, "\n";
+  return {'message' => "$object"};
 }
 
 1;

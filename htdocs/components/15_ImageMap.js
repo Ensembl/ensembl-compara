@@ -418,6 +418,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         hoverLabel = panel.elLk.hoverLabels.filter('.' + hoverLabel);
 
+        var share_url = hoverLabel.find('.hl-content ._copy_url').val();
+        // Create an href from <a> and get a valid url
+        hoverLabel.find('.hl-content ._copy_url').val(($('<a/>', {'href': share_url})).prop('href'));
+
         if (hoverLabel.length) {
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(

@@ -285,9 +285,15 @@ sub format_table {
      
       # SSID + Submitter
       if ($ssid) {
-        $pop_row{'ssid'}      = $hub->get_ExtURL_link($ssid, 'DBSNPSS', $ssid) unless $ssid eq 'ss0';
-        $pop_row{'submitter'} = ($data->{'submitter'}) ? $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'}) : '-';
-      }  
+        if ($hub->species eq 'Homo_sapiens') {
+          $pop_row{'ssid'}      = $hub->get_ExtURL_link($ssid, 'DBSNPSS', $ssid) unless $ssid eq 'ss0';
+          $pop_row{'submitter'} = ($data->{'submitter'}) ? $hub->get_ExtURL_link($data->{'submitter'}, 'DBSNPSSID', $data->{'submitter'}) : '-';
+        }
+        else {
+          $pop_row{'ssid'} = $ssid unless $ssid eq 'ss0';
+          $pop_row{'submitter'} = ($data->{'submitter'}) ? $data->{'submitter'} : '-';
+        }
+      }
 
       # Column "Allele: frequency (count)"
       my $allele_content = $self->format_allele_genotype_content($data,'Allele',$ref_allele,$is_somatic);
@@ -422,31 +428,6 @@ sub sort_extra_pops {
   return join '<br />', @pops;
 }
 
-sub pop_url {
-   ### Arg1        : Population name (to be displayed)
-   ### Arg2        : dbSNP population ID (variable to be linked to)
-   ### Example     : $self->pop_url($pop_name, $pop_dbSNPID);
-   ### Description : makes pop_name into a link
-   ### Returns  string
-
-  my ($self, $pop_name, $pop_dbSNP) = @_;
-  
-  my $pop_url;
-
-  if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_name); 
-  }
-  elsif ($pop_name =~ /^NextGen/i) {
-    $pop_url = $self->hub->get_ExtURL('NEXTGEN_POP');
-  }
-  elsif ($pop_name =~ /^ExAC/i) {
-    $pop_url = $self->hub->get_ExtURL('EXAC_POP');
-  }
-  else {
-    $pop_url = ($pop_dbSNP && $pop_dbSNP->[0] ne '') ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef;
-  }
-  return $pop_url;
-}
 
 sub no_pop_data {
   my ($self, $data) = @_;
@@ -481,8 +462,8 @@ sub no_pop_data {
       }
       
       push @rows, {
-        ssid      => $hub->get_ExtURL_link($ss, 'DBSNPSS', $ss),
-        submitter => $hub->get_ExtURL_link($sub, 'DBSNPSSID', $sub),
+        ssid      => ($hub->species eq 'Homo_sapiens') ? $hub->get_ExtURL_link($ss, 'DBSNPSS', $ss) : $ss,
+        submitter => ($hub->species eq 'Homo_sapiens') ? $hub->get_ExtURL_link($sub, 'DBSNPSSID', $sub) : $sub,
         alleles   =>
           join("/",
             map {defined($alleles{$_}) ? qq{<span style="font-weight:bold">$_</span>} : qq{<span style="color:red">$_</span>}}

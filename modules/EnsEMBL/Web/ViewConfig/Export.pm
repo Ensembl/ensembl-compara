@@ -221,6 +221,22 @@ sub init_form {
         });
       }
 
+      ## If the fieldset has many checkboxes, provide a select/deselect all option
+      my $params = $config->{$c}->{'params'} || [];
+      my $checkbox_count;
+      foreach (@$params) {
+        $checkbox_count++ if (!$config->{$c}{'type'} || $config->{$c}{'type'} eq 'CheckBox');
+      }
+      if ($checkbox_count > 3) {
+        $self->add_form_element({
+                              'type'        => 'Checkbox',
+                              'name'        => 'select_all',
+                              'label'       => 'Select/deselect all',
+                              'value'       => 'yes',
+                              'field_class' => 'select_all',
+                            });
+      }
+
       foreach (@{$config->{$c}->{'params'}}) {
         next unless defined $self->get("$f->[0]_$_->[0]");
         next if $_->[2] eq '0'; # Next if 0, but not if undef. Where is my === operator, perl?

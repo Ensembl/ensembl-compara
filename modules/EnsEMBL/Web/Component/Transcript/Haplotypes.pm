@@ -43,12 +43,34 @@ sub buttons {
                       $hub->species_defs->ENSEMBL_REST_URL, 
                       lc($hub->species), 
                       $hub->param('t');
+  my @buttons;
 
-  return {
+  push @buttons, {
       'url'       => $url,
       'caption'   => 'Export data as JSON',
       'class'     => 'export',
     };
+
+  my $type = $self->hub->param('ht_type') || 'protein';
+  my %titles = (
+    'protein' => 'Protein',
+    'cds'     => 'CDS',
+  );
+  my $other_type = $type eq 'protein' ? 'cds' : 'protein';
+
+  $url = $self->hub->url({ht_type => lc($other_type)});
+  my $html .= sprintf(
+    '<h4><a href="%s" style="vertical-align:middle">Switch to %s view</a> <img src="/i/16/reload.png" style="vertical-align:middle"></h4>',
+    $url, $titles{$other_type}
+  );
+
+  push @buttons, {
+      'url'       => $url,
+      'caption'   => sprintf('Switch to %s view', $titles{$other_type}),
+      'class'     => 'view',
+    };
+
+  return @buttons;
 
 }
 
@@ -152,12 +174,6 @@ sub content {
   foreach my $ht(@$haplotypes) {    
     $table->add_row($self->render_haplotype_row($ht));
   }
-
-  my $url = $self->hub->url({ht_type => lc($other_type)});
-  $html .= sprintf(
-    '<h4><a href="%s" style="vertical-align:middle">Switch to %s view</a> <img src="/i/16/reload.png" style="vertical-align:middle"></h4>',
-    $url, $titles{$other_type}
-  );
   
   $html .= $table->render;
 

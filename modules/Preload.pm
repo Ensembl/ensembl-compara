@@ -18,6 +18,7 @@ limitations under the License.
 =cut
 
 package Preload;
+
 use strict;
 use warnings;
 
@@ -30,6 +31,7 @@ use warnings;
 
 use EnsEMBL::Root;
 use EnsEMBL::Web::Utils::DynamicLoader;
+use EnsEMBL::Web::Exceptions;
 use Image::Minifier;
 
 our $REALSTDERR;
@@ -89,6 +91,39 @@ sub import {
   Image::Minifier::kit_complete;
   Image::Minifier::preload_config;
   moan;
+}
+
+sub preload_orm {
+  ## Preloads the code provided as callback only if orm db connections for the given db types is valid is valid
+  my ($plugin, $db_types, $on_success_callback) = @_;
+  my @error;
+  my @dbh;
+
+  eval {
+    require ORM::EnsEMBL::Rose::DbConnection;
+  };
+
+  if ($@) {
+    @error = ($@);
+  } else {
+
+    foreach my $db_type (@$db_types) {
+      my $db = ORM::EnsEMBL::Rose::DbConnection->new('type' => $db_type);
+
+      try {
+        push @dbh, $db->init_dbh;
+      } catch {
+        push @error, $_->message(1);
+      };
+    }
+  }
+
+  if (@dbh) {
+    $on_success_callback->(@dbh);
+  } else {
+    warn sprintf "Preload Error: Not preloading '%s' plugin for the reason(s):\n", $plugin;
+    warn "  $_\n" for @error;
+  }
 }
 
 1;

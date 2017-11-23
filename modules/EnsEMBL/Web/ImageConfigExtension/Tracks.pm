@@ -950,7 +950,7 @@ sub add_regulation_features {
 
   my $reg_regions       = $menu->append_child($self->create_menu_node('functional_other_regulatory_regions', 'Other regulatory regions'));
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
-  my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
+  my ($keys_2, $data_2) = $self->_merge($hashref->{'alignment'});
   my %fg_data           = (%$data_1, %$data_2);
 
   foreach my $key_2 (sort grep { !/Regulatory_Build|seg_/ } @$keys_1, @$keys_2) {

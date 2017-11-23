@@ -60,22 +60,27 @@ sub update_from_url {
   my $species_defs    = $self->species_defs;
 
   my $attach = !!$params->{'attach'};
-  my @values = grep $_, split(/,/, $params->{'attach'} || ''); #attach=url:https://some_url_to_attach/=normal
-  push @values, grep $_, split(/,/, $params->{$self->type} || ''); # contigviewbottom=url:https://some_url_to_attach/=normal
 
-  my @other_values;
-  # delete params to avoid doing it again when calling SUPER method
+  ## Don't use CGI::param here, as we want to keep values unescaped until we've finished splitting them
   delete $params->{$self->type};
   delete $params->{'attach'};
+  my $raw_params;
+  foreach (split(/;/, $self->hub->controller->query)) {
+    $_ =~ /(\w+)=(.+)/;
+    $raw_params->{$1} = $2;
+  }
+  my @values = grep $_, split(/,/, $raw_params->{'attach'} || ''); #attach=url:https://some_url_to_attach/=normal
+  push @values, grep $_, split(/,/, $raw_params->{$self->type} || ''); # contigviewbottom=url:https://some_url_to_attach/=normal
 
   # if param name is 'trackhub'
-  push @values, $params->{'trackhub'} || ();
+  push @values, $raw_params->{'trackhub'} || ();
 
   # Backwards compatibility
   if ($params->{'format'} && $params->{'format'} eq 'DATAHUB') {
     $params->{'format'} = 'TRACKHUB';
   }
 
+  my @other_values;
   foreach my $v (@values) {
     my $format = $params->{'format'};
     my ($url, $renderer);
