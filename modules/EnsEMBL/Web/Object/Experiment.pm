@@ -37,64 +37,84 @@ sub new {
   my $param                 = $hub->param('ex');
 
   my $funcgen_db_adaptor    = $hub->database('funcgen');
-  my $feature_set_adaptor   = $funcgen_db_adaptor->get_FeatureSetAdaptor;
+  my $peak_calling_adaptor  = $funcgen_db_adaptor->get_PeakCallingAdaptor;
   my $feature_type_adaptor  = $funcgen_db_adaptor->get_FeatureTypeAdaptor;
 
   my $param_to_filter_map   = $self->{'_param_to_filter_map'}   = {'all' => 'All', 'cell_type' => 'Cell/Tissue', 'evidence_type' => 'Evidence type', 'project' => 'Project', 'feature_type' => 'Feature type'};
-  my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $funcgen_db_adaptor->get_FeatureSetAdaptor->fetch_feature_set_filter_counts;
+  my $grouped_feature_sets  = $self->{'_grouped_feature_sets'}  = $peak_calling_adaptor->_fetch_feature_set_filter_counts;
   my $feature_sets_info     = $self->{'_feature_sets_info'}     = [];
-  my $feature_sets          = [];
+  my $peak_callings = [];
 
   $self->{'_filter_to_param_map'} = { reverse %{$self->{'_param_to_filter_map'}} };
 
-  # Get the feature set according to the url param
-  if ($param =~ /^name\-(.+)$/) {
-    $feature_sets = [ $feature_set_adaptor->fetch_by_name($1) || () ];
+  my $display_all_peak_calling_sources = $param eq 'all';
+  my $display_named_peak_calling       = $param =~ /^name\-(.+)$/;
+  
+  my $peak_calling_name;
+  if ($display_named_peak_calling) {
+    $peak_calling_name = $1;
   }
-  else {
+  
+  if ($display_all_peak_calling_sources) {
+    $peak_callings = $peak_calling_adaptor->fetch_all;
+  }
+
+  if ($display_named_peak_calling) {
+    $peak_callings = [ $peak_calling_adaptor->fetch_by_name($peak_calling_name) || () ];
+  }
+  
+  if (!$display_all_peak_calling_sources && !$display_named_peak_calling) {
+  
     my $constraints = {};
-    if ($param ne 'all') {
+    my $filters = $self->applied_filters($param);
 
-      my $filters = $self->applied_filters($param);
-
-      while (my ($filter, $value) = each(%$filters)) {
-        if ($filter eq 'cell_type') {
-          my $cell_type_adaptor = $funcgen_db_adaptor->get_EpigenomeAdaptor;
-          push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
-        } elsif ($filter eq 'evidence_type') {
-          $constraints->{'evidence_types'} = $value;
-        } elsif ($filter eq 'project') {
-          my $experimental_group_adaptor = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor;
-          push @{$constraints->{'projects'}}, $_ for map $experimental_group_adaptor->fetch_by_name($_) || (), @$value;
-        } elsif ($filter eq 'feature_type') {
-          push @{$constraints->{'feature_types'}}, $_ for map $feature_type_adaptor->fetch_by_name($_) || (), @$value;
-        }
+    FILTER: while (my ($filter, $value) = each(%$filters)) {
+      if ($filter eq 'cell_type') {
+        my $cell_type_adaptor = $funcgen_db_adaptor->get_EpigenomeAdaptor;
+        push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+        next FILTER;
       }
+      if ($filter eq 'feature_type') {
+        push @{$constraints->{'feature_types'}}, $_ for map $feature_type_adaptor->fetch_by_name($_) || (), @$value;
+        next FILTER;
+      }
+      if ($filter eq 'evidence_type') {
+        $constraints->{'evidence_types'} = $value;
+        next FILTER;
+      }
+      if ($filter eq 'project') {
+        my $experimental_group_adaptor = $funcgen_db_adaptor->get_ExperimentalGroupAdaptor;
+        push @{$constraints->{'projects'}}, $_ for map $experimental_group_adaptor->fetch_by_name($_) || (), @$value;
+        next FILTER;
+      }
+      die("Unknown filter $filter!");
     }
-    $feature_sets = $param eq 'all' || keys %$constraints
-      ? $feature_set_adaptor->fetch_all_displayable_by_type('annotated', keys %$constraints ? {'constraints' => $constraints} : ())
-      : [];
+    
+    if (keys %$constraints) {
+      $peak_callings = $peak_calling_adaptor->_fetch_all_by_constraints($constraints);
+    }
   }
 
   my $binding_matrix_adaptor = $funcgen_db_adaptor->get_BindingMatrixAdaptor;
 
   # Get info for all feature sets and pack it in an array of hashes
-  foreach my $feature_set (@$feature_sets) {
+  foreach my $peak_calling (@$peak_callings) {
+  
 
-    my $experiment = $feature_set->experiment;
+    my $experiment = $peak_calling->fetch_Experiment;
 
     if (! defined $experiment) {
-      warn "Failed to get Experiment for FeatureSet:\t".$feature_set->name;
+      warn "Failed to get Experiment for FeatureSet:\t".$peak_calling->name;
       next;
     }
 
     my $experiment_group  = $experiment->experimental_group;
     $experiment_group     = undef unless $experiment_group->is_project;
     my $project_name      = $experiment_group ? $experiment_group->name : '';
-    my $source_info       = $experiment->source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
-    my $epigenome         = $feature_set->epigenome;
+    my $source_info       = $experiment->_source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
+    my $epigenome         = $peak_calling->fetch_Epigenome;
     my $epigenome_name    = $epigenome->name;
-    my $feature_type      = $feature_set->feature_type;
+    my $feature_type      = $peak_calling->fetch_FeatureType;
     my $evidence_label    = $feature_type->evidence_type_label;
 
     push @$feature_sets_info, {
@@ -102,7 +122,7 @@ sub new {
       'project_name'        => $project_name,
       'experimental_group'  => $experiment->experimental_group->name,
       'project_url'         => $experiment_group ? $experiment_group->url : '',
-      'feature_set_name'    => $feature_set->name,
+      'feature_set_name'    => $peak_calling->name,
       'feature_type_name'   => $feature_type->name,
       'evidence_label'      => $evidence_label,
       'cell_type_name'      => $epigenome_name,
