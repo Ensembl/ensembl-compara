@@ -76,11 +76,35 @@ sub fetch_all_seqs_missing_annot_by_range {
     return $self->dbc->db_handle->selectcol_arrayref($sql, undef, $start_member_id, $end_member_id);
 }
 
+sub fetch_all_seqs_in_trees_by_range {
+    my ($self, $start_member_id, $end_member_id, $clusterset_id) = @_;
+
+    my $sql = 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_tree_node as gtn USING (seq_member_id) JOIN gene_tree_root USING (root_id) WHERE gtn.seq_member_id IS NOT NULL AND clusterset_id = ? AND seq_member_id BETWEEN ? AND ?';
+    return $self->dbc->db_handle->selectcol_arrayref($sql, undef, $clusterset_id, $start_member_id, $end_member_id);
+}
+
+sub fetch_all_seqs_under_the_diversity_levels {
+    my ($self) = @_;
+    return $self->dbc->db_handle->selectcol_arrayref($sql_all);
+}
+
 
 sub store_hmmclassify_result {
-    my ($self, $seq_member_id, $model_id, $evalue) = @_;
+    my ($self, $seq_member_id, $model_id, $evalue, $table) = @_;
+
+    $table = "hmm_annot" if (!defined($table));
 
     my $sql = "INSERT INTO hmm_annot(seq_member_id, model_id, evalue) VALUES (?,?,?)";
+    my $sth = $self->prepare($sql);
+    $sth->execute($seq_member_id, $model_id, $evalue);
+    $sth->finish();
+}
+
+sub store_hmmclassify_all_results {
+    my ($self, $seq_member_id, $model_id, $evalue, $table) = @_;
+
+    #INSERT IGNORE to be able to rerun jobs
+    my $sql = "INSERT IGNORE INTO $table(seq_member_id, root_id, evalue) VALUES (?,?,?)";
     my $sth = $self->prepare($sql);
     $sth->execute($seq_member_id, $model_id, $evalue);
     $sth->finish();
