@@ -176,7 +176,28 @@ sub write_output {
 sub run_buildhmm {
     my $self = shift;
 
-    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
+    $self->param('hidden_genes', [] );
+    $self->merge_split_genes($self->param('protein_tree')) if $self->param('check_split_genes');
+
+
+    my $aln_file;
+    if ( $self->param('include_thresholds') ) {
+
+        my %thresholds = ();
+        if ( $self->param('protein_tree')->has_tag('trusted_cutoff') ) {
+            $thresholds{'TC'} = $self->param('protein_tree')->get_value_for_tag('trusted_cutoff') . " " .  $self->param('protein_tree')->get_value_for_tag('trusted_cutoff');
+        }
+
+        if ( $self->param('protein_tree')->has_tag('noise_cutoff') ) {
+            $thresholds{'NC'} = $self->param('protein_tree')->get_value_for_tag('noise_cutoff') . " " . $self->param('protein_tree')->get_value_for_tag('noise_cutoff');
+        }
+
+        $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir( $self->param('protein_align'), 'stockholm', {-ANNOTATIONS => \%thresholds} );
+    }
+    else {
+        $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir( $self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm' );
+    }
+
     my $hmm_file = $self->param('hmm_file', $aln_file . '_hmmbuild.hmm');
 
     ## as in treefam
