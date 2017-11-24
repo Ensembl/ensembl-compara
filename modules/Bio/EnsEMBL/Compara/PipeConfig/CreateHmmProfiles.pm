@@ -104,7 +104,7 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
     # "Member" parameters:
-        'allow_ambiguity_codes'     => 0,
+        'allow_ambiguity_codes'     => 1,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
 
@@ -174,6 +174,7 @@ sub default_options {
         'hcluster_exe'              => $self->o('ensembl_cellar').'/hclustersg/0.5.0/bin/hcluster_sg',
         'mcoffee_home'              => $self->o('ensembl_cellar').'/t-coffee/9.03.r1336/',
         'mafft_home'                => $self->o('ensembl_cellar').'/mafft/7.305/',
+        'extaligners_exe_dir'       => $self->o('ensembl_cellar').'/../bin/',   # We expect the latest version of each aligner to be symlinked there
         'noisy_exe'                 => $self->o('ensembl_cellar').'/noisy/1.5.12/bin/noisy',
         'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
         'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
@@ -182,13 +183,18 @@ sub default_options {
         'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
         'pantherScore_path'         => $self->o('ensembl_cellar').'/pantherscore/1.03/',
         'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
+        'cdhit_exe'                 => '/homes/carlac/software/cdhit/cd-hit',
 
         # HMM specific parameters
         # The location of the HMM library:
+        'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}."/",
         'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
         'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
+        'treefam_only_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18_only_TF_hmmer3/',
         'seed_hmm_library_basedir'      => '/hps/nobackup/production/ensembl/compara_ensembl/seed_hmms/',
         'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',
+        'hmm_thresholding_table'        => 'hmm_thresholding',
+        'hmmer_search_cutoff'           => '1e-23',
         'lustre_tmp_dir'                => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/tmp_hmmsearch/',
         'min_num_members'               => 4,
         'min_num_species'               => 2,
@@ -199,9 +205,15 @@ sub default_options {
 	    'max_chunk_length'              => 100,
         'output_prefix'                 => "hmm_split_",
 
+        # cdhit is used to filter out proteins that are too close to each other
+        'cdhit_identity_threshold' => 0.99,
+
         #name of the profile to be created:
         'hmm_library_name'          => 'panther_12_0.hmm3',
         
+        #Compara HMM profile name:
+        'compara_hmm_library_name'  => 'compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}.'.hmm3',
+
         #URL to find the PANTHER profiles:
         'panther_url'               => 'ftp://ftp.pantherdb.org/panther_library/current_release/',
 
@@ -228,8 +240,8 @@ sub default_options {
         'reuse_capacity'            =>  30,
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 200,
-        'blastpu_capacity'          => 150,
-        'mcoffee_capacity'          => 200,
+        'blastpu_capacity'          => 5000,
+        'mcoffee_capacity'          => 2000,
         'alignment_filtering_capacity'  => 200,
         'filter_1_capacity'         => 50,
         'filter_2_capacity'         => 50,
@@ -239,13 +251,16 @@ sub default_options {
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
         'loadmembers_capacity'      => 30,
-        'HMMer_search_capacity'     => 100,
+        'split_genes_capacity'      => 100,
+        'HMMer_search_capacity'     => 8000,
+        'HMMer_search_all_hits_capacity'     => 1000,
 
     # Setting priorities
         'mcoffee_himem_priority'    => 40,
         'mafft_himem_priority'      => 35,
         'mafft_priority'            => 30,
         'mcoffee_priority'          => 20,
+        'noisy_priority'            => 20,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -259,19 +274,19 @@ sub default_options {
         'host' => 'mysql-ens-compara-prod-4:4401',
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/treefam_master',
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/treefam_master',
+        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
+        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_protein_trees_90b',
 
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
-        'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
+        'member_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_load_members_tf_90',
 
     # Configuration of the pipeline worklow
 
@@ -308,9 +323,15 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
          '250Mb_job'        => {'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
+         '250Mb_2_hour_job' => {'LSF' => '-W 02:00 -C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'        => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'          => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '1Gb_4c_job'       => {'LSF' => '-n 4 -C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]  span[hosts=1]"' },
+         '4Gb_4c_job'       => {'LSF' => '-n 4 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"' },
+         '16Gb_16c_job'       => {'LSF' => '-n 16 -C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]  span[hosts=1]"' },
+         '32Gb_16c_job'       => {'LSF' => '-n 16 -C0 -M32000  -R"select[mem>32000]  rusage[mem=32000]  span[hosts=1]"' },
          '2Gb_job'          => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '2Gb_2_hour_job'   => {'LSF' => '-W 02:00 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'          => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '4Gb_big_tmp_job'  => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000,tmp=102400]"' },
          '8Gb_job'          => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
@@ -318,8 +339,6 @@ sub resource_classes {
          '32Gb_job'         => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };
 }
-
-
 
 sub pipeline_create_commands {
     my ($self) = @_;
@@ -346,20 +365,23 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('fasta_dir'),
+        'become -- compara_ensembl mkdir -p '.$self->o('compara_hmm_library_basedir'),
         'become -- compara_ensembl mkdir -p '.$self->o('panther_hmm_library_basedir'),
         'become -- compara_ensembl mkdir -p '.$self->o('seed_hmm_library_basedir'),
         'mkdir -p '.$self->o('lustre_tmp_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
-        'become -- compara_ensembl && lfs setstripe '.$self->o('panther_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
-        'become -- compara_ensembl && lfs setstripe '.$self->o('seed_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
+        'which lfs && become -- compara_ensembl lfs getstripe ' . $self->o('compara_hmm_library_basedir'). ' && become -- compara_ensembl lfs setstripe '.$self->o('compara_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
+        'which lfs && become -- compara_ensembl lfs getstripe ' . $self->o('panther_hmm_library_basedir'). ' && become -- compara_ensembl lfs setstripe '.$self->o('panther_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
+        'which lfs && become -- compara_ensembl lfs getstripe ' . $self->o('seed_hmm_library_basedir'). ' && become -- compara_ensembl lfs setstripe '.$self->o('seed_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
 
     ];
 }
 
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+sub pipeline_wide_parameters {
+# these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
@@ -373,6 +395,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
+        'compara_hmm_library_basedir'   => $self->o('compara_hmm_library_basedir'),
         'panther_hmm_library_basedir'   => $self->o('panther_hmm_library_basedir'),
         'seed_hmm_library_basedir'      => $self->o('seed_hmm_library_basedir'),
         'seed_hmm_library_name'         => $self->o('seed_hmm_library_name'),
@@ -436,7 +459,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_2_before_tree_building.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_3_before_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
@@ -557,6 +580,9 @@ sub core_pipeline_analyses {
                 'whole_method_links'    => [ 'PROTEIN_TREES' ],
             },
             -rc_name => '2Gb_job',
+            -parameters => {
+                'create_homology_mlss'       => '0',
+            },
             -flow_into => {
                 1 => [ 'make_treebest_species_tree', 'hc_members_globally' ],
             },
@@ -579,7 +605,12 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'make_treebest_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
-                               'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
+                               'species_tree_input_file'                => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
+                               #Options needed when using strains:
+                               #-----------------------------------------------------
+                               'allow_subtaxa'                          => 1,
+                               'multifurcation_deletes_all_subnodes'    => [ 10088 ],
+                               #-----------------------------------------------------
             },
             -flow_into     => {
                 2 => [ 'hc_species_tree' ],
@@ -641,7 +672,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'reuse_db'              => '#member_db#',
                 'biotype_filter'        => 'biotype_group = "coding"',
-                'exclute_tables'        => [ 'exon_boundaries', 'hmm_annot', 'seq_member_projection_stable_id' ],
+                'exclude_tables'        => [ 'exon_boundaries', 'hmm_annot', 'seq_member_projection_stable_id' ],
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '250Mb_job',
@@ -742,18 +773,76 @@ sub core_pipeline_analyses {
                                 'hmmer_home'                => $self->o('hmmer3_home'),
                                 'panther_hmm_library_name'  => $self->o('hmm_library_name'),
                                 'treefam_hmm_lib'           => $self->o('treefam_hmm_library_basedir'),
+                                'treefam_only_hmm_lib'      => $self->o('treefam_only_hmm_library_basedir'),
                                 'panther_hmm_lib'           => $self->o('panther_hmm_library_basedir'),
                                 'seed_hmm_library_basedir'  => $self->o('seed_hmm_library_basedir'),
                                 'seed_hmm_library_name'     => $self->o('seed_hmm_library_name'),
             },
             -hive_capacity  => $self->o('HMMer_search_capacity'),
             -flow_into      => {
-                                1 => [ 'HMMer_search_factory' ],
+                                1 => [ 'backup_before_cdhit_diversity' ],
                             },
         },
 
+        {   -logic_name => 'backup_before_cdhit_diversity',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature%',
+                'exclude_list'  => 1,
+                'output_file'   => '#dump_dir#/snapshot_2_before_cdhit_divergency.sql.gz',
+            },
+            -flow_into  => {
+                '1->A'  => [ 'diversity_CDHit' ],
+                'A->1'  => [ 'HMMer_search_factory' ],
+            },
+        },
+
+        {   -logic_name => 'diversity_CDHit',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CDHitDiversity',
+
+            -parameters => {
+                            'cdhit_exe'                => $self->o('cdhit_exe'),
+                            'cdhit_identity_threshold' => '0.99',
+                            'cdhit_num_threads'        => 8,
+                            'cdhit_memory_in_mb'       => 0,
+            },
+
+            -flow_into     => {
+                -1 => [ 'diversity_CDHit_himem' ],
+                3 => [ '?table_name=seq_member_projection' ],
+            },
+
+            -hive_capacity => $self->o('build_hmm_capacity'),
+            -batch_size    => 50,
+            -priority      => -20,
+            -rc_name       => '16Gb_16c_job',
+        },
+
+        {   -logic_name => 'diversity_CDHit_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CDHitDiversity',
+
+            -parameters => {
+                'cdhit_exe'                => $self->o('cdhit_exe'),
+                'cdhit_identity_threshold' => '0.99',
+                'cdhit_num_threads'        => 8,
+                'cdhit_memory_in_mb'       => 0,
+            },
+            -flow_into => {
+                3 => [ '?table_name=seq_member_projection' ],
+            },
+
+            -hive_capacity => $self->o('build_hmm_capacity'),
+            -batch_size    => 10,
+            -priority      => -20,
+            -rc_name       => '32Gb_16c_job',
+        },
+
+
         {   -logic_name => 'HMMer_search_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -parameters => {
+                            'use_diversity_filter' => 1,
+                           },
             -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -769,6 +858,7 @@ sub core_pipeline_analyses {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('seed_hmm_library_name'),
                          'library_basedir'   => $self->o('seed_hmm_library_basedir'),
+                         'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
          -rc_name => '2Gb_job',
@@ -784,9 +874,11 @@ sub core_pipeline_analyses {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('seed_hmm_library_name'),
                          'library_basedir'   => $self->o('seed_hmm_library_basedir'),
+                         'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
          -rc_name => '4Gb_job',
+         -priority=> 20,
          -flow_into => {
                        -1 => [ 'HMMer_search_super_himem' ],  # MEMLIMIT
                        },
@@ -799,9 +891,11 @@ sub core_pipeline_analyses {
                          'hmmer_home'        => $self->o('hmmer3_home'),
                          'library_name'      => $self->o('seed_hmm_library_name'),
                          'library_basedir'   => $self->o('seed_hmm_library_basedir'),
+                         'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
                         },
          -hive_capacity => $self->o('HMMer_search_capacity'),
          -rc_name => '32Gb_job',
+         -priority=> 25,
         },
 
             {
@@ -811,7 +905,7 @@ sub core_pipeline_analyses {
                  'division'     => $self->o('division'),
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
              },
-             -rc_name => '8Gb_job',
+             -rc_name => '16Gb_job',
              -flow_into      => [ 'dump_unannotated_members' ],
             },
 
@@ -822,7 +916,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'fasta_file'    => '#fasta_dir#/unannotated.fasta',
             },
-            -rc_name       => '4Gb_job',
+            -rc_name       => '16Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'make_blastdb_unannotated' ],
         },
@@ -851,7 +945,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'unannotated_all_vs_all_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotatedMembers',
-            -rc_name       => '250Mb_job',
+            -rc_name       => '16Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_unannotated' ],
@@ -862,14 +956,16 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp_unannotated',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
+                'blast_step'                => '100',
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '250Mb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
+               -2 => 'break_batch',
             },
             -hive_capacity => $self->o('blastpu_capacity'),
         },
@@ -877,13 +973,56 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp_unannotated_himem',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
+                'blast_step'                => '100',
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
             },
-            -rc_name       => '1Gb_job',
+            -rc_name       => '2Gb_6_hour_job',
+            -flow_into => {
+               -2 => 'break_batch',
+            },
+            -priority      => 20,
             -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+        {   -logic_name         => 'blastp_unannotated_no_runlimit',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
+            -parameters         => {
+                'blast_step'                => '100',
+                'blast_db'                  => '#fasta_dir#/unannotated.fasta',
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
+                'blast_bin_dir'             => $self->o('blast_bin_dir'),
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+            },
+            -rc_name       => '250Mb_job',
+            -flow_into => {
+               -1 => [ 'blastp_unannotated_himem_no_runlimit' ],  # MEMLIMIT
+            },
+            -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+        {   -logic_name         => 'blastp_unannotated_himem_no_runlimit',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
+            -parameters         => {
+                'blast_step'                => '100',
+                'blast_db'                  => '#fasta_dir#/unannotated.fasta',
+                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
+                'blast_bin_dir'             => $self->o('blast_bin_dir'),
+                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+            },
+            -rc_name       => '2Gb_job',
+            -priority      => 20,
+            -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+
+        {   -logic_name    => 'break_batch',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BreakUnannotatedBlast',
+            -flow_into  => {
+                2 => 'blastp_unannotated_no_runlimit',
+            }
         },
 
         {   -logic_name => 'hcluster_dump_input_all_pafs',
@@ -929,13 +1068,23 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '16Gb_job',
         },
 
         {   -logic_name     => 'cluster_tagging',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ClusterTagging',
             -hive_capacity  => $self->o('cluster_tagging_capacity'),
             -rc_name    	=> '4Gb_job',
+            -batch_size     => 50,
+            -flow_into => {
+               -1 => [ 'cluster_tagging_himem' ],  # MEMLIMIT
+            },
+        },
+
+        {   -logic_name     => 'cluster_tagging_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ClusterTagging',
+            -hive_capacity  => $self->o('cluster_tagging_capacity'),
+            -rc_name    	=> '8Gb_job',
             -batch_size     => 50,
         },
 
@@ -967,7 +1116,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 blacklist_file      => $self->o('gene_blacklist_file'),
             },
-            -flow_into          => [ 'create_additional_clustersets' ],
+            -flow_into          => [ 'clusterset_backup' ],
             -rc_name => '500Mb_job',
         },
 
@@ -975,8 +1124,9 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update filter_level_1 filter_level_2 filter_level_3 fasttree )],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update filter_level_1 filter_level_2 filter_level_3 filter_level_4 fasttree )],
             },
+            -flow_into          => [ 'cluster_tagging_factory' ],
         },
 
 
@@ -987,12 +1137,7 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
             },
-            -flow_into     => {
-                1 => [
-                    'create_additional_clustersets',
-                    'cluster_tagging_factory',
-                ],
-            },
+            -flow_into          => [ 'create_additional_clustersets' ],
         },
 
         {   -logic_name => 'cluster_tagging_factory',
@@ -1052,14 +1197,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into  => [
-                'write_stn_tags',
-                WHEN(
-                    '#do_stable_id_mapping#' => 'stable_id_mapping',
-                    ELSE 'build_HMM_factory',
-                ),
-                WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
-            ],
+            -flow_into      => [ 'backup_before_cdhit_filter', 'write_stn_tags' ],
             %hc_analysis_params,
         },
 
@@ -1088,7 +1226,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
-                'mafft_home'            => $self->o('mafft_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
@@ -1106,7 +1244,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
-                'mafft_home'            => $self->o('mafft_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
@@ -1138,7 +1276,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
-                'mafft_home'            => $self->o('mafft_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
@@ -1172,14 +1310,12 @@ sub core_pipeline_analyses {
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
-            -flow_into  => {
-                '1->A' => WHEN(
+            -flow_into  =>
+                WHEN(
                      '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'filter_level_2',
                      '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
                      ELSE 'noisy',
                 ),
-                'A->1' => [ 'filter_level_3_factory' ],
-            },
             %decision_analysis_params,
         },
 
@@ -1191,8 +1327,8 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '4Gb_job',
-            -batch_size     => 5,
             -flow_into      => [ 'filter_level_2' ],
+            -batch_size     => 5,
         },
 
         {   -logic_name     => 'noisy_large',
@@ -1202,9 +1338,10 @@ sub core_pipeline_analyses {
                                'noisy_cutoff'  => $self->o('noisy_cutoff_large'),
             },
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
-            -rc_name           => '16Gb_job',
-            -batch_size     => 5,
+            -rc_name        => '16Gb_job',
+            -priority       => $self->o('noisy_priority'),
             -flow_into      => [ 'filter_level_2' ],
+            -batch_size     => 5,
         },
 
         {   -logic_name => 'filter_level_2',
@@ -1219,9 +1356,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'filter_level_3',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterSubfamiliesPatterns',
-            #get identities from: http://search.cpan.org/dist/BioPerl/Bio/SimpleAlign.pm#average_percentage_identity
             -parameters         => {
-                'max_gappiness'           => $self->o('max_gappiness'),
                 'fasttree_exe'            => $self->o('fasttree_exe'),
                 'treebest_exe'            => $self->o('treebest_exe'),
                 'output_clusterset_id'    => 'fasttree',
@@ -1230,6 +1365,58 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('filter_3_capacity'),
             -rc_name 		=> '2Gb_job',
             -batch_size     => 5,
+
+            -flow_into  => {
+                2 => WHEN (
+                    '(#tree_gene_count# >= #mafft_gene_count# and #tree_gene_count# < #mafft_himem_gene_count#)'   => 'mafft_supertree',
+                    '(#tree_gene_count# >= #mafft_himem_gene_count#)'                                              => 'mafft_supertree_himem',
+                ),
+               -1 => [ 'filter_level_3_himem' ],  # MEMLIMIT
+            }
+        },
+
+        {   -logic_name => 'filter_level_3_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FilterSubfamiliesPatterns',
+            -parameters         => {
+                'fasttree_exe'            => $self->o('fasttree_exe'),
+                'treebest_exe'            => $self->o('treebest_exe'),
+                'output_clusterset_id'    => 'fasttree',
+                'input_clusterset_id'     => 'default',
+            },
+            -hive_capacity  => $self->o('filter_3_capacity'),
+            -rc_name 		=> '16Gb_job',
+            -batch_size     => 5,
+
+            -flow_into  => {
+                2 => WHEN (
+                    '(#tree_gene_count# >= #mafft_gene_count# and #tree_gene_count# < #mafft_himem_gene_count#)'   => 'mafft_supertree',
+                    '(#tree_gene_count# >= #mafft_himem_gene_count#)'                                              => 'mafft_supertree_himem',
+                ),
+            }
+        },
+
+        {   -logic_name => 'mafft_supertree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
+                'mafft_home'                 => $self->o('mafft_home'),
+                'escape_branch'              => -1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_name    => '2Gb_job',
+            -priority   => $self->o('mafft_priority'),
+            -flow_into => {
+               -1 => [ 'mafft_supertree_himem' ],  # MEMLIMIT
+            },
+        },
+
+        {   -logic_name => 'mafft_supertree_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
+                'mafft_home'                 => $self->o('mafft_home'),
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_name    => '8Gb_job',
+            -priority   => $self->o('mafft_himem_priority'),
         },
 
 # ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
@@ -1246,106 +1433,381 @@ sub core_pipeline_analyses {
   
 # ---------------------------------------------[tree reconciliation / rearrangements]-------------------------------------------------------------
 
-# ---------------------------------------------[build HMMs]-------------------------------------------------------------
+        {   -logic_name     => 'split_genes',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
+            -parameters     => {
+                split_genes_gene_count  => $self->o('split_genes_gene_count'),
+            },
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -rc_name        => '500Mb_job',
+            -batch_size     => 20,
+            -flow_into      => [ 'build_HMM_aa_v3' ],
+        },
 
-        {   -logic_name => 'build_HMM_aa_v3',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters => {
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -20,
-            -rc_name        => '250Mb_job',
-            -flow_into      => {
-                -1  => 'build_HMM_aa_v3_himem'
-            },
+        {  -logic_name => 'build_HMM_aa_v3',
+           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+
+           -parameters => {
+                            'hmmer_home'               => $self->o('hmmer3_home'),
+                            'hmmer_version'            => 3,
+                            'check_split_genes'        => 1,
+                            'cdna'                     => 0,
+           },
+
+           -hive_capacity => $self->o('build_hmm_capacity'),
+           -batch_size    => 5,
+           -priority      => -20,
+           -rc_name       => '1Gb_job',
+           -flow_into     => {
+               -1 => 'build_HMM_aa_v3_himem',
+           },
         },
 
         {   -logic_name     => 'build_HMM_aa_v3_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
+                            'hmmer_home'            => $self->o('hmmer3_home'),
+                            'hmmer_version'         => 3,
+                            'check_split_genes'     => 1,
+                            'cdna'                  => 0,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -20,
-            -rc_name        => '1Gb_job',
+            -priority       => -15,
+            -rc_name        => '4Gb_job',
         },
 
-        {   -logic_name => 'build_HMM_cds_v3',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters => {
-                'cdna'              => 1,
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -20,
-            -rc_name        => '500Mb_job',
-            -flow_into      => {
-                -1  => 'build_HMM_cds_v3_himem'
-            },
-        },
-
-        {   -logic_name     => 'build_HMM_cds_v3_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters     => {
-                'cdna'              => 1,
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -20,
-            -rc_name        => '2Gb_job',
-        },
 
 # ---------------------------------------------[Quick tree break steps]-----------------------------------------------------------------------
 
-# -------------------------------------------[name mapping step]---------------------------------------------------------------------
+# -------------------------------------------[CDHit step (filter_level_4)]---------------------------------------------------------------------
 
-        {
-            -logic_name => 'stable_id_mapping',
-            -module => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
+        {   -logic_name => 'backup_before_cdhit_filter',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'prev_rel_db'   => '#mapping_db#',
-                'type'          => 't',
-            },
-            -flow_into          => [ 'hc_stable_id_mapping' ],
-            -rc_name => '1Gb_job',
-        },
-
-        {   -logic_name         => 'hc_stable_id_mapping',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'stable_id_mapping',
-            },
-            -flow_into  => [ 'build_HMM_factory' ],
-            %hc_analysis_params,
-        },
-
-        {   -logic_name    => 'treefam_xref_idmap',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper',
-            -parameters    => {
-                'tf_release'  => $self->o('tf_release'),
-                'tag_prefix'  => '',
-            },
-            -rc_name => '1Gb_job',
-        },
-
-        {   -logic_name => 'build_HMM_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+                'table_list'    => 'peptide_align_feature%',
+                'exclude_list'  => 1,
+                'output_file'   => '#dump_dir#/snapshot_4_before_cdhit_filter.sql.gz',
             },
             -flow_into  => {
-                # We don't use build_HMM_aa_v2 because hmmcalibrate takes ages
-                2 => [ 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
+                '1'  => [ 'CDHit_factory' ],
             },
         },
-# ---------------------------------------------[homology step]-----------------------------------------------------------------------
+
+        {   -logic_name => 'CDHit_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="filter_level_3"',
+            },
+            -flow_into  => {
+                '2->A'  => [ 'CDHit' ],
+                'A->1'  => [ 'prepare_hmm_profiles' ],
+            },
+        },
+
+        {  -logic_name => 'CDHit',
+           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CDHit',
+
+           -parameters => {
+                            'cdhit_exe'                => $self->o('cdhit_exe'),
+                            'cdhit_identity_threshold' => $self->o('cdhit_identity_threshold'),
+                            'cdhit_num_threads'        => 1,
+                            'cdhit_memory_in_mb'       => 0,
+           },
+
+            -flow_into => {
+               1 => [ 'CDHit_alignment_entry_point' ],  # MEMLIMIT
+               -1 => [ 'CDHit_himem' ],  # MEMLIMIT
+            },
+
+           -hive_capacity => $self->o('build_hmm_capacity'),
+           -batch_size    => 50,
+           -priority      => -20,
+           -rc_name       => '1Gb_job',
+       },
+
+        {  -logic_name => 'CDHit_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CDHit',
+
+            -parameters => {
+                'cdhit_exe'                => $self->o('cdhit_exe'),
+                'cdhit_identity_threshold' => $self->o('cdhit_identity_threshold'),
+                'cdhit_num_threads'        => 4,
+                'cdhit_memory_in_mb'       => 0,
+            },
+
+            -flow_into => {
+               1 => [ 'CDHit_alignment_entry_point' ],  # MEMLIMIT
+            },
+
+            -hive_capacity => $self->o('build_hmm_capacity'),
+            -batch_size    => 10,
+            -priority      => -20,
+            -rc_name       => '4Gb_4c_job',
+        },
+
+        {   -logic_name => 'CDHit_alignment_entry_point',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+            -parameters => {
+                'tags'  => {
+                    'gene_count'          => 0,
+                    'reuse_aln_runtime'   => 0,
+                },
+
+                'mcoffee_short_gene_count'  => $self->o('mcoffee_short_gene_count'),
+                'mcoffee_himem_gene_count'  => $self->o('mcoffee_himem_gene_count'),
+                'mafft_gene_count'          => $self->o('mafft_gene_count'),
+                'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
+                'mafft_runtime'             => $self->o('mafft_runtime'),
+            },
+
+            -flow_into  => {
+                '1->A' => WHEN (
+                    '(#tree_gene_count# <  #mcoffee_short_gene_count#)                                                      and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'cdhit_mcoffee_short',
+                    '(#tree_gene_count# >= #mcoffee_short_gene_count# and #tree_gene_count# < #mcoffee_himem_gene_count#)   and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'cdhit_mcoffee',
+                    '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)           and     (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)'  => 'cdhit_mcoffee_himem',
+                    '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'cdhit_mafft',
+                    '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'cdhit_mafft_himem',
+                ),
+                'A->1' => [ 'split_genes' ],
+            },
+            %decision_analysis_params,
+        },
+
+
+        {   -logic_name => 'cdhit_mcoffee_short',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -parameters => {
+                'cmd_max_runtime'       => '43200',
+                'method'                => 'cmcoffee',
+                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
+                'escape_branch'         => -1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -batch_size           => 20,
+            -rc_name    => '1Gb_job',
+            -flow_into => {
+               -1 => [ 'cdhit_mcoffee' ],  # MEMLIMIT
+               -2 => [ 'cdhit_mafft' ],
+            },
+        },
+
+        {   -logic_name => 'cdhit_mcoffee',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -parameters => {
+                'cmd_max_runtime'       => '43200',
+                'method'                => 'cmcoffee',
+                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
+                'escape_branch'         => -1,
+            },
+            -analysis_capacity    => $self->o('mcoffee_capacity'),
+            -rc_name    => '2Gb_job',
+            -priority   => $self->o('mcoffee_priority'),
+            -flow_into => {
+               -1 => [ 'cdhit_mcoffee_himem' ],  # MEMLIMIT
+               -2 => [ 'cdhit_mafft' ],
+            },
+        },
+
+        {   -logic_name => 'cdhit_mafft',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
+                'mafft_home'                 => $self->o('mafft_home'),
+                'escape_branch'              => -1,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_name    => '2Gb_job',
+            -priority   => $self->o('mafft_priority'),
+            -flow_into => {
+               -1 => [ 'cdhit_mafft_himem' ],  # MEMLIMIT
+            },
+        },
+
+        {   -logic_name => 'cdhit_mcoffee_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
+            -parameters => {
+                'cmd_max_runtime'       => '43200',
+                'method'                => 'cmcoffee',
+                'mcoffee_home'          => $self->o('mcoffee_home'),
+                'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
+                'escape_branch'         => -2,
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_name    => '8Gb_job',
+            -priority   => $self->o('mcoffee_himem_priority'),
+            -flow_into => {
+               -1 => [ 'cdhit_mafft_himem' ],
+               -2 => [ 'cdhit_mafft_himem' ],
+            },
+        },
+
+        {   -logic_name => 'cdhit_mafft_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
+                'mafft_home'                 => $self->o('mafft_home'),
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_name    => '8Gb_job',
+            -priority   => $self->o('mafft_himem_priority'),
+        },
+
+# ---------------------------------------------[HMM thresholding step]-------------------------------------------------------------
+
+        {   -logic_name           => 'prepare_hmm_profiles',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PrepareHmmProfiles',
+            -rc_name            => '1Gb_job',
+            -max_retry_count    => 0,
+            -parameters         => {
+                                    'library_name'      => $self->o('compara_hmm_library_name'),
+                                    'hmmer_home'        => $self->o('hmmer3_home'),
+                                    'compara_hmm_lib'   => $self->o('compara_hmm_library_basedir'),
+            },
+            -flow_into => {
+               1 => [ 'hmm_thresholding_factory' ],
+           },
+        },
+
+        {   -logic_name     => 'hmm_thresholding_factory',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HmmThresholdFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id, seq_member_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id = "filter_level_4" AND seq_member_id IS NOT NULL',
+            },
+            -rc_name       => '2Gb_job',
+            -flow_into  => {
+                '2->A'  => [ 'hmm_thresholding_searches' ],
+                'A->1'  => [ 'compute_thresholds' ],
+            },
+        },
+
+        {   -logic_name     => 'hmm_thresholding_searches',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
+            -rc_name        => '2Gb_job',
+            -parameters     => {
+                                'hmmer_home'            => $self->o('hmmer3_home'),
+                                'library_name'          => $self->o('compara_hmm_library_name'),
+                                'library_basedir'       => $self->o('compara_hmm_library_basedir'),
+                                'target_table'          => $self->o('hmm_thresholding_table'),
+                                'source_clusterset_id'  => 'filter_level_4',
+                                'fetch_all_seqs'        => 1,
+                                'store_all_hits'        => 1,
+            },
+            -hive_capacity  => $self->o('HMMer_search_all_hits_capacity'),
+            -batch_size     => 5,
+            -flow_into => {
+               -1 => [ 'hmm_thresholding_searches_himem' ],
+            }
+        },
+
+        {   -logic_name     => 'hmm_thresholding_searches_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
+            -rc_name        => '8Gb_job',
+            -parameters     => {
+                                'hmmer_home'            => $self->o('hmmer3_home'),
+                                'library_name'          => $self->o('compara_hmm_library_name'),
+                                'library_basedir'       => $self->o('compara_hmm_library_basedir'),
+                                'target_table'          => $self->o('hmm_thresholding_table'),
+                                'source_clusterset_id'  => 'filter_level_4',
+                                'fetch_all_seqs'        => 1,
+                                'store_all_hits'        => 1,
+            },
+            -batch_size     => 1,
+            -priority       => 10,
+            -hive_capacity  => $self->o('HMMer_search_all_hits_capacity'),
+            -flow_into => {
+               -1 => [ 'hmm_thresholding_searches_super_himem' ],
+            }
+        },
+
+        {   -logic_name     => 'hmm_thresholding_searches_super_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
+            -rc_name        => '32Gb_job',
+            -parameters     => {
+                                'hmmer_home'            => $self->o('hmmer3_home'),
+                                'library_name'          => $self->o('compara_hmm_library_name'),
+                                'library_basedir'       => $self->o('compara_hmm_library_basedir'),
+                                'target_table'          => $self->o('hmm_thresholding_table'),
+                                'source_clusterset_id'  => 'filter_level_4',
+                                'fetch_all_seqs'        => 1,
+                                'store_all_hits'        => 1,
+            },
+            -batch_size     => 1,
+            -priority       => 20,
+            -hive_capacity  => $self->o('HMMer_search_all_hits_capacity'),
+        },
+
+        {   -logic_name     => 'compute_thresholds',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::ComputeHmmThresholds',
+            -rc_name        => '4Gb_job',
+
+            -flow_into => {
+               1 => [ 'build_HMM_with_tags_factory' ],
+           },
+        },
+
+
+        #new build_HMM_aa_v3 with cut_off tags
+        #-----------------------------------------------------------------------------------------------
+        {   -logic_name => 'build_HMM_with_tags_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="filter_level_4"',
+            },
+            -flow_into  => {
+                '2->A'  => [ 'build_HMM_with_tags' ],
+                'A->1'  => [ 'prepare_hmm_profiles_post_thresholding' ],
+            },
+        },
+
+        {   -logic_name           => 'prepare_hmm_profiles_post_thresholding',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PrepareHmmProfiles',
+            -rc_name            => '1Gb_job',
+            -max_retry_count    => 0,
+            -parameters         => {
+                                    'library_name'      => $self->o('compara_hmm_library_name'),
+                                    'hmmer_home'        => $self->o('hmmer3_home'),
+                                    'compara_hmm_lib'   => $self->o('compara_hmm_library_basedir'),
+            },
+        },
+
+        {  -logic_name => 'build_HMM_with_tags',
+           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+
+           -parameters => {
+                            'hmmer_home'               => $self->o('hmmer3_home'),
+                            'hmmer_version'            => 3,
+                            'check_split_genes'        => 1,
+                            'cdna'                     => 0,
+                            'include_thresholds'       => 1,
+                            'check_split_genes'        => 1,
+           },
+
+           -hive_capacity => $self->o('build_hmm_capacity'),
+           -batch_size    => 5,
+           -priority      => -20,
+           -rc_name       => '1Gb_job',
+           -flow_into     => {
+               -1 => 'build_HMM_with_tags_himem',
+           },
+        },
+
+        {   -logic_name     => 'build_HMM_with_tags_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters     => {
+                            'hmmer_home'            => $self->o('hmmer3_home'),
+                            'hmmer_version'         => 3,
+                            'check_split_genes'     => 1,
+                            'cdna'                  => 0,
+                            'include_thresholds'    => 1,
+                            'check_split_genes'     => 1,
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -priority       => -15,
+            -rc_name        => '4Gb_job',
+        },
+
+        #-----------------------------------------------------------------------------------------------
+
     ];
 }
 
