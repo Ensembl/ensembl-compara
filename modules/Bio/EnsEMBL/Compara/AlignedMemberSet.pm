@@ -89,6 +89,8 @@ use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
+use Bio::Annotation::AnnotationFactory;
+
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 
 ##############################
@@ -386,9 +388,10 @@ sub get_SimpleAlign {
     my $removed_columns = undef;
     my $removed_members = undef;
     my $map_long_seq_names = undef;
+    my $annotations = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $removed_members, $map_long_seq_names) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $removed_members, $map_long_seq_names, $annotations) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES ANNOTATIONS)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
@@ -503,6 +506,18 @@ sub get_SimpleAlign {
     }
     $sa = $sa->remove_gaps(undef, 1) if $remove_gaps;
     $sa = $sa->remove_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
+
+    #Add cutoffs annotations to the HMM stockholm file, which will be caught by hmmbuild
+    if ($annotations) {
+        # AnnotationCollection from the SimpleAlign object
+        my $factory = Bio::Annotation::AnnotationFactory->new( -type => 'Bio::Annotation::SimpleValue' );
+
+        foreach my $annot_tag (keys %{$annotations}) {
+            my $annot_obj = $factory->create_object( -value => $annotations->{$annot_tag}, -tagname => $annot_tag );
+            $sa->annotation->add_Annotation( 'custom', $annot_obj );
+        }
+    }
+
     return $sa;
 }
 
@@ -529,6 +544,7 @@ sub print_alignment_to_file {
 
     my $sa = $self->get_SimpleAlign(@args);    # We assume that none of print_alignment_to_file() arguments clash with get_SimpleAlign()'s
     $sa->set_displayname_flat($flat_display_name // 1);
+
     my $alignIO = Bio::AlignIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
     $alignIO->write_aln($sa);
     return $sa
