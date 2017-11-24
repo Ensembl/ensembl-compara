@@ -47,7 +47,7 @@ sub param_defaults {
              'run_treebest_sdi'           => 1,
              'reroot_with_sdi'            => 1,
              'input_clusterset_id'        => 'raxml_parsimony',
-             'output_file'                => 'RAxML_bestTree.#gene_tree_id#',
+             'output_file'                => 'RAxML_result.#gene_tree_id#',
              'minimum_genes'              => 4,
 			 'output_clusterset_id'       => 'raxml',
     };
