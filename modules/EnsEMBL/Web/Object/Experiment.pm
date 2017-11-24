@@ -49,22 +49,16 @@ sub new {
 
   my $display_all_peak_calling_sources = $param eq 'all';
   my $display_named_peak_calling       = $param =~ /^name\-(.+)$/;
-  
   my $peak_calling_name;
-  if ($display_named_peak_calling) {
-    $peak_calling_name = $1;
-  }
-  
+
   if ($display_all_peak_calling_sources) {
     $peak_callings = $peak_calling_adaptor->fetch_all;
   }
-
-  if ($display_named_peak_calling) {
+  elsif ($display_named_peak_calling) {
+    $peak_calling_name = $1;
     $peak_callings = [ $peak_calling_adaptor->fetch_by_name($peak_calling_name) || () ];
   }
-  
-  if (!$display_all_peak_calling_sources && !$display_named_peak_calling) {
-  
+  else { 
     my $constraints = {};
     my $filters = $self->applied_filters($param);
 
@@ -87,7 +81,6 @@ sub new {
         push @{$constraints->{'projects'}}, $_ for map $experimental_group_adaptor->fetch_by_name($_) || (), @$value;
         next FILTER;
       }
-      die("Unknown filter $filter!");
     }
     
     if (keys %$constraints) {
@@ -100,11 +93,10 @@ sub new {
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $peak_calling (@$peak_callings) {
   
-
     my $experiment = $peak_calling->fetch_Experiment;
 
     if (! defined $experiment) {
-      warn "Failed to get Experiment for FeatureSet:\t".$peak_calling->name;
+      #warn "Failed to get Experiment for FeatureSet:\t".$peak_calling->name;
       next;
     }
 
@@ -126,7 +118,7 @@ sub new {
       'feature_type_name'   => $feature_type->name,
       'evidence_label'      => $evidence_label,
       'cell_type_name'      => $epigenome_name,
-      'efo_id'              => $epigenome->ontology_accession,
+      'efo_id'              => $epigenome->efo_accession,
       'xref_genes'          => $feature_type->get_all_coding_gene_stable_ids(),
       'binding_motifs'      => [ map {$_->name} map { @{$binding_matrix_adaptor->fetch_all_by_FeatureType($_)} } ($feature_type, @{$feature_type->associated_feature_types}) ]
     };
