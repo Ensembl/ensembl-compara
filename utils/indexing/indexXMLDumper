@@ -1323,7 +1323,6 @@ sub dumpOligoProbe {
       join $FUNCDB.array using (array_id)
     GROUP BY
       probe_set.name,
-      probe_set.probe_set_id,
       array.name
 ));
   $sth->execute();
@@ -1377,12 +1376,9 @@ sub dumpOligoProbe {
       join $FUNCDB.array_chip using (array_chip_id)
       join $FUNCDB.array using (array_id)
     where
-      array.is_probeset_array = false
+      probe.probe_set_id is null
     group by
-      probe.probe_id,
-      probe.name,
-      array.vendor,
-      array.name
+      probe.name
   ));
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
