@@ -74,7 +74,15 @@ sub fetch_by_GeneTree_and_label {
     $self->bind_param_generic_fetch(ref($gene_tree) ? $gene_tree->root_id() : $gene_tree, SQL_INTEGER);
     $self->bind_param_generic_fetch($label, SQL_VARCHAR);
 
-    return $self->generic_fetch_one($constraint);
+    ## hack e91 ##
+    #return $self->generic_fetch_one($constraint);
+    my $str = $self->generic_fetch_one($constraint);
+    if ($label =~ /^cafe/) {
+        $str =~ s/"common_name":"Mus_caroli"/"url_name":"Mus_caroli"/g;
+        $str =~ s/"production_name":"Mus_pahari"/"url_name":"Mus_pahari"/g;
+    }
+    return $str;
+    ## hack e91 ##
 }
 
 ###############################
