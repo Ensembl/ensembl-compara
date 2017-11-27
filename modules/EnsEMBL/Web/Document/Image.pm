@@ -161,7 +161,7 @@ sub _render_toolbars {
     $extra_html //= '';
     my $top    = $self->toolbars->{'top'} ? qq(<div class="image_toolbar top print_hide">$toolbar</div>$extra_html) : '';
     ### Force a toolbar if the image is long enough to disappear off most screens!
-    my $bottom = ($self->toolbars->{'bottom'} || $self->height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $extra_html : '';
+    my $bottom = ($self->toolbars->{'bottom'} || ($self->height && $self->height > 999)) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $extra_html : '';
     @toolbars = ($top, $bottom);
   }
 
