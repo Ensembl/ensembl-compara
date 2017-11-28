@@ -872,7 +872,7 @@ sub copy_conservation_scores {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
-    print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
+    die " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
 
   my $step = 1000;
@@ -983,7 +983,7 @@ sub copy_constrained_elements {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
-    print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
+    die " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
 
   ## Check availability of the internal IDs in the TO database
