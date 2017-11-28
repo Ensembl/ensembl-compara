@@ -722,18 +722,18 @@ sub copy_dna_dna_alignements {
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_block_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where);
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_block', $where, undef, 'skip_disable_keys');
     print ".";
     $where = "genomic_align_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND genomic_align_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
     $where = "method_link_species_set_id = ".($this_method_link_species_set->dbID) if $filter_by_mlss;
-    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where);
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align', $where, undef, 'skip_disable_keys');
     print ".";
     $where = "node_id >= ".
         ($this_method_link_species_set->dbID * 10**10)." AND node_id < ".
         (($this_method_link_species_set->dbID + 1) * 10**10);
-    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where);
+    copy_table($old_dba->dbc, $new_dba->dbc, 'genomic_align_tree', $where, undef, 'skip_disable_keys');
     print "ok!\n";
   }
   print "re-enabling keys\n";
@@ -834,7 +834,7 @@ sub copy_constrained_elements {
     my $where = "constrained_element_id >= ".
     ($this_method_link_species_set->dbID * 10**10)." AND constrained_element_id < ".
     (($this_method_link_species_set->dbID + 1) * 10**10);
-    copy_table($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where);
+    copy_table($old_dba->dbc, $new_dba->dbc, 'constrained_element', $where, undef, 'skip_disable_keys');
     print "ok!\n";
   }
   $new_dba->dbc->do("ALTER TABLE `constrained_element` ENABLE KEYS");
@@ -873,7 +873,7 @@ sub copy_conservation_scores {
     my $where = "genomic_align_block_id >= $lower_gab_id AND genomic_align_block_id < $upper_gab_id";
     print "Copying conservation scores for ", $this_method_link_species_set->name,
 	" (", $this_method_link_species_set->dbID, "): ";
-    copy_table($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, "skip-disable-keys");
+    copy_table($old_dba->dbc, $new_dba->dbc, 'conservation_score', $where, undef, "skip_disable_keys");
     print "ok!\n";
   }
 
