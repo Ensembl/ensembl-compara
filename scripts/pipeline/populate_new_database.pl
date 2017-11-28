@@ -620,13 +620,18 @@ sub copy_all_dnafrags {
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
+  # Keys are disabled / enabled only once for the whole loop
+  $new_dba->dbc->do("ALTER TABLE `dnafrag` DISABLE KEYS");
+
   my $n = 0;
   foreach my $this_genome_db (@$genome_dbs) {
     $n++;
     print "Copying ", $this_genome_db->name, "'s DnaFrags ($n/", scalar(@$genome_dbs), ") ...\n";
     my $constraint = "genome_db_id = ".($this_genome_db->dbID);
-    copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''));
+    copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''), undef, 'skip_disable_keys');
   }
+
+  $new_dba->dbc->do("ALTER TABLE `dnafrag` ENABLE KEYS");
 }
 
 =head2 copy_all_mlss_tags
