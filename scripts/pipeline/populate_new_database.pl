@@ -340,6 +340,7 @@ $master_dba->dbc->disconnect_if_idle;
 
 if ($old_dba and !$skip_data) {
 ## Copy all the stable ID mapping entries
+  print "Copying the stable_id_history table ...\n";
   copy_table($old_dba->dbc, $new_dba->dbc, "stable_id_history");
 ## Copy all the MethodLinkSpeciesSetTags for MethodLinkSpeciesSets
   copy_all_mlss_tags($old_dba, $new_dba, $all_default_method_link_species_sets);
@@ -619,7 +620,10 @@ sub copy_all_dnafrags {
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
+  my $n = 0;
   foreach my $this_genome_db (@$genome_dbs) {
+    $n++;
+    print "Copying ", $this_genome_db->name, "'s DnaFrags ($n/", scalar(@$genome_dbs), ") ...\n";
     my $constraint = "genome_db_id = ".($this_genome_db->dbID);
     copy_table($from_dba->dbc, $to_dba->dbc, 'dnafrag', $constraint.($cellular_component ? " AND cellular_component = '$cellular_component'" : ''));
   }
@@ -640,6 +644,7 @@ sub copy_all_dnafrags {
 sub copy_all_mlss_tags {
   my ($from_dba, $to_dba, $mlsss) = @_;
 
+  print "Copying all MethodLinkSpeciesSet tags ...\n";
   foreach my $this_mlss (@$mlsss) {
     next if $methods_to_skip{$this_mlss->method->type};
     copy_table($from_dba->dbc, $to_dba->dbc, 'method_link_species_set_tag', "method_link_species_set_id = ".($this_mlss->dbID));
@@ -663,6 +668,7 @@ sub copy_all_mlss_tags {
 sub copy_all_species_tres {
   my ($from_dba, $to_dba, $mlsss) = @_;
 
+  print "Copying all species-trees ...\n";
   foreach my $this_mlss (@$mlsss) {
     next unless $this_mlss->method->class =~ /(GenomicAlign(Tree|Block).(tree|ancestral|multiple)_alignment|SpeciesTree.species_tree_root)/;
     my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
