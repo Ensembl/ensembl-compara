@@ -791,12 +791,19 @@ sub copy_ancestor_dnafrag {
 sub copy_synteny_data {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
+  # Keys are disabled / enabled only once for the whole loop
+  $new_dba->dbc->do("ALTER TABLE `synteny_region` DISABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `dnafrag_region` DISABLE KEYS");
+
   foreach my $this_mlss (@$method_link_species_sets) {
     next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
     my $mlss_filter = "method_link_species_set_id = ".($this_mlss->dbID);
     copy_table($old_dba->dbc, $new_dba->dbc, 'synteny_region', $mlss_filter);
     copy_data($old_dba->dbc, $new_dba->dbc, 'dnafrag_region', "SELECT dnafrag_region.* FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE $mlss_filter");
   }
+
+  $new_dba->dbc->do("ALTER TABLE `synteny_region` ENABLE KEYS");
+  $new_dba->dbc->do("ALTER TABLE `dnafrag_region` ENABLE KEYS");
 }
 
 
