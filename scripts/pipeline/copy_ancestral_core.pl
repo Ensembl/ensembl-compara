@@ -296,62 +296,32 @@ sub copy_ancestral_data {
     }
 
     #
-    #Find min and max seq_region_id
+    #Find min seq_region_id
     #
-    my $range_sql = "SELECT MIN(seq_region_id), MAX(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
-    my ($min_sr, $max_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
+    my $range_sql = "SELECT MIN(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
+    my ($min_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
 
     #
-    #Create correct number of spaceholder rows in seq_region table in to_db 
+    #Copy the seq_region rows with new, auto-incremented, seq_region_ids
+    #We expect copy_data to reserve *consecutive* rows, this is done with "mysqlimport --lock-tables"
+    #The ORDER BY clause is important because otherwise the database engine could return the rows in any order
     #
-    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region ss WHERE name like '${name}_%'";
-    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr);
+    print "reserving seq_region_ids\n";
+    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region WHERE name like '${name}_%' ORDER BY seq_region_id";
+    copy_data($from_dbc, $to_dbc, 'seq_region', $query);
 
     #
-    #Find min and max of new seq_region_ids
+    #Find min of new seq_region_ids
     #
-    my ($new_min_sr, $new_max_sr) = $to_dbc->db_handle->selectrow_array($range_sql);
-
-    #
-    #Create temporary table in from_db to store mappings
-    #
-    $from_dbc->do("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
-    $from_dbc->do('DELETE FROM tmp_seq_region_mapping');
-
-    #
-    #Create mappings
-    #
-    my $values="";
-    my $new_seq_region_id = $new_min_sr;
-    for (my $i = $min_sr; $i <= $max_sr; $i++) {
-	$values .= "($i, $new_seq_region_id),";
-	$new_seq_region_id++;
-    }
-
-    #remove final comma
-    chop $values;
-    #print "values $values\n";
-    $from_dbc->do("INSERT INTO tmp_seq_region_mapping \(seq_region_id, new_seq_region_id\) VALUES $values");
-
-    #
-    #Copy over the seq_region with new seq_region_ids
-    #
-    $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '${name}_%'";
-
-    print "copying seq_region in replace mode\n";
-    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, undef, 1);
+    my ($new_min_sr) = $to_dbc->db_handle->selectrow_array($range_sql);
 
     #
     #Copy over the dna with new seq_region_ids
+    #Assuming all of the above, the seq_region_ids can be simply shifted
     #
-    $query = "SELECT new_seq_region_id, sequence FROM tmp_seq_region_mapping JOIN dna USING (seq_region_id) WHERE seq_region_id > 0";
+    $query = "SELECT seq_region_id+$new_min_sr-$min_sr, sequence FROM dna";
 
     print "copying dna\n";
-    copy_data($from_dbc, $to_dbc, "dna", $query, "seq_region_id", $min_sr, $max_sr, 1000);
-
-    #
-    #Drop temporary table
-    #
-    $from_dbc->do("DROP TABLE tmp_seq_region_mapping");
+    copy_data($from_dbc, $to_dbc, 'dna', $query);
 }
 
