@@ -92,13 +92,14 @@ our @EXPORT_OK;
     copy_data
     copy_data_in_binary_mode
     copy_data_in_text_mode
+    copy_data_pp
     copy_table
     bulk_insert
     single_insert
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_table)],
+  'table_copy'  => [qw(copy_data copy_data_pp copy_table)],
   'insert'      => [qw(bulk_insert single_insert)],
   'all'         => [@EXPORT_OK]
 );
@@ -585,6 +586,54 @@ sub copy_table {
     Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1, debug => $debug });
 
     print "time " . (time - $start_time) . "\n" if $debug;
+}
+
+
+=head2 copy_data_pp
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
+  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
+  Arg[3]      : string $table_name
+  Arg[4]      : string $query
+  Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $debug (default: false)
+
+  Description : "Pure-Perl" implementation of copy_data(). It loads the rows from
+                the query and builds multi-inserts statements. As everything remains
+                within the Perl DBI layers, this method is suitable when a transaction
+                on the target database is required.
+  Return      : Integer - The number of rows copied over
+
+=cut
+
+sub copy_data_pp {
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $debug) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
+    my $to_dbh = $to_dbc->db_handle;
+
+    my $sth = $from_dbc->prepare($query, { 'mysql_use_result' => 1 });
+    $sth->execute();
+    my $curr_row;
+
+    my $total_rows = 0;
+    do {
+        my $insert_sql = ($replace ? 'REPLACE' : 'INSERT IGNORE') . ' INTO ' . $table_name;
+        $insert_sql .= ' VALUES ';
+        my $first = 1;
+        # The order of the condition is important: we don't want to discard a row
+        while ((length($insert_sql) < MAX_STATEMENT_LENGTH) and ($curr_row = $sth->fetchrow_arrayref)) {
+            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {$to_dbh->quote($_)} @{$curr_row}) . ')';
+            $first = 0;
+        }
+        my $this_time = $to_dbc->do($insert_sql) or die "Could not execute the insert because of ".$to_dbc->db_handle->errstr;
+        print "Inserted $this_time rows in $table_name\n" if $debug;
+        $total_rows += $this_time;
+    } while ($curr_row);
+    $sth->finish;
+    return $total_rows;
 }
 
 
