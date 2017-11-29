@@ -52,7 +52,10 @@ sub populate_tree {
   ));
   
   $self->create_node('Evidence', 'Supporting evidence',
-    [qw( evidence  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence)],
+    [qw(
+        popfreq   EnsEMBL::Web::Component::StructuralVariation::PopulationFrequency
+        evidence  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence
+    )],
     { 'availability' => 'has_supporting_structural_variation', 'concise' => 'Supporting evidence' }
   );
   
@@ -63,6 +66,5 @@ sub populate_tree {
     )],
     { 'availability' => 'has_phenotype', 'concise' => 'Phenotype Data' }
   );
-  
 }
 1;
