@@ -31,7 +31,7 @@ sub top_message {
 sub content {
   my $self      = shift;
   my $content   = $self->SUPER::content(@_);
-  my $url_path  = ($self->hub->param('src') || '') =~ s/^.+\.[^\/]+//r; # remove the hostname
+  my $url_path  = ($self->hub->param('src') || '') =~ s/^.+?\.[^\/]+//r; # remove the hostname
 
   return $content =~ s/href\=\"([^\"]+\.[^\/\"]+)[^\"]*\"/href="$1$url_path"/gr; # replace url paths for all the links in the page
 }
