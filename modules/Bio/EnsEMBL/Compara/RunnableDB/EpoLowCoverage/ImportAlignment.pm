@@ -125,27 +125,6 @@ sub importAlignment {
     my $ancestor_genome_db = $self->param('from_comparaDBA')->get_GenomeDBAdaptor()->fetch_by_name_assembly("ancestral_sequences");
     my $ancestral_dbID_constraint = $ancestor_genome_db ? ' AND genome_db_id != '.$ancestor_genome_db->dbID : '';
 
-    my $step = $self->param('step');
-
-    ##Find min and max of the relevant internal IDs in the FROM database
-    my $sth = $self->param('from_dbc')->prepare("SELECT
-        MIN(gab.genomic_align_block_id), MAX(gab.genomic_align_block_id),
-        MIN(ga.genomic_align_id), MAX(ga.genomic_align_id),
-        MIN(gat.node_id), MAX(gat.node_id),
-        MIN(gat.root_id), MAX(gat.root_id)
-      FROM genomic_align_block gab
-        LEFT JOIN genomic_align ga using (genomic_align_block_id)
-	LEFT JOIN genomic_align_tree gat ON gat.node_id = ga.node_id
-      WHERE
-        gab.method_link_species_set_id = ?");
-    
-    $sth->execute($mlss_id);
-    my ($min_gab, $max_gab, $min_ga, $max_ga, $min_node_id, $max_node_id, 
-	$min_root_id, $max_root_id) =
-	  $sth->fetchrow_array();
-    
-    $sth->finish();
-
     #HACK to just copy over one chr (22) for testing purposes
     #my $dnafrag_id = 905407;
 
@@ -179,10 +158,7 @@ sub importAlignment {
     }
     copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_block",
-              $gab_sql,
-              "genomic_align_block_id",
-              $min_gab, $max_gab,
-              $step);
+              $gab_sql);
 
     #copy genomic_align_tree table
     my $gat_sql;
@@ -198,10 +174,7 @@ sub importAlignment {
     }
     copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align_tree",
-              $gat_sql,
-              "root_id",
-              $min_root_id, $max_root_id,
-              $step);
+              $gat_sql);
 
     #copy genomic_align table
     my $ga_sql;
@@ -211,17 +184,13 @@ sub importAlignment {
                     " WHERE method_link_species_set_id = $mlss_id AND dnafrag_id=$dnafrag_id";
     } else {
 	#Don't copy over ancestral genomic_aligns 
-        #NOTE: what don't we apply the same filter when $dnafrag_id is set ??
         $ga_sql = "SELECT genomic_align.*".
                     " FROM genomic_align JOIN dnafrag USING (dnafrag_id)".
                     " WHERE method_link_species_set_id = $mlss_id $ancestral_dbID_constraint";
     }
     copy_data($self->param('from_dbc'), $self->compara_dba->dbc,
               "genomic_align",
-              $ga_sql,
-              "genomic_align_id",
-              $min_ga, $max_ga,
-              $step);
+              $ga_sql);
 }
 
 
