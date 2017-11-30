@@ -212,9 +212,13 @@ sub variation_source {
   my $source_prefix = 'View in';
 
   # Source link
-  if ($source =~ /dbSNP/ && $hub->species eq 'Homo_sapiens') {
-    $sname       = 'DBSNP';
-    $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
+  if ($source =~ /dbSNP/) {
+    if ($hub->species eq 'Homo_sapiens') {
+      $sname       = 'DBSNP';
+      $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
+    } else {
+      $source_link = "";
+    } 
   } elsif ($source =~ /ClinVar/i) {
     $sname = ($name =~ /^rs/) ?  'CLINVAR_DBSNP' : 'CLINVAR';
     $source_link = $hub->get_ExtURL_link("About $source", $sname, $name);
@@ -247,8 +251,10 @@ sub variation_source {
   }
   
   $version = ($version) ? " (release $version)" : '';
-  
-  return ['Original source', sprintf('<p>%s%s%s%s</p>', $description, $version, $self->text_separator, $source_link)];
+ 
+  my $text_separator = $source_link ne '' ? $self->text_separator : '';
+ 
+  return ['Original source', sprintf('<p>%s%s%s%s</p>', $description, $version, $text_separator, $source_link)];
 }
 
 
