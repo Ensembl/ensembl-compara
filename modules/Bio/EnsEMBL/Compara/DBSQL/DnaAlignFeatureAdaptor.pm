@@ -503,7 +503,11 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
             $num = 0;
             $type = "D";
           }
+        } elsif ($this_genomic_align_block->method_link_species_set->method->type =~ /^CACTUS_HAL/) {
+          # Cactus returns blocks with double-gaps
+          $num--;   # to cancel out the incrementation below
         } else {
+          # But other methods shouldn't
           throw "no double gaps can occur in a pairwise alignment!";
         }
         $num++;
