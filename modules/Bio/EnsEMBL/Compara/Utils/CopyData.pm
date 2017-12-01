@@ -51,7 +51,7 @@ transfer mode depending on the type of query and the data types.
 
 copy_data_with_foreign_keys_by_constraint() can copy individual rows with
 their own depedencies. It will also "expand" the data, for instance by
-copying homology_member too when asked to copy homology_member.
+copying homology_member too when asked to copy homology.
 
 =head2 :insert export-tag
 
