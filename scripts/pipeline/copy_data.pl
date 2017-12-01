@@ -757,7 +757,7 @@ sub copy_ancestral_dnafrags {
   my $sth = $from_dbc->prepare("SELECT name FROM genomic_align
                                          LEFT JOIN dnafrag USING (dnafrag_id)
                                          WHERE genome_db_id = $ancestral_dbID
-                                         AND method_link_species_set_id = ?");
+                                         AND method_link_species_set_id = ? LIMIT 1");
   $sth->execute($mlss_id);
   my @names = $sth->fetchrow_array();
   $sth->finish();
