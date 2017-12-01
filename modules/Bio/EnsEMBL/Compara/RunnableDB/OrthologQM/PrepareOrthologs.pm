@@ -216,7 +216,7 @@ sub _reusable_homologies {
     my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
 
     # first, find reusable homologies based on id mapping table
-    my $sql = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ? AND prev_release_homology_id IS NOT NULL";
+    my $sql = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ?";
 
     my $sth = $dba->dbc->prepare($sql);
     $sth->execute( $mlss_id );

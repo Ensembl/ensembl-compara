@@ -231,7 +231,8 @@ sub default_options {
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'goc_capacity'              => 200,
+        'goc_capacity'              => 30,
+        'goc_stats_capacity'        => 5,
         'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 1500,
@@ -3097,66 +3098,10 @@ sub core_pipeline_analyses {
                 'taxlevels'             => $self->o('goc_taxlevels'),
             },
             -flow_into  => {
-                '1->A' => WHEN( 'scalar(@{#taxlevels#})' => 'copy_prev_tables' ),
+                '1->A' => WHEN( 'scalar(@{#taxlevels#})' => 'goc_entry_point' ),
                 'A->1' => ['floating_rib'],
             },
         },
-
-        {   -logic_name => 'copy_prev_tables',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table','copy_prev_gene_member_table']),
-                'A->1' => ['goc_group_genomes_under_taxa'],
-            },
-        },
-
-        {   -logic_name => 'copy_prev_goc_score_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#goc_reuse_db#',
-                'mode'          => 'overwrite',
-                'table'         => 'ortholog_goc_metric',
-                'renamed_table' => 'prev_rel_goc_metric',
-            },
-        },
-        
-        {   -logic_name => 'copy_prev_gene_member_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#goc_reuse_db#',
-                'mode'          => 'overwrite',
-                'table'         => 'gene_member',
-                'renamed_table' => 'prev_rel_gene_member'
-            },
-        },
-
-
-
-        {   -logic_name => 'goc_group_genomes_under_taxa',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
-            -parameters => {
-                'taxlevels'             => $self->o('goc_taxlevels'),
-                'filter_high_coverage'  => 0,
-            },
-            -flow_into => {
-                '2' => [ 'goc_mlss_factory' ],
-            },
-        },
-
-        {   -logic_name => 'goc_mlss_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
-            -parameters => {
-                'methods'   => {
-                    'ENSEMBL_ORTHOLOGUES'   => 2,
-                },
-            },
-            -flow_into => {
-                2 => {
-                    'get_orthologs' => { 'goc_mlss_id' => '#homo_mlss_id#' },    
-                },
-            },
-        },
-
 
         {   -logic_name => 'homology_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',

@@ -143,6 +143,7 @@ sub default_options {
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
         'goc_capacity'              => 200,
+        'goc_stats_capacity'        => 15,
         'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 200,

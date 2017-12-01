@@ -263,6 +263,7 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 	PRIMARY KEY (ensembl_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+
 -- ----------------------------------------------------------------------------------
 --
 -- Table structure for tables 'ortholog_goc_metric'
@@ -272,19 +273,39 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   method_link_species_set_id int(10) unsigned NOT NULL,
   homology_id int(10) unsigned NOT NULL,
   gene_member_id int(10) unsigned NOT NULL,
-  dnafrag_id bigint(20) unsigned NOT NULL,
-  goc_score INT NOT NULL, 
-  left1 INT,
-  left2 INT,
-  right1 INT,
-  right2 INT,
+  goc_score TINYINT NOT NULL,
+  left1 TINYINT(1),
+  left2 TINYINT(1),
+  right1 TINYINT(1),
+  right2 TINYINT(1),
 
   PRIMARY KEY (homology_id, gene_member_id),
-  KEY method_link_species_set_id (method_link_species_set_id),
   
+  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set (method_link_species_set_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member (gene_member_id),
-  FOREIGN KEY (homology_id) REFERENCES homology (homology_id),
-  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag (dnafrag_id)
+  FOREIGN KEY (homology_id) REFERENCES homology (homology_id)
+)  ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for tables 'prev_ortholog_goc_metric'
+-- overview: This table contains the full breakdown of what was used to
+-- calculate the goc score in the last release. The schema is almost the
+-- same as ortholog_goc_metric but we use stable_id instead of gene_member_id
+
+CREATE TABLE IF NOT EXISTS prev_ortholog_goc_metric (
+  method_link_species_set_id int(10) unsigned NOT NULL,
+  homology_id int(10) unsigned NOT NULL,
+  stable_id varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  goc_score TINYINT NOT NULL,
+  left1 TINYINT(1),
+  left2 TINYINT(1),
+  right1 TINYINT(1),
+  right2 TINYINT(1),
+
+  PRIMARY KEY (homology_id, stable_id),
+  KEY (method_link_species_set_id)
+
 )  ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
@@ -323,7 +344,7 @@ CREATE TABLE `seq_member_id_current_reused_map` (
 
 CREATE TABLE homology_id_mapping (
 	curr_release_homology_id  INT UNSIGNED NOT NULL,
-	prev_release_homology_id  INT UNSIGNED,
+	prev_release_homology_id  INT UNSIGNED NOT NULL,
 	mlss_id                   INT UNSIGNED NOT NULL,
 	PRIMARY KEY (curr_release_homology_id),
 	UNIQUE KEY (prev_release_homology_id),

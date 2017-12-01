@@ -48,9 +48,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
 use List::MoreUtils qw(firstidx);
-#use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -76,25 +79,25 @@ sub param_defaults {
 sub fetch_input{
     my $self = shift;
 #    $self->debug(1);
-    $self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
-    $self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
-    $self->param('gmember_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
-    
-#get the list of homology ids. 
-    my @keys = keys %{$self->param('chr_job')};
-    my $homologies_dbID_list = $self->param('chr_job')->{$keys[0]};
-    
+
+    # Preload all the homologies
+  my $preloaded_homologs_hashref;
+  my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
+  while (my ($dnafrag_id, $homologies_dbID_list) = each(%{$self->param('chr_job')}) ) {
+
 #preload all gene members to make quering the homologs faster later on
-    my $homologs = $self->param('homolog_adaptor')->fetch_all_by_dbID_list($homologies_dbID_list);
+    my $homologs = $homology_adaptor->fetch_all_by_dbID_list($homologies_dbID_list);
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologs->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologs);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologs->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
-    my $preloaded_homologs_hashref;
 
   #loop through the preloaded homologies to create a hash table homology id => homology object. this will serve as a look up table 
     while ( my $ortholog = shift( @{ $homologs} ) ) {
         $preloaded_homologs_hashref->{$ortholog->dbID()} = $ortholog;
     }
+  }
+
     $self->param('preloaded_homologs', $preloaded_homologs_hashref);
+    $self->param('all_goc_score_arrayref', []);
 
 }
 
@@ -104,8 +107,6 @@ sub run {
 #    $self->dbc and $self->dbc->disconnect_if_idle();
     print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n" if ( $self->debug );
     print Dumper($chr_orth_hashref)if ( $self->debug >3 );
-    my @all_goc_score_array;
-    $self->param('all_goc_score_arrayref', \@all_goc_score_array);
     my $count_homologs = 0;
     while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
         my @ordered_orth_array = @$ordered_orth_arrayref;
@@ -132,53 +133,43 @@ sub run {
 
             }
             $query = $ordered_orth_array[$index];
-            print $left1, " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
-            my $goc_score_hashref = $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID );
+            print $left1//'NA', " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
+            my $goc_score_hashref = $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2);
             push @{$self->param('all_goc_score_arrayref')}, $goc_score_hashref ;
         }
     }
     print "\n\n This is how many homology ids were in the input : $count_homologs  \n\n" if ( $self->debug );
-    $self->_insert_all_goc_scores()
+}
+
+sub write_output {
+    my $self = shift;
+    $self->_insert_goc_scores($self->param('all_goc_score_arrayref'));
 }
 
 #this method will create one sql insert statement out of the goc_scores array and insert it into the ortholog_goc_metric table
-sub _insert_all_goc_scores {
-  my $self = shift;
-  print "\n Starting ------  _update_ortholog_goc_table \n" if ( $self->debug );
+sub _insert_goc_scores {
+  my ($self, $goc_arrayref) = @_;
+  print "\n Starting ------  _insert_goc_scores\n" if ( $self->debug );
 
-  my $sql_insert_query = 'REPLACE INTO ortholog_goc_metric (method_link_species_set_id,homology_id,gene_member_id,dnafrag_id,goc_score,left1,left2,right1,right2) VALUES ' ;
-  my $size_goc_score_arrayref = scalar @{$self->param('all_goc_score_arrayref')};
-  #my @goc_data;
+  my $size_goc_score_arrayref = scalar @$goc_arrayref;
   print "\n\n This is the how many homology ids we have goc scores for and inserting into the ortholog goc table :  \n  $size_goc_score_arrayref \n\n " if ( $self->debug );
-  foreach ( @{$self->param('all_goc_score_arrayref')} ) {
-    my $l1 = defined $_->{'left1'} ? $_->{'left1'} : 'NULL';
-    my $l2 = defined $_->{'left2'} ? $_->{'left2'} : 'NULL';
-    my $r1 = defined $_->{'right1'} ? $_->{'right1'} : 'NULL';
-    my $r2 = defined $_->{'right2'} ? $_->{'right2'} : 'NULL';
+  my @goc_data;
+  foreach ( @$goc_arrayref ) {
     defined $_->{'goc_score'} or die " the goc score should atleast be 0. mlss id :  $_->{'method_link_species_set_id'} , homology_id : $_->{'homology_id'} ";
     defined $_->{'method_link_species_set_id'} or die " the method_link_species_set_id can not be empty. homology_id : $_->{'homology_id'} ";
-    my $tmp = ' (' . $_->{'method_link_species_set_id'} . ',' . $_->{'homology_id'} . ',' . $_->{'gene_member_id'} . ',' . $_->{'dnafrag_id'} .
-              ',' . $_->{'goc_score'} . ',' . $l1 . ',' . $l2 . ',' . $r1 . ',' . $r2 . '),' ;
-
-    $sql_insert_query .= $tmp ;
-    #push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}. $_->{'dnafrag_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
+    push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
   }
 
-  my $insert_query = substr($sql_insert_query, 0, -1);
-  print "\n this is the concatenated insert after clean up :    $insert_query   \n\n" if ( $self->debug >3);
-  my $goc_insert =  $self->compara_dba->dbc->db_handle->prepare($insert_query) or die "Couldn't prepare query: ".$self->compara_dba->dbc->db_handle->errstr;
-
-  $goc_insert->execute() or die "Couldn't execute query: ".$self->compara_dba->dbc->db_handle->errstr;
-  #bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id dnafrag_id goc_score left1 left2 right1 right2)]);
+  bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id goc_score left1 left2 right1 right2)], 'INSERT IGNORE');
 }
 
 
 sub _compute_ortholog_score {
     my $self = shift;
-    my ($left1, $left2, $query, $right1, $right2, $ref_chr_dnafragID ) = @_;
+    my ($left1, $left2, $query, $right1, $right2) = @_;
     print " ------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
-#    print " \n ", $left1,  " left1 ", $left2, " left2 ", $query, " query ", $right1, " right1 ", $right2, " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug >1);
-    my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2, 'ref_chr_dnafragID' => $ref_chr_dnafragID);
+#    print " \n ", $left1//'NA',  " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2\n\n" if ( $self->debug >1);
+    my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2);
 
     #create an array of only the present neighbours
     # will be useful in collapsing tandem duplications
@@ -215,7 +206,7 @@ sub _compute_ortholog_score {
     }
     my $homology = $self->param('preloaded_homologs')->{$query};
 
-    my %result;
+    my $result;
     my $non_ref_gmembers_list={};
 
     my $query_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
@@ -253,7 +244,7 @@ sub _compute_ortholog_score {
 
     #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
     if ($strand == 1) {
-        $self->param('result', $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered')));
+        $result = $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered'));
     }
     else {
         my $temp_query = $non_ref_gmembers_list->{'query'};
@@ -261,38 +252,35 @@ sub _compute_ortholog_score {
         my $temp_left2 = $non_ref_gmembers_list->{'right2'};
         my $temp_right1 = $non_ref_gmembers_list->{'left1'};
         my $temp_right2 = $non_ref_gmembers_list->{'left2'};
-        $self->param('result_temp', $self->_compare( {'query' => $temp_query, 'left1' => $temp_left1, 'left2' => $temp_left2, 'right1' => $temp_right1, 'right2' => $temp_right2}, , $self->param('non_ref_gmembers_ordered')));
-        $result{'left1'} = $self->param('result_temp')->{right1};
-        $result{'left2'} = $self->param('result_temp')->{right2};
-        $result{'right1'} = $self->param('result_temp')->{left1};
-        $result{'right2'} = $self->param('result_temp')->{left2};
-        $self->param('result', \%result);
+        my $result_temp = $self->_compare( {'query' => $temp_query, 'left1' => $temp_left1, 'left2' => $temp_left2, 'right1' => $temp_right1, 'right2' => $temp_right2}, , $self->param('non_ref_gmembers_ordered'));
+        $result = {
+            'left1' => $result_temp->{right1},
+            'left2' => $result_temp->{right2},
+            'right1' => $result_temp->{left1},
+            'right2' => $result_temp->{left2},
+        };
     }
 
     #calculate the percentage of the goc score
-    my $percent = $self->param('result')->{'left1'} + $self->param('result')->{'left2'} + $self->param('result')->{'right1'} + $self->param('result')->{'right2'};
+    my $percent = ($result->{'left1'} // 0) + ($result->{'left2'} // 0) + ($result->{'right1'} // 0) + ($result->{'right2'} // 0);
     my $percentage = $percent * 25;
 
-    $self->param('result')->{'goc_score'} =$percentage;
-    $self->param('result')->{'dnafrag_id'} = $query_ref_gmem_obj->dnafrag_id();
-    $self->param('result')->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
-    $self->param('result')->{'homology_id'} = $query;
-    $self->param('result')->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
+    $result->{'goc_score'}      = $percentage;
+    $result->{'dnafrag_id'}     = $query_ref_gmem_obj->dnafrag_id();
+    $result->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
+    $result->{'homology_id'}    = $query;
+    $result->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
 
 #    print "RESULTS hash--------------->>>>>   \n" if ( $self->debug );
-#    print Dumper($self->param('result')) if ( $self->debug );
+#    print Dumper($result) if ( $self->debug );
 #    print  " mlss_id  ----->>>>  \n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
-    return $self->param('result');
+    return $result;
 
 }
 
-
-#get all the gene members of in a chromosome coordinate range, filter only the ones that are protein-coding and order them based on their dnafrag start positions
-sub _get_non_ref_gmembers {
+sub _fetch_members_with_homology_by_range {
     my $self = shift;
-    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
     my ($dnafragID, $st, $ed)= @_;
-        print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
 
         # The query could do GROUP BY and ORDER BY, but the MySQL server would have to buffer the data, make temporary tables, etc
         # It is faster to have a straightforward query and do some processing in Perl
@@ -305,13 +293,25 @@ sub _get_non_ref_gmembers {
                 method_link_species_set_id = ? AND (m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND m.biotype_group = "coding"};
 
         # Returns the rows as an array of hashes (Slice parameter)
-    my $unsorted_mem = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
+    return $self->compara_dba->dbc->db_handle->selectall_arrayref($sql, {Slice=> {}} , $self->param('goc_mlss_id'), $dnafragID, $st, $ed, $st, $ed);
+}
 
-        #collapse tandem duplications
-    my @new_unsorted_mem=grep {$self->_collapse_tandem_repeats($_)} @$unsorted_mem;
+
+#get all the gene members of in a chromosome coordinate range, filter only the ones that are protein-coding and order them based on their dnafrag start positions
+sub _get_non_ref_gmembers {
+    my $self = shift;
+    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
+    my ($dnafragID, $st, $ed)= @_;
+        print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
+
+    my $unsorted_mem = $self->_fetch_members_with_homology_by_range($dnafragID, $st, $ed);
 
     # And now we simply sort the genes by their coordinates and return the sorted list
-    my @sorted_mem= sort {$a->{dnafrag_start} <=> $b->{dnafrag_start}} @new_unsorted_mem;
+    my @sorted_all_mem = sort {($a->{dnafrag_start} <=> $b->{dnafrag_start}) || ($a->{gene_member_id} <=> $b->{gene_member_id}) || ($a->{homology_id} <=> $b->{homology_id})} @$unsorted_mem;
+
+        #collapse tandem duplications
+    my @sorted_mem=grep {$self->_collapse_tandem_repeats($_)} @sorted_all_mem;
+
     my @nr_gmem_sorted;
     foreach my $mem (@sorted_mem) {
         push (@nr_gmem_sorted, $mem->{gene_member_id});

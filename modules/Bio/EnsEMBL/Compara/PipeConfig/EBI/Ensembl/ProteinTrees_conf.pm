@@ -154,7 +154,7 @@ sub default_options {
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
         'goc_capacity'              => 30,
-        'store_goc_capacity'        => 70,
+        'goc_stats_capacity'        => 70,
         'genesetQC_capacity'        => 100,
         'cafe_capacity'             => 50,
 

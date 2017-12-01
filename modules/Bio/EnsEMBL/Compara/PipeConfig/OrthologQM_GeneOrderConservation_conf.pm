@@ -1,4 +1,3 @@
-=pod
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -28,16 +27,19 @@ limitations under the License.
   <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
-	
-	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
+
+Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
 =head1 DESCRIPTION
+
     if a default threshold is not given the pipeline will use the genetic distance between the pair species to choose between a threshold of 50 and 75 percent.
 	http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
 
 
-    Example run
+Example initialization (to compute GOC on a single -orthology- MLSS)
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf -goc_mlss_id <20620> -goc_threshold (optional) -pipeline_name <GConserve_trial> -host <host_server> [-goc_reuse_db <>] -compara_db <>
+
+Alternatively, set goc_taxlevels instead of goc_mlss_id to work on multiple taxa
 
 =cut
 
@@ -67,14 +69,19 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-        'goc_mlss_id'     => undef, #'100021',
         'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
+
+        'goc_mlss_id'   => undef, #'100021',
+        'goc_taxlevels' => [],
         'goc_threshold' => undef,
-        'reuse_db'  => undef,
-        'goc_reuse_db'     => undef,
+        'goc_reuse_db'  => undef,
 	'calculate_goc_distribution' => undef,
-        'goc_capacity'   => 200,
+
+        # Capacities and batch-sizes
+        'goc_capacity'          => 30,
+        'goc_batch_size'        => 20,
+        'goc_stats_capacity'    => 5,
     };
 }
 
@@ -107,52 +114,6 @@ sub resource_classes {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'goc_reuse_backbone',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [ { } ],
-            -flow_into  => {
-                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table' , 'copy_prev_gene_member_table']),
-
-                'A->1' => ['goc_backbone'], 
-            },
-        },
-
-        {   -logic_name => 'copy_prev_goc_score_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#reuse_db#',
-                'dest_db_conn'  =>  '#compara_db#',
-                'mode'          => 'overwrite',
-                'table'         => 'ortholog_goc_metric',
-                'renamed_table' => 'prev_rel_goc_metric',
-            },
-        },
-        
-        {   -logic_name => 'copy_prev_gene_member_table',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters => {
-                'src_db_conn'   => '#reuse_db#',
-                'dest_db_conn'  =>  '#compara_db#',
-                'mode'          => 'overwrite',
-                'table'         => 'gene_member',
-                'renamed_table' => 'prev_rel_gene_member'
-            },
-        },
-
-        {   -logic_name => 'goc_backbone',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => WHEN('#goc_mlss_id#' => 'goc_entry_point'),
-        },
-
-        {   -logic_name => 'goc_entry_point',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                1 => {
-                    'get_orthologs' => { 'goc_mlss_id' => $self->o('goc_mlss_id') },
-                    },
-            },
-        },
-
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
 	];
 }

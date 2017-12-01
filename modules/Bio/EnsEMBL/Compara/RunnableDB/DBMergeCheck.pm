@@ -92,7 +92,7 @@ sub param_defaults {
         # content exclusively comes from the master database)
         'master_tables'     => [qw(meta genome_db species_set species_set_header method_link method_link_species_set ncbi_taxa_node ncbi_taxa_name dnafrag)],
         # Static list of production tables that must be ignored
-        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection anchor_sequence anchor_align homology_id_mapping prev_rel_goc_metric prev_rel_gene_member ortholog_goc_metric)],
+        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection anchor_sequence anchor_align homology_id_mapping prev_ortholog_goc_metric ortholog_goc_metric)],
 
         # Do we want to be very picky and die if a table hasn't been listed
         # above / isn't in the target database ?

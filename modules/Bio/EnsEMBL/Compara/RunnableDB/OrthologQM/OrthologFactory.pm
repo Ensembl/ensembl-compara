@@ -65,13 +65,9 @@ sub fetch_input {
 	print "mlss_id is ------------------  ", $self->param_required('goc_mlss_id'), " ------------- \n\n" if ( $self->debug );
 	print Dumper($self->compara_dba) if ( $self->debug );
 
-	$self->param('homolog_adaptor', $self->compara_dba->get_HomologyAdaptor);
-	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
-	$self->param('gdb_adaptor', $self->compara_dba->get_GenomeDBAdaptor);
-
 	my $species1_dbid;
 	my $species2_dbid;
-	my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($self->param_required('goc_mlss_id'));
+	my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('goc_mlss_id'));
 	my $speciesSet_obj= $mlss->species_set();
 	my $speciesSet = $speciesSet_obj->genome_dbs();
 	
@@ -80,10 +76,12 @@ sub fetch_input {
 		$species2_dbid = $speciesSet->[1]->dbID();
 	}
 
-    $self->dbc and $self->dbc->disconnect_if_idle();
-	my $homologs = $self->param('homolog_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
+        $self->disconnect_from_hive_database;
+	my $homologs = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
 	print "This is the returned homologs \n " if ( $self->debug >4);
 	print Dumper($homologs) if ( $self->debug >4); 
+	my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $homologs);
+	Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $sms);
 	$self->param('ref_species_dbid', $species1_dbid);
 	$self->param('non_ref_species_dbid', $species2_dbid);
 	$self->param( 'ortholog_objects', $homologs );
@@ -99,14 +97,14 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 
-    $self->dbc and $self->dbc->disconnect_if_idle();
+        $self->disconnect_from_hive_database;
 
 	my $ref_ortholog_info_hashref;
 	my $non_ref_ortholog_info_hashref;
 	my $c = 0;
 	my $ref_species_dbid = $self->param('ref_species_dbid');
 	my $non_ref_species_dbid = $self->param('non_ref_species_dbid');
-	while ( my $ortholog = shift( @{ $self->param('ortholog_objects') } ) ) {
+	foreach my $ortholog ( @{ $self->param('ortholog_objects') } ) {
 		my $ortholog_dbID = $ortholog->dbID();
 		my $ref_gene_member = $ortholog->get_all_GeneMembers($ref_species_dbid)->[0];
 		print $ref_gene_member->dbID() , "\n\n" if ( $self->debug >3 );
@@ -153,11 +151,17 @@ sub run {
 	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------non_ref_ortholog_info_hashref\n" if ( $self->debug );
 	print Dumper($non_ref_ortholog_info_hashref) if ( $self->debug >3 );
 
-	$self->dataflow_output_id( {'ortholog_info_hashref' => $ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid')} , 2 );
+        $self->param('ref_ortholog_info_hashref', $ref_ortholog_info_hashref);
+        $self->param('non_ref_ortholog_info_hashref', $non_ref_ortholog_info_hashref);
+}
 
-	$self->dataflow_output_id( {'ortholog_info_hashref' => $non_ref_ortholog_info_hashref, 'ref_species_dbid' => $self->param('non_ref_species_dbid'), 'non_ref_species_dbid' => $self->param('ref_species_dbid') } , 2 );
-#	$self->dataflow_output_id( {'goc_mlss_id' => $self->param('goc_mlss_id')} , 1);
 
+sub write_output {
+    my $self = shift;
+
+    $self->dataflow_output_id( {'ortholog_info_hashref' => $self->param('ref_ortholog_info_hashref'), 'ref_species_dbid' => $self->param('ref_species_dbid'), 'non_ref_species_dbid' => $self->param('non_ref_species_dbid')} , 2 );
+    $self->dataflow_output_id( {'ortholog_info_hashref' => $self->param('non_ref_ortholog_info_hashref'), 'ref_species_dbid' => $self->param('non_ref_species_dbid'), 'non_ref_species_dbid' => $self->param('ref_species_dbid') } , 2 );
+    #$self->dataflow_output_id( {'goc_mlss_id' => $self->param('goc_mlss_id')} , 1);
 }
 
 1;
