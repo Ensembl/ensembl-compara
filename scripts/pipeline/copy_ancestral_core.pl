@@ -270,119 +270,58 @@ sub copy_ancestral_data {
     #
     my $name = "Ancestor_" . $mlss_id;
 
-    my $name_sql = "SELECT count(*) FROM seq_region WHERE name LIKE '$name" . "_%'";
-    my $sth = $from_dbc->prepare($name_sql);
-    $sth->execute();
-    my ($num_sr) = $sth->fetchrow_array();
-    $sth->finish;
-
+    my $name_sql = "SELECT COUNT(*) FROM seq_region WHERE name LIKE '${name}_%'";
+    my ($num_sr) = $from_dbc->db_handle->selectrow_array($name_sql);
     if ($num_sr == 0) {
-	throw("Invalid seq_region name. Should be of the form: $name" . "_%");
+	throw("Invalid seq_region name. Should be of the form: ${name}_%");
     }
     
     #
     #Check coord_system_id the same in from_db and to_db
     #
     my $cs_sql = "SELECT coord_system_id FROM coord_system WHERE name = '$coord_system_name'";
-    $sth = $to_dbc->prepare($cs_sql);
-    $sth->execute();
-    my ($coord_system_id) = $sth->fetchrow_array();
-    $sth->finish;
+    my ($coord_system_id) = $to_dbc->db_handle->selectrow_array($cs_sql);
     #print "cs $coord_system_id\n";
 
     $cs_sql = "SELECT count(*) FROM seq_region WHERE coord_system_id = $coord_system_id";
-    $sth = $from_dbc->prepare($cs_sql);
-    $sth->execute();
-    my ($num_cs) = $sth->fetchrow_array();
-    $sth->finish;
-
+    my ($num_cs) = $from_dbc->db_handle->selectrow_array($cs_sql);
     if ($num_cs == 0) {
 	throw("coord_system_id $coord_system_id does not exist in the production database. This needs to be fixed.");
     }
     
     #Check no clashes in to_db
-    $sth = $to_dbc->prepare($name_sql);
-    $sth->execute();
-    my ($num_to_sr) = $sth->fetchrow_array();
-    $sth->finish;
-
+    my ($num_to_sr) = $to_dbc->db_handle->selectrow_array($name_sql);
     if ($num_to_sr != 0) {
 	throw("Already have names of $name in the production database. This needs to be fixed");
-
     }
 
     #
-    #Find min and max seq_region_id
+    #Find min seq_region_id
     #
-    my $range_sql = "SELECT min(seq_region_id), max(seq_region_id) FROM seq_region WHERE name LIKE '$name" . "_%'";
-
-    $sth = $from_dbc->prepare($range_sql);
-    $sth->execute();
-    my ($min_sr, $max_sr) = $sth->fetchrow_array();
-    $sth->finish;
+    my $range_sql = "SELECT MIN(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
+    my ($min_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
 
     #
-    #Create correct number of spaceholder rows in seq_region table in to_db 
+    #Copy the seq_region rows with new, auto-incremented, seq_region_ids
+    #We expect copy_data to reserve *consecutive* rows, this is done with "mysqlimport --lock-tables"
+    #The ORDER BY clause is important because otherwise the database engine could return the rows in any order
     #
-    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region ss WHERE name like '$name" . "_%'";
-    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr);
+    print "reserving seq_region_ids\n";
+    my $query = "SELECT 0, name, coord_system_id, length FROM seq_region WHERE name like '${name}_%' ORDER BY seq_region_id";
+    copy_data($from_dbc, $to_dbc, 'seq_region', $query);
 
     #
-    #Find min and max of new seq_region_ids
+    #Find min of new seq_region_ids
     #
-    $sth = $to_dbc->prepare($range_sql);
-    $sth->execute();
-    my ($new_min_sr, $new_max_sr) = $sth->fetchrow_array();
-    $sth->finish;
-
-    #
-    #Create temporary table in from_db to store mappings
-    #
-    $sth = $from_dbc->prepare("CREATE TABLE tmp_seq_region_mapping (seq_region_id INT(10) UNSIGNED NOT NULL,new_seq_region_id INT(10) UNSIGNED NOT NULL,  KEY seq_region_idx (seq_region_id))");
-
-    $sth->execute();
-    $sth->finish;
-    $from_dbc->do('DELETE FROM tmp_seq_region_mapping');
-
-    #
-    #Create mappings
-    #
-    my $values="";
-    my $new_seq_region_id = $new_min_sr;
-    for (my $i = $min_sr; $i <= $max_sr; $i++) {
-	$values .= "($i, $new_seq_region_id),";
-	$new_seq_region_id++;
-    }
-
-    #remove final comma
-    chop $values;
-    #print "values $values\n";
-    $sth = $from_dbc->prepare("INSERT INTO tmp_seq_region_mapping \(seq_region_id, new_seq_region_id\) VALUES $values");
-    $sth->execute();
-    $sth->finish;
-
-    #
-    #Copy over the seq_region with new seq_region_ids
-    #
-    $query = "SELECT new_seq_region_id, name, coord_system_id,length FROM seq_region LEFT JOIN tmp_seq_region_mapping USING (seq_region_id) WHERE name like '$name" . "_%'";
-
-    print "copying seq_region in replace mode\n";
-    copy_data($from_dbc, $to_dbc, "seq_region", $query, "seq_region_id", $min_sr, $max_sr, undef, undef, undef, 1);
+    my ($new_min_sr) = $to_dbc->db_handle->selectrow_array($range_sql);
 
     #
     #Copy over the dna with new seq_region_ids
+    #Assuming all of the above, the seq_region_ids can be simply shifted
     #
-    $query = "SELECT new_seq_region_id, sequence FROM tmp_seq_region_mapping JOIN dna USING (seq_region_id) WHERE seq_region_id > 0";
+    $query = "SELECT seq_region_id+$new_min_sr-$min_sr, sequence FROM dna";
 
     print "copying dna\n";
-    copy_data($from_dbc, $to_dbc, "dna", $query, "seq_region_id", $min_sr, $max_sr, 1000);
-
-    #
-    #Drop temporary table
-    #
-    $sth = $from_dbc->prepare("DROP TABLE tmp_seq_region_mapping");
-    $sth->execute();
-    $sth->finish;
-
+    copy_data($from_dbc, $to_dbc, 'dna', $query);
 }
 

@@ -42,8 +42,6 @@ sub default_options {
 
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 
-        'step' => 10000, #size used in ImportAlignment for selecting how many entries to copy at once
-
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
@@ -229,7 +227,6 @@ sub pipeline_analyses {
 		-parameters => {
 				'method_link_species_set_id'       => $self->o('high_epo_mlss_id'),
 				'from_db_url'                      => $self->o('epo_db'),
-                                'step'                             => $self->o('step'),
 			       },
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],

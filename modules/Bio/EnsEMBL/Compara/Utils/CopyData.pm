@@ -41,10 +41,10 @@ without paying attention to the foreign-key constraints. If defined,
 the filter can only be a straight WHERE clause.
 
 For more advanced cases, copy_data() can run an arbitrary query and
-insert its result into another table. Use copy_data() when you cannot
-express the constraint with a WHERE and need a JOIN.
+insert its result into another table. Use copy_data() when you need to
+join to another table.
 
-Both copy_data() and copy_table() automatically choose the optimal
+copy_data() automatically chooses the optimal
 transfer mode depending on the type of query and the data types.
 
 =head2 :row_copy export-tag
@@ -92,20 +92,21 @@ our @EXPORT_OK;
     copy_data
     copy_data_in_binary_mode
     copy_data_in_text_mode
+    copy_data_pp
     copy_table
-    copy_table_in_binary_mode
-    copy_table_in_text_mode
     bulk_insert
     single_insert
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
-  'table_copy'  => [qw(copy_data copy_table)],
+  'table_copy'  => [qw(copy_data copy_data_pp copy_table)],
   'insert'      => [qw(bulk_insert single_insert)],
   'all'         => [@EXPORT_OK]
 );
 
-use constant MAX_ROWS_FOR_MYSQLIMPORT => 1_000_000;
+use constant MAX_FILE_SIZE_FOR_MYSQLIMPORT => 10_000_000;   # How much space can we safely assume is available on /tmp
+use constant MAX_STATEMENT_LENGTH => 1_000_000;             # Related to MySQL's "max_allowed_packet" parameter
+use constant ROWS_SLOW_MYSQLIMPORT => 100_000;              # Heuristics: importing that amount of rows is going to take some time, so disconnect from the source database if possible
 
 use Data::Dumper;
 use File::Temp qw/tempfile/;
@@ -303,48 +304,43 @@ sub _has_binary_column {
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
   Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
   Arg[3]      : string $table_name
-  Arg[4]      : (opt) string $query
-  Arg[5]      : (opt) string $index_name
-  Arg[6]      : (opt) integer $min_id
-  Arg[7]      : (opt) integer $max_id
-  Arg[8]      : (opt) integer $step
-  Arg[9]      : (opt) boolean $disable_keys (default: true)
-  Arg[10]     : (opt) boolean $reenable_keys (default: true)
-  Arg[11]     : (opt) boolean $holes_possible (default: false)
-  Arg[12]     : (opt) boolean $replace (default: false) [only used when the underlying data is text-only]
-  Arg[13]     : (opt) boolean $debug
+  Arg[4]      : string $query
+  Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
+  Arg[7]      : (opt) boolean $debug (default: false)
 
-  Description : Copy data in this table. The main optional arguments are:
-                 - ($index_name,$min_id,$max_id) to restrict to a range
-                 - $query for a general way of altering the data (e.g. fixing it)
+  Description : Copy the output of the query to this table using chunks of $index_name
   Return      : Integer - The number of rows copied over
 
 =cut
 
 sub copy_data {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $disable_keys, $reenable_keys, $holes_possible, $replace, $debug) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $skip_disable_keys, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
+    unless (defined $table_name && defined $query) {
+        die "table_name and query are mandatory parameters";
+    };
+
     print "Copying data in table $table_name\n" if $debug;
 
-    die "Keys must be disabled in order to be reenabled\n" if $reenable_keys and not $disable_keys;
-
-    #When merging the patches, there are so few items to be added, we have no need to disable the keys
-    if ($disable_keys // 1) {
+    unless ($skip_disable_keys) {
         #speed up writing of data by disabling keys, write the data, then enable
-        #but takes far too long to ENABLE again
         print "DISABLE KEYS\n" if $debug;
         $to_dbc->do("ALTER TABLE `$table_name` DISABLE KEYS");
     }
+
     my $rows;
     if (_has_binary_column($from_dbc, $table_name)) {
-        $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $debug);
+        $rows = copy_data_in_binary_mode($from_dbc, $to_dbc, $table_name, $query, $replace, $debug);
     } else {
-        $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace, $debug);
+        $rows = copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, $replace, $debug);
     }
-    if ($reenable_keys // 1) {
+
+    unless ($skip_disable_keys) {
+        # this can take a lot of time
         print "ENABLE KEYS\n" if $debug;
         $to_dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
     }
@@ -375,7 +371,7 @@ sub _escape {
 =cut
 
 sub copy_data_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $holes_possible, $replace, $debug) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
@@ -386,68 +382,36 @@ sub copy_data_in_text_mode {
     my $port = $to_dbc->port;
     my $dbname = $to_dbc->dbname;
 
-    #Default step size.
-    $step ||= MAX_ROWS_FOR_MYSQLIMPORT;
-
-    my ($use_limit, $start);
-    if (defined $index_name && defined $min_id && defined $max_id) {
-        # We'll use BETWEEN
-        $use_limit = 0;
-        $start = $min_id;
-    } else {
-        # We'll use LIMIT 
-        $use_limit = 1;
-        $start = 0;
-    }
-    # $use_limit also tells whether $start and $end are counters or values comparable to $index_name
+    print "Query: $query\n" if $debug;
+    my $sth = $from_dbc->prepare($query, { 'mysql_use_result' => 1 });
+    $sth->execute();
+    my $curr_row;
 
     my $total_rows = 0;
-    while (1) {
-        my $end = $start + $step - 1;
-        my $sth;
-        my $sth_attribs = { 'mysql_use_result' => 1 };
-
-        print "start $start end $end\nquery $query\n" if $debug;
-
-        if ($use_limit) {
-            $sth = $from_dbc->prepare( $query." LIMIT $start, $step", $sth_attribs );
-        } else {
-            $sth = $from_dbc->prepare( $query." AND $index_name BETWEEN $start AND $end", $sth_attribs );
-        }
-        $start += $step;
-        $sth->execute();
-        my $first_row = $sth->fetchrow_arrayref;
-
-        ## EXIT CONDITION
-        if (!$first_row) {
-            # We're told there could be holes in the data, and $end hasn't yet reached $max_id
-            next if ($holes_possible and !$use_limit and ($end < $max_id));
-            # Otherwise it is the end
-            return $total_rows;
-        }
-
-        my ($fh, $filename) = tempfile("${table_name}.XXXXXX", TMPDIR => 1);
-        print $fh join("\t", map {_escape($_)} @$first_row), "\n";
-        my $nrows = 1;
-        while(my $this_row = $sth->fetchrow_arrayref) {
-            print $fh join("\t", map {_escape($_)} @$this_row), "\n";
+    do {
+        my ($fh, $filename) = tempfile("${table_name}.XXXXXX", TMPDIR => 1, UNLINK => 0);
+        my $nrows = 0;
+        my $file_size = 0;
+        # The order of the condition is important: we don't want to discard a row
+        while (($file_size < MAX_FILE_SIZE_FOR_MYSQLIMPORT) and ($curr_row = $sth->fetchrow_arrayref)) {
+            my $row = join("\t", map {_escape($_)} @$curr_row) . "\n";
+            print $fh $row;
+            $file_size += length($row);
             $nrows++;
         }
         close($fh);
-        $sth->finish;
-
-        print "start $start end $end limit $step rows $nrows in file $filename\n" if $debug;
-
-        # Heuristics: it's going to take some time to insert these rows, so
-        # better to disconnect to save resources on the source server
-        $from_dbc->disconnect_if_idle if $nrows >= 100_000;
-
-        my @cmd = ('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
-        Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(\@cmd, { die_on_failure => 1, debug => $debug });
-
+        unless ($curr_row) {
+            $sth->finish;
+            $from_dbc->disconnect_if_idle if $nrows >= ROWS_SLOW_MYSQLIMPORT;
+        }
+        if ($nrows) {
+            my @cmd = ('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
+            Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(\@cmd, { die_on_failure => 1, debug => $debug });
+            print "Inserted $nrows rows in $table_name\n" if $debug;
+            $total_rows += $nrows;
+        }
         unlink($filename);
-        $total_rows += $nrows;
-    }
+    } while ($curr_row);
     return $total_rows;
 }
 
@@ -460,83 +424,42 @@ sub copy_data_in_text_mode {
 =cut
 
 sub copy_data_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $query, $index_name, $min_id, $max_id, $step, $debug) = @_;
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $debug) = @_;
 
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
-
-    my $from_user = $from_dbc->username;
-    my $from_pass = $from_dbc->password;
-    my $from_host = $from_dbc->host;
-    my $from_port = $from_dbc->port;
-    my $from_dbname = $from_dbc->dbname;
-
-    my $to_user = $to_dbc->username;
-    my $to_pass = $to_dbc->password;
-    my $to_host = $to_dbc->host;
-    my $to_port = $to_dbc->port;
-    my $to_dbname = $to_dbc->dbname;
-
-    my $use_limit = 0;
-    my $start = $min_id // 0;
-    my $total_rows = 0;
-
-    #all the data in the table needs to be copied and does not need fixing
-    if (!defined $query) {
-        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
-    }
 
     print " ** WARNING ** Copying table $table_name in binary mode, this requires write access.\n";
     print " ** WARNING ** The original table will be temporarily renamed as original_$table_name.\n";
     print " ** WARNING ** An auxiliary table named temp_$table_name will also be created.\n";
     print " ** WARNING ** You may have to undo this manually if the process crashes.\n\n";
 
-    #If not using BETWEEN, revert back to LIMIT
-    if (!defined $index_name && !defined $min_id && !defined $max_id) {
-        $use_limit = 1;
-        $start = 0;
-    }
-    if (!defined $step) {
-        $step = 1000000;
-    }
-    while (1) {
-        my $start_time  = time();
-        my $end = $start + $step - 1;
-        print "start $start end $end\nquery $query\n" if $debug;
+    my $start_time  = time();
 
-        ## Copy data into a aux. table
-        my $sth;
-        if (!$use_limit) {
-            $sth = $from_dbc->prepare("CREATE TABLE temp_$table_name $query AND $index_name BETWEEN $start AND $end");
-        } else {
-            $sth = $from_dbc->prepare("CREATE TABLE temp_$table_name $query LIMIT $start, $step");
-        }
-        $sth->execute();
+    my $from_dbh = $from_dbc->db_handle;
 
-        $start += $step;
-        my $count = $from_dbc->db_handle->selectrow_array("SELECT count(*) FROM temp_$table_name");
+    my $count = $from_dbh->selectrow_array("SELECT COUNT(*) FROM temp_$table_name");
 
-        ## EXIT CONDITION
-        if (!$count) {
-            $from_dbc->db_handle->do("DROP TABLE temp_$table_name");
-            return;
-        }
+    ## EXIT CONDITION
+    return unless !$count;
 
-        ## Change table names (mysqldump will keep the table name, hence we need to do this)
-        $from_dbc->db_handle->do("ALTER TABLE $table_name RENAME original_$table_name");
-        $from_dbc->db_handle->do("ALTER TABLE temp_$table_name RENAME $table_name");
+    ## Copy data into a aux. table
+    my $sth = $from_dbc->prepare("CREATE TABLE temp_$table_name $query");
+    $sth->execute();
 
-        ## mysqldump data
-        copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, undef, undef, undef, $debug);
-        $total_rows += $count;
+    ## Change table names (mysqldump will keep the table name, hence we need to do this)
+    $from_dbh->do("ALTER TABLE $table_name RENAME original_$table_name");
+    $from_dbh->do("ALTER TABLE temp_$table_name RENAME $table_name");
 
-        ## Undo table names change
-        $from_dbc->db_handle->do("DROP TABLE $table_name");
-        $from_dbc->db_handle->do("ALTER TABLE original_$table_name RENAME $table_name");
+    ## mysqldump data
+    ## disable/enable keys is managed in copy_data, so here we can just skip this
+    copy_table($from_dbc, $to_dbc, $table_name, undef, $replace, 'skip_disable_keys', $debug);
 
-        print "total time " . ($start-$min_id) . " " . (time - $start_time) . "\n" if $debug;
-    }
-    return $total_rows;
+    ## Undo table names change
+    $from_dbh->do("DROP TABLE $table_name");
+    $from_dbh->do("ALTER TABLE original_$table_name RENAME $table_name");
+
+    return $count;
 }
 
 
@@ -547,7 +470,8 @@ sub copy_data_in_binary_mode {
   Arg[3]      : string $table_name
   Arg[4]      : (opt) string $where_filter
   Arg[5]      : (opt) boolean $replace (default: false)
-  Arg[6]      : (opt) boolean $debug
+  Arg[6]      : (opt) boolean $skip_disable_keys (default: false)
+  Arg[7]      : (opt) boolean $debug (default: false)
 
   Description : Copy the table (either all of it or a subset).
                 The main optional argument is $where_filter, which allows to select a portion of
@@ -563,42 +487,6 @@ sub copy_table {
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     print "Copying data in table $table_name\n" if $debug;
-
-    if (_has_binary_column($from_dbc, $table_name)) {
-        return copy_table_in_binary_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug);
-    } else {
-        return copy_table_in_text_mode($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $debug);
-    }
-}
-
-
-=head2 copy_table_in_text_mode
-
-  Description : A specialized version of copy_table() for tables that don't have
-                any binary data and can be loaded with mysqlimport.
-
-=cut
-
-sub copy_table_in_text_mode {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $debug) = @_;
-
-    my $query = 'SELECT * FROM '.$table_name.($where_filter ? ' WHERE '.$where_filter : '');
-    return copy_data_in_text_mode($from_dbc, $to_dbc, $table_name, $query, undef, undef, undef, undef, undef, $replace, $debug);
-}
-
-
-=head2 copy_table_in_binary_mode
-
-  Description : A specialized version of copy_table() for tables that have binary
-                data, using mysqldump.
-
-=cut
-
-sub copy_table_in_binary_mode {
-    my ($from_dbc, $to_dbc, $table_name, $where_filter, $replace, $skip_disable_keys, $debug) = @_;
-
-    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
-    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
     my $from_user = $from_dbc->username;
     my $from_pass = $from_dbc->password;
@@ -622,6 +510,54 @@ sub copy_table_in_binary_mode {
     Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, { die_on_failure => 1, use_bash_pipefail => 1, debug => $debug });
 
     print "time " . (time - $start_time) . "\n" if $debug;
+}
+
+
+=head2 copy_data_pp
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $from_dbc
+  Arg[2]      : Bio::EnsEMBL::DBSQL::DBConnection $to_dbc
+  Arg[3]      : string $table_name
+  Arg[4]      : string $query
+  Arg[5]      : (opt) boolean $replace (default: false)
+  Arg[6]      : (opt) boolean $debug (default: false)
+
+  Description : "Pure-Perl" implementation of copy_data(). It loads the rows from
+                the query and builds multi-inserts statements. As everything remains
+                within the Perl DBI layers, this method is suitable when a transaction
+                on the target database is required.
+  Return      : Integer - The number of rows copied over
+
+=cut
+
+sub copy_data_pp {
+    my ($from_dbc, $to_dbc, $table_name, $query, $replace, $debug) = @_;
+
+    assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
+    assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
+
+    my $to_dbh = $to_dbc->db_handle;
+
+    my $sth = $from_dbc->prepare($query, { 'mysql_use_result' => 1 });
+    $sth->execute();
+    my $curr_row;
+
+    my $total_rows = 0;
+    do {
+        my $insert_sql = ($replace ? 'REPLACE' : 'INSERT IGNORE') . ' INTO ' . $table_name;
+        $insert_sql .= ' VALUES ';
+        my $first = 1;
+        # The order of the condition is important: we don't want to discard a row
+        while ((length($insert_sql) < MAX_STATEMENT_LENGTH) and ($curr_row = $sth->fetchrow_arrayref)) {
+            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {$to_dbh->quote($_)} @{$curr_row}) . ')';
+            $first = 0;
+        }
+        my $this_time = $to_dbc->do($insert_sql) or die "Could not execute the insert because of ".$to_dbc->db_handle->errstr;
+        print "Inserted $this_time rows in $table_name\n" if $debug;
+        $total_rows += $this_time;
+    } while ($curr_row);
+    $sth->finish;
+    return $total_rows;
 }
 
 
@@ -678,13 +614,14 @@ sub bulk_insert {
     my ($dest_dbc, $table_name, $data, $col_names, $insertion_mode) = @_;
 
     my $insert_n   = 0;
+    my $to_dbh = $dest_dbc->db_handle;
     while (@$data) {
         my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
         $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
         $insert_sql .= ' VALUES ';
         my $first = 1;
-        while (@$data and (length($insert_sql) < 1_000_000)) {
-            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {defined $_ ? '"'.$_.'"' : 'NULL'} @{shift @$data}) . ')';
+        while (@$data and (length($insert_sql) < MAX_STATEMENT_LENGTH)) {
+            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {$to_dbh->quote($_)} @{shift @$data}) . ')';
             $first = 0;
         }
         my $this_time = $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;

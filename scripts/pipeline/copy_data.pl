@@ -194,8 +194,6 @@ my $trust_ce = 0;
 #If true, then add new data to existing set of alignments
 my $merge = 0;
 
-my $patch_merge; #special case for merging patches where the dbIDs are not consecutive
-
 my $dry_run = 0;    # if set, will stop just before any data has been copied
 
 GetOptions(
@@ -215,7 +213,6 @@ GetOptions(
            'trust_to!'                      => \$trust_to,
            'trust_ce!'                      => \$trust_ce,
            'merge!'                         => \$merge,
-           'patch_merge!'                   => \$patch_merge,
 );
 
 # Print Help and exit if help is requested
@@ -254,8 +251,6 @@ my %all_mlss_objects = ();
 
 # By default, $disable_keys depends on $merge
 $disable_keys //= !$merge;
-# This is used to tell copy_data() that dbIDs are not necessarily contiguous
-$patch_merge //= scalar(grep {$type_to_adaptor{$_->method->type}} @{$from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all()});
 
     # First adding MLSS objects via method_link_type values (the most portable way)
 foreach my $one_method_link_type (@method_link_types) {
@@ -300,15 +295,12 @@ if($dry_run) {
     print "\n\t*** This is the dry_run mode. Please remove the --dry_run flag if you want the script to copy anything\n\n";
 }
 
-my $ini_re_enable = $re_enable;
-
 my $from_dbc = $from_dba->dbc;
 my $to_dbc = $to_dba->dbc;
 
 while (my $method_link_species_set = shift @all_method_link_species_sets) {
   my $mlss_id = $method_link_species_set->dbID;
   my $class = $method_link_species_set->method->class;
-  $re_enable = scalar(@all_method_link_species_sets) ? 0 : $ini_re_enable;
 
   exit(1) if !check_table("method_link", $from_dbc, $to_dbc, undef,
     "method_link_id = ".$method_link_species_set->method->dbID);
@@ -324,25 +316,19 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy the species_tree_root data if present
-  copy_data($from_dbc, $to_dbc,
+  copy_table($from_dbc, $to_dbc,
             "species_tree_root",
-            "SELECT * " .
-            " FROM species_tree_root" .
-            " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+            "method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_attr table for a method_link_speceies_set_id
-  copy_data($from_dbc, $to_dbc,
+  copy_table($from_dbc, $to_dbc,
           "method_link_species_set_attr",
-          "SELECT mlssa.* " .
-	  "FROM method_link_species_set_attr mlssa" .
-	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+	  "method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
-  copy_data($from_dbc, $to_dbc,
+  copy_table($from_dbc, $to_dbc,
 	  "method_link_species_set_tag",
-	  "SELECT method_link_species_set_id, tag, value" .
-	  " FROM method_link_species_set_tag " .
-	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
+	  "method_link_species_set_id = $mlss_id") unless $dry_run;
 
   if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
     copy_genomic_align_blocks($from_dbc, $to_dbc, $method_link_species_set);
@@ -357,6 +343,8 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
     exit(1);
   }
 }
+
+_reenable_all_disabled_keys($to_dba->dbc) if $re_enable;
 
 exit(0);
 
@@ -445,7 +433,7 @@ sub check_table {
   }
 
   ## Execute on FROM
-  my $sth = $from_dbc->prepare($sql);
+  my $sth = $from_dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
     my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
@@ -454,7 +442,7 @@ sub check_table {
   $sth->finish;
 
   ## Execute on TO
-  $sth = $to_dbc->prepare($sql);
+  $sth = $to_dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
     my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
@@ -667,35 +655,37 @@ sub copy_genomic_align_blocks {
 
   return if $dry_run;
 
-  # 1. $step is undef -> default value
-  # 2/3. Whether the keys are disabled and reenabled
-  # 4. "holes" are only present on the patch-alignments
-  my @copy_data_args = (undef, $disable_keys, $disable_keys && $re_enable, $patch_merge);
+  _disable_keys_if_allowed($to_dbc, 'genomic_align');
+  _disable_keys_if_allowed($to_dbc, 'genomic_align_block');
+  _disable_keys_if_allowed($to_dbc, 'genomic_align_tree');
+
+  my @copy_data_args = (undef, 'skip_disable_keys');
 
   #copy genomic_align_block table
-   copy_data($from_dbc, $to_dbc,
+  if ($fix_gab or $fix_gab_gid) {
+    copy_data($from_dbc, $to_dbc,
        "genomic_align_block",
        "SELECT genomic_align_block_id+$fix_gab, method_link_species_set_id, score, perc_id, length, group_id+$fix_gab_gid, level_id".
          " FROM genomic_align_block WHERE method_link_species_set_id = $mlss_id",
-       "genomic_align_block_id",
-       $min_gab, $max_gab,
        @copy_data_args);
+  } else {
+    copy_table($from_dbc, $to_dbc, 'genomic_align_block', "method_link_species_set_id = $mlss_id", undef, "skip_disable_keys");
+  }
 
   #copy genomic_align_tree table
   #Fixes node_id, parent_id, root_id, left_node_id, right_node_id 
   #Needs to correct parent_id, left_node_id, right_node_id if these were 0
   if(defined($max_gat)) {
-    copy_data($from_dbc, $to_dbc,
+    if ($fix_gat) {
+      copy_data($from_dbc, $to_dbc,
         "genomic_align_tree",
         "SELECT node_id+$fix_gat, parent_id+$fix_gat, root_id+$fix_gat, left_index, right_index, left_node_id+$fix_gat, right_node_id+$fix_gat, distance_to_parent".
         " FROM genomic_align_tree ".
 	"WHERE root_id >= $min_root_id AND root_id <= $max_root_id",
-        "root_id",
-        $min_root_id, $max_root_id,
         @copy_data_args);
+
     #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
     #has been applied.
-    if ($fix_gat != 0) {
 
 	#NEED TO CHECK THIS ONE!!
         foreach my $gt_field( qw/ parent_id node_id left_node_id right_node_id / ) {
@@ -703,6 +693,8 @@ sub copy_genomic_align_blocks {
                                         WHERE $gt_field = ?");
             $gt_sth->execute($fix_gat, $fix_gat);
         }
+    } else {
+      copy_table($from_dbc, $to_dbc, 'genomic_align_tree', "root_id >= $min_root_id AND root_id <= $max_root_id", undef, "skip_disable_keys");
     }
   }
   my $class = $mlss->method->class;
@@ -724,22 +716,20 @@ sub copy_genomic_align_blocks {
   	    " dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, visible, node_id+$fix_gat".
   	    " FROM $temp_genomic_align".
             " WHERE method_link_species_set_id = $mlss_id",
-	    "genomic_align_id",
-            $min_ga, $max_ga,
             @copy_data_args);
 
       #delete temporary genomic_align table
       $from_dbc->db_handle->do("DROP TABLE $temp_genomic_align");
-  } else {
+  } elsif ($fix_ga or $fix_gab or $fix_gat) {
       copy_data($from_dbc, $to_dbc,
 		"genomic_align",
 		"SELECT genomic_align_id+$fix_ga, genomic_align_block_id+$fix_gab, method_link_species_set_id,".
 		" dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line, visible, node_id+$fix_gat".
 		" FROM genomic_align".
 		" WHERE method_link_species_set_id = $mlss_id",
-		"genomic_align_id",
-		$min_ga, $max_ga,
                 @copy_data_args);
+  } else {
+      copy_table($from_dbc, $to_dbc, 'genomic_align', "method_link_species_set_id = $mlss_id", undef, "skip_disable_keys");
   }
 
 }
@@ -767,7 +757,7 @@ sub copy_ancestral_dnafrags {
   my $sth = $from_dbc->prepare("SELECT name FROM genomic_align
                                          LEFT JOIN dnafrag USING (dnafrag_id)
                                          WHERE genome_db_id = $ancestral_dbID
-                                         AND method_link_species_set_id = ?");
+                                         AND method_link_species_set_id = ? LIMIT 1");
   $sth->execute($mlss_id);
   my @names = $sth->fetchrow_array();
   $sth->finish();
@@ -827,8 +817,7 @@ sub copy_ancestral_dnafrags {
        "SELECT dnafrag_id+$fix_dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference".
          " FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id)" .
          " WHERE method_link_species_set_id = $mlss_id AND genome_db_id=$ancestral_dbID",
-       "dnafrag_id",
-       $min_dnafrag_id, $max_dnafrag_id,
+       undef, 'skip_disable_keys',
    );
 
 }
@@ -878,10 +867,9 @@ sub copy_conservation_scores {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
-    print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
+    die " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
 
-  my $step = 1000;
   ## Check availability of the internal IDs in the TO database
   $sth = $to_dbc->prepare("SELECT count(*)
       FROM conservation_score
@@ -897,6 +885,8 @@ sub copy_conservation_scores {
   }
 
   return if $dry_run;
+
+  _disable_keys_if_allowed($to_dbc, 'conservation_score');
 
   # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
   $sth = $from_dbc->prepare("SELECT count(*)
@@ -918,7 +908,7 @@ sub copy_conservation_scores {
           " FROM genomic_align_block gab".
           " LEFT JOIN conservation_score cs using (genomic_align_block_id)".
           " WHERE cs.genomic_align_block_id IS NOT NULL AND gab.method_link_species_set_id = $gab_mlss_id",
-         "genomic_align_block_id", $min_cs, $max_cs,
+        undef, 'skip_disable_keys',
       );
   } elsif ($fix) {
     ## These are the only scores but need to fix them.
@@ -931,11 +921,11 @@ sub copy_conservation_scores {
         "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
           " FROM conservation_score cs" . 
 	  " WHERE genomic_align_block_id >= $min_cs AND genomic_align_block_id <= $max_cs",
-        "genomic_align_block_id", $min_cs, $max_cs,
-	 $step);
+        undef, 'skip_disable_keys',
+    );
   } else {
       ## These are the only scores and need no fixing. Copy all as they are
-      copy_data($from_dbc, $to_dbc, "conservation_score");
+      copy_table($from_dbc, $to_dbc, "conservation_score");
   }
 }
 
@@ -980,7 +970,6 @@ sub copy_constrained_elements {
   $sth->finish();
 
   my $fix;
-  my $step = 10000;
 
   if ($max_ce < 10**10) {
     ## Need to add $method_link_species_set_id * 10^10 to the internal_ids
@@ -989,7 +978,7 @@ sub copy_constrained_elements {
     ## Internal IDs are OK.
     $fix = 0;
   } else {
-    print " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
+    die " ** ERROR **  Internal IDs are funny. Case not implemented yet!\n";
   }
 
   ## Check availability of the internal IDs in the TO database
@@ -1008,38 +997,20 @@ sub copy_constrained_elements {
 
   return if $dry_run;
 
-  # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
-  $sth = $from_dbc->prepare("SELECT count(*)
-      FROM constrained_element
-      WHERE method_link_species_set_id != $mlss_id limit 1");
-  $sth->execute();
-  ($count) = $sth->fetchrow_array();
-  if ($count) {
-    ## Other constrained elements are in the from database.
-    print " ** WARNING **\n";
-    print " ** WARNING ** Copying only part of the data in the conservation_score table\n";
-    print " ** WARNING ** This process might be very slow.\n";
-    print " ** WARNING **\n";
+  _disable_keys_if_allowed($to_dbc, 'constrained_element');
+
+  if ($fix) {
     copy_data($from_dbc, $to_dbc,
         "constrained_element",
         "SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
 	method_link_species_set_id, p_value, score".
         " FROM constrained_element".
         " WHERE method_link_species_set_id = $mlss_id",
-        "constrained_element_id",
-        $min_ce, $max_ce,
+        undef, 'skip_disable_keys',
     );
   } else {
-    ## These is only one set of constrained elements. Copy all of them
-      copy_data($from_dbc, $to_dbc,
-		"constrained_element",
-		"SELECT constrained_element_id+$fix, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand,
-	method_link_species_set_id, p_value, score".
-		" FROM constrained_element ".
-		" WHERE method_link_species_set_id = $mlss_id",
-		"constrained_element_id",
-		$min_ce, $max_ce,
-		$step);
+      ## Need no fixing. Copy as they are
+      copy_table($from_dbc, $to_dbc, "constrained_element", "method_link_species_set_id = $mlss_id", undef, "skip_disable_keys");
   }
 }
 
@@ -1122,4 +1093,20 @@ sub fix_genomic_align_table {
     $from_dbc->db_handle->do("DROP TABLE temp_dnafrag");
 }
 
+
+my %disabled_keys;
+
+sub _disable_keys_if_allowed {
+    my ($dbc, $table) = @_;
+    return unless $disable_keys;
+    return unless $disabled_keys{$table};
+    $dbc->db_handle->do("ALTER TABLE $table DISABLE KEYS");
+    $disabled_keys{$table} = 1;
+}
+
+sub _reenable_all_disabled_keys {
+    my $dbc = shift;
+    $dbc->db_handle->do("ALTER TABLE $_ ENABLE KEYS") for keys %disabled_keys;
+    %disabled_keys = ();
+}
 

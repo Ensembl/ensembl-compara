@@ -92,7 +92,7 @@ sub _copy_data_wrapper {
 
     # The extra arguments tell copy_data *not* to disable and enable keys
     # since there is too little data to copy to make it worth
-    my $rows = copy_data($from_dbc, $to_dbc, $table, $input_query, undef, undef, undef, undef, 0, 0, undef, undef, $self->debug);
+    my $rows = copy_data($from_dbc, $to_dbc, $table, $input_query, undef, 'skip_disable_keys', $self->debug);
     $self->warning("Copied over $rows rows of the $table table for genome_db_id=$genome_db_id");
 }
 
