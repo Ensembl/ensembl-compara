@@ -433,7 +433,7 @@ sub check_table {
   }
 
   ## Execute on FROM
-  my $sth = $from_dbc->prepare($sql);
+  my $sth = $from_dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
     my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
@@ -442,7 +442,7 @@ sub check_table {
   $sth->finish;
 
   ## Execute on TO
-  $sth = $to_dbc->prepare($sql);
+  $sth = $to_dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   while (my $row = $sth->fetchrow_arrayref) {
     my $key = join("..", map {defined $_ ? $_ : '<NULL>'} @$row);
