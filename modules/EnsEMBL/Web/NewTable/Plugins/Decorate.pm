@@ -198,4 +198,8 @@ sub col_toggle_highlight_over {
   $_[0]->set_decorates($_[1],'*',{ highlight_over => $_[2] });
 }
 
+sub col_toggle_highlight_position {
+  $_[0]->set_decorates($_[1],'*',{ highlight_pos => $_[2] });
+}
+
 1;
