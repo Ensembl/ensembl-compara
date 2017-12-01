@@ -513,7 +513,6 @@ CREATE TABLE `ortholog_goc_metric` (
   `method_link_species_set_id` int(11) NOT NULL,
   `homology_id` int(11) NOT NULL,
   `gene_member_id` int(11) NOT NULL,
-  `dnafrag_id` int(11) NOT NULL,
   `goc_score` int(11) NOT NULL,
   `left1` int(11) DEFAULT NULL,
   `left2` int(11) DEFAULT NULL,
