@@ -397,7 +397,7 @@ CREATE TABLE `homology` (
 
 CREATE TABLE `homology_id_mapping` (
   `curr_release_homology_id` int(11) NOT NULL,
-  `prev_release_homology_id` int(11) DEFAULT NULL,
+  `prev_release_homology_id` int(11) NOT NULL,
   `mlss_id` int(11) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
