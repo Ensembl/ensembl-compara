@@ -1204,34 +1204,41 @@ sub merge_node_via_shared_ancestor {
 }
 
 
+# NB: Will also minimize the tree
 sub extract_subtree_from_leaves {
     my $self = shift;
-    my $copy = $self->copy;
     my $node_ids = shift;	# Array ref of node_ids.
-    my @keepers = @{$node_ids};
 
-    # Add all ancestors of kept nodes to the keep list.
-    my @all_keepers = ();
-    my $node_id_index = $copy->_make_search_index_on_nodes('node_id', 1);
-    foreach my $keeper (@keepers) {
-	my $node = $node_id_index->{$keeper};
-	push @all_keepers, $keeper;
-
-	my $parent = $node->parent;
-	while (defined $parent) {
-	    push @all_keepers, $parent->node_id;
-	    $parent = $parent->parent;
-	}
-    }
-
-    my @remove_me = ();
-    foreach my $node (values %$node_id_index) {
-	push @remove_me, $node unless (grep {$node->node_id == $_} @all_keepers);
-    }
-    $copy->remove_nodes(\@remove_me);
-    return $copy;
+    my %node_ids_to_keep = map {$_ => 1} @{$node_ids};
+    return $self->_rec_extract_subtree_from_leaves(\%node_ids_to_keep);
 }
 
+sub _rec_extract_subtree_from_leaves {
+    my $self = shift;
+    my $node_ids_to_keep = shift;   # hashref
+    if ($self->is_leaf) {
+        if ($node_ids_to_keep->{$self->node_id}) {
+            my $copy = $self->copy_node;
+            $copy->node_id($self->node_id);
+            return $copy;
+        } else {
+            return undef;
+        }
+    } else {
+        my @new_children = grep {$_} map {$_->_rec_extract_subtree_from_leaves($node_ids_to_keep)} @{$self->children};
+        if (scalar(@new_children) == 0) {
+            return undef;
+        } elsif (scalar(@new_children) == 1) {
+            $new_children[0]->distance_to_parent( $new_children[0]->distance_to_parent + $self->distance_to_parent );
+            return $new_children[0];
+        } else {
+            my $copy = $self->copy_node;
+            $copy->node_id( $self->node_id );
+            $copy->add_child($_, $_->distance_to_parent) for @new_children;
+            return $copy;
+        }
+    }
+}
 
 ##################################
 #
@@ -1738,6 +1745,7 @@ sub random_binarize_node {
 
         # Create new internal node attached to N
         my $newNode = $node->copy_node();
+        $newNode->adaptor($node->adaptor) if $node->adaptor;
 
         # Attach A & B to I
         # A & B will be automatically removed from previous parent

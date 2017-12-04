@@ -138,7 +138,9 @@ use Getopt::Long;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 no warnings 'uninitialized';
 
@@ -222,6 +224,12 @@ else {
     $compara_dba = $reg->get_DBAdaptor( $default_aln_alias, 'compara' );
 }
 
+# When run on a production database, the connections to the core databases
+# will have disconnect_when_inactive set to 1.
+map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+
+Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
+
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
 my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_production_name();
 my $species_assembly = $reg->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
@@ -271,9 +279,9 @@ foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
-  open(FASTA, ">$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
+  open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
   print FASTA ">ANCESTOR_for_", $slice->name, "\n";
-  open(BED, ">$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
+  open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   my $num_of_blocks = 0;
   for (my $start = 1; $start <= $length; $start += $step) {
     my $end = $start + $step - 1;

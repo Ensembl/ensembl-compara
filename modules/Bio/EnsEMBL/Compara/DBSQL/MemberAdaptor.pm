@@ -56,6 +56,7 @@ package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use strict; 
 use warnings;
 
+use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -99,10 +100,16 @@ sub fetch_by_stable_id {
     return $m if $m;
 
     my $vindex = rindex($stable_id, '.');
-    $constraint = 'm.stable_id = ? AND m.version = ?';
-    $self->bind_param_generic_fetch(substr($stable_id,0,$vindex), SQL_VARCHAR);
-    $self->bind_param_generic_fetch(substr($stable_id,$vindex+1), SQL_INTEGER);
-    return $self->generic_fetch_one($constraint);
+    return undef if $vindex <= 0;  # bail out if there is no dot, or if the string starts with a dot (since that would make the stable_id part empty)
+    my $version = substr($stable_id,$vindex+1);
+    if (looks_like_number($version)) {  # to avoid DBI complains
+        $constraint = 'm.stable_id = ? AND m.version = ?';
+        $self->bind_param_generic_fetch(substr($stable_id,0,$vindex), SQL_VARCHAR);
+        $self->bind_param_generic_fetch($version, SQL_INTEGER);
+        return $self->generic_fetch_one($constraint);
+    } else {
+        return undef;
+    }
 }
 
 

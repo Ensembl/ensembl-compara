@@ -338,7 +338,7 @@
 9362	65.9	ensembl timetree mya
 314145	Laurasiatheria	scientific name
 314145	Laurasiatherian mammals	ensembl alias name
-314145	91.7	ensembl timetree mya
+314145	91.8	ensembl timetree mya
 314145	laurasiatheria	ensembl web display
 314145	d0fafa	genetree_bgcolour
 314145	005050	genetree_fgcolour
