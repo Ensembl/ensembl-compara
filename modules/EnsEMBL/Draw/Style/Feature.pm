@@ -120,12 +120,13 @@ sub create_glyphs {
       }
     }
 
+    my $bump_rows;
     if ($self->can('configure_bumping')) {
       $self->configure_bumping(\@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
-      do_bump($self, \@features);
+      $bump_rows = do_bump($self, \@features);
     }
     else { ## use generic bump prep method
-      mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+      $bump_rows = mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
     }
 
     my $typical_label;
@@ -143,7 +144,7 @@ sub create_glyphs {
       my $label_row   = 0;
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
-        my $bump = $feature->{'_bump'};
+        my $bump = $track_config->get('flip_vertical') ? $bump_rows - $feature->{'_bump'} : $feature->{'_bump'};
         $label_row   = $bump unless $bumped eq 'features_only';
         $feature_row = $bump unless $bumped eq 'labels_only';       
       }
