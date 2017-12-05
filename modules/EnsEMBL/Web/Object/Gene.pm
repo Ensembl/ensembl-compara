@@ -1496,10 +1496,7 @@ sub get_extended_reg_region_slice {
 
 
   my $fg_db = $self->get_fg_db;
-  my $fg_slice_adaptor = $fg_db->get_SliceAdaptor;
-  my $fsets = $self->feature_sets;
-  my $gr_slice = $fg_slice_adaptor->fetch_by_Gene_FeatureSets($self->Obj, $fsets);
-  $gr_slice = $gr_slice->invert if $gr_slice->strand < 1; ## Put back onto correct strand!
+  my $gr_slice = $object_slice;
 
 
   ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
@@ -1556,7 +1553,7 @@ sub reg_factors {
   my $fsets = $self->feature_sets;
   my $fg_db= $self->get_fg_db;
   my $ext_feat_adaptor = $fg_db->get_ExternalFeatureAdaptor;
-  my $fg_slice_adaptor = $fg_db->get_SliceAdaptor;
+  
   my $slice = $self->get_extended_reg_region_slice;
   my $factors_by_gene = $ext_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1);
   my $factors_by_slice = $ext_feat_adaptor->fetch_all_by_Slice_FeatureSets($slice, $fsets);
