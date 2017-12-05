@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::_alignment_pairwise;
+package EnsEMBL::Draw::GlyphSet::cactus_hal;
 
 ### Draws compara pairwise alignments - see EnsEMBL::Web::ImageConfig
 ### and E::W::ImageConfig::MultiBottom for usage
@@ -69,13 +69,14 @@ sub render_normal {
 
   return $self->render_compact if $debug_force_compact;
 
-  $self->{'my_config'}->set('bumped', 1)
+  $self->{'my_config'}->set('bumped', 1);
 
   my $data = $self->get_data;
   if (scalar @{$data->[0]{'features'}||[]}) {
-    my $config = $self->track_style_config;
-    my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
-    $self->push($style->create_glyphs);
+    warn ">>> DRAWING FEATURES!";
+    #my $config = $self->track_style_config;
+    #my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
+    #$self->push($style->create_glyphs);
   }
   else {
     $self->no_features;
@@ -99,6 +100,7 @@ sub get_data {
     return $self->feature_cache($cache_key);
   }
 
+  my $slice   = $self->{'container'};
   my $compara = $self->dbadaptor('multi',$self->my_config('db'));
   my $mlss_a  = $compara->get_MethodLinkSpeciesSetAdaptor;
   my $mlss_id = $self->my_config('method_link_species_set_id');
@@ -106,10 +108,9 @@ sub get_data {
   my $gab_a   = $compara->get_GenomicAlignBlockAdaptor;
 
   #Get restricted blocks
-  my $features = $gab_a->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss,$cont, undef, undef, 'restrict');
+  my $features = $gab_a->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice, undef, undef, 'restrict');
 
   ## Build features into sorted groups
-  my $slice       = $self->{'container'};
   my @slices      = split(' ',$self->my_config('slice_summary')||'');
   my $strand_flag = $self->my_config('strand');
   my $length      = $slice->length;
@@ -126,20 +127,49 @@ sub get_data {
    
     next if $end < 1 || $start > $length;
     my $key = $hseqname . ':' . ($gab->group_id || ('00' . $k++));
+    my $group = $groups{$key} || {};
+
+    ## Do max start and end, to get group length
+    $group->{'max'} = $gab->reference_slice_end if (!defined($group->{'max'}) || $gab->reference_slice_end > $group->{'max'});
+    $group->{'min'} = $gab->reference_slice_start if (!defined($group->{'min'}) || $gab->reference_slice_start < $group->{'min'});
+
+    ##  Special GABs are ones where they contain a displayed GA for more than
+    ##  one displayed slice. This method tests all the passed GABs to see if
+    ##  any of them are special. A special GAB is then prioritised in sorting
+    ##  to try to ensure that it is displayed despite maximum depths.
+    my $c = 0;
+    unless ($group->{'special'}) {
+      ## Don't do this if 'special' is already set, as it's quite intensive!
+      SPECIAL: foreach my $ga (@{$gab->get_all_GenomicAligns}) {
+        foreach my $slice (@slices) {
+          my ($species,$seq_region,$start,$end) = split(':',$slice);
+          next unless lc $species eq lc $ga->genome_db->name;
+          next unless $seq_region eq $ga->dnafrag->name;
+          next unless $end >= $ga->dnafrag_start();
+          next unless $start <= $ga->dnafrag_end();
+          $c++;
+          if ($c > 1) {
+            $group->{'special'} = 1;
+            last SPECIAL;
+          }
+        }
+      }
+    }
 
     ## Convert GAB into something the drawing code can understand
+    my $drawable = {'block_1' => {}, 'block_2' => {}};
 
+    my @tag = ($gab->reference_genomic_align->original_dbID, $gab->get_all_non_reference_genomic_aligns->[0]->original_dbID);
+    warn ">>> TAG @tag";
 
-    push @{$groups{$key}{'gabs'}},[$start,$gab];
+    push @{$groups{$key}{'gabs'}},[$start,$drawable];
   }
 
   ## Sort contents of groups by start
   foreach my $group (values %groups) {
-    my @f = map {$_->[1]} sort { $a->[0] <=> $b->[0] } @{$g->{'gabs'}};
-    $group->{'len'} = max(map { $_->reference_slice_end   } @f) -
-                      min(map { $_->reference_slice_start } @f);
+    my @f = map {$_->[1]} sort { $a->[0] <=> $b->[0] } @{$group->{'gabs'}};
     $group->{'gabs'} = \@f;
-    $group->{'special'} = $self->is_special($g->{'gabs'},\@slices);
+    $group->{'len'} = $group->{'max'} - $group->{'min'}; 
   }
 
   # Sort by length
@@ -149,7 +179,7 @@ sub get_data {
     } values %groups;
 
   ## Set cache
-  my $data = [{'features' => \@sorted}]
+  my $data = [{'features' => \@sorted}];
   $self->feature_cache($cache_key, $data);
   return $data;
 }
