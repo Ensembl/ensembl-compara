@@ -66,28 +66,29 @@ sub new {
   }
   
   my $self = {
-    glyphs     => [],
-    x          => undef,
-    y          => undef,
-    width      => undef,
-    minx       => undef,
-    miny       => undef,
-    maxx       => undef,
-    maxy       => undef,
-    label      => undef,
-    label2     => undef,
-    bumped     => undef,
-    error      => undef,
-    features   => [],
-    data       => [], ## New name for 'features'
-    highlights => $data->{'highlights'},
-    strand     => $data->{'strand'},
-    container  => $data->{'container'},
-    config     => $data->{'config'},
-    my_config  => $data->{'my_config'},
-    display    => $data->{'display'} || 'off',
-    legend     => $data->{'legend'}  || {},
-    extras     => $data->{'extra'}   || {}
+    glyphs        => [],
+    x             => undef,
+    y             => undef,
+    width         => undef,
+    minx          => undef,
+    miny          => undef,
+    maxx          => undef,
+    maxy          => undef,
+    label         => undef,
+    label2        => undef,
+    bumped        => undef,
+    error         => undef,
+    features      => [],
+    data          => [], ## New name for 'features'
+    feature_cache => $data->{'feature_cache'}, ## Cached data for HAL alignments
+    highlights    => $data->{'highlights'},
+    strand        => $data->{'strand'},
+    container     => $data->{'container'},
+    config        => $data->{'config'},
+    my_config     => $data->{'my_config'},
+    display       => $data->{'display'} || 'off',
+    legend        => $data->{'legend'}  || {},
+    extras        => $data->{'extra'}   || {}
   };
   
   bless $self, $class;
@@ -106,6 +107,15 @@ sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};   
 sub scalex             { return $_[0]->{'config'}->transform_object->scalex;                                                                                     }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub get_features       { return $_[0]->{'features'}; }
+
+sub feature_cache  { 
+  my ($self, $key, $data) = @_;
+  return undef unless $key;
+  if ($data) {
+    $self->{'feature_cache'}{$key} = $data;
+  }
+  return $self->{'feature_cache'}{$key}; 
+}
 
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
