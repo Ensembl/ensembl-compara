@@ -119,9 +119,9 @@ sub config {
       formats => [
         [ 'csv',  'CSV (Comma separated values)' ],
         [ 'tab',  'Tab separated values' ],
-        [ 'gtf',  'Gene Transfer Format (GTF)' ],
-        [ 'gff',  'Generic Feature Format' ],
-        [ 'gff3', 'Generic Feature Format Version 3' ],
+        [ 'gtf',  'GTF (Gene Transfer Format)' ],
+        [ 'gff',  'GFF (Generic Feature Format)' ],
+        [ 'gff3', 'GFF3 (Generic Feature Format Version 3)' ],
       ],
       params => [
         [ 'similarity', 'Similarity features' ],
