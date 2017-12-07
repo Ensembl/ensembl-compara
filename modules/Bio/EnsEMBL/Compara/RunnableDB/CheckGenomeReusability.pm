@@ -15,24 +15,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod 
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability
+Bio::EnsEMBL::Compara::RunnableDB::CheckGenomeReusability
 
 =head1 DESCRIPTION
 
-This Runnable checks whether a certain genome_db data can be reused for the purposes of ProteinTrees pipeline
+This is a base Runnable to check the reusability of a certain GenomeDB
 
-The format of the input_id follows the format of a Perl hash reference.
-Example:
-    { 'genome_db_id' => 90 }
-
-supported keys:
+supported parameters:
     'genome_db_id'  => <number>
         the id of the genome to be checked (main input_id parameter)
 
@@ -44,14 +35,15 @@ supported keys:
 
     'do_not_reuse_list' => <list_of_species_ids_or_names>
         (optional)  is a 'veto' list of species we definitely do not want to be reused this time
+
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability;
+package Bio::EnsEMBL::Compara::RunnableDB::CheckGenomeReusability;
 
 use strict;
 use warnings;
+
 use Scalar::Util qw(looks_like_number);
-use Digest::MD5 qw(md5_hex);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::GenomeDB;
@@ -64,7 +56,10 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        check_gene_content  => 1,
+
+        # If set to true, the runnable will try to find the genomes
+        # (current and previous) in the Registry
+        'needs_core_db' => undef,
 
         # "reuse_this" is used throughout the Runnable. Default value is
         # undef, so that the calling job can set it to 0 or 1
@@ -80,7 +75,7 @@ sub fetch_input {
 
     my $genome_db_id = $self->param('genome_db_id');
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
-    my $species_name = $self->param('species_name', $genome_db->name());
+    my $species_name = $genome_db->name();
 
     # For polyploid genomes, the reusability is only assessed on the principal genome
     if ($genome_db->genome_component) {
@@ -122,6 +117,7 @@ sub fetch_input {
 
             # Need to check that the genome_db_id has not changed (treat the opposite as a signal not to reuse) :
         my $reuse_compara_dba       = $self->get_cached_compara_dba('reuse_db');    # may die if bad parameters
+        $self->param('reuse_dba', $reuse_compara_dba);
         my $reuse_genome_db_adaptor = $reuse_compara_dba->get_GenomeDBAdaptor();
         my $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
         if (not $reuse_genome_db) {
@@ -146,11 +142,7 @@ sub fetch_input {
         $self->param('genome_db', $genome_db);
         $self->param('reuse_genome_db', $reuse_genome_db);
 
-        if (not $self->param('check_gene_content')) {
-            $self->warning("As requested, will not check that the gene-content is the same for ".$genome_db->name);
-            $self->param('reuse_this', 1);
-            return;
-        }
+        return unless $self->param('needs_core_db');
 
         my $prev_core_dba;
 
@@ -174,7 +166,7 @@ sub fetch_input {
             my $prev_assembly = $prev_core_dba->assembly_name;
 
             if($curr_assembly ne $prev_assembly) {
-
+                # This is very unlikely since at this stage, genome_db_ids must be equal
                 $self->warning("Assemblies for '$species_name'($prev_assembly -> $curr_assembly) do not match, so cannot reuse");
                 $self->param('reuse_this', 0);
             }
@@ -197,23 +189,7 @@ sub run {
 
     return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
 
-    my ($prev_hash, $curr_hash);
-    if (comes_from_core_database($self->param('genome_db'))) {
-        $prev_hash = hash_all_exons_from_dbc( $self->param('prev_core_dba') );
-        $curr_hash = hash_all_exons_from_dbc( $self->param('curr_core_dba') );
-    } else {
-        $prev_hash = hash_all_sequences_from_db( $self->param('reuse_genome_db') );
-        $curr_hash = hash_all_sequences_from_file( $self->param('genome_db') );
-    }
-    my ($removed, $remained1) = check_hash_equals($prev_hash, $curr_hash);
-    my ($added, $remained2)   = check_hash_equals($curr_hash, $prev_hash);
-
-    my $coding_objects_differ = $added || $removed;
-    if($coding_objects_differ) {
-        $self->warning("The coding objects changed: $added hash keys were added and $removed were removed");
-    }
-
-    $self->param('reuse_this', $coding_objects_differ ? 0 : 1);
+    $self->param('reuse_this', $self->run_comparison());
 }
 
 
@@ -246,61 +222,41 @@ sub comes_from_core_database {
 }
 
 
-sub hash_all_exons_from_dbc {
+sub hash_rows_from_dba {
+    my $self = shift;
     my $dba = shift @_;
-    my $dbc = $dba->dbc();
+    my $sql = shift @_;
 
-    my $sql = qq{
-        SELECT CONCAT(t.stable_id, ':', e.seq_region_start, ':', e.seq_region_end)
-          FROM transcript t, exon_transcript et, exon e, seq_region sr, coord_system cs
-         WHERE t.transcript_id=et.transcript_id
-           AND et.exon_id=e.exon_id
-           AND t.seq_region_id = sr.seq_region_id
-           AND sr.coord_system_id = cs.coord_system_id
-           AND t.canonical_translation_id IS NOT NULL
-           AND cs.species_id =?
-    };
+    my %rows = ();
 
-    my %exon_set = ();
-
-    my $sth = $dbc->prepare($sql);
-    $sth->execute($dba->species_id());
+    my $sth = $dba->dbc->prepare($sql);
+    $sth->execute(@_);
 
     while(my ($key) = $sth->fetchrow()) {
-        $exon_set{$key} = 1;
+        $rows{$key} = 1;
     }
 
-    return \%exon_set;
+    return \%rows;
 }
 
-sub hash_all_sequences_from_db {
-    my $genome_db = shift;
 
-    my $sql = 'SELECT stable_id, MD5(sequence) FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = ?';
-    my $sth = $genome_db->adaptor->dbc->prepare($sql);
-    $sth->execute($genome_db->dbID);
+sub do_one_comparison {
+    my $self = shift @_;
+    my ($label, $prev_hash, $curr_hash) = @_;
 
-    my %sequence_set = ();
+    return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
 
-    while(my ($stable_id, $seq_md5) = $sth->fetchrow()) {
-        $sequence_set{$stable_id} = lc $seq_md5;
+    my ($removed, $remained1) = check_hash_equals($prev_hash, $curr_hash);
+    my ($added, $remained2)   = check_hash_equals($curr_hash, $prev_hash);
+
+    my $objects_differ = $added || $removed;
+    if ($objects_differ) {
+        $self->warning("$label changes: $added hash keys were added and $removed were removed");
     }
 
-    return \%sequence_set;
+    return $objects_differ ? 0 : 1;
 }
 
-sub hash_all_sequences_from_file {
-    my $genome_db = shift;
-
-    my $prot_seq = $genome_db->db_adaptor->get_protein_sequences;
-
-    my %sequence_set = ();
-
-    foreach my $stable_id (keys %$prot_seq) {
-        $sequence_set{$stable_id} = lc md5_hex($prot_seq->{$stable_id}->seq);
-    }
-    return \%sequence_set;
-}
 
 sub check_hash_equals {
     my ($from_hash, $to_hash) = @_;
