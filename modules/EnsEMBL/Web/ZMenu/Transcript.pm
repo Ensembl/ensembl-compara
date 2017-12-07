@@ -43,7 +43,7 @@ sub content {
   
   $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
 
-  $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Novel transcript');
+  $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Transcript');
     
   if (scalar @click) {
     ## Has user clicked on an exon (or exons)? If yes find out the exon rank to display in zmenu
