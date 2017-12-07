@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-div.config_wrapper                            { border-left: 1px solid [[PALE_GREY]]; }
 div.config_wrapper div.panel div.content      { padding: 12px 12px 0 }
 div.config_wrapper div.panel div.content form { margin: 0; }
 

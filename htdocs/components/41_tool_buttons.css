@@ -19,13 +19,21 @@
 .other_tool              { display: none; margin: 0; }
 .tool_buttons div        { display: inline-block; }
 .tool_buttons a,
-.tool_buttons p.disabled, .tool_buttons div.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[WHITE]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
+.tool_buttons p.disabled, .tool_buttons div.disabled { 
+    background-position: 7px 50%; 
+    background-repeat: no-repeat; 
+    margin: 6px 1px; 
+    padding: 6px 6px 6px 30px; 
+    -moz-border-radius: 6px; 
+    -webkit-border-radius: 6px; 
+    border-radius: 6px;
+}
 .tool_buttons input.disabled { background-position: 7px 50%; background-repeat: no-repeat;  padding-left: 29px; }
 .tool_buttons a          { background-color: [[MAIN_DARK]]; color: [[WHITE]]; text-decoration: none; display: block; }
 .tool_buttons a.hidden   { display: none; }
 .tool_buttons .togglebutton.off { background-color: [[MAIN_LIGHT]]; outline: 1px outset [[MAIN_LIGHT]]; outline-offset: -4px; }
 .tool_buttons .togglebutton { outline: 1px inset [[MAIN_DARK]]; outline-offset: -4px; background-color: [[MAIN_DARK]]; }
-.tool_buttons .group     { background-color: [[MAIN_DARK]]; border: 3px double [[WHITE]]; float: left; margin: 4px 0 0; padding: 0 0 0 1px; }
+.tool_buttons .group     { background-color: [[MAIN_DARK]]; float: left; margin: 4px 0 0; padding: 0 0 0 1px; }
 .tool_buttons .group .togglebutton { border: medium none; margin: 2px 3px 2px 0; outline-offset: 0; padding: 2px 6px 2px 29px; }
 .tool_buttons p.disabled, .tool_buttons div.disabled, .tool_buttons .togglebutton.off.disabled { background-color: [[MEDIUM_GREY]]; color: [[WHITE]]; cursor: default; }
 .tool_buttons .togglebutton.off.disabled { outline: none; }
