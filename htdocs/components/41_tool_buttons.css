@@ -20,10 +20,10 @@
 .tool_buttons div        { display: inline-block; }
 .tool_buttons a,
 .tool_buttons p.disabled, .tool_buttons div.disabled { 
-    background-position: 7px 50%; 
+    background-position: 12px 50%; 
     background-repeat: no-repeat; 
     margin: 6px 1px; 
-    padding: 6px 6px 6px 30px; 
+    padding: 6px 15px 6px 36px; 
     -moz-border-radius: 6px; 
     -webkit-border-radius: 6px; 
     border-radius: 6px;

@@ -95,7 +95,8 @@ a.toggle.no_img              { background-image:none; padding:0; }
 a.button { 
   background-color: [[MAIN_DARK]]; 
   color: [[WHITE]]!important; 
-  padding: 4px 8px!important; 
+  height:20px;
+  padding: 6px 15px 2px 15px!important; 
   margin-right: 4px!important; 
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;

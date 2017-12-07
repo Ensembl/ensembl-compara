@@ -42,10 +42,9 @@
   position: relative;
   line-height: 20px;
   vertical-align: top;
-  padding: 2px 8px;
+  padding: 4px 8px;
   margin-left: 2px;
-  font-size: 10px;
-  font-weight: bold;
+  font-weight: normal;
   letter-spacing: 0.5px;
   color: [[WHITE]];
   background-color: [[MAIN_DARK]];
