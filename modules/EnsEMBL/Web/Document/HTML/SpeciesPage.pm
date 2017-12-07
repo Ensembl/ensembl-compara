@@ -100,10 +100,10 @@ sub render {
 
   if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
     ## Hardcode this because the version is actually updated when the site is upgraded
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="http://www.ensembl.org/">www.ensembl.org</a>.</p></div>);
+    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($sitename =~ /Archive/) {
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="http://www.ensembl.org/">www.ensembl.org</a>.</p></div>);
+    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
     $html .= '<p>Note: to find out which species were in previous releases, please see the <a href="/info/website/archives/assembly.html">table of assemblies</a></p>';
@@ -131,9 +131,9 @@ sub render {
     my $img_url = '/';
     if ($info->{'status'} eq 'pre') {
       $image_fade = 'opacity:0.7';
-      $sp_link    = sprintf('<a href="http://pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $common);
-      $img_url    = 'http://pre.ensembl.org/';
-      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'});
+      $sp_link    = sprintf('<a href="//pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $common);
+      $img_url    = '//pre.ensembl.org/';
+      $pre_link   = sprintf('<a href="//pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'});
     }
     else {
       $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
@@ -155,7 +155,7 @@ sub render {
 # if a species is both pre and ensembl we are adding a new row for the pre assembly    
     if ($info->{'status'} eq 'both') {
       $table->add_row({
-          'common' => sprintf('<a href="http://pre.ensembl.org/%s"><img src="/i/species/48/%1$s.png" alt="%s" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="http://pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
+          'common' => sprintf('<a href="//pre.ensembl.org/%s"><img src="/i/species/48/%1$s.png" alt="%s" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="//pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
           'species'     => '<i>'.$name.'</i>',
           'taxon_id'    => $info->{'taxon_id'},
           'assembly'    => '-',
@@ -163,7 +163,7 @@ sub render {
           'genebuild'   => '-',
           'variation'   => '-',
           'regulation'  => '-',
-          'pre'         => sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'}),
+          'pre'         => sprintf('<a href="//pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'}),
       });
     } 
   }

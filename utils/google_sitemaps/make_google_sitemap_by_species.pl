@@ -100,13 +100,14 @@ $map->write("${sitemap_path}/sitemap-common.xml");
 push @sitemaps, "sitemap-common.xml";
 
 my @skip = split /,/, $skip_list;
+my $name_lookup = $hub->species_defs->production_name_lookup;
 
 # create the sitemaps for each dataset
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
   next if grep { $_ eq $dataset } @skip;
   
-  print "$dataset\n";
-  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $dataset);
+  print "DATASET $dataset\n";
+  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $name_lookup->{$dataset});
   if (!$adaptor) {
     warn "core db doesn't exist for $dataset\n";
     next;

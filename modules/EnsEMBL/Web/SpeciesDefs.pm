@@ -765,18 +765,22 @@ sub _parse {
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$prodname}{'SPECIES_URL'};
+    if ($url) {
     
-    ## Add in aliases to production names
-    $aliases->{$prodname} = $url;
+      ## Add in aliases to production names
+      $aliases->{$prodname} = $url;
     
-    ## Rename the tree keys for easy data access via URLs
-    ## (and backwards compatibility!)
-    if ($url ne $prodname) {
-      $tree->{$url} = $tree->{$prodname};
-      delete $tree->{$prodname};
+      ## Rename the tree keys for easy data access via URLs
+      ## (and backwards compatibility!)
+      if ($url ne $prodname) {
+        $tree->{$url} = $tree->{$prodname};
+        delete $tree->{$prodname};
+      }
+      push @$datasets, $url;
     }
-    push @$datasets, $url;
-    
+    else {
+      warn ">>> SPECIES $prodname has no URL defined";
+    }
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);

@@ -115,6 +115,19 @@ sub render {
     });
   }
 
+  ## Linkage Disequilibrium Calculator
+  if ($sd->ENSEMBL_LD_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action LD)});
+    $table->add_row({
+      'name'  => sprintf('<b><a class="nodeco" href="%s">Linkage Disequilibrium Calculator</a></b>', $link),
+      'desc'  => 'Calculate LD between variants using genotypes from a selected population.',
+      'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'limit' => '',
+      'code'  => '',
+      'docs'  =>  sprintf('<a href="/%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Tools/LD'}}), $img_url),
+    });
+  }
+
   ## Allele frequency
   if ($sd->ENSEMBL_AF_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action AlleleFrequency)});
@@ -173,7 +186,7 @@ sub render {
 
   }
   else {
-    $html .= '<p><b>No tools are available on this site. Please visit <a href="http://www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
+    $html .= '<p><b>No tools are available on this site. Please visit <a href="//www.ensembl.org/info/docs/tools/">our main site</a> for more options.</b></p>';
   }
 
   ## Table of other tools
@@ -216,7 +229,7 @@ sub render {
 
   ## REST
   if (my $rest_url = $sd->ENSEMBL_REST_URL) {
-    (my $rest_domain = $rest_url) =~ s/http:\/\///;
+    my $rest_domain = $rest_url =~ s/(https?:)?\/\///r;
     $table->add_row({
       "name" => sprintf("<b><a href=%s>$sitename REST server</a></b>", $rest_url),
       'desc' => 'Access Ensembl data using your favourite programming language',

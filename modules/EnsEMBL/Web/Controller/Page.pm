@@ -26,6 +26,7 @@ use strict;
 use warnings;
 
 use URI::Escape qw(uri_unescape);
+use JSON;
 
 use EnsEMBL::Web::Exceptions;
 

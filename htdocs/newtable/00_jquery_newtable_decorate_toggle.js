@@ -48,27 +48,60 @@
 
       return {
         go: function(html,row) {
-          var sep = RegExp(extras['*'].separator || '\s');
           var max = (extras['*'].max || 20);
-          var parts = split_up(sep,html);
+          var parts;
+
+          if (extras['*'].separator) {
+            var sep = RegExp(extras['*'].separator || '\s');
+            parts = split_up(sep,html);
+          }
+          else {
+            parts = html.split('');
+          }
+
           var all = parts.slice();
           var out = "";
           var trimmed = false;
           var highlight_col = extras['*'].highlight_col;
           var highlight_over = (extras['*'].highlight_over || 0);
           var highlight_value;
+          var highlight_pos = new Array();
+          var incr = 2;
+
           if(highlight_col && parts.length>2*highlight_over) {
             highlight_value = row[rseries[highlight_col]];
           }
-          for(var i=0;i<parts.length;i+=2) {
-            var highlight = (parts[i] == highlight_value);
+
+          if (extras['*'].highlight_pos && highlight_value) {
+            highlight_pos = highlight_value.split(',').map( Number ).sort();
+            incr = 1;
+          }
+
+          for(var i=0;i<parts.length;i+=incr) {
             if(parts[i].length>max) {
               parts[i] = parts[i].substring(0,max-2)+"...";
               trimmed = true;
             }
-            if(highlight) {
-              parts[i] = '<b>'+parts[i]+'</b>';
-              all[i] = '<b>'+all[i]+'</b>';
+
+            var highlight;
+
+            if (highlight_pos.length) {
+              var re, m;
+              for(var j=highlight_pos.length-1; j>=0; j--) {
+                re = new RegExp('^(.{'+ (highlight_pos[j]-1) + '})(.{1})?(.+)?$');
+                m = parts[i].match(re)
+                if(m) {
+                  parts[i] = m[1] + (m[2] ? '<b>' + m[2] + '</b>' : '') + (m[3] ? m[3] : '');
+                  all[i] = m[1] + (m[2] ? '<b>' + m[2] + '</b>' : '') + (m[3] ? m[3] : '');
+                }
+              }
+            }
+            else {
+              highlight = (parts[i] == highlight_value);
+              if(highlight) {
+                parts[i] = '<b>'+parts[i]+'</b>';
+                all[i] = '<b>'+all[i]+'</b>';
+              }
             }
             out = out + parts[i];
             if(i<parts.length-1) {

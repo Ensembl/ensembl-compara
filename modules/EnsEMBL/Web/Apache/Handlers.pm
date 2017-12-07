@@ -1,6 +1,4 @@
 =head1 LICENSE
-f
-
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 Copyright [2016-2017] EMBL-European Bioinformatics Institute
@@ -125,7 +123,7 @@ sub get_redirect_uri {
 
   ## Redirect to live site if this instance has no Doxygen files
   if ($uri =~ /Doxygen/ && !(-e $species_defs->ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs'.$uri)) {
-    return 'http://www.ensembl.org/'.$uri;
+    return '//www.ensembl.org/'.$uri;
   } 
 
   return undef;

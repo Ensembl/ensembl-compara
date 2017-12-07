@@ -207,18 +207,34 @@ sub _create_exon_structure {
   foreach my $e (@{$f->{'exons'}}) {
     next unless ($e->{'start'} || $e->{'end'}); 
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
+
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
+      ## Turn API coordinates into something that makes sense in drawing terms 
+      if ($e->{'coding_start'} < 1) {
+        $e->{'coding_start'} = $e->{'start'};
+      }
+      if ($e->{'coding_end'} < 1) {
+        $e->{'coding_end'} = $e->{'end'};
+      }
+
+      if ($e->{'coding_start'} != $e->{'start'}) {
+        $e->{'coding_start'}  += $e->{'start'};
+      }
+      if ($e->{'coding_end'} != $e->{'end'}) {
+        $e->{'coding_end'}  = $e->{'end'} - $e->{'coding_end'};
+      }
+
       ## Use direction of drawing, not direction of transcript
       my ($coding_start, $coding_end) = ($e->{'coding_start'}, $e->{'coding_end'});
       if (($coding_end - $coding_start) < 0 || ($coding_end - $coding_start) > $slice_length) {
         $exon->{'non_coding'} = 1;
       }
       else {
-        if ($coding_start > 0) {
-          $exon->{'utr_5'} = $e->{'start'} + $coding_start;
+        if ($coding_start > $e->{'start'}) {
+          $exon->{'utr_5'} = $coding_start;
         }
-        if ($coding_end < ($e->{'end'} - $e->{'start'})) {
-          $exon->{'utr_3'} = $e->{'end'} - $coding_end;
+        if ($coding_end < $e->{'end'}) {
+          $exon->{'utr_3'} = $coding_end;
         }
       }
     }

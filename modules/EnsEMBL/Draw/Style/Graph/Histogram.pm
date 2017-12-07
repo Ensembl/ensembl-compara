@@ -38,6 +38,7 @@ sub draw_wiggle {
     y               => $c->{'y_offset'} || 0,
     height          => $height,
     unit            => $c->{'unit'},
+    min             => $c->{'min_score'},
     max             => $c->{'max_score'},
     colour          => $c->{'colour'},
     truncate_colour => $c->{'truncate_colour'},

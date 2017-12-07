@@ -140,7 +140,7 @@ sub content {
     $selected_pop ||= (keys %rows)[0]; # there is only one entry in %rows
 
     my $pop_name = $pop_names{$selected_pop};
-    my $project_url  = $self->pop_url($pop_name,$pop_name);
+    my $project_url  = $self->pop_url($pop_name);
     my $pop_url = ($project_url) ? sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the <b>%s</b> population</a></p>', $project_url, $pop_name) : ''; 
 
     return $self->toggleable_table(
@@ -285,31 +285,6 @@ sub format_other_samples_table {
 sub format_parent {
   my ($self, $parent_data) = @_;
   return ($parent_data && $parent_data->{'Name'}) ? $parent_data->{'Name'} : '-';
-}
-
-
-sub pop_url {
-   ### Arg1        : Full population name
-   ### Arg2        : Population name/label (to be displayed)
-   ### Arg3        : dbSNP population ID (variable to be linked to)
-   ### Example     : $self->pop_url($pop_name, $pop_label, $pop_dbSNPID);
-   ### Description : makes pop_name into a link
-   ### Returns  string
-
-  my ($self, $pop_name, $pop_label, $pop_dbSNP) = @_;
-
-  my $pop_url;
-
-  if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_label);
-  }
-  elsif ($pop_name =~ /^NextGen/i) {
-    $pop_url = $self->hub->get_ExtURL('NEXTGEN_POP');
-  }
-  else {
-    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef;
-  }
-  return $pop_url;
 }
 
 

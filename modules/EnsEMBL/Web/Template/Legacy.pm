@@ -181,7 +181,7 @@ sub render_footer {
   my $page = $self->page;
 
   my $footer_id = $self->{'lefthand_menu'} ? 'footer' : 'wide-footer';
-  return qq(
+  my $html = qq(
         <div id="$footer_id">
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
             <p class="invisible">.</p>
@@ -191,6 +191,11 @@ sub render_footer {
           </div>
         </div>
   );
+
+  if ($self->{'show_banner'}) {
+    $html .= $elements->{'bottom_banner'};
+  }
+  return $html;
 }
 
 sub render_page_end {

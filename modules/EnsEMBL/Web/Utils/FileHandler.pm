@@ -33,7 +33,9 @@ our @EXPORT_OK = qw(file_get_contents file_put_contents file_append_contents);
 sub file_get_contents {
   ## Reads a file from memory location
   ## @param File location
-  ## @param (optional) Subroutine to apply to every line of content before returning it (Inside the sub, $_ is the current line string itself and first argument is the line number starting from 0)
+  ## @param (optional) Subroutine to apply to every line of content before returning it
+  ##   (Inside the sub, $_ is the current line string itself and first argument is the line number starting from 0)
+  ##   (If undef is returned by the sub for a line, that line will be ignored in the output)
   ## @return Whole file content as a string in scalar content, list of lines of file for list content
   my ($filename, $iterate_sub) = @_;
 
@@ -45,7 +47,8 @@ sub file_get_contents {
   if ($iterate_sub) {
     my $i = 0;
     while ($_ = $file_handle->getline) { # getline doesn't assign $_ automatically
-      push @lines, $iterate_sub->($i++);
+      my $line = $iterate_sub->($i++);
+      push @lines, $line if defined $line;
     }
   } else {
     @lines = $file_handle->getlines;

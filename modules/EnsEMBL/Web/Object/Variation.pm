@@ -1810,7 +1810,7 @@ sub get_snpedia_data {
   $rev->{'*'} =~s/\[\[(?!rs\d+)(.*?)\]\]/($1 ne $var_id) ? $hub->get_ExtURL_link($1, 'SNPEDIA_SEARCH', { 'ID' => encode_entities($1) }) : "<b>$1<\/b>"/ge;
 
   # Create html links for content like [url linktext]
-  $rev->{'*'} =~s/\[(http:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;
+  $rev->{'*'} =~s/\[(https?:\/\/.*?)\s(.*?)\]/<a href="$1">$2<\/a>/g;
 
   # Display only the first paragraph
   my @desc_arr = split(/\*\*\*+/, $rev->{'*'});

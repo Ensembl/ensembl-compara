@@ -208,13 +208,17 @@ sub variation_source {
   }
   
   ## parse description for links
-  (my $description = $object->source_description) =~ s/(\w+) \[(http:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
+  (my $description = $object->source_description) =~ s/(\w+) \[(https?:\/\/[\w\.\/]+)\]/<a href="$2" class="constant">$1<\/a>/; 
   my $source_prefix = 'View in';
 
   # Source link
   if ($source =~ /dbSNP/) {
-    $sname       = 'DBSNP';
-    $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
+    if ($hub->species eq 'Homo_sapiens') {
+      $sname       = 'DBSNP';
+      $source_link = $hub->get_ExtURL_link("$source_prefix dbSNP", $sname, $name);
+    } else {
+      $source_link = "";
+    } 
   } elsif ($source =~ /ClinVar/i) {
     $sname = ($name =~ /^rs/) ?  'CLINVAR_DBSNP' : 'CLINVAR';
     $source_link = $hub->get_ExtURL_link("About $source", $sname, $name);
@@ -242,13 +246,15 @@ sub variation_source {
   }  elsif ($source =~ /PhenCode/) {
      $sname       = 'PHENCODE';
      $source_link = $hub->get_ExtURL_link("$source_prefix PhenCode", $sname, $name);
-} else {
+  } else {
     $source_link = $url ? qq{<a href="$url" class="constant">$source_prefix $source</a>} : "$source $version";
   }
   
   $version = ($version) ? " (release $version)" : '';
-  
-  return ['Original source', sprintf('<p>%s%s%s%s</p>', $description, $version, $self->text_separator, $source_link)];
+ 
+  my $text_separator = $source_link ne '' ? $self->text_separator : '';
+ 
+  return ['Original source', sprintf('<p>%s%s%s%s</p>', $description, $version, $text_separator, $source_link)];
 }
 
 
@@ -324,18 +330,21 @@ sub synonyms {
 
     next if ($db =~ /(Affy|Illumina|HGVbase|TSC|dbSNP\sHGVS)/i);
 
-    if ($db =~ /dbsnp rs/i) { # Glovar stuff
-      @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
-    }
-    elsif ($db =~ /dbsnp hgvs/i) {
-      @urls = sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @ids;
-    }    
-    elsif ($db =~ /dbsnp/i) {
-      foreach (@ids) {
-        next if /^ss/; # don't display SSIDs - these are useless
-        push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
+    # dbSNP
+    if ($db =~ /dbsnp/i && $hub->species eq 'Homo_sapiens') {
+      if ($db =~ /dbsnp rs/i ) { # Glovar stuff
+        @urls = map $hub->get_ExtURL_link($_, 'DBSNP', $_), @ids;
       }
-      next unless @urls;
+      elsif ($db =~ /dbsnp hgvs/i) {
+        @urls = sort { $a !~ /NM_/ cmp $b !~ /NM_/ || $a cmp $b } @ids;
+      }
+      elsif ($db =~ /dbsnp/i) {
+        foreach (@ids) {
+          next if /^ss/; # don't display SSIDs - these are useless
+          push @urls, $hub->get_ExtURL_link($_, 'DBSNP', $_);
+        }
+        next unless @urls;
+      }
     }
     elsif ($db =~ /clinvar/i) {
       @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
@@ -345,6 +354,9 @@ sub synonyms {
     }
     elsif ($db =~ /PhenCode/) {
       push @urls, $hub->get_ExtURL_link($_, 'PHENCODE', $_) for @ids;
+    }
+    elsif ($db =~ /PharmGKB/) {
+      push @urls, $hub->get_ExtURL_link($_, 'PHARMGKB', $self->object->name) for @ids;
     }
     ## these are LSDBs who submit to dbSNP, so we use the submitter name as a synonym & link to the original site
     elsif ($db =~ /OIVD|LMDD|KAT6BDB|HbVar|PAHdb|Infevers|LSDB/) {

@@ -87,10 +87,13 @@ sub create_glyphs {
 
     ## Set cutoff point for top of graph if we have one
     if (defined($self->{'cutoff'})) {
-      $graph_conf->{'cutoff'} = $self->{'cutoff'};
+      $graph_conf->{'cutoff_max'} = $self->{'cutoff'};
     }
     elsif (defined($metadata->{'y_max'})) {
-      $graph_conf->{'cutoff'} = $metadata->{'y_max'}; 
+      $graph_conf->{'cutoff_max'} = $metadata->{'y_max'}; 
+    }
+    if (defined($metadata->{'y_min'})) {
+      $graph_conf->{'cutoff_min'} = $metadata->{'y_min'}; 
     }
 
     ## Single line? Build into singleton set.

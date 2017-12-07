@@ -28,6 +28,7 @@ our $VERSION = 1;
 sub precache {
   return {
     'rfunder-all' => {
+      parts => 500,
       loop => ['species','regulatoryfeature'],
       args => {
         epigenome => '',

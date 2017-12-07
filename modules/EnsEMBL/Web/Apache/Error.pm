@@ -40,7 +40,7 @@ sub handler {
   my ($content, $content_type);
 
   my $heading = '404 Not Found'; # TODO - not always 404
-  my $message = 'Please check that you have typed in the correct URL or else use the <a href="/Multi/Search/Results">site search</a> facility to try and locate information you require.<br />If you think an error has occurred, please <a href="http://www.ensembl.org/Help/Contact">contact our HelpDesk</a>';
+  my $message = 'Please check that you have typed in the correct URL or else use the <a href="/Multi/Search/Results">site search</a> facility to try and locate information you require.<br />If you think an error has occurred, please <a href="//www.ensembl.org/Help/Contact">contact our HelpDesk</a>';
 
   try {
 

@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 90;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Aug2017';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'August 2017'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 91;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Dec2017';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'December 2017'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -72,7 +72,7 @@ our $ENSEMBL_SERVERADMIN          = 'webmaster&#064;mydomain.org';              
 ###############################################################################
 ## Other server settings
 our $ENSEMBL_SERVER               = Sys::Hostname::Long::hostname_long; # Local machine name
-our $ENSEMBL_PROTOCOL             = 'http';                             # Used for proxies and self-referential URLs
+our $ENSEMBL_PROXY_PROTOCOL       = 'http';                             # Used for proxy-forwarding
 our $ENSEMBL_PROXY_PORT           = undef;                              # Port used for self-referential URLs. Set to undef if not using proxy-forwarding
 our $ENSEMBL_LONGPROCESS_MINTIME  = 10;                                 # Warn extra info to logs if a process takes more than given time in seconds to serve request
 our $ENSEMBL_MAX_PROCESS_SIZE     = 1024 * 1024;                        # Value for Apache2::SizeLimit::MAX_PROCESS_SIZE
@@ -94,8 +94,8 @@ our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Set
 our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\W+/-/gr; # Unique string representing this machine/server
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
-our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
 our $PERL_RLIMIT_AS                   = '2048:4096';                      # linux does not honor RLIMIT_DATA, RLIMIT_AS (address space) will work to limit the size of a process
+our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
 our $CGI_POST_MAX                     = 20 * 1024 * 1024; # 20MB file upload max limit
 our $UPLOAD_SIZELIMIT_WITHOUT_INDEX   = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing trackhub requests
@@ -105,7 +105,7 @@ our $ENSEMBL_SPECIES_SELECT_DIVISION  = defer { "$ENSEMBL_DOCROOT/e_species_divi
 our $ENSEMBL_SKIP_RSS                 = 0;      # set to 1 in sandboxes to avoid overloading blog
 our $ENSEMBL_EXTERNAL_SEARCHABLE      = 0;      # No external bots allowed by default (used to create default robots.txt)
 our $ENSEMBL_CUSTOM_ROBOTS_TXT        = 0;      # If set to true will use robots.txt from a plugin instead of using the default one
-our $PACED_MULTI                      = 6;      # Max simultaneous connections
+our $PACED_MULTI                      = 2;      # Max simultaneous connections
 our $HTTP_PROXY                       = undef;  # Web proxy for outgoing http/https requests
 our $ENSEMBL_REGISTRY                 = undef;  # Set this to a valid config file for Bio::EnsEMBL::Registry::load_all() or leave undef
 our $ENSEMBL_SITE_DIR                 = '';     # URL Path if site is served from a sub path i.e www.example.org/$ENSEMBL_SITE_DIR/
@@ -367,14 +367,14 @@ sub import {
   $ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
   $ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
 
-  $ENSEMBL_BASE_URL = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME" . (
-    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
-    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
+  $ENSEMBL_BASE_URL = "//$ENSEMBL_SERVERNAME" . (
+    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROXY_PROTOCOL eq 'http' ||
+    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROXY_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
   );
 
   $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
   $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
-  $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
+  $ENSEMBL_STATIC_SERVER     = "//$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
@@ -422,8 +422,8 @@ sub _update_conf {
     eval qq{ require '$dir/conf/SiteDefs.pm' };                               # load the actual plugin SiteDefs
 
     if ($@) {
-      my $message = "Can't locate $dir/conf/SiteDefs.pm in";
-      warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:;
+      my $message = "Can't locate $dir/conf/SiteDefs.pm";
+      warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:s;
     } else {
 
       # create datastructures for validating the rules in the end
@@ -507,7 +507,7 @@ sub _update_conf {
 sub _set_dedicated_mart {
   ## Set ENSEMBL_MART_SERVERNAME if mart is running on a separate dedicated server
   if ($ENSEMBL_MART_ENABLED && !$ENSEMBL_MART_PLUGIN_ENABLED && $ENSEMBL_MART_SERVER) {
-    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROTOCOL, $ENSEMBL_MART_SERVER;
+    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROXY_PROTOCOL, $ENSEMBL_MART_SERVER;
     $ENSEMBL_SETENV->{'ENSEMBL_MART_SERVERNAME'} = 'ENSEMBL_MART_SERVERNAME';
   }
 }

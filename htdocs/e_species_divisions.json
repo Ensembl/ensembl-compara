@@ -14,8 +14,33 @@
           "is_leaf":"true"
       },
       {
+          "scientific_name":"Colobus angolensis palliatus",
+          "key":"Colobus_angolensis_palliatus",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Rhinopithecus bieti",
+          "key":"Rhinopithecus_bieti",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Saimiri boliviensis boliviensis",
+          "key":"Saimiri_boliviensis_boliviensis",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Pan paniscus",
+          "key":"Pan_paniscus",
+          "is_leaf":"true"
+      },
+      {
           "scientific_name":"Otolemur garnettii",
           "key":"Otolemur_garnettii",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Cebus capucinus",
+          "key":"Cebus_capucinus",
           "is_leaf":"true"
       },
       {
@@ -24,8 +49,28 @@
           "is_leaf":"true"
       },
       {
+          "scientific_name":"Propithecus coquereli",
+          "key":"Propithecus_coquereli",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Macaca fascicularis",
+          "key":"Macaca_fascicularis",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Mandrillus leucophaeus",
+          "key":"Mandrillus_leucophaeus",
+          "is_leaf":"true"
+      },
+      {
           "scientific_name":"Nomascus leucogenys",
           "key":"Nomascus_leucogenys",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Rhinopithecus roxellana",
+          "key":"Rhinopithecus_roxellana",
           "is_leaf":"true"
       },
       {
@@ -34,13 +79,18 @@
           "is_leaf":"true"
       },
       {
+          "scientific_name":"Macaca mulatta",
+          "key":"Macaca_mulatta",
+          "is_leaf":"true"
+      },
+      {
           "scientific_name":"Callithrix jacchus",
           "key":"Callithrix_jacchus",
           "is_leaf":"true"
       },
       {
-          "scientific_name":"Macaca mulatta",
-          "key":"Macaca_mulatta",
+          "scientific_name":"Aotus nancymaae",
+          "key":"Aotus_nancymaae",
           "is_leaf":"true"
       },
       {
@@ -59,6 +109,11 @@
           "is_leaf":"true"
       },
       {
+          "scientific_name":"Macaca nemestrina",
+          "key":"Macaca_nemestrina",
+          "is_leaf":"true"
+      },
+      {
           "scientific_name":"Carlito syrichta",
           "key":"Carlito_syrichta",
           "is_leaf":"true"
@@ -66,6 +121,11 @@
       {
           "scientific_name":"Chlorocebus sabaeus",
           "key":"Chlorocebus_sabaeus",
+          "is_leaf":"true"
+      },
+      {
+          "scientific_name":"Cercocebus atys",
+          "key":"Cercocebus_atys",
           "is_leaf":"true"
       }
     ]

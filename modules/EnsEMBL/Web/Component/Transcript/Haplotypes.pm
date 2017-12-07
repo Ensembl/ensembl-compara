@@ -43,12 +43,34 @@ sub buttons {
                       $hub->species_defs->ENSEMBL_REST_URL, 
                       lc($hub->species), 
                       $hub->param('t');
+  my @buttons;
 
-  return {
+  push @buttons, {
       'url'       => $url,
       'caption'   => 'Export data as JSON',
       'class'     => 'export',
     };
+
+  my $type = $self->hub->param('ht_type') || 'protein';
+  my %titles = (
+    'protein' => 'Protein',
+    'cds'     => 'CDS',
+  );
+  my $other_type = $type eq 'protein' ? 'cds' : 'protein';
+
+  $url = $self->hub->url({ht_type => lc($other_type)});
+  my $html .= sprintf(
+    '<h4><a href="%s" style="vertical-align:middle">Switch to %s view</a> <img src="/i/16/reload.png" style="vertical-align:middle"></h4>',
+    $url, $titles{$other_type}
+  );
+
+  push @buttons, {
+      'url'       => $url,
+      'caption'   => sprintf('Switch to %s view', $titles{$other_type}),
+      'class'     => 'view',
+    };
+
+  return @buttons;
 
 }
 
@@ -152,21 +174,18 @@ sub content {
   foreach my $ht(@$haplotypes) {    
     $table->add_row($self->render_haplotype_row($ht));
   }
-
-  my $url = $self->hub->url({ht_type => lc($other_type)});
-  $html .= sprintf(
-    '<h4><a href="%s" style="vertical-align:middle">Switch to %s view</a> <img src="/i/16/reload.png" style="vertical-align:middle"></h4>',
-    $url, $titles{$other_type}
-  );
   
   $html .= $table->render;
 
+  $c->_prefetch_everything();
+
   # send through JSON version of the container
   my $json = JSON->new();
-
+  my $params_to_client = {'protein_haplotypes' => $c->get_all_ProteinHaplotypes,
+                          'cds_haplotypes'     => $c->get_all_CDSHaplotypes };
   $html .= sprintf(
     '<input class="js_param" type="hidden" name="haplotype_data" value="%s" />',
-    encode_entities($json->allow_blessed->convert_blessed->encode($c))
+    encode_entities($json->allow_blessed->convert_blessed->encode($params_to_client))
   );
 
   # and send population stuff

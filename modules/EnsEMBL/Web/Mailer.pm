@@ -37,7 +37,7 @@ sub new {
     'hub'           => $hub,
     'from'          => $sd->ENSEMBL_HELPDESK_EMAIL,
     'mail_server'   => $sd->ENSEMBL_MAIL_SERVER,
-    'base_url'      => $sd->ENSEMBL_BASE_URL,
+    'base_url'      => $sd->ENSEMBL_PROXY_PROTOCOL.":".$sd->ENSEMBL_BASE_URL,
     'site_name'     => $sd->ENSEMBL_SITETYPE,
     %{$data || {}}
   }, $class;

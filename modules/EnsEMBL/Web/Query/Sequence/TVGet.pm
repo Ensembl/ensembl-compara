@@ -32,7 +32,8 @@ sub precache {
       loop => ['species','transcripts'],
       args => {
         type => "core"
-      }
+      },
+      parts => 5000,
     }
   };
 }
@@ -59,8 +60,10 @@ sub _build_vf_cache {
   my $ad = $self->source('Adaptors');
   my $vfa = $ad->variation_feature_adaptor($config->{'species'});
   my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
+  return if @$vfs > 60000;
   $cache->{$_->dbID} = $_ for(@$vfs);
   $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
+  return if @$vfs > 60000;
   $cache->{$_->dbID} = $_ for(@$vfs);
 }
 

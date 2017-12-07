@@ -88,7 +88,7 @@ sub create {
     if (-e "$map_dir/sitemap-index.xml") {
       # If we have a sitemap let google know about it.
       warn _box("Creating robots.txt for google sitemap");
-      push @lines, _lines("Sitemap", sprintf '%s://%s/sitemaps/sitemap-index.xml', $sd->ENSEMBL_PROTOCOL, $sd->ENSEMBL_SERVERNAME);
+      push @lines, _lines("Sitemap", sprintf '//%s/sitemaps/sitemap-index.xml', $sd->ENSEMBL_SERVERNAME);
     }
   } else {
     push @lines, _lines("User-agent", "*");

@@ -204,7 +204,8 @@ sub _block_zmenu {
     action => 'FeatureEvidence',
     fdb    => 'funcgen',
     pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
-    fs     => $f->feature_set->name,
+    fs     => $f->fetch_PeakCalling->name,
+
     ps     => $f->summit || 'undetermined',
     act    => $self->{'config'}->hub->action,
     evidence => !$self->{'will_draw_wiggle'},
@@ -223,6 +224,7 @@ sub get_features {
                     };
 
     my @temp          = split /:/, $f_set;
+    
     pop @temp;
     my $feature_name  = pop @temp;
 

@@ -62,7 +62,7 @@ sub focus {
     my $snp       = $builder->object('Variation');
     my $name      = $snp->name;
     my $source    = $snp->source;
-    my $link_name = $hub->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP';
+    my $link_name = $hub->get_ExtURL_link($name, 'DBSNP', $name) if ($source eq 'dbSNP' && $hub->species eq 'Homo_sapiens');
     my $url       = $hub->url({ type => 'Variation', action => 'Explore', v => $v, vf => $hub->param('vf') });
 
     $info = sprintf 'Variant %s (%s %s) <a href="%s">[View variation]</a>', $link_name, $source, $snp->Obj->adaptor->get_source_version($source), $url;
@@ -201,14 +201,17 @@ sub pop_url {
 
   my ($self, $pop_name, $pop_dbSNP) = @_;
 
+  my $hub = $self->hub;
+
   my @composed_name = split(':', $pop_name);
   if (scalar @composed_name > 1) {
     $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
     $pop_name = join(':', @composed_name);
   }
 
+  return $pop_name if ($hub->species ne 'Homo_sapiens');
   return $pop_name unless $pop_dbSNP;
-  return $self->hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]);
+  return $hub->get_ExtURL_link($pop_name, 'DBSNPPOP', $pop_dbSNP->[0]);
 }
 
 #-----------------------------------------------------------------------------

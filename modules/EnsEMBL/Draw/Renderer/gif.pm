@@ -337,15 +337,17 @@ sub render_Histogram {
   my $points = $glyph->{'pixelpoints'};
   return unless defined $points;
 
+  my $max = defined($glyph->{'max'}) || 1000;
+  my $min = defined($glyph->{'min'}) ? $glyph->{'min'} : 0;
+
   my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
   my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
-  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
-  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my $y1 = $self->{'sf'} * ( $glyph->{'pixely'} + $min );
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} + $min);
 
-  my $max = $glyph->{'max'} || 1000;
   my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+  my $mul = ($y2-$y1) / ($max - $min);
 
-  my $mul = ($y2-$y1) / $max;
   foreach my $p (@$points) {
     my $truncated = 0;
     if ($p > $max) {
@@ -353,7 +355,7 @@ sub render_Histogram {
       $p = $max;
       $truncated = 1 if $glyph->{'truncate_colour'};
     }
-    my $yb = $y2 - max($p,0) * $mul;
+    my $yb = $y2 - max($p,$min) * $mul;
     $canvas->filledRectangle($x1,$yb,$x2,$y2,$colour);
     ## Mark truncation with a contrasting line at the top of the bar
     if ($truncated) {

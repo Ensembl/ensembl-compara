@@ -1664,34 +1664,29 @@ sub variation_data {
     
     my $start = $vf->start;
     my $end   = $vf->end;
-    
-    push @data, lazy_hash({
-      tva           => sub {
-        return $tv->get_all_alternate_TranscriptVariationAlleles->[0];
-      },
-      tv            => $tv,
-      vf            => $vf,
-      position      => $pos,
-      vdbid         => $vdbid,
-      snp_source    => sub { $vf->source },
-      snp_id        => sub { $vf->variation_name },
-      ambigcode     => sub { $vf->ambig_code($strand) },
-      codons        => sub {
-        my $tva = $_[0]->get('tva');
-        return $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '';
-      },
-      allele        => sub { $vf->allele_string(undef, $strand) },
-      pep_snp       => sub {
-        my $tva = $_[0]->get('tva');
-        return join(', ', split '/', $tva->pep_allele_string);
-      },
-      type          => sub { $tv->display_consequence },
-      class         => sub { $vf->var_class },
-      length        => $vf->length,
-      indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
-      codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
-      codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
-    });
+
+    foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+ 
+      push @data, lazy_hash({
+        tva           => $tva,
+        tv            => $tv,
+        vf            => $vf,
+        position      => $pos,
+        vdbid         => $vdbid,
+        snp_source    => $vf->source,
+        snp_id        => $vf->variation_name,
+        ambigcode     => $vf->ambig_code($strand),
+        codons        => $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '',
+        allele        => $vf->allele_string(undef, $strand),
+        pep_snp       => join(', ', split '/', $tva->pep_allele_string),
+        type          => $tv->display_consequence,
+        class         => $vf->var_class,
+        length        => $vf->length,
+        indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
+        codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
+        codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
+      });
+    }
   }
 
   @data = map $_->[2], sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map [ $_->{'vf'}->length, $_->{'vf'}->most_severe_OverlapConsequence->rank, $_ ], @data;

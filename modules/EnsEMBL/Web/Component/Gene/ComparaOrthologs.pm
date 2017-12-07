@@ -48,7 +48,7 @@ sub _get_all_analysed_species {
     } else {
       $best_pt_mlss = $pt_mlsss->[0];
     }
-    $self->{'_all_analysed_species'} = {map {ucfirst($_->name) => 1} @{$best_pt_mlss->species_set->genome_dbs}};
+    $self->{'_all_analysed_species'} = {map {$self->hub->species_defs->production_name_mapping($_->name) => 1} @{$best_pt_mlss->species_set->genome_dbs}};
   }
   return %{$self->{'_all_analysed_species'}};
 }
@@ -76,22 +76,23 @@ sub content {
 
   my %not_seen = $self->_get_all_analysed_species($cdb);
   
-  delete $not_seen{ucfirst($species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME'))}; #deleting current species
-  
+  delete $not_seen{$hub->species}; #deleting current species
+
   for (keys %not_seen) {
     #do not show non-strain species on strain view
-    if ($self->is_strain && !$species_defs->get_config($species_defs->production_name_mapping($_), 'RELATED_TAXON')) { delete $not_seen{$_}; }
+    if ($self->is_strain && !$species_defs->get_config($_, 'RELATED_TAXON')) { delete $not_seen{$_}; }
 
     #do not show strain species on main species view
-    if(!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($_), 'IS_STRAIN_OF')) { delete $not_seen{$_}; }
+    if(!$self->is_strain && $species_defs->get_config($_, 'IS_STRAIN_OF')) { delete $not_seen{$_}; }
   }
   
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
+      next unless $species;
 
       #do not show strain species on main species view
-      if ((!$self->is_strain && $species_defs->get_config($species_defs->production_name_mapping($species), 'IS_STRAIN_OF')) || ($self->is_strain && !$species_defs->get_config($species_defs->production_name_mapping($species), 'RELATED_TAXON'))) {
+      if ((!$self->is_strain && $species_defs->get_config($species, 'IS_STRAIN_OF')) || ($self->is_strain && !$species_defs->get_config($species, 'RELATED_TAXON'))) {
         delete $not_seen{$species};
         next;
       }
@@ -177,6 +178,7 @@ sub content {
   
   foreach my $species (sort { ($a =~ /^<.*?>(.+)/ ? $1 : $a) cmp ($b =~ /^<.*?>(.+)/ ? $1 : $b) } keys %orthologue_list) {
     next if $skipped{$species};
+    next unless $species;
     
     foreach my $stable_id (sort keys %{$orthologue_list{$species}}) {
       my $orthologue = $orthologue_list{$species}{$stable_id};
@@ -196,8 +198,7 @@ sub content {
       my $goc_class  = ($goc_score ne "n/a" && $goc_score >= $orthologue->{goc_threshold}) ? "box-highlight" : "";
       my $wga_class  = ($wgac ne "n/a" && $wgac >= $orthologue->{wga_threshold}) ? "box-highlight" : "";
          
-      (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;
-      $spp = $species_defs->production_name_mapping($spp);
+      (my $spp = $orthologue->{'spp'}) =~ tr/ /_/;     
       my $link_url = $hub->url({
         species => $spp,
         action  => 'Summary',
@@ -290,9 +291,9 @@ sub content {
         g       => $stable_id,
         __clear => 1
       });
- 
+
       my $table_details = {
-        'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species_defs->production_name_mapping($species))),
+        'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species)),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'dN/dS'      => qq{<span class="$dnds_class">$orthologue_dnds_ratio</span>},
         'identifier' => $self->html_format ? $id_info : $stable_id,
@@ -326,11 +327,11 @@ sub content {
       sprintf(
         '<p>%d orthologues not shown in the table above from the following species. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
         $count,
-        join "</li>\n<li>", sort map {$species_defs->species_label($species_defs->production_name_mapping($_))." ($skipped{$_})"} keys %skipped
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)." ($skipped{$_})"} keys %skipped
       )
     );
   }   
-      
+ 
   if (%not_seen) {
     $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
       'Species without orthologues',
@@ -338,7 +339,7 @@ sub content {
         '<p>%d species are not shown in the table above because they don\'t have any orthologue with %s.<ul><li>%s</li></ul></p>',
         scalar(keys %not_seen),
         $self->object->Obj->stable_id,
-        join "</li>\n<li>", sort map {$species_defs->species_label($species_defs->production_name_mapping($_))} keys %not_seen,
+        join "</li>\n<li>", sort map {$species_defs->species_label($_)} keys %not_seen,
       )
     );
   }

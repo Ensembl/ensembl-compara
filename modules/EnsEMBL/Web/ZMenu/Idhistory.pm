@@ -78,7 +78,7 @@ sub archive_link {
     my $archive_site = $release ? $release->{'archive'} : '';
     
     if ($archive_site) {
-      $url = "http://$archive_site.archive.ensembl.org";
+      $url = "//$archive_site.archive.ensembl.org";
       
       if ($archive->release >= 51) {
         $url .= $hub->url({ type => $type, action => $action, $p => $name });

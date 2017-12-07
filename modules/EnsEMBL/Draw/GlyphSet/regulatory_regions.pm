@@ -54,19 +54,14 @@ sub get_data {
     $reg_feats = [ sort { $p{$b->feature_type->name} <=> $p{$a->feature_type->name} } @$reg_feats ]; 
   }
 
-  # count used for colour assignment
-  my $count = 0;
+  ## Assign this track a "random" colour if none set
+  my $default_colour_key = int(rand(16));
+
   my $features = [];
   my $colour_lookup = {};
   foreach my $rf (@$reg_feats){
     my $label = $rf->display_label;
-    my $colour_key = $self->colour_key($rf) || $config->cache($label);
-    unless ($colour_key) {
-      ## Assign this feature a "random" colour
-      $colour_key = $count;
-      $count++;
-      if ($count >= 15) {$count = 0;} 
-    }
+    my $colour_key = $self->colour_key($rf) || $config->cache($label) || $default_colour_key;
     my $colour = $colour_lookup->{$colour_key};
     unless ($colour) {
       $rf->{'colour_key'} = $colour_key;

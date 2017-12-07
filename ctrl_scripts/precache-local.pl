@@ -11,6 +11,8 @@ use Getopt::Long;
 use JSON;
 use Parallel::Forker;
 
+use List::Util qw(shuffle);
+
 my ($list,@subparts);
 
 GetOptions('l' => \$list,'s=s' => \@subparts);
@@ -25,6 +27,17 @@ push @params,@ARGV;
 my $params = join(' ',@params);
   
 qx($Bin/precache.pl --mode=start $params);
+
+my @jobs = @ARGV;
+if(!@jobs) {
+  @jobs = split('\n',qx($Bin/precache.pl --mode=list));
+}
+
+foreach my $j (@jobs) {
+  warn "preparing $j\n";
+  qx($Bin/precache.pl --mode=prepare $j);
+}
+
 open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
 my $jobs;
 { local $/ = undef; $jobs = JSON->new->decode(<SPEC>); }
@@ -33,22 +46,36 @@ die unless $jobs;
   
 my $forker = Parallel::Forker->new(
   use_sig_chld => 1,
-  max_proc => 20 
+  max_proc => 10
 );
 $SIG{CHLD} = sub { Parallel::Forker::sig_child($forker); };
 $SIG{TERM} = sub { $forker->kill_tree_all('TERM') if $forker && $forker->in_parent; die "Quitting...\n"; };
 
+my $njobs=@$jobs;
 my $ndone=0;
-foreach my $i (reverse (0..$#$jobs)) {
+sub schedule {
+  my ($i) = @_;
+
   $forker->schedule(
     run_on_start => sub {
       qx($Bin/precache.pl --mode=index --index=$i);
+      exit $?;
     },
     run_on_finish => sub {
-      $ndone++;
-      print sprintf("%d/%d (%d%%) done\n",$ndone,$#$jobs+1,$ndone*100/@$jobs);
+      my ($self,$exit) = @_;
+      if($exit) {
+        warn "failed. $exit rescheduling\n";
+        schedule($i); 
+      } else {
+        $ndone++;
+      }
+      print sprintf("%d/%d (%d%%) done\n",$ndone,$njobs,$ndone*100/$njobs);
     }
   )->ready();
+}
+
+foreach my $i (shuffle (0..$#$jobs)) {
+  schedule($i);
 }
 $forker->wait_all();
 qx($Bin/precache.pl --mode=end);

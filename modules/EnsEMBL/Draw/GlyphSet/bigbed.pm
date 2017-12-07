@@ -117,7 +117,7 @@ sub get_data {
       $total += scalar @{$_->{'features'}||[]};
     }
 
-    if ($total > 5000) {
+    if ($total > 500) {
       $self->{'data'} = [];
       $self->{'no_empty_track_message'}  = 1;
       return $self->errorTrack('This track has too many features to show at this scale. Please zoom in.');

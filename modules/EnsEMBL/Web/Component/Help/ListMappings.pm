@@ -69,7 +69,7 @@ sub content {
             { key => 'target',  title => "$alt_assembly coordinates",  align => 'left', sort => 'position_html'}
           );
 
-          my $base_url  = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+          my $base_url  = '//'.$hub->species_defs->SWITCH_ARCHIVE_URL;
           my $title     = 'Go to '.$hub->species_defs->SWITCH_ARCHIVE_URL; 
     
           foreach my $segment (@$segments) {
