@@ -47,7 +47,7 @@ sub _content {
   my @xref        = $object->display_xref;
   my $gene_desc   = $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r;
   
-  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : 'Novel transcript');
+  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : 'Gene');
   
   if($gene_desc) {
     $self->add_entry({
