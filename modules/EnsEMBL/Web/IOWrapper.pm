@@ -464,17 +464,22 @@ sub create_hash {
 sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
-  my $errors = $self->parser->validate;
+  my $response = $self->parser->validate;
+  my $message = 'File did not validate as format '.$self->format;
 
-  if (! keys %$errors && $self->parser->format) {
+  ## For formats that still use old validation method
+  if (ref($response) ne 'HASH') {
+  return $response == 1 ? undef : $message;
+  }
+
+  if (! keys %$response && $self->parser->format) {
     $self->format($self->parser->format->name);
     return undef;
   }
   else {
-    my $message = 'File did not validate as format '.$self->format;
     $message .= '<ul>';
-    foreach (sort keys %$errors) {
-      $message .= sprintf('<li>%s: %s</li>', $_, $errors->{$_});
+    foreach (sort keys %$response) {
+      $message .= sprintf('<li>%s: %s</li>', $_, $response->{$_});
     }
     $message .= '</ul>';
     return $message;
