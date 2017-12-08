@@ -8,6 +8,7 @@ requires 'Text::CSV';
 requires 'XML::Writer';
 requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
+requires 'Set::Jaccard::SimilarityCoefficient';
 
 test_requires 'Test::Exception';
 test_requires 'Test::Most';
