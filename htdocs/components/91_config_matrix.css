@@ -88,8 +88,8 @@ table.config_matrix td.st p span.off                                { position: 
 table.config_matrix td.st.on p span.off                             { visibility: hidden; }
 table.config_matrix td.st.on p span.on                              { visibility: visible; }
 table.config_matrix td,        div.matrix_key .key .disabled        { background-color: [[PALE_GREY]]; }
-table.config_matrix td.opt, div.matrix_key .key .off                { background-color: [[TINT_BG]]; }
-table.config_matrix td.on,  div.matrix_key .key .on                 { background-color: [[MH_BORDER]]; color: [[WHITE]]; }
+table.config_matrix td.opt, div.matrix_key .key .off                { background-color: [[MAIN_V_LIGHT]]; }
+table.config_matrix td.on,  div.matrix_key .key .on                 { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; }
 table.config_matrix td.filter p,
 div.config div.matrix_key .key .filter p                            { background-color: [[OK_LIGHT]]; }
 table.config_matrix td.filter.on p,
@@ -102,7 +102,7 @@ table.config_matrix tr.config_menu th.first div                     { position: 
 table.config_matrix tr.config_menu th.first ul.popup_menu           { margin: -6px 0 0; }
 table.config_matrix tr.config_menu th.first h2                      { margin: 0; padding: 0; float: none; }
 table.config_matrix tr.config_menu th.first em                      { font-size: 10px; font-weight: normal; font-style: normal; color: #369; text-decoration: underline; display: block; }
-table.config_matrix tr.gap                                          { vertical-align: middle; white-space: nowrap; background: [[MH_TAB]]; border: 1px solid #000; height: 32px; }
+table.config_matrix tr.gap                                          { vertical-align: middle; white-space: nowrap; background: [[MAIN_DARK]]; border: 1px solid #000; height: 32px; }
 table.config_matrix tr.gap th                                       { color: [[WHITE]]; }
 table.config_matrix tr.gap.empty,
 table.config_matrix tr.gap.empty th                                 { height: 6px; }

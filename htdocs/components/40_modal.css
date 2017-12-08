@@ -92,7 +92,7 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .panel div.hint   { width: auto!important; }
 .modal_content p.modal_error     { color: [[SEVERE_DARK]]; }
 .modal_content p.modal_a         { margin: 10px 0; }
-.modal_content p.modal_a a       { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
+.modal_content p.modal_a a       { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; border: outset [[MAIN_V_DARK]] 2px; text-decoration: none; padding: 2px 8px; }
 .modal_content div.filter-error  { margin: 12px 12px 0; }
 
 .modal_content .ajax_error                { margin: 12px; }
@@ -244,14 +244,14 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .cloud_multi_selector_list li                   { list-style: none; display: inline-block; background: [[MAIN_DARK]]; padding: 2px 8px; border: 1px solid [[MAIN_DARK]]; cursor: pointer; color: [[WHITE]]; }
 .modal_content .cloud_multi_selector_list li:hover             { background: [[MAIN_V_DARK]]; }
 .modal_content .cloud_multi_selector_list li.off               { background: [[MEDIUM_GREY]]; color: [[WHITE]]; border: 1px solid [[MEDIUM_GREY]]; }
-.modal_content .cloud_multi_selector_list li.partial           { background: [[BUTTON_PARTIAL]]; color: [[WHITE]]; border: 1px solid [[BUTTON_PARTIAL]]; }
+.modal_content .cloud_multi_selector_list li.partial           { background: [[MAIN_LIGHT]]; color: [[WHITE]]; border: 1px solid [[MAIN_LIGHT]]; }
 .modal_content .cloud_multi_selector_list li.off:hover         { background: [[MEDIUM_GREY_HOVER]]; }
 .modal_content .cloud_multi_selector_list li.partial:hover     { background: [[MAIN_V_DARK]]; }
 .cloud_flip_hint { height: 100%; position: absolute; text-align: center; width: 100%; }
 .cloud_flip_hint_wrap { display: inline-block; padding: 100px 16px; }
 .cloud_flip_hint .on { background: [[MAIN_DARK]]; border: 1px solid [[MAIN_DARK]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
 .cloud_flip_hint .off { background: [[MEDIUM_GREY]]; border: 1px solid [[MEDIUM_GREY]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .partial { background: [[BUTTON_PARTIAL]]; border: 1px solid [[BUTTON_PARTIAL]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
+.cloud_flip_hint .partial { background: [[MAIN_LIGHT]]; border: 1px solid [[MAIN_LIGHT]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
 .cloud_flip_hint .flip_icon { background-image: url("/i/32/reload.png"); display: inline-block; height: 32px; width: 32px; margin-bottom: -11px; }
 .cloud_flip_hint .error_pad { padding: 24px 8px; }
 .modal_content .cloud_multi_selector_list li.heading { background: none; border: medium none; color: black; font-size: 140%;  }
