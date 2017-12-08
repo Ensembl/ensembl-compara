@@ -845,16 +845,45 @@ sub feature {
   foreach (keys %$properties) {
     $vals{$_} = $properties->{$_} if defined $properties->{$_};
   }
-  
+ 
   if ($vals{'strand'} == 1) {
     $vals{'strand'} = '+';
-    $vals{'phase'}  = $feature->phase if $feature->can('phase');
+    if ($feature->can('phase')) {
+      ## Stricter rules for GFF3
+      if ($format eq 'gff3') {
+        if ($vals{'type'} eq 'CDS') {
+          $vals{'phase'} = $feature->phase;
+          ## -1 is not a valid value for a CDS phase!
+          $vals{'phase'} = 0 if $vals{'phase'} == -1; 
+        }
+        else {
+          $vals{'phase'} = '.';
+        }
+      }
+      else {
+        $vals{'phase'}  = $feature->phase;
+      }
+    }
   } elsif ($vals{'strand'} == -1) {
     $vals{'strand'} = '-';
-    $vals{'phase'}  = $feature->end_phase if $feature->can('end_phase');
+    if ($feature->can('end_phase')) {
+      ## Stricter rules for GFF3
+      if ($format eq 'gff3') {
+        if ($vals{'type'} eq 'CDS') {
+          $vals{'phase'} = $feature->end_phase;
+        }
+        else {
+          $vals{'phase'} = '.';
+        }
+      }
+      else {
+        $vals{'phase'}  = $feature->end_phase;
+      }
+    }
+    ## Hack for API bug - -1 is not a valid value for phase!
+    $vals{'phase'} = 0 if (defined($vals{'phase'}) && $vals{'phase'} == -1); 
   }
   
-  $vals{'phase'}    = '.' if $vals{'phase'} == -1;
   $vals{'strand'} = '.' unless defined $vals{'strand'};
   $vals{'seqid'}  ||= 'SEQ';
   
