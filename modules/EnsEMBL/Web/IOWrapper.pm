@@ -472,8 +472,10 @@ sub validate {
   return $response == 1 ? undef : $message;
   }
 
-  if (! keys %$response && $self->parser->format) {
-    $self->format($self->parser->format->name);
+  if (! keys %$response) {
+    if ($self->parser->format) {
+      $self->format($self->parser->format->name);
+    }
     return undef;
   }
   else {
