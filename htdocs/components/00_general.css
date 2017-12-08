@@ -129,7 +129,17 @@ a.toggle.closed.new_icon { background: url(/i/close_1x.png) no-repeat right cent
 /*a.toggle              { background: url(/i/open_1x.png) no-repeat right center !important; }*/
 /*a.toggle.closed       { background: url(/i/close_1x.png) no-repeat right center !important; display: inline; min-height: 16px; }*/
 a.ajax_add            { background: none!important; padding-right: 0; }
-p.button a            { background-color: [[MAIN_DARK]]; border: 3px double [[WHITE]]; color: [[WHITE]]; padding: 3px 6px 1px; margin-right: 4px; text-decoration: none; display: inline-block; }
+p.button a            { 
+  background-color: [[MAIN_DARK]]; 
+  color: [[WHITE]]; 
+  padding: 4px 10px 2px 10px; 
+  margin-right: 4px; 
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
+  text-decoration: none; 
+  display: inline-block; 
+}
 p.warn a              { background-color: [[MODERATE_DARK]]; }
 a.pre_species         { color: [[V_DARK_GREY]]; }
 a.pre_species:visited { color: [[V_DARK_GREY]]; }

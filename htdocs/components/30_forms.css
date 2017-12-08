@@ -145,18 +145,11 @@ div.inline-label {
 input.fbutton {
   background-color:[[MAIN_DARK]];
   color:[[WHITE]];
-  font-weight:bold;
-  margin-bottom: 3px;
-  margin-left: -1px;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 2px 8px 4px 8px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border-radius: 6px;
-}
-body.ie67 input.fbutton {
-  padding: 0 2px;
-  border: 0; /* double border doesn't work on IE6 & 7 */
 }
 input.fbutton:active, input.fbutton:hover {
   background-color:[[MAIN_V_DARK]];
@@ -174,39 +167,14 @@ input.fbutton.disabled, input.fbutton.disabled:active {
   margin-right: 6px;
 }
 .ff-inline input.fbutton {
-  vertical-align: bottom;
   height: 20px;
-  position: relative;
-  top: -1px; /* to offset shadow */
-  font-size: 10px;
-  padding: 0 6px;
-  border-width: 1px;
-  -moz-box-shadow: 0px 0px 0px 1px [[MAIN_DARK]]; /* to add a double border effect */
-  -webkit-box-shadow: 0px 0px 0px 1px [[MAIN_DARK]];
-  box-shadow: 0px 0px 0px 1px [[MAIN_DARK]];
-  margin-top: 2px;
 }
 body.ienew .ff-inline input.fbutton {
   height: 19px;
 }
-body.mac .ff-inline input.fbutton {
-  height: 17px;
-}
 body.ie8 .ff-inline input.fbutton {
-  border-width: 3px;
-  border-style: double;
   height: 24px;
   top: 1px;
-}
-body.ie67 .ff-inline input.fbutton {
-  outline: none;
-  height: 22px;
-  top: -1px;
-  border: none;
-  padding: 0 6px;
-}
-body.ie6 .ff-inline input.fbutton {
-  height: 20px;
 }
 .ff-checklist {
   margin-right: 10px;
