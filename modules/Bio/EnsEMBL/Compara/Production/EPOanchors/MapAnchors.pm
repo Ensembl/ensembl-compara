@@ -88,6 +88,12 @@ sub fetch_input {
         $sth->finish;
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
+
+        return unless $self->param('with_server');
+        $self->param('index_file', "$genome_db_file.esi");
+        $self->param('log_file', $self->worker_temp_directory . "/server_gdb_". $self->param_required('genome_db_id'). '.log.' . ($self->worker->dbID // 'standalone'));
+        $self->param('max_connections', 1);
+        $self->start_server;
 }
 
 sub run {
@@ -96,6 +102,7 @@ sub run {
 	my $program = $self->param_required('mapping_exe');
 	my $query_file = $self->param_required('query_file');
 	my $target_file = $self->param_required('genome_db_file');
+	   $target_file = $self->param('server_loc') if $self->param('with_server');
 	my $option_st;
 	while( my ($opt, $opt_value) = each %{ $self->param_required('mapping_params') } ) {
 		$option_st .= " --" . $opt . " " . $opt_value; 
@@ -118,6 +125,8 @@ sub run {
 		$target2dnafrag->{$targ_info}++;
 	}
         close($out_fh);
+
+        $self->stop_server if $self->param('with_server');
 
 	if (!$hits) {
 		$self->warning("Exonerate didn't find any hits");
@@ -205,6 +214,77 @@ sub merge_overlapping_target_regions { #merge overlapping target regions hit by 
 	}
 	return $HIT_NUMS;
 }
+
+
+## Functions to start and stop the server ##
+
+sub start_server {
+    my $self = shift @_;
+
+    # Get the list of ports that are in use
+    my $netstat_output = `netstat -nt4 | tail -n+3 | awk '{print \$4}' | cut -d: -f2 | sort -nu`;
+    my %bad_ports = map {$_ => 1} split(/\n/, $netstat_output);
+
+    # Start at default port; if something is already running, try another one
+    foreach my $port (12886..32886) {
+        next if $bad_ports{$port};
+        if ($self->start_server_on_port($port)) {
+            $self->param('server_loc', "localhost:$port");
+            return;
+        }
+    }
+    $self->throw("Failed to find an available port for exonerate-server");
+}
+
+sub start_server_on_port {
+  my ($self, $port) = @_;
+
+  my $server_exe = $self->param_required('server_exe');
+  my $index_file = $self->param_required('index_file');
+  my $max_connections = $self->param_required('max_connections');
+  my $log_file = $self->param('log_file');
+  my $command = "$server_exe $index_file --maxconnections $max_connections --port $port &> $log_file";
+
+  $self->say_with_header("Starting the server: $command");
+  my $pid;
+  {
+    if ($pid = fork) {
+      last;
+    } elsif (defined $pid) {
+      exec("exec $command") == 0 or $self->throw("Failed to run $command: $!");
+    }
+  }
+  $self->param('server_pid', $pid);
+
+  my ($server_starting, $cycles) = (1, 0);
+  while ($server_starting) {
+    if ($cycles < 50) {
+      sleep 2;
+      $cycles++;
+      my $started_message = `tail -1 $log_file`;
+      if ($started_message =~ /Message: listening on port/) {
+        $server_starting = 0;
+      }
+    } else {
+      $self->stop_server;
+      system('cp', '-a', $log_file, '/homes/muffato/nfs/hps/mammals_epo_anchor_mapping_91_new_schema/');
+      #$self->throw("Failed to start server; see log: $log_file");
+      $self->say_with_header("Failed to start server; see log: $log_file");
+      return 0;
+    }
+  }
+  $self->say_with_header("Server started on port $port");
+  return 1;
+}
+
+sub stop_server {
+  my $self = shift @_;
+
+  my $pid = $self->param('server_pid');
+  $self->say_with_header("Killing server process $pid");
+  kill('KILL', $pid) or $self->throw("Failed to kill server process $pid: $!");
+}
+
 
 1;
 

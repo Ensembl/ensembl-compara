@@ -287,10 +287,21 @@ sub pipeline_analyses {
 		-parameters => {
                     'cellular_components_only' => sprintf(q{#expr(%s ? ['NUC'] : [])expr#}, $self->o('only_nuclear_genome')),
 		},
-		-flow_into => { 1 => {'map_anchors_factory' => INPUT_PLUS() } },
+		-flow_into => { 1 => {'index_genome_sequence' => INPUT_PLUS() } },
 		-rc_name => 'mem7500',
 		-hive_capacity => $self->o('low_capacity'),
 	    },
+
+            {   -logic_name => 'index_genome_sequence',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                    'esd2esi_exe' => $self->o('esd2esi_exe'),
+                    'fasta2esd_exe' => $self->o('fasta2esd_exe'),
+                    'cmd' => '#fasta2esd_exe# #genome_dump_file# #genome_dump_file#.esd && #esd2esi_exe# #genome_dump_file#.esd #genome_dump_file#.esi',
+                },
+                -flow_into  => [ 'map_anchors_factory' ],
+                -rc_name => 'mem7500',
+            },
 
 	    {	-logic_name     => 'map_anchors_factory',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchorsFactory',
@@ -310,12 +321,15 @@ sub pipeline_analyses {
 		-parameters => {
 			'mapping_exe' => $self->o('exonerate_exe'),
 	                'mapping_params' => $self->o('mapping_params'),
+                        'server_exe' => $self->o('server_exe'),
+                        'with_server' => 1,
 		},
                 -flow_into => {
                     -1 => 'map_anchors_himem',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
+                -rc_name => 'mem7500',
                 -priority => -10,
 		-max_retry_count => 1,
 	    },
@@ -325,10 +339,12 @@ sub pipeline_analyses {
 		-parameters => {
 			'mapping_exe' => $self->o('exonerate_exe'),
 	                'mapping_params' => $self->o('mapping_params'),
+                        'server_exe' => $self->o('server_exe'),
+                        'with_server' => 1,
 		},
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
-                -rc_name => 'mem7500',
+                -rc_name => 'mem14000',
 		-max_retry_count => 1,
 	    },
 

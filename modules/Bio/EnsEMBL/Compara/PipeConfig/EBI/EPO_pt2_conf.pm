@@ -82,11 +82,14 @@ sub default_options {
     'reuse_db' => undef,
 
     'exonerate_exe'  => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'),
+    'server_exe'     => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate-server'),
+    'fasta2esd_exe'  => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/fasta2esd'),
+    'esd2esi_exe'    => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/esd2esi'),
     'ortheus_c_exe'  => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
 
         # Capacities
         'low_capacity'                  => 10,
-        'map_anchors_batch_size'        => 20,
+        'map_anchors_batch_size'        => 10,
         'map_anchors_capacity'          => 1000,
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 150,
