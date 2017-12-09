@@ -283,6 +283,7 @@ sub stop_server {
   my $pid = $self->param('server_pid');
   $self->say_with_header("Killing server process $pid");
   kill('KILL', $pid) or $self->throw("Failed to kill server process $pid: $!");
+  waitpid($pid, 0);
 }
 
 
