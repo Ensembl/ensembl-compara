@@ -96,6 +96,7 @@ sub pipeline_create_commands {
     my ($self) = @_; 
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
+        'rm -rf '.$self->o('seq_dump_loc'),
         'mkdir -p '.$self->o('seq_dump_loc'),
            ];  
 }
