@@ -83,6 +83,13 @@ sub default_options {
 	'mapping_exe' => $self->o('ensembl_cellar') . '/exonerate22/2.2.0/bin/exonerate',
     'ortheus_c_exe' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/ortheus_core',
 
+        # Capacities
+        'low_capacity'                  => 10,
+        'map_anchors_batch_size'        => 20,
+        'map_anchors_capacity'          => 1000,
+        'trim_anchor_align_batch_size'  => 20,
+        'trim_anchor_align_capacity'    => 150,
+
 	 # place to dump the genome sequences
     'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/genome_seq/' ,
     'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',

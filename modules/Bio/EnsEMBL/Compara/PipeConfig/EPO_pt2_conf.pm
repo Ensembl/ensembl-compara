@@ -181,6 +181,7 @@ sub pipeline_analyses {
                 -parameters => {
                     'registry_conf_file' => $self->o('reg_conf'),
                 },
+		-hive_capacity => $self->o('low_capacity'),
                 -flow_into => [ 'copy_dnafrags_from_master' ],
             },
 
@@ -192,6 +193,7 @@ sub pipeline_analyses {
                     'where'         => 'genome_db_id = #genome_db_id#',
                     'mode'          => 'insertignore',
                 },
+		-hive_capacity => $self->o('low_capacity'),
                 -flow_into => [ 'check_reusability' ],
             },
 
@@ -204,6 +206,7 @@ sub pipeline_analyses {
                     2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                     3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                 },
+		-hive_capacity => $self->o('low_capacity'),
             },
 
             {   -logic_name => 'create_mlss_ss',
@@ -242,6 +245,7 @@ sub pipeline_analyses {
                     'table'      => 'anchor_align',
                     'inputquery' => 'SELECT anchor_align.* FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE genome_db_id = #genome_db_id# AND method_link_species_set_id = #mapping_mlssid#',
                 },
+		-hive_capacity => $self->o('low_capacity'),
             },
 
             {   -logic_name => 'reset_anchor_status',
@@ -270,7 +274,7 @@ sub pipeline_analyses {
 		},
 		-flow_into => { 1 => {'map_anchors_factory' => INPUT_PLUS() } },
 		-rc_name => 'mem7500',
-		-hive_capacity => 10,
+		-hive_capacity => $self->o('low_capacity'),
 	    },
 
 	    {	-logic_name     => 'map_anchors_factory',
@@ -283,7 +287,7 @@ sub pipeline_analyses {
 			2 => [ 'map_anchors' ],
 		},
 		-rc_name => 'mem7500',
-		-hive_capacity => 10,
+		-hive_capacity => $self->o('low_capacity'),
 	    },
 
 	    {	-logic_name     => 'map_anchors',
@@ -295,7 +299,9 @@ sub pipeline_analyses {
                 -flow_into => {
                     -1 => 'map_anchors_himem',
                 },
-		-hive_capacity => 1000,
+                -batch_size => $self->o('map_anchors_batch_size'),
+                -hive_capacity => $self->o('map_anchors_capacity'),
+                -priority => -10,
 		-max_retry_count => 1,
 	    },
 
@@ -305,7 +311,8 @@ sub pipeline_analyses {
 			'mapping_exe' => $self->o('mapping_exe'),
 	                'mapping_params' => $self->o('mapping_params'),
 		},
-		-hive_capacity => 1000,
+                -batch_size => $self->o('map_anchors_batch_size'),
+                -hive_capacity => $self->o('map_anchors_capacity'),
                 -rc_name => 'mem7500',
 		-max_retry_count => 1,
 	    },
@@ -339,8 +346,8 @@ sub pipeline_analyses {
                 -flow_into => {
                     -1 => 'trim_anchor_align_himem',
                 },
-		-hive_capacity => 150,
-		-batch_size    => 20,
+		-hive_capacity => $self->o('trim_anchor_align_capacity'),
+		-batch_size    => $self->o('trim_anchor_align_batch_size'),
 	    },
 
 	    {   -logic_name => 'trim_anchor_align_himem',
@@ -351,7 +358,8 @@ sub pipeline_analyses {
                                 'ortheus_c_exe' => $self->o('ortheus_c_exe'),
 			},
         -flow_into => { -1 => 'ignore_huge_trim_anchor_align' },
-		-hive_capacity => 150,
+		-hive_capacity => $self->o('trim_anchor_align_capacity'),
+		-batch_size    => $self->o('trim_anchor_align_batch_size'),
         -rc_name => 'mem7500',
 	    },
 
