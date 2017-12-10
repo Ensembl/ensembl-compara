@@ -98,6 +98,9 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         'rm -rf '.$self->o('seq_dump_loc'),
         'mkdir -p '.$self->o('seq_dump_loc'),
+
+            # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
+        'which lfs && lfs getstripe '.$self->o('seq_dump_loc').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('seq_dump_loc').' -c -1 || echo "Striping is not available on this system" ',
            ];  
 }
 
