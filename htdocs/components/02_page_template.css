@@ -72,7 +72,7 @@ body.static #widemain { margin-left: 0; }
 
 /* New separate species header */
 #masthead div.spbar_holder                      { position: absolute; top: 66px; clear: both; }
-#masthead div.spbar_holder .header              { margin:24px 0 0 8px; color:#fff; }
+#masthead div.spbar_holder .header              { margin:24px 0 0 8px; color:[[WHITE]]; }
 #masthead div.spbar_holder .header span.species { font-size:150%; font-weight:bold; }
 #masthead div.spbar_holder .header span.more    { font-size:120%; }
 #masthead div.spbar_holder .header img          { float: left; vertical-align:middle; 

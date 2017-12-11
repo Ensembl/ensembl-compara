@@ -62,8 +62,8 @@ body.ie6 #modal_panel div.modal_title { height: 20px; }
 #modal_panel .modal_title ul            { margin: 0; padding: 0 0 0 6px; position: absolute; bottom: 0; }
 #modal_panel .modal_title li            { list-style: none; padding: 4px 2px; background-color: [[MEDIUM_GREY]]; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
 #modal_panel .modal_title li.active     { background-color: [[WHITE]]; color: [[DARK_GREY]]; }
-#modal_panel .modal_title li a          { color: [[PANEL_BG]]; padding: 0 8px; text-decoration: none; outline: none; }
-#modal_panel .modal_title li.active a   { color: [[PAGE_TEXT]]; }
+#modal_panel .modal_title li a          { color: [[WHITE]]; padding: 0 8px; text-decoration: none; outline: none; }
+#modal_panel .modal_title li.active a   { color: [[DARK_GREY]]; }
 #modal_panel .modal_title .modal_close  { position: absolute; top: -11px; right: -11px;  height: 22px; width: 22px; margin: 0; display: block; background: url(/i/cp_close.png) no-repeat center; cursor: pointer; }
 #modal_panel .ui-draggable .modal_title { cursor: move; }
 
