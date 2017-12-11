@@ -16,11 +16,11 @@
  */
 
 form div, form > fieldset, form h2 {
-  -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
+  -webkit-margin-collapse: separate; /* chrome and safari fix for margins of form components */
 }
 input::-moz-focus-inner { /* Remove button padding in FF */
-  border: 0;
-  padding: 0;
+  border: 0!important;
+  padding: 0!important;
 }
 
 form fieldset { border: none; padding: 0; margin: 0; }
@@ -147,6 +147,9 @@ input.fbutton {
   color:[[WHITE]];
   cursor: pointer;
   padding: 2px 8px 4px 8px;
+  border-style: none;
+  border-color: transparent;
+  border-width: 0;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border-radius: 6px;
