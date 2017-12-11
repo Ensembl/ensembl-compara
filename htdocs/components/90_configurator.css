@@ -165,6 +165,7 @@ div.config_wrapper .config_menu .signal_map,
 div.config_wrapper .config_menu .signal,
 div.config_wrapper .config_menu .wiggle,
 div.config_wrapper .config_menu .tiling                  { background-image: url(/i/render/signal.gif); }
+div.config_wrapper .config_menu .scatter                 { background-image: url(/i/render/scatter.gif); }
 div.config_wrapper .config_menu .coverage_with_reads     { background-image: url(/i/render/coverage_with_reads.gif); }
 div.config_wrapper .config_menu .as_alignment_label      { background-image: url(/i/render/as_alignment_label.gif); }
 div.config_wrapper .config_menu .as_alignment_nolabel    { background-image: url(/i/render/as_alignment_nolabel.gif); }
