@@ -824,6 +824,7 @@ sub source_url {
 }
 
 sub ie_version {
+  return 11 if $ENV{'HTTP_USER_AGENT'} =~ m#Trident/7#;
   return 0 unless $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   return $1;
 }
