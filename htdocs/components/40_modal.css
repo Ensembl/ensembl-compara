@@ -194,7 +194,7 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .multi_selector_list_wide                       { width: 100%; }
 .modal_content .multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
 .modal_content .multi_selector_list li                         { position: relative; height: 22px; padding-left: 10px; list-style-image: none; clear: both; }
-.modal_content .multi_selector_list ul.included li             { background-color: [[MAIN_V_PALE]]; color: [[DARK_GREY]]; border: 1px solid [[MAIN_LIGHT]]; cursor: ns-resize; }
+.modal_content .multi_selector_list ul.included li             { background-color: [[MAIN_LIGHT]]; color: [[DARK_GREY]]; border: 1px solid [[MAIN_MEDIUM]]; cursor: ns-resize; }
 .modal_content .multi_selector_list ul.excluded li             { background-color: [[LIGHT_GREY]]; color: [[DARK_GREY]]; border: 1px solid [[PALE_GREY]]; cursor: pointer; }
 .modal_content .multi_selector_list ul li span                 { position: absolute; left: 28px; top: 3px; }
 .modal_content .multi_selector_list ul li span.switch          { height: 16px; width: 16px; background-repeat: no-repeat; background-position: top left; left: 6px; cursor: pointer; }
