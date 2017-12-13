@@ -50,7 +50,7 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_wrapper, .toggleTable_wrapper { margin: 0 0 16px; clear: both; }
 
 .dataTables_top,
-.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[PALE_GREY]]; background-color: [[TABLE_HEADER]]; color: [[WHITE]]; }
+.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[PALE_GREY]]; background-color: [[MAIN_DARK]]; color: [[WHITE]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
 .dataTables_info   { float: left; line-height: 20px; }
@@ -80,10 +80,9 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_paginate .paginate_button_disabled:hover { background-color: [[MAIN_V_LIGHT]] !important;   }
 
 
-.dataTables_length select,
-.dataTables_filter input    { border: 1px solid [[PALE_GREY]]; }
+.dataTables_length select    { border: 1px solid [[PALE_GREY]]; }
 .dataTables_filter input    { height: 16px; width: 140px; }
-.dataTables_filter .overlay { position: absolute; color: [[MEDIUM_GREY]]; left: 2px; top: 2px; line-height: 16px; }
+.dataTables_filter .overlay { position: absolute; color: [[PALE_GREY]]; font-weight:normal; left: 4px; top: 4px; line-height: 16px; }
 
 body.ie6 .dataTables_filter input { height: 20px; }
 
@@ -91,7 +90,21 @@ body.ie6 .dataTables_filter input { height: 20px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
 
 .col_toggle              { float: left;  text-align: center; color: [[DARK_GREY]]; }
-.col_toggle .toggle      { cursor: pointer; background-color: [[MAIN_V_LIGHT]]; border: 2px outset [[MAIN_V_LIGHT]]; min-width: 125px; display: inline-block; padding: 1px 5px; margin: auto; }
+.col_toggle .toggle      { 
+    cursor: pointer; 
+    color: [[DARK_GREY]];
+    background-color: [[WHITE]]; 
+    min-width: 125px; 
+    display: inline-block; 
+    padding: 4px 8px 2px 8px; 
+    margin: auto;
+    border-color: [[MAIN_V_DARK]];
+    border-style: solid; 
+    border-width: 0px 1px 1px 0px; 
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+}
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
 .col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 137px; }
