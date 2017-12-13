@@ -71,8 +71,8 @@ html .hyphenated { word-wrap: normal; text-align: left; }
 body.ie .dataTables_wrapper { zoom: 1; }
 body.ie .open .cell_detail { display: block; }
 
-.ts_flag { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
-.ts_biotype { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
+.ts_flag { background: none repeat scroll 0 0 [[MAIN_LIGHT]]; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
+.ts_biotype { background: none repeat scroll 0 0 [[MAIN_LIGHT]]; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
 .appris_green { color:[[OK_DARK]]; }
 .appris_yellow { color:[[MODERATE_DARK]]; }
 
