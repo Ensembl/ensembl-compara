@@ -105,14 +105,15 @@ my $name_lookup = $hub->species_defs->production_name_lookup;
 # create the sitemaps for each dataset
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
   next if grep { $_ eq $dataset } @skip;
+  my $species = $name_lookup->{$dataset};
   
-  print "DATASET $dataset\n";
-  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $name_lookup->{$dataset});
+  print "DATASET $dataset -> SPECIES $species\n";
+  my $adaptor = $hub->get_adaptor('get_GeneAdaptor', 'core', $species);
   if (!$adaptor) {
     warn "core db doesn't exist for $dataset\n";
     next;
   }
-  my @urls = get_dataset_urls($sd, $adaptor, $dataset);
+  my @urls = get_dataset_urls($sd, $adaptor, $species);
   push @sitemaps, create_dataset_sitemaps($dataset, \@urls); 
 }
 
@@ -137,7 +138,7 @@ exit;
 #------------------------------------------------------------------------------
 
 sub get_dataset_urls {
-  my ($sd, $adaptor, $dataset) = @_;
+  my ($sd, $adaptor, $species) = @_;
   
   my %url_template = (
     'species'    => "/Info/Index",
@@ -145,12 +146,7 @@ sub get_dataset_urls {
     'transcript' => "/Transcript/Summary?t=",
   );
    
-  my $sth = $adaptor->prepare('SELECT species_id, meta_value FROM meta WHERE meta_key = "species.production_name"');
-  $sth->execute;
-  
-  my %species_path = map { $_->[0] => $sd->species_path(valid_species_name($sd, $_->[1])) } @{$sth->fetchall_arrayref};
-  
-  my @urls = map { $domain . $species_path{$_} . $url_template{'species'} } keys %species_path;
+  my @urls = ($domain . $species . $url_template{'species'});
   my @analysis_ids = get_analysis_ids($adaptor);
   if(! @analysis_ids){
     print "Cannot fetch genes and transcripts - no analysis_ids\n";
@@ -189,12 +185,12 @@ sub get_dataset_urls {
       my $chromosome = $region->[3];
       my $gene = $region->[4];
       
-      my $url = $species_path{$species_id} . $url_template{$type} . $stable_id;
+      my $url = $species . $url_template{$type} . $stable_id;
       $url .= ";r=$chromosome:$start-$end";
       $url .= ";t=$transcript" if (@regions == 1 && $type eq 'gene');     #only if there is one transcript add it to the url
       $url .= ";g=$gene" if($type eq 'transcript');
       
-      $url = "$domain$url" if $url !~ /^http/;
+      $url = "$domain/$url" if $url !~ /^http/;
       
       push @urls, $url;       
     }    

@@ -123,7 +123,7 @@ sub content {
     label => $introns[0]." of ". scalar(@all_introns)
   }) if(scalar @introns);  
   
-  if($xref[0] && $xref[0] != $stable_id) { # if there is transcript symbol then show it as the first label and stable id as second label, if not then stable id as first label
+  if($xref[0] && $xref[0] ne $stable_id) { # if there is transcript symbol then show it as the first label and stable id as second label, if not then stable id as first label
     $self->add_entry({
       type  => 'Transcript',
       label => $xref[0]
