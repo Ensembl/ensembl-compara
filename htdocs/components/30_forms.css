@@ -170,7 +170,7 @@ input.fbutton.disabled, input.fbutton.disabled:active {
   margin-right: 6px;
 }
 .ff-inline input.fbutton {
-  height: 20px;
+  height: 1.2rem;
 }
 body.ienew .ff-inline input.fbutton {
   height: 19px;
