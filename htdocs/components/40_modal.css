@@ -203,16 +203,11 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 
 .modal_content .multi_selector_hint                            { margin: 16px; }
 
-/*.modal_content .select_by_group_div                            { display: flex; justify-content: flex-start; align-items: center; }*/
-/*.modal_content .select_by                                      { margin: 12px 16px 16px; min-width: 200px;}*/
-/*.modal_content .select_by h2                                   { border-bottom: 1px solid [[PANEL_BORDER]]; padding-bottom: 2px; }*/
-/*.modal_content .select_by select                               { width: 100%; }*/
-
-.modal_content .select_by_group_div                            { display: flex; justify-content: flex-start; align-items: center; }
-.modal_content .select_by                                      { margin: 12px 16px 16px; min-width: 200px;}
-.modal_content .select_by .title                               { border-bottom: 1px solid [[PALE_GREY]]; padding-bottom: 2px; }
-.modal_content .select_by h2                                   { padding-bottom: 8px; }
-.modal_content .select_by select                               { width: 100%; }
+.select_by_group_div                            { display: flex; justify-content: flex-start; align-items: center; }
+.select_by                                      { margin: 12px 16px 16px; min-width: 200px;}
+.select_by .title                               { border-bottom: 1px solid [[PALE_GREY]]; padding-bottom: 2px; }
+.select_by h2                                   { padding-bottom: 8px;}
+.select_by select                               { width: 100%; }
 
 .modal_content .multi_selector_list span.count {
   font-size: 10px;
