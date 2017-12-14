@@ -35,7 +35,7 @@ div.portal div              { float:left; position:relative; }
 div.portal .portal_box, div.portal img      { height: 96px; width: 96px; margin: 0 16px 16px 0; padding:8px; border-width:1px; border-style:solid; border-color:#ccc; border-radius:16px; -moz-border-radius: 16px; -webkit-border-radius: 16px; }
 div.portal .portal_box img { height: auto; width: auto; margin: auto; padding: 0; border: none; border-radius: 0; -moz-border-radius: 0; -webkit-border-radius: 0; }
 div.portal .portal_box a    { color: black; display: block; height: 100%; text-align: center; text-decoration: none; font-weight: bold; }
-div.portal .portal_box.navb-current { box-shadow: 0 0 8px [[OK_DARK]]; }
+div.portal .portal_box.navb-current { box-shadow: 0 0 8px [[MAIN_DARK]]; }
 div.portal .portal_box .text { line-height: 115%; width: 100%; }
 div.portal-small img        { height: 80px; width: 80px; }
 div.portal img.unavailable  { -webkit-filter: grayscale(100%); filter: grayscale(100%); filter: gray; filter: url("[[IMG:greyscale.svg]]#greyscale"); opacity: 0.4; }
