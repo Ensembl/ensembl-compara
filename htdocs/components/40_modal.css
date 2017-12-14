@@ -236,26 +236,50 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 
 .modal_content .cloud_multi_selector_list                      { width: 100%; }
 
-.modal_content .cloud_multi_selector_list li                   { list-style: none; display: inline-block; background: [[MAIN_DARK]]; padding: 2px 8px; border: 1px solid [[MAIN_DARK]]; cursor: pointer; color: [[WHITE]]; }
+.cloud_all_none span,
+.cloud_flip_hint span,
+.cloud_multi_selector_list li {
+  color: [[WHITE]];
+  display: inline-block;
+  margin: 2px 4px;
+  padding: 6px 8px 4px 8px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.modal_content .cloud_multi_selector_list li                   { list-style: none; background: [[MAIN_DARK]] }
+.modal_content .cloud_multi_selector_list li.off               { background: [[MEDIUM_GREY]]; }
+.modal_content .cloud_multi_selector_list li.partial           { background: [[MAIN_LIGHT]];  }
 .modal_content .cloud_multi_selector_list li:hover             { background: [[MAIN_V_DARK]]; }
-.modal_content .cloud_multi_selector_list li.off               { background: [[MEDIUM_GREY]]; color: [[WHITE]]; border: 1px solid [[MEDIUM_GREY]]; }
-.modal_content .cloud_multi_selector_list li.partial           { background: [[MAIN_LIGHT]]; color: [[WHITE]]; border: 1px solid [[MAIN_LIGHT]]; }
 .modal_content .cloud_multi_selector_list li.off:hover         { background: [[MEDIUM_GREY_HOVER]]; }
 .modal_content .cloud_multi_selector_list li.partial:hover     { background: [[MAIN_V_DARK]]; }
-.cloud_flip_hint { height: 100%; position: absolute; text-align: center; width: 100%; }
-.cloud_flip_hint_wrap { display: inline-block; padding: 100px 16px; }
-.cloud_flip_hint .on { background: [[MAIN_DARK]]; border: 1px solid [[MAIN_DARK]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .off { background: [[MEDIUM_GREY]]; border: 1px solid [[MEDIUM_GREY]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .partial { background: [[MAIN_LIGHT]]; border: 1px solid [[MAIN_LIGHT]]; color: [[WHITE]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .flip_icon { background-image: url("/i/32/reload.png"); display: inline-block; height: 32px; width: 32px; margin-bottom: -11px; }
-.cloud_flip_hint .error_pad { padding: 24px 8px; }
+
 .modal_content .cloud_multi_selector_list li.heading { background: none; border: medium none; color: black; font-size: 140%;  }
 .modal_content .cloud_multi_selector_list h4 { display: inline-block; }
 .modal_content .cloud_multi_selector_list ul { display: inline-block; padding-left: 12px; }
 .modal_content .cloud_multi_selector_list li.hidden { display: none; }
+
+.cloud_flip_hint { height: 100%; position: absolute; text-align: center; width: 100%; }
+.cloud_flip_hint_wrap { display: inline-block; padding: 100px 16px; }
+.cloud_flip_hint .on { background: [[MAIN_DARK]]; }
+.cloud_flip_hint .off { background: [[MEDIUM_GREY]];}
+.cloud_flip_hint .partial { background: [[MAIN_LIGHT]]; }
+.cloud_flip_hint .flip_icon { 
+  background: url("/i/32/reload.png") no-repeat 8px center; 
+  display: inline-block; 
+  height: 32px; 
+  width: 32px; 
+  margin-bottom: -11px; 
+}
+.cloud_flip_hint .error_pad { padding: 24px 8px; }
 .cloud_filter_clear { font-size: 80%; }
 .cloud_filter { border-bottom: 2px solid grey; padding-bottom: 8px; text-align: center; }
-.cloud_filter .ftext { border: 2px solid [[MAIN_DARK]]; font-size: 150%; width: 50%; }
-.cloud_all_none { text-align: center; margin: 8px 0 0 0; }
-.cloud_all_none .none { background: none repeat scroll 0 0 [[OK_DARK]]; border: 1px solid [[OK_DARK]]; color: [[WHITE]]; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
-.cloud_all_none .all { background: none repeat scroll 0 0 [[SEVERE_DARK]]; border: 1px solid [[SEVERE_DARK]]; color: [[WHITE]]; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
+.cloud_filter .ftext { border: 2px solid [[MAIN_DARK]]; font-size: 120%; font-style: italic; width: 50%; }
+
+.cloud_all_none { 
+  text-align: center; 
+  margin: 8px 0 0 0; 
+}
+.cloud_all_none .none { background-color: [[OK_DARK]]; }
+.cloud_all_none .all { background-color: [[SEVERE_DARK]]; }
