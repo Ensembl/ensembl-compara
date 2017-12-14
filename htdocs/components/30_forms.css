@@ -146,7 +146,7 @@ input.fbutton {
   background-color:[[MAIN_DARK]];
   color:[[WHITE]];
   cursor: pointer;
-  padding: 2px 8px 4px 8px;
+  padding: 3px 8px 4px 8px;
   border-style: none;
   border-color: transparent;
   border-width: 0;
