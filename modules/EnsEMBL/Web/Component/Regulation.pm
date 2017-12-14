@@ -239,14 +239,14 @@ sub renderer_button {
   push @{$self->{'buttons'}||=[]},{
     url => $peaks_url,
     caption => 'Peaks',
-    class => 'peak radiogroup',
+    class => 'peak radiogroup first',
     toggle => $peaks_on?'on':'off',
     disabled => $disabled,
     group => 'renderer',
   },{
     url => $signals_url,
     caption => 'Signal',
-    class => 'signal',
+    class => 'signal last',
     toggle => $signals_on?'on':'off',
     disabled => $disabled,
     group => 'renderer',
