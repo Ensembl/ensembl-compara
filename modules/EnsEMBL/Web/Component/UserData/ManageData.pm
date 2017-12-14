@@ -161,7 +161,7 @@ sub content {
     my $trackhub_search = $self->trackhub_search;
 
     if (scalar @$records_data) {
-      my $more  = sprintf '<p class="tool_buttons button"><a href="%s" class="modal_link data" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
+      my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link data" style="display:inline-block" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
       ## Show 'add more' link at top as well, if table is long
       if (scalar(@rows) > 10) {
         $html = $more.$html;
