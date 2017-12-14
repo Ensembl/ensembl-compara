@@ -16,7 +16,16 @@
  */
 
 /* SIFT & PolyPhen scores */
-div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 100%; max-width: 50px; color: white; text-align: center; }
+div.score         { 
+  width: 100%; 
+  max-width: 50px; 
+  color: white; 
+  text-align: center; 
+  padding: 2px 2px 0 2px;
+  border-radius: 6px; 
+  -moz-border-radius: 6px; 
+  -webkit-border-radius: 6px;
+}
 div.score_good    { background: green;  }
 div.score_ok      { background: orange; }
 div.score_bad     { background: red;    }
