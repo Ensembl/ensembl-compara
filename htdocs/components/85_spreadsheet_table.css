@@ -70,7 +70,8 @@ table.toggle_table th div            { padding: 0; }
 .list_paginate .paginate_button,
 .list_paginate .paginate_active,
 .dataTables_paginate .paginate_button,
-.dataTables_paginate .paginate_active                { color: [[DARK_GREY]]; background-color: [[MAIN_DARK]]; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_active                { color: [[DARK_GREY]]; background-color: [[MAIN_V_LIGHT]]; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_active                {color: [[WHITE]]; background-color: [[MAIN_V_DARK]]; }
 .list_paginate .paginate_button,
 .dataTables_paginate .paginate_button                { background-color: [[MAIN_V_LIGHT]]; }
 .list_paginate .paginate_button:hover,
