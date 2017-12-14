@@ -59,10 +59,17 @@
 .tool_buttons a.pulse,
 .tool_buttons a:hover    { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; }
 .tool_buttons .togglebutton:hover    { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; }
-.tool_buttons .togglebutton.inactive:hover    { background-color: [[MAIN_DARK]]; color: [[WHITE]]; }
 .tool_buttons a:visited  { color: [[WHITE]]; }
 
-.tool_buttons a.unstyled { background: none; color: [[MAIN_DARK]]; display: inline-block; margin: 0; padding: 4px; vertical-align: bottom; line-height: 32px; height: 16px; }
+.tool_buttons a.unstyled { 
+  background: none; 
+  display: inline-block; 
+  margin: 0 0 0 12px; 
+  padding: 4px; 
+  vertical-align: bottom; 
+  line-height: 32px; 
+  height: 16px; 
+}
 .tool_buttons a.unstyled:hover { text-decoration: underline; color: [[HOVER]]; }
 .tool_buttons a.disabled { background-color: [[MEDIUM_GREY]] !important; cursor: default;  }
 .tool_buttons .group.disabled { background-color: [[PALE_GREY]]; padding: 0; }
