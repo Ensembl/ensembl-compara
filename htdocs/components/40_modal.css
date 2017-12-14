@@ -246,8 +246,13 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border-radius: 6px;
+}
+
+.cloud_all_none span,
+.cloud_multi_selector_list li {
   cursor: pointer;
 }
+
 .modal_content .cloud_multi_selector_list li                   { list-style: none; background: [[MAIN_DARK]] }
 .modal_content .cloud_multi_selector_list li.off               { background: [[MEDIUM_GREY]]; }
 .modal_content .cloud_multi_selector_list li.partial           { background: [[MAIN_LIGHT]];  }
