@@ -285,8 +285,7 @@ sub new_from_newick {
         if ((not $gdb) and ($node->name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
             my $pgdb = $all_genome_dbs{lc $1};
-            if ($pgdb) {
-                die "$1 is not a polyploid genome\n" unless $pgdb->is_polyploid;
+            if ($pgdb and $pgdb->is_polyploid) {
                 $gdb = $pgdb->component_genome_dbs($2) or die "No component named '$2' in '$1'\n";
             }
         }
