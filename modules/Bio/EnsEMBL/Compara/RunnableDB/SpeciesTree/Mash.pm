@@ -77,7 +77,10 @@ sub write_output {
 	$self->SUPER::write_output;
 
 	return unless $self->param('dataflow_branch');
-	$self->dataflow_output_id( { mash_output_file => $self->param('mash_output_file') }, $self->param('dataflow_branch') );
+
+	my $dataflow = { mash_output_file => $self->param('mash_output_file') };
+	$dataflow->{'out_prefix'} = $self->param('out_prefix') if $self->param('out_prefix');
+	$self->dataflow_output_id( $dataflow, $self->param('dataflow_branch') );
 }
 
 sub mash_dist_options {

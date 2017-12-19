@@ -46,6 +46,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CheckSketches;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use Bio::EnsEMBL::Compara::Utils::DistanceMatrix;
 use Data::Dumper;
 
 sub fetch_input {
@@ -96,41 +97,100 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 	
+	my @gdb_ids_no_dump;
 	my @gdb_ids_no_sketch;
 	my @path_list;
 
+	# perhaps there's already some distances computed?
+	my $dist_file = $self->_check_for_distance_files();
+	if ( defined $dist_file ) {
+		$self->param('mash_dist_file', $dist_file);
+		return;
+	}
+
 	foreach my $gdb ( @{ $self->param_required('genome_dbs') } ) {
-		my $mash_path = $self->mash_file_from_gdb($gdb);
+		my $mash_path = $self->find_file_for_gdb($self->param_required('sketch_dir'), $gdb, ['msh']);
+		my $dump_path = $self->find_file_for_gdb($self->param('multifasta_dir'), $gdb, ['fa', 'fa\.gz']);
 
 		if ( -e $mash_path ) {
 			push( @path_list, $mash_path );
-		} else {
-			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, genome_dump_file => "$mash_path.fa"} ) unless -e $mash_path;
+		} 
+		elsif ( -e $dump_path ) {
+			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, genome_dump_file => => $dump_path } );
+		}
+		else {
+			push( @gdb_ids_no_dump, { genome_db_id => $gdb->dbID, genome_dump_file => "$mash_path.fa"} );
 			push( @path_list, "$mash_path.fa.msh" );
 		}
 		
 	}
-	$self->param('missing_sketch_gdb_ids', \@gdb_ids_no_sketch);
+	$self->param('gdb_ids_no_sketch', \@gdb_ids_no_sketch);
+	$self->param('gdb_ids_no_dump', \@gdb_ids_no_dump);
 	$self->param('mash_file_list', \@path_list);
 }
 
 sub write_output {
 	my $self = shift;
 
-	$self->dataflow_output_id( $self->param('missing_sketch_gdb_ids'), 2 );
+	my $mash_dist_file = $self->param('mash_dist_file');
+	if ( $mash_dist_file  ) {
+		$self->dataflow_output_id( {mash_dist_file => $mash_dist_file}, 4 );
+		$self->input_job->autoflow(0);
+		$self->complete_early("Found distance file containing all genome_dbs: $mash_dist_file. Skipping Mash steps.");
+	}
+
+	$self->dataflow_output_id( $self->param('gdb_ids_no_dump'), 2 );
+	$self->dataflow_output_id( $self->param('gdb_ids_no_sketch'), 3 );
 	my $input_file = join(' ', @{ $self->param('mash_file_list') });
 	$self->dataflow_output_id( { input_file => $input_file, out_prefix => $self->param('collection') }, 1 );
 }
 
-sub mash_file_from_gdb {
-	my $self = shift;
-	my $gdb  = shift;
+sub find_file_for_gdb {
+	my ($self, $dir, $gdb, $suffixes) = @_;
+	
+	$suffixes = [''] unless defined $suffixes->[0];
 
-	my $sketch_dir = $self->param_required('sketch_dir');
 	my $prefix = $gdb->name . "." . $gdb->assembly;
-	my @found_files = glob "$sketch_dir/$prefix.*msh";
-	return $found_files[0] if $found_files[0];
-	return "$sketch_dir/$prefix"; # to pass to dump_genome
+	foreach my $suffix ( @$suffixes ) {
+		my @found_files = glob "$dir/$prefix.*$suffix";
+		return $found_files[0] if $found_files[0];
+	}
+	return "$dir/$prefix"; # to pass to dump_genome
+}
+
+sub _check_for_distance_files {
+	my $self = shift;
+
+	my $dir = $self->param_required('sketch_dir');
+	my @dist_files = glob "$dir/*.dists";
+	my @needed_gdb_ids = map {$_->dbID} @{ $self->param('genome_dbs') };
+
+	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+
+	foreach my $dfile ( @dist_files ) {
+		print " --- checking $dfile\n";
+		my $dist_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new( -file => $dfile );
+		$dist_matrix = $dist_matrix->convert_to_genome_db_ids($gdb_adaptor);
+
+		my @matrix_members = $dist_matrix->members;
+		my $overlap = $self->_overlap(\@needed_gdb_ids, \@matrix_members);
+		print " --- --- overlap = $overlap (" . scalar @needed_gdb_ids . " needed)\n";
+		return $dfile if $overlap >= scalar @needed_gdb_ids;
+	}	
+
+	return undef;
+}
+
+sub _overlap {
+	my ( $self, $setA, $setB ) = @_;
+
+	my $count = 0;
+	foreach my $a ( @$setA ) {
+		foreach my $b ( @$setB ) {
+			$count++ if $a == $b;
+		}
+	}
+	return $count;
 }
 
 1;

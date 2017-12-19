@@ -38,18 +38,19 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'ensembl_release' => 90,
+        'ensembl_release' => 91,
         'pipeline_name'   => 'species_tree_' . $self->o('ensembl_release'),
         'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_conf.pl',
-        'collection'      => undef,
+        'collection'      => 'ensembl', # build tree with everything by default
         'species_set_id'  => undef,
-        'outgroup_gdbs'   => [134], # arrayref of genome_db_id for additional outgroup species
+        'outgroup'        => 'saccharomyces_cerevisiae',
         
         'sketch_dir'       => '/nfs/nobackup/ensembl/carlac/species_tree/mash/ensembl_sketches',
         'mash_exe'         => '/nfs/gns/homes/carlac/bin/mash',
@@ -59,13 +60,12 @@ sub default_options {
         'master_db'          => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
         'dump_genome_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/dumps/dump_genome.pl',
         'rapidnj_exe'        => '/homes/carlac/software/rapidnj/bin-2.3.2/linux_64/rapidnj',
+        'erable_exe'         => '/homes/carlac/software/erable',
+        'multifasta_dir'     => undef, # define if species multifastas have been pre-dumped
 
         'group_on_taxonomy' => 0,
         'representative_species' => undef,
-        # 'representative_species' => ['homo_sapiens', 'mus_musculus'], # when group_on_taxonomy is set, define which species should act as the
-                                                                      # representative for its taxonomic group - a default will be set if not defined
-        # 'exclude_species'   => [ 'sorex_araneus', 'erinaceus_europaeus', 'oryctolagus_cuniculus', 'ochotona_princeps' ],
-        'exclude_species' => undef,
+
     };
 }
 
@@ -89,7 +89,7 @@ sub hive_meta_table {
     my ($self) = @_;
     return {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+        # 'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     };
 }
 
@@ -104,11 +104,8 @@ sub pipeline_analyses {
             -input_ids => [{
               'sketch_dir'        => $self->o('sketch_dir'),
               'collection'        => $self->o('collection'),
-              'outgroup_gdbs'     => $self->o('outgroup_gdbs'),
               'species_set_id'    => $self->o('species_set_id'),
               'compara_db'        => $self->o('master_db'),
-              'group_on_taxonomy' => $self->o('group_on_taxonomy'),
-              'exclude_species'   => $self->o('exclude_species'),
             }],
         },
 
@@ -116,14 +113,14 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CheckSketches',
             -flow_into  => {
                 '2->A' => [ 'dump_genome' ],
+                '3->A' => [ 'mash_sketch' ],
                 'A->1' => [ 'mash_paste' ],
+                '4'    => [ 'permute_matrix' ],
             },
             -parameters => {
             	'sketch_dir'     => $self->o('sketch_dir'),
-            	# 'collection'     => $self->o('collection'),
-              # 'outgroup_gdbs'  => $self->o('outgroup_gdbs'),
-            	# 'species_set_id' => $self->o('species_set_id'),
             	'compara_db'     => $self->o('master_db'),
+            	'multifasta_dir' => $self->o('multifasta_dir'),
             },
         },
 
@@ -132,10 +129,6 @@ sub pipeline_analyses {
         	  -flow_into  => {
                     1 => { 'mash_sketch' => { 'input_file' => '#genome_dump_file#', } },
         	},
-        	# -parameters => {
-        	# 	'dump_genome_script' => $self->o('dump_genome_script'),
-        	# 	'compara_db'         => $self->o('master_db'),
-        	# },
         	-rc_name => '2Gb_reg_conf',
           -analysis_capacity => 5,
         },
@@ -147,7 +140,7 @@ sub pipeline_analyses {
                 'mode'               => 'sketch',
                 'mash_exe'           => $self->o('mash_exe'),
                 'out_dir'            => $self->o('sketch_dir'),
-                'additional_options' => '-p 8', # use 8 processes & 10,000 sketch size
+                'additional_options' => '-p 8', # use 8 processes
                 'kmer_size'          => $self->o('mash_kmer_size'),
                 'sketch_size'        => $self->o('mash_sketch_size'),
                 'cleanup_input_file' => 0,
@@ -189,7 +182,6 @@ sub pipeline_analyses {
         {  -logic_name => 'mash_dist',
            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::Mash',
            -parameters => {
-                # 'input_file'      => '#mash_output_file#',
                 'mode'            => 'dist',
                 'mash_exe'        => $self->o('mash_exe'),
                 'additional_options' => '-t', # tab delimited output
@@ -199,7 +191,7 @@ sub pipeline_analyses {
                                         # allow param mash_output_file to be used in place of input_file
             },
            -flow_into => {
-           	   1 => [ 'neighbour_joining_tree' ],
+           	   1 => { 'permute_matrix' => { 'mash_dist_file' => "#mash_output_file#" } },
                -1 => [ 'mash_dist_himem' ],
            },
            -rc_name => '4Gb_job',
@@ -217,31 +209,46 @@ sub pipeline_analyses {
                                         # allow param mash_output_file to be used in place of input_file
             },
            -flow_into => {
-               1 => [ 'neighbour_joining_tree' ],
+               1 => { 'permute_matrix' => { 'mash_dist_file' => "#mash_output_file#" } },
            },
            -rc_name => '16Gb_job',
         },
 
-		# {  -logic_name => 'build_matrix',
-  #          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::BuildMashDistanceMatrix',
-  #          -parameters => {
-  #          		'output_file' => $self->o('mega_file'),
-  #          		'cleanup_distance_file' => 0,
-  #          	},
-  #          -flow_into  => {
-  #          	   1 => [ 'neighbour_joining_tree' ],
-  #          },
-  #       },
+        { -logic_name => 'permute_matrix',
+          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::PermuteMatrix',
+          -flow_into => {
+              '2->A' => [ 'neighbour_joining_tree' ],
+              'A->1' => [ 'graft_subtrees' ],
+          }
+        },
 
         {  -logic_name => 'neighbour_joining_tree',
            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::MashNJTree',
            -parameters => {
            		'rapidnj_exe'       => $self->o('rapidnj_exe'),
-           		'output_file'       => $self->o('output_file'),
            		'compara_db'        => $self->o('master_db'),
-              'group_on_taxonomy' => $self->o('group_on_taxonomy'),
            	},
+            -flow_into => {
+                1 => [ '?accu_name=trees&accu_address={group_key}&accu_input_variable=group_info' ],
+            },
+        },
 
+        { -logic_name => 'graft_subtrees',
+          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::GraftSubtrees',
+          -parameters => {
+              'outgroup'    => $self->o('outgroup'),
+          },
+          -flow_into => {
+                1 => ['adjust_branch_lengths'],
+          },
+        },
+
+        { -logic_name => 'adjust_branch_lengths',
+          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::AdjustBranchLengths',
+          -parameters => {
+              'output_file' => $self->o('output_file'),
+              'erable_exe'  => $self->o('erable_exe'),
+          }
         }       
     ];
 }
