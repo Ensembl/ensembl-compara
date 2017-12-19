@@ -515,6 +515,10 @@ sub name {
       ## Bio::EnsEMBL::Compara::GenomicAlignTree in the Ortheus pipeline
       $self->{_name} = $self->SUPER::name();
     } elsif ($self->is_leaf) {
+      unless ($genomic_align_group) {
+        $self->{_name} = 'NONAME';
+        return $self->{_name};
+      }
       my $gdb_name = $genomic_align_group->genome_db->name();
       $self->{_name} = $gdb_name.'_'.$genomic_align_group->dnafrag->name."_".
           $genomic_align_group->dnafrag_start."_".$genomic_align_group->dnafrag_end."[".
