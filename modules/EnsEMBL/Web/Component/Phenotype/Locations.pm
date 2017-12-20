@@ -347,9 +347,8 @@ sub source_url {
   my $source_uc = uc $source;
      $source_uc =~ s/\s/_/g;
 
-  if ($source eq 'Animal QTLdb') {
+  if ($source =~ /^animal.qtldb/i) {
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $hub->species)));
-
     return ($source,$hub->get_ExtURL(
       $source_uc,
       { ID => $obj_name, SP => $species}

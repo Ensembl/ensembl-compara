@@ -54,7 +54,7 @@ sub table_content {
   my $colourmap   = $hub->colourmap;
   my $glossary    = $hub->glossary_lookup;
   my $show_scores = $hub->param('show_scores');
-  
+
   ROWS: foreach my $var (sort { $a->{'position'} <=> $b->{'position'} } @{$object->variation_data}) {
     next if $callback->free_wheel();
 
@@ -63,7 +63,8 @@ sub table_content {
       my $var_url = $hub->url({ type => 'Variation', action => 'Summary', v => $var->{'snp_id'}, vf => $var->{'vdbid'}, vdb => 'variation' }); 
 
       my $codons = $var->{'codons'} || '-';
-    
+      my $codons_variant_position;
+
       if ($codons ne '-') {
         if (length($codons)>8) {
           $codons =~ s/([ACGT])/<b>$1<\/b>/g;
@@ -71,14 +72,17 @@ sub table_content {
           $codons = $self->trim_large_string($codons,'codons_'.$var->{'snp_id'},8);
         }
         else {
-          $codons =~ s/([ACGT])/<b>$1<\/b>/g;
+          # Get the position of the highlighted base
+          $codons =~ /([ATGC])/;
+          $codons_variant_position = $+[0];
           $codons =~ tr/acgt/ACGT/;
         }
       }
+
       my $allele = $var->{'allele'};
       my $tva    = $var->{'tva'};
       my $var_allele = $tva->variation_feature_seq;
-    
+
       # Evidence status
       my $evidences = $var->{'vf'}->get_all_evidence_values || [];
       my $status = join('~',@$evidences);
@@ -88,7 +92,7 @@ sub table_content {
       if (length($allele)>10 && $allele !~ /^(COSMIC|HGMD)/) {
         $allele = $self->trim_large_allele_string($allele,'allele_'.$var->{'snp_id'},10);
       }
-      $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
+      # $allele =~ s/$var_allele/<b>$var_allele<\/b>/ if $allele =~ /\//;
     
       # consequence type
       my $type = $self->new_consequence_type($tva);    
@@ -96,17 +100,20 @@ sub table_content {
       # SIFT and PolyPhen
       my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
       my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-    
+
       my $row = {
+        vf      => $var->{'vf'}->dbID,
         res     => $var->{'position'},
-        ID      => sprintf('<a href="%s">%s</a>', $var_url, $var->{'snp_id'}),
+        ID      => $var->{'snp_id'},
         snptype => $type,
         source  => $var->{'snp_source'}->name,
         status  => $status,
         allele  => $allele,
+        vf_allele => $var_allele,
         ambig   => $var->{'ambigcode'} || '-',
         alt     => $var->{'pep_snp'} || '-',
         codons  => $codons,
+        codons_variant_position => join('', $codons_variant_position),
         sift_sort  => $sifts->[0],
         sift_class => $sifts->[1],
         sift_value => $sifts->[2],
@@ -114,7 +121,6 @@ sub table_content {
         polyphen_class => $polys->[1],
         polyphen_value => $polys->[2]
       };
-
       $callback->add_row($row);
       last ROWS if $callback->stand_down;
     }
@@ -156,9 +162,7 @@ sub make_table {
       v      => undef # remove the 'v' param from the links if already present
     }
   },{
-    _key => 'vf', _type => 'numeric unshowable no_filter'
-  },{
-    _key => 'vf_allele', _type => 'string no_filter unshowable',
+    _key => 'vf', _type => 'numeric no_filter unshowable'
   },{
     _key => 'snptype', _type => 'iconic', label => "Conseq. Type",
     filter_label => 'Consequences',
@@ -185,6 +189,8 @@ sub make_table {
     filter_sorted => 1,
     primary => 5,
   },{
+    _key => 'vf_allele', _type => 'string no_filter unshowable',
+  },{
     _key => 'allele', _type => 'string no_filter no_sort',
     label => "Alle\fles",
     helptip => 'Alternative nucleotides',
@@ -201,9 +207,15 @@ sub make_table {
     label => "Residues",
     helptip => 'Resulting amino acid(s)'
   },{
+    _key => 'codons_variant_position', _type => 'string no_filter unshowable',
+    label => "Codons Variant Position"
+  },{
     _key => 'codons', _type => 'string no_filter',
     label => "Codons",
-    helptip => 'Resulting codon(s), with the allele(s) displayed in bold'
+    helptip => 'Resulting codon(s), with the allele(s) displayed in bold',
+    toggle_separator => ', ',
+    toggle_highlight_position => 'true',
+    toggle_highlight_column => 'codons_variant_position'
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'sift_value',

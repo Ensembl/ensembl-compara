@@ -422,8 +422,8 @@ sub _update_conf {
     eval qq{ require '$dir/conf/SiteDefs.pm' };                               # load the actual plugin SiteDefs
 
     if ($@) {
-      my $message = "Can't locate $dir/conf/SiteDefs.pm in";
-      warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:;
+      my $message = "Can't locate $dir/conf/SiteDefs.pm";
+      warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:s;
     } else {
 
       # create datastructures for validating the rules in the end

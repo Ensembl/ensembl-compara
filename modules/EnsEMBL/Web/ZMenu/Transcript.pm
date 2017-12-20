@@ -43,7 +43,7 @@ sub content {
   
   $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
 
-  $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Novel transcript');
+  $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Transcript');
     
   if (scalar @click) {
     ## Has user clicked on an exon (or exons)? If yes find out the exon rank to display in zmenu
@@ -123,7 +123,7 @@ sub content {
     label => $introns[0]." of ". scalar(@all_introns)
   }) if(scalar @introns);  
   
-  if($xref[0]) { # if there is transcript symbol then show it as the first label and stable id as second label, if not then stable id as first label
+  if($xref[0] && $xref[0] ne $stable_id) { # if there is transcript symbol then show it as the first label and stable id as second label, if not then stable id as first label
     $self->add_entry({
       type  => 'Transcript',
       label => $xref[0]

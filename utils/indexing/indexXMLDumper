@@ -1323,7 +1323,6 @@ sub dumpOligoProbe {
       join $FUNCDB.array using (array_id)
     GROUP BY
       probe_set.name,
-      probe_set.probe_set_id,
       array.name
 ));
   $sth->execute();
@@ -1377,12 +1376,9 @@ sub dumpOligoProbe {
       join $FUNCDB.array_chip using (array_chip_id)
       join $FUNCDB.array using (array_id)
     where
-      array.is_probeset_array = false
+      probe.probe_set_id is null
     group by
-      probe.probe_id,
-      probe.name,
-      array.vendor,
-      array.name
+      probe.name
   ));
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
@@ -3136,13 +3132,9 @@ sub dumpRegulatoryFeature {
       ft.name
     from 
       $dbname.regulatory_feature rf
-      join $dbname.seq_region sr using (seq_region_id)
-      join $dbname.coord_system cs using (coord_system_id)
+      join seq_region sr using (seq_region_id)
       join $dbname.feature_type ft using (feature_type_id)
-    where
-      cs.is_current=1
-      and sr.schema_build=cs.schema_build
-   ");
+     ");
 
   foreach my $row ( @$d ) {
     my $desc = qq($row->[4] regulatory feature);
@@ -3166,10 +3158,7 @@ sub dumpRegulatoryFeature {
       $dbname.external_feature ef
       join $dbname.feature_type ft using (feature_type_id)
       join $dbname.feature_set fs using (feature_set_id)
-      join $dbname.seq_region sr using (seq_region_id)
-      join $dbname.coord_system cs using (coord_system_id)
-    where
-      cs.is_current = 1
+      join seq_region sr using (seq_region_id)
     group by 
       ef.display_label
  ");
@@ -3201,10 +3190,7 @@ sub dumpRegulatoryFeature {
     $dbname.mirna_target_feature mrf
     join $dbname.feature_type ft using (feature_type_id)
     join $dbname.feature_set fs using (feature_set_id)
-    join $dbname.seq_region sr using (seq_region_id)
-    join $dbname.coord_system cs using (coord_system_id)
-  where
-    cs.is_current = 1
+    join seq_region sr using (seq_region_id)
   group by 
     mrf.display_label
  "

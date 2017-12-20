@@ -209,7 +209,7 @@ sub _create_exon_structure {
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
 
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
-      ## Fix for unintuitive coding start/end in some transcripts
+      ## Turn API coordinates into something that makes sense in drawing terms 
       if ($e->{'coding_start'} < 1) {
         $e->{'coding_start'} = $e->{'start'};
       }
@@ -221,7 +221,7 @@ sub _create_exon_structure {
         $e->{'coding_start'}  += $e->{'start'};
       }
       if ($e->{'coding_end'} != $e->{'end'}) {
-        $e->{'coding_end'}  = $e->{'coding_end'} + $e->{'start'};
+        $e->{'coding_end'}  = $e->{'end'} - $e->{'coding_end'};
       }
 
       ## Use direction of drawing, not direction of transcript

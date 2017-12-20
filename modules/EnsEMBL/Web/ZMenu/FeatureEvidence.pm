@@ -60,7 +60,7 @@ sub content {
 
 
   #my $source_label = $feature_set->source_label;
-  my $source_label = undef;
+  my $source_label = $peak_calling->fetch_source_label;
 
   if(defined $source_label){
 

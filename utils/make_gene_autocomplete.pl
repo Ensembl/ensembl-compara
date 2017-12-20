@@ -36,9 +36,10 @@ BEGIN {
 my $nodelete = 0;
 GetOptions ('nodelete' => \$nodelete);
 
-my $hub = EnsEMBL::Web::DBHub->new;
-my $dbh = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
-my $sd  = $hub->species_defs;
+my $hub         = EnsEMBL::Web::DBHub->new;
+my $dbh         = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
+my $sd          = $hub->species_defs;
+my $name_lookup = $sd->production_name_lookup;
 my $sth;
 
 $dbh->do(
@@ -66,21 +67,21 @@ if (!@ARGV and !$nodelete) {
 
 foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
   warn "$dataset\n";
-  
-  my $dbs = $sd->get_config($dataset, 'databases');
-  
+
+  my $species = $name_lookup->{$dataset};
+  my $dbs     = $sd->get_config($species, 'databases');
+
   next unless $dbs;
-  
+
   my (%species_hash, $delete, @insert);
-  
+
   foreach my $db (grep $dbs->{'DATABASE_' . uc}, qw(core otherfeatures)) {
-    my $adaptor = $hub->get_adaptor('get_GeneAdaptor', $db, $dataset);
+    my $adaptor = $hub->get_adaptor('get_GeneAdaptor', $db, $species);
     
     if (!$adaptor) {
       warn "$db doesn't exist for $dataset\n";
       next;
     }
-    
     if (!scalar keys %species_hash) {
       $sth = $adaptor->prepare('SELECT species_id, meta_value FROM meta WHERE meta_key = "species.production_name"');
       $sth->execute;

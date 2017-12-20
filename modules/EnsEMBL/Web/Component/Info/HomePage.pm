@@ -102,6 +102,7 @@ sub assembly_text {
   my $hub               = $self->hub;
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
+  my $species_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   my $sample_data       = $species_defs->SAMPLE_DATA;
   my $ftp               = $self->ftp_url;
   my $assembly          = $species_defs->ASSEMBLY_NAME;
@@ -145,7 +146,7 @@ sub assembly_text {
     
     $ftp ? sprintf(
       '<p><a href="%s/fasta/%s/dna/" class="nodeco">%sDownload DNA sequence</a> (FASTA)</p>', ## Link to FTP site
-      $ftp, lc $species, sprintf($self->{'icon'}, 'download')
+      $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
     ) : '',
     
     $mappings && ref $mappings eq 'ARRAY' ? sprintf(
@@ -208,6 +209,7 @@ sub genebuild_text {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $species      = $hub->species;
+  my $sp_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
   my $vega         = $species_defs->SUBTYPE !~ /Archive|Pre/ && $species_defs->get_config('MULTI', 'ENSEMBL_VEGA') || {};
@@ -243,7 +245,7 @@ sub genebuild_text {
     
     $ftp ? sprintf(
       '<p><a href="%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
-      $ftp, lc $species, sprintf($self->{'icon'}, 'download')
+      $ftp, $sp_prod_name, sprintf($self->{'icon'}, 'download')
     ) : '',
     
     $idm_link
@@ -282,9 +284,10 @@ sub compara_text {
 }
 
 sub variation_text {
-  my $self          = shift;
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
+  my $self              = shift;
+  my $hub               = $self->hub;
+  my $species_defs      = $hub->species_defs;
+  my $species_prod_name = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
   my $html;
 
   if ($hub->database('variation')) {
@@ -325,7 +328,7 @@ sub variation_text {
       
       $ftp ? sprintf(
         '<p><a href="%s/variation/gvf/%s/" class="nodeco">%sDownload all variants</a> (GVF)</p>', ## Link to FTP site
-        $ftp, lc $hub->species, sprintf($self->{'icon'}, 'download')
+        $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
       ) : ''
     );
   } else {
@@ -354,8 +357,9 @@ sub funcgen_text {
   my $sample_data  = $species_defs->SAMPLE_DATA;
   
   if ($sample_data->{'REGULATION_PARAM'}) {
-    my $species = $hub->species;
-    my $ftp     = $self->ftp_url;
+    my $species           = $hub->species;
+    my $species_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+    my $ftp               = $self->ftp_url;
     
     return sprintf('
       <div class="homepage-icon">
@@ -384,7 +388,7 @@ sub funcgen_text {
 
       $ftp ? sprintf(
         '<p><a href="%s/regulation/%s/" class="nodeco">%sDownload all regulatory features</a> (GFF)</p>', ## Link to FTP site
-        $ftp, lc $species, sprintf($self->{'icon'}, 'download')
+        $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
       ) : '',
     );
   } else {
