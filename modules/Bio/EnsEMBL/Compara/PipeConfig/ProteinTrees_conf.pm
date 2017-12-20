@@ -1579,7 +1579,7 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
-            -analysis_capacity    => $self->o('mcoffee_capacity'),
+            -hive_capacity => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
