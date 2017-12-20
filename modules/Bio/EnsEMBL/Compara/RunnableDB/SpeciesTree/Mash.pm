@@ -56,6 +56,7 @@ sub fetch_input {
 	my $additional_options = $self->param('additional_options');
 	my $input_file = $self->param_required('input_file');
 
+	# start to build command
 	my $mash_cmd = "$mash_exe $mode ";
 	$mash_cmd .= "$additional_options " if $additional_options;
 
@@ -87,7 +88,7 @@ sub mash_dist_options {
 	my $self = shift;
 
 	my $input_file = $self->param_required('input_file');
-	my $out_dir = $self->param('out_dir');
+	my $out_dir = $self->param('output_dir');
 	my $out_prefix = $self->param('out_prefix');
 
 	my $mash_cmd = '';
@@ -110,7 +111,7 @@ sub mash_paste_options {
 	my $self = shift;
 
 	my $input_file = $self->param_required('input_file');
-	my $out_dir = $self->param('out_dir');
+	my $out_dir = $self->param('output_dir');
 	my $out_prefix = $self->param_required('out_prefix');
 
 	my $outfile = $out_dir ? "$out_dir/$out_prefix" : $out_prefix;
@@ -126,7 +127,7 @@ sub mash_sketch_options {
 	my $self = shift;
 	
 	my $input_file = $self->param_required('input_file');
-	my $out_dir = $self->param('out_dir');
+	my $out_dir = $self->param('output_dir');
 	my $out_prefix = $self->param('out_prefix');
 
 	my $mash_cmd = '';

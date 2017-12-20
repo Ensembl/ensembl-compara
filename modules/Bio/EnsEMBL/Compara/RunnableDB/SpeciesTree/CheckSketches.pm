@@ -155,7 +155,7 @@ sub find_file_for_gdb {
 		my @found_files = glob "$dir/$prefix.*$suffix";
 		return $found_files[0] if $found_files[0];
 	}
-	return "$dir/$prefix"; # to pass to dump_genome
+	return $self->param('output_dir') . "/$prefix"; # to pass to dump_genome
 }
 
 sub _check_for_distance_files {

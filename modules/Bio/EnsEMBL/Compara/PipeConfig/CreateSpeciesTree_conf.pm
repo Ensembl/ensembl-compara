@@ -45,17 +45,20 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'ensembl_release' => 91,
+        'ensembl_release' => 92,
         'pipeline_name'   => 'species_tree_' . $self->o('ensembl_release'),
         'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_conf.pl',
         'collection'      => 'ensembl', # build tree with everything by default
         'species_set_id'  => undef,
         'outgroup'        => 'saccharomyces_cerevisiae',
         
-        'sketch_dir'       => '/nfs/nobackup/ensembl/carlac/species_tree/mash/ensembl_sketches',
-        'mash_exe'         => '/nfs/gns/homes/carlac/bin/mash',
-        'mash_kmer_size'   => 24, 
-        'mash_sketch_size' => 1000000, 
+        'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
+        'sketch_dir'        => '/hps/nobackup/production/ensembl/compara_ensembl/species_tree/ensembl_sketches',
+        'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
+                                                  # sketch_dir, 'become' this user to place files there
+        'mash_exe'          => '/nfs/gns/homes/carlac/bin/mash',
+        'mash_kmer_size'    => 24, 
+        'mash_sketch_size'  => 1000000, 
 
         'master_db'          => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
         'dump_genome_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/dumps/dump_genome.pl',
@@ -65,7 +68,6 @@ sub default_options {
 
         'group_on_taxonomy' => 0,
         'representative_species' => undef,
-
     };
 }
 
@@ -83,6 +85,16 @@ sub resource_classes {
          '2Gb_reg_conf' => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', '--reg_conf '.$self->o('reg_conf')] },
 
     };
+}
+
+sub pipeline_create_commands {
+    my $self = shift;
+
+    return [
+        @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
+
+        'mkdir -p '.$self->o('output_dir'),
+    ];
 }
 
 sub hive_meta_table {
@@ -121,6 +133,7 @@ sub pipeline_analyses {
             	'sketch_dir'     => $self->o('sketch_dir'),
             	'compara_db'     => $self->o('master_db'),
             	'multifasta_dir' => $self->o('multifasta_dir'),
+              'output_dir'     => $self->o('output_dir'),
             },
         },
 
@@ -136,10 +149,9 @@ sub pipeline_analyses {
         {  -logic_name => 'mash_sketch',
         	-module    => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::Mash',
         	-parameters => {
-                'input_file'         => '#genome_dump_file#',
                 'mode'               => 'sketch',
                 'mash_exe'           => $self->o('mash_exe'),
-                'out_dir'            => $self->o('sketch_dir'),
+                'output_dir'            => $self->o('output_dir'),
                 'additional_options' => '-p 8', # use 8 processes
                 'kmer_size'          => $self->o('mash_kmer_size'),
                 'sketch_size'        => $self->o('mash_sketch_size'),
@@ -153,7 +165,7 @@ sub pipeline_analyses {
            -parameters => {
            		'mode'     => 'paste',
            		'mash_exe' => $self->o('mash_exe'),
-           		'out_dir'  => $self->o('sketch_dir'),
+           		'output_dir'  => $self->o('output_dir'),
            		'dataflow_branch' => 1,
            		'overwrite_paste_file' => 1,
            	},
@@ -169,7 +181,7 @@ sub pipeline_analyses {
            -parameters => {
               'mode'     => 'paste',
               'mash_exe' => $self->o('mash_exe'),
-              'out_dir'  => $self->o('sketch_dir'),
+              'output_dir' => $self->o('output_dir'),
               'dataflow_branch' => 1,
               'overwrite_paste_file' => 1,
             },
@@ -185,7 +197,7 @@ sub pipeline_analyses {
                 'mode'            => 'dist',
                 'mash_exe'        => $self->o('mash_exe'),
                 'additional_options' => '-t', # tab delimited output
-                'out_dir'         => $self->o('sketch_dir'),
+                'output_dir'         => $self->o('output_dir'),
                 'dataflow_branch' => 1, # force runnable to flow mash output filename
                 'output_as_input' => 1, # if multiple mash commands need to be run in succession,
                                         # allow param mash_output_file to be used in place of input_file
@@ -203,7 +215,7 @@ sub pipeline_analyses {
                 'mode'            => 'dist',
                 'mash_exe'        => $self->o('mash_exe'),
                 'additional_options' => '-t ', # tab delimited output
-                'out_dir'         => $self->o('sketch_dir'),
+                'output_dir'         => $self->o('output_dir'),
                 'dataflow_branch' => 1, # force runnable to flow mash output filename
                 'output_as_input' => 1, # if multiple mash commands need to be run in succession,
                                         # allow param mash_output_file to be used in place of input_file
@@ -248,8 +260,24 @@ sub pipeline_analyses {
           -parameters => {
               'output_file' => $self->o('output_file'),
               'erable_exe'  => $self->o('erable_exe'),
-          }
-        }       
+          },
+          -flow_into => {
+              1 => ['copy_files_to_sketch_dir'],
+          },
+        },
+
+        { -logic_name => 'copy_files_to_sketch_dir',
+          -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CopyFilesAsUser',
+          -parameters => {
+              'destination_dir' => $self->o('sketch_dir'),
+              'become_user'     => $self->o('write_access_user'),
+              'source_dir'      => $self->o('output_dir'),
+              'file_list' => [
+                '#source_dir#/*.msh',
+                '#source_dir#/*.dists',
+              ],
+          },
+        },    
     ];
 }
 

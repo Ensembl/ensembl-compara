@@ -108,10 +108,10 @@ sub write_output {
 
 	if ( $outfile ) {
 		$self->_spurt($outfile, $erable_tree);
-		$self->input_job->autoflow(0);
-		$self->complete_early("Final tree written to $outfile");
+		# $self->input_job->autoflow(0);
+		# $self->complete_early("Final tree written to $outfile");
 	} else {
-		$self->dataflow_output_id( { tree => $erable_tree }, 1 ); # for testing mostly
+		$self->dataflow_output_id( { tree => $erable_tree }, 2 ); # for testing mostly
 	}
 }
 
