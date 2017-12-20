@@ -181,6 +181,7 @@ sub db_adaptor {
         assert_ref($dba, 'Bio::EnsEMBL::DBSQL::DBAdaptor', 'db_adaptor');
         throw('$db_adaptor must refer to a Core database') unless $dba->group eq 'core';
         $self->{'_db_adaptor'} = $dba;
+        Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_one_DBConnection($dba);
         if ($update_other_fields) {
             my $was_connected       = $dba->{_dbc}->connected;
             my $meta_container      = $dba->get_MetaContainer;

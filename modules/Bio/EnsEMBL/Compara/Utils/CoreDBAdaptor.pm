@@ -47,6 +47,7 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::ProxyDBConnection;
 
+my %share_dbcs;
 
 =head2 pool_all_DBConnections
 
@@ -63,14 +64,35 @@ use Bio::EnsEMBL::DBSQL::ProxyDBConnection;
 sub pool_all_DBConnections {
     my $self = shift;
 
-    my %share_dbcs;
-
     foreach my $dba (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors}) {
+        $self->pool_one_DBConnection($dba);
+    }
+}
+
+
+=head2 pool_one_DBConnection
+
+  Arg [1]     : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Example     : $Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_one_DBConnection($dba);
+  Description : Link this DBAdaptor to the pool, i.e. change its DBConnection to a
+                ProxyDBConnection if possible, so that all the Core adaptors share
+                the same underlying connection.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub pool_one_DBConnection {
+    my $self = shift;
+    my $dba  = shift;
+
         my $dbc = $dba->dbc;
         # Skip the eHive DBConnections as they are different from Core's ones
-        next if $dbc->isa('Bio::EnsEMBL::Hive::DBSQL::DBConnection');
+        return if $dbc->isa('Bio::EnsEMBL::Hive::DBSQL::DBConnection');
         # Skip if it has no dbname
-        next unless $dbc->dbname;
+        return unless $dbc->dbname;
         # Disconnect as the DBC is going to be superseded
         $dbc->disconnect_if_idle;
         my $signature = sprintf('%s://%s@%s:%s/', $dbc->driver, $dbc->username, $dbc->host, $dbc->port);
@@ -82,7 +104,6 @@ sub pool_all_DBConnections {
         #warn "Replacing ", $dbc->locator, " with a Proxy to $signature\n";
         my $new_dbc = Bio::EnsEMBL::DBSQL::ProxyDBConnection->new(-DBC => $share_dbcs{$signature}, -DBNAME => $dbc->dbname);
         $dba->dbc($new_dbc);
-    }
 }
 
 

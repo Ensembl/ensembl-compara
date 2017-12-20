@@ -53,7 +53,6 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 =head2 fetch_input
 
@@ -69,7 +68,6 @@ sub fetch_input {
   my( $self) = @_;
 
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-  Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
   $genome_db_adaptor->dbc($self->compara_dba->dbc);
 
   my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
