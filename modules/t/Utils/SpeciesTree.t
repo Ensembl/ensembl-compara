@@ -93,8 +93,9 @@ subtest 'new_from_newick' => sub {
         'Homo sapiens',
     );
 
-    throws_ok {Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(aegilops_tauschii_A)', $dba )}
-                qr/aegilops_tauschii is not a polyploid genome/, 'Not polyploid genomes';
+    warning_like {
+        Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(aegilops_tauschii_A)', $dba );
+    } qr/aegilops_tauschii_A not found in the genome_db table/;
 
     throws_ok {Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(triticum_aestivum_X)', $dba )}
                 qr/No component named 'X' in 'triticum_aestivum'/, 'Non-existing component';
