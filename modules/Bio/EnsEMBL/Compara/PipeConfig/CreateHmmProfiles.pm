@@ -1811,36 +1811,5 @@ sub core_pipeline_analyses {
     ];
 }
 
-sub pipeline_analyses {
-    my $self = shift;
-
-    ## The analysis defined in this file
-    my $all_analyses = $self->core_pipeline_analyses(@_);
-    ## We add some more analyses
-    push @$all_analyses, @{$self->extra_analyses(@_)};
-
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
-    $self->tweak_analyses(\%analyses_by_name);
-
-    return $all_analyses;
-}
-
-
-## The following methods can be redefined to add more analyses / remove some, and change the parameters of some core ones
-sub extra_analyses {
-    my $self = shift;
-    return [
-    ];
-}
-
-sub analyses_to_remove {
-    return [];
-}
-
-sub tweak_analyses {
-    my $self = shift;
-    my $analyses_by_name = shift;
-}
-
 1;
 
