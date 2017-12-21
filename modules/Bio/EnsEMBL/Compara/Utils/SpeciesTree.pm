@@ -509,7 +509,7 @@ sub ultrametrize_from_timetree {
     # We make the parents as old as needed to go over their children
     if (!$node->has_divergence_time or ($node->get_divergence_time <= $t)) {
         $t += 0.1;  # We work by increments of 0.1
-        printf("Shifting %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time // 'N/A', $t);
+        printf("Shifting %s (%d): %s -> %s mya\n", $node->node_name, $node->node_id, $node->get_divergence_time || 'N/A', $t);
     } else {
         $t = $node->get_divergence_time;
     }
@@ -733,5 +733,50 @@ sub _count_topologies {
     return undef;
 }
 
+=head2 collapse_short_branches
+
+    Arg [1] : root node (Bio::EnsEMBL::Compara::SpeciesTreeNode)
+    Arg [2] : optional. threshold for short branches. default: 0.001
+    Example : my $collapsed_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree
+                        ->collapse_short_branches($species_tree_root, 0.01);
+    Description: given a species_tree_node root, collapse all internal branches
+                 shorter than $threshold into polytomies
+    Returntype: Bio::EnsEMBL::Compara::SpeciesTreeNode - root of new tree
+
+=cut
+
+sub collapse_short_branches {
+    my ( $self, $root_node, $threshold ) = @_;
+    $threshold ||= 0.001;
+
+    # my $curr_node = $root_node;
+    my @node_children = @{ $root_node->children };
+    #foreach my $child ( @$node_children ) {
+    while ( my $curr_node = shift @node_children ) {
+        next if $curr_node->is_leaf;
+
+        my $dist_to_parent = $curr_node->distance_to_parent;
+        print "\tdistance_to_parent: $dist_to_parent ( <= $threshold ?)\n";
+        print "!!! YES !!!\n" if ($dist_to_parent <= $threshold);
+        if ($dist_to_parent <= $threshold) {
+            # add children to parent node with updated branch lengths
+            foreach my $child ( @{$curr_node->children} ) {
+                print "adding child to parent: ";
+                $child->print_node();
+                my $new_dist = $curr_node->parent->distance_to_node($child);
+                $curr_node->parent->add_child($child, $new_dist);
+                push( @node_children, $child ) unless $child->is_leaf;
+            }
+            $curr_node->disavow_parent;
+        } else {
+            push( @node_children, @{ $curr_node->children } );
+        }
+
+        my @str_nodes = map { $_->string_node } @node_children;
+        chomp @str_nodes;
+        print "str_nodes: " . join(', ', @str_nodes) . "\n";
+    }
+    return $root_node;
+}
 
 1;
