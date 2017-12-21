@@ -154,7 +154,7 @@ sub _species_list {
       group       => $species->{$_}{'group'},
       homepage    => $homepage,
       name        => $species->{$_}{'name'},
-      img         => sprintf('%sspecies/48/%s.png', $img_url, $_),
+      img         => sprintf('%sspecies/%s.png', $img_url, $_),
       common      => $species->{$_}{'common'},
       assembly    => $species->{$_}{'assembly'},
       assembly_v  => $species->{$_}{'assembly_version'},
@@ -170,10 +170,7 @@ sub _species_list {
 
 sub _fav_template {
   ## @private
-  return qq(<div class="species-box-outer"><div class="species-box"><a href="{{species.homepage}}"><img src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" height="48" width="48"/></a><a href="{{species.homepage}}">{{species.common}}</a><div>{{species.assembly}}</div></div></div>);
-  return qq(<div class="species-box"><a href="{{species.homepage}}"><span class="sp-img"><img
-    src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" height="48"
-    width="48"></span></a><a href="{{species.homepage}}"><span>{{species.common}}</span></a><span>{{species.assembly}}</span></div>);
+  return qq(<div class="species-box-outer"><div class="species-box"><a href="{{species.homepage}}"><img src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" class="badge-48"/></a><a href="{{species.homepage}}">{{species.common}}</a><div>{{species.assembly}}</div></div></div>);
 }
 
 sub _list_template {

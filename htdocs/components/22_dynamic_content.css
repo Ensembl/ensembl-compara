@@ -29,6 +29,14 @@ body.ie6  a.help-header span.sprite { width: 18px; font-size: 14px; }
 
 p#bottompad{margin:0;border:0;padding:0;clear:both;height:1px;overflow:hidden}
 
+
+/* Species "badges" */
+
+img.badge-64 { width:64px; height:64px; }
+img.badge-48 { width:48px; height:48px; }
+img.badge-32 { width:32px; height:32px; }
+img.badge-16 { width:16px; height:16px; }
+
 /* Portal "icons" for Variation, compara etc */
 div.portal                  { width: 650px; }
 div.portal div              { float:left; position:relative; }

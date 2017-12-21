@@ -140,7 +140,7 @@ sub render {
       $pre_link   = '-';
     }
     $table->add_row({
-        'common' => sprintf('<a href="%s%s/"><img src="/i/species/48/%s.png" alt="%s" style="float:left;padding-right:4px;%s" /></a>%s',
+        'common' => sprintf('<a href="%s%s/"><img src="/i/species/%s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;%s" /></a>%s',
                         $img_url, $dir,  $dir, $common, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
@@ -155,7 +155,7 @@ sub render {
 # if a species is both pre and ensembl we are adding a new row for the pre assembly    
     if ($info->{'status'} eq 'both') {
       $table->add_row({
-          'common' => sprintf('<a href="//pre.ensembl.org/%s"><img src="/i/species/48/%1$s.png" alt="%s" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="//pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
+          'common' => sprintf('<a href="//pre.ensembl.org/%s"><img src="/i/species/%1$s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="//pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
           'species'     => '<i>'.$name.'</i>',
           'taxon_id'    => $info->{'taxon_id'},
           'assembly'    => '-',
