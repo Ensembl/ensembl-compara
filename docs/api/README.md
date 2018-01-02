@@ -11,3 +11,5 @@ valid, but you may get warnings about deprecated methods.
 
 Additional information can be found [online](http://www.ebi.ac.uk/~muffato/workshops/2016_06_Cambridge/)
 
+![e!Compara word cloud](../ebang-wordcloud.png)
+
