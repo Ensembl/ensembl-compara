@@ -61,14 +61,14 @@ pre.wrap              { white-space: pre-wrap; }
 ----------------------------------------------------------------------*/
 
 /* TO REVISIT? - NUMBERS DON'T CORRESPOND 1:1 WITH TEMPLATE ONES! */
-.bg1    { background: [[PAGE_BG]];         }
-.bg2    { background: [[TINT_BG]];         }
-.bg3    { background: [[NEUTRAL_BG]];      }
-.bg4    { background: [[CONTRAST_BG]];     }
-.hilite { background: [[CONTRAST_BORDER]]; }
-.red    { color: #933; }
+.bg1    { background: [[WHITE]];         }
+.bg2    { background: [[MAIN_V_LIGHT]];         }
+.bg3    { background: [[V_LIGHT_GREY]];      }
+.bg4    { background: [[CONTRAST_MEDIUM]];     }
+.hilite { background: [[CONTRAST_DARK]]; }
+.red    { color: [[SEVERE_DARK]] }
 
-hr { display:block; height:4px; border:0; border-top: 4px solid [[MH_TAB]]; margin: 1em 0; padding: 0; }
+hr { display:block; height:4px; border:0; border-top: 4px solid [[MAIN_DARK]]; margin: 1em 0; padding: 0; }
 
 /*----------------------------------------------------------------------
   Columns and boxes 
@@ -127,21 +127,17 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 
 .plain-box, .tinted-box,
 .info-box,  .round-box,
-.alert-box, .embedded-box { color:[[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
-.plain-box                { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
-.shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
+.alert-box, .embedded-box { color:[[DARK_GREY]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
+.plain-box                { background-color:[[WHITE]]; border-color: [[PALE_GREY]]; }
+.shadow-box               { box-shadow: 2px 2px 4px [[PALE_GREY]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
-.bordered     { border:1px solid [[PANEL_BORDER]]; }
+.bordered     { border:1px solid [[PALE_GREY]]; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
 .unbordered p { margin-bottom:8px; }
-.tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
-.tinted-box a       { color:[[TINT_LINK]]; }
-.tinted-box a:hover { color: [[PAGE_HOVER]];   }
-.info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
-.info-box a       { color:[[CONTRAST_LINK]]; }
-.info-box a:hover { color: [[PAGE_HOVER]];   }
-.alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
+.tinted-box   { background-color:[[MAIN_LIGHT]]; border-color: [[MAIN_MEDIUM]]; }
+.info-box     { background-color:[[CONTRAST_MEDIUM]]; border-color:[[CONTRAST_DARK]]; }
+.alert-box    { background-color:[[MODERATE_LIGHT]]; border-color:[[MODERATE_DARK]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
 
@@ -178,9 +174,9 @@ ul.no-bullet, ul.no-bullet li   { list-style-image: none; list-style: none; }
 
 code { font: 1em andale mono, courier new, courier, monospace; font-weight: bold; }
 
-.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; padding: 8px !important; overflow: auto; }
+.code     { border: 1px solid [[PALE_GREY]]; background: [[V_LIGHT_GREY]]; padding: 8px !important; overflow: auto; }
 
-.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, courier new, courier, monospace; color: [[CONTRAST_BG]] }
+.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, courier new, courier, monospace; color: [[CONTRAST_LIGHT]] }
 .code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
 .code pre { display: inline-block; }
 

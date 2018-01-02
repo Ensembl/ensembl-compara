@@ -44,11 +44,6 @@ sub content {
   return '' if $species =~ /^(multi|common)$/i;
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
 
-  ## Quality flag
-  #(my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
-  #my $glossary_helptip = glossary_helptip($hub, ucfirst $text);
-  my $quality = ''; # sprintf '<img src="/i/16/rev/database.png"/> %s', $glossary_helptip;
-
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
 
@@ -64,14 +59,14 @@ sub content {
     $dropdown = ''; 
   }
   else {
-    $header = sprintf '<img src="/i/species/32/%s.png"><span class="species">%s</span> <span class="more">(%s)</span>', $hub->species, $species, $assembly;
+    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $hub->species, $species, $assembly;
     ## Species selector
     $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
     $dropdown  = $self->species_list;
   }
 
-  my $content = sprintf '<span class="header"><a href="%s">%s</a></span> %s%s %s', 
-                          $home_url, $header, $arrow, $quality, $dropdown;
+  my $content = sprintf '<span class="header"><a href="%s">%s</a></span> %s %s', 
+                          $home_url, $header, $arrow, $dropdown;
  
   return $content;
 }

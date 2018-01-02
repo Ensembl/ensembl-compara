@@ -19,27 +19,60 @@
 .other_tool              { display: none; margin: 0; }
 .tool_buttons div        { display: inline-block; }
 .tool_buttons a,
-.tool_buttons p.disabled, .tool_buttons div.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
+.tool_buttons p.disabled, .tool_buttons div.disabled { 
+    background-position: 12px 50%; 
+    background-repeat: no-repeat; 
+    margin: 6px 1px; 
+    padding: 7px 15px 4px 36px; 
+    -moz-border-radius: 6px; 
+    -webkit-border-radius: 6px; 
+    border-radius: 6px;
+}
 .tool_buttons input.disabled { background-position: 7px 50%; background-repeat: no-repeat;  padding-left: 29px; }
-.tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
+.tool_buttons a          { background-color: [[MAIN_DARK]]; color: [[WHITE]]; text-decoration: none; display: block; }
 .tool_buttons a.hidden   { display: none; }
-.tool_buttons .togglebutton.off { background-color: [[BUTTON_ON]]; outline: 1px outset [[BUTTON_ON]]; outline-offset: -4px; }
-.tool_buttons .togglebutton { outline: 1px inset [[BUTTON_BG]]; outline-offset: -4px; background-color: [[BUTTON_BG]]; }
-.tool_buttons .group     { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; float: left; margin: 4px 0 0; padding: 0 0 0 1px; }
-.tool_buttons .group .togglebutton { border: medium none; margin: 2px 3px 2px 0; outline-offset: 0; padding: 2px 6px 2px 29px; }
-.tool_buttons p.disabled, .tool_buttons div.disabled, .tool_buttons .togglebutton.off.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; cursor: default; }
-.tool_buttons .togglebutton.off.disabled { outline: none; }
+.tool_buttons .togglebutton.off { background-color: [[MAIN_LIGHT]]; color: [[DARK_GREY]] }
+.tool_buttons .togglebutton { background-color: [[MAIN_DARK]]; }
+.tool_buttons .group     { 
+  float: left; 
+}
+.tool_buttons .group .togglebutton { 
+  margin: 6px 1px 0px 1px; 
+  padding: 8px 8px 4px 32px; 
+  background-position: 8px center;
+}
+
+.tool_buttons .group .first { 
+  -moz-border-radius: 6px 0px 0px 6px;
+  -webkit-border-radius: 6px 0px 0px 6px;
+  border-radius: 6px 0px 0px 6px;
+}
+
+.tool_buttons .group .last { 
+  -moz-border-radius: 0px 6px 6px 0px;
+  -webkit-border-radius: 0px 6px 6px 0px;
+  border-radius: 0px 6px 6px 0px;
+}
+
+.tool_buttons p.disabled, .tool_buttons div.disabled, .tool_buttons .togglebutton.off.disabled { background-color: [[MEDIUM_GREY]]; color: [[WHITE]]; cursor: default; }
 
 .tool_buttons a.pulse,
-.tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
-.tool_buttons .togglebutton:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
-.tool_buttons .togglebutton.inactive:hover    { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; }
-.tool_buttons a:visited  { color: [[BUTTON_TEXT]]; }
+.tool_buttons a:hover    { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; }
+.tool_buttons .togglebutton:hover    { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; }
+.tool_buttons a:visited  { color: [[WHITE]]; }
 
-.tool_buttons a.unstyled { background: none; color: #3366bb; display: inline-block; margin: 0; padding: 4px; vertical-align: bottom; line-height: 32px; height: 16px; }
-.tool_buttons a.unstyled:hover { text-decoration: underline; color: #cc0000; }
-.tool_buttons a.disabled { background-color: [[BUTTON_DISABLED]] !important; border: none !important; outline: none !important; cursor: default;  }
-.tool_buttons .group.disabled { background-color: [[BUTTON_GROUP_BG]]; padding: 0; }
+.tool_buttons a.unstyled { 
+  background: none; 
+  display: inline-block; 
+  margin: 0 0 0 12px; 
+  padding: 4px; 
+  vertical-align: bottom; 
+  line-height: 32px; 
+  height: 16px; 
+}
+.tool_buttons a.unstyled:hover { text-decoration: underline; color: [[HOVER]]; }
+.tool_buttons a.disabled { background-color: [[MEDIUM_GREY]] !important; cursor: default;  }
+.tool_buttons .group.disabled { background-color: [[PALE_GREY]]; padding: 0; }
      
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }

@@ -2,7 +2,7 @@
 
 .taxon_selector h2 { margin: 0 }
 
-.taxon_selector .loader { background: #ffffff url("/i/e-loader.gif") no-repeat center center; height: 100%; }
+.taxon_selector .loader { background: [[WHITE]] url("/i/e-loader.gif") no-repeat center center; height: 100%; }
 
 .species_select_container {
   display: flex;
@@ -33,20 +33,20 @@
 }
 .species_select_container div.content {
   flex-direction: column;
-  background-color: #fff;
+  background-color: [[WHITE]];
   padding: 1em;
   width: 100%;
   padding: 0 !important;
   overflow: auto;
-  border: #ccc 1px solid;
+  border: [[PALE_GREY]] 1px solid;
 }
 .species_select_container div.content h2{
-  background: #e0e0e0;
+  background: [[PALE_GREY]];
   font-weight: 100;
   font-size: 18px;
   padding: 4px 8px;
   text-align: center;
-  color: #444343;
+  color: [[V_DARK_GREY]];
   letter-spacing: 0.4px;
 }
 
@@ -54,14 +54,14 @@ div.taxon_selector_list h2 .ss-count {
   font-size: 14px;
   position: absolute;
   padding: 7px 12px;
-  background: #52b15a;
+  background: [[OK_DARK]];
   margin: -4px 0px 0 0;
   right: 10px;
-  color: white;
+  color: [[WHITE]];
 }
 
 div.taxon_selector_list h2 .ss-count.warn {
-  background-color: rgba(206, 62, 62, 0.88);
+  background-color: [[SEVERE_DARK]];
 }
 
 .species_select_container div.content .vscroll_container {
@@ -70,35 +70,35 @@ div.taxon_selector_list h2 .ss-count.warn {
 
 div.taxon_selector_tree .finder { 
   display: flex;
-  background-color: #F0F0F0;
+  background-color: [[V_LIGHT_GREY]];
   box-sizing: border-box;
 }
 
 div.taxon_selector_tree .finder input { 
   width: 100%;
-  font-size: 24px;
+  color: [[MEDIUM_GREY]];
+  font-size: 1.2em;
   font-weight: 100;
   padding-left: 8px;
   outline: none;
   height: 40px;
   border: none;
-  letter-spacing: 1px;
 }
 
 div.taxon_selector_tree .finder input::-webkit-input-placeholder {
-   color: #ccc;
+   color: [[PALE_GREY]];
 }
 
 div.taxon_selector_tree .finder input:-moz-placeholder { /* Firefox 18- */
-   color: #ccc;  
+   color: [[PALE_GREY]];  
 }
 
 div.taxon_selector_tree .finder input::-moz-placeholder {  /* Firefox 19+ */
-   color: #ccc;  
+   color: [[PALE_GREY]];  
 }
 
 div.taxon_selector_tree .finder input:-ms-input-placeholder {  
-   color: #ccc;  
+   color: [[PALE_GREY]];  
 }
 
 div.taxon_selector_list     {  }
@@ -109,10 +109,10 @@ div.taxon_selector_list li  {
   clear: both;
   height: 40px;
   position: relative;
-  background-color: #f7f7f7;
-  color: #464646;
-  border-bottom: 1px solid #dcdcdc;
-  box-shadow: 2px 0px 4px #d2d2d2;
+  background-color: [[V_LIGHT_GREY]];
+  color: [[V_DARK_GREY]];
+  border-bottom: 1px solid [[PALE_GREY]];
+  box-shadow: 2px 0px 4px [[PALE_GREY]];
   box-sizing: border-box;
   margin-bottom: 0px !important;
 }
@@ -136,7 +136,7 @@ div.taxon_selector_list li span.selected-sp-title {
   text-overflow: ellipsis;
 }
 div.taxon_selector_list .selected-sp-img img{
-  border-bottom: 1px solid #bababb;
+  border-bottom: 1px solid [[PALE_GREY]];
   height: 39px;
 }
 div.taxon_selector_list li span.remove {
@@ -144,12 +144,12 @@ div.taxon_selector_list li span.remove {
   font-size: 18px;
   padding: 12px 12px;
   right: 0;
-  color: #828181;
+  color: [[MEDIUM_GREY]];
   font-weight: 100;
 }
 div.taxon_selector_list li span.remove:hover {
-  background-color: coral;
-  color: white;
+  background-color: [[SEVERE_MEDIUM]];
+  color: [[WHITE]];
 }
 /*
 div.taxon_selector_hint         { margin: 0.25em 0.25em 0.5em 0.25em; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
@@ -171,7 +171,7 @@ div.taxon_selector_form div.checkboxes {
 
 div.taxon_selector_form div.list-wrapper {
   padding:6px;
-  background-color:#FFFFFF;
+  background-color:[[WHITE]];
   width:576px;
 }
 
@@ -191,7 +191,7 @@ div.taxon_selector_form ul.list li {
   list-style: none;
   margin-bottom: 10px; 
   box-sizing: border-box;
-  border: 1px solid #ccc;
+  border: 1px solid [[PALE_GREY]];
   background: aliceblue;
   display: flex;
   width: 30%;
@@ -210,29 +210,29 @@ div.ss-alignment-container .ss-alignment-selected-label {
 }
 div.ss-alignment-container .ss-alignment-selected-label {
   margin: 0px 8px;
-  background-color: white;
-  border: 1px solid #ccc;
+  background-color: [[WHITE]];
+  border: 1px solid [[PALE_GREY]];
 }
 div.taxon_selector_form ul.list li span.ss-selected,
 div.ss-alignment-container .ss-alignment-selected-label .ss-selected {
   padding: 4px 6px;
   font-weight: 400;
   font-size: 12px;
-  color: #464646;
+  color: [[V_DARK_GREY]];
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 div.taxon_selector_form ul.list li span.ss-selection-delete {
   padding: 4px 6px 0 0;
-  color: #a7a7a7;
+  color: [[PALE_GREY]];
   font-weight: 100;
   font-size: 16px;
   cursor: pointer;
   margin-left: auto;
 }
 div.taxon_selector_form ul.list li span.ss-selection-delete:hover {
-  color: #ff7c7c;
+  color: [[SEVERE_MEDIUM]];
 }
 div.taxon_selector_form div.links {
   padding: 3px 0;
@@ -240,7 +240,7 @@ div.taxon_selector_form div.links {
 
 div.taxon_selector_tree .ss_breadcrumbs {
   padding: 0px;
-  background: #D4D4D4;
+  background: [[PALE_GREY]];
   list-style: none; 
   overflow: hidden;
   height: 24px;
@@ -250,7 +250,7 @@ div.taxon_selector_tree .ss_breadcrumbs {
 }
 
 div.taxon_selector_tree .ss_breadcrumbs li.active{
-  background: #D4D4D4;
+  background: [[MEDIUM_GREY]];
 }
 
 div.taxon_selector_tree .ss_breadcrumbs>li+li:before {
@@ -261,22 +261,20 @@ div.taxon_selector_tree .ss_breadcrumbs li {
   list-style: none;
 }
 div.taxon_selector_tree .ss_breadcrumbs li.active a {
-  background: brown;                   /* fallback color */
-  background: #ffc107; 
+  background: [[CONTRAST_DARK]]; 
 }
 div.taxon_selector_tree .ss_breadcrumbs li.completed a {
-  background: brown;                   /* fallback color */
-  background: hsla(153, 57%, 51%, 1); 
+  background: [[MAIN_DARK]]; 
 }
 div.taxon_selector_tree .ss_breadcrumbs li.active a:after {
-  border-left: 30px solid #ffc107 ;
+  border-left: 30px solid [[CONTRAST_DARK]];
 }
 div.taxon_selector_tree .ss_breadcrumbs li.completed a:after {
-  border-left: 30px solid hsla(153, 57%, 51%, 1);
+  border-left: 30px solid [[MAIN_DARK]];
 } 
 
 div.taxon_selector_tree .ss_breadcrumbs li a {
-  color: white;
+  color: [[WHITE]];
   text-decoration: none; 
   padding: 4px 0 4px 45px;
   position: relative; 
@@ -292,7 +290,7 @@ div.taxon_selector_tree .ss_breadcrumbs li a:after {
   height: 0;
   border-top: 50px solid transparent;           /* Go big on the size, and let overflow hide */
   border-bottom: 50px solid transparent;
-  border-left: 30px solid hsla(0, 0%, 83%, 1);
+  border-left: 30px solid [[PALE_GREY]];
   position: absolute;
   top: 50%;
   margin-top: -50px; 
@@ -306,7 +304,7 @@ div.taxon_selector_tree .ss_breadcrumbs li a:before {
   height: 0;
   border-top: 50px solid transparent;           /* Go big on the size, and let overflow hide */
   border-bottom: 50px solid transparent;
-  border-left: 30px solid white;
+  border-left: 30px solid [[WHITE]];
   position: absolute;
   top: 50%;
   margin-top: -50px; 
@@ -317,8 +315,8 @@ div.taxon_selector_tree .ss_breadcrumbs li a:before {
 div.taxon_selector_tree .ss_breadcrumbs li:first-child a {
   padding-left: 15px;
 }
-div.taxon_selector_tree .ss_breadcrumbs li a:hover { background: #ffc107; color: #757575; }
-div.taxon_selector_tree .ss_breadcrumbs li a:hover:after { border-left-color: #ffc107   !important; }
+div.taxon_selector_tree .ss_breadcrumbs li a:hover { background: [[CONTRAST_DARK]]; color: [[DARK_GREY]]; }
+div.taxon_selector_tree .ss_breadcrumbs li a:hover:after { border-left-color: [[CONTRAST_DARK]] !important; }
 
 div.species_division_buttons {
   display: flex;
@@ -328,21 +326,21 @@ div.species_division_buttons a {
   margin-right: 8px;
 }
 div.species_division_buttons a:hover {
-  color: #fff;
-  background-color: #26a69a;
+  color: [[WHITE]];
+  background-color: [[MAIN_DARK]];
 }
 div.species_division_buttons a.active {
-  color: #fff;
-  background-color: #26a69a;
+  color: [[WHITE]];
+  background-color: [[MAIN_DARK]];
 }
 .btn, .btn-large {
     text-decoration: none;
-    color: #26a69a;
+    color: [[MAIN_DARK]];
     text-align: center;
     letter-spacing: .5px;
     transition: .2s ease-out;
     cursor: pointer;
-    border: 1px solid #26a69a;
+    border: 1px solid [[MAIN_DARK]];
     box-sizing: border-box;
     border-radius: 2px;
     display: inline-block;
@@ -357,11 +355,11 @@ div.species_division_buttons a.active {
 }
 
 .taxon_selector_tree .ss-strain {
-  background: #f6ffad;
+  background: [[CONTRAST_MEDIUM]];
 }
 
 .ss-autocomplete {
-  background-color: #f4f4f4 !important;
+  background-color: [[V_LIGHT_GREY]] !important;
 }
 
 .ss-autocomplete.ui-autocomplete.ui-widget-content {
@@ -371,8 +369,8 @@ div.species_division_buttons a.active {
 .ss-autocomplete.ui-autocomplete .ss-ac-result.ui-state-focus {
   border-left: 1px solid transparent !important;
   border-right: 1px solid transparent !important;
-  border-top: 1px solid #d4d4d4 !important;
-  border-bottom: 1px solid #d4d4d4 !important;
+  border-top: 1px solid [[PALE_GREY]] !important;
+  border-bottom: 1px solid [[PALE_GREY]] !important;
 }
 .ss-autocomplete.ui-autocomplete.ui-menu .ui-menu-item a.ss-ac-result {
   font-weight: 100;
@@ -383,7 +381,7 @@ div.species_division_buttons a.active {
 }
 /* Autocomplete highlight search letter */
 .ss-ac-highlight {
-  color: #e00000;
+  color: [[SEVERE_DARK]];
 }
 
 input.ss-alignment-selected-label {
@@ -407,17 +405,16 @@ div.taxon_selector .ss-buttons button{
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
   border-radius: 3px;
-  border: 1px solid #afafaf;
+  border: 1px solid [[PALE_GREY]];
   display: inline-block;
   cursor: pointer;
-  color: #0a0a0a;
-  background-color: #e6e6e6;
+  color: [[V_DARK_GREY]];
+  background-color: [[LIGHT_GREY]];
   padding: 4px 16px;
   text-decoration: none;
   outline: none;
   position: relative;
   overflow: hidden;
-  /*text-shadow: 0px 0px 4px #52889c;*/
 }
 
 div.taxon_selector .ss-buttons button:after {
@@ -430,7 +427,7 @@ div.taxon_selector .ss-buttons button:after {
   height: 120px;
   margin-left: -60px;
   margin-top: -60px;
-  background: #fff;
+  background: [[WHITE]];
   border-radius: 100%;
   opacity: .5;
 
@@ -465,7 +462,7 @@ div.taxon_selector .ss-buttons button:focus:after {
 }
 
 div.taxon_selector .ss-buttons button:hover {
-  background-color:#ccc;
+  background-color:[[PALE_GREY]];
 }
 div.taxon_selector .ss-buttons button:active {
   position:relative;
@@ -473,21 +470,22 @@ div.taxon_selector .ss-buttons button:active {
 }
 
 div.taxon_selector .ss-buttons button#ss-submit {
-  color: #c5c5c5;
-  border-color: #d4d4d4;
+  color: [[PALE_GREY]];
+  border-color: [[LIGHT_GREY]];
 }
 
 div.taxon_selector .ss-buttons button#ss-submit:hover {
-  background-color: #e6e6e6;
+  background-color: [[LIGHT_GREY]];
 }
 
 div.taxon_selector .ss-buttons button#ss-submit.active {
-  border: 1px solid #709de0;
-  color: white;
-  background-color: #5fb4d9;
+  border: 1px solid [[MEDIUM_GREY]];
+  color: [[WHITE]];
+  background-color: [[MAIN_DARK]];
 }
+
 div.taxon_selector .ss-buttons button#ss-submit.active:hover {
-  background-color:#2d9fc2;
+  background-color:[[MAIN_V_DARK]];
 }
 
 div.taxon_selector .ss-msg {
@@ -496,8 +494,8 @@ div.taxon_selector .ss-msg {
 }
 div.taxon_selector .ss-msg span{
   height: 50px;
-  background: rgba(206, 62, 62, 0.88);
-  color: white;
+  background: [[SEVERE_DARK]];
+  color: [[WHITE]];
   max-width: 400px;
   font-size: 16px;
   font-weight: 100;

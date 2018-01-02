@@ -20,9 +20,9 @@
 /* General */
 
 div.image_container { position: relative; border: 1px solid #999999; margin-bottom: 16px; }
-div.image-caption   { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; font-weight: bold; line-height: 16px; padding: 4px; }
+div.image-caption   { background-color: [[MAIN_DARK]]; color: [[WHITE]]; font-weight: bold; line-height: 16px; padding: 4px; }
 
-body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
+body.ie6 div.image_container { background-color: [[MAIN_DARK]]; }
 
 /* Navigation within image */
 
@@ -153,10 +153,10 @@ li.usertrack_highlight:after {
 .hover_label a.closetrack                 { background-image: url(/i/16/cross.png); }
 .hover_label a.config                     { text-decoration: none; }
 .hover_label p                            { padding: 4px 0; margin: 0; line-height: 1.5em; }
-.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[BUTTON_BG]]; color: #FFF; cursor: pointer; }
-.hover_label p.header span.hl-pin         { background-color: [[BUTTON_BG]]; background-image: url(/i/16/rev/pin.png); background-size: 12px auto; border: 2px solid [[BUTTON_BG]];
+.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[MAIN_DARK]]; color: #FFF; cursor: pointer; }
+.hover_label p.header span.hl-pin         { background-color: [[MAIN_DARK]]; background-image: url(/i/16/rev/pin.png); background-size: 12px auto; border: 2px solid [[MAIN_DARK]];
                                             border-radius: 2px; float: left; height: 12px; width: 12px; margin-right: 4px; }
-.hover_label p.header.on span.hl-pin      { background-color: [[BUTTON_BG_HOVER]]; border-color: [[BUTTON_BG_HOVER]]; }
+.hover_label p.header.on span.hl-pin      { background-color: [[MAIN_V_DARK]]; border-color: [[MAIN_V_DARK]]; }
 .hover_label p.header .hl-extend          { background: transparent url("/i/16/extend.png") no-repeat right center; cursor: ew-resize; height: 16px; width: 16px; float: right; display: none; }
 .pinned .hover_label p.header .hl-extend  { display: block; }
 
@@ -166,20 +166,20 @@ li.usertrack_highlight:after {
 .hover_label div.config li.normal         { font-weight: bold; }
 .hover_label div.config li.current        { font-weight: normal!important; }
 .hover_label div.config a                 { font-size: 11px; color: #000; }
-.hover_label div.config li.subset a       { color: [[PAGE_LINK]]; }
-.hover_label div.config li.subset a:hover { color: [[PAGE_HOVER]]; }
+.hover_label div.config li.subset a       { color: [[LINK]]; }
+.hover_label div.config li.subset a:hover { color: [[HOVER]]; }
 .hover_label div.config img               { vertical-align: top; padding: 2px 0; margin-left: 0; }
 .hover_label div.config img.tick          { margin: 9px 0 0 -11px; }
 
 .hover_label div.hl-buttons               { padding: 4px 8px; }
 .hover_label div.hl-content               { padding: 0 4px; }
 .hover_label div.hl-icon                  { float: left; margin-right: 4px; padding: 6px; width: 16px; height: 16px; background-repeat: no-repeat; background-position: 6px center; border-radius: 4px 4px 0 0; }
-.hover_label div.hl-icon.active           { background-color: [[PANEL_BG]]; }
-.hover_label div.hl-tab                   { background-color: [[PANEL_BG]]; display: none; clear: both; padding: 8px; }
+.hover_label div.hl-icon.active           { background-color: [[WHITE]]; }
+.hover_label div.hl-tab                   { background-color: [[WHITE]]; display: none; clear: both; padding: 8px; }
 .hover_label div.hl-tab.active            { display: block; }
 .hover_label div.hl-tab input             { width: 97% }
 .hover_label div.hl-tab input.small       { width: 25% }
-.hover_label div.hl-tab input.button      { background-color: [[BUTTON_BG]]; color:white; }
+.hover_label div.hl-tab input.button      { background-color: [[MAIN_DARK]]; color:white; }
 .hover_label div.hl-tab label             { display:inline}
 
 .hl-icon-info                             { background-image: url(/i/16/info.png); }
@@ -219,11 +219,11 @@ div.boundaries_wrapper ul li.hover::before     {
 }
 
 
-div.boundaries_wrapper ul li.helper            { outline: [[PANEL_BORDER]] solid 1px; }
-div.boundaries_wrapper ul li div.handle        { width: 10px; cursor: n-resize; background-color: [[TINT_BG]]; }
+div.boundaries_wrapper ul li.helper            { outline: [[PALE_GREY]] solid 1px; }
+div.boundaries_wrapper ul li div.handle        { width: 10px; cursor: n-resize; background-color: [[MAIN_V_LIGHT]]; }
 div.boundaries_wrapper ul li div.handle p      { height: 60%; position: relative; top: 20%; background-image: url(/i/track_grabber.png); }
-div.boundaries_wrapper ul li.f div.handle      { background: #9ED4DC; }
-div.boundaries_wrapper ul li.r div.handle      { background: #F1D7A4; }
+div.boundaries_wrapper ul li.f div.handle      { background: [[MAIN_LIGHT]]; }
+div.boundaries_wrapper ul li.r div.handle      { background: [[MODERATE_LIGHT]]; }
 
 body.track-reordering *                        { cursor: n-resize !important; }
 body.track-reordering.mac *                    { cursor: ns-resize !important; }
@@ -247,12 +247,12 @@ div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
 
 /* Icon toolbar for dynamic images */
 
-div.image_toolbar                 { background-color: [[BUTTON_BG]]; color: #FFFFFF; height: 16px; padding: 4px 0; overflow: hidden; }
+div.image_toolbar                 { background-color: [[MAIN_DARK]]; color: #FFFFFF; height: 16px; padding: 4px 0; overflow: hidden; }
 div.image_toolbar.top             { border-bottom: 1px solid #999999; }
 div.image_toolbar.bottom          { border-top: 1px solid #999999; }
-div.image_toolbar a               { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[BUTTON_BG]] solid 2px; border-radius: 2px; cursor: pointer; }
+div.image_toolbar a               { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[MAIN_DARK]] solid 2px; border-radius: 2px; cursor: pointer; }
 div.image_toolbar a:hover,
-div.image_toolbar a.selected      { border-color: [[BUTTON_BG_HOVER]]; background-color: [[BUTTON_BG_HOVER]]; }
+div.image_toolbar a.selected      { border-color: [[MAIN_V_DARK]]; background-color: [[MAIN_V_DARK]]; }
 
 div.image_toolbar a.config        { background-image: url(/i/16/rev/setting.png);       }
 div.image_toolbar a.data          { background-image: url(/i/16/rev/page-user.png);     }
@@ -269,37 +269,37 @@ div.image_toolbar a.mr-reset.outside { background-image: url(/i/16/rev/jump.png)
 div.image_toolbar div.scroll-switch               { float: right; line-height: 16px; }
 div.image_toolbar div.scroll-switch span          { margin-right: 4px; }
 div.image_toolbar div.scroll-switch div           { display: inline-block; margin: -2px 2px 0; padding: 2px; border-radius: 2px; }
-div.image_toolbar div.scroll-switch div.selected  { background-color: [[BUTTON_BG_HOVER]]; }
+div.image_toolbar div.scroll-switch div.selected  { background-color: [[MAIN_V_DARK]]; }
 div.image_toolbar div.scroll-switch div.last      { margin-right: 6px; }
-div.image_toolbar div.scroll-switch div:hover     { background-color: [[BUTTON_BG_HOVER]]; }
+div.image_toolbar div.scroll-switch div:hover     { background-color: [[MAIN_V_DARK]]; }
 div.image_toolbar div.scroll-switch button        { border: none; cursor: pointer; height: 17px; outline: none; width: 16px; vertical-align: top; background: url(/i/controls_white.png) repeat scroll -68px -18px transparent; }
 div.image_toolbar div.scroll-switch button.on     { background-position: -68px 0; }
 div.image_toolbar div.image_loading               { position: absolute; font-size: 120%; left: 50%; line-height: 16px; margin-left: -30px; }
 
 /* Image resize */
-div.image_resize_menu                 { z-index: 1000; border-top: 1px solid [[TINT_BORDER]]; position: absolute; cursor: pointer; display: none; width: 120px; }
-div.image_resize_menu div             { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 20px; background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; text-align: left; padding: 0 4px; }
-div.image_resize_menu div.header      { background-color: [[TABLE_HEADER]]; color: #FFFFFF; font-weight: bold; }
+div.image_resize_menu                 { z-index: 1000; border-top: 1px solid [[MAIN_LIGHT]]; position: absolute; cursor: pointer; display: none; width: 120px; }
+div.image_resize_menu div             { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 20px; background-color: [[MAIN_V_LIGHT]]; color: [[V_DARK_GREY]]; text-align: left; padding: 0 4px; }
+div.image_resize_menu div.header      { background-color: [[MAIN_DARK]]; color: [[WHITE]]; font-weight: bold; }
 div.image_resize_menu div div         { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 110px; }
 div.image_resize_menu div a           { text-decoration: none; font-weight: bold; }
-div.image_resize_menu div div.current { text-decoration: none; font-weight: bold; color: grey; background: url(/i/16/rev/check_grey.png) right no-repeat; }
+div.image_resize_menu div div.current { text-decoration: none; font-weight: bold; color: [[MEDIUM_GREY]]; background: url(/i/16/rev/check_grey.png) right no-repeat; }
 
-div.image_container .ui-resizable-handle:hover                  { top: -1px; width: 10px; padding: 1px 0; background: [[PAGE_TEXT]]; opacity: 0.5; filter: alpha(opacity=50); }
+div.image_container .ui-resizable-handle:hover                  { top: -1px; width: 10px; padding: 1px 0; background: [[DARK_GREY]]; opacity: 0.5; filter: alpha(opacity=50); }
 div.image_container.ui-resizable-disabled .ui-resizable-handle  { display: none; }
 div.image_container.ui-resizable-resizing .drag_select          { cursor: ew-resize; }
 div.image_resize_overlay                                        { z-index: 1000!important; overflow: inherit!important; }
-div.image_resize_overlay .bg                                    { width: 100%; height: 100%; background: [[PAGE_TEXT]]; opacity: 0.5; filter: alpha(opacity=50); }
+div.image_resize_overlay .bg                                    { width: 100%; height: 100%; background: [[DARK_GREY]]; opacity: 0.5; filter: alpha(opacity=50); }
 div.image_resize_overlay .ui-tooltip                            { right: 20px; }
 div.image_resize_overlay .ui-tooltip .ui-tooltip-content:before,
-div.image_resize_overlay .ui-tooltip .ui-tooltip-content:after  { border-style: solid; border-color: transparent [[PAGE_TEXT]]; content: ""; display: block; position: absolute; width: 0; }
+div.image_resize_overlay .ui-tooltip .ui-tooltip-content:after  { border-style: solid; border-color: transparent [[DARK_GREY]]; content: ""; display: block; position: absolute; width: 0; }
 div.image_resize_overlay .ui-tooltip .ui-tooltip-content:before { border-width: 0 0 8px 8px; right: -8px; top:    50%; }
 div.image_resize_overlay .ui-tooltip .ui-tooltip-content:after  { border-width: 8px 0 0 8px; right: -8px; bottom: 50%; }
 
-body.ie8 div.image_resize_overlay .bg                           { background: 0; border: 5px dashed [[PAGE_TEXT]]; }
+body.ie8 div.image_resize_overlay .bg                           { background: 0; border: 5px dashed [[DARK_GREY]]; }
 body.ie8 div.image_resize_overlay .ui-tooltip                   { display: none; }
 
 /* Styles for sprite mouseovers */
-a.icon_link                   { text-decoration: none; color: [[PAGE_TEXT]]; }
+a.icon_link                   { text-decoration: none; color: [[DARK_GREY]]; }
 div.icon                      { padding: 4px 8px 4px 0; }
 .sprite,
 .sprite_disabled              { display: inline-block; height: 16px; width: 16px; background: no-repeat 0 0; cursor: pointer; }

@@ -94,7 +94,7 @@ sub add_auto_format_dropdown {
 sub trackhub_search {
   my $self            = shift;
   my $hub             = $self->hub;
-  return sprintf '<a href="%s" class="modal_link" rel="modal_user_data"><img src="/i/16/globe.png" style="margin-right:8px; vertical-align:middle" />Search for public track hubs</a></p>', $hub->url({'action' => 'TrackHubSearch'});
+  return sprintf '<a href="%s" class="modal_link find" style="inline-block" rel="modal_user_data">Search for public track hubs</a></p>', $hub->url({'action' => 'TrackHubSearch'});
 }
 
 sub userdata_form {
