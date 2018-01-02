@@ -19,7 +19,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Getopt::Long;
 use IO::Compress::Gzip qw(gzip $GzipError);
 use Pod::Usage;
@@ -69,8 +68,7 @@ FROM
     JOIN seq_member pm ON (gm.gene_member_id=pm.gene_member_id) 
 SQL
 
-  my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $DBA->dbc());
-  $helper->execute_no_return(
+  $DBA->dbc->sql_helper->execute_no_return(
     -SQL => $sql,
     -CALLBACK => sub {
       my ($row) = @_;

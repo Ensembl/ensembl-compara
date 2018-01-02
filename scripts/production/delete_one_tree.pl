@@ -23,7 +23,6 @@ use warnings;
 use Getopt::Long;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::SqlHelper;
 
 my $compara_url;
 my $tree_id;
@@ -37,12 +36,11 @@ GetOptions(
 
 my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $compara_url);
 my $gene_tree_adaptor = $dba->get_GeneTreeAdaptor;
-my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc);
 
 my $tree = $gene_tree_adaptor->fetch_by_dbID($tree_id);
 
 $tree->preload();
-$helper->transaction(-CALLBACK => sub {
+$dba->dbc->sql_helper->transaction(-CALLBACK => sub {
     $gene_tree_adaptor->delete_tree($tree);
 });
 $tree->release_tree();

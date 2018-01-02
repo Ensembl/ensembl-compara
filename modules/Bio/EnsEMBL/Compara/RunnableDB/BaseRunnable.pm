@@ -264,8 +264,7 @@ Calls a method within a transaction.
 sub call_within_transaction {
     my ($self, $callback, $retry, $pause) = @_;
 
-        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
-        return $helper->transaction(
+        return $self->compara_dba->dbc->sql_helper->transaction(
             -RETRY => $retry,
             -PAUSE => $pause,
             -CALLBACK => $callback,

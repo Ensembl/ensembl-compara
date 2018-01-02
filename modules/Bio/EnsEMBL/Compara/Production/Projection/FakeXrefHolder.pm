@@ -50,7 +50,6 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref wrap_array);
 
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::DBEntry;
 use Bio::EnsEMBL::OntologyXref;
 
@@ -167,7 +166,6 @@ sub build_peptide_dbentries_from_Member {
   my $canonical_member = $member->get_canonical_SeqMember;
 
   my $dbc = $canonical_member->genome_db()->db_adaptor()->dbc();
-  my $t = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
   
   my $columns  = 'x.xref_id, x.external_db_id, x.dbprimary_acc, x.display_label, x.version, x.description, x.info_type, x.info_text, oxr.linkage_type, ed.db_name, ed.type, ed.db_release, oxr.object_xref_id';
   my $xref_join = <<'SQL';
@@ -263,7 +261,7 @@ SQL
     return $xref;
   };
 
-  my $entries = $t->execute(-SQL => $sql, -CALLBACK => $callback, -PARAMS => $params);
+  my $entries = $dbc->sql_helper->execute(-SQL => $sql, -CALLBACK => $callback, -PARAMS => $params);
   
   return $class->new(-DBENTRIES => $entries);
 }

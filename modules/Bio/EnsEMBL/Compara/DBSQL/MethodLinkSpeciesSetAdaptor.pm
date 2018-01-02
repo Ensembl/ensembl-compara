@@ -94,7 +94,6 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
@@ -220,8 +219,7 @@ sub store {
         my $min_mlss_id = 10000 * $mlss_id_factor + 1;
         my $max_mlss_id = 10000 * ($mlss_id_factor + 1);
 
-        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new( -DB_CONNECTION => $self->dbc );
-        my $val = $helper->transaction(
+        my $val = $self->dbc->sql_helper->transaction(
             -RETRY => 3,
             -CALLBACK => sub {
                 my $sth2 = $self->prepare("INSERT INTO method_link_species_set $columns SELECT

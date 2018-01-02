@@ -263,14 +263,13 @@ sub _update_status {
 
 sub _dbname_to_original_type_builder {
   my ($self, $dba) = @_;
-  my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc());
   my $sql = <<SQL;
 SELECT DISTINCT e.db_name, ox.ensembl_object_type 
 FROM external_db e, xref x, object_xref ox 
 WHERE x.xref_id=ox.xref_id 
 AND e.external_db_id=x.external_db_id
 SQL
-  return $h->execute_into_hash(-SQL => $sql);
+  return $dba->dbc->sql_helper->execute_into_hash(-SQL => $sql);
 }
 
 1;

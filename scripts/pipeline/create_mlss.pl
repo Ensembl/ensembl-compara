@@ -174,7 +174,6 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Getopt::Long;
 
 my $help;
@@ -260,7 +259,6 @@ if ($compara =~ /mysql:\/\//) {
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
 }
-my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 my $gdba = $compara_dba->get_GenomeDBAdaptor();
 my $ma = $compara_dba->get_MethodAdaptor();
 my $ssa = $compara_dba->get_SpeciesSetAdaptor();
@@ -436,7 +434,7 @@ sub create_mlss {
     print "  SpeciesSet name: ".($mlss->species_set->name)."\n";
     print "  MethodLinkSpeciesSet has dbID: ", $mlss->dbID, "\n";
     if ($release and !$mlss->is_current) {
-      $helper->transaction( -CALLBACK => sub { $mlssa->make_object_current($mlss) } );
+      $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub { $mlssa->make_object_current($mlss) } );
     }
     return;
   }
@@ -514,7 +512,7 @@ sub create_mlss {
                                                                  -source => $source,
                                                                  -url => $url);
 
-  $helper->transaction( -CALLBACK => sub {
+  $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
     $mlssa->store($new_mlss);
     $mlssa->make_object_current($new_mlss) if $release;
     if (!$singleton && !$pairwise) {

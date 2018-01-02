@@ -101,7 +101,6 @@ database (and would be happy with a read-only connection).
 =cut
 
 use Bio::EnsEMBL::ApiVersion;
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
@@ -219,8 +218,7 @@ warn "The new collection will be composed of ".scalar(@new_collection_gdbs)." Ge
 print "Press Enter to continue\n";
 <>;
 
-my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
-$helper->transaction( -CALLBACK => sub {
+$compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
     my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
     # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
     $compara_dba->get_SpeciesSetAdaptor->make_object_current($new_collection_ss);

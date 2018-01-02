@@ -63,7 +63,6 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(looks_like_number);
-use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -142,9 +141,8 @@ sub fetch_input {
   my $species_list = $self->param('species') || $self->param('genome_db_ids');
 
   unless( $species_list ) {
-      my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
       my $sql = q{SELECT DISTINCT genome_db_id FROM gene_member WHERE genome_db_id IS NOT NULL AND genome_db_id <> 0};
-      $species_list = $h->execute_simple( -SQL => $sql);
+      $species_list = $self->compara_dba->dbc->sql_helper->execute_simple( -SQL => $sql);
   }
 
   my $genome_db_adaptor = $self->compara_dba()->get_GenomeDBAdaptor();  
@@ -264,11 +262,10 @@ sub _process {
 
 sub _need_to_process_genome_db_source {
 	my ($self, $genome_db, $source_name) = @_;
-	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
 	my $sql = sprintf('select count(*) from %s where genome_db_id =? and source_name =?', $source_name2table{$source_name});
       $sql .= sprintf("AND %s IS NULL", $modes->{$self->param('mode')}->{sql_column});
   my $params = [$genome_db->dbID(), $source_name];
-	return $h->execute_single_result( -SQL => $sql, -PARAMS => $params);
+	return $self->compara_dba->dbc->sql_helper->execute_single_result( -SQL => $sql, -PARAMS => $params);
 }
 
 
@@ -281,11 +278,9 @@ sub _get_field_lookup {
   my $sql = $modes->{$self->param('mode')}->{sql_lookups}->{$source_name};
 	
   my $dba = $genome_db->db_adaptor();
-  my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dba->dbc());
-  
   my $params = [$dba->species_id()];
 	
-  my $hash = $h->execute_into_hash( -SQL => $sql, -PARAMS => $params );
+  my $hash = $dba->dbc->sql_helper->execute_into_hash( -SQL => $sql, -PARAMS => $params );
   return $hash;
 }
 
@@ -307,13 +302,11 @@ sub _update_field {
 	
 	my $total = 0;
 	
-	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
-	 
       my $sql_column = $modes->{$self->param('mode')}->{sql_column};
       my $table = $source_name2table{$self->param('source_name')};
-	$h->transaction( -CALLBACK => sub {
+	$self->compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 	  my $sql = "update $table set $sql_column = ? where ${table}_id =?";
-	  $h->batch(
+	  $self->compara_dba->dbc->sql_helper->batch(
 	   -SQL => $sql,
 	   -CALLBACK => sub {
 	     my ($sth) = @_;

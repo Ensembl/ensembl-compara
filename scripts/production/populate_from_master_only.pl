@@ -76,8 +76,7 @@ foreach my $mlss_id ( @mlss_ids ) {
 
 summarise_copy_data( \%mlss_ids, \%ss_ids, \%gdb_ids );
 exit(1) if ( $dry_run );
-my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $new_dba->dbc);
-$helper->transaction(
+$new_dba->dbc->sql_helper->transaction(
     -RETRY => 0,
     -PAUSE => 0,
     -CALLBACK => sub{ perform_copy( \%mlss_ids, \%ss_ids, \%gdb_ids ) },

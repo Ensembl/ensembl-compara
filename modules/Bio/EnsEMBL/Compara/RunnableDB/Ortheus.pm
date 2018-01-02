@@ -94,7 +94,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GenomicAlign;
@@ -231,10 +230,8 @@ sub write_output {
 	my $ancestor_genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly("ancestral_sequences");
 	my $ancestral_conn = $ancestor_genome_db->db_adaptor->dbc;
 
-	my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-	my $ancestral_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $ancestral_conn);
-	$compara_helper->transaction(-CALLBACK => sub {
-	    $ancestral_helper->transaction(-CALLBACK => sub {
+	$compara_conn->sql_helper->transaction(-CALLBACK => sub {
+	    $ancestral_conn->sql_helper->transaction(-CALLBACK => sub {
 		 $self->_write_output;
 	     });
          });

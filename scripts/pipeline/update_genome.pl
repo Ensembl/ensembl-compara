@@ -147,7 +147,6 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
-use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
@@ -201,7 +200,6 @@ if ($compara =~ /mysql:\/\//) {
     $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 }
 throw ("Cannot connect to database [$compara]") if (!$compara_dba);
-my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 
 my $new_genome_dbs = [];
 
@@ -231,7 +229,7 @@ if ($collection) {
     } else {
         print "*** The collection '$collection' does not exist in the database. It will now be created.\n";
     }
-    $helper->transaction( -CALLBACK => sub {
+    $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         my $new_collection_ss = $ss_adaptor->update_collection($collection, $ini_coll_ss, $new_genome_dbs);
         # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
         $ss_adaptor->make_object_current($new_collection_ss) if $release;
@@ -262,7 +260,7 @@ sub process_species {
     }
     throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
 
-    my $gdbs = $helper->transaction( -CALLBACK => sub {
+    my $gdbs = $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         my $genome_db = update_genome_db($species_db, $compara_dba, $force);
         print "GenomeDB after update: ", $genome_db->toString, "\n\n";
         Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $genome_db, $species_db);
