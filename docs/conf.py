@@ -32,6 +32,7 @@ import sys
 import os
 import sphinx_rtd_theme
 import subprocess
+import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -62,6 +63,7 @@ source_parsers = {
     '.md': CommonMarkParser,
 }
 
+year = datetime.datetime.now().year
 
 # The suffix of source filenames.
 source_suffix = ['.rst', '.md']
@@ -74,7 +76,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Ensembl Compara documentation'
-copyright = u'2017, Ensembl'
+copyright = u'{0}, Ensembl'.format(year)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -294,7 +296,7 @@ texinfo_documents = [
 epub_title = u'ensembl_compara_doc'
 epub_author = u'Ensembl-compara'
 epub_publisher = u'Ensembl-compara'
-epub_copyright = u'2017, Ensembl Compara'
+epub_copyright = u'{0}, Ensembl Compara'.format(year)
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'ensembl_compara_doc'
