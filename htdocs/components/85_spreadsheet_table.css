@@ -155,7 +155,7 @@ tr.row-sub td:first-child { text-indent:24px; }
 .new_table th,.new_table td { padding: 4px; word-wrap: break-word; }
 
 .newtable_controller { margin: 16px 0; }
-.new_table_wrapper { clear: both; margin: 0 0 16px; }
+.new_table_wrapper { clear: both; margin: 0 0 16px; display: grid;}
 .new_table_top     { background-color: [[MAIN_DARK]]; border: 1px solid [[PALE_GREY]]; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
 .new_table_section { float: left; width: 33%; height: 100%; }
 .new_table_section_2 > * { float: right; }
