@@ -92,6 +92,7 @@ sub table_data {
 
   # Get population structure
   foreach my $svpf (@$data) {
+
     my $pop = $svpf->population;
     my $pname  = $pop->name;
     my $pop_id = $pop->dbID;
@@ -129,6 +130,8 @@ sub table_data {
   foreach my $pop_id (@ids) {
 
     my $svpf = $pop_data{$pop_id};
+
+    next if (!$svpf);
 
     my ($row_class, $group_member);
     if ($svpf->name =~ /(\W+|_)ALL/ && $tree->{$pop_id}{'children'}) {
