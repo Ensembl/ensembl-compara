@@ -29,18 +29,14 @@ sub draw_feature {
 ### @param position Hashref - information about the feature's size and position
   my ($self, $block, $position) = @_;
 
-  ## Basic parameters for all parts of the feature
-  my $track_config  = $self->track_config;
-  my $colour        = $feature->{'colour'};
-
   ## We only need the alignment for the current species
-  my $feature = $block->{$track_config->{'species'}};
+  my $feature = $block->{$self->image_config->{'species'}};
   return unless $feature;
+  #use Data::Dumper;
+  #warn ">>> DRAWING FEATURE ".Dumper($feature);
+  $position->{'width'} = $feature->{'end'} - $feature->{'start'};
 
-  my $params = {};
-  my $alignment = $self->Rect($params);;
-
-  push @{$self->glyphs}, $alignment;
+  $self->SUPER::draw_feature($feature, $position);
 }
 
 1;

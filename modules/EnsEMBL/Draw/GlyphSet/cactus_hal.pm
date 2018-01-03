@@ -65,7 +65,6 @@ sub init {
 
 sub render_normal {
   my $self = shift;
-  warn ">>> RENDERING NORMAL";
 
   return $self->render_compact if $debug_force_compact;
 
@@ -73,12 +72,11 @@ sub render_normal {
 
   my $data = $self->get_data;
   if (scalar @{$data->[0]{'features'}||[]}) {
-    warn ">>> DRAWING FEATURES!";
-    use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-    warn Dumper($data);
-    #my $config = $self->track_style_config;
-    #my $style  = EnsEMBL::Draw::Style::Feature::Alignment->new($config, $data);
-    #$self->push($style->create_glyphs);
+    #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+    #warn Dumper($data);
+    my $config = $self->track_style_config;
+    my $style  = EnsEMBL::Draw::Style::Feature::Alignment->new($config, $data);
+    $self->push($style->create_glyphs);
   }
   else {
     $self->no_features;
@@ -100,9 +98,8 @@ sub get_data {
     return $self->feature_cache($cache_key);
   }
 
-  my $ref_sp    = $self->{'container'}->hub->species;
-  my $nonref_sp = $self->{'container'}->hub->param('s1');
-  warn ">>> REF $ref_sp, NON-REF $nonref_sp";
+  my $ref_sp    = $self->{'config'}->hub->species;
+  my $nonref_sp = $self->{'config'}->hub->param('s1');
 
   my $slice   = $self->{'container'};
   my $compara = $self->dbadaptor('multi',$self->my_config('db'));
@@ -118,10 +115,13 @@ sub get_data {
   my $strand_flag = $self->my_config('strand');
   my $length      = $slice->length;
   my $strand      = $self->strand;
+  my $colour      = $self->my_colour('default');
+  $self->{'config'}{'hub'}->param('r1') =~ /:(\d+)\-/;
+  my $other_start = $1; 
 
   my $features = [];
 
-  foreach my $gab (@{$features||[]}) {
+  foreach my $gab (@{$gabs||[]}) {
     my $start     = $gab->reference_slice_start;
     my $end       = $gab->reference_slice_end;
     my $nonref    = $gab->get_all_non_reference_genomic_aligns->[0];
@@ -130,7 +130,17 @@ sub get_data {
     next if $end < 1 || $start > $length;
 
     ## Convert GAB into something the drawing code can understand
-    my $drawable = {'block_1' => {}, 'block_2' => {}};
+    my $drawable = {
+                    $ref_sp     => {
+                                    'start'   => $start, 
+                                    'end'     => $end, 
+                                    'colour'  => $colour,
+                                    },
+                    $nonref_sp  => {'start'   => $nonref->dnafrag_start - $other_start, 
+                                    'end'     => $nonref->dnafrag_end - $other_start,
+                                    'colour'  => $colour,
+                                    },
+                  };
 
     #my @tag = ($gab->reference_genomic_align->original_dbID, $gab->get_all_non_reference_genomic_aligns->[0]->original_dbID);
     #warn ">>> TAG @tag";
