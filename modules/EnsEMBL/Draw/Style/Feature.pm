@@ -138,6 +138,7 @@ sub create_glyphs {
     #warn Dumper(\@features);
 
     ## SECOND LOOP - draw features row by row
+    my $count = 0;
     foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
       my $new_y;
       my $feature_row = 0;
@@ -179,7 +180,7 @@ sub create_glyphs {
                       };
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      my $glyph = $self->draw_feature($feature, $position);
+      my $glyph = $self->draw_feature($feature, $position, $count);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
       $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
@@ -276,7 +277,7 @@ sub create_glyphs {
       ## Optionally highlight this feature (including its label) 
       $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
       $self->add_highlight($feature, $position);
-
+      $count++;
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin

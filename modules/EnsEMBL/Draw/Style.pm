@@ -74,6 +74,28 @@ use EnsEMBL::Draw::Glyph::Space;
 use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
 
+sub rainbow {
+## Enable drawing of features in different colours so they can be told apart
+## (Generally only used for debugging)
+## @param index - Integer (optional)
+## Usage: 
+## my $debug = $self->track_config->get('DEBUG_RAINBOW');
+## $feature->{'colour'} = $self->random_colour if $debug;
+  my ($self, $index) = @_;
+  my $rainbow = $self->image_config->hub->species_defs->RAINBOW || [qw(magenta red orange yellow green cyan blue purple)];
+  if ($index) {
+    ## Use the supplied index but adjust to fit within the array
+    if ($index > scalar(@$rainbow)) {
+      $index = $index % scalar(@$rainbow);
+    }
+  }
+  else {
+    ## Return a random colour 
+    $index = rand() * scalar(@$rainbow);
+  }
+  return $rainbow->[$index];  
+}
+
 ### Wrappers around low-level drawing code
 sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);        }
 sub Barcode    { my $self = shift; return EnsEMBL::Draw::Glyph::Barcode->new(@_);    }
