@@ -83,7 +83,7 @@ sub rainbow {
 ## $feature->{'colour'} = $self->random_colour if $debug;
   my ($self, $index) = @_;
   my $rainbow = $self->image_config->hub->species_defs->RAINBOW || [qw(magenta red orange yellow green cyan blue purple)];
-  if ($index) {
+  if (defined $index) {
     ## Use the supplied index but adjust to fit within the array
     if ($index > scalar(@$rainbow)) {
       $index = $index % scalar(@$rainbow);
