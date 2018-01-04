@@ -105,7 +105,7 @@ sub draw_feature {
       $params{'x'} = $end < 0 ? 0 : $image_width; 
     }
     else {
-      $params{'colour'}     = $colour;
+      $params{'colour'}     = $_->{'colour'} || $colour;
       $params{'structure'}  = $_;
       $self->draw_block($composite, %params);
     }
