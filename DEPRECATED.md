@@ -2,7 +2,6 @@
 
 ## Methods removed in favour of toString() in Ensembl 88
 
-* `Member::print_member()`
 * `GenomicAlign::_print()`
 * `GenomicAlignBlock::_print()`
 * `ConservationScore::_print()`

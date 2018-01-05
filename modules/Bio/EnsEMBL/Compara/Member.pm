@@ -372,11 +372,5 @@ sub toString {
     return $str;
 }
 
-sub print_member {  ## DEPRECATED
-    my $self = shift;
-    deprecate('$member->print_member() is deprecated and will be removed in e88. Use $member->toString() instead.');
-    print $self->toString, "\n";
-}
-
 
 1;
