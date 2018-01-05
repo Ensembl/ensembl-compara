@@ -52,7 +52,8 @@ sub default_options {
         'species_set_id'  => undef,
         'outgroup'        => 'saccharomyces_cerevisiae',
         
-        'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
+        # 'output_dir'        => "/gpfs/nobackup/ensembl/" . $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
+        'output_dir'        => "/hps/nobackup/production/ensembl/" . $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
         'sketch_dir'        => '/hps/nobackup/production/ensembl/compara_ensembl/species_tree/ensembl_sketches',
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
