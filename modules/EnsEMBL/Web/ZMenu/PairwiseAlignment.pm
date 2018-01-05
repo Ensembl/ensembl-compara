@@ -106,7 +106,7 @@ sub content {
       });
     }
 
-    if ($n0) {
+    if ($n0 && $hub->action ne 'Multi') {
       # Link from the block to the Multi-species view
       $url = $hub->url({
         type    => 'Location',
@@ -116,10 +116,11 @@ sub content {
         s1      => $sp1,
       });
 
-      $self->add_entry({
-        label => 'Region Comparison View',
-        link  => $url,
-      });
+        $self->add_entry({
+          label => 'Region Comparison View',
+          link  => $url,
+        });
+      }
     }
   }
 
