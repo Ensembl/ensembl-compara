@@ -31,7 +31,6 @@ use EnsEMBL::Draw::Style::Feature::Alignment;
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 # Useful for debugging. Should all be 0 in checked-in code.
-my $debug_force_cigar   = 1; # CIGAR at all resolutions
 my $debug_force_compact = 0; # render_normal -> render_compact
 
 sub init {
@@ -138,51 +137,19 @@ sub get_data {
    
     next if $end < 1 || $start > $length;
 
-    ## Build structure from cigar
-    my $structures = {};
-
-    ## Only draw CIGAR if really zoomed in!
-    if ($self->scalex > 0.2 || $debug_force_cigar) {
-      ## Build underlying CIGAR structure
-      my %cigars = (
-                    'ref'     => $gab->reference_genomic_align->cigar_line,
-                    'nonref'  => $nonref->cigar_line,
-                    );
-
-      while (my($key, $cigar) = each (%cigars)) {
-        warn ">>> CIGAR $cigar";
-        ## Skip if it's 100% match
-        next unless $cigar =~ /[IDG]/;
-        my $cigar_start = 0;
-        my $cigar_array = _parse_cigar($cigar);
-        foreach (@$cigar_array) {
-          my ($length, $type) = @$_;
-          my $segment_colour = $type eq 'D' ? 'black' : $colour; 
-          push @{$structures->{$key}}, {
-                      'start'   => $cigar_start, 
-                      'end'     => $cigar_start + $length,
-                      'colour'  => $segment_colour,
-                    };
-          $cigar_start += $length;
-        }
-      }
-    }
-
     ## Convert into something the drawing code can understand
     my $drawable = {
                     $ref_sp     => {
                                     'start'     => $start, 
                                     'end'       => $end, 
-                                    'structure' => $structures->{'ref'},
                                     'colour'    => $colour,
                                     },
                     $nonref_sp  => {'start'     => $nr_start, 
                                     'end'       => $nr_end,
-                                    'structure' => $structures->{'nonref'},
                                     'colour'    => $colour,
                                     },
                   };
-    warn Dumper($drawable);
+    #warn Dumper($drawable);
 
 =pod
     my @tag = ($gab->reference_genomic_align->original_dbID, $gab->get_all_non_reference_genomic_aligns->[0]->original_dbID);
@@ -209,48 +176,6 @@ sub get_data {
 }
 
 ###### PRIVATE METHODS ###########
-
-sub parse_cigar {
-## Build CIGAR array from "match/gap" CIGARs in each GenomicAlign.
-## (The one good thing we once got automatically from DnaAlignFeatures).
-## Based on _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures, but
-## implemented more efficiently.
-## @param gab - GenomicAlignBlock
-## @return ArrayRef
-  my ($self, $gab) = @_;
-
-  my @inputs = map { _split_cigar($_) } (
-    $gab->reference_genomic_align->cigar_line,
-    $gab->get_all_non_reference_genomic_aligns->[0]->cigar_line
-  );
-
-  if ($gab->reference_slice_strand < 0) {
-    @inputs = map { [ reverse @$_ ] } @inputs;
-  }
-
-  my $out = [];
-  while (@{$inputs[0]} and @{$inputs[1]}) {
-    my $n = min(map { $_->[0][0] } @inputs);
-    my $m = join("",map { ($_->[0][1] eq 'M')?'N':'-' } @inputs);
-    $m = { NN => 'M', 'N-' => 'I', '-N' => 'D' }->{$m};
-    return undef unless($m);
-    push @$out, [$n,$m];
-
-    foreach my $in (@inputs) {
-      shift @$in unless $in->[0][0] -= $n;
-    }
-  }
-  return $out;
-  #return join("",map { (($_->[0]==1)?'':$_->[0]).$_->[1] } @out);
-}
-
-sub _parse_cigar {
-# Split CIGAR string into array
-  my $cigar = shift;
-  my @out;
-  while ($cigar =~ s/^(\d*)([A-Z])//) { push @out,[$1||1,$2]; }
-  return \@out;
-}
 
 # Should we draw a cross rather than a quadrilateral?
 sub _should_draw_cross {

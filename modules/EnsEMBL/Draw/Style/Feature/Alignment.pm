@@ -21,7 +21,7 @@ package EnsEMBL::Draw::Style::Feature::Alignment;
 
 ### Renders a track as a series of align blocks
 
-use parent qw(EnsEMBL::Draw::Style::Feature::Structured);
+use parent qw(EnsEMBL::Draw::Style::Feature);
 
 sub draw_feature {
 ### Create each alignment as a block
@@ -32,10 +32,11 @@ sub draw_feature {
   ## We only need the alignment for the current species
   my $feature = $block->{$self->image_config->{'species'}};
   return unless $feature;
-  #use Data::Dumper;
-  #warn ">>> DRAWING FEATURE ".Dumper($feature);
+  use Data::Dumper;
+  warn ">>> DRAWING ALIGNMENT ".Dumper($block);
   my $debug = $self->track_config->get('DEBUG_RAINBOW');
   $feature->{'colour'} = $self->rainbow($count) if $debug;
+  warn "@@@ ACTUAL COLOUR ".$feature->{'colour'}."\n\n";
   ## Historically, width is saved in the position hash rather than the feature itself
   $position->{'width'} = $feature->{'end'} - $feature->{'start'};
 
