@@ -186,15 +186,6 @@ sub content {
         link  => $url,
       });
     }
-
-    # Link from the block to old ComparaGenomicAlignment display
-    $url = $hub->url({
-      type   => 'Location',
-      action => 'ComparaGenomicAlignment', # TODO: does this exist anywhere? doesn't look like it
-      s1     => $sp1,
-      r1     => $r1,
-      method => $disp_method
-    });
   }
   
   $sp1         =~ s/_/ /g;
