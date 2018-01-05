@@ -70,7 +70,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::SyntenyRegion methods", sub {
 
     my $regions = $dnafrag_region_adaptor->fetch_all_by_synteny_region_id($synteny_region_id);
 
-    ok(test_getter_setter($synteny_region, "regions", $regions));
+    ok(test_getter_setter($synteny_region, "_regions", $regions));
 
     done_testing();
 };

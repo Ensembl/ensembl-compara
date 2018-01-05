@@ -84,7 +84,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception qw(deprecate);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -115,13 +114,12 @@ sub new {
     my ($method_link_species_set_id, $regions) =
         rearrange([qw(METHOD_LINK_SPECIES_SET_ID REGIONS)], @args);
 
-    $self->{'regions'} = $regions if $regions;
+    $self->_regions($regions) if $regions;
     $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
   }
 
   return $self;
 }
-
 
 
 =head2 method_link_species_set_id
@@ -145,6 +143,7 @@ sub method_link_species_set_id {
   return $obj->{'method_link_species_set_id'};
 }
 
+
 =head2 get_all_DnaFragRegions
 
  Arg  1     : -none-
@@ -165,9 +164,20 @@ sub get_all_DnaFragRegions {
   return $obj->{'regions'};
 }
 
-sub regions {   ## DEPRECATED
+
+=head2 _regions
+
+  Arg [1]     : (optional) Arrayref of Bio::EnsEMBL::Compara::DnaFragRegion $regions
+  Example     : none
+  Description : Getter/setter for the regions value.
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::DnaFragRegion
+  Exceptions  : none
+  Caller      : private
+
+=cut
+
+sub _regions {
   my ($obj, $value) = @_;
-  deprecate('SyntenyRegion::regions() is deprecated and will be removed in e91. Please use get_all_DnaFragRegions() instead');
 
   if (defined $value) {
     $obj->{'regions'} = $value;

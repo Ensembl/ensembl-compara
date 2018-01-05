@@ -10,7 +10,6 @@
 ## Miscellaneous, to be removed in Ensembl 89
 
 * `MethodLinkSpeciesSet::species_set_obj()`
-* `SyntenyRegion::regions()`
 
 ## DnaFrag methods, to be removed in Ensembl 91
 
