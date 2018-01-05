@@ -44,8 +44,8 @@ install:
     - export HTSLIB_DIR=$(pwd -P)
     - cd ../
     - export PERL5LIB=$PWD/bioperl-live
-    - cpanm --quiet --installdeps --with-recommends --notest --cpanfile ensembl/cpanfile .
-    - cpanm --quiet --installdeps --with-recommends --notest --cpanfile ensembl-rest/cpanfile .
+    - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+    - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
