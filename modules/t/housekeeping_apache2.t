@@ -1,5 +1,5 @@
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2017] EMBL-European Bioinformatics Institute
+# Copyright [2016-2018] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modu
 foreach my $f (@source_files) {
     # Except the .sql of the test-database dumps
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
+    # CLEAN.t
+    next if $f =~ /\/CLEAN.t$/;
     # And Apollo's code
     next if $f =~ /scripts\/synteny\/(apollo|BuildSynteny|SyntenyManifest.txt)/;
     has_apache2_licence($f);
