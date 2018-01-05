@@ -51,6 +51,8 @@ sub content {
   my $sp1_display = $sp1;
   my $url;
   
+  my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
+
   $sp1_display  =~ s/_/ /g;
   
   if ($orient eq 'Forward') {
@@ -106,7 +108,7 @@ sub content {
       });
     }
 
-    if ($n0 && $hub->action ne 'Multi') {
+    if ($n0 && $page_action ne 'Multi') {
       # Link from the block to the Multi-species view
       $url = $hub->url({
         type    => 'Location',
@@ -116,11 +118,10 @@ sub content {
         s1      => $sp1,
       });
 
-        $self->add_entry({
-          label => 'Region Comparison View',
-          link  => $url,
-        });
-      }
+      $self->add_entry({
+        label => 'Region Comparison View',
+        link  => $url,
+      });
     }
   }
 
@@ -170,19 +171,21 @@ sub content {
       });
     }
 
-    # Link from the block to the Multi-species view
-    $url = $hub->url({
-      type    => 'Location',
-      action  => 'Multi',
-      r       => $r,
-      r1      => $r1,
-      s1      => $sp1,
-    });
+    unless ($page_action eq 'Multi') {
+      # Link from the block to the Multi-species view
+      $url = $hub->url({
+        type    => 'Location',
+        action  => 'Multi',
+        r       => $r,
+        r1      => $r1,
+        s1      => $sp1,
+      });
 
-    $self->add_entry({
-      label => 'Region Comparison View',
-      link  => $url,
-    });
+      $self->add_entry({
+        label => 'Region Comparison View',
+        link  => $url,
+      });
+    }
 
     # Link from the block to old ComparaGenomicAlignment display
     $url = $hub->url({
