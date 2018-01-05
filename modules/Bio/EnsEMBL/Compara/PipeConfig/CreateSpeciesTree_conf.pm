@@ -52,19 +52,20 @@ sub default_options {
         'species_set_id'  => undef,
         'outgroup'        => 'saccharomyces_cerevisiae',
         
-        # 'output_dir'        => "/gpfs/nobackup/ensembl/" . $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
-        'output_dir'        => "/hps/nobackup/production/ensembl/" . $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
+        'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). "/species_tree_" . $self->o('ensembl_release'),
         'sketch_dir'        => '/hps/nobackup/production/ensembl/compara_ensembl/species_tree/ensembl_sketches',
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
-        'mash_exe'          => '/nfs/gns/homes/carlac/bin/mash',
+        
+        'linuxbrew_bin'     => $self->o('ENV', 'LINUXBREW_HOME').'/bin',
+        'mash_exe'          => $self->o('linuxbrew_bin').'/mash',
         'mash_kmer_size'    => 24, 
         'mash_sketch_size'  => 1000000, 
 
         'master_db'          => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
         'dump_genome_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/dumps/dump_genome.pl',
-        'rapidnj_exe'        => '/homes/carlac/software/rapidnj/bin-2.3.2/linux_64/rapidnj',
-        'erable_exe'         => '/homes/carlac/software/erable',
+        'rapidnj_exe'        => $self->o('linuxbrew_bin').'/rapidnj',
+        'erable_exe'         => $self->o('linuxbrew_bin').'/erable',
         'multifasta_dir'     => undef, # define if species multifastas have been pre-dumped
 
         'group_on_taxonomy' => 0,
