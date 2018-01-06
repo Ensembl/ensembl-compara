@@ -25,24 +25,12 @@ before_install:
     - git clone --branch version/2.4 --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
-    - git clone --branch master --depth 1 https://github.com/samtools/tabix.git
-    - git clone  --branch 1.3.2 --depth 1 https://github.com/samtools/htslib.git
 
 
 install:
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
-    - cd tabix
-    - make
-    - cd perl
-    - perl Makefile.PL
-    - make && make install
-    - cd ../../
-    - cd htslib
-    - make
-    - export HTSLIB_DIR=$(pwd -P)
-    - cd ../
     - export PERL5LIB=$PWD/bioperl-live
     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
