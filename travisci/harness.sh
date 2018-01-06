@@ -22,6 +22,7 @@ echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$C
 export ENSEMBL_CVS_ROOT_DIR=$PWD
 export TEST_AUTHOR=$USER
 export PERL5LIB=$PERL5LIB:$PWD/modules
+export PERL5LIB=$PERL5LIB:$PWD/travisci/fake_libs/
 export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-rest/lib
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
@@ -30,9 +31,8 @@ export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-funcgen/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-vep/modules
-export PERL5LIB=$PERL5LIB:$PWD/Bio-HTS/lib:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS/Faidx:$PWD/Bio-HTS/blib/arch/auto/Bio/DB/HTS
 
-ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen,+ignore,ensembl-vep,+ignore,Bio-HTS'
+ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-io,+ignore,ensembl-funcgen,+ignore,ensembl-vep'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
 COMPARA_SCRIPTS=("$PWD/modules/t")
 CORE_SCRIPTS=("$PWD/ensembl/modules/t/compara.t")
