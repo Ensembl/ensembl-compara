@@ -21,6 +21,7 @@ echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$C
 # Setup the environment variables
 export ENSEMBL_CVS_ROOT_DIR=$PWD
 export TEST_AUTHOR=$USER
+export PERL5LIB=$PWD/bioperl-live
 export PERL5LIB=$PERL5LIB:$PWD/modules
 export PERL5LIB=$PERL5LIB:$PWD/travisci/fake_libs/
 export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
