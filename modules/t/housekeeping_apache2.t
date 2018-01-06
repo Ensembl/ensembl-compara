@@ -46,6 +46,8 @@ my @source_files = map {all_source_code(File::Spec->catfile($root, $_))} qw(modu
 foreach my $f (@source_files) {
     # Except the .sql of the test-database dumps
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\.sql$/;
+    # Fake libraries
+    next if $f =~ /\/fake_libs\//;
     # CLEAN.t
     next if $f =~ /\/CLEAN.t$/;
     # And Apollo's code

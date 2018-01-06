@@ -54,6 +54,8 @@ Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'
 my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts sql docs travisci);
 
 foreach my $perl (@perl_files) {
+  # Except the fake libraries
+  next if $perl =~ /\/fake_libs\//;
   critic_ok($perl);
 }
 
