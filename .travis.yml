@@ -19,7 +19,6 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
     - git clone --branch version/2.4 --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - ln -s . ensembl-compara
