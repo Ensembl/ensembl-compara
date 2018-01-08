@@ -122,6 +122,12 @@ sub get_data {
   $self->{'config'}{'hub'}->param('r1') =~ /:(\d+)\-/;
   my $other_start = $1; 
 
+  my %zmenu = (
+                type    => 'Location',
+                action  => 'PairwiseAlignment',
+                method  => $self->my_config('type'),
+              );
+
   my $features = [];
   my $connections = {};
   use Data::Dumper;
@@ -130,23 +136,39 @@ sub get_data {
     warn "\n\n### NEXT";
     my $start     = $gab->reference_slice_start;
     my $end       = $gab->reference_slice_end;
-    my $nonref    = $gab->get_all_non_reference_genomic_aligns->[0];
-    my $nr_start  = $nonref->dnafrag_start - $other_start;
-    my $nr_end    = $nonref->dnafrag_end - $other_start;
-    my $hseqname  = $nonref->dnafrag->name;
-   
     next if $end < 1 || $start > $length;
 
+    my $nonref    = $gab->get_all_non_reference_genomic_aligns->[0];
+    my $nr_start  = $nonref->dnafrag_start;
+    my $nr_end    = $nonref->dnafrag_end;
+    my $hseqname  = $nonref->dnafrag->name;
+   
+    my $chr       = $self->{'container'}->seq_region_name;
+    my $slice_start = $self->{'container'}->start;
+    my $ref_url   = $self->_url({
+                                's1' => $ref_sp,
+                                'r1'  => sprintf('%s:%s-%s', $chr, $start + $slice_start, $end + $slice_start),
+                                %zmenu
+                              });
+    my $nonref_url = $self->_url({
+                                's1' => $nonref_sp,
+                                'r1'  => sprintf('%s:%s-%s', $hseqname, $nr_start, $nr_end),
+                                %zmenu
+                              });
+
     ## Convert into something the drawing code can understand
+    ## Note that we link to the _other_ species in the alignment
     my $drawable = {
                     $ref_sp     => {
                                     'start'     => $start, 
                                     'end'       => $end, 
                                     'colour'    => $colour,
+                                    'href'      => $nonref_url, 
                                     },
-                    $nonref_sp  => {'start'     => $nr_start, 
-                                    'end'       => $nr_end,
+                    $nonref_sp  => {'start'     => $nr_start - $other_start, 
+                                    'end'       => $nr_end - $other_start,
                                     'colour'    => $colour,
+                                    'href'      => $ref_url, 
                                     },
                   };
     #warn Dumper($drawable);
@@ -177,8 +199,8 @@ sub get_data {
 
 ###### PRIVATE METHODS ###########
 
-# Should we draw a cross rather than a quadrilateral?
 sub _should_draw_cross {
+# Should we draw a cross rather than a quadrilateral?
   my ($self, $gab) = @_;
 
   my $this_ori  = $gab->reference_slice_strand;
@@ -191,6 +213,5 @@ sub _should_draw_cross {
   my $flipview = (($this_ori == -1) xor ($other_ori == -1));
   return ($flipdata xor $flipview);
 }
-
 
 1;
