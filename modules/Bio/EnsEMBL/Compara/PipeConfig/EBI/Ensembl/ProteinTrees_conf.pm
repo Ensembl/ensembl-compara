@@ -163,9 +163,6 @@ sub default_options {
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
-
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
         'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
 

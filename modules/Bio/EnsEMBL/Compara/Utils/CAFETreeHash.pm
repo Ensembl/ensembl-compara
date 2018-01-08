@@ -78,7 +78,6 @@ sub _convert_node {
     $hash->{tax}->{'common_name'} = $cn if $cn;
     if ($node->genome_db_id) {
         $hash->{tax}->{'production_name'} = $node->genome_db->name;
-        $hash->{tax}->{'url_name'} = $node->genome_db->{'_url_name'} if $node->genome_db->{'_url_name'};
     }
   }
 

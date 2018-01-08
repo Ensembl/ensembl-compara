@@ -88,7 +88,6 @@ sub default_options {
 
            
             'epo_db'                => 'mysql://ensro@compara1/epolc_mammals',
-            'production_db_url'     => 'mysql://ensro@ens-staging/ensembl_production',
 
             # connection parameters
 

@@ -85,15 +85,6 @@ sub fetch_input {
 
     $self->param('cafe_tree', $cafe_tree);
     $self->param('cafe_tree_copy', $copy);
-
-    unless ($self->compara_dba->{'_has_url_names'}) {
-        my $production_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $self->param_required('production_db_url'));
-        my $mapping = $production_dbc->db_handle->selectall_hashref('SELECT production_name, url_name FROM species', 'production_name');
-        my %genome_dbs_by_name = map {$_->name => $_} @{$self->compara_dba->get_GenomeDBAdaptor->fetch_all};
-        $genome_dbs_by_name{$_}->{'_url_name'} = $mapping->{$_}->{'url_name'} for keys %$mapping;
-        $production_dbc->disconnect_if_idle();
-        $self->compara_dba->{'_has_url_names'} = 1;
-    }
 }
 
 ## Compute the LCA-pruned tree and convert both to JSON

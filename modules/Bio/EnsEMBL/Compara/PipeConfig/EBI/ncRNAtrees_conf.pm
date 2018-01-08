@@ -101,7 +101,6 @@ sub default_options {
             
             # Other parameters
             'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-4.ebi.ac.uk:4401/carlac_epo_low_55way_mammals_90',
-            'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_91',
 
             # connection parameters
 

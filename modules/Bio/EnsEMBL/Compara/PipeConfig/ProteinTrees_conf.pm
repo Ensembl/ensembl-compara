@@ -449,7 +449,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'member_db'     => $self->o('member_db'),
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
-        'production_db_url'             => $self->o('production_db_url'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),

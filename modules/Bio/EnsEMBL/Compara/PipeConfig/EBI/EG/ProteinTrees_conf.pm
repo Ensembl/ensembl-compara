@@ -174,9 +174,6 @@ sub default_options {
         'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
         'master_db_is_missing_dnafrags' => 1,
 
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@mysql-eg-pan-prod.ebi.ac.uk:4276/ensembl_production',
-
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
 

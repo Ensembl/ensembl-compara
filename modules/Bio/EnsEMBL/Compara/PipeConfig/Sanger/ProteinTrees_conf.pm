@@ -203,8 +203,6 @@ sub default_options {
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
-        # Production database (for the biotypes)
-        'production_db_url'     => 'mysql://ensro@ens-staging/ensembl_production',
 
         # Ensembl-specific databases
         'staging_loc1' => {                     # general location of half of the current release core databases

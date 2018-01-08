@@ -142,7 +142,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'create_ss_picts'   => $self->o('create_ss_picts'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
-        'production_db_url' => $self->o('production_db_url'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
     }
