@@ -1445,6 +1445,14 @@ sub section_height {
 }
 
 
+sub add_connections {
+## Used by new drawing code to add 'tags'
+  my ($self, $style) = @_;
+  foreach (@{$style->connections||[]}) {
+    $self->join_tag($_->{'glyph'}, $_->{'tag'}, $_->{'params'});
+  }
+}
+
 sub join_tag {
 ### join_tag joins between glyphsets in different tracks
 ### @param glyph          - glyph you've drawn...
