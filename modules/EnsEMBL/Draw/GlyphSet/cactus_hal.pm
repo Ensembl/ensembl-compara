@@ -94,7 +94,7 @@ sub render_compact {
 
 sub get_data {
   my $self = shift;
-  $self->{'my_config'}->set('DEBUG_RAINBOW', 1); 
+  #$self->{'my_config'}->set('DEBUG_RAINBOW', 1); 
 
   ## Check the cache first
   my $cache_key = $self->my_label;
