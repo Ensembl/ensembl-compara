@@ -71,9 +71,10 @@ sub param_defaults {
     return {
              'library_name'        => '#hmm_library_name#',
              'hmmpress_exe'        => '#hmmer_home#/hmmpress',
-             'panther_hmm_library_basedir' => '#panther_hmm_library_basedir#',
+             'panther_hmm_lib'     => '#panther_hmm_library_basedir#',
              'url'                 => '#panther_url#',
-             'file'                => '#panther_file#', };
+             'file'                => '#panther_file#',
+         };
 }
 
 sub fetch_input {
@@ -84,7 +85,13 @@ sub fetch_input {
     $self->param_required('url');
     $self->param_required('file');
     $self->param_required('hmmer_home');
-    $self->param_required('hmm_lib');
+    $self->param_required('panther_hmm_lib');
+
+    #Avoid running, used for test purposes:
+    $self->dataflow_output_id(undef, 1);
+    $self->input_job->autoflow(0);
+    $self->complete_early("PANTHER is already downloaded.");
+
 }
 
 sub run {
@@ -124,14 +131,15 @@ sub _download_panter_families {
     my $worker_temp_directory = $self->worker_temp_directory;
 
     my $ftp_file = $self->param('url') . $self->param('file');
-    my $tmp_file = $self->param('hmm_lib') . "/" . $self->param('file');
+    my $tmp_file = $self->param('panther_hmm_lib') . "/" . $self->param('file');
 
     my $panther_dir = $tmp_file;
     $panther_dir =~ s/_ascii\.tgz//;
     $self->param( 'panther_dir', $panther_dir );
 
     #cleanup before downlading
-    $self->_clear_tmp_panther_directory_structure;
+    my $rm_cmd = [qw(rm), $self->param('panther_hmm_lib')."*.h*"];
+    $self->run_command($rm_cmd, { die_on_failure => 0, description => 'delete previous PANTHER library files' } );
 
     #get fresh file from FTP
     my $status = getstore( $ftp_file, $tmp_file );
@@ -142,7 +150,7 @@ sub _download_panter_families {
 
     #untar file
     my $cmd = "tar -xzvf " . $tmp_file;
-    $self->run_command("cd " . $self->param('hmm_lib') . "; $cmd", { die_on_failure => 1, description => 'expand PANTHER families' } );
+    $self->run_command("cd " . $self->param('panther_hmm_lib') . "; $cmd", { die_on_failure => 1, description => 'expand PANTHER families' } );
 
     printf( "time for fetching and decompressing PANTHER families: %1.3f secs\n", time() - $starttime );
 } ## end sub _download_panter_families
@@ -159,14 +167,14 @@ sub _concatenate_profiles {
     $self->param( 'local_hmm_library', $self->param('panther_dir') . "/" . $self->param('library_name') );
     print ">>concatenating:" . $self->param('local_hmm_library') . "|\n" if ($self->debug);
 
-    open( LIBRARY, ">" . $self->param('local_hmm_library') );
+    open my $library_fh , ">" . $self->param('local_hmm_library') || die "Could not open local_hmm_library file.";
     foreach my $hmm (@hmm_list) {
-        open( HMM, $hmm );
-        my @lines = <HMM>;
-        print LIBRARY @lines;
-        close(HMM);
+        open my $hmm_fh, $hmm || die "Could not open $hmm file.";
+        my @lines = <$hmm_fh>;
+        print $library_fh @lines;
+        close($hmm_fh);
     }
-    close(LIBRARY);
+    close($library_fh);
 }
 
 #Run hmmpress to create binary indices to enhance the searches.
@@ -187,7 +195,7 @@ sub _hmm_press_profiles {
     my $runtime_msec = $cmd_out->runtime_msec;
 
     #move HMM library into place
-    $cmd = "become - compara_ensembl ; mv " . $self->param('local_hmm_library') . "* " . $self->param('hmm_library_basedir') . "/";
+    $cmd = "become -- compara_ensembl mv " . $self->param('local_hmm_library') . "* " . $self->param('panther_hmm_lib') . "/";
     $self->run_command($cmd, { die_on_failure => 1, description => 'move the HMM library to "hmm_library_basedir"' } );
 }
 
@@ -197,11 +205,11 @@ sub _clear_tmp_panther_directory_structure {
 
     #remove previous directory structure (books, globals, etc)
     my $cmd = [qw(rm -rf), $self->param('panther_dir')];
-    $self->run_command($cmd, { die_on_failure => 1, description => 'delete previous PANTHER directory structure' } );
+    $self->run_command($cmd, { die_on_failure => 0, description => 'delete previous PANTHER directory structure' } );
 
     #remove previously downloaded file from PANTHER FTP
-    $cmd = [qw(rm -rf), $self->param('file')];
-    $self->run_command($cmd, { die_on_failure => 1, description => 'delete previous downloaded .tgz file' } );
+    $cmd = [qw(rm -rf), $self->param('panther_hmm_lib')."/".$self->param('file')];
+    $self->run_command($cmd, { die_on_failure => 0, description => 'delete previous downloaded .tgz file' } );
 }
 
 1;
