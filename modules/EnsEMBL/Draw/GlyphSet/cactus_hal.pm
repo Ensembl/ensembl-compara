@@ -177,20 +177,19 @@ sub get_data {
 
     ## Convert into something the drawing code can understand
     ## Note that we link to the _other_ species in the alignment
-    ## connection starts at bottom edge of upper block & vice versa
     my $drawable = {
                     $ref_sp     => {
                                     'start'     => $start, 
                                     'end'       => $end, 
                                     'colour'    => $colour,
                                     'href'      => $nonref_url, 
-                                    'c_offset'  => 1,
+                                    'index'     => 0,
                                     },
                     $nonref_sp  => {'start'     => $nr_start - $other_start, 
                                     'end'       => $nr_end - $other_start,
                                     'colour'    => $colour,
                                     'href'      => $ref_url, 
-                                    'c_offset'  => 0,
+                                    'index'     => 1,
                                     },
                     'connections' => [{
                                         'key'     => $block_id,

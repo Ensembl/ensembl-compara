@@ -46,7 +46,7 @@ sub draw_feature {
   if (scalar(@{$block->{'connections'}||[]})) {
     my $connection_colour; # = $debug ? $feature->{'colour'} : undef;
     $self->draw_connections($block->{'connections'}, $glyph, {
-                                                              c_offset => $feature->{'c_offset'}, 
+                                                              index  => $feature->{'index'}, 
                                                               colour => $connection_colour
                                                               }); 
   }
@@ -57,26 +57,21 @@ sub draw_connections {
   ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
   my ($self, $connections, $glyph, $args) = @_;
 
-  my $part = ($self->strand == 1) || 0;
-  warn ">>> STRAND = ".$args->{'strand'};
+  my $part = $args->{'index'};
+  my $y    = $part == 1 ? 0 : 1;  
   my @shapes = (
                 [[0,0],[0,1],[1,1],[1,0]], # circuit makes quadrilateral,
                 [[0,0],[0,1],[1,0],[1,1]], # but zigzag makes cross
                 );
 
   foreach my $connection (@$connections) {
-    warn ">>> CROSS ".$connection->{'cross'};
     foreach my $s (@{$shapes[$connection->{'cross'}]}) {
       next unless $s->[0] == $part; # only half of it is on each track
-      warn "\n\n>>> S0 = ".$s->[0];
-      my $y = $args->{'c_offset'}; 
-      warn ">>> X = ".$s->[1];
-      warn ">>> Y = $y";
 
       my $params = {
                     x     => $s->[1],
                     y     => $y, 
-                    z     => 1000,
+                    z     => 100,
                     col   => $args->{'colour'} || $connection->{'colour'},
                     style => 'fill',
                     };  
