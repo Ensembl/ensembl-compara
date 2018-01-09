@@ -140,17 +140,19 @@ sub resource_classes {
             '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
             '32Gb_job'                 => { 'LSF' => '-C0 -M32000  -R"select[mem>32000]  rusage[mem=32000]"' },
 
-            '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
-            '8Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
-            '32Gb_ncores_job'         => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
+            '2Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
+            '8Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
+            '8Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
+            '32Gb_4c_job'         => { 'LSF' => '-C0 -n 4 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
+            '32Gb_8c_job'         => { 'LSF' => '-C0 -n 8 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
 
             # When we grab a machine in the long queue, let's keep it as long as we can
             # this is for other_paralogs
             '250Mb_long_job'          => { 'LSF' => ['-C0 -M250 -R"select[mem>250]   rusage[mem=250]"', '-lifespan 360' ] },
             # this is for fast_trees
-            '8Gb_mpi_ncores_job'     => { 'LSF' => ['-q mpi-rh7 -C0 -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
-            '16Gb_mpi_ncores_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n'. $self->o('raxml_number_of_cores') . ' -M16000 -R"span[hosts=1] select[mem>16000] rusage[mem=16000]"', '-lifespan 360' ] },
-            '32Gb_mpi_ncores_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n'. $self->o('raxml_number_of_cores') . ' -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
+            '8Gb_mpi_4c_job'     => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
+            '16Gb_mpi_4c_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M16000 -R"span[hosts=1] select[mem>16000] rusage[mem=16000]"', '-lifespan 360' ] },
+            '32Gb_mpi_4c_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
            };
 }
 

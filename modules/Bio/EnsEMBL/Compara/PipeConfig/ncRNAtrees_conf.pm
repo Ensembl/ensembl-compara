@@ -691,7 +691,7 @@ sub pipeline_analyses {
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
                            },
-             -rc_name => '2Gb_ncores_job',
+             -rc_name => '2Gb_4c_job',
             },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
@@ -701,7 +701,7 @@ sub pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                            },
-            -rc_name => '2Gb_ncores_job',
+            -rc_name => '2Gb_4c_job',
         },
 
         {   -logic_name    => 'genomic_alignment',
@@ -720,7 +720,7 @@ sub pipeline_analyses {
                            2  => ['genomic_tree'],
                            -2 => [ 'fast_trees' ],
                           },
-            -rc_name => '2Gb_ncores_job',
+            -rc_name => '2Gb_4c_job',
             -priority      => $self->o('genomic_alignment_priority'),
         },
 
@@ -737,7 +737,7 @@ sub pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_himem'],
                           },
-             -rc_name => '8Gb_mpi_ncores_job',
+             -rc_name => '8Gb_mpi_4c_job',
             },
             {
              -logic_name => 'fast_trees_himem',
@@ -752,7 +752,7 @@ sub pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
                           },
-             -rc_name => '16Gb_mpi_ncores_job',
+             -rc_name => '16Gb_mpi_4c_job',
             },
             {
              -logic_name => 'fast_trees_hugemem',
@@ -764,7 +764,7 @@ sub pipeline_analyses {
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
                              'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
-             -rc_name => '32Gb_mpi_ncores_job',
+             -rc_name => '32Gb_mpi_4c_job',
             },
 
         {
@@ -779,7 +779,7 @@ sub pipeline_analyses {
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
                            },
-         -rc_name => '8Gb_ncores_job',
+         -rc_name => '8Gb_8c_job',
          -priority  => $self->o('genomic_alignment_himem_priority'),
          -flow_into => {
                         3 => [ 'fast_trees' ],
@@ -799,7 +799,7 @@ sub pipeline_analyses {
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
                            },
-         -rc_name => '32Gb_ncores_job',
+         -rc_name => '32Gb_8c_job',
          -flow_into => {
                         3 => [ 'fast_trees_himem' ],
                         2 => [ 'genomic_tree_himem' ],
