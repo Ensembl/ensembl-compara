@@ -78,6 +78,7 @@ sub render_normal {
     my $config = $self->track_style_config;
     my $style  = EnsEMBL::Draw::Style::Feature::Alignment->new($config, $data);
     $self->push($style->create_glyphs);
+    $self->add_connections($style);
   }
   else {
     $self->no_features;
@@ -129,7 +130,8 @@ sub get_data {
               );
 
   my $features = [];
-  my $connections = {};
+  my $feature_key = lc $self->my_config('type');
+  my $connection_colour = $self->my_colour($feature_key, 'join') || 'gold'; 
   use Data::Dumper;
 
   foreach my $gab (@{$gabs||[]}) {
@@ -142,7 +144,8 @@ sub get_data {
     my $nr_start  = $nonref->dnafrag_start;
     my $nr_end    = $nonref->dnafrag_end;
     my $hseqname  = $nonref->dnafrag->name;
-   
+  
+    ## Create zmenu link 
     my $chr       = $self->{'container'}->seq_region_name;
     my $slice_start = $self->{'container'}->start;
     my $ref_url   = $self->_url({
@@ -156,62 +159,54 @@ sub get_data {
                                 %zmenu
                               });
 
+    ## Create information needed for cross-species join
+    my $block_id = sprintf('%s_%s-%s-%s:%s_%s-%s-%s', 
+                              $ref_sp, $chr, $start + $slice_start, $end + $slice_start,
+                              $nonref_sp, $hseqname, $nr_start, $nr_end);
+
+    # Should we draw an 'x' rather than a quadrilateral?
+    my $ref_ori     = $gab->reference_slice_strand;
+    my $nonref_ori  = $nonref->dnafrag_strand;
+    my $other_ori   = $self->my_config('ori');
+
+    # flipdata -- alignment is interstrand
+    # flipview -- views are in opposite orientations
+    my $flipdata = ($ref_ori != $nonref_ori);
+    my $flipview = (($ref_ori == -1) xor ($other_ori == -1));
+    my $cross = ($flipdata xor $flipview) ? 1 : 0;
+
     ## Convert into something the drawing code can understand
     ## Note that we link to the _other_ species in the alignment
+    ## connection starts at bottom edge of upper block & vice versa
     my $drawable = {
                     $ref_sp     => {
                                     'start'     => $start, 
                                     'end'       => $end, 
                                     'colour'    => $colour,
                                     'href'      => $nonref_url, 
+                                    'c_offset'  => 1,
                                     },
                     $nonref_sp  => {'start'     => $nr_start - $other_start, 
                                     'end'       => $nr_end - $other_start,
                                     'colour'    => $colour,
                                     'href'      => $ref_url, 
+                                    'c_offset'  => 0,
                                     },
+                    'connections' => [{
+                                        'key'     => $block_id,
+                                        'colour'  => $connection_colour,
+                                        'cross'   => $cross,
+                                      }],
                   };
     #warn Dumper($drawable);
-
-=pod
-    my @tag = ($gab->reference_genomic_align->original_dbID, $gab->get_all_non_reference_genomic_aligns->[0]->original_dbID);
-    @tag = (
-      #Need to use original_dbID if GenomicAlign has been restricted
-      $gab->reference_genomic_align->dbID() || $gab->reference_genomic_align->original_dbID,
-      $gab->get_all_non_reference_genomic_aligns->[0]->dbID() || $gab->get_all_non_reference_genomic_aligns->[0]->original_dbID
-    );
-=cut
-
-    my @tag = (
-                sprintf('%s_%s-%s', $ref_sp, $start, $end),
-                sprintf('%s_%s-%s', $nonref_sp, $nr_start, $nr_end),
-              );
-    #warn ">>> TAG @tag";
 
     push @$features, $drawable;
   }
 
   ## Set cache
-  my $data = [{'features' => $features, 'connections' => $connections}];
+  my $data = [{'features' => $features}];
   $self->feature_cache($cache_key, $data);
   return $data;
-}
-
-###### PRIVATE METHODS ###########
-
-sub _should_draw_cross {
-# Should we draw a cross rather than a quadrilateral?
-  my ($self, $gab) = @_;
-
-  my $this_ori  = $gab->reference_slice_strand;
-  my $other_ori = $self->my_config('ori');
-  my $nonref    = $gab->get_all_non_reference_genomic_aligns->[0];
-
-  # flipdata -- alignment is interstrand
-  # flipview -- views are in opposite orientations
-  my $flipdata = ($gab->reference_slice_strand != $nonref->dnafrag_strand);
-  my $flipview = (($this_ori == -1) xor ($other_ori == -1));
-  return ($flipdata xor $flipview);
 }
 
 1;

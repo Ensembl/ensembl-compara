@@ -20,6 +20,7 @@ limitations under the License.
 package EnsEMBL::Draw::Style::Feature::Alignment;
 
 ### Renders a track as a series of align blocks
+use strict;
 
 use parent qw(EnsEMBL::Draw::Style::Feature);
 
@@ -36,11 +37,52 @@ sub draw_feature {
   warn ">>> DRAWING ALIGNMENT ".Dumper($block);
   my $debug = $self->track_config->get('DEBUG_RAINBOW');
   $feature->{'colour'} = $self->rainbow($count) if $debug;
-  warn "@@@ ACTUAL COLOUR ".$feature->{'colour'}."\n\n";
+  #warn "@@@ ACTUAL COLOUR ".$feature->{'colour'}."\n\n";
   ## Historically, width is saved in the position hash rather than the feature itself
   $position->{'width'} = $feature->{'end'} - $feature->{'start'};
 
-  $self->SUPER::draw_feature($feature, $position);
+  my $glyph = $self->SUPER::draw_feature($feature, $position);
+  ## Now add the 'tag' that joins the two blocks
+  if (scalar(@{$block->{'connections'}||[]})) {
+    my $connection_colour; # = $debug ? $feature->{'colour'} : undef;
+    $self->draw_connections($block->{'connections'}, $glyph, {
+                                                              c_offset => $feature->{'c_offset'}, 
+                                                              colour => $connection_colour
+                                                              }); 
+  }
+}
+
+sub draw_connections {
+  ## Set up a "join tag" to display mapping between align blocks
+  ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
+  my ($self, $connections, $glyph, $args) = @_;
+
+  my $part = ($self->strand == 1) || 0;
+  warn ">>> STRAND = ".$args->{'strand'};
+  my @shapes = (
+                [[0,0],[0,1],[1,1],[1,0]], # circuit makes quadrilateral,
+                [[0,0],[0,1],[1,0],[1,1]], # but zigzag makes cross
+                );
+
+  foreach my $connection (@$connections) {
+    warn ">>> CROSS ".$connection->{'cross'};
+    foreach my $s (@{$shapes[$connection->{'cross'}]}) {
+      next unless $s->[0] == $part; # only half of it is on each track
+      warn "\n\n>>> S0 = ".$s->[0];
+      my $y = $args->{'c_offset'}; 
+      warn ">>> X = ".$s->[1];
+      warn ">>> Y = $y";
+
+      my $params = {
+                    x     => $s->[1],
+                    y     => $y, 
+                    z     => 1000,
+                    col   => $args->{'colour'} || $connection->{'colour'},
+                    style => 'fill',
+                    };  
+      $self->add_connection($glyph, $connection->{'key'}, $params);
+    }
+  }
 }
 
 1;
