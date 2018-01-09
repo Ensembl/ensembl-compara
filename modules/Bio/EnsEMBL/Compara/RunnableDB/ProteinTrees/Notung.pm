@@ -41,7 +41,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'cmd'               => '#java_exe# -Xmx#notung_memory#M -jar #notung_jar# #gene_tree_file# -s #species_tree_file# --rearrange --treeoutput newick --speciestag postfix --edgeweights length --threshold 0.9 --silent --nolosses',
         'runtime_tree_tag'  => 'notung_runtime',
-        'output_file'       => '#gene_tree_file#.rearrange.0',
+        'output_file'       => 'gene_tree_#gene_tree_id#.nhx.rearrange.0',
         'run_treebest_sdi'  => 1,
         'species_tree_label'    => 'binary',
     };
