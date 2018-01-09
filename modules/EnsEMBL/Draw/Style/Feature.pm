@@ -339,6 +339,7 @@ sub draw_feature {
   }
 
   push @{$self->glyphs}, $glyph;
+  return $glyph;
 }
 
 sub add_highlight {
@@ -415,7 +416,14 @@ sub draw_connection {
   ## Set up a "join tag" to display mapping between features, e.g. homologues
   ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
   my ($self, $glyph, $connection) = @_;
-  $self->add_connection($glyph, $connection->{'key'}, 0.5, 0.5, $connection->{'colour'}, 'line', 1000);
+  my $params = {
+                'x'     => 0.5, 
+                'y'     => 0.5, 
+                'z'     => 1000,
+                'col'   => $connection->{'colour'}, 
+                'style' => 'line', 
+                };
+  $self->add_connection($glyph, $connection->{'key'}, $params);
 }
 
 

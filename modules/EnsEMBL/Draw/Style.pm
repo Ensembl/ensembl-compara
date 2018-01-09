@@ -420,8 +420,8 @@ sub add_messages {
 }
 
 sub add_connection {
-  my ($self, $glyph, $tag, @params) = @_;
-  push @{$self->{'connections'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => \@params};
+  my ($self, $glyph, $tag, $params) = @_;
+  push @{$self->{'connections'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => $params};
 }
 
 #### TRIGONOMETRY FOR CIRCULAR GLYPHS
