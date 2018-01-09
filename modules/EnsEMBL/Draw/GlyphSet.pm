@@ -1449,6 +1449,7 @@ sub add_connections {
 ## Used by new drawing code to add 'tags'
   my ($self, $style) = @_;
   foreach (@{$style->connections||[]}) {
+    next unless $_->{'glyph'};
     $self->join_tag($_->{'glyph'}, $_->{'tag'}, $_->{'params'});
   }
 }
