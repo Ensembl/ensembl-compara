@@ -266,6 +266,37 @@ CREATE TABLE IF NOT EXISTS panther_annot (
 
 -- ----------------------------------------------------------------------------------
 --
+-- Table structure for table 'hmm_thresholding'
+--
+-- overview: This table stores the HMM annotation of the seq_members
+
+/**
+    @table hmm_thresholding
+    @desc  This table stores the HMM annotation of the seq_members
+    @colour   #66CCFF
+
+    @column seq_member_id         External reference to a seq_member_id in the @link seq_member table
+    @column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+    @column root_id     	      External reference to the internal unique ID
+    @column evalue                The e-value of the hit
+*/
+
+CREATE TABLE hmm_thresholding (
+      seq_member_id             INT(10) UNSIGNED NOT NULL, # FK homology.homology_id
+      root_id                   INT(10) UNSIGNED NOT NULL,
+      evalue                    float,
+      score                     float,
+      bias                      float,
+
+      PRIMARY KEY (root_id,seq_member_id),
+      KEY (root_id),
+      KEY (seq_member_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+-- ----------------------------------------------------------------------------------
+--
 -- Table structure for tables 'ortholog_goc_metric'
 -- overview: This table contains the full breakdown of what is used to calculate the goc score.
 
