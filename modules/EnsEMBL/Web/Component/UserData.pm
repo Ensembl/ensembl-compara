@@ -109,6 +109,13 @@ sub userdata_form {
   my $current_species = $hub->data_species;
   my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
 
+  my $message         = qq(<p>
+Please note that track hubs and indexed files (BAM, BigBed, etc) do not work with certain
+cloud services, including <b>Google Drive</b> and <b>Dropbox</b>. Please see our 
+<a href="/info/website/trackhub_support.html">support page</a> for more information.
+</p>);
+
+
   my $form            = $self->modal_form('select', $hub->url({'type' => 'UserData', 'action' => 'AddFile'}), {
     'skip_validation'   => 1, # default JS validation is skipped as this form goes through a customised validation
     'class'             => 'check bgcolour',
@@ -165,7 +172,7 @@ sub userdata_form {
     'value'         => 'Add data'
   });
 
-  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
+  return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s%s', $message, $form->render;
 }
 
 1;
