@@ -56,7 +56,20 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot('no_null');
+    my $member_ids;
+
+    if($self->param('no_nulls')){
+        $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot('no_null');
+    }else{
+        $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot();
+    }
+
+    if (scalar(@{$member_ids}) < 1){
+        $self->input_job->autoflow(0);
+        my $exit_msg = "No unannotated members were found.";
+        $self->complete_early($exit_msg);
+    }
+
     my $unannotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 
     # write fasta file:
