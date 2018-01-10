@@ -21,6 +21,7 @@ package EnsEMBL::Web::JSONServer::SpeciesSelector;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 use JSON;
 use List::MoreUtils qw/ uniq /;
 use URI::Escape qw(uri_escape);
