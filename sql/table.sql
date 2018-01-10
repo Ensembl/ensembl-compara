@@ -2146,7 +2146,7 @@ CREATE TABLE homology_member (
 
 CREATE TABLE mapping_session (
     mapping_session_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    type               ENUM('family', 'tree'),
+    type               ENUM('family', 'tree', 'hmm'),
     when_mapped        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     rel_from           INT UNSIGNED,
     rel_to             INT UNSIGNED,
