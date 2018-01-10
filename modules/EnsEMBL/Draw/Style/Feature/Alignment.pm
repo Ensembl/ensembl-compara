@@ -33,8 +33,8 @@ sub draw_feature {
   ## We only need the alignment for the current species
   my $feature = $block->{$self->image_config->{'species'}};
   return unless $feature;
-  use Data::Dumper;
-  warn ">>> DRAWING ALIGNMENT ".Dumper($block);
+  #use Data::Dumper;
+  #warn ">>> DRAWING ALIGNMENT ".Dumper($block);
   my $debug = $self->track_config->get('DEBUG_RAINBOW');
   $feature->{'colour'} = $self->rainbow($count) if $debug;
   #warn "@@@ ACTUAL COLOUR ".$feature->{'colour'}."\n\n";
@@ -71,9 +71,10 @@ sub draw_connections {
       my $params = {
                     x     => $s->[1],
                     y     => $y, 
-                    z     => 100,
+                    z     => 1000,
                     col   => $args->{'colour'} || $connection->{'colour'},
                     style => 'fill',
+                    alpha => 0.6,
                     };  
       $self->add_connection($glyph, $connection->{'key'}, $params);
     }
