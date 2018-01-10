@@ -576,6 +576,7 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
+                                'mxsize'      => $self->o('mxsize'),
                                },
                 -flow_into     => [ 'quick_tree_break' ],
                 -rc_name => '4Gb_job',

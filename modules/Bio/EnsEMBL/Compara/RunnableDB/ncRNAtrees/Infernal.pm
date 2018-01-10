@@ -87,6 +87,7 @@ sub param_defaults {
     return {
             'method'      => 'Infernal',
             'cmalign_threads'   => 1,
+            'mxsize'            => 10000,
            };
 }
 
@@ -253,9 +254,10 @@ sub run_infernal {
 
 
   my $cmd = $cmalign_exe;
+  my $mxsize = $self->param('mxsize');
   # infernal -o cluster_6357.stk RF00599_profile.cm cluster_6357.fasta
 
-  $cmd .= " --mxsize 4000 " if($self->input_job->retry_count >= 1); # large alignments FIXME separate Infernal_huge
+  $cmd .= " --mxsize $mxsize " if($self->input_job->retry_count >= 1); # large alignments FIXME separate Infernal_huge
   $cmd .= " -o " . $stk_output;
   $cmd .= " --cpu " . $self->param_required('cmalign_threads');
   $cmd .= " " . $self->param('profile_file');
@@ -288,8 +290,8 @@ sub run_infernal {
   $cmd = $cmbuild_exe;
   #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
   # This may be necessary if cmbuild crashes.
-  #$cmd .= " --mxsize 20000 --refine $refined_stk_output";
-  $cmd .= " --refine $refined_stk_output";
+  $cmd .= " --mxsize $mxsize --refine $refined_stk_output";
+  #$cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
@@ -356,7 +358,7 @@ sub parse_and_store_alignment_into_tree {
   my $aln_io = Bio::AlignIO->new
     (-file => "$stk_output",
      -format => 'stockholm');
-  my $aln = $aln_io->next_aln;
+  my $aln = $aln_io->next_aln || die "Could not get align";
   foreach my $seq ($aln->each_seq) {
     $align_hash{$seq->display_id} = $seq->seq;
   }
