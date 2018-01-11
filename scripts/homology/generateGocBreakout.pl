@@ -239,7 +239,7 @@ my $sql_heatmap = "
         gdb1.taxon_id = ntn1.taxon_id inner JOIN   ncbi_taxa_name ntn2 on
         gdb2.taxon_id = ntn2.taxon_id where   mlss.method_link_id = 201 AND
         ntn1.name <> ntn2.name AND   ntn1.name_class = 'scientific name' AND
-        ntn2.name_class = 'scientific name' ORDER by ntn1.name, ntn2.name;
+        ntn2.name_class = 'scientific name' AND gdb1.name NOT LIKE 'mus_musculus_%' AND gdb2.name NOT LIKE 'mus_musculus_%' ORDER by ntn1.name, ntn2.name;
 ";
 
 my $sth_heatmap = $dbh->prepare($sql_heatmap);
