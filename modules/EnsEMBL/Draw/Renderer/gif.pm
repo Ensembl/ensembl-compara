@@ -337,7 +337,7 @@ sub render_Histogram {
   my $points = $glyph->{'pixelpoints'};
   return unless defined $points;
 
-  my $max = defined($glyph->{'max'}) || 1000;
+  my $max = defined($glyph->{'max'}) ? $glyph->{'max'} : 1000;
   my $min = defined($glyph->{'min'}) ? $glyph->{'min'} : 0;
 
   my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
