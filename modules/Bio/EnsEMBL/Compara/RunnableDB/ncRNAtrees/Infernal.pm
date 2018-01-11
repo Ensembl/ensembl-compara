@@ -254,7 +254,7 @@ sub run_infernal {
 
 
   my $cmd = $cmalign_exe;
-  my $mxsize = $self->param('mxsize');
+  my $infernal_mxsize = $self->param('infernal_mxsize');
   # infernal -o cluster_6357.stk RF00599_profile.cm cluster_6357.fasta
 
   $cmd .= " --mxsize $mxsize " if($self->input_job->retry_count >= 1); # large alignments FIXME separate Infernal_huge

@@ -121,7 +121,7 @@ sub default_options {
 
             # Other parameters
             'raxml_number_of_cores' => 4,
-            'mxsize'                => 10000,
+            'infernal_mxsize'       => 10000,
 
             # For the homology_id_mapping
             'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90",
