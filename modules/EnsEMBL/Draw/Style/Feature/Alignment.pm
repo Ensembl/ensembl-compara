@@ -44,7 +44,7 @@ sub draw_feature {
   my $glyph = $self->SUPER::draw_feature($feature, $position);
   ## Now add the 'tag' that joins the two blocks
   if (scalar(@{$block->{'connections'}||[]})) {
-    my $connection_colour; # = $debug ? $feature->{'colour'} : undef;
+    my $connection_colour = $debug ? $feature->{'colour'} : undef;
     $self->draw_connections($block->{'connections'}, $glyph, {
                                                               index  => $feature->{'index'}, 
                                                               colour => $connection_colour
