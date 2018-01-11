@@ -87,7 +87,6 @@ sub param_defaults {
     return {
             'method'      => 'Infernal',
             'cmalign_threads'   => 1,
-            'mxsize'            => 10000,
            };
 }
 
@@ -257,7 +256,7 @@ sub run_infernal {
   my $infernal_mxsize = $self->param('infernal_mxsize');
   # infernal -o cluster_6357.stk RF00599_profile.cm cluster_6357.fasta
 
-  $cmd .= " --mxsize $mxsize " if($self->input_job->retry_count >= 1); # large alignments FIXME separate Infernal_huge
+  $cmd .= " --mxsize $infernal_mxsize " if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)); # large alignments FIXME separate Infernal_huge
   $cmd .= " -o " . $stk_output;
   $cmd .= " --cpu " . $self->param_required('cmalign_threads');
   $cmd .= " " . $self->param('profile_file');
@@ -290,8 +289,11 @@ sub run_infernal {
   $cmd = $cmbuild_exe;
   #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
   # This may be necessary if cmbuild crashes.
-  $cmd .= " --mxsize $mxsize --refine $refined_stk_output";
-  #$cmd .= " --refine $refined_stk_output";
+  if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)){
+    $cmd .= " --mxsize $infernal_mxsize --refine $refined_stk_output " if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)); # large alignments FIXME separate Infernal_huge
+  }else{
+    $cmd .= " --refine $refined_stk_output ";
+  }
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
