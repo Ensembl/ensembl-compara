@@ -290,7 +290,7 @@ sub run_infernal {
   #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
   # This may be necessary if cmbuild crashes.
   if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)){
-    $cmd .= " --mxsize $infernal_mxsize --refine $refined_stk_output " if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)); # large alignments FIXME separate Infernal_huge
+    $cmd .= " --mxsize $infernal_mxsize --refine $refined_stk_output "; # large alignments FIXME separate Infernal_huge
   }else{
     $cmd .= " --refine $refined_stk_output ";
   }
