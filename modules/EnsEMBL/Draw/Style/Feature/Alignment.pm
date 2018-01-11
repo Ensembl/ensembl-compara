@@ -39,7 +39,7 @@ sub draw_feature {
   if ($debug) {
     $feature->{'colour'} = $self->rainbow($count);
   }
-  else {
+  elsif (ref($feature->{'colour'}) eq 'ARRAY') {
     my @colours = @{$feature->{'colour'}||[]};
     my $i = $count % scalar(@colours);;
     $feature->{'colour'} = $colours[$i];

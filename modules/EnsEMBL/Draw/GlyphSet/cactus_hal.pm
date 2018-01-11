@@ -127,7 +127,7 @@ sub get_data {
   my $feature_key         = lc $self->my_config('type');
   my $colours             = [$self->my_colour($feature_key), $self->my_colour($feature_key, 'alt')];
   my $connection_colours  = [$self->my_colour($feature_key, 'join'), $self->my_colour($feature_key, 'join_alt')]; 
-  use Data::Dumper;
+  #use Data::Dumper;
 
   my $ref_sp = $self->species;
   my $nonref_sp;
