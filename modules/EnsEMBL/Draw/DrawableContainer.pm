@@ -48,6 +48,9 @@ sub new {
   my $self            = $class->_init(@_); 
   my $primary_config  = $self->{'config'};
   my $legend          = {};
+
+  ## Enable caching between glyphsets - useful for campara views
+  $self->{'feature_cache'} = {};
   
   ## Parameters used by private methods - easier to pass this way
   my $options = {
@@ -309,6 +312,7 @@ sub _create_glyphsets {
                       highlights  => $self->{'highlights'},
                       display     => $display,
                       legend      => $legend,
+                      feature_cache => $self->{'feature_cache'},
                   });
     };
         
