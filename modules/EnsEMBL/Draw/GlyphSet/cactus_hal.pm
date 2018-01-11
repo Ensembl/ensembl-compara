@@ -70,6 +70,7 @@ sub render_normal {
 
   $self->{'my_config'}->set('bumped', 1);
   $self->{'my_config'}->set('no_join', 1);
+  $self->{'my_config'}->set('drawn_strand', $self->strand);
 
   my $data = $self->get_data;
   if (scalar @{$data->[0]{'features'}||[]}) {
@@ -207,13 +208,11 @@ sub get_data {
                                     'end'       => $end, 
                                     'colour'    => $colours,
                                     'href'      => $nonref_url, 
-                                    'index'     => 0,
                                     },
                     $nonref_sp  => {'start'     => $nr_start - $other_start, 
                                     'end'       => $nr_end - $other_start,
                                     'colour'    => $colours,
                                     'href'      => $ref_url, 
-                                    'index'     => 1,
                                     },
                     'connections' => [{
                                         'key'     => $block_id,

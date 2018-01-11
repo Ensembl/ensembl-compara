@@ -53,7 +53,6 @@ sub draw_feature {
   if (scalar(@{$block->{'connections'}||[]})) {
     my $connection_colour = $debug ? $feature->{'colour'} : undef;
     $self->draw_connections($block->{'connections'}, $glyph, {
-                                                              index  => $feature->{'index'}, 
                                                               colour => $connection_colour,
                                                               count  => $count,
                                                               }); 
@@ -65,8 +64,9 @@ sub draw_connections {
   ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
   my ($self, $connections, $glyph, $args) = @_;
 
-  my $part = $args->{'index'};
-  my $y    = $part == 1 ? 0 : 1;  
+  my $strand  = $self->track_config->get('drawn_strand');
+  my $part    = $strand == 1 ? 1 : 0;
+  my $y       = $strand == 1 ? 0 : 1;  
   my @shapes = (
                 [[0,0],[0,1],[1,1],[1,0]], # circuit makes quadrilateral,
                 [[0,0],[0,1],[1,0],[1,1]], # but zigzag makes cross
