@@ -102,9 +102,6 @@ sub get_data {
     return $self->feature_cache($cache_key);
   }
 
-  my $ref_sp    = $self->{'config'}->hub->species;
-  my $nonref_sp = $self->{'config'}->hub->param('s1');
-
   my $slice   = $self->{'container'};
   my $compara = $self->dbadaptor('multi',$self->my_config('db'));
   my $mlss_a  = $compara->get_MethodLinkSpeciesSetAdaptor;
@@ -120,8 +117,6 @@ sub get_data {
   my $length      = $slice->length;
   my $strand      = $self->strand;
   my $colour      = $self->my_colour('default');
-  $self->{'config'}{'hub'}->param('r1') =~ /:(\d+)\-/;
-  my $other_start = $1; 
 
   my %zmenu = (
                 type    => 'Location',
@@ -134,8 +129,19 @@ sub get_data {
   my $connection_colour = $self->my_colour($feature_key, 'join') || 'gold'; 
   use Data::Dumper;
 
+  my $ref_sp = $self->species;
+  my $nonref_sp;
+
+  ## Work out the start and end of the non-reference slice we're going to be drawing
+  my $other_start;
+  if ($ref_sp ne $self->{'config'}{'hub'}->species) {
+    ## We're not drawing the page species, so use the main r parameter as 'other'
+    $self->{'config'}{'hub'}->param('r') =~ /:(\d+)\-/;
+    $other_start = $1; 
+  }
+
   foreach my $gab (@{$gabs||[]}) {
-    warn "\n\n### NEXT";
+    #warn "\n\n### NEXT";
     my $start     = $gab->reference_slice_start;
     my $end       = $gab->reference_slice_end;
     next if $end < 1 || $start > $length;
@@ -145,6 +151,22 @@ sub get_data {
     my $nr_end    = $nonref->dnafrag_end;
     my $hseqname  = $nonref->dnafrag->name;
   
+    ## Annoyingly we can't reliably get these params any other way
+    unless ($nonref_sp) {
+      my $prod_name = $nonref->dnafrag->genome_db->name;
+      $nonref_sp = $self->{'config'}->hub->species_defs->production_name_mapping($prod_name);
+    }
+    unless ($other_start) {
+      foreach ( $self->{'config'}{'hub'}->param) {
+        ## find the nonref species param
+        next unless $_ =~ /^s(\d)$/;
+        next unless $self->{'config'}{'hub'}->param($_) eq $nonref_sp;
+        $self->{'config'}{'hub'}->param('r'.$1) =~ /:(\d+)\-/;
+        $other_start = $1;
+        last;
+      }
+    }
+
     ## Create zmenu link 
     my $chr       = $self->{'container'}->seq_region_name;
     my $slice_start = $self->{'container'}->start;
