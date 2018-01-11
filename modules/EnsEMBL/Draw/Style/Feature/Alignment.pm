@@ -36,7 +36,14 @@ sub draw_feature {
   #use Data::Dumper;
   #warn ">>> DRAWING ALIGNMENT ".Dumper($block);
   my $debug = $self->track_config->get('DEBUG_RAINBOW');
-  $feature->{'colour'} = $self->rainbow($count) if $debug;
+  if ($debug) {
+    $feature->{'colour'} = $self->rainbow($count);
+  }
+  else {
+    my @colours = @{$feature->{'colour'}||[]};
+    my $i = $count % scalar(@colours);;
+    $feature->{'colour'} = $colours[$i];
+  }
   #warn "@@@ ACTUAL COLOUR ".$feature->{'colour'}."\n\n";
   ## Historically, width is saved in the position hash rather than the feature itself
   $position->{'width'} = $feature->{'end'} - $feature->{'start'};
@@ -47,7 +54,8 @@ sub draw_feature {
     my $connection_colour = $debug ? $feature->{'colour'} : undef;
     $self->draw_connections($block->{'connections'}, $glyph, {
                                                               index  => $feature->{'index'}, 
-                                                              colour => $connection_colour
+                                                              colour => $connection_colour,
+                                                              count  => $count,
                                                               }); 
   }
 }
@@ -64,6 +72,10 @@ sub draw_connections {
                 [[0,0],[0,1],[1,0],[1,1]], # but zigzag makes cross
                 );
 
+  my @colours = @{$connections->[0]{'colour'}||[]};
+  my $i = $args->{'count'} % scalar(@colours);;
+  my $colour = $args->{'colour'} || $colours[$i];
+
   foreach my $connection (@$connections) {
     foreach my $s (@{$shapes[$connection->{'cross'}]}) {
       next unless $s->[0] == $part; # only half of it is on each track
@@ -72,7 +84,7 @@ sub draw_connections {
                     x     => $s->[1],
                     y     => $y, 
                     z     => 1000,
-                    col   => $args->{'colour'} || $connection->{'colour'},
+                    col   => $colour,
                     style => 'fill',
                     alpha => 0.6,
                     };  

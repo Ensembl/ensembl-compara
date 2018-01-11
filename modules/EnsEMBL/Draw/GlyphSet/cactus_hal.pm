@@ -116,7 +116,6 @@ sub get_data {
   my $strand_flag = $self->my_config('strand');
   my $length      = $slice->length;
   my $strand      = $self->strand;
-  my $colour      = $self->my_colour('default');
 
   my %zmenu = (
                 type    => 'Location',
@@ -124,9 +123,10 @@ sub get_data {
                 method  => $self->my_config('type'),
               );
 
-  my $features = [];
-  my $feature_key = lc $self->my_config('type');
-  my $connection_colour = $self->my_colour($feature_key, 'join') || 'gold'; 
+  ## Get alternating colours
+  my $feature_key         = lc $self->my_config('type');
+  my $colours             = [$self->my_colour($feature_key), $self->my_colour($feature_key, 'alt')];
+  my $connection_colours  = [$self->my_colour($feature_key, 'join'), $self->my_colour($feature_key, 'join_alt')]; 
   use Data::Dumper;
 
   my $ref_sp = $self->species;
@@ -139,6 +139,8 @@ sub get_data {
     $self->{'config'}{'hub'}->param('r') =~ /:(\d+)\-/;
     $other_start = $1; 
   }
+
+  my $features = [];
 
   foreach my $gab (@{$gabs||[]}) {
     #warn "\n\n### NEXT";
@@ -203,19 +205,19 @@ sub get_data {
                     $ref_sp     => {
                                     'start'     => $start, 
                                     'end'       => $end, 
-                                    'colour'    => $colour,
+                                    'colour'    => $colours,
                                     'href'      => $nonref_url, 
                                     'index'     => 0,
                                     },
                     $nonref_sp  => {'start'     => $nr_start - $other_start, 
                                     'end'       => $nr_end - $other_start,
-                                    'colour'    => $colour,
+                                    'colour'    => $colours,
                                     'href'      => $ref_url, 
                                     'index'     => 1,
                                     },
                     'connections' => [{
                                         'key'     => $block_id,
-                                        'colour'  => $connection_colour,
+                                        'colour'  => $connection_colours,
                                         'cross'   => $cross,
                                       }],
                   };
