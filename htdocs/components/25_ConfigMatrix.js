@@ -246,7 +246,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       
       cells = null;
       
-      e.stopPropagation();
+      // e.stopPropagation();
     });
     
     // Display a select all popup for rows
@@ -278,7 +278,7 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       input.prop('checked', !checked);
       input = th = null;
       
-      e.stopPropagation();
+      // e.stopPropagation();
     });
     
     this.elLk.configMenus.filter('.select_all').children('.popup_menu').children('li:not(.header)').on('click', function () {

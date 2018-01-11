@@ -1,3 +1,4 @@
+  $self->{'extra_params'} = { image_config => $hub->param('image_config') };
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -63,6 +64,7 @@ sub content_ajax {
   $self->{'category_map'} = \%evidence_categories;
   $self->{'cluster_map'} = \%evidence_clusters;
   $self->{'sort_func'} = \&id_sort;
+  $self->{'extra_params'} = { image_config => $hub->param('image_config') };
 
   $self->SUPER::content_ajax;
 }
