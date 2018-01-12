@@ -60,7 +60,6 @@ sub fetch_input {
     $self->param( 'gene_tree_id',      $self->param_required('gene_tree_id') );
     $self->param( 'gene_tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
     $self->param( 'gene_tree',         $self->param('gene_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) or die "Could not fetch gene_tree with gene_tree_id='" . $self->param('gene_tree_id');
-    $self->param( 'gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $self->param('gene_tree_id') ) ) or die "Could not fetch gene_tree with gene_tree_id='" . $self->param('gene_tree_id');
 
     #Fetch tags
     $self->param( 'cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id( $self->param('gene_tree')->gene_align_id ) );
@@ -95,18 +94,20 @@ sub run {
     $self->param( 'gappiness', $gaps/$sum );
     print "sum:$gaps|$sum\ngappiness:" . $self->param('gappiness') . "\n" if ( $self->debug );
 
-    #Applying filters
-    if ( $self->param('gappiness') > $self->param('max_gappiness') ) {
-
-        #delete cluster from clusterset_id default and copy to filter_level_1
-        print "Moving " . $self->param('gene_tree_id') . " to filter_level_2 clusterset\n" if ( $self->debug );
-        $self->param('gene_tree_adaptor')->change_clusterset( $self->param('gene_tree'), "filter_level_2" );
-    }
 
 } ## end sub run
 
 sub write_output {
-    my $self = shift;
+    my $self = shift @_;
+
+    $self->param('gene_tree')->store_tag('gappiness',$self->param('gappiness'));
+
+    if ( $self->param('gappiness') < $self->param('max_gappiness') ) {
+
+        #delete cluster from clusterset_id default and copy to filter_level_1
+        print "Moving " . $self->param('gene_tree_id') . " to filter_level_2 clusterset\n" if ( $self->debug );
+        $self->param('gene_tree_adaptor')->change_clusterset( $self->param('gene_tree'), "filter_level_2" );
+    };
 }
 
 ##########################################
