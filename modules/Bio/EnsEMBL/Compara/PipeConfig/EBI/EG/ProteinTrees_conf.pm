@@ -273,7 +273,7 @@ sub tweak_analyses {
         $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
     }
 
-    # Leave this untouched: it is an extremely-hacky way of setting # "taxlevels" to
+    # Leave this untouched: it is an extremely-hacky way of setting "taxlevels" to
     # a division-default only if it hasn't been redefined on the command line
     if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'taxlevels_'.$self->o('division')})) {
         if (stringify($self->default_options()->{'taxlevels'}) eq stringify($self->o('taxlevels'))) {
