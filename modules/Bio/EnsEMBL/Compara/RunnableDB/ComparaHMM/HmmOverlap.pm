@@ -57,7 +57,7 @@ use base ( 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Com
 
 sub param_defaults {
     return {
-        'hmmer_cutoff' => 0.0000000001,
+        'hmmer_cutoff' => 1e-23,
         'panther_hmm_lib' => '#panther_hmm_library_basedir#',
     };
 }
