@@ -35,6 +35,7 @@ sub default_options {
         'compara_innodb_schema' => 1,
 
         'ensembl_cellar'        => $self->o('ENV', 'LINUXBREW_HOME').'/Cellar',
+        'ensembl_linuxbrew_opt' => $self->o('ENV', 'LINUXBREW_HOME').'/opt',
     };
 }
 

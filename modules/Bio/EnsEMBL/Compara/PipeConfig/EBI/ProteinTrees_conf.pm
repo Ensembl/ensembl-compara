@@ -89,7 +89,7 @@ sub default_options {
         'cafe_shell'                => $self->o('ensembl_cellar').'/cafe/2.2/bin/cafeshell',
         'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
-        'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-141/bin/java',
+        'java_exe'                  => $self->o('ensembl_linuxbrew_opt').'/jdk@8/bin/java',
         'cdhit_exe'                 => $self->o('ensembl_cellar').'/cd-hit/4.6.8/bin/cd-hit',
 
         # HMM specific parameters

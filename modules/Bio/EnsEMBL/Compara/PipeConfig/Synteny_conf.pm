@@ -94,7 +94,7 @@ sub default_options {
             'DumpGFFHomologuesForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl",
             'BuildSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/BuildSynteny.jar",
 
-            'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-141/bin/java',
+            'java_exe'      => $self->o('ensembl_linuxbrew_opt').'/jdk@8/bin/java',
 
            };
 }
