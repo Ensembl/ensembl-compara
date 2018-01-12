@@ -46,26 +46,24 @@ package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
 use Time::HiRes qw/time gettimeofday tv_interval/;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::MemberSet;
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub param_defaults {
-    return { 'hmmer_cutoff' => 0.001, 'library_name' => '#hmm_library_name#', 'library_basedir' => '#hmm_library_basedir#' };
-}
 
 sub fetch_input {
     my ($self) = @_;
 
-    $self->param_required('library_name');
-    $self->param_required('hmm_library_basedir');
     $self->param_required('hmmer_home');
+    $self->param_required('library_basedir');
+    $self->param_required('library_name');
 
-    #need to add some quality check on the HMM profile, e.g. expecting X number of prifiles to be in the concatenated file, etc.
-
+    #need to add some quality check on the HMM profile, e.g. expecting X number of profiles to be in the concatenated file, etc.
     $self->param( 'query_set', Bio::EnsEMBL::Compara::MemberSet->new( -members => $self->_get_queries ) );
     $self->param( 'all_hmm_annots', {} );
 }
@@ -92,9 +90,30 @@ sub write_output {
     my $adaptor        = $self->compara_dba->get_HMMAnnotAdaptor();
     my $all_hmm_annots = $self->param('all_hmm_annots');
 
-    # Store into table 'hmm_annot'
-    foreach my $seq_id ( keys %$all_hmm_annots ) {
-        $adaptor->store_hmmclassify_result( $seq_id, @{ $all_hmm_annots->{$seq_id} } );
+    if ( $self->param('store_all_hits') ) {
+
+        my $target_table = $self->param_required('target_table');
+
+        #Individual queries are too slow in this case, so we need to bulk the INSERT statements.
+        my @bulk_array;
+
+        foreach my $seq_id ( keys %{ $self->param('all_hmm_annots') } ) {
+            foreach my $hmm_id ( keys %{ $self->param('all_hmm_annots')->{$seq_id} } ) {
+                #$adaptor->store_hmmclassify_all_results( $seq_id, $hmm_id, $all_hmm_annots->{$seq_id}->{$hmm_id}, $target_table );
+                my @hit_array = [ $seq_id, $hmm_id, $all_hmm_annots->{$seq_id}->{$hmm_id}->{'eval'}, $all_hmm_annots->{$seq_id}->{$hmm_id}->{'score'}, $all_hmm_annots->{$seq_id}->{$hmm_id}->{'bias'} ];
+                push(@bulk_array, @hit_array);
+            }
+        }
+
+        #Store all at once:
+        print "Storing all the hits at once:\n" if ($self->debug);
+        bulk_insert($self->compara_dba->dbc, 'hmm_thresholding', \@bulk_array, ['seq_member_id', 'root_id', 'evalue', 'score', 'bias'], 'INSERT IGNORE');
+
+    }
+    else {
+        foreach my $seq_id ( keys %$all_hmm_annots ) {
+            $adaptor->store_hmmclassify_result( $seq_id, @{ $all_hmm_annots->{$seq_id} } );
+        }
     }
 }
 
@@ -111,8 +130,15 @@ sub _get_queries {
     my $end_member_id   = $self->param_required('end_member_id');
 
     #Get list of members and sequences
-    my $member_ids =
-      $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot_by_range( $start_member_id, $end_member_id );
+    my $member_ids;
+    if ( $self->param('fetch_all_seqs') == 1 ) {
+        my $source_clusterset_id = $self->param_required('source_clusterset_id');
+        $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_in_trees_by_range( $start_member_id, $end_member_id, $source_clusterset_id );
+    }
+    else {
+        $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot_by_range( $start_member_id, $end_member_id );
+    }
+
     return $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 }
 
@@ -134,18 +160,22 @@ sub _run_HMM_search {
     my $fastafile    = $self->param('fastafile');
     my $hmmLibrary   = $self->param('library_basedir') . "/" . $self->param('library_name');
     my $hmmer_home   = $self->param('hmmer_home');
-    my $hmmer_cutoff = $self->param('hmmer_cutoff');                                               ## Not used for now!!
+    my $hmmer_cutoff = $self->param('hmmer_cutoff');
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd                   = $hmmer_home . "/hmmsearch --cpu 1 -E $hmmer_cutoff --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
+    my $cmd;
+    if ( $self->param('hmmer_cutoff') ) {
+        $cmd = $hmmer_home . "/hmmsearch --cpu 1 -E $hmmer_cutoff --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
+    }
+    else {
+        $cmd = $hmmer_home . "/hmmsearch --cpu 1 --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
+    }
 
     my $cmd_out = $self->run_command($cmd);
 
-    my %hmm_annot;
-
     # Detection of failures
     if ( $cmd_out->exit_code ) {
-        $self->throw( sprintf( "error running pantherScore [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err ) );
+        $self->throw( sprintf( "error running hmmsearch [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err ) );
     }
     if ( $cmd_out->err =~ /^Missing sequence for (.*)$/ ) {
         $self->throw( sprintf( "pantherScore detected a missing sequence for the member %s. Full log is:\n%s", $1, $cmd_out->err ) );
@@ -153,39 +183,100 @@ sub _run_HMM_search {
 
     #Parsing outputs
     open( HMM, "$fastafile.out" );
-    while (<HMM>) {
 
-        #get rid of the header lines
-        next if $_ =~ /^#/;
+    if ( $self->param('store_all_hits') ) {
 
-        #Only split the initial 6 wanted positions, $accession1-2 are not used.
-        my ( $seq_id, $accession1, $hmm_id, $accession2, $eval ) = split /\s+/, $_, 6;
+        #store all the hmm annotations
+        my %hmm_annot;
 
-        #if hash exists we need to compare the already existing value, so that we only store the best e-value
-        if ( exists( $hmm_annot{$seq_id} ) ) {
-            if ( $eval < $hmm_annot{$seq_id}{'eval'} ) {
+        #map of the stable_ids with their corresponding stable_ids
+        my %stable_root_id_map;
+
+        #list of stable_ids
+        my %stable_id_list;
+
+        #Map of the stable_ids and root_id
+        while (<HMM>) {
+
+            #get rid of the header lines
+            next if $_ =~ /^#/;
+
+            #Only split the initial 6 wanted positions, $accession1-2 are not used.
+            my ( $seq_id, $accession1, $hmm_id, $accession2, $eval, $score, $bias ) = split /\s+/, $_, 8;
+
+            $hmm_annot{$seq_id}{$hmm_id}{'eval'}  = $eval;
+            $hmm_annot{$seq_id}{$hmm_id}{'score'} = $score;
+            $hmm_annot{$seq_id}{$hmm_id}{'bias'}  = $bias;
+            $stable_id_list{$hmm_id} = 1;
+        }
+
+        my @stable_id_array = keys(%stable_id_list);
+
+        $self->map_stableIds_to_rootIds(\@stable_id_array, \%stable_root_id_map);
+
+        #Create the final hash
+        foreach my $seq_id ( keys %hmm_annot ) {
+            foreach my $hmm_id ( keys %{ $hmm_annot{$seq_id} } ) {
+                $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'eval'}  = $hmm_annot{$seq_id}{$hmm_id}{'eval'};
+                $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'score'} = $hmm_annot{$seq_id}{$hmm_id}{'score'};
+                $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'bias'}  = $hmm_annot{$seq_id}{$hmm_id}{'bias'};
+            }
+        }
+
+    } ## end if ( $self->param('store_all_hits'...))
+    else {
+        my %hmm_annot;
+
+        while (<HMM>) {
+
+            #get rid of the header lines
+            next if $_ =~ /^#/;
+
+            #Only split the initial 6 wanted positions, $accession1-2 are not used.
+            my ( $seq_id, $accession1, $hmm_id, $accession2, $eval ) = split /\s+/, $_, 6;
+
+            #if hash exists we need to compare the already existing value, so that we only store the best e-value
+            if ( exists( $hmm_annot{$seq_id} ) ) {
+                if ( $eval < $hmm_annot{$seq_id}{'eval'} ) {
+                    $hmm_annot{$seq_id}{'eval'}   = $eval;
+                    $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
+                }
+            }
+            else {
+                #storing evalues for the firt time
                 $hmm_annot{$seq_id}{'eval'}   = $eval;
                 $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
             }
-        }
-        else {
-            #storing evalues for the firt time
-            $hmm_annot{$seq_id}{'eval'}   = $eval;
-            $hmm_annot{$seq_id}{'hmm_id'} = $hmm_id;
+
         }
 
-    } ## end while (<HMM>)
-
-    foreach my $seq_id ( keys %hmm_annot ) {
-        $self->_add_hmm_annot( $seq_id, $hmm_annot{$seq_id}{'hmm_id'}, $hmm_annot{$seq_id}{'eval'} );
-    }
+        foreach my $seq_id ( keys %hmm_annot ) {
+            $self->param('all_hmm_annots')->{$seq_id} = [ $hmm_annot{$seq_id}{'hmm_id'}, $hmm_annot{$seq_id}{'eval'} ];
+        }
+    } ## end else [ if ( $self->param('store_all_hits'...))]
 
 } ## end sub _run_HMM_search
 
-sub _add_hmm_annot {
-    my ( $self, $seq_id, $hmm_id, $eval ) = @_;
-    print STDERR "Found [$seq_id, $hmm_id, $eval]\n" if ( $self->debug() );
-    $self->param('all_hmm_annots')->{$seq_id} = [ $hmm_id, $eval ];
+#Used to fetch the root_ids for the list of stable_ids.
+# Its is useful to avoid having huge 'SELECT .. WHERE .. IN' statements.
+# It receives an array with the stable_ids and a reference to a hash to map them with the root_ids.
+sub map_stableIds_to_rootIds {
+    my ( $self, $model_ids_ref, $model_id_hash_ref ) = @_;
+
+    my $select_sql = "SELECT root_id, stable_id FROM gene_tree_root WHERE ";
+
+    my $gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor();
+    $gene_tree_adaptor->split_and_callback( $model_ids_ref, 'stable_id', SQL_VARCHAR, sub {
+            my $sql = $select_sql . (shift);
+            my $sth = $self->compara_dba->dbc->prepare($sql);
+            $sth->execute();
+            my ( $root_id, $stable_id );
+            $sth->bind_columns( \$root_id, \$stable_id );
+            while ( $sth->fetch ) {
+                $model_id_hash_ref->{$stable_id} = $root_id;
+            }
+            $sth->finish;
+    } );
 }
 
 1;
