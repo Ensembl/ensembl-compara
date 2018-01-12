@@ -242,6 +242,7 @@ sub default_options {
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
         'HMMer_classifyPantherScore_capacity'   => 1000,
+        'HMMer_search_capacity'     => 8000,
         'copy_trees_capacity'       => 50,
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
@@ -455,6 +456,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'examl_dir'     => $self->o('examl_dir'),
         'dump_dir'      => $self->o('dump_dir'),
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
+        'hmm_library_version'   => $self->o('hmm_library_version'),
 
         'clustering_mode'   => $self->o('clustering_mode'),
         'reuse_level'       => $self->o('reuse_level'),
@@ -997,11 +999,13 @@ sub core_pipeline_analyses {
             -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                '2->A'  => [ 'HMMer_classifyPantherScore' ],
-                'A->1'  => [ 'HMM_clusterize' ],
+                '2->A' => WHEN(
+                    '#hmm_library_version# == 3'  => 'HMMer_search',
+                    '#hmm_library_version# == 2'  => 'HMMer_classifyPantherScore',
+                ),
+                'A->1' => [ 'HMM_clusterize' ],
             },
         },
-
 
             {
              -logic_name => 'HMMer_classifyPantherScore',
@@ -1030,6 +1034,52 @@ sub core_pipeline_analyses {
              -rc_name => '8Gb_job',
             },
 
+        {
+         -logic_name => 'HMMer_search',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
+         -parameters => {
+                         'hmmer_home'        => $self->o('hmmer3_home'),
+                         'library_name'      => $self->o('hmm_library_name'),
+                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
+                        },
+         -hive_capacity => $self->o('HMMer_search_capacity'),
+         -rc_name => '2Gb_job',
+         -flow_into => {
+                       -1 => [ 'HMMer_search_himem' ],  # MEMLIMIT
+                       },
+        },
+
+        {
+         -logic_name => 'HMMer_search_himem',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
+         -parameters => {
+                         'hmmer_home'        => $self->o('hmmer3_home'),
+                         'library_name'      => $self->o('hmm_library_name'),
+                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
+                        },
+         -hive_capacity => $self->o('HMMer_search_capacity'),
+         -rc_name => '4Gb_job',
+         -priority=> 20,
+         -flow_into => {
+                       -1 => [ 'HMMer_search_super_himem' ],  # MEMLIMIT
+                       },
+        },
+
+        {
+         -logic_name => 'HMMer_search_super_himem',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
+         -parameters => {
+                         'hmmer_home'        => $self->o('hmmer3_home'),
+                         'library_name'      => $self->o('hmm_library_name'),
+                         'library_basedir'   => $self->o('hmm_library_basedir'),
+                         'hmmer_cutoff'      => $self->o('hmmer_search_cutoff'),
+                        },
+         -hive_capacity => $self->o('HMMer_search_capacity'),
+         -rc_name => '64Gb_job',
+         -priority=> 25,
+        },
 
             {
              -logic_name => 'HMM_clusterize',

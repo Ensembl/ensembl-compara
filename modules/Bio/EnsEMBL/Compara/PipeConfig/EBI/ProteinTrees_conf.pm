@@ -90,6 +90,13 @@ sub default_options {
         'getPatterns_exe'           => $self->o('ensembl_cellar').'/raxml-get-patterns/1.0/bin/getPatterns',
         'java_exe'                  => $self->o('ensembl_cellar').'/jdk/1.8.0-141/bin/java',
         'cdhit_exe'                 => $self->o('ensembl_cellar').'/cd-hit/4.6.8/bin/cd-hit',
+
+        # HMM specific parameters
+        # The location of the HMM library:
+        'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_91/',
+        'hmm_library_name'              => 'compara_hmm_91.hmm3',
+        'hmmer_search_cutoff'           => '1e-23',
+        'lustre_tmp_dir'                => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/tmp_hmmsearch/',
     };
 }
 
