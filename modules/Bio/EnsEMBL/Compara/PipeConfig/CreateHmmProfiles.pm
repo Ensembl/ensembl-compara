@@ -343,7 +343,8 @@ sub resource_classes {
     };
 }
 
-sub pipeline_create_commands {
+
+sub pipeline_checks_pre_init {
     my ($self) = @_;
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
@@ -356,9 +357,14 @@ sub pipeline_create_commands {
     die if not $self->o('master_db') and not $self->o('ncbi_db');
 
     my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
-    die "'reuse_level' must be set to one of: clusters, blastp, members" if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
+    die "'reuse_level' must be set to one of: clusters, blastp, members" unless $self->o('reuse_level') and $reuse_modes{$self->o('reuse_level')};
     my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
-    die "'clustering_mode' must be set to one of: blastp, ortholog, hmm, hybrid or topup" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
+    die "'clustering_mode' must be set to one of: blastp, ortholog, hmm, hybrid or topup" unless $self->o('clustering_mode') and $clustering_modes{$self->o('clustering_mode')};
+}
+
+
+sub pipeline_create_commands {
+    my ($self) = @_;
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables

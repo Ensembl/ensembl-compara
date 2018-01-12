@@ -398,7 +398,7 @@ sub resource_classes {
 =cut
 
 
-sub pipeline_create_commands {
+sub pipeline_checks_pre_init {
     my ($self) = @_;
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
@@ -411,23 +411,25 @@ sub pipeline_create_commands {
     die if not $self->o('master_db') and not $self->o('ncbi_db');
 
     my %reuse_modes = (clusters => 1, members => 1);
-    die "'reuse_level' must be set to one of: ".join(", ", keys %reuse_modes) if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
+    die "'reuse_level' must be set to one of: ".join(", ", keys %reuse_modes) unless $self->o('reuse_level') and $reuse_modes{$self->o('reuse_level')};
     my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
-    die "'clustering_mode' must be set to one of: ".join(", ", keys %clustering_modes) if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
+    die "'clustering_mode' must be set to one of: ".join(", ", keys %clustering_modes) unless $self->o('clustering_mode') and $clustering_modes{$self->o('clustering_mode')};
 
     # In HMM mode the library must exist
     if (($self->o('clustering_mode') ne 'blastp') and ($self->o('clustering_mode') ne 'ortholog')) {
         my $lib = $self->o('hmm_library_basedir');
-        unless ($lib =~ /^#:subst/) {
             if ($self->o('hmm_library_version') == 2){
                 die "'$lib' does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-d "$lib/books") && (-d "$lib/globals") && (-s "$lib/globals/con.Fasta"));
             }
             elsif($self->o('hmm_library_version') == 3){
                 die "$lib does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3f") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3i") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3m") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3p"));
             }
-        }
     }
+}
 
+
+sub pipeline_create_commands {
+    my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 

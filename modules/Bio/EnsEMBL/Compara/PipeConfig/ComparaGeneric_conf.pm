@@ -42,10 +42,17 @@ sub default_options {
 sub pipeline_create_commands {
     my $self            = shift @_;
 
+    # eHive calls pipeline_create_commands twice: once to know which
+    # $self->o() parameters it needs, once to get the actual list of
+    # commands ($self->o() values are all present only the second time)
+    my $second_pass     = scalar(keys %{$self->root}) > 1;
+
+    # Pre-checks framework: only run them once we have all the values in $self->o()
+    $self->pipeline_checks_pre_init if ($self->can('pipeline_checks_pre_init') and $second_pass);
+
     return $self->SUPER::pipeline_create_commands if $self->can('no_compara_schema');
 
     my $pipeline_url    = $self->pipeline_url();
-    my $second_pass     = $pipeline_url!~ /^#:subst/;
     my $parsed_url      = $second_pass && Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
     my $driver          = $second_pass ? $parsed_url->{'driver'} : '';
 
