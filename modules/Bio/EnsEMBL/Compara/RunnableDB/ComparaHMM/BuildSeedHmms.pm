@@ -95,8 +95,8 @@ sub run {
 sub _fetch_all_tf_ids {
     my ($self) = @_;
 
-    my $tf_globals       = $self->param('treefam_hmm_lib') . "/2015-12-18/globals/con.Fasta";
-    my $treefam_lib_file = $self->param('treefam_hmm_lib') . "/2015-12-18_only_TF_hmmer3/treefam.hmm3";
+    my $tf_globals       = $self->param('treefam_hmm_lib') . "/globals/con.Fasta";
+    my $treefam_lib_file = $self->param('treefam_only_hmm_lib') . "/treefam.hmm3";
     my $panther_lib_file = $self->param('panther_hmm_lib') . "/" . $self->param('panther_hmm_library_name');
     $self->param( 'treefam_lib_file', $treefam_lib_file );
     $self->param( 'panther_lib_file', $panther_lib_file );
