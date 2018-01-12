@@ -209,6 +209,7 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => ["Euteleostomi","Ciona"],
         'calculate_goc_distribution'    => 0,
+        'goc_batch_size'                => 20,
 
     # Extra analyses
         # Export HMMs ?
