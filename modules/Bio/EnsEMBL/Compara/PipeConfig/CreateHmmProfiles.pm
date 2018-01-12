@@ -102,6 +102,7 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
+        'tmp_hmmsearch'         => $self->o('work_dir') . '/tmp_hmmsearch',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
@@ -198,7 +199,6 @@ sub default_options {
         'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',
         'hmm_thresholding_table'        => 'hmm_thresholding',
         'hmmer_search_cutoff'           => '1e-23',
-        'lustre_tmp_dir'                => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/tmp_hmmsearch/',
         'min_num_members'               => 4,
         'min_num_species'               => 2,
         'min_taxonomic_coverage'        => 0.5,
@@ -368,10 +368,10 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('dump_dir').'/pafs',
         'mkdir -p '.$self->o('fasta_dir'),
+        'mkdir -p '.$self->o('tmp_hmmsearch'),
         'become -- compara_ensembl mkdir -p '.$self->o('compara_hmm_library_basedir'),
         'become -- compara_ensembl mkdir -p '.$self->o('panther_hmm_library_basedir'),
         'become -- compara_ensembl mkdir -p '.$self->o('seed_hmm_library_basedir'),
-        'mkdir -p '.$self->o('lustre_tmp_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -398,6 +398,8 @@ sub pipeline_wide_parameters {
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
+        'tmp_hmmsearch' => $self->o('tmp_hmmsearch'),
+
         'compara_hmm_library_basedir'   => $self->o('compara_hmm_library_basedir'),
         'panther_hmm_library_basedir'   => $self->o('panther_hmm_library_basedir'),
         'seed_hmm_library_basedir'      => $self->o('seed_hmm_library_basedir'),
@@ -732,7 +734,7 @@ sub core_pipeline_analyses {
                             'input_format'              => 'fasta',
                             'seq_filter'                => '^TF',
                             'inputfile'                 => $self->o('treefam_hmm_library_basedir')."/globals/con.Fasta",
-                            'output_dir'                => $self->o('lustre_tmp_dir'),
+                            'output_dir'                => $self->o('tmp_hmmsearch'),
                             'output_prefix'             => $self->o('output_prefix'),
                             'hash_directories'          => 1,
                             'split_by_sequence_count'   => 1,
