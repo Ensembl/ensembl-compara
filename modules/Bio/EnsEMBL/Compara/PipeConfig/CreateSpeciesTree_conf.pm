@@ -57,8 +57,7 @@ sub default_options {
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
         
-        'linuxbrew_bin'     => $self->o('ENV', 'LINUXBREW_HOME').'/bin',
-        'mash_exe'          => $self->o('linuxbrew_bin').'/mash',
+        'mash_exe'          => $self->o('ensembl_cellar').'/mash/2.0/bin/mash',
         'mash_kmer_size'    => 24, 
         'mash_sketch_size'  => 1000000, 
 
@@ -88,6 +87,8 @@ sub resource_classes {
 
     };
 }
+
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_create_commands {
     my $self = shift;

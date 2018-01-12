@@ -42,6 +42,8 @@ sub default_options {
 sub pipeline_create_commands {
     my $self            = shift @_;
 
+    return $self->SUPER::pipeline_create_commands if $self->can('no_compara_schema');
+
     my $pipeline_url    = $self->pipeline_url();
     my $second_pass     = $pipeline_url!~ /^#:subst/;
     my $parsed_url      = $second_pass && Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
