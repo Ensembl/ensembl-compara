@@ -544,7 +544,7 @@ sub core_pipeline_analyses {
         'treebest_exe'              => $self->o('treebest_exe'),
         'java_exe'                  => $self->o('java_exe'),
         'label'                     => 'binary',
-        'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
+        'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'default',
         'output_clusterset_id'      => 'notung',
     );
 
