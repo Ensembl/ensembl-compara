@@ -105,7 +105,7 @@ sub default_options {
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
         #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
-        'division'              => undef,
+        #'division'              => undef,
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
