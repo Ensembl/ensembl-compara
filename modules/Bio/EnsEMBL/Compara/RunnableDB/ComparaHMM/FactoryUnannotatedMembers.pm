@@ -60,7 +60,14 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot();
+    my $unannotated_member_ids;
+    if($self->param('use_diversity_filter')){
+        $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_under_the_diversity_levels();
+    }
+    else{
+        $unannotated_member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot();
+    }
+
     $self->param('unannotated_member_ids', [sort {$a <=> $b} @$unannotated_member_ids]);
 
 }
