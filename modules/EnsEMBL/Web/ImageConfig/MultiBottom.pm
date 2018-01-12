@@ -33,6 +33,7 @@ sub init_cacheable {
   $self->set_parameters({
     image_resizeable  => 1,
     sortable_tracks   => 1,  # allow the user to reorder tracks
+    can_trackhubs     => 1,      # allow track hubs
     opt_lines         => 1,  # register lines
     spritelib         => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
   });
@@ -84,6 +85,19 @@ sub init_cacheable {
   );
 
   $_->set_data('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
+}
+
+sub glyphset_tracks {
+  ## @override
+  ## Adds trackhub tracks before returning the list of tracks
+  my $self = shift;
+
+  if (!$self->{'_glyphset_tracks'}) {
+    $self->get_node('user_data')->after($_) for grep $_->get_data('trackhub_menu'), $self->tree->nodes;
+    $self->SUPER::glyphset_tracks;
+  }
+
+  return $self->{'_glyphset_tracks'};
 }
 
 sub multi {
