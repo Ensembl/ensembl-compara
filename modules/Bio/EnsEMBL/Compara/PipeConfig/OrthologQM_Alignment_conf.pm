@@ -115,7 +115,7 @@ sub default_options {
         'species_set_name' => undef,
         'species_set_id'   => undef,
         'ref_species'      => undef,
-        'reg_conf'         => "$ENV{'ENSEMBL_CVS_ROOT_DIR'}/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [
             'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
@@ -126,7 +126,6 @@ sub default_options {
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
         'master_db'        => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
 
-        'ensembl_cvs_root_dir'      => $ENV{ENSEMBL_CVS_ROOT_DIR},
         'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
 }
