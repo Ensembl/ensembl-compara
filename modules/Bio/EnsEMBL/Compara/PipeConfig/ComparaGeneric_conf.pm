@@ -36,13 +36,19 @@ sub default_options {
 
         'linuxbrew_home'        => $self->o('ENV', 'LINUXBREW_HOME'),
         'ensembl_cellar'        => $self->o('ENV', 'LINUXBREW_HOME').'/Cellar',
-        'ensembl_linuxbrew_opt' => $self->o('ENV', 'LINUXBREW_HOME').'/opt',
     };
 }
 
 sub check_exe_in_cellar {
     my ($self, $exe_path) = @_;
     $exe_path = "Cellar/$exe_path";
+    push @{$self->{'_all_exe_paths'}}, $exe_path;
+    return $self->o('linuxbrew_home').'/'.$exe_path;
+}
+
+sub check_exe_in_linuxbrew_opt {
+    my ($self, $exe_path) = @_;
+    $exe_path = "opt/$exe_path";
     push @{$self->{'_all_exe_paths'}}, $exe_path;
     return $self->o('linuxbrew_home').'/'.$exe_path;
 }
