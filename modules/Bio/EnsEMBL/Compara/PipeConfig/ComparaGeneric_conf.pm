@@ -34,11 +34,28 @@ sub default_options {
 
         'compara_innodb_schema' => 1,
 
+        'linuxbrew_home'        => $self->o('ENV', 'LINUXBREW_HOME'),
         'ensembl_cellar'        => $self->o('ENV', 'LINUXBREW_HOME').'/Cellar',
         'ensembl_linuxbrew_opt' => $self->o('ENV', 'LINUXBREW_HOME').'/opt',
     };
 }
 
+sub check_exe_in_cellar {
+    my ($self, $exe_path) = @_;
+    $exe_path = "Cellar/$exe_path";
+    push @{$self->{'_all_exe_paths'}}, $exe_path;
+    return $self->o('linuxbrew_home').'/'.$exe_path;
+}
+
+sub check_all_executables_exist {
+    my $self = shift;
+    my $linuxbrew_home = $self->root()->{'linuxbrew_home'};
+    foreach my $p (@{$self->{'_all_exe_paths'}}) {
+        $p = $linuxbrew_home.'/'.$p;
+        die "'$p' cannot be found.\n" unless -e $p;
+        die "'$p' is not executable.\n" unless -x $p;
+    }
+}
 
 sub pipeline_create_commands {
     my $self            = shift @_;
@@ -49,6 +66,7 @@ sub pipeline_create_commands {
     my $second_pass     = scalar(keys %{$self->root}) > 1;
 
     # Pre-checks framework: only run them once we have all the values in $self->o()
+    $self->check_all_executables_exist if $second_pass;
     $self->pipeline_checks_pre_init if ($self->can('pipeline_checks_pre_init') and $second_pass);
 
     return $self->SUPER::pipeline_create_commands if $self->can('no_compara_schema');

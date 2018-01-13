@@ -51,7 +51,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'halStats_exe'          => $self->o('ensembl_cellar') . '/hal/1a89bd2/bin/halStats',
+        'halStats_exe'          => $self->check_exe_in_cellar('hal/1a89bd2/bin/halStats'),
 
         'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 

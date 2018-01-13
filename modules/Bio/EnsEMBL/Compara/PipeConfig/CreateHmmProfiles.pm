@@ -175,19 +175,19 @@ sub default_options {
         'tf_release'                => undef,
 
     # executable locations:
-        'hcluster_exe'              => $self->o('ensembl_cellar').'/hclustersg/0.5.0/bin/hcluster_sg',
+        'hcluster_exe'              => $self->check_exe_in_cellar('hclustersg/0.5.0/bin/hcluster_sg'),
         'mcoffee_home'              => $self->o('ensembl_cellar').'/t-coffee/9.03.r1336/',
         'mafft_home'                => $self->o('ensembl_cellar').'/mafft/7.305/',
         'extaligners_exe_dir'       => $self->o('ensembl_cellar').'/../bin/',   # We expect the latest version of each aligner to be symlinked there
-        'noisy_exe'                 => $self->o('ensembl_cellar').'/noisy/1.5.12/bin/noisy',
+        'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),
         'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
-        'treebest_exe'              => $self->o('ensembl_cellar').'/treebest/88/bin/treebest',
+        'treebest_exe'              => $self->check_exe_in_cellar('treebest/88/bin/treebest'),
         'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
         'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
         'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
         'pantherScore_path'         => $self->o('ensembl_cellar').'/pantherscore/1.03/',
-        'fasttree_exe'              => $self->o('ensembl_cellar'). '/fasttree/2.1.8/bin/FastTree',
-        'cdhit_exe'                 => '/homes/carlac/software/cdhit/cd-hit',
+        'fasttree_exe'              => $self->check_exe_in_cellar('fasttree/2.1.8/bin/FastTree'),
+        'cdhit_exe'                 => $self->check_exe_in_cellar('cd-hit/4.6.8/bin/cd-hit'),
 
         # HMM specific parameters
         # The location of the HMM library:

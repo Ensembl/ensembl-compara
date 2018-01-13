@@ -57,7 +57,7 @@ sub default_options {
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
         
-        'mash_exe'          => $self->o('ensembl_cellar').'/mash/2.0/bin/mash',
+        'mash_exe'          => $self->check_exe_in_cellar('mash/2.0/bin/mash'),
         'mash_kmer_size'    => 24, 
         'mash_sketch_size'  => 1000000, 
 

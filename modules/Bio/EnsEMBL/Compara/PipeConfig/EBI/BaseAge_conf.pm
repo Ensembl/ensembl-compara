@@ -75,7 +75,7 @@ sub default_options {
             'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_91_38?group=variation',
 
             # executable locations:
-            'big_bed_exe'   => $self->o('ensembl_cellar').'/kent/v335_1/bin/bedToBigBed',
+            'big_bed_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
 
             #Locations to write output files
             'bed_dir'        => sprintf('/hps/nobackup/production/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),

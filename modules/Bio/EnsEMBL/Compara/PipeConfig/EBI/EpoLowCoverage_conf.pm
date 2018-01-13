@@ -140,8 +140,8 @@ sub default_options {
 
 	#Location of executables (or paths to executables)
 	'gerp_exe_dir'    => $self->o('ensembl_cellar').'/gerp/20080211/bin',   #gerp program
-    'semphy_exe'      => $self->o('ensembl_cellar').'/semphy/2.0b3/bin/semphy', #semphy program
-    'treebest_exe'      => $self->o('ensembl_cellar').'/treebest/88/bin/treebest', #treebest program
+    'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
+    'treebest_exe'    => $self->check_exe_in_cellar('treebest/88/bin/treebest'), #treebest program
 
     # stats report email
   	'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',

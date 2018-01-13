@@ -46,7 +46,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
