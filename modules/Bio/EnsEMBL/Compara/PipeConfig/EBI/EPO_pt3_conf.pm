@@ -93,13 +93,13 @@ sub default_options {
       'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
       
       'blastn'          => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
-      'pecan_exe_dir'   => $self->o('ensembl_cellar') . '/pecan/0.8.0/libexec/',
+      'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
       'gerp_version' => '2.1', #gerp program version
-      'gerp_exe_dir'    => $self->o('ensembl_cellar') . '/gerp/20080211/bin/', #gerp program
+      'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211/bin'), #gerp program
       'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
       'exonerate_exe'   => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'), # path to exonerate executable
-      'ortheus_bin_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/bin/',
-      'ortheus_lib_dir' => $self->o('ensembl_cellar') . '/ortheus/0.5.0/',
+      'ortheus_bin_dir' => $self->check_dir_in_cellar('ortheus/0.5.0/bin'),
+      'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0'),
       'enredo_exe'      => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
       'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
 

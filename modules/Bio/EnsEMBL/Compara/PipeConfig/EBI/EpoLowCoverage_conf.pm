@@ -139,7 +139,7 @@ sub default_options {
     'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
-	'gerp_exe_dir'    => $self->o('ensembl_cellar').'/gerp/20080211/bin',   #gerp program
+    'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211/bin'),   #gerp program
     'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
     'treebest_exe'    => $self->check_exe_in_cellar('treebest/88/bin/treebest'), #treebest program
 

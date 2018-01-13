@@ -62,8 +62,8 @@ sub default_options {
 
     # executable locations:
         'hcluster_exe'              => $self->check_exe_in_cellar('hclustersg/0.5.0/bin/hcluster_sg'),
-        'mcoffee_home'              => $self->o('ensembl_cellar').'/t-coffee/9.03.r1336/',
-        'mafft_home'                => $self->o('ensembl_cellar').'/mafft/7.305/',
+        'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336'),
+        'mafft_home'                => $self->check_dir_in_cellar('mafft/7.305'),
         'extaligners_exe_dir'       => $self->o('ensembl_cellar').'/../bin/',   # We expect the latest version of each aligner to be symlinked there
         'trimal_exe'                => $self->check_exe_in_cellar('trimal/1.4.1/bin/trimal'),
         'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),
@@ -80,12 +80,12 @@ sub default_options {
         'notung_jar'                => $self->o('ensembl_cellar').'/notung/2.6.0/libexec/Notung-2.6.jar',
         'treerecs_exe'              => '/homes/mateus/reconcile/Treerecs/bin/Treerecs',
         'quicktree_exe'             => $self->check_exe_in_cellar('quicktree/2.1/bin/quicktree'),
-        'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
-        'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
+        'hmmer2_home'               => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
+        'hmmer3_home'               => $self->check_dir_in_cellar('hmmer/3.1b2_1/bin'),
         'codeml_exe'                => $self->check_exe_in_cellar('paml43/4.3.0/bin/codeml'),
         'ktreedist_exe'             => $self->check_exe_in_cellar('ktreedist/1.0.0/bin/Ktreedist.pl'),
-        'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
-        'pantherScore_path'         => $self->o('ensembl_cellar').'/pantherscore/1.03/',
+        'blast_bin_dir'             => $self->check_dir_in_cellar('blast/2.2.30/bin'),
+        'pantherScore_path'         => $self->check_dir_in_cellar('pantherscore/1.03'),
         'cafe_shell'                => $self->check_exe_in_cellar('cafe/2.2/bin/cafeshell'),
         'fasttree_exe'              => $self->check_exe_in_cellar('fasttree/2.1.8/bin/FastTree'),
         'getPatterns_exe'           => $self->check_exe_in_cellar('raxml-get-patterns/1.0/bin/getPatterns'),

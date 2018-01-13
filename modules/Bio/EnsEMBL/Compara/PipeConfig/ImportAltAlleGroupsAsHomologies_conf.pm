@@ -61,7 +61,7 @@ sub default_options {
         'import_altalleles_as_homologies_capacity'  => '300',
 
         #Software dependencies
-        'mafft_home'            => $self->o('ensembl_cellar').'/mafft/7.305/',
+        'mafft_home'            => $self->check_dir_in_cellar('mafft/7.305'),
 
     };
 }

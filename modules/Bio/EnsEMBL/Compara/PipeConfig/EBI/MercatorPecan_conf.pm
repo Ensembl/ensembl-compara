@@ -92,17 +92,17 @@ sub default_options {
 	    
 
     #Location of executables (or paths to executables)
-    'gerp_exe_dir'              => $self->o('ensembl_cellar').'/gerp/20080211/bin',
+    'gerp_exe_dir'              => $self->check_dir_in_cellar('gerp/20080211/bin'),
     'mercator_exe'              => $self->check_exe_in_cellar('cndsrc/2013.01.11/bin/mercator'),
-    'blast_bin_dir'             => $self->o('ensembl_cellar').'/blast/2.2.30/bin/',
+    'blast_bin_dir'             => $self->check_dir_in_cellar('blast/2.2.30/bin'),
     'exonerate_exe'             => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'),
     'java_exe'                  => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
     'estimate_tree_exe'         => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py',
 
     'semphy_exe'                => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
-    'ortheus_bin_dir'           => $self->o('ensembl_cellar').'/ortheus/0.5.0/bin/',
-    'ortheus_lib_dir'           => $self->o('ensembl_cellar').'/ortheus/0.5.0/',
-    'pecan_exe_dir'             => $self->o('ensembl_cellar').'/pecan/0.8.0/libexec/',
+    'ortheus_bin_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0/bin'),
+    'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0'),
+    'pecan_exe_dir'             => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
 
     'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
     # connection parameters to various databases:
