@@ -180,7 +180,7 @@ sub default_options {
         'mafft_home'                => $self->check_dir_in_cellar('mafft/7.305'),
         'extaligners_exe_dir'       => $self->o('ensembl_cellar').'/../bin/',   # We expect the latest version of each aligner to be symlinked there
         'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),
-        'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
+        'prottest_jar'              => $self->check_file_in_cellar('prottest3/3.4.2/libexec/prottest-3.4.2.jar'),
         'treebest_exe'              => $self->check_exe_in_cellar('treebest/88/bin/treebest'),
         'hmmer2_home'               => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
         'hmmer3_home'               => $self->check_dir_in_cellar('hmmer/3.1b2_1/bin'),

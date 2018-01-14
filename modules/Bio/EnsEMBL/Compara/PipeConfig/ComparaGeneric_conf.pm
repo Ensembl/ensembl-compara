@@ -46,6 +46,13 @@ sub check_exe_in_cellar {
     return $self->o('linuxbrew_home').'/'.$exe_path;
 }
 
+sub check_file_in_cellar {
+    my ($self, $file_path) = @_;
+    $file_path = "Cellar/$file_path";
+    push @{$self->{'_all_file_paths'}}, $file_path;
+    return $self->o('linuxbrew_home').'/'.$file_path;
+}
+
 sub check_dir_in_cellar {
     my ($self, $dir_path) = @_;
     $dir_path = "Cellar/$dir_path";
@@ -67,6 +74,11 @@ sub check_all_executables_exist {
         $p = $linuxbrew_home.'/'.$p;
         die "'$p' cannot be found.\n" unless -e $p;
         die "'$p' is not a directory.\n" unless -d $p;
+    }
+    foreach my $p (@{$self->{'_all_file_paths'}}) {
+        $p = $linuxbrew_home.'/'.$p;
+        die "'$p' cannot be found.\n" unless -e $p;
+        die "'$p' is not readable.\n" unless -r $p;
     }
     foreach my $p (@{$self->{'_all_exe_paths'}}) {
         $p = $linuxbrew_home.'/'.$p;

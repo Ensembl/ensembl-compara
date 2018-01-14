@@ -67,7 +67,7 @@ sub default_options {
         'extaligners_exe_dir'       => $self->o('ensembl_cellar').'/../bin/',   # We expect the latest version of each aligner to be symlinked there
         'trimal_exe'                => $self->check_exe_in_cellar('trimal/1.4.1/bin/trimal'),
         'noisy_exe'                 => $self->check_exe_in_cellar('noisy/1.5.12/bin/noisy'),
-        'prottest_jar'              => $self->o('ensembl_cellar').'/prottest3/3.4.2/libexec/prottest-3.4.2.jar',
+        'prottest_jar'              => $self->check_file_in_cellar('prottest3/3.4.2/libexec/prottest-3.4.2.jar'),
         'treebest_exe'              => $self->check_exe_in_cellar('treebest/88/bin/treebest'),
         'raxml_pthread_exe_sse3'    => $self->check_exe_in_cellar('raxml/8.2.8/bin/raxmlHPC-PTHREADS-SSE3'),
         'raxml_pthread_exe_avx'     => $self->check_exe_in_cellar('raxml/8.2.8/bin/raxmlHPC-PTHREADS-AVX'),
@@ -77,7 +77,7 @@ sub default_options {
         'examl_exe_sse3'            => $self->check_exe_in_cellar('examl/3.0.17/bin/examl'),
         'parse_examl_exe'           => $self->check_exe_in_cellar('examl/3.0.17/bin/parse-examl'),
         'mpirun_exe'                => $self->check_exe_in_cellar('open-mpi/2.1.1/bin/mpirun'),
-        'notung_jar'                => $self->o('ensembl_cellar').'/notung/2.6.0/libexec/Notung-2.6.jar',
+        'notung_jar'                => $self->check_file_in_cellar('notung/2.6.0/libexec/Notung-2.6.jar'),
         'treerecs_exe'              => '/homes/mateus/reconcile/Treerecs/bin/Treerecs',
         'quicktree_exe'             => $self->check_exe_in_cellar('quicktree/2.1/bin/quicktree'),
         'hmmer2_home'               => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
