@@ -44,7 +44,7 @@ sub fetch_input {
     my $self = shift @_;
 
     #Get genome_db_id list from the accumulator updated_genome_db_ids.
-    my @genome_db_ids_list = $self->param('updated_genome_db_ids');
+    my $genome_db_ids_list = $self->param('updated_genome_db_ids');
     
     #Holds a list of the genome_db_adaptors.
     my @genome_db_adaptors_list;
@@ -53,7 +53,7 @@ sub fetch_input {
     $self->param( 'master_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db_ro') ) ) || die "Could not get adaptor";
 
     #Get list of adaptors.
-    foreach my $genome_db_id (@genome_db_ids_list) {
+    foreach my $genome_db_id (@{$genome_db_ids_list}) {
         my $gdba = $self->param( 'master_dba')->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) || die "Could not fetch adaptor for $genome_db_id";
         push( @genome_db_adaptors_list, $gdba );
     }
