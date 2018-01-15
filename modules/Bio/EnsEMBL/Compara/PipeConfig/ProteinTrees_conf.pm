@@ -415,12 +415,16 @@ sub pipeline_create_commands {
     my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
     die "'clustering_mode' must be set to one of: ".join(", ", keys %clustering_modes) if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
 
-
     # In HMM mode the library must exist
     if (($self->o('clustering_mode') ne 'blastp') and ($self->o('clustering_mode') ne 'ortholog')) {
         my $lib = $self->o('hmm_library_basedir');
         unless ($lib =~ /^#:subst/) {
-            die "'$lib' does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-d "$lib/books") && (-d "$lib/globals") && (-s "$lib/globals/con.Fasta"));
+            if ($self->o('hmm_library_version') == 2){
+                die "'$lib' does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-d "$lib/books") && (-d "$lib/globals") && (-s "$lib/globals/con.Fasta"));
+            }
+            elsif($self->o('hmm_library_version') == 3){
+                die "$lib does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3f") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3i") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3m") && (-s "$lib/compara_hmm_".$self->o('ensembl_release').".hmm3.h3p"));
+            }
         }
     }
 
