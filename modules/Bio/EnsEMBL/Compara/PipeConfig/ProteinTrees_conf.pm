@@ -151,6 +151,7 @@ sub default_options {
     # tree building parameters:
         'use_raxml'                 => 0,
         'use_notung'                => 0,
+        'use_treerecs'              => 0,
         'do_model_selection'        => 0,
         'use_quick_tree_break'      => 1,
 
@@ -469,6 +470,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
         'use_notung'   => $self->o('use_notung'),
+        'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
@@ -779,6 +781,9 @@ sub core_pipeline_analyses {
             -flow_into  => WHEN(
                 '#use_notung# and  #binary_species_tree_input_file#' => 'load_binary_species_tree',
                 '#use_notung# and !#binary_species_tree_input_file#' => 'make_binary_species_tree',
+
+                '#use_treerecs# and  #binary_species_tree_input_file#' => 'load_binary_species_tree',
+                '#use_treerecs# and !#binary_species_tree_input_file#' => 'make_binary_species_tree',
             ),
             %hc_analysis_params,
         },
@@ -1460,7 +1465,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update )],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung treerecs copy raxml_update )],
             },
         },
 
@@ -1736,7 +1741,8 @@ sub core_pipeline_analyses {
                     ELSE 'treebest_decision',
                 ),
                 'A->1' => WHEN(
-                    '#use_notung#' => 'notung_decision',
+                    '#use_notung#'      => 'notung_decision',
+                    '#use_treerecs#'    => 'treerecs',
                     ELSE 'hc_post_tree',
                 ),
             },
@@ -2517,6 +2523,22 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[tree reconciliation / rearrangements]-------------------------------------------------------------
 
+        {   -logic_name => 'treerecs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Treerecs',
+            -parameters => {
+                'input_clusterset_id'       => 'default',
+                'output_clusterset_id'      => 'treerecs',
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'treerecs_exe'              => $self->o('treerecs_exe'),
+            },
+            -hive_capacity                  => $self->o('notung_capacity'),
+            -batch_size    => 2,
+            -rc_name        => '2Gb_job',
+            -flow_into      => {
+                1  => [ 'copy_treerecs_bl_tree_2_default_tree' ],
+            },
+        },
+
         {   -logic_name => 'notung_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
@@ -2723,6 +2745,18 @@ sub core_pipeline_analyses {
             -parameters => {
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'raxml_bl',
+                'output_clusterset_id'  => 'default',
+            },
+            -hive_capacity              => $self->o('copy_tree_capacity'),
+            -rc_name                    => '2Gb_job',
+            -flow_into                  => [ 'hc_post_tree' ],
+        },
+
+        {   -logic_name                 => 'copy_treerecs_bl_tree_2_default_tree',
+            -module                     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'input_clusterset_id'   => 'treerecs',
                 'output_clusterset_id'  => 'default',
             },
             -hive_capacity              => $self->o('copy_tree_capacity'),

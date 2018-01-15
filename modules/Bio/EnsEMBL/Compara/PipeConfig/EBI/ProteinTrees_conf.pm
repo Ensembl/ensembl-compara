@@ -78,6 +78,7 @@ sub default_options {
         'parse_examl_exe'           => $self->o('ensembl_cellar').'/examl/3.0.17/bin/parse-examl',
         'mpirun_exe'                => $self->o('ensembl_cellar').'/open-mpi/2.1.1/bin/mpirun',
         'notung_jar'                => $self->o('ensembl_cellar').'/notung/2.6.0/libexec/Notung-2.6.jar',
+        'treerecs_exe'              => '/homes/mateus/reconcile/Treerecs/bin/Treerecs',
         'quicktree_exe'             => $self->o('ensembl_cellar').'/quicktree/2.1/bin/quicktree',
         'hmmer2_home'               => $self->o('ensembl_cellar').'/hmmer2/2.3.2/bin/',
         'hmmer3_home'               => $self->o('ensembl_cellar').'/hmmer/3.1b2_1/bin/',
