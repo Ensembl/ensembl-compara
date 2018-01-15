@@ -111,13 +111,20 @@ sub get_message {
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
     my $current_loc = $hub->referer->{'params'}->{'r'}[0];
     my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
-    my $url = $hub->url({
+    my $params      = {
                           species   => $species,
                           type      => 'Location',
                           action    => $page_action,,
                           function  => undef,
                           r         => $current_loc || $default_loc,
-              });
+                      };
+    if ($page_action eq 'Multi') {
+      foreach (keys %{$hub->referer->{'params'}}) {
+        next unless $_ =~ /^[r|s]\d*$/;
+        $params->{$_} = $hub->referer->{'params'}{$_}[0];  
+      } 
+    }
+    my $url = $hub->url($params);
     my $config = $page_action eq 'Multi' ? 'multibottom' : 'viewbottom';
     $message .= sprintf('</p><p><a href="%s#modal_config_%s-%s">Configure your hub</a>', $url, $config, $menu_id);
   }
