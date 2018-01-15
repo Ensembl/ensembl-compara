@@ -1,4 +1,3 @@
-  $self->{'extra_params'} = { image_config => $hub->param('image_config') };
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
