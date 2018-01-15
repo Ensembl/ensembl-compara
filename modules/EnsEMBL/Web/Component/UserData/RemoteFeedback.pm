@@ -110,14 +110,16 @@ sub get_message {
     my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
     my $current_loc = $hub->referer->{'params'}->{'r'}[0];
+    my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
     my $url = $hub->url({
                           species   => $species,
                           type      => 'Location',
-                          action    => 'View',
+                          action    => $page_action,,
                           function  => undef,
                           r         => $current_loc || $default_loc,
               });
-    $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_id);
+    my $config = $page_action eq 'Multi' ? 'multibottom' : 'viewbottom';
+    $message .= sprintf('</p><p><a href="%s#modal_config_%s-%s">Configure your hub</a>', $url, $config, $menu_id);
   }
 
   if ($try_archive) {
