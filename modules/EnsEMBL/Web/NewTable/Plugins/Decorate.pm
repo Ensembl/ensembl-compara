@@ -88,12 +88,18 @@ sub decorate_key { return 'link'; }
 
 sub col_link_url {
   my ($self,$col,$spec) = @_;
-  my (%base,%params);
+  my (%base,%params,$base);
+  if($spec->{'__external'}) {
+    $base = $spec->{'__external'};
+    delete $spec->{'__external'};
+  }
   foreach my $k (keys %$spec) {
     if(ref($spec->{$k}) eq 'ARRAY') { $params{$k} = $spec->{$k}[0]; }
     else { $base{$k} = $spec->{$k}; }
   }
-  my $base = $self->hub->url(\%base);
+  unless($base) {
+    $base = $self->hub->url(\%base);
+  }
   $self->set_decorates($col,'*',{ base_url => $base, params => \%params});
 }
 
