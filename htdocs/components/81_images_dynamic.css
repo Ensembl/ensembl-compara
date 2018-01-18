@@ -42,7 +42,7 @@ body.ie6 div.image_container { background-color: [[MAIN_DARK]]; }
 .drag_select                              { cursor: default; position: relative; }
 .drag_select.drag_select_pointer          { cursor: pointer; }
 
-.drag_select .selector                    { background-color: [[MODERATE_LIGHT]]; position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; display: none; }
+.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; display: none; }
 .drag_select .mrselector                  { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
 .drag_select .mrselector-close            { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: [[PALE_GREY]]; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
                                             line-height: 18px; pointer-events: auto; position: absolute; right: -1px; text-align: center; top: -1px; width: 16px; }
