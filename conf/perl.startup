@@ -44,8 +44,8 @@ my $userid = getlogin || getpwuid($<) || undef;
 my $host = qx(hostname);
 chomp $host;
 
-die "-- ERROR! -- Cannot run as $userid (should be $SiteDefs::USER_CHECK from \$SiteDefs::USER_CHECK)\n" unless $userid and $SiteDefs::USER_CHECK and $SiteDefs::USER_CHECK eq $userid;
-die "-- ERROR! -- Cannot run on $host (should be $SiteDefs::HOST_CHECK from \$SiteDefs::HOST_CHECK)\n" unless $host and $SiteDefs::HOST_CHECK and $SiteDefs::HOST_CHECK eq $host;
+die "-- ERROR! -- Cannot run as $userid (should be $SiteDefs::USER_CHECK from \$SiteDefs::USER_CHECK)\n" if $userid and $SiteDefs::USER_CHECK and $SiteDefs::USER_CHECK ne $userid;
+die "-- ERROR! -- Cannot run on $host (should be $SiteDefs::HOST_CHECK from \$SiteDefs::HOST_CHECK)\n" if $host and $SiteDefs::HOST_CHECK and $SiteDefs::HOST_CHECK ne $host;
 $Apache2::SizeLimit::MAX_PROCESS_SIZE = $SiteDefs::ENSEMBL_MAX_PROCESS_SIZE || 1000000; # Kill httpd over 1000Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
