@@ -164,7 +164,7 @@ sub _write_ss {
     if ($self->param('reference_dba')) {
         $ss = $self->param('reference_dba')->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($genome_dbs);
         if ((not $is_local_ss) and (not $ss)) {
-            die sprintf("The %s species-set could not be found in the master database\n", join('/', map {$_->name} @$genome_dbs));
+            die sprintf("The %s species-set could not be found in the master database\n", join('/', map {$_->name} @$genome_dbs) || 'empty');
         }
     }
     unless ($ss) {
