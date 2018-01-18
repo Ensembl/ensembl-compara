@@ -19,7 +19,7 @@
 
 /* General */
 
-div.image_container { position: relative; border: 1px solid #999999; margin-bottom: 16px; }
+div.image_container { position: relative; border: 1px solid [[MEDIUM_GREY]]; margin-bottom: 16px; }
 div.image-caption   { background-color: [[MAIN_DARK]]; color: [[WHITE]]; font-weight: bold; line-height: 16px; padding: 4px; }
 
 body.ie6 div.image_container { background-color: [[MAIN_DARK]]; }
@@ -42,9 +42,9 @@ body.ie6 div.image_container { background-color: [[MAIN_DARK]]; }
 .drag_select                              { cursor: default; position: relative; }
 .drag_select.drag_select_pointer          { cursor: pointer; }
 
-.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; display: none; }
+.drag_select .selector                    { background-color: [[MODERATE_LIGHT]]; position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; display: none; }
 .drag_select .mrselector                  { background-color: rgba(140, 100, 140, 0.1); border: rgba(140, 100, 140, 0.5) dashed 1px; pointer-events: none; }
-.drag_select .mrselector-close            { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: #ccc; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
+.drag_select .mrselector-close            { background-color: rgba(40, 0, 40, 1); border-radius: 0 0 0 4px; color: [[PALE_GREY]]; cursor: pointer; font-size: 70%; font-weight: bold; height: 16px;
                                             line-height: 18px; pointer-events: auto; position: absolute; right: -1px; text-align: center; top: -1px; width: 16px; }
 .drag_select .selector.vertical           { border-width: 1px; }
 .drag_select .selector .left-border,
@@ -52,7 +52,7 @@ body.ie6 div.image_container { background-color: [[MAIN_DARK]]; }
 .drag_select .selector .right-border      { left: auto; right: 0; border-width: 0 1px 0 0; }
 .drag_select .selector .left-border:hover,
 .drag_select .selector .right-border:hover{ background-color: rgba(255, 0, 0, 0.4); border: none; width: 5px; }
-.drag_select div.image_spinner            { position: absolute; opacity: 0.7; border: none; background-position: center center; background-color: #fff; width: 100%; height: 100%; top: 0; bottom: 0; }
+.drag_select div.image_spinner            { position: absolute; opacity: 0.7; border: none; background-position: center center; background-color: [[WHITE]]; width: 100%; height: 100%; top: 0; bottom: 0; }
 
 li.usertrack_highlight {
 	position: relative;
@@ -81,19 +81,19 @@ li.usertrack_highlight:after {
 }
 
 .usertrack_highlight_border_top::after {
-  border-top: 2px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-top: 2px solid [[BLACK]]
 }
 
 .usertrack_highlight_border_bottom::after {
-  border-bottom: 2px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-bottom: 2px solid [[BLACK]];
 }
 
 .usertrack_highlight_border_left::after {
-  border-left: 2px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-left: 2px solid [[BLACK]];
 }
 
 .usertrack_highlight_border_right::after {
-  border-right: 2px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-right: 2px solid [[BLACK]];
 }
 
 /* Track highlight on hover */
@@ -110,8 +110,8 @@ li.usertrack_highlight:after {
   width: 100%;
   height: 100%;
   opacity: 0.15;
-  border-top: 1px solid [[TRACK_HIGHLIGHT_BORDER]];
-  border-bottom: 1px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-top: 1px solid [[BLACK]];
+  border-bottom: 1px solid [[BLACK]];
   background: [[TRACK_HIGHLIGHT_BG]];
   -webkit-animation:fadeIn ease-in 1;  /* call our keyframe named fadeIn, use animattion ease-in and repeat it only 1 time */
   -moz-animation:fadeIn ease-in 1;
@@ -127,12 +127,12 @@ li.usertrack_highlight:after {
 /* Hover menus */
 
 .hover_layer                              { position: absolute; opacity: 0.1; cursor: pointer; }
-.hover_layer:hover                        { background-color: #333; }
+.hover_layer:hover                        { background-color: [[V_DARK_GREY]]; }
 .hover_label span.close               { position: absolute; right: 0; top: -10px; right: -10px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; z-index: 201; }
 
 .label_layer,
 .label_layer .label_layer_bg              { cursor: pointer; position: absolute; margin-left: -5px; padding-right: 5px; padding-bottom: 2px; }
-.label_layer .label_layer_bg              { width: inherit; height: inherit; margin: 0; background-color: #333; opacity: 0.1; display: none; }
+.label_layer .label_layer_bg              { width: inherit; height: inherit; margin: 0; background-color: [[V_DARK_GREY]]; opacity: 0.1; display: none; }
 .hover_label                              { position: absolute; margin-left: 5px; padding: 0 0 4px; border: none; display: none; text-align: left; width: 450px; cursor: default; }
 .hover_label div.spinner                  { display: none; }
 .hover_label_spinner div                  { display: none; }
@@ -153,7 +153,7 @@ li.usertrack_highlight:after {
 .hover_label a.closetrack                 { background-image: url(/i/16/cross.png); }
 .hover_label a.config                     { text-decoration: none; }
 .hover_label p                            { padding: 4px 0; margin: 0; line-height: 1.5em; }
-.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[MAIN_DARK]]; color: #FFF; cursor: pointer; }
+.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[MAIN_DARK]]; color: [[WHITE]]; cursor: pointer; }
 .hover_label p.header span.hl-pin         { background-color: [[MAIN_DARK]]; background-image: url(/i/16/rev/pin.png); background-size: 12px auto; border: 2px solid [[MAIN_DARK]];
                                             border-radius: 2px; float: left; height: 12px; width: 12px; margin-right: 4px; }
 .hover_label p.header.on span.hl-pin      { background-color: [[MAIN_V_DARK]]; border-color: [[MAIN_V_DARK]]; }
@@ -165,7 +165,7 @@ li.usertrack_highlight:after {
 .hover_label div.config li                { line-height: 22px; }
 .hover_label div.config li.normal         { font-weight: bold; }
 .hover_label div.config li.current        { font-weight: normal!important; }
-.hover_label div.config a                 { font-size: 11px; color: #000; }
+.hover_label div.config a                 { font-size: 11px; color: [[BLACK]]; }
 .hover_label div.config li.subset a       { color: [[LINK]]; }
 .hover_label div.config li.subset a:hover { color: [[HOVER]]; }
 .hover_label div.config img               { vertical-align: top; padding: 2px 0; margin-left: 0; }
@@ -196,7 +196,7 @@ body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; 
 /* track reordering */
 
 div.boundaries_wrapper                         { position: absolute; width: 100%; }
-div.boundaries_wrapper ul                      { position: relative; width: 100%; list-style: none; margin: 0; padding: 0; visibility: hidden; background-color: #666; }
+div.boundaries_wrapper ul                      { position: relative; width: 100%; list-style: none; margin: 0; padding: 0; visibility: hidden; background-color: [[MEDIUM_GREY]]; }
 div.boundaries_wrapper ul li                   { list-style-image: none; margin: 0; padding: 0; }
 
 div.boundaries_wrapper ul li:hover,
@@ -213,8 +213,8 @@ div.boundaries_wrapper ul li.hover::before     {
   width: 100%;
   height: 100%;
   opacity: 0.15;
-  border-top: 1px solid [[TRACK_HIGHLIGHT_BORDER]];
-  border-bottom: 1px solid [[TRACK_HIGHLIGHT_BORDER]];
+  border-top: 1px solid [[BLACK]];
+  border-bottom: 1px solid [[BLACK]];
   background: [[TRACK_HIGHLIGHT_BG]];
 }
 
@@ -238,7 +238,7 @@ body.ie7 div.boundaries_wrapper ul li div           { position: absolute; left: 
 body.mac div.boundaries_wrapper ul li div.handle    { cursor: ns-resize; }
 
 /* Image panning */
-div.boundaries_wrapper div.boundaries_panning             { position: absolute; top: 0; background-color: #fffdf8; height: 100%; overflow: hidden; cursor: move; }
+div.boundaries_wrapper div.boundaries_panning             { position: absolute; top: 0; background-color: [[IMAGE_BG1]]; height: 100%; overflow: hidden; cursor: move; }
 div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
 
 @media print {
@@ -247,9 +247,9 @@ div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
 
 /* Icon toolbar for dynamic images */
 
-div.image_toolbar                 { background-color: [[MAIN_DARK]]; color: #FFFFFF; height: 16px; padding: 4px 0; overflow: hidden; }
-div.image_toolbar.top             { border-bottom: 1px solid #999999; }
-div.image_toolbar.bottom          { border-top: 1px solid #999999; }
+div.image_toolbar                 { background-color: [[MAIN_DARK]]; color: [[WHITE]]; height: 16px; padding: 4px 0; overflow: hidden; }
+div.image_toolbar.top             { border-bottom: 1px solid [[MEDIUM_GREY]]; }
+div.image_toolbar.bottom          { border-top: 1px solid [[MEDIUM_GREY]]; }
 div.image_toolbar a               { float: left; width: 16px; height: 16px; display: block; margin: -2px 2px 2px; border: [[MAIN_DARK]] solid 2px; border-radius: 2px; cursor: pointer; }
 div.image_toolbar a:hover,
 div.image_toolbar a.selected      { border-color: [[MAIN_V_DARK]]; background-color: [[MAIN_V_DARK]]; }
@@ -278,7 +278,7 @@ div.image_toolbar div.image_loading               { position: absolute; font-siz
 
 /* Image resize */
 div.image_resize_menu                 { z-index: 1000; border-top: 1px solid [[MAIN_LIGHT]]; position: absolute; cursor: pointer; display: none; width: 120px; }
-div.image_resize_menu div             { border: 1px solid #999999; border-top: 0; font-size: 12px; line-height: 20px; background-color: [[MAIN_V_LIGHT]]; color: [[V_DARK_GREY]]; text-align: left; padding: 0 4px; }
+div.image_resize_menu div             { border: 1px solid [[MEDIUM_GREY]]; border-top: 0; font-size: 12px; line-height: 20px; background-color: [[MAIN_V_LIGHT]]; color: [[V_DARK_GREY]]; text-align: left; padding: 0 4px; }
 div.image_resize_menu div.header      { background-color: [[MAIN_DARK]]; color: [[WHITE]]; font-weight: bold; }
 div.image_resize_menu div div         { display: inline-block; border: none; background: none; margin: 0; padding: 0; width: 110px; }
 div.image_resize_menu div a           { text-decoration: none; font-weight: bold; }
