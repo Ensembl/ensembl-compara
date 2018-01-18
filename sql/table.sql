@@ -1632,7 +1632,7 @@ CREATE TABLE gene_tree_node_tag (
 
 CREATE TABLE gene_tree_root_tag (
   root_id                int(10) unsigned NOT NULL,
-  tag                    varchar(50) NOT NULL,
+  tag                    VARCHAR(255) NOT NULL,
   value                  mediumtext NOT NULL,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
