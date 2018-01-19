@@ -13,7 +13,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-# patch_91_92_c.sql
+# patch_91_92_b.sql
 #
 # Title: Add new mapping type: hmm
 #
@@ -24,4 +24,4 @@ ALTER TABLE mapping_session MODIFY COLUMN type ENUM('family', 'tree', 'hmm');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_91_92_c.sql|mapping_session_new_type_hmm');
+  VALUES (NULL, 'patch', 'patch_91_92_b.sql|mapping_session_new_type_hmm');
