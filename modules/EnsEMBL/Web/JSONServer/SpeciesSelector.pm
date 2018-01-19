@@ -21,7 +21,6 @@ package EnsEMBL::Web::JSONServer::SpeciesSelector;
 
 use strict;
 use warnings;
-no warnings 'uninitialized';
 use JSON;
 use List::MoreUtils qw/ uniq /;
 use URI::Escape qw(uri_escape);
@@ -36,151 +35,160 @@ sub init {
   my $panel_type = $hub->param('panel_type');
 }
 
-sub json_to_dynatree {
+sub simpletree {
   my $self = shift;
   my $division_hash = shift;
   my $species_info = shift;
   my $available_internal_nodes = shift;
   my $internal_node_select = shift;
   my $extras = shift || {};
-  my @dyna_tree = ();
-  my @child_nodes = ();
+  my $sp_assembly_map = shift || {};
+  my @nodes = map { traverse($_) } @{$division_hash->{child_nodes}}; 
+# print Data::Dumper::Dumper $division_hash;
 
-  if ($division_hash->{child_nodes}) {
-    @child_nodes = @{$division_hash->{child_nodes}};
-  }
+  my $final = create_node($division_hash, 1, 1);
+  $final->{children} = [@nodes];
+  return $final;
 
-  if ($division_hash->{is_leaf}) {
-    if($species_info->{$division_hash->{key}}) {
-      my $sp = $species_info->{$division_hash->{key}};
+  sub traverse() {
+    my $node = shift;
+    my @tree;
 
-      my $t = {
-        key             => $division_hash->{key},
-        scientific_name => $sp->{scientific},
-        title           => $division_hash->{display_name} || $sp->{common},
-        tooltip         => $sp->{scientific} || '',
-        searchable      => 1,
-        icon            => '/i/species/16/' . $sp->{key} . '.png'
-      };
-      if ($sp->{strain} && $sp->{strain} ne '') {
-        $t->{isStrain} = "true" ;
+    if ($node->{is_leaf}) {
+      my $t = $node;
+
+      if ($extras->{$_->{key}}) {
+        map { push @{$t->{children}}, @$_ } create_folder_for_special_types($extras->{$_->{key}});
       }
-      if ($sp->{value}) {
-        $t->{value}    = $sp->{value};
-      }
+      return create_node($t, 1);
 
-      # Add extra groups like strains / haplotypes_and_patches etc
-      if($extras->{$division_hash->{key}} or ($division_hash->{extras_key} && $extras->{$division_hash->{extras_key}})) {
-        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}}, $internal_node_select);
-        $t->{isFolder} = 1;
-        $t->{searchable} = 1;
-        # Make it unselectable if it is not in the available species_list
-        # $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
-        push @{$t->{children}}, @$extra_dyna;
-      }
-      push @dyna_tree, $t;
     }
-  }
+    else {
+      if ($node->{child_nodes}) {
+        my @children;
+        my $type;
+        my $other_types;
+        my $assembly_group;
+        foreach (@{$node->{child_nodes}}) {
+          if ($_->{type}) {
+            push @{$type->{$_->{type}}}, traverse($_);
+          }
+          elsif ($sp_assembly_map->{$_->{scientific_name}} && scalar @{$sp_assembly_map->{$_->{scientific_name}}} > 1) {
+            # Group same species but different assemblies
+            # print  Data::Dumper::Dumper $_;
+            push @{$assembly_group->{$_->{scientific_name}}}, traverse($_);
+          }
+          else {
+            push @children, traverse($_);
+          }
+        }
 
-  if (scalar @child_nodes > 0) {
+        if (scalar keys %$type > 0) {
+          map { push @children, @$_ } create_children_for_types($type);
+        }
 
-    my @children = map {  $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $internal_node_select, $extras) } @child_nodes;
-    if ($available_internal_nodes->{$division_hash->{display_name}}) {
-      my $t = {
-        key            => $division_hash->{display_name},
-        title          => $division_hash->{display_name},
-        children       => [ @children ],
-        isFolder       => 1,
-        searchable     => 1,
-        # Get a display tree starting from the first internal node on a bottom up search
-        isInternalNode => $division_hash->{is_internal_node},
-        unselectable   => !$internal_node_select
-      };
-      if(defined $division_hash->{is_submenu} && $division_hash->{is_submenu} eq 'true') {
-        $t->{is_submenu} = 1;
+        if (scalar keys %$assembly_group > 0) {
+# print Data::Dumper::Dumper $assembly_group;
+          map { push @children, @$_ } create_children_for_types($assembly_group);
+        }
+
+        push @tree, {
+          key => $node->{key},
+          title    => $node->{display_name},
+          isFolder => 1,
+          is_submenu => $node->{is_submenu},
+          isInternalNode => $node->{is_internal_node},
+          children => [@children]
+        };
       }
-
-      # Add extra groups like strains / haplotypes_and_patches etc
-      my $x = $extras->{$division_hash->{key}} || ($division_hash->{extras_key} ? $extras->{$division_hash->{extras_key}} : '');
-      if($x) {
-        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $x, $internal_node_select);
-        $t->{isFolder} = 1;
-        $t->{searchable} = 1;
-        push @{$t->{children}}, @$extra_dyna;
-      }
-      push @dyna_tree, $t;
     }
+    return @tree;
   }
-
-  return @dyna_tree;
 }
 
-sub get_extras_as_dynatree {
-  my $species = shift;
-  my $extras = shift;
+sub create_node {
+  my $n = shift;
+  my $searchable = shift || 0;
+  my $isFolder = shift || 0;
+
+  return { 
+    key        => $n->{key} || '',
+    scientific_name => $n->{key} || '',
+    title           => $n->{display_name} || $n->{scientific_name} || '',
+    tooltip         => $n->{scientific_name} || '',
+    searchable => $searchable,
+    isFolder => $isFolder,
+    children => $n->{children} && scalar @{$n->{children}} > 0 ? $n->{children} : []
+  };
+}
+sub create_children_for_types {
+  my $type = shift;
+  # my $display_name
+  my $children = ();
+  foreach (keys %$type) {
+    push @$children, {
+      key => $_,
+      title => ucfirst($_),
+      isFolder => 1,
+      children => $type->{$_}
+    };
+  }
+  return $children;
+}
+
+sub create_folder_for_special_types {
+  my $type = shift;
+
+  # my $children = ();
+  # foreach (keys %$type) {
+  #   push @$children, {
+  #     key => $_,
+  #     title => ucfirst($_),
+  #     isFolder => 1,
+  #     children => $type->{$_}
+  #   };
+  # }
+  # return $children;
+
   my $internal_node_select = shift;
   my $extra_dyna = [];
   my $children = [];
 
-  foreach my $k (keys %$extras) {
-    my $folder = {};
-    $folder->{key}          = $k;
-    $folder->{title}        = ucfirst($k);
-    $folder->{isFolder}     = 1;
-    $folder->{children}     = [];
-    $folder->{searchable}   = 0;
-    $folder->{unselectable} = !$internal_node_select;
-
+  foreach my $k (keys %$type) {
     $children = [];
-
     # For sorting based on chromosome numbers
-    my $is_primary_assembly = $extras->{$k}->{data}[0]->{assembly_target} ? 1 : 0;
     my @extras_data_array;
-    if ($is_primary_assembly) {
-      @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$extras->{$k}->{data}};
+    if ($k =~ /primary assembly/i) {
+      @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$type->{$k}->{data}};
     }
     else {
-      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$extras->{$k}->{data}};
+      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$type->{$k}->{data}};
     }
 
     foreach my $hash (@extras_data_array) {
-      my $icon = '';
-      if ($k =~/haplotype|primary assembly/ and $hash->{key} =~/--/) {
-        my ($sp, $type) = split('--', $hash->{key});
-        $icon = '/i/species/16/' . $sp . '.png';
-      }
-      else {
-        $icon = '/i/species/16/' . $hash->{key} . '.png';        
-      }
-
-      my $t = {
-        key             => $hash->{scientific},
-        scientific_name => $hash->{scientific},
-        title           => $hash->{common},
-        extra           => 1, # used to get image file of the parent node, say for a haplotype
-        searchable      => 1,
-        icon            => $icon
-      };
-      if ($hash->{value}) {
-        $t->{value}    = $hash->{value};
-      }
-      push @$children, $t;
+      push @$children, create_node($hash, 1, 1);
     }
 
     # Create folder if opted
-    if ($extras->{$k}->{create_folder} eq '0') {
-      push @$extra_dyna, @$children;
-    }
-    else {
+    if ($type->{$k}->{create_folder} == 1) {
+      my $folder = {};
+      $folder->{key}          = $k;
+      $folder->{title}        = ucfirst($k);
+      $folder->{isFolder}     = 1;
+      $folder->{children}     = [];
+      $folder->{searchable}   = 0;
       push @{$folder->{children}}, @$children;
       push @$extra_dyna, $folder;
     }
-
-
+    else {
+      push @$extra_dyna, @$children;
+    }
   }
-
+# print Data::Dumper::Dumper $extra_dyna;
   return $extra_dyna;
 }
+
+
 
 # Get sub node display names as array to see all available internal nodes
 # This is used to remove all paths that doesnt have any child
@@ -190,8 +198,9 @@ sub get_available_internal_nodes {
   my $species_info = shift;
   my $available_paths = {};
 
-  foreach my $key (%$species_info) {
+  foreach my $key (keys %$species_info) {
     my $path = get_path($key, $json);
+
     if ($path) {
       foreach my $p (split(',', $path)){
         $available_paths->{$p}++;
@@ -205,10 +214,10 @@ sub get_path {
   my $key = shift;
   my $node = shift;
   my $path = '';
-
   sub search {
     my ($path, $obj, $target) = @_;
-    if ((defined $obj->{key} && $obj->{key} eq $target) || (defined $obj->{extras_key} && $obj->{extras_key} eq $target)) {
+
+    if ((defined $obj->{key} && lc($obj->{key}) eq lc($target)) || (defined $obj->{extras_key} && $obj->{extras_key} eq $target)) {
       $path .= $obj->{key};
       return $path;
     }

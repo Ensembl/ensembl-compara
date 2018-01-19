@@ -25,8 +25,6 @@ no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
 
-use JSON qw(from_json to_json);
-
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
 sub munge {
@@ -1554,6 +1552,8 @@ sub _munge_meta {
   } else {
     $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
   }
+
+  # my $div = from_json('{"key":"All Divisions","display_name":"All Divisions","is_internal_node":"true","child_nodes":[{"key":"primates","taxa": ["Primates"],"display_name":"Primates","is_internal_node":"true"},{"key":"rodents","taxa": ["Rodentia", "Lagomorpha"],"display_name":"Rodents & Lagomorphs","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"Mice","taxa": ["Mus"],"display_name":"Mice","extras_key":"mouse","is_internal_node":"true"},{"key":"lagomorpha","taxa": ["Lagomorpha"],"display_name":"Lagomorphs","is_internal_node":"true"},{"key":"other_rodents","taxa": ["Rodentia"],"display_name":"Other Rodents","is_internal_node":"true"}]},{"key":"other_mammals","display_name":"Other Mammals","taxa": ["Carnivora", "Cetartiodactyla", "Xenarthra", "Metatheria", "Monotremata"],"is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"carnivores","taxa": ["Carnivora"],"display_name":"Carnivores","is_internal_node":"true"},{"key":"ungulates","taxa": ["Cetartiodactyla"],"display_name":"Ungulates","is_internal_node":"true"},{"key":"other_placental","taxa": ["Xenarthra", "Afrotheria"],"display_name":"Other Placental","is_internal_node":"true"},{"key":"marsupials_monotremes","taxa": ["Metatheria", "Monotremata"],"display_name":"Marsupials and Monotremes","is_internal_node":"true"}]},{"key":"non_vertebrates","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia", "Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha", "Xenopus"],"display_name":"Other Vertebrates","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"bird_and_reptiles","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia"],"display_name":"Birds and Reptiles","is_internal_node":"true"},{"key":"fish","taxa": ["Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha"],"display_name":"Fish","is_internal_node":"true"},{"key":"others","display_name":"Others","is_internal_node":"true"}]},{"key":"other_species","display_name":"Other Species","is_internal_node":"true"}]}');
 
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';

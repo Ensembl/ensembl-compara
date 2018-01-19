@@ -57,6 +57,7 @@ sub json_fetch_species {
   my $all_species     = {};
   my $extras = {};
   my $uniq_assembly = {};
+
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
     my $type = lc $alignment->{'type'};
@@ -67,10 +68,10 @@ sub json_fetch_species {
     $species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
 
     my $tmp = {};
-    $tmp->{scientific} = $s;
+    $tmp->{scientific_name} = $s;
     $tmp->{key} = $s;
     if (grep($target eq $_, @$chromosomes)) {
-      $tmp->{common} = 'Chromosome ' . "$target";
+      $tmp->{display_name} = 'Chromosome ' . "$target";
       $tmp->{assembly_target} = $target;
       if (!$uniq_assembly->{$target}) {
         push @{$extras->{$sp}->{'primary assembly'}->{data}}, $tmp;
@@ -81,7 +82,8 @@ sub json_fetch_species {
       }
     }
     else {
-      $tmp->{common} = "$target";
+      $tmp->{display_name} = "$target";
+      $extras->{$sp}->{'haplotypes and patches'}->{create_folder} = 1;
       push @{$extras->{$sp}->{'haplotypes and patches'}->{data}}, $tmp;
     }
   }
@@ -146,12 +148,15 @@ sub json_fetch_species {
     }
   }
 
-  my $file = $species_defs->ENSEMBL_SPECIES_SELECT_DIVISION;
-  my $division_json = from_json(file_get_contents($file));
+  # my $file = $species_defs->ENSEMBL_SPECIES_SELECT_DIVISION;
+  # my $division_json = from_json(file_get_contents($file));
+  my $division_json = $species_defs->ENSEMBL_TAXONOMY_DIVISION;
   my $json = {};
-
+  my $sp_assembly_map = $species_defs->SPECIES_ASSEMBLY_MAP;
   my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $all_species);
-  my @dyna_tree = $self->json_to_dynatree($division_json, $final_hash->{species_info}, $available_internal_nodes, 1, $extras);
+  # print Data::Dumper::Dumper $species_info;
+  ### TODO Pass a hash than a long array
+  my @dyna_tree = $self->simpletree($division_json, $final_hash->{species_info}, $available_internal_nodes, 1, $extras, $sp_assembly_map);
 
    return { json => \@dyna_tree };
 }

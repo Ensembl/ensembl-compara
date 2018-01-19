@@ -5,7 +5,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.base(id);
     this.dataUrl        = params.dataUrl;
     this.taxonTreeData  = null;
-    this.imagePath      = '/i/species/48/';
+    this.imagePath      = '/i/species/';
     this.lastSelected   = null;
     this.activeTreeKey  = '';
     this.selectionLimit = params.selectionLimit || 25;
@@ -407,6 +407,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       return;
     }
 
+    console.log(taxon_tree.toDict(true))
     panel.elLk.tree.dynatree({
       // initAjax: {url: panel.dataUrl},
       children: [taxon_tree.toDict(true)],
@@ -545,7 +546,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         items_hash[node.data.title] = {
           key   : node.data.key,
           title : node.data.title,
-          icon  : node.data.icon,
+          // icon  : node.data.icon,
           value : node.data.value
         };
       }
@@ -611,7 +612,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       if (flag) {
         if (!$('li.'+item.data.key, panel.elLk.list).length) {
           var img_filename = item.data.key + '.png';
-          item.data.img_url = item.data.icon.replace('\/16\/', '\/48\/');
+          item.data.img_url = panel.imagePath + item.data.key + '.png';
           var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
 
           $('<li/>', {
@@ -667,6 +668,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.createMenu(submenu_tree.data.children, tree.data.title)
       panel.addBreadcrumbs(submenu_tree);
     }
+    
     panel.displayTree(tree.data.title);
 
     var node = panel.elLk.tree.dynatree("getTree").getNodeInTree(key);

@@ -73,6 +73,8 @@ use Hash::Merge qw(merge);
 use Storable qw(lock_nstore lock_retrieve thaw);
 use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
+use JSON;
+use Try::Tiny;
 
 use Sys::Hostname::Long;
 
@@ -293,7 +295,7 @@ sub get_font_path {
   my $path = $SiteDefs::GRAPHIC_TTF_PATH || ($self->ENSEMBL_STYLE || {})->{'GRAPHIC_TTF_PATH'};
   $path = $path ? $path =~ /^\// ? $path : $SiteDefs::ENSEMBL_SERVERROOT."/$path" : "/usr/local/share/fonts/ttfonts/";
 
-  return $path =~ s/\/+/\//gr;
+  return $path =~ s/\/+/\//g;
 }
 
 sub get_config {
@@ -487,6 +489,26 @@ sub _load_in_species_pages {
   }
   
   return $spp_tree;
+}
+
+sub _load_in_taxonomy_division {
+  my ($self) = @_;
+  my $filename = $SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE;
+  my $json_text = do {
+    open(my $json_fh, "<", $filename)
+      or die("Can't open $filename: $!\n");
+    local $/;
+    <$json_fh>
+  };
+  my $json = JSON->new;
+  my $data;
+  try{
+    $data = $json->decode($json_text);
+  }
+  catch {
+    die "JSON decode error: $filename \n $_";
+  };
+  return $data;
 }
 
 sub _read_in_ini_file {
@@ -702,6 +724,9 @@ sub _parse {
   # Parse the web tree to create the static content site map
   $tree->{'STATIC_INFO'}  = $self->_load_in_webtree;
   $self->_info_line('Filesystem', 'Trawled web tree');
+  # Load taxonomy division json for species selector
+  $self->_info_log('Loading', 'Loading taxonomy division json file');
+  $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_in_taxonomy_division;
   
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');
   
@@ -726,6 +751,7 @@ sub _parse {
   # Prepare to process strain information
   my $name_lookup = {};
   my $species_to_strains = {};
+  my $species_to_assembly = {};
 
   # Loop over each tree and make further manipulations
   foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
@@ -739,6 +765,7 @@ sub _parse {
     ## Key on actual URL, not production name
     my $species_key = $config_packer->tree->{'SPECIES_URL'};
     my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
+    my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
     if ($collection && $strain_name !~ /reference/) {
       if ($species_to_strains->{$collection}) {
         push @{$species_to_strains->{$collection}}, $species_key;
@@ -747,7 +774,75 @@ sub _parse {
         $species_to_strains->{$collection} = [$species_key];
       }
     }
+
+    if ($species ne "MULTI") {
+      push @{$species_to_assembly->{$scientific_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
+      my $taxonomy = $config_packer->tree->{TAXONOMY};
+      my $children = [];
+      my $other_species_children = [];
+      my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
+      $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+
+      foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
+        my $child = {
+          key           => $species_key,
+          scientific_name => $scientific_name,
+          display_name  => $config_packer->tree->{'DISPLAY_NAME'},
+          is_leaf       => 'true'
+        };
+
+        if ($collection && $strain_name !~ /reference/) {
+          $child->{type} = 'strain';
+        }
+        elsif($collection && $strain_name =~ /reference/) {
+          $child->{type} = $strain_name;
+          # $child->{reference} = $strain_name;
+        }
+
+        if (!$node->{taxa}) {
+          push @{$other_species[0]->{child_nodes}}, $child;
+        }
+        else {
+          my %taxa = map {$_ => 1} @{ $node->{taxa} };
+          my @matched_groups = grep { $taxa{$_} } @$taxonomy;
+
+          if ($#matched_groups >= 0) {
+            if ($node->{child_nodes}) {
+              my $cnode_match = {};
+              foreach my $cnode ( @{$node->{child_nodes}}) {
+                my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
+                if ($#match >=0 ) {
+                  $cnode_match = $cnode;
+                  last;
+                }
+              }
+
+              if (keys %$cnode_match) {
+                if (!$cnode_match->{child_nodes}) {
+                  $cnode_match->{child_nodes} = [];
+                }
+                push @{$cnode_match->{child_nodes}}, $child;
+                last;
+              }
+              else {
+                if (!$node->{child_nodes}) {
+                  $node->{child_nodes} = [];
+                }
+                push @{$node->{child_nodes}}, $child;
+                last;
+              }
+            }
+            else {
+              $node->{child_nodes} = [];
+              push @{$node->{child_nodes}}, $child;
+              last;
+            }
+          }
+        }
+      }
+    }
   }
+  $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
 
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
