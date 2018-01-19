@@ -236,12 +236,17 @@ sub run_analysis {
       $genepairlink->add_tag("subtree1", $child1);
       $genepairlink->add_tag("subtree2", $child2);
 
-      given ($ancestor->get_value_for_tag('node_type')) {
-          when ('speciation') { $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1) }
-          when ('dubious')    { $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0) }
-          when ('gene_split') { $self->tag_genepairlink($genepairlink, 'gene_split', 1) }
-          when ('duplication'){ push @pair_group, $genepairlink }
-          default             { die sprintf("Unknown node type '%s' for node_id %d\n", $ancestor->get_value_for_tag('node_type'), $ancestor->node_id) }
+      my $node_type = $ancestor->get_value_for_tag('node_type');
+      if ($node_type eq 'speciation') {
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
+      } elsif ($node_type eq 'dubious') {
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
+      } elsif ($node_type eq 'gene_split') {
+          $self->tag_genepairlink($genepairlink, 'gene_split', 1);
+      } elsif ($node_type eq 'duplication') {
+          push @pair_group, $genepairlink;
+      } else {
+          die sprintf("Unknown node type '%s' for node_id %d\n", $ancestor->get_value_for_tag('node_type'), $ancestor->node_id);
       }
 
      }
