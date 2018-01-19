@@ -852,7 +852,6 @@ sub summary_as_hash {
     #check if genomic_align is in $species list
     if ($display_species_set) {
        next unless (grep {$genomic_align->genome_db->name eq $_}  @$display_species_set);
-      #next unless ($genomic_align->genome_db->name ~~ @$display_species_set);
     }
 
     my $seq_region =  $genomic_align->dnafrag->name;

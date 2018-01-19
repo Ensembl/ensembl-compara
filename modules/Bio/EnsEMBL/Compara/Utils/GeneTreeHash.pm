@@ -185,7 +185,7 @@ sub _convert_node {
   if ($dcs) {
     $hash->{confidence}{duplication_confidence_score} = $dcs + 0;
   }
-  if($type) { # && $type ~~ [qw/duplication dubious/]) {
+  if($type) {
     $hash->{events} = { type => $type };
   }
 

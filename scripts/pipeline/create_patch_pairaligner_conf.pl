@@ -182,7 +182,6 @@ if ($species && @$species > 0) {
 die "--skip_species is forbidden twhen the patched species is not the reference in the alignment.\n" if @$skip_species and not $patched_species_is_alignment_reference;
 foreach my $name (keys %unique_genome_dbs) {
     #skip anything in the skip_species array 
-    #next if ($name ~~ @$skip_species);
     next if (grep {$name eq $_}  @$skip_species); 
 #    print $unique_genome_dbs{$name}->name . "\n";
     push @all_genome_dbs, $unique_genome_dbs{$name};

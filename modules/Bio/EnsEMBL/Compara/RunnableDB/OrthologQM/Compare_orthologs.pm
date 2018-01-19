@@ -329,7 +329,7 @@ sub _collapse_tandem_repeats {
 
     #check if the gene member is a tandem duplication by looking for it comparing gene tree node its of it homology_id
     if ( (defined $self->param('homology_gtn_id_href')->{$local_unsorted_mem->{gene_tree_node_id}}) &&
-                not ($local_unsorted_mem->{homology_id} ~~ @{$self->param('homology_gtn_id_href')->{$local_unsorted_mem->{gene_tree_node_id} } } ) )  {
+                not (grep {$local_unsorted_mem->{homology_id} == $_} @{$self->param('homology_gtn_id_href')->{$local_unsorted_mem->{gene_tree_node_id} } } ) ) {
 
                     return 0;
             }

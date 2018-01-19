@@ -70,7 +70,6 @@ my $mlss;
 if ($mlss_id) {
     $mlss = $mlssa->fetch_by_dbID($mlss_id);
     my $genome_dbs = $mlss->species_set->genome_dbs;
-   # die "The mlss_id $mlss_id does not match the same species set\n" unless ($genome_dbs ~~ [$qy_gdb, $tg_gdb]) or ($genome_dbs ~~ [$tg_gdb, $qy_gdb]);
     die "The mlss_id $mlss_id does not match the right method_link\n" if $mlss->method->type ne 'SYNTENY';
     my($qy_match, $tg_match)=(0,0);
     foreach my$this_genome_db(@$genome_dbs){

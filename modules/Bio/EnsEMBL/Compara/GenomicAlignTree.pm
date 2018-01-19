@@ -1162,7 +1162,6 @@ sub prune {
     foreach my $this_leaf (@{$self->get_all_leaves}) {
         my $genomic_aligns = $this_leaf->genomic_align_group->get_all_GenomicAligns;
         my $species_name = $genomic_aligns->[0]->genome_db->name;
-        #unless ($species_name ~~ @display_species_set_scientific_names) {
         unless (grep {$species_name eq $_}  @display_species_set_scientific_names) {
             $this_leaf->disavow_parent;
         }
