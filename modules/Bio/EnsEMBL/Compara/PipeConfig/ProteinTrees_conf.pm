@@ -303,7 +303,7 @@ sub default_options {
         #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
         #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
         #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
-        'reuse_level'               => 'clusters',
+        'reuse_level'               => 'members',
 
     # Ortholog-clustering parameters
         'ref_ortholog_db'           => undef,
