@@ -24,4 +24,4 @@ ALTER TABLE gene_tree_root_tag MODIFY tag VARCHAR(255);
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_91_92_c.sql|tag_255');
+  VALUES (NULL, 'patch', 'patch_91_92_c.sql|gene_tree_root_tag_255');
