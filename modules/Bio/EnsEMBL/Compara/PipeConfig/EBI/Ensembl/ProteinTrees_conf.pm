@@ -244,6 +244,7 @@ sub tweak_analyses {
         'CAFE_table'                => '24Gb_job',
         'hcluster_run'              => '38Gb_job',
         'split_genes'               => '250Mb_job',
+        'CAFE_species_tree'         => '24Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
