@@ -28,9 +28,6 @@ use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-	my ($self) = @_;
-}
 
 sub run {
 	my ($self) = @_;
@@ -40,6 +37,7 @@ sub run {
 	my $dnafrag_adaptor = $self_dba->get_adaptor("DnaFrag");
 	my $gab_adaptor = $self_dba->get_adaptor("GenomicAlignBlock");
 	my $genome_db_adaptor = $self_dba->get_adaptor("GenomeDB");
+	my $target_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('target_genome')->{"name"});
 	my ($gab_id) = $self->param('gab_id');
 	my $self_gab_adaptor = $self_dba->get_adaptor("GenomicAlignBlock");
 	my @hits = ();
@@ -47,7 +45,9 @@ sub run {
 	my $stk_file = $self->worker_temp_directory."$gab_id.stk";
 	my $hmm_file = $self->worker_temp_directory."$gab_id.hmm";
 
-	$self_dba->dbc->disconnect_when_inactive(1); 
+	# Preload the GenomicAlign objects
+	$gab->get_all_GenomicAligns;
+	$self_dba->dbc->disconnect_if_idle;
 
 	open(IN, ">$stk_file") or throw("can not open stockholm file $stk_file for writing");
 	print IN "# STOCKHOLM 1.0\n";
@@ -113,8 +113,6 @@ sub run {
 		}
 	}
 
-	$self_dba->dbc->disconnect_when_inactive(0); 
-
 	my @anchor_align_records;
 	foreach my $hit(@hits){
 		my $mapping_id = $hit->[0];
@@ -123,8 +121,7 @@ sub run {
 		my($score,$bias, $evalue, $hmm_from, $hmm_to, $alifrom, $alito) = (split(/ +/, $mapping_info))[2,3,4,5,6,8,9];
 		my $strand = $alifrom > $alito ? "-1" : "1";
 		($alifrom, $alito) = ($alito, $alifrom) if $strand eq "-1";
-		my $taregt_genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('target_genome')->{"name"});
-		my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($taregt_genome_db, $seq_region_name);
+		my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($target_genome_db, $seq_region_name);
 		next unless($dnafrag);	
 		push( @anchor_align_records, [ $self->param('mlssid_of_alignments'), $mapping_id, $dnafrag->dbID, $alifrom, $alito,
 						$strand, $score, $hmm_from, $hmm_to, $evalue, $hmm_len ] );  
