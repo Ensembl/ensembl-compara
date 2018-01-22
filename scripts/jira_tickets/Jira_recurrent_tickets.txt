@@ -7,6 +7,9 @@ ENSCOMPARASW	Sub-task	update Configuration file	Release <version>  Preparation	<
 ENSCOMPARASW	Task	Release <version> Schema preparation		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Schemapreparation
 ENSCOMPARASW	Sub-task	update master tables and create patch files	Release <version> Schema preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Updatetable.sqlandcreatepatchfiles
 ENSCOMPARASW	Sub-task	check patch files	Release <version> Schema preparation	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Checkthepatchfiles
+ENSCOMPARASW	Sub-task	Patch the test DBs	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Patchthetestdatabases
+ENSCOMPARASW	Sub-task	Branch code	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Branchthecode
+ENSCOMPARASW	Sub-task	Specialize the branch	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Specializethebranch
 ENSCOMPARASW	Task	Update master DB		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Masterdatabase
 ENSCOMPARASW	Sub-task	NCBI taxonomy 	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-NCBItaxonomydata
 ENSCOMPARASW	Sub-task	Add new entries to compara master database	Update master DB	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Addnewentriestocomparamasterdatabase
@@ -44,9 +47,6 @@ ENSCOMPARASW	Sub-task	test the documentation and statistics	Release <version> Te
 ENSCOMPARASW	Sub-task	Final Handover of DBs	Release <version> End of production window	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]
 ENSCOMPARASW	Task	Release <version> Post-handover		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Post-handover
 ENSCOMPARASW	Sub-task	Generate and commit diagrams	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Updatedocumentationanddiagrams[edit]
-ENSCOMPARASW	Sub-task	Patch the test DBs	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Patchthetestdatabases
-ENSCOMPARASW	Sub-task	Branch code	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Branchthecode
-ENSCOMPARASW	Sub-task	Specialize the branch	Release <version> Post-handover	<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Specializethebranch
 ENSCOMPARASW	Task	Release <version> Test the sites		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Testthesites
 ENSCOMPARASW	Sub-task	test the main ensembl site	Release <version> Test the sites	<RelCo>	Major	Ensembl <version>		Release process	http://test.ensembl.org/
 ENSCOMPARASW	Sub-task	test the GRCh37 site	Release <version> Test the sites	<RelCo>	Major	Ensembl <version>		Release process	http://test.ensembl.org
