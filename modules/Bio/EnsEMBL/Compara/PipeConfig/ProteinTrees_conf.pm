@@ -1548,7 +1548,7 @@ sub core_pipeline_analyses {
                     '#clustering_mode# eq "topup"' => 'copy_trees_from_previous_release',
                     ELSE 'alignment_entry_point',
                 ),
-                'A->1' => [ 'hc_global_tree_set' ],
+                'A->1' => [ 'compute_statistics' ],
             },
             -rc_name    => '1Gb_job',
         },
@@ -1586,13 +1586,21 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
+            -flow_into      => [ 'compute_statistics' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name    => 'compute_statistics',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComputeStatistics',
+            -hive_capacity => 10,
+            -batch_size    => 5,
+            -rc_name       => '500Mb_job',
             -flow_into  => [
                     'write_stn_tags',
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                     WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies'),
                 ],
-            %hc_analysis_params,
         },
 
         {   -logic_name     => 'write_stn_tags',
