@@ -158,7 +158,13 @@ sub run {
     $sth->bind_columns(\$homology_id, \$description, \$seq_member_id1, \$seq_member_id2, \$dn, \$ds, \$goc_score, \$wga_coverage);
 
     while ($sth->fetch()) {
-        print $HANDLE qq{<orthologGroup id="${homology_id}"><property name="homology_description" value="${description}" /><geneRef id="${seq_member_id1}" /> <geneRef id="${seq_member_id2}" /> <score id="dn" value="${dn}" /> <score id="ds" value="${ds}" /> <score id="goc_score" value="${goc_score}" /> <score id="wga_coverage" value="${wga_coverage}" /> </orthologGroup>\n};
+        my $str = qq{<orthologGroup id="${homology_id}"><property name="homology_description" value="${description}" /><geneRef id="${seq_member_id1}" /> <geneRef id="${seq_member_id2}" />};
+        $str .= qq{ <score id="dn" value="${dn}" />} if defined $dn;
+        $str .= qq{ <score id="ds" value="${ds}" />} if defined $ds;
+        $str .= qq{ <score id="goc_score" value="${goc_score}" />} if defined $goc_score;
+        $str .= qq{ <score id="wga_coverage" value="${wga_coverage}" />} if defined $wga_coverage;
+        $str .= qq{  </orthologGroup>\n};
+        print $HANDLE $str;
     }
     
     print $HANDLE "</groups>\n";
