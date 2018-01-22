@@ -53,7 +53,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
 
@@ -85,6 +85,8 @@ sub default_options {
 
         'dump_per_species_tsv'  => 0,
         'max_files_per_tar'     => 500,
+
+        'xmllint_exe' => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
 
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
@@ -362,7 +364,28 @@ sub _pipeline_analyses {
                 'production_registry' => $self->o('production_registry'),
                 'dump_script'       => $self->o('dump_script'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
+                'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
                 'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
+            },
+            -flow_into     => {
+                1 => {
+                    'validate_xml' => [
+                        { 'schema' => 'orthoxml', 'filename' => '#base_filename#.orthoxml.xml' },
+                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.phyloxml.xml' },
+                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
+                    ],
+                },
+            },
+            -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
+            -batch_size    => $self->o('batch_size'),
+            -rc_name       => '2Gb_job',
+        },
+
+        {   -logic_name    => 'validate_xml',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'xmllint_exe'   => $self->o('xmllint_exe'),
+                'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
