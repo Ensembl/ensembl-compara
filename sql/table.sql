@@ -2253,19 +2253,19 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '91');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '92');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_90_91_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_91_92_a.sql|schema_version');
 
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_90_91_b.sql|gene_member_qc.seq_member_id.unsigned.foreign_key');
+  VALUES (NULL, 'patch', 'patch_91_92_b.sql|mapping_session_new_type_hmm');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_90_91_c.sql|gene_member.biotype_group-index');
+  VALUES (NULL, 'patch', 'patch_91_92_c.sql|gene_tree_root_tag_255');
 
 
 
