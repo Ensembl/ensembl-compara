@@ -75,7 +75,9 @@ $SiteDefs::ENSEMBL_IDENTITIES = [
     add_symlinks(\@paths, {});
     foreach my $host (uniq('', $hostname, $hostname =~ s/\..*//r)) {
       push @out, map {"unix:$host:$_"} @paths;
+      push @out, "host:$host";
     }
+    push @out, map { "path:$_" } @paths;
     @out = sort @out;
     return \@out;
   }

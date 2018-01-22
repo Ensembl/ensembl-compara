@@ -524,6 +524,15 @@ sub _get_serverroot {
   return $path;
 }
 
+sub solve_identity {
+  my ($k,$ids) = @_;
+
+  foreach my $pat (split(' ',$k)) {
+    return 0 unless grep { $_ eq $pat } @$ids;
+  }
+  return 1;
+}
+
 sub _populate_plugins_list {
   ## @private
   ## Populates ENSEMBL_PLUGINS from Plugins.pm or AutoPlugins.pm
@@ -566,7 +575,6 @@ sub _populate_plugins_list {
   $ENSEMBL_IDS_USED->{'- direct -'} = 0;
   $ENSEMBL_PLUGINS_USED->{$_} = [0] for @plugins_seen;
 
-
   my $code = 1;
   my (%plugins_list, %plugins_priority, @identity_maps);
   foreach my $f (glob $a_paths) {
@@ -606,7 +614,7 @@ sub _populate_plugins_list {
 
   # Process AutoPlugin files
   foreach my $k (sort { $plugins_priority{$a} <=> $plugins_priority{$b} } keys %plugins_list) {
-    if (grep { $_ eq $k } @ensembl_identity) {
+    if (solve_identity($k,\@ensembl_identity)) {
       warn " Loading $k\n";
       my @to_add;
       foreach my $p ($paired->(@{$plugins_list{$k}||[]})) {
