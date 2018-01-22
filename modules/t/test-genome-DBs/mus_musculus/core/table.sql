@@ -500,7 +500,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`),
   KEY `species_value_idx` (`species_id`,`meta_value`)
-) ENGINE=MyISAM AUTO_INCREMENT=628 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=630 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `meta_coord` (
   `table_name` varchar(40) NOT NULL,
@@ -697,6 +697,8 @@ CREATE TABLE `protein_feature` (
   `perc_ident` float DEFAULT NULL,
   `external_data` text,
   `hit_description` text,
+  `cigar_line` text,
+  `align_type` enum('ensembl','cigar','cigarplus','vulgar','mdtag') DEFAULT NULL,
   PRIMARY KEY (`protein_feature_id`),
   UNIQUE KEY `aln_idx` (`translation_id`,`hit_name`,`seq_start`,`seq_end`,`hit_start`,`hit_end`,`analysis_id`),
   KEY `translation_idx` (`translation_id`),
