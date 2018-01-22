@@ -21,16 +21,15 @@ Compara.{release}.{protein|ncrna}_{species_collection}.alltrees.orthoxml.xml.gz
   attached to the root 'groups' tag.
 
 
-The following three files are tar archives containing one file per tree.
-CAUTION: Be aware that untaring any of these files will create in your current
-	   directory hundreds or thousands of files !
+The following three files are tar archives containing one file per tree, organized in
+series of 500 trees (to avoid so-called "tar bombs").
 
-Compara.{release}.{protein|ncrna}_{species_collection}.tree.orthoxml.tar.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.tree.orthoxml.111111-222222.tar.gz
   Each file will contain one tree, in OrthoXML format.
 
-Compara.{release}.{protein|ncrna}_{species_collection}.tree.phyloxml.tar.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.tree.phyloxml.111111-222222.tar.gz
   Each file will contain one tree, in PhyloXML format.
 
-Compara.{release}.{protein|ncrna}_{species_collection}.tree.cafe_phyloxml.tar.gz
+Compara.{release}.{protein|ncrna}_{species_collection}.tree.cafe_phyloxml.111111-222222.tar.gz
   Each file will contain one CAFE tree, in PhyloXML format.
 

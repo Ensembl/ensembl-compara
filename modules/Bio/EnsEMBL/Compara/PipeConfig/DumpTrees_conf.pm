@@ -84,6 +84,7 @@ sub default_options {
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
 
         'dump_per_species_tsv'  => 0,
+        'max_files_per_tar'     => 500,
 
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
@@ -402,23 +403,35 @@ sub _pipeline_analyses {
                 'column_names'      => [ 'extension' ],
             },
             -flow_into => {
-                2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
+                2 => { 'tar_dumps_factory'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
+            },
+        },
+
+        {   -logic_name => 'tar_dumps_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'step'          => $self->o('max_files_per_tar'),
+                'contiguous'    => 0,
+                'inputcmd'      => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n',
+            },
+            -hive_capacity => 2,
+            -flow_into => {
+                2 => [ 'tar_dumps' ],
             },
         },
 
         {   -logic_name => 'tar_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'file_list'     => '#work_dir#/#extension#.list',
-                'tar_archive'   => '#xml_dir#/#dump_file_name#.tar',
-                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n | tee #file_list# | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
+                'file_list'     => '#expr( join("\n", @{ #_range_list# }) )expr#',   # Assumes no whitespace in the filenames
+                'min_tree_id'   => '#expr( ($_ = #_range_start#) and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
+                'max_tree_id'   => '#expr( ($_ = #_range_end#)   and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
+                'tar_archive'   => '#xml_dir#/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
+                'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
             -hive_capacity => 2,
             -flow_into => {
-                1 => WHEN(
-                    '-z #file_list#' => { 'remove_empty_file' => { 'full_name' => '#tar_archive#' } },
-                    ELSE { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
-                ),
+                1 => { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
             },
         },
 
