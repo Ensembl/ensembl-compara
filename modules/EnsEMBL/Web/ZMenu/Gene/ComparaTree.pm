@@ -52,13 +52,39 @@ sub content {
     position    => 1
   });
   
+  if ($ens_prot) {
+    $self->add_entry({
+      type     => 'Protein summary',
+      label    => $ens_prot->display_id,
+      position => 5,
+      link     => $hub->url({
+        type   => 'Transcript',
+        action => 'ProteinSummary',
+        t      => $ens_tran->stable_id 
+      })
+    });
+
+    $self->add_entry({
+      type     => 'Protein sequence',
+      label    => $ens_prot->display_id,
+      position => 6,
+      link     => $hub->url({
+        type   => 'Transcript',
+        action => 'Sequence_Protein',
+        t      => $ens_tran->stable_id 
+      })
+    });
+  }
+
+  # The external links need to be displayed at the bottom of the ZMenu.
+  # The number of variables can vary, hence the position numbers that are greater than the usual number of labels in the ZMenu.
   if ($phy_link) {
     $self->add_entry({
       type     => 'PhylomeDB',
       label    => 'Gene in PhylomeDB',
       link     => $phy_link,
       external => 1,
-      position => 3
+      position => 11
     });
   }
   
@@ -67,8 +93,8 @@ sub content {
       type     => 'Genomicus Synteny',
       label    => 'Gene in Genomicus',
       link     => $dyo_link,
-      external => 1, 
-      position => 4
+      external => 1,
+      position => 12
     });
   }
   
@@ -78,20 +104,7 @@ sub content {
       label    => 'Gene in TreeFam',
       link     => $treefam_link,
       external => 1,
-      position => 5
-    });
-  }
-  
-  if ($ens_prot) {
-    $self->add_entry({
-      type     => 'Protein',
-      label    => $ens_prot->display_id,
-      position => 6,
-      link     => $hub->url({
-        type   => 'Transcript',
-        action => 'Sequence_Protein',
-        t      => $ens_tran->stable_id 
-      })
+      position => 13
     });
   }
 }

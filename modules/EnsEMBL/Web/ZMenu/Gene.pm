@@ -51,22 +51,16 @@ sub _content {
   
   if($gene_desc) {
     $self->add_entry({
-      type  => 'Gene',
+      type  => 'Gene Symbol',
       label => $gene_desc
     });
-    
-    $self->add_entry({
-      type  => ' ',
-      label => $object->stable_id,
-      link  => $hub->url({ type => 'Gene', action => 'Summary' })
-    }); 
-  } else {
-    $self->add_entry({
-      type  => 'Gene',
-      label => $object->stable_id,
-      link  => $hub->url({ type => 'Gene', action => 'Summary' })
-    });     
   }
+
+  $self->add_entry({
+    type  => 'Gene Summary',
+    label => $object->stable_id,
+    link  => $hub->url({ type => 'Gene', action => 'Summary' })
+  });
   
   $self->add_entry({
     type  => 'Location',
