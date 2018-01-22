@@ -35,21 +35,10 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # The majority of core databases live on staging servers:
   Bio::EnsEMBL::Registry->load_registry_from_url(
-    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/91');
-  #Bio::EnsEMBL::Registry->load_registry_from_url(
-   #'mysql://ensro@mysql-ens-general-prod-1:4525/90');
+    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/92');
 
-# # Extra core databases that live on genebuilders' servers:
-# Bio::EnsEMBL::Registry->remove_DBAdaptor('sus_scrofa', 'core'); # deregister old version
-# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-1',
-#     -user => 'ensro',
-#     -port => 4485,
-#     -species => 'sus_scrofa',
-#     -group => 'core',
-#     -dbname => 'sus_scrofa_core_90',
-# );
 
+=pod
 #-------------------------HOMOLOGY DATABASES-----------------------------------
 
 # Individual pipeline database for ProteinTrees:
@@ -73,14 +62,14 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 # Individual pipeline database for ncRNAtrees:
- Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-ens-compara-prod-4',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4401,
      -species => 'compara_nctrees',
      -dbname => 'mateus_compara_nctrees_91',
- );
+);
 
 # Mouse strains protein trees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -103,7 +92,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
-=pod
+
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-ens-compara-prod-1',
      -user => 'ensadmin',
@@ -185,7 +174,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -dbname => 'db8_hrzcho_cricetulus_griseus_lastz_89b',
      -group => 'compara',
 );
-=cut
+
 # ------------------------- EPO DATABASES: -----------------------------------
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -226,6 +215,8 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -dbname => 'waakanni_alignment_synteny_91',
 );
 
+=cut
+
 # ----------------------COMPARA DATABASES---------------------------
 
 # Compara Master database:
@@ -245,7 +236,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_prev',
-    -dbname => 'ensembl_compara_90',
+    -dbname => 'ensembl_compara_91',
 );
 
 # current release database on one of Compara servers:
@@ -255,7 +246,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_curr',
-    -dbname => 'ensembl_compara_91',
+    -dbname => 'ensembl_compara_92',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -266,7 +257,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4485,
     -group => 'core',
     -species => 'ancestral_prev',
-    -dbname => 'ensembl_ancestral_90',
+    -dbname => 'ensembl_ancestral_91',
 );
 
 # current ancestral database on one of Compara servers. This alias is need for the epo data dumps to work:
@@ -277,7 +268,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4485,
     -group => 'core',
     -species => 'ancestral_sequences',
-    -dbname => 'ensembl_ancestral_91',
+    -dbname => 'ensembl_ancestral_92',
 );
 
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -287,7 +278,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4485,
     -group => 'core',
     -species => 'ancestral_curr',
-    -dbname => 'ensembl_ancestral_91',
+    -dbname => 'ensembl_ancestral_92',
 );
 
 # ensembl production (maintained by production team):
@@ -296,7 +287,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -user => 'ensro',
     -port => 4519,
     -species => 'ensembl_production',
-    -dbname => 'ensembl_production_91',
+    -dbname => 'ensembl_production_92',
     -group => 'production',
 );
 
