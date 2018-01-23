@@ -152,7 +152,7 @@ sub render_Text {
 
   return unless length $glyph->{'text'};
   my $font   = $glyph->font();
-  my $colour = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
+  my $colour = $self->colour($glyph->{'colour'});
 
   ########## Stock GD fonts
   my $left       = $self->{sf} * $glyph->{'pixelx'}    || 0;
@@ -205,7 +205,7 @@ sub render_Circle {
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
-  my $colour         = $self->colour($gcolour, $glyph->{'alpha'});
+  my $colour         = $self->colour($gcolour);
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
@@ -225,7 +225,7 @@ sub render_Ellipse {
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
-  my $colour         = $self->colour($gcolour, $glyph->{'alpha'});
+  my $colour         = $self->colour($gcolour);
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
@@ -244,7 +244,7 @@ sub render_Arc {
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
-  my $colour         = $self->colour($gcolour, $glyph->{'alpha'});
+  my $colour         = $self->colour($gcolour);
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
@@ -271,7 +271,7 @@ sub render_Intron {
   my ($self, $glyph) = @_;
 
   my ($colour, $xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand, $gy);
-  $colour  = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
+  $colour  = $self->colour($glyph->{'colour'});
   $gy      = $self->{sf} * $glyph->{'pixely'};
   $strand  = $glyph->{'strand'};
   $xstart  = $self->{sf} * $glyph->{'pixelx'};
@@ -289,7 +289,7 @@ sub render_Intron {
 sub render_Line {
   my ($self, $glyph) = @_;
 
-  my $colour = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
+  my $colour = $self->colour($glyph->{'colour'});
   my $x1     = $self->{sf} * $glyph->{'pixelx'} + 0;
   my $y1     = $self->{sf} * $glyph->{'pixely'} + 0;
   my $x2     = $x1 + $self->{sf} * $glyph->{'pixelwidth'};
@@ -332,7 +332,7 @@ sub render_Histogram {
   my ($self, $glyph) = @_;
 
   my $canvas         = $self->{'canvas'};
-  my $colour         = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
+  my $colour         = $self->colour($glyph->{'colour'});
 
   my $points = $glyph->{'pixelpoints'};
   return unless defined $points;
@@ -360,7 +360,7 @@ sub render_Histogram {
     ## Mark truncation with a contrasting line at the top of the bar
     if ($truncated) {
       my $yc = $yb + 1;
-      $canvas->filledRectangle($x1,$yb,$x2,$yc,$self->colour($glyph->{'truncate_colour'}, $glyph->{'alpha'}));
+      $canvas->filledRectangle($x1,$yb,$x2,$yc,$self->colour($glyph->{'truncate_colour'}));
     }
     $x1 += $step;
     $x2 += $step;
@@ -411,8 +411,8 @@ sub render_Poly {
   my ($self, $glyph) = @_;
 
   my $canvas         = $self->{'canvas'};
-  my $bordercolour   = $self->colour($glyph->{'bordercolour'}, $glyph->{'alpha'});
-  my $colour         = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
+  my $bordercolour   = $self->colour($glyph->{'bordercolour'});
+  my $colour         = $self->colour($glyph->{'colour'});
   my $poly           = GD::Polygon->new;
 
   return unless(defined $glyph->pixelpoints());
