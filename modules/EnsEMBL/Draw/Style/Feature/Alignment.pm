@@ -29,12 +29,12 @@ sub draw_feature {
 ### @param feature Arrayref - data for a genomic alignment block
 ### @param position Hashref - information about the feature's size and position
   my ($self, $block, $position, $count) = @_;
+  #use Data::Dumper;
+  #warn ">>> DRAWING ALIGNMENT ".Dumper($block);
 
   ## We only need the alignment for the current species
   my $feature = $block->{$self->image_config->{'species'}};
   return unless $feature;
-  #use Data::Dumper;
-  #warn ">>> DRAWING ALIGNMENT ".Dumper($block);
   my $debug = $self->track_config->get('DEBUG_RAINBOW');
   if ($debug) {
     $feature->{'colour'} = $self->rainbow($count);
