@@ -76,7 +76,7 @@ sub content {
                                   });
 
       my $link    = sprintf('<a href="%s">View example location</a> | <a href="%s">Karyotype and statistics</a>', $loc_url, $kar_url);
-      my $species_badge = sprintf '<img src="/i/species/48/%s.png" alt="icon" style="float:left;padding-right:4px;" /><span class="bigtext">%s</span><br />%s', $strain, $sd->get_config($strain, 'SPECIES_COMMON_NAME'), $link; 
+      my $species_badge = sprintf '<img src="/i/species/%s.png" alt="icon" class="badge-48" style="float:left;padding-right:4px;" /><span class="bigtext">%s</span><br />%s', $strain, $sd->get_config($strain, 'SPECIES_COMMON_NAME'), $link; 
 
       ## Link to Jackson Labs for mouse strains
       my $info_link;
