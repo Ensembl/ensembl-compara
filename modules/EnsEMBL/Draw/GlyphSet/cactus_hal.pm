@@ -69,12 +69,26 @@ sub render_normal {
   return $self->render_compact if $debug_force_compact;
 
   $self->{'my_config'}->set('bumped', 1);
+  $self->_render;
+}
+
+sub render_compact {
+  my $self = shift;
+
+  $self->{'my_config'}->set('bumped', 0);
+  $self->_render;
+}
+
+sub _render {
+  my $self = shift;
+
   $self->{'my_config'}->set('no_join', 1);
   $self->{'my_config'}->set('drawn_strand', $self->strand);
 
   my $data = $self->get_data;
   if (scalar @{$data->[0]{'features'}||[]}) {
     #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+    #$Data::Dumper::Maxdepth = 2;
     #warn Dumper($data);
     my $config = $self->track_style_config;
     my $style  = EnsEMBL::Draw::Style::Feature::Alignment->new($config, $data);
@@ -84,13 +98,6 @@ sub render_normal {
   else {
     $self->no_features;
   }
-
-}
-
-sub render_compact {
-  my $self = shift;
-
-  $self->{'my_config'}->set('no_join', 1);
 }
 
 sub get_data {
