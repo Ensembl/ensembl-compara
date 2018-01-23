@@ -446,7 +446,7 @@ sub handler {
     $r->content_type('text/plain');
     if(lb_force_down() || selfcheck_down()) {
       $r->status(HTTP_SERVICE_UNAVAILABLE);
-      $r->print("503 Stitcky wicket");
+      $r->print("503 Sticky wicket");
       return HTTP_SERVICE_UNAVAILABLE; # 503, not 500, so e! deosn't catch it
     } else {
       $r->print("200 Mustn't grumble");
