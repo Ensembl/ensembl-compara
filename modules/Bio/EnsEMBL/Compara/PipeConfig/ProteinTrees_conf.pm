@@ -1710,7 +1710,7 @@ sub core_pipeline_analyses {
             },
             -flow_into      => WHEN(
                 '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
-                ELSE 'split_genes',
+                ELSE 'aln_filtering_tagging',
             ),
             -rc_name    => '500Mb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
@@ -1780,7 +1780,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 1 => WHEN(
-                     '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'aln_filtering_tagging',
+                     '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)' => 'get_num_of_patterns',
                      '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)' => 'noisy_large',
                      #'' => 'trimal', # Not actually used
                      ELSE 'noisy',
@@ -1798,7 +1798,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '4Gb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'aln_filtering_tagging' ],
+            -flow_into      => [ 'get_num_of_patterns' ],
         },
 
         {   -logic_name     => 'noisy_large',
@@ -1810,7 +1810,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '16Gb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'aln_filtering_tagging' ],
+            -flow_into      => [ 'get_num_of_patterns' ],
         },
 
 
@@ -1822,7 +1822,7 @@ sub core_pipeline_analyses {
             #-hive_capacity  => $self->o('alignment_filtering_capacity'),
             #-rc_name        => '500Mb_job',
             #-batch_size     => 5,
-            #-flow_into      => [ 'aln_filtering_tagging' ],
+            #-flow_into      => [ 'get_num_of_patterns' ],
         #},
 
         {   -logic_name     => 'aln_filtering_tagging',
@@ -1830,7 +1830,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name    	=> '4Gb_job',
             -batch_size     => 50,
-            -flow_into      => [ 'get_num_of_patterns' ],
+            -flow_into      => [ 'split_genes' ],
         },
 
 # ---------------------------------------------[small trees decision]-------------------------------------------------------------
