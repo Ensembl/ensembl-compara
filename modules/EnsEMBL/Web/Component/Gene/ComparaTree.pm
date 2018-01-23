@@ -111,17 +111,11 @@ sub content {
 
   my $leaves               = $tree->get_all_leaves;
   my $tree_stable_id       = $tree->tree->stable_id;
-  my $highlight_gene       = $self->param('g1');
-  my $should_highlight     = $self->param('h');
+  my $highlight_gene       = $hub->param('g1');
+  my $highlight_status     = $hub->get_cookie_value('gene_tree_highlighting') || 'on'; # get the the highlight switch status from the cookie
 
-  if ($should_highlight eq undef) {
-    $should_highlight = "1";
-  }
-
-  my $highlight_link       = $should_highlight eq '1' ? $hub->url({ g1 => $highlight_gene, h => '0', collapse => $self->param('collapse') }) : $hub->url({ g1 => $highlight_gene, h => '1' }); # h is highlighting and 0 is for off and 1 is for on
-
-  # set highlight_gene to undefined if should highlight is 0 as most of the code depends on that logic to unhighlight the gene tree
-  if ($should_highlight eq "0") {
+  # Set $highlight_gene to undefined if the highlight status is off. This is due to the module relying heavily on $highlight_gene to do the rendering based on the highlight status.
+  if ($highlight_status eq 'off') {
     $highlight_gene = undef;
   }
 
@@ -199,12 +193,11 @@ sub content {
     if ($member && $gene && $highlight_species) {
       $html .= $self->_info('Highlighted genes',
         sprintf(
-          '<p>The <i>%s</i> %s gene, its paralogues, its orthologue in <i>%s</i>, and paralogues of the <i>%s</i> gene, have all been highlighted. <a href="%s">Click here to switch off highlighting</a>.</p>',
+          '<p>The <i>%s</i> %s gene, its paralogues, its orthologue in <i>%s</i>, and paralogues of the <i>%s</i> gene, have all been highlighted. <a href="#" class="switch_highlighting on">Click here to switch off highlighting</a>.</p>',
           $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_COMMON_NAME'),
           $highlight_gene_display_label,
           $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME'),
-          $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME'),
-          $highlight_link
+          $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME')
         )
       );
     } else {
@@ -212,7 +205,7 @@ sub content {
       $highlight_gene = undef;
     }
   } else {
-    $html .= $self->_info('Highlighted genes', sprintf('<p>Highlighting is turned off. <a href="%s">Click here to switch on highlighting</a>.</p>', $highlight_link));
+    $html .= $self->_info('Highlighted genes', '<p>Highlighting is turned off. <a href="#" class="switch_highlighting off">Click here to switch on highlighting</a>.</p>');
   }
   
   # Get all the genome_db_ids in each clade
@@ -361,7 +354,7 @@ sub content {
   
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_dups, g1 => $highlight_gene }), 'View all duplication nodes';
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => 'none', g1 => $highlight_gene }), 'View fully expanded tree';
-  push @view_links, sprintf $li_tmpl, $highlight_link, 'Switch off highlighting' if $highlight_gene;
+  push @view_links, sprintf $li_tmpl, '#', 'Switch off highlighting' if $highlight_gene;
 
   {
     my @rank_options = ( q{<option value="#">-- Select a rank--</option>} );

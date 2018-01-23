@@ -43,7 +43,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     $.extend(this.elLk, fnEls);
 
-    this.toggleable();  
+    this.toggleable();
+    this.switchChange();
+
     $(this).afterimage();
 
     for (var fn in fnEls) {
@@ -289,6 +291,21 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     el = null;
+  },
+
+  // gene tree highlighting switch
+  switchChange: function () {
+    $('a.switch_highlighting', this.el).on('click', function (e) {
+      var el = $(this);
+
+      e.preventDefault();
+
+      Ensembl.cookie.set('gene_tree_highlighting', el.hasClass('on') ? 'off' : 'on');
+
+      // the page is reloaded after clicked on the switching link and the cookie value is inversed
+      // might need to find a better to do this
+      location.href = location.href;
+    });
   },
   
   hashChange: function () {
