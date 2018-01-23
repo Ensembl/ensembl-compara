@@ -170,8 +170,8 @@ sub render {
         height => $glyphset->height
       };
     }
-    foreach my $tag (keys %{$glyphset->{'tags'}}) {
-      if ($tags{$tag}) {
+    foreach (keys %{$glyphset->{'tags'}}) {
+      if ($tags{$_}) {
         my $COL   = undef;
         my $FILL  = undef;
         my $Z     = undef;
@@ -179,12 +179,12 @@ sub render {
         my $glyph;
         my @points;
         
-        for (@{$tags{$tag}}, @{$glyphset->{'tags'}{$tag}}) {
-          $COL    = defined $COL    ? $COL  : $_->{'col'};
-          $FILL   = defined $FILL   ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
-          $Z      = defined $Z      ? $Z    : $_->{'z'};
+        for (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}}) {
+          $COL    = defined $COL  ? $COL  : $_->{'col'};
+          $FILL   = defined $FILL ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
+          $Z      = defined $Z    ? $Z    : $_->{'z'};
           $ALPHA  = defined $ALPHA  ? $ALPHA    : $_->{'alpha'};
-          
+
           push (@points, 
             $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
             $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
@@ -228,9 +228,9 @@ sub render {
         }
         
         push @{$layers{defined $Z ? $Z : -1 }}, $glyph;
-        delete $tags{$tag};
+        delete $tags{$_};
       } else {
-        $tags{$tag} = $glyphset->{'tags'}{$tag};
+        $tags{$_} = $glyphset->{'tags'}{$_};
       }       
     }
     

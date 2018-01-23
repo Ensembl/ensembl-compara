@@ -411,7 +411,7 @@ sub render_Poly {
   my ($self, $glyph) = @_;
 
   my $canvas         = $self->{'canvas'};
-  my $bordercolour   = $self->colour($glyph->{'bordercolour'}, $glyph->{'alpha'});
+  my $bordercolour   = $self->colour($glyph->{'bordercolour'});
   my $colour         = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
   my $poly           = GD::Polygon->new;
 
