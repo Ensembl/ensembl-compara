@@ -66,6 +66,10 @@ sub run {
 
     my $size_summary = $self->_get_sizes_summary();
     $self->param( 'size_summary', $size_summary );
+
+    my $gini_coefficient= $self->_compute_gini_coefficient();
+    $self->param( 'gini_coefficient', $gini_coefficient);
+
 }
 
 sub write_output {
@@ -117,6 +121,14 @@ sub write_output {
         my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.number_of_proteins_used_in_trees', $self->param('number_of_proteins_used_in_trees') );
     }
+
+    #gini_coefficient
+    if ( $self->param('gini_coefficient') > 0 ) {
+        print "\nStoring gini_coefficient\n" if $self->debug;
+        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+        $clusterset_tree->store_tag( 'stat.gini_coefficient', $self->param('gini_coefficient') );
+    }
+
 } ## end sub write_output
 
 ##########################################
@@ -234,5 +246,46 @@ sub _get_sizes_summary {
     $sizes_summary{"stat.sizes_summary.min"}    = $min;
     return \%sizes_summary;
 } ## end sub _get_sizes_summary
+
+# Computes the Gini coefficient which measures the inequality among values.
+sub _compute_gini_coefficient {
+    my ($self) = @_;
+
+    # The following code was initially based on a script implemented by Paul Kersey.
+    # But the following implementation is more efficient:  http://shlegeris.com/2016/12/29/gini
+    # ------------------------------------------------------------------------------
+    my $get_all_seqs_sql = "SELECT b.root_id, count(seq_member_id) AS cni
+                             FROM gene_tree_root a, gene_tree_node b
+                             WHERE a.root_id = b.root_id
+                             AND tree_type = 'tree'
+                             AND clusterset_id = 'default'
+                             AND member_type = 'protein'
+                             AND seq_member_id is NOT NULL
+                             GROUP BY root_id
+                             ORDER BY cni";
+
+    my @cluster_sizes;
+    my $sum_of_absolute_differences = 0;
+    my $subsum                      = 0;
+    my $cluster_count               = 0;
+
+
+    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    $sth->execute();
+    while ( my @row = $sth->fetchrow_array() ) {
+        push( @cluster_sizes, $row[1] );
+        $sum_of_absolute_differences += $cluster_count*$row[1] - $subsum;
+        $subsum += $row[1];
+        $cluster_count++;
+    }
+
+    $sth->finish();
+
+    my $gini_coefficient = $sum_of_absolute_differences/$subsum/scalar(@cluster_sizes);
+
+    # ------------------------------------------------------------------------------
+
+    return $gini_coefficient;
+} ## end sub _compute_gini_coefficient
 
 1;
