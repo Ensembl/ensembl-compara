@@ -61,8 +61,7 @@ sub run {
     my $avg_duplication_confidence_score = $self->_get_avg_duplication_confidence_score();
     $self->param( 'avg_duplication_confidence_score', $avg_duplication_confidence_score );
 
-    my $number_of_proteins_used_in_trees = $self->_get_number_of_proteins_used_in_trees();
-    $self->param( 'number_of_proteins_used_in_trees', $number_of_proteins_used_in_trees );
+    my $number_of_proteins_used_in_trees = $self->_get_number_of_proteins_used();
 
     my $size_summary = $self->_get_sizes_summary();
     $self->param( 'size_summary', $size_summary );
@@ -117,6 +116,21 @@ sub write_output {
         my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.number_of_proteins_used_in_trees', $self->param('number_of_proteins_used_in_trees') );
     }
+
+    #number_of_orphan_proteins
+    if ( $self->param('number_of_orphan_proteins') > 0 ) {
+        print "\nStoring number_of_orphan_proteins\n" if $self->debug;
+        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+        $clusterset_tree->store_tag( 'stat.number_of_orphan_proteins', $self->param('number_of_proteins_used_in_trees') );
+    }
+
+    #number_of_proteins_in_single_species_trees
+    if ( $self->param('number_of_proteins_in_single_species_trees') > 0 ) {
+        print "\nStoring number_of_proteins_in_single_species_trees\n" if $self->debug;
+        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+        $clusterset_tree->store_tag( 'stat.number_of_proteins_in_single_species_trees', $self->param('number_of_proteins_used_in_trees') );
+    }
+
 } ## end sub write_output
 
 ##########################################
@@ -191,22 +205,24 @@ sub _get_avg_duplication_confidence_score {
     return \%avg_duplication_confidence_score;
 }
 
-sub _get_number_of_proteins_used_in_trees {
+sub _get_number_of_proteins_used {
     my ($self) = @_;
 
-    my $number_of_proteins_used_in_trees;
-
     #Compute the number of proteins used in trees
-    my $get_all_seqs_sql = "SELECT COUNT(seq_member_id) FROM gene_tree_root JOIN gene_tree_node USING (root_id) where clusterset_id = 'default' AND tree_type = 'tree' AND member_type = 'protein' AND seq_member_id IS NOT NULL";
+    my $get_all_seqs_sql = "SELECT SUM(nb_genes_in_tree), SUM(nb_orphan_genes), SUM(nb_genes_in_tree_single_species) FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL)";
+
     my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
-        my $count = $row[0];
+        my $number_of_proteins_used_in_trees           = $row[0];
+        my $number_of_orphan_proteins                  = $row[1];
+        my $number_of_proteins_in_single_species_trees = $row[2];
 
-        $number_of_proteins_used_in_trees = $count;
+        $self->param( 'number_of_proteins_used_in_trees',           $number_of_proteins_used_in_trees );
+        $self->param( 'number_of_orphan_proteins',                  $number_of_orphan_proteins );
+        $self->param( 'number_of_proteins_in_single_species_trees', $number_of_proteins_in_single_species_trees );
     }
 
-    return $number_of_proteins_used_in_trees;
 }
 
 sub _get_sizes_summary {
