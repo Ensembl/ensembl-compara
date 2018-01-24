@@ -264,16 +264,13 @@ sub _compute_gini_coefficient {
                              GROUP BY root_id
                              ORDER BY cni";
 
-    my @cluster_sizes;
     my $sum_of_absolute_differences = 0;
     my $subsum                      = 0;
     my $cluster_count               = 0;
 
-
     my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
-        push( @cluster_sizes, $row[1] );
         $sum_of_absolute_differences += $cluster_count*$row[1] - $subsum;
         $subsum += $row[1];
         $cluster_count++;
@@ -281,7 +278,7 @@ sub _compute_gini_coefficient {
 
     $sth->finish();
 
-    my $gini_coefficient = $sum_of_absolute_differences/$subsum/scalar(@cluster_sizes);
+    my $gini_coefficient = $sum_of_absolute_differences/$subsum/$cluster_count;
 
     # ------------------------------------------------------------------------------
 
