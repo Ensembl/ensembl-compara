@@ -140,7 +140,8 @@ sub _get_homology_counts {
         my $node_type         = $row[2];
         my $count             = $row[3];
 
-        my $key = "stat.homology_counts." . $description . "." . $node_type . ".is_tree_compliant_$is_tree_compliant";
+        my $tree_compliance = $is_tree_compliant ? "tree_compliant" : "not_tree_compliant";
+        my $key = "stat.homology_counts.$description.$node_type.$tree_compliance";
         $homology_counts{$key} = $count;
     }
 
@@ -161,7 +162,8 @@ sub _get_avg_perc_identity {
         my $count             = $row[2];
 
         if ( $count > 0 ) {
-            my $key = "stat.avg_perc_identity." . $description . ".is_tree_compliant_$is_tree_compliant";
+            my $tree_compliance = $is_tree_compliant ? "tree_compliant" : "not_tree_compliant";
+            my $key = "stat.avg_perc_identity.$description.$tree_compliance";
             $avg_perc_identity{$key} = $count;
         }
     }
