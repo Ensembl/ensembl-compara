@@ -60,8 +60,9 @@ sub run {
     $self->param( 'gene_count', $gene_count );
 
     my $gappiness = $self->_get_gappiness();
+    my $depth = 1-$gappiness;
     $self->param( 'gappiness', $gappiness );
-
+    $self->param( 'depth', $depth);
 }
 
 sub write_output {
@@ -71,6 +72,7 @@ sub write_output {
     $self->param('gene_tree')->store_tag( 'aln_after_filter_length', $self->param('after_filter_length') );
     $self->param('gene_tree')->store_tag( 'gene_count',              $self->param('gene_count') );
     $self->param('gene_tree')->store_tag( 'gappiness',               $self->param('gappiness') );
+    $self->param('gene_tree')->store_tag( 'alignment_depth',         $self->param('depth') );
 }
 
 ##########################################
