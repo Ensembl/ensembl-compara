@@ -158,6 +158,7 @@ sub _get_homology_counts {
         my $key = "stat.homology_counts.$description.$node_type.$tree_compliance";
         $homology_counts{$key} = $count;
     }
+    $sth->finish();
 
     return \%homology_counts;
 }
@@ -181,6 +182,7 @@ sub _get_avg_perc_identity {
             $avg_perc_identity{$key} = $count;
         }
     }
+    $sth->finish();
 
     return \%avg_perc_identity;
 }
@@ -201,6 +203,7 @@ sub _get_avg_duplication_confidence_score {
         my $key = "stat.avg_duplication_confidence_score." . $description;
         $avg_duplication_confidence_score{$key} = $score;
     }
+    $sth->finish();
 
     return \%avg_duplication_confidence_score;
 }
@@ -223,6 +226,7 @@ sub _get_number_of_proteins_used {
         $self->param( 'number_of_proteins_in_single_species_trees', $number_of_proteins_in_single_species_trees );
     }
 
+    $sth->finish();
 }
 
 sub _get_sizes_summary {
@@ -239,6 +243,7 @@ sub _get_sizes_summary {
     while ( my @row = $sth->fetchrow_array() ) {
         push( @count_seq_member_ids, $row[0] );
     }
+    $sth->finish();
 
     $stats->add_data( \@count_seq_member_ids );
     my $median = $stats->median;
