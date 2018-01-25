@@ -62,6 +62,7 @@ sub run {
     $self->param( 'avg_duplication_confidence_score', $avg_duplication_confidence_score );
 
     $self->_get_number_of_proteins_used();
+    $self->_get_mean_cluster_size_per_protein();
 
     my $size_summary = $self->_get_sizes_summary();
     $self->param( 'size_summary', $size_summary );
