@@ -126,6 +126,7 @@ sub write_output {
         print "\nStoring gini_coefficient\n" if $self->debug;
         my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.gini_coefficient', $self->param('gini_coefficient') );
+    }
 
     #number_of_orphan_proteins
     if ( $self->param('number_of_orphan_proteins') > 0 ) {
