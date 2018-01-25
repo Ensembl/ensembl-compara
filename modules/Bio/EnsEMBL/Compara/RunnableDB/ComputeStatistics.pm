@@ -131,6 +131,12 @@ sub write_output {
         $clusterset_tree->store_tag( 'stat.number_of_proteins_in_single_species_trees', $self->param('number_of_proteins_in_single_species_trees') );
     }
 
+    #mean_cluster_size_per_protein
+    if ( $self->param('mean_cluster_size_per_protein') > 0 ) {
+        print "\nStoring mean_cluster_size_per_protein\n" if $self->debug;
+        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+        $clusterset_tree->store_tag( 'stat.mean_cluster_size_per_protein', $self->param('mean_cluster_size_per_protein') );
+    }
 } ## end sub write_output
 
 ##########################################
@@ -257,5 +263,23 @@ sub _get_sizes_summary {
     $sizes_summary{"stat.sizes_summary.min"}    = $min;
     return \%sizes_summary;
 } ## end sub _get_sizes_summary
+
+sub _get_mean_cluster_size_per_protein  {
+    my ($self) = @_;
+
+    my $mean_cluster_size_per_protein;
+
+    #Compute the mean cluster size per protein
+    my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = 'protein' AND tree_type = 'tree'";
+
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
+    $sth->execute();
+    while ( my @row = $sth->fetchrow_array() ) {
+        $mean_cluster_size_per_protein = $row[0];
+    }
+    $sth->finish();
+
+    $self->param( 'mean_cluster_size_per_protein', $mean_cluster_size_per_protein);
+}
 
 1;
