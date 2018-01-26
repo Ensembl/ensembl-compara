@@ -29,6 +29,8 @@ use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
+our $other_species_data = {};
+
 sub _init {
   my $self = shift;
   $self->cacheable(0);
@@ -58,6 +60,7 @@ sub content {
 
   my (@data, @rows);
   my $html = '';
+  my $data_on_this_species = 0;
 
   ## Show table if any user or session record is present
   if (@$records_data) {
@@ -123,7 +126,10 @@ sub content {
 
       my $row = $self->table_row($record_data);
 
-      push @rows, $row;
+      if ($row) {
+        push @rows, $row;
+        $data_on_this_species++;
+      }
     }
 
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
@@ -148,9 +154,21 @@ sub content {
       }
       $html .= $self->info_panel('Saved data on other servers', $message);
     }
+  
   }
 
   $html  .= $self->group_shared_data;
+
+  if (keys %{$other_species_data}) {
+    my @species_list;
+    foreach (keys %{$other_species_data}) {
+      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+    }
+    my $also = $data_on_this_species > 0 ? 'also' : '';
+    my $message = sprintf('You %s have data for the following other species: %s', $also, join(', ', @species_list)); 
+    $html .= $self->info_panel('Data on other species', $message);
+  }
+
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
@@ -205,6 +223,10 @@ sub _no_icon {
 sub table_row {
   my ($self, $record_data, $sharers) = @_;
   my $hub          = $self->hub;
+  if ($record_data->{'species'} ne $hub->species) {
+    $other_species_data->{$record_data->{'species'}} = 1;
+    return undef;
+  }
   my $img_url      = $self->img_url.'16/';
   my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   my $title        = $sharers ? ' title="This data is shared with other users"' : '';
@@ -355,15 +377,17 @@ sub group_shared_data {
   );
 
   my $html = '';
+  my $other_species_count = 0;
 
   foreach my $group (@groups) {
     my @rows;
 
     foreach (grep $_, $group->records('uploads'), $group->records('urls')) {
-      push @rows, {
-        %{$self->table_row($_)},
-        share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->group_id, __clear => 1 }))
-      };
+      my $row = $self->table_row($_);
+      if ($row) {
+        push @rows, {%$row, share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->group_id, __clear => 1 }))
+        };
+      }
     }
 
     next unless scalar @rows;
