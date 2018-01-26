@@ -111,6 +111,7 @@ Ensembl.extend({
   setSpecies: function () {
     this.speciesPath        = $('#species_path').val()        || '';
     this.speciesCommon      = $('#species_common_name').val() || '';
+    this.speciesImagePath   = $('#ensembl_image_root').val() + 'species/' || '';
     this.species            = this.speciesPath.split('/').pop();
   },
 

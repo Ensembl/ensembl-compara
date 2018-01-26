@@ -5,7 +5,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.base(id);
     this.dataUrl        = params.dataUrl;
     this.taxonTreeData  = null;
-    this.imagePath      = '/i/species/';
+    this.imagePath      = Ensembl.speciesImagePath;
     this.lastSelected   = null;
     this.activeTreeKey  = '';
     this.selectionLimit = params.selectionLimit || 25;
@@ -407,7 +407,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       return;
     }
 
-    console.log(taxon_tree.toDict(true))
     panel.elLk.tree.dynatree({
       // initAjax: {url: panel.dataUrl},
       children: [taxon_tree.toDict(true)],
@@ -611,9 +610,10 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.elLk.mastertree.dynatree("getTree").selectKey(item.data.key, flag);
       if (flag) {
         if (!$('li.'+item.data.key, panel.elLk.list).length) {
-          var img_filename = item.data.key + '.png';
-          item.data.img_url = panel.imagePath + item.data.key + '.png';
-          var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
+          var img_filename = (item.data.special_type ?  item.data.special_type : item.data.key) + '.png';
+          item.data.img_url = item.data.img_url || (panel.imagePath + img_filename);
+
+          var species_img = '<span class="selected-sp-img"><img src="' + item.data.img_url +'"></span>';
 
           $('<li/>', {
             'class': item.data.key
@@ -765,7 +765,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
     else if (this.isCompara) {
       var sel_alignment = items[0];
-
       if (multipleAlignment) {
         Ensembl.EventManager.trigger('updateMultipleAlignmentSpeciesSelection', sel_alignment);
       }

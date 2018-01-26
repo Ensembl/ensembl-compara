@@ -760,7 +760,9 @@ sub _parse {
     $self->_info_line('munging', "$species config");
 
     ## Need to gather strain info for all species
-    $name_lookup->{$config_packer->tree->{'SPECIES_COMMON_NAME'}} = $species;
+    my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
+
+    $name_lookup->{$common_name} = $species;
     my $collection = $config_packer->tree->{'STRAIN_COLLECTION'};
     ## Key on actual URL, not production name
     my $species_key = $config_packer->tree->{'SPECIES_URL'};
@@ -774,9 +776,10 @@ sub _parse {
         $species_to_strains->{$collection} = [$species_key];
       }
     }
-
-    if ($species ne "MULTI") {
-      push @{$species_to_assembly->{$scientific_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
+    
+    # Populate taxonomy division using e_divisions.json template
+    if ($species ne "MULTI" && $species ne "databases") {
+      push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
       my $taxonomy = $config_packer->tree->{TAXONOMY};
       my $children = [];
       my $other_species_children = [];
@@ -785,18 +788,21 @@ sub _parse {
 
       foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
         my $child = {
-          key           => $species_key,
+          key             => $species_key,
           scientific_name => $scientific_name,
-          display_name  => $config_packer->tree->{'DISPLAY_NAME'},
-          is_leaf       => 'true'
+          common_name     => $common_name,
+          display_name    => $config_packer->tree->{'DISPLAY_NAME'},
+          is_leaf         => 'true'
         };
 
         if ($collection && $strain_name !~ /reference/) {
-          $child->{type} = 'strain';
+          $child->{type} = $collection . ' strains';
         }
         elsif($collection && $strain_name =~ /reference/) {
-          $child->{type} = $strain_name;
-          # $child->{reference} = $strain_name;
+          # Create display name for Reference species
+          my $ref_name = $config_packer->tree->{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
+          $child->{display_name} = $ref_name;
+          # $child->{type} = $ref_name;
         }
 
         if (!$node->{taxa}) {
@@ -842,6 +848,7 @@ sub _parse {
       }
     }
   }
+  # Used for grouping same species with different assemblies in species selector
   $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
 
   ## Compile strain info into a single structure
