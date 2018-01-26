@@ -504,7 +504,7 @@ foreach my $slice (sort {
         my $sub_slice = $it->next();
         warn $sub_slice->name();
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
-        print join("\t", $name, $_->start, $_->end, $_->diff_score), "\n" for @$scores;
+        print join("\t", $name, $_->start-1, $_->end, $_->diff_score), "\n" for @$scores;
     }
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {
