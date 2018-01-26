@@ -295,7 +295,13 @@ sub table_row {
 
   my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
-  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => lc($record_data->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload', %url_params });
+
+  my $delete_function = $record_data->{'format'} eq 'TRACKHUB' ? 'delete_trackhub'
+                                                             : lc($record_data->{'type'}) eq 'url' ? 'delete_remote' 
+                                                                                                   : 'delete_upload';
+
+  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $delete_function, %url_params });
+
   if ($record_data->{'format'} eq 'TRACKHUB' || $record_data->{'type'} eq 'upload' && $record_data->{'url'}) {
     my ($reload_action, $reload_text);
     if ($record_data->{'format'} eq 'TRACKHUB') {

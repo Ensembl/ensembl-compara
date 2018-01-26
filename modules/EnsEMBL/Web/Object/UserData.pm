@@ -183,6 +183,34 @@ sub md_delete_upload {
   return undef;
 }
 
+sub md_delete_trackhub {
+### Delete all records for a given trackhub
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my (@th_records, $record_manager, $current_record);
+
+  ## First get the current record 
+  foreach my $manager (grep $_, $hub->user, $hub->session) {
+    $current_record = $manager->get_record_data({'type' => 'url', 'code' => $hub->param('code')});
+    $record_manager = $manager;
+    last if $current_record;
+  }
+  return unless $current_record;
+  my $trackhub_url = $current_record->{'url'};
+  
+  ## Now get all records for this trackhub
+  foreach my $record (@{$record_manager->records({'type' => 'url'})||[]}) {
+    next unless $record->{'data'}{'url'} eq $trackhub_url;
+    push @th_records, $record;
+  }
+
+  ## Now delete them all
+  foreach (@th_records) {
+    $self->_delete_record('url', undef, $_->{'code'}, $_->{'record_id'});
+  }
+  return undef;
+}
+
 sub md_delete_remote {
 ### Delete record for an attached file
   my $self  = shift;
