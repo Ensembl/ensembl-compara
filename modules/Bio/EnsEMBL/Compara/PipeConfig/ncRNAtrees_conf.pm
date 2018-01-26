@@ -368,7 +368,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                 'species_tree_input_file'               => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-                'multifurcation_deletes_node'           => [ 314146, 1489913 ], # 33316 and 129949 has been removed from NCBI taxonomy
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
             },
             -flow_into     => {
