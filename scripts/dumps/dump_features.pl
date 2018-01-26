@@ -532,7 +532,24 @@ foreach my $slice (sort {
         my $sub_slice = $it->next();
         warn $sub_slice->name();
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
-        print join("\t", $name, $_->seq_region_pos-1, $_->seq_region_pos, $_->diff_score), "\n" for @$scores;
+        next unless @$scores;
+        my @sorted_scores = sort {$a->seq_region_pos <=> $b->seq_region_pos} @$scores;
+        my $ref_score = shift @sorted_scores;
+        my $last_pos = $ref_score->seq_region_pos;
+        # To save space we can merge consecutive positions that have the same score
+        foreach my $score (@sorted_scores) {
+            if (($score->seq_region_pos == ($last_pos+1)) and (abs($ref_score->diff_score - $score->diff_score) < 1e-6)) {
+                # Next position and same score
+                $last_pos++;
+            } else {
+                # Something is different, we print the previous region
+                print join("\t", $name, $ref_score->seq_region_pos-1, $last_pos, sprintf('%.6f', $ref_score->diff_score)), "\n";
+                $ref_score = $score;
+                $last_pos = $ref_score->seq_region_pos;
+            }
+        }
+        # Don't forget the last block !
+        print join("\t", $name, $ref_score->seq_region_pos-1, $last_pos, sprintf('%.6f', $ref_score->diff_score)), "\n";
     }
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {
