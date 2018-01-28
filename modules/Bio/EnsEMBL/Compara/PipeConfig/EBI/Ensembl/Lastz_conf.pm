@@ -55,11 +55,12 @@ sub default_options {
 			-pass   => '',
 			-db_version => $self->o('rel_with_suffix'),
 		},
-	    
-	    # 'curr_core_sources_locs' => [ $self->o('staging_loc') ], 
-	    # 'curr_core_dbs_locs' => [ $self->o('staging_loc') ],
-	    'curr_core_sources_locs' => [ $self->o('livemirror_loc') ], 
-	    'curr_core_dbs_locs' => [ $self->o('livemirror_loc') ],
+
+            # 'curr_core_sources_locs' is a list of servers from where the Registry will load the databases
+            # 'curr_core_dbs_locs' is a list of database hash locators (incl. database name)
+            # NOTE: you can add example configurations but leave these two lines below as the default
+             'curr_core_sources_locs' => [ $self->o('staging_loc') ],
+             'curr_core_dbs_locs' => undef,
 
 	    'dump_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/',
 
