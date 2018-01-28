@@ -279,7 +279,6 @@ sub pipeline_analyses {
 				  'mlss_id_list'   => $self->o('mlss_id_list'),
                   'collection'     => $self->o('collection'),
                   'master_db'      => $self->o('master_db'),
-                  'pipeline_db'    => $self->pipeline_url(),
                   'only_cellular_component' => $self->o('only_cellular_component'),
 
 				 },
