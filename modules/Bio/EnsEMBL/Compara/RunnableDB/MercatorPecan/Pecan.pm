@@ -640,11 +640,13 @@ sub _dump_fasta {
   } else {
     @seqs = (1..scalar(@$all_dnafrag_regions));
   }
-  foreach my $seq_id (@seqs) {
+
+  $self->iterate_by_dbc(\@seqs,
+      sub {my $seq_id = shift; return $all_dnafrag_regions->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $seq_id = shift;
+
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
-
-    $dfr->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 
     my $slice = $dfr->slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
@@ -661,14 +663,12 @@ sub _dump_fasta {
             $seq,
         ));
 
-    });
-
     $self->add_fasta_files($file);
     $self->add_species_order($dfr->dnafrag->genome_db_id);
 
     #push @{$self->fasta_files}, $file;
     #push @{$self->species_order}, $dfr->dnafrag->genome_db_id;
-  }
+  } );
 
   return 1;
 }

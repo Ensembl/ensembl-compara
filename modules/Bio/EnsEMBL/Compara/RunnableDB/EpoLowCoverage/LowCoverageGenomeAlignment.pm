@@ -1012,8 +1012,10 @@ sub _load_GenomicAligns {
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
-  foreach my $ga (@{$gab->get_all_GenomicAligns}) {  
-    $ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+  $self->iterate_by_dbc( $gab->get_all_GenomicAligns,
+      sub {my $ga = shift; return $ga->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $ga = shift;
+
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
 
@@ -1023,8 +1025,7 @@ sub _load_GenomicAligns {
       if (@projection > 0) {
 	  push(@{$genomic_aligns}, $ga);
       }
-    });
-  }
+  });
 
   #only store genomic_aligns if there are more than 1 genomic_align left in the
   #genomic_align_block
@@ -1366,7 +1367,10 @@ sub _dump_fasta_and_mfa {
   print "mfa_file $mfa_file\n" if $self->debug;
   open MFA, ">$mfa_file" || throw("Couldn't open $mfa_file");
 
-  foreach my $seq_id (@seqs) {
+  $self->iterate_by_dbc(\@seqs,
+      sub {my $seq_id = shift; return $all_genomic_aligns->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $seq_id = shift;
+
     my $ga = $all_genomic_aligns->[$seq_id-1];
 
     my $file = $self->worker_temp_directory . "/seq" . $seq_id;
@@ -1377,7 +1381,7 @@ sub _dump_fasta_and_mfa {
 	print "FOUND 2X GENOME\n" if $self->debug;
 	print "num of frags " . @$ga . "\n" if $self->debug;
 	$self->_dump_2x_fasta($ga, $file, $seq_id, \*MFA);
-	next;
+	return;
     }
 
     #add taxon_id to end of fasta files
@@ -1391,8 +1395,6 @@ sub _dump_fasta_and_mfa {
 
     print ">DnaFrag", $ga->dnafrag->dbID, "|", $ga->dnafrag->name, ".",
         $ga->dnafrag_start, "-", $ga->dnafrag_end, ":", $ga->dnafrag_strand,"\n" if $self->debug;
-
-    $ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 
     my $slice = $ga->get_Slice;
     throw("Cannot get slice for DnaFragRegion in DnaFrag #".$ga->dnafrag->dbID) if (!$slice);
@@ -1417,11 +1419,9 @@ sub _dump_fasta_and_mfa {
     $aligned_seq =~ s/\n$//;
     print MFA $aligned_seq, "\n";
 
-    } );
-
     push @{$self->fasta_files}, $file;
     push @{$self->species_order}, $ga->dnafrag->genome_db_id;
-  }
+  });
   close MFA;
 
   return 1;
