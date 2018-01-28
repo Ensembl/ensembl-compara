@@ -192,6 +192,37 @@ sub disconnect_from_hive_database {
 }
 
 
+=head2 iterate_by_dbc
+
+  Description : Group the objects by DBConnection before doing the iteration, so that the
+                connection cycles are minimized, and call $callback on each of them.
+                Access to a given DBConnection is wrapped with prevent_disconnect()
+
+=cut
+
+sub iterate_by_dbc {
+    my ($self, $objects, $dbc_getter, $callback) = @_;
+
+    my %objects_per_dbc_str;
+    my %dbc_str_2_dbc;
+    foreach my $obj (@$objects) {
+        my $dbc = $dbc_getter->($obj);
+        # The DBC could be a Proxy, in which case need to look into the "real" one
+        $dbc = $dbc->__proxy if $dbc->isa('Bio::EnsEMBL::DBSQL::ProxyDBConnection');
+        my $dbc_str = "$dbc";
+        push @{$objects_per_dbc_str{$dbc_str}}, $obj;
+        $dbc_str_2_dbc{$dbc_str} = $dbc;
+    }
+
+    # Make parameter to control prevent_disconnect ?
+    foreach my $dbc_str (keys %dbc_str_2_dbc) {
+        $dbc_str_2_dbc{$dbc_str}->prevent_disconnect( sub {
+                $callback->($_) for @{$objects_per_dbc_str{$dbc_str}};
+            } );
+    }
+}
+
+
 =head2 _slurp
 
   Arg[1]      : String $filename
