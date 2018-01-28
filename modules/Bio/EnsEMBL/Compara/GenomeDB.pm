@@ -203,6 +203,7 @@ sub db_adaptor {
         if ($self->locator) {
             eval {$self->{'_db_adaptor'} = Bio::EnsEMBL::DBLoader->new($self->locator); };
             warn sprintf("The locator '%s' of %s could not be loaded because: %s\n", $self->locator, $self->name, $@) if $@;
+            Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_one_DBConnection($self->{'_db_adaptor'});
         } else {
             $self->adaptor->_find_missing_DBAdaptors;
         }
