@@ -669,6 +669,18 @@ sub parse_defaults {
                 my $pair = { 'ref_genome_db' => $ref_genome_db, 'non_ref_genome_db' => $genome_db };
                 push @$collection, $pair;
             }
+
+        } elsif ($self->param('non_ref_species')) {
+            #all vs non_ref
+
+            $self->param('ref_species', $self->param('non_ref_species'));
+            my ($non_ref_genome_db, @ref_gdbs) = $self->find_reference_species($genome_dbs);
+            die "Cannot find non-reference species " . $self->param('non_ref_species') . " in collection " . $self->param('collection') unless ($non_ref_genome_db);
+            foreach my $genome_db (@ref_gdbs) {
+                my $pair = { 'ref_genome_db' => $genome_db, 'non_ref_genome_db' => $non_ref_genome_db };
+                push @$collection, $pair;
+            }
+
         } else {
             #all vs all
 

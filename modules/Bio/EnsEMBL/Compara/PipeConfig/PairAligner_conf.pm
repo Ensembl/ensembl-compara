@@ -98,6 +98,7 @@ sub default_options {
 
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,
+        'non_ref_species' => undef,
 
         # Dnafrags to load and align
         'only_cellular_component'   => undef,   # Do we load *all* the dnafrags or only the ones from a specific cellular-component ?
@@ -294,6 +295,7 @@ sub pipeline_analyses {
   				  'reg_conf'  => $self->o('reg_conf'),
   				  'conf_file' => $self->o('conf_file'),
 				  'ref_species' => $self->o('ref_species'),
+				  'non_ref_species' => $self->o('non_ref_species'),
 				  'dump_dir' => $self->o('dump_dir'),
   				  'default_chunks' => $self->o('default_chunks'),
   				  'default_pair_aligner' => $self->o('pair_aligner_method_link'),
