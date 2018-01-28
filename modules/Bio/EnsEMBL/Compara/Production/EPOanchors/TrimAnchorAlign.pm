@@ -165,11 +165,9 @@ sub _dump_fasta {
     $tree_str .= "aa$anchor_align_id:0.1,";
     my $file = $self->worker_temp_directory . "/seq" . $anchor_align_id . ".fa";
 
-    open F, ">$file" || throw("Couldn't open $file");
-
-    print F ">AnchorAlign", $anchor_align_id, "|", $anchor_align->dnafrag->name, ".",
+    my $header = join("", ">AnchorAlign", $anchor_align_id, "|", $anchor_align->dnafrag->name, ".",
         $anchor_align->dnafrag_start, "-", $anchor_align->dnafrag_end, ":",
-        $anchor_align->dnafrag_strand, "\n";
+        $anchor_align->dnafrag_strand);
     my $seq;
     $anchor_align->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
         $seq = $anchor_align->seq;
@@ -180,9 +178,8 @@ sub _dump_fasta {
     }
     $seq =~ s/(.{80})/$1\n/g;
     chomp $seq;
-    print F $seq,"\n";
 
-    close F;
+    $self->_spurt($file, "$header\n$seq\n");
 
     push @{$self->param('fasta_files')}, $file;
   }
