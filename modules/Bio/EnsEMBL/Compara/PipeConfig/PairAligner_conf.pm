@@ -86,6 +86,7 @@ sub default_options {
 
             #Set for single pairwise mode
         'mlss_id' => '',
+        'mlss_id_list' => undef,
 
         #Collection name 
         'collection' => '',
@@ -275,6 +276,7 @@ sub pipeline_analyses {
 				  'program'        => $self->o('populate_new_database_exe'),
 				  'reg_conf'        => $self->o('reg_conf'),
 				  'mlss_id'        => $self->o('mlss_id'),
+				  'mlss_id_list'   => $self->o('mlss_id_list'),
                   'collection'     => $self->o('collection'),
                   'master_db'      => $self->o('master_db'),
                   'pipeline_db'    => $self->pipeline_url(),
@@ -306,6 +308,7 @@ sub pipeline_analyses {
   				  'default_net_input' => $self->o('net_input_method_link'),
 				  'net_ref_species' => $self->o('net_ref_species'),
 				  'mlss_id' => $self->o('mlss_id'),
+				  'mlss_id_list' => $self->o('mlss_id_list'),
                                   'collection' => $self->o('collection'),
 				  'registry_dbs' => $self->o('curr_core_sources_locs'),
 				  'core_dbs' => $self->o('curr_core_dbs_locs'),

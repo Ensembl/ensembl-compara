@@ -58,7 +58,7 @@ use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
-use Bio::EnsEMBL::Hive::Utils 'stringify';
+use Bio::EnsEMBL::Hive::Utils 'stringify', 'destringify';
 
 use Data::Dumper;
 $Data::Dumper::Maxdepth = 2;
@@ -648,6 +648,13 @@ sub parse_defaults {
 	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
 	$genome_dbs = $mlss->species_set->genome_dbs;
     } 
+    if ($self->param('mlss_id_list')) {
+	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+        foreach my $mlss_id (@{destringify($self->param('mlss_id_list'))}) {
+            $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+	    push @$genome_dbs, @{$mlss->species_set->genome_dbs};
+        }
+    }
     #load genome_dbs from a collection
     if ($self->param('collection')) {
         my $collection = $self->param('collection');
