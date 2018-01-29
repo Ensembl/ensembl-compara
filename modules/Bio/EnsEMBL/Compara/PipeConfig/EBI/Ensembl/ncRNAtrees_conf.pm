@@ -124,7 +124,7 @@ sub default_options {
             'infernal_mxsize'       => 10000,
 
             # For the homology_id_mapping
-            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90",
+            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_91",
     };
 }   
 
