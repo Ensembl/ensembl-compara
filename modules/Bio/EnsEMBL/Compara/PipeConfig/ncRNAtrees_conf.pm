@@ -96,7 +96,7 @@ sub default_options {
             'create_ss_picts'          => 0,
 
             # ambiguity codes
-            'allow_ambiguity_codes'    => 0,
+            'allow_ambiguity_codes'    => 1,
 
             # Do we want to initialise the CAFE part now ?
             'initialise_cafe_pipeline'  => undef,
