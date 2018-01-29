@@ -402,33 +402,20 @@ sub get_short_name {
 }
 
 
-=head2 toString
+=head2 _toString
 
-  Example    : print $taxon->toString();
-  Description: used for debugging, returns a string with the key descriptive
-               elements of this taxon
-  Returntype : none
-  Exceptions : none
-  Caller     : general
+  Description : Helper method for NestedSet::toString and NestedSet::string_node that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
 
 =cut
 
-sub toString {
+sub _toString {
     my $self = shift;
-    my $type = ref($self);
-    $type =~ s/^.*:://;
-    my $str = sprintf('NCBITaxon taxon_id=%s %s (%s)', $self->dbID || '?', $self->name, $self->rank);
-    return $str;
+
+    return sprintf('taxon_id=%s %s (%s)', $self->dbID || '?', $self->name, $self->rank);
 }
 
-
-sub print_node {
-  my $self  = shift;
-  printf("(%s", $self->node_id);
-  printf(" %s", $self->rank) if($self->rank);
-  print(")");
-  printf("%s", $self->name) if($self->name);
-  print("\n");
-}
 
 1;

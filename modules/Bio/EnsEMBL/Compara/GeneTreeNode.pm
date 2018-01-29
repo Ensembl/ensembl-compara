@@ -283,17 +283,35 @@ sub release_tree {
 }
 
 
-#use Data::Dumper;
+=head2 _toString
 
-#sub string_node {
-#    my $self = shift;
-#    my $str = $self->SUPER::string_node;
-#    if (defined $self->{'_tree'}) {
-#        my $t = $self->{'_tree'};
-#        $str = chop($str)." $t/root_id=".($self->{'_tree'}->root_id)."/".join("/", map { "$_ => ${$t}{$_}" } keys %$t)."\n";
-#    }
-#    return $str;
-#}
+  Description : Helper method for NestedSet::toString and NestedSet::string_node that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+
+    my $str = $self->node_type;
+
+    # Only show the duplication confidence score for duplications at ancestral taxa
+    if (($self->node_type eq 'duplication') and $self->species_tree_node and !$self->species_tree_node->genome_db_id) {
+        my $sis = ($self->duplication_confidence_score // 0) * 100;
+        $str .= sprintf(' (SIS=%.2f)', $sis);
+    }
+
+    if (defined (my $taxon_name_value = $self->taxonomy_level)) {
+        $str .= ' @ ' . $taxon_name_value;
+    }
+    if (defined (my $bootstrap_value = $self->bootstrap)) {
+        $str .= " B=$bootstrap_value";
+    }
+
+    return $str;
+}
 
 
 =head2 get_leaf_by_Member

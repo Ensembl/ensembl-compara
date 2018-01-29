@@ -172,15 +172,6 @@ sub name {
     return $self->node_name(@_);
 }
 
-sub string_node {
-    my $self = shift;
-
-    my $s = $self->right_index ? sprintf('(%s,%s)', $self->left_index, $self->right_index).' ' : '';
-    $s .= $self->toString()."\n";
-
-    return $s;
-}
-
 
 sub get_scientific_name {
     my $self = shift;
@@ -219,7 +210,16 @@ sub set_divergence_time {
 }
 
 
-sub toString {
+=head2 _toString
+
+  Description : Helper method for NestedSet::toString and NestedSet::string_node that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
     my $self = shift;
 
     my @elts;

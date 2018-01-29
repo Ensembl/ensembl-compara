@@ -890,7 +890,7 @@ sub _internal_string_tree {
     for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $$buffer .= '-'; }
   }
 
-  $$buffer .= $self->string_node($indent);
+  $$buffer .= $self->string_node;
 
   if(defined($indent)) {
     if($lastone) {
@@ -948,36 +948,58 @@ sub _internal_print_tree {
 
 sub print_node {
   my $self = shift;
-  print $self->string_node;
+  print $self->string_node, "\n";
 }
 
 sub string_node {
     my $self  = shift;
-    my $str = '(';
 
-    my $isdup = 0;
-    $isdup = 1 if ($self->get_value_for_tag('Duplication', 0) > 0 and not $self->get_value_for_tag('dubious_duplication', 0));
-    $isdup = 1 if $self->get_value_for_tag('node_type', '') eq 'duplication';
+    my @in_brackets;
+    push @in_brackets, $self->node_id if $self->node_id;
+    push @in_brackets, sprintf('%d,%d', $self->left_index, $self->right_index) if $self->right_index;
 
-    my $isdub = ($self->get_value_for_tag('node_type', '') eq 'dubious');
+    my $s = $self->_toString;
 
-    if ($isdup) {
-        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeNode') and (defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
-            $str .= "Dup ";
-        } else {
-            $str .= "DUP ";
-        }
-       my $sis = $self->get_value_for_tag('duplication_confidence_score', 0) * 100;
-       $str .= sprintf('SIS=%.2f ', $sis);
-    } elsif ($isdub) {
-        $str .= "DD  ";
-       $str .= 'SIS=0 ';
+    my @elts;
+    push @elts, '(' . join(' ', @in_brackets) . ')' if @in_brackets;
+    push @elts, $s if $s;
+    return join(' ', @elts);
+}
+
+
+=head2 toString
+
+  Example    : print $node->toString();
+  Description: Returns a description of this object as a string
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = ref($self);
+    $str =~ s/^.*:://;
+    if (my $s = $self->_toString) {
+        $str .= ' ' . $s;
     }
-    if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->bootstrap(); $str .= "B=$bootstrap_value "; }
-    if($self->can('taxonomy_level') && $self->taxonomy_level) { my $taxon_name_value = $self->taxonomy_level(); $str .="T=$taxon_name_value "; }
-    $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-    $str .= sprintf("%s\n", $self->name || '');
     return $str;
+}
+
+
+=head2 _toString
+
+  Description : Helper method for toString that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+    return $self->name || '';
 }
 
 

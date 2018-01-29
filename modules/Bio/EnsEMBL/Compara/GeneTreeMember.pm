@@ -94,38 +94,23 @@ sub copy {
 }
 
 
-=head2 string_node (overrides default method in Bio::EnsEMBL::Compara::NestedSet)
+=head2 _toString
 
-  Arg [1]     : none
-  Example     : $aligned_member->string_node();
-  Description : Outputs the info for this GeneTreeMember. First, the node_id, the
-                left and right indexes are printed, then the species name. If the
-                gene member can be determined, the methods prints the stable_id,
-                the display label and location of the gene member, otherwise the
-                seq_member_id and stable_id of the object are printed.
-  Returntype  : none
+  Description : Helper method for NestedSet::toString and NestedSet::string_node that provides class-specific information
+  Returntype  : String
   Exceptions  : none
-  Caller      : general
-  Status      : Stable
+  Caller      : internal
 
 =cut
 
-sub string_node {
-  my $self  = shift;
-  my $str = sprintf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
-    if($self->genome_db_id and $self->adaptor) {
-      $str .= sprintf(" %s", $self->genome_db->name) 
-    }
-  if(my $gene_member = $self->gene_member) {
-    $str .= " ".$gene_member->stable_id;
-    $str .= sprintf(" (%s)", $gene_member->display_label) if $gene_member->display_label;
-    $str .= sprintf(" %s:%d-%d", $gene_member->dnafrag->name, $gene_member->dnafrag_start, $gene_member->dnafrag_end) if $gene_member->dnafrag_id;
-  } elsif($self->stable_id) {
-    $str .= sprintf(" (%d) %s", $self->seq_member_id, $self->stable_id);
-  }
-  $str .= "\n";
+sub _toString {
+    my $self  = shift;
+    # We use a representative SeqMember to build the tree but we show the GeneMember if possible
+    my $str = $self->gene_member ? $self->gene_member->toString : $self->SUPER::toString;
+    # Remove the leading object type
+    $str =~ s/^\w+Member //;
+    return $str;
 }
-
 
 
 =head2 name (overrides default method in Bio::EnsEMBL::Compara::Graph::Node)
