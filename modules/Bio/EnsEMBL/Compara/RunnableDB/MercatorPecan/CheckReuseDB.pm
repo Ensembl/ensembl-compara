@@ -71,8 +71,6 @@ sub run {
 	 $curr_list->{$dnafrag->dbID}{$dnafrag->name}{$dnafrag->length}{$dnafrag->coord_system_name} = 1;
      }
 
-     my ($old_names, $new_names);
-
      my ($removed, $remained1, $old_names) = $self->check_presence($reuse_list, $curr_list);
      my ($added, $remained2, $new_names)   = $self->check_presence($curr_list, $reuse_list);
 
