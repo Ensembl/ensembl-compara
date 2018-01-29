@@ -51,6 +51,8 @@ use strict;
 use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use Bio::EnsEMBL::Hive::Utils ('destringify');
+
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 
@@ -71,7 +73,7 @@ sub fetch_input {
     # allow for a single mlss_id or multiples as populate_new_database.pl can accept multiple mlsses in the same cmd
     push @cmd, '--mlss', $self->param('mlss_id') if $self->param('mlss_id');
     if ( $self->param('mlss_id_list') ){
-        push @cmd, '--mlss ' . join( ' --mlss ', @{ $self->param('mlss_id_list') } );
+        push @cmd, '--mlss', $_ for @{ destringify($self->param('mlss_id_list')) };
     }
 
     $self->param('cmd', \@cmd);
