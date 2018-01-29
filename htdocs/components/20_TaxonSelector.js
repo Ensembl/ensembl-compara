@@ -467,10 +467,20 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var treeObj = panel.elLk.mastertree.dynatree("getTree");
     var multipleAlign = panel.isCompara && panel.alignLabel;
     var node;
+    var species; // Species to locate and show by default
     if (panel.defaultKeys && panel.defaultKeys.length > 0) {
       // set selected nodes
       $.each(panel.defaultKeys.reverse(), function(index, _key) { 
         node = treeObj.getNodeByKey(_key);
+        species = _key;
+        if (!node) {
+          sp = _key.match(/(.*)--\w+$/);
+          if (sp && sp[1]) {
+            node = treeObj.getNodeInTree(sp[1]);
+            species = sp[1];
+          }
+        }
+
         if (node) {
           node.select();      // tick it
           !multipleAlign && node.makeVisible(); // force parent path to be expanded
@@ -479,9 +489,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         }
       });
 
-
       // Locate multiple alignment with label instead of species name as one species may be found in different EPO alignments
-      multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(panel.defaultKeys[0]);
+      multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(species);
     }
   },
 
@@ -650,6 +659,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   locateNode: function(key, select) {
     var panel = this;
     var mastertree_node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(key);
+
+    if (!mastertree_node) return;
 
     if (!mastertree_node.data.isFolder) {
       panel.setSelection(mastertree_node, true, panel.isCompara, panel.isCompara);

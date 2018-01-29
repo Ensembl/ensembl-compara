@@ -69,13 +69,6 @@ sub traverse() {
 
       my @child_nodes = $node->{child_nodes};
 
-      if (!$node->{is_submenu}) {
-        # Bring Human and Mouse reference to the top of the list and sort the rest alphabetically
-        my @arr1 = grep { $_->{key} =~/Homo_sapiens$|Mus_musculus$/ } @{$node->{child_nodes}};
-        my @arr2 = grep { $_->{key} !~/Homo_sapiens$|Mus_musculus$/ } sort {$a->{display_name} cmp $b->{display_name}} @{$node->{child_nodes}};
-        $node->{child_nodes} = [@arr1, @arr2];
-      }
-
       foreach (@{$node->{child_nodes}}) {
         if ($_->{type}) { # for strains and stuff that could come from configpacker
           push @{$type->{$_->{type}}}, $self->traverse($_);
@@ -98,6 +91,14 @@ sub traverse() {
 
       if (scalar keys %$assembly_group > 0) {
         map { push @children, @$_ } $self->create_children_for_types($assembly_group);
+      }
+
+      # Sorting
+      if (!$node->{is_submenu}) {
+        # Bring Human and Mouse reference to the top of the list and sort the rest alphabetically
+        my @ch_arr1 = grep { $_->{key} =~/Homo_sapiens$|Mus_musculus$/ } @children;
+        my @ch_arr2 = grep { $_->{key} !~/Homo_sapiens$|Mus_musculus$/ } sort {$a->{title} cmp $b->{title}} @children;
+        @children = (@ch_arr1, @ch_arr2);
       }
 
       if ($#children >= 0) {
