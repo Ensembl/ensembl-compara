@@ -472,7 +472,7 @@ sub store_tree_tags {
     my $num_dups = 0;
     my $num_specs = 0;
     foreach my $node (@nodes) {
-        if ($node->has_tag('node_type') and ($node->get_value_for_tag('node_type') ne 'speciation')) {
+        if ($node->has_tag('node_type') and $node->is_duplication) {
             $num_dups++;
         } else {
             $num_specs++;

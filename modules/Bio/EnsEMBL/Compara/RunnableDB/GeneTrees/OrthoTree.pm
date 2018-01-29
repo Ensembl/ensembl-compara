@@ -237,7 +237,7 @@ sub run_analysis {
       $genepairlink->add_tag("subtree2", $child2);
 
       my $node_type = $ancestor->get_value_for_tag('node_type');
-      if ($node_type eq 'speciation') {
+      if ($ancestor->is_speciation) {
           $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
       } elsif ($node_type eq 'dubious') {
           $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);

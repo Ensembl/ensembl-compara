@@ -301,7 +301,7 @@ sub _node_body {
   my ($self, $node, $defer_taxonomy) = @_;
 
   my $type  = $node->node_type();
-  my $is_dup = ((defined $type) and ($type eq "duplication" || $type eq "dubious")) ? 1 : 0;
+  my $is_dup = $node->is_duplication;
   my $boot  = $node->bootstrap();
   my $stn   = $node->species_tree_node();
 

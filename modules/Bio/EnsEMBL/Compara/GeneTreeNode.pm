@@ -165,10 +165,41 @@ sub node_type {
     return $self->_getter_setter_for_tag('node_type', @_);
 }
 
+
+=head2 is_speciation
+
+  Description: Tells whether the type of this node broadly means a speciation type of event
+               (by opposite to duplication-like events). Currently the list of underlying
+               node types is: 'speciation'
+
+=cut
+
+sub is_speciation {
+    my $self = shift;
+    my $node_type = $self->node_type;
+    return ((defined $node_type) && ($node_type eq 'speciation'));
+}
+
+
+=head2 is_duplication
+
+  Description: Tells whether the type of this node broadly means a duplication type of event
+               (by opposite to a speciation-like event). Currently the list of underlying
+               node types is: "duplication", "dubious" and "gene_split"
+
+=cut
+
+sub is_duplication {
+    my $self = shift;
+    my $node_type = $self->node_type;
+    return ((defined $node_type) && !$self->is_speciation);
+}
+
+
 sub _newick_dup_code {
     my $self = shift;
     my $node_type = $self->node_type;
-    return 'D=N' if ($node_type eq 'speciation');
+    return 'D=N' if $self->is_speciation;
     return 'DD=Y' if ($node_type eq 'dubious');
     return 'D=Y';
 }

@@ -564,9 +564,9 @@ sub _extract_branch_lengths {
     _extract_branch_lengths($_, $distances) for @{$gene_tree_node->children};
 
     # Take the distances between speciation nodes, without any missing species-tree nodes
-    if ($gene_tree_node->node_type eq 'speciation') {
+    if ($gene_tree_node->is_speciation) {
         foreach my $child (@{$gene_tree_node->children})  {
-            if ($child->is_leaf || ($child->node_type eq 'speciation')) {
+            if ($child->is_leaf || $child->is_speciation) {
                 if ($child->species_tree_node->_parent_id == $gene_tree_node->_species_tree_node_id) {
                     push @{$distances->{$child->_species_tree_node_id}}, $child->distance_to_parent;
                 }
@@ -720,7 +720,7 @@ sub _count_topologies {
     unless ($gene_tree_node->is_leaf()) {
         # If the current gene_tree_node is $internal_taxon_id speciation and if all the children are fine
         my @child_strings = (map {_count_topologies($_, $ref_stn_id, $stn_id_2_child, $counts)} @{$gene_tree_node->children});
-        if ($gene_tree_node->_species_tree_node_id == $ref_stn_id and ($gene_tree_node->node_type eq 'speciation')) {
+        if ($gene_tree_node->_species_tree_node_id == $ref_stn_id and $gene_tree_node->is_speciation) {
             if (not grep {not defined $_} @child_strings) {
                 return sprintf('(%s,%s)', sort @child_strings);
             }

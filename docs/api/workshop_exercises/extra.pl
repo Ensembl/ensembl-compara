@@ -127,7 +127,7 @@ compare_family_tree($relevant_family, $this_tree);
 
 my $sarco_subtree = undef;
 foreach my $node (@{$this_tree->get_all_nodes}) {
-    if (($node->taxonomy_level() eq 'Euteleostomi') and ($node->node_type() eq 'speciation')) {
+    if (($node->taxonomy_level() eq 'Euteleostomi') and $node->is_speciation) {
         my $found_safb = 0;
         foreach my $leaf (@{$node->get_all_leaves}) {
             if ($leaf->gene_member->stable_id eq $gene_member->stable_id) {
@@ -154,7 +154,7 @@ foreach my $node (@{$this_tree->get_all_nodes}) {
 ## In the subtree, list the duplications and their confidence score
 
 foreach my $node (@{$sarco_subtree->get_all_nodes}) {
-    if ((not $node->is_leaf()) and ($node->node_type eq 'duplication')) {
+    if ((not $node->is_leaf()) and $node->is_duplication) {
         print "Found a duplication at ".$node->taxonomy_level()." with a score of ".$node->duplication_confidence_score."\n";
     }
 }

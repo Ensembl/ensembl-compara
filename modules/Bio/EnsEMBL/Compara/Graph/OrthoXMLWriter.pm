@@ -413,7 +413,7 @@ sub _find_valid_genetree_roots {
   my ($self, $tree) = @_;
   no warnings 'recursion';
   
-  if (not $tree->is_leaf() and ($tree->node_type ne 'speciation')) {
+  if (not $tree->is_leaf() and $tree->is_duplication) {
     # Goes recursively until the next speciation node
     foreach my $child (@{$tree->children()}) {
       $self->_find_valid_genetree_roots($child);
@@ -440,7 +440,7 @@ sub _genetreenode_body {
     return $w->emptyTag("geneRef", "id" => $node->seq_member_id);
   }
 
-  my $tagname = $node->node_type ne 'speciation' ? "paralogGroup" : "orthologGroup";
+  my $tagname = $node->is_duplication ? "paralogGroup" : "orthologGroup";
 
   $w->startTag(
     $tagname,
