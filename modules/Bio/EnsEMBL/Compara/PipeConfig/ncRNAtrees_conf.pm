@@ -862,7 +862,7 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
             },
             -flow_into  => [ 'hc_tree_homologies' ],
-           -rc_name => '500Mb_job',
+           -rc_name => '1Gb_job',
         },
 
         {   -logic_name    => 'ktreedist',
