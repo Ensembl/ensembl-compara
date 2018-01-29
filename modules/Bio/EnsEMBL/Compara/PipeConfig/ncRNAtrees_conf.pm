@@ -775,7 +775,7 @@ sub pipeline_analyses {
             -parameters => {
                             %raxml_parameters,
                             'cmd_max_runtime'       => '43200',
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
@@ -795,7 +795,7 @@ sub pipeline_analyses {
          -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
                             %raxml_parameters,
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
