@@ -24,7 +24,6 @@ use warnings;
 
 use JSON;
 use HTML::Entities qw(encode_entities);
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use parent qw(EnsEMBL::Web::JSONServer::SpeciesSelector);
 no warnings 'numeric';
 
@@ -126,8 +125,6 @@ sub json_fetch_species {
     }
   }
 
-  # my $file = $sd->ENSEMBL_SPECIES_SELECT_DIVISION;
-  # my $division_json = from_json(file_get_contents($file));
   my $json = {};
   my $sp_assembly_map = $sd->SPECIES_ASSEMBLY_MAP;
 

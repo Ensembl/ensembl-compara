@@ -27,7 +27,6 @@ use List::MoreUtils qw/ uniq /;
 use URI::Escape qw(uri_escape);
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::IOWrapper::Indexed;
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 
 use parent qw(EnsEMBL::Web::JSONServer::SpeciesSelector);
 
@@ -128,8 +127,6 @@ sub json_fetch_species {
   # the species is displayed on the tree and thus its children as haplotypes
   map { $available_species_map->{$_} = 1 } keys %$extras, keys %available_species;
 
-  # my $file = $species_defs->ENSEMBL_SPECIES_SELECT_DIVISION;
-  # my $division_json = from_json(file_get_contents($file));
   my $division_json = $species_defs->ENSEMBL_TAXONOMY_DIVISION;
   my $sp_assembly_map = $species_defs->SPECIES_ASSEMBLY_MAP;
 

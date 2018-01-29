@@ -114,7 +114,6 @@ our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connecti
 our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stack traces to logs and send a unique error Id on the browser
 our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
 ###############################################################################
-our $ENSEMBL_SPECIES_SELECT_DIVISION  = defer { "$ENSEMBL_DOCROOT/e_species_divisions.json" }; # JSON file used by Species Selector on multiple views
 
 
 ###############################################################################
