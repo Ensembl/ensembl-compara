@@ -5,7 +5,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.base(id);
     this.dataUrl        = params.dataUrl;
     this.taxonTreeData  = null;
-    this.imagePath      = '/i/species/48/';
+    this.imagePath      = Ensembl.speciesImagePath;
     this.lastSelected   = null;
     this.activeTreeKey  = '';
     this.selectionLimit = params.selectionLimit || 25;
@@ -467,10 +467,20 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var treeObj = panel.elLk.mastertree.dynatree("getTree");
     var multipleAlign = panel.isCompara && panel.alignLabel;
     var node;
+    var species; // Species to locate and show by default
     if (panel.defaultKeys && panel.defaultKeys.length > 0) {
       // set selected nodes
       $.each(panel.defaultKeys.reverse(), function(index, _key) { 
         node = treeObj.getNodeByKey(_key);
+        species = _key;
+        if (!node) {
+          sp = _key.match(/(.*)--\w+$/);
+          if (sp && sp[1]) {
+            node = treeObj.getNodeInTree(sp[1]);
+            species = sp[1];
+          }
+        }
+
         if (node) {
           node.select();      // tick it
           !multipleAlign && node.makeVisible(); // force parent path to be expanded
@@ -479,9 +489,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         }
       });
 
-
       // Locate multiple alignment with label instead of species name as one species may be found in different EPO alignments
-      multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(panel.defaultKeys[0]);
+      multipleAlign ? panel.locateNode(panel.alignLabel) : panel.locateNode(species);
     }
   },
 
@@ -545,7 +554,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
         items_hash[node.data.title] = {
           key   : node.data.key,
           title : node.data.title,
-          icon  : node.data.icon,
+          // icon  : node.data.icon,
           value : node.data.value
         };
       }
@@ -610,9 +619,10 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.elLk.mastertree.dynatree("getTree").selectKey(item.data.key, flag);
       if (flag) {
         if (!$('li.'+item.data.key, panel.elLk.list).length) {
-          var img_filename = item.data.key + '.png';
-          item.data.img_url = item.data.icon.replace('\/16\/', '\/48\/');
-          var species_img = item.data.img_url ? '<span class="selected-sp-img"><img src="'+ item.data.img_url +'"></span>' : '';
+          var img_filename = (item.data.special_type ?  item.data.special_type : item.data.key) + '.png';
+          item.data.img_url = item.data.img_url || (panel.imagePath + img_filename);
+
+          var species_img = '<span class="selected-sp-img"><img src="' + item.data.img_url +'"></span>';
 
           $('<li/>', {
             'class': item.data.key
@@ -650,6 +660,8 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var panel = this;
     var mastertree_node = panel.elLk.mastertree.dynatree("getTree").getNodeInTree(key);
 
+    if (!mastertree_node) return;
+
     if (!mastertree_node.data.isFolder) {
       panel.setSelection(mastertree_node, true, panel.isCompara, panel.isCompara);
     }
@@ -667,6 +679,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.createMenu(submenu_tree.data.children, tree.data.title)
       panel.addBreadcrumbs(submenu_tree);
     }
+    
     panel.displayTree(tree.data.title);
 
     var node = panel.elLk.tree.dynatree("getTree").getNodeInTree(key);
@@ -763,7 +776,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
     else if (this.isCompara) {
       var sel_alignment = items[0];
-
       if (multipleAlignment) {
         Ensembl.EventManager.trigger('updateMultipleAlignmentSpeciesSelection', sel_alignment);
       }
