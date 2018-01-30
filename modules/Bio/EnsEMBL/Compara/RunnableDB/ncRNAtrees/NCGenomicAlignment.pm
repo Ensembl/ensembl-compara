@@ -225,11 +225,7 @@ sub run_RAxML {
         print STDERR "We have a problem running RAxML -- Inspecting error\n";
         # memory problem?
         if ($command->err =~ /malloc_aligned/) {
-            $self->dataflow_output_id (
-                                       {
-                                        'gene_tree_id' => $self->param('gene_tree_id'),
-                                       }, -1
-                                      );
+            $self->dataflow_output_id(undef, -1);
             $self->input_job->autoflow(0);
             $self->complete_early("RAXML ERROR: Problem allocating memory. Re-scheduled with more memory");
         }
