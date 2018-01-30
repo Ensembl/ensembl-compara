@@ -19,7 +19,13 @@ limitations under the License.
 
 =cut
 
-### Only builds the packed file if they are missing.
+# Rebuilds packed in temporary location, ensuring restart -r will work in
+# the meantime. Takes species to rebuild as argument. ALL rebuilds all.
+# No argument only rebuilds config.packed
+# 
+# ./build_packed
+# ./build_packed homo_sapiens mus_musculus
+# ./build_packed ALL
 
 use strict;
 use warnings;
@@ -28,20 +34,45 @@ use FindBin qw($Bin);
 
 BEGIN {
   require "$Bin/helper.pl";
-
-  my $config_file = sprintf '%s/conf/%s', $SiteDefs::ENSEMBL_SYS_DIR, $SiteDefs::ENSEMBL_CONFIG_FILENAME;
-
-  if (-e $config_file) {
-    if (unlink $config_file) {
-      warn "Removed $config_file\n";
-    } else {
-      die("Could not remove conf file: $config_file\n");
-    }
-  }
 }
 
+sub echosys {
+  my $cmd = shift;
+
+  warn "$cmd\n";
+  system("$cmd") && die;
+}
+
+use File::Path qw(rmtree);
 use EnsEMBL::Web::SpeciesDefs;
 
-EnsEMBL::Web::SpeciesDefs->new();
+my $dir = "$SiteDefs::ENSEMBL_TMP_DIR/rebuild";
+my $dest = $SiteDefs::ENSEMBL_SYS_DIR;
+warn "Building packeds to $dir (ultimate destination $dest)\n";
+
+rmtree($dir,{ safe => 1 });
+mkdir $dir;
+mkdir "$dir/conf";
+mkdir "$dir/conf/packed";
+
+if(!@ARGV or $ARGV[0] ne "ALL") {
+  echosys("cp -v $dest/conf/packed/* $dir/conf/packed");
+  echosys("rm $dir/conf/packed/$_.*") for @ARGV;
+}
+
+$SiteDefs::ENSEMBL_SYS_DIR = $dir;
+$EnsEMBL::Web::SpeciesDefs::CONF={ '_storage' => 0 }; # Don't parse automatically
+my $sd = EnsEMBL::Web::SpeciesDefs->new();
+delete $sd->{'_storage'};
+$sd->{'_start_time'} = time;
+$sd->_parse;
+$sd->store;
+
+if(@ARGV ne "ALL") {
+  echosys("cp -v $dir/conf/packed/$_.* $dest/conf/packed") for @ARGV;
+}
+echosys("cp -v $dir/conf/*.config.packed $dest/conf/packed");
+#rmtree($dir,{ safe => 1 });
 
 1;
+
