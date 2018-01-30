@@ -47,8 +47,8 @@ sub file_get_contents {
   if ($iterate_sub) {
     my $i = 0;
     while ($_ = $file_handle->getline) { # getline doesn't assign $_ automatically
-      my $line = $iterate_sub->($i++);
-      push @lines, $line if defined $line;
+      my @tmp_line = $iterate_sub->($i++);
+      foreach(@tmp_line) {push @lines, $_ if defined $_}
     }
   } else {
     @lines = $file_handle->getlines;
