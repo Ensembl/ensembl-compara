@@ -89,10 +89,7 @@ use warnings;
 
 use Getopt::Long;
 use Pod::Usage;
-use Sys::Hostname;
-use File::Temp qw(tempfile);
 
-use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 
 
