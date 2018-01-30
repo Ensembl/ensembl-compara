@@ -719,7 +719,6 @@ sub pipeline_analyses {
                            -1 => ['genomic_alignment_himem'],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
-                           -2 => [ 'fast_trees' ],
                           },
             -rc_name => '2Gb_4c_job',
             -priority      => $self->o('genomic_alignment_priority'),
@@ -786,7 +785,6 @@ sub pipeline_analyses {
                         3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],
                         -1 => [ 'genomic_alignment_hugemem' ],
-                        -2 => [ 'fast_trees' ],
                        },
         },
         {
