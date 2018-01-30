@@ -295,7 +295,7 @@ sub get_font_path {
   my $path = $SiteDefs::GRAPHIC_TTF_PATH || ($self->ENSEMBL_STYLE || {})->{'GRAPHIC_TTF_PATH'};
   $path = $path ? $path =~ /^\// ? $path : $SiteDefs::ENSEMBL_SERVERROOT."/$path" : "/usr/local/share/fonts/ttfonts/";
 
-  return $path =~ s/\/+/\//g;
+  return $path =~ s/\/+/\//gr;
 }
 
 sub get_config {
