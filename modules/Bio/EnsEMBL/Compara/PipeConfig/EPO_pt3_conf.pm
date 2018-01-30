@@ -83,7 +83,7 @@ sub default_options {
 
         'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
         # 'mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
-        #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
+        #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
         'run_gerp' => 0,
 

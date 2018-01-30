@@ -77,7 +77,7 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
     #location of full species tree, will be pruned
-	'species_tree_file'     => '/homes/carlac/projects/release91/species_tree.31amniotes.branch_len.nwk',
+        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
     #master database
     'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',

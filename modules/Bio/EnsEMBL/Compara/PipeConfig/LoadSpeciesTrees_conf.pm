@@ -71,7 +71,7 @@ sub default_options {
             [ 'Murinae', 'Rat and all mice (incl. strains)' ],
         ],
 
-        'ensembl_topology_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw',
+        'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
         'reg_conf'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
 
@@ -131,7 +131,7 @@ sub pipeline_analyses {
                 # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'Ensembl',
                 'mlss_id'   => '#method_link_species_set_id#',
-                'species_tree_input_file'   => $self->o('ensembl_topology_species_tree'),
+                'species_tree_input_file'   => $self->o('ensembl_species_tree'),
             },
             -flow_into  => {
                 2 => [ 'hc_binary_species_tree' ],
