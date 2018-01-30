@@ -140,9 +140,10 @@ $source_server_url .= '/' unless $source_server_url =~ /\/$/;
 $target_server_url .= '/' unless $target_server_url =~ /\/$/;
 
 Bio::EnsEMBL::Registry->load_registry_from_url($target_server_url);
-my %existing_target_databases;
+my %existing_target_species;
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
-    $existing_target_databases{ $db_adaptor->dbc->dbname } = 1;
+    #$existing_target_species{ $db_adaptor->species } = 1;
+    push @{ $existing_target_species{ $db_adaptor->species } }, $db_adaptor->dbc->dbname;
 }
 
 
@@ -151,18 +152,35 @@ Bio::EnsEMBL::Registry->load_registry_from_url($source_server_url);
 
 my @databases_to_copy;
 my @db_clash;
+my @existing_dbs;
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
     my $dbname = $db_adaptor->dbc->dbname;
-    if ($existing_target_databases{$dbname}) {
-        push @db_clash, $dbname;
+    if ($existing_target_species{$db_adaptor->species}) {
+        my $all_dbs = $existing_target_species{ $db_adaptor->species };
+        my @same_dbs = grep {$_ eq $dbname} @$all_dbs;
+        my @diff_dbs = grep {$_ ne $dbname} @$all_dbs;
+        if (@same_dbs) {
+            push @existing_dbs, $dbname;
+        }
+        if (@diff_dbs) {
+            push @db_clash, [$dbname, \@diff_dbs];
+        }
     } elsif ($dbname !~ /ensembl_ancestral/) {
         push @databases_to_copy, $dbname;
     }
 }
 
-if (@db_clash) {
+if (@existing_dbs) {
     warn "These databases already exist on $target_server_url ! Check with the genebuilders that the assembly and geneset it contains are correct.\n";
-    warn join("\n", map {"\t$_"} @db_clash), "\n";
+    warn join("\n", map {"\t$_"} @existing_dbs), "\n";
+}
+
+
+if (@db_clash) {
+    warn "These species have databases on $target_server_url with a different name ! The Registry may be confused ! Check with the genebuilders what they are and whether they can be dropped.\n";
+    foreach my $a (@db_clash) {
+        warn "\t", $a->[0], "\t", join(" ", @{$a->[1]}), "\n";
+    }
 }
 
 foreach my $dbname (@databases_to_copy) {
