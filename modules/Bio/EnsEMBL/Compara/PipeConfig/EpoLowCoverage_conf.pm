@@ -45,7 +45,6 @@ sub default_options {
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
-	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
         'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)

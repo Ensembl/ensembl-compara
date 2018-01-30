@@ -133,7 +133,6 @@ sub default_options {
 
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
-	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
     #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.55mammals.branch_len.nw', #location of full species tree, will be pruned 
 	'species_tree_file' => '/homes/carlac/projects/release91/species_tree.67mammals.branch_len.nwk',
     'species_to_skip' => undef,
