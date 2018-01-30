@@ -231,6 +231,7 @@ sub run_RAxML {
         }
 
         if ($command->exit_code == -2) {
+            $self->store_fasta_alignment('mafft');
             $self->dataflow_output_id (
                 {
                     'gene_tree_id'  => $self->param('gene_tree_id'),
@@ -298,6 +299,7 @@ sub run_prank {
     if ($command->exit_code) {
         print STDERR "We have a problem running PRANK\n";
         if ($command->exit_code == -2) {
+            $self->store_fasta_alignment('mafft');
             $self->dataflow_output_id (
                 {
                     'gene_tree_id'  => $self->param('gene_tree_id'),
