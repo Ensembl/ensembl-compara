@@ -54,8 +54,8 @@ sub content {
   
   if ($ens_prot) {
     $self->add_entry({
-      type     => 'Protein summary',
-      label    => $ens_prot->display_id,
+      type     => 'Protein',
+      label => 'Summary',
       position => 5,
       link     => $hub->url({
         type   => 'Transcript',
@@ -65,8 +65,8 @@ sub content {
     });
 
     $self->add_entry({
-      type     => 'Protein sequence',
-      label    => $ens_prot->display_id,
+      type     => ' ',
+      label => 'Sequence',
       position => 6,
       link     => $hub->url({
         type   => 'Transcript',
