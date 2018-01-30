@@ -515,7 +515,7 @@ sub pipeline_analyses {
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -parameters    => {
-                    'max_members'   => 10000,
+                    'max_members'   => 50000,
                 },
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => {
@@ -529,7 +529,7 @@ sub pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => [ 'hc_epo_removed_members' ],
-                -rc_name => '8Gb_job',
+                -rc_name => '16Gb_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
