@@ -298,7 +298,17 @@ sub run_prank {
     if ($command->exit_code) {
         print STDERR "We have a problem running PRANK\n";
         if ($command->exit_code == -2) {
-            $self->warning("Timeout reached, analysis will most likelly not finish.");
+            $self->dataflow_output_id (
+                {
+                    'gene_tree_id'  => $self->param('gene_tree_id'),
+                    'fastTreeTag'   => "ftga_it_nj",
+                    'raxmlLightTag' => "ftga_it_ml",
+                    'alignment_id'  => $self->param('alignment_id'),
+                    'aln_seq_type'  => $self->param('aln_seq_type'),
+                }, 3 #branch 3 (fast_trees)
+            );
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("Timeout reached, Prank will most likely not finish. Data-flowing to 'fast_trees'.\n"));
         }
         die "PRANK ERROR: ", $command->err, "\n";
     }
