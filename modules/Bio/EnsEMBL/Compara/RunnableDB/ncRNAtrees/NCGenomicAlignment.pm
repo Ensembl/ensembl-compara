@@ -62,7 +62,7 @@ sub run {
     if ($self->param('tag_residue_count') > 150000) {  ## Likely to take too long
         $self->run_mafft;
         # We put the alignment into the db
-        $self->store_fasta_alignment('mafft_output');
+        $self->store_fasta_alignment('mafft');
         $self->param('gene_align_id', $self->param('alignment_id'));
         $self->call_one_hc('unpaired_alignment');
 
@@ -99,7 +99,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    $self->store_fasta_alignment("prank_output");
+    $self->store_fasta_alignment('prank');
     $self->param('gene_align_id', $self->param('alignment_id'));
     $self->call_one_hc('unpaired_alignment');
     for my $method (qw/phyml nj/) {
@@ -351,17 +351,16 @@ sub fasta2phylip {
 }
 
 sub store_fasta_alignment {
-    my ($self, $param) = @_;
+    my ($self, $aln_method) = @_;
 
     my $nc_tree_id = $self->param('gene_tree_id');
-    my $uniq_alignment_id = "$param" . "_" . $self->input_job->dbID ;
-    my $aln_file = $self->param($param);
+    my $aln_file = $self->param("${aln_method}_output");
     my $aln_seq_type = $self->param('aln_seq_type');
 
     my $aln = $self->param('gene_tree')->deep_copy();
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
     $aln->seq_type($aln_seq_type);
-    $aln->aln_method('prank');
+    $aln->aln_method($aln_method);
     $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
