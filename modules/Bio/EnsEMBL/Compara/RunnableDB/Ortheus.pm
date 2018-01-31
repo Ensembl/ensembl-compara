@@ -214,6 +214,19 @@ sub run {
               # Let's discard this job.
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
+          } elsif ($err_msg =~ /Java heap space/ || $err_msg =~ /GC overhead limit exceeded/ || $err_msg =~ /Cannot allocate memory/ || $err_msg =~ /OutOfMemoryError/) {
+
+              #Flow to next memory.
+              my $num_jobs = $self->dataflow_output_id(undef, -1);
+
+              #Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
+              if (@$num_jobs == 0) {
+                  throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
+              }
+
+              #Don't want to flow to gerp jobs here
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Not enough memory available in this analysis. New job created in the #-1 branch\n" );
           }
       }
       return if %err_msgs;
