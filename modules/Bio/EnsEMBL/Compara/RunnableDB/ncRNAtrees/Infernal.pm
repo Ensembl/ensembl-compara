@@ -303,6 +303,10 @@ sub run_infernal {
   if ($log_message =~ /Error: Calculating QDBs, Z got insanely large /){
       $self->param('stk_output', $stk_output);
       $self->param('refined_profile', $self->param('profile_file'));
+
+  } elsif ($cmd_return_value->exit_code) {
+      die sprintf("Could not run %s, got %s\nSTDOUT %s\nSTDERR %s\n", $cmd, $cmd_return_value->exit_code, $cmd_return_value->out, $log_message);
+
   }
   else{
       $self->param('stk_output', $refined_stk_output);
