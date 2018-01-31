@@ -562,6 +562,7 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
+                                'infernal_mxsize' => $self->o('infernal_mxsize'),
                                },
                 -flow_into     => {
                     1 => ['quick_tree_break' ],
@@ -576,7 +577,7 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
-                                'infernal_mxsize'      => $self->o('infernal_mxsize'),
+                                'infernal_mxsize' => $self->o('infernal_mxsize'),
                                },
                 -flow_into     => [ 'quick_tree_break' ],
                 -rc_name => '4Gb_job',
@@ -630,6 +631,7 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
+                                   'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
@@ -644,6 +646,7 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
+                                   'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
                 -flow_into     => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                 -rc_name       => '2Gb_job',
