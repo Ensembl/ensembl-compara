@@ -296,12 +296,10 @@ sub run_infernal {
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
-  $self->run_command($cmd, { die_on_failure => 0 });
-
-  #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
   my $cmd_return_value = $self->run_command($cmd);
   my $log_message = $cmd_return_value->err;
 
+  #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
   if ($log_message =~ /Error: Calculating QDBs, Z got insanely large /){
       $self->param('stk_output', $stk_output);
       $self->param('refined_profile', $self->param('profile_file'));
