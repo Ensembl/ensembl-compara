@@ -224,7 +224,7 @@ sub run {
               $self->complete_early( "Not enough memory available in this analysis. New job created in the #-1 branch\n" );
           }
       }
-      return if %err_msgs;
+      die "There were errors when running Ortheus. Please investigate\n" if %err_msgs;
   }
 
   $self->parse_results();
