@@ -59,7 +59,6 @@ use warnings;
 use Bio::EnsEMBL::Compara::Production::Analysis::Mercator;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Data::Dumper;
-#use Bio::EnsEMBL::Analysis;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -74,7 +73,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-#  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   unless (defined $self->param('output_dir')) {
     my $output_dir = $self->worker_temp_directory . "/output_dir";
@@ -83,14 +81,8 @@ sub run
   if (! -e $self->param('output_dir')) {
     mkdir($self->param('output_dir'));
   }
-  my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Mercator
-    (-input_dir => $self->param('input_dir'),
-     -output_dir => $self->param('output_dir'),
-     -genome_names => $self->param('genome_db_ids'),
-#     -analysis => $fake_analysis,
-     -program => $self->param('mercator_exe'));
-  $self->param('runnable', $runnable);
-  $runnable->run_analysis;
+  my $mercator_output = Bio::EnsEMBL::Compara::Production::Analysis::Mercator::run_mercator($self);
+  $self->param('mercator_output', $mercator_output);
 }
 
 sub write_output {
@@ -143,7 +135,7 @@ sub store_synteny {
   }
 
   my $synteny_region_ids;
-  foreach my $sr (@{$self->param('runnable')->output}, @extra_synteny_groups) {
+  foreach my $sr (@{$self->param('mercator_output')}, @extra_synteny_groups) {
     my @regions;
     my $run_id;
     foreach my $dfr (@{$sr}) {

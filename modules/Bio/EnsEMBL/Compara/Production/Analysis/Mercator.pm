@@ -27,17 +27,11 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Mercator - 
+Bio::EnsEMBL::Compara::Production::Analysis::Mercator
 
 =head1 SYNOPSIS
 
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Mercator
-     (-input_dir => $input_dir,
-      -output_dir => $output_dir,
-      -genome_names => ["homo_sapiens","mus_musculus","rattus_norvegicus"],
-      -program => "/path/to/program");
-  $runnable->run;
-  my @output = @{$runnable->output};
+  my $output = Bio::EnsEMBL::Compara::Production::Analysis::Mercator::run_mercator($self);
 
 =head1 DESCRIPTION
 
@@ -55,151 +49,21 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Mercator;
 use strict;
 use warnings;
 
-#use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-#our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
 
-=head2 new
-
-  Arg [1]   : -input_dir => "/path/to/input/directory"
-  Arg [2]   : -output_dir => "/path/to/output/directory"
-  Arg [3]   : -genome_names => ["homo_sapiens","mus_musculus","rattus_norvegicus"]
-  Function  : contruct a new Bio::EnsEMBL::Analysis::Runnable::Mercator
-  runnable
-  Returntype: Bio::EnsEMBL::Analysis::Runnable::Mercator
-  Exceptions: none
-  Example   :
-
-=cut
-
-
-sub new {
-  my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
-   my ($input_dir, $output_dir, $genome_names, $program, $pre_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'PROGRAM','PRE_MAP'], @args);
-#  my ($input_dir, $output_dir, $genome_names, $strict_map) = rearrange(['INPUT_DIR', 'OUTPUT_DIR', 'GENOME_NAMES', 'STRICT_MAP'], @args);
-
-  if (defined $program) {
-    $self->program($program);
-    }else{ 
-    die "\n mercator exe location is needed \n";
-  }
-  $self->input_dir($input_dir) if (defined $input_dir);
-  $self->output_dir($output_dir) if (defined $output_dir);
-  $self->genome_names($genome_names) if (defined $genome_names);
-#  if (ref($genome_names) eq "ARRAY") {
-#   print "GENOME_NAMES: ", join(", ", @{$genome_names}), "\n" if ($self->debug);
-#  } else {
-#    print "GENOME_NAMES: $genome_names\n" if ($self->debug);
-#  }
-   if (defined $pre_map){
-     $self->pre_map($pre_map);
-  } else {
-     $self->pre_map(1);
-  }
-  
-  return $self;
-}
-
-sub input_dir {
-    my ($self, $arg) = @_;
-
-    $self->{'_input_dir'} = $arg if defined $arg;
-    
-    return $self->{'_input_dir'};
-}
-
-sub output_dir {
-    my ($self, $arg) = @_;
-
-    $self->{'_output_dir'} = $arg if defined $arg;
-    return $self->{'_output_dir'};
-}
-
-sub genome_names {
-    my ($self, $arg) = @_;
-
-    $self->{'_genome_names'} = $arg if defined $arg;
-    return $self->{'_genome_names'};
-}
-
-sub program {
-  my $self = shift;
-  $self->{'_program'} = shift if(@_);
-  return $self->{'_program'};
-}
-
-sub pre_map {
-    my ($self, $arg) = @_;
-
-    $self->{'_pre_map'} = $arg if defined $arg;
-    return $self->{'_pre_map'};
-}
-
-sub output {
-  my $self = shift;
-  $self->{'_output'} = shift if(@_);
-  return $self->{'_output'};
-}
-=head2 run_analysis
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::TRF
-  Arg [2]   : string, program name
-  Function  : create and open a commandline for the program trf
-  Returntype: none
-  Exceptions: throws if the program in not executable or if the results
-  file doesnt exist
-  Example   : 
-
-=cut
-
-
-
-sub run_analysis{
-  my ($self, $program) = @_;
-  if(!$program){
-    $program = $self->program;
-  }
-  throw($program." is not executable Mercator::run_analysis ") 
-    unless($program && -x $program);
-
-  my $command = "$program -i " . $self->input_dir . " -o " . $self->output_dir;
-#  print "genome_names: ".join(", ", @{$self->genome_names})."\n" if ($self->debug);
-  foreach my $species (@{$self->genome_names}) {
-    $command .= " $species";
-  }
-#  print "Running analysis ".$command."\n" if ($self->debug);
-  unless (system($command) == 0) {
-    throw("mercator execution failed\n");
-  }
-  $self->parse_results;
-}
-
-
-=head2 parse_results
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Mercator
-  Arg [2]   : string, results filename
-  Function  : parse the specifed file and produce RepeatFeatures
-  Returntype: nine
-  Exceptions: throws if fails to open or close the results file
-  Example   : 
-
-=cut
-
-
-sub parse_results{
+sub run_mercator {
   my ($self) = @_;
 
-  my $map_file = $self->output_dir . "/pre.map";
-  unless ($self->pre_map) {
-    $map_file = $self->output_dir . "/map";
-  }
-  my $genomes_file = $self->output_dir . "/genomes";
+  my @command = ($self->param('mercator_exe'), '-i', $self->param('input_dir'), '-o', $self->param('output_dir'));
+  push @command, @{$self->param('genome_db_ids')};
+
+  $self->run_command(\@command, { 'die_on_failure' => 1} );
+
+  my $map_file = $self->param('output_dir') . "/pre.map";
+  my $genomes_file = $self->param('output_dir') . "/genomes";
   open F, $genomes_file ||
     throw("Can't open $genomes_file\n");
 
@@ -228,7 +92,7 @@ sub parse_results{
   my $output = [ values %hash ];
 #  print "scalar output", scalar @{$output},"\n"  if($self->debug);
   print "No synteny regions found" if (scalar @{$output} == 0);
-  $self->output($output);
+  return $output;
 }
 
 1;
