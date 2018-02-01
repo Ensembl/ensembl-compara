@@ -557,7 +557,7 @@ sub render_cactus_multiple {
     my $table = EnsEMBL::Web::Document::Table->new([
         { key => 'species', title => 'Species',         width => '50%', align => 'left', sort => 'string' },
         { key => 'asm',     title => 'Assembly',        width => '50%', align => 'left', sort => 'string' },
-      ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
+      ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set->name), sorting => ['species asc']});
     foreach my $sp (@$species_order) {
       $table->add_row({
           'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
