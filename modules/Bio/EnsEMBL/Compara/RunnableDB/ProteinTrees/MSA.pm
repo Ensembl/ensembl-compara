@@ -236,7 +236,7 @@ sub run_msa {
             # we won't risk the escape route being triggered)
             $self->input_job->transient_error(0);
         }
-        $self->throw(sprintf("Failed to execute the MSA program [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
+        $cmd_out->die_with_log;
     }
 }
 

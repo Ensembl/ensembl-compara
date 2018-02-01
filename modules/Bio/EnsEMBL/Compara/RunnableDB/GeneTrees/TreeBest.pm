@@ -141,7 +141,7 @@ sub run_treebest_best {
             $filtering_cutoff--;
             $self->warning("Lowering filtering_cutoff to $filtering_cutoff");
         } else {
-            $self->throw(sprintf("error running treebest [%s]: %d\n%s", $run_cmd->cmd, $run_cmd->exit_code, $logfile));
+            $run_cmd->die_with_log;
         }
     }
 

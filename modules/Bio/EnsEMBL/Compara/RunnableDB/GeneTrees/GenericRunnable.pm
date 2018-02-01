@@ -303,7 +303,7 @@ sub run_generic_command {
             $self->input_job->autoflow(0);
             $self->complete_early("Java heap space is out of memory.\n");
         }
-        $self->throw( sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\nstdout is %s", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out) );
+        $run_cmd->die_with_log;
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);
     $self->param('cmd_out',      $run_cmd->out);

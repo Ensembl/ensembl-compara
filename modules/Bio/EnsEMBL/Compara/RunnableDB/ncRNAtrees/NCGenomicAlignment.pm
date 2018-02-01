@@ -200,7 +200,7 @@ sub run_mafft {
             $self->complete_early(sprintf("Timeout reached, Mafft analysis will most likely not finish. Giving up on this family.\n"));
         }
 
-        die "MAFFT ERROR: ", $command->err, "\n";
+        $command->die_with_log;
     }
 }
 
@@ -256,7 +256,7 @@ sub run_RAxML {
             $self->complete_early(sprintf("Timeout reached, RAxML analysis will most likelly not finish. Data-flowing to 'fast_trees'.\n"));
         }
 
-        die "RAXML ERROR: ", $command->err, "\n";
+        $command->die_with_log;
     }
 
     return
@@ -323,7 +323,7 @@ sub run_prank {
             $self->input_job->autoflow(0);
             $self->complete_early(sprintf("Timeout reached, Prank will most likely not finish. Data-flowing to 'fast_trees'.\n"));
         }
-        die "PRANK ERROR: ", $command->err, "\n";
+        $command->die_with_log;
     }
 
     # prank renames the output by adding ".2.fas" => .1.fas" because it doesn't need to make the tree

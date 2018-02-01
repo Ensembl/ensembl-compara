@@ -130,13 +130,14 @@ sub run {
     # Assuming that if RAxML runs without problems, no stderr output will be generated.
     # We are reading STDERR to get if RAxML fails and the error reported.
     # If the error is an assertion error. We report, but no error is raised to msg table.
+    # FIXME: we should probably test the exit code instead of $err_msg
     if ($err_msg) {
         print STDERR "We have a problem running RAxML -- Inspecting error file\n";
         if ($err_msg =~ /Assertion(.+)failed/) {
             $self->input_job->autoflow(0);
             $self->complete_early("Assertion failed for RAxML: $1\n");
         } else {
-            $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n$err_msg\n");
+            $command->die_with_log;
         }
     }
 

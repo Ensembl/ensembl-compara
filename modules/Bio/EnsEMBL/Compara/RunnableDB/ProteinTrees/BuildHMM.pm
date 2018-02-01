@@ -241,7 +241,7 @@ sub run_buildhmm {
                 } elsif ($cmd_out2->err =~ /Posix threads support is not compiled into HMMER/) {
                     $use_cpu_option = 0;
                 } else {
-                    die sprintf("Could not run hmmcalibrate\n%s\n%s", $cmd_out2->out, $cmd_out2->err);
+                    $cmd_out2->die_with_log;
                 }
             } else {
                 $success = 1;

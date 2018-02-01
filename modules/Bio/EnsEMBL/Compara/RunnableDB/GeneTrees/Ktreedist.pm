@@ -252,7 +252,7 @@ sub run_ktreedist {
           # The tree is too big for ktreedist
           $self->complete_early('Ktreedist is not able to compute distances');
       }
-      $self->throw("Error exit status running Ktreedist: " .$runCmd->err . "\n");
+      $runCmd->die_with_log;
   }
   my @output = split/\n/, $runCmd->out;
 

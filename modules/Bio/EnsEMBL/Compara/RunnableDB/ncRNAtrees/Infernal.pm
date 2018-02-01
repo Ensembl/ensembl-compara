@@ -305,7 +305,7 @@ sub run_infernal {
       $self->param('stk_output', $stk_output);
 
   } elsif ($cmd_return_value->exit_code) {
-      die sprintf("Could not run %s, got %s\nSTDOUT %s\nSTDERR %s\n", $cmd, $cmd_return_value->exit_code, $cmd_return_value->out, $log_message);
+      $cmd_return_value->die_with_log;
 
   }
   else{

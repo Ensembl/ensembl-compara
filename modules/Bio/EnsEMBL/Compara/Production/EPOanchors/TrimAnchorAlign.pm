@@ -117,7 +117,7 @@ sub run {
       $self->dataflow_output_id(undef, -1);
       $self->complete_early($self->param('ortheus_c_exe').' was killed because it was using too much memory.');
   } elsif ($cmd->exit_code) {
-      die sprintf("Could not run %s, got %s\nSTDOUT %s\nSTDERR %s\n", $self->param('ortheus_c_exe'), $cmd->exit_code, $cmd->out, $cmd->err);
+      $cmd->die_with_log;
   }
 
   my $trim_position = $self->get_best_trimming_position($cmd->out);

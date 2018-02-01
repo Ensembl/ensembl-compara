@@ -75,8 +75,8 @@ sub new_and_exec {
     $runCmd->run();
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
-    my $purpose = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
-    die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $purpose, $runCmd->exit_code, $runCmd->out, $runCmd->err) if $runCmd->exit_code && $options->{die_on_failure};
+    $runCmd->{_purpose} = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
+    $runCmd->die_with_log if $runCmd->exit_code && $options->{die_on_failure};
     return $runCmd;
 }
 
@@ -136,6 +136,11 @@ sub runtime_msec {
 sub exit_code {
     my ($self) = @_;
     return $self->{_exit_code};
+}
+
+sub die_with_log {
+    my ($self) = @_;
+    die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $self->{_purpose}, $self->exit_code, $self->out, $self->err);
 }
 
 sub _run {
