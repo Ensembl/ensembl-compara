@@ -512,12 +512,13 @@ foreach my $slice (sort {
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {
 
-    if (!defined $dnafrag_adaptor->fetch_by_Slice($slice)) {
+    my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
+    if (!defined $dnafrag) {
          print STDERR "Unable to fetch " . $slice->name . "\n";
          next;
      }
 
-    my $dnafrag_id = $dnafrag_adaptor->fetch_by_Slice($slice)->dbID;
+    my $dnafrag_id = $dnafrag->dbID;
     my $sql = "SELECT dnafrag_start, dnafrag_end FROM genomic_align WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID;
     if ($extra) {
