@@ -147,6 +147,11 @@ if ($compara_url) {
       };
 }
 
+if ($compara_dba) {
+    # will have disconnect_when_inactive set to 1.
+    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+}
+
 my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
 $species_name .= ".$component" if $component;
 
@@ -517,6 +522,12 @@ foreach my $slice (sort {
          print STDERR "Unable to fetch " . $slice->name . "\n";
          next;
      }
+
+    # Heuristics: There could be quite some alignments on a >1Mbp region,
+    # so disconnect from the database
+    if ($dnafrag->length > 1_000_000) {
+        $slice->adaptor->dbc->disconnect_if_idle;
+    }
 
     my $dnafrag_id = $dnafrag->dbID;
     my $sql = "SELECT dnafrag_start, dnafrag_end FROM genomic_align WHERE".
