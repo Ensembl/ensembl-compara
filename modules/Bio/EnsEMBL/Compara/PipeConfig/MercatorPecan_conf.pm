@@ -286,7 +286,7 @@ sub pipeline_analyses {
 	    -parameters => {
 		'reuse_url'   => $self->dbconn_2_url('reuse_db'),
 	    },
-	    -rc_name => '1Gb',
+	    -rc_name => '1.8Gb',
         },
 
         {   -logic_name => 'create_mlss_ss',
