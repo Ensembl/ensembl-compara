@@ -91,6 +91,8 @@ sub pool_one_DBConnection {
         my $dbc = $dba->dbc;
         # Skip the eHive DBConnections as they are different from Core's ones
         return if $dbc->isa('Bio::EnsEMBL::Hive::DBSQL::DBConnection');
+        # ProxyDBConnections are what we want to achieve
+        return if $dbc->isa('Bio::EnsEMBL::DBSQL::ProxyDBConnection');
         # Skip if it has no dbname
         return unless $dbc->dbname;
         # Disconnect as the DBC is going to be superseded
