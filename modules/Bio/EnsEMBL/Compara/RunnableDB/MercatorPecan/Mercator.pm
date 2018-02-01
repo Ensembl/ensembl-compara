@@ -88,11 +88,10 @@ sub run
 sub write_output {
   my ($self) = @_;
 
-  my $synteny_region_ids = $self->store_synteny();
-  foreach my $sr_id (@{$synteny_region_ids}) {
-    my ($dnafrag_count, $total_residues) = $self->calculator($sr_id);
+  my $synteny_regions = $self->store_synteny();
+  foreach my $sr (@{$synteny_regions}) {
     #Flow into pecan
-    my $dataflow_output_id = { synteny_region_id => $sr_id , dnafrag_count => $dnafrag_count, total_residues_count => $total_residues};
+    my $dataflow_output_id = { synteny_region_id => $sr->dbID , dnafrag_count => $sr->{'__dnafrag_count'}, total_residues_count => $sr->{'__total_residues_count'} };
     $self->dataflow_output_id($dataflow_output_id,2);
   }
   return 1;
@@ -134,10 +133,11 @@ sub store_synteny {
       push @extra_synteny_groups, \@regions if scalar(@regions) > 1;
   }
 
-  my $synteny_region_ids;
+  my $synteny_regions;
   foreach my $sr (@{$self->param('mercator_output')}, @extra_synteny_groups) {
     my @regions;
     my $run_id;
+    my $total_residues_count = 0;
     foreach my $dfr (@{$sr}) {
       my ($gdb_id, $seq_region_name, $start, $end, $strand);
       ($run_id, $gdb_id, $seq_region_name, $start, $end, $strand) = @{$dfr};
@@ -151,40 +151,21 @@ sub store_synteny {
               'dnafrag_end'     => $end,
               'dnafrag_strand'  => $strand,
       } );
+      $total_residues_count += $end - $start;
       push @regions, $dnafrag_region;
     }
     my $synteny_region = Bio::EnsEMBL::Compara::SyntenyRegion->new_fast( {
         'method_link_species_set_id' => $mlss_id,
         'regions' => \@regions,
+        # These two fields are not part of SyntenyRegion, but needed to populate the dataflow event
+        '__dnafrag_count'           => scalar(@regions),
+        '__total_residues_count'    => $total_residues_count,
     } );
     $sra->store($synteny_region);
-    push @{$synteny_region_ids}, $synteny_region->dbID;
+    push @{$synteny_regions}, $synteny_region;
   }
 
-  return $synteny_region_ids;
-}
-
-#returns the total dnafrag count and residue count for a given syntenic region id
-sub calculator {
-  my $self = shift;
-
-  my $synteny_region_id = shift;
-  my $query = "select synteny_region_id, sum(dnafrag_end) - sum(dnafrag_start) as total_residues from dnafrag_region group by synteny_region_id having synteny_region_id = $synteny_region_id";
-  my $sth = $self->compara_dba->dbc->db_handle->prepare($query);
-  $sth->execute();
-  my $synteny_residue_map = $sth->fetchall_hashref('synteny_region_id');
-  print "\n this is the hash of the synteny total residue \n" if ($self->debug > 6);
-  print Dumper($synteny_residue_map) if ($self->debug > 6);
-  my $total_residues = $synteny_residue_map->{$synteny_region_id}->{'total_residues'};
-  my $query2 = "select synteny_region_id, count(*) as no_dnafrag from dnafrag_region where synteny_region_id = $synteny_region_id";
-  my $sth2 = $self->compara_dba->dbc->db_handle->prepare($query2);
-  $sth2->execute();
-  my $synteny_dnafrag_count = $sth2->fetchall_hashref('synteny_region_id');
-  print "\n this is the hash of the synteny total dnafrag \n" if ($self->debug > 6);
-  print Dumper($synteny_dnafrag_count) if ($self->debug > 6);
-  my $dnafrag_count = $synteny_dnafrag_count->{$synteny_region_id}->{'no_dnafrag'};
-  
-  return ($dnafrag_count, $total_residues);
+  return $synteny_regions;
 }
 
 1;
