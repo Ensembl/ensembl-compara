@@ -190,7 +190,18 @@ sub run_mafft {
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
     print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
 
-    $self->run_command($cmd, { die_on_failure => 1 } );
+    my $command = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
+    if ($command->exit_code) {
+        print STDERR "We have a problem running Mafft -- Inspecting error\n";
+
+        if ($command->exit_code == -2) {
+            # Even Mafft takes ages. Give up ... !
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("Timeout reached, Mafft analysis will most likely not finish. Giving up on this family.\n"));
+        }
+
+        die "MAFFT ERROR: ", $command->err, "\n";
+    }
 }
 
 sub run_RAxML {
