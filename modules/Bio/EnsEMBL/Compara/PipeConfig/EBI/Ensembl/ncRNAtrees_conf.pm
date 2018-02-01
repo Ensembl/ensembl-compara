@@ -120,7 +120,6 @@ sub default_options {
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
 
             # Other parameters
-            'raxml_number_of_cores' => 8,
             'infernal_mxsize'       => 10000,
 
             # For the homology_id_mapping

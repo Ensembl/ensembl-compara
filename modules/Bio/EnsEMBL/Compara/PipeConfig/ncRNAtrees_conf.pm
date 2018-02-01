@@ -690,7 +690,7 @@ sub pipeline_analyses {
              -analysis_capacity => $self->o('raxml_capacity'),
              -parameters => {
                              %raxml_parameters,
-                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'raxml_number_of_cores' => 4,
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
@@ -703,7 +703,7 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('raxml_capacity'),
             -parameters => {
                             %raxml_parameters,
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 4,
                            },
             -rc_name => '2Gb_4c_job',
         },
@@ -715,7 +715,7 @@ sub pipeline_analyses {
                             %raxml_parameters,
                             'cmd_max_runtime'       => '43200',
                             'mafft_exe'             => $self->o('mafft_exe'),
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 4,
                             'prank_exe'             => $self->o('prank_exe'),
                            },
             -flow_into => {
@@ -735,7 +735,7 @@ sub pipeline_analyses {
                             %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => 4,
                             },
             -flow_into => {
                            -1 => ['fast_trees_himem'],
@@ -750,7 +750,7 @@ sub pipeline_analyses {
                             %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => 4,
                             },
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
@@ -765,7 +765,7 @@ sub pipeline_analyses {
                             %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => 4,
                             },
              -rc_name => '32Gb_mpi_4c_job',
             },
