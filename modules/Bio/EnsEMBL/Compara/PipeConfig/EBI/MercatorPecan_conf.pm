@@ -107,16 +107,6 @@ sub default_options {
     'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_92',
     # connection parameters to various databases:
 
-        'host'        => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => $self->o('host'),
-            -port   => 4523,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),
-        -driver => 'mysql',
-        },
-
         'staging_loc' => {                     # general location of half of the current release core databases
             -host   => 'mysql-ens-sta-1',
             -port   => 4519,
