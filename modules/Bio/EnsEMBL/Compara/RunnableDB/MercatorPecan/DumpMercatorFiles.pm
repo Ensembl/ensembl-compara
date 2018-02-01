@@ -104,6 +104,7 @@ sub dumpMercatorFiles {
   my $file = $self->param('input_dir') . "/$gdb_id.chroms";
   open F, ">$file";
   my $core_dba = $gdb->db_adaptor;
+ $core_dba->dbc->prevent_disconnect( sub {
   my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
   my $assembly_mapper_adaptor = $core_dba->get_AssemblyMapperAdaptor();
   my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
@@ -126,6 +127,7 @@ sub dumpMercatorFiles {
 	  }
       }
   }
+ } );
   close F;
 
   ## Create the anchor file for Mercator
