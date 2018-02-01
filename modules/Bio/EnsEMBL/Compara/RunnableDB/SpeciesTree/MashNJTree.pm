@@ -87,7 +87,7 @@ sub run {
 	# run rapidnj
 	my $rapidnj_cmd = "$rapidnj_exe $phylip_file --no-negative-length";
 	print " --- CMD: $rapidnj_cmd\n";
-	my $tree = $self->run_command($rapidnj_cmd)->out;
+	my $tree = $self->run_command($rapidnj_cmd, { die_on_failure => 1 })->out;
 
 	die $tree unless $tree =~ /^\(/; # rapidnj writes errors to STDOUT :/
 
