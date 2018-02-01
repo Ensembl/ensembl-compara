@@ -68,7 +68,9 @@ $sd->{'_start_time'} = time;
 $sd->_parse;
 $sd->store;
 
-if(@ARGV ne "ALL") {
+if($ARGV[0] eq "ALL") {
+  echosys("cp -v $dir/conf/packed/* $dest/conf/packed");
+} else {
   echosys("cp -v $dir/conf/packed/$_.* $dest/conf/packed") for @ARGV;
 }
 echosys("cp -v $dir/conf/*.config.packed $dest/conf/packed");
