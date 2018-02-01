@@ -102,7 +102,7 @@ sub dumpMercatorFiles {
   ## Create the Chromosome file for Mercator
   my $gdb = $gdba->fetch_by_dbID($gdb_id);
   my $file = $self->param('input_dir') . "/$gdb_id.chroms";
-  open F, ">$file";
+  open(my $fh, '>', $file);
   my $core_dba = $gdb->db_adaptor;
  $core_dba->dbc->prevent_disconnect( sub {
   my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
@@ -111,7 +111,7 @@ sub dumpMercatorFiles {
   my $seq_level_coord_system = $coord_system_adaptor->fetch_sequence_level;
   my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems($chromosome_coord_system, $seq_level_coord_system);
   foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
-      print F $df->name . "\t" . $df->length,"\n";
+      print $fh $df->name . "\t" . $df->length,"\n";
       if ($max_gap and $df->coord_system_name eq "chromosome") {
 
 	  my @mappings = $assembly_mapper->map($df->name, 1, $df->length, 1, $chromosome_coord_system);
@@ -121,18 +121,18 @@ sub dumpMercatorFiles {
 	      next if ($this_mapping->isa("Bio::EnsEMBL::Mapper::Coordinate"));
 	      next if ($this_mapping->length < $max_gap);
 	      # print join(" :: ", $df->name, $this_mapping->length, $this_mapping->start, $this_mapping->end), "\n";
-	      print F $df->name . "--$part\t" . $df->length,"\n";
+	      print $fh $df->name . "--$part\t" . $df->length,"\n";
 	      $dnafrags->{$df->dbID}->{$this_mapping->start} = $df->name."--".$part;
 	      $part++;
 	  }
       }
   }
  } );
-  close F;
+  close $fh;
 
   ## Create the anchor file for Mercator
   $file = $self->param('input_dir') . "/$gdb_id.anchors";
-  open F, ">$file";
+  open($fh, '>', $file);
   foreach my $member (@{$ma->fetch_all_by_GenomeDB($gdb_id)}) {
       my $strand = "+";
       $strand = "-" if ($member->dnafrag_strand == -1);
@@ -146,13 +146,13 @@ sub dumpMercatorFiles {
 	      }
 	  }
       }
-      print F $member->dbID . "\t" .
+      print $fh $member->dbID . "\t" .
         $dnafrag_name ."\t" .
           $strand . "\t" .
             ($member->dnafrag_start - 1) ."\t" .
               $member->dnafrag_end ."\t1\n";
   }
-  close F;
+  close $fh;
 
   my $genome_db_ids = $self->param('genome_db_ids');
 
@@ -160,7 +160,7 @@ sub dumpMercatorFiles {
 
   foreach my $gdb_id2 (@$genome_db_ids) {
       my $file = $self->param('input_dir') . "/$gdb_id1" . "-$gdb_id2.hits";
-      open F, ">$file";
+      open($fh, '>', $file);
       my $sql = $self->get_sql_for_peptide_hits($gdb_id1, $gdb_id2);
       my $sth = $self->compara_dba->dbc->prepare($sql);
       my ($qmember_id,$hmember_id,$score1,$evalue1,$score2,$evalue2);
@@ -173,10 +173,10 @@ sub dumpMercatorFiles {
         my $evalue = ($evalue1>$evalue2)?$evalue1:$evalue2; ## Use largest e-value
         next if (defined $self->param('cutoff_score') && $score < $self->param('cutoff_score'));
         next if (defined $self->param('cutoff_evalue') && $evalue > $self->param('cutoff_evalue'));
-        print F "$qmember_id\t$hmember_id\t" . int($score). "\t$evalue\n";
+        print $fh "$qmember_id\t$hmember_id\t" . int($score). "\t$evalue\n";
         $pair_seen{$qmember_id . "_" . $hmember_id} = 1;
     }
-      close F;
+      close $fh;
       $sth->finish();
   }
 
