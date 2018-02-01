@@ -34,7 +34,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Statistics::Basic qw(mean stddev);
 use File::Basename;
 
 use Data::Dumper;
@@ -278,7 +277,6 @@ sub collapse_group_in_matrix {
 			}
 		}
 		
-		# my $mean = mean( @collapse_dists );
 		my $l = scalar @collapse_dists;
 		my $t = 0;
 		foreach my $i ( @collapse_dists ) { $t += $i; }
