@@ -180,7 +180,7 @@ sub dumpMercatorFiles {
       $sth->finish();
   }
 
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->collection_name);}
+  if($self->debug){printf("%1.3f secs to dump mercator files for \"%s\"\n", (time()-$starttime), $gdb->name);}
 
   return 1;
 }
