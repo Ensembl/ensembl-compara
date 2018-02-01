@@ -496,6 +496,8 @@ sub store_fasta_alignment {
     if ($n_deleted_members) {
         # Empty the cached array of members, so that $self->param('gene_tree')->get_all_Members doesn't see the removed members any more
         delete $self->param('gene_tree')->{'_member_array'};
+        # Adjust the gene_count
+        $self->param('gene_tree')->store_tag('gene_count', $self->param('gene_tree')->get_value_for_tag('gene_count')-$n_deleted_members);
     }
 
     $self->compara_dba->get_GeneAlignAdaptor->store($aln);
