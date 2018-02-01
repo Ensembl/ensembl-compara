@@ -158,12 +158,9 @@ sub run_HMM_search {
 
     my $worker_temp_directory = $self->worker_temp_directory;
     my $cmd = "PATH=$blast_bin_dir:$hmmer_path:\$PATH; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
-    my $cmd_out = $self->run_command($cmd);
+    my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
-    # Detection of failures
-    if ($cmd_out->exit_code) {
-        $self->throw(sprintf("error running pantherScore [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
-    }
+    # Detection of issues in the error log
     if ($cmd_out->err =~ /^Problem with blast on (.*)$/) {
         $self->throw(sprintf("pantherScore detected an error with blast on the member %s. Full log is:\n%s", $1, $cmd_out->err));
     }

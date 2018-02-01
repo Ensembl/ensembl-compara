@@ -99,14 +99,11 @@ sub _run_HMM_search {
 
     my $cmd = $hmmer_home . "/hmmsearch --cpu 1 -E $hmmer_cutoff --noali --tblout $worker_temp_directory/treefam_hmm_search.out " . $hmmLibrary . " " . $self->param('chunk_name');
 
-    my $cmd_out = $self->run_command($cmd);
+    my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
     my %hmm_annot;
 
-    # Detection of failures
-    if ( $cmd_out->exit_code ) {
-        $self->throw( sprintf( "error running pantherScore [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err ) );
-    }
+    # Detection of issues in the error log
     if ( $cmd_out->err =~ /^Missing sequence for (.*)$/ ) {
         $self->throw( sprintf( "pantherScore detected a missing sequence for the member %s. Full log is:\n%s", $1, $cmd_out->err ) );
     }

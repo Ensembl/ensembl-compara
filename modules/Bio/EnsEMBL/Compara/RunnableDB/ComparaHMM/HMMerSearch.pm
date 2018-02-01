@@ -171,12 +171,9 @@ sub _run_HMM_search {
         $cmd = $hmmer_home . "/hmmsearch --cpu 1 --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
     }
 
-    my $cmd_out = $self->run_command($cmd);
+    my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
-    # Detection of failures
-    if ( $cmd_out->exit_code ) {
-        $self->throw( sprintf( "error running hmmsearch [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err ) );
-    }
+    # Detection of issues in the error log
     if ( $cmd_out->err =~ /^Missing sequence for (.*)$/ ) {
         $self->throw( sprintf( "pantherScore detected a missing sequence for the member %s. Full log is:\n%s", $1, $cmd_out->err ) );
     }
