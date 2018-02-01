@@ -111,7 +111,7 @@ sub render_normal {
       { legend => 'other gene',               colour => 'ff6666', text => 'Gene ID' },
       { legend => 'other within-sp. paralog', colour => 'black',  text => 'Gene ID' },
     ], 'Genes', {
-      bold  => 1,
+      # bold  => 1,
       style => 'text',
     });
   } elsif ($cafe) {

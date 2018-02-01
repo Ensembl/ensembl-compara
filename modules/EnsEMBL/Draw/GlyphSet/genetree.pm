@@ -109,6 +109,7 @@ sub _init {
   my $align_bitmap_width = $bitmap_width - $tree_bitmap_width;
   # Calculate space to reserve for the labels
   my( $fontname, $fontsize ) = $self->get_font_details( 'small' );
+  $fontsize = 7; # make default font size 7 instead of the 'small' font size of 6.4 which takes the floor value
   $fontsize = 8 if($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode'));
   my( $longest_label ) = ( sort{ length($b) <=> length($a) } 
                            map{$_->{label}} @nodes );
@@ -289,6 +290,7 @@ sub _init {
     elsif( $f->{_child_count} ){ # Expanded internal node   
 # Draw n_members label on top of the node
       $f->{_n_members} = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && !$f->{_n_members}) ? '0 ' : $f->{_n_members}; #adding a space hack to get it display 0 as label
+
       my $nodes_label = $self->Text
           ({
             'text'       => $f->{_n_members},
@@ -361,11 +363,10 @@ sub _init {
     
     # Leaf label or collapsed node label, coloured for focus gene/species
     if ($f->{label}) {
-      $label_colour = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && !$f->{_n_members}) ? 'Grey' : $label_colour;      
-      # Draw the label      
+      $label_colour = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') && !$f->{_n_members}) ? 'Grey' : $label_colour;
 
-      my $txt = $self->Text
-          ({
+      # Draw the label
+      my $txt = $self->Text({
             'text'       => $f->{label},
             'height'     => $font_height,
             'width'      => $labels_bitmap_width,
@@ -376,9 +377,10 @@ sub _init {
             'y' => $f->{y} - int($font_height/2),
             'x' => $f->{x} + 10 + $collapsed_xoffset,
             'zindex' => 40,
-	  });
+	        });
 
-      $txt->{'font'} = 'MediumBold' if($bold);
+      # increase the size of the text that has been flagged as bold
+      $txt->{'ptsize'} = 8 if ($bold);
       
       if ($f->{'_gene'}) {
         $txt->{'href'} = $self->_url({
@@ -395,8 +397,6 @@ sub _init {
       }
       
       push(@labels, $txt);
-
-
     }
   }
   
