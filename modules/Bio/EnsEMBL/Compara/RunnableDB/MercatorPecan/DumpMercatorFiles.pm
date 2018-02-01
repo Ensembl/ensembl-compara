@@ -103,16 +103,16 @@ sub dumpMercatorFiles {
   my $gdb = $gdba->fetch_by_dbID($gdb_id);
   my $file = $self->param('input_dir') . "/$gdb_id.chroms";
   open F, ">$file";
+  my $core_dba = $gdb->db_adaptor;
+  my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
+  my $assembly_mapper_adaptor = $core_dba->get_AssemblyMapperAdaptor();
+  my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
+  my $seq_level_coord_system = $coord_system_adaptor->fetch_sequence_level;
+  my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems($chromosome_coord_system, $seq_level_coord_system);
   foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
       print F $df->name . "\t" . $df->length,"\n";
       if ($max_gap and $df->coord_system_name eq "chromosome") {
-	  my $core_dba = $gdb->db_adaptor;
-	  my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
-	  my $assembly_mapper_adaptor = $core_dba->get_AssemblyMapperAdaptor();
-	  my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
-	  my $seq_level_coord_system = $coord_system_adaptor->fetch_sequence_level;
 
-	  my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems($chromosome_coord_system, $seq_level_coord_system);
 	  my @mappings = $assembly_mapper->map($df->name, 1, $df->length, 1, $chromosome_coord_system);
 	  
 	  my $part = 1;
