@@ -189,6 +189,7 @@ sub write_statistics {
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     my ($num_blocks) = $sth->fetchrow_array();
+    $sth->finish;
 
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
