@@ -104,7 +104,7 @@ sub default_options {
     'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0'),
     'pecan_exe_dir'             => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
 
-    'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+    'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_92',
     # connection parameters to various databases:
 
         'host'        => 'mysql-ens-compara-prod-3.ebi.ac.uk',
@@ -144,15 +144,6 @@ sub default_options {
 	   -driver => 'mysql',
         },
 
-        #production database
-        'production_db' => {   # required by the load_fresh_members analysis
-           -host   => 'mysql-ens-sta-1',
-           -port   => 4519,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'ensembl_production_91',
-       -driver => 'mysql',
-        },
 	#Testing mode
         'reuse_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'ensembldb.ensembl.org',

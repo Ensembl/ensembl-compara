@@ -406,7 +406,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20,
-                'production_db_url' => $self->dbconn_2_url('production_db'),
+                'production_db_url' => $self->o('production_db_url'),
                 },
 	    -rc_name => '1.8Gb',
         },
