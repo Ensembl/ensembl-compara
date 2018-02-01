@@ -147,17 +147,8 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => '90'
+            #-db_version => '90'
         },
-#        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
-#        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
-#        'reuse_db' => {   # usually previous production database
-#           -host   => 'compara4',
-#           -port   => 3306,
-#           -user   => 'ensro',
-#           -pass   => '',
-#           -dbname => 'kb3_pecan_19way_61',
-#        },
 
 
      # stats report email
