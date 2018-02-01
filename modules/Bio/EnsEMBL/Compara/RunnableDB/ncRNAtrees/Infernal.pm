@@ -167,7 +167,7 @@ sub write_output {
 
     $self->parse_and_store_alignment_into_tree;
     print STDERR "ALIGNMENT ID IS: ", $self->param('alignment_id'), "\n";
-    $self->store_refined_profile;
+    $self->store_refined_profile if $self->param('refined_profile');
     $self->_store_aln_tags;
 
     $self->call_one_hc('alignment');
@@ -301,8 +301,8 @@ sub run_infernal {
 
   #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
   if ($log_message =~ /Error: Calculating QDBs, Z got insanely large /){
+      $self->warning("Could not refine the alignment: $log_message");
       $self->param('stk_output', $stk_output);
-      $self->param('refined_profile', $self->param('profile_file'));
 
   } elsif ($cmd_return_value->exit_code) {
       die sprintf("Could not run %s, got %s\nSTDOUT %s\nSTDERR %s\n", $cmd, $cmd_return_value->exit_code, $cmd_return_value->out, $log_message);
