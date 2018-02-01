@@ -51,7 +51,6 @@ use Capture::Tiny qw(tee_merged);
 use Data::Dumper;
 
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument;
 
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
