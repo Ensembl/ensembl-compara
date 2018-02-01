@@ -167,7 +167,7 @@ sub write_output {
 
     $self->parse_and_store_alignment_into_tree;
     print STDERR "ALIGNMENT ID IS: ", $self->param('alignment_id'), "\n";
-    $self->store_refined_profile;
+    $self->store_refined_profile if $self->param('refined_profile');
     $self->_store_aln_tags;
 
     $self->call_one_hc('alignment');
@@ -290,22 +290,23 @@ sub run_infernal {
   #Increasing the maximum allowable DP matrix size to <x> Mb  default(2048.0)
   # This may be necessary if cmbuild crashes.
   if(defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)){
-    $cmd .= " --mxsize $infernal_mxsize --refine $refined_stk_output "; # large alignments FIXME separate Infernal_huge
-  }else{
-    $cmd .= " --refine $refined_stk_output ";
+    $cmd .= " --mxsize $infernal_mxsize"; # large alignments FIXME separate Infernal_huge
   }
+  $cmd .= " --refine $refined_stk_output";
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
-  $self->run_command($cmd, { die_on_failure => 0 });
-
-  #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
   my $cmd_return_value = $self->run_command($cmd);
   my $log_message = $cmd_return_value->err;
 
+  #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
   if ($log_message =~ /Error: Calculating QDBs, Z got insanely large /){
+      $self->warning("Could not refine the alignment: $log_message");
       $self->param('stk_output', $stk_output);
-      $self->param('refined_profile', $self->param('profile_file'));
+
+  } elsif ($cmd_return_value->exit_code) {
+      die sprintf("Could not run %s, got %s\nSTDOUT %s\nSTDERR %s\n", $cmd, $cmd_return_value->exit_code, $cmd_return_value->out, $log_message);
+
   }
   else{
       $self->param('stk_output', $refined_stk_output);
@@ -475,6 +476,7 @@ sub store_fasta_alignment {
     $aln->aln_length($alignment_length);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
+    my $n_deleted_members = 0;
     for my $member (@{$aln->get_all_Members}) {
         my $seq = $new_align_hash->{$member->sequence_id};
         $seq =~ s/-//g;
@@ -485,9 +487,17 @@ sub store_fasta_alignment {
             # array-ref within the MemberSet, so the cursor of the above
             # for loop is unaffected
             $aln->remove_Member($member);
+            $n_deleted_members++;
             next;
         }
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
+    }
+
+    if ($n_deleted_members) {
+        # Empty the cached array of members, so that $self->param('gene_tree')->get_all_Members doesn't see the removed members any more
+        delete $self->param('gene_tree')->{'_member_array'};
+        # Adjust the gene_count
+        $self->param('gene_tree')->store_tag('gene_count', $self->param('gene_tree')->get_value_for_tag('gene_count')-$n_deleted_members);
     }
 
     $self->compara_dba->get_GeneAlignAdaptor->store($aln);

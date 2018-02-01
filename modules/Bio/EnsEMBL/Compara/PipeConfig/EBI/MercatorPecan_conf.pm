@@ -71,13 +71,12 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 	#pecan mlss_id
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'pipeline_name'         => 'pecan_27way',
         'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
-        'species_set'           => '31amniotes',
+        'species_set_name'      => 'amniotes',
         'do_not_reuse_list'     => [ ],
 
     #location of full species tree, will be pruned
-	'species_tree_file'     => '/homes/carlac/projects/release91/species_tree.31amniotes.branch_len.nwk',
+        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
     #master database
     'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
@@ -104,18 +103,8 @@ sub default_options {
     'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0'),
     'pecan_exe_dir'             => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
 
-    'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production',
+    'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_92',
     # connection parameters to various databases:
-
-        'host'        => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => $self->o('host'),
-            -port   => 4523,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),
-        -driver => 'mysql',
-        },
 
         'staging_loc' => {                     # general location of half of the current release core databases
             -host   => 'mysql-ens-sta-1',
@@ -129,30 +118,21 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => 90,
+            -db_version => 91,
         },
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
        'curr_core_sources_locs'    => [ $self->o('staging_loc')],
 
        'reuse_db' => {   # usually previous pecan production database
-           -host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-           -port   => 4522,
+           -host   => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+           -port   => 4523,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'muffato_27mammals_pecan_90',
+           -dbname => 'waakanni_pecan_31way_91',
 	   -driver => 'mysql',
         },
 
-        #production database
-        'production_db' => {   # required by the load_fresh_members analysis
-           -host   => 'mysql-ens-sta-1',
-           -port   => 4519,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'ensembl_production_91',
-       -driver => 'mysql',
-        },
 	#Testing mode
         'reuse_loc' => {                   # general location of the previous release core databases (for checking their reusability)
             -host   => 'ensembldb.ensembl.org',
@@ -166,17 +146,8 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => '90'
+            #-db_version => '90'
         },
-#        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
-#        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
-#        'reuse_db' => {   # usually previous production database
-#           -host   => 'compara4',
-#           -port   => 3306,
-#           -user   => 'ensro',
-#           -pass   => '',
-#           -dbname => 'kb3_pecan_19way_61',
-#        },
 
 
      # stats report email

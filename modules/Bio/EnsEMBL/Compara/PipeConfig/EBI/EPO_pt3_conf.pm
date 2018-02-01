@@ -85,7 +85,7 @@ sub default_options {
       'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
       'port' => 4523,
 
-      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.42mammals.branch_len.nw',
+      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
       'bl2seq' => undef,
 

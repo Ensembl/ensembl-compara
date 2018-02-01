@@ -62,7 +62,7 @@ sub run {
     if ($self->param('tag_residue_count') > 150000) {  ## Likely to take too long
         $self->run_mafft;
         # We put the alignment into the db
-        $self->store_fasta_alignment('mafft_output');
+        $self->store_fasta_alignment('mafft');
         $self->param('gene_align_id', $self->param('alignment_id'));
         $self->call_one_hc('unpaired_alignment');
 
@@ -99,7 +99,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    $self->store_fasta_alignment("prank_output");
+    $self->store_fasta_alignment('prank');
     $self->param('gene_align_id', $self->param('alignment_id'));
     $self->call_one_hc('unpaired_alignment');
     for my $method (qw/phyml nj/) {
@@ -190,7 +190,18 @@ sub run_mafft {
     print STDERR "Running mafft\n$cmd\n" if ($self->debug);
     print STDERR "mafft_output has been set to " . $self->param('mafft_output') . "\n" if ($self->debug);
 
-    $self->run_command($cmd, { die_on_failure => 1 } );
+    my $command = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
+    if ($command->exit_code) {
+        print STDERR "We have a problem running Mafft -- Inspecting error\n";
+
+        if ($command->exit_code == -2) {
+            # Even Mafft takes ages. Give up ... !
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("Timeout reached, Mafft analysis will most likely not finish. Giving up on this family.\n"));
+        }
+
+        die "MAFFT ERROR: ", $command->err, "\n";
+    }
 }
 
 sub run_RAxML {
@@ -225,16 +236,13 @@ sub run_RAxML {
         print STDERR "We have a problem running RAxML -- Inspecting error\n";
         # memory problem?
         if ($command->err =~ /malloc_aligned/) {
-            $self->dataflow_output_id (
-                                       {
-                                        'gene_tree_id' => $self->param('gene_tree_id'),
-                                       }, -1
-                                      );
+            $self->dataflow_output_id(undef, -1);
             $self->input_job->autoflow(0);
             $self->complete_early("RAXML ERROR: Problem allocating memory. Re-scheduled with more memory");
         }
 
         if ($command->exit_code == -2) {
+            $self->store_fasta_alignment('mafft');
             $self->dataflow_output_id (
                 {
                     'gene_tree_id'  => $self->param('gene_tree_id'),
@@ -302,7 +310,18 @@ sub run_prank {
     if ($command->exit_code) {
         print STDERR "We have a problem running PRANK\n";
         if ($command->exit_code == -2) {
-            $self->warning("Timeout reached, analysis will most likelly not finish.");
+            $self->store_fasta_alignment('mafft');
+            $self->dataflow_output_id (
+                {
+                    'gene_tree_id'  => $self->param('gene_tree_id'),
+                    'fastTreeTag'   => "ftga_it_nj",
+                    'raxmlLightTag' => "ftga_it_ml",
+                    'alignment_id'  => $self->param('alignment_id'),
+                    'aln_seq_type'  => $self->param('aln_seq_type'),
+                }, 3 #branch 3 (fast_trees)
+            );
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("Timeout reached, Prank will most likely not finish. Data-flowing to 'fast_trees'.\n"));
         }
         die "PRANK ERROR: ", $command->err, "\n";
     }
@@ -351,17 +370,16 @@ sub fasta2phylip {
 }
 
 sub store_fasta_alignment {
-    my ($self, $param) = @_;
+    my ($self, $aln_method) = @_;
 
     my $nc_tree_id = $self->param('gene_tree_id');
-    my $uniq_alignment_id = "$param" . "_" . $self->input_job->dbID ;
-    my $aln_file = $self->param($param);
+    my $aln_file = $self->param("${aln_method}_output");
     my $aln_seq_type = $self->param('aln_seq_type');
 
     my $aln = $self->param('gene_tree')->deep_copy();
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
     $aln->seq_type($aln_seq_type);
-    $aln->aln_method('prank');
+    $aln->aln_method($aln_method);
     $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;

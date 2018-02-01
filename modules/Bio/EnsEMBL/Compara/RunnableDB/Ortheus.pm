@@ -204,19 +204,27 @@ sub run {
       #Write to job_message table but without returing an error
       foreach my $err_msg (keys %err_msgs) {
           $self->warning("Ortheus failed with error: $err_msg\n");
-          if ($err_msg =~ /AttributeError: 'int' object has no attribute 'internal'/) {
-              # hack to deal with cases where the dataset is too small for ortheus to
-              # create a tree. Change when Ortheus.py reports a saner error
-              $self->input_job->autoflow(0);
-              $self->complete_early( "Ortheus failed to create a tree - dataset too small. Skipping." );
-          } elsif ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException:  Total is unacceptable NaN/) {
+          if ($err_msg =~ /Exception in thread "main" java.lang.IllegalStateException($|:\s+Total is unacceptable (-?Infinity|NaN))/m) {
               # Not sure why this happens (the input data looked sensible)
               # Let's discard this job.
               $self->input_job->autoflow(0);
               $self->complete_early( "Pecan failed to align the sequences. Skipping." );
+          } elsif ($err_msg =~ /Java heap space/ || $err_msg =~ /GC overhead limit exceeded/ || $err_msg =~ /Cannot allocate memory/ || $err_msg =~ /OutOfMemoryError/) {
+
+              #Flow to next memory.
+              my $num_jobs = $self->dataflow_output_id(undef, -1);
+
+              #Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
+              if (@$num_jobs == 0) {
+                  throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
+              }
+
+              #Don't want to flow to gerp jobs here
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Not enough memory available in this analysis. New job created in the #-1 branch\n" );
           }
       }
-      return if %err_msgs;
+      die "There were errors when running Ortheus. Please investigate\n" if %err_msgs;
   }
 
   $self->parse_results();

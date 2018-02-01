@@ -96,7 +96,7 @@ sub default_options {
             'create_ss_picts'          => 0,
 
             # ambiguity codes
-            'allow_ambiguity_codes'    => 0,
+            'allow_ambiguity_codes'    => 1,
 
             # Do we want to initialise the CAFE part now ?
             'initialise_cafe_pipeline'  => undef,
@@ -514,7 +514,7 @@ sub pipeline_analyses {
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -parameters    => {
-                    'max_members'   => 10000,
+                    'max_members'   => 50000,
                 },
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => {
@@ -528,7 +528,7 @@ sub pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => [ 'hc_epo_removed_members' ],
-                -rc_name => '8Gb_job',
+                -rc_name => '16Gb_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
@@ -561,6 +561,7 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
+                                'infernal_mxsize' => $self->o('infernal_mxsize'),
                                },
                 -flow_into     => {
                     1 => ['quick_tree_break' ],
@@ -575,7 +576,7 @@ sub pipeline_analyses {
                 -parameters => {
                                 'cmbuild_exe' => $self->o('cmbuild_exe'),
                                 'cmalign_exe' => $self->o('cmalign_exe'),
-                                'infernal_mxsize'      => $self->o('infernal_mxsize'),
+                                'infernal_mxsize' => $self->o('infernal_mxsize'),
                                },
                 -flow_into     => [ 'quick_tree_break' ],
                 -rc_name => '4Gb_job',
@@ -629,6 +630,7 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
+                                   'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
@@ -643,6 +645,7 @@ sub pipeline_analyses {
                 -parameters    => {
                                    'cmbuild_exe' => $self->o('cmbuild_exe'),
                                    'cmalign_exe' => $self->o('cmalign_exe'),
+                                   'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
                 -flow_into     => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                 -rc_name       => '2Gb_job',
@@ -686,7 +689,7 @@ sub pipeline_analyses {
              -analysis_capacity => $self->o('raxml_capacity'),
              -parameters => {
                              %raxml_parameters,
-                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'raxml_number_of_cores' => 4,
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
@@ -699,7 +702,7 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('raxml_capacity'),
             -parameters => {
                             %raxml_parameters,
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 4,
                            },
             -rc_name => '2Gb_4c_job',
         },
@@ -711,14 +714,13 @@ sub pipeline_analyses {
                             %raxml_parameters,
                             'cmd_max_runtime'       => '43200',
                             'mafft_exe'             => $self->o('mafft_exe'),
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 4,
                             'prank_exe'             => $self->o('prank_exe'),
                            },
             -flow_into => {
                            -1 => ['genomic_alignment_himem'],
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
-                           -2 => [ 'fast_trees' ],
                           },
             -rc_name => '2Gb_4c_job',
             -priority      => $self->o('genomic_alignment_priority'),
@@ -732,7 +734,7 @@ sub pipeline_analyses {
                             %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => 4,
                             },
             -flow_into => {
                            -1 => ['fast_trees_himem'],
@@ -747,7 +749,7 @@ sub pipeline_analyses {
                             %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => 4,
                             },
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
@@ -762,7 +764,7 @@ sub pipeline_analyses {
                             %examl_parameters,
                              'fasttree_exe'          => $self->o('fasttree_exe'),
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
-                             'examl_number_of_cores' => $self->o('raxml_number_of_cores'),
+                             'examl_number_of_cores' => 4,
                             },
              -rc_name => '32Gb_mpi_4c_job',
             },
@@ -774,7 +776,7 @@ sub pipeline_analyses {
             -parameters => {
                             %raxml_parameters,
                             'cmd_max_runtime'       => '43200',
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
@@ -785,7 +787,6 @@ sub pipeline_analyses {
                         3 => [ 'fast_trees' ],
                         2 => [ 'genomic_tree_himem' ],
                         -1 => [ 'genomic_alignment_hugemem' ],
-                        -2 => [ 'fast_trees' ],
                        },
         },
         {
@@ -794,7 +795,7 @@ sub pipeline_analyses {
          -analysis_capacity => $self->o('genomic_alignment_capacity'),
             -parameters => {
                             %raxml_parameters,
-                            'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
+                            'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                             'inhugemem' => 1,
@@ -861,7 +862,7 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
             },
             -flow_into  => [ 'hc_tree_homologies' ],
-           -rc_name => '500Mb_job',
+           -rc_name => '1Gb_job',
         },
 
         {   -logic_name    => 'ktreedist',

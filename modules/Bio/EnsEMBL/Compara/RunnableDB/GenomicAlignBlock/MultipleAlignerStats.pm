@@ -189,6 +189,7 @@ sub write_statistics {
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     my ($num_blocks) = $sth->fetchrow_array();
+    $sth->finish;
 
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
@@ -220,7 +221,10 @@ sub calc_stats {
 
     # Always construct a eHive DBConnection object because
     # $self->compara_dba may be a Core DBConnection (which lacks ->url())
-    my $compara_url = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc)->url;
+    unless ($self->compara_dba->dbc->isa('Bio::EnsEMBL::Hive::DBSQL::DBConnection')) {
+        bless $self->compara_dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
+    }
+    my $compara_url = $self->compara_dba->dbc->url;
 
     #dump alignment_bed
     my $feature = "mlss_" . $self->param('mlss_id');

@@ -147,6 +147,11 @@ if ($compara_url) {
       };
 }
 
+if ($compara_dba) {
+    # will have disconnect_when_inactive set to 1.
+    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+}
+
 my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
 $species_name .= ".$component" if $component;
 
@@ -251,6 +256,9 @@ if ($regions) {
   $all_slices = $slice_adaptor->fetch_all("toplevel");
 }
 
+# For fast access find all the karyotype-level slices
+my %karyo_hash = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype() };
+
 foreach my $slice (sort {
     if ($a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
         $a->seq_region_name <=> $b->seq_region_name
@@ -259,7 +267,7 @@ foreach my $slice (sort {
             @$all_slices) {
   # print STDERR $slice->name, "\n";
   my $name = $slice->seq_region_name;
-  $name = 'chr'.$name if $slice->is_chromosome;
+  $name = 'chr'.$name if $karyo_hash{$name};
 
   if (defined($from)) {
     if ($slice->seq_region_name eq $from) {
@@ -526,12 +534,19 @@ foreach my $slice (sort {
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {
 
-    if (!defined $dnafrag_adaptor->fetch_by_Slice($slice)) {
+    my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
+    if (!defined $dnafrag) {
          print STDERR "Unable to fetch " . $slice->name . "\n";
          next;
      }
 
-    my $dnafrag_id = $dnafrag_adaptor->fetch_by_Slice($slice)->dbID;
+    # Heuristics: There could be quite some alignments on a >1Mbp region,
+    # so disconnect from the database
+    if ($dnafrag->length > 1_000_000) {
+        $slice->adaptor->dbc->disconnect_if_idle;
+    }
+
+    my $dnafrag_id = $dnafrag->dbID;
     my $sql = "SELECT dnafrag_start, dnafrag_end FROM genomic_align WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID;
     if ($extra) {

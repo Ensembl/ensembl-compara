@@ -76,9 +76,10 @@ sub default_options {
         #'species_set'           => '24amniotes',
 	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 #	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+	#'species_set_name'      => 'amniotes',
 
     # Automatically set using the above
-        'pipeline_name'         => 'pecan_27way',
+        'pipeline_name'         => $self->o('species_set_name').'_mercator_pecan_'.$self->o('rel_with_suffix'),
 
     # dependent parameters:
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
@@ -285,7 +286,7 @@ sub pipeline_analyses {
 	    -parameters => {
 		'reuse_url'   => $self->dbconn_2_url('reuse_db'),
 	    },
-	    -rc_name => '1Gb',
+	    -rc_name => '1.8Gb',
         },
 
         {   -logic_name => 'create_mlss_ss',
@@ -406,7 +407,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20,
-                'production_db_url' => $self->dbconn_2_url('production_db'),
+                'production_db_url' => $self->o('production_db_url'),
                 },
 	    -rc_name => '1.8Gb',
         },

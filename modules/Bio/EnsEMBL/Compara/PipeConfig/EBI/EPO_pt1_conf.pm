@@ -73,7 +73,8 @@ sub default_options {
         'species_set_name' => 'sauropsids',
         'reference_genome_db_id' => 157,
         'list_of_pairwise_mlss_ids' => "809,816,817",
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.7sauropsids.branch_len.nw',
+        #location of full species tree, will be pruned
+        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
 
         # connection parameters to various databases:

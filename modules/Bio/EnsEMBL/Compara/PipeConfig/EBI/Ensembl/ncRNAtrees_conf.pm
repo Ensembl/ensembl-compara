@@ -120,11 +120,10 @@ sub default_options {
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
 
             # Other parameters
-            'raxml_number_of_cores' => 4,
             'infernal_mxsize'       => 10000,
 
             # For the homology_id_mapping
-            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90",
+            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_91",
     };
 }   
 
