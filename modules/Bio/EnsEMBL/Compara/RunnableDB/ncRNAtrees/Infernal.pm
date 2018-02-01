@@ -476,6 +476,7 @@ sub store_fasta_alignment {
     $aln->aln_length($alignment_length);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
+    my $n_deleted_members = 0;
     for my $member (@{$aln->get_all_Members}) {
         my $seq = $new_align_hash->{$member->sequence_id};
         $seq =~ s/-//g;
@@ -486,9 +487,15 @@ sub store_fasta_alignment {
             # array-ref within the MemberSet, so the cursor of the above
             # for loop is unaffected
             $aln->remove_Member($member);
+            $n_deleted_members++;
             next;
         }
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
+    }
+
+    if ($n_deleted_members) {
+        # Empty the cached array of members, so that $self->param('gene_tree')->get_all_Members doesn't see the removed members any more
+        delete $self->param('gene_tree')->{'_member_array'};
     }
 
     $self->compara_dba->get_GeneAlignAdaptor->store($aln);
