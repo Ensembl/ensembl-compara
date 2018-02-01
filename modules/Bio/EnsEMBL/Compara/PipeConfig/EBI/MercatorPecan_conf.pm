@@ -118,18 +118,18 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => 90,
+            -db_version => 91,
         },
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
        'curr_core_sources_locs'    => [ $self->o('staging_loc')],
 
        'reuse_db' => {   # usually previous pecan production database
-           -host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-           -port   => 4522,
+           -host   => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+           -port   => 4523,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'muffato_27mammals_pecan_90',
+           -dbname => 'waakanni_pecan_31way_91',
 	   -driver => 'mysql',
         },
 
