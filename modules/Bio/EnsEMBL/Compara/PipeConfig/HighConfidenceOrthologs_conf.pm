@@ -131,5 +131,12 @@ sub pipeline_analyses {
     return $pipeline_analyses;
 }
 
+sub resource_classes {
+  my ($self) = @_;
+  return {
+    'default' => {'LSF' => '-q production-rh7 -M  1000 -R "rusage[mem=1000]"'},
+  };
+}
+
 1;
 
