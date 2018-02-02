@@ -35,9 +35,9 @@ sub default_options {
 
 
 
-	'rel_suffix'	=> '67_way_mammals_91',
-	'ensembl_release' => 91,
-	'prev_release'  => 90,
+	'rel_suffix'	=> '68_way_mammals_92',
+	'ensembl_release' => 92,
+	'prev_release'  => 91,
 
     'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
 
@@ -58,38 +58,18 @@ sub default_options {
         -port   => 4485,
         -user   => 'ensro',
         -pass   => '',
-		-dbname => 'ensembl_compara_90',
+		-dbname => 'ensembl_compara_91',
 		-driver => 'mysql',
     },
 
     #location of new pairwise mlss if not in the pairwise_default_location eg:
     #'pairwise_exception_location' => { },
 	 'pairwise_exception_location' => {
-         1026 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1027 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1028 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1029 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1030 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1031 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1032 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1033 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1034 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1035 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1036 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1037 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1094 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1095 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1096 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1098 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1099 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1100 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_primates_fix_91',
-         1105 => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_human_cat_lastz_91',
-         1106 => 'mysql://ensro@mysql-ens-compara-prod-1:4485/carlac_cat_dog_lastz_91',
  #        1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
 	 },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_mammals_epo_91',
+	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_mammals_epo_92',
 
 	'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
