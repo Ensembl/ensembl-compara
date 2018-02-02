@@ -315,7 +315,7 @@ sub table_row {
     $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($record_data->{'species'}, 'SPECIES_COMMON_NAME') });
     my $sample_data = $hub->species_defs->get_config($record_data->{'species'}, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
-    (my $menu_name = $record_data->{'name'}) =~ s/ /_/g;
+    (my $menu_name = $self->strip_HTML($record_data->{'name'})) =~ s/ /_/g;
     $config_link = $hub->url({
         species  => $record_data->{'species'},
         type     => 'Location',

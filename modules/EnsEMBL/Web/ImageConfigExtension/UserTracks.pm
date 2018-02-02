@@ -29,7 +29,7 @@ no warnings qw(uninitialized);
 
 use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
-use EnsEMBL::Web::Utils::Sanitize qw(clean_id);
+use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
 sub load_user_tracks {
   ## Loads tracks attached by user
@@ -163,7 +163,7 @@ sub _load_remote_url_tracks {
     ## Don't turn off trackhubs that were added before disconnection code
     next if (defined $data->{'disconnected'} && $data->{'disconnected'} == 1);
 
-    my $source_name = $data->{'name'} || $data->{'url'};
+    my $source_name = strip_HTML($data->{'name'}) || $data->{'url'};
 
     next unless $source_name;
 
@@ -209,7 +209,7 @@ sub _load_remote_url_tracks {
     my $track_data = $tracks_data{$code};
 
     if (lc $track_data->{'format'} eq 'trackhub') {
-      my ($trackhub_menu) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub($track_data->{'source_name'}, $track_data->{'source_url'}) : ();
+      my ($trackhub_menu) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}) : ();
 
       if ($trackhub_menu && ($trackhub_menu = $self->get_node($trackhub_menu))) {
         $trackhub_menu->set_data('linked_record', $track_data->{'linked_record'});
@@ -326,7 +326,7 @@ sub _add_trackhub {
     ## Probably couldn't contact the hub
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
-    my $shortLabel = $hub_info->{'details'}{'shortLabel'};
+    my $shortLabel = strip_HTML($hub_info->{'details'}{'shortLabel'});
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
 
     my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $hub_info->{'details'}{'longLabel'}}));
@@ -428,7 +428,7 @@ sub _add_trackhub_tracks {
     menu_key      => $name,
     menu_name     => $name,
     submenu_key   => clean_id("${name}_$data->{'track'}", '\W'),
-    submenu_name  => $data->{'shortLabel'},
+    submenu_name  => strip_HTML($data->{'shortLabel'}),
     submenu_desc  => $data->{'longLabel'},
     trackhub      => 1,
   );
@@ -524,7 +524,7 @@ sub _add_trackhub_tracks {
 
     ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
     my $squish       = $ucsc_display eq 'squish';
-    (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
+    (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
 
     ## Translate between UCSC terms and Ensembl ones
     my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
@@ -575,8 +575,8 @@ sub _add_trackhub_tracks {
     }
 
     if ($matrix) {
-      my $caption = $track->{'shortLabel'};
-      $source->{'section'} = $parent->data->{'shortLabel'};
+      my $caption = strip_HTML($track->{'shortLabel'});
+      $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
       $source->{'labelcaption'} = $caption;
 
@@ -677,7 +677,7 @@ sub load_file_format {
         ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
         my $force_hide = $internal ? 1 : 0;
-        $self->_add_trackhub($source->{'source_name'}, $source->{'url'}, undef, $menu, $force_hide);
+        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, undef, $menu, $force_hide);
       }
       else {
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
