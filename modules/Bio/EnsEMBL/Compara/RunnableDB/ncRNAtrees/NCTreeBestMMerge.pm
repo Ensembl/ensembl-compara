@@ -140,6 +140,13 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
+  ## Remove the tree if there are no contributions
+  unless (scalar(keys %{$self->param('inputtrees_unrooted')} )) {
+      $self->compara_dba->get_GeneTreeAdaptor->delete_tree( $self->param('gene_tree') );
+      $self->input_job->autoflow(0);
+      $self->complete_early($self->param('gene_tree_id')." tree has no contributions from genomic_tree / fast_trees / sec_struct_model_tree. Deleting this family !\n");
+  }
+
   my $merged_tree;
 
   my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
