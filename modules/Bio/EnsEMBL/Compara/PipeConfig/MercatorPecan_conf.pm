@@ -124,9 +124,10 @@ sub default_options {
      #
      'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
     'pecan_capacity'        => 500,
+    'pecan_himem_capacity'  => 1000,
     'gerp_capacity'         => 500,
     'blast_capacity'        => 100,
-    'reuse_capacity'        => 100,
+    'reuse_capacity'        => 5,
 
      # stats report email
      'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
@@ -257,7 +258,7 @@ sub pipeline_analyses {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'master_db' => $self->o('master_db'),
             },
-            -hive_capacity => 5,    # they are all short jobs, no point doing them in parallel
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 1 => [ 'check_reusability' ],   # each will flow into another one
             },
@@ -273,7 +274,7 @@ sub pipeline_analyses {
                 'registry_dbs'  => $self->o('reuse_core_sources_locs'),
 		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
-            -hive_capacity => 10,    # allow for parallel execution
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 2 => [ 'check_reuse_db', '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id' ],
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
@@ -330,7 +331,7 @@ sub pipeline_analyses {
                 'table'      => 'sequence',
                 'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
             },
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'seq_member_table_reuse' ],    # n_reused_species
 	    -rc_name => '1Gb',
         },
@@ -371,7 +372,7 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
 	    -rc_name => '100Mb',
         },
 
@@ -490,7 +491,6 @@ sub pipeline_analyses {
 
          {   -logic_name => 'mercator_file_factory',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::MercatorFileFactory',
-            -hive_capacity => 1,
 	    -flow_into => { 
 			    'A->1' => { 'mercator' => undef },
 			    '2->A' => ['dump_mercator_files'],
@@ -513,7 +513,6 @@ sub pipeline_analyses {
 			     'input_dir' => $self->o('input_dir'),
                              'mercator_exe' => $self->o('mercator_exe'),
 			    },
-             -hive_capacity => 1,
 	     -rc_name => '14Gb',
              -flow_into => {
                  "2->A" => WHEN (
@@ -571,7 +570,7 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '7Gb',
-             -hive_capacity => $self->o('pecan_capacity'),
+             -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem2'], #retry with even more heap memory
@@ -595,7 +594,7 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '14Gb',
-             -hive_capacity => $self->o('pecan_capacity'),
+             -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
 		 2 => [ 'pecan_mem3'], #retry with even more heap memory
@@ -619,7 +618,6 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 1,
 	     -rc_name => '30Gb',
-             -hive_capacity => $self->o('pecan_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
              },
