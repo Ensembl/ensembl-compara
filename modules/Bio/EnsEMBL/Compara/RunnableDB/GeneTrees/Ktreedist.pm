@@ -220,16 +220,9 @@ sub run_ktreedist {
   print CTFILE "End;\n\n";
   close CTFILE;
 
-  my $reference_string;
-  my $ref_label;
- 
-  if ($self->param('ref_tree_clusterset')){
-    $reference_string = $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')}->newick_format('member_id_taxon_id');
-    $ref_label = $self->param('ref_tree_clusterset');
-  }else{
-    $reference_string = $self->param('gene_tree')->newick_format('member_id_taxon_id');
-    $ref_label = 'default';
-  }
+  my $reference_tree = $self->param('ref_tree_clusterset') ? $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')} : $self->param('gene_tree');
+  my $reference_string = $reference_tree->newick_format('member_id_taxon_id');
+  my $ref_label = $self->param('gene_tree')->clusterset_id;
   
   $self->throw("error with newick tree") unless (defined($reference_string));
 
