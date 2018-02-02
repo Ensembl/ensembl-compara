@@ -797,7 +797,7 @@ sub _run_ortheus {
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     $self->param('options', ['-y']);
-    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus->run_ortheus($self);
+    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
 
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {
