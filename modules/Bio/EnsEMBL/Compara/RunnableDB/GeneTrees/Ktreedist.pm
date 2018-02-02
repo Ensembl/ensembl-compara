@@ -214,17 +214,6 @@ sub run_ktreedist {
     $newick_string =~ s/\[[^\]]*\]//g;
     $newick_string =~ s/\n//g;
 
-    #We replace all the zero branch lengths (added by the parser, since parsimony trees have no BLs) with 1s.
-    #This allows KtreeDist to run without crashing.
-
-    #!!!!!! IMPORTANT !!!!!!!!
-    # Should ONLY look into RF distances for raxml_parsimony trees. Other distances should be ignored.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    if ($method eq "raxml_parsimony"){
-        $newick_string =~ s/:0/:1/g;
-    }
-
     $self->throw("error with newick tree") unless (defined($newick_string));
     print CTFILE "TREE    $method = $newick_string\n";
   }
@@ -298,7 +287,6 @@ sub load_input_trees {
         #If we have a different set of alternative trees and the tags are not specified, it will skip the current tree
         next if ($self->param('ref_tree_clusterset') && (!$alternative_trees{$other_tree->clusterset_id}));
 
-        #print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         print "tree:" . $other_tree->clusterset_id . "\n" if ($self->debug);
 
         # ktreedist will crash if the trees being compared have different number of leaves.
@@ -315,14 +303,10 @@ sub load_input_trees {
         }
         print "ref_tree_leaves:" . scalar( keys( %{ $self->param('ref_tree_seq_member_ids') } ) ) . "\tcomp_tree_leaves:" . scalar(@{ $other_tree->get_all_leaves }) . "\tafter removing:" . scalar(@{ $other_tree->get_all_leaves }) . "\n" if ( $self->debug );
 
-
-        #Parsimony trees dont have branch lengths.
-        if ($other_tree->clusterset_id eq "raxml_parsimony"){
-            $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}');
-        }else{
-            $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
-        }
-
+        # We set all the branch lengths to 1 in trees that are missing branch lengths
+        # (e.g raxml_parsimony), so that KtreeDist runs without crashing
+        my $ryo_format = $self->check_distances_to_parent($other_tree) ? '%{-m}%{"_"-x}:%{d}' : '%{-m}%{"_"-x}:1';
+        $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo', $ryo_format);
     }
     return 1;
 }
