@@ -251,7 +251,7 @@ sub run_ktreedist {
           "End;\n",
       ));
 
-  my $cmd = "$ktreedist_exe -a -rt $referencefilename -ct $comparisonfilename";
+  my $cmd = [$ktreedist_exe, '-a', '-rt', $referencefilename, '-ct', $comparisonfilename];
   my $runCmd = $self->run_command($cmd);
   if ($runCmd->exit_code) {
       if ($runCmd->err =~ /Substitution loop at.*ktreedist line 1777/) {
