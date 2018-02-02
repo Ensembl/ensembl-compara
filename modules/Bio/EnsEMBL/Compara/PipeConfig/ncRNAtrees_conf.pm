@@ -703,9 +703,9 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('raxml_capacity'),
             -parameters => {
                             %raxml_parameters,
-                            'raxml_number_of_cores' => 4,
+                            'raxml_number_of_cores' => 8,
                            },
-            -rc_name => '2Gb_4c_job',
+            -rc_name => '4Gb_8c_job',
         },
 
         {   -logic_name    => 'genomic_alignment',
