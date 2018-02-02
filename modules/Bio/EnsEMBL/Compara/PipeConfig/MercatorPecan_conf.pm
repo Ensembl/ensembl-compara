@@ -514,7 +514,7 @@ sub pipeline_analyses {
                              'mercator_exe' => $self->o('mercator_exe'),
 			    },
              -hive_capacity => 1,
-	     -rc_name => '3.5Gb',
+	     -rc_name => '14Gb',
              -flow_into => {
                  "2->A" => WHEN (
                     "(#total_residues_count# <= 3000000) || ( #dnafrag_count# <= 10 )"                          => "pecan",
