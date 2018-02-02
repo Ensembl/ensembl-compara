@@ -149,29 +149,16 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-#  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
   $self->require_executable('exonerate_exe');
 
   $self->compara_dba->dbc->disconnect_if_idle;
-  my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::Pecan(
-      -workdir => $self->worker_temp_directory,
-      -fasta_files => $self->param('fasta_files'),
-      -tree_string => $self->param('pecan_tree_string'),
-#      -analysis => $fake_analysis,
-      -parameters => $self->param('java_options'),
-      -exonerate_exe => $self->param_required('exonerate_exe'),
-      -pecan_exe_dir => $self->param_required('pecan_exe_dir'),
-      -pecan_java_class => $self->param_required('default_java_class'),
-      -estimate_tree_exe => $self->param_required('estimate_tree_exe'),
-      -java_exe =>  $self->param_required('java_exe'),
-      );
-  $self->param('runnable', $runnable);
 
   $self->param('more_heap', 0);
   eval {
-      $runnable->run_analysis;
+      my $pecan_gabs = Bio::EnsEMBL::Compara::Production::Analysis::Pecan::run_pecan($self);
+      $self->param('pecan_gabs', $pecan_gabs);
   } or do {
       if ($@ =~ /Java heap space/ || 
 	 $@ =~ /GC overhead limit exceeded/ || 
@@ -211,10 +198,10 @@ sub write_output {
 sub _write_output {
   my ($self) = @_;
 
-  if ($self->param('runnable')->{tree_to_save}) {
+  if ($self->param('tree_to_save')) {
     my $meta_container = $self->compara_dba->get_MetaContainer;
     $meta_container->store_key_value("synteny_region_tree_".$self->param('synteny_region_id'),
-        $self->param('runnable')->{tree_to_save});
+        $self->param('tree_to_save'));
   }
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -222,7 +209,7 @@ sub _write_output {
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
 
-  foreach my $gab (@{$self->param('runnable')->output}) {
+  foreach my $gab (@{$self->param('pecan_gabs')}) {
       foreach my $ga (@{$gab->genomic_align_array}) {
 	  $ga->adaptor($gaa);
 	  $ga->method_link_species_set($mlss);
