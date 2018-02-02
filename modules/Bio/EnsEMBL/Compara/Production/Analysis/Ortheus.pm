@@ -27,7 +27,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Ortheus
+Bio::EnsEMBL::Compara::Production::Analysis::Ortheus
 
 =head1 DESCRIPTION
 
