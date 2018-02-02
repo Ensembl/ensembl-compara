@@ -209,8 +209,10 @@ sub run_ktreedist {
   foreach my $method (keys %{$self->param('inputtrees_rooted')}) {
     my $inputtree = $self->param('inputtrees_rooted')->{$method};
     die ($method." is not defined in inputtrees_rooted")  unless (defined $inputtree);
-    my $comparison_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree);
-    my $newick_string = $comparison_tree->newick_format("simple");
+    # KtreeDist doesn't understand NHX tags, and needs each tree on a single line
+    my $newick_string = $inputtree;
+    $newick_string =~ s/\[[^\]]*\]//g;
+    $newick_string =~ s/\n//g;
 
     #We replace all the zero branch lengths (added by the parser, since parsimony trees have no BLs) with 1s.
     #This allows KtreeDist to run without crashing.
