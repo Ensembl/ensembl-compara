@@ -73,7 +73,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use Array::Utils qw(:all);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
@@ -101,8 +100,6 @@ sub fetch_input {
 
     # Fetch sequences:
   $self->param('gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
-
-  $self->param('ref_tree_string', $self->param('gene_tree')->newick_format('member_id_taxon_id'));
 
   if ($self->check_members) {
       $self->complete_early("Ktreedist.pm: All members have the same sequence.");
@@ -182,15 +179,14 @@ sub post_cleanup {
 ## otherwise, ktreedist will fail
 sub check_members {
     my ($self) = @_;
-    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('ref_tree_string'));
+    my $tree = $self->param('gene_tree');
     my %seqs;
-
+    my %ref_tree_seq_member_ids;
     for my $leaf (@{$tree->get_all_leaves}) {
-        #$seqs{$leaf->name}++;
-        my @tok = split(/\_/,$leaf->name);
-        $seqs{$tok[0]}++;
+        $seqs{$leaf->sequence_id}++;
+        $ref_tree_seq_member_ids{$leaf->seq_member_id} = $leaf;
     }
-    $self->param('ref_tree_seq_names', \%seqs);
+    $self->param('ref_tree_seq_member_ids', \%ref_tree_seq_member_ids);
 
     if (scalar(keys %seqs) == 1) {
         return 1
@@ -289,7 +285,11 @@ sub load_input_trees {
         %alternative_trees = map { $_ => 1 } @{$self->param('alternative_trees')};
     }
 
-    my @ref_tree_leaves  = keys( %{ $self->param('ref_tree_seq_names') } );
+    # Although the reference tree for KTreeDist is "ref_tree_clusterset", the
+    # tree in which the members are removed is the "default" clusterset, i.e.
+    # $self->param('gene_tree_id') because KTreeDist can deal with alternative
+    # references
+    my %removed_members = map { $_ => 1 } @{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_removed_seq_member_ids_by_root_id($self->param('gene_tree_id'))};
 
     for my $other_tree (values %{$tree->alternative_trees}) {
 
@@ -303,30 +303,16 @@ sub load_input_trees {
         # This may be caused by a member being deleted from one tree only but the other
         # jobs running on the same family are still unaware that the gene has been
         # dropped and keep it.
-        my %comp_tree_leaves;
+
         for my $leaf ( @{ $other_tree->get_all_leaves } ) {
-            $comp_tree_leaves{ $leaf->dbID } = $leaf->name;
-        }
-
-        my @comp_tree_leaves_ids = keys(%comp_tree_leaves);
-        if ( scalar(@ref_tree_leaves) != scalar(@comp_tree_leaves_ids) ) {
-
-            print "\t\t".$ref_tree_leaves[0] . "|" . $comp_tree_leaves_ids[0] . "|\n";
-
-            my @diff = array_diff( @ref_tree_leaves, @comp_tree_leaves_ids );
-            print "ref_tree_leaves:" . scalar(@ref_tree_leaves) . "\tcomp_tree_leaves:" . scalar( @comp_tree_leaves_ids) . "\textra_leaves:" . scalar(@diff) . "\n" if ( $self->debug );
-
-            my %removed_members = map { $_ => 1 } @{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_removed_seq_member_ids_by_root_id($self->param('gene_tree_id'))};
-
-            foreach my $tip_to_remove (@diff) {
-                if ($removed_members{$tip_to_remove}) {
-                    print "\tremoving:$tip_to_remove\n" if ( $self->debug );
-                    my $node_to_delete = $other_tree->find_node_by_name($comp_tree_leaves{$tip_to_remove}) || die "Node not found";
-                    $node_to_delete->disavow_parent;
-                    $other_tree->minimize_tree;
-                }
+            if ( !exists( $self->param('ref_tree_seq_member_ids')->{ $leaf->dbID } ) && ( exists( $removed_members{ $leaf->dbID } ) ) ) {
+                print "\tremoving:" . $leaf->dbID . "\n" if ( $self->debug );
+                $leaf->disavow_parent;
+                $other_tree->minimize_tree;
             }
         }
+        print "ref_tree_leaves:" . scalar( keys( %{ $self->param('ref_tree_seq_member_ids') } ) ) . "\tcomp_tree_leaves:" . scalar(@{ $other_tree->get_all_leaves }) . "\tafter removing:" . scalar(@{ $other_tree->get_all_leaves }) . "\n" if ( $self->debug );
+
 
         #Parsimony trees dont have branch lengths.
         if ($other_tree->clusterset_id eq "raxml_parsimony"){
