@@ -304,7 +304,10 @@ sub _writeMultiFastaAlignment {
       $segments = $object->get_all_GenomicAligns;
     }
 
-    foreach my $this_segment (@{$segments}) {
+    $self->iterate_by_dbc($segments,
+        sub { my $this_segment = shift; return $this_segment->genome_db->db_adaptor->dbc },
+        sub { my $this_segment = shift;
+
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
         #$seq_name =~ s/(\w*) (\w*)/$1_$2/;
 
@@ -324,7 +327,9 @@ sub _writeMultiFastaAlignment {
         chomp($aligned_sequence);
         print ALIGN ">$seq_name\n$aligned_sequence\n";
 	free_aligned_sequence($this_segment);
-    }
+
+    } );
+
     close ALIGN;
 }
 
