@@ -51,8 +51,6 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
 
 sub run_mercator {
   my ($self) = @_;

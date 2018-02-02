@@ -54,8 +54,6 @@ use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
 
 sub run_ortheus {
   my $self = shift;
