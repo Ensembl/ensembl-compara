@@ -345,7 +345,7 @@ sub store_ktreedist_score {
     my $other_trees = $self->param('gene_tree')->alternative_trees;
 
     my $sth = $self->compara_dba->dbc->prepare
-        ("INSERT IGNORE INTO ktreedist_score
+        ("REPLACE INTO ktreedist_score
                                             (node_id,
                                              tag,
                                              k_score,
