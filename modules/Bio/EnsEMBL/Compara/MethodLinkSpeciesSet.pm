@@ -117,10 +117,10 @@ sub new {
 
     my $self = $class->SUPER::new(@_);  # deal with Storable stuff
 
-    my ($method, $species_set_obj, $species_set,
+    my ($method, $species_set,
         $name, $source, $url, $max_alignment_length) =
             rearrange([qw(
-                METHOD SPECIES_SET_OBJ SPECIES_SET
+                METHOD SPECIES_SET
                 NAME SOURCE URL MAX_ALIGNMENT_LENGTH)], @_);
 
   if($method) {
@@ -131,9 +131,6 @@ sub new {
 
   if ($species_set) {
       $self->species_set($species_set);
-  } elsif ($species_set_obj) {
-      deprecate('MethodLinkSpeciesSet::new(-SPECIES_SET_OBJ => ...) is deprecated and will be removed in e89. Use -SPECIES_SET instead');
-      $self->species_set($species_set_obj);
   } else {
       warning("species_set has not been set in MLSS->new");
   }
@@ -172,19 +169,6 @@ sub method {
     }
 
     return $self->{'method'};
-}
-
-
-=head2 species_set_obj (DEPRECATED)
-
-  Description: DEPRECATED. It will be removed in e89. Use species_set() instead
-
-=cut
-
-sub species_set_obj {   ## DEPRECATED
-    my $self = shift;
-    deprecate('MethodLinkSpeciesSet::species_set_obj is deprecated and will be removed in e89. Use species_set() instead');
-    return $self->species_set(@_);
 }
 
 
