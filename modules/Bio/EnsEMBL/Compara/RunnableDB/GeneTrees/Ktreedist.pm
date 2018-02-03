@@ -203,9 +203,9 @@ sub run_ktreedist {
 
   my $comparisonfilename = $temp_directory . "/" . $root_id . ".ct";
   my $referencefilename = $temp_directory .  "/" .$root_id . ".rt";
-  open CTFILE,">$comparisonfilename" or die $!;
-  print CTFILE "#NEXUS\n\n";
-  print CTFILE "Begin TREES;\n\n";
+  open(my $ct_fh, '>', $comparisonfilename) or die $!;
+  print $ct_fh "#NEXUS\n\n";
+  print $ct_fh "Begin TREES;\n\n";
   foreach my $method (keys %{$self->param('inputtrees_rooted')}) {
     my $inputtree = $self->param('inputtrees_rooted')->{$method};
     die ($method." is not defined in inputtrees_rooted")  unless (defined $inputtree);
@@ -215,10 +215,10 @@ sub run_ktreedist {
     $newick_string =~ s/\n//g;
 
     $self->throw("error with newick tree") unless (defined($newick_string));
-    print CTFILE "TREE    $method = $newick_string\n";
+    print $ct_fh "TREE    $method = $newick_string\n";
   }
-  print CTFILE "End;\n\n";
-  close CTFILE;
+  print $ct_fh "End;\n\n";
+  close $ct_fh;
 
   my $reference_tree = $self->param('ref_tree_clusterset') ? $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')} : $self->param('gene_tree');
   my $reference_string = $reference_tree->newick_format('member_id_taxon_id');
