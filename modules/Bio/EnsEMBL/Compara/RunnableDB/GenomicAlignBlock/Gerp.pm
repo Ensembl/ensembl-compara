@@ -304,6 +304,11 @@ sub _writeMultiFastaAlignment {
       $segments = $object->get_all_GenomicAligns;
     }
 
+    # Preload everything needed from Compara so that we can disconnect
+    # before moving on to the core databases
+    $_->dnafrag->genome_db for @$segments;
+    $self->compara_dba->dbc->disconnect_if_idle();
+
     $self->iterate_by_dbc($segments,
         sub { my $this_segment = shift; return $this_segment->genome_db->db_adaptor->dbc },
         sub { my $this_segment = shift;
