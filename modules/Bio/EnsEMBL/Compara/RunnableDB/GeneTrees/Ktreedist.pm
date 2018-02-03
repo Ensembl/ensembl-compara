@@ -221,7 +221,7 @@ sub run_ktreedist {
   close $ct_fh;
 
   my $reference_tree = $self->param('ref_tree_clusterset') ? $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')} : $self->param('gene_tree');
-  my $reference_string = $reference_tree->newick_format('member_id_taxon_id');
+  my $reference_string = $reference_tree->newick_format('ryo', '%{-m}%{"_"-X}:%{d}');
   my $ref_label = $self->param('gene_tree')->clusterset_id;
   
   $self->throw("error with newick tree") unless (defined($reference_string));
@@ -298,7 +298,7 @@ sub load_input_trees {
 
         # We set all the branch lengths to 1 in trees that are missing branch lengths
         # (e.g raxml_parsimony), so that KtreeDist runs without crashing
-        my $ryo_format = $self->check_distances_to_parent($other_tree) ? '%{-m}%{"_"-x}:%{d}' : '%{-m}%{"_"-x}:1';
+        my $ryo_format = $self->check_distances_to_parent($other_tree) ? '%{-m}%{"_"-X}:%{d}' : '%{-m}%{"_"-X}:1';
         $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo', $ryo_format);
     }
     return 1;
