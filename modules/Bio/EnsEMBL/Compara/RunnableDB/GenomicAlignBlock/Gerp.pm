@@ -297,14 +297,25 @@ sub _writeMultiFastaAlignment {
 
     
     #create mfa file of multiple alignment from genomic align block
+
+    # Preload everything needed from Compara so that we can disconnect
+    # before moving on to the core databases
     my $segments;
     if (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
       $segments = $object->get_all_leaves;
+      $_->genomic_align_group->dnafrag->genome_db for @$segments;
     } elsif (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
       $segments = $object->get_all_GenomicAligns;
+      $_->dnafrag->genome_db for @$segments;
     }
 
-    foreach my $this_segment (@{$segments}) {
+    # Disconnecting
+    $self->compara_dba->dbc->disconnect_if_idle();
+
+    $self->iterate_by_dbc($segments,
+        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $_)->genome_db->db_adaptor->dbc },
+        sub { my $this_segment = shift;
+
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
         #$seq_name =~ s/(\w*) (\w*)/$1_$2/;
 
@@ -324,7 +335,9 @@ sub _writeMultiFastaAlignment {
         chomp($aligned_sequence);
         print ALIGN ">$seq_name\n$aligned_sequence\n";
 	free_aligned_sequence($this_segment);
-    }
+
+    } );
+
     close ALIGN;
 }
 

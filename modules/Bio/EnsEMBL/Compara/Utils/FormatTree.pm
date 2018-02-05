@@ -92,7 +92,7 @@ Method_caller : "C(" string ( "," string )(s?) ")"
     "C";
 }
 
-Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
+Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "X" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
 
 preliteral  : string
 {
@@ -268,6 +268,15 @@ my $taxon_id_cb = sub {
   return $self->{tree}->taxon_id;
 };
 
+my $stn_id_cb = sub {
+  my ($self) = @_;
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::SpeciesTreeNode')) {
+      return $self->{tree}->node_id;
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+      return $self->{tree}->_species_tree_node_id;
+  }
+};
+
 my $sp_name_cb = sub {
   my ($self) = @_;
   my $species_name;
@@ -343,6 +352,7 @@ my %callbacks = (
         'p' => $prot_id_cb,
         'm' => $seq_member_id_cb,
         'x' => $taxon_id_cb,
+        'X' => $stn_id_cb,
         'S' => $sp_name_cb,
         'N' => $n_members_cb, # Used in cafe trees (number of members)
         'P' => $pvalue_cb, # Used in cafe trees (pvalue)

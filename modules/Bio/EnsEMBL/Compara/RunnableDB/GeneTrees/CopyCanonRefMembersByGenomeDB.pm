@@ -66,8 +66,8 @@ sub run {
     my $self = shift;
 
     #Creates a hash of the tables to be excluded from the copy.
-    if ( defined $self->param('exclute_tables') ) {
-        my %exclude_tables = map { $_ => 1 } @{ $self->param('exclute_tables') };
+    if ( defined $self->param('exclude_tables') ) {
+        my %exclude_tables = map { $_ => 1 } @{ $self->param('exclude_tables') };
         $self->param( 'exclude_tables', \%exclude_tables );
     }
 

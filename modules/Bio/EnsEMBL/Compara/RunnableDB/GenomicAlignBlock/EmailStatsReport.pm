@@ -52,6 +52,10 @@ sub fetch_input {
 	my $epo_url   = $self->compara_dba->dbc->url;
 	my $stats_cmd = "$stats_exe -url $epo_url -html";
 
+        if ($self->param('mlss_id')) {
+            $stats_cmd .= " -mlss_id ".$self->param('mlss_id');
+        }
+
 	# run command, capture output
         warn "CMD: $stats_cmd\n" if $self->debug;
 	my $stats_string = `$stats_cmd`;

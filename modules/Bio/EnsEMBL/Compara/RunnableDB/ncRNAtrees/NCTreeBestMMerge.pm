@@ -140,6 +140,13 @@ sub fetch_input {
 sub run {
   my $self = shift;
 
+  ## Remove the tree if there are no contributions
+  unless (scalar(keys %{$self->param('inputtrees_unrooted')} )) {
+      $self->compara_dba->get_GeneTreeAdaptor->delete_tree( $self->param('gene_tree') );
+      $self->input_job->autoflow(0);
+      $self->complete_early($self->param('gene_tree_id')." tree has no contributions from genomic_tree / fast_trees / sec_struct_model_tree. Deleting this family !\n");
+  }
+
   my $merged_tree;
 
   my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
@@ -226,13 +233,9 @@ sub load_input_trees {
 
   my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
   for my $other_tree (values %{$tree->alternative_trees}) {
-    # horrible hack: we replace taxon_id with species_tree_node_id
-    foreach my $leaf (@{$other_tree->get_all_leaves}) {
-        $leaf->taxon_id($gdbid2stn->{$leaf->genome_db_id}->node_id);
-    }
-    print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;
-    $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
+    $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-X}:%{d}');
+    print STDERR $self->param('inputtrees_unrooted')->{$tag} if ($self->debug);
   }
 }
 

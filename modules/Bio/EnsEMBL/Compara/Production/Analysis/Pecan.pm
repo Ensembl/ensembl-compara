@@ -27,17 +27,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Pecan - 
-
-=head1 SYNOPSIS
-
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan
-     (-workdir => $workdir,
-      -fasta_files => $fasta_files,
-      -tree_string => $tree_string,
-      -program => "/path/to/program");
-  $runnable->run;
-  my @output = @{$runnable->output};
+Bio::EnsEMBL::Compara::Production::Analysis::Pecan
 
 =head1 DESCRIPTION
 
@@ -55,248 +45,84 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
 use strict;
 use warnings;
 
+use Capture::Tiny qw(tee_merged);
+
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 
-=head2 new
+sub run_pecan {
+  my $self = shift;
 
-  Arg [1]   : -workdir => "/path/to/working/directory"
-  Arg [2]   : -fasta_files => "/path/to/fasta/file"
-  Arg [3]   : -tree_string => "/path/to/tree/file" (optional)
-  Arg [4]   : -parameters => "parameter" (optional)
+  my $prev_dir = chdir $self->worker_temp_directory;
 
-  Function  : contruct a new Bio::EnsEMBL::Analysis::Runnable::Pecan
-  runnable
-  Returntype: Bio::EnsEMBL::Analysis::Runnable::Pecan
-  Exceptions: none
-  Example   :
-
-=cut
-
-
-sub new {
-  my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
-  my ($workdir, $fasta_files, $tree_string, $parameters, $exonerate_exe,
-      $pecan_exe_dir, $pecan_java_class,  $estimate_tree_exe, $java_exe) =
-        rearrange(['WORKDIR', 'FASTA_FILES', 'TREE_STRING','PARAMETERS', 'EXONERATE_EXE',
-            'PECAN_EXE_DIR', 'PECAN_JAVA_CLASS', 'ESTIMATE_TREE_EXE', 'JAVA_EXE'], @args);
-
-
-  $self->workdir($workdir) if (defined $workdir);      
-  chdir $self->workdir;
-  unless (defined $estimate_tree_exe) { die 'estimate_tree_exe is not given'; }
-
-  $self->fasta_files($fasta_files) if (defined $fasta_files);
-  if (defined $tree_string) {
-    $self->tree_string($tree_string)
-  } else {
+  my @fasta_files = @{$self->param('fasta_files')};
+  my $tree_string = $self->param('pecan_tree_string');
+  unless (defined $tree_string) {
     # Use EstimateTree.py program to get a tree from the sequences
-    my $run_str = "python2 $estimate_tree_exe " . join(" ", @$fasta_files);
-    print "RUN $run_str\n";
-    my @estimate = qx"$run_str";
+    my @est_command = ('python2', $self->param_required('estimate_tree_exe'), @fasta_files);
+    my $ret_cmd = $self->run_command(\@est_command, { 'die_on_failure' => 1} );
+    my @estimate = split "\n", $ret_cmd->out;
     if (($estimate[0] !~ /^FINAL_TREE: \(.+\);/) or ($estimate[2] !~ /^ORDERED_SEQUENCES: (.+)/)) {
       throw "Error while running EstimateTree program for Pecan";
     }
     ($tree_string) = $estimate[0] =~ /^FINAL_TREE: (\(.+\);)/;
-    $self->tree_string($tree_string);
     # print "THIS TREE $tree_string\n";
     my ($files) = $estimate[2] =~ /^ORDERED_SEQUENCES: (.+)/;
-    @$fasta_files = split(" ", $files);
-    $self->fasta_files($fasta_files);
-    # print "THESE FILES ", join(" ", @$fasta_files), "\n";
+    @fasta_files = split(" ", $files);
+    # print "THESE FILES ", join(" ", @fasta_files), "\n";
     ## Build newick tree which can be stored in the meta table
-    foreach my $this_file (@$fasta_files) {
+    foreach my $this_file (@fasta_files) {
       my $header = qx"head -1 $this_file";
       my ($dnafrag_id, $name, $start, $end, $strand) = $header =~ /^>DnaFrag(\d+)\|([^\.+])\.(\d+)\-(\d+)\:(\-?1)/;
       # print "HEADER: $dnafrag_id, $name, $start, $end, $strand  $header";
       $strand = 0 if ($strand != 1);
       $tree_string =~ s/(\W)\d+(\W)/$1${dnafrag_id}_${start}_${end}_${strand}$2/;
     }
-    $self->{tree_to_save} = $tree_string;
+    $self->param('tree_to_save', $tree_string);
     # print "TREE_TO_SAVE: $tree_string\n";
   }
-  $self->parameters($parameters) if (defined $parameters);
-  unless (defined $self->program) {
-    if (defined $java_exe) {
-      $self->program($java_exe);
-    } else {
-      die  "\n java executable needed \n";
-    }
+
+  my @command = ($self->require_executable('java_exe'));
+  if ($self->param('java_options')) {
+      # FIXME: encode java_options as an array in the PipeConfigs
+      push @command, split(/ /, $self->param('java_options'));
   }
-  if (defined $pecan_exe_dir) {
-    $self->pecan_exe_dir($pecan_exe_dir);
-  } else {
-    die "\n pecan exe_dir  needed \n";
-  }
-  if (defined $pecan_java_class) {
-    $self->pecan_java_class($pecan_java_class);
-  } else {
-    die "\n pecan java_class  needed \n";
-#    $self->pecan_java_class($default_java_class);
-  }
-  if (defined $exonerate_exe) {
-    $self->exonerate_exe($exonerate_exe);
-  } else {
-    die "\n exonerate executable needed \n";
-  }
+  push @command, '-cp', $self->param_required('pecan_exe_dir'), $self->param_required('default_java_class');
 
-  return $self;
-}
-
-sub workdir {
-  my $self = shift;
-  $self->{'_workdir'} = shift if(@_);
-  return $self->{'_workdir'};
-}
-
-sub fasta_files {
-  my $self = shift;
-  $self->{'_fasta_files'} = shift if(@_);
-  return $self->{'_fasta_files'};
-}
-
-sub tree_string {
-  my $self = shift;
-  $self->{'_tree_string'} = shift if(@_);
-  return $self->{'_tree_string'};
-}
-
-sub parameters {
-  my $self = shift;
-  $self->{'_parameters'} = shift if(@_);
-  return $self->{'_parameters'};
-}
-
-sub pecan_exe_dir {
-  my $self = shift;
-  $self->{'_pecan_exe_dir'} = shift if(@_);
-  return $self->{'_pecan_exe_dir'};
-}
-
-sub pecan_java_class {
-  my $self = shift;
-  $self->{'_pecan_java_class'} = shift if(@_);
-  return $self->{'_pecan_java_class'};
-}
-
-sub exonerate_exe {
-  my $self = shift;
-  $self->{'_exonerate_exe'} = shift if(@_);
-  return $self->{'_exonerate_exe'};
-}
-
-sub options {
-  my $self = shift;
-  $self->{'_options'} = shift if(@_);
-  return $self->{'_options'};
-}
-
-sub program {
-  my $self = shift;
-  $self->{'_program'} = shift if(@_);
-  return $self->{'_program'};
-}
-
-sub output {
-  my $self = shift;
-  $self->{'_output'} = shift if(@_);
-  return $self->{'_output'};
-}
-
-=head2 run_analysis
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Pecan
-  Arg [2]   : string, program name
-  Function  : create and open a commandline for the program trf
-  Returntype: none
-  Exceptions: throws if the program in not executable or if the results
-  file doesnt exist
-  Example   : 
-
-=cut
-
-sub run_analysis {
-  my ($self, $program) = @_;
-
-  $self->run_pecan;
-
-  $self->parse_results;
-
-  return 1;
-}
-
-sub run_pecan {
-  my $self = shift;
-
-  chdir $self->workdir;
-
-  throw($self->program . " is not executable Pecan::run_analysis ")
-    unless ($self->program && -x $self->program);
-
-  my $command = $self->program;
-  if ($self->parameters) {
-    $command .= " " . $self->parameters;
-  }
-  $command .= " -cp ".$self->pecan_exe_dir." ".$self->pecan_java_class;
-  if (@{$self->fasta_files}) {
-    $command .= " -F";
-    foreach my $fasta_file (@{$self->fasta_files}) {
-      $command .= " $fasta_file";
-    }
+  if (@fasta_files) {
+    push @command, '-F', @fasta_files;
   }
 
   #Remove -X option. Transitive anchoring is now switched off by default
-  #$command .= " -J '" . $self->exonerate_exe . "' -X";
-  $command .= " -J '" . $self->exonerate_exe . "'";
-  if ($self->tree_string) {
-    $command .= " -E '" . $self->tree_string . "'";
+  #push @command, '-J', $self->param_required('exonerate_exe'), '-X';
+  push @command, '-J', $self->param_required('exonerate_exe');
+  if ($tree_string) {
+    push @command, '-E', $tree_string;
   }
-  $command .= " -G pecan.mfa";
-  if ($self->options) {
-    $command .= " " . $self->options;
-  }
-  print "Running pecan: " . $command . "\n";
+  push @command, '-G', 'pecan.mfa';
 
-  open(PECAN, "$command 2>&1 |") || die "Failed: $!\n";
-  my $java_error = <PECAN>;
+  print "Running pecan " . Bio::EnsEMBL::Compara::Utils::RunCommand::join_command_args(@command) . "\n";
+
+  #Capture output messages when running pecan instead of throwing
+  my $java_error = tee_merged { system(@command) };
+  chdir $prev_dir;
+
   if ($java_error) {
       die ($java_error);
   }
-  close PECAN;
 
-#  unless (system($command) == 0) {
-#    throw("pecan execution failed\n");
-#  }
-}
-
-=head2 parse_results
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Pecan
-  Function  : parse the specifed file and produce RepeatFeatures
-  Returntype: nine
-  Exceptions: throws if fails to open or close the results file
-  Example   : 
-
-=cut
-
-
-sub parse_results{
-  my ($self, $run_number) = @_;
-
-  my $alignment_file = $self->workdir . "/pecan.mfa";
+  my $alignment_file = $self->worker_temp_directory . "/pecan.mfa";
   my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
-  open F, $alignment_file || throw("Could not open $alignment_file");
+  open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
   my $seq = "";
   my $this_genomic_align;
 print "Reading $alignment_file...\n";
-  while (<F>) {
+  while (<$fh>) {
     next if (/^\s*$/);
     chomp;
     ## FASTA headers are defined in the Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::Pecan
@@ -323,11 +149,11 @@ print "Reading $alignment_file...\n";
       $seq .= $_;
     }
   }
-  close F;
+  close $fh;
   $this_genomic_align->aligned_sequence($seq);
   $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
   
-  $self->output([$this_genomic_align_block]);
+  return [$this_genomic_align_block];
 }
 
 

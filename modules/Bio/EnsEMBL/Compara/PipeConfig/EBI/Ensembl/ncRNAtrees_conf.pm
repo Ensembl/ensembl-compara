@@ -142,6 +142,7 @@ sub resource_classes {
 
             '2Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
             '8Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
+            '4Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"' },
             '8Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
             '32Gb_4c_job'         => { 'LSF' => '-C0 -n 4 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
             '32Gb_8c_job'         => { 'LSF' => '-C0 -n 8 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },

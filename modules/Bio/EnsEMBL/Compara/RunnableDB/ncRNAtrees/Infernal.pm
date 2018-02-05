@@ -319,7 +319,8 @@ sub run_infernal {
 sub dump_model {
     my ($self, $model_id) = @_;
 
-    my $nc_profile = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_model_id_type($model_id)->[0]->profile();
+    my $nc_profile_obj = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_model_id_type($model_id, 'infernal')->[0];
+    my $nc_profile = $nc_profile_obj->profile();
 
     unless (defined($nc_profile)) {
         return 1;
@@ -328,6 +329,7 @@ sub dump_model {
     $self->_spurt($profile_file, $nc_profile);
 
     $self->param('profile_file', $profile_file);
+    $self->param('profile_name', $nc_profile_obj->name);
     return 0;
 }
 
@@ -571,7 +573,7 @@ sub store_refined_profile {
     my $type = "infernal-refined";
     my $refined_profile_file = $self->param('refined_profile');
     my $hmmProfile_Adaptor = $self->compara_dba->get_HMMProfileAdaptor();
-    my $name = $hmmProfile_Adaptor->fetch_all_by_model_id_type($model_id)->[0]->name();
+    my $name = $self->param('profile_name');
 
     my $refined_profile = $self->_slurp($refined_profile_file);
 

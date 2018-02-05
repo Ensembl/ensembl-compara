@@ -181,9 +181,13 @@ sub check_members {
     my ($self) = @_;
     my $tree = $self->param('gene_tree');
     my %seqs;
+    my %ref_tree_seq_member_ids;
     for my $leaf (@{$tree->get_all_leaves}) {
         $seqs{$leaf->sequence_id}++;
+        $ref_tree_seq_member_ids{$leaf->seq_member_id} = $leaf;
     }
+    $self->param('ref_tree_seq_member_ids', \%ref_tree_seq_member_ids);
+
     if (scalar(keys %seqs) == 1) {
         return 1
     }
@@ -199,42 +203,26 @@ sub run_ktreedist {
 
   my $comparisonfilename = $temp_directory . "/" . $root_id . ".ct";
   my $referencefilename = $temp_directory .  "/" .$root_id . ".rt";
-  open CTFILE,">$comparisonfilename" or die $!;
-  print CTFILE "#NEXUS\n\n";
-  print CTFILE "Begin TREES;\n\n";
+  open(my $ct_fh, '>', $comparisonfilename) or die $!;
+  print $ct_fh "#NEXUS\n\n";
+  print $ct_fh "Begin TREES;\n\n";
   foreach my $method (keys %{$self->param('inputtrees_rooted')}) {
     my $inputtree = $self->param('inputtrees_rooted')->{$method};
     die ($method." is not defined in inputtrees_rooted")  unless (defined $inputtree);
-    my $comparison_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($inputtree);
-    my $newick_string = $comparison_tree->newick_format("simple");
-
-    #We replace all the zero branch lengths (added by the parser, since parsimony trees have no BLs) with 1s.
-    #This allows KtreeDist to run without crashing.
-
-    #!!!!!! IMPORTANT !!!!!!!!
-    # Should ONLY look into RF distances for raxml_parsimony trees. Other distances should be ignored.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    if ($method eq "raxml_parsimony"){
-        $newick_string =~ s/:0/:1/g;
-    }
+    # KtreeDist doesn't understand NHX tags, and needs each tree on a single line
+    my $newick_string = $inputtree;
+    $newick_string =~ s/\[[^\]]*\]//g;
+    $newick_string =~ s/\n//g;
 
     $self->throw("error with newick tree") unless (defined($newick_string));
-    print CTFILE "TREE    $method = $newick_string\n";
+    print $ct_fh "TREE    $method = $newick_string\n";
   }
-  print CTFILE "End;\n\n";
-  close CTFILE;
+  print $ct_fh "End;\n\n";
+  close $ct_fh;
 
-  my $reference_string;
-  my $ref_label;
- 
-  if ($self->param('ref_tree_clusterset')){
-    $reference_string = $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')}->newick_format('member_id_taxon_id');
-    $ref_label = $self->param('ref_tree_clusterset');
-  }else{
-    $reference_string = $self->param('gene_tree')->newick_format('member_id_taxon_id');
-    $ref_label = 'default';
-  }
+  my $reference_tree = $self->param('ref_tree_clusterset') ? $self->param('gene_tree')->alternative_trees->{$self->param('ref_tree_clusterset')} : $self->param('gene_tree');
+  my $reference_string = $reference_tree->newick_format('ryo', '%{-m}%{"_"-X}:%{d}');
+  my $ref_label = $self->param('gene_tree')->clusterset_id;
   
   $self->throw("error with newick tree") unless (defined($reference_string));
 
@@ -245,7 +233,7 @@ sub run_ktreedist {
           "End;\n",
       ));
 
-  my $cmd = "$ktreedist_exe -a -rt $referencefilename -ct $comparisonfilename";
+  my $cmd = [$ktreedist_exe, '-a', '-rt', $referencefilename, '-ct', $comparisonfilename];
   my $runCmd = $self->run_command($cmd);
   if ($runCmd->exit_code) {
       if ($runCmd->err =~ /Substitution loop at.*ktreedist line 1777/) {
@@ -281,21 +269,37 @@ sub load_input_trees {
         %alternative_trees = map { $_ => 1 } @{$self->param('alternative_trees')};
     }
 
+    # Although the reference tree for KTreeDist is "ref_tree_clusterset", the
+    # tree in which the members are removed is the "default" clusterset, i.e.
+    # $self->param('gene_tree_id') because KTreeDist can deal with alternative
+    # references
+    my %removed_members = map { $_ => 1 } @{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_removed_seq_member_ids_by_root_id($self->param('gene_tree_id'))};
+
     for my $other_tree (values %{$tree->alternative_trees}) {
 
         #If we have a different set of alternative trees and the tags are not specified, it will skip the current tree
         next if ($self->param('ref_tree_clusterset') && (!$alternative_trees{$other_tree->clusterset_id}));
 
-        #print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         print "tree:" . $other_tree->clusterset_id . "\n" if ($self->debug);
 
-        #Parsimony trees dont have branch lengths.
-        if ($other_tree->clusterset_id eq "raxml_parsimony"){
-            $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}');
-        }else{
-            $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
-        }
+        # ktreedist will crash if the trees being compared have different number of leaves.
+        # This may be caused by a member being deleted from one tree only but the other
+        # jobs running on the same family are still unaware that the gene has been
+        # dropped and keep it.
 
+        for my $leaf ( @{ $other_tree->get_all_leaves } ) {
+            if ( !exists( $self->param('ref_tree_seq_member_ids')->{ $leaf->dbID } ) && ( exists( $removed_members{ $leaf->dbID } ) ) ) {
+                print "\tremoving:" . $leaf->dbID . "\n" if ( $self->debug );
+                $leaf->disavow_parent;
+                $other_tree->minimize_tree;
+            }
+        }
+        print "ref_tree_leaves:" . scalar( keys( %{ $self->param('ref_tree_seq_member_ids') } ) ) . "\tcomp_tree_leaves:" . scalar(@{ $other_tree->get_all_leaves }) . "\tafter removing:" . scalar(@{ $other_tree->get_all_leaves }) . "\n" if ( $self->debug );
+
+        # We set all the branch lengths to 1 in trees that are missing branch lengths
+        # (e.g raxml_parsimony), so that KtreeDist runs without crashing
+        my $ryo_format = $self->check_distances_to_parent($other_tree) ? '%{-m}%{"_"-X}:%{d}' : '%{-m}%{"_"-X}:1';
+        $self->param('inputtrees_unrooted')->{$other_tree->clusterset_id} = $other_tree->newick_format('ryo', $ryo_format);
     }
     return 1;
 }
@@ -341,7 +345,7 @@ sub store_ktreedist_score {
     my $other_trees = $self->param('gene_tree')->alternative_trees;
 
     my $sth = $self->compara_dba->dbc->prepare
-        ("INSERT IGNORE INTO ktreedist_score
+        ("REPLACE INTO ktreedist_score
                                             (node_id,
                                              tag,
                                              k_score,
@@ -363,6 +367,10 @@ sub store_ktreedist_score {
             my $symm_difference = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{symm_difference};
             my $n_partitions    = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{n_partitions};
             my $k_score_rank    = $count++;
+            ## Hack e92 ##
+            $scale_factor = '99999.99999' if $scale_factor >= 100_000;
+            $k_score = '99999.99999' if $k_score >= 100_000;
+            ## Hack e92 ##
             $sth->execute($root_id,
                           $tag,
                           $k_score,

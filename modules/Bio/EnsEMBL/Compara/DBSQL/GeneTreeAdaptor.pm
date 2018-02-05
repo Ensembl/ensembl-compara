@@ -374,6 +374,23 @@ sub fetch_all_linked_trees {
     }
 }
 
+=head2 fetch_all_removed_seq_member_ids_by_root_id
+
+  Arg[1]     : int: root_id: ID of the root node of the tree
+  Example    : $all_removed_members = $genetree_adaptor->fetch_all_Removed_Members_by_root_id($root_id);
+  Description: Gets all the removed members of the given tree.
+  Returntype : arrayref of seq_member_ids
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_all_removed_seq_member_ids_by_root_id {
+    my ( $self, $root_id ) = @_;
+
+    return $self->dbc->db_handle->selectcol_arrayref( 'SELECT seq_member_id FROM gene_tree_backup WHERE is_removed = 1 AND root_id = ? ;', undef, $root_id );
+}
+
 
 #
 # STORE/DELETE methods

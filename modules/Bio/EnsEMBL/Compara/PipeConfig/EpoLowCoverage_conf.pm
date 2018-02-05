@@ -255,8 +255,8 @@ sub pipeline_analyses {
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
-		-batch_size      => 5,
-		-hive_capacity   => 30,
+		-batch_size     => 10,
+		-hive_capacity  => 100,
 		#Need a mode to say, do not die immediately if fail due to memory because of memory leaks, rerunning is the solution. Flow to module _again.
 		-flow_into => {
 			       2 => [ 'gerp' ],
@@ -275,8 +275,9 @@ sub pipeline_analyses {
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
-		-batch_size      => 5,
-		-hive_capacity   => 30,
+		-batch_size     => 10,
+		-hive_capacity  => 100,
+        -priority       => 15,
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			       -1 => [ 'low_coverage_genome_alignment_himem' ],
@@ -295,8 +296,9 @@ sub pipeline_analyses {
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
-		-batch_size      => 5,
-		-hive_capacity   => 30,
+		-batch_size     => 10,
+		-hive_capacity  => 100,
+        -priority       => 20,
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			      },
@@ -310,7 +312,7 @@ sub pipeline_analyses {
 				'window_sizes' => $self->o('gerp_window_sizes'),
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
-		-hive_capacity   => 600,
+		-analysis_capacity  => 700,
 		-rc_name => '1.8Gb',
 	    },
 

@@ -352,7 +352,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-	-hive_capacity => 50,
+	-hive_capacity => 200,
 	-max_retry_count => 3,
 	-flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
