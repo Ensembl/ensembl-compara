@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
@@ -45,6 +46,7 @@ sub default_options {
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 
 	 #gerp parameters
+        'run_gerp' => 1,
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
         'species_to_skip' => undef,
@@ -87,6 +89,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
             'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'mlss_id' => $self->o('low_epo_mlss_id'),
+                               'run_gerp' => $self->o('run_gerp'),
     };
 }
 
@@ -109,6 +112,13 @@ sub pipeline_analyses {
 
     return [
 
+            {   -logic_name => 'with_or_without_gerp',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -input_ids  => [{}],
+                -flow_into  => WHEN( '#run_gerp#' => [ 'find_gerp_mlss_ids' ],
+                                    ELSE [ 'populate_new_database' ],
+                                ),
+            },
 # ---------------------------------------------[find out the other mlss_ids involved ]---------------------------------------------------
 #
             {   -logic_name => 'find_gerp_mlss_ids',
@@ -119,9 +129,8 @@ sub pipeline_analyses {
                     'cs_ml_type'    => 'GERP_CONSERVATION_SCORE',
                     'inputquery'    => 'SELECT mlss_ce.method_link_species_set_id AS ce_mlss_id, mlss_cs.method_link_species_set_id AS cs_mlss_id FROM method_link_species_set mlss JOIN (method_link_species_set mlss_ce JOIN method_link ml_ce USING (method_link_id)) USING (species_set_id) JOIN (method_link_species_set mlss_cs JOIN method_link ml_cs USING (method_link_id)) USING (species_set_id) WHERE mlss.method_link_species_set_id = #mlss_id# AND ml_ce.type = "#ce_ml_type#" AND ml_cs.type = "#cs_ml_type#"',
                 },
-                -input_ids => [{}],
                 -flow_into => {
-                    2 => 'populate_new_database',
+                    2 => 'populate_new_database_with_gerp',
                 },
 	    },
 
@@ -130,21 +139,42 @@ sub pipeline_analyses {
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_program'),
-				  'cmd'            => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#'],
+				  'cmd'            => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#'],
 				 },
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
 		-rc_name => '1Gb',
 	    },
+	    {  -logic_name => 'populate_new_database_with_gerp',
+	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+	       -parameters    => {
+				  'program'        => $self->o('populate_new_database_program'),
+                                  'cmd'            => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#'],
+				 },
+	       -flow_into => {
+			      1 => [ 'set_gerp_mlss_tag' ],
+			     },
+		-rc_name => '1Gb',
+	    },
 
 # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
-            { -logic_name => 'set_mlss_tag',
+            { -logic_name => 'set_gerp_mlss_tag',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
               -parameters => {
                               'sql' => [
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#cs_mlss_id#, "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#ce_mlss_id#, "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
+                              ],
+                             },
+              -flow_into => [ 'set_mlss_tag' ],
+              -rc_name => '100Mb',
+            },
+
+            { -logic_name => 'set_mlss_tag',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+              -parameters => {
+                              'sql' => [
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')',
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "reference_species", "' . $self->o('ref_species') . '")'
                               ],
@@ -261,7 +291,7 @@ sub pipeline_analyses {
 		-hive_capacity  => 100,
 		#Need a mode to say, do not die immediately if fail due to memory because of memory leaks, rerunning is the solution. Flow to module _again.
 		-flow_into => {
-			       2 => [ 'gerp' ],
+                               2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
 			       -1 => [ 'low_coverage_genome_alignment_again' ],
 			      },
 		-rc_name => '1.8Gb',
@@ -281,7 +311,7 @@ sub pipeline_analyses {
 		-hive_capacity  => 100,
         -priority       => 15,
 		-flow_into => {
-			       2 => [ 'gerp' ],
+                               2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
 			       -1 => [ 'low_coverage_genome_alignment_himem' ],
 			      },
 		-rc_name => '3.5Gb',
@@ -302,7 +332,7 @@ sub pipeline_analyses {
 		-hive_capacity  => 100,
         -priority       => 20,
 		-flow_into => {
-			       2 => [ 'gerp' ],
+                               2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
 			      },
 		-rc_name => '8Gb',
 	    },
@@ -377,12 +407,12 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -meadow_type=> 'LOCAL',
                 -flow_into => {
-                               '2->A' => {
+                               '2->A' => WHEN( '#run_gerp#' => {
                                      'conservation_score_healthcheck'  => [
                                                                            {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO_LOW_COVERAGE'}, 
                                                                            {'test' => 'conservation_scores','method_link_species_set_id'=>'#cs_mlss_id#'},
                                                                 ],
-                                    },
+                                    } ),
                                'A->1' => ['register_mlss'],
                               },
             },
