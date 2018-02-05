@@ -52,7 +52,7 @@ sub param_defaults {
         'info_file'            => 'ExaML_info.#gene_tree_id#',
         'sequence_type'        => '#expr(#use_dna_for_phylogeny# ? "DNA" : "PROT")expr#',
         'remove_columns'       => 1,
-        'ryo_gene_tree'     => '%{-m}%{"_"-x}',
+        'ryo_gene_tree'     => '%{-m}%{"_"-X}',
 
     };
 }

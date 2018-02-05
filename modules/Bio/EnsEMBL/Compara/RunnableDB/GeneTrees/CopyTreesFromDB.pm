@@ -267,7 +267,7 @@ sub write_output {
         #Remapping leaves.
         $self->_remap_leaves( $self->param( 'all_leaves' ) );
         #Also copy the tree under the copy clusterset_id, in order to keep track of things, and to make sure CopyAlignmentsFromDB.pm works OK.
-        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-X}:%{d}' ),
                                                       $self->param('output_clusterset_id'),
                                                       $self->param('current_gene_tree'),
                                                       undef, 1 );

@@ -63,7 +63,7 @@ Other parameters:
  - cdna: 1 if the alignment file contains the CDS sequences (otherwise: the protein sequences)
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
  - ryo_species_tree: Roll-Your-Own format string for the species-tree
- - ryo_gene_tree: Roll-Your-Own format string for the gene-tree (NB: taxon_ids are in fact species_tree_node_ids !)
+ - ryo_gene_tree: Roll-Your-Own format string for the gene-tree
  - species_tree_label: the label od the species-tree that should be used for this command
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
@@ -105,7 +105,7 @@ sub param_defaults {
         'check_split_genes' => 1,
         'read_tags'         => 0,
         'ryo_species_tree'  => '%{o}',
-        'ryo_gene_tree'     => '%{-m}%{"_"-x}:%{d}',
+        'ryo_gene_tree'     => '%{-m}%{"_"-X}:%{d}',
 
         'species_tree_label'        => undef,
         'input_clusterset_id'       => undef,
@@ -414,12 +414,6 @@ sub get_gene_tree_file {
     my $self                    = shift;
     my $gene_tree_root          = shift;
     my $map_long_seq_names      = shift;
-
-    # horrible hack: we replace taxon_id with species_tree_node_id
-    my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
-    foreach my $leaf (@{$gene_tree_root->get_all_leaves}) {
-        $leaf->taxon_id($gdbid2stn->{$leaf->genome_db_id}->node_id);
-    }
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
 
