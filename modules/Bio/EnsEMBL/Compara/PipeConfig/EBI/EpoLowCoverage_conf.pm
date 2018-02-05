@@ -33,24 +33,13 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
+        #'species_set_name'  => 'primates',
 
-
-	'rel_suffix'	=> '68_way_mammals_92',
 	'ensembl_release' => 92,
 	'prev_release'  => 91,
 
-    'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
+    'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo_low_coverage/' . $self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
 
-    'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_LC/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-    'pipeline_db' => {
-        -host   => $self->o('host'),
-        -port   => 4401,
-        -user   => 'ensadmin',
-        -pass   => $self->o('password'),
-        -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
-        -driver => 'mysql',
-    },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
