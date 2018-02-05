@@ -232,10 +232,21 @@ sub pipeline_analyses {
             },
             -analysis_capacity => 10,
             -rc_name           => '250Mb_job',
-            -flow_into         => WHEN('#name# eq "homo_sapiens"' => 'load_lrgs'),
+            -flow_into         => WHEN('#name# eq "homo_sapiens"' => 'copy_freshest_dnafrags_from_master'),
         },
 
-        {   -logic_name => 'load_lrgs',
+        {   -logic_name    => 'copy_freshest_dnafrags_from_master',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'mode'          => 'insertignore',
+                'src_db_conn'   => '#master_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id# AND coord_system_name = "lrg"',
+            },
+            -flow_into     => 'load_lrg_genes',
+        },
+
+        {   -logic_name => 'load_lrg_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadLRGs',
         },
 
