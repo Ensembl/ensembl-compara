@@ -35,6 +35,8 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
+        'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
+
 	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
