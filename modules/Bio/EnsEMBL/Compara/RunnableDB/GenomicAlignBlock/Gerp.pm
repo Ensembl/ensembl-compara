@@ -297,20 +297,23 @@ sub _writeMultiFastaAlignment {
 
     
     #create mfa file of multiple alignment from genomic align block
-    my $segments;
-    if (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
-      $segments = $object->get_all_leaves;
-    } elsif (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-      $segments = $object->get_all_GenomicAligns;
-    }
 
     # Preload everything needed from Compara so that we can disconnect
     # before moving on to the core databases
-    $_->dnafrag->genome_db for @$segments;
+    my $segments;
+    if (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
+      $segments = $object->get_all_leaves;
+      $_->genomic_align_group->dnafrag->genome_db for @$segments;
+    } elsif (UNIVERSAL::isa($object, "Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+      $segments = $object->get_all_GenomicAligns;
+      $_->dnafrag->genome_db for @$segments;
+    }
+
+    # Disconnecting
     $self->compara_dba->dbc->disconnect_if_idle();
 
     $self->iterate_by_dbc($segments,
-        sub { my $this_segment = shift; return $this_segment->genome_db->db_adaptor->dbc },
+        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $_)->genome_db->db_adaptor->dbc },
         sub { my $this_segment = shift;
 
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
