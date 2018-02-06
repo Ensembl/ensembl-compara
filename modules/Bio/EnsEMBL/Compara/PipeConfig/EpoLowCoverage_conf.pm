@@ -349,6 +349,16 @@ sub pipeline_analyses {
 		-batch_size    => 10,
 		-hive_capacity => 15,
 		-rc_name => '1.8Gb',
+		-flow_into => {
+			       -1 => [ 'set_neighbour_nodes_himem' ],
+			      },
+	    },
+
+	    {   -logic_name => 'set_neighbour_nodes_himem',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+		-batch_size    => 5,
+		-hive_capacity => 20,
+		-rc_name => '3.5Gb',
 	    },
 # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
             {   -logic_name => 'healthcheck_factory',
