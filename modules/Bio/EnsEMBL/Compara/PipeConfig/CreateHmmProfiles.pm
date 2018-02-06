@@ -205,7 +205,8 @@ sub default_options {
         'min_ratio_species_genes'       => 0.5,
         'max_gappiness'                 => 0.9,
 	    'sequence_limit'                => 50,
-	    'max_chunk_length'              => 100,
+	    'max_chunk_length'              => 0,
+        'max_chunk_size'                => 100,
         'output_prefix'                 => "hmm_split_",
 
         # cdhit is used to filter out proteins that are too close to each other
@@ -737,6 +738,7 @@ sub core_pipeline_analyses {
             -parameters => {
                             'sequence_limit'            => $self->o('sequence_limit'),
                             'max_chunk_length'          => $self->o('max_chunk_length'),
+                            'max_chunk_size'            => $self->o('max_chunk_size'),
                             'input_format'              => 'fasta',
                             'seq_filter'                => '^TF',
                             'inputfile'                 => $self->o('treefam_hmm_library_basedir')."/globals/con.Fasta",
