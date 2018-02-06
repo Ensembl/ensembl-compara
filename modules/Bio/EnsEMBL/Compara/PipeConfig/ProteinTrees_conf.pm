@@ -1591,7 +1591,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name    => 'compute_statistics',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComputeStatistics',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
             -hive_capacity => 10,
             -batch_size    => 5,
             -rc_name       => '500Mb_job',

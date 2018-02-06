@@ -35,7 +35,7 @@ All results are stored in method_link_species_set_tag.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ComputeStatistics;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics;
 
 use strict;
 use warnings;
