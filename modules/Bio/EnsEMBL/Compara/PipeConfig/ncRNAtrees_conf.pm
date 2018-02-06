@@ -690,12 +690,28 @@ sub pipeline_analyses {
              -analysis_capacity => $self->o('raxml_capacity'),
              -parameters => {
                              %raxml_parameters,
+                             'cmd_max_runtime'       => '86400',
                              'raxml_number_of_cores' => 4,
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
+                            -2 => [ 'pre_sec_struct_tree_long' ],       # RUNTIME
                            },
              -rc_name => '2Gb_4c_job',
+            },
+
+            {
+             -logic_name    => 'pre_sec_struct_tree_long', ## pre_sec_struct_tree
+             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+             -analysis_capacity => $self->o('raxml_capacity'),
+             -parameters => {
+                             %raxml_parameters,
+                             'raxml_number_of_cores' => 8,
+                            },
+             -flow_into => {
+                            2 => [ 'sec_struct_model_tree_long'],
+                           },
+             -rc_name => '4Gb_8c_job',
             },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
@@ -703,9 +719,25 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('raxml_capacity'),
             -parameters => {
                             %raxml_parameters,
+                            'cmd_max_runtime'       => '86400',
                             'raxml_number_of_cores' => 8,
                            },
+
+             -flow_into => {
+                            -2 => [ 'sec_struct_model_tree_long' ],       # RUNTIME
+                           },
+
             -rc_name => '4Gb_8c_job',
+        },
+
+        {   -logic_name    => 'sec_struct_model_tree_long', ## sec_struct_model_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 16,
+                           },
+            -rc_name => '8Gb_16c_job',
         },
 
         {   -logic_name    => 'genomic_alignment',
