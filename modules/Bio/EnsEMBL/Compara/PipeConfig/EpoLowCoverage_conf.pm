@@ -347,7 +347,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
 		-batch_size    => 10,
-		-hive_capacity => 15,
+		-hive_capacity => 20,
 		-rc_name => '1.8Gb',
 		-flow_into => {
 			       -1 => [ 'set_neighbour_nodes_himem' ],
