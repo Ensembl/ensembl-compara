@@ -171,6 +171,11 @@ sub web_proxy {
   return $SiteDefs::HTTP_PROXY || '';
 }
 
+sub https_proxy {
+  ## Gets the http and https proxy address
+  return $SiteDefs::HTTPS_PROXY || '';
+}
+
 sub image_width {
   ## Gets image width or sets it for subsequent requests by setting a cookie
   ## @param Width in pixels (if setting)

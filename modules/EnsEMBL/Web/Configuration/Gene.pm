@@ -276,6 +276,12 @@ sub populate_tree {
     { 'availability' => 'gene', 'no_menu_entry' => 1 }
   );
 
+  my $gxa = $self->get_node('ExpressionAtlas');
+  my $pathway = $self->create_node('Pathway', 'Pathway',
+    [qw( pathway EnsEMBL::Web::Component::Gene::Pathway )],
+    { 'availability'  => 'gene has_pathway' }
+  );
+  $gxa->after($pathway);
 
 }
 

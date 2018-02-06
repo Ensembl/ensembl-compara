@@ -142,6 +142,11 @@ sub populate_tree {
     { 'availability' => 'transcript database:funcgen has_oligos', 'concise' => 'Oligo probes' }
   ));
 
+  my $pathway = $self->create_node('Pathway', 'Pathway',
+    [qw( pathway EnsEMBL::Web::Component::Gene::Pathway )],
+    # { 'availability'  => 'gene has_pathway' }
+  );
+
   my $T = $self->create_node('SupportingEvidence', 'Supporting evidence',
    [qw( evidence EnsEMBL::Web::Component::Transcript::SupportingEvidence )],
     { 'availability' => 'transcript has_evidence', 'concise' => 'Supporting evidence' }
@@ -176,6 +181,7 @@ sub populate_tree {
     [qw( export EnsEMBL::Web::Component::Export::Output )],
     { 'availability' => 'transcript', 'no_menu_entry' => 1 }
   );
+
 }
 
 1;
