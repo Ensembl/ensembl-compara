@@ -607,12 +607,10 @@ sub detail_panel {
     my $display_allele = $self->trim_large_string($allele,'allele_'.$t_data->{transcriptname},50);
     $t_allele = $self->trim_large_string($t_allele,'t_allele_'.$t_data->{transcriptname},50);
         
-    # HGVS
-    my $hgvs_c = $self->trim_large_string($tva->hgvs_transcript,'hgvs_c_'.$t_data->{transcriptname},60);
-    my $hgvs_p = $self->trim_large_string($tva->hgvs_protein,'hgvs_p_'.$t_data->{transcriptname},60);
-
     
-    my %ens_term = map { $_->display_term => 1 } @$ocs;
+    ## HGVS ##
+    my $hgvs_c = $tva->hgvs_transcript;
+    my $hgvs_p = $tva->hgvs_protein;
     
     my %data = (
       allele     => $display_allele,
@@ -621,13 +619,11 @@ sub detail_panel {
       gene       => qq{<a href="$gene_url">$gene_id</a>},
       transcript => qq{<a href="$tr_url">$tr_id</a>},
       protein    => $prot_id ? qq{<a href="$prot_url">$prot_id</a>} : '-',
-      ens_term   => join(', ', keys(%ens_term)),
       so_term    => join(', ', map { sprintf '%s - <i>%s</i> (%s)', $_->label, $_->description, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
       hgvs       => join('<br />', grep $_, $hgvs_c, $hgvs_p) || '-',
     );
     
     if($tv->affects_cds) {
-      #$data{context} = $self->render_context($tv, $tva);
       
       my $context_url = $hub->url({
         type   => 'Transcript',
@@ -641,7 +637,8 @@ sub detail_panel {
       
       $data{'context'} = qq{<a href="$context_url">Show in transcript</a>};
       
-      # work out which exon it is in
+
+      ## Exon - work out which exon it is in ##
       my @exons       = @{$tr->get_all_Exons};      
       my $exon_number = 0;
       my $exon;
@@ -670,18 +667,29 @@ sub detail_panel {
       $data{'exon_coord'} =
         ($tv->cdna_start - $exon->cdna_start($tr) + 1) .
         ($tv->cdna_end == $tv->cdna_start ? '' : '-' . ($tv->cdna_end - $exon->cdna_start($tr) + 1));
-        
-      # protein domains
-      my @strings;
 
+
+      ## Protein domains ##
+      my %domains;
+
+      # Store protein domain info by source 
       for my $feat (@{$tv->get_overlapping_ProteinFeatures}) {
-          my $label = $feat->analysis->display_label.': '.$feat->hseqname;
-          push @strings, $label;
+        my $domain_source = $feat->analysis->display_label;
+        my $domain_id     = $feat->hseqname;
+
+        if ($domains{$domain_source}) {
+          push(@{$domains{$domain_source}}, $domain_id);
+        }
+        else {
+          $domains{$domain_source} = [$domain_id];
+        }
+      }
+      foreach my $domain_src (sort(keys(%domains))) {
+        $data{domains} .= "<b>$domain_src</b><div class=\"column-right\"><ul class=\"compact\"><li>".join('</li><li>', @{$domains{$domain_src}})."</li></ul></div>";
       }
 
-      $data{domains} = join '<br/>', @strings if @strings;
-      
-      # find vars in same AA
+
+      ## Find vars in same AA ##
       my @same_aa;
       
       foreach my $other_vf(@{$vf_adaptor->fetch_all_by_Slice($vf->feature_Slice->expand(3, 3))}) {
@@ -702,26 +710,23 @@ sub detail_panel {
       
       $data{same_aa} = (join ", ", @same_aa) || "-";
     }
-    
-    #$data{'context'} =
-    #  $self->context_image($tva).
-    #  $self->render_context($tv, $tva);
-    
+
+    my $var_strand = ($vf->seq_region_strand == 1) ? 'forward' : 'reverse';
+
     my @rows = (
-      { name       => 'Variation name'             },      
-      { gene       => 'Gene'                       },
-      { transcript => 'Transcript'                 },
-      { protein    => 'Protein'                    },
-      { allele     => 'Allele (variation)'         },
-      { t_allele   => 'Allele (transcript)'        },
-      { so_term    => 'Consequence (SO term)'      },
-      { ens_term   => 'Consequence (Old Ensembl term)' },
-      { hgvs       => 'HGVS names'                 },
-      { exon       => 'Exon'                       },
-      { exon_coord => 'Position in exon'           },
-      { domains    => 'Overlapping protein domains'},
-      { same_aa    => 'Variants in same codon'     },
-      { context    => 'Context'                    },
+      { name       => 'Variation name'                       },
+      { gene       => 'Gene'                                 },
+      { transcript => 'Transcript'                           },
+      { protein    => 'Protein'                              },
+      { allele     => "Allele (reference $var_strand strand)"},
+      { t_allele   => 'Allele (transcript strand)'           },
+      { so_term    => 'Consequence (SO term)'                },
+      { hgvs       => 'HGVS names'                           },
+      { exon       => 'Exon'                                 },
+      { exon_coord => 'Position in exon'                     },
+      { domains    => 'Overlapping protein domains'          },
+      { same_aa    => 'Variants in same codon'               },
+      { context    => 'Context'                              },
     );
     
     my $table = $self->new_table([{ key => 'name' }, { key => 'value'}], [], { header => 'no', class => 'cellwrap_inside' });
