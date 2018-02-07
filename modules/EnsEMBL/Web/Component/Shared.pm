@@ -1448,7 +1448,7 @@ sub render_consequence_type {
       $self->coltab($_->label, $hex, $_->description);
     }
     @consequences;
-  my $rank = $consequences[0]->rank;
+  my $rank = @consequences ? $consequences[0]->rank : undef;
       
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
 }

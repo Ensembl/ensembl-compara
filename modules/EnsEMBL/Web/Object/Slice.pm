@@ -113,6 +113,18 @@ sub getFakeMungedVariationFeatures {
 
   my ($self, $subslices, $gene, $so_terms) = @_;
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+  
+  # find VCF config
+  my $c = $self->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+
+  if($c) {
+    my $variation_db = $self->variation_adaptor;
+    
+    # set config file via ENV variable
+    $ENV{ENSEMBL_VARIATION_VCF_CONFIG_FILE} = $c->{'CONFIG'};
+    $variation_db->use_vcf($c->{'ENABLED'}) if $variation_db->can('use_vcf');
+  }
+  
   if ($so_terms) {
     $vfa->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   }

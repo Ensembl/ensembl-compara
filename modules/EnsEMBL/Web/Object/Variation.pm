@@ -56,8 +56,8 @@ sub availability {
       
       $availability->{"has_$_"} = $counts->{$_} for qw(uniq_transcripts transcripts regfeats features populations population_freqs samples ega citation locations);
       if($self->param('vf')){
-        ## only show these if a mapping available
-        $availability->{"has_$_"} = $counts->{$_} for qw(alignments ldpops);
+          ## only show these if a mapping available
+          $availability->{"has_$_"}  = $counts->{$_} for qw(alignments ldpops);
       }
       $availability->{'is_somatic'}  = $obj->has_somatic_source;
       $availability->{'not_somatic'} = !$obj->has_somatic_source;
@@ -115,9 +115,7 @@ sub get_ega_links {
   my $self = shift;
   my @ega_links = @{$self->get_external_data};
 
-  my $vf = $self->param('vf');
-  my $vf_object = ($vf) ? $self->hub->database('variation')->get_VariationFeatureAdaptor->fetch_by_dbID($vf) : undef;
-  if ($vf_object) {
+  if(my $vf_object = $self->get_selected_variation_feature) {
     my $chr   = $vf_object->seq_region_name;
     my $start = $vf_object->seq_region_start;
     my $end   = $vf_object->seq_region_end;
@@ -132,17 +130,7 @@ sub count_features {
 }
 
 sub count_transcripts {
-  my $self = shift;
-  my %mappings = %{ $self->variation_feature_mapping };
-  my $counts = 0;
-
-  foreach my $varif_id (keys %mappings) {
-    next unless ($varif_id  eq $self->param('vf'));
-    my @transcript_variation_data = @{ $mappings{$varif_id}{transcript_vari} };
-    $counts = scalar @transcript_variation_data;
-  }
-
-  return $counts;
+  return scalar @{($_[0]->selected_variation_feature_mapping || {})->{transcript_vari} || []};
 }
 
 sub count_regfeats {
@@ -155,21 +143,8 @@ sub count_regfeats {
 }
 
 sub count_uniq_transcripts {
-  my $self = shift;
-  my %mappings = %{ $self->variation_feature_mapping };
-  my $count = 0;
-
-  foreach my $varif_id (keys %mappings) {
-    next unless ($varif_id  eq $self->param('vf'));
-    my %transcriptnames;
-    for ( @{ $mappings{$varif_id}{transcript_vari} } ) {
-        $transcriptnames{$_->{transcriptname}} += 1;
-    }
-    $count = scalar keys %transcriptnames;
-    last;
-  }
-
-  return $count;
+  my %transcriptnames = map {$_->{transcriptname} => 1} @{$_[0]->selected_variation_feature_mapping->{transcript_vari} || []};
+  return scalar keys %transcriptnames;
 }
 
 sub count_populations {
@@ -304,40 +279,13 @@ sub _seq_region_ {
     if ($unique) {
       return (undef, undef, undef, "multiple") if $#vari_mappings > 0;
     }
-    $seq_region  = $self->region_name($vari_mappings[0]);
-    $start       = $self->start($vari_mappings[0]);
-    $seq_type    = $self->region_type($vari_mappings[0]);
+
+    my $vf = $vari_mappings[0];
+    $seq_region = $vf->seq_region_name;
+    $start      = $vf->seq_region_start;;
+    $seq_type   = $vf->slice->coord_system_name;
   }
   return ( $seq_region, $start, $seq_type );
-}
-
-
-sub seq_region_name    {
-
-  ### Variation_location 
-  ### a
-
-  my( $sr,$st) = $_[0]->_seq_region_; return $sr; 
-}
-sub seq_region_start   {
-  ### Variation_location 
-  ### a
-  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
-}
-sub seq_region_end     {
-  ### Variation_location 
-  ### a
-  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
-}
-sub seq_region_strand  {
-  ### Variation_location 
-  ### a
-  return 1; 
-}
-sub seq_region_type    { 
-  ### Variation_location
-  ### a
-  my($sr,$st,$type) = $_[0]->_seq_region_; return $type; 
 }
 
 sub seq_region_data {
@@ -431,7 +379,7 @@ sub source_version {
 
   my $self    = shift;
   my $source  = $self->vari->source_name;
-  my $version = $self->vari->adaptor->get_source_version($source);
+  my $version = $self->vari->source_version;
   return $version;
 }
 
@@ -525,10 +473,8 @@ sub alleles {
   my $self = shift;
 
   # A selected variation feature
-  if ($self->hub->param('vf')) {
-    my $vf_adaptor = $self->hub->database('variation')->get_VariationFeatureAdaptor();
-    my $vf_object  = $vf_adaptor->fetch_by_dbID($self->hub->param('vf'));
-    return $vf_object->allele_string if $vf_object;
+  if(my $vf_object = $self->get_selected_variation_feature) {
+    return $vf_object->allele_string;
   }
 
   # A unique variation feature
@@ -784,14 +730,13 @@ sub get_external_data {
 
 sub slice {
   my $self = shift;
-  my @vfs = @{$self->Obj->get_all_VariationFeatures};
+
   my $feature_slice;
-  return 1 unless $self->hub->param('vf');
-  foreach my $vf (@vfs){
-    if ($vf->dbID == $self->hub->core_param('vf')){
-      $feature_slice = $vf->feature_Slice;
-    }
+  
+  if(my $vf = $self->get_selected_variation_feature) {
+    $feature_slice = $vf->feature_Slice;
   }
+
   return $feature_slice;
 }
 
@@ -799,13 +744,7 @@ sub is_somatic_with_different_ref_base {
   my $self = shift;
   return unless $self->Obj->is_somatic;
   # get slice for variation feature
-  my @vfs = @{$self->Obj->get_all_VariationFeatures};
-  my $feature_slice;
-  foreach my $vf (@vfs){
-    if ($vf->dbID == $self->hub->core_param('vf')){
-      $feature_slice = $vf->feature_Slice;
-    }
-  }
+  my $feature_slice = $self->slice;
   return unless $feature_slice;
   my $ref_base = $feature_slice->seq();
   my ($a1, $a2) = split(//,$self->alleles);
@@ -1010,7 +949,7 @@ sub sample_table {
   ### limit populations shown to those with population genotypes 
   ### summarised by dbSNP or added in adaptor for 1KG
   my $pop_geno_adaptor   = $self->hub->database('variation')->get_PopulationGenotypeAdaptor();
-  my $pop_genos = $pop_geno_adaptor->fetch_all_by_Variation($self->vari);
+  my $pop_genos = $self->pop_genotype_obj;
 
   my %synonym;
   my %pop_seen;
@@ -1261,15 +1200,24 @@ sub variation_feature_mapping { ## used for snpview
  
   my %data;
   foreach my $vari_feature_obj (@{ $self->get_variation_features }) { 
-     my $varif_id = $vari_feature_obj->dbID;
-     $data{$varif_id}{Type}           = $self->region_type($vari_feature_obj);
-     $data{$varif_id}{Chr}            = $self->region_name($vari_feature_obj);
-     $data{$varif_id}{start}          = $self->start($vari_feature_obj);
-     $data{$varif_id}{end}            = $vari_feature_obj->end;
-     $data{$varif_id}{strand}         = $vari_feature_obj->strand;
+     my $varif_id = $vari_feature_obj->dbID || $vari_feature_obj->location_identifier;
+     $data{$varif_id}{Type}            = $vari_feature_obj->slice->coord_system_name;
+     $data{$varif_id}{Chr}             = $vari_feature_obj->seq_region_name;
+     $data{$varif_id}{start}           = $vari_feature_obj->seq_region_start;
+     $data{$varif_id}{end}             = $vari_feature_obj->seq_region_end;
+     $data{$varif_id}{strand}          = $vari_feature_obj->strand;
      $data{$varif_id}{transcript_vari} = $self->transcript_variation($vari_feature_obj, undef, $recalculate);
   }
   return \%data;
+}
+
+sub selected_variation_feature_mapping {
+  my $self = shift;
+
+  my $mappings = $self->variation_feature_mapping;
+  my $param = $self->param('vf');
+
+  return $param ? $mappings->{$param} : {};
 }
 
 
@@ -1316,43 +1264,17 @@ sub get_variation_features {
    return $self->vari ? $self->vari->get_all_VariationFeatures : [];
 }
 
-sub region_type { 
+sub get_selected_variation_feature {
+  my $self = shift;
 
-  ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $type = $data->region_type($vari)
-  ### Description: gets the VariationFeature slice seq region type
-  ### Returns String
+  my $variation_feature;
 
-  my ($self, $vari_feature) = @_;
-  my $slice =  $vari_feature->slice;
-  return $slice->coord_system_name if $slice;
-}
+  # have vf
+  if(my $vf_param = $self->param('vf')) {
+    ($variation_feature) = grep {$_->dbID eq $vf_param} @{$self->get_variation_features};
+  }
 
-sub region_name { 
-  ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $chr = $data->region_name($vari)
-  ### Description: gets the VariationFeature slice seq region name
-  ### Returns String
-  
-  my ($self, $vari_feature) = @_;
-  my $slice =  $vari_feature->slice;
-  return $slice->seq_region_name() if $slice;
-}
-
-
-
-sub start {
-
-  ### Variation_features
-  ### Args      : Bio::EnsEMBL::Variation::Variation::Feature
-  ### Example    : my $vari_start = $object->start($vari);
-  ### Description: gets the Variation start coordinates
-  ### Returns String
-
-  my ($self, $vari_feature) = @_;
-  return $vari_feature->start;
+  return $variation_feature;
 }
 
 
@@ -1438,15 +1360,15 @@ sub ld_pops_for_snp {
 
 sub ld_location {
   my $self = shift;
-  my $start = $self->seq_region_start;
-  my $end = $self->seq_region_end;
+  my ($sr, $start) = $self->_seq_region_;
+  my $end = $start;
   my $length = $end - $start +1;
   my $offset = (20000 - $length)/2;
   $start -= $offset;
   $end += $offset;
   $start =~s/\.5//;
   $end =~s/\.5//;
-  my $location = $self->seq_region_name .":". $start .'-'. $end;
+  my $location = $sr .":". $start .'-'. $end;
   return $location;
 }
 
@@ -1544,16 +1466,7 @@ sub hgvs {
   # skip if no mapping or somatic mutation with mutation ref base different to ensembl ref base
   return {} unless $mapping_count && !$self->is_somatic_with_different_ref_base; 
   
-  if ($mapping_count == 1) {
-    ($vfid) = keys %$mappings;
-  } elsif (!$vfid) {
-    $vfid = $self->hub->param('vf');
-  }
-  
-  return {} unless $vfid;
-  
-  my $vf = $self->Obj->get_VariationFeature_by_dbID($vfid);
-  
+  my $vf = $self->get_selected_variation_feature;  
   return {} unless $vf;
   
   # Get all transcript variations and put them in a hash with allele seq as key
