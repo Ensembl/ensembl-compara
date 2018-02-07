@@ -313,7 +313,7 @@ sub _writeMultiFastaAlignment {
     $self->compara_dba->dbc->disconnect_if_idle();
 
     $self->iterate_by_dbc($segments,
-        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $_)->genome_db->db_adaptor->dbc },
+        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $this_segment)->genome_db->db_adaptor->dbc },
         sub { my $this_segment = shift;
 
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
