@@ -118,8 +118,9 @@ sub default_options {
         'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [
-            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
+            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_92',
         ],
+
         'alt_homology_db'  => undef,
         'previous_rel_db'  => undef,
         'user'             => 'ensadmin',
