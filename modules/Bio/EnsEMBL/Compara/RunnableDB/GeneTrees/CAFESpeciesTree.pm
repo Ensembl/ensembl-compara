@@ -62,7 +62,7 @@ sub param_defaults {
     return {
             'label'      => 'full_species_tree',
             'new_label'  => 'cafe',
-            'use_genetrees' => 1,
+            'use_genetrees' => 0,
             'use_timetree'  => 1,
            };
 }
