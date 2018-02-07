@@ -35,7 +35,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
 sub param_defaults {
     my $self = shift @_;
     return {
@@ -183,6 +182,16 @@ sub write_output {
                 $dbc->do('UPDATE homology_member SET seq_member_id = ?, gene_member_id = ? WHERE seq_member_id = ?', undef, $offset+$r->{'curr'}->{'seq_member_id'}, $r->{'curr'}->{'gene_member_id'}, $r->{'prev'}->{'seq_member_id'});
             }
             $dbc->do('SET FOREIGN_KEY_CHECKS=1');
+
+            # # removing offset can be performed in bulk
+            # $dbc->do("UPDATE seq_member_projection SET source_seq_member_id = source_seq_member_id - $offset, target_seq_member_id = target_seq_member_id - $offset WHERE source_seq_member_id > $offset AND target_seq_member_id > $offset");
+            # $dbc->do("UPDATE seq_member_projection SET source_seq_member_id = source_seq_member_id - $offset WHERE source_seq_member_id > $offset");
+            # $dbc->do("UPDATE seq_member_projection SET target_seq_member_id = target_seq_member_id - $offset WHERE target_seq_member_id > $offset");
+            # $dbc->do("UPDATE other_member_sequence SET seq_member = seq_member_id - $offset WHERE seq_member_id > $offset");
+            # $dbc->do("UPDATE gene_tree_node SET seq_member_id = seq_member_id - $offset WHERE seq_member_id > $offset");
+            # $dbc->do("UPDATE gene_align_member SET seq_member_id = seq_member_id - $offset WHERE seq_member_id > $offset");
+            # $dbc->do("UPDATE homology_member SET seq_member_id = seq_member_id - $offset WHERE seq_member_id > $offset");
+
             foreach my $r (@$to_rename) {
                 $dbc->do('UPDATE other_member_sequence SET seq_member_id = ? WHERE seq_member_id = ?',               undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
                 $dbc->do('UPDATE seq_member_projection SET source_seq_member_id = ? WHERE source_seq_member_id = ?', undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
@@ -191,6 +200,7 @@ sub write_output {
                 $dbc->do('UPDATE gene_align_member SET seq_member_id = ? WHERE seq_member_id = ?',                   undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
                 $dbc->do('UPDATE homology_member SET seq_member_id = ? WHERE seq_member_id = ?',                     undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
             }
+
             die "Dry-run requested" if $self->param('dry_run');
         } );
     }
@@ -201,6 +211,8 @@ sub write_output {
         my $sql = 'SELECT root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE ref_root_id IS NULL AND seq_member_id = ?';
         my $sth = $dbc->prepare($sql);
         foreach my $seq_member_id (@$to_delete) {
+            $dbc->do('DELETE FROM seq_member_projection WHERE source_seq_member_id = ?', undef, $seq_member_id);
+
             $sth->execute($seq_member_id);
             my ($tree_id) = $sth->fetchrow_array;
             $sth->finish;
