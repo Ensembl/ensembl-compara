@@ -121,6 +121,15 @@ sub pipeline_analyses {
                 'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_url #compara_url# --species #name# --reg_conf "#registry#" > #output_file#',
             },
             -analysis_capacity => $self->o('capacity'),
+            -flow_into      => [ 'check_not_empty' ],
+        },
+
+        {   -logic_name     => 'check_not_empty',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckNotEmpty'
+            -parameters     => {
+                'min_number_of_lines'   => 1,   # The header is always present
+                'filename'              => '#output_file#',
+            },
             -flow_into      => [ 'compress' ],
         },
 
