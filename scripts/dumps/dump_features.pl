@@ -217,10 +217,30 @@ if ($feature =~ /^top/) {
   $description = "$species_name regulatory features in Ensembl $version";
 } elsif ($feature =~ /^ce_?(\d+)/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
+  if ($mlss->method->class =~ /^GenomicAlign.*_alignment$/) {
+      # Check if there is a corresponding CE MLSS
+      my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = "ConstrainedElement.constrained_element" AND tag = "msa_mlss_id" AND value = ?';
+      my $ce_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->_id_cache->get_by_sql($sql, [$mlss->dbID]);
+      if (scalar(@$ce_mlsss) == 1) {
+          warn sprintf("Automatically switching from mlss_id=%d (%s) to mlss_id=%d (%s)\n", $mlss->dbID, $mlss->method->type, $ce_mlsss->[0]->dbID, $ce_mlsss->[0]->method->type);
+          $mlss = $ce_mlsss->[0];
+      }
+  }
+  die "This mlss is not of Constrained elements: ".$mlss->toString if ($mlss->method->class ne 'ConstrainedElement.constrained_element');
   $track_name = "gerp_elements.".($mlss->species_set->name || $1).".$species_name.e$version";
   $description = $mlss->name." on $species_name in Ensembl $version";
 } elsif ($feature =~ /^cs_?(\d+)/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
+  if ($mlss->method->class =~ /^GenomicAlign.*_alignment$/) {
+      # Check if there is a corresponding CS MLSS
+      my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = "ConservationScore.conservation_score" AND tag = "msa_mlss_id" AND value = ?';
+      my $cs_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->_id_cache->get_by_sql($sql, [$mlss->dbID]);
+      if (scalar(@$cs_mlsss) == 1) {
+          warn sprintf("Automatically switching from mlss_id=%d (%s) to mlss_id=%d (%s)\n", $mlss->dbID, $mlss->method->type, $cs_mlsss->[0]->dbID, $cs_mlsss->[0]->method->type);
+          $mlss = $cs_mlsss->[0];
+      }
+  }
+  die "This mlss is not of Conservation scores: ".$mlss->toString if ($mlss->method->class ne 'ConservationScore.conservation_score');
   $track_name = "gerp_score.".($mlss->species_set->name || $1).".$species_name.e$version";
   $description = $mlss->name." on $species_name in Ensembl $version";
   $extra_desc = 'type=bedGraph';
