@@ -138,7 +138,7 @@ sub _family_object_to_hash {
       elsif (!$self->no_seq) {
         $temp_hash->{seq} = $this_member->other_sequence($self->seq_type);
       }
-      push $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id}, $temp_hash;
+      push @{ $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id} }, $temp_hash;
     }
 
     if ( ($this_member->source_name() =~ /Uniprot/) and ( ($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'uniprot') ) ) {
@@ -150,7 +150,7 @@ sub _family_object_to_hash {
       elsif (!$self->no_seq) {
         $temp_hash1->{seq} = $this_member->other_sequence($self->seq_type);
       }
-      push $hash->{MEMBERS}{UNIPROT_proteins}, $temp_hash1;
+      push @{ $hash->{MEMBERS}{UNIPROT_proteins} }, $temp_hash1;
     }
   }
   return $hash;
