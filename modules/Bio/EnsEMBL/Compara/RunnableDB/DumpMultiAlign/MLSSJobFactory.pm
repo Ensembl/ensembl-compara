@@ -38,6 +38,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'species_priority'   => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
         'from_first_release' => 40, # dump method_link_species_sets with a first_release > this option
+        'add_conservation_scores'   => 1,       # When set, will add the conservation scores to the EMF dumps
     }
 }
 
@@ -108,9 +109,20 @@ sub _test_mlss {
     $filename =~ s/[\W\s]+/_/g;
     $filename =~ s/_$//;
 
+    if ($self->param('add_conservation_scores')) {
+        foreach my $method (@{ $compara_dba->get_MethodAdaptor->fetch_all_by_class_pattern('ConservationScore.conservation_score') }) {
+            my $cs_mlss = $mlss->adaptor->fetch_by_method_link_id_species_set_id($method->dbID, $mlss->species_set->dbID);
+            if ($cs_mlss) {
+                $mlss_id = $cs_mlss->dbID;
+                last
+            }
+        }
+    }
+
     my $output_dir = $self->param_required('export_dir').'/'.$filename;
     my $output_id = {
         mlss_id         => $mlss->dbID,
+        dump_mlss_id    => $mlss_id,            # Could be the mlss_id of conservation scores
         species         => $species_name,
         genome_db_id    => $genome_db->dbID,
         base_filename   => $filename,
