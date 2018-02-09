@@ -127,7 +127,7 @@ sub _family_object_to_hash {
 
   foreach my $this_member (@{$members}) {
     if  ( ($this_member->source_name() eq 'ENSEMBLPEP') and ( ($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'ensembl') ) ){
-      my $gene_mem_stable_id = $this_member->{_gene_member}->stable_id();
+      my $gene_mem_stable_id = $this_member->gene_member->stable_id();
       if (! defined $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id} ){
         $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id} = [];
       }
