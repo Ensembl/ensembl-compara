@@ -367,10 +367,6 @@ sub store_ktreedist_score {
             my $symm_difference = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{symm_difference};
             my $n_partitions    = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{n_partitions};
             my $k_score_rank    = $count++;
-            ## Hack e92 ##
-            $scale_factor = '99999.99999' if $scale_factor >= 100_000;
-            $k_score = '99999.99999' if $k_score >= 100_000;
-            ## Hack e92 ##
             $sth->execute($root_id,
                           $tag,
                           $k_score,
