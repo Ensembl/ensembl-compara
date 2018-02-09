@@ -117,13 +117,13 @@ sub default_options {
       	# location of species core dbs which were used in the pairwise alignments
       	'core_db_urls' => [ 'mysql://ensro@mysql-ensembl-mirror.ebi.ac.uk:4240/'.$self->o('core_db_version') ],
       	'gerp_program_version' => "2.1",
-        'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211/bin'), #gerp program
+        'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
         'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
         'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
         'exonerate_exe'   => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'), # path to exonerate executable
-        'ortheus_c_exe'   => $self->check_exe_in_cellar('ortheus/0.5.0/bin/ortheus_core'),
-        'ortheus_py'      => $self->check_exe_in_cellar('ortheus/0.5.0/bin/Ortheus.py'),
-        'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0'),
+        'ortheus_c_exe'   => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
+        'ortheus_py'      => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/Ortheus.py'),
+        'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
         'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
         'estimate_tree_exe' => $self->check_file_in_cellar('pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py'),
     };
