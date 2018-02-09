@@ -576,6 +576,11 @@ sub _read_in_ini_file {
     }
   }
   
+  ## Automatic database configuration
+  unless ($filename eq 'COLOUR' || $filename eq 'MULTI') {
+    $tree->{'SPECIES_RELEASE_VERSION'} ||= 1;
+  }
+
   return $inifile ? $tree : undef;
 }
 
@@ -588,7 +593,7 @@ sub _promote_general {
 }
 
 sub _expand_database_templates {
-  my ($self, $filename, $tree) = @_;
+  my ($self, $filename, $tree, $config_packer) = @_;
  
   my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
   my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
@@ -596,50 +601,75 @@ sub _expand_database_templates {
   my $PASS   = $tree->{'general'}{'DATABASE_DBPASS'};    
   my $DRIVER = $tree->{'general'}{'DATABASE_DRIVER'} || 'mysql'; 
   
-  if (exists $tree->{'databases'}) {
-    foreach my $key (keys %{$tree->{'databases'}}) {
-      my $db_name = $tree->{'databases'}{$key};
-      my $version = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
-      
-      if ($db_name =~ /^%_(\w+)_%_%$/) {
-        $db_name = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
-      } elsif ($db_name =~ /^%_(\w+)_%$/) {
-        $db_name = lc(sprintf '%s_%s_%s_%s', $filename , $1, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
-      } elsif ($db_name =~/^%_(\w+)$/) {
-        $db_name = lc(sprintf '%s_%s_%s', $filename , $1, $version);
-      } elsif ($db_name =~/^(\w+)_%$/) {
-        $db_name = lc(sprintf '%s_%s', $1, $version);
+  ## Autoconfigure databases
+  unless (exists $tree->{'databases'} && exists $tree->{'databases'}{'DATABASE_CORE'}) {
+    my @db_types = qw(CORE CDNA OTHERFEATURES RNASEQ FUNCGEN VARIATION);
+    my $db_details = {
+                      'HOST'    => $HOST,
+                      'PORT'    => $PORT,
+                      'USER'    => $USER,
+                      'PASS'    => $PASS,
+                      'DRIVER'  => $DRIVER,
+                      };
+    foreach (@db_types) {
+      my $species_version = $tree->{'general'}{'SPECIES_RELEASE_VERSION'} || 1;
+      my $db_name = sprintf('%s_%s_%s_%s', $filename, lc($_), $SiteDefs::ENSEMBL_VERSION, $species_version);
+      ## Does this database exist?
+      $db_details->{'NAME'} = $db_name;
+      my $db_exists = $config_packer->db_connect($_, $db_details, 1);
+      if ($db_exists) {
+        $self->_info_line('Databases', "$_: $db_name - autoconfigured") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+        $tree->{'databases'}{'DATABASE_'.$_} = $db_name;
       }
-      
-      if ($tree->{'databases'}{$key} eq '') {
-        delete $tree->{'databases'}{$key};
-      } else {
-        if (exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
-          my %cnf = %{$tree->{$key}};
-          
-          $tree->{'databases'}{$key} = {
+      else {
+        $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+      }
+    }
+  }
+
+  foreach my $key (keys %{$tree->{'databases'}}) {
+    my $db_name = $tree->{'databases'}{$key};
+    my $version = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
+   
+    ## Expand name if it is a template, e.g. %_core_%   
+    if ($db_name =~ /^%_(\w+)_%_%$/) {
+      $db_name = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+    } elsif ($db_name =~ /^%_(\w+)_%$/) {
+      $db_name = lc(sprintf '%s_%s_%s_%s', $filename , $1, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+    } elsif ($db_name =~/^%_(\w+)$/) {
+      $db_name = lc(sprintf '%s_%s_%s', $filename , $1, $version);
+    } elsif ($db_name =~/^(\w+)_%$/) {
+      $db_name = lc(sprintf '%s_%s', $1, $version);
+    }
+    
+    if ($tree->{'databases'}{$key} eq '') {
+      delete $tree->{'databases'}{$key};
+    } else {
+      if (exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
+        my %cnf = %{$tree->{$key}};
+         
+        $tree->{'databases'}{$key} = {
             NAME   => $db_name,
             HOST   => exists $cnf{'HOST'}   ? $cnf{'HOST'}   : $HOST,
             USER   => exists $cnf{'USER'}   ? $cnf{'USER'}   : $USER,
             PORT   => exists $cnf{'PORT'}   ? $cnf{'PORT'}   : $PORT,
             PASS   => exists $cnf{'PASS'}   ? $cnf{'PASS'}   : $PASS,
             DRIVER => exists $cnf{'DRIVER'} ? $cnf{'DRIVER'} : $DRIVER,
-          };
+        };
           
-          delete $tree->{$key};
-        } else {
-          $tree->{'databases'}{$key} = {
+        delete $tree->{$key};
+      } else {
+        $tree->{'databases'}{$key} = {
             NAME   => $db_name,
             HOST   => $HOST,
             USER   => $USER,
             PORT   => $PORT,
             PASS   => $PASS,
             DRIVER => $DRIVER
-          };
-        }
-        
-        $tree->{'databases'}{$key}{$_} = $tree->{'general'}{"${key}_$_"} for grep $tree->{'general'}{"${key}_$_"}, qw(HOST PORT);
+        };
       }
+        
+      $tree->{'databases'}{$key}{$_} = $tree->{'general'}{"${key}_$_"} for grep $tree->{'general'}{"${key}_$_"}, qw(HOST PORT);
     }
   }
 }
@@ -897,7 +927,7 @@ sub process_ini_files {
   my ($self, $species, $config_packer, $defaults) = @_;
   my $type = 'db';
   
-  my $msg  = "$species database";
+  my $msg  = "$species databases";
   my $file = File::Spec->catfile($self->{'_conf_dir'}, 'packed', "$species.$type.packed");
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
@@ -907,7 +937,7 @@ sub process_ini_files {
     $full_tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours($self->_read_in_ini_file('COLOUR', {})) if $species eq 'MULTI';
     
     $self->_info_line('Parsing', "$species ini file");
-    $self->_expand_database_templates($species, $full_tree->{$species});
+    $self->_expand_database_templates($species, $full_tree->{$species}, $config_packer);
     $self->_promote_general($full_tree->{$species});
   }
   

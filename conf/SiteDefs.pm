@@ -128,6 +128,7 @@ our $ENSEMBL_DEBUG_IMAGES         = 0; # change these to 1 to prevent css minifi
 ## Other DEBUG flags
 our $ENSEMBL_DEBUG_HANDLER_ERRORS   = 1; # Shows messages from EnsEMBL::Web::Apache::*
 our $ENSEMBL_DEBUG_CACHE            = 0; # Turns debug messages on for EnsEMBL::Web::Cache
+our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::Web::SpeciesDefs
 ###############################################################################
 
 

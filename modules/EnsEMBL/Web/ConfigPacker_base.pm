@@ -84,17 +84,17 @@ sub db_connect {
   ### Connects to the specified database
   ### Arguments: configuration tree (hash ref), database name (string)
   ### Returns: DBI database handle
-  my $self    = shift;
-  my $db_name = shift;
-  return unless exists $self->tree->{'databases'}->{$db_name};
-  my $dbname  = $self->tree->{'databases'}->{$db_name}{'NAME'};
+  my ($self, $db, $details, $no_warn) = @_;
+  return unless ($details || exists $self->tree->{'databases'}{$db});
+  $details ||= $self->tree->{'databases'}{$db};
+  my $dbname  = $details->{'NAME'};
   return unless $dbname;
 
-  my $dbhost  = $self->tree->{'databases'}->{$db_name}{'HOST'};
-  my $dbport  = $self->tree->{'databases'}->{$db_name}{'PORT'};
-  my $dbuser  = $self->tree->{'databases'}->{$db_name}{'USER'};
-  my $dbpass  = $self->tree->{'databases'}->{$db_name}{'PASS'};
-  my $dbdriver= $self->tree->{'databases'}->{$db_name}{'DRIVER'};
+  my $dbhost  = $details->{'HOST'};
+  my $dbport  = $details->{'PORT'};
+  my $dbuser  = $details->{'USER'};
+  my $dbpass  = $details->{'PASS'};
+  my $dbdriver= $details->{'DRIVER'};
   my ($dsn, $dbh);
   # warn "Connecting to $dbname ($db_name) with args: $dbuser\@$dbhost:$dbport\n";
   eval {
@@ -125,11 +125,10 @@ sub db_connect {
   };
 
   if( $@ ) {
-    print STDERR "\t  [WARN] Can't connect to $db_name\n", "\t  [WARN] $@";
-    return undef();
+    print STDERR "\t  [WARN] Can't connect to $db\n", "\t  [WARN] $@" unless $no_warn;
+    $dbh = undef;
   } elsif( !$dbh ) {
-    print STDERR ( "\t  [WARN] $db_name database handle undefined\n" );
-    return undef();
+    print STDERR ( "\t  [WARN] $db database handle undefined\n" ) unless $no_warn;
   }
   return $dbh;
 }
