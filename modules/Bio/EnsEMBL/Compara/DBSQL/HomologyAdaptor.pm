@@ -575,7 +575,7 @@ sub _objs_from_sth {
             '_gene_tree_root_id',
         ], sub {
             return {
-                '_this_one_first'   => $self->{'_this_one_first'},
+                '_this_one_first'   => $self->{'_this_one_first'},      # Propagate the "_this_one_first" trick
             };
         });
 }

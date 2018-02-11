@@ -367,7 +367,7 @@ sub _objs_from_sth {
             'node_id',
         ], sub {
             return {
-                'cigar_arrayref' => undef,
+                'cigar_arrayref' => undef,      # Default value
             }
         }
     );

@@ -499,8 +499,8 @@ sub _objs_from_sth {
         ], sub {
             my $a = shift;
             return {
-                ($a->[1] ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),
-                ($a->[2] ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),
+                ($a->[1] ? ('_query_member' => $memberDBA->fetch_by_dbID($a->[1])) : ()),       # The object is not able to fetch this, so it's done here instead
+                ($a->[2] ? ('_hit_member'   => $memberDBA->fetch_by_dbID($a->[2])) : ()),       # The object is not able to fetch this, so it's done here instead
             };
         });
 }

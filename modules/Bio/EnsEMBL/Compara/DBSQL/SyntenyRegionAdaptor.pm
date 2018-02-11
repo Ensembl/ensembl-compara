@@ -316,7 +316,7 @@ sub _objs_from_sth {
         ], sub {
             my $a = shift;
             return {
-                'regions' => $dfra->fetch_all_by_synteny_region_id($a->[0]),
+                'regions' => $dfra->fetch_all_by_synteny_region_id($a->[0]),    # The object is not able to fetch these, so it's done here instead
             }
         } );
 }

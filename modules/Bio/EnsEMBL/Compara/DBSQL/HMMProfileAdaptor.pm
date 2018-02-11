@@ -183,7 +183,7 @@ sub _objs_from_sth {
             '_model_id',
             '_name',
             '_type',
-            undef,
+            undef,          # compressed_profile is uncompressed (see below)
             '_consensus',
         ], sub {
             my $a = shift;

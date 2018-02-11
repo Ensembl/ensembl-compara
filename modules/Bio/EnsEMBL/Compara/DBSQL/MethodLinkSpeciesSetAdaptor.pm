@@ -324,8 +324,8 @@ sub _objs_from_sth {
 
     my $mlsss = $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', [
             'dbID',
-            undef,
-            undef,
+            undef,  # method_link_id itself is not put in the object, but instead the object will have "method" (see below)
+            undef,  # species_set_id itself is not put in the object, but instead the object will have "species_set" (see below)
             'name',
             'source',
             'url',
