@@ -248,7 +248,7 @@ sub pipeline_analyses {
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -analysis_capacity => 5,
+            -analysis_capacity => 50,
             -rc_name => 'crowd',
             -max_retry_count    => 0,
             -flow_into => [ WHEN(
