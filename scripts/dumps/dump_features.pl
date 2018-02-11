@@ -535,12 +535,15 @@ foreach my $slice (sort {
         warn $sub_slice->name();
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
         next unless @$scores;
-        my @sorted_scores = sort {$a->seq_region_pos <=> $b->seq_region_pos} @$scores;
+        # Sort by position and decreasing score, so that we get the best score first
+        my @sorted_scores = sort {($a->seq_region_pos <=> $b->seq_region_pos) || ($b->diff_score <=> $a->diff_score)} @$scores;
         my $ref_score = shift @sorted_scores;
         my $last_pos = $ref_score->seq_region_pos;
         # To save space we can merge consecutive positions that have the same score
         foreach my $score (@sorted_scores) {
-            if (($score->seq_region_pos == ($last_pos+1)) and (abs($ref_score->diff_score - $score->diff_score) < 1e-6)) {
+            if ($score->seq_region_pos == $last_pos) {
+                # Same position -> must be a lower score -> discard
+            } elsif (($score->seq_region_pos == ($last_pos+1)) and (abs($ref_score->diff_score - $score->diff_score) < 1e-6)) {
                 # Next position and same score
                 $last_pos++;
             } else {
