@@ -43,6 +43,7 @@ my $dbname;
 my $port;
 my $help;
 my $urls;
+my $lex_sort;
 
 my $desc = "
 USAGE dump_features.pl [options] --feature FEATURE
@@ -96,6 +97,7 @@ GetOptions(
   'feature=s' => \$feature,
   'extra=s' => \$extra,
   'print_strand!' => \$print_strand,
+  'lex_sort!' => \$lex_sort,
   'from=s' => \$from,
   'host=s' => \$host,
   'user=s' => \$user,
@@ -280,7 +282,7 @@ if ($regions) {
 my %karyo_hash = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype() };
 
 foreach my $slice (sort {
-    if ($a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
+    if (!$lex_sort and $a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
         $a->seq_region_name <=> $b->seq_region_name
     } else {
         $a->seq_region_name cmp $b->seq_region_name}}
