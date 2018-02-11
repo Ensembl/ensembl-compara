@@ -258,7 +258,6 @@ sub pipeline_analyses {
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
-            -analysis_capacity  => 5,
             -rc_name        => 'crowd',
             -flow_into => [
                 WHEN( '!#make_tar_archive#' => { 'compress' => [ undef, { 'format' => 'maf'} ] } ),
@@ -269,7 +268,6 @@ sub pipeline_analyses {
             -parameters     => {
                 'cmd'           => 'gzip -f -9 #output_file#',
             },
-            -analysis_capacity => 1,
         },
         {   -logic_name     => 'md5sum',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
