@@ -19,12 +19,7 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-Initialise the pipeline on compara1 and dump the conservation scores of mlss_id 836
-found at cc21_ensembl_compara_86 on compara5
-
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_url mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1 -registry $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl
-
-Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
+Pipeline to dump conservation scores as bedGraph and bigWig files
 
 =cut
 
@@ -34,9 +29,9 @@ use strict;
 use warnings;
 no warnings 'qw';
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -44,28 +39,15 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # Where dumps are created
-        'export_dir'    => '/hps/nobackup/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
-
         # Paths to compara files
         'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
-
-        # How many species can be dumped in parallel
-        'capacity'    => 50,
     };
 }
 
 
-# Ensures species output parameter gets propagated implicitly
-sub hive_meta_table {
-    my ($self) = @_;
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
-    return {
-        %{$self->SUPER::hive_meta_table},
-        'hive_use_param_stack'  => 1,
-    };
-}
 
 sub pipeline_wide_parameters {
     my ($self) = @_;
@@ -81,7 +63,8 @@ sub pipeline_wide_parameters {
 
         'export_dir'    => $self->o('export_dir'),
         'output_dir'    => '#export_dir#/#dirname#',
-        'output_file'   => '#output_dir#/gerp_conservation_scores.#name#.bedgraph',
+        'bedgraph_file' => '#output_dir#/gerp_conservation_scores.#name#.bedgraph',
+        'bigwig_file'   => '#output_dir#/gerp_conservation_scores.#name#.bw',
     };
 }
 
@@ -110,7 +93,7 @@ sub pipeline_analyses {
                 'extra_parameters'      => [ 'name' ],
             },
             -flow_into      => {
-                '2->A' => [ 'dump_conservation_scores' ],
+                '2->A' => { 'dump_conservation_scores' => INPUT_PLUS() },
                 'A->1' => [ 'md5sum' ],
             },
         },
@@ -118,27 +101,34 @@ sub pipeline_analyses {
         {   -logic_name     => 'dump_conservation_scores',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => '#dump_features_program# --feature cs_#mlss_id# --compara_url #compara_url# --species #name# --reg_conf "#registry#" > #output_file#',
+                'cmd'   => '#dump_features_program# --feature cs_#mlss_id# --compara_url #compara_url# --species #name# --lex_sort --reg_conf "#registry#" > #bedgraph_file#',
             },
             -analysis_capacity => $self->o('capacity'),
-            -flow_into      => [ 'compress' ],
+            -rc_name        => 'crowd',
+            -flow_into      => [ 'convert_to_bigwig' ],
         },
 
-        # TODO:
-        # - Need to convert to a bigWig: bedGraphToBigWig in.bedGraph chrom.sizes myBigWig.bw
-        # - Need to add an analysis to download chrom.sizes (like in BaseAge_conf ?)
+        {   -logic_name     => 'convert_to_bigwig',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::ConvertToBigWig',
+            -parameters     => {
+                'compara_db'    => '#compara_url#',
+                'big_wig_exe'   => $self->o('big_wig_exe'),
+            },
+            -rc_name        => 'crowd',
+            -flow_into      => [ 'compress' ],
+        },
 
         {   -logic_name     => 'compress',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => [qw(gzip -f -9 #output_file#)],
+                'cmd'   => [qw(gzip -f -9 #bedgraph_file#)],
             },
         },
 
         {   -logic_name     => 'md5sum',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => 'cd #output_dir#; md5sum *.bedgraph.gz > MD5SUM',
+                'cmd'   => 'cd #output_dir#; md5sum *.bedgraph.gz *.bw > MD5SUM',
             },
             -flow_into      =>  [ 'readme' ],
         },
