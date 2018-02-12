@@ -80,6 +80,9 @@ sub write_output {
 
     my $clusterset_tree = $self->param('clusterset_tree');
 
+    # FIXME: should be storing the tags even if the value if 0 !
+    # FIXME: should not have "protein" in the name
+
     #homology_counts
     if ( keys %{ $self->param('homology_counts') } > 0 ) {
         print "\nStoring homology_counts\n" if $self->debug;
@@ -159,6 +162,7 @@ sub _get_homology_counts {
     my %homology_counts;
 
     #Compute Homology counts
+    # FIXME: need to remove the hard-coded threshold
     my $get_all_seqs_sql = "SELECT description, is_tree_compliant, node_type, COUNT(*) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < 100000000 GROUP BY description, is_tree_compliant, node_type";
     my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
@@ -182,6 +186,7 @@ sub _get_avg_perc_identity {
     my %avg_perc_identity;
 
     #Compute Average percentage identity
+    # FIXME: need to remove the hard-coded threshold
     my $get_all_seqs_sql = "SELECT description, is_tree_compliant, ROUND(AVG(perc_id),2) FROM homology JOIN homology_member USING (homology_id) WHERE homology_id < 100000000 GROUP BY description, is_tree_compliant";
     my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
@@ -207,6 +212,7 @@ sub _get_avg_duplication_confidence_score {
     my %avg_duplication_confidence_score;
 
     #Compute Average duplication confidence score
+    # FIXME: need to remove the hard-coded threshold
     my $get_all_seqs_sql = "SELECT description, AVG(duplication_confidence_score) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < 100000000 AND node_type = 'duplication' GROUP BY description;";
     my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
@@ -251,6 +257,7 @@ sub _get_sizes_summary {
     my @count_seq_member_ids;
 
     #Compute Mean and median, max, min cluster sizes, number of proteins per cluster:
+    # FIXME: need to remove the hard-coded mmber_type
     my $get_all_seqs_sql = "SELECT count(seq_member_id) FROM gene_tree_root JOIN gene_tree_node USING (root_id) where clusterset_id = 'default' and tree_type = 'tree' and member_type = 'protein' and seq_member_id IS NOT NULL GROUP BY root_id";
     my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
@@ -275,6 +282,7 @@ sub _get_sizes_summary {
 # Computes the Gini coefficient which measures the inequality among values.
 sub _compute_gini_coefficient {
     my ($self) = @_;
+    # FIXME: need to remove the hard-coded member_type
 
     # The following code was initially based on a script implemented by Paul Kersey.
     # But the following implementation is more efficient:  http://shlegeris.com/2016/12/29/gini
@@ -316,6 +324,7 @@ sub _get_mean_cluster_size_per_protein  {
     my $mean_cluster_size_per_protein;
 
     #Compute the mean cluster size per protein
+    # FIXME: need to remove the hard-coded member_type
     my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = 'protein' AND tree_type = 'tree'";
 
     my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
