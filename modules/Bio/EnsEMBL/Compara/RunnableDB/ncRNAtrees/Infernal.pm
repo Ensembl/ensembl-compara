@@ -74,6 +74,7 @@ use strict;
 use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
+use Statistics::Descriptive;
 
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
@@ -87,6 +88,7 @@ sub param_defaults {
     return {
             'method'      => 'Infernal',
             'cmalign_threads'   => 1,
+            'length_threshold'  => 10,      # Sequences longer than 10x the median length will be discarded as they can cause errors in cmbuild
            };
 }
 
@@ -127,6 +129,8 @@ sub fetch_input {
     if (scalar keys %model_id_hash > 1) {
         print STDERR "WARNING: More than one model: ", join(",",keys %model_id_hash), "\n";
     }
+
+    $self->detect_long_sequences($nc_tree);
 
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
@@ -189,6 +193,28 @@ sub write_output {
 ##########################################
 
 1;
+
+sub detect_long_sequences {
+    my $self = shift;
+    my $nc_tree = shift;
+
+    my $members = $nc_tree->get_all_Members;
+    my $stats = new Statistics::Descriptive::Full;
+    foreach my $member (@$members) {
+        $stats->add_data(length($member->sequence));
+    }
+
+    my $threshold = $stats->median * $self->param_required('length_threshold');
+    my %todelete;
+    foreach my $member (@$members) {
+        if (length($member->sequence) > $threshold) {
+            $todelete{$member->stable_id} = $member;
+            $member->disavow_parent;
+            $nc_tree->remove_Member($member);
+        }
+    }
+    $self->param('members_to_delete', \%todelete);
+}
 
 sub dump_sequences_to_workdir {
   my $self = shift;
@@ -296,22 +322,14 @@ sub run_infernal {
   $cmd .= " -F $refined_profile";
   $cmd .= " $stk_output";
 
-  my $cmd_return_value = $self->run_command($cmd);
-  my $log_message = $cmd_return_value->err;
+  # These two errors should be taken care of by the sequence filtering
+  #  - cm_from_guide(), it's illegal to construct a CM with 0 MATL, MATR and BIF nodes.
+  #  - Calculating QDBs, Z got insanely large (> 1000*clen)
+  # and we now expect cmbuild not to fail
+  $self->run_command($cmd, { die_on_failure => 1 });
 
-  #Deals with error: Z got insanely large. It bypass the refined profiles and uses the original ones.
-  if ($log_message =~ /Error: Calculating QDBs, Z got insanely large /){
-      $self->warning("Could not refine the alignment: $log_message");
-      $self->param('stk_output', $stk_output);
-
-  } elsif ($cmd_return_value->exit_code) {
-      $cmd_return_value->die_with_log;
-
-  }
-  else{
-      $self->param('stk_output', $refined_stk_output);
-      $self->param('refined_profile', $refined_profile);
-  }
+  $self->param('stk_output', $refined_stk_output);
+  $self->param('refined_profile', $refined_profile);
 
   return 0;
 }
@@ -450,10 +468,12 @@ sub store_fasta_alignment {
 
     my $aln = $self->param('gene_tree')->deep_copy();
     my %original_members = map {$_->stable_id => $_} @{$self->param('gene_tree')->get_all_leaves};
+    my $members_to_delete = $self->param('members_to_delete');
 
     for my $member (@{$aln->get_all_leaves}) {
 
-        if ($new_align_hash->{$member->sequence_id} eq "") {
+        #if ($new_align_hash->{$member->sequence_id} eq "") {
+        if (($new_align_hash->{$member->sequence_id} eq "") and !$members_to_delete->{$member->stable_id})   {
             $self->throw("infernal produced an empty cigar_line for ". $member->stable_id . "\n");
         }
         print STDERR "NEW CIGAR LINE: ", $new_cigar_hash->{$member->sequence_id}, "\n";
@@ -478,24 +498,30 @@ sub store_fasta_alignment {
     $aln->aln_length($alignment_length);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
-    my $n_deleted_members = 0;
     for my $member (@{$aln->get_all_Members}) {
         my $seq = $new_align_hash->{$member->sequence_id};
         $seq =~ s/-//g;
         unless ($seq) {
             # After filtering the sequence may become empty
-            $self->compara_dba->get_GeneTreeNodeAdaptor->remove_seq_member($original_members{$member->stable_id});
+            $members_to_delete->{$member->stable_id} = $original_members{$member->stable_id};
             # We can call remove_Member because the latter creates a new
             # array-ref within the MemberSet, so the cursor of the above
             # for loop is unaffected
             $aln->remove_Member($member);
-            $n_deleted_members++;
             next;
         }
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
     }
 
-    if ($n_deleted_members) {
+    if (%$members_to_delete) {
+
+        my $n_deleted_members = 0;
+        foreach my $member (values %$members_to_delete) {
+            $self->warning($member->stable_id. " doesn't align well with the family");
+            $self->compara_dba->get_GeneTreeNodeAdaptor->remove_seq_member($member);
+            $n_deleted_members++;
+        }
+
         # Empty the cached array of members, so that $self->param('gene_tree')->get_all_Members doesn't see the removed members any more
         delete $self->param('gene_tree')->{'_member_array'};
         # Adjust the gene_count
