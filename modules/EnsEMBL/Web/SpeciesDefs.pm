@@ -887,7 +887,6 @@ sub _parse {
     $tree->{$species}{'ALL_STRAINS'} = $v;
   } 
 
-  #use Data::Dumper; 
   #$Data::Dumper::Maxdepth = 2;
   #$Data::Dumper::Sortkeys = 1;
   #warn ">>> ORIGINAL KEYS: ".Dumper($tree);

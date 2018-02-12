@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::FavouriteSpecies;
+package EnsEMBL::Web::Document::HTML::GenomeList;
 
 use strict;
 use warnings;
@@ -55,6 +55,11 @@ sub _get_dom_tree {
     $prehtml .= $template =~ s/\{\{species\.(\w+)}\}/my $replacement = $species->[$_]{$1};/gre if $species->[$_] && $species->[$_]->{'favourite'};
   }
 
+  my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
+  my $list_html = sprintf qq(<h3>All genomes</h3>
+    <p><select class="_all_species"><option value="">-- Select a species --</option></select></p>
+    <p><a href="/info/about/species.html">View full list of all %s species</a></p>), $sitename;
+
   my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
           <ul class="_favourites"></ul>
@@ -64,64 +69,72 @@ sub _get_dom_tree {
           <a href="#Reset" class="button _list_reset">Restore default list</a></p>);
 
   return $self->dom->create_element('div', {
-    'class'       => 'static_favourite_species',
+    'class'       => 'column_wrapper',
     'children'    => [{
-      'node_name'   => 'h3',
-      'inner_HTML'  => 'Favourite genomes'
-    }, {
-      'node_name'   => 'div',
-      'class'       => [qw(_species_fav_container species-list faded)],
-      'inner_HTML'  => $prehtml
-    }, {
-      'node_name'   => 'div',
-      'class'       => [qw(_species_sort_container reorder_species clear hidden)],
-      'inner_HTML'  => $sort_html
-    }, {
-      'node_name'   => 'p',
-      'class'       => 'customise-species-list',
-      'inner_HTML'  => sprintf('<a class="_list_edit small modal_link" href="%s">Edit favourites</a>', $hub->url({qw(type Account action Login)}))
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
-      'name'        => 'fav_template',
-      'value'       => encode_entities($template)
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
-      'name'        => 'list_template',
-      'value'       => encode_entities($self->_list_template)
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param json',
-      'name'        => 'species_list',
-      'value'       => encode_entities(to_json($species))
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
-      'name'        => 'ajax_refresh_url',
-      'value'       => encode_entities($self->ajax_url)
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
-      'name'        => 'ajax_save_url',
-      'value'       => encode_entities($hub->url({qw(type Account action Favourites function Save)}))
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param',
-      'name'        => 'display_limit',
-      'value'       => SPECIES_DISPLAY_LIMIT
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param json',
-      'name'        => 'taxon_labels',
-      'value'       => encode_entities(to_json($sd->TAXON_LABEL||{}))
-    }, {
-      'node_name'   => 'inputhidden',
-      'class'       => 'js_param json',
-      'name'        => 'taxon_order',
-      'value'       => encode_entities(to_json($sd->TAXON_ORDER))
-    }]
-  });
+              'node_name'   => 'div',
+              'class'       => 'column-two static_all_species',
+              'inner_HTML'  => $list_html,
+            }, {
+              'node_name'   => 'div',
+              'class'       => 'column-two fave-genomes',
+              'children'    => [{
+                        'node_name'   => 'h3',
+                        'inner_HTML'  => 'Favourite genomes'
+                      }, {
+                        'node_name'   => 'div',
+                        'class'       => [qw(_species_fav_container species-list)],
+                        'inner_HTML'  => $prehtml
+                      }, {
+                        'node_name'   => 'div',
+                        'class'       => [qw(_species_sort_container reorder_species clear hidden)],
+                        'inner_HTML'  => $sort_html
+                      }, {
+                        'node_name'   => 'p',
+                        'class'       => 'customise-species-list',
+                        'inner_HTML'  => sprintf('<a class="_list_edit small modal_link" href="%s">Edit favourites</a>', $hub->url({qw(type Account action Login)}))
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param',
+                        'name'        => 'fav_template',
+                        'value'       => encode_entities($template)
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param',
+                        'name'        => 'list_template',
+                        'value'       => encode_entities($self->_list_template)
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param json',
+                        'name'        => 'species_list',
+                        'value'       => encode_entities(to_json($species))
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param',
+                        'name'        => 'ajax_refresh_url',
+                        'value'       => encode_entities($self->ajax_url)
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param',
+                        'name'        => 'ajax_save_url',
+                        'value'       => encode_entities($hub->url({qw(type Account action Favourites function Save)}))
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param',
+                        'name'        => 'display_limit',
+                        'value'       => SPECIES_DISPLAY_LIMIT
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param json',
+                        'name'        => 'taxon_labels',
+                        'value'       => encode_entities(to_json($sd->TAXON_LABEL||{}))
+                      }, {
+                        'node_name'   => 'inputhidden',
+                        'class'       => 'js_param json',
+                        'name'        => 'taxon_order',
+                        'value'       => encode_entities(to_json($sd->TAXON_ORDER))
+                      }]
+          }]
+    });
 }
 
 sub _species_list {
