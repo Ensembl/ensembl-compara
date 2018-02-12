@@ -3,7 +3,7 @@ language: "perl"
 perl:
   - "5.14"
   - "5.10"
-  - "5.24"
+  - "5.26"
 
 env:
   matrix:
@@ -52,6 +52,6 @@ matrix:
       env: COVERALLS=true
     - perl: "5.14"
       env: COVERALLS=false
-    - perl: "5.24"
+    - perl: "5.26"
       env: COVERALLS=true
 
