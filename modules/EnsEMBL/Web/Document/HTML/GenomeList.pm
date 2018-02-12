@@ -58,7 +58,12 @@ sub _get_dom_tree {
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $list_html = sprintf qq(<h3>All genomes</h3>
     <p><select class="_all_species"><option value="">-- Select a species --</option></select></p>
-    <p><a href="/info/about/species.html">View full list of all %s species</a></p>), $sitename;
+    <ul class="space-above">
+      <li><a href="/info/about/species.html">View full list of all %s species</a></li>
+      <li class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></li>
+    </ul>
+    ), 
+    $sitename, $hub->url({qw(type Account action Login)});
 
   my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
@@ -88,10 +93,6 @@ sub _get_dom_tree {
                         'node_name'   => 'div',
                         'class'       => [qw(_species_sort_container reorder_species clear hidden)],
                         'inner_HTML'  => $sort_html
-                      }, {
-                        'node_name'   => 'p',
-                        'class'       => 'customise-species-list',
-                        'inner_HTML'  => sprintf('<a class="_list_edit small modal_link" href="%s">Edit favourites</a>', $hub->url({qw(type Account action Login)}))
                       }, {
                         'node_name'   => 'inputhidden',
                         'class'       => 'js_param',
