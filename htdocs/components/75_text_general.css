@@ -89,6 +89,9 @@ div.box-left                { width:49.5%; float:left; margin-left: 0; margin-ri
 div.box-right               { width:49.5%; float:right; margin-left: 0.5%; margin-right: 0; }
 div.column-twothird         { float:left; width: 66.7% }
 
+div.column-forty            { float:left; width: 40%; }
+div.column-sixty            { float:left; width: 60%; }
+
 /* IE 6 & 7 hacks for above */
 body.ie67 div.column-wrapper,
 body.ie67 div.column-two,

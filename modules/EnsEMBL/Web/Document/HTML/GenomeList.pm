@@ -72,11 +72,11 @@ sub _get_dom_tree {
     'class'       => 'column_wrapper',
     'children'    => [{
               'node_name'   => 'div',
-              'class'       => 'column-two static_all_species',
+              'class'       => 'column-forty static_all_species',
               'inner_HTML'  => $list_html,
             }, {
               'node_name'   => 'div',
-              'class'       => 'column-two fave-genomes',
+              'class'       => 'column-sixty fave-genomes',
               'children'    => [{
                         'node_name'   => 'h3',
                         'inner_HTML'  => 'Favourite genomes'
@@ -162,6 +162,8 @@ sub _species_list {
     my $alt_assembly  = $sd->get_config($_, 'SWITCH_ASSEMBLY');
     my $strainspage   = $species->{$_}{'has_strains'} ? $hub->url({'species' => $_, 'type' => 'Info', 'function' => 'Strains', '__clear' => 1}) : 0;
 
+    my $extra = $_ eq 'Homo_sapiens' ? '<a href="/info/website/tutorials/grch37.html" class="species-extra">Still using GRCh37?</a>' : '';
+
     push @list, {
       key         => $_,
       group       => $species->{$_}{'group'},
@@ -173,7 +175,8 @@ sub _species_list {
       assembly_v  => $species->{$_}{'assembly_version'},
       favourite   => $fav{$_} ? 1 : 0,
       strainspage => $strainspage,
-      has_alt     => $alt_assembly ? 1 : 0
+      has_alt     => $alt_assembly ? 1 : 0,
+      extra       => $extra,
     };
 
   }
@@ -183,7 +186,15 @@ sub _species_list {
 
 sub _fav_template {
   ## @private
-  return qq(<div class="species-box-outer"><div class="species-box"><a href="{{species.homepage}}"><img src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" class="badge-48"/></a><a href="{{species.homepage}}">{{species.common}}</a><div>{{species.assembly}}</div></div></div>);
+  return qq(
+<div class="species-box-outer">
+  <div class="species-box">
+    <a href="{{species.homepage}}"><img src="{{species.img}}" alt="{{species.name}}" title="Browse {{species.name}}" class="badge-48"/></a>
+    <a href="{{species.homepage}}" class="species-name">{{species.common}}</a>
+    <div class="assembly">{{species.assembly}}</div>
+  </div>
+  {{species.extra}}
+</div>);
 }
 
 sub _list_template {
