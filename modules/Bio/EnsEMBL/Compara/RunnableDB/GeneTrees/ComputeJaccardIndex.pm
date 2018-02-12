@@ -45,7 +45,6 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Set::Jaccard::SimilarityCoefficient;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -78,25 +77,25 @@ sub run {
             my @leaves_current  = @{ $tree->get_all_Members };
             my @leaves_previous = @{ $reused_tree->get_all_Members };
 
-            my @members_current  = map { $_->gene_member->stable_id() } @leaves_current;
-            my @members_previous = map { $_->gene_member->stable_id() } @leaves_previous;
-
-            #print scalar(@members_current) . "-" . scalar(@members_previous) . "\n";
-            #my $s1 = join " ", @members_current;
-            #my $s2 = join " ", @members_previous;
-            #print "=$s1\n=$s2\n";
-
             #Computing the Jaccard Index give the sets of current and previous members:
-            my $tree_jaccard_index = Set::Jaccard::SimilarityCoefficient::calc( \@members_current, \@members_previous );
+            my %members_current = map {$_->gene_member->stable_id => 1} @leaves_current;
+            my $union = scalar(@leaves_current);
+            my $inter = 0;
+            foreach my $leaf (@leaves_previous) {
+                if ($members_current{$leaf->gene_member->stable_id}) {
+                    $inter++;
+                } else {
+                    $union++;
+                }
+            }
+            my $tree_jaccard_index = $inter/$union;
 
             print "$stable_id\t$tree_jaccard_index\n";
 
             #Cleaning up memory
             $reused_tree->release_tree;
             $tree->release_tree;
-            undef @members_previous;
             undef @leaves_previous;
-            undef @members_current;
             undef @leaves_current;
         }
     } ## end foreach my $tree ( @{$all_trees...})
