@@ -321,18 +321,11 @@ sub _compute_gini_coefficient {
 sub _get_mean_cluster_size_per_protein  {
     my ($self) = @_;
 
-    my $mean_cluster_size_per_protein;
-
     #Compute the mean cluster size per protein
     # FIXME: need to remove the hard-coded member_type
     my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = 'protein' AND tree_type = 'tree'";
 
-    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
-    $sth->execute();
-    while ( my @row = $sth->fetchrow_array() ) {
-        $mean_cluster_size_per_protein = $row[0];
-    }
-    $sth->finish();
+    my $mean_cluster_size_per_protein = $self->compara_dba->dbc->sql_helper->execute_single_result(-SQL => $sql);
 
     $self->param( 'mean_cluster_size_per_protein', $mean_cluster_size_per_protein);
 }
