@@ -70,13 +70,12 @@ sub run {
 
     foreach my $tree ( @{$all_trees} ) {
 
-        my @leaves_current = @{ $tree->get_all_Members };
-
         my $stable_id = $tree->stable_id();
 
         my $reused_tree = $self->param('reused_tree_adaptor')->fetch_by_stable_id($stable_id);
 
         if ($reused_tree) {
+            my @leaves_current  = @{ $tree->get_all_Members };
             my @leaves_previous = @{ $reused_tree->get_all_Members };
 
             my @members_current  = map { $_->gene_member->stable_id() } @leaves_current;
@@ -94,12 +93,12 @@ sub run {
 
             #Cleaning up memory
             $reused_tree->release_tree;
+            $tree->release_tree;
             undef @members_previous;
             undef @leaves_previous;
             undef @members_current;
             undef @leaves_current;
         }
-        $tree->release_tree;
     } ## end foreach my $tree ( @{$all_trees...})
 
 } ## end sub run
