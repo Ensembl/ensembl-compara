@@ -1604,8 +1604,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'compute_jaccard_index',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
-            -hive_capacity => 10,
-            -batch_size    => 5,
             -rc_name       => '500Mb_job',
         },
 
