@@ -135,10 +135,6 @@ sub read_ucsc_map {
     close MAP;
 }
 
-sub run {
-    my $self = shift;
-
-}
 
 sub write_output {
     my ($self) = shift;

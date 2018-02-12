@@ -47,7 +47,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {}
 
 sub run {
     my $self = shift;

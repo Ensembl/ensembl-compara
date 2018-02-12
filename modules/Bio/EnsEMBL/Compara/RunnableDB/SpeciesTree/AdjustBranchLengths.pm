@@ -61,7 +61,6 @@ sub param_defaults {
     };
 }
 
-sub fetch_input {}
 
 sub run {
 	my $self = shift;

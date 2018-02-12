@@ -99,21 +99,6 @@ sub run {
 
 }
 
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   Write results to the database
-    Returns :   1
-    Args    :   none
-
-=cut
-
-sub write_output {
-    my ($self) = @_;
-
-    return 1;
-}
 
 #Uses copy_data method from Utils::CopyData module
 sub importAlignment {

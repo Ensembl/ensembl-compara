@@ -52,9 +52,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
-sub param_defaults {
-    return {};
-}
 
 sub fetch_input {
     my $self = shift @_;

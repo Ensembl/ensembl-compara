@@ -49,13 +49,7 @@ use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
-sub fetch_input {
-    my $self = shift;
-}
 
-sub run {
-    my $self = shift;
-}
 
 sub write_output {
     my $self = shift @_;

@@ -48,10 +48,6 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::AncestralAllelesCompleteBase');
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
-sub fetch_input {
-    my $self = shift;
-
-}
 
 sub run {
     my $self = shift;

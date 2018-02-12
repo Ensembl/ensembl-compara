@@ -82,11 +82,6 @@ sub fetch_input {
 }
 
 
-sub run {
-  my $self = shift;
-  return 1;
-}
-
 
 sub write_output {
   my $self = shift;

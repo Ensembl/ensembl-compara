@@ -102,12 +102,6 @@ sub run
 }
 
 
-sub write_output
-{
-  my $self = shift;
-  return 1;
-}
-
 
 ######################################
 #

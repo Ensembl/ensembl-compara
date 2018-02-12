@@ -50,20 +50,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-=head2 fetch_input
-
-    Title   :   fetch_input
-    Usage   :   $self->fetch_input
-    Function:   Fetches input data for gerp from the database
-    Returns :   none
-    Args    :   none
-
-=cut
-
-sub fetch_input {
-  my( $self) = @_;
-
-}
 
 =head2 run
 
@@ -85,21 +71,6 @@ sub run {
 
 }
 
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   Write results to the database
-    Returns :   1
-    Args    :   none
-
-=cut
-
-sub write_output {
-    my ($self) = @_;
-
-    return 1;
-}
 
 #Makes the internal ids unique
 sub setInternalIds {

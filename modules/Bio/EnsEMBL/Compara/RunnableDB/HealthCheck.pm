@@ -149,12 +149,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-  my ($self) = @_;
-
-  return 1;
-}
-
 
 sub run
 {
@@ -171,12 +165,6 @@ sub run
 	  die "There is no test called ".$self->param('test')."\n";
       }
   }
-  return 1;
-}
-
-sub write_output {
-  my ($self) = @_;
-
   return 1;
 }
 

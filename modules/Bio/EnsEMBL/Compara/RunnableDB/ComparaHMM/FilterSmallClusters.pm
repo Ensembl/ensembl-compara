@@ -91,10 +91,6 @@ sub run {
     print "Data:" . $self->param('gene_count') . "|" . $self->param('lca_node_id') . "|" . $self->param('taxonomic_coverage') . "|" . $self->param('ratio_species_genes') . "\n";
 }
 
-sub write_output {
-    my $self = shift;
-}
-
 ##########################################
 #
 # internal methods

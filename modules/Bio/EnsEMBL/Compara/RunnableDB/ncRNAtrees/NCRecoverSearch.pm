@@ -124,23 +124,6 @@ sub run {
 }
 
 
-=head2 write_output
-
-    Title   :   write_output
-    Usage   :   $self->write_output
-    Function:   stores something
-    Returns :   none
-    Args    :   none
-
-=cut
-
-
-sub write_output {
-  my $self = shift;
-
-  # Default autoflow
-}
-
 
 ##########################################
 #

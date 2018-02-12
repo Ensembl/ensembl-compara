@@ -54,15 +54,6 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-=head2 fetch_input
-
-
-=cut
-
-sub fetch_input {
-	
-}
-
 =head2 run
 
 	Description: calculate coverage for both members of the homology

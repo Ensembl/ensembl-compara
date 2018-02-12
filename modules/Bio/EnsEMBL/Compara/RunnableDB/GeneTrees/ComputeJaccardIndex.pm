@@ -103,8 +103,5 @@ sub run {
 
 } ## end sub run
 
-sub write_output {
-    my $self = shift;
-}
 
 1;

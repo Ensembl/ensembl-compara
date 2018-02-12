@@ -48,14 +48,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Variation::DBSQL::DBAdaptor;
 use File::Path qw(make_path);
 
-sub fetch_input {
-    my $self = shift;
-}
-
-sub run {
-    my $self = shift;
-
-}
 
 sub write_output {
     my $self = shift @_;
