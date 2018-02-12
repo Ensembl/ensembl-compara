@@ -47,6 +47,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
+    # FIXME: need to remove the hardcoded member_type
+    my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+    $self->param('clusterset_tree', $clusterset_tree);
 }
 
 sub run {
@@ -75,12 +78,13 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    my $clusterset_tree = $self->param('clusterset_tree');
+
     #homology_counts
     if ( keys %{ $self->param('homology_counts') } > 0 ) {
         print "\nStoring homology_counts\n" if $self->debug;
         foreach my $key ( keys %{ $self->param('homology_counts') } ) {
             print "$key|" . $self->param('homology_counts')->{$key} . "|\n" if $self->debug;
-            my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
             $clusterset_tree->store_tag( $key, $self->param('homology_counts')->{$key} );
         }
     }
@@ -90,7 +94,6 @@ sub write_output {
         print "\nStoring avg_perc_identity\n" if $self->debug;
         foreach my $key ( keys %{ $self->param('avg_perc_identity') } ) {
             print "$key|" . $self->param('avg_perc_identity')->{$key} . "|\n" if $self->debug;
-            my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
             $clusterset_tree->store_tag( $key, $self->param('avg_perc_identity')->{$key} );
         }
     }
@@ -100,7 +103,6 @@ sub write_output {
         print "\nStoring avg_duplication_confidence_score\n" if $self->debug;
         foreach my $key ( keys %{ $self->param('avg_duplication_confidence_score') } ) {
             print "$key|" . $self->param('avg_duplication_confidence_score')->{$key} . "|\n" if $self->debug;
-            my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
             $clusterset_tree->store_tag( $key, $self->param('avg_duplication_confidence_score')->{$key} );
         }
     }
@@ -110,7 +112,6 @@ sub write_output {
         print "\nStoring size_summary\n" if $self->debug;
         foreach my $key ( keys %{ $self->param('size_summary') } ) {
             print "$key|" . $self->param('size_summary')->{$key} . "|\n" if $self->debug;
-            my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
             $clusterset_tree->store_tag( $key, $self->param('size_summary')->{$key} );
         }
     }
@@ -118,35 +119,30 @@ sub write_output {
     #number_of_proteins_used_in_trees
     if ( $self->param('number_of_proteins_used_in_trees') > 0 ) {
         print "\nStoring number_of_proteins_used_in_trees\n" if $self->debug;
-        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.number_of_proteins_used_in_trees', $self->param('number_of_proteins_used_in_trees') );
     }
 
     #gini_coefficient
     if ( $self->param('gini_coefficient') > 0 ) {
         print "\nStoring gini_coefficient\n" if $self->debug;
-        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.gini_coefficient', $self->param('gini_coefficient') );
     }
 
     #number_of_orphan_proteins
     if ( $self->param('number_of_orphan_proteins') > 0 ) {
         print "\nStoring number_of_orphan_proteins\n" if $self->debug;
-        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.number_of_orphan_proteins', $self->param('number_of_orphan_proteins') );
     }
 
     #number_of_proteins_in_single_species_trees
     if ( $self->param('number_of_proteins_in_single_species_trees') > 0 ) {
         print "\nStoring number_of_proteins_in_single_species_trees\n" if $self->debug;
-        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.number_of_proteins_in_single_species_trees', $self->param('number_of_proteins_in_single_species_trees') );
     }
 
     #mean_cluster_size_per_protein
     if ( $self->param('mean_cluster_size_per_protein') > 0 ) {
         print "\nStoring mean_cluster_size_per_protein\n" if $self->debug;
-        my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
         $clusterset_tree->store_tag( 'stat.mean_cluster_size_per_protein', $self->param('mean_cluster_size_per_protein') );
     }
 } ## end sub write_output
