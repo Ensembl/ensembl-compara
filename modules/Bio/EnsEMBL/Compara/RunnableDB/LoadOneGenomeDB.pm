@@ -136,8 +136,6 @@ sub fetch_input {
             $self->param('locator', $core_dba->locator($suffix_separator) );  # substitute the given locator by one in conventional format
         }
         $self->param('core_dba', $core_dba);
-        $self->param('genome_db_id',$self->param('master_dbID'));
-        return;
     }
 
     if ($self->param('master_dbID')) {
@@ -152,7 +150,7 @@ sub fetch_input {
         $self->param('genome_component', $master_genome_db->genome_component);
     }
 
-    if( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
+    if( !$core_dba && $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
 
         foreach my $this_core_dba (@{$self->iterate_through_registered_species}) {
 
