@@ -1548,7 +1548,7 @@ sub core_pipeline_analyses {
                     '#clustering_mode# eq "topup"' => 'copy_trees_from_previous_release',
                     ELSE 'alignment_entry_point',
                 ),
-                'A->1' => [ 'compute_statistics' ],
+                'A->1' => [ 'hc_global_tree_set' ],
             },
             -rc_name    => '1Gb_job',
         },
