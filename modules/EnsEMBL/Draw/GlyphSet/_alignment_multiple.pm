@@ -76,17 +76,20 @@ sub draw_features {
 
   if ($wiggle ne 'wiggle') {
 
-      #Get features and group and sort them
-      my $features = $self->element_features();
-      my $sorted_features = $self->build_features_into_sorted_groups($features);
+    #Get features and group and sort them
+    my $features = $self->element_features();
+    my $sorted_features = [];
+    if (scalar @{$features||[]}) {
+      $sorted_features = $self->build_features_into_sorted_groups($features);
 
       unless ($constrained_element) {
         #draw containing box around groups
         foreach my $ga_s (@$sorted_features) {
-            next unless @$ga_s;
-            my $net_composite = $self->draw_containing_box($ga_s, $feature_colour);
-            $self->push($net_composite);
+          next unless @$ga_s;
+          my $net_composite = $self->draw_containing_box($ga_s, $feature_colour);
+          $self->push($net_composite);
         }
+      }
     }
   
     my $i = 0;
@@ -227,11 +230,20 @@ sub element_features {
   my $ss = eval {$db->get_adaptor('SpeciesSet')->_uncached_fetch_by_dbID($mlss_conf->{'SPECIES_SET'})};
   return [] if $@;
   my $ml = $db->get_adaptor('Method')->_uncached_fetch_by_dbID($mlss_conf->{'METHOD_LINK'});
+  my $url = $mlss_conf->{'URL'};
+  if ($url) {
+    my $sd = $self->{'config'}->hub->species_defs;
+    my $datafile_root = $sd->DATAFILE_ROOT.'/'.$sd->SUBDOMAIN_DIR;;
+    $url =~ s/#base_dir#/$datafile_root/;
+  }
+  return [] if $ml->type eq 'CACTUS_HAL';
+
   my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-    -DBID => $id,
-    -ADAPTOR => $db->get_adaptor('MethodLinkSpeciesSet'),
-    -METHOD => $ml,
-    -SPECIES_SET => $ss
+    -DBID         => $id,
+    -ADAPTOR      => $db->get_adaptor('MethodLinkSpeciesSet'),
+    -METHOD       => $ml,
+    -SPECIES_SET  => $ss,
+    -URL          => $url
   );
 
   $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice, undef, undef, $restrict) || [];
