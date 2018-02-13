@@ -365,7 +365,6 @@ sub content {
   
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => $collapsed_to_dups, g1 => $highlight_gene }), 'View all duplication nodes';
   push @view_links, sprintf $li_tmpl, $hub->url({ collapse => 'none', g1 => $highlight_gene }), 'View fully expanded tree';
-  push @view_links, sprintf $li_tmpl, '#', 'Switch off highlighting' if $highlight_gene;
 
   {
     my @rank_options = ( q{<option value="#">-- Select a rank--</option>} );
