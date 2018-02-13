@@ -49,7 +49,7 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::SqlCmd');
 
 my $sql_num_blocks = q{
-INSERT IGNORE INTO method_link_species_set_tag
+REPLACE INTO method_link_species_set_tag
 	SELECT method_link_species_set_id, CONCAT("num_blocks_",POW(10,FLOOR(LOG10(length)))) AS tag, COUNT(*) AS value
 	FROM genomic_align_block
         WHERE method_link_species_set_id = #mlss_id#
@@ -57,7 +57,7 @@ INSERT IGNORE INTO method_link_species_set_tag
 };
 
 my $sql_totlength = q{
-INSERT IGNORE INTO method_link_species_set_tag
+REPLACE INTO method_link_species_set_tag
 	SELECT method_link_species_set_id, CONCAT("totlength_blocks_",POW(10,FLOOR(LOG10(length)))) AS tag, SUM(length) AS value
 	FROM genomic_align_block
         WHERE method_link_species_set_id = #mlss_id#

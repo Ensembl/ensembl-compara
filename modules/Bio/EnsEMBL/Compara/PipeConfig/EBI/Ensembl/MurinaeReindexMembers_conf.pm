@@ -87,8 +87,8 @@ sub default_options {
         # Where to find the core databases
         'curr_core_sources_locs' => [
             {
-                -host   => 'mysql-ens-sta-1.ebi.ac.uk',
-                -port   => '4519',
+                -host   => 'mysql-ens-vertannot-staging.ebi.ac.uk',
+                -port   => '4573',
                 -user   => 'ensro',
             },
         ],

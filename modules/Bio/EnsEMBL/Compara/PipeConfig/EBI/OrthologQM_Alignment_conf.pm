@@ -117,8 +117,8 @@ sub default_options {
         'port'       => 4523,
         'master_db'  => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master",
         'compara_db' => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_" . $self->o('current_release'),
-        'alt_aln_db' => $self->o('previous_rel_db'),
-        'previous_rel_db'  => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_" . ($self->o('current_release') - 1),
+        'alt_aln_dbs' => [ 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_92' ],
+        'previous_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_91",
         'species_set_name' => 'collection-default',
     };
 }

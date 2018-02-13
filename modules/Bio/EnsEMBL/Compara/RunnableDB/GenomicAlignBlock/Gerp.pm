@@ -313,7 +313,7 @@ sub _writeMultiFastaAlignment {
     $self->compara_dba->dbc->disconnect_if_idle();
 
     $self->iterate_by_dbc($segments,
-        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $_)->genome_db->db_adaptor->dbc },
+        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $this_segment)->genome_db->db_adaptor->dbc },
         sub { my $this_segment = shift;
 
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
@@ -419,7 +419,14 @@ sub run_gerp_v2 {
     if (defined $self->param('depth_threshold')) {
         $command .= " -d " . $self->param('depth_threshold');
     }
-    $self->run_command($command, { die_on_failure => 1 });
+    my $cmd_status = $self->run_command($command, { die_on_failure => 1 });
+    if ($cmd_status->exit_code) {
+        if ($cmd_status->err =~ /The matrix is too big .* and is causing an integer overflow. Aborting/) {
+            $self->input_job->autoflow(0);
+            $self->complete_early("Cannot run GERP (integer overflow). Discarding this family");
+        }
+        die "GERP failed:".$cmd_status->err;
+    }
 }
 
 #Parse results for Gerp version 1

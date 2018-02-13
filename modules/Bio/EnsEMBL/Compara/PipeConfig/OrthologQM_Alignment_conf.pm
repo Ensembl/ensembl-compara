@@ -117,9 +117,8 @@ sub default_options {
         'ref_species'      => undef,
         'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
         # 'alt_aln_dbs'      => undef,
-        'alt_aln_dbs'      => [
-            'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
-        ],
+        'alt_aln_dbs'      => [ ],
+
         'alt_homology_db'  => undef,
         'previous_rel_db'  => undef,
         'user'             => 'ensadmin',
@@ -268,7 +267,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'prepare_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
-            -analysis_capacity  =>  100,  # use per-analysis limiter
+            -analysis_capacity  =>  50,  # use per-analysis limiter
             -flow_into => {
                 2 => [ 'calculate_wga_coverage' ],
                 3 => [ 'reuse_wga_score' ],
@@ -278,8 +277,8 @@ sub pipeline_analyses {
 
         {   -logic_name => 'calculate_wga_coverage',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
-            -analysis_capacity => 200,
-            -batch_size => 20,
+            -hive_capacity => 30,
+            -batch_size => 10,
             -parameters => { pipeline_url => $self->pipeline_url },
             -flow_into  => {
                 '1'  => [ '?table_name=ortholog_quality' ],
@@ -291,6 +290,8 @@ sub pipeline_analyses {
 
         {   -logic_name => 'calculate_wga_coverage_long',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
+            -hive_capacity => 30,
+            -batch_size => 1,
             -parameters => { pipeline_url => $self->pipeline_url },
             -flow_into  => {
                 1 => [ '?table_name=ortholog_quality' ],
@@ -301,14 +302,14 @@ sub pipeline_analyses {
 
         {   -logic_name => 'assign_wga_coverage_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore',
-            -analysis_capacity => 50,
+            -hive_capacity     => 100,
             -batch_size        => 10,
         },
 
         {   -logic_name => 'reuse_wga_score',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
-            -analysis_capacity => 100,
-            -batch_size        => 50,
+            -hive_capacity     => 30,
+            -batch_size        => 10,
         },
 
         {   -logic_name => 'write_threshold',

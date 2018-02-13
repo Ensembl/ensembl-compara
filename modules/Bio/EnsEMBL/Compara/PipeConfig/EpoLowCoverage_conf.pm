@@ -93,20 +93,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
-	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-        '8Gb' =>  { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
-    };
-}
-
-
 sub pipeline_analyses {
     my ($self) = @_;
 
@@ -393,8 +379,18 @@ sub pipeline_analyses {
                     -1 => [ 'set_neighbour_nodes_himem' ],
                 },
 		-batch_size    => 10,
-		-hive_capacity => 15,
+		-hive_capacity => 20,
 		-rc_name => '1.8Gb',
+		-flow_into => {
+			       -1 => [ 'set_neighbour_nodes_himem' ],
+			      },
+	    },
+
+	    {   -logic_name => 'set_neighbour_nodes_himem',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+		-batch_size    => 5,
+		-hive_capacity => 20,
+		-rc_name => '3.5Gb',
 	    },
 	    {   -logic_name => 'set_neighbour_nodes_himem',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',

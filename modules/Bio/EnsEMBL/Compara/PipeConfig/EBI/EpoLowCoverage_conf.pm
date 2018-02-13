@@ -106,7 +106,7 @@ sub default_options {
     'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
-    'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211/bin'),   #gerp program
+    'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'),   #gerp program
     'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
     'treebest_exe'    => $self->check_exe_in_cellar('treebest/88/bin/treebest'), #treebest program
 
@@ -123,7 +123,7 @@ sub resource_classes {
          '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
          '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
 	 	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
     };
 }
 

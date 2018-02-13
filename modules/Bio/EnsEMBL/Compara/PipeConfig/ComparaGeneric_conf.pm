@@ -68,6 +68,7 @@ sub check_exe_in_linuxbrew_opt {
 
 sub check_all_executables_exist {
     my $self = shift;
+    return unless exists $self->root()->{'linuxbrew_home'};
     my $linuxbrew_home = $self->root()->{'linuxbrew_home'};
     foreach my $p (@{$self->{'_all_dir_paths'}}) {
         $p = $linuxbrew_home.'/'.$p;

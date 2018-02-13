@@ -43,6 +43,7 @@ my $dbname;
 my $port;
 my $help;
 my $urls;
+my $lex_sort;
 
 my $desc = "
 USAGE dump_features.pl [options] --feature FEATURE
@@ -96,6 +97,7 @@ GetOptions(
   'feature=s' => \$feature,
   'extra=s' => \$extra,
   'print_strand!' => \$print_strand,
+  'lex_sort!' => \$lex_sort,
   'from=s' => \$from,
   'host=s' => \$host,
   'user=s' => \$user,
@@ -217,10 +219,30 @@ if ($feature =~ /^top/) {
   $description = "$species_name regulatory features in Ensembl $version";
 } elsif ($feature =~ /^ce_?(\d+)/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
+  if ($mlss->method->class =~ /^GenomicAlign.*_alignment$/) {
+      # Check if there is a corresponding CE MLSS
+      my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = "ConstrainedElement.constrained_element" AND tag = "msa_mlss_id" AND value = ?';
+      my $ce_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->_id_cache->get_by_sql($sql, [$mlss->dbID]);
+      if (scalar(@$ce_mlsss) == 1) {
+          warn sprintf("Automatically switching from mlss_id=%d (%s) to mlss_id=%d (%s)\n", $mlss->dbID, $mlss->method->type, $ce_mlsss->[0]->dbID, $ce_mlsss->[0]->method->type);
+          $mlss = $ce_mlsss->[0];
+      }
+  }
+  die "This mlss is not of Constrained elements: ".$mlss->toString if ($mlss->method->class ne 'ConstrainedElement.constrained_element');
   $track_name = "gerp_elements.".($mlss->species_set->name || $1).".$species_name.e$version";
   $description = $mlss->name." on $species_name in Ensembl $version";
 } elsif ($feature =~ /^cs_?(\d+)/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
+  if ($mlss->method->class =~ /^GenomicAlign.*_alignment$/) {
+      # Check if there is a corresponding CS MLSS
+      my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = "ConservationScore.conservation_score" AND tag = "msa_mlss_id" AND value = ?';
+      my $cs_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->_id_cache->get_by_sql($sql, [$mlss->dbID]);
+      if (scalar(@$cs_mlsss) == 1) {
+          warn sprintf("Automatically switching from mlss_id=%d (%s) to mlss_id=%d (%s)\n", $mlss->dbID, $mlss->method->type, $cs_mlsss->[0]->dbID, $cs_mlsss->[0]->method->type);
+          $mlss = $cs_mlsss->[0];
+      }
+  }
+  die "This mlss is not of Conservation scores: ".$mlss->toString if ($mlss->method->class ne 'ConservationScore.conservation_score');
   $track_name = "gerp_score.".($mlss->species_set->name || $1).".$species_name.e$version";
   $description = $mlss->name." on $species_name in Ensembl $version";
   $extra_desc = 'type=bedGraph';
@@ -260,7 +282,7 @@ if ($regions) {
 my %karyo_hash = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype() };
 
 foreach my $slice (sort {
-    if ($a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
+    if (!$lex_sort and $a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
         $a->seq_region_name <=> $b->seq_region_name
     } else {
         $a->seq_region_name cmp $b->seq_region_name}}
@@ -268,6 +290,9 @@ foreach my $slice (sort {
   # print STDERR $slice->name, "\n";
   my $name = $slice->seq_region_name;
   $name = 'chr'.$name if $karyo_hash{$name};
+
+  # Check if the connection is still on
+  $slice_adaptor->dbc->reconnect()  unless $slice_adaptor->dbc->db_handle->ping;
 
   if (defined($from)) {
     if ($slice->seq_region_name eq $from) {
@@ -513,12 +538,16 @@ foreach my $slice (sort {
         warn $sub_slice->name();
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
         next unless @$scores;
-        my @sorted_scores = sort {$a->seq_region_pos <=> $b->seq_region_pos} @$scores;
+        # Sort by position and decreasing score, so that we get the best score first
+        my @sorted_scores = sort {($a->seq_region_pos <=> $b->seq_region_pos) || ($b->diff_score <=> $a->diff_score)}
+                            grep {($_->seq_region_pos >= $sub_slice->seq_region_start) && ($_->seq_region_pos <= $sub_slice->seq_region_end)} @$scores;
         my $ref_score = shift @sorted_scores;
         my $last_pos = $ref_score->seq_region_pos;
         # To save space we can merge consecutive positions that have the same score
         foreach my $score (@sorted_scores) {
-            if (($score->seq_region_pos == ($last_pos+1)) and (abs($ref_score->diff_score - $score->diff_score) < 1e-6)) {
+            if ($score->seq_region_pos == $last_pos) {
+                # Same position -> must be a lower score -> discard
+            } elsif (($score->seq_region_pos == ($last_pos+1)) and (abs($ref_score->diff_score - $score->diff_score) < 1e-6)) {
                 # Next position and same score
                 $last_pos++;
             } else {

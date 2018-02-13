@@ -865,7 +865,8 @@ sub core_pipeline_analyses {
                 'biotype_filter'        => 'biotype_group = "coding"',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => [ 'hc_members_per_genome' ],
+            -flow_into => WHEN( '#is_polyploid#' => 'hc_members_per_genome',
+                                ELSE                'check_reusability' ),
         },
 
         {   -logic_name         => 'hc_members_per_genome',
@@ -1548,7 +1549,7 @@ sub core_pipeline_analyses {
                     '#clustering_mode# eq "topup"' => 'copy_trees_from_previous_release',
                     ELSE 'alignment_entry_point',
                 ),
-                'A->1' => [ 'compute_statistics' ],
+                'A->1' => [ 'hc_global_tree_set' ],
             },
             -rc_name    => '1Gb_job',
         },
@@ -1592,8 +1593,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
-            -hive_capacity => 10,
-            -batch_size    => 5,
             -rc_name       => '500Mb_job',
             -flow_into  => [
                     'write_stn_tags',
