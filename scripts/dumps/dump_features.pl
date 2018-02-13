@@ -291,6 +291,9 @@ foreach my $slice (sort {
   my $name = $slice->seq_region_name;
   $name = 'chr'.$name if $karyo_hash{$name};
 
+  # Check if the connection is still on
+  $slice_adaptor->dbc->reconnect()  unless $slice_adaptor->dbc->db_handle->ping;
+
   if (defined($from)) {
     if ($slice->seq_region_name eq $from) {
       undef($from);
