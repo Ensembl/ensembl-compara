@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt3_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt3_conf -password <your_password> -mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -compara_master <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt3_conf -mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -host <server_name> -port <server_port>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -77,13 +77,12 @@ sub default_options {
     return {
       %{$self->SUPER::default_options},
 
-      # NOTE : remember to adjust the species_tree_file in the base class 
-      #        in accordance with this species_set!
-      'species_set_name' => 'primates',
+      # Used to name the databases and the working directory
+      #'species_set_name' => 'primates',
 
       # Where the pipeline lives
-      'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-      'port' => 4523,
+      #'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
+      #'port' => 4523,
 
       'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
@@ -105,20 +104,23 @@ sub default_options {
 
       'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
-      # connection parameters to various databases:
+      # The ancestral_db is created on the same server as the pipeline_db
       'ancestral_db' => { # core ancestral db
-        	-driver => 'mysql',
-          -host => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-          -port => 4523,
-        	-species => $self->o('ancestral_sequences_name'),
-        	-user   => 'ensadmin',
-        	-pass   => $self->o('password'),
-        	-dbname => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
+          -driver   => $self->o('pipeline_db', '-driver'),
+          -host     => $self->o('pipeline_db', '-host'),
+          -port     => $self->o('pipeline_db', '-port'),
+          -species  => $self->o('ancestral_sequences_name'),
+          -user     => $self->o('pipeline_db', '-user'),
+          -pass     => $self->o('pipeline_db', '-pass'),
+          -dbname   => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
       },
+
       # master db
       'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+
       # anchor mappings
-      'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_anchor_mapping_91',
+      #'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_anchor_mapping_91',
+      #'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_fish_epo_anchor_mapping_92',
 
     }; 
 
