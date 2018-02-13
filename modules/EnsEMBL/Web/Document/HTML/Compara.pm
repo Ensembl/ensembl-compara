@@ -54,6 +54,21 @@ sub get_genome_db {
   }
 }
 
+
+sub error_message {
+  my ($self, $title, $message, $type) = @_;
+  $type ||= 'error';
+  $message .= '<p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to helpdesk@ensembl.org</p>' if $type ne 'info';
+  return qq{
+      <div class="$type left-margin right-margin">
+        <h3>$title</h3>
+        <div class="message-pad">
+          $message
+        </div>
+      </div>
+  };
+}
+
 ## Output a list of whole-genome alignments for a given method, and their species
 sub format_wga_list {
   my ($self, $method) = @_;

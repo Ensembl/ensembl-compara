@@ -107,20 +107,6 @@ our @window_desc = (
 
 ## HTML OUTPUT ######################################
 
-sub error_message {
-  my ($self, $title, $message, $type) = @_;
-  $type ||= 'error';
-  $message .= '<p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to helpdesk@ensembl.org</p>' if $type ne 'info';
-  return qq{
-      <div class="$type left-margin right-margin">
-        <h3>$title</h3>
-        <div class="message-pad">
-          $message
-        </div>
-      </div>
-  };
-}
-
 sub render { 
   my $self    = shift;
   my $hub     = $self->hub;
