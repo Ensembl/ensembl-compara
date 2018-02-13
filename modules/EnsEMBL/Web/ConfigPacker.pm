@@ -1071,7 +1071,8 @@ sub _build_compara_mlss {
   my $sth = $dbh->prepare(qq(
     select mlss.method_link_species_set_id,
            ss.species_set_id,
-           ml.method_link_id
+           ml.method_link_id,
+           mlss.url
       from method_link_species_set as mlss
       join species_set as ss
         on mlss.species_set_id = ss.species_set_id
@@ -1080,8 +1081,8 @@ sub _build_compara_mlss {
   ));
   $sth->execute;
   my %mlss;
-  while(my ($mlss_id,$ss_id,$ml_id) = $sth->fetchrow_array) {
-    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id };
+  while (my ($mlss_id, $ss_id, $ml_id, $url) = $sth->fetchrow_array) {
+    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id, URL => $url };
   }
   $dest->{'MLSS_IDS'} = \%mlss;
 }
