@@ -61,6 +61,18 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
+# Used to name the MLSSs and for Web
+our %PLAIN_TEXT_DESCRIPTIONS = (
+    'BLASTZ_NET'            => 'BlastZ',
+    'LASTZ_NET'             => 'LastZ',
+    'TRANSLATED_BLAT_NET'   => 'Translated Blat',
+    'EPO'                   => 'EPO',
+    'EPO_LOW_COVERAGE'      => 'EPO-LOW-COVERAGE',
+    'PECAN'                 => 'Mercator-Pecan',
+    'CACTUS_HAL'            => 'Cactus',
+);
+
+
 =head2 new
 
   Arg [..]   : Takes a set of named arguments
