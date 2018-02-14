@@ -208,6 +208,7 @@ sub detect_long_sequences {
     my %todelete;
     foreach my $member (@$members) {
         if (length($member->sequence) > $threshold) {
+            $self->warning( sprintf("Removing %s because it is longer (%d) than the threshold %d (median %d)", $member->stable_id, length($member->sequence), $threshold, $stats->median);
             $todelete{$member->stable_id} = $member;
             $member->disavow_parent;
             $nc_tree->remove_Member($member);
@@ -508,6 +509,7 @@ sub store_fasta_alignment {
             # array-ref within the MemberSet, so the cursor of the above
             # for loop is unaffected
             $aln->remove_Member($member);
+            $self->warning("Removing " . $member->stable_id. " because its filtered alignment string is empty");
             next;
         }
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
@@ -517,7 +519,6 @@ sub store_fasta_alignment {
 
         my $n_deleted_members = 0;
         foreach my $member (values %$members_to_delete) {
-            $self->warning($member->stable_id. " doesn't align well with the family");
             $self->compara_dba->get_GeneTreeNodeAdaptor->remove_seq_member($member);
             $n_deleted_members++;
         }
