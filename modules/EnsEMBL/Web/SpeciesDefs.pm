@@ -791,8 +791,10 @@ sub _parse {
 
     ## Need to gather strain info for all species
     my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
-
     $name_lookup->{$common_name} = $species;
+    my $display_name = $config_packer->tree->{'SPECIES_COMMON_NAME'};
+    $name_lookup->{$display_name} = $species;
+  
     my $collection = $config_packer->tree->{'STRAIN_COLLECTION'};
     ## Key on actual URL, not production name
     my $species_key = $config_packer->tree->{'SPECIES_URL'};
@@ -880,6 +882,9 @@ sub _parse {
   }
   # Used for grouping same species with different assemblies in species selector
   $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
+  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+  warn Dumper($species_to_strains);
+  warn Dumper($name_lookup);
 
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
