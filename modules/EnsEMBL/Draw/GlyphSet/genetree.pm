@@ -430,6 +430,10 @@ sub _init {
   my $alignment_width  = $align_bitmap_width - 20;
   my $alignment_length = 0;
 
+  if ($tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    $alignment_length = $tree->tree->aln_length;
+  } else {
+
   #Find the alignment length from the first alignment
   my @cigar = grep {$_} split(/(\d*[GDMmXI])/, $alignments[0]->[1]);
   for my $cigElem ( @cigar ) {
@@ -441,6 +445,9 @@ sub _init {
       $alignment_length += $cigCount;
     }
   }
+
+  }
+
   $alignment_length ||= $alignment_width; # All nodes collapsed
   my $min_length      = int($alignment_length / $alignment_width);   
   my $alignment_scale = $alignment_width / $alignment_length;   
