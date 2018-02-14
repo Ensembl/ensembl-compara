@@ -882,9 +882,6 @@ sub _parse {
   }
   # Used for grouping same species with different assemblies in species selector
   $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
-  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-  warn Dumper($species_to_strains);
-  warn Dumper($name_lookup);
 
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
