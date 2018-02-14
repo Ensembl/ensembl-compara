@@ -813,8 +813,18 @@ sub features {
       }
     }
   } elsif ($f->{'_collapsed'}) { # Collapsed node
+    unless ($tree->tree->{_consensus_cigar_line_hash}) {
+      my $gtos_adaptor = $tree->adaptor->db->get_GeneTreeObjectStoreAdaptor;
+      my $json_string = $gtos_adaptor->fetch_by_GeneTree_and_label($tree->tree, 'consensus_cigar_line');
+      if ($json_string) {
+        $tree->tree->{_consensus_cigar_line_hash} = JSON->new->decode($json_string);
+      } else {
+        $tree->tree->{_consensus_cigar_line_hash} = {};
+      }
+    }
     $f->{'_name'}       = $tree->name;
-    $f->{'_cigar_line'} = $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');
+    $f->{'_cigar_line'}   = $tree->tree->{_consensus_cigar_line_hash}->{$tree->node_id};
+    $f->{'_cigar_line'} ||= $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');   # Until all the EG divisions have updated their database
   } elsif ($tree->is_leaf && $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     my $name = $tree->{_subtree}->stable_id;
     $name = $tree->{_subtree}->get_tagvalue('model_id') unless $name;
