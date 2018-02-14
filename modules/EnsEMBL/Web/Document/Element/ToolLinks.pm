@@ -34,8 +34,8 @@ sub links {
   my @links;
 
   push @links, 'mart',          '<a class="constant" href="/biomart/martview">BioMart</a>' if $sd->ENSEMBL_MART_ENABLED;
-  push @links, 'blast',        '<a class="constant" href="">BLAST</a>' if $sd->ENSEMBL_BLAST_ENABLED;
-  push @links, 'vep',          '<a class="constant" href="">VEP</a>' if $sd->ENSEMBL_VEP_ENABLED;
+  push @links, 'blast',        '<a class="constant" href="/Multi/Tools/Blast?db=core">BLAST</a>' if $sd->ENSEMBL_BLAST_ENABLED;
+  push @links, 'vep',          '<a class="constant" href="/info/docs/tools/vep/">VEP</a>' if $sd->ENSEMBL_VEP_ENABLED;
   push @links, 'tools',         '<a class="constant" href="/info/docs/tools/index.html">Tools</a>';
   push @links, 'download',      '<a class="constant" href="/downloads.html">Downloads</a>';
   push @links, 'documentation', '<a class="constant" href="/info/">Help &amp; Docs</a>';
