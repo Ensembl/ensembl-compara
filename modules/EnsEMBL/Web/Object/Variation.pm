@@ -288,6 +288,38 @@ sub _seq_region_ {
   return ( $seq_region, $start, $seq_type );
 }
 
+sub seq_region_name    {
+
+  ### Variation_location 
+  ### a
+
+  my( $sr,$st) = $_[0]->_seq_region_; return $sr; 
+}
+
+sub seq_region_start   {
+  ### Variation_location 
+  ### a
+  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
+}
+
+sub seq_region_end     {
+  ### Variation_location 
+  ### a
+  my( $sr,$st) = $_[0]->_seq_region_; return $st; 
+}
+
+sub seq_region_strand  {
+  ### Variation_location 
+  ### a
+  return 1; 
+}
+
+sub seq_region_type    { 
+  ### Variation_location
+  ### a
+  my($sr,$st,$type) = $_[0]->_seq_region_; return $type; 
+}
+
 sub seq_region_data {
 
   ### Variation_location
