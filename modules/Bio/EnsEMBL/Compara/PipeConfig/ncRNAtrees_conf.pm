@@ -175,6 +175,12 @@ sub pipeline_analyses {
         'mpirun_exe'            => $self->o('mpirun_exe'),
     );
 
+    my %decision_analysis_params = (
+            -analysis_capacity  => $self->o('decision_capacity'),
+            -priority           => $self->o('hc_priority'),
+            -batch_size         => 20,
+    );
+
     return [
 
 # --------------------------------------------- [ backbone ]-----------------------------------------------------------------------------
@@ -634,7 +640,7 @@ sub pipeline_analyses {
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
-                                   1 => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
+                                   1 => [ 'secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
                 -rc_name       => '1Gb_job',
             },
@@ -647,8 +653,28 @@ sub pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                    'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
-                -flow_into     => [ 'pre_sec_struct_tree', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
-                -rc_name       => '2Gb_job',
+                -flow_into     => [ 'secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
+                -rc_name       => '16Gb_job',
+            },
+
+            {   -logic_name => 'secondary_structure_decision',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
+                -parameters => {
+                    'tags'  => {
+                        'aln_length' => 0,
+                    },
+                },
+
+                -flow_into => {
+                    1 => WHEN(
+                        '(#tree_aln_length# <= 200)'                                    => 'pre_sec_struct_tree_1_core',
+                        '( (#tree_aln_length# > 200) && (#tree_aln_length# < 600) )'    => 'pre_sec_struct_tree_2_cores',
+                        '( (#tree_aln_length# > 600) && (#tree_aln_length# < 1300) )'   => 'pre_sec_struct_tree_4_cores',
+                        '(#tree_aln_length# > 1300)'                                    => 'pre_sec_struct_tree_8_cores',
+                        #'( #tree_aln_length# > 4000 )'                                 => 'pre_sec_struct_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
+                    ),
+                },
+                %decision_analysis_params,
             },
 
             {   -logic_name    => 'tree_backup',
@@ -683,37 +709,113 @@ sub pipeline_analyses {
                 -rc_name       => '2Gb_job',
             },
 
-            {
-             -logic_name    => 'pre_sec_struct_tree', ## pre_sec_struct_tree
-             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
-             -analysis_capacity => $self->o('raxml_capacity'),
-             -parameters => {
-                             %raxml_parameters,
-                             'cmd_max_runtime'       => '86400',
-                             'raxml_number_of_cores' => 4,
+        {   -logic_name    => 'pre_sec_struct_tree_1_core', ## pre_sec_struct_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 1,
+                            'more_cores_branch'     => 3,
+                            'cmd_max_runtime'       => '43200',
                             },
              -flow_into => {
-                            2 => [ 'sec_struct_model_tree'],
-                            -2 => [ 'pre_sec_struct_tree_long' ],       # RUNTIME
+                            2 => [ 'sec_struct_model_tree_1_core' ],
+                            3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
-             -rc_name => '2Gb_4c_job',
-            },
+             -rc_name => '250Mb_job',
+        },
 
-            {
-             -logic_name    => 'pre_sec_struct_tree_long', ## pre_sec_struct_tree
-             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
-             -analysis_capacity => $self->o('raxml_capacity'),
-             -parameters => {
-                             %raxml_parameters,
-                             'raxml_number_of_cores' => 8,
-                            },
-             -flow_into => {
-                            2 => [ 'sec_struct_model_tree_long'],
+        {   -logic_name    => 'pre_sec_struct_tree_2_cores', ## pre_sec_struct_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 2,
+                            'more_cores_branch'     => 3,
+                            'cmd_max_runtime'       => '43200',
                            },
-             -rc_name => '4Gb_8c_job',
-            },
+            -flow_into => {
+                            2 => [ 'sec_struct_model_tree_2_cores' ],
+                            3 => [ 'pre_sec_struct_tree_4_cores' ],
+                          },
+            -rc_name => '500Mb_2c_job',
+        },
 
-        {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
+        {   -logic_name    => 'pre_sec_struct_tree_4_cores', ## pre_sec_struct_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 4,
+                            'more_cores_branch'     => 3,
+                            'cmd_max_runtime'       => '43200',
+                           },
+            -flow_into => {
+                            2 => [ 'sec_struct_model_tree_4_cores' ],
+                            3 => [ 'pre_sec_struct_tree_8_cores' ],
+                           },
+            -rc_name => '1Gb_4c_job',
+        },
+
+        {   -logic_name    => 'pre_sec_struct_tree_8_cores', ## pre_sec_struct_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::PrepareSecStructModels',  ## PrepareRAxMLSecModels -- rename
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 8,
+                           },
+            -flow_into => {
+                            2 => [ 'sec_struct_model_tree_8_cores' ],
+                          },
+            -rc_name => '2Gb_8c_job',
+        },
+
+        {   -logic_name    => 'sec_struct_model_tree_1_core', ## sec_struct_model_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 1,
+                            'more_cores_branch'     => 3,
+                            'cmd_max_runtime'       => '43200',
+                           },
+            -flow_into => {
+                            3 => [ 'sec_struct_model_tree_2_cores' ],
+                          },
+            -rc_name => '250Mb_job',
+        },
+
+        {   -logic_name    => 'sec_struct_model_tree_2_cores', ## sec_struct_model_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 2,
+                            'more_cores_branch'     => 3,
+                            'cmd_max_runtime'       => '43200',
+                           },
+            -flow_into => {
+                            3 => [ 'sec_struct_model_tree_4_cores' ],
+                       },
+            -rc_name => '500Mb_2c_job',
+        },
+
+        {   -logic_name    => 'sec_struct_model_tree_4_cores', ## sec_struct_model_tree
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
+            -analysis_capacity => $self->o('raxml_capacity'),
+            -parameters => {
+                            %raxml_parameters,
+                            'raxml_number_of_cores' => 4,
+                            'more_cores_branch'     => 3,
+                            'cmd_max_runtime'       => '43200',
+                           },
+            -flow_into => {
+                            3 => [ 'sec_struct_model_tree_8_cores' ],
+                       },
+            -rc_name => '1Gb_4c_job',
+        },
+
+        {   -logic_name    => 'sec_struct_model_tree_8_cores', ## sec_struct_model_tree
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
             -analysis_capacity => $self->o('raxml_capacity'),
             -parameters => {
@@ -721,22 +823,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '86400',
                             'raxml_number_of_cores' => 8,
                            },
-
-             -flow_into => {
-                            -2 => [ 'sec_struct_model_tree_long' ],       # RUNTIME
-                           },
-
-            -rc_name => '4Gb_8c_job',
-        },
-
-        {   -logic_name    => 'sec_struct_model_tree_long', ## sec_struct_model_tree
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels
-            -analysis_capacity => $self->o('raxml_capacity'),
-            -parameters => {
-                            %raxml_parameters,
-                            'raxml_number_of_cores' => 16,
-                           },
-            -rc_name => '8Gb_16c_job',
+            -rc_name => '2Gb_8c_job',
         },
 
         {   -logic_name    => 'genomic_alignment',
