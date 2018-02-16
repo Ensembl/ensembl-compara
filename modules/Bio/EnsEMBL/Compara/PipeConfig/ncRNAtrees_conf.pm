@@ -623,7 +623,7 @@ sub pipeline_analyses {
                                     'dataflow_subclusters' => 1,
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
-                -rc_name            => '250Mb_long_job',
+                -rc_name            => '250Mb_job',
                 -priority           => 40,
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
