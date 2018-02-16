@@ -211,7 +211,26 @@ sub _run_bootstrap_raxml {
   print "$cmd\n" if($self->debug);
   my $bootstrap_starttime = time()*1000;
 
-  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1 } );
+
+    # The idea here is to try first rerunning RAxML before trying it with a better capacity.
+    # We have observed that in many cases RAxML would be running for 4 days, and if we restar the jobs it would finish in less than 1 hour.
+    my $command = $self->run_command("cd $worker_temp_directory; $cmd", { timeout => $self->param('cmd_max_runtime') } );
+
+    if ( $command->exit_code == -2 ) {
+
+        #RAxML can be stuck ... restarting
+        $self->warning( sprintf("Timeout reached, it is better to restart RAxML for 'PrepareSecStructModels'.\n") );
+        $command = $self->run_command( "cd $worker_temp_directory; rm RAxML_*; $cmd", { timeout => $self->param('cmd_max_runtime') } );
+
+        if ( ( $command->exit_code == -2 ) && defined( $self->param('more_cores_branch') ) ) {
+            $self->input_job->autoflow(0);
+            $self->dataflow_output_id( undef, $self->param('more_cores_branch') );
+            $self->complete_early("Could no complete RAxML (PrepareSecStructModels) within 12 hours. Dataflowing to the next level capacity.");
+        }
+    }
+    if ($command->exit_code) {
+        $command->die_with_log;
+    }
 
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
 
