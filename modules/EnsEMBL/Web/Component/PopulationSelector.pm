@@ -33,7 +33,7 @@ sub _init {
   $self->{'excluded_header'} = 'Unselected Populations';
   $self->{'url_param'}       = 'pop';
   $self->{'rel'}             = 'modal_select_populations';
-  $self->{'url'}             = $self->hub->url({action => 'LD'}, 1);
+  $self->{'url'}             = $self->hub->url({action => 'LDPlot'}, 1);
 }
 
 sub content_ajax {
