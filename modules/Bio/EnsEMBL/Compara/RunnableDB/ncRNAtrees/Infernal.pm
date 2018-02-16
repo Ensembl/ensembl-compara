@@ -591,6 +591,10 @@ sub _store_aln_tags {
     my $aln_num_residues = $sa->num_residues;
     $tree->store_tag("aln_num_residues",$aln_num_residues);
 
+    # Alignment length.
+    my $aln_length = $sa->length;
+    $tree->store_tag("aln_length",$aln_length);
+
 }
 
 sub store_refined_profile {
