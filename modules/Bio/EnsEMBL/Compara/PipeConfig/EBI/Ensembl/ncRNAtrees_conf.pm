@@ -97,6 +97,7 @@ sub default_options {
             'ortho_stats_capacity'            => 10,
             'homology_id_mapping_capacity'    => 10,
             'cafe_capacity'                   => 50,
+            'decision_capacity'               => 4,
 
             # Setting priorities
             'genomic_alignment_priority'       => 35,
@@ -137,7 +138,10 @@ sub resource_classes {
             '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
             '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
 
+            '500Mb_2c_job'          => { 'LSF' => '-C0 -n 2 -M500 -R"span[hosts=1] select[mem>500] rusage[mem=500]"' },
+            '1Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"' },
             '2Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
+            '2Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
             '8Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
             '32Gb_8c_job'         => { 'LSF' => '-C0 -n 8 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
 
