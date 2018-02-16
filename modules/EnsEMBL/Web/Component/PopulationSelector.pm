@@ -25,15 +25,27 @@ use base qw(EnsEMBL::Web::Component::MultiSelector);
 
 sub _init {
   my $self = shift;
- 
+  my $action = '';
+
   $self->SUPER::_init;
- 
+
   $self->{'link_text'}       = 'Select populations';
   $self->{'included_header'} = 'Selected Populations';
   $self->{'excluded_header'} = 'Unselected Populations';
   $self->{'url_param'}       = 'pop';
   $self->{'rel'}             = 'modal_select_populations';
-  $self->{'url'}             = $self->hub->url({action => 'LDPlot'}, 1);
+
+  foreach my $component_array (@{$self->hub->components}) {
+    foreach my $component (@{$component_array}) {
+      if ($component eq 'LDPlot') {
+        $action = 'LDPlot';
+      } elsif ($component eq 'LDImage') {
+        $action = 'LD';
+      }
+    }
+  }
+
+  $self->{'url'} = $self->hub->url({action => $action}, 1);
 }
 
 sub content_ajax {
