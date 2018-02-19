@@ -25,7 +25,6 @@ use base qw(EnsEMBL::Web::Component::MultiSelector);
 
 sub _init {
   my $self = shift;
-  my $action = '';
 
   $self->SUPER::_init;
 
