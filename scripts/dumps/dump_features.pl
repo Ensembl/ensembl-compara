@@ -151,7 +151,7 @@ if ($compara_url) {
 
 if ($compara_dba) {
     # will have disconnect_when_inactive set to 1.
-    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} grep {$_->db_adaptor} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
 }
 
 my $species_name = $reg->get_adaptor($species, "core", "MetaContainer")->get_production_name;
