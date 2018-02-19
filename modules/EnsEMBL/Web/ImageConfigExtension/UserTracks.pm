@@ -384,7 +384,7 @@ sub _add_trackhub_node {
     my $config  = {};
     my @ok_keys = qw(visibility dimensions priority);
     if ($data->{'superTrack'} && $data->{'superTrack'} eq 'on') {
-      my @inherited = qw(visibility viewLimits maxHeightPixels);
+      my @inherited = qw(on_off visibility viewLimits maxHeightPixels);
       foreach (@inherited) {
         $config->{$_} = $data->{$_};
       }
