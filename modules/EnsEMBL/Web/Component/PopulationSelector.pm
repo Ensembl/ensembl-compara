@@ -35,17 +35,7 @@ sub _init {
   $self->{'url_param'}       = 'pop';
   $self->{'rel'}             = 'modal_select_populations';
 
-  foreach my $component_array (@{$self->hub->components}) {
-    foreach my $component (@{$component_array}) {
-      if ($component eq 'LDPlot') {
-        $action = 'LDPlot';
-      } elsif ($component eq 'LDImage') {
-        $action = 'LD';
-      }
-    }
-  }
-
-  $self->{'url'} = $self->hub->url({action => $action}, 1);
+  $self->{'url'} = $self->hub->url({action => $self->hub->action}, 1);
 }
 
 sub content_ajax {
