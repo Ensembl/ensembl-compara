@@ -123,16 +123,13 @@ sub run {
 
         #RAxML can be stuck ... restarting
         $self->warning( sprintf("Timeout reached, it is better to restart RAxML for 'SecStructModelTree'.\n") );
-        my $command_second_try = $self->run_command( "cd $worker_temp_directory; rm RAxML_*; $cmd", { timeout => $self->param('cmd_max_runtime') } );
+        $command = $self->run_command( "cd $worker_temp_directory; rm RAxML_*; $cmd", { timeout => $self->param('cmd_max_runtime') } );
 
-        if ( ( $command_second_try->exit_code == -2 ) && defined( $self->param('more_cores_branch') ) ) {
+        if ( ( $command->exit_code == -2 ) && defined( $self->param('more_cores_branch') ) ) {
             $self->input_job->autoflow(0);
             $self->dataflow_output_id( undef, $self->param('more_cores_branch') );
             $self->complete_early("Could no complete RAxML (SecStructModelTree) within 12 hours. Dataflowing to the next level capacity.");
         }
-    }
-    elsif ($command->exit_code) {
-        $command->die_with_log;
     }
 
 
