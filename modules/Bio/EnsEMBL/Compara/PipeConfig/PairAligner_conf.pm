@@ -145,7 +145,6 @@ sub default_options {
 	    
         #
 	#Default filter_duplicates
-	#
         #'window_size' => 1000000,
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
@@ -647,7 +646,8 @@ sub pipeline_analyses {
 	    { -logic_name => 'pairaligner_stats',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
 	      -parameters => {
-			      'skip' => $self->o('skip_pairaligner_stats'),
+			      # 'skip' => $self->o('skip_pairaligner_stats'),
+            'skip' => '#expr( #skip_pairaligner_stats# || #patch_alignments# )expr#',
 			      'dump_features' => $self->o('dump_features_exe'),
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),

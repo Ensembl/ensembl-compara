@@ -35,11 +35,23 @@ sub default_options {
 
         #'species_set_name'  => 'primates',
 
+	'rel_suffix'	=> $self->o('species_set_name') . '_' . $self->o('ensembl_release'),
 	'ensembl_release' => 92,
-	'prev_release'  => 91,
+	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
-    'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/epo_low_coverage/' . $self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
+    'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
+    'port' => 4401,
 
+    'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_2X/' . 'release_' . $self->o('rel_with_suffix') . '/',
+
+    'pipeline_db' => {
+        -host   => $self->o('host'),
+        -port   => $self->o('port'),
+        -user   => 'ensadmin',
+        -pass   => $self->o('password'),
+        -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
+        -driver => 'mysql',
+    },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
@@ -47,24 +59,24 @@ sub default_options {
         -port   => 4485,
         -user   => 'ensro',
         -pass   => '',
-		-dbname => 'ensembl_compara_91',
+		-dbname => 'ensembl_compara_' . $self->o('ensembl_release'),
 		-driver => 'mysql',
     },
 
     #location of new pairwise mlss if not in the pairwise_default_location eg:
-    #'pairwise_exception_location' => { },
-	 'pairwise_exception_location' => {
- #        1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
-	 },
+    'pairwise_exception_location' => { },
+	# 'pairwise_exception_location' => {
+    #      1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+	# },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_mammals_epo_92',
+	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_fish_epo_92',
 
 	'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
 	'staging_loc1' => {
-        -host   => 'mysql-ens-sta-1',
-        -port   => 4519,
+        -host   => 'mysql-ens-vertannot-staging',
+        -port   => 4573,
         -user   => 'ensro',
         -pass   => '',
         -db_version => $self->o('ensembl_release'),
@@ -95,8 +107,8 @@ sub default_options {
 
     #ref species for pairwise alignments
  	# 'ref_species' => 'gallus_gallus',    # sauropsids 
-	# 'ref_species' => 'oryzias_latipes',  # fish
-	'ref_species' => 'homo_sapiens',       # mammals
+	'ref_species' => 'oryzias_latipes',  # fish
+	# 'ref_species' => 'homo_sapiens',       # mammals
 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
