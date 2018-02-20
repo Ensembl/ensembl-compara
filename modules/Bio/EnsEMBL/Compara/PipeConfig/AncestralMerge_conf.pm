@@ -70,10 +70,10 @@ sub default_options {
 
         # map EPO mlss_ids to their source ancestral db
         'epo_mlsses' => [ # this table needs to be edited prior to running the pipeline:
-            [ '1132' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_fish_ancestral_core_92', ], # 5 teleost fish
-            [ '825'  => $self->o('prev_ancestral_db'), ], # 4 sauropsids
-            [ '1134' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_primates_ancestral_core_92', ], # 12 primates
-	    	[ '1135' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_ancestral_core_92',] # 26 mammals
+            [ '1132' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_fish_ancestral_core_92', ], # teleost fish
+            [ '825'  => $self->o('prev_ancestral_db'), ], # sauropsids
+            [ '1134' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_primates_ancestral_core_92', ], # primates
+            [ '1135' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_ancestral_core_92',] # mammals
         ],
 
         # Redefined so that the database name is *not* prefixed with the user name
