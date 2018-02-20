@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -363,13 +363,15 @@ sub reset {
 sub get_data {
 ## get the alignment features
   my $self = shift;
-  my $adaptor = $self->bam_adaptor;
-  if ($self->{'file_error'}) {
-    return [];
-  }
 
-  my $slice = $self->{'container'};
-  if (!exists($self->{_cache}->{data})) {
+  unless ( $self->{_cache}->{data} ) {    
+    my $adaptor = $self->bam_adaptor;
+    if ($self->{'file_error'}) {
+      $self->{_cache}->{_bam_adaptor} = undef;
+      return [];
+    }
+
+    my $slice = $self->{'container'};
     
     ## Allow for seq region synonyms
     my $seq_region_names = [$slice->seq_region_name];
@@ -378,16 +380,13 @@ sub get_data {
     }
 
     my $data;
-
     foreach my $seq_region_name (@$seq_region_names) {
       $data = $adaptor->fetch_alignments_filtered($seq_region_name, $slice->start, $slice->end) || [];
       last if @$data;
     }
 
     $self->{_cache}->{data} = $data;
-
-    ## Explicitly close file, otherwise it can cause errors
-    $adaptor->htsfile_close;
+    $self->{_cache}->{_bam_adaptor} = undef;
   }
 
   ## Return data in standard format expected by other modules
@@ -398,10 +397,12 @@ sub get_data {
 
 sub consensus_features {
   my $self = shift;
+
   unless ($self->{_cache}->{consensus_features}) {
 
     my $adaptor = $self->bam_adaptor;
     if ($self->{'file_error'}) {
+      $self->{_cache}->{_bam_adaptor} = undef;
       return {};
     }
 
@@ -424,6 +425,7 @@ sub consensus_features {
       $cons_lookup->{$_->{'x'}} = $_->{'bp'};
     }
     $self->{_cache}->{consensus_features} = $cons_lookup;
+    $self->{_cache}->{_bam_adaptor} = undef;
   }
   return $self->{_cache}->{consensus_features}; 
 }

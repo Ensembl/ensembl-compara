@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 .floating_popup { 
   position: absolute !important;
   display: none;
-  background-color: [[TINT_BG]];
-  border: 1px solid [[TINT_BG]];
+  background-color: [[MAIN_V_LIGHT]];
+  border: 1px solid [[MAIN_V_LIGHT]];
   z-index: 200;
   font-weight: bold;
   padding: 2px;
@@ -31,14 +31,14 @@
 }
 
 .floating_popup .spinner               { height: 66px !important; margin: 0; }
-body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 0; margin: 16px 0; }
+body.ie6 .floating_popup .spinner      { background-color: [[MAIN_V_LIGHT]]; border: 0; margin: 16px 0; }
 
 .info_popup                            { width: auto; padding: 0; }
 .info_popup th,
 .info_popup td                         { padding: 2px 3px; white-space: nowrap; }
-.info_popup tr.header                  { background-color: [[BUTTON_BG]]; cursor: default; }
+.info_popup tr.header                  { background-color: [[MAIN_DARK]]; cursor: default; }
 .info_popup tr.header th,
-.info_popup tr.header a                { color: #FFFFFF; }
+.info_popup tr.header a                { color: [[WHITE]]; }
 .info_popup span.close                 { position: absolute; top: -8px; right: -12px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; }
 .info_popup td.closed                  { background: url(/i/closed2.gif) 100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
 .info_popup td.opened                  { background: url(/i/open2.gif)   100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
@@ -60,26 +60,26 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder .info_popup              { border: 0; }
 .zmenu_holder .zmenu                   { width: 180px; }
 .zmenu_holder .zmenu tr.bg1            { background-color:transparent;}
-.zmenu_holder .zmenu tr.bg2            { background-color:[[TINT_BORDER]];}
+.zmenu_holder .zmenu tr.bg2            { background-color:[[MAIN_LIGHT]];}
 .zmenu_holder .zmenu tr.bg1 a,
-.zmenu_holder .zmenu tr.bg2 a          { color:[[TINT_LINK]] }
+.zmenu_holder .zmenu tr.bg2 a          { color:[[MAIN_V_DARK]] }
 .zmenu_holder .zmenu th,
 .zmenu_holder .zmenu td                { white-space: normal; }
 .zmenu_holder .zmenu tr.child th       { padding-left: 12px; }
 .zmenu_holder span.close               { position: absolute; right: 0; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; z-index: 201; }
 .zmenu_holder div.header,
 .zmenu_holder .container,
-.zmenu_holder .loading                 { border: 1px solid [[TINT_BG]]; }
-.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: #FFFFFF; background-color: [[BUTTON_BG]]; text-align: center; cursor: default; }
+.zmenu_holder .loading                 { border: 1px solid [[MAIN_V_LIGHT]]; }
+.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: [[WHITE]]; background-color: [[MAIN_DARK]]; text-align: center; cursor: default; }
 .zmenu_holder .loading                 { width: 200px; }
-.zmenu_holder .loading div             { padding: 2px 3px; color: #FFFFFF; background-color: [[BUTTON_BG]]; }
+.zmenu_holder .loading div             { padding: 2px 3px; color: [[WHITE]]; background-color: [[MAIN_DARK]]; }
 .zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-table; vertical-align: top; }
 .zmenu_holder .row .zmenu:last-child   { padding-right: 0; }
 .zmenu_holder .row .zmenu tr.header th { width: 180px; }
 .zmenu_holder .grid                    { max-height: 250px; overflow-x: hidden; overflow-y: scroll; }
 
 .zmenu .loc-icon-a                     { line-height: 20px; }
-.zmenu .loc-icon                       { display: inline-block; background-color: [[BUTTON_BG]]; background-size: 12px auto; border: 2px solid [[BUTTON_BG]]; border-radius: 2px;  height: 12px; margin: 2px 4px 2px 0; text-decoration: none; width: 12px; }
+.zmenu .loc-icon                       { display: inline-block; background-color: [[MAIN_DARK]]; background-size: 12px auto; border: 2px solid [[MAIN_DARK]]; border-radius: 2px;  height: 12px; margin: 2px 4px 2px 0; text-decoration: none; width: 12px; }
 .zmenu .loc-icon-a .loc-icon           { float: left; margin-right: 4px; }
 
 .zmenu .loc-mark                       { background-image: url("/i/16/rev/marker.png");       }
@@ -89,7 +89,7 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu .remove                         { background-image: url("/i/16/rev/cross.png"); }
 
 .zmenu .loc-icon-a:hover .loc-icon,
-.zmenu .loc-icon:hover                 { background-color: [[BUTTON_BG_HOVER]]; border: 2px solid [[BUTTON_BG_HOVER]]; }
+.zmenu .loc-icon:hover                 { background-color: [[MAIN_V_DARK]]; border: 2px solid [[MAIN_V_DARK]]; }
 
 body.ie  .zmenu_holder .grid           { width: 200px; }
 body.ie  .zmenu_holder div.header      { width: 202px; }

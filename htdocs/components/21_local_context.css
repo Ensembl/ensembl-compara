@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,23 @@
  */
 
 .nav                               { width: 221px; margin: 3px; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
-.nav div.header                    { font-weight: bold;  border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; background-color:[[PANEL_BG]] }
-.nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PANEL_BORDER]]; padding: 2px 0 0 16px; background-color: [[PANEL_BG]]; }
-.nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
+.nav div.header                    { font-weight: bold;  border: 1px solid [[PALE_GREY]]; border-bottom: 0; padding: 2px; background-color:[[WHITE]] }
+.nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PALE_GREY]]; padding: 2px 0 0 16px; background-color: [[WHITE]]; }
+.nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[DARK_GREY]]; }
 .nav ul.local_context              { padding: 0; list-style: none; white-space: nowrap; }
 .nav ul.local_context li           { width: 100%; list-style-image: none; margin: 0; overflow: hidden; }
 .nav ul.local_context li,
 .nav ul.local_context li ul        { background-image: url(/i/line.gif); background-repeat: repeat-y; }
 .nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
 .nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
-.nav ul.local_context li.last      { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
+.nav ul.local_context li.last      { background: [[WHITE]] url(/i/last.gif) no-repeat; }
 .nav ul.local_context li.last ul   { background: 0; }
-.nav ul.local_context li.active    { font-weight: bold; background-color: [[TINT_BG]]; }
-.nav ul.local_context li.active ul { background-color: [[PANEL_BG]]; }
+.nav ul.local_context li.active    { font-weight: bold; background-color: [[MAIN_LIGHT]]; }
+.nav ul.local_context li.active ul { background-color: [[WHITE]]; }
 .nav ul.local_context li.active li { font-weight: normal; }
 .nav ul.local_context li.closed ul { display: none; }
-.nav ul.local_context li .disabled { color: [[PAGE_TEXT]]; }
-.nav ul.local_context a            { color: [[MENU_LINK]]; text-decoration: none; }
+.nav ul.local_context li .disabled { color: [[DARK_GREY]]; }
+.nav ul.local_context a            { text-decoration: none; }
 
 body.ie67 .nav                         { margin-top: 3px; }
 body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
@@ -40,11 +40,11 @@ body.ie67 .nav ul.local_context li img { margin: 0; vertical-align: top; }
 div#mobile_context        { display: none; }
 ul.mobile_context li img  { display: none; }
 
-div.share_page          { background: #FFF; color: #000; z-index: 1000; border: 1px solid #000; position: absolute; display: none; width: 300px; padding: 16px; }
+div.share_page          { background: [[WHITE]]; color: [[BLACK]]; z-index: 1000; border: 1px solid [[BLACK]]; position: absolute; display: none; width: 300px; padding: 16px; }
 div.share_page ul       { position: relative; list-style: none; clear: both; margin-bottom: 16px; }
 div.share_page ul li    { list-style-image: none; }
 div.share_page ul label { width: 90%; display: inline-block; overflow: hidden; text-overflow: ellipsis; }
 div.share_page ul input { position: absolute; right: 0; }
 div.share_page .go      { margin-right: 8px; }
-div.share_page .url     { width: 286px; border: 1px solid [[PANEL_BORDER]]; padding: 6px; }
+div.share_page .url     { width: 286px; border: 1px solid [[PALE_GREY]]; padding: 6px; }
 div.share_page .spinner { height: 66px; border: 0; margin: 16px 0; display: none; }

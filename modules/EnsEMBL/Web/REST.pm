@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -124,12 +124,12 @@ sub fetch_via_ini {
   my ($self,$species,$name,$params,$args,$part) = @_;
 
   my $sources = $self->species_defs->get_config($species,'REST_SOURCES') || {};
-  return undef unless $sources->{$name};
+  return (['Unknown source'], 1) unless $sources->{$name};
   my $type = $sources->{$name};
   my $ini = $self->species_defs->get_config($species,$type);
-  return undef unless $ini;
+  return (['Cannot configure for this species'], 1) unless $ini;
   my $url = $ini->{$part||'url'};
-  return undef unless $url;
+  return (['No REST URL'], 1) unless $url;
   { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
   $url =~ s/<<(.*?)>>/$params->{$1}/eg;
   return $self->fetch_url($url,$args);

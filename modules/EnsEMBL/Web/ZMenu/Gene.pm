@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ sub _content {
   my @xref        = $object->display_xref;
   my $gene_desc   = $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r;
   
-  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : 'Novel transcript');
+  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : 'Gene');
   
   if($gene_desc) {
     $self->add_entry({

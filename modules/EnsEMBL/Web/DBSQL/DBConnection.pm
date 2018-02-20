@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -134,14 +134,6 @@ sub get_DBAdaptor {
   $self->clean($dba);
   # warn "$species - $database - $dba";
 
-  # Funcgen Database Files Overwrite
-  if ($database eq 'funcgen' &&
-      $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'} &&
-      $self->{'species_defs'}->databases->{'DATABASE_FUNCGEN'}{'NAME'}) {
-    my $file_path = join '/', $self->{'species_defs'}->DATAFILE_BASE_PATH, lc $species, $self->{'species_defs'}->ASSEMBLY_VERSION;
-    $dba->get_ResultSetAdaptor->dbfile_data_root($file_path) if ($dba && -e $file_path && -d $file_path);
-  }  
-  
   $self->{'_dbs'}{$species}{$database} = $dba;
   
   return $self->{'_dbs'}{$species}{$database};
@@ -459,7 +451,7 @@ sub proxy {
   my $URL = shift;
   my $PROXY = 1;
   return 0 unless $URL=~/^https?:\/\/([^:\/]+)/;
-  return 0 unless defined $self->{'species_defs'}->ENSEMBL_WWW_PROXY;
+  return 0 unless $SiteDefs::HTTP_PROXY;
   return 1 unless defined $self->{'species_defs'}->ENSEMBL_NO_PROXY;
 # return 1;
   my $DOMAIN = $1 ;

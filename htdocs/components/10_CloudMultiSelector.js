@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
     this.base(id);
     this.urlParam = params.urlParam;
     this.params = params;
-
+    this.userInteraction = '';
     this.selection = [];
     Ensembl.EventManager.register('updateConfiguration', this, this.updateSelection);
   },
@@ -89,6 +89,7 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
       panel.elLk.filter.focus();
     });
     this.elLk.list.click(function() {
+      panel.userInteraction = 'partial';
       if($(this).hasClass('partial')) {
         $(this).removeClass('partial');
       } else {
@@ -99,11 +100,13 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
       return false;
     });
     this.elLk.all.click(function() {
+      panel.userInteraction = 'all-on';
       panel.elLk.list.removeClass('off');
       panel.set_selection();
       return false;
     });
     this.elLk.none.click(function() {
+      panel.userInteraction = 'all-off';
       panel.elLk.list.addClass('off');
       panel.set_selection();
       return false;

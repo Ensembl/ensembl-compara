@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -281,7 +281,7 @@ sub write_fasta {
       my $id  = $id_info[0] || $transcript->display_id;
       my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
                       ? $transcript->analysis->logic_name 
-                      : $transcript->status . '_' . $transcript->biotype;
+                      : $transcript->biotype;
 
       $intron_id = 1;
 

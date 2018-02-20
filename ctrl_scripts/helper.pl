@@ -1,38 +1,25 @@
-=head1 LICENSE
-
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-=cut
-
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [2016-2018] EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 # helper for ctrl scripts
 
 use strict;
 use warnings;
 
 use FindBin qw($Bin);
-use File::Basename qw(dirname);
-use POSIX qw(strftime);
 
-BEGIN {
-  unshift @INC, sprintf('%s/conf', dirname($Bin));
-};
-
-use SiteDefs;
-
-unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
+BEGIN { require "$Bin/../conf/includeSiteDefs.pl" }
 
 sub warn_line {
   warn sprintf "%s\n", '=' x 78;
@@ -73,5 +60,36 @@ sub before_after_hooks {
   return (\@before, \@after);
 }
 
+sub run_script {
+  ## It's like running a perl script with system but as a part of the same script, with INC maintained
+  my ($script, $argv, $err_ref) = @_;
+
+  local @ARGV = @{$argv || []};
+  local $@    = undef;
+
+  my $return;
+
+  if (-f $script && -r $script) {
+    eval '
+      no warnings qw(redefine);
+      require subs;
+      subs->import(qw(exit));
+      sub exit(;$) {
+        die("EXIT:".($_[0] << 8));
+      }
+    ';
+    do $script;
+    if ($@) {
+      if ($@ =~ /^EXIT:(\d+)\s/) {
+        $return = $1;
+      } else {
+        $$err_ref = $@;
+      }
+    }
+  } else {
+    $$err_ref = "Not a script: $script\n";
+  }
+  return $return || 0;
+}
 
 1;

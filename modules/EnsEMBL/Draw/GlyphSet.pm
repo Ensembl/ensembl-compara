@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,28 +66,29 @@ sub new {
   }
   
   my $self = {
-    glyphs     => [],
-    x          => undef,
-    y          => undef,
-    width      => undef,
-    minx       => undef,
-    miny       => undef,
-    maxx       => undef,
-    maxy       => undef,
-    label      => undef,
-    label2     => undef,
-    bumped     => undef,
-    error      => undef,
-    features   => [],
-    data       => [], ## New name for 'features'
-    highlights => $data->{'highlights'},
-    strand     => $data->{'strand'},
-    container  => $data->{'container'},
-    config     => $data->{'config'},
-    my_config  => $data->{'my_config'},
-    display    => $data->{'display'} || 'off',
-    legend     => $data->{'legend'}  || {},
-    extras     => $data->{'extra'}   || {}
+    glyphs        => [],
+    x             => undef,
+    y             => undef,
+    width         => undef,
+    minx          => undef,
+    miny          => undef,
+    maxx          => undef,
+    maxy          => undef,
+    label         => undef,
+    label2        => undef,
+    bumped        => undef,
+    error         => undef,
+    features      => [],
+    data          => [], ## New name for 'features'
+    feature_cache => $data->{'feature_cache'}, ## Cached data for HAL alignments
+    highlights    => $data->{'highlights'},
+    strand        => $data->{'strand'},
+    container     => $data->{'container'},
+    config        => $data->{'config'},
+    my_config     => $data->{'my_config'},
+    display       => $data->{'display'} || 'off',
+    legend        => $data->{'legend'}  || {},
+    extras        => $data->{'extra'}   || {}
   };
   
   bless $self, $class;
@@ -106,6 +107,15 @@ sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};   
 sub scalex             { return $_[0]->{'config'}->transform_object->scalex;                                                                                     }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub get_features       { return $_[0]->{'features'}; }
+
+sub feature_cache  { 
+  my ($self, $key, $data) = @_;
+  return undef unless $key;
+  if ($data) {
+    $self->{'feature_cache'}{$key} = $data;
+  }
+  return $self->{'feature_cache'}{$key}; 
+}
 
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
@@ -1230,14 +1240,30 @@ sub sort_features_by_priority {
 
 sub no_features {
   my $self  = shift;
-  my $label;
-  if($self->can('my_empty_label')) {
-    $label = $self->my_empty_label;
-  }
-  $label ||= $self->my_label;
+  my $label = $self->my_empty_label;
   $self->errorTrack($label) if $label && 
     ($self->{'config'}->get_option('opt_empty_tracks') == 1
       || $self->{'my_config'}->get('show_empty_track') == 1 );
+}
+
+sub my_empty_label {
+  my $self = shift;
+  my $message;
+  if ($self->can('get_data') || $self->can('features')) {
+    $message = 'No features';
+    my $track_name = $self->my_config('name');
+    if ($track_name) {
+      $message .= sprintf(' from %s', $track_name);
+    }
+    my $strand_flag = $self->my_config('strand');
+    if ($strand_flag eq 'b') {
+      $message .= ' on this strand';
+    }
+    else {
+      $message .= ' in this region';
+    }
+  }
+  return $message;
 }
 
 sub too_many_features {
@@ -1418,6 +1444,15 @@ sub section_height {
   return $section_height;
 }
 
+
+sub add_connections {
+## Used by new drawing code to add 'tags'
+  my ($self, $style) = @_;
+  foreach (@{$style->connections||[]}) {
+    next unless $_->{'glyph'};
+    $self->join_tag($_->{'glyph'}, $_->{'tag'}, $_->{'params'});
+  }
+}
 
 sub join_tag {
 ### join_tag joins between glyphsets in different tracks

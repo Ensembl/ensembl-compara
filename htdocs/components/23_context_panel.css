@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 #transcripts_table { clear: both; }
 #transcripts_table tr.ss_header,
-#transcripts_table tr.ss_header th { background-color: #FFF!important; }
+#transcripts_table tr.ss_header th { background-color: [[WHITE]]!important; }
 
 /******************************
         Summary panel
@@ -25,13 +25,13 @@
 
 /* NOTE: summary table is now configured to use "twocol" instead of dl dt dd */
 
-div.summary_panel a.toggle                   { color: [[PAGE_TEXT]]; }
-div.summary_panel a.toggle_link              { color: [[PAGE_LINK]]; text-decoration: underline; }
+div.summary_panel a.toggle                   { color: [[DARK_GREY]]; }
+div.summary_panel a.toggle_link              { color: [[LINK]]; text-decoration: underline; }
 
 div.summary_panel table.toggle_table         { border-collapse: collapse; cursor: default; }
 div.summary_panel table.toggle_table td,
-div.summary_panel table.toggle_table th      { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; text-align: center; white-space: nowrap; }
+div.summary_panel table.toggle_table th      { border: 1px solid [[PALE_GREY]]; margin: 0; text-align: center; white-space: nowrap; }
 div.summary_panel table.toggle_table td      { padding: 2px 4px; }
-div.summary_panel table.toggle_table .active { background-color: [[TINT_BG]]; }
+div.summary_panel table.toggle_table .active { background-color: [[MAIN_V_LIGHT]]; }
 div.summary_panel table.toggle_table td.bold { font-weight: bold; text-align: center; }
 div.summary_panel .toggleTable_wrapper       { clear: none; }

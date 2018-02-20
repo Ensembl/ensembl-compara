@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,197 +35,179 @@ sub init {
   my $panel_type = $hub->param('panel_type');
 }
 
-sub json_to_dynatree {
+sub create_tree {
   my $self = shift;
-  my $division_hash = shift;
-  my $species_info = shift;
-  my $available_internal_nodes = shift;
-  my $internal_node_select = shift;
-  my $extras = shift || {};
-  my @dyna_tree = ();
-  my @child_nodes = ();
-
-  if ($division_hash->{child_nodes}) {
-    @child_nodes = @{$division_hash->{child_nodes}};
-  }
-
-  if ($division_hash->{is_leaf}) {
-    if($species_info->{$division_hash->{key}}) {
-      my $sp = $species_info->{$division_hash->{key}};
-
-      my $t = {
-        key             => $division_hash->{key},
-        scientific_name => $sp->{scientific},
-        title           => $division_hash->{display_name} || $sp->{common},
-        tooltip         => $sp->{scientific} || '',
-        searchable      => 1,
-        icon            => '/i/species/16/' . $sp->{key} . '.png'
-      };
-      if ($sp->{strain} && $sp->{strain} ne '') {
-        $t->{isStrain} = "true" ;
-      }
-      if ($sp->{value}) {
-        $t->{value}    = $sp->{value};
-      }
-
-      # Add extra groups like strains / haplotypes_and_patches etc
-      if($extras->{$division_hash->{key}} or ($division_hash->{extras_key} && $extras->{$division_hash->{extras_key}})) {
-        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $extras->{$division_hash->{key}}, $internal_node_select);
-        $t->{isFolder} = 1;
-        $t->{searchable} = 1;
-        # Make it unselectable if it is not in the available species_list
-        # $t->{unselectable} = 1 if (!$sp->{$division_hash->{key}});
-        push @{$t->{children}}, @$extra_dyna;
-      }
-      push @dyna_tree, $t;
-    }
-  }
-
-  if (scalar @child_nodes > 0) {
-
-    my @children = map {  $self->json_to_dynatree($_, $species_info, $available_internal_nodes, $internal_node_select, $extras) } @child_nodes;
-    if ($available_internal_nodes->{$division_hash->{display_name}}) {
-      my $t = {
-        key            => $division_hash->{display_name},
-        title          => $division_hash->{display_name},
-        children       => [ @children ],
-        isFolder       => 1,
-        searchable     => 1,
-        # Get a display tree starting from the first internal node on a bottom up search
-        isInternalNode => $division_hash->{is_internal_node},
-        unselectable   => !$internal_node_select
-      };
-      if(defined $division_hash->{is_submenu} && $division_hash->{is_submenu} eq 'true') {
-        $t->{is_submenu} = 1;
-      }
-
-      # Add extra groups like strains / haplotypes_and_patches etc
-      my $x = $extras->{$division_hash->{key}} || ($division_hash->{extras_key} ? $extras->{$division_hash->{extras_key}} : '');
-      if($x) {
-        my $extra_dyna = get_extras_as_dynatree($division_hash->{key}, $x, $internal_node_select);
-        $t->{isFolder} = 1;
-        $t->{searchable} = 1;
-        push @{$t->{children}}, @$extra_dyna;
-      }
-      push @dyna_tree, $t;
-    }
-  }
-
-  return @dyna_tree;
+  my $division_json = $self->{species_selector_data}->{division_json};
+  my @nodes = map { $self->traverse($_) } @{$division_json->{child_nodes}};
+  my $final = create_node($division_json, 1, 1);
+  $final->{children} = [@nodes];
+  return $final;
 }
 
-sub get_extras_as_dynatree {
-  my $species = shift;
-  my $extras = shift;
+# Traverse through the ensembl taxonomy divisions and create the dynatree json
+sub traverse() {
+  my $self = shift;
+  my $node = shift;
+  my @tree;
+  my $species_is_available = $self->{species_selector_data}->{available_species}->{$node->{key}} ? 1 : 0;
+  my $value = $self->{species_selector_data}->{available_species}->{$node->{key}};
+
+  if ($node->{is_leaf} && $species_is_available) {
+    $node->{value} = $value if $value;
+    if ($self->{species_selector_data}->{extras} && $self->{species_selector_data}->{extras}->{$node->{key}}) {
+      # create folder for special types like human self alignments
+      map { push @{$node->{children}}, @$_ } create_folder_for_special_types($node, $self->{species_selector_data}->{extras}->{$node->{key}}, $self->{species_selector_data}->{internal_node_select});
+    }
+    return create_node($node, 1);
+  }
+  else {
+    if ($node->{child_nodes}) {
+      my @children;
+      my $type;
+      my $other_types;
+      my $assembly_group;
+
+      my @child_nodes = $node->{child_nodes};
+
+      foreach (@{$node->{child_nodes}}) {
+        if ($_->{type}) { # for strains and stuff that could come from configpacker
+          push @{$type->{$_->{type}}}, $self->traverse($_);
+        }
+        elsif ($self->{species_selector_data}->{sp_assembly_map} &&
+               $self->{species_selector_data}->{sp_assembly_map}->{$_->{common_name} || $_->{key}} &&
+               scalar @{$self->{species_selector_data}->{sp_assembly_map}->{$_->{common_name} || $_->{key}}} > 1 &&
+               $_->{display_name} !~/reference/) {
+          # Group same species but different assemblies
+          push @{$assembly_group->{$_->{common_name}}}, $self->traverse($_);
+        }
+        else {
+          # normal internal node as defined in the e_divisions.json template
+          push @children, $self->traverse($_);
+        }
+      }
+      if (scalar keys %$type > 0) {
+        map { push @children, @$_ } $self->create_children_for_types($type);
+      }
+
+      if (scalar keys %$assembly_group > 0) {
+        map { push @children, @$_ } $self->create_children_for_types($assembly_group);
+      }
+
+      # Sorting
+      if (!$node->{is_submenu}) {
+        # Bring Human and Mouse reference to the top of the list and sort the rest alphabetically
+        my @ch_arr1 = grep { $_->{key} =~/Homo_sapiens$|Mus_musculus$/ } @children;
+        my @ch_arr2 = grep { $_->{key} !~/Homo_sapiens$|Mus_musculus$/ } sort {$a->{title} cmp $b->{title}} @children;
+        @children = (@ch_arr1, @ch_arr2);
+      }
+
+      if ($#children >= 0) {
+        push @tree, {
+          key => $node->{key},
+          title    => $node->{display_name},
+          isFolder => 1,
+          is_submenu => $node->{is_submenu},
+          isInternalNode => $node->{is_internal_node},
+          children => [@children],
+          unselectable => !!!$self->{species_selector_data}->{internal_node_select}
+        };
+      }
+    }
+  }
+  return @tree;
+}
+
+# Returns a dynatree style node/branch
+sub create_node {
+  my $n = shift;
+  my $searchable = shift || 0;
+  my $isFolder = shift || 0;
+
+  return { 
+    key        => $n->{key} || '',
+    scientific_name => $n->{key} || '',
+    title           => $n->{display_name} || $n->{scientific_name} || '',
+    tooltip         => $n->{scientific_name} || '',
+    unselectable    => $n->{unselectable} || 0,
+    searchable => $searchable,
+    isFolder => $isFolder,
+    children => $n->{children} && scalar @{$n->{children}} > 0 ? $n->{children} : [],
+    value => $n->{value} || '',
+    special_type => $n->{parent_node_species} ? $n->{parent_node_species} : ''  # for human self alignment folder, parent node species will be human
+  };
+}
+
+# Create child nodes for different types such as
+# strains that is generated in Configpacker and
+# same species but different assemblies grouping
+sub create_children_for_types {
+  my $self = shift;
+  my $type = shift;
+  my $internal_node_select = $self->{species_selector_data}->{internal_node_select};
+  my $children = [];
+  foreach (keys %$type) {
+    if (scalar @{$type->{$_}} > 0) { # Create only if children are present
+      if ($_ !~ /Mouse/) {
+        push @$children, {
+          key => $_,
+          title => ucfirst($_),
+          isFolder => 1,
+          unselectable => !!!$internal_node_select,
+          children => $type->{$_}
+        };
+      }
+      else {
+        push @$children, @{$type->{$_}};
+      }
+    }
+  }
+  return $children;
+}
+
+# Create child nodes for different types such as
+# haplotypes and patches coming from Region comparison
+# primary assembly or self alignments coming from Region comparison
+sub create_folder_for_special_types {
+  my $parent_node = shift;   # e.g. Homo_sapiens for Human Primary assembly folder
+  my $special_type_data = shift;
   my $internal_node_select = shift;
   my $extra_dyna = [];
   my $children = [];
 
-  foreach my $k (keys %$extras) {
-    my $folder = {};
-    $folder->{key}          = $k;
-    $folder->{title}        = ucfirst($k);
-    $folder->{isFolder}     = 1;
-    $folder->{children}     = [];
-    $folder->{searchable}   = 0;
-    $folder->{unselectable} = !$internal_node_select;
-
+  foreach my $k (keys %$special_type_data) {
     $children = [];
-
     # For sorting based on chromosome numbers
-    my $is_primary_assembly = $extras->{$k}->{data}[0]->{assembly_target} ? 1 : 0;
     my @extras_data_array;
-    if ($is_primary_assembly) {
-      @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$extras->{$k}->{data}};
+    if ($k =~ /primary assembly/i) {
+      @extras_data_array = sort {$a->{assembly_target} <=> $b->{assembly_target}} @{$special_type_data->{$k}->{data}};
     }
     else {
-      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$extras->{$k}->{data}};
+      @extras_data_array = sort {$a->{common} cmp $b->{common}} @{$special_type_data->{$k}->{data}};
     }
 
-    foreach my $hash (@extras_data_array) {
-      my $icon = '';
-      if ($k =~/haplotype|primary assembly/ and $hash->{key} =~/--/) {
-        my ($sp, $type) = split('--', $hash->{key});
-        $icon = '/i/species/16/' . $sp . '.png';
+    foreach my $n_data (@extras_data_array) {
+      $n_data->{parent_node_species} = $parent_node->{key};
+      push @$children, create_node($n_data, 1);
+    }
+
+    if (scalar @$children > 0) {
+      # Create folder if opted
+      if ($special_type_data->{$k}->{create_folder} == 1) {
+        my $folder = {};
+        $folder->{key}          = $k;
+        $folder->{title}        = ucfirst($k);
+        $folder->{isFolder}     = 1;
+        $folder->{children}     = [];
+        $folder->{searchable}   = 0;
+        push @{$folder->{children}}, @$children;
+        push @$extra_dyna, $folder;
       }
       else {
-        $icon = '/i/species/16/' . $hash->{key} . '.png';        
+        push @$extra_dyna, @$children;
       }
-
-      my $t = {
-        key             => $hash->{scientific},
-        scientific_name => $hash->{scientific},
-        title           => $hash->{common},
-        extra           => 1, # used to get image file of the parent node, say for a haplotype
-        searchable      => 1,
-        icon            => $icon
-      };
-      if ($hash->{value}) {
-        $t->{value}    = $hash->{value};
-      }
-      push @$children, $t;
     }
-
-    # Create folder if opted
-    if ($extras->{$k}->{create_folder} eq '0') {
-      push @$extra_dyna, @$children;
-    }
-    else {
-      push @{$folder->{children}}, @$children;
-      push @$extra_dyna, $folder;
-    }
-
-
   }
-
   return $extra_dyna;
-}
-
-# Get sub node display names as array to see all available internal nodes
-# This is used to remove all paths that doesnt have any child
-sub get_available_internal_nodes {
-  my $self = shift;
-  my $json = shift;
-  my $species_info = shift;
-  my $available_paths = {};
-
-  foreach my $key (%$species_info) {
-    my $path = get_path($key, $json);
-    if ($path) {
-      foreach my $p (split(',', $path)){
-        $available_paths->{$p}++;
-      }
-    }
-  }
-  return $available_paths;
-}
-
-sub get_path {
-  my $key = shift;
-  my $node = shift;
-  my $path = '';
-
-  sub search {
-    my ($path, $obj, $target) = @_;
-    if ((defined $obj->{key} && $obj->{key} eq $target) || (defined $obj->{extras_key} && $obj->{extras_key} eq $target)) {
-      $path .= $obj->{key};
-      return $path;
-    }
-
-    if ($obj->{child_nodes}) {
-      $path .= $obj->{display_name} . ',';
-      foreach my $child (@{$obj->{child_nodes}}) {
-        my $result = search($path, $child, $target);
-        if ($result) {
-          return $result;
-        }
-      }
-    }
-    return '';
-  }
-  $path = search($path, $node, $key);
-  $path =~s/,$//g;
-  return $path;
 }
 
 1;

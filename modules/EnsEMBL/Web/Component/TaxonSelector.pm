@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [2009-2014] EMBL-European Bioinformatics Institute
+Copyright [2009-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ sub _init {
   $self->{caller}          = $hub->param('referer_action');
 
   $self->{multiselect}     = $self->param('multiselect');
-  $self->{selection_limit} = 40;
+  $self->{selection_limit} = 67;
   $self->{is_blast}        = 0,
   $self->{entry_node}      = undef;
 }

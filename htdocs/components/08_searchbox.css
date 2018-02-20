@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@
 #masthead form                      { padding: 0; border: 0; margin: 0; }
 div.search                          { margin: 1px 1px 0 0; height: 22px; }
 div.search img                      { cursor: pointer; height: 16px; width: 16px; }
-div.search div                      { background-color: [[PANEL_BG]] !important; float: left; height: 16px; padding: 3px; font-weight: bold; }
-div.search div input                { width: 256px; height: 16px; font-family: inherit; padding: 0; color: [[CONTRAST_TEXT]]; outline: 0; border: 0; }
-div.search div input.inactive       { font-style: italic; color: [[PAGE_TEXT]]; }
-div.search div input.inactive:focus { color: [[PANEL_BORDER]]; }
+div.search div                      { background-color: [[WHITE]] !important; float: left; height: 16px; padding: 3px; font-weight: bold; }
+div.search div input                { width: 256px; height: 16px; font-family: inherit; padding: 0; color: [[V_DARK_GREY]]; outline: 0; border: 0; }
+div.search div input.inactive       { font-style: italic; color: [[V_DARK_GREY]]; }
+div.search div input.inactive:focus { color: [[PALE_GREY]]; }
 div.search div.button img           { cursor: pointer; }
 div.search div.button input         { width: 16px; position: static; }
 
-div.site_menu                       { z-index: 100; width: 100%; margin: 0 0 0 -1px; border-top: 1px solid [[MH_BORDER]]; position: absolute; cursor: pointer; }
-div.site_menu div                   { height: 16px; padding: 2px; line-height: 16px; border: 1px solid [[MH_BORDER]]; border-top: 0; font-size: 10px; background-color: [[PANEL_BG]] !important; color: [[CONTRAST_TEXT]]; }
+div.site_menu                       { z-index: 100; width: 100%; margin: 0 0 0 -1px; border-top: 1px solid [[MAIN_V_DARK]]; position: absolute; cursor: pointer; }
+div.site_menu div                   { height: 16px; padding: 2px; line-height: 16px; border: 1px solid [[MAIN_V_DARK]]; border-top: 0; font-size: 10px; background-color: [[WHITE]] !important; color: [[V_DARK_GREY]]; }
 div.site_menu div img               { height: 16px; width: 16px; margin-right: 4px; float: left; }
 
 body.ie6 div.search div             { height: 22px; overflow: hidden; }

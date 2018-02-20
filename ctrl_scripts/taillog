@@ -17,7 +17,7 @@ specifying --access tails the access log instead
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,17 +43,10 @@ no warnings 'uninitialized';
 
 use Getopt::Long;
 use FindBin qw($Bin);
-use File::Basename qw( dirname );
-
-my $serverroot;
 
 BEGIN {
-  $serverroot = dirname($Bin);
-  unshift @INC, "$serverroot/conf";
-};
-
-use SiteDefs;
-
+  require "$Bin/helper.pl";
+}
 
 my ($help, $do_access, $both, $do_nginx);
 &GetOptions(

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -119,9 +119,9 @@ sub config {
       formats => [
         [ 'csv',  'CSV (Comma separated values)' ],
         [ 'tab',  'Tab separated values' ],
-        [ 'gtf',  'Gene Transfer Format (GTF)' ],
-        [ 'gff',  'Generic Feature Format' ],
-        [ 'gff3', 'Generic Feature Format Version 3' ],
+        [ 'gtf',  'GTF (Gene Transfer Format)' ],
+        [ 'gff',  'GFF (Generic Feature Format)' ],
+        [ 'gff3', 'GFF3 (Generic Feature Format Version 3)' ],
       ],
       params => [
         [ 'similarity', 'Similarity features' ],
@@ -845,16 +845,45 @@ sub feature {
   foreach (keys %$properties) {
     $vals{$_} = $properties->{$_} if defined $properties->{$_};
   }
-  
+ 
   if ($vals{'strand'} == 1) {
     $vals{'strand'} = '+';
-    $vals{'phase'}  = $feature->phase if $feature->can('phase');
+    if ($feature->can('phase')) {
+      ## Stricter rules for GFF3
+      if ($format eq 'gff3') {
+        if ($vals{'type'} eq 'CDS') {
+          $vals{'phase'} = $feature->phase;
+          ## -1 is not a valid value for a CDS phase!
+          $vals{'phase'} = 0 if $vals{'phase'} == -1; 
+        }
+        else {
+          $vals{'phase'} = '.';
+        }
+      }
+      else {
+        $vals{'phase'}  = $feature->phase;
+      }
+    }
   } elsif ($vals{'strand'} == -1) {
     $vals{'strand'} = '-';
-    $vals{'phase'}  = $feature->end_phase if $feature->can('end_phase');
+    if ($feature->can('end_phase')) {
+      ## Stricter rules for GFF3
+      if ($format eq 'gff3') {
+        if ($vals{'type'} eq 'CDS') {
+          $vals{'phase'} = $feature->end_phase;
+        }
+        else {
+          $vals{'phase'} = '.';
+        }
+      }
+      else {
+        $vals{'phase'}  = $feature->end_phase;
+      }
+    }
+    ## Hack for API bug - -1 is not a valid value for phase!
+    $vals{'phase'} = 0 if (defined($vals{'phase'}) && $vals{'phase'} == -1); 
   }
   
-  $vals{'phase'}    = '.' if $vals{'phase'} == -1;
   $vals{'strand'} = '.' unless defined $vals{'strand'};
   $vals{'seqid'}  ||= 'SEQ';
   

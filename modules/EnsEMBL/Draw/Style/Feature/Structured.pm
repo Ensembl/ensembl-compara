@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ sub draw_feature {
 ### @param feature Hashref - data for a single feature
 ### @param position Hashref - information about the feature's size and position
   my ($self, $feature, $position) = @_;
-#  warn "\n\n>>> DRAWING FEATURE ".$feature->{'label'}; 
 
   ## In case we're trying to draw a feature with no internal structure,
   ## revert to parent method, which is much simpler!
@@ -40,10 +39,6 @@ sub draw_feature {
   }
 
   ## Basic parameters for all parts of the feature
-  my $feature_start = $feature->{'start'};
-  my $current_x     = $feature_start;
-  $current_x        = 0 if $current_x < 0;
-
   my $colour      = $feature->{'colour'};
   my $join_colour = $feature->{'join_colour'};
 
@@ -71,7 +66,6 @@ sub draw_feature {
   my %previous;
 
   foreach (@$structure) {
-
     my $last_element = 0;
 
     ## Draw a join between this block and the previous one unless they're contiguous
@@ -111,11 +105,10 @@ sub draw_feature {
       $params{'x'} = $end < 0 ? 0 : $image_width; 
     }
     else {
-      $params{'colour'}     = $colour;
+      $params{'colour'}     = $_->{'colour'} || $colour;
       $params{'structure'}  = $_;
       $self->draw_block($composite, %params);
     }
-    $current_x += $width;
     %previous = %params;
   }
 
@@ -143,7 +136,82 @@ sub draw_join {
 
 sub draw_block {
   my ($self, $composite, %params) = @_;
+  my $structure   = $params{'structure'};
+
+  ## Calculate dimensions based on viewport, otherwise maths can go pear-shaped!
+  my $start = $structure->{'start'};
+  $start    = 0 if $start < 0;
+  my $end   = $structure->{'end'};
+  my $edge = $self->image_config->container_width;
+  $end      = $edge if $end > $edge;
+  ## NOTE: for drawing purposes, the UTRs are defined with respect to the forward strand,
+  ## not with respect to biology, because it makes the logic a lot simpler
+  my $coding_start  = $structure->{'utr_5'} || $start;
+  my $coding_end    = $structure->{'utr_3'} || $end;
+  my $coding_width  = $coding_end - $coding_start + 1;
+
+  if ($structure->{'non_coding'}) {
+    $self->draw_noncoding_block($composite, %params);
+  }
+  elsif (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
+    if (defined($structure->{'utr_5'})) {
+      $params{'width'}  = $structure->{'utr_5'} - $start + 1;
+      $self->draw_noncoding_block($composite, %params);
+    }
+
+    if ($coding_width > 0) {
+      $params{'x'} = $coding_start - 1;
+      $params{'width'} = $coding_width;
+      $self->draw_coding_block($composite, %params);
+    }
+
+    if (defined($structure->{'utr_3'})) {
+      $params{'x'}      = $structure->{'utr_3'} - 1;
+      $params{'x'}      = 0 if $params{'x'} < 0; 
+      ## Don't add one here, because we're working backwards!
+      $params{'width'}  = $end - $params{'x'};
+      $self->draw_noncoding_block($composite, %params);
+    }
+  }
+  else {
+    $self->draw_coding_block($composite, %params);
+  }
+}
+
+sub draw_coding_block {
+  my ($self, $composite, %params) = @_;
+  ## Now that we have used the correct coordinates, constrain to viewport
+  if ($params{'x'} < 0) {
+    $params{'x'}          = 0;
+    $params{'width'}     += $params{'x'};
+  }
+  delete $params{'structure'};
   $composite->push($self->Rect(\%params));
 }
+
+sub draw_noncoding_block {
+  my ($self, $composite, %params) = @_;
+
+  ## Now that we have used the correct coordinates, constrain to viewport
+  if ($params{'x'} < 0) {
+    $params{'x'}          = 0;
+    $params{'width'}     += $params{'x'};
+  }
+
+  unless ($self->track_config->get('collapsed')) {
+    ## Exons are shown as outlined blocks, except in collapsed view
+    $params{'bordercolour'} = $params{'colour'};
+    delete $params{'colour'};
+    ## Make UTRs smaller than exons
+    if (defined($structure->{'utr_5'}) || defined($structure->{'utr_3'})) {
+      $params{'height'} = $params{'height'} - 2;
+      $params{'y'} += 1;
+    }
+  }
+  delete $params{'structure'};
+  $composite->push($self->Rect(\%params));
+}
+
+
 
 1;

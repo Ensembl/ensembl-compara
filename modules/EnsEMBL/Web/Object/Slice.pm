@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -113,6 +113,18 @@ sub getFakeMungedVariationFeatures {
 
   my ($self, $subslices, $gene, $so_terms) = @_;
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+  
+  # find VCF config
+  my $c = $self->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+
+  if($c) {
+    my $variation_db = $self->variation_adaptor;
+    
+    # set config file via ENV variable
+    $ENV{ENSEMBL_VARIATION_VCF_CONFIG_FILE} = $c->{'CONFIG'};
+    $variation_db->use_vcf($c->{'ENABLED'}) if $variation_db->can('use_vcf');
+  }
+  
   if ($so_terms) {
     $vfa->{_ontology_adaptor} ||= $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
   }
@@ -391,19 +403,18 @@ sub get_data {
   my $is_image = keys %$filter ? 0 : 1;
 
   my $hub                 = $self->hub;
-  my $dataset_adaptor     = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
-  my $featureset_adaptor  = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $annotated_fsets     = $featureset_adaptor->fetch_all_by_feature_class('annotated');
+  my $peak_calling_adaptor  = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
+  my $all_peak_calling     = $peak_calling_adaptor->fetch_all;
 
   my $count               = 0;
   my %feature_sets_on;
 
-  foreach my $afs (@{$annotated_fsets||[]}) {
+  foreach my $peak_calling (@{$all_peak_calling||[]}) {
 
-    my $ftype       = $afs->feature_type;
+    my $ftype       = $peak_calling->fetch_FeatureType;
     my $ftype_name  = $ftype->name;
 
-    my $epigenome   = $afs->epigenome;
+    my $epigenome   = $peak_calling->fetch_Epigenome;
     my $cell_line   = $epigenome->display_label;
     next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
     next if $filter->{'cells_only'};
@@ -422,21 +433,27 @@ sub get_data {
     if ($filter->{'block_features'}
         || grep { $display_style eq $_ } qw(compact tiling_feature signal_feature)) {
       my $key = $unique_id.':'.$count;
-      my $afa = $hub->get_adaptor('get_AnnotatedFeatureAdaptor', 'funcgen');
-      my $block_features = $afa->fetch_all_by_Slice_FeatureSets($self->Obj, [$afs]);
+      my $peak_adaptor = $hub->get_adaptor('get_PeakAdaptor', 'funcgen');
+      my $block_features = $peak_adaptor->fetch_all_by_Slice_PeakCalling($self->Obj, $peak_calling);
 
       $data->{$cell_line}{$set}{'block_features'}{$key} = $block_features if scalar @$block_features;
     }
 
     ## Get path to bigWig file
     if (grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
-      my $dataset = $dataset_adaptor->fetch_by_product_FeatureSet($afs);
-      my $ssets   = $dataset->get_supporting_sets('result');
-      next if scalar @$ssets != 1;
-      my $file_path = join '/', $hub->species_defs->DATAFILE_BASE_PATH, lc $hub->species, $hub->species_defs->ASSEMBLY_VERSION;
-      $file_path .= $ssets->[0]->dbfile_path;
-      my $key = $unique_id.':'.$ssets->[0]->dbID;
+      
+      my $alignment        = $peak_calling->fetch_Alignment;
+      my $bigwig_file      = $alignment->fetch_bigwig_DataFile;
+      my $bigwig_file_name = $bigwig_file->path;
+      
+      my $file_path = join '/', 
+        $hub->species_defs->DATAFILE_BASE_PATH, 
+        lc $hub->species, 
+        $hub->species_defs->ASSEMBLY_VERSION, 
+        $bigwig_file_name;
 
+      my $key = $unique_id.':'.$alignment->dbID;
+      
       $data->{$cell_line}{$set}{'wiggle_features'}{$key} = $file_path;
     }
   }

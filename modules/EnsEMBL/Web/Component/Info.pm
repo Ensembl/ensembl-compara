@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ sub assembly_dropdown {
       my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) ? lc $archive->{'archive'}.'.archive' : lc $archive->{'archive'};
 
       push @assemblies, {
-        url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
+        url      => sprintf('//%s.ensembl.org/%s/', $subdomain, $species),
         assembly => $archive_assembly,
         release  => $desc,
       };
@@ -60,7 +60,7 @@ sub assembly_dropdown {
   }
 
   ## Don't link to pre site on archives, as it changes too often
-  push @assemblies, { url => "http://pre.ensembl.org/$species/", assembly => $pre_species->{$species}[1], release => '(Ensembl pre)' } if ($pre_species->{$species} && $species_defs->ENSEMBL_SITETYPE !~ /archive/i);
+  push @assemblies, { url => "//pre.ensembl.org/$species/", assembly => $pre_species->{$species}[1], release => '(Ensembl pre)' } if ($pre_species->{$species} && $species_defs->ENSEMBL_SITETYPE !~ /archive/i);
 
   my $html = '';
 

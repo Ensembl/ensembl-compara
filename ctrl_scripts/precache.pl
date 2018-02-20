@@ -3,32 +3,25 @@
 use strict;
 use warnings;
 
-my $ENSEMBL_ROOT;
+use FindBin qw($Bin);
 
 BEGIN {
-  use FindBin qw($Bin);
-  use File::Basename qw( dirname );
-  $ENSEMBL_ROOT = dirname( $Bin );
-  $ENSEMBL_ROOT =~ s/\/utils$//;
-  unshift @INC, "$ENSEMBL_ROOT/conf";
   open OLDERR,'>&STDERR';
   eval{
     local *STDERR;
     open(STDERR,">/dev/null");
-    require SiteDefs; SiteDefs->import;
+    require "$Bin/../conf/includeSiteDefs.pl";
     close STDERR;
-  };  
+  };
   open(STDERR,">&OLDERR");
   close OLDERR;
-
-  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
-  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
 use EnsEMBL::Web::QueryStore::Cache::PrecacheBuilder qw(compile_precache identity);
 
 use List::Util qw(min shuffle);
 use Getopt::Long;
+use Storable qw(store);
 
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::QueryStore::Cache::PrecacheFile;
@@ -66,6 +59,28 @@ sub merge {
   $cache->launch_as("ready.merged",1);
 }
 
+sub run0 {
+  my ($query,$kind,$n,$subparts) = @_;
+
+  my $id = identity();
+  my $SD = EnsEMBL::Web::SpeciesDefs->new();
+
+  my $qs = EnsEMBL::Web::QueryStore->new({
+    Adaptors => EnsEMBL::Web::QueryStore::Source::Adaptors->new($SD),
+    SpeciesDefs => EnsEMBL::Web::QueryStore::Source::SpeciesDefs->new($SD),
+  },undef);
+
+  my $q = $qs->get($query);
+  my $all = $q->precache_divide($kind,$n,$subparts);
+  open(ALL,'>',"$SiteDefs::ENSEMBL_PRECACHE_DIR/all.$kind") || die;
+  my $j = JSON->new->utf8->indent(0);
+  foreach my $p (@$all) {
+    print ALL $j->encode($p)."\n";
+  }
+  close ALL;
+}
+
+
 sub run1 {
   my ($query,$kind,$i,$n,$subparts) = @_;
 
@@ -87,7 +102,15 @@ sub run1 {
   },$cache);
 
   my $q = $qs->get($query);
-  my $pc = $q->precache($kind,$i,$n,$subparts);
+  open(ALL,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/all.$kind") || die;
+  my $line = '[]';
+  foreach my $x (0..$i) {
+    $line = <ALL>;
+  }
+  $line = '[]' unless $line;
+  chomp $line;
+  my $part = JSON->new->utf8->decode($line);
+  my $pc = $q->precache($kind,$part);
   $cache->launch_as("ready.$kind",1);
   
   merge(3);
@@ -108,12 +131,20 @@ foreach my $p (@{compile_precache()}) {
   foreach my $type (keys %$r) {
     $r->{$type}{'module'} = $module;
     $precache{$type} = $r->{$type};
-    $parts{$type} = $r->{$type}{'parts'} || 100;
+    $parts{$type} = $r->{$type}{'parts'} || 500;
   }
 }
 
 my @jobs = keys %precache;
-@jobs = @ARGV if @ARGV;
+
+if(@ARGV) {
+  if($ARGV[0] eq 'not') {
+    my %exclude = map { $_ => 1 } @ARGV;
+    @jobs = grep { !defined $exclude{$_} } @jobs;
+  } else {
+    @jobs = @ARGV if @ARGV;
+  }
+}
 
 # Parse subparts arguments / list jobs
 my %subparts;
@@ -143,6 +174,7 @@ if($mode eq 'start') {
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/ready.*"));
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/merging.*"));
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/selected.*"));
+  unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/all.*"));
 }
 
 if($mode eq 'start') {
@@ -151,6 +183,21 @@ if($mode eq 'start') {
   print SPEC JSON->new->encode(\@procs);
   close SPEC;
   exit 0;
+}
+
+if($mode eq 'prepare') {
+  open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
+  my $spec = JSON->new->decode(<SPEC>);
+  close SPEC;
+  my %tasks;
+  foreach my $line (@$spec) {
+    my ($query,$kind,$i,$n,$subparts) = @$line;
+    next unless grep { $_ eq $kind } @jobs;
+    $tasks{"$query:$kind"} = [$query,$kind,$n,$subparts];
+  }
+  foreach my $prep (values %tasks) {
+    run0(@$prep);
+  }
 }
 
 if($mode eq 'index') {

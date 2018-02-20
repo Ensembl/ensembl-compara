@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,5 +45,64 @@ sub trim_large_allele_string {
   });
 }
 
-1;
+# Population external links
+sub pop_url {
+  ### Arg1        : Population name (to be displayed)
+  ### Arg2        : dbSNP population ID (variable to be linked to)
+  ### Arg3        : Population display label (optional)
+  ### Example     : $self->pop_url($pop_name, $pop_dbSNPID);
+  ### Description : makes pop_name into a URL
+  ### Returns  string
 
+  my ($self, $pop_name, $pop_dbSNP, $pop_label) = @_;
+
+  my $hub = $self->hub;
+
+  my $pop_url;
+
+  $pop_label = $pop_name if (!$pop_label);
+
+  if($pop_name =~ /^1000GENOMES/) {
+    $pop_url = $hub->get_ExtURL('1KG_POP', $pop_label);
+  }
+  elsif ($pop_name =~ /^NextGen/i) {
+    $pop_url = $hub->get_ExtURL('NEXTGEN_POP');
+  }
+  elsif ($pop_name =~ /^ExAC/i) {
+    $pop_url = $hub->get_ExtURL('EXAC_POP');
+  }
+  else {
+    $pop_url = ($pop_dbSNP && $pop_dbSNP->[0] ne '' && $hub->species eq 'Homo_sapiens') ? $hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef;
+  }
+  return $pop_url;
+}
+
+sub pop_link {
+  ### Arg1        : Population name (to be displayed)
+  ### Arg2        : dbSNP population ID (variable to be linked to)
+  ### Arg3        : Population label (optional)
+  ### Example     : $self->pop_link($pop_name, $pop_dbSNPID, $pop_label);
+  ### Description : makes pop_name into a link
+  ### Returns  string
+
+  my ($self, $pop_name, $pop_dbSNP, $pop_label) = @_;
+
+  my $hub = $self->hub;
+
+  my $pop_link;
+
+  $pop_label = $pop_name if (!$pop_label);
+
+  if($pop_name =~ /^1000GENOMES/) {
+    $pop_link = $hub->get_ExtURL_link($pop_label, '1KG_POP', $pop_name);
+  }
+  elsif ($pop_name =~ /^NextGen/i) {
+    $pop_link = $hub->get_ExtURL_link($pop_label, 'NEXTGEN_POP', $pop_name);
+  }
+  else {
+    $pop_link = ($pop_dbSNP && $hub->species eq 'Homo_sapiens') ? $hub->get_ExtURL_link($pop_label, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
+  }
+  return $pop_link;
+}
+
+1;

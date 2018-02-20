@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -239,14 +239,14 @@ sub renderer_button {
   push @{$self->{'buttons'}||=[]},{
     url => $peaks_url,
     caption => 'Peaks',
-    class => 'peak radiogroup',
+    class => 'peak radiogroup first',
     toggle => $peaks_on?'on':'off',
     disabled => $disabled,
     group => 'renderer',
   },{
     url => $signals_url,
     caption => 'Signal',
-    class => 'signal',
+    class => 'signal last',
     toggle => $signals_on?'on':'off',
     disabled => $disabled,
     group => 'renderer',

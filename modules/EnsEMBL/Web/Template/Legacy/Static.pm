@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ sub init {
     $self->{'lefthand_menu'}  = 0;
     $self->{'tabs'}           = 0;
   }
+
+  ## Elixir banner on home page
+  $self->{'show_banner'} = 1 if ($here eq '/index.html');
 
   $self->add_head;
   $self->add_body;
@@ -91,6 +94,15 @@ sub add_body {
     copyright        EnsEMBL::Web::Document::Element::Copyright
     footerlinks      EnsEMBL::Web::Document::Element::FooterLinks
     fatfooter        EnsEMBL::Web::Document::Element::FatFooter
+  ));
+
+  if ($self->{'show_banner'}) {
+    $page->add_body_elements(qw(
+      bottom_banner  EnsEMBL::Web::Document::Element::BottomBanner
+    ));
+  }
+
+  $page->add_body_elements(qw(
     tmp_message      EnsEMBL::Web::Document::Element::TmpMessage
     body_javascript  EnsEMBL::Web::Document::Element::BodyJavascript
   ));

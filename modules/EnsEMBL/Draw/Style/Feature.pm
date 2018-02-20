@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -120,12 +120,13 @@ sub create_glyphs {
       }
     }
 
+    my $bump_rows;
     if ($self->can('configure_bumping')) {
       $self->configure_bumping(\@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
-      do_bump($self, \@features);
+      $bump_rows = do_bump($self, \@features);
     }
     else { ## use generic bump prep method
-      mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
+      $bump_rows = mr_bump($self, \@features, $track_config->get('show_labels'), $slice_width, $track_config->get('bstrand'), $track_config->get('moat'));
     }
 
     my $typical_label;
@@ -137,13 +138,14 @@ sub create_glyphs {
     #warn Dumper(\@features);
 
     ## SECOND LOOP - draw features row by row
+    my $count = 0;
     foreach my $feature (sort {$a->{'_bump'} <=> $b->{'_bump'}} @features) {
       my $new_y;
       my $feature_row = 0;
       my $label_row   = 0;
       ## Work out if we're bumping the whole feature or just the label
       if ($bumped) {
-        my $bump = $feature->{'_bump'};
+        my $bump = $track_config->get('flip_vertical') ? $bump_rows - $feature->{'_bump'} : $feature->{'_bump'};
         $label_row   = $bump unless $bumped eq 'features_only';
         $feature_row = $bump unless $bumped eq 'labels_only';       
       }
@@ -178,7 +180,7 @@ sub create_glyphs {
                       };
       
       ## Get the real height of the feature e.g. if it includes any tags or extra glyphs
-      my $glyph = $self->draw_feature($feature, $position);
+      my $glyph = $self->draw_feature($feature, $position, $count);
       my $extra = $self->track_config->get('extra_height') || 0;
       my $approx_height = $feature_height + $extra;
       $subtitle_height  = 0 if $feature_row > 0; ## Subtitle only added to 1st row
@@ -275,7 +277,7 @@ sub create_glyphs {
       ## Optionally highlight this feature (including its label) 
       $position->{'highlight_height'} ||= ($approx_height + $space_for_labels);
       $self->add_highlight($feature, $position);
-
+      $count++;
     }
 
     ## Set the height of the track, in case we want anything in the lefthand margin
@@ -337,6 +339,7 @@ sub draw_feature {
   }
 
   push @{$self->glyphs}, $glyph;
+  return $glyph;
 }
 
 sub add_highlight {
@@ -413,7 +416,14 @@ sub draw_connection {
   ## Set up a "join tag" to display mapping between features, e.g. homologues
   ## This will actually be rendered into a glyph later, when all the glyphsets are drawn
   my ($self, $glyph, $connection) = @_;
-  $self->add_connection($glyph, $connection->{'key'}, 0.5, 0.5, $connection->{'colour'}, 'line', 1000);
+  my $params = {
+                'x'     => 0.5, 
+                'y'     => 0.5, 
+                'z'     => 1000,
+                'col'   => $connection->{'colour'}, 
+                'style' => 'line', 
+                };
+  $self->add_connection($glyph, $connection->{'key'}, $params);
 }
 
 

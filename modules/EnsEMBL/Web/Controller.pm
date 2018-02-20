@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -383,6 +383,14 @@ sub is_ajax_request {
   return 0;
 }
 
+sub configuration_name {
+  ## Gets name of the component configuration class to be used for the request
+  ## @return EnsEMBL::Web::Configuration subclass name
+  my $self = shift;
+
+  return 'EnsEMBL::Web::Configuration::' . $self->hub->type;
+}
+
 sub configuration {
   ## Initialises and returns the Configuration object for the request
   ## @return EnsEMBL::Web::Configuration subclass instance
@@ -394,7 +402,7 @@ sub configuration {
     my $module;
 
     try {
-      $module = dynamic_require('EnsEMBL::Web::Configuration::' . $hub->type);
+      $module = dynamic_require($self->configuration_name);
     } catch {
       throw $_ unless $_->type eq 'ModuleNotFound';
     };

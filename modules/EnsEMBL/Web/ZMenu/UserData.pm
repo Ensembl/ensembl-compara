@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ sub feature_content {
         if ($extra->{'value'} =~ /<a /) {
           $self->add_entry({'type' => $extra->{'name'}, 'label_html' => $extra->{'value'}});
         }
-        elsif ($extra->{'name'} =~ /^url$/i) {
+        elsif ($extra->{'name'} =~ /^ur[l|i]$/i) {
           $self->add_entry({'type' => 'Link', 'label_html' => sprintf('<a href="%s">%s</a>', $extra->{'value'}, $extra->{'value'})});
         }
         else {

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ sub create {
   my $root      = $sd->ENSEMBL_ROBOTS_TXT_DIR || $sd->ENSEMBL_WEBROOT.'/htdocs';
   my $map_dir   = $sd->GOOGLE_SITEMAPS_PATH || $sd->ENSEMBL_WEBROOT.'/htdocs/sitemaps';
   my @lines;
+
+  if ($SiteDefs::ENSEMBL_CUSTOM_ROBOTS_TXT) {
+    warn _box('Not creating robots.txt (a custom one in use)');
+    return;
+  }
 
   warn _box(sprintf 'Placing robots.txt into %s (Searchable: %s)', $root, $sd->ENSEMBL_EXTERNAL_SEARCHABLE ? 'Yes' : 'No');
 
@@ -83,7 +88,7 @@ sub create {
     if (-e "$map_dir/sitemap-index.xml") {
       # If we have a sitemap let google know about it.
       warn _box("Creating robots.txt for google sitemap");
-      push @lines, _lines("Sitemap", sprintf '%s://%s/sitemaps/sitemap-index.xml', $sd->ENSEMBL_PROTOCOL, $sd->ENSEMBL_SERVERNAME);
+      push @lines, _lines("Sitemap", sprintf '//%s/sitemaps/sitemap-index.xml', $sd->ENSEMBL_SERVERNAME);
     }
   } else {
     push @lines, _lines("User-agent", "*");

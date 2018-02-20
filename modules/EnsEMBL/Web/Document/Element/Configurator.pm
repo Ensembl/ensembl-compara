@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ sub add_image_config_notes {
     <div class="info-box">
     <p>Looking for more data? Search the <a href="${trackhub_link}" class="modal_link">Trackhub Registry</a> for external sources of annotation</p>
     </div>
-    <h2 class="border clear">Key</h2>
+    <h2 class="clear">Key</h2>
     <div>
       <ul class="configuration_key">
         <li><img src="${img_url}render/normal.gif" /><span>Track style</span></li>
@@ -203,7 +203,7 @@ sub add_image_config_notes {
         <li><img src="${img_url}track-user.gif" /><span>User-added track</span></li>
       </ul>
     </div>
-    <p class="border space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
+    <p class="space-below">Please note that the content of external tracks is not the responsibility of the Ensembl project.</p>
     <p>URL-based tracks may either slow down your ensembl browsing experience OR may be unavailable as these are served and stored from other servers elsewhere on the Internet.</p>
   ));
 

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ sub init {
   ## Set track height
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
   my $height            = $self->my_config('height') || [$self->get_text_width(0, 'X', '', font => $font, ptsize => $fontsize)]->[3] + 2;
-  $height               = 4 if $depth > 0 && $self->get_parameter('squishable_features') eq 'yes' && $self->my_config('squish');
   $height               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   $self->{'my_config'}->set('height', $height); 
 
@@ -81,11 +80,14 @@ sub render_normal {
   my $self = shift;
 
   my $data = $self->get_data;
-  return unless scalar @{$data->[0]{'features'}||[]};
-
-  my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
-  $self->push($style->create_glyphs);
+  if (scalar @{$data->[0]{'features'}||[]}) {
+    my $config = $self->track_style_config;
+    my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
+    $self->push($style->create_glyphs);
+  }
+  else {
+    $self->no_features;
+  }
 }
 
 sub get_colours {

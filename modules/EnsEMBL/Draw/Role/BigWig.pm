@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ sub get_data {
 
   if ($data) {
     ## Adjust max and min according to track settings
-    my $viewLimits = $self->my_config('viewLimits');
+    my @viewLimits = split(':', $self->my_config('viewLimits') || '');
     foreach (@$data) {
       my ($min_score, $max_score);
 
@@ -67,15 +67,17 @@ sub get_data {
 
       ## Otherwise constrain to configured view limits 
       unless(defined $min_score) {
-        if (defined $viewLimits) {
-          $min_score = [ split ':', $viewLimits ]->[0];
+        if (scalar @viewLimits) {
+          $min_score = $viewLimits[0];
+          $_->{'metadata'}{'y_min'} = $min_score;
         } else {
           $min_score = $_->{'metadata'}{'min_score'};
         }
       }
       unless(defined $max_score) {
-        if (defined $viewLimits) {
-          $max_score = [ split ':', $viewLimits ]->[1];
+        if (scalar @viewLimits) {
+          $max_score = $viewLimits[1];
+          $_->{'metadata'}{'y_max'} = $max_score;
         } else {
           $max_score = $_->{'metadata'}{'max_score'};
         }
@@ -125,14 +127,6 @@ sub _fetch_data {
   return [] unless $url;
 
   my $check;
-=pod
-  if ($url =~ /^http|ftp/) {
-    $check = EnsEMBL::Web::File::Utils::URL::file_exists($url, {'nice' => 1});
-  }
-  else {
-    $check = EnsEMBL::Web::File::Utils::IO::file_exists($url, {'nice' => 1});
-  }
-=cut
 
   if ($check->{'error'}) {
     my $error = $self->{'my_config'}->get('on_error');
@@ -157,6 +151,12 @@ sub _fetch_data {
     ## most files won't have explicit colour settings
     my $colour = $self->my_config('colour') || 'slategray';
     $self->{'my_config'}->set('axis_colour', $colour);
+
+    my ($y_min, $y_max);
+    if ($self->{'my_config'}{'data'}) {
+      $y_min  = $self->{'my_config'}{'data'}{'y_min'};
+      $y_max  = $self->{'my_config'}{'data'}{'y_max'};
+    }
   
     my ($slice, $whole_chromosome);
     if (ref($self->{'container'}) eq 'Bio::EnsEMBL::Slice') {
@@ -180,6 +180,8 @@ sub _fetch_data {
                     'unit'            => $length / $bins,
                     'length'          => $length,
                     'bins'            => $bins,
+                    'y_min'           => $y_min,
+                    'y_max'           => $y_max,
                     'display'         => $self->{'display'},
                     'no_titles'       => $self->my_config('no_titles'),
                     'default_strand'  => 1,

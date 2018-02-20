@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,23 @@
  */
 
 .cp_nav                               { width: 221px; margin: 3px; border: 0; padding: 0; z-index: 100; position: absolute; left: 0; }
-.cp_nav div.header                    { font-weight: bold;  border: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding: 2px; }
-.cp_nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PANEL_BORDER]]; padding: 2px 0 0 16px; background-color: [[PANEL_BG]]; }
-.cp_nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[CONTRAST_HEADER]]; }
+.cp_nav div.header                    { font-weight: bold;  border: 1px solid [[PALE_GREY]]; border-bottom: 0; padding: 2px; }
+.cp_nav ul                            { margin: 0 0 4px 0; border: 1px solid [[PALE_GREY]]; padding: 2px 0 0 16px; background-color: [[WHITE]]; }
+.cp_nav ul li                         { margin-bottom: 0; list-style-image: none; color: [[DARK_GREY]]; }
 .cp_nav ul.local_context              { padding: 0; list-style: none; white-space: nowrap; }
 .cp_nav ul.local_context li           { width: 100%; list-style-image: none; margin: 0; overflow: hidden; }
 .cp_nav ul.local_context li,
 .cp_nav ul.local_context li ul        { background-image: url(/i/line.gif); background-repeat: repeat-y; }
 .cp_nav ul.local_context li ul        { list-style: none; border: 0; padding: 0 0 0 14px; margin: 0; }
 .cp_nav ul.local_context li img       { height: 14px; width: 14px; border: 0; margin-bottom: -3px; padding-right: 5px; }
-.cp_nav ul.local_context li.last      { background: [[PANEL_BG]] url(/i/last.gif) no-repeat; }
+.cp_nav ul.local_context li.last      { background: [[WHITE]] url(/i/last.gif) no-repeat; }
 .cp_nav ul.local_context li.last ul   { background: 0; }
-.cp_nav ul.local_context li.active    { font-weight: bold; background-color: [[TINT_BG]]; }
-.cp_nav ul.local_context li.active ul { background-color: [[PANEL_BG]]; }
+.cp_nav ul.local_context li.active    { font-weight: bold; background-color: [[MAIN_V_DARK]]; }
+.cp_nav ul.local_context li.active ul { background-color: [[WHITE]]; }
 .cp_nav ul.local_context li.active li { font-weight: normal; }
 .cp_nav ul.local_context li.closed ul { display: none; }
-.cp_nav ul.local_context li .disabled { color: [[PAGE_TEXT]]; }
-.cp_nav ul.local_context a            { color: [[MENU_LINK]]; text-decoration: none; }
+.cp_nav ul.local_context li .disabled { color: [[DARK_GREY]]; }
+.cp_nav ul.local_context a            { color: [[MAIN_V_DARK]]; text-decoration: none; }
 
 body.ie67 .cp_nav                         { margin-top: 3px; }
 body.ie67 .cp_nav ul.local_context li img { margin: 0; vertical-align: top; }

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -695,17 +695,13 @@ sub species_stats {
       $a_id .= " ($long)";
     }
     if (my ($acc) = @{$meta_container->list_value_by_key('assembly.accession')}) {
-      $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc);
+      $acc = sprintf('INSDC Assembly <a href="//www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc);
       $a_id .= ", $acc";
     }
   }
   $summary->add_row({
       'name' => '<b>Assembly</b>',
       'stat' => $a_id.', '.$sd->ASSEMBLY_DATE
-  });
-  $summary->add_row({
-      'name' => '<b>Database version</b>',
-      'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION
   });
   $summary->add_row({
       'name' => '<b>Base Pairs</b>',
@@ -716,15 +712,22 @@ sub species_stats {
       'name' => "<b>$header</b>",
       'stat' => $self->thousandify($genome_container->get_ref_length())
   });
-  $summary->add_row({
-      'name' => '<b>Genebuild by</b>',
-      'stat' => $sd->GENEBUILD_BY
-  });
+  my $prov_name = $sd->PROVIDER_NAME;
+  if ($prov_name) {
+    $prov_name =~ s/_/ /;
+    my $prov_url  = $sd->PROVIDER_URL;
+    $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
+    my $provider = $prov_url && $prov_name ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $prov_name) : $prov_name;
+    $summary->add_row({
+      'name' => '<b>Annotation provider</b>',
+      'stat' => $provider, 
+    });
+  }
   my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
   my $method  = ucfirst($A[0]) || '';
   $method     =~ s/_/ /g;
   $summary->add_row({
-      'name' => '<b>Genebuild method</b>',
+      'name' => '<b>Annotation method</b>',
       'stat' => $method
   });
   $summary->add_row({
@@ -738,6 +741,10 @@ sub species_stats {
   $summary->add_row({
       'name' => '<b>Genebuild last updated/patched</b>',
       'stat' => $sd->GENEBUILD_LATEST
+  });
+  $summary->add_row({
+      'name' => '<b>Database version</b>',
+      'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION
   });
   my $gencode = $sd->GENCODE_VERSION;
   if ($gencode) {
@@ -916,7 +923,6 @@ sub check_for_missing_species {
 
 sub show_warnings {
   my ($self, $messages) = @_;
-
   return '' unless defined $messages;
 
   my $html;
@@ -1067,6 +1073,10 @@ sub _sort_similarity_links {
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
 
       if ($link) {
+        ## KEGG Enzyme xrefs are compound, consisting of pathway and enzyme ids.
+        ## Need to modify the xref for linkouts to work.
+        $link =~ s/%2B/&multi_query=/ if $externalDB eq 'KEGG_Enzyme';
+        
         $text = qq{<a href="$link" class="constant">$word</a>};
       } else {
         $text = $word;
@@ -1438,7 +1448,7 @@ sub render_consequence_type {
       $self->coltab($_->label, $hex, $_->description);
     }
     @consequences;
-  my $rank = $consequences[0]->rank;
+  my $rank = @consequences ? $consequences[0]->rank : undef;
       
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
 }

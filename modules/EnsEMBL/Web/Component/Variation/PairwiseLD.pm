@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,21 +106,11 @@ sub content_results {
     return qq{<div class="js_panel">$html</div>};
   }
 
-  my %mappings = %{$object->variation_feature_mapping}; # determine correct SNP location
-  my ($vf, $loc);
+  my ($vf, $loc) = (
+    $object->get_selected_variation_feature,
+    $object->selected_variation_feature_mapping
+  );
 
-  if (keys %mappings == 1) {
-    ($loc) = values %mappings; 
-  } else {
-    $loc = $mappings{$hub->param('vf')};
-  }
-  # get the VF that matches the selected location
-  foreach (@{$object->get_variation_features}) {
-    if ($_->seq_region_start == $loc->{'start'}) {
-      $vf = $_;
-      last;
-    }
-  }
   my $seq_region_name = $vf->seq_region_name;
   my @vfs2 = grep { $_->slice->is_reference } @{$second_variant->get_all_VariationFeatures};
   my @vfs = ($vf);
@@ -158,13 +148,7 @@ sub content_results {
     }
 
     # Population external links
-    my $pop_url;
-    if ($pop_name =~ /^1000GENOMES/) {
-      $pop_url = $self->hub->get_ExtURL_link($pop_label, '1KG_POP', $pop_name);
-    }
-    else {
-      $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL_link($pop_label, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_label;
-    }
+    my $pop_url = $self->pop_link($pop_name, $pop_dbSNP, $pop_label);
 
     my @ld_values = @{$ldfca->fetch_by_VariationFeatures(\@vfs, $ld_population)->get_all_ld_values()};  
     foreach my $hash (@ld_values) {

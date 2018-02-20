@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-.navbar                          { color: [[CONTRAST_TEXT]]; background-color: [[TINT_BG]]; margin: 0 0 16px; padding: 8px 0; font-weight: bold; border: 1px solid [[TABLE_HEADER]]; position: relative; }
+.navbar                          { color: [[DARK_GREY]]; background-color: [[MAIN_LIGHT]]; margin: 0 0 16px; padding: 8px 0; font-weight: bold; border: 1px solid [[MAIN_MEDIUM]]; position: relative; }
 .navbar a                        { text-decoration: none; }
 .navbar div                      { margin: 0 5px; }
 .navbar form                     { margin: 0; }
@@ -27,8 +27,8 @@
 .navbar div.image_nav a.disabled { opacity: 0.5; }
 
 .navbar .homolgy                 { font-size: 1.2em; }
-.navbar .relocate input          { border: 1px solid [[TINT_BORDER]]; height: 22px; padding: 0 4px; width: 248px; line-height: 22px; }
-.navbar .relocate input:hover    { background-color: [[CONTRAST_BG]]; }
+.navbar .relocate input          { border: 1px solid [[MAIN_LIGHT]]; height: 22px; padding: 0 4px; width: 248px; line-height: 22px; }
+.navbar .relocate input:hover    { background-color: [[MODERATE_LIGHT]]; }
 .navbar .relocate form           { float: left; padding: 2px 0; width: 370px; }
 .navbar .relocate form label     { float: left; display: block; width: 64px; margin-top: 5px; padding-right: 8px; text-align: right; }
 .navbar .navgene                 { float: left; margin: 0; }
@@ -42,29 +42,30 @@
   position: relative;
   line-height: 20px;
   vertical-align: top;
-  padding: 2px 8px;
+  padding: 4px 8px;
   margin-left: 2px;
-  font-size: 10px;
-  font-weight: bold;
+  font-weight: normal;
   letter-spacing: 0.5px;
-  color: [[BUTTON_TEXT]];
-  background-color: [[BUTTON_BG]];
-  border: 1px solid [[BUTTON_TEXT]];
+  color: [[WHITE]];
+  background-color: [[MAIN_DARK]];
+  -moz-border-radius: 6px;  
+  -webkit-border-radius: 6px; 
+  border-radius: 6px;
   cursor: pointer;
-  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
-  -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
-  box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
+  -moz-box-shadow: 0px 0px 0px 1px [[MAIN_DARK]];
+  -webkit-box-shadow: 0px 0px 0px 1px [[MAIN_DARK]];
+  box-shadow: 0px 0px 0px 1px [[MAIN_DARK]];
 }
 .navbar a.go-button:hover { 
-  background-color: [[BUTTON_BG_HOVER]];
-  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
-  -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
-  box-shadow: 0px 0px 0px 1px [[BUTTON_BG_HOVER]];
+  background-color: [[MAIN_V_DARK]];
+  -moz-box-shadow: 0px 0px 0px 1px [[MAIN_V_DARK]];
+  -webkit-box-shadow: 0px 0px 0px 1px [[MAIN_V_DARK]];
+  box-shadow: 0px 0px 0px 1px [[MAIN_V_DARK]];
 }
 
 .navbar .relocate a.go-button           { top: 2px; padding: 4px 8px; }
 
-body.ie   .navbar a.go-button           { border: 3px double [[BUTTON_TEXT]]; margin-left: 0; }
+body.ie   .navbar a.go-button           { border: 3px double [[WHITE]]; margin-left: 0; }
 body.ie67 .alignment_select a.go-button { top: 4px; }
 body.ie67 .navbar form select           { vertical-align: middle; }
 body.ie67 .navbar .relocate             { zoom: 100% }
@@ -93,22 +94,22 @@ a.move.right_2 { background: url(/i/nav-r2.gif); }
 .slider_wrapper .slider_left,
 .slider_wrapper .slider_right                 { width: 5px; z-index: 0 }
 .slider_wrapper .slider_left                  { background-position: -1px center; }
-.slider_wrapper .slider .ui-slider-handle     { margin-left: -6px; position: absolute; z-index: 2; width: 9px; height: 18px; color: #222222; outline: 0; }
+.slider_wrapper .slider .ui-slider-handle     { margin-left: -6px; position: absolute; z-index: 2; width: 9px; height: 18px; color: [[V_DARK_GREY]]; outline: 0; }
 .slider_wrapper .slider .ui-state-default,
-.slider_wrapper .slider .ui-widget-content .ui-state-default { border: 1px solid #666666; background: #CCCCCC; color: #555555; }
+.slider_wrapper .slider .ui-widget-content .ui-state-default { border: 1px solid [[V_DARK_GREY]]; background: [[PALE_GREY]]; color: [[DARK_GREY]]; }
 .slider_wrapper .slider .ui-state-active,
-.slider_wrapper .slider .ui-widget-content .ui-state-active  { border: 1px solid #AAAAAA; background: #FFFFFF; color: #212121; }
+.slider_wrapper .slider .ui-widget-content .ui-state-active  { border: 1px solid [[MEDIUM_GREY]]; background: [[WHITE]]; color: [[V_DARK_GREY]]; }
 .slider_wrapper .slider .ui-state-hover,
 .slider_wrapper .slider .ui-widget-content .ui-state-hover, 
 .slider_wrapper .slider .ui-state-focus,
-.slider_wrapper .slider .ui-widget-content .ui-state-focus   { border: 1px solid #CC0000; background: #DDDDDD; color: #212121; }
+.slider_wrapper .slider .ui-widget-content .ui-state-focus   { border: 1px solid [[SEVERE_DARK]]; background: [[LIGHT_GREY]]; color: [[V_DARK_GREY]]; }
 .slider_wrapper .slider .slider_label                        { bottom: 23px; font-weight: normal; font-size: 0.8em; margin: 0 0 0 -3em; left: 50%; text-align: center; width: 6.5em; }
 
 body.ie67 .slider_wrapper .slider_right                      { z-index: -1; }
 
-ul.autocomplete               { position: absolute; display: none; margin: 0; padding: 0; width: 258px; background: #FFF; list-style: none; border: 1px solid [[TINT_BORDER]]; z-index: 9999999999999; }
+ul.autocomplete               { position: absolute; display: none; margin: 0; padding: 0; width: 258px; background: [[WHITE]]; list-style: none; border: 1px solid [[MAIN_LIGHT]]; z-index: 9999999999999; }
 ul.autocomplete li            { font-weight: normal; list-style-image: none; text-align: left; padding: 4px 10px; margin: 0; height: 14px; cursor: pointer; clear: both; }
-ul.autocomplete li.focused    { background-color: [[CONTRAST_BG]]; }
+ul.autocomplete li.focused    { background-color: [[MODERATE_LIGHT]]; }
 ul.autocomplete li .name      { float: left; }
 ul.autocomplete li .stable_id { float: right; }
 body.ie6 ul.autocomplete      { width: 250px; }

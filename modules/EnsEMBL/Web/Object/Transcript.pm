@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1541,16 +1541,33 @@ sub get_genetic_variations {
 sub get_transcript_variations {
   my ($self,$vf_cache) = @_;
 
+  my $tvs = $self->__data->{'tv_cache'} ||= $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ], undef, 1);
+
   # Most VFs will be in slice for transcript, so cache them.
   if($vf_cache and !$self->__data->{'vf_cache'}) {
-    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
-    $self->__data->{'vf_cache'} = {};
-    my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice);
-    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
-    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice);
-    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+
+    # if fetched from VCF, VFs will already be attached to TVs
+    my $need_db_fetch = 0;
+    foreach my $tv(@$tvs) {
+      if(my $vf = $tv->{base_variation_feature} || $tv->{variation_feature}) {
+        $self->__data->{'vf_cache'}{$vf->dbID} = $vf;
+      }
+      else {
+        $need_db_fetch = 1;
+      }
+    }
+
+    if($need_db_fetch) {
+      my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
+      $self->__data->{'vf_cache'} = {};
+      my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice, undef, 1);
+      $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+      $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice, undef, 1);
+      $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    }
   }
-	return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
+
+	return $tvs;
 }
 
 sub transcript_variation_to_variation_feature {
@@ -1664,34 +1681,29 @@ sub variation_data {
     
     my $start = $vf->start;
     my $end   = $vf->end;
-    
-    push @data, lazy_hash({
-      tva           => sub {
-        return $tv->get_all_alternate_TranscriptVariationAlleles->[0];
-      },
-      tv            => $tv,
-      vf            => $vf,
-      position      => $pos,
-      vdbid         => $vdbid,
-      snp_source    => sub { $vf->source },
-      snp_id        => sub { $vf->variation_name },
-      ambigcode     => sub { $vf->ambig_code($strand) },
-      codons        => sub {
-        my $tva = $_[0]->get('tva');
-        return $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '';
-      },
-      allele        => sub { $vf->allele_string(undef, $strand) },
-      pep_snp       => sub {
-        my $tva = $_[0]->get('tva');
-        return join(', ', split '/', $tva->pep_allele_string);
-      },
-      type          => sub { $tv->display_consequence },
-      class         => sub { $vf->var_class },
-      length        => $vf->length,
-      indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
-      codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
-      codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
-    });
+
+    foreach my $tva (@{$tv->get_all_alternate_TranscriptVariationAlleles}) {
+ 
+      push @data, lazy_hash({
+        tva           => $tva,
+        tv            => $tv,
+        vf            => $vf,
+        position      => $pos,
+        vdbid         => $vdbid,
+        snp_source    => $vf->source,
+        snp_id        => $vf->variation_name,
+        ambigcode     => $vf->ambig_code($strand),
+        codons        => $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '',
+        allele        => $vf->allele_string(undef, $strand),
+        pep_snp       => join(', ', split '/', $tva->pep_allele_string),
+        type          => $tv->display_consequence,
+        class         => $vf->var_class,
+        length        => $vf->length,
+        indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
+        codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
+        codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
+      });
+    }
   }
 
   @data = map $_->[2], sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map [ $_->{'vf'}->length, $_->{'vf'}->most_severe_OverlapConsequence->rank, $_ ], @data;

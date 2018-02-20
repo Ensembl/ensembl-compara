@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -464,11 +464,28 @@ sub create_hash {
 sub validate {
   ### Wrapper around the parser's validation method
   my $self = shift;
-  my $valid = $self->parser->validate;
-  if ($valid && $self->parser->format) {
-    $self->format($self->parser->format->name);
+  my $response = $self->parser->validate;
+  my $message = 'File did not validate as format '.$self->format;
+
+  ## For formats that still use old validation method
+  if (ref($response) ne 'HASH') {
+  return $response == 1 ? undef : $message;
   }
-  return $valid ? undef : 'File did not validate as format '.$self->format;
+
+  if (! keys %$response) {
+    if ($self->parser->format) {
+      $self->format($self->parser->format->name);
+    }
+    return undef;
+  }
+  else {
+    $message .= '<ul>';
+    foreach (sort keys %$response) {
+      $message .= sprintf('<li>%s: %s</li>', $_, $response->{$_});
+    }
+    $message .= '</ul>';
+    return $message;
+  }
 }
 
 sub coords {

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ sub init_cacheable {
     misc_feature
     synteny
     variation
+    functional
     decorations
     information
   ));
@@ -55,7 +56,10 @@ sub init_cacheable {
   $self->load_tracks;
 
   $self->modify_configs([ 'transcript' ], { render => 'gene_label', strand => 'r' });
-  $self->modify_configs([ 'variation',  'variation_legend', 'structural_variation_legend' ], { display => 'off', menu => 'no' });
+  $self->modify_configs([ 'variation',  'variation_legend', 'structural_variation_legend',
+                          'functional_other_regulatory_regions', 'functional_dna_methylation',
+                          'reg_features', 'seg_features', 'reg_feats_core', 'reg_feats_non_core' ], 
+                              { display => 'off', menu => 'no' });
 
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', menu => 'no'                }],

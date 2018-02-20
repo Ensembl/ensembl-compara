@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,20 +106,6 @@ our @window_desc = (
 
 
 ## HTML OUTPUT ######################################
-
-sub error_message {
-  my ($self, $title, $message, $type) = @_;
-  $type ||= 'error';
-  $message .= '<p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to helpdesk@ensembl.org</p>' if $type ne 'info';
-  return qq{
-      <div class="$type left-margin right-margin">
-        <h3>$title</h3>
-        <div class="message-pad">
-          $message
-        </div>
-      </div>
-  };
-}
 
 sub render { 
   my $self    = shift;
@@ -557,7 +543,7 @@ sub render_cactus_multiple {
     my $table = EnsEMBL::Web::Document::Table->new([
         { key => 'species', title => 'Species',         width => '50%', align => 'left', sort => 'string' },
         { key => 'asm',     title => 'Assembly',        width => '50%', align => 'left', sort => 'string' },
-      ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set_obj->name), sorting => ['species asc']});
+      ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set->name), sorting => ['species asc']});
     foreach my $sp (@$species_order) {
       $table->add_row({
           'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),

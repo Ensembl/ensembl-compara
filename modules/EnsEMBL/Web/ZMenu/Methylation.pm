@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -179,8 +179,6 @@ sub _menu_setup {
   my $slice = $sa->fetch_by_toplevel_location($r)->seq_region_Slice;
 
   my $fgh   = $hub->database('funcgen');
-  my $rsa   = $fgh->get_ResultSetAdaptor;
-  my $rs    = undef; 
   my $ch3fa = $fgh->get_DNAMethylationFeatureAdaptor;
   
   my $dma   = $fgh->get_DNAMethylationFileAdaptor;
@@ -198,7 +196,7 @@ sub _menu_setup {
   my $bba = $self->{'_cache'}->{'bigbed_parser'}->{$bigbed_file} 
               ||= Bio::EnsEMBL::IO::Parser::open_as('bigbed', $bigbed_file);
 
-  return ($fudge, $slice, $rs, $ch3fa, $bba);
+  return ($fudge, $slice, undef, $ch3fa, $bba);
 }
 
 sub content {

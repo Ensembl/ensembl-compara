@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
  */
 
 form div, form > fieldset, form h2 {
-  -webkit-margin-collapse: separate; /* crome and safari fix for margins of form components */
+  -webkit-margin-collapse: separate; /* chrome and safari fix for margins of form components */
 }
 input::-moz-focus-inner { /* Remove button padding in FF */
-  border: 0;
-  padding: 0;
+  border: 0!important;
+  padding: 0!important;
 }
 
 form fieldset { border: none; padding: 0; margin: 0; }
@@ -52,25 +52,25 @@ form.std input.short  { width: 10em }
 form.std input.narrow { width: 20em }
 form.std input.vshort { width: 4em }
 
-form input.required { background-color: #FFEECC; }
-form input.invalid  { background-color: #FFCCCC; }
-form input.valid    { background-color: #CCFFCC; }
-form input.disabled { background-color: #999999; }
+form input.required { background-color: [[SEVERE_LIGHT]]; }
+form input.invalid  { background-color: [[MODERATE_LIGHT]]; }
+form input.valid    { background-color: [[OK_LIGHT]]; }
+form input.disabled { background-color: [[MEDIUM_GREY]]; }
 
-form label.invalid { color: #FF0000; font-weight: normal; font-style: italic; display: inline; white-space: nowrap; position: relative; top: 3px; left: 3px; vertical-align: top; }
+form label.invalid { color: [[SEVERE_DARK]]; font-weight: normal; font-style: italic; display: inline; white-space: nowrap; position: relative; top: 3px; left: 3px; vertical-align: top; }
 
-.hi { border: solid 1px red; padding: 0 1px; font-weight: bold }
+.hi { border: solid 1px [[SEVERE_DARK]]; padding: 0 1px; font-weight: bold }
 
 /* new stuff */
 
 legend { /*intentionally made similar to panel h2 */
-  border-bottom: 1px solid [[PANEL_BORDER]];
+  border-bottom: 1px solid [[PALE_GREY]];
   display: block;
   width: 100%;
   font-weight:bold;
   margin: 5px -2px;
   padding: 2px;
-  color: [[CONTRAST_HEADER]];
+  color: [[DARK_GREY]];
   font-size: 1.2em;
 }
 div.fnotes {
@@ -90,7 +90,7 @@ div.ff-right {
   padding-left: 50%;
 }
 div.form-field-scroll div.ff-right  {
-  border: 1px solid [[PANEL_BORDER]];
+  border: 1px solid [[PALE_GREY]];
   max-height: 400px;
   overflow: auto;
   padding: 8px;
@@ -130,7 +130,7 @@ div.inline-label {
   line-height: 20px;
 }
 .ftext, .ftextarea {
-  border: [[PANEL_BORDER]] solid 1px;
+  border: [[PALE_GREY]] solid 1px;
   width: 206px;
   margin: 0 0 3px;
   padding-left: 4px;
@@ -143,24 +143,22 @@ div.inline-label {
   width: auto;
 }
 input.fbutton {
-  background-color:[[BUTTON_BG]];
-  border:double [[BUTTON_TEXT]] 3px;
-  color:[[BUTTON_TEXT]];
-  font-weight:bold;
-  margin-bottom: 3px;
-  margin-left: -1px;
+  background-color:[[MAIN_DARK]];
+  color:[[WHITE]];
   cursor: pointer;
-  padding: 2px 6px;
-}
-body.ie67 input.fbutton {
-  padding: 0 2px;
-  border: 0; /* double border doesn't work on IE6 & 7 */
+  padding: 3px 8px 4px 8px;
+  border-style: none;
+  border-color: transparent;
+  border-width: 0;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
 }
 input.fbutton:active, input.fbutton:hover {
-  background-color:[[BUTTON_BG_HOVER]];
+  background-color:[[MAIN_V_DARK]];
 }
 input.fbutton.disabled, input.fbutton.disabled:active {
-  background-color:#999;
+  background-color:[[MEDIUM_GREY]];
   cursor: default;
 }
 .fselect {
@@ -172,41 +170,15 @@ input.fbutton.disabled, input.fbutton.disabled:active {
   margin-right: 6px;
 }
 .ff-inline input.fbutton {
-  vertical-align: bottom;
-  height: 20px;
-  position: relative;
-  top: -1px; /* to offset shadow */
-  font-size: 10px;
-  padding: 0 6px;
-  border-width: 1px;
-  -moz-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]]; /* to add a double border effect */
-  -webkit-box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
-  box-shadow: 0px 0px 0px 1px [[BUTTON_BG]];
-  margin-top: 2px;
+  height: 1.2rem;
 }
 body.ienew .ff-inline input.fbutton {
   height: 19px;
 }
-body.mac .ff-inline input.fbutton {
-  height: 17px;
-}
 body.ie8 .ff-inline input.fbutton {
-  border-width: 3px;
-  border-style: double;
   height: 24px;
   top: 1px;
 }
-body.ie67 .ff-inline input.fbutton {
-  outline: none;
-  height: 22px;
-  top: -1px;
-  border: none;
-  padding: 0 6px;
-}
-body.ie6 .ff-inline input.fbutton {
-  height: 20px;
-}
-
 .ff-checklist {
   margin-right: 10px;
 }
@@ -234,7 +206,7 @@ table.matrix label {
 }
 p.matrixhead {
   font-weight:bold;
-  color: [[CONTRAST_HEADER]];
+  color: [[DARK_GREY]];
 }
 div.ele-das {
   overflow: hidden;
@@ -251,10 +223,10 @@ div.ele-das {
   font-weight: bold;
 }
 form.bgcolour div.form-field {
-  background-color: [[FORMFIELD_BG1]];
+  background-color: [V_LIGHT_GREY]];
 }
 form.bgcolour div.form-field div.ff-right, form.bgcolour div.form-field.ff-multi div.ff-right, form.bgcolour div.form-field div.ff-notes {
-  background-color: [[FORMFIELD_BG2]];
+  background-color: [[LIGHT_GREY]];
   margin-left: 300px;
   padding: 6px 6px 100px;
   margin-bottom: -94px; /* 6 - 100 = -94  */
@@ -278,8 +250,8 @@ form.compact div.form-field div.ff-right textarea {
 }
 
 div.filterable-dropdown-tag {
-  background-color: [[TINT_BG]];
-  border: 1px solid [[TINT_BORDER]];
+  background-color: [[MAIN_V_LIGHT]];
+  border: 1px solid [[MAIN_LIGHT]];
   margin: 0 0 2px;
   width: 206px;
   padding: 1px 0 0 6px;
@@ -290,12 +262,12 @@ div.filterable-dropdown-tag {
   cursor: default;
 }
 div.filterable-dropdown-tag.removable, div.filterable-dropdown-tag.readonly {
-  color: [[PAGE_TEXT]];
+  color: [[DARK_GREY]];
 }
 
 form.bgcolour div.filterable-dropdown-tag {
-  background-color: [[PANEL_BG]];
-  border: 1px solid [[PANEL_BORDER]];
+  background-color: [[WHITE]];
+  border: 1px solid [[PALE_GREY]];
 }
 
 div.filterable-dropdown-tag span.fdt-icon {
@@ -327,11 +299,11 @@ div.ff-icon-link {
 div.ff-icon-link a {
   text-decoration: none;
   font-weight: bold;
-  color: [[PAGE_TEXT]];
+  color: [[DARK_GREY]];
 }
 
 div.ff-icon-link a:hover {
-  color: [[BUTTON_BG]];
+  color: [[MAIN_DARK]];
 }
 
 div.ff-icon-link span.sprite {
@@ -343,8 +315,8 @@ div.ff-icon-link span.sprite {
 }
 
 div.filterable-dropdown div.filterable-dropdown-div {
-  background-color: [[PANEL_BORDER]];
-  border: 1px solid [[PANEL_BORDER]];
+  background-color: [[PALE_GREY]];
+  border: 1px solid [[PALE_GREY]];
   max-height: 199px;
   overflow-x: hidden;
   overflow-y: auto;
@@ -371,7 +343,7 @@ div.filterable-dropdown div.filterable-dropdown-div p.ff-checklist.last-child {
 }
 
 div.filterable-dropdown p.ff-checklist label.ff-checklist-label {
-  background-color: [[PANEL_BG]];
+  background-color: [[WHITE]];
   white-space: nowrap;
   padding: 3px 0 1px 6px;
   display: block;
@@ -380,15 +352,15 @@ div.filterable-dropdown p.ff-checklist label.ff-checklist-label {
 }
 
 div.filterable-dropdown p.ff-checklist label.highlight {
-  background-color: [[PANEL_BORDER]];
-  border: [[PAGE_TEXT]] solid 3px;
+  background-color: [[PALE_GREY]];
+  border: [[DARK_GREY]] solid 3px;
   border-width: 0 3px;
   padding-left: 3px;
 }
 
 div.filterable-dropdown p.ff-checklist label.selected {
-  color: [[PANEL_BG]];
-  background-color: [[BUTTON_BG]];
+  color: [[WHITE]];
+  background-color: [[MAIN_DARK]];
 }
 
 div.filterable-dropdown p.ff-checklist input {
@@ -404,7 +376,7 @@ div.filterable-dropdown p.filterable-dropdown-filter input {
   height: 20px;
   margin: 0;
   width: 375px;
-  color: [[PAGE_TEXT]];
+  color: [[DARK_GREY]];
   font-style: italic;
 }
 
@@ -414,7 +386,7 @@ div.filterable-dropdown.open p.filterable-dropdown-filter input {
 }
 
 div.filterable-dropdown p.filterable-dropdown-filter span {
-  background: none repeat scroll 0 0 [[PANEL_BORDER]];
+  background: none repeat scroll 0 0 [[PALE_GREY]];
   border-radius: 0 4px 4px 0;
   display: block;
   float: right;
@@ -439,7 +411,7 @@ div.filterable-dropdown p.filterable-dropdown-nomatch {
 }
 
 div.species-tag           { padding-left: 23px; width: 189px; background-repeat: no-repeat; background-position: 2px 2px; }
-div.species-tag.disabled  { background-color: #f0f0f0; border: 1px solid #cccccc; color: #cccccc; }
+div.species-tag.disabled  { background-color: [[V_LIGHT_GREY]]; border: 1px solid [[PALE_GREY]]; color: [[PALE_GREY]]; }
 div.species-tag img       { display: block; float: left; margin: 2px 5px 2px 2px; }
 
 /* Override the standard layout */
@@ -458,7 +430,7 @@ form.freeform fieldset .form-field .ff-right {
 
 textarea.inactive {
   font-style: italic;
-  color: #999;
+  color: [[MEDIUM_GREY]];
 }
 
 /* Override standard layout - SelectToToggle compatible */

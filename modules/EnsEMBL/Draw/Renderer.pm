@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -175,14 +175,16 @@ sub render {
         my $COL   = undef;
         my $FILL  = undef;
         my $Z     = undef;
+        my $ALPHA = undef;
         my $glyph;
         my @points;
         
         for (@{$tags{$_}}, @{$glyphset->{'tags'}{$_}}) {
-          $COL  = defined $COL  ? $COL  : $_->{'col'};
-          $FILL = defined $FILL ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
-          $Z    = defined $Z    ? $Z    : $_->{'z'};
-          
+          $COL    = defined $COL  ? $COL  : $_->{'col'};
+          $FILL   = defined $FILL ? $FILL : ($_->{'style'} && $_->{'style'} eq 'fill'); 
+          $Z      = defined $Z    ? $Z    : $_->{'z'};
+          $ALPHA  = defined $ALPHA  ? $ALPHA    : $_->{'alpha'};
+
           push (@points, 
             $_->{'glyph'}->pixelx + $_->{'x'} * $_->{'glyph'}->pixelwidth,
             $_->{'glyph'}->pixely + $_->{'y'} * $_->{'glyph'}->pixelheight
@@ -201,6 +203,7 @@ sub render {
         
         $PAR->{'bordercolour'} = $COL if defined $COL;
         $PAR->{'colour'} = $COL if $FILL;
+        $PAR->{'alpha'} = $ALPHA if $ALPHA;
         
         if (@points == 4 && ($points[0] == $points[2] || $points[1] == $points[3])) {
           $PAR->{'pixelx'}      = $points[0] < $points[2] ? $points[0] : $points[2];

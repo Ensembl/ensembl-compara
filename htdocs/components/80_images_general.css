@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 /* Basic layout */
 
 img { border: 0; }
-img.bordered    { border:1px solid [[PANEL_BORDER]]; }
+img.bordered    { border:1px solid [[PALE_GREY]]; }
 img.float-left  { float:left;  margin: 0 16px 16px 0; padding: 0; }
 img.float-right { float:right; margin: 0 0 16px 16px; padding: 0; }
 img.screenshot,  
@@ -43,7 +43,7 @@ img.flash      { margin: 20px auto; }
 
 a.vep-icon {
   background: url("/i/vep_logo_sm.png") no-repeat 8px 8px;
-  border: 1px solid [[PANEL_BORDER]];
+  border: 1px solid [[PALE_GREY]];
   border-radius: 8px;
   line-height: 16px;
   min-height: 45px;

@@ -1,9 +1,7 @@
 =head1 LICENSE
-f
-
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -125,7 +123,7 @@ sub get_redirect_uri {
 
   ## Redirect to live site if this instance has no Doxygen files
   if ($uri =~ /Doxygen/ && !(-e $species_defs->ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs'.$uri)) {
-    return 'http://www.ensembl.org/'.$uri;
+    return '//www.ensembl.org/'.$uri;
   } 
 
   return undef;
@@ -375,6 +373,13 @@ sub check_port_exhaustion {
   return $count;
 }
 
+sub lb_force_down {
+  foreach my $f (@{$SiteDefs::ENSEMBL_FORCE_DOWN||[]}) {
+    return 1 if -e $f;
+  }
+  return 0;
+}
+
 sub tidy_databases {
   my $debug = $SiteDefs::ENSEMBL_DB_TIDY_DEBUG;
 
@@ -417,6 +422,11 @@ sub tidy_databases {
   }
 }
 
+sub selfcheck_down {
+  # TODO check stuff
+  return 0;
+}
+
 sub handler {
   ## This is the main handler that gets called to generate a response for the given request
   ## @param Apache2::RequestRec request object
@@ -430,6 +440,18 @@ sub handler {
       return http_redirect($r, $redirect);
     }
     return OK;
+  }
+
+  if($uri eq '/__howsitgoing') {
+    $r->content_type('text/plain');
+    if(lb_force_down() || selfcheck_down()) {
+      $r->status(HTTP_SERVICE_UNAVAILABLE);
+      $r->print("503 Sticky wicket");
+      return HTTP_SERVICE_UNAVAILABLE; # 503, not 500, so e! deosn't catch it
+    } else {
+      $r->print("200 Mustn't grumble");
+      return OK;
+    }
   }
 
   # handle any redirects

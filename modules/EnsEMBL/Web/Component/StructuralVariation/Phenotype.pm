@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,12 +34,12 @@ sub content {
   my $object = $self->object;
 
   ## first check we have uniquely determined variation
-  return $self->_info('A unique location can not be determined for this Structural Variation', $object->not_unique_location) if $object->not_unique_location;
+  return $self->_info('A unique location can not be determined for this structural variant', $object->not_unique_location) if $object->not_unique_location;
   
   my $supporting_evidences = $object->Obj->get_all_SupportingStructuralVariants();
   my ($table_rows, $column_flags) = $self->table_data($supporting_evidences);
   
-  return $self->_info('No phenotype data','We do not have any phenotype data associated wih this structural variation.') unless scalar (keys(%$table_rows));
+  return $self->_info('No phenotype data','We do not have any phenotype data associated with this structural variant.') unless scalar (keys(%$table_rows));
   
   my $table = $self->new_table([], [], { data_table => 1 });
    

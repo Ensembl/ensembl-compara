@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,22 +31,22 @@ our @EXPORT = qw(mirrors_list);
 sub mirrors_list {
   return [
     'UK'      => {'name'  => 'UK (Sanger Institute)',
-                  'url'   => 'http://www.ensembl.org',
+                  'url'   => '//www.ensembl.org',
                   'blurb' => 'Main site, best for Europe, Africa and Middle East',
                   'flag'  => 'flag_uk.png',
                   },
     'USWEST'  => {'name'  => 'US West (Amazon AWS)',
-                  'url'   => 'http://uswest.ensembl.org',
+                  'url'   => '//uswest.ensembl.org',
                   'blurb' => 'Cloud-based mirror on West Coast of US',
                   'flag'  => 'flag_usa.png',
                   },
     'USEAST'  => {'name'  => 'US East (Amazon AWS)',
-                  'url'   => 'http://useast.ensembl.org',
+                  'url'   => '//useast.ensembl.org',
                   'blurb' => 'Cloud-based mirror on East Coast of US',
                   'flag'  => 'flag_usa.png',
                   },
     'ASIA'    => {'name'  => 'Asia (Amazon AWS)',
-                  'url'   => 'http://asia.ensembl.org',
+                  'url'   => '//asia.ensembl.org',
                   'blurb' => 'Cloud-based mirror in Singapore',
                   'flag'  => 'flag_sg.png',
                   },

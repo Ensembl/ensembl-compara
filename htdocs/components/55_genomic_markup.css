@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,8 @@ div.alignment_list a { text-decoration: none; }
 /* phenotype swatch */
 
 div.swatch-wrapper     { float: left; text-align: center; }
-div.swatch             { background-color: #999; padding-left: 2px; float: left; }
-div.swatch div         { float: left; width:30px; line-height:20px; height: 20px; text-align:center; margin: 2px 2px 2px 0; color: #fff; }
+div.swatch             { background-color: [[MEDIUM_GREY]]; padding-left: 2px; float: left; }
+div.swatch div         { float: left; width:30px; line-height:20px; height: 20px; text-align:center; margin: 2px 2px 2px 0; color: [[WHITE]]; }
 div.swatch-legend      { clear: both; padding: 8px 0; }
 div.swatch-legend span { text-decoration: line-through; font-size: 20px; white-space: pre; line-height: 10px; margin: 0px -3px; }
 

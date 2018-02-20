@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ sub content {
           if ($key == $align) {
             $align_label = $species_defs->production_name_mapping($_);
             last;
-          }          
+          }
         }
       } 
     }    
@@ -111,7 +111,8 @@ sub getLabelHtml {
   my $self = shift;
   my $species = shift;
   my $species_label = $self->hub->species_defs->get_config($species, 'SPECIES_COMMON_NAME');
-  my $species_img = sprintf '<img class="nosprite" src="/i/species/48/%s.png">', $species;
+  my $img_url = $self->hub->species_defs->ENSEMBL_IMAGE_ROOT . '/species/' . $species;
+  my $species_img = sprintf '<img class="nosprite" src="%s.png">', $img_url;
   my $common_name = '';
 
   return sprintf '<span class="ss-alignment-selected-label">%s <span class="ss-selected">%s</span></span>',

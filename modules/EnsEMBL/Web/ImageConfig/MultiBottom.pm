@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,14 +33,15 @@ sub init_cacheable {
   $self->set_parameters({
     image_resizeable  => 1,
     sortable_tracks   => 1,  # allow the user to reorder tracks
+    can_trackhubs     => 1,      # allow track hubs
     opt_lines         => 1,  # register lines
     spritelib         => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
   });
-  my $sp_img_48 = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species/48'; # XXX make configurable
-  if(-e $sp_img_48) {
+  my $sp_img = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species'; # XXX make configurable
+  if(-e $sp_img) {
     $self->set_parameters({ spritelib => {
       %{$self->get_parameter('spritelib')||{}},
-      species => $sp_img_48,
+      species => $sp_img,
     }});
   }
 
@@ -84,6 +85,19 @@ sub init_cacheable {
   );
 
   $_->set_data('display', 'off') for grep $_->id =~ /^chr_band_/, $self->get_node('decorations')->nodes; # Turn off chromosome bands by default
+}
+
+sub glyphset_tracks {
+  ## @override
+  ## Adds trackhub tracks before returning the list of tracks
+  my $self = shift;
+
+  if (!$self->{'_glyphset_tracks'}) {
+    $self->get_node('user_data')->after($_) for grep $_->get_data('trackhub_menu'), $self->tree->nodes;
+    $self->SUPER::glyphset_tracks;
+  }
+
+  return $self->{'_glyphset_tracks'};
 }
 
 sub multi {
@@ -153,9 +167,11 @@ sub multi {
       foreach my $align (sort { $a->{'type'} cmp $b->{'type'} } @{$alignments{$_}}) {
         my ($other_species) = grep $_ ne $sp, keys %{$align->{'species'}};
 
+        my $glyphset = $align->{'type'} =~ /CACTUS/ ? 'cactus_hal' : '_alignment_pairwise';
+
         $decorations->before(
           $self->create_track("$align->{'id'}:$align->{'type'}:$_", $align->{'name'}, {
-            glyphset                   => '_alignment_pairwise',
+            glyphset                   => $glyphset,
             colourset                  => 'pairwise',
             name                       => $align->{'name'},
             species                    => [split '--', $other_species]->[0],

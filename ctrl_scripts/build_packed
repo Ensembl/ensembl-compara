@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+# Rebuilds packed in temporary location, ensuring restart -r will work in
+# the meantime. Takes species to rebuild as argument. ALL rebuilds all.
+# No argument only rebuilds config.packed
+# 
+# ./build_packed
+# ./build_packed homo_sapiens mus_musculus
+# ./build_packed ALL
+
+use strict;
+use warnings;
+
+use FindBin qw($Bin);
+
+BEGIN {
+  require "$Bin/helper.pl";
+}
+
+sub echosys {
+  my $cmd = shift;
+
+  warn "$cmd\n";
+  system("$cmd") && die;
+}
+
+use File::Path qw(rmtree);
+use EnsEMBL::Web::SpeciesDefs;
+
+my $dir = "$SiteDefs::ENSEMBL_TMP_DIR/rebuild";
+my $dest = $SiteDefs::ENSEMBL_SYS_DIR;
+warn "Building packeds to $dir (ultimate destination $dest)\n";
+
+rmtree($dir,{ safe => 1 });
+mkdir $dir;
+mkdir "$dir/conf";
+mkdir "$dir/conf/packed";
+
+if(!@ARGV or $ARGV[0] ne "ALL") {
+  echosys("cp -v $dest/conf/packed/* $dir/conf/packed");
+  echosys("rm $dir/conf/packed/$_.*") for @ARGV;
+}
+
+$SiteDefs::ENSEMBL_SYS_DIR = $dir;
+$EnsEMBL::Web::SpeciesDefs::CONF={ '_storage' => 0 }; # Don't parse automatically
+my $sd = EnsEMBL::Web::SpeciesDefs->new();
+delete $sd->{'_storage'};
+$sd->{'_start_time'} = time;
+$sd->_parse;
+$sd->store;
+
+if($ARGV[0] eq "ALL") {
+  echosys("cp -v $dir/conf/packed/* $dest/conf/packed");
+} else {
+  echosys("cp -v $dir/conf/packed/$_.* $dest/conf/packed") for @ARGV;
+}
+echosys("cp -v $dir/conf/*.config.packed $dest/conf/packed");
+#rmtree($dir,{ safe => 1 });
+
+1;
+

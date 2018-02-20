@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ sub session_id {
 
 sub web_proxy {
   ## Gets the http and https proxy address
-  return shift->species_defs->ENSEMBL_WWW_PROXY || '';
+  return $SiteDefs::HTTP_PROXY || '';
 }
 
 sub image_width {
@@ -505,7 +505,7 @@ sub _get_permanent_url_base {
   my $sd    = $self->species_defs;
 
   return lc($sd->ARCHIVE_BASE_DOMAIN
-    ? sprintf('%s://%s.%s', $sd->ENSEMBL_PROTOCOL, $sd->ARCHIVE_VERSION, $sd->ARCHIVE_BASE_DOMAIN)
+    ? sprintf('//%s.%s', $sd->ARCHIVE_VERSION, $sd->ARCHIVE_BASE_DOMAIN)
     : $sd->ENSEMBL_BASE_URL
   );
 }
@@ -824,6 +824,7 @@ sub source_url {
 }
 
 sub ie_version {
+  return 11 if $ENV{'HTTP_USER_AGENT'} =~ m#Trident/7#;
   return 0 unless $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/;
   return $1;
 }
@@ -997,18 +998,19 @@ sub otherspecies {
   return $self->param('otherspecies') if $self->param('otherspecies');
   return $self->param('species') if $self->param('species');
 
-  my $species_defs = $self->species_defs;
-  my $species      = $self->species;
-  my $primary_sp   = $species_defs->ENSEMBL_PRIMARY_SPECIES;
-  my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
-  my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
+  my $species_defs  = $self->species_defs;
+  my $map           = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
+  my $species       = $species_defs->get_config($self->species, 'SPECIES_PRODUCTION_NAME');
+  my $primary_sp    = $species_defs->get_config($species_defs->ENSEMBL_PRIMARY_SPECIES, 'SPECIES_PRODUCTION_NAME');
+  my $secondary_sp  = $species_defs->get_config($species_defs->ENSEMBL_SECONDARY_SPECIES, 'SPECIES_PRODUCTION_NAME');
+  my %synteny       = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
 
-  return $primary_sp if  ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
+  return $map->{$primary_sp} if ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
 
-  return $secondary_sp if  ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
+  return $map->{$secondary_sp} if ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
 
   my @has_synteny  = grep { $_ ne $species } sort keys %{$synteny{$species}};
-  return $has_synteny[0];
+  return $map->{$has_synteny[0]};
 }
 
 sub order_species_by_clade { # TODO - move to EnsEMBL::Web::Document::HTML::Compara::GeneTrees

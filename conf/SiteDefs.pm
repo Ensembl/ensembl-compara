@@ -1,5 +1,5 @@
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2017] EMBL-European Bioinformatics Institute
+# Copyright [2016-2018] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 89;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'May2017';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'May 2017';    # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 91;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Dec2017';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'December 2017'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -72,7 +72,7 @@ our $ENSEMBL_SERVERADMIN          = 'webmaster&#064;mydomain.org';              
 ###############################################################################
 ## Other server settings
 our $ENSEMBL_SERVER               = Sys::Hostname::Long::hostname_long; # Local machine name
-our $ENSEMBL_PROTOCOL             = 'http';                             # Used for proxies and self-referential URLs
+our $ENSEMBL_PROXY_PROTOCOL       = 'http';                             # Used for proxy-forwarding
 our $ENSEMBL_PROXY_PORT           = undef;                              # Port used for self-referential URLs. Set to undef if not using proxy-forwarding
 our $ENSEMBL_LONGPROCESS_MINTIME  = 10;                                 # Warn extra info to logs if a process takes more than given time in seconds to serve request
 our $ENSEMBL_MAX_PROCESS_SIZE     = 1024 * 1024;                        # Value for Apache2::SizeLimit::MAX_PROCESS_SIZE
@@ -94,16 +94,17 @@ our $ENSEMBL_CONFIG_BUILD             = 0; # Build config on server startup? Set
 our $ENSEMBL_SERVER_SIGNATURE         = "$ENSEMBL_SERVER-$ENSEMBL_SERVERROOT" =~ s/\W+/-/gr; # Unique string representing this machine/server
 our $ENSEMBL_SITETYPE                 = 'Ensembl';
 our $ENSEMBL_HELPDESK_EMAIL           = defer { $ENSEMBL_SERVERADMIN };   # Email address for contact form and help pages
+our $PERL_RLIMIT_AS                   = '2048:4096';                      # linux does not honor RLIMIT_DATA, RLIMIT_AS (address space) will work to limit the size of a process
 our $ENSEMBL_REST_URL                 = 'http://rest.mydomain.org';       # url to your REST service
 our $CGI_POST_MAX                     = 20 * 1024 * 1024; # 20MB file upload max limit
 our $UPLOAD_SIZELIMIT_WITHOUT_INDEX   = 10 * 1024 * 1024; # 10MB max allowed for url uploads that don't have index files in the same path
 our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing trackhub requests
 our $ENSEMBL_ORM_DATABASES            = {};               # Hash to contain DB settings for databases connected via ensembl-orm (Used in SpeciesDefs::register_orm_databases)
 our $ENSEMBL_API_VERBOSITY            = 'WARNING';        # OFF, EXCEPTION, WARNING, DEPRECATE, INFO, ALL
-our $ENSEMBL_SPECIES_SELECT_DIVISION  = defer { "$ENSEMBL_DOCROOT/e_species_divisions.json" }; # JSON file used by Species Selector on multiple views
 our $ENSEMBL_SKIP_RSS                 = 0;      # set to 1 in sandboxes to avoid overloading blog
-our $ENSEMBL_EXTERNAL_SEARCHABLE      = 0;      # No external bots allowed by default
-our $PACED_MULTI                      = 6;      # Max simultaneous connections
+our $ENSEMBL_EXTERNAL_SEARCHABLE      = 0;      # No external bots allowed by default (used to create default robots.txt)
+our $ENSEMBL_CUSTOM_ROBOTS_TXT        = 0;      # If set to true will use robots.txt from a plugin instead of using the default one
+our $PACED_MULTI                      = 2;      # Max simultaneous connections
 our $HTTP_PROXY                       = undef;  # Web proxy for outgoing http/https requests
 our $ENSEMBL_REGISTRY                 = undef;  # Set this to a valid config file for Bio::EnsEMBL::Registry::load_all() or leave undef
 our $ENSEMBL_SITE_DIR                 = '';     # URL Path if site is served from a sub path i.e www.example.org/$ENSEMBL_SITE_DIR/
@@ -127,6 +128,7 @@ our $ENSEMBL_DEBUG_IMAGES         = 0; # change these to 1 to prevent css minifi
 ## Other DEBUG flags
 our $ENSEMBL_DEBUG_HANDLER_ERRORS   = 1; # Shows messages from EnsEMBL::Web::Apache::*
 our $ENSEMBL_DEBUG_CACHE            = 0; # Turns debug messages on for EnsEMBL::Web::Cache
+our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::Web::SpeciesDefs
 ###############################################################################
 
 
@@ -159,10 +161,10 @@ our $ENSEMBL_PIDFILE              = defer { "$ENSEMBL_LOGDIR/httpd.pid" };      
 our $ENSEMBL_ERRORLOG             = defer { "$ENSEMBL_LOGDIR/error_log" };                                    # Error log file
 our $ENSEMBL_CUSTOMLOG            = defer { "$ENSEMBL_LOGDIR/access_log ensembl_extended" };                  # Access log file
 our $ENSEMBL_FAILUREDIR           = defer { "$ENSEMBL_TMP_DIR/failure_dir" };                                 # Folder to save status of external resources (Check EnsEMBL::Web::Tools::FailOver)
-our $ENSEMBL_ROBOTS_TXT_DIR       = defer { $ENSEMBL_WEBROOT };                                               # Directory for saving robots.txt file
+our $ENSEMBL_ROBOTS_TXT_DIR       = defer { "$ENSEMBL_WEBROOT/htdocs" };                                      # Directory for saving robots.txt file
 our $ENSEMBL_MINIFIED_FILES_PATH  = defer { "$ENSEMBL_WEBROOT/minified" };                                    # Path for saving minified files
 our $ENSEMBL_OPENSEARCH_PATH      = defer { "$ENSEMBL_WEBROOT/opensearch" };                                  # Path for saving opensearch files
-our $GOOGLE_SITEMAPS_PATH         = defer { "$ENSEMBL_WEBROOT/sitemaps" };                                  # Path for saving Google Sitemap files
+our $GOOGLE_SITEMAPS_PATH         = defer { "$ENSEMBL_WEBROOT/sitemaps" };                                    # Path for saving Google Sitemap files
 our $UDC_CACHEDIR                 = defer { "$ENSEMBL_TMP_DIR/udcCache" };                                    # Directory to cache outgoing UDC requests (required for BAM files)
 our $ENSEMBL_TMP_MESSAGE_FILE     = defer { "$ENSEMBL_TMP_DIR/ensembl_tmp_message" };                         # File location for the temporary message for the website
 
@@ -182,10 +184,9 @@ our $GOOGLE_SITEMAPS_URL          = '/sitemaps';                                
 
 ###############################################################################
 ## Content dirs
-our @ENSEMBL_LIB_DIRS;                                                                      # locates perl library modules. Array order is maintained in @INC
-our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates <species>.ini files
-our @ENSEMBL_PERL_DIRS    = ("$ENSEMBL_WEBROOT/perl");                                      # locates mod-perl scripts
-our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
+our @ENSEMBL_CONF_DIRS               = ("$ENSEMBL_WEBROOT/conf");                                      # locates plugin SiteDefs.pm and ini-files
+our @ENSEMBL_HTDOCS_DIRS             = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
+our $ENSEMBL_TAXONOMY_DIVISION_FILE  = ("$ENSEMBL_DOCROOT/e_divisions.json");
 ###############################################################################
 
 
@@ -235,6 +236,7 @@ our $ENSEMBL_MART_PLUGIN_ENABLED  = 0;  # Is set true by the mart plugin itself.
 our $ENSEMBL_MART_SERVER          = ''; # Server address if mart server is running on another server (biomart requests get proxied to ENSEMBL_MART_SERVER)
 ###############################################################################
 
+
 ###############################################################################
 ## Memcached specific configs
 our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|1] and 'default_exptime'. See EnsEMBL::Web::Cache in public-plugins for details.
@@ -248,6 +250,7 @@ our $FLANK3_PERC                  = 0.02; # % 3' flanking region for images (use
 our $ENSEMBL_ALIGNMENTS_HIERARCHY = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
 ###############################################################################
 
+
 ###############################################################################
 # Variables exported for ENV for apache processes
 our $ENSEMBL_SETENV                   = {}; # Map of ENV variables nams to SiteDefs variable names for setting ENV (check _set_env method)
@@ -255,6 +258,7 @@ $ENSEMBL_SETENV->{'http_proxy'}       = 'HTTP_PROXY';
 $ENSEMBL_SETENV->{'https_proxy'}      = 'HTTP_PROXY';
 $ENSEMBL_SETENV->{'COMPARA_HAL_DIR'}  = 'COMPARA_HAL_DIR';
 $ENSEMBL_SETENV->{'UDC_CACHEDIR'}     = 'UDC_CACHEDIR';
+$ENSEMBL_SETENV->{'PERL_RLIMIT_AS'}   = 'PERL_RLIMIT_AS';
 ###############################################################################
 
 
@@ -297,6 +301,20 @@ our $OBJECT_PARAMS = [
 ###############################################################################
 
 
+###############################################################################
+## Dirs for the @INC
+our $ENSEMBL_API_LIBS = [   # Main ensembl API libraries needed for the site (packages in these locations are pluggable) - mainly used for internal modules
+  "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-io/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
+  "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
+  "$ENSEMBL_SERVERROOT/ensembl/modules"
+];
+our $ENSEMBL_EXTRA_INC = []; # Any extra perl paths needed for the site (packages in these locations are NOT pluggable) - mainly used for external modules
+###############################################################################
+
+
 #### END OF VARIABLE DEFINITION ####
 
 
@@ -307,6 +325,7 @@ our $OBJECT_PARAMS = [
 our $ENSEMBL_PLUGINS      = []; # List of all plugins enabled - populated by _populate_plugins_list()
 our $ENSEMBL_IDS_USED     = {}; # All plugins with extra info for perl.startup output - populated by _populate_plugins_list()
 our $ENSEMBL_PLUGINS_USED = {}; # Identities being used for plugins - needed by perl.startup - populated by _populate_plugins_list()
+our @ENSEMBL_LIB_DIRS     = (); # List to locate perl library modules - populated by _update_conf()
 our $ENSEMBL_PLUGIN_ROOTS = []; # Populated by _update_conf()
 our $ENSEMBL_BASE_URL;          # Populated by import
 our $ENSEMBL_SITE_URL;          # Populated by import
@@ -349,14 +368,14 @@ sub import {
   $ENSEMBL_PROXY_PORT   = $ENSEMBL_PORT unless $ENSEMBL_PROXY_PORT && $ENSEMBL_PROXY_PORT ne '';
   $ENSEMBL_SERVERNAME ||= $ENSEMBL_SERVER;
 
-  $ENSEMBL_BASE_URL = "$ENSEMBL_PROTOCOL://$ENSEMBL_SERVERNAME" . (
-    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROTOCOL eq 'http' ||
-    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
+  $ENSEMBL_BASE_URL = "//$ENSEMBL_SERVERNAME" . (
+    $ENSEMBL_PROXY_PORT == 80  && $ENSEMBL_PROXY_PROTOCOL eq 'http' ||
+    $ENSEMBL_PROXY_PORT == 443 && $ENSEMBL_PROXY_PROTOCOL eq 'https' ? '' : ":$ENSEMBL_PROXY_PORT"
   );
 
   $ENSEMBL_SITE_URL          = join '/', $ENSEMBL_BASE_URL, $ENSEMBL_SITE_DIR || (), '';
   $ENSEMBL_STATIC_SERVERNAME = $ENSEMBL_STATIC_SERVER || $ENSEMBL_SERVERNAME;
-  $ENSEMBL_STATIC_SERVER     = "$ENSEMBL_PROTOCOL://$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
+  $ENSEMBL_STATIC_SERVER     = "//$ENSEMBL_STATIC_SERVER" if $ENSEMBL_STATIC_SERVER;
   $ENSEMBL_STATIC_BASE_URL   = $ENSEMBL_STATIC_SERVER || $ENSEMBL_BASE_URL;
 
   $ENSEMBL_CONFIG_FILENAME   = sprintf "%s.%s", $ENSEMBL_SERVER_SIGNATURE, $ENSEMBL_CONFIG_FILENAME_SUFFIX;
@@ -404,8 +423,8 @@ sub _update_conf {
     eval qq{ require '$dir/conf/SiteDefs.pm' };                               # load the actual plugin SiteDefs
 
     if ($@) {
-      my $message = "Can't locate $dir/conf/SiteDefs.pm in";
-      warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:;
+      my $message = "Can't locate $dir/conf/SiteDefs.pm";
+      warn "Error requiring $plugin_conf:\n$@" unless $@ =~ m:$message:s;
     } else {
 
       # create datastructures for validating the rules in the end
@@ -427,7 +446,6 @@ sub _update_conf {
 
     $order_validation{$name}{'order'} = ++$count;
 
-    unshift @ENSEMBL_PERL_DIRS,     "$dir/perl";
     unshift @ENSEMBL_HTDOCS_DIRS,   "$dir/htdocs";
     unshift @$ENSEMBL_PLUGIN_ROOTS, $name;
     push    @ENSEMBL_CONF_DIRS,     "$dir/conf";
@@ -480,24 +498,17 @@ sub _update_conf {
     }
   }
 
-  push @ENSEMBL_LIB_DIRS, (
-    "$ENSEMBL_WEBROOT/modules",
-    $BIOPERL_DIR,
-    $VCFTOOLS_PERL_LIB,
-    "$ENSEMBL_SERVERROOT/biomart-perl/lib",
-    "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-io/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
-    "$ENSEMBL_SERVERROOT/ensembl/modules",
-  );
+  # Add API libs to ENSEMBL_LIB_DIRS
+  @ENSEMBL_LIB_DIRS = ("$ENSEMBL_WEBROOT/modules", @$ENSEMBL_API_LIBS);
+
+  # Add extra libs to ENSEMBL_EXTRA_INC
+  unshift @$ENSEMBL_EXTRA_INC, $BIOPERL_DIR, $VCFTOOLS_PERL_LIB;
 }
 
 sub _set_dedicated_mart {
   ## Set ENSEMBL_MART_SERVERNAME if mart is running on a separate dedicated server
   if ($ENSEMBL_MART_ENABLED && !$ENSEMBL_MART_PLUGIN_ENABLED && $ENSEMBL_MART_SERVER) {
-    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROTOCOL, $ENSEMBL_MART_SERVER;
+    $ENSEMBL_MART_SERVERNAME = sprintf '%s://%s', $ENSEMBL_PROXY_PROTOCOL, $ENSEMBL_MART_SERVER;
     $ENSEMBL_SETENV->{'ENSEMBL_MART_SERVERNAME'} = 'ENSEMBL_MART_SERVERNAME';
   }
 }
@@ -512,6 +523,15 @@ sub _get_serverroot {
      $path =~ s|\.snapshots/[^/]+|latest|;
 
   return $path;
+}
+
+sub solve_identity {
+  my ($k,$ids) = @_;
+
+  foreach my $pat (split(' ',$k)) {
+    return 0 unless grep { $_ eq $pat } @$ids;
+  }
+  return 1;
 }
 
 sub _populate_plugins_list {
@@ -556,7 +576,6 @@ sub _populate_plugins_list {
   $ENSEMBL_IDS_USED->{'- direct -'} = 0;
   $ENSEMBL_PLUGINS_USED->{$_} = [0] for @plugins_seen;
 
-
   my $code = 1;
   my (%plugins_list, %plugins_priority, @identity_maps);
   foreach my $f (glob $a_paths) {
@@ -596,7 +615,7 @@ sub _populate_plugins_list {
 
   # Process AutoPlugin files
   foreach my $k (sort { $plugins_priority{$a} <=> $plugins_priority{$b} } keys %plugins_list) {
-    if (grep { $_ eq $k } @ensembl_identity) {
+    if (solve_identity($k,\@ensembl_identity)) {
       warn " Loading $k\n";
       my @to_add;
       foreach my $p ($paired->(@{$plugins_list{$k}||[]})) {
@@ -622,7 +641,7 @@ sub _set_env {
   if (keys %$ENSEMBL_SETENV) {
     push @_VERBOSE_LINES, "ENV variables added:\n" if $ENSEMBL_STARTUP_VERBOSE;
     for (sort keys %$ENSEMBL_SETENV) {
-      if (defined $ENSEMBL_SETENV->{$_}) {
+      if (defined $ENSEMBL_SETENV->{$_} && defined ${"SiteDefs::$ENSEMBL_SETENV->{$_}"}) {
         $ENV{$_} = ${"SiteDefs::$ENSEMBL_SETENV->{$_}"};
         push @_VERBOSE_LINES, sprintf "%50s: %s\n", $_, $ENV{$_} if $ENSEMBL_STARTUP_VERBOSE;
       } else {

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,10 +70,14 @@ sub draw_feature {
   ## Draw internal structure, e.g. motif features
   if ($feature->{'extra_blocks'} && $self->track_config->get('display_structure')) {
     foreach my $element (@{$feature->{'extra_blocks'}}) {
+      ## Check in case outside viewport
+      next if ($element->{'end'} < 0 || $element->{'start'} > $position->{'image_width'});
       $composite->push($self->Rect({
-                                    x         => $element->{'start'} - 1,
-                                    width     => $element->{'end'} - $element->{'start'} + 1,
-                                    colour    => $element->{'colour'},
+                                    x             => $element->{'start'} - 1,
+                                    width         => $element->{'end'} - $element->{'start'} + 1,
+                                    colour        => $element->{'colour'},
+                                    pattern       => $element->{'pattern'},
+                                    patterncolour => $element->{'patterncolour'},
                                     %defaults
                                     }
       ));

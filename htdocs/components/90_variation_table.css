@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,16 @@
  */
 
 /* SIFT & PolyPhen scores */
-div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 100%; max-width: 50px; color: white; text-align: center; }
+div.score         { 
+  width: 100%; 
+  max-width: 50px; 
+  color: white; 
+  text-align: center; 
+  padding: 2px 2px 0 2px;
+  border-radius: 6px; 
+  -moz-border-radius: 6px; 
+  -webkit-border-radius: 6px;
+}
 div.score_good    { background: green;  }
 div.score_ok      { background: orange; }
 div.score_bad     { background: red;    }
@@ -36,7 +45,7 @@ img.clin_sign     { vertical-align:middle; margin-right:5px; }
 img.review_status { vertical-align:middle; margin:2px 0px; }
 
 /* LD export table */
-span.ld_focus_variant {background-color:[[BUTTON_BG]]; color:[[BUTTON_TEXT]];padding:2px 4px;border-radius:5px}
+span.ld_focus_variant {background-color:[[MAIN_DARK]]; color:[[WHITE]];padding:2px 4px;border-radius:5px}
 
 /* Gene and regulation */
 div.var_trans_pos     { height: 10px; width:100px; border:1px solid black; background-color:#FFF; margin-top:1px; box-shadow:1px 1px 2px #888; }

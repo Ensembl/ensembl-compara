@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ body.modal-open {
   left: 0;
   height: 100%;
   width: 100%;
-  background-color: [[MH_BORDER]];
+  background-color: [[MAIN_V_DARK]];
   text-align: center;
   vertical-align: middle;
   display: none;
@@ -34,7 +34,7 @@ body.modal-open {
   opacity: 0.25; filter: Alpha(Opacity=25);
 }
 
-#modal_panel                  { position: fixed; left: auto; top: auto; text-align: left; background-color: [[PANEL_BG]]; margin: 0; padding: 0; display: none; z-index: 1001; zoom: 1; }
+#modal_panel                  { position: fixed; left: auto; top: auto; text-align: left; background-color: [[WHITE]]; margin: 0; padding: 0; display: none; z-index: 1001; zoom: 1; }
 #modal_panel .ui-resizable-se { width: 14px; height: 14px; right: 2px; bottom: 2px; background: url(/i/resize.png) no-repeat scroll right bottom; }
 #modal_panel div.modal_title  {
   position: absolute;
@@ -43,10 +43,10 @@ body.modal-open {
   width: 100%;
   margin: 0;
   padding: 2px 0 0;
-  border: solid [[PANEL_TEXT]];
+  border: solid [[DARK_GREY]];
   border-width: 0 1px;
-  background-color: [[PANEL_TEXT]];
-  color: [[PANEL_BG]];
+  background-color: [[DARK_GREY]];
+  color: [[WHITE]];
   font-weight: normal;
   clear: both;
   font-size: 12px;
@@ -60,10 +60,10 @@ body.ie6 #modal_panel div.modal_title { height: 20px; }
 .modal_caption { position: absolute; bottom: 3px; left: 4px; }
 
 #modal_panel .modal_title ul            { margin: 0; padding: 0 0 0 6px; position: absolute; bottom: 0; }
-#modal_panel .modal_title li            { list-style: none; padding: 4px 2px; background-color: #999; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
-#modal_panel .modal_title li.active     { background-color: [[PANEL_BG]]; color: [[PAGE_TEXT]]; }
-#modal_panel .modal_title li a          { color: [[PANEL_BG]]; padding: 0 8px; text-decoration: none; outline: none; }
-#modal_panel .modal_title li.active a   { color: [[PAGE_TEXT]]; }
+#modal_panel .modal_title li            { list-style: none; padding: 4px 2px; background-color: [[MEDIUM_GREY]]; margin: 0 6px 0 0; float: left; border-radius: 5px 5px 0 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-radius: 5px 5px 0 0; }
+#modal_panel .modal_title li.active     { background-color: [[WHITE]]; color: [[DARK_GREY]]; }
+#modal_panel .modal_title li a          { color: [[WHITE]]; padding: 0 8px; text-decoration: none; outline: none; }
+#modal_panel .modal_title li.active a   { color: [[DARK_GREY]]; }
 #modal_panel .modal_title .modal_close  { position: absolute; top: -11px; right: -11px;  height: 22px; width: 22px; margin: 0; display: block; background: url(/i/cp_close.png) no-repeat center; cursor: pointer; }
 #modal_panel .ui-draggable .modal_title { cursor: move; }
 
@@ -72,35 +72,35 @@ body.ie6 #modal_panel .modal_title ul           { position: relative; }
 body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_close.gif); }
 
 
-#modal_panel .modal_overlay_bg              { top: -20px; left: 0; width: 100%; height: 100%; padding: 20px 2px 0 0; background-color: [[MH_BORDER]]; z-index: 10000; opacity: 0.5; filter: Alpha(Opacity=50); }
+#modal_panel .modal_overlay_bg              { top: -20px; left: 0; width: 100%; height: 100%; padding: 20px 2px 0 0; background-color: [[MAIN_V_DARK]]; z-index: 10000; opacity: 0.5; filter: Alpha(Opacity=50); }
 #modal_panel .modal_overlay_bg,
 #modal_panel .modal_overlay                 { display: none; position: absolute; }
-#modal_panel .modal_overlay                 { top: 32px; left: 50%; z-index: 10001; background-color: #FFF; padding: 16px; border: 2px solid #000; }
+#modal_panel .modal_overlay                 { top: 32px; left: 50%; z-index: 10001; background-color: [[WHITE]]; padding: 16px; border: 2px solid [[BLACK]]; }
 #modal_panel .modal_overlay .overlay_close  { position: absolute; top: -10px; right: -10px; cursor: pointer; }
 #modal_panel .modal_overlay .overlay_scroll { height: 300px; padding-right: 26px; overflow-x: hidden; overflow-y: auto; }
 #modal_panel .modal_overlay form            { margin: 0; }
 #modal_panel .modal_overlay input.fbutton   { width: 100%; margin-bottom: 0; cursor: pointer; }
-#modal_panel .modal_overlay h1              { margin-bottom: 16px; border-bottom: 1px solid [[PANEL_TEXT]]; word-break: break-all; }
+#modal_panel .modal_overlay h1              { margin-bottom: 16px; border-bottom: 1px solid [[DARK_GREY]]; word-break: break-all; }
 
-.modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[PANEL_TEXT]]; border-width: 0 1px 1px; background-color: [[PANEL_BG]]; }
+.modal_content                   { position: absolute; height: 100%; width: 100%; overflow: auto; border: solid [[DARK_GREY]]; border-width: 0 1px 1px; background-color: [[WHITE]]; }
 .modal_content .panel            { padding: 0; margin: 0; }
 .modal_content .panel .content   { padding: 12px 12px 4px; margin: 0; }
-.modal_content .panel h2         { border-bottom: 1px solid [[PANEL_BORDER]]; padding-bottom: 2px; }
+.modal_content .panel h2         { padding-bottom: 4px; }
 .modal_content .panel div.error,
 .modal_content .panel div.warning,
 .modal_content .panel div.info,
 .modal_content .panel div.hint   { width: auto!important; }
-.modal_content p.modal_error     { color: #C33; }
+.modal_content p.modal_error     { color: [[SEVERE_DARK]]; }
 .modal_content p.modal_a         { margin: 10px 0; }
-.modal_content p.modal_a a       { background-color: [[MH_BG]]; color: #FFF; border: outset [[MH_BG]] 2px; text-decoration: none; padding: 2px 8px; }
+.modal_content p.modal_a a       { background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; border: outset [[MAIN_V_DARK]] 2px; text-decoration: none; padding: 2px 8px; }
 .modal_content div.filter-error  { margin: 12px 12px 0; }
 
 .modal_content .ajax_error                { margin: 12px; }
 .modal_content .modal_wrapper .ajax_error { margin-left: 232px; }
 
 .modal_content .modal_wrapper .export_buttons_div {
-  border-top: 1px solid [[PANEL_BORDER]];
-  border-bottom: 1px solid [[PANEL_BORDER]];
+  border-top: 1px solid [[PALE_GREY]];
+  border-bottom: 1px solid [[PALE_GREY]];
   margin: 8px 0px 16px 0px;
 }
 .modal_content .export_buttons_div div { padding: 8px 4px;}
@@ -127,7 +127,7 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .config_wrapper                 { overflow: hidden; }
 .modal_content .config_wrapper .panel .content { padding: 12px 12px 0; }
 
-.modal_content .modal_nav                 { width: auto; min-width: 210px; float: left; position: relative; margin: 0 -1px 0 0; border-right: 1px solid [[PANEL_BORDER]]; padding: 0; min-height: 100%; }
+.modal_content .modal_nav                 { width: auto; min-width: 210px; float: left; position: relative; margin: 0 -1px 0 0; padding: 0; min-height: 100%; }
 .modal_content .modal_nav .tool_buttons p { margin: 0 2px; }
 .modal_content .modal_nav div.header      { display: none; }
 
@@ -139,15 +139,15 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .modal_nav ul.local_context li ul                  { padding: 0; }
 .modal_content .modal_nav ul.local_context li a,
 .modal_content .modal_nav ul.local_context li .disabled           { float: left; margin-left: 19px; }
-.modal_content .modal_nav ul.local_context li .disabled           { color: [[PAGE_TEXT]]; cursor: text; }
+.modal_content .modal_nav ul.local_context li .disabled           { color: [[DARK_GREY]]; cursor: text; }
 .modal_content .modal_nav ul.local_context li img                 { float: left;  margin-top: 1px; } 
 .modal_content .modal_nav ul.local_context li ul                  { clear: both; }
-.modal_content .modal_nav ul.local_context li .count              { float: right; margin: 0 3px 0 10px; color: [[MH_BORDER]]; }
+.modal_content .modal_nav ul.local_context li .count              { float: right; margin: 0 3px 0 10px; color: [[MAIN_V_DARK]]; }
 .modal_content .modal_nav ul.local_context li.active a            { outline: 0; }
-.modal_content .modal_nav ul.local_context li.top_level           { margin: 3px; padding: 0; border: 1px solid #dddfff; line-height: 16px; } /* TODO - add colour to ini file */
+.modal_content .modal_nav ul.local_context li.top_level           { margin: 3px; padding: 0; border: 1px solid [[MAIN_LIGHT]]; line-height: 16px; } /* TODO - add colour to ini file */
 .modal_content .modal_nav ul.local_context li.top_level,
 .modal_content .modal_nav ul.local_context li.top_level ul,
-.modal_content .modal_nav ul.local_context li.top_level li        { background-color: [[TINT_BG]]; }
+.modal_content .modal_nav ul.local_context li.top_level li        { background-color: [[MAIN_V_LIGHT]]; }
 .modal_content .modal_nav ul.local_context li.top_level a,        
 .modal_content .modal_nav ul.local_context li.top_level .count    { font-weight: bold; padding: 0px; }
 .modal_content .modal_nav ul.local_context li.top_level li a,
@@ -160,12 +160,12 @@ body.ie6 #modal_panel .modal_title .modal_close { background-image: url(/i/cp_cl
 .modal_content .modal_nav ul.local_context li.parent li,
 .modal_content .modal_nav ul.local_context li.parent ul           { background-image: url(/i/line.gif); background-repeat: repeat-y; }
 .modal_content .modal_nav ul.local_context li.parent li.last      { background-image: url(/i/last.gif); background-repeat: no-repeat; padding-bottom: 1px; }
-.modal_content .modal_nav ul.local_context li.active              { font-weight: normal; background-color: [[BUTTON_BG]]!important; }
+.modal_content .modal_nav ul.local_context li.active              { font-weight: normal; background-color: [[MAIN_DARK]]!important; }
 .modal_content .modal_nav ul.local_context li.active a,
-.modal_content .modal_nav ul.local_context li.active .count       { color: #FFF; }
+.modal_content .modal_nav ul.local_context li.active .count       { color: [[WHITE]]; }
 .modal_content .modal_nav ul.local_context li.active li a,
-.modal_content .modal_nav ul.local_context li.active li .count    { color: #369; }
-.modal_content .modal_nav ul.local_context li.active li           { background-color: [[TINT_BG]]; }
+.modal_content .modal_nav ul.local_context li.active li .count    { color: [[MAIN_V_DARK]]; }
+.modal_content .modal_nav ul.local_context li.active li           { background-color: [[MAIN_V_LIGHT]]; }
 
 body.ie7  .modal_content .modal_nav                                    { min-height: 99%; }
 body.ie7  .modal_content .modal_nav ul.local_context li.top_level      { margin: 0 -2px 0 0; }
@@ -181,7 +181,7 @@ body.ie6  .modal_content .modal_nav ul.local_context li.top_level      { margin:
 body.ie6  .modal_content .modal_nav ul.local_context li.parent li.last { padding-bottom: 0; }
 
 #modal_panel .fixed_width .modal_nav               { width: 220px; float: none; position: absolute; margin: 0; min-height: 100%; }
-#modal_panel .fixed_width .modal_wrapper .panel    { margin-left: 220px; border-left: [[PANEL_BORDER]] solid 1px; }
+#modal_panel .fixed_width .modal_wrapper .panel    { margin-left: 220px; }
 #modal_panel .fixed_width .no_local_context .panel { margin-left: 0!important; border-left: 0; }
 
 body.ie6 #modal_panel .fixed_width .modal_wrapper        { margin-left: 0; }
@@ -194,8 +194,8 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .multi_selector_list_wide                       { width: 100%; }
 .modal_content .multi_selector_list ul                         { padding: 0; margin-left: 5px; margin-right: 5px; list-style: none; }
 .modal_content .multi_selector_list li                         { position: relative; height: 22px; padding-left: 10px; list-style-image: none; clear: both; }
-.modal_content .multi_selector_list ul.included li             { background-color: [[TINT_BG]]; color: [[CONTRAST_TEXT]]; border: 1px solid [[TINT_BORDER]]; cursor: ns-resize; }
-.modal_content .multi_selector_list ul.excluded li             { background-color: #EEE; color: [[CONTRAST_TEXT]]; border: 1px solid [[NEUTRAL_BORDER]]; cursor: pointer; }
+.modal_content .multi_selector_list ul.included li             { background-color: [[MAIN_LIGHT]]; color: [[DARK_GREY]]; border: 1px solid [[MAIN_MEDIUM]]; cursor: ns-resize; }
+.modal_content .multi_selector_list ul.excluded li             { background-color: [[LIGHT_GREY]]; color: [[DARK_GREY]]; border: 1px solid [[PALE_GREY]]; cursor: pointer; }
 .modal_content .multi_selector_list ul li span                 { position: absolute; left: 28px; top: 3px; }
 .modal_content .multi_selector_list ul li span.switch          { height: 16px; width: 16px; background-repeat: no-repeat; background-position: top left; left: 6px; cursor: pointer; }
 .modal_content .multi_selector_list ul.included li span.switch { background-image: url(/i/16/minus-button.png); }
@@ -203,16 +203,11 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 
 .modal_content .multi_selector_hint                            { margin: 16px; }
 
-/*.modal_content .select_by_group_div                            { display: flex; justify-content: flex-start; align-items: center; }*/
-/*.modal_content .select_by                                      { margin: 12px 16px 16px; min-width: 200px;}*/
-/*.modal_content .select_by h2                                   { border-bottom: 1px solid [[PANEL_BORDER]]; padding-bottom: 2px; }*/
-/*.modal_content .select_by select                               { width: 100%; }*/
-
-.modal_content .select_by_group_div                            { display: flex; justify-content: flex-start; align-items: center; }
-.modal_content .select_by                                      { margin: 12px 16px 16px; min-width: 200px;}
-.modal_content .select_by .title                               { border-bottom: 1px solid [[PANEL_BORDER]]; padding-bottom: 2px; }
-.modal_content .select_by h2                                   { padding-bottom: 8px; }
-.modal_content .select_by select                               { width: 100%; }
+.select_by_group_div                            { display: flex; justify-content: flex-start; align-items: center; }
+.select_by                                      { margin: 12px 16px 16px; min-width: 200px;}
+.select_by .title                               { border-bottom: 1px solid [[PALE_GREY]]; padding-bottom: 2px; }
+.select_by h2                                   { padding-bottom: 8px;}
+.select_by select                               { width: 100%; }
 
 .modal_content .multi_selector_list span.count {
   font-size: 10px;
@@ -221,15 +216,15 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
   padding: 1px 3px;  
 }
 .modal_content .multi_selector_list span.selected {
-  background-color: [[TINT_BG]]; 
-  color: [[CONTRAST_TEXT]]; 
-  border: 1px solid [[TINT_BORDER]]; 
+  background-color: [[MAIN_V_PALE]]; 
+  color: [[DARK_GREY]]; 
+  border: 1px solid [[MAIN_LIGHT]]; 
 }
 
 .modal_content .multi_selector_list span.unselected {
-  background-color: #EEE; 
-  color: [[CONTRAST_TEXT]]; 
-  border: 1px solid [[NEUTRAL_BORDER]]; 
+  background-color: [[LIGHT_GREY]]; 
+  color: [[DARK_GREY]]; 
+  border: 1px solid [[PALE_GREY]]; 
 }
 
 @media screen and (max-width: 640px) {
@@ -241,26 +236,55 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 
 .modal_content .cloud_multi_selector_list                      { width: 100%; }
 
-.modal_content .cloud_multi_selector_list li                   { list-style: none; display: inline-block; background: [[BUTTON_BG]]; padding: 2px 8px; border: 1px solid [[BUTTON_BG]]; cursor: pointer; color: [[BUTTON_TEXT]]; }
-.modal_content .cloud_multi_selector_list li:hover             { background: [[BUTTON_BG_HOVER]]; }
-.modal_content .cloud_multi_selector_list li.off               { background: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; border: 1px solid [[BUTTON_DISABLED]]; }
-.modal_content .cloud_multi_selector_list li.partial           { background: [[BUTTON_PARTIAL]]; color: [[BUTTON_TEXT]]; border: 1px solid [[BUTTON_PARTIAL]]; }
-.modal_content .cloud_multi_selector_list li.off:hover         { background: [[BUTTON_DISABLED_HOVER]]; }
-.modal_content .cloud_multi_selector_list li.partial:hover     { background: [[BUTTON_BG_HOVER]]; }
-.cloud_flip_hint { height: 100%; position: absolute; text-align: center; width: 100%; }
-.cloud_flip_hint_wrap { display: inline-block; padding: 100px 16px; }
-.cloud_flip_hint .on { background: [[BUTTON_BG]]; border: 1px solid [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .off { background: [[BUTTON_DISABLED]]; border: 1px solid [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .partial { background: [[BUTTON_PARTIAL]]; border: 1px solid [[BUTTON_PARTIAL]]; color: [[BUTTON_TEXT]]; display: inline-block; margin: 4px; padding: 2px 8px; }
-.cloud_flip_hint .flip_icon { background-image: url("/i/32/reload.png"); display: inline-block; height: 32px; width: 32px; margin-bottom: -11px; }
-.cloud_flip_hint .error_pad { padding: 24px 8px; }
+.cloud_all_none span,
+.cloud_flip_hint span,
+.cloud_multi_selector_list li {
+  color: [[WHITE]];
+  display: inline-block;
+  margin: 2px 4px;
+  padding: 6px 8px 4px 8px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
+}
+
+.cloud_all_none span,
+.cloud_multi_selector_list li {
+  cursor: pointer;
+}
+
+.modal_content .cloud_multi_selector_list li                   { list-style: none; background: [[MAIN_DARK]] }
+.modal_content .cloud_multi_selector_list li.off               { background: [[MEDIUM_GREY]]; }
+.modal_content .cloud_multi_selector_list li.partial           { background: [[MAIN_LIGHT]];  }
+.modal_content .cloud_multi_selector_list li:hover             { background: [[MAIN_V_DARK]]; }
+.modal_content .cloud_multi_selector_list li.off:hover         { background: [[MEDIUM_GREY_HOVER]]; }
+.modal_content .cloud_multi_selector_list li.partial:hover     { background: [[MAIN_V_DARK]]; }
+
 .modal_content .cloud_multi_selector_list li.heading { background: none; border: medium none; color: black; font-size: 140%;  }
 .modal_content .cloud_multi_selector_list h4 { display: inline-block; }
 .modal_content .cloud_multi_selector_list ul { display: inline-block; padding-left: 12px; }
 .modal_content .cloud_multi_selector_list li.hidden { display: none; }
+
+.cloud_flip_hint { height: 100%; position: absolute; text-align: center; width: 100%; }
+.cloud_flip_hint_wrap { display: inline-block; padding: 100px 16px; }
+.cloud_flip_hint .on { background: [[MAIN_DARK]]; }
+.cloud_flip_hint .off { background: [[MEDIUM_GREY]];}
+.cloud_flip_hint .partial { background: [[MAIN_LIGHT]]; }
+.cloud_flip_hint .flip_icon { 
+  background: url("/i/32/reload.png") no-repeat 8px center; 
+  display: inline-block; 
+  height: 32px; 
+  width: 32px; 
+  margin-bottom: -11px; 
+}
+.cloud_flip_hint .error_pad { padding: 24px 8px; }
 .cloud_filter_clear { font-size: 80%; }
 .cloud_filter { border-bottom: 2px solid grey; padding-bottom: 8px; text-align: center; }
-.cloud_filter .ftext { border: 2px solid #667aa6; font-size: 150%; width: 50%; }
-.cloud_all_none { text-align: center; margin: 8px 0 0 0; }
-.cloud_all_none .none { background: none repeat scroll 0 0 #628e4e; border: 1px solid #628e4e; color: white; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
-.cloud_all_none .all { background: none repeat scroll 0 0 #8e4e62; border: 1px solid #8e4e62; color: white; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
+.cloud_filter .ftext { border: 2px solid [[MAIN_DARK]]; font-size: 120%; font-style: italic; width: 50%; }
+
+.cloud_all_none { 
+  text-align: center; 
+  margin: 8px 0 0 0; 
+}
+.cloud_all_none .none { background-color: [[OK_DARK]]; }
+.cloud_all_none .all { background-color: [[SEVERE_DARK]]; }

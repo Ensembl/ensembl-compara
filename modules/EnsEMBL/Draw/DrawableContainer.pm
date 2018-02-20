@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,6 +48,9 @@ sub new {
   my $self            = $class->_init(@_); 
   my $primary_config  = $self->{'config'};
   my $legend          = {};
+
+  ## Enable caching between glyphsets - useful for campara views
+  $self->{'feature_cache'} = {};
   
   ## Parameters used by private methods - easier to pass this way
   my $options = {
@@ -309,6 +312,7 @@ sub _create_glyphsets {
                       highlights  => $self->{'highlights'},
                       display     => $display,
                       legend      => $legend,
+                      feature_cache => $self->{'feature_cache'},
                   });
     };
         

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ sub gene_phenotypes {
     if ($species eq 'Mouse') {
       my $features;
       foreach my $pf (@{$pfa->fetch_all_by_Gene($obj)}) {
-        my $phen   = $pf->phenotype->description;
+        my $phe    = $pf->phenotype->description;
         my $ext_id = $pf->external_id;
         my $source = $pf->source_name;
         my $strain = $pf->strain;
@@ -96,29 +96,31 @@ sub gene_phenotypes {
           }
         }
 
-        my $locs = sprintf(
-            '<a href="%s">View</a>',
+        my $phe_url = sprintf(
+            '<a href="%s" title="%s">%s</a>',
             $hub->url({
               type    => 'Phenotype',
               action  => 'Locations',
               ph      => $pf->phenotype->dbID
              }),
+             'View associate loci',
+             $phe
         );
+
         # display one row for phenotype associated with male and female strain
-        my $key = join("\t", ($phen, $strain_name, $allele_symbol));
+        my $key = join("\t", ($phe, $strain_name, $allele_symbol));
         $features->{$key}->{source} = $source;
         push @{$features->{$key}->{gender}}, $strain_gender;
-        $features->{$key}->{locations} = $locs;
+        $features->{$key}->{url} = $phe_url;
         $features->{$key}->{pmid} = $pmids;
       }
       foreach my $key (sort keys %$features) {
         my ($phenotype, $strain_name, $allele_symbol) = split("\t", $key);
         push @rows, {
           source => $features->{$key}->{source},
-          phenotype => $phenotype,
+          phenotype => $features->{$key}->{url},
           allele => $allele_symbol,
           strain => $strain_name .  " (" . join(', ', sort @{$features->{$key}->{gender}}) . ")",
-          locations => $features->{$key}->{locations},
           study => $features->{$key}->{pmid}
         };
       }
@@ -151,15 +153,17 @@ sub gene_phenotypes {
         $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} };
         $phenotypes{$phe}{'source'}{$source_url} = 1;
 
-        my $locs = sprintf(
-          '<a href="%s">View</a>',
+        my $phe_url = sprintf(
+          '<a href="%s" title="%s">%s</a>',
           $hub->url({
             type    => 'Phenotype',
             action  => 'Locations',
             ph      => $pf->phenotype->dbID
           }),
+          'View associate loci',
+          $phe
         );
-        $phenotypes{$phe}{'locations'} = $locs;
+        $phenotypes{$phe}{'url'} = $phe_url;
 
         my $allelic_requirement = '-';
         if ($self->_inheritance($attribs)) {
@@ -183,8 +187,7 @@ sub gene_phenotypes {
 
         push @rows, {
           source    => join(', ', keys(%{$phenotypes{$phe}{'source'}})),
-          phenotype => $phe,
-          locations => $phenotypes{$phe}{'locations'},
+          phenotype => $phenotypes{$phe}{'url'},
           allelic   => ($phenotypes{$phe}{'allelic_requirement'}) ? join(', ', keys(%{$phenotypes{$phe}{'allelic_requirement'}})) : '-',
           study     => $study
         };
@@ -204,7 +207,6 @@ sub gene_phenotypes {
     }
     if ($species eq 'Mouse') {
       push @columns, (
-        { key => 'locations', align => 'left', title => 'Associated loci' },
         { key => 'strain',    align => 'left', title => 'Strain'    },
         { key => 'allele',    align => 'left', title => 'Allele'    }
       );     
@@ -213,7 +215,6 @@ sub gene_phenotypes {
       if ($has_allelic == 1) {
         push @columns, { key => 'allelic', align => 'left', title => 'Allelic requirement' , help => 'Allelic status associated with the disease (monoallelic, biallelic, etc)' };      
       }
-      push @columns, { key => 'locations', align => 'left', title => 'Associated loci' };
       $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_sort no_col_toggle', sorting => [ 'phenotype asc' ], exportable => 1 })->render;
     }
   }

@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -417,6 +417,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         });
 
         hoverLabel = panel.elLk.hoverLabels.filter('.' + hoverLabel);
+
+        var share_url = hoverLabel.find('.hl-content ._copy_url').val();
+        // Create an href from <a> and get a valid url
+        hoverLabel.find('.hl-content ._copy_url').val(($('<a/>', {'href': share_url})).prop('href'));
 
         if (hoverLabel.length) {
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
@@ -937,7 +941,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.positionAreas(-heightChange);
     this.positionLayers();
     this.removeShare();
-    this.highlightImage(this.imageNumber, 0);
+    Ensembl.EventManager.trigger('removeShare')
+
+    Object.keys(this.highlightRegions) > 0 && this.highlightImage(this.imageNumber, 0);
     this.markLocation(Ensembl.markedLocation);
 
     return true;

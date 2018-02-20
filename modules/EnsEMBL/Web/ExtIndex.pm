@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ sub do_http_request {
 
   if (!$self->{'_ua'}) {
     $self->{'_ua'} = LWP::UserAgent->new;
-    $self->{'_ua'}->proxy([qw(http https)], $_) for $self->hub->species_defs->ENSEMBL_WWW_PROXY || ();
+    $self->{'_ua'}->proxy([qw(http https)], $_) for $self->hub->web_proxy || ();
   }
 
   my $response = $self->{'_ua'}->request(HTTP::Request->new($method, $service_url));

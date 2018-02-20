@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,13 +42,12 @@ sub regulation_content {
   $self->add_entry({ type => "Cell Type", label => $cell_line });
   $self->add_entry({ type => "Description", label => $epi->description });
 
-  ## Roadmap Epigenomics xref
-#  my $xra     = $dba->get_DBEntryAdaptor;
-#  my ($xref)  = grep { $_->dbname =~ /EpiRR/i} @{$epi->get_all_DBEntries||[]};
-#  if ($xref) {
-#    my $epi_rr = $hub->get_ExtURL_link($xref->primary_id, 'EPI_RR', $xref->primary_id);
-#    $self->add_entry({'type' => 'EpiRR', 'label_html' => $epi_rr});
-#  }
+  ## Roadmap Epigenomics link
+  my $epirr = $epi->epirr_accession;
+  if ($epirr) {
+    my $epirr_link = $hub->get_ExtURL_link($epirr, 'EPI_RR', $epirr);
+    $self->add_entry({'type' => 'EpiRR', 'label_html' => $epirr_link});
+  }
 
   if(grep { $_ eq $context->{'image_config'} } qw(regulation_view)) {
     my $cell_type_url = $self->hub->url('MultiSelector', {

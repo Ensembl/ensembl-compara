@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -182,8 +182,8 @@ sub content {
     $html     .= "<h2>Features overlapping $vname:</h2>";
   }
   
-  $html .= $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
-  $html .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
+  $html .= $self->structural_variation_table($slice, 'Structural variants',        'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
+  $html .= $self->structural_variation_table($slice, 'Copy number variant probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
   $html .= $self->regulatory_feature_table($var_slice,  $vname, $image_config) if $hub->species_defs->databases->{'DATABASE_FUNCGEN'};
   $html .= $self->constrained_element_table($var_slice, $vname);
   
@@ -243,9 +243,7 @@ sub regulatory_feature_table {
     }
   }
 
-  if ( !$rows || scalar(@{$rows}) < 1 ) {
-    return '<p>No regulatory features associated with this variant.</p>';
-  }
+  return '' if ( !$rows || scalar(@{$rows}) < 1 );
   
   return $self->toggleable_table('Regulatory features', 'reg', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
 }
@@ -283,9 +281,7 @@ sub constrained_element_table {
     }
   }
 
-  if ( !$rows || scalar(@{$rows}) < 1 ) {
-    return '<p>No constrained elements associated with this variant.</p>';
-  }
+  return '' if ( !$rows || scalar(@{$rows}) < 1 );
   
   return $self->toggleable_table('Constrained elements', 'cons', $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), 1);
 }

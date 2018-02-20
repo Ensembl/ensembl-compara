@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -97,38 +97,60 @@ sub content_ajax {
             $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $count;
           }
 
-          my $contigviewbottom = join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'});
-          my $location_view = ($hub->referer->{ENSEMBL_TYPE} eq 'Location' && $hub->referer->{ENSEMBL_ACTION} eq 'View') ? 1 : 0;
+          my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
+          #my $config      = $page_action eq 'Multi' ? 'multibottom' : 'contigviewbottom';
+          #my $param_string = join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'});
+          my $location_view = ($hub->referer->{ENSEMBL_TYPE} eq 'Location' && ($page_action eq 'View' || $page_action eq 'Multi')) ? 1 : 0;
+          my $link_params = {
+                              species  => $data->{'species'},
+                              type     => 'Location',
+                              action   => $page_action,
+                              function => undef,
+                              r        => $nearest,
+                              __clear => 1
+                            };
+
+          my $multi_params = {};
+          if ($page_action eq 'Multi') {
+            foreach (keys %{$hub->referer->{'params'}}) {
+              next unless $_ =~ /^([r|s])\d*$/;
+              if ($1 eq 'r') {
+                $multi_params->{'region'}{$_} = $hub->referer->{'params'}{$_}[0];
+              }
+              else {
+                $multi_params->{'species'}{$_} = $hub->referer->{'params'}{$_}[0];
+              }
+            }
+            ## Link to nearest - can't use region parameters as may well be wrong!
+            while (my($p, $v) = each (%{$multi_params->{'species'}})) {
+              $link_params->{$p} = $v;
+            }
+          }
+
+          my $nearest_url = $hub->url($link_params);
+
+          ## Now create link back to current page
+          $link_params->{'r'} = $hub->referer->{'params'}{'r'}[0];
+          if ($page_action eq 'Multi') {
+            while (my($p, $v) = each (%{$multi_params->{'region'}})) {
+              $link_params->{$p} = $v;
+            }
+          }
+          my $current_url = $hub->url($link_params);
 
           $html .= sprintf('
                 <br>
                 <p><strong>Go to%s:</strong></p>
                 <ul>
-                  <li>%s region with data: <a href="%s;contigviewbottom=%s">%s</a></li>
-                  <li>Current region: <a href="%s;contigviewbottom=%s">%s</a></li>
+                  <li>%s region with data: <a href="%s">%s</a></li>
+                  <li>Current region: <a href="%s">%s</a></li>
                 </ul>
                 <p class="space-below">or</p>',
                 !$location_view ? ' Location view' : '',
                 $hub->referer->{'params'}{'r'} ? 'Nearest' : 'First',
-                $hub->url({
-                  species  => $data->{'species'},
-                  type     => 'Location',
-                  action   => 'View',
-                  function => undef,
-                  r        => $nearest,
-                  __clear => 1
-                }),
-                $contigviewbottom,
+                $nearest_url,
                 $nearest,
-                $hub->url({
-                  species  => $data->{'species'},
-                  type     => 'Location',
-                  action   => 'View',
-                  function => undef,
-                  r        => $hub->param('r'),
-                  __clear => 1
-                }),
-                $contigviewbottom,
+                $current_url,
                 $hub->param('r')
               );
         }

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ sub availability {
         })->[0];
 
       $availability->{'has_gxa'} = $self->gxa_check;
+      $availability->{'has_pathway'} = $self->pathway_check;
       $availability->{'logged_in'} = $self->user ? 1 : 0;
     } elsif ($obj->isa('Bio::EnsEMBL::Compara::Family')) {
       $availability->{'family'} = 1;
@@ -514,6 +515,7 @@ sub feature_length              { return $_[0]->Obj->feature_Slice->length; }
 sub get_latest_incarnation      { return $_[0]->Obj->get_latest_incarnation; }
 sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived; }
 sub gxa_check                   { return; } #implemented in widget plugin, to check for gene expression atlas availability
+sub pathway_check               { return; } #implemented in widget plugin, to check for plant reactome availability
 
 
 sub get_database_matches {
@@ -830,6 +832,7 @@ sub fetch_homology_species_hash {
   my $name_lookup          = $self->hub->species_defs->production_name_lookup;
   my ($homologies, $classification, $query_member) = $self->get_homologies($homology_source, $homology_description, $compara_db);
   my %homologues;
+  my $missing;
 
   foreach my $homology (@$homologies) {
     my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio, $goc_score, $wgac, $highconfidence, $goc_threshold, $wga_threshold);
@@ -854,11 +857,23 @@ sub fetch_homology_species_hash {
 
     ## In case of data bugs, make sure this is a genuine node
     my $species_tree_node = eval { $homology->species_tree_node(); };
-    next unless $species_tree_node;
-
     my $species_url = $name_lookup->{$genome_db_name};
 
-    push @{$homologues{$species_url}}, [ $target_member, $homology->description, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
+    if ($species_tree_node) {
+      push @{$homologues{$species_url}}, [ $target_member, $homology->description, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID, $goc_score, $goc_threshold, $wgac, $wga_threshold, $highconfidence ];    
+    }
+    else {
+      $missing++; 
+    }
+  }
+
+  if ($missing && $self->hub->action ne 'Phenotype') { 
+    $self->hub->session->set_record_data({
+        'type'      => 'message',
+        'function'  => '_info',
+        'code'      => 'mouse_strain_bug',
+        'message'   => sprintf 'Homology data for mouse strains is missing from this release. Please visit the <a href="http://e88.ensembl.org%s">release 88 archive site</a> to view this data', $self->hub->url,
+      });
   }
 
   @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;  
@@ -1481,10 +1496,7 @@ sub get_extended_reg_region_slice {
 
 
   my $fg_db = $self->get_fg_db;
-  my $fg_slice_adaptor = $fg_db->get_SliceAdaptor;
-  my $fsets = $self->feature_sets;
-  my $gr_slice = $fg_slice_adaptor->fetch_by_Gene_FeatureSets($self->Obj, $fsets);
-  $gr_slice = $gr_slice->invert if $gr_slice->strand < 1; ## Put back onto correct strand!
+  my $gr_slice = $object_slice;
 
 
   ## Now we need to extend the slice!! Default is to add 500kb to either end of slice, if gene_reg slice is
@@ -1541,7 +1553,7 @@ sub reg_factors {
   my $fsets = $self->feature_sets;
   my $fg_db= $self->get_fg_db;
   my $ext_feat_adaptor = $fg_db->get_ExternalFeatureAdaptor;
-  my $fg_slice_adaptor = $fg_db->get_SliceAdaptor;
+  
   my $slice = $self->get_extended_reg_region_slice;
   my $factors_by_gene = $ext_feat_adaptor->fetch_all_by_Gene_FeatureSets($gene, $fsets, 1);
   my $factors_by_slice = $ext_feat_adaptor->fetch_all_by_Slice_FeatureSets($slice, $fsets);

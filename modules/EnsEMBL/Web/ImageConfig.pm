@@ -273,6 +273,15 @@ sub update_from_url {
 
   $self->save_user_settings if $self->is_altered;
 
+  if ($self->is_altered) {
+    my $tracks = join(', ', grep $_ ne '1', @{$self->altered});
+    $self->hub->session->set_record_data({
+      'type'      => 'message',
+      'function'  => '_info',
+      'code'      => 'image_config',
+      'message'   => "The link you followed has made changes to these tracks: $tracks.",
+    });
+  }
   return $self->is_altered;
 }
 
@@ -380,7 +389,6 @@ sub update_track_axes {
   if ($key =~ /^(upload|url)_/) {
     my ($type, $code, $record_id) = split('_', $key);
     $record = $self->hub->session->get_record_data({'type' => $type, 'code' => sprintf '%s_%s', $code, $record_id});
-    warn $record;
     if ($record) {
       $record->{'y_min'} = $y_min if defined $y_min;
       $record->{'y_max'} = $y_max if defined $y_max;
@@ -864,10 +872,10 @@ sub get_shareable_settings {
   my (%share_data, %done_record);
 
   foreach my $data_menu (@data_menus) {
-    my $linked_record = $data_menu->get_data('linked_record');
+    my $parent_linked_record = $data_menu->get_data('linked_record');
 
     foreach my $track (@{$data_menu->get_all_nodes}) {
-      $linked_record ||= $track->get_data('linked_record');
+      my $linked_record = $track->get_data('linked_record') || $parent_linked_record;
 
       next unless $linked_record;
 

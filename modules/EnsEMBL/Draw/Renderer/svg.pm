@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -94,6 +94,7 @@ sub class {
     }
     return qq(class="$class");
 }
+
 sub style {
     my ($self, $glyph,$colour) = @_;
     my $gcolour       = $colour || $glyph->colour();
@@ -101,10 +102,16 @@ sub style {
     my $opacity       = sprintf '%.1f', 1 - ($glyph->{'alpha'} || 0);
        $opacity       = int $opacity if int $opacity == $opacity;
 
-    my $style = 
-      defined $gcolour ?        qq(fill:).$self->svg_rgb_by_id($gcolour).qq(;opacity:$opacity;stroke:none;) :
-      defined $gbordercolour ?  qq(fill:none;opacity:$opacity;stroke:).$self->svg_rgb_by_id($gbordercolour).qq(;) :
-                                qq(fill:none;stroke:none;);
+    my $style = defined $gcolour ? 'fill:'.$self->svg_rgb_by_id($gcolour).qq(;opacity:$opacity;)
+                                 : 'fill:none;';
+    
+    if (defined $gbordercolour) {
+      $style .= 'stroke:'.$self->svg_rgb_by_id($gbordercolour).';'; 
+    }
+    else {
+      $style .= 'stroke:none;';
+    }
+    
     return $self->class($style);
 }
 

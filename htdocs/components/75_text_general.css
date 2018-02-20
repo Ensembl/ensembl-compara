@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,14 +61,14 @@ pre.wrap              { white-space: pre-wrap; }
 ----------------------------------------------------------------------*/
 
 /* TO REVISIT? - NUMBERS DON'T CORRESPOND 1:1 WITH TEMPLATE ONES! */
-.bg1    { background: [[PAGE_BG]];         }
-.bg2    { background: [[TINT_BG]];         }
-.bg3    { background: [[NEUTRAL_BG]];      }
-.bg4    { background: [[CONTRAST_BG]];     }
-.hilite { background: [[CONTRAST_BORDER]]; }
-.red    { color: #933; }
+.bg1    { background: [[WHITE]];         }
+.bg2    { background: [[MAIN_V_LIGHT]];         }
+.bg3    { background: [[V_LIGHT_GREY]];      }
+.bg4    { background: [[CONTRAST_MEDIUM]];     }
+.hilite { background: [[CONTRAST_DARK]]; }
+.red    { color: [[SEVERE_DARK]] }
 
-hr { display:block; height:4px; border:0; border-top: 4px solid [[MH_TAB]]; margin: 1em 0; padding: 0; }
+hr { display:block; height:4px; border:0; border-top: 4px solid [[MAIN_DARK]]; margin: 1em 0; padding: 0; }
 
 /*----------------------------------------------------------------------
   Columns and boxes 
@@ -78,6 +78,7 @@ div.column-wrapper          { overflow: hidden; position:relative; } /* wraps th
 div.column-two              { float: left; width:50%;       } /* actual column for 2 col layout */
 div.column-three            { float: left; width:33.3%;     } /* actual column for 3 col layout */
 div.column-four             { float: left; width:25%;       } /* actual column for 4 col layout */
+div.column-six              { float: left; width:16.6%;       } /* actual column for 6 col layout */
 div.column-padding          { margin-left: 0.5em; margin-right: 0.5em; } /* inner div for columns to provide padding */
 
 div.column-left             { margin-left: 0;       margin-right: 0.5em; }
@@ -88,6 +89,9 @@ div.box-left                { width:49.5%; float:left; margin-left: 0; margin-ri
 div.box-right               { width:49.5%; float:right; margin-left: 0.5%; margin-right: 0; }
 div.column-twothird         { float:left; width: 66.7% }
 
+div.column-forty            { float:left; width: 40%; }
+div.column-sixty            { float:left; width: 60%; }
+
 /* IE 6 & 7 hacks for above */
 body.ie67 div.column-wrapper,
 body.ie67 div.column-two,
@@ -97,7 +101,7 @@ body.ie67 div.column-left,
 body.ie67 div.column-middle,
 body.ie67 div.column-right,
 body.ie67 div.box-left,
-body.ie67 div.box-right,,
+body.ie67 div.box-right,
 body.ie67 div.column-padding  { zoom: 100% }
 
 
@@ -127,21 +131,17 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 
 .plain-box, .tinted-box,
 .info-box,  .round-box,
-.alert-box, .embedded-box { color:[[PANEL_TEXT]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
-.plain-box                { background-color:[[PANEL_BG]]; border-color: [[PANEL_BORDER]]; }
-.shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
+.alert-box, .embedded-box { color:[[DARK_GREY]]; padding: 16px 16px 0; margin-bottom:16px; border-width: 1px; border-style: solid; overflow: hidden; }
+.plain-box                { background-color:[[WHITE]]; border-color: [[PALE_GREY]]; }
+.shadow-box               { box-shadow: 2px 2px 4px [[PALE_GREY]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
-.bordered     { border:1px solid [[PANEL_BORDER]]; }
+.bordered     { border:1px solid [[PALE_GREY]]; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
 .unbordered p { margin-bottom:8px; }
-.tinted-box   { background-color:[[TINT_BG]]; border-color: [[TINT_BORDER]]; }
-.tinted-box a       { color:[[TINT_LINK]]; }
-.tinted-box a:hover { color: [[PAGE_HOVER]];   }
-.info-box     { background-color:[[CONTRAST_BG]]; border-color:[[CONTRAST_BORDER]]; }
-.info-box a       { color:[[CONTRAST_LINK]]; }
-.info-box a:hover { color: [[PAGE_HOVER]];   }
-.alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
+.tinted-box   { background-color:[[MAIN_LIGHT]]; border-color: [[MAIN_MEDIUM]]; }
+.info-box     { background-color:[[CONTRAST_MEDIUM]]; border-color:[[CONTRAST_DARK]]; }
+.alert-box    { background-color:[[MODERATE_LIGHT]]; border-color:[[MODERATE_DARK]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
 
@@ -178,9 +178,9 @@ ul.no-bullet, ul.no-bullet li   { list-style-image: none; list-style: none; }
 
 code { font: 1em andale mono, courier new, courier, monospace; font-weight: bold; }
 
-.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; padding: 8px !important; overflow: auto; }
+.code     { border: 1px solid [[PALE_GREY]]; background: [[V_LIGHT_GREY]]; padding: 8px !important; overflow: auto; }
 
-.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, courier new, courier, monospace; color: [[CONTRAST_BG]] }
+.code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, courier new, courier, monospace; color: [[CONTRAST_LIGHT]] }
 .code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
 .code pre { display: inline-block; }
 

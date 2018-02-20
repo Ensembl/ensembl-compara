@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ sub _render_toolbars {
     $extra_html //= '';
     my $top    = $self->toolbars->{'top'} ? qq(<div class="image_toolbar top print_hide">$toolbar</div>$extra_html) : '';
     ### Force a toolbar if the image is long enough to disappear off most screens!
-    my $bottom = ($self->toolbars->{'bottom'} || $self->height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $extra_html : '';
+    my $bottom = ($self->toolbars->{'bottom'} || ($self->height && $self->height > 999)) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : $extra_html : '';
     @toolbars = ($top, $bottom);
   }
 

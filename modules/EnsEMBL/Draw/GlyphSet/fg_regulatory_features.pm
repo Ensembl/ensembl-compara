@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -57,19 +57,16 @@ sub get_data {
     warn ("Cannot get get adaptors: $rfa");
     return [];
   }
- 
+   
   ## OK, looking good - fetch data from db 
   my $cell_line = $self->my_config('cell_line');  
   my $config      = $self->{'config'};
-  my $fsets;
   if ($cell_line) {
-    my $fsa = $db->get_FeatureSetAdaptor;
-    $fsets  = $fsa->fetch_by_name($cell_line);
     my $ega = $db->get_EpigenomeAdaptor;
     my $epi = $ega->fetch_by_name($cell_line);
     $self->{'my_config'}->set('epigenome', $epi);
   }
-  my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}, $fsets); 
+  my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}); 
 
   my $drawable        = []; 
   my $entries         = $self->{'legend'}{'fg_regulatory_features_legend'}{'entries'} || {};
@@ -114,29 +111,38 @@ sub get_data {
       }
     }
 
-    my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $colour);
-    $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
-    ## Add motif box  at end of feature types
-    $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
-
-    my $params = {
-      start         => $rf->start,
-      end           => $rf->end,
-      label         => $text,
-      href          => $self->href($rf),
-      extra_blocks  => $extra_blocks,
+    ## Basic feature
+    my $feature = {
+        start         => $rf->start,
+        end           => $rf->end,
+        label         => $text,
+        colour        => $colour,
+        href          => $self->href($rf),
     };
+
     if ($pattern || $bordercolour) {
-      $params->{'pattern'}        = $pattern;
-      $params->{'patterncolour'}  = $patterncolour;
-      $params->{'colour'}         = $colour;
-      $params->{'bordercolour'}   = $bordercolour;
-    }
-    else {
-      $params->{'colour'} = $colour;
+      $feature->{'pattern'}        = $pattern;
+      $feature->{'patterncolour'}  = $patterncolour;
+      $feature->{'bordercolour'}   = $bordercolour;
     }
 
-    push @$drawable, $params;
+    ## Add flanks and motif features, except on Genoverse where it's currently way too slow
+    if ($self->{'container'}->length < 1000000) {
+      my $appearance = {'colour' => $colour};
+      if ($pattern) {
+        $appearance->{'pattern'}        = $pattern;
+        $appearance->{'patterncolour'}  = $patterncolour;
+      }
+      my ($extra_blocks, $flank_colour, $has_motifs) = $self->get_structure($rf, $type, $activity, $appearance);
+    
+      ## Extra legend items as required
+      $entries->{'promoter_flanking'} = {'legend' => 'Promoter Flank', 'colour' => $flank_colour} if $flank_colour;
+      $entries->{'x_motif'} = {'legend' => 'Motif feature', 'colour' => 'black', 'width' => 4} if $has_motifs;
+      $feature->{extra_blocks}  = $extra_blocks;
+    }
+
+    ## OK, done
+    push @$drawable, $feature;
   }
 
 
@@ -157,8 +163,14 @@ sub get_data {
   }];
 }
 
+sub features {
+  my $self    = shift;
+  my $data = $self->get_data;
+  return $data->[0]{'features'};
+}
+
 sub get_structure {
-  my ($self, $f, $type, $activity, $colour) = @_;
+  my ($self, $f, $type, $activity, $appearance) = @_;
 
   my $hub = $self->{'config'}{'hub'};
   my $epigenome = $self->{'my_config'}->get('epigenome') || '';
@@ -175,11 +187,10 @@ sub get_structure {
   my $bound_end = pop @$loci;
   my $end       = pop @$loci;
   my ($bound_start, $start, @mf_loci) = @$loci;
-  my $flank_colour = $colour;
   my $has_flanking = 0;;
   my $flank_different = 0;
   if ($type eq 'promoter' && $activity eq 'active') {
-    $flank_colour = $self->my_colour('promoter_flanking');
+    $appearance->{'colour'} = $self->my_colour('promoter_flanking');
     $flank_different = 1;
   }
 
@@ -190,15 +201,14 @@ sub get_structure {
     push @$extra_blocks, {
       start  => $bound_start,
       end    => $start,
-      colour => $flank_colour,
+      %$appearance
     },{
       start  => $end,
       end    => $bound_end,
-      colour => $flank_colour,
+      %$appearance
     };
     $has_flanking = 1;
   }
-  $flank_colour = undef unless ($has_flanking && $flank_different);
 
   # Motif features
   my $has_motifs = 0;
@@ -212,7 +222,9 @@ sub get_structure {
       $has_motifs = 1;
     }
   }
-  
+ 
+  ## Need to pass colour back for use in legend 
+  my $flank_colour = ($has_flanking && $flank_different) ? $appearance->{'colour'} : undef;
   return ($extra_blocks, $flank_colour, $has_motifs);
 }
 

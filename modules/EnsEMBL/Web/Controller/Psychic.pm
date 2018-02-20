@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,9 +67,9 @@ sub psychic {
   push @extra,"facet_feature_type=Documentation" if $species eq 'help';
   $species = undef if $dest_site =~ /_all/ or $species eq 'help';
 
-  return $self->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")  if $dest_site eq 'ebi';
-  return $self->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")              if $dest_site eq 'sanger';
-  return $self->redirect("http://www.ensemblgenomes.org/search/eg/$query")                    if $dest_site eq 'ensembl_genomes';
+  return $self->redirect("//www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")  if $dest_site eq 'ebi';
+  return $self->redirect("//www.sanger.ac.uk/search?db=allsanger&t=$query")              if $dest_site eq 'sanger';
+  return $self->redirect("//www.ensemblgenomes.org/search/eg/$query")                    if $dest_site eq 'ensembl_genomes';
 
   my $extra = '';
   if(@extra) {
@@ -81,11 +81,11 @@ sub psychic {
       $url = "/Multi/Search/Results?species=all&idx=All&q=$query";
     } else {
       $url  = "/Multi/Search/Results?species=all&idx=All&q=$query";
-      $site = 'http://vega.sanger.ac.uk';
+      $site = '//vega.sanger.ac.uk';
     }
   } elsif ($site_type eq 'vega') {
     $url  = "/Multi/Search/Results?species=all&idx=All&q=$query";
-    $site = 'http://www.ensembl.org'; 
+    $site = '//www.ensembl.org'; 
   } else {
     $url = "/Multi/Search/Results?species=$species&idx=All&q=$query$extra";
   }

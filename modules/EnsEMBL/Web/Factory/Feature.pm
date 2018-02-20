@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -200,7 +200,7 @@ sub _create_ProbeFeatures_linked_transcripts {
 
     if (!exists $seen{$entry->stable_id}) {
       my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->stable_id);
-      push @transcripts, $transcript;
+      push @transcripts, $transcript if $transcript;
       $seen{$entry->stable_id} = 1;
     }
   }

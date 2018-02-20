@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -113,8 +113,6 @@ sub add_table_columns {
     $table->add_columns({ key => 'stats',  title => 'Statistics', align => 'left', sort => 'none' });
   }
 
-  $table->add_columns({ key => 'locations', align => 'left', title => 'Associated loci' });
-  
   return $table;
 }
 
@@ -252,13 +250,13 @@ sub table_data {
       if ($pf->adaptor->count_all_by_phenotype_id($id) > 250) {
         $disease_url = $mart_somatic_url;
         $disease_url =~ s/###PHE###/$phenotype/;
-        $locations = qq{<a href="$disease_url">View list in BioMart</a>};
+        $disease = qq{<a href="$disease_url" title="View list in BioMart">$disease</a>};
         $bm_flag = 1;
       }
     }
-    # Karyotype link
+    # Associate loci link
     if ($bm_flag == 0) {
-      $locations = qq{<a href="$disease_url">View</a>} unless ($disease =~ /HGMD/);
+      $disease = qq{<a href="$disease_url" title="View associate loci">$disease</a>} unless ($disease =~ /HGMD/);
     }
 
     # Stats column
@@ -345,8 +343,7 @@ sub table_data {
       genes     => ($gene) ? $gene : '-',
       allele    => ($allele) ? $allele : '-',
       variant   => ($variant_link) ? $variant_link : '-',
-      stats     => $stats_values,
-      locations => $locations
+      stats     => $stats_values
     };
 
     my $term_html = '-';

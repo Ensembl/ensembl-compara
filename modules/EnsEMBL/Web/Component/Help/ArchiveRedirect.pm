@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ sub top_message {
 sub content {
   my $self      = shift;
   my $content   = $self->SUPER::content(@_);
-  my $url_path  = ($self->hub->param('src') || '') =~ s/^.+\.[^\/]+//r; # remove the hostname
+  my $url_path  = ($self->hub->param('src') || '') =~ s/^.+?\.[^\/]+//r; # remove the hostname
 
   return $content =~ s/href\=\"([^\"]+\.[^\/\"]+)[^\"]*\"/href="$1$url_path"/gr; # replace url paths for all the links in the page
 }

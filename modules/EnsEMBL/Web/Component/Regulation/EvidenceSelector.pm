@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ sub content_ajax {
   $self->{'category_map'} = \%evidence_categories;
   $self->{'cluster_map'} = \%evidence_clusters;
   $self->{'sort_func'} = \&id_sort;
+  $self->{'extra_params'} = { image_config => $hub->param('image_config') };
 
   $self->SUPER::content_ajax;
 }

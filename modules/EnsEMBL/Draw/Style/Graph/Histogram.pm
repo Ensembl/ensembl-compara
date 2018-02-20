@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ sub draw_wiggle {
     y               => $c->{'y_offset'} || 0,
     height          => $height,
     unit            => $c->{'unit'},
+    min             => $c->{'min_score'},
     max             => $c->{'max_score'},
     colour          => $c->{'colour'},
     truncate_colour => $c->{'truncate_colour'},

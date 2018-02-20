@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,8 +44,6 @@ sub render {
   my %species;
 
   foreach my $sp (@valid_species) {
-    next if ($species_defs->get_config($sp, 'STRAIN_COLLECTION') 
-              && $species_defs->get_config($sp, 'SPECIES_STRAIN') !~ /reference/);
     (my $genebuild = $hub->species_defs->get_config($sp, 'GENEBUILD_METHOD')) =~ s/_/ /g;
     my $genebuild_helptip = glossary_helptip($hub, ucfirst $genebuild);
     my $info    = {
@@ -98,14 +96,14 @@ sub render {
   }
 
   ## Display all the species in data table
-  my $html = "<h3>$sitename Species</h3>";
+  my $html = "<h3>Available genomes</h3>";
 
   if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
     ## Hardcode this because the version is actually updated when the site is upgraded
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="http://www.ensembl.org/">www.ensembl.org</a>.</p></div>);
+    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release 75 - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($sitename =~ /Archive/) {
-    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="http://www.ensembl.org/">www.ensembl.org</a>.</p></div>);
+    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="//www.ensembl.org/">www.ensembl.org</a>.</p></div>);
   }
   elsif ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
     $html .= '<p>Note: to find out which species were in previous releases, please see the <a href="/info/website/archives/assembly.html">table of assemblies</a></p>';
@@ -133,16 +131,16 @@ sub render {
     my $img_url = '/';
     if ($info->{'status'} eq 'pre') {
       $image_fade = 'opacity:0.7';
-      $sp_link    = sprintf('<a href="http://pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $common);
-      $img_url    = 'http://pre.ensembl.org/';
-      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'});
+      $sp_link    = sprintf('<a href="//pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $common);
+      $img_url    = '//pre.ensembl.org/';
+      $pre_link   = sprintf('<a href="//pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'});
     }
     else {
       $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
       $pre_link   = '-';
     }
     $table->add_row({
-        'common' => sprintf('<a href="%s%s/"><img src="/i/species/48/%s.png" alt="%s" style="float:left;padding-right:4px;%s" /></a>%s',
+        'common' => sprintf('<a href="%s%s/"><img src="/i/species/%s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;%s" /></a>%s',
                         $img_url, $dir,  $dir, $common, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
@@ -157,7 +155,7 @@ sub render {
 # if a species is both pre and ensembl we are adding a new row for the pre assembly    
     if ($info->{'status'} eq 'both') {
       $table->add_row({
-          'common' => sprintf('<a href="http://pre.ensembl.org/%s"><img src="/i/species/48/%1$s.png" alt="%s" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="http://pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
+          'common' => sprintf('<a href="//pre.ensembl.org/%s"><img src="/i/species/%1$s.png" alt="%s" class="badge-48" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="//pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
           'species'     => '<i>'.$name.'</i>',
           'taxon_id'    => $info->{'taxon_id'},
           'assembly'    => '-',
@@ -165,7 +163,7 @@ sub render {
           'genebuild'   => '-',
           'variation'   => '-',
           'regulation'  => '-',
-          'pre'         => sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'}),
+          'pre'         => sprintf('<a href="//pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'}),
       });
     } 
   }

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ sub search_options {
   my $species_name  = $species ? $self->species_defs->SPECIES_COMMON_NAME : '';
 
   return [ $species ? (
-    'ensembl'         => { 'label' => "Search $species_name",   'icon' => "species/16/${species}.png"   }) : (),
+    'ensembl'         => { 'label' => "Search $species_name",   'icon' => "species/${species}.png"   }) : (),
     'ensembl_all'     => { 'label' => 'Search all species',     'icon' => 'search/ensembl.gif'          },
     'ensembl_genomes' => { 'label' => 'Search Ensembl genomes', 'icon' => 'search/ensembl_genomes.gif'  },
     'vega'            => { 'label' => 'Search Vega',            'icon' => 'search/vega.gif'             },
@@ -65,7 +65,7 @@ sub content {
     if ($_ % 2 == 0) {
       my $code    = $options->[$_];
       my $details = $options->[$_ + 1];
-      qq(<div class="$code"><img src="${img_url}$details->{'icon'}" alt="$details->{'label'}"/>$details->{'label'}<input type="hidden" value="$details->{'label'}&hellip;" /></div>\n);
+      qq(<div class="$code"><img class="no-sprite" src="${img_url}$details->{'icon'}" class="badge-16" alt="$details->{'label'}"/>$details->{'label'}<input type="hidden" value="$details->{'label'}&hellip;" /></div>\n);
     }
   } 0..scalar @$options - 1;
 
@@ -75,7 +75,7 @@ sub content {
       <form action="$search_url">
         <div class="search print_hide">
           <div class="sites button">
-            <img class="search_image" src="${img_url}$options_hash{$search_code}{'icon'}" alt="" />
+            <img class="search_image no-sprite badge-16" src="${img_url}$options_hash{$search_code}{'icon'}" alt="" />
             <img src="${img_url}search/down.gif" style="width:7px" alt="" />
             <input type="hidden" name="site" value="$search_code" />
           </div>

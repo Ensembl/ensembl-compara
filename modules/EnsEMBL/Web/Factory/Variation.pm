@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use HTML::Entities qw(encode_entities);
+use Scalar::Util qw(isweak);
 
 use base qw(EnsEMBL::Web::Factory);
 
@@ -47,18 +48,22 @@ sub createObjects {
     return $self->problem('fatal', 'Database Error', 'Could not connect to the variation database.') unless $variation_db;
     
     $variation_db->dnadb($core_db);
- 
-    if(!$identifier) {
-      my $vfid = $self->param('vf');
-      my $vf = $variation_db->get_VariationFeatureAdaptor->fetch_by_dbID($vfid);
-      if($vf) {
-        $identifier = $vf->variation->name;
+
+    my $vfid = $self->param('vf');
+
+    if($identifier) {
+      $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier);
+    }
+
+    if(!$variation && $vfid) {
+      if(my $vf = $variation_db->get_VariationFeatureAdaptor->fetch_by_dbID($vfid)) {
+        $identifier = $vf->variation_name;
         $self->param('v',$identifier);
+        $variation = $vf->variation;
+
+        $variation->{variation_feature} = $vf if isweak($variation->{variation_feature});
       }
     }
-    return $self->problem('fatal', 'Variation ID required', $self->_help('A variation ID is required to build this page.')) unless $identifier;
- 
-    $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier);
   }
   
   if ($variation) {

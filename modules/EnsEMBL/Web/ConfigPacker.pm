@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ use warnings;
 no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
-
-use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
@@ -55,7 +53,7 @@ sub munge_rest {
       { no strict; $url =~ s/<<<(.*?)>>>/${"SiteDefs::$1"}/eg; }
       $url =~ s/<<species>>/$self->species/ge;
       my $response = read_file($url,{
-        proxy => $self->full_tree->{'ENSEMBL_WWW_PROXY'},
+        proxy => $SiteDefs::HTTP_PROXY,
         nice => 1,
         no_exception => 1,
       });
@@ -713,7 +711,7 @@ sub _summarise_funcgen_db {
   }
 
   ## Get analysis information about each feature type
-  foreach my $table (qw(probe_feature feature_set result_set regulatory_build)) {
+  foreach my $table (qw(probe_feature peak_calling feature_set alignment regulatory_build)) {
     my $res_aref = $dbh->selectall_arrayref("select analysis_id, count(*) from $table group by analysis_id");
     
     foreach my $T (@$res_aref) {
@@ -792,12 +790,16 @@ sub _summarise_funcgen_db {
     'select vendor, name, array_id from array'
   );
   my $sth = $dbh->prepare(
-    'select pf.probe_feature_id
-       from array_chip ac, probe p, probe_feature pf, seq_region sr, coord_system cs
-       where ac.array_chip_id=p.array_chip_id and p.probe_id=pf.probe_id  
-       and pf.seq_region_id=sr.seq_region_id and sr.coord_system_id=cs.coord_system_id 
-       and cs.is_current=1 and ac.array_id = ?
-       limit 1 
+    '
+    select 
+        probe_feature_id
+    from 
+        array_chip 
+        join probe using (array_chip_id)
+        join probe_feature using (probe_id)
+    where
+         array_id = ?
+    limit 1
     '
   );
   foreach my $row (@$t_aref) {
@@ -901,16 +903,20 @@ sub _summarise_funcgen_db {
 
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
-      select 
-        epigenome.display_label, 
-        feature_set.feature_type_id, 
-        feature_set.feature_set_id
-      from 
-        epigenome 
-      join feature_set using (epigenome_id) 
-      join feature_type using (feature_type_id) 
-      where 
-        class in ($classes) 
+        select
+            epigenome.display_label,
+            peak_calling.feature_type_id,
+            peak_calling.peak_calling_id
+        from
+            peak_calling
+            join feature_type using (feature_type_id)
+            join epigenome using (epigenome_id)
+        where
+            class in ($classes)
+        group by
+            epigenome.display_label,
+            peak_calling.feature_type_id,
+            peak_calling.peak_calling_id
     ));
 
     my $data;
@@ -1065,7 +1071,8 @@ sub _build_compara_mlss {
   my $sth = $dbh->prepare(qq(
     select mlss.method_link_species_set_id,
            ss.species_set_id,
-           ml.method_link_id
+           ml.method_link_id,
+           mlss.url
       from method_link_species_set as mlss
       join species_set as ss
         on mlss.species_set_id = ss.species_set_id
@@ -1074,8 +1081,8 @@ sub _build_compara_mlss {
   ));
   $sth->execute;
   my %mlss;
-  while(my ($mlss_id,$ss_id,$ml_id) = $sth->fetchrow_array) {
-    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id };
+  while (my ($mlss_id, $ss_id, $ml_id, $url) = $sth->fetchrow_array) {
+    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id, URL => $url };
   }
   $dest->{'MLSS_IDS'} = \%mlss;
 }
@@ -1213,13 +1220,8 @@ sub _summarise_compara_db {
   push @$res_aref, $_ for @$res_aref_2;
   
   foreach my $row (@$res_aref) {
-    my ($species1, $species2) = (ucfirst $row->[1], ucfirst $row->[2]);
-    
-    $species1 =~ tr/ /_/;
-    $species2 =~ tr/ /_/;
-    
     my $key = $sections{uc $row->[0]} || uc $row->[0];
-    
+    my ($species1, $species2) = ($row->[1], $row->[2]);
     $self->db_tree->{$db_name}{$key}{$species1}{$species2} = $valid_species{$species2};
   }             
   
@@ -1517,6 +1519,7 @@ sub _munge_meta {
     species.url                   SPECIES_URL
     species.stable_id_prefix      SPECIES_PREFIX
     species.display_name          SPECIES_COMMON_NAME
+    species.common_name           SPECIES_DB_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
     assembly.accession            ASSEMBLY_ACCESSION
@@ -1551,6 +1554,8 @@ sub _munge_meta {
   } else {
     $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
   }
+
+  # my $div = from_json('{"key":"All Divisions","display_name":"All Divisions","is_internal_node":"true","child_nodes":[{"key":"primates","taxa": ["Primates"],"display_name":"Primates","is_internal_node":"true"},{"key":"rodents","taxa": ["Rodentia", "Lagomorpha"],"display_name":"Rodents & Lagomorphs","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"Mice","taxa": ["Mus"],"display_name":"Mice","extras_key":"mouse","is_internal_node":"true"},{"key":"lagomorpha","taxa": ["Lagomorpha"],"display_name":"Lagomorphs","is_internal_node":"true"},{"key":"other_rodents","taxa": ["Rodentia"],"display_name":"Other Rodents","is_internal_node":"true"}]},{"key":"other_mammals","display_name":"Other Mammals","taxa": ["Carnivora", "Cetartiodactyla", "Xenarthra", "Metatheria", "Monotremata"],"is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"carnivores","taxa": ["Carnivora"],"display_name":"Carnivores","is_internal_node":"true"},{"key":"ungulates","taxa": ["Cetartiodactyla"],"display_name":"Ungulates","is_internal_node":"true"},{"key":"other_placental","taxa": ["Xenarthra", "Afrotheria"],"display_name":"Other Placental","is_internal_node":"true"},{"key":"marsupials_monotremes","taxa": ["Metatheria", "Monotremata"],"display_name":"Marsupials and Monotremes","is_internal_node":"true"}]},{"key":"non_vertebrates","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia", "Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha", "Xenopus"],"display_name":"Other Vertebrates","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"bird_and_reptiles","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia"],"display_name":"Birds and Reptiles","is_internal_node":"true"},{"key":"fish","taxa": ["Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha"],"display_name":"Fish","is_internal_node":"true"},{"key":"others","display_name":"Others","is_internal_node":"true"}]},{"key":"other_species","display_name":"Other Species","is_internal_node":"true"}]}');
 
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';

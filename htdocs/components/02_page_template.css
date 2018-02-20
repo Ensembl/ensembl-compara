@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,55 +33,55 @@ body.static #widemain { margin-left: 0; }
 
 
 /* Masthead */
-#masthead                                 { background-color: [[MH_BG]]; color: [[MH_TEXT]]; height: 80px; position: relative; }
+#masthead                                 { background-color: [[MAIN_V_DARK]]; color: [[MAIN_LIGHT]]; height: 80px; position: relative; }
 #masthead.tabs_only                       { height: 80px; }
 #masthead.bar_only                        { height: 100px; }
 #masthead.bar_and_tabs                    { height: 120px; }
-#masthead div                             { background-color: [[MH_BG]] important; }
+#masthead div                             { background-color: [[MAIN_V_DARK]] important; }
 #masthead a,
-#masthead span.disabled                   { color: [[MH_LINK]]; text-decoration: none; outline: none; }
+#masthead span.disabled                   { color: [[WHITE]]; text-decoration: none; outline: none; }
 #masthead a:hover,
-#masthead span.disabled.toggle:hover      { color: [[MH_HOVER]] !important; }
+#masthead span.disabled.toggle:hover      { color: [[HOVER_REVERSE]] !important; }
 #masthead ul                              { list-style: none; margin: 0; padding: 0 }
 #masthead li                              { list-style: none; float: left; text-align: center; white-space: nowrap; }
 #masthead .mh                             { float: left; }
 #masthead ul.tools                        { margin: 19px 0 0 -5px; height: 16px; overflow: hidden; }
-#masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MH_TEXT]]; margin: 0; }
+#masthead ul.tools li                     { padding: 0 10px; border-right: 1px solid [[MAIN_LIGHT]]; margin: 0; }
 #masthead ul.tools li.last                { border: 0; }
 
 #masthead ul.tabs                         { margin: 0; padding: 0; width: 100%; }
-#masthead ul.tabs li                      { background: [[MH_TAB]]; margin: 0 5px 0 2px; padding: 0; border-radius: 10px 10px 0 0; -moz-border-radius: 10px 10px 0 0; -webkit-border-radius: 10px 10px 0 0; }
-#masthead ul.tabs li.active               { background: [[MH_TAB_ACTIVE]] }
+#masthead ul.tabs li                      { background: [[MAIN_DARK]]; margin: 0 5px 0 2px; padding: 0; border-radius: 10px 10px 0 0; -moz-border-radius: 10px 10px 0 0; -webkit-border-radius: 10px 10px 0 0; }
+#masthead ul.tabs li.active               { background: [[WHITE]] }
 #masthead ul.tabs li.long_tab             { display: none; }
 #masthead ul.tabs a,
 #masthead ul.tabs span.dropdown           { display: block; text-decoration: none; padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.dropdown           { padding-left:  0; }
 #masthead ul.tabs span.dropdown.empty     { padding-right: 0; }
 #masthead ul.tabs li.active a,
-#masthead ul.tabs li.active span.dropdown { color: [[PAGE_TEXT]]; font-weight: bold; }
+#masthead ul.tabs li.active span.dropdown { color: [[DARK_GREY]]; font-weight: bold; }
 #masthead ul.tabs span.dropdown a         { display: inline; }
 #masthead ul.tabs span.dropdown a.toggle  { cursor: pointer; padding: 0; font-size: 11px; line-height: 11px; background-image: none; }
 #masthead ul.tabs span.disabled           { padding: 3px 8px 2px; outline: 0; }
 #masthead ul.tabs span.disabled.toggle    { cursor: pointer; }
-#masthead div.dropdown                    { position: absolute; top: 21px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[TINT_BORDER]]; padding-bottom: 5px; }
-#masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; border-bottom: 1px solid [[TINT_BORDER]]; }
+#masthead div.dropdown                    { position: absolute; top: 21px; display: none; background-color: [[MAIN_V_LIGHT]]; border: 1px solid [[MAIN_LIGHT]]; padding-bottom: 5px; }
+#masthead div.dropdown h4                 { margin: 0; padding: 4px 8px; text-align: center; border-bottom: 1px solid [[MAIN_LIGHT]]; }
 #masthead div.dropdown ul                 { padding-top: 4px; }
 #masthead div.dropdown ul li              { display: block; margin: 2px 6px; padding: 0 10px 3px; text-align: left; float: none; }
-#masthead div.dropdown ul li a            { color: [[PAGE_LINK]]; }
+#masthead div.dropdown ul li a            { color: [[LINK]]; }
 #masthead div.dropdown ul li a.bold       { font-weight: bold; font-size: 90%; }
 
 /* New separate species header */
 #masthead div.spbar_holder                      { position: absolute; top: 66px; clear: both; }
-#masthead div.spbar_holder .header              { margin:24px 0 0 8px; color:#fff; }
+#masthead div.spbar_holder .header              { margin:24px 0 0 8px; color:[[WHITE]]; }
 #masthead div.spbar_holder .header span.species { font-size:150%; font-weight:bold; }
 #masthead div.spbar_holder .header span.more    { font-size:120%; }
 #masthead div.spbar_holder .header img          { float: left; vertical-align:middle; 
                                                   height: 32px; width: 32px; margin: -8px 0 0 8px;
-                                                  border: 2px solid [[MH_BORDER]];
+                                                  border: 2px solid [[MAIN_V_DARK]];
                                                   border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; }
 #masthead div.spbar_holder span.dropdown a.toggle { background: none; }
-#masthead div.spbar_holder div.dropdown.species            { width: 505px; }
-#masthead div.spbar_holder div.dropdown.species ul li      { width: 130px; float: left; }
+#masthead div.spbar_holder div.dropdown.species            { width: 720px; }
+#masthead div.spbar_holder div.dropdown.species ul li      { width: 200px; float: left; }
 
 #masthead .logo_holder                    { position: relative; top: 6px; margin-left: 6px; float: left; }
 #masthead .logo_holder .logo-header       { background: url(/i/[[SITE_LOGO]]) no-repeat 0 0; display: inline-block; width: [[SITE_LOGO_WIDTH]]px; height: [[SITE_LOGO_HEIGHT]]px; }
@@ -91,18 +91,18 @@ body.static #widemain { margin-left: 0; }
 #masthead .tabs_holder                    { position: absolute; bottom: 0; clear: both; }
 #masthead div.more                        { display: none; float: left; margin: -16px 7px 0; position: relative; z-index: 250; }
 #masthead div.more a                      { outline: 0; padding: 2px 4px; }
-#masthead div.more a.open                 { border: 1px solid [[MH_BORDER]]; color: [[CONTRAST_TEXT]]; background-color: [[PANEL_BG]]; height: 16px; position: relative; }
-#masthead ul.more_tools                   { display: none; position: absolute; left: 0; top: 18px; border-top: 1px solid [[MH_BORDER]]; font-size: 10px; z-index: 200; }
-#masthead ul.more_tools li                { color: [[CONTRAST_TEXT]]; border: 1px solid [[MH_BORDER]]; border-top: 0; background-color: [[PANEL_BG]]; float: none; text-align: left; margin: 0; padding: 2px; }
-#masthead ul.more_tools li a              { color: [[CONTRAST_TEXT]]; }
+#masthead div.more a.open                 { border: 1px solid [[MAIN_V_DARK]]; color: [[V_DARK_GREY]]; background-color: [[WHITE]]; height: 16px; position: relative; }
+#masthead ul.more_tools                   { display: none; position: absolute; left: 0; top: 18px; border-top: 1px solid [[MAIN_V_DARK]]; font-size: 10px; z-index: 200; }
+#masthead ul.more_tools li                { color: [[V_DARK_GREY]]; border: 1px solid [MAIN_V_DARK]]; border-top: 0; background-color: [[WHITE]]; float: none; text-align: left; margin: 0; padding: 2px; }
+#masthead ul.more_tools li a              { color: [[V_DARK_GREY]]; }
 
 body.mac #masthead                        { font-size: 13px; }
 body.mac #masthead ul.tabs li             { height: 21px; }
 body.mac #masthead div.more a             { padding: 4px; }
 body.mac #masthead .tools_holder          { top: 13px; }
 
-body.ie #masthead ul.tabs li                      { background: url(/i/tab_on_r.gif) no-repeat right top; margin: 0 2px; background-color: [[MH_TAB]]; }
-body.ie #masthead ul.tabs li.active               { background-color: [[MH_TAB_ACTIVE]]; }
+body.ie #masthead ul.tabs li                      { background: url(/i/tab_on_r.gif) no-repeat right top; margin: 0 2px; background-color: [[MAIN_DARK]]; }
+body.ie #masthead ul.tabs li.active               { background-color: [[WHITE]]; }
 body.ie #masthead ul.tabs a,
 body.ie #masthead ul.tabs span.dropdown           { background: url(/i/tab_on_l.gif) no-repeat left top; }
 body.ie #masthead ul.tabs li.active a.toggle      { background: none; }
@@ -119,8 +119,8 @@ body.ie6 #masthead div.toggle h4                  { width: 100%; }
 body.ie6 #masthead div.search_holder              { width: 320px; left: 100%; margin-left: -325px; }
 
 @media print {
-  #masthead   { background: #ffffff; }
-  #masthead a { color: #000000; }
+  #masthead   { background: [[WHITE]]; }
+  #masthead a { color: [[BLACK]]; }
 }
 
 /* Footer */

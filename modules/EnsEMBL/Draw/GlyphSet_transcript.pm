@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1140,7 +1140,7 @@ sub render_text {
     
     next if $target_gene && $gene_id ne $target_gene;
     
-    my $gene_type   = $gene->status . '_' . $gene->biotype;
+    my $gene_type   = $gene->biotype;
     my $gene_name   = $gene->can('display_xref') && $gene->display_xref ? $gene->display_xref->display_id : undef;
     my $gene_source = $gene->source;
     

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -196,8 +196,13 @@ sub render_align_bar {
     
     $self->push($glyph);
 
-    my $ref_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $species, 'SPECIES_COMMON_NAME') || lc $species;
-    my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp || '';
+    my $species_defs  = $config->{'hub'}->species_defs;
+    my $map           = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
+    my $ref_species   = $map->{$species};
+    my $other_species = $map->{$s2sp}; 
+
+    my $ref_species_common_name = lc $species_defs->get_config($ref_species, 'SPECIES_COMMON_NAME');
+    my $other_species_common_name = lc $species_defs->get_config($other_species, 'SPECIES_COMMON_NAME') || '';
     
     # This happens when we have two slices following each other
     if (defined $last_end and ($last_end <= $ss - 1)) {

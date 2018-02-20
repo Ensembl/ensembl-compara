@@ -8,7 +8,7 @@ div.export-formats div {
 div.export-formats img {
   height: 150px;
   width: 200px;
-  border: 1px solid [[PANEL_BORDER]];
+  border: 1px solid [[PALE_GREY]];
 }
 
 
@@ -16,6 +16,6 @@ div.export-formats div {
 }
 
 div.export-formats div.selected {
-  background-color: [[BUTTON_BG]];
-  color: [[BUTTON_TEXT]];
+  background-color: [[MAIN_DARK]];
+  color: [[WHITE]];
 }

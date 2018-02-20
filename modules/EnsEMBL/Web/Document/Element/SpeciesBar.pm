@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,11 +44,6 @@ sub content {
   return '' if $species =~ /^(multi|common)$/i;
   my $assembly = $hub->species_defs->ASSEMBLY_NAME;
 
-  ## Quality flag
-  #(my $text = $hub->species_defs->GENEBUILD_METHOD) =~ s/_/ /g;
-  #my $glossary_helptip = glossary_helptip($hub, ucfirst $text);
-  my $quality = ''; # sprintf '<img src="/i/16/rev/database.png"/> %s', $glossary_helptip;
-
   ## Species header
   my $home_url  = $hub->url({'type' => 'Info', 'action' => 'Index'});
 
@@ -64,14 +59,14 @@ sub content {
     $dropdown = ''; 
   }
   else {
-    $header = sprintf '<img src="/i/species/32/%s.png"><span class="species">%s</span> <span class="more">(%s)</span>', $hub->species, $species, $assembly;
+    $header = sprintf '<img src="/i/species/%s.png" class="badge-32"><span class="species">%s</span> <span class="more">(%s)</span>', $hub->species, $species, $assembly;
     ## Species selector
     $arrow     = sprintf '<span class="dropdown"><a class="toggle species" href="#" rel="species">&#9660;</a></span>';
     $dropdown  = $self->species_list;
   }
 
-  my $content = sprintf '<span class="header"><a href="%s">%s</a></span> %s%s %s', 
-                          $home_url, $header, $arrow, $quality, $dropdown;
+  my $content = sprintf '<span class="header"><a href="%s">%s</a></span> %s %s', 
+                          $home_url, $header, $arrow, $dropdown;
  
   return $content;
 }
@@ -83,8 +78,7 @@ sub init_species_list {
   $self->{'species_list'} = [ 
     sort { $a->[1] cmp $b->[1] } 
     map  [ $hub->url({ species => $_, type => 'Info', action => 'Index', __clear => 1 }), $species_defs->get_config($_, 'SPECIES_COMMON_NAME') ],
-    grep !$species_defs->get_config($_, 'IS_STRAIN_OF'), 
-    $species_defs->valid_species
+    $species_defs->reference_species
   ];
 
   #adding species strain (Mouse strains) to the list above

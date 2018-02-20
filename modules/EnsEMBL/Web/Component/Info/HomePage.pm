@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ sub content {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $common_name  = $species_defs->SPECIES_COMMON_NAME;
+  my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
   my $img_url      = $self->img_url;
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
@@ -59,7 +60,7 @@ sub content {
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     %s',
-    $common_name,
+    $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} ? '<div class="box-right"><div class="round-box info-box unbordered">' . $self->whats_new_text . '</div></div>' : '',
     $self->assembly_text,
@@ -101,6 +102,7 @@ sub assembly_text {
   my $hub               = $self->hub;
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
+  my $species_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   my $sample_data       = $species_defs->SAMPLE_DATA;
   my $ftp               = $self->ftp_url;
   my $assembly          = $species_defs->ASSEMBLY_NAME;
@@ -144,7 +146,7 @@ sub assembly_text {
     
     $ftp ? sprintf(
       '<p><a href="%s/fasta/%s/dna/" class="nodeco">%sDownload DNA sequence</a> (FASTA)</p>', ## Link to FTP site
-      $ftp, lc $species, sprintf($self->{'icon'}, 'download')
+      $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
     ) : '',
     
     $mappings && ref $mappings eq 'ARRAY' ? sprintf(
@@ -207,6 +209,7 @@ sub genebuild_text {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $species      = $hub->species;
+  my $sp_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   my $sample_data  = $species_defs->SAMPLE_DATA;
   my $ftp          = $self->ftp_url;
   my $vega         = $species_defs->SUBTYPE !~ /Archive|Pre/ && $species_defs->get_config('MULTI', 'ENSEMBL_VEGA') || {};
@@ -242,7 +245,7 @@ sub genebuild_text {
     
     $ftp ? sprintf(
       '<p><a href="%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
-      $ftp, lc $species, sprintf($self->{'icon'}, 'download')
+      $ftp, $sp_prod_name, sprintf($self->{'icon'}, 'download')
     ) : '',
     
     $idm_link
@@ -281,9 +284,10 @@ sub compara_text {
 }
 
 sub variation_text {
-  my $self          = shift;
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
+  my $self              = shift;
+  my $hub               = $self->hub;
+  my $species_defs      = $hub->species_defs;
+  my $species_prod_name = $species_defs->get_config($hub->species, 'SPECIES_PRODUCTION_NAME');
   my $html;
 
   if ($hub->database('variation')) {
@@ -324,7 +328,7 @@ sub variation_text {
       
       $ftp ? sprintf(
         '<p><a href="%s/variation/gvf/%s/" class="nodeco">%sDownload all variants</a> (GVF)</p>', ## Link to FTP site
-        $ftp, lc $hub->species, sprintf($self->{'icon'}, 'download')
+        $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
       ) : ''
     );
   } else {
@@ -353,8 +357,9 @@ sub funcgen_text {
   my $sample_data  = $species_defs->SAMPLE_DATA;
   
   if ($sample_data->{'REGULATION_PARAM'}) {
-    my $species = $hub->species;
-    my $ftp     = $self->ftp_url;
+    my $species           = $hub->species;
+    my $species_prod_name = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+    my $ftp               = $self->ftp_url;
     
     return sprintf('
       <div class="homepage-icon">
@@ -383,7 +388,7 @@ sub funcgen_text {
 
       $ftp ? sprintf(
         '<p><a href="%s/regulation/%s/" class="nodeco">%sDownload all regulatory features</a> (GFF)</p>', ## Link to FTP site
-        $ftp, lc $species, sprintf($self->{'icon'}, 'download')
+        $ftp, $species_prod_name, sprintf($self->{'icon'}, 'download')
       ) : '',
     );
   } else {

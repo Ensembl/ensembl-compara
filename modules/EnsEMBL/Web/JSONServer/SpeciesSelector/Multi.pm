@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ use List::MoreUtils qw/ uniq /;
 use URI::Escape qw(uri_escape);
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::IOWrapper::Indexed;
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 
 use parent qw(EnsEMBL::Web::JSONServer::SpeciesSelector);
 
@@ -51,12 +50,12 @@ sub json_fetch_species {
   my $intra_species   = ($hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'INTRA_SPECIES_ALIGNMENTS'} || {})->{'REGION_SUMMARY'}{$primary_species};
   my $chromosomes     = $species_defs->ENSEMBL_CHROMOSOMES;
   my $species_info    = $hub->get_species_info;
-  my (%species, %included_regions);
+  my (%available_species, %included_regions);
 
-  my $final_hash      = {};
-  my $all_species     = {};
+  my $available_species_map = {};
   my $extras = {};
   my $uniq_assembly = {};
+
   # Adding haplotypes / patches
   foreach my $alignment (grep $start < $_->{'end'} && $end > $_->{'start'}, @{$intra_species->{$object->seq_region_name}}) {
     my $type = lc $alignment->{'type'};
@@ -64,13 +63,12 @@ sub json_fetch_species {
     my ($sp, $target) = split '--', $s;
     s/_/ /g for $type, $target;
 
-    $species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
-
+    $available_species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
     my $tmp = {};
-    $tmp->{scientific} = $s;
+    $tmp->{scientific_name} = $s;
     $tmp->{key} = $s;
     if (grep($target eq $_, @$chromosomes)) {
-      $tmp->{common} = 'Chromosome ' . "$target";
+      $tmp->{display_name} = 'Chromosome ' . "$target";
       $tmp->{assembly_target} = $target;
       if (!$uniq_assembly->{$target}) {
         push @{$extras->{$sp}->{'primary assembly'}->{data}}, $tmp;
@@ -81,12 +79,13 @@ sub json_fetch_species {
       }
     }
     else {
-      $tmp->{common} = "$target";
+      $tmp->{display_name} = "$target";
+      $extras->{$sp}->{'haplotypes and patches'}->{create_folder} = 1;
       push @{$extras->{$sp}->{'haplotypes and patches'}->{data}}, $tmp;
     }
   }
 
-  foreach (grep !$species{$_}, keys %shown) {
+  foreach (grep !$available_species{$_}, keys %shown) {
     my ($sp, $target) = split '--';
     $included_regions{$target} = $intra_species->{$target} if $sp eq $primary_species;
   }
@@ -98,7 +97,7 @@ sub json_fetch_species {
     foreach (grep $_->{'target_name'} eq $chr, @{$included_regions{$target}}) {
       (my $type = lc $_->{'type'}) =~ s/_/ /g;
       (my $t    = $target)         =~ s/_/ /g;
-      $species{$s} = "$label $t - $type";
+      $available_species{$s} = "$label $t - $type";
     }
   }
 
@@ -109,22 +108,10 @@ sub json_fetch_species {
         my $type = lc $alignment->{'type'};
            $type =~ s/_net//;
            $type =~ s/_/ /g;
-        if ($species{$_}) {
-          $species{$_} .= "/$type";
+        if ($available_species{$_}) {
+          $available_species{$_} .= "/$type";
         } else {
-          $species{$_} = $species_defs->species_label($_, 1) . " - $type";
-          my $tmp = {};
-          $tmp->{scientific} = $_;
-          $tmp->{key} = $_;
-          $tmp->{common} = $species_info->{$_}->{common};
-          if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            # push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}->{data}}, $tmp;
-            # $all_species->{$species_info->{$_}->{strain_collection}} = $tmp;
-          }
-          else {
-            $final_hash->{species_info}->{$_} = $tmp;
-            $all_species->{$_} = $tmp;
-          }
+          $available_species{$_} = $species_defs->species_label($_, 1) . " - $type";
         }
       }
     }
@@ -132,26 +119,25 @@ sub json_fetch_species {
 
   if ($shown{$primary_species}) {
     my ($chr) = split ':', $params->{"r$shown{$primary_species}"};
-    $species{$primary_species} = "$species_label - chromosome $chr";
+    $available_species{$primary_species} = "$species_label - chromosome $chr";
   }
 
-  # Insert missing species into species info for all haplpotypes
+  # create a map of all available species including the haplotypes etc
+  # Insert missing species into species_info for haplpotypes so that
+  # the species is displayed on the tree and thus its children as haplotypes
+  map { $available_species_map->{$_} = 1 } keys %$extras, keys %available_species;
 
-  foreach (keys %$extras) {
-    my $tmp = {};
-    if (!$final_hash->{species_info}->{$_}) {
-      $final_hash->{species_info}->{$_}->{scientific} = $_;
-      $final_hash->{species_info}->{$_}->{key} = $_;
-      $final_hash->{species_info}->{$_}->{common} = $species_info->{$_}->{common};
-    }
-  }
+  my $division_json = $species_defs->ENSEMBL_TAXONOMY_DIVISION;
+  my $sp_assembly_map = $species_defs->SPECIES_ASSEMBLY_MAP;
 
-  my $file = $species_defs->ENSEMBL_SPECIES_SELECT_DIVISION;
-  my $division_json = from_json(file_get_contents($file));
-  my $json = {};
-
-  my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $all_species);
-  my @dyna_tree = $self->json_to_dynatree($division_json, $final_hash->{species_info}, $available_internal_nodes, 1, $extras);
+  $self->{species_selector_data} = {
+    division_json => $division_json,
+    available_species => $available_species_map,
+    internal_node_select => 1,
+    extras => $extras,
+    sp_assembly_map => $sp_assembly_map
+  };
+  my @dyna_tree = $self->create_tree();
 
    return { json => \@dyna_tree };
 }

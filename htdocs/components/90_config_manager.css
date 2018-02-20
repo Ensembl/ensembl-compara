@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,20 @@
 .config_manager table tr a.add_to_set                     { display: inline-block; width: 16px; height: 16px; background-image: url(/i/16/plus-button.png); }
 .config_manager table tr a.add_to_set span                { display: inline-block; width: 100%; }
 .config_manager table tr a.add_to_set span.added          { display: none; }
-.config_manager table tr.added                            { background-color: [[BUTTON_BG]]!important; }
+.config_manager table tr.added                            { background-color: [[MAIN_DARK]]!important; }
 .config_manager table tr.added a.add_to_set               { background-image: url(/i/16/minus-button.png); }
 .config_manager table tr.added a.add_to_set span.added    { display: inline-block; }
 .config_manager table tr.added a.add_to_set span.removed  { display: none; }
-.config_manager table tr.disabled                         { background-color: #AAA!important; }
-.config_manager table tr.disabled *                       { color: #666!important; }
+.config_manager table tr.disabled                         { background-color: [[MEDIUM_GREY]]!important; }
+.config_manager table tr.disabled *                       { color: [[DARK_GREY]]!important; }
 .config_manager table tr.disabled a.add_to_set            { display: none; }
-.config_manager table td.subheader                        { background: [[TABLE_SUBHEADER]]; text-align: left!important; padding-left: 16px; font-weight: bold; }
+.config_manager table td.subheader                        { background: [[MAIN_DARK]]; text-align: left!important; padding-left: 16px; font-weight: bold; }
 .config_manager table td.details                          { padding-left: 26px; text-align: left; }
 .config_manager table td.details ul                       { margin: 0; }
 .config_manager table td.details h4                       { text-decoration: underline; margin-bottom: 8px; }
 .config_manager table td.wrap                             { padding-left: 4px!important; }
 .config_manager table.config-list tr                      { position: relative; } /* to provide offsets to div.config_used */
-.config_manager table td div.config_used                  { position: absolute; left: 0; right : 0; top: 0; bottom: 0; line-height: 26px; display: none; background: [[BUTTON_BG]]; text-align: center; z-index: 100; }
+.config_manager table td div.config_used                  { position: absolute; left: 0; right : 0; top: 0; bottom: 0; line-height: 26px; display: none; background: [[MAIN_DARK]]; text-align: center; z-index: 100; }
 .config_manager table td div.none                         { display: none; word-break: normal; }
 .config_manager table td div.none.show                    { display: block; }
 .config_manager table td .height_wrap                     { overflow: hidden; height: 16px; line-height: 16px; padding-right: 20px; }
@@ -62,7 +62,7 @@
 .share_config.narrow                { width: 300px; }
 .share_config form h2               { font-size: 13px; }
 .share_config fieldset              { position: relative; width: 300px; float: left; }
-.share_config fieldset.group        { padding-left: 31px; border-left: 1px solid [[PANEL_TEXT]]; }
+.share_config fieldset.group        { padding-left: 31px; border-left: 1px solid [[DARK_GREY]]; }
 .share_config .ff-checklist         { position: absolute; right: 0; margin: 0; }
 .share_config label                 { padding-right: 32px; width: auto; font-weight: normal!important; word-break: break-all; }
 .share_config .form-field           { margin-bottom: 16px; }
@@ -124,5 +124,5 @@ table.manage-configs span.delete:hover { background-position: 0 34px; } /* icon 
 
 table.manage-configs tr.user-config span.save { background-position: 0 16px; cursor: default; } /* disable save icon for already user saved config */
 
-div.manage-config-copy-url { position: fixed; background: #fff; width: 300px; margin-left: -150px; padding: 12px; z-index: 9999; border: [[PANEL_TEXT]] solid 1px; }
+div.manage-config-copy-url { position: fixed; background: #fff; width: 300px; margin-left: -150px; padding: 12px; z-index: 9999; border: [[DARK_GREY]] solid 1px; }
 div.manage-config-copy-url input { width: 100%; box-sizing: border-box; }

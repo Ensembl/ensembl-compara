@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ sub availability {
     $availability->{'has_chromosomes'} = scalar @chromosomes;
     $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
     $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->hub->core_param('r');
-    $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$self->species} || {}};
+    $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$species_defs->get_config($self->species, 'SPECIES_PRODUCTION_NAME')} || {}};
     $availability->{'has_LD'}          = $variation_db && $variation_db->{'DEFAULT_LD_POP'};
     $availability->{'has_markers'}     = ($self->param('m') || $self->param('r')) && $self->table_info($self->get_db, 'marker_feature')->{'rows'};
     $availability->{"has_$_"}          = $counts->{$_} for qw(alignments pairwise_alignments);

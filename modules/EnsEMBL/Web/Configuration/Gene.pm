@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -238,10 +238,10 @@ sub populate_tree {
   $self->create_node('Regulation', 'Regulation',
     [qw(
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
-      features   EnsEMBL::Web::Component::Gene::RegulationTable
     )],
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
+      #features   EnsEMBL::Web::Component::Gene::RegulationTable
 
   $self->create_node('Matches', 'External references',
     [qw( 

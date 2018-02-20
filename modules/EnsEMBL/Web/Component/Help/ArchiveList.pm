@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ sub output_link {
     }
   }
   else {
-    $string = sprintf('<li><strong><a href="http://%s.ensembl.org">Ensembl %s</a></strong>: %s', lc($date), $date, $archives->{$release}{'description'});
+    $string = sprintf('<li><strong><a href="//%s.ensembl.org/%s">Ensembl %s</a></strong>: %s', lc($date), $url, $date, $archives->{$release}{'description'});
   }
  
   $string .= '</li>';

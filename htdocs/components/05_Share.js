@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,9 @@ Ensembl.Share = {
   share: function (url, link) {
     var panel = this;
     
+    if (!this.elLk.share) {
+      return;
+    }
     this.shareOptions.positionPopup.call(this, this.elLk.share, link);
     
     this.shareTimeout = setTimeout(function () {
@@ -73,6 +76,8 @@ Ensembl.Share = {
         panel.elLk.shareSpinner.hide();
         
         if (json.url) {
+          json.url = $('<a>').attr('href', json.url).prop('href'); // in case protocol or domain is missing
+
           if (!$('.url', panel.elLk.share).val(json.url).add('.copy', panel.elLk.share).show().length) {
             panel.elLk.share.find('.fbutton').addClass('bottom-margin');
             panel.elLk.shareSpinner.before('<p class="copy">Copy this link:</p><input class="url" type="text" value="' + json.url + '" />');

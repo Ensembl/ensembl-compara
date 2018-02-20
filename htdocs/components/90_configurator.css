@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-div.config_wrapper                            { border-left: 1px solid [[PANEL_BORDER]]; }
 div.config_wrapper div.panel div.content      { padding: 12px 12px 0 }
 div.config_wrapper div.panel div.content form { margin: 0; }
 
 body.ie6 div.config_wrapper                   { border: 0 }
 
 div.modal_content div.configuration_search                          { padding: 3px 11px 0px 3px; }
-div.modal_content div.configuration_search input                    { color: #999999; width: 100%; padding: 3px; background-color: [[CONTRAST_BG]]; border: 1px solid [[PANEL_BORDER]]; }
+div.modal_content div.configuration_search input                    { color: [[MEDIUM_GREY]]; width: 100%; padding: 3px; background-color: [[MODERATE_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
 
 div.modal_content div.species_select div.species_select_select      { float: left; margin-left: 0 !important; }
 div.modal_content div.species_select div.ff-right img               { vertical-align: middle; height: 24px; }
@@ -31,11 +30,11 @@ div.modal_content div.species_select div.ff-right img               { vertical-a
 
 form.configuration div,
 form.configuration h2                                               { -webkit-margin-collapse: collapse; }
-form.configuration h1                                               { border-bottom: 1px solid [[PANEL_BORDER]]; display: none; }
+form.configuration h1                                               { border-bottom: 1px solid [[PALE_GREY]]; display: none; }
 form.configuration h1,                                              
 form.configuration div.config h2                                    { cursor: pointer; font-size: 20px;  margin: 0 0 8px; padding-bottom: 2px; }
-form.configuration div.config h3                                    { margin: 10px 0 5px; color: [[PAGE_TEXT]]; text-decoration: underline; font-size: 14px; padding: 2px 5px; }
-form.configuration div.config h4                                    { margin: 10px 0 5px 5px; color: [[PAGE_TEXT]]; }
+form.configuration div.config h3                                    { margin: 10px 0 5px; color: [[DARK_GREY]]; text-decoration: underline; font-size: 14px; padding: 2px 5px; }
+form.configuration div.config h4                                    { margin: 10px 0 5px 5px; color: [[DARK_GREY]]; }
 div.config_wrapper div.config img                                   { height: 17px; width: 17px; margin-right: 4px; padding: 2px; vertical-align: top; }
 
 div.config_wrapper div.config div.long_label                        { font-style: italic; font-size: 90%; margin-bottom:10px; }
@@ -47,14 +46,14 @@ div.config_wrapper div.config div.select_all ul.popup_menu          { margin: 18
 div.config_wrapper div.config ul                                    { margin: 0; padding: 0; list-style: none; }
 div.config_wrapper div.config ul li                                 { margin: 0; list-style-image: none; background-repeat: no-repeat; background-position: 2px 2px; }
 
-div.config_wrapper div.config ul.config_menu li                     { font-weight: normal; clear: right; background-color: #FFF; }
+div.config_wrapper div.config ul.config_menu li                     { font-weight: normal; clear: right; background-color: [[WHITE]]; }
 div.config_wrapper div.config ul.config_menu li div.track_name      { padding: 3px 0 2px 25px; cursor: pointer; background: inherit; min-height: 16px;}
-div.config_wrapper div.config ul.config_menu li div.desc            { margin: 5px 0; padding: 5px 10px; display: none; background-color: [[TINT_BG]]; border: 1px solid [[PANEL_BORDER]]; }
+div.config_wrapper div.config ul.config_menu li div.desc            { margin: 5px 0; padding: 5px 10px; display: none; background-color: [[MAIN_V_LIGHT]]; border: 1px solid [[PALE_GREY]]; }
 div.config_wrapper div.config ul.config_menu li div.desc ul         { padding-left: 26px; }
 div.config_wrapper div.config ul.config_menu li div.desc ul li      { padding: 0 0 2px; background-color: inherit; list-style-image: url(/i/bullet_1.gif); }
 div.config_wrapper div.config ul.config_menu li div.desc ul li p    { margin: 4px 0 16px 8px; }
 div.config_wrapper div.config ul.config_menu li div.desc h1,
-div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size: 14px; display: block; border: none; cursor: default; color: [[PAGE_TEXT]] }
+div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size: 14px; display: block; border: none; cursor: default; color: [[DARK_GREY]] }
 div.config_wrapper div.config ul.config_menu li div.desc h2         { font-size: 12px; }
 div.config_wrapper div.config ul.config_menu li .controls           { margin-right: -5px; float: right; height: 17px; padding: 2px; }
 div.config_wrapper div.config ul.config_menu li .controls div       { height: 100%; width: 17px; float: left; margin-right: 7px; }
@@ -66,9 +65,9 @@ div.config_wrapper div.config ul.config_menu li .strand             { background
 div.config_wrapper div.config ul.config_menu li.r .strand           { background-position: 0 -19px; }
 div.config_wrapper div.config ul.config_menu li.external:before     { background: url(/i/track-external.gif) no-repeat; width: 48px; height: 100%; margin: 2px 6px 0 24px; float: left; content: '\0000a0'; }
 div.config_wrapper div.config ul.config_menu li.user:before         { background-image: url(/i/track-user.gif); }
-div.config_wrapper div.config ul.popup_menu                         { background: [[TINT_BG]]; position: absolute; display: none; margin: 10px 0 0 10px; padding: 0; z-index: 3000; border: 1px solid; cursor: pointer; }
-div.config_wrapper div.config ul.popup_menu li                      { background-color: [[TINT_BG]]!important; color: #000; height: 22px; line-height: 22px; padding: 0 6px 0 28px; font-weight: bold; white-space: nowrap; }
-div.config_wrapper div.config ul.popup_menu li.header               { background: [[BUTTON_BG]]!important; color: #FFF; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[PAGE_TEXT]]; height: auto; line-height: 16px; }
+div.config_wrapper div.config ul.popup_menu                         { background: [[MAIN_V_LIGHT]]; position: absolute; display: none; margin: 10px 0 0 10px; padding: 0; z-index: 3000; border: 1px solid; cursor: pointer; }
+div.config_wrapper div.config ul.popup_menu li                      { background-color: [[MAIN_V_LIGHT]]!important; color: [[BLACK]]; height: 22px; line-height: 22px; padding: 0 6px 0 28px; font-weight: bold; white-space: nowrap; }
+div.config_wrapper div.config ul.popup_menu li.header               { background: [[MAIN_DARK]]!important; color: [[WHITE]]; text-align: center; padding: 2px 10px; border-bottom: 1px solid [[DARK_GREY]]; height: auto; line-height: 16px; }
 div.config_wrapper div.config ul.popup_menu li.header img           { position: absolute; top: -10px; right: -10px; border: 0; padding: 0; height: 20px; width: 20px; margin: 0; }
 div.config_wrapper div.config ul.popup_menu li.subset img           { height: 16px; width: 16px; padding: 3px; margin-right: 3px; }
 div.config_wrapper div.config ul.popup_menu li.default              { border-bottom: 1px solid; }
@@ -80,15 +79,15 @@ div.config_wrapper div.config div.subset.active h4                  { display: b
 div.config_wrapper div.config div.select_all strong:hover,
 div.config_wrapper div.config li.track div.track_name:hover,
 div.config_wrapper div.track_order ul.config_menu li div.track_name:hover,
-div.config_wrapper div.config ul.popup_menu li:hover                { background-color: [[CONFIG_HOVER]]; }
+div.config_wrapper div.config ul.popup_menu li:hover                { background-color: [[MAIN_V_LIGHT]]; }
 div.config_wrapper div.favourite_tracks img                         { vertical-align: top; }
 div.config_wrapper div.track_order ul.config_menu li div.track_name { cursor: n-resize; }
 
 form.configuration.single div.config ul.config_menu li.hidden       { display: none!important; }
 
 form.export div.view_config h2,
-form.configuration.multi div.config h2                              { font-size: 15px; border-bottom-width: 0; color: [[MENU_LINK]]; margin-bottom: 5px; padding-bottom: 0; }
-form.export div.view_config h2                                      { border-bottom-width: 1px; color: [[PAGE_HEADER]]; padding-bottom: 2px; margin-bottom: 16px; }
+form.configuration.multi div.config h2                              { font-size: 15px; border-bottom-width: 0; color: [[MAIN_V_DARK]]; margin-bottom: 5px; padding-bottom: 0; }
+form.export div.view_config h2                                      { border-bottom-width: 1px; color: [[V_DARK_GREY]]; padding-bottom: 2px; margin-bottom: 16px; }
 form.configuration.multi div.config                                 { margin-bottom: 8px; }
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
@@ -166,6 +165,7 @@ div.config_wrapper .config_menu .signal_map,
 div.config_wrapper .config_menu .signal,
 div.config_wrapper .config_menu .wiggle,
 div.config_wrapper .config_menu .tiling                  { background-image: url(/i/render/signal.gif); }
+div.config_wrapper .config_menu .scatter                 { background-image: url(/i/render/scatter.gif); }
 div.config_wrapper .config_menu .coverage_with_reads     { background-image: url(/i/render/coverage_with_reads.gif); }
 div.config_wrapper .config_menu .as_alignment_label      { background-image: url(/i/render/as_alignment_label.gif); }
 div.config_wrapper .config_menu .as_alignment_nolabel    { background-image: url(/i/render/as_alignment_nolabel.gif); }
@@ -173,7 +173,7 @@ div.config_wrapper .config_menu .as_alignment_nolabel    { background-image: url
 /* image config notes */
 
 div.image_config_notes                               { padding: 4px!important; }
-div.image_config_notes .border                       { border-top: 1px solid [[PANEL_BORDER]]; border-bottom: 0; padding-top: 12px; margin-top: -8px; }
+div.image_config_notes .border                       { border-top: 1px solid [[PALE_GREY]]; border-bottom: 0; padding-top: 12px; margin-top: -8px; }
 div.image_config_notes .content div                  { float: left; margin-right: 32px; }
 div.image_config_notes ul.configuration_key          { list-style: none; padding: 0; margin-left: 4px; }
 div.image_config_notes ul.configuration_key li       { list-style-image: none; }
@@ -197,11 +197,11 @@ div.config_save_as span input  { position: relative; top: 2px; }
 div.config_save_as p,
 div.config_save_as .groups     { margin-bottom: 16px; }
 div.config_save_as .groups     { display: none; }
-div.config_save_as .groups h4  { color: [[PAGE_TEXT]]; margin-bottom: 8px; }
+div.config_save_as .groups h4  { color: [[DARK_GREY]]; margin-bottom: 8px; }
 div.config_save_as .desc,
 div.config_save_as .name       { width: 395px; margin-top: 3px; }
 div.config_save_as .desc       { height: 105px; }
-div.config_save_as .disabled   { background-color: #999; border-color: #999; cursor: default; }
+div.config_save_as .disabled   { background-color: [[MEDIUM_GREY]]; border-color: [[MEDIUM_GREY]]; cursor: default; }
 div.config_save_as .close      { position: absolute; top: -10px; right: -10px; cursor: pointer; }
 
 

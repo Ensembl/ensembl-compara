@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ sub render_Text {
 
   return unless length $glyph->{'text'};
   my $font   = $glyph->font();
-  my $colour = $self->colour($glyph->{'colour'});
+  my $colour = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
 
   ########## Stock GD fonts
   my $left       = $self->{sf} * $glyph->{'pixelx'}    || 0;
@@ -205,7 +205,7 @@ sub render_Circle {
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
-  my $colour         = $self->colour($gcolour);
+  my $colour         = $self->colour($gcolour, $glyph->{'alpha'});
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
@@ -225,7 +225,7 @@ sub render_Ellipse {
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
-  my $colour         = $self->colour($gcolour);
+  my $colour         = $self->colour($gcolour, $glyph->{'alpha'});
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
@@ -244,7 +244,7 @@ sub render_Arc {
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
-  my $colour         = $self->colour($gcolour);
+  my $colour         = $self->colour($gcolour, $glyph->{'alpha'});
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
@@ -271,7 +271,7 @@ sub render_Intron {
   my ($self, $glyph) = @_;
 
   my ($colour, $xstart, $xmiddle, $xend, $ystart, $ymiddle, $yend, $strand, $gy);
-  $colour  = $self->colour($glyph->{'colour'});
+  $colour  = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
   $gy      = $self->{sf} * $glyph->{'pixely'};
   $strand  = $glyph->{'strand'};
   $xstart  = $self->{sf} * $glyph->{'pixelx'};
@@ -289,7 +289,7 @@ sub render_Intron {
 sub render_Line {
   my ($self, $glyph) = @_;
 
-  my $colour = $self->colour($glyph->{'colour'});
+  my $colour = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
   my $x1     = $self->{sf} * $glyph->{'pixelx'} + 0;
   my $y1     = $self->{sf} * $glyph->{'pixely'} + 0;
   my $x2     = $x1 + $self->{sf} * $glyph->{'pixelwidth'};
@@ -332,20 +332,22 @@ sub render_Histogram {
   my ($self, $glyph) = @_;
 
   my $canvas         = $self->{'canvas'};
-  my $colour         = $self->colour($glyph->{'colour'});
+  my $colour         = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
 
   my $points = $glyph->{'pixelpoints'};
   return unless defined $points;
 
+  my $max = defined($glyph->{'max'}) ? $glyph->{'max'} : 1000;
+  my $min = defined($glyph->{'min'}) ? $glyph->{'min'} : 0;
+
   my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
   my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
-  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
-  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my $y1 = $self->{'sf'} * ( $glyph->{'pixely'} + $min );
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} + $min);
 
-  my $max = $glyph->{'max'} || 1000;
   my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+  my $mul = ($y2-$y1) / ($max - $min);
 
-  my $mul = ($y2-$y1) / $max;
   foreach my $p (@$points) {
     my $truncated = 0;
     if ($p > $max) {
@@ -353,12 +355,12 @@ sub render_Histogram {
       $p = $max;
       $truncated = 1 if $glyph->{'truncate_colour'};
     }
-    my $yb = $y2 - max($p,0) * $mul;
+    my $yb = $y2 - max($p,$min) * $mul;
     $canvas->filledRectangle($x1,$yb,$x2,$y2,$colour);
     ## Mark truncation with a contrasting line at the top of the bar
     if ($truncated) {
       my $yc = $yb + 1;
-      $canvas->filledRectangle($x1,$yb,$x2,$yc,$self->colour($glyph->{'truncate_colour'}));
+      $canvas->filledRectangle($x1,$yb,$x2,$yc,$self->colour($glyph->{'truncate_colour'}, $glyph->{'alpha'}));
     }
     $x1 += $step;
     $x2 += $step;
@@ -410,7 +412,7 @@ sub render_Poly {
 
   my $canvas         = $self->{'canvas'};
   my $bordercolour   = $self->colour($glyph->{'bordercolour'});
-  my $colour         = $self->colour($glyph->{'colour'});
+  my $colour         = $self->colour($glyph->{'colour'}, $glyph->{'alpha'});
   my $poly           = GD::Polygon->new;
 
   return unless(defined $glyph->pixelpoints());

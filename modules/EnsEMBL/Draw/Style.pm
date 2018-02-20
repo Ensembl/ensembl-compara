@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,6 +73,28 @@ use EnsEMBL::Draw::Glyph::Rect;
 use EnsEMBL::Draw::Glyph::Space;
 use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
+
+sub rainbow {
+## Enable drawing of features in different colours so they can be told apart
+## (Generally only used for debugging)
+## @param index - Integer (optional)
+## Usage: 
+## my $debug = $self->track_config->get('DEBUG_RAINBOW');
+## $feature->{'colour'} = $self->random_colour if $debug;
+  my ($self, $index) = @_;
+  my $rainbow = $self->image_config->hub->species_defs->RAINBOW || [qw(magenta red orange yellow green cyan blue purple)];
+  if (defined $index) {
+    ## Use the supplied index but adjust to fit within the array
+    if ($index > scalar(@$rainbow)) {
+      $index = $index % scalar(@$rainbow);
+    }
+  }
+  else {
+    ## Return a random colour 
+    $index = rand() * scalar(@$rainbow);
+  }
+  return $rainbow->[$index];  
+}
 
 ### Wrappers around low-level drawing code
 sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);        }
@@ -181,22 +203,33 @@ sub draw_graph_base {
   my $range; 
   if (defined($metadata->{'y_min'}) || defined($metadata->{'y_max'})) {
     ## User has defined scale, so use it!
+    my ($saved_min, $saved_max) = ($min_score, $max_score);
     $min_score = $metadata->{'y_min'} if (defined($metadata->{'y_min'}) && $metadata->{'y_min'} ne ''); 
     $max_score = $metadata->{'y_max'} if (defined($metadata->{'y_max'}) && $metadata->{'y_max'} ne ''); 
-  }
-  $range = $max_score - $min_score;
-  ## Try to calculate something sensible 
-  if ($range < 0.01) {
-    ## Oh dear, data all has pretty much same value ...
-    if ($max_score > 0.01) {
-      ## ... but it's not zero, so just move minimum down
-      $min_score = 0;
-    } else {
-      ## ... just create some sky
-      $max_score = 0.1;
+    ## Sanity check - ignore these values if user settings are nonsense
+    $range = $max_score - $min_score;
+    if ($range == 0) {
+      $min_score = $saved_min;
+      $max_score = $saved_max;
     }
   }
-  $min_score = 0 if $min_score >= 0 && $baseline_zero;
+  else {
+    $range = $max_score - $min_score;
+    ## Try to calculate something sensible 
+    if ($range < 0.01) {
+      ## Oh dear, data all has pretty much same value ...
+      if ($max_score > 0.01) {
+        ## ... but it's not zero, so just move minimum down
+        $min_score = 0;
+      } 
+      else {
+        ## ... just create some sky
+        $max_score = 0.1;
+        $metadata->{'y_max'} = $max_score;
+      }
+    }
+    $min_score = 0 if $min_score >= 0 && $baseline_zero;
+  }
   $range = $max_score - $min_score;
 
   my $pix_per_score = $row_height/$range;
@@ -387,8 +420,8 @@ sub add_messages {
 }
 
 sub add_connection {
-  my ($self, $glyph, $tag, @params) = @_;
-  push @{$self->{'connections'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => \@params};
+  my ($self, $glyph, $tag, $params) = @_;
+  push @{$self->{'connections'}}, {'glyph' => $glyph, 'tag' => $tag, 'params' => $params};
 }
 
 #### TRIGONOMETRY FOR CIRCULAR GLYPHS

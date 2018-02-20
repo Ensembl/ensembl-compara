@@ -355,7 +355,7 @@ sub _build_imageconfig_menus {
        $display     = $valid{'normal'} ? 'normal' : $states[2] unless $valid{$display};
     my $controls    = $node->get_data('controls');
     my $subset      = $node->get_data('subset');
-    my $name        = encode_entities($node->get_data('name'));
+    my $name        = $node->get_data('name');
     my $caption     = encode_entities($node->get_data('caption'));
     $name           .= $name ne $caption ? "<span class='hidden-caption'> ($caption)</span>" : '';
     my @classes     = ('track', $external ? 'external' : '', lc $external);

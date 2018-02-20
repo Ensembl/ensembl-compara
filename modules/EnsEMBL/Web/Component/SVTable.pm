@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ sub content {
   my $hub     = $self->hub;
   my $object  = $self->object;  
   my $slice   = $object->slice;
-  my $html    = $self->structural_variation_table($slice, 'Structural variants',         'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
-     $html   .= $self->structural_variation_table($slice, 'Copy number variants probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
+  my $html    = $self->structural_variation_table($slice, 'Structural variants',        'sv',  ['fetch_all_by_Slice','fetch_all_somatic_by_Slice'], 1);
+     $html   .= $self->structural_variation_table($slice, 'Copy number variant probes', 'cnv', ['fetch_all_cnv_probe_by_Slice']);
   
   return $html;
 }

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ sub _init {
   $self->{'link_text'} = 'Select species or regions';
   $self->{'url_param'} = 's';
   $self->{'rel'}       = 'modal_select_species_or_regions';
-  $self->{'action'}    = $hub->url({ function => undef });
+  my $params           = { function => undef };
+  $params->{'action'}  = $hub->param('referer_action') if $hub->param('referer_action');
+  $self->{'action'}    = $hub->url($params);
 }
 
 sub buttons {

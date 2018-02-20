@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,14 @@
 .vis { display:block;}
 .invis {display:none; }
 #debug { position:absolute; margin: 1em; left: 4em; top: 0; padding: 0; font-size: 0.7em; z-index: 9999 }
-#debug_button { background-color: #c90; color: #fff; font-size: 1.2em; font-weight: bold; width: 40em; padding: 1px 0.5em }
-#debug_links { height: 1.3em; width: 80em; border: 1px solid #c00; background-color: #c00; padding: 2px; margin: 0; }
-#debug_list { height: 40em; width: 80em; border: 1px solid #c00; background-color: #fee; padding: 0.5em; margin: 0; overflow: scroll }
+#debug_button { background-color: [[MODERATE_DARK]]; color: [[WHITE]]; font-size: 1.2em; font-weight: bold; width: 40em; padding: 1px 0.5em }
+#debug_links { height: 1.3em; width: 80em; border: 1px solid [[SEVERE_DARK]]; background-color: [[SEVERE_DARK]]; padding: 2px; margin: 0; }
+#debug_list { height: 40em; width: 80em; border: 1px solid [[SEVERE_DARK]]; background-color: [[SEVERE_LIGHT]]; padding: 0.5em; margin: 0; overflow: scroll }
 
-.debug_button     { background-color: #fff; border: 1px outset #c00; color: #c00; padding: 1px 1em; margin: 0 0.5em }
-.debug_button_inv { background-color: #c00; border: 1px outset #fff; color: #fff; padding: 1px 1em; margin: 0 0.5em }
-.debug_success { color: #090 }
-.debug_info    { color: #666 }
-.debug_warn    { color: #f90 }
-.debug_error   { color: #c00 }
+.debug_button     { background-color: [[WHITE]]; border: 1px outset [[SEVERE_DARK]]; color: [[SEVERE_DARK]]; padding: 1px 1em; margin: 0 0.5em }
+.debug_button_inv { background-color: [[SEVERE_DARK]]; border: 1px outset [[WHITE]]; color:  [[WHITE]];; padding: 1px 1em; margin: 0 0.5em }
+.debug_success { color: [[OK_DARK]] }
+.debug_info    { color: [[DARK_GREY]] }
+.debug_warn    { color: [[MODERATE_DARK]] }
+.debug_error   { color: [[SEVERE_DARK]] }
 

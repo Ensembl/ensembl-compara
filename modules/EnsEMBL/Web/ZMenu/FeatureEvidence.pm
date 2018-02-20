@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,19 +27,19 @@ sub content {
   my $self                = shift;
   my $hub                 = $self->hub;
   my $db_adaptor          = $hub->database($hub->param('fdb'));
-  my $feature_set         = $db_adaptor->get_FeatureSetAdaptor->fetch_by_name($hub->param('fs')); 
+  my $peak_calling        = $db_adaptor->get_PeakCallingAdaptor->fetch_by_name($hub->param('fs')); 
   my ($chr, $start, $end) = split /\:|\-/, $hub->param('pos'); 
   my $length              = $end - $start + 1;
   my $slice               = $hub->database('core')->get_SliceAdaptor->fetch_by_region('toplevel', $chr, $start, $end);
-  my @a_features          = @{$db_adaptor->get_AnnotatedFeatureAdaptor->fetch_all_by_Slice($slice)};
-  my $annotated_feature;
+  my @peaks               = @{$db_adaptor->get_PeakAdaptor->fetch_all_by_Slice($slice)};
+  my $peak;
   
-  foreach (@a_features) { 
-    $annotated_feature = $_ if $_->feature_set->display_label eq $feature_set->display_label && $_->start == 1 && $_->end == $length;
+  foreach (@peaks) { 
+    $peak = $_ if $_->peak_calling_id eq $peak_calling->dbID && $_->start == 1 && $_->end == $length;
   }
 
-  my $summit   = $annotated_feature->summit || 'undetermined';
-  my @features = @{$annotated_feature->get_associated_MotifFeatures};
+  my $summit   = $peak->summit || 'undetermined';
+  my @features = @{$peak->get_associated_MotifFeatures};
   my %motif_features;
   
   foreach my $mf (@features) {
@@ -51,22 +51,23 @@ sub content {
     $motif_features{$mf->start . ':' . $mf->end} = [ "$bm_ftname$other_names_txt", $mf->score, $mf->binding_matrix->name ];
   }
   
-  $self->caption($feature_set->feature_type->evidence_type_label);
+  $self->caption($peak_calling->fetch_FeatureType->evidence_type_label);
   
   $self->add_entry({
     type  => 'Feature',
-    label => $feature_set->display_label
+    label => $peak_calling->display_label
   });
 
 
-  my $source_label = $feature_set->source_label;
+  #my $source_label = $feature_set->source_label;
+  my $source_label = $peak_calling->fetch_source_label;
 
   if(defined $source_label){
 
     $self->add_entry({
       type        => 'Source',
       label_html  =>  sprintf '<a href="%s">%s</a> ',
-                      $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$feature_set->name}),
+                      $hub->url({'type' => 'Experiment', 'action' => 'Sources', 'ex' => 'name-'.$peak_calling->name}),
                       $source_label
                      });
   }

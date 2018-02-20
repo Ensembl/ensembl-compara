@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ sub new {
     'hub'           => $hub,
     'from'          => $sd->ENSEMBL_HELPDESK_EMAIL,
     'mail_server'   => $sd->ENSEMBL_MAIL_SERVER,
-    'base_url'      => $sd->ENSEMBL_BASE_URL,
+    'base_url'      => $sd->ENSEMBL_PROXY_PROTOCOL.":".$sd->ENSEMBL_BASE_URL,
     'site_name'     => $sd->ENSEMBL_SITETYPE,
     %{$data || {}}
   }, $class;

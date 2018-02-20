@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ sub archive_link {
     my $archive_site = $release ? $release->{'archive'} : '';
     
     if ($archive_site) {
-      $url = "http://$archive_site.archive.ensembl.org";
+      $url = "//$archive_site.archive.ensembl.org";
       
       if ($archive->release >= 51) {
         $url .= $hub->url({ type => $type, action => $action, $p => $name });

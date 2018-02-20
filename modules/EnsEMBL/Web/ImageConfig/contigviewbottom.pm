@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,20 +60,27 @@ sub update_from_url {
   my $species_defs    = $self->species_defs;
 
   my $attach = !!$params->{'attach'};
-  my @values = split(/,/, $params->{'attach'}); 
-  push @values, split(/,/, $params->{$self->type}); 
-  # delete params to avoid doing it again when calling SUPER method
+
+  ## Don't use CGI::param here, as we want to keep values unescaped until we've finished splitting them
   delete $params->{$self->type};
   delete $params->{'attach'};
+  my $raw_params;
+  foreach (split(/;/, $self->hub->controller->query)) {
+    $_ =~ /(\w+)=(.+)/;
+    $raw_params->{$1} = $2;
+  }
+  my @values = grep $_, split(/,/, $raw_params->{'attach'} || ''); #attach=url:https://some_url_to_attach/=normal
+  push @values, grep $_, split(/,/, $raw_params->{$self->type} || ''); # contigviewbottom=url:https://some_url_to_attach/=normal
 
   # if param name is 'trackhub'
-  push @values, $params->{'trackhub'} || ();
+  push @values, $raw_params->{'trackhub'} || ();
 
   # Backwards compatibility
   if ($params->{'format'} && $params->{'format'} eq 'DATAHUB') {
     $params->{'format'} = 'TRACKHUB';
   }
 
+  my @other_values;
   foreach my $v (@values) {
     my $format = $params->{'format'};
     my ($url, $renderer);
@@ -199,20 +206,12 @@ sub update_from_url {
         'message'   => $message,
       });
     } else {
-      ($url, $renderer) = split /=/, $v;
-      $renderer ||= 'normal';
-      $self->update_track_renderer($url, $renderer);
+      push @other_values, $v; # let the parent method deal with these
     }
   }
 
-  if ($self->is_altered) {
-    my $tracks = join(', ', grep $_ ne '1', @{$self->altered});
-    $session->set_record_data({
-      'type'      => 'message',
-      'function'  => '_info',
-      'code'      => 'image_config',
-      'message'   => "The link you followed has made changes to these tracks: $tracks.",
-    });
+  if (@other_values) {
+    $params->{$self->type} = join(',', @other_values);
   }
 
   return $self->SUPER::update_from_url($params);

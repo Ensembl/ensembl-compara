@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 
 .panel { padding: 0 16px; }
 
-.panel span.summary-subhead { color: [[PANEL_TEXT]]; font-size: 0.7em; }
+.panel span.summary-subhead { color: [[DARK_GREY]]; font-size: 0.7em; }
 .panel img.helplink       { width:16px; height:16px; padding-left:2px; vertical-align: middle; }
 
 .panel h2.normal          { border:none; padding: 2px 0; margin: 8px 0 0 0; }
@@ -29,7 +29,7 @@
 .panel .nav-heading div   { width: 16em; padding: 1px;  }
 .panel .nav-heading div span,
 .panel .nav-heading div a { height: 1.4em; overflow: hidden; text-decoration: none; margin: 2px; font-weight: bold; display:block; padding: 0 0.5em; }
-.panel .nav-heading div a { background-color: [[TINT_BG]]; border:1px outset [[TINT_BORDER]]; font-size: 0.9em; }
+.panel .nav-heading div a { background-color: [[MAIN_V_LIGHT]]; border:1px outset [[MAIN_LIGHT]]; font-size: 0.9em; }
 
 .left-button  { float: left;  }
 .right-button { float: right; }

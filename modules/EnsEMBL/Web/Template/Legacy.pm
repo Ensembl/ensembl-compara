@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ sub render_footer {
   my $page = $self->page;
 
   my $footer_id = $self->{'lefthand_menu'} ? 'footer' : 'wide-footer';
-  return qq(
+  my $html = qq(
         <div id="$footer_id">
           <div class="column-wrapper">$elements->{'copyright'}$elements->{'footerlinks'}
             <p class="invisible">.</p>
@@ -191,6 +191,11 @@ sub render_footer {
           </div>
         </div>
   );
+
+  if ($self->{'show_banner'}) {
+    $html .= $elements->{'bottom_banner'};
+  }
+  return $html;
 }
 
 sub render_page_end {
@@ -202,6 +207,7 @@ sub render_page_end {
   my $species_path        = $hub->species_defs->species_path;
   my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
+  my $ensembl_image_root  = $hub->species_defs->ENSEMBL_IMAGE_ROOT;
   my $core_params         = $hub->core_params || {};
   my $core_params_html = join('',map {
       $v = encode_entities($core_params->{$_});
@@ -216,6 +222,7 @@ sub render_page_end {
   </form>
   <input type="hidden" id="species_path" name="species_path" value="$species_path" />
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
+  <input type="hidden" id="ensembl_image_root" name="ensembl_image_root" value="$ensembl_image_root" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
     $elements->{'modal'}
     $elements->{'tmp_message'}

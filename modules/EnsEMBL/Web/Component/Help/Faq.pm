@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ sub content {
   if (! $just_faq) {
     $html .= qq(<hr /><p style="margin-top:1em">If you have any other questions about Ensembl, please do not hesitate to 
 <a href="/Help/Contact" class="popup">contact our HelpDesk</a>. You may also like to subscribe to the 
-<a href="http://www.ensembl.org/info/about/contact/mailing.html" class="cp-external">developers' mailing list</a>.</p>);
+<a href="//www.ensembl.org/info/about/contact/mailing.html" class="cp-external">developers' mailing list</a>.</p>);
   }
   return $html;
 }

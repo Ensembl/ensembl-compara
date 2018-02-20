@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,8 +68,9 @@ sub render_simple {
     else {
       ## Convert raw features into correct data format 
       $self->{'my_config'}->set('height', 12);
+      $self->{'my_config'}->set('show_overlay', 1);
       $self->{'my_config'}->set('default_strand', 1);
-      $self->{'my_config'}->set('drawing_style', ['Feature']);
+      $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
       $self->{'data'}[0]{'features'} = $self->consensus_features;
       $self->draw_features;
     }
@@ -161,18 +162,22 @@ sub consensus_features {
   my $colours = $self->species_defs->colour('variation');
    
   foreach my $f (@$raw_features) {
+    my $type         = undef;
     my $unknown_type = 1;
-    my $vs           = $f->{'POS'} - $start;
+    my $vs           = $f->{'POS'} - $start + 1;
     my $ve           = $vs;
     my $sv           = $f->{'INFO'}{'SVTYPE'};
     my $info_string;
     $info_string .= ";  $_: $a->{'INFO'}{$_}" for sort keys %{$a->{'INFO'} || {}};
 
+    ## N.B. Compensate for VCF indel start including the bp before the variant
     if ($sv) {
       $unknown_type = 0;
 
       if ($sv eq 'DEL') {
+        $type = 'deletion';
         my $svlen = $f->{'INFO'}{'SVLEN'} || 0;
+        $vs++;
         $ve       = $vs + abs $svlen;
 
         $f->{'REF'} = substr($f->{'REF'}, 0, 30) . ' ...' if length $f->{'REF'} > 30;
@@ -182,11 +187,22 @@ sub consensus_features {
         $ve       = $vs + $svlen + 1;
       } 
       elsif ($sv eq 'INS') {
+        $type = 'insertion';
+        $vs++;
         $ve = $vs -1;
       }
     } 
     else {
       my ($reflen, $altlen) = (length $f->{'REF'}, length $f->{'ALT'}[0]);
+
+      if ($altlen > $reflen) {
+        $vs++;
+        $type = 'insertion';
+      }
+      elsif ($altlen < $reflen) {
+        $vs++;
+        $type = 'deletion';
+      }
 
       if ($reflen > 1) {
         $ve = $vs + $reflen - 1;
@@ -212,8 +228,8 @@ sub consensus_features {
                   'DEL'   => 'Deletion',
                   'TDUP'  => 'Duplication',
                   );
-    my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start);
-    $location   .= '-'.($ve + $slice->start) if ($ve && $ve != $vs);
+    my $location = sprintf('%s:%s', $slice->seq_region_name, $vs + $slice->start - 1);
+    $location   .= '-'.($ve + $slice->start - 2) if ($ve && $ve != $vs);
 
     my $title = "$vf_name; Location: $location; Allele: $allele_string";
     $title .= 'Type: '.$lookup{$sv}.'; ' if $lookup{$sv};
@@ -224,8 +240,10 @@ sub consensus_features {
       }
     }
 
+    my $colour  = $colours->{'default'}->{'default'};
+
     ## Get consequence type
-    my $consequence;
+    my ($consequence, $ambig_code);
     if (defined($f->{'INFO'}->{'VE'})) {
       $consequence = (split /\|/, $f->{'INFO'}->{'VE'})[0];
     }
@@ -248,21 +266,23 @@ sub consensus_features {
       $snp->get_all_TranscriptVariations;
 
       $consequence = $snp->display_consequence;
+      $ambig_code  = $snp->ambig_code;
     }
       
     ## Set colour by consequence
-    my $colour  = $colours->{'default'}->{'default'};
     if ($consequence && defined($overlap_cons{$consequence})) {
       $colour = $colours->{lc $consequence}->{'default'};
     }
 
     my $fhash = {
-                  start   => $vs,
-                  end     => $ve,
-                  strand  => 1,
-                  colour  => $colour,       
-                  label   => $vf_name, 
-                  title   => $title,
+                  start         => $vs,
+                  end           => $ve,
+                  strand        => 1,
+                  colour        => $colour,       
+                  label         => $vf_name, 
+                  text_overlay  => $ambig_code,
+                  title         => $title,
+                  type          => $type,
                 };
 
     push @$features, $fhash;

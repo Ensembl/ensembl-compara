@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,6 +73,8 @@ use Hash::Merge qw(merge);
 use Storable qw(lock_nstore lock_retrieve thaw);
 use Time::HiRes qw(time);
 use Fcntl qw(O_WRONLY O_CREAT);
+use JSON;
+use Try::Tiny;
 
 use Sys::Hostname::Long;
 
@@ -489,6 +491,26 @@ sub _load_in_species_pages {
   return $spp_tree;
 }
 
+sub _load_in_taxonomy_division {
+  my ($self) = @_;
+  my $filename = $SiteDefs::ENSEMBL_TAXONOMY_DIVISION_FILE;
+  my $json_text = do {
+    open(my $json_fh, "<", $filename)
+      or die("Can't open $filename: $!\n");
+    local $/;
+    <$json_fh>
+  };
+  my $json = JSON->new;
+  my $data;
+  try{
+    $data = $json->decode($json_text);
+  }
+  catch {
+    die "JSON decode error: $filename \n $_";
+  };
+  return $data;
+}
+
 sub _read_in_ini_file {
   my ($self, $filename, $defaults) = @_;
   my $inifile = undef;
@@ -554,6 +576,11 @@ sub _read_in_ini_file {
     }
   }
   
+  ## Automatic database configuration
+  unless ($filename eq 'COLOUR' || $filename eq 'MULTI') {
+    $tree->{'SPECIES_RELEASE_VERSION'} ||= 1;
+  }
+
   return $inifile ? $tree : undef;
 }
 
@@ -566,7 +593,7 @@ sub _promote_general {
 }
 
 sub _expand_database_templates {
-  my ($self, $filename, $tree) = @_;
+  my ($self, $filename, $tree, $config_packer) = @_;
  
   my $HOST   = $tree->{'general'}{'DATABASE_HOST'};      
   my $PORT   = $tree->{'general'}{'DATABASE_HOST_PORT'}; 
@@ -574,50 +601,75 @@ sub _expand_database_templates {
   my $PASS   = $tree->{'general'}{'DATABASE_DBPASS'};    
   my $DRIVER = $tree->{'general'}{'DATABASE_DRIVER'} || 'mysql'; 
   
-  if (exists $tree->{'databases'}) {
-    foreach my $key (keys %{$tree->{'databases'}}) {
-      my $db_name = $tree->{'databases'}{$key};
-      my $version = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
-      
-      if ($db_name =~ /^%_(\w+)_%_%$/) {
-        $db_name = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
-      } elsif ($db_name =~ /^%_(\w+)_%$/) {
-        $db_name = lc(sprintf '%s_%s_%s_%s', $filename , $1, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
-      } elsif ($db_name =~/^%_(\w+)$/) {
-        $db_name = lc(sprintf '%s_%s_%s', $filename , $1, $version);
-      } elsif ($db_name =~/^(\w+)_%$/) {
-        $db_name = lc(sprintf '%s_%s', $1, $version);
+  ## Autoconfigure databases
+  unless (exists $tree->{'databases'} && exists $tree->{'databases'}{'DATABASE_CORE'}) {
+    my @db_types = qw(CORE CDNA OTHERFEATURES RNASEQ FUNCGEN VARIATION);
+    my $db_details = {
+                      'HOST'    => $HOST,
+                      'PORT'    => $PORT,
+                      'USER'    => $USER,
+                      'PASS'    => $PASS,
+                      'DRIVER'  => $DRIVER,
+                      };
+    foreach (@db_types) {
+      my $species_version = $tree->{'general'}{'SPECIES_RELEASE_VERSION'} || 1;
+      my $db_name = sprintf('%s_%s_%s_%s', $filename, lc($_), $SiteDefs::ENSEMBL_VERSION, $species_version);
+      ## Does this database exist?
+      $db_details->{'NAME'} = $db_name;
+      my $db_exists = $config_packer->db_connect($_, $db_details, 1);
+      if ($db_exists) {
+        $self->_info_line('Databases', "$_: $db_name - autoconfigured") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+        $tree->{'databases'}{'DATABASE_'.$_} = $db_name;
       }
-      
-      if ($tree->{'databases'}{$key} eq '') {
-        delete $tree->{'databases'}{$key};
-      } else {
-        if (exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
-          my %cnf = %{$tree->{$key}};
-          
-          $tree->{'databases'}{$key} = {
+      else {
+        $self->_info_line('Databases', "-- database $db_name not available") if $SiteDefs::ENSEMBL_WARN_DATABASES;
+      }
+    }
+  }
+
+  foreach my $key (keys %{$tree->{'databases'}}) {
+    my $db_name = $tree->{'databases'}{$key};
+    my $version = $tree->{'general'}{"${key}_VERSION"} || $SiteDefs::ENSEMBL_VERSION;
+   
+    ## Expand name if it is a template, e.g. %_core_%   
+    if ($db_name =~ /^%_(\w+)_%_%$/) {
+      $db_name = lc(sprintf '%s_%s_%s_%s_%s', $filename , $1, $SiteDefs::SITE_RELEASE_VERSION, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+    } elsif ($db_name =~ /^%_(\w+)_%$/) {
+      $db_name = lc(sprintf '%s_%s_%s_%s', $filename , $1, $version, $tree->{'general'}{'SPECIES_RELEASE_VERSION'});
+    } elsif ($db_name =~/^%_(\w+)$/) {
+      $db_name = lc(sprintf '%s_%s_%s', $filename , $1, $version);
+    } elsif ($db_name =~/^(\w+)_%$/) {
+      $db_name = lc(sprintf '%s_%s', $1, $version);
+    }
+    
+    if ($tree->{'databases'}{$key} eq '') {
+      delete $tree->{'databases'}{$key};
+    } else {
+      if (exists $tree->{$key} && exists $tree->{$key}{'HOST'}) {
+        my %cnf = %{$tree->{$key}};
+         
+        $tree->{'databases'}{$key} = {
             NAME   => $db_name,
             HOST   => exists $cnf{'HOST'}   ? $cnf{'HOST'}   : $HOST,
             USER   => exists $cnf{'USER'}   ? $cnf{'USER'}   : $USER,
             PORT   => exists $cnf{'PORT'}   ? $cnf{'PORT'}   : $PORT,
             PASS   => exists $cnf{'PASS'}   ? $cnf{'PASS'}   : $PASS,
             DRIVER => exists $cnf{'DRIVER'} ? $cnf{'DRIVER'} : $DRIVER,
-          };
+        };
           
-          delete $tree->{$key};
-        } else {
-          $tree->{'databases'}{$key} = {
+        delete $tree->{$key};
+      } else {
+        $tree->{'databases'}{$key} = {
             NAME   => $db_name,
             HOST   => $HOST,
             USER   => $USER,
             PORT   => $PORT,
             PASS   => $PASS,
             DRIVER => $DRIVER
-          };
-        }
-        
-        $tree->{'databases'}{$key}{$_} = $tree->{'general'}{"${key}_$_"} for grep $tree->{'general'}{"${key}_$_"}, qw(HOST PORT);
+        };
       }
+        
+      $tree->{'databases'}{$key}{$_} = $tree->{'general'}{"${key}_$_"} for grep $tree->{'general'}{"${key}_$_"}, qw(HOST PORT);
     }
   }
 }
@@ -702,6 +754,9 @@ sub _parse {
   # Parse the web tree to create the static content site map
   $tree->{'STATIC_INFO'}  = $self->_load_in_webtree;
   $self->_info_line('Filesystem', 'Trawled web tree');
+  # Load taxonomy division json for species selector
+  $self->_info_log('Loading', 'Loading taxonomy division json file');
+  $tree->{'ENSEMBL_TAXONOMY_DIVISION'} = $self->_load_in_taxonomy_division;
   
   $self->_info_log('Parser', 'Parsing ini files and munging dbs');
   
@@ -726,6 +781,7 @@ sub _parse {
   # Prepare to process strain information
   my $name_lookup = {};
   my $species_to_strains = {};
+  my $species_to_assembly = {};
 
   # Loop over each tree and make further manipulations
   foreach my $species (@$SiteDefs::PRODUCTION_NAMES, 'MULTI') {
@@ -734,11 +790,16 @@ sub _parse {
     $self->_info_line('munging', "$species config");
 
     ## Need to gather strain info for all species
-    $name_lookup->{$config_packer->tree->{'SPECIES_COMMON_NAME'}} = $species;
+    my $common_name = $config_packer->tree->{'SPECIES_DB_COMMON_NAME'};
+    $name_lookup->{$common_name} = $species;
+    my $display_name = $config_packer->tree->{'SPECIES_COMMON_NAME'};
+    $name_lookup->{$display_name} = $species;
+  
     my $collection = $config_packer->tree->{'STRAIN_COLLECTION'};
     ## Key on actual URL, not production name
     my $species_key = $config_packer->tree->{'SPECIES_URL'};
     my $strain_name = $config_packer->tree->{'SPECIES_STRAIN'};
+    my $scientific_name = $config_packer->tree->{'SPECIES_SCIENTIFIC_NAME'};
     if ($collection && $strain_name !~ /reference/) {
       if ($species_to_strains->{$collection}) {
         push @{$species_to_strains->{$collection}}, $species_key;
@@ -747,7 +808,80 @@ sub _parse {
         $species_to_strains->{$collection} = [$species_key];
       }
     }
+    
+    # Populate taxonomy division using e_divisions.json template
+    if ($species ne "MULTI" && $species ne "databases") {
+      push @{$species_to_assembly->{$common_name}}, $config_packer->tree->{'ASSEMBLY_VERSION'};
+      my $taxonomy = $config_packer->tree->{TAXONOMY};
+      my $children = [];
+      my $other_species_children = [];
+      my @other_species = grep { $_->{key} =~ m/other_species/ } @{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}};
+      $other_species[0]->{child_nodes} = [] if ($other_species[0] && !$other_species[0]->{child_nodes});
+
+      foreach my $node (@{$tree->{'ENSEMBL_TAXONOMY_DIVISION'}->{child_nodes}}) {
+        my $child = {
+          key             => $species_key,
+          scientific_name => $scientific_name,
+          common_name     => $common_name,
+          display_name    => $config_packer->tree->{'DISPLAY_NAME'},
+          is_leaf         => 'true'
+        };
+
+        if ($collection && $strain_name !~ /reference/) {
+          $child->{type} = $collection . ' strains';
+        }
+        elsif($collection && $strain_name =~ /reference/) {
+          # Create display name for Reference species
+          my $ref_name = $config_packer->tree->{'SPECIES_COMMON_NAME'} . ' '. $strain_name;
+          $child->{display_name} = $ref_name;
+          # $child->{type} = $ref_name;
+        }
+
+        if (!$node->{taxa}) {
+          push @{$other_species[0]->{child_nodes}}, $child;
+        }
+        else {
+          my %taxa = map {$_ => 1} @{ $node->{taxa} };
+          my @matched_groups = grep { $taxa{$_} } @$taxonomy;
+
+          if ($#matched_groups >= 0) {
+            if ($node->{child_nodes}) {
+              my $cnode_match = {};
+              foreach my $cnode ( @{$node->{child_nodes}}) {
+                my @match = grep { /$matched_groups[0]/ }  @{$cnode->{taxa}};
+                if ($#match >=0 ) {
+                  $cnode_match = $cnode;
+                  last;
+                }
+              }
+
+              if (keys %$cnode_match) {
+                if (!$cnode_match->{child_nodes}) {
+                  $cnode_match->{child_nodes} = [];
+                }
+                push @{$cnode_match->{child_nodes}}, $child;
+                last;
+              }
+              else {
+                if (!$node->{child_nodes}) {
+                  $node->{child_nodes} = [];
+                }
+                push @{$node->{child_nodes}}, $child;
+                last;
+              }
+            }
+            else {
+              $node->{child_nodes} = [];
+              push @{$node->{child_nodes}}, $child;
+              last;
+            }
+          }
+        }
+      }
+    }
   }
+  # Used for grouping same species with different assemblies in species selector
+  $tree->{'SPECIES_ASSEMBLY_MAP'} = $species_to_assembly;
 
   ## Compile strain info into a single structure
   while (my($k, $v) = each (%$species_to_strains)) {
@@ -755,7 +889,6 @@ sub _parse {
     $tree->{$species}{'ALL_STRAINS'} = $v;
   } 
 
-  #use Data::Dumper; 
   #$Data::Dumper::Maxdepth = 2;
   #$Data::Dumper::Sortkeys = 1;
   #warn ">>> ORIGINAL KEYS: ".Dumper($tree);
@@ -765,15 +898,22 @@ sub _parse {
   my $aliases  = $tree->{'MULTI'}{'ENSEMBL_SPECIES_URL_MAP'};
   foreach my $prodname (@$SiteDefs::PRODUCTION_NAMES) {
     my $url = $tree->{$prodname}{'SPECIES_URL'};
+    if ($url) {
     
-    ## Add in aliases to production names
-    $aliases->{$prodname} = $url;
+      ## Add in aliases to production names
+      $aliases->{$prodname} = $url;
     
-    ## Rename the tree keys for easy data access via URLs
-    ## (and backwards compatibility!)
-    $tree->{$url} = $tree->{$prodname};
-    push @$datasets, $url;
-    delete $tree->{$prodname};
+      ## Rename the tree keys for easy data access via URLs
+      ## (and backwards compatibility!)
+      if ($url ne $prodname) {
+        $tree->{$url} = $tree->{$prodname};
+        delete $tree->{$prodname};
+      }
+      push @$datasets, $url;
+    }
+    else {
+      warn ">>> SPECIES $prodname has no URL defined";
+    }
   } 
   $tree->{'MULTI'}{'ENSEMBL_DATASETS'} = $datasets;
   #warn ">>> NEW KEYS: ".Dumper($tree);
@@ -788,7 +928,7 @@ sub process_ini_files {
   my ($self, $species, $config_packer, $defaults) = @_;
   my $type = 'db';
   
-  my $msg  = "$species database";
+  my $msg  = "$species databases";
   my $file = File::Spec->catfile($self->{'_conf_dir'}, 'packed', "$species.$type.packed");
   my $full_tree = $config_packer->full_tree;
   my $tree_type = "_${type}_tree";
@@ -798,7 +938,7 @@ sub process_ini_files {
     $full_tree->{'MULTI'}{'COLOURSETS'} = $self->_munge_colours($self->_read_in_ini_file('COLOUR', {})) if $species eq 'MULTI';
     
     $self->_info_line('Parsing', "$species ini file");
-    $self->_expand_database_templates($species, $full_tree->{$species});
+    $self->_expand_database_templates($species, $full_tree->{$species}, $config_packer);
     $self->_promote_general($full_tree->{$species});
   }
   

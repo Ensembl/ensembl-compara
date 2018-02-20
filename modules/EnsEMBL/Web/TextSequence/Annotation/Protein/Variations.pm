@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,13 +30,18 @@ sub annotate {
   my $object = $config->{'object'};
   my $translation = $config->{'translation'};
   my $strand   = $object->Obj->strand;
+  my %variants_list;
   foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
     next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $config->{'snp_length_filter'};
     next if $self->too_rare_snp($snp->{'vf'},$config);
     next if $self->hidden_source($snp->{'vf'},$config);
-        
+
     my $pos  = $snp->{'position'} - 1;
     my $dbID = $snp->{'vdbid'};
+
+    next if $variants_list{$dbID}; # Avoid duplication
+    $variants_list{$dbID} = 1;
+
     $markup->{'variants'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
     $markup->{'variants'}->{$pos}->{'alleles'} = $snp->{'allele'};
     $markup->{'variants'}->{$pos}->{'href'} ||= {

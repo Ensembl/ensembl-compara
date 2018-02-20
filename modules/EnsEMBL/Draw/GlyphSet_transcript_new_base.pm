@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ sub draw_collapsed_genes {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
   ## Add old-style 'tags' between genes or transcripts
-  $self->_add_connections($style);
+  $self->add_connections($style);
 
   $self->_make_legend($genes,$self->my_config('name'));
 
@@ -141,7 +141,7 @@ sub draw_expanded_transcripts {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
   ## Add old-style 'tags' between genes or transcripts
-  $self->_add_connections($style);
+  $self->add_connections($style);
 
   $self->_make_legend($transcripts, $self->my_config('name'));
 
@@ -177,7 +177,7 @@ sub draw_rect_genes {
   my $style = $style_class->new(\%config, $data);
   $self->push($style->create_glyphs);
   ## Add old-style 'tags' between genes or transcripts
-  $self->_add_connections($style);
+  $self->add_connections($style);
 
   $self->_make_legend($genes,$self->my_config('name'));
 
@@ -202,18 +202,40 @@ sub _set_bump_strand {
 sub _create_exon_structure {
   my ($self, $f) = @_;
   my $structure = [];
+  my $slice_length = $self->{'config'}->container_width;
 
   foreach my $e (@{$f->{'exons'}}) {
     next unless ($e->{'start'} || $e->{'end'}); 
     my $exon = {'start' => $e->{'start'}, 'end' => $e->{'end'}};
+
     if (defined $e->{'coding_start'} && defined $e->{'coding_end'}) {
+      ## Turn API coordinates into something that makes sense in drawing terms 
+      if ($e->{'coding_start'} < 1) {
+        $e->{'coding_start'} = $e->{'start'};
+      }
+      if ($e->{'coding_end'} < 1) {
+        $e->{'coding_end'} = $e->{'end'};
+      }
+
+      if ($e->{'coding_start'} != $e->{'start'}) {
+        $e->{'coding_start'}  += $e->{'start'};
+      }
+      if ($e->{'coding_end'} != $e->{'end'}) {
+        $e->{'coding_end'}  = $e->{'end'} - $e->{'coding_end'};
+      }
+
       ## Use direction of drawing, not direction of transcript
       my ($coding_start, $coding_end) = ($e->{'coding_start'}, $e->{'coding_end'});
-      if ($coding_start > 0) {
-        $exon->{'utr_5'} = $e->{'start'} + $coding_start;
+      if (($coding_end - $coding_start) < 0 || ($coding_end - $coding_start) > $slice_length) {
+        $exon->{'non_coding'} = 1;
       }
-      if ($coding_end < ($e->{'end'} - $e->{'start'})) {
-        $exon->{'utr_3'} = $e->{'end'} - $coding_end;
+      else {
+        if ($coding_start > $e->{'start'}) {
+          $exon->{'utr_5'} = $coding_start;
+        }
+        if ($coding_end < $e->{'end'}) {
+          $exon->{'utr_3'} = $coding_end;
+        }
       }
     }
     else {
@@ -223,16 +245,6 @@ sub _create_exon_structure {
   }
   $f->{'structure'} = $structure;
   return 1;
-}
-
-sub _add_connections {
-  my ($self, $style) = @_;
-  my @A = @{$style->connections};
-  #warn ">>> ADDING BRIDGES @A";
-  #use Data::Dumper; $Data::Dumper::Maxdepth = 1; warn Dumper($style);
-  foreach (@{$style->connections}) {
-    $self->join_tag($_->{'glyph'}, $_->{'tag'}, @{$_->{'params'}||[]});
-  }
 }
 
 sub _add_connection_to_legend {

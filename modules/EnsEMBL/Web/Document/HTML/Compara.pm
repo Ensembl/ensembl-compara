@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,7 +54,23 @@ sub get_genome_db {
   }
 }
 
+
+sub error_message {
+  my ($self, $title, $message, $type) = @_;
+  $type ||= 'error';
+  $message .= '<p>Please email a report giving the URL and details on how to replicate the error (for example, how you got here), to helpdesk@ensembl.org</p>' if $type ne 'info';
+  return qq{
+      <div class="$type left-margin right-margin">
+        <h3>$title</h3>
+        <div class="message-pad">
+          $message
+        </div>
+      </div>
+  };
+}
+
 ## Output a list of whole-genome alignments for a given method, and their species
+## NOTE: not used any more since e92
 sub format_wga_list {
   my ($self, $method) = @_;
   my $html = '<ul>';
@@ -72,6 +88,52 @@ sub format_wga_list {
   $html .= '</ul>';
   return $html;
 }
+
+## Output a list of whole-genome alignments for a given method, and their species
+sub format_wga_table {
+  my ($self) = @_;
+
+  my $compara_db = $self->hub->database('compara');
+  unless ($compara_db) {
+    return $self->error_message('No Compara databse', '<p>No Compara database is configured on this site.</p>' );
+  }
+
+  my @all_mlss;
+  foreach my $method_link_type (qw(PECAN EPO EPO_LOW_COVERAGE CACTUS_HAL)) {
+    push @all_mlss, sort {$a->dbID <=> $b->dbID} @{ $compara_db->get_adaptor('MethodLinkSpeciesSet')->fetch_all_by_method_link_type($method_link_type) };
+  }
+
+  unless (@all_mlss) {
+    return $self->error_message('No alignments found', qq{<p>This Compara database doesn't contain any multiple-genome alignments.</p>}, 'info');
+  }
+
+  my $table = EnsEMBL::Web::Document::Table->new([
+    { key => 'name'   , title => 'Name', },
+    { key => 'genomes', title => 'Genomes', },
+    { key => 'method' , title => 'Method used', },
+  ], [], {data_table => 1, exportable => 1, id => 'all_multiple_alignments'});
+
+  foreach my $mlss (@all_mlss) {
+    my $name = $mlss->name;
+    my $genomes = join(", ", sort map {$_->display_name} @{$mlss->species_set->genome_dbs});
+    my $method_link_type = $mlss->method->type;
+    # Remove the method name, trying first the type
+    $name =~ s/\s+$method_link_type$//i;
+    # And then the display name if there is one
+    if ($Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method_link_type}) {
+        $method_link_type = $Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method_link_type};
+        $name =~ s/\s+$method_link_type$//i;
+    }
+    my $url = sprintf(q{<a href="/info/genome/compara/mlss.html?mlss=%d">%s</a>}, $mlss->dbID, $name);
+    $table->add_row({
+      'name'    => $url,
+      'genomes' => $genomes,
+      'method'  => $method_link_type,
+    });
+  }
+  return $table->render;
+}
+
 
 sub print_wga_stats {
   my ($self, $mlss) = @_;

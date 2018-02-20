@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ package EnsEMBL::Draw::GlyphSet::flat_file;
 
 use strict;
 
+use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 
@@ -63,6 +64,16 @@ sub get_data {
   my $file  = EnsEMBL::Web::File::User->new(%args);
   return [] unless $file->exists;
   
+  ## Set style for VCF here, as other formats define it in different ways
+  my $adaptor;
+  if ($format =~ /vcf/i) {
+    $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
+    $self->{'my_config'}->set('height', 12);
+    $self->{'my_config'}->set('show_overlay', 1);
+    ## Also create adaptor, so we can look up consequence in db
+    $adaptor = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($hub->species);
+  }
+
   ## Get settings from user interface
   my ($colour, $y_min, $y_max);
   if ($self->{'my_config'}{'data'}) {
@@ -71,17 +82,27 @@ sub get_data {
     $y_max  = $self->{'my_config'}{'data'}{'y_max'};
   }
 
-  my $iow   = EnsEMBL::Web::IOWrapper::open($file, 
-                                            'hub'         => $hub, 
-                                            'config_type' => $self->{'config'}{'type'},
-                                            'track'       => $self->{'my_config'}{'id'},
-                                            );
+  my $iow     = EnsEMBL::Web::IOWrapper::open($file, 
+                                              'hub'         => $hub, 
+                                              'adaptor'     => $adaptor,
+                                              'config_type' => $self->{'config'}{'type'},
+                                              'track'       => $self->{'my_config'}{'id'},
+                                              );
   if ($iow) {
+    ## Override colourset based on format here, because we only want to have to do this in one place
+    my $colourset   = $iow->colourset || 'userdata';
+    my $colours     = $hub->species_defs->colour($colourset);
+    $self->{'my_config'}->set('colours', $colours);
+
+    $colour       ||= $self->my_colour('default');
+    $self->{'my_config'}->set('colour', $colour);
+
     my $extra_config = {
                         'strand_to_omit'  => $strand_to_omit,
                         'display'         => $self->{'display'},
                         'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                         'colour'          => $colour,
+                        'colours'         => $colours,
                         'y_min'           => $y_min, 
                         'y_max'           => $y_max, 
                         };
@@ -89,11 +110,6 @@ sub get_data {
     ## Parse the file, filtering on the current slice
     $data = $iow->create_tracks($container, $extra_config);
     #use Data::Dumper; warn '>>> TRACKS '.Dumper($data);
-
-    ## Override colourset based on format here, because we only want to have to do this in one place
-    my $colourset   = $iow->colourset || 'userdata';
-    $self->{'my_config'}->set('colours', $hub->species_defs->colour($colourset));
-    $self->{'my_config'}->set('colour', $self->my_colour('default'));
   } else {
     $self->{'data'} = [];
     return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));

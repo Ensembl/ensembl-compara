@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -470,8 +470,14 @@ sub html_template {
   $self->add_body_attr('id',    'ensembl-webpage');
   $self->add_body_attr('class', 'mac')                               if $ENV{'HTTP_USER_AGENT'} =~ /Macintosh/;
   my $ie = $self->hub->ie_version;
-  $self->add_body_attr('class', "ie ie$ie" . ($ie < 8 ? ' ie67' : '')) if $ie and $ie < 9;
-  $self->add_body_attr('class', "ienew ie$1")                        if $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 >= 9;
+  if ($ie && $ie < 11) {
+    if ($ie < 9) {
+      $self->add_body_attr('class', "ie ie$ie" . ($ie < 8 ? ' ie67' : ''));
+    }
+    else {
+      $self->add_body_attr('class', "ienew ie$1");
+    }
+  }
   $self->add_body_attr('class', 'no_tabs')                           unless $elements->{'tabs'};
   $self->add_body_attr('class', 'static')                            if $self->isa('EnsEMBL::Web::Document::Page::Static');
   $self->add_body_attr('data-pace',$SiteDefs::PACED_MULTI||8);

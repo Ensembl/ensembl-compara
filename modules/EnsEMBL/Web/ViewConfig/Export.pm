@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -219,6 +219,22 @@ sub init_form {
           label    => 'Genomic',
           values   => $genomic
         });
+      }
+
+      ## If the fieldset has many checkboxes, provide a select/deselect all option
+      my $params = $config->{$c}->{'params'} || [];
+      my $checkbox_count;
+      foreach (@$params) {
+        $checkbox_count++ if (!$config->{$c}{'type'} || $config->{$c}{'type'} eq 'CheckBox');
+      }
+      if ($checkbox_count > 3) {
+        $self->add_form_element({
+                              'type'        => 'Checkbox',
+                              'name'        => 'select_all',
+                              'label'       => 'Select/deselect all',
+                              'value'       => 'yes',
+                              'field_class' => 'select_all',
+                            });
       }
 
       foreach (@{$config->{$c}->{'params'}}) {

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2017] EMBL-European Bioinformatics Institute
+# Copyright [2016-2018] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -247,7 +247,7 @@ foreach my $index (@indexes) {
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
-#    next unless ($species =~ /^Mus/);
+ #    next unless ($species =~ /^mus/);
     my $single_species = 0;
     my %dbs = %{$PD->{$species}{'databases'}||{}};
     $conf->{'dbs'}                     = { map { ($_,$dbs{$_}{NAME}) } keys %dbs };
@@ -737,38 +737,6 @@ sub dumpVariation {
     $quick_links = 'all:0';
   }
 
-  my $ssid_hash = on_disk_set('ssid');
-  my ($ssid_sth, $stmt);
-  # the human database is so big that that dumping in one go runs out of memory even with 128Gb!
-  if ($dbspecies ne 'omo_sapiens') {
-    print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
-    $stmt = qq{SELECT variation_id,
-                      GROUP_CONCAT('ss',subsnp_id) as ssid
-                 FROM subsnp_map
-             GROUP BY variation_id};
-    $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
-    $ssid_sth->execute();
-    print LOG "     ...executed SQL, now retrieving data ".&date_and_mem()."\n";
-
-    # Get a hashref of the results with the variation_id as key
-    #$ssid_hash = $ssid_sth->fetchall_hashref('variation_id');
-    while ( my ($variation_id,$ssids) = $ssid_sth->fetchrow_array ) {
-      foreach my $ssid (split(/,/,$ssids)) {
-        set_add($ssid_hash,$variation_id,$ssid);
-      }
-    }
-
-    print LOG "     Retrieved extra ssID info ".&date_and_mem()."\n";
-  }
-  else {
-    #for human we need to get the extra allele info as we go along
-    print LOG "    Will get extra ssID info as we go along ".&date_and_mem()."\n";
-    $stmt = qq{SELECT GROUP_CONCAT('ss',subsnp_id) as ssid
-                 FROM subsnp_map
-                WHERE variation_id = ?};
-    $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
-  }
-
   ## get synonym info
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
   my $synonyms;
@@ -815,44 +783,12 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       my $synonym_list       = $synonyms->{$variation_id};
       my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
-      my $ssids;
-      if ($ssid_hash) {
-        $ssids = [ set_get($ssid_hash,$variation_id) ];
-      }
-      else {
-        #comment out these three lines if time constraints mean you need to generate indices without extra allele info
-        my $timed_out = 1;
-        until ($ssid_sth->execute($variation_id) || $timed_out > 5) {
-          print LOG "Can't execute query to get extra allele info:\n".$conf->{'variation_dbh'}->errstr."\n. Retrying\n";
-          sleep 3;
-          $timed_out++;
-        }
-        if ($timed_out > 5) {
-          print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
-          return 0;
-        }
-
-        (my $res) = $ssid_sth->fetchrow_arrayref();
-        if ($conf->{'variation_dbh'}->err) {
-          print LOG "Data retrieval for $variation_name terminated early:\n".$conf->{'variation_dbh'}->errstr."\n";
-          print LOG "WARNING: You'll need to reindex $dbspecies Variations, can't maintain connection\n";
-          return 0;
-        }
-        $ssids = [ split(/,/,$res->[0]) ];
-      }
       my %synonyms;
       my $syn_c = 0;
       foreach my $syn (split /,/, $synonym_list) {
         my ($source_id,$sname) = split / /,$syn;
         $synonyms{$sname} = $sources->{$source_id};
         $syn_c++;
-      }
-      foreach my $ssid_syn (@$ssids) {
-        unless (exists $synonyms{$ssid_syn}) {
-          $synonyms{$ssid_syn} = 'dbSNP';
-          $syn_c++;
-          $new_syn_c++;
-        }
       }
       my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
       foreach my $syn (keys %synonyms) {
@@ -939,11 +875,9 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
   print LOG "  $new_syn_c synonyms added from the subsnp_map table\n";
 
   %snp_extra    = undef;
-  $ssid_hash = undef;
 
   off_disk('all_hgvs_names',$all_hgvs_names);
   off_disk('all_hgnc_names',$all_hgnc_names);
-  off_disk('ssid',$ssid_hash);
   return $c;
 }
 
@@ -2362,7 +2296,7 @@ sub dumpGene {
     $sql = qq(
       SELECT g.gene_id, t.transcript_id, tr.translation_id,
              g.stable_id as gsid, g.version as gversion, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
-             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.status, g.biotype, a.logic_name
+             g.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, g.biotype, a.logic_name
         FROM (( $dbname.gene as g,
              $dbname.analysis as a,
              $dbname.analysis_description as ad,
@@ -2379,9 +2313,9 @@ sub dumpGene {
 
     my $old;
     my $c;
-    my ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    my ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      ($gid,$tid,$tlid,$gsid,$gver,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln) = @$r;
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
@@ -2425,7 +2359,6 @@ sub dumpGene {
           'xrefs'     => [],
           'synonyms'  => [ @{$gene_trans_syns{$gsid}||[]}, @{$gene_trans_syns{$tsid}||[]} ],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel gene",
-          'status'    => $status,
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
         };
@@ -2738,7 +2671,7 @@ sub dumpTranscript {
     $trans_locations->{'has_patches'} = $has_patches;
     $sql = qq(
       SELECT t.transcript_id, tr.translation_id, t.stable_id as tsid, t.version as tversion, tr.stable_id as trsid, tr.version as trversion,
-             t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.status, t.biotype, a.logic_name
+             t.description, x.display_label, ad.display_label, ad.web_data, ad.displayable, t.biotype, a.logic_name
         FROM (( $dbname.analysis_description as ad,
              $dbname.analysis as a,
              $dbname.transcript as t) left join
@@ -2753,9 +2686,9 @@ sub dumpTranscript {
 
     my $old;
     my $c = 0;
-    my ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln);
+    my ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln);
     while (my $r = $sth->fetchrow_arrayref()) {
-      ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$status,$biotype,$ln) = @$r;
+      ($tid,$tlid,$tsid,$tver,$tlsid,$tlver,$desc,$disp_xref,$ad_dl,$webdata,$displayable,$biotype,$ln) = @$r;
       $desc = $desc ? $desc : $gene_desc->{$tid}{'description'} ? $gene_desc->{$tid}{'description'} : '';
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
@@ -2799,7 +2732,6 @@ sub dumpTranscript {
           'xrefs'     => [],
           'synonyms'  => $trans_syns{$tsid} || [],
           'disp_xref' => $disp_xref ? "$disp_xref" : "novel transcript",
-          'status'    => $status,
           'biotype'   => $biotype,
           'ad_dl'     => $ad_dl,
           'domains'   => $protein_domains->{$tid},
@@ -3200,13 +3132,9 @@ sub dumpRegulatoryFeature {
       ft.name
     from 
       $dbname.regulatory_feature rf
-      join $dbname.seq_region sr using (seq_region_id)
-      join $dbname.coord_system cs using (coord_system_id)
+      join seq_region sr using (seq_region_id)
       join $dbname.feature_type ft using (feature_type_id)
-    where
-      cs.is_current=1
-      and sr.schema_build=cs.schema_build
-   ");
+     ");
 
   foreach my $row ( @$d ) {
     my $desc = qq($row->[4] regulatory feature);
@@ -3230,10 +3158,7 @@ sub dumpRegulatoryFeature {
       $dbname.external_feature ef
       join $dbname.feature_type ft using (feature_type_id)
       join $dbname.feature_set fs using (feature_set_id)
-      join $dbname.seq_region sr using (seq_region_id)
-      join $dbname.coord_system cs using (coord_system_id)
-    where
-      cs.is_current = 1
+      join seq_region sr using (seq_region_id)
     group by 
       ef.display_label
  ");
@@ -3265,10 +3190,7 @@ sub dumpRegulatoryFeature {
     $dbname.mirna_target_feature mrf
     join $dbname.feature_type ft using (feature_type_id)
     join $dbname.feature_set fs using (feature_set_id)
-    join $dbname.seq_region sr using (seq_region_id)
-    join $dbname.coord_system cs using (coord_system_id)
-  where
-    cs.is_current = 1
+    join seq_region sr using (seq_region_id)
   group by 
     mrf.display_label
  "

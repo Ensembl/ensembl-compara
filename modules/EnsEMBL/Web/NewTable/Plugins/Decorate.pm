@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,12 +88,18 @@ sub decorate_key { return 'link'; }
 
 sub col_link_url {
   my ($self,$col,$spec) = @_;
-  my (%base,%params);
+  my (%base,%params,$base);
+  if($spec->{'__external'}) {
+    $base = $spec->{'__external'};
+    delete $spec->{'__external'};
+  }
   foreach my $k (keys %$spec) {
     if(ref($spec->{$k}) eq 'ARRAY') { $params{$k} = $spec->{$k}[0]; }
     else { $base{$k} = $spec->{$k}; }
   }
-  my $base = $self->hub->url(\%base);
+  unless($base) {
+    $base = $self->hub->url(\%base);
+  }
   $self->set_decorates($col,'*',{ base_url => $base, params => \%params});
 }
 
@@ -196,6 +202,10 @@ sub col_toggle_highlight_column {
 
 sub col_toggle_highlight_over {
   $_[0]->set_decorates($_[1],'*',{ highlight_over => $_[2] });
+}
+
+sub col_toggle_highlight_position {
+  $_[0]->set_decorates($_[1],'*',{ highlight_pos => $_[2] });
 }
 
 1;

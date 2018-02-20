@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ sub content {
   my $features     = [];
 
   # details of each probe within the probe set on the array that are found within the slice
-  my ($r_name, $r_start, $r_end) = $hub->param('r') =~ /(\w+):(\d+)-(\d+)/;
+  my ($r_name, $r_start, $r_end) = $hub->param('r') =~ /^([^:]+):(\d+)-(\d+)$/;
   my %probes;
   
   if ($hub->param('ptype') ne 'probe') {
@@ -83,7 +83,7 @@ sub content {
     $probes{$of_name}{'chr'}   = $of_sr_name;
     $probes{$of_name}{'start'} = $of_start;
     $probes{$of_name}{'end'}   = $of_end;
-    $probes{$of_name}{'loc'}   = $of_start . 'bp-' . $of_end . 'bp';
+    $probes{$of_name}{'loc'}   = $self->thousandify($of_start) . 'bp-' . $self->thousandify($of_end) . 'bp';
   }
   
   foreach my $probe (sort {

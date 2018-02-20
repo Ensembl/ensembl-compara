@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,7 @@ Ensembl.extend({
   setSpecies: function () {
     this.speciesPath        = $('#species_path').val()        || '';
     this.speciesCommon      = $('#species_common_name').val() || '';
+    this.speciesImagePath   = $('#ensembl_image_root').val() + 'species/' || '';
     this.species            = this.speciesPath.split('/').pop();
   },
 

@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,15 @@
 ** 'Spreadsheet' with striped rows
 ***********************************************************************/
 
-table.ss                { width: 100%; border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; border-spacing: 0; }
+table.ss                { width: 100%; border: 1px [[PALE_GREY]] solid; margin: 0 0 16px; border-spacing: 0; }
 table.ss   th, 
-table.ss   tr.ss_header { background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
+table.ss   tr.ss_header { background-color: [[PALE_GREY]]; line-height: 16px; }
 table.ss   th,
 table.ss   td           { padding: 4px; }
-table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
-table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
+table.ss   tr.bg1       { background-color: [[WHITE]];   }
+table.ss   tr.bg2       { background-color: [[V_LIGHT_GREY]]; } 
 table.tint tr.bg2,
-table.ss   tr.bg3       { background-color: [[TINT_BG]];    }
+table.ss   tr.bg3       { background-color: [[MAIN_V_LIGHT]];    }
 table.ss   tr.highlight { background-color: [[HIGHLIGHT2]];   }
 
 table.fixed            { table-layout: fixed; }
@@ -39,7 +39,7 @@ body.ienew table.fixed { table-layout: auto; }
 table.padded-cell td,
 table.padded-cell th   { padding: 8px; }
  
-table.data_table                     { border: 1px solid [[NEUTRAL_BORDER]]; margin: 0; min-width: 421px; }
+table.data_table                     { border: 1px solid [[PALE_GREY]]; margin: 0; min-width: 421px; }
 table.data_table th                  { cursor: pointer; padding: 2px 20px 2px 4px; }
 table.data_table th:first-child,
 table.data_table td:first-child.wrap { padding-left: 4px; }
@@ -50,9 +50,10 @@ table.toggle_table th div            { padding: 0; }
 .dataTables_wrapper, .toggleTable_wrapper { margin: 0 0 16px; clear: both; }
 
 .dataTables_top,
-.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[NEUTRAL_BORDER]]; background-color: [[TABLE_HEADER]]; color: [[PANEL_BG]]; }
+.dataTables_bottom { min-width: 400px; height: 22px; padding: 7px 10px 5px; border: 1px solid [[PALE_GREY]]; background-color: [[MAIN_DARK]]; color: [[WHITE]]; }
 .dataTables_top    { border-bottom: 0; }
 .dataTables_bottom { border-top: 0; }
+.dataTables_top label { font-weight:normal; }
 .dataTables_info   { float: left; line-height: 20px; }
 .dataTables_length { float: left; width: 33%; }
 .dataTables_filter { float: right; text-align: right; position: relative; }
@@ -60,7 +61,7 @@ table.toggle_table th div            { padding: 0; }
 
 .dataTables_paginate                                 { float: right; text-align: right; font-size: 10px; }
 .list_paginate                                       { text-align:left; font-size: 14px; font-weight:bold; }
-.list_paginate .page_button_frame                    { padding: 4px 2px; border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; background-color:[[BUTTON_BG]]; font-size:14px; }
+.list_paginate .page_button_frame                    { padding: 4px 2px; border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; background-color:[[MAIN_DARK]]; font-size:14px; }
 
 .list_paginate .first,
 .dataTables_paginate .first                          { border-radius: 4px 0 0 4px; -moz-border-radius: 4px 0 0 4px; -webkit-border-radius: 4px 0 0 4px; }
@@ -69,29 +70,43 @@ table.toggle_table th div            { padding: 0; }
 .list_paginate .paginate_button,
 .list_paginate .paginate_active,
 .dataTables_paginate .paginate_button,
-.dataTables_paginate .paginate_active                { color: [[PAGE_TEXT]]; background-color: #99B3FF; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_active                { color: [[DARK_GREY]]; background-color: [[MAIN_V_LIGHT]]; border: none; padding: 0px 8px; margin: 0 1px 0 0; cursor: pointer; display: inline-block; line-height: 20px; }
+.dataTables_paginate .paginate_active                {color: [[WHITE]]; background-color: [[MAIN_V_DARK]]; }
 .list_paginate .paginate_button,
-.dataTables_paginate .paginate_button                { background-color: [[TINT_BG]]; }
+.dataTables_paginate .paginate_button                { background-color: [[MAIN_V_LIGHT]]; }
 .list_paginate .paginate_button:hover,
-.dataTables_paginate .paginate_button:hover          { background-color: #BFD0FF; }
+.dataTables_paginate .paginate_button:hover          { background-color: [[MAIN_LIGHT]]; }
 .list_paginate .paginate_button_disabled,
-.dataTables_paginate .paginate_button_disabled       { color: [[NEUTRAL_BORDER]]; cursor: default; }
+.dataTables_paginate .paginate_button_disabled       { color: [[PALE_GREY]]; cursor: default; }
 .list_paginate .paginate_button_disabled:hover,
-.dataTables_paginate .paginate_button_disabled:hover { background-color: [[TINT_BG]] !important;   }
+.dataTables_paginate .paginate_button_disabled:hover { background-color: [[MAIN_V_LIGHT]] !important;   }
 
 
-.dataTables_length select,
-.dataTables_filter input    { border: 1px solid [[NEUTRAL_BORDER]]; }
+.dataTables_length select    { border: 1px solid [[PALE_GREY]]; }
 .dataTables_filter input    { height: 16px; width: 140px; }
-.dataTables_filter .overlay { position: absolute; color: #999999; left: 2px; top: 2px; line-height: 16px; }
+.dataTables_filter .overlay { position: absolute; color: [[PALE_GREY]]; font-weight:normal; left: 4px; top: 4px; line-height: 16px; }
 
 body.ie6 .dataTables_filter input { height: 20px; }
 
-.dataTables_export .floating_popup   { color: [[PAGE_TEXT]]; right: 0; width: 125px; }
+.dataTables_export .floating_popup   { color: [[DARK_GREY]]; right: 0; width: 125px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
 
-.col_toggle              { float: left;  text-align: center; color: [[PAGE_TEXT]]; }
-.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; min-width: 125px; display: inline-block; padding: 1px 5px; margin: auto; }
+.col_toggle              { float: left;  text-align: center; color: [[DARK_GREY]]; }
+.col_toggle .toggle      { 
+    cursor: pointer; 
+    color: [[DARK_GREY]];
+    background-color: [[WHITE]]; 
+    min-width: 125px; 
+    display: inline-block; 
+    padding: 4px 8px 2px 8px; 
+    margin: auto;
+    border-color: [[MAIN_V_DARK]];
+    border-style: solid; 
+    border-width: 0px 1px 1px 0px; 
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+}
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
 .col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 137px; }
@@ -123,56 +138,66 @@ div.up_arrow   { width: 0; height: 0; border-left: 8px solid transparent; border
 div.down_arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top:    15px solid red;   }
 div.no_arrow   { width: 15px; height: 15px; background: grey; }
 
-td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[PANEL_BG]]; padding: 2px; }
-tr.bg2 td a.hover_show { background-color: [[NEUTRAL_BG]]; }
+td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[WHITE]]; padding: 2px; }
+tr.bg2 td a.hover_show { background-color: [[V_LIGHT_GREY]]; }
 td:hover a.hover_show  { display: inline; }
 
 tr.row-sub td { font-size: 85%; }
 tr.row-sub td:first-child { text-indent:24px; }
 
-.new_table { border: 1px [[NEUTRAL_BORDER]] solid; margin: 0 0 16px; }
+.new_table { border: 1px [[PALE_GREY]] solid; margin: 0 0 16px; }
 .new_table table    { table-layout: fixed;  width: 100%; border-spacing: 0; }
-.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[NEUTRAL_BORDER]]; line-height: 16px; }
-.new_table tbody tr { background-color: #fff; }
-.new_table tbody tr:nth-child(odd) { background-color: #eee; }
-.new_table tbody tr:nth-child(even) { background-color: #fff; }
-.new_table .subtable { background: #f8f8f0;  }
+.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; background-color: [[PALE_GREY]]; line-height: 16px; }
+.new_table tbody tr { background-color: [[WHITE]]; }
+.new_table tbody tr:nth-child(odd) { background-color: [[LIGHT_GREY]]; }
+.new_table tbody tr:nth-child(even) { background-color: [[WHITE]]; }
+.new_table .subtable { background: [[CONTRAST_V_LIGHT]];  }
 .new_table th,.new_table td { padding: 4px; word-wrap: break-word; }
 
 .newtable_controller { margin: 16px 0; }
-.new_table_wrapper { clear: both; margin: 0 0 16px; }
-.new_table_top     { background-color: #8b9bc1; border: 1px solid #ccc; color: #fff; height: 22px; padding: 7px 0 5px 10px; position: relative; }
+.new_table_wrapper { clear: both; margin: 0 0 16px; display: grid;}
+.new_table_top     { background-color: [[MAIN_DARK]]; border: 1px solid [[PALE_GREY]]; color: [[WHITE]]; height: 22px; padding: 7px 0 5px 10px; position: relative; }
 .new_table_section { float: left; width: 33%; height: 100%; }
 .new_table_section_2 > * { float: right; }
 div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: center; }
 .new_table_section div { display: inline-block; }
-.new_table_pagesize select { border: 1px solid #ccc; }
-.new_table_thinking { background: white url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid #8b9bc1; border-radius: 5px; color: #8b9bc1; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
-.new_table .no_results { font-size: 128px; font-weight: bold; background-color: #ddd; text-align: center; color: #ccc; padding: 16px; display: none; }
+.new_table_pagesize select { border: 1px solid [[PALE_GREY]]; }
+.new_table_thinking { background: [[WHITE]] url("/i/loading-tiny.gif") no-repeat scroll 1px 1px; border: 1px solid [[MAIN_DARK]]; border-radius: 5px; color: [[MAIN_DARK]]; display: inline-block; float: left; font-size: 14px; font-weight: bold; height: 22px; left: 50%; margin: 0 4px 2px -44px; padding: 0 6px 0 2px; position: absolute; text-align: right; top: -12px; width: 74px; line-height: 20px; }
+.new_table .no_results { font-size: 128px; font-weight: bold; background-color: [[PALE_GREY]]; text-align: center; color: #ccc; padding: 16px; display: none; }
 
 .newtable_filter { -moz-user-select: none; -khtml-user-select: none; -webkit-user-select: none; -ms-user-select: none; }
 .newtable_filter ul { display: inline-block; margin: 0; padding: 4px 2px; }
-.newtable_filter li.t { list-style: none; background-color: white; line-height: 20px; display: inline-block; margin: 0; }
-.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: #cfc; }
-.newtable_filter .x:hover { border: 2px solid #999; text-shadow: 0 1px white; }
+.newtable_filter li.t { list-style: none; background-color: [[WHITE]]; line-height: 20px; display: inline-block; margin: 0; }
+.newtable_filter .x { display: inline-block; visibility: hidden; height: 20px; width: 20px; vertical-align: bottom; margin: 0 -12px 3px 0; border: 2px solid #ccc; border-radius: 16px; z-index: 10; position: relative; background: [[OK_LIGHT]]; }
+.newtable_filter .x:hover { border: 2px solid [[MEDIUM_GREY]]; text-shadow: 0 1px [[WHITE]]; }
 .newtable_filter .x span { background: url(/i/16/cross-grey.png) no-repeat 4px 4px; display: inline-block; width: 20px; height: 20px; }
-.newtable_filter li.t .b { padding: 2px 8px 2px 24px; margin: 0; color: white; display: inline-block; border: 3px double white; font-size: 14px; cursor: pointer; background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
-.newtable_filter li.t.more .b { background: #506099 url(/i/16/rev/filter.png) no-repeat 4px 50%; }
+.newtable_filter li.t .b { 
+  padding: 4px 12px 2px 30px; 
+  margin: 0; color: [[WHITE]]; 
+  display: inline-block; 
+  cursor: pointer; 
+  background: [[MAIN_DARK]] url(/i/16/rev/filter.png) no-repeat 8px 50%; 
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
+}
+.newtable_filter li.t.more .b { background: [[MAIN_DARK]] url(/i/16/rev/filter.png) no-repeat 8px 50%; }
 .newtable_filter li.t.restricted .x { visibility: visible; }
 .newtable_filter li.t.more .b { display: inline-block; }
 .newtable_filter li.more .k:after { content: ""; }
 .newtable_filter li.t.more .v { display: none; }
-.newtable_filter li .b:hover { background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
-.newtable_filter { padding: 0 0px; margin: 0; background-color: white; font-size: 16px; color: #333; }
+.newtable_filter li .b:hover,
+.newtable_filter li.t.more .b:hover { background-color: [[MAIN_V_DARK]]; }
+.newtable_filter { padding: 0 0px; margin: 0; background-color: [[WHITE]]; color: [[V_DARK_GREY]]; }
 .newtable_filter li .k:after { content: ": "; }
 .newtable_filter li { position: relative; }
-.newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: white; padding: 4px; border: 1px solid #999; display: none; z-index: 100; text-shadow: none; color: black; cursor: auto; }
+.newtable_filter li .m { position: absolute; top: 22px; left: 4px; background: [[WHITE]]; padding: 4px; border: 1px solid [[MEDIUM_GREY]]; display: none; z-index: 100; text-shadow: none; color: [[BLACK]]; cursor: auto; }
 .newtable_filter .newtable_filtertype_class .body ul { margin: -3px 0; padding: 0; display: block; float: left; font-size: 75%; line-height: 1em; }
-.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,#444,#666),#666; color: #888; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid #ccc; display: block; width: 200px; border-radius: 8px; cursor: pointer; }
+.newtable_filter .newtable_filtertype_class .body li { background: linear-gradient(to top,[[V_DARK_GREY]],[[DARK_GREY]]),[[DARK_GREY]]; color: [[MEDIUM_GREY]]; margin: 4px; padding: 4px 36px 4px 4px; position: relative; word-wrap: break-word; list-style: none; border: 1px solid [[MEDIUM_GREY]]; display: block; width: 200px; border-radius: 8px; cursor: pointer; }
 .newtable_filter li .m .tail li { cursor: pointer; }
 .newtable_filter .newtable_filtertype_class .body li img { max-height: 12px; }
 .newtable_filter .newtable_filtertype_class .body li:before { content: "Off"; background: linear-gradient(to top,#422,#633), #633; position: absolute; right: 0; top: 0; bottom: 0; padding: 4px; width: 26px; display: inline-block; text-align: center; color: #999; overflow: hidden; border-radius: 0 8px 8px 0; }
-.newtable_filter .newtable_filtertype_class .body li.on:before { content: "On"; background: linear-gradient(to top,#174,#396) #396; border-radius: 0 8px 8px 0; color: black; }
+.newtable_filter .newtable_filtertype_class .body li.on:before { content: "On"; background: linear-gradient(to top,#174,#396) #396; border-radius: 0 8px 8px 0; color: [[BLACK]]; }
 .newtable_filtertype_class li img { display: inline-block; vertical-align: bottom; margin-right: 4px; }
 .newtable_filter .newtable_filtertype_class .body li.on { background: linear-gradient(to top,#cec,#efe),#cec; color: black; }
 .newtable_filter .newtable_filtertype_class div.use_cols { width: 750px; }
@@ -183,7 +208,7 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_range .slider_unspecified { padding: 0 6px; }
 .newtable_range .slider_unspecified input { vertical-align: bottom; }
 .newtable_filtertype_more ul { padding: 0; }
-.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double white; list-style: none; color: white; text-align: left; cursor: pointer; }
+.newtable_filtertype_more li { background: #667aa6 url(/i/16/rev/filter.png) no-repeat 4px 50%; margin: 4px; width: 100px; border-radius: 0; padding: 2px 8px 2px 24px; border: 3px double [[WHITE]]; list-style: none; color: [[WHITE]]; text-align: left; cursor: pointer; }
 .newtable_filtertype_more li:hover {  background: url(/i/16/rev/filter.png) no-repeat 4px 50%,linear-gradient(to top,#667aa6,#869ac6) #667aa6; text-shadow: 0 1px #869ac6; }
 .newtable_filter ul li.t.prec_sec { display: none; }
 .newtable_filter .intro { font-weight: bold; margin: 0 0 0 8px; color: #666; }
@@ -196,27 +221,27 @@ div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: cent
 .newtable_toggle.open .newtable_toggle_short { display: none; }
 .newtable_toggle .newtable_toggle_long { display: none; }
 .newtable_toggle.open .newtable_toggle_long { display: block; }
-.new_table_loading { height: 64px; width: 100%; display: block; font-size: 32px; font-weight: bold; color: #aaa; vertical-align: middle; text-align: center; line-height: 61px; background: #ddd; }
+.new_table_loading { height: 64px; width: 100%; display: block; font-size: 32px; font-weight: bold; color: #aaa; vertical-align: middle; text-align: center; line-height: 61px; background: [[PALE_GREY]]; }
 .new_table_loading > div { display: inline-block; background: url(/i/table.gif) no-repeat 0 15px; padding: 0 0 0 42px; }
 .newtable_filter .m .head { border-bottom: 1px solid #ccc; overflow: auto; zoom: 1; margin: 4px; }
 .newtable_filter .m .title { float: left; }
-.newtable_filter .m .summary { float: right; margin: 0 4px; font-size: 80%; color: #777; }
-td.colour-swatch { border:2px solid #ffffff; }
-.newtable_ancient { background-color: #fee; margin: 8px 4px; border: 1px solid red; padding: 8px; display: none; }
+.newtable_filter .m .summary { float: right; margin: 0 4px; font-size: 80%; color: [[DARK_GREY]]; }
+td.colour-swatch { border:2px solid [[WHITE]]; }
+.newtable_ancient { background-color: [[SEVERE_LIGHT]]; margin: 8px 4px; border: 1px solid [[SEVERE_DARK]]; padding: 8px; display: none; }
 .newtable_filter .slider_main { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; }
 .newtable_filter .slider_left { text-align: left; height: 24px; line-height: 24px; }
 .newtable_filter .slider_right { text-align: right; height: 24px; line-height: 24px; }
 .newtable_pager { margin: 0; padding: 0; }
-.newtable_pager li { display: inline-block; padding: 2px 3px; color: black; }
-.newtable_pager a { color: white; }
+.newtable_pager li { display: inline-block; padding: 2px 3px; color: [[BLACK]]; }
+.newtable_pager a { color: [[WHITE]]; }
 body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5px 0; }
 .newtable_filtertype_class .baked { padding: 0; }
 .newtable_filter .newtable_filtertype_class .bakery { float: none; text-align: center; display: block; }
 .newtable_filtertype_class .bakery ul { padding-bottom: 0; }
 .newtable_filtertype_class .bakery li { width: auto; }
 .newtable_filtertype_class .bakery li.disabled { background: linear-gradient(to top,#ccc,#aaa) #ccc; }
-.newtable_filtertype_class .bakery li { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; padding: 0; border: double white; color: white; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
-.newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
+.newtable_filtertype_class .bakery li { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]),[[MAIN_DARK]]; padding: 0; border: double [[WHITE]]; color: [[WHITE]]; cursor: pointer; display: inline-block; width: 105px; text-align: center; margin: 2px 0; padding: 6px; border-width: 3px 3px 3px 0; }
+.newtable_filtertype_class .bakery li:active { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_V_DARK]]),[[MAIN_DARK]]; }
 .newtable_filtertype_class .bakery li:before { visibility: hidden; }
 .newtable_filtertype_class .bakery .first { border-radius: 12px 0 0 12px; border-width: 3px 3px 3px 3px;  }
 .newtable_filtertype_class .bakery .last { border-radius: 0 12px 12px 0; }
@@ -224,15 +249,15 @@ body div.score_example { width: 50px; height: 15px; line-height: 15px; margin: 5
 .newtable_filtertype_class .body ul .coltab-text { margin-bottom: 1px; }
 .newtable_filtertype_class .bakefoot li { list-style-image: none; list-style: none; }
 .newtable_filtertype_class .body li .main { margin-right: 24px; }
-.newtable_filtertype_class .body li .more { float: right; color: #999; padding-right: 4px; }
-.newtable_filter .tail { border-top: 1px solid #ccc; margin: 8px 8px 0 8px; text-align: center; }
+.newtable_filtertype_class .body li .more { float: right; color: [[MEDIUM_GREY]]; padding-right: 4px; }
+.newtable_filter .tail { border-top: 1px solid [[PALE_GREY]]; margin: 8px 8px 0 8px; text-align: center; }
 .newtable_filter .tail ul { margin: 0; padding: 0; }
-.newtable_filter .tail li { list-style: none; display: inline-block; margin: 4px; background: linear-gradient(to top,#667aa6,#899ac6),#667aa6; border: 3px double white; padding: 6px; color: white; }
-.newtable_filter .tail li.cancel { background: none; color: #667aa6; font-size: 75%; }
-.newtable_filter .tail li.apply { background: linear-gradient(to top,#667aa6,#869ac6),#667aa6; }
-.newtable_filter .tail li.apply.unchanged { background: #bbb; }
-.newtable_filter .tail li.apply.unchanged:active { background: #bbb; }
-.newtable_filter .tail li.apply:active { background: linear-gradient(to top,#667aa6,#465a76),#667AA6; }
+.newtable_filter .tail li { list-style: none; display: inline-block; margin: 4px; background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]),[[MAIN_DARK]]; border: 3px double [[WHITE]]; padding: 6px; color: [[WHITE]]; }
+.newtable_filter .tail li.cancel { background: none; color: [[MAIN_DARK]]; font-size: 75%; }
+.newtable_filter .tail li.apply { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_MEDIUM]]),[[MAIN_DARK]]; }
+.newtable_filter .tail li.apply.unchanged { background: [[PALE_GREY]]; }
+.newtable_filter .tail li.apply.unchanged:active { background: [[PALE_GREY]]; }
+.newtable_filter .tail li.apply:active { background: linear-gradient(to top,[[MAIN_DARK]],[[MAIN_V_DARK]]),[[MAIN_DARK]]; }
 .newtable_filter .tail li.cancel:hover { text-decoration: underline; }
 .newtable_filter .none_present { display: block; margin: 16px; }
 .newtable_filter .m .summary .more { background: url(/i/table-small.gif) no-repeat 0 50%; display: inline-block; padding-left: 16px; margin-right: 8px; white-space: nowrap; }

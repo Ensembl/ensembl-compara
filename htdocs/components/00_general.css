@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 ----------------------------------------------------------------------*/
 
 body      { font-family: Luxi Sans, Helvetica, Arial, Geneva, sans-serif; 
-            font-size:80%; color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]];
+            font-size:80%; color: [[DARK_GREY]]; background-color: [[WHITE]];
             padding: 0; margin: 0; border: 0; }
 body.ie6  { font-size:85%; }
 
@@ -50,7 +50,7 @@ pre     { margin: 0 0 1em; }
 #min_width_container { position: relative; width: 100%; min-width:775px; }
 #min_width_holder    { display: block; }
 
-body.ie6 #min_width_container { border-right: 775px solid [[PAGE_BG]]; }
+body.ie6 #min_width_container { border-right: 775px solid [[WHITE]]; }
 body.ie6 #min_width_holder    { display: inline-block; position: relative; margin-right: -775px; }
 
 /*----------------------------------------------------------------------
@@ -62,7 +62,7 @@ body.ie6 #min_width_holder    { display: inline-block; position: relative; margi
 .page    { text-align: center; padding: 0.25em; }
 .spinner { height: 100px; display: block; border: 16px solid transparent; margin: 0 0 16px; text-align: center; background: url(/i/e-loader.gif) no-repeat bottom center; }
 .pointer { cursor: pointer; }
-body.ie6 .spinner { background-color: [[PAGE_BG]]; border-color: [[PAGE_BG]]; height: 132px; }
+body.ie6 .spinner { background-color: [[WHITE]]; border-color: [[WHITE]]; height: 132px; }
 
 /*----------------------------------------------------------------------
   Manual margin settings - to override any existing margins
@@ -90,7 +90,7 @@ body.ie6 .spinner { background-color: [[PAGE_BG]]; border-color: [[PAGE_BG]]; he
   Headings
 ----------------------------------------------------------------------*/
 
-h1, h2, h3, h4  { color: [[PAGE_HEADER]]; margin: 0 0 1em; }
+h1, h2, h3, h4  { color: [[V_DARK_GREY]]; margin: 0 0 1em; }
 h1              { font-size: 1.5em; }
 h2              { font-size: 1.2em; }
 h3              { font-size: 1.1em; }
@@ -98,27 +98,27 @@ h4              { font-size: 1em;   }
 h1.light,
 h2.light,
 h3.light,
-h4.light        { color: #808080; }
+h4.light        { color: [[MEDIUM_GREY]]; }
 body.mac h1,
 body.mac h2     { padding-top: 4px; }
 
-.invisible      { font-size: 1px; color: #fff; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
+.invisible      { font-size: 1px; color:[[WHITE]]; height: 0; clear: both; overflow: hidden; margin: 0!important; line-height: 0!important; }
 .mobile-only    { display:none; }
 a.mobile-link   { font-size: 15px; } /* footer mobile site link */
 
 /*----------------------------------------------------------------------
  Links 
 ----------------------------------------------------------------------*/
-a                     { color: [[PAGE_LINK]];    } /* neutral style for anchor target */
-a:visited             { color: [[PAGE_VISITED]]; }
-a:hover               { color: [[PAGE_HOVER]];   }
-a:active              { color: [[PAGE_HOVER]];   }
-a.no-visit:visited    { color: [[PAGE_LINK]]; } /* don't change link colour on links we want to stay "visible" */
+a                     { color: [[LINK]];    } /* neutral style for anchor target */
+a:visited             { color: [[VISITED]]; }
+a:hover               { color: [[HOVER]];   }
+a:active              { color: [[HOVER]];   }
+a.no-visit:visited    { color: [[LINK]]; } /* don't change link colour on links we want to stay "visible" */
 a.external-link,
 a[rel=external]       { background-position: right center; background-repeat: no-repeat; padding-right: 12px; background-image: url("[[IMG:external_link.svg]]") }
 a.external-link:hover,
 a[rel=external]:hover { background-image: url("[[IMG:external_link_hover.svg]]") }
-span.link             { color: [[PAGE_LINK]]; cursor: pointer; text-decoration: underline; }
+span.link             { color: [[LINK]]; cursor: pointer; text-decoration: underline; }
 
 a.toggle              { background: url(/i/open2.gif) no-repeat right center; text-decoration: none; padding-right: 20px; outline: 0 none;}
 a.toggle.closed       { background-image: url(/i/closed2.gif); }
@@ -129,11 +129,21 @@ a.toggle.closed.new_icon { background: url(/i/close_1x.png) no-repeat right cent
 /*a.toggle              { background: url(/i/open_1x.png) no-repeat right center !important; }*/
 /*a.toggle.closed       { background: url(/i/close_1x.png) no-repeat right center !important; display: inline; min-height: 16px; }*/
 a.ajax_add            { background: none!important; padding-right: 0; }
-p.button a            { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; color: [[PAGE_BG]]; padding: 3px 6px 1px; margin-right: 4px; text-decoration: none; display: inline-block; }
-p.warn a              { background-color: [[WARNING_BG]]; }
-a.pre_species         { color: #333333; }
-a.pre_species:visited { color: #333333; }
-a.pre_species:hover   { color: [[PAGE_HOVER]]; }
+p.button a            { 
+  background-color: [[MAIN_DARK]]; 
+  color: [[WHITE]]; 
+  padding: 4px 10px 2px 10px; 
+  margin-right: 4px; 
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
+  text-decoration: none; 
+  display: inline-block; 
+}
+p.warn a              { background-color: [[MODERATE_DARK]]; }
+a.pre_species         { color: [[V_DARK_GREY]]; }
+a.pre_species:visited { color: [[V_DARK_GREY]]; }
+a.pre_species:hover   { color: [[HOVER]]; }
 
 
 /*----------------------------------------------------------------------
@@ -141,7 +151,7 @@ a.pre_species:hover   { color: [[PAGE_HOVER]]; }
 ----------------------------------------------------------------------*/
 
 tr     { vertical-align: top; }
-th, td { text-align: left; border: 0; color: [[CONTRAST_TEXT]]; }
+th, td { text-align: left; border: 0; color: [[V_DARK_GREY]]; }
 
 /*----------------------------------------------------------------------
   Lists
@@ -174,41 +184,41 @@ div.error h3,
 div.warning h3,
 div.info h3,
 div.sidebar h3,
-div.hint h3         { margin: 0; padding: 4px 8px 2px 24px; background: [[ERROR_BG]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; line-height: 1em; }
+div.hint h3         { margin: 0; padding: 4px 8px 2px 24px; background: [[SEVERE_DARK]] url(/i/16/rev/alert.png) no-repeat 4px center; border-radius: 8px 8px 0 0; -moz-border-radius: 8px 8px 0 0; -webkit-border-radius: 8px 8px 0 0; line-height: 1em; }
 div.error h4,
 div.error h3,
-div.warning > h3    { color: [[PAGE_BG]] !important; }
-div.warning > h3    { background-color: [[WARNING_BG]]; }
+div.warning > h3    { color: [[WHITE]] !important; }
+div.warning > h3    { background-color: [[MODERATE_DARK]]; }
 div.info > h3,
-div.sidebar > h3    { background-image: url(/i/16/info.png);  background-color: [[INFO_BG]]; }
-div.hint > h3       { background-image: none; padding: 4px 8px 2px; background-color: [[INFO_BG]]; height: 20px; line-height: 20px; }
+div.sidebar > h3    { background-image: url(/i/16/info.png);  background-color: [[PALE_GREY]]; }
+div.hint > h3       { background-image: none; padding: 4px 8px 2px; background-color: [[PALE_GREY]]; height: 20px; line-height: 20px; }
 
 div.error > div,
 div.warning > div,
 div.info > div,
 div.sidebar > div,
-div.hint > div      { border: 1px solid [[ERROR_BG]]; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
-div.warning div     { border-color: [[WARNING_BG]]; }
+div.hint > div      { border: 1px solid [[SEVERE_DARK]]; border-radius: 0 0 8px 8px; -moz-border-radius: 0 0 8px 8px; -webkit-border-radius: 0 0 8px 8px; }
+div.warning div     { border-color: [[MODERATE_DARK]]; }
 div.info > div,
 div.sidebar > div,
-div.hint > div      { border-color: [[INFO_BG]]; }
+div.hint > div      { border-color: [[PALE_GREY]]; }
 .info div,
 .sidebar div,
 .hint div           { border: none; }
 
-div.syntax-error    { color: [[PAGE_TEXT]]; background-color: [[PAGE_BG]]; }
+div.syntax-error    { color: [[DARK_GREY]]; background-color: [[WHITE]]; }
 
 .error-pad,
 .message-pad        { padding: 1em 1em 0; }
 
 div.filter-error    { margin: 1em 1em 0; }
 
-.box-highlight      { background-color: #55aa55; font-weight: bold; border-radius: 4px; color: [[PAGE_BG]]; padding: 2px 3px 1px; cursor: default; white-space: nowrap; } 
+.box-highlight      { background-color: [[OK_DARK]]; font-weight: bold; border-radius: 4px; color: [[WHITE]]; padding: 2px 3px 1px; cursor: default; white-space: nowrap; } 
 
 /* "close" icon */
 div.hint h3 img { float: right; margin: 0; padding: 0; }
 
-div.notes    { padding: 1em 1em 8px; margin-bottom: 1em; background-color: [[CONTRAST_BG]]; border: 1px [[CONTRAST_BORDER]] solid; }
+div.notes    { padding: 1em 1em 8px; margin-bottom: 1em; background-color: [[CONTRAST_MEDIUM]]; border: 1px [[CONTRAST_DARK]] solid; }
 div.notes h4 { background: url(/i/16/info.png) top left no-repeat; height: 1em; line-height: 1em; padding-left: 24px; }
 div.notes p  { margin-bottom: 8px; }
 
@@ -221,7 +231,7 @@ div.notes p  { margin-bottom: 8px; }
 .screen_hide_inline, .screen_hide_block { display: none; }
 
 @media print {
-  body, h1, h2, h4                     { color: #000; }
+  body, h1, h2, h4                     { color: [[BLACK]]; }
   .print_hide, .error, .warning, .info { display: none !important; }
   .screen_hide_inline                  { display: inline; }
   .screen_hide_block                   { display: block ; }
@@ -229,7 +239,7 @@ div.notes p  { margin-bottom: 8px; }
 
 /* external links have an extra ..... ed line under them... */
 
-a._external_link_ { border-bottom: 1px dotted [[PAGE_LINK]]; }
+a._external_link_ { border-bottom: 1px dotted [[LINK]]; }
 
 /* mobile version site */
 /*.full-site-box {  display: none; } */

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ sub content {
   
   $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
 
-  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$gene ? $stable_id : 'Novel transcript');
+  $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Transcript');
     
   if (scalar @click) {
     ## Has user clicked on an exon (or exons)? If yes find out the exon rank to display in zmenu
@@ -123,11 +123,24 @@ sub content {
     label => $introns[0]." of ". scalar(@all_introns)
   }) if(scalar @introns);  
   
-  $self->add_entry({
-    type  => 'Transcript',
-    label => $transcript->version ? $stable_id . "." . $transcript->version : $stable_id,
-    link  => $hub->url({ type => 'Transcript', action => 'Summary' })
-  });
+  if($xref[0] && $xref[0] ne $stable_id) { # if there is transcript symbol then show it as the first label and stable id as second label, if not then stable id as first label
+    $self->add_entry({
+      type  => 'Transcript',
+      label => $xref[0]
+    });
+
+    $self->add_entry({
+      type  => ' ',
+      label => $transcript->version ? $stable_id . "." . $transcript->version : $stable_id,
+      link  => $hub->url({ type => 'Transcript', action => 'Summary' })
+    });
+ } else {
+    $self->add_entry({
+      type  => 'Transcript',
+      label => $transcript->version ? $stable_id . "." . $transcript->version : $stable_id,
+      link  => $hub->url({ type => 'Transcript', action => 'Summary' })
+    });
+ }
 
   $self->add_entry({
     type  => ' ',

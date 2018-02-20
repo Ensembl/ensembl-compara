@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,15 +48,7 @@ sub import {
 
       *{"${caller}::${exception_name}"} = sub { return exception($exception_name, @_); };
 
-      if (!$EXCEPTION_CLASS{$exception_name}) {
-
-        my $exception_class_name = "${EXCEPTION_BASE}::${exception_name}";
-
-        eval "require $exception_class_name";
-
-        $EXCEPTION_CLASS{$exception_name} = $@ ? $EXCEPTION_BASE : $exception_class_name;
-        $@ = undef;
-      }
+      $EXCEPTION_CLASS{$exception_name} ||= _get_exception_class($exception_name);
     }
 
     # import functions
@@ -105,7 +97,25 @@ sub exception {
   # if data is provided as second argument with no message
   ref $message and $data = $message and $message = '';
 
-  return ($EXCEPTION_CLASS{$type} || $EXCEPTION_BASE)->new({'type' => $type, 'message' => $message, 'data' => $data});
+  # check if the exception class exists but is not cached yet
+  $EXCEPTION_CLASS{$type} ||= _get_exception_class($type);
+
+  return $EXCEPTION_CLASS{$type}->new({'type' => $type, 'message' => $message, 'data' => $data});
+}
+
+sub _get_exception_class {
+  ## @private
+  ## Returns the exception class if it exists, otherwise returns the base class (EnsEMBL::Web::Exception)
+  ## eg. for ORMException, it would return EnsEMBL::Web::Exception::ORMException because this package exists
+  my $name  = shift;
+  my $class = "${EXCEPTION_BASE}::${name}";
+
+  eval "require $class";
+
+  $class  = $EXCEPTION_BASE if $@;
+  $@      = undef;
+
+  return $class;
 }
 
 1;

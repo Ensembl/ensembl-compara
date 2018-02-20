@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ sub init {
 
     $self->add_entry({
       caption => 'Reset configuration',
-      class   => 'modal_link',
+      class   => 'modal_link config-reset',
       rel     => $rel,
       url     => $hub->url('Config', {
         reset => 1
@@ -71,7 +71,7 @@ sub init {
       if ($image_config->get_parameter('sortable_tracks')) {
         $self->add_entry({
           caption => 'Reset track order',
-          class   => 'modal_link',
+          class   => 'modal_link order-reset',
           rel     => $rel,
           url     => $hub->url('Config', {
             reset   => 'track_order',
@@ -82,7 +82,7 @@ sub init {
       
       $self->add_entry({
         caption => 'Custom tracks',
-        class   => 'modal_link',
+        class   => 'modal_link data',
         url     => $hub->url({
           type    => 'UserData',
           action  => 'ManageData',

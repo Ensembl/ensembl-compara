@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     
     this.base();
     
-    this.shareEnabled = false;
-    
     $.extend(this, Ensembl.Share);
     
     this.shareInit();
@@ -32,6 +30,7 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     Ensembl.EventManager.register('hashChange',   this, this.removeShare);
     Ensembl.EventManager.register('reloadPage',   this, this.removeShare);
     Ensembl.EventManager.register('ajaxComplete', this, this.shareReady);
+    Ensembl.EventManager.register('share', this, this.share);
     
     if (!this.el.hasClass('modal_nav')) {
       Ensembl.EventManager.register('relocateTools', this, this.relocateTools);
@@ -113,13 +112,11 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
     $.each(Ensembl.PanelManager.getPanels('ImageMap'), function () {
       panel.shareOptions.species[this.id] = this.getSpecies();
     });
-    
-    this.shareEnabled = true;
-    
-    if (this.shareWaiting) {
-      this.share(this.elLk.shareLink[0].href, this.elLk.shareLink[0]);
+
+    if (this.elLk.shareLink.length > 0 && this.elLk.shareLink[0].href) {
+      Ensembl.EventManager.deferTrigger('share', this.elLk.shareLink[0].href, this.elLk.shareLink[0]);
     }
     
-     Ensembl.EventManager.unregister('ajaxLoaded', this);
+    Ensembl.EventManager.unregister('ajaxLoaded', this);
   }
 });

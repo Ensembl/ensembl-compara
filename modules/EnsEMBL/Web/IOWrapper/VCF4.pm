@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use Bio::EnsEMBL::Variation::Utils::Constants;
+
 use parent qw(EnsEMBL::Web::IOWrapper);
 
 sub colourset { return 'variation'; }
@@ -48,6 +50,20 @@ sub create_hash {
   my $seqname       = $self->parser->get_seqname;
   my @feature_ids   = @{$self->parser->get_IDs};
 
+  ## Work out what kind of variant we have
+  my $type;
+  my $ref = $self->parser->get_raw_reference;
+  foreach my $alt (@{$self->parser->get_alternatives}) {
+    if (length($alt) > length($ref)) {
+      $type = 'insertion';
+      last;
+    }
+    elsif (length($alt) < length($ref)) {
+      $type = 'deletion';
+      last;
+    }
+  }
+
   $metadata ||= {};
 
   my $href = $self->href({
@@ -63,30 +79,72 @@ sub create_hash {
   my $feature = {
     'seq_region'    => $seqname,
     'label'         => join(',', @feature_ids),
-    'colour'        => $metadata->{'colour'},
-    'label_colour'  => $metadata->{'label_colour'},
     };
+  my $parsed_info   = $self->parser->get_info || {};
+  my $allele_string = join('/', @alleles);
+  my $vf_name       = $feature_ids[0] eq '.' ? sprintf('%s_%s_%s', $seqname, $feature_start, $allele_string) : $feature_ids[0];
   if ($metadata->{'display'} eq 'text') {
     $feature->{'start'} = $feature_start;
-    $feature->{'end'}   = $feature_end;
+    ## Indels include the base pair before the actual variant
+    $feature->{'end'}   = $feature_end == $feature_start ? $feature_end : $feature_end - 1;
 
     $feature->{'extra'} = [
-                        {'name' => 'Alleles', 'value' => join('/', @alleles)},
+                        {'name' => 'Alleles', 'value' => $allele_string},
                         {'name' => 'Quality', 'value' => $self->parser->get_score},
                         {'name' => 'Filter',  'value' => $self->parser->get_raw_filter_results},
                         ];
 
     ## Convert INFO field into a hash
-    my $parsed_info = $self->parser->get_info || {};
     my %info_hash; 
     foreach my $field (sort keys %$parsed_info) {
       push @{$feature->{'extra'}}, {'name' => $field, 'value' => $parsed_info->{$field}};   
     }
   }
   else {
-    $feature->{'start'} = $start;
-    $feature->{'end'}   = $end;
-    $feature->{'href'}  = $href;
+    ## Get consequence from database and use it to set colour
+    my $colours = $metadata->{'colours'};
+    my $colour  = $colours->{'default'}->{'default'} || $metadata->{'colour'};
+    my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+    my ($consequence, $ambig_code);
+    if (defined($parsed_info->{'VE'})) {
+      $consequence = (split /\|/, $parsed_info->{'VE'})[0];
+    }
+    elsif ($self->{'adaptor'}) {
+      ## Not defined in file, so look up in database
+      my $info_string;
+      $info_string .= ";  $_: $parsed_info->{$_}" for sort keys %$parsed_info;
+      my $snp = {
+        start            => $start,
+        end              => $end,
+        strand           => 1,
+        slice            => $slice,
+        allele_string    => $allele_string,
+        variation_name   => $vf_name,
+        map_weight       => 1,
+        adaptor          => $self->{'adaptor'},
+        seqname          => $info_string ? "; INFO: --------------------------$info_string" : '',
+        consequence_type => $parsed_info->{'SVTYPE'} ? ['COMPLEX_INDEL'] : ['INTERGENIC'],
+      };
+      bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
+
+      $snp->get_all_TranscriptVariations;
+
+      $consequence  = $snp->display_consequence;
+      $ambig_code   = $snp->ambig_code;
+    }
+
+    ## Set colour by consequence
+    if ($consequence && defined($overlap_cons{$consequence})) {
+      $colour = $colours->{lc $consequence}->{'default'};
+    }
+
+    $feature->{'start'}         = $start;
+    $feature->{'end'}           = $end;
+    $feature->{'href'}          = $href;
+    $feature->{'type'}          = $type;
+    $feature->{'colour'}        = $colour;
+    $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
+    $feature->{'text_overlay'}  = $ambig_code;
   }
   return $feature;
 }

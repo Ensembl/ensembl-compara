@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -713,12 +713,12 @@ sub toggleable_table {
   $table->add_option('id', "${id}_table");
   
   return sprintf('
-    <div class="toggleable_table">
+    <div class="toggleable_table" id="%s_anchor">
       %s
       <h2><a rel="%s_table" class="toggle _slide_toggle %s" href="#%s_table">%s</a></h2>
       %s
     </div>',
-    $extra_html, $id, $state[1], $id, $title, $table->render(@{$for_render||[]})
+    $id, $extra_html, $id, $state[1], $id, $title, $table->render(@{$for_render||[]})
   ); 
 }
 
