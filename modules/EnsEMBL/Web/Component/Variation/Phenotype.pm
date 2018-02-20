@@ -303,7 +303,7 @@ sub table_data {
 
     ## Ontology information
     my ($terms,  $accessions, $accessions_no_url);
-    my $ontology_accessions = $pf->phenotype()->ontology_accessions();
+    my $ontology_accessions = $pf->phenotype()->ontology_accessions('is');
 
     my $adaptor = $hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
