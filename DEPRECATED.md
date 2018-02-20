@@ -16,9 +16,6 @@
 * `GenomicAlignBlock::_print()`
 * `ConservationScore::_print()`
 
-## Miscellaneous, to be removed in Ensembl 89
-
-* `MethodLinkSpeciesSet::species_set_obj()`
 
 ## DnaFrag methods, to be removed in Ensembl 91
 
@@ -37,6 +34,10 @@
 * `GenomicAlignTree::get_all_GenomicAligns()`
 
 # Methods removed in previous versions of Ensembl
+
+## Ensembl 93
+
+* `MethodLinkSpeciesSet::species_set_obj()`
 
 ## Ensembl 92
 
