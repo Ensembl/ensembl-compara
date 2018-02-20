@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Compara::Taggable;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
 
 =head2 add_tag
 
@@ -464,15 +464,18 @@ sub AUTOLOAD {
 
         # Example: $node->get_value_for_bootstrap()
     if ( $AUTOLOAD =~ m/::get_value_for_(\w+)$/ ) {
+        deprecate("get_value_for_$1() constructs are deprecated and will be removed in e94. Use get_value_for_tag('$1') instead");
         #print "MATCHED $1\n";
         return $self->get_value_for_tag($1);
 
         # Example: $node->get_all_values_for_lost_species_tree_node_id()
     } elsif ( $AUTOLOAD =~ m/::get_all_values_for_(\w+)$/ ) {
+        deprecate("get_all_values_for_$1() constructs are deprecated and will be removed in e94. Use get_all_values_for_tag('$1') instead");
         return $self->get_all_values_for_tag($1);
 
         # Example: $node->get_bootstrap_value()
     } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
+        deprecate("get_$1_value() constructs are deprecated and will be removed in e94. Use get_tagvalue('$1') instead");
         return $self->get_tagvalue($1);
 
     } elsif( $AUTOLOAD !~ /::DESTROY$/) {

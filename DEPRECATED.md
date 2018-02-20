@@ -15,6 +15,12 @@
 * `DnaFrag::isMT()`
 * `DnaFrag::dna_type()`
 
+## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 92
+
+* `Taggable::get_value_for_XXX()`
+* `Taggable::get_all_values_for_XXX()`
+* `Taggable::get_XXX_value()`
+
 # Deprecated methods not yet scheduled for deletion
 
 * `GenomicAlignTree::genomic_align_array()`
