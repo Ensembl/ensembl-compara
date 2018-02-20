@@ -538,7 +538,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
   resize: function () {
     var newHeight = $(this.el).height() - 80;
     this.elLk.tree.parent('.content').height(newHeight);
-    this.elLk.list.closest('.vscroll_container').height(newHeight - 40);
+    this.elLk.list.closest('.vscroll_container').height(newHeight - 29);
   },
   
   getSelectedItems: function(tree) {
