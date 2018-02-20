@@ -52,10 +52,12 @@ sub extra_tabs { # TODO - fix the old style component link
   my $self = shift;
   my $hub  = $self->hub;
 
+  # referer_action is added to ensure the correct action can be used by PopulationSelector when the OK icon is clicked
   return [
     'Select populations',
     $hub->url('MultiSelector', {
       action   => 'SelectPopulation',
+      referer_action => $hub->action,
       %{$hub->multi_params}
     })
   ];
