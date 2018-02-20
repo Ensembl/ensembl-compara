@@ -51,7 +51,7 @@ sub feature_group {
   my( $self, $f ) = @_; 
   next unless ( $f && $f->isa('Bio::EnsEMBL::Funcgen::ProbeFeature'));
   my ($vendor_name, $array_name ) = split (/__/, $self->my_config('array')); 
-  if ( $f->probeset_id) { 
+  if ( $f->probe_set_id) { 
     return $f->probe->probeset->name;
   } else { 
     return $f->probe->get_probename($array_name);
@@ -73,7 +73,7 @@ sub href {
   my ($self, $f ) = @_;
   my ($vendor, $array_name ) = split (/__/, $self->my_config('array'));
   my ($probe_name, $probe_type);
-  if ( $f->probeset_id) {
+  if ( $f->probe_set_id) {
     $probe_name = $f->probe->probeset->name;
     $probe_type = 'pset';
   } else { 
