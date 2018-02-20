@@ -43,10 +43,9 @@ package Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor;
 
 use strict;
 use warnings;
-use Data::Dumper;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning); ## All needed?
 
 use DBI qw(:sql_types);
+
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
