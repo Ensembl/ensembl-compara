@@ -74,7 +74,6 @@ sub content {
     my $data_elsewhere  = 0;
     my %other_servers;
 
-    #$html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
     $html .= $self->_add_buttons;
 
     ## Do some preliminary processing to decide which records to show, and to
@@ -121,14 +120,13 @@ sub content {
   ## Now loop through the desired records to show table rows
   if (@current_records) {
 
-    $html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
-
     my @columns = (
+      { key => 'check',     title => 'Select',        width => '10%',   align => 'center' },
       { key => 'type',      title => 'Type',          width => '10%',   align => 'left'                                     },
       { key => 'name',      title => 'Source',        width => '30%',   align => 'left',    sort => 'html', class => 'wrap' },
       { key => 'species',   title => 'Species',       width => '20%',   align => 'left',    sort => 'html'                  },
-      { key => 'assembly',  title => 'Assembly',      width => '15%',   align => 'left',    sort => 'html'                  },
-      { key => 'date',      title => 'Last updated',  width => '20%',   align => 'left',    sort => 'numeric_hidden'        },
+      { key => 'assembly',  title => 'Assembly',      width => '10%',   align => 'left',    sort => 'html'                  },
+      { key => 'date',      title => 'Last updated',  width => '10%',   align => 'left',    sort => 'numeric_hidden'        },
       { key => 'actions',   title => 'Actions',       width => '150px', align => 'center',  sort => 'none'                  },
     );
 
@@ -165,8 +163,6 @@ sub content {
       my $plural = $old_assemblies > 1 ? '' : 's';
       $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
-
-    #$html .= '</form></div>';
 
     if ($data_elsewhere) {
       my $message;
@@ -254,15 +250,17 @@ sub _add_buttons {
   my $self    = shift;
   my $hub     = $self->hub;
 
-  my $html = '<div class="tool_buttons"><span class="button-label">Update selected</span>: ';
+  my $html = '<div class="tool_buttons">
+  <span class="button-label">Update selected</span>: ';
 
   my @buttons = qw(enable disable delete);
 
   foreach (@buttons) {
-    my $url = $hub->url({'action' => 'ModifyData', 'function' => 'mass_update', 'form_action' => $_});
-    $html .= sprintf '<a href="%s" class="%s _mass_update inline-button modal_link">%s</a>', 
+    my $url = $hub->url({'action' => 'ModifyData', 'function' => 'mass_update', 'mu_action' => $_});
+    $html .= sprintf '<a href="%s" class="%s _mu_button inline-button modal_link">%s</a>', 
                         $url, $_, ucfirst($_);
   }
+
   $html .= '</div>';
 
   return $html;

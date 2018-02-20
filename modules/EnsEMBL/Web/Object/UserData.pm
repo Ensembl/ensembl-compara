@@ -226,15 +226,15 @@ sub md_mass_update {
 ### Catchall method for enable/disable/delete buttons
   my $self = shift;
 
-  my $form_action = $self->hub->param('form_action');
+  my $mu_action = $self->hub->param('mu_action');
 
-  if ($form_action eq 'enable') {
+  if ($mu_action eq 'enable') {
     $self->enable_files;
   }
-  elsif ($form_action eq 'disable') {
+  elsif ($mu_action eq 'disable') {
     $self->disable_files;
   }
-  elsif ($form_action eq 'delete') {
+  elsif ($mu_action eq 'delete') {
     $self->delete_files;
   }
 }

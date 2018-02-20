@@ -22,7 +22,7 @@ Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
     var panel = this;
     this.base();
  
-    this.el.find("._mass_update").each(
+    this.el.find("._mu_button").each(
       function() {
         $(this).on({ mouseover: function () {
                                         alert('Please do not press this button again.');
