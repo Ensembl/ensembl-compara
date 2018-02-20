@@ -24,7 +24,7 @@ use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Getopt::Long;
 use File::Slurp;
 
-my ( $help, $reg_conf, $master, $new, $dry_run, @mlss_ids, $mlss_file );
+my ( $help, $reg_conf, $master, $new, $dry_run, @mlss_ids, $mlss_file, $no_seq, $no_gdbs );
 GetOptions(
     "help"        => \$help,
     "reg_conf=s"  => \$reg_conf,
@@ -33,6 +33,8 @@ GetOptions(
     "dry_run!"    => \$dry_run,
     "mlss_id=i@"  => \@mlss_ids,
     "mlss_file=s" => \$mlss_file,
+    "no_seqs!"    => \$no_seq,
+    "no_gdbs!"    => \$no_gdbs,
 );
 
 @mlss_ids = read_file($mlss_file) if $mlss_file;
@@ -102,10 +104,16 @@ sub summarise_copy_data {
 	}
 	print "total species_sets: $ss_count\n\n";
 
+	if ( $no_gdbs ) {
+		print "genome_dbs will not be copied this time\n\n";
+		return 1;
+	}
+
 	print "genome_dbs:\n";
 	my $gdb_count = 0;
+	my $dnafrag_status = $no_seq ? ', but NO dnafrags' : ' with dnafrags';
 	foreach my $gdb_name ( values %gdb_ids ) {
-		print "\t- will be copying '$gdb_name' + dnafrags\n";
+		print "\t- will be copying '$gdb_name'$dnafrag_status\n";
 		$gdb_count++;
 	}
 	print "total genome_dbs: $gdb_count\n\n";
@@ -135,9 +143,13 @@ sub perform_copy {
 	    );
 	}
 
+	return 1 if $no_gdbs;
+
 	# copy tables with genome_db_id field
+	my @gdb_tables = ('genome_db');
+	push( @gdb_tables, 'dnafrag' ) unless $no_seq;
 	my $gdb_id_list = join( ',', keys %$gdb_ids );
-	foreach my $table ( 'genome_db', 'dnafrag' ) {
+	foreach my $table ( @gdb_tables ) {
 		my $gdb_where = "genome_db_id IN ($gdb_id_list)";
 		# print "Will be copying : $gdb_where\n";
 		copy_table($master_dba->dbc, $new_dba->dbc,
@@ -157,6 +169,9 @@ Usage: populate_from_master_only.pl <options>
 	--new        registry alias or url to the destination db
 	--mlss_id    method_link_species_set_id(s) to copy (--mlss_id 123 --mlss_id 456, etc)
 	--dry_run    don't write to the database
+
+	--no_seqs    don't copy dnafrags
+	--no_gdbs    don't copy genome_db or dnafrag entries
 
 HELPEND
 	return $msg;

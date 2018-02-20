@@ -64,11 +64,17 @@ sub default_options {
         'species_tree_method_link' => 'SPECIES_TREE',
 
         'taxon_filters' => [
+            # Filters with the default behaviour (strains hidden)
             [ 'Amniota', 'Amniotes' ],
             [ 'Mammalia', 'Mammals' ],
             [ 'Neopterygii', 'Fish' ],
             [ 'Sauria', 'Sauropsids' ],
-            [ 'Murinae', 'Rat and all mice (incl. strains)' ],
+            # Filters with the strains shown, prefix with "str:"
+            [ 'str:Murinae', 'Rat and all mice (incl. strains)' ],
+        ],
+        'reference_genomes' => [
+            # Which genome_dbs are used references for which clades
+            [ 'ref_genome:10090', 'mus_musculus' ],
         ],
 
         'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
@@ -170,7 +176,7 @@ sub pipeline_analyses {
                 binary          => 0,
                 n_missing_species_in_tree   => 0,
             },
-            -flow_into  => [ 'insert_taxon_filters_factory' ],
+            -flow_into  => [ 'insert_taxon_filters_factory', 'insert_reference_genomes_factory' ],
         },
 
 
@@ -190,6 +196,26 @@ sub pipeline_analyses {
             -parameters => {
                 # Gets #db_conn# from pipeline_wide_parameters
                 'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "filter:#scientific_name#", "#common_name#")',
+            },
+        },
+
+
+        {   -logic_name => 'insert_reference_genomes_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => $self->o('reference_genomes'),
+                'column_names' => [ 'taxon_id', 'genome_db_name' ],
+            },
+            -flow_into => {
+                2 => [ 'insert_reference_genomes' ],    # Cannot flow directly into the table because table-dataflows can only reach the eHive database, not #db_conn#
+            },
+        },
+
+        {   -logic_name => 'insert_reference_genomes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                # Gets #db_conn# from pipeline_wide_parameters
+                'sql'       => 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#method_link_species_set_id#, "ref_genome:#taxon_id#", "#genome_db_name#")',
             },
         },
 

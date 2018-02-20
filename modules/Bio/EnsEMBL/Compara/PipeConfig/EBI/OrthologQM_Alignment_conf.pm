@@ -116,9 +116,15 @@ sub default_options {
         'host'       => "mysql-ens-compara-prod-3.ebi.ac.uk",
         'port'       => 4523,
         'master_db'  => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master",
+
+        # location of homology data. note: wga_score will be written here
         'compara_db' => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_" . $self->o('current_release'),
-        'alt_aln_dbs' => [ 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_92' ],
-        'previous_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_91",
+        # if alignments are not all present in compara_db, define alternative db locations
+        'alt_aln_db' => [
+            $self->o('previous_rel_db'),
+            # list of databases with EPO or LASTZ data
+        ],
+        'previous_rel_db'  => 'mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_#expr( #current_release# - 1 )expr#',
         'species_set_name' => 'collection-default',
     };
 }

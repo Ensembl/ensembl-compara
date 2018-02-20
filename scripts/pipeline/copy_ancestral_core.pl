@@ -298,8 +298,8 @@ sub copy_ancestral_data {
     #
     #Find min seq_region_id
     #
-    my $range_sql = "SELECT MIN(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
-    my ($min_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
+    my $range_sql = "SELECT MIN(seq_region_id), MAX(seq_region_id) FROM seq_region WHERE name LIKE '${name}_%'";
+    my ($min_sr, $max_sr) = $from_dbc->db_handle->selectrow_array($range_sql);
 
     #
     #Copy the seq_region rows with new, auto-incremented, seq_region_ids
@@ -319,7 +319,7 @@ sub copy_ancestral_data {
     #Copy over the dna with new seq_region_ids
     #Assuming all of the above, the seq_region_ids can be simply shifted
     #
-    $query = "SELECT seq_region_id+$new_min_sr-$min_sr, sequence FROM dna";
+    $query = "SELECT seq_region_id+$new_min_sr-$min_sr, sequence FROM dna WHERE seq_region_id BETWEEN $min_sr AND $max_sr";
 
     print "copying dna\n";
     copy_data($from_dbc, $to_dbc, 'dna', $query);

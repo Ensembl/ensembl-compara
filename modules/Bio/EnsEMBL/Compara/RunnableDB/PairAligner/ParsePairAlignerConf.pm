@@ -277,7 +277,7 @@ sub parse_conf {
 	if ($self->param('master_db')) {
 	    $self->get_species($speciesList, 'in_master_db');
 	    foreach my $species (@{$speciesList}) {
-		push @spp_names, $species->{genome_db}->dbID,
+		push @spp_names, $species->{genome_db}->name,
 	    }
 	}
 
