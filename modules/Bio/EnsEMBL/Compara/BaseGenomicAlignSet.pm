@@ -46,7 +46,7 @@ use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 
 
 =head2 slice

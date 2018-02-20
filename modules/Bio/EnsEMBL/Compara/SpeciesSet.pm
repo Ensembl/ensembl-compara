@@ -58,7 +58,7 @@ use warnings;
 
 use Scalar::Util qw(looks_like_number);
 
-use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(warning throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::GenomeDB;
 

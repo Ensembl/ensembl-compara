@@ -55,6 +55,7 @@ use IO::File;
 
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
+use Bio::EnsEMBL::Utils::Exception qw(warning throw deprecate);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
 
