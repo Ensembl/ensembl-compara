@@ -19,11 +19,6 @@
 .other_tool              { display: none; margin: 0; }
 .tool_buttons div        { display: inline-block; }
 .tool_buttons a,
-/*
-.tool_buttons p.disabled, .tool_buttons div.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
-.tool_buttons input.disabled { background-position: 7px 50%; background-repeat: no-repeat;  padding-left: 29px; }
-.tool_buttons a { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
-*/
 .tool_buttons p.disabled, .tool_buttons div.disabled { 
     background-position: 12px 50%; 
     background-repeat: no-repeat; 
@@ -52,15 +47,6 @@
   -webkit-border-radius: 6px 0px 0px 6px;
   border-radius: 6px 0px 0px 6px;
 }
-
-<<<<<<< HEAD
-.tool_buttons a.unstyled { background: none; color: #3366bb; display: inline-block; margin: 0; padding: 4px; vertical-align: bottom; line-height: 32px; height: 16px; }
-.tool_buttons a.unstyled:hover { text-decoration: underline; color: #cc0000; }
-.tool_buttons a.disabled { background-color: [[BUTTON_DISABLED]] !important; border: none !important; outline: none !important; cursor: default;  }
-.tool_buttons .group.disabled { background-color: [[BUTTON_GROUP_BG]]; padding: 0; }
-.tool_buttons a.inline-button { display: inline-block; padding: 4px 6px 4px 29px!important; }
-.tool_buttons span.button-label {display: inline-block;margin-bottom:6px;font-size:16px;font-weight:bold;}
-=======
 .tool_buttons .group .last { 
   -moz-border-radius: 0px 6px 6px 0px;
   -webkit-border-radius: 0px 6px 6px 0px;
@@ -86,7 +72,8 @@
 .tool_buttons a.unstyled:hover { text-decoration: underline; color: [[HOVER]]; }
 .tool_buttons a.disabled { background-color: [[MEDIUM_GREY]] !important; cursor: default;  }
 .tool_buttons .group.disabled { background-color: [[PALE_GREY]]; padding: 0; }
->>>>>>> master
+.tool_buttons a.inline-button { display: inline-block; padding: 6px 14px 4px 34px!important; }
+.tool_buttons span.button-label {display: inline-block;margin-bottom:6px;font-size:16px;font-weight:bold;}
      
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }

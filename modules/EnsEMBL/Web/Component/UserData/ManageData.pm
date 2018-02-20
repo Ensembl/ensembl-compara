@@ -207,7 +207,7 @@ sub content {
     my $trackhub_search = $self->trackhub_search;
 
     if (scalar @current_records) {
-      my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link data" style="display:inline-block" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
+      my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link inline-button data" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
       ## Show 'add more' link at top as well, if table is long
       if (scalar(@rows) > 10) {
         $html = $more.$html;
@@ -260,7 +260,7 @@ sub _add_buttons {
 
   foreach (@buttons) {
     my $url = $hub->url({'action' => 'ModifyData', 'function' => 'mass_update', 'form_action' => $_});
-    $html .= sprintf '<a href="%s" class="%s _mass_update button inline-button modal_link">%s</a>', 
+    $html .= sprintf '<a href="%s" class="%s _mass_update inline-button modal_link">%s</a>', 
                         $url, $_, ucfirst($_);
   }
   $html .= '</div>';
