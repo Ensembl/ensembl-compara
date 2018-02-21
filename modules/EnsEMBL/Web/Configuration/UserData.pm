@@ -58,7 +58,7 @@ sub populate_tree {
   $self->create_node('ShareURL',       '',              [qw(share_url    EnsEMBL::Web::Component::UserData::ShareURL)]);
   
   $self->create_node('RefreshUpload',   '', [], { command => 'EnsEMBL::Web::Command::UserData::RefreshUpload'   });
-  $self->create_node('FlipTrackHub',   '', [], { command => 'EnsEMBL::Web::Command::UserData::FlipTrackHub' });
+  $self->create_node('FlipTrack',       '', [], { command => 'EnsEMBL::Web::Command::UserData::FlipTrack' });
   $self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   });
   ## Data management
 

@@ -394,15 +394,20 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
+  my $connect_text;
+  my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
+  my $sprite_class  = $disconnect ? 'sprite' : 'sprite_disabled';
   if ($record_data->{'format'} eq 'TRACKHUB') {
-    my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
     ## 'Disabled' class will show 'connect' version of icon in swp sprite
-    my $sprite_class  = $disconnect ? 'sprite' : 'sprite_disabled';
-    my $connect_text  = $disconnect ? 'Disconnect' : 'Reconnect';
-    $connect_text    .= ' this track hub';
-    my $connect_url   = $hub->url({'action' => 'FlipTrackHub', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}});
-    $connect          = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
+    $connect_text  = $disconnect ? 'Disconnect' : 'Reconnect';
+    $connect_text .= ' this track hub';
   }
+  else {
+    $connect_text  = $disconnect ? 'Disable' : 'Enable';
+    $connect_text .= ' this track';
+  }
+  my $connect_url   = $hub->url({'action' => 'FlipTrack', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}, 'data_type' => $record_data->{'type'}});
+  $connect = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
 
   my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 
