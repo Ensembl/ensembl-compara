@@ -253,9 +253,19 @@ sub format_table {
   push @ids, $all if $all;
   my @super_order = sort {$tree->{$a}{'name'} cmp $tree->{$b}{'name'}} keys (%$tree);
   foreach my $super (@super_order) {
-    next if ($all && $super == $all); # Skip the 3 layers structure, which leads to duplicated rows
-    push @ids, $super;
     my $children = $tree->{$super}{'children'} || {};
+    my $next_level_has_children = 0;
+    foreach my $child_id (keys %$children) {
+      if ($tree->{$child_id}{'children'}) {
+        $next_level_has_children = 1;
+      }
+    }
+    next if ($all && $super == $all && $next_level_has_children); # Skip the 3 layers structure, which leads to duplicated rows
+    if ($all) {
+      push @ids, $super if ($super != $all);
+    } else {
+      push @ids, $super;
+    } 
     push @ids, sort {$children->{$a} cmp $children->{$b}} keys (%$children);
   }
 
