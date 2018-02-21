@@ -160,7 +160,7 @@ sub _load_remote_url_tracks {
     my $data = $record->data;
 
     next if $data->{'no_attach'};
-    ## Don't turn off trackhubs that were added before disconnection code
+    ## Don't turn off tracks that were added before disconnection code
     next if (defined $data->{'disconnected'} && $data->{'disconnected'} == 1);
 
     my $source_name = strip_HTML($data->{'name'}) || $data->{'url'};
@@ -259,6 +259,8 @@ sub _load_uploaded_tracks {
   foreach my $record (@$session_records, @$user_records) {
 
     my $data    = $record->data;
+    next if (defined $data->{'disconnected'} && $data->{'disconnected'} == 1);
+
     my $is_user = $record->record_type ne 'session'; # both user and group
 
     ## Do we have any saved config for this track?
