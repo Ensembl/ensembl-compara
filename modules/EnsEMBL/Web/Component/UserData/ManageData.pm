@@ -253,7 +253,7 @@ sub _add_buttons {
   my $html = '<div class="tool_buttons">
   <span class="button-label">Update selected</span>: ';
 
-  my @buttons = qw(enable disable delete);
+  my @buttons = qw(connect disconnect delete);
 
   foreach (@buttons) {
     my $url = $hub->url({'action' => 'ModifyData', 'function' => 'mass_update', 'mu_action' => $_});

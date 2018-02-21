@@ -229,10 +229,10 @@ sub md_mass_update {
   my $mu_action = $self->hub->param('mu_action');
 
   if ($mu_action eq 'enable') {
-    $self->enable_files;
+    $self->connect_files;
   }
   elsif ($mu_action eq 'disable') {
-    $self->disable_files;
+    $self->disconnect_files;
   }
   elsif ($mu_action eq 'delete') {
     $self->delete_files;
@@ -256,12 +256,12 @@ sub delete_files {
   }
 }
 
-sub enable_files {
+sub connect_files {
   my $self = shift;
 
 }
 
-sub disable_files {
+sub disconnect_files {
   my $self = shift;
 
 }
