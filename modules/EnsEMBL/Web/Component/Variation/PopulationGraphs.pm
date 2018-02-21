@@ -81,7 +81,12 @@ sub content {
   }
   
   # Create graphs
+  my $population_count = scalar keys %$pop_freq;
+  my $too_many_populations = ($population_count > 35);
   foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$pop_freq) {
+    if ($too_many_populations) {
+      next if ($pop_name !~ /ALL/);
+    }
     my $values     = '';
     my $short_name = $self->get_short_name($pop_name);
     my $pop_desc   = $pop_freq->{$pop_name}{'desc'};
