@@ -9,6 +9,7 @@ requires 'Text::CSV';
 requires 'XML::Writer';
 requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
+requires 'Set::IntervalTree';
 requires 'Set::Jaccard::SimilarityCoefficient';
 requires 'namespace::autoclean';
 
