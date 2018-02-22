@@ -1,6 +1,7 @@
 requires 'Data::Predicate';
 requires 'HTML::Template';
 requires 'JSON';
+requires 'List::Compare';
 requires 'LWP::Simple';
 requires 'Number::Format';
 requires 'Statistics::Descriptive';
