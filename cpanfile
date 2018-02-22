@@ -9,6 +9,7 @@ requires 'XML::Writer';
 requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
 requires 'Set::Jaccard::SimilarityCoefficient';
+requires 'namespace::autoclean';
 
 test_requires 'Test::Exception';
 test_requires 'Test::Most';
