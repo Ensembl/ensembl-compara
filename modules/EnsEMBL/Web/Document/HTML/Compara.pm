@@ -42,18 +42,6 @@ sub common_name {
   return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
 }
 
-sub get_genome_db {
-  my ($self, $adaptor, $short_name) = @_;
-
-  my $all_genome_dbs = $adaptor->fetch_all;
-  $short_name =~ tr/\.//d;
-  foreach my $genome_db (@$all_genome_dbs) {
-    if ($genome_db->get_short_name eq $short_name) {
-      return $genome_db;
-    }
-  }
-}
-
 
 sub error_message {
   my ($self, $title, $message, $type) = @_;
@@ -229,23 +217,16 @@ sub mlss_data {
 
 
     foreach my $mlss (@$mls_sets) {
-      ## Work out the name of the reference species using the MLSS title
-      my $short_ref_name;
-      if ($method =~ /LASTZ/) {
-        ($short_ref_name) = $mlss->name =~ /\(on (.+)\)/;
-      }
-      else {
-        $short_ref_name = substr($mlss->name, 0, 5);
-      }
-      if ($short_ref_name) {
-        my $ref_genome_db = $self->get_genome_db($genome_adaptor, $short_ref_name);
+      ## MLSS have a special tag to indicate the reference species
+      if ($mlss->has_tag('reference_species')) {
+        my $ref_gdb_name = $mlss->get_value_for_tag('reference_species');
       
         ## Add to full list of species
-        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_genome_db->name);
+        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_gdb_name);
         $species->{$ref_name}++;
 
         ## Build data matrix
-        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set->genome_dbs};
+        my @non_ref_genome_dbs = grep {$_->name ne $ref_gdb_name} @{$mlss->species_set->genome_dbs};
         if (scalar(@non_ref_genome_dbs)) {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
