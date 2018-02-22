@@ -16,11 +16,12 @@
  */
 
 // JavaScript to control enabling, disabling and deleting of userdata files via the ManageData table 
-Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
+Ensembl.Panel.ManageData = Ensembl.Panel.extend({
 
   init: function () {
     var panel = this;
     this.base();
+    alert('Managing data!');
  
     this.el.find("._mu_button").each(
       function() {
