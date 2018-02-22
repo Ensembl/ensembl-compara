@@ -67,7 +67,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::NoMasterProteinTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
 
 
 sub default_options {
