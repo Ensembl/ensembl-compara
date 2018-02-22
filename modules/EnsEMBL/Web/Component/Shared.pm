@@ -897,6 +897,9 @@ sub check_for_missing_species {
     $title .= ' and ';
   }
 
+  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+  warn Dumper($missing_hash);
+
   my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
@@ -908,11 +911,25 @@ sub check_for_missing_species {
       $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
     } else {
       my $str = '';
-      $str = $missing_hash->{strains} ? @{$missing_hash->{strains}} . ' strain' : '';
-      $str .= $missing_hash->{strains} && @{$missing_hash->{strains}} > 1 ? 's' : '';
-      $str .= $missing_hash->{species} ? ' and ' . @{$missing_hash->{species}} . ' species' : '';
+      my $count = 0;
 
-      $warnings .= sprintf('<p>The following %s have no alignment in this region:<ul><li>%s</li></ul></p>',
+      if ($missing_hash->{strains}) {
+        $count = scalar @{$missing_hash->{strains}};
+        $str .= "$count strain";
+        $str .= 's' if $count > 1;
+      }
+
+      $str .= ' and ' if ($missing_hash->{strains} && $missing_hash->{species});
+      
+      if ($missing_hash->{species}) {
+        my $sp_count = @{$missing_hash->{species}};
+        $str .= "$sp_count species";
+        $count += $sp_count;
+      }
+
+      $str .= $count > 1 ? ' have' : ' has';
+
+      $warnings .= sprintf('<p>The following %s no alignment in this region:<ul><li>%s</li></ul></p>',
                                  $str,
                                  join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
                             );
