@@ -14,6 +14,11 @@ env:
 
 sudo: false
 
+addons:
+  apt:
+    packages:
+    - graphviz
+
 before_install:
     - git clone --branch release/92 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch release/92 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
