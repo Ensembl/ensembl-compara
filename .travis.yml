@@ -28,6 +28,7 @@ before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
+    - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
     - sed -i '/Bio::DB::HTS/d' ensembl-rest/cpanfile
 
 
