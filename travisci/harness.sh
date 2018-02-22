@@ -59,7 +59,11 @@ else
   rt3=$?
 fi
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) ]]; then
+# Check that all the Perl files can be compiled
+find -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' -print0 | xargs -0 -n 1 perl -c
+rt4=$?
+
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) ]]; then
   if [ "$COVERALLS" = 'true' ]; then
     echo "Running Devel::Cover coveralls report"
     cover --nosummary -report coveralls
