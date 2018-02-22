@@ -20,7 +20,7 @@ before_install:
     - git clone --branch release/92 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
     - git clone --branch release/92 --depth 1 https://github.com/Ensembl/ensembl-variation.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
     - git clone --branch release/92 --depth 1 https://github.com/Ensembl/ensembl.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
-    - git clone --branch version/2.4 --depth 1 https://github.com/Ensembl/ensembl-hive.git
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - sed -i '/Bio::DB::HTS/d' ensembl-rest/cpanfile
