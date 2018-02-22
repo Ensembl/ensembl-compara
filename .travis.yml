@@ -32,6 +32,7 @@ install:
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
+    - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
 
