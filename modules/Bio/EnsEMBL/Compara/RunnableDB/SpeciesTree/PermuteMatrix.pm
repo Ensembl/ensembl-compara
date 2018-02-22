@@ -51,7 +51,6 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::Utils::DistanceMatrix;
 
 use File::Basename;
-use Statistics::Basic qw(mean stddev);
 
 use Data::Dumper;
 $Data::Dumper::Maxdepth = 2;
