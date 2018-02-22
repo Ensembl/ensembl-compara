@@ -260,12 +260,11 @@ sub format_table {
         $next_level_has_children = 1;
       }
     }
-    next if ($all && $super == $all && $next_level_has_children); # Skip the 3 layers structure, which leads to duplicated rows
-    if ($all) {
-      push @ids, $super if ($super != $all);
+    if ($all && $super == $all) {
+      next if ($next_level_has_children); # Skip the 3 layers structure, which leads to duplicated rows
     } else {
       push @ids, $super;
-    } 
+    }
     push @ids, sort {$children->{$a} cmp $children->{$b}} keys (%$children);
   }
 
