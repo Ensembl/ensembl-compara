@@ -208,7 +208,7 @@ sub detect_long_sequences {
     my %todelete;
     foreach my $member (@$members) {
         if (length($member->sequence) > $threshold) {
-            $self->warning( sprintf("Removing %s because it is longer (%d) than the threshold %d (median %d)", $member->stable_id, length($member->sequence), $threshold, $stats->median);
+            $self->warning( sprintf("Removing %s because it is longer (%d) than the threshold %d (median %d)", $member->stable_id, length($member->sequence), $threshold, $stats->median) );
             $todelete{$member->stable_id} = $member;
             $member->disavow_parent;
             $nc_tree->remove_Member($member);
