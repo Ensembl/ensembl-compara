@@ -135,7 +135,7 @@ div.config div.config_matrix div.subtracks div.select_all .current  { font-weigh
 
 /* tutorial */
 
-div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 8px; left: 800px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
+div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 55px; left: 630px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
 div.config div.config_matrix .toggle_tutorial.on        { background-position: 0 bottom; }
 div.config div.config_matrix .tutorial                  { position: absolute; display: none; padding: 8px; background: [[V_DARK_GREY]]; color: [[WHITE]]; text-align: center; z-index: 10000; white-space: normal; line-height: 16px; border-radius: 10px; }
 div.config div.config_matrix .tutorial:before, 
