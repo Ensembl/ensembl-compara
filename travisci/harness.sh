@@ -61,7 +61,7 @@ else
 fi
 
 # Check that all the Perl files can be compiled
-find -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' -print0 | xargs -0 -n 1 perl -c
+find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' -print0 | xargs -0 -n 1 perl -c
 rt4=$?
 
 if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) ]]; then
