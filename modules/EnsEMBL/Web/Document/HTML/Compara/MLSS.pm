@@ -546,7 +546,7 @@ sub render_cactus_multiple {
       ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $mlss->method->type, $mlss->species_set->name), sorting => ['species asc']});
     foreach my $sp (@$species_order) {
       $table->add_row({
-          'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+          'species' => $self->combine_names($info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
           'asm'     => $info->{$sp}{'assembly'},
         });
     }

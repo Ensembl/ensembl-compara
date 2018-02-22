@@ -42,6 +42,14 @@ sub common_name {
   return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
 }
 
+sub combine_names {
+  my ($self, $common_name, $sci_name) = @_;
+  if ($sci_name eq $common_name) {
+      return "<em>$sci_name</em>";
+  } else {
+      return "$common_name (<em>$sci_name</em>)";
+  }
+}
 
 sub error_message {
   my ($self, $title, $message, $type) = @_;
@@ -157,7 +165,7 @@ sub print_wga_stats {
           my $cgc = $colors[int($gc/25)];
           my $cec = $colors[int($ec/25)];
           $table->add_row({
-            'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'species' => $self->combine_names($info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
             'asm'     => $info->{$sp}{'assembly'},
             'gl'      => $self->thousandify($info->{$sp}{'genome_length'}),
             'gc'      => $self->thousandify($info->{$sp}{'genome_coverage'}),

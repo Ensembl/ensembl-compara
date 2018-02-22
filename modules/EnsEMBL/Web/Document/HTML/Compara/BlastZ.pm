@@ -46,7 +46,7 @@ sub render {
         
           my $mlss_id = $values->[1];
           my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
-          my $txt = sprintf '<a href="%s">%s (<em>%s</em>)</a>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+          my $txt = sprintf '<a href="%s">%s</a>', $url, $self->combine_names($info->{$other}{'common_name'}, $info->{$other}{'long_name'});
           if ($sp eq $other) {
               $txt .= ' [self-alignment]';
           } elsif ($data_synt->{$sp}{$other}) {
