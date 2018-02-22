@@ -32,6 +32,7 @@ export PERL5LIB=$PERL5LIB:$PWD/ensembl-hive/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-funcgen/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules
+export PERL5LIB=$PERL5LIB:$PWD/ensembl-analysis/modules
 
 ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
