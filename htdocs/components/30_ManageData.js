@@ -26,15 +26,16 @@ Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
     this.el.find("._mu_button").each(
       function() {
         $(this).on({ click: function () {
+          panel.elLk.url = $(this).attr("href");
+          //console.log('URL = '+panel.elLk.url);
           panel.elLk.table.find(".mass_update").each(
             function() {
               if ($(this).is(":checked")) {
-                console.log('Update record: '+$(this).val());                   
+                panel.elLk.url += ';record='+$(this).val();
               }
-              else {
-                console.log('No update for '+$(this).val());                   
-              }
-          });             
+          });
+          //console.log('URL now '+panel.elLk.url);
+          $(this).attr("href", panel.elLk.url);             
         }});
       }
     );
