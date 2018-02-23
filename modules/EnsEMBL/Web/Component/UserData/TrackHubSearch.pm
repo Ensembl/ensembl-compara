@@ -25,8 +25,6 @@ use strict;
 use warnings;
 no warnings "uninitialized";
 
-use EnsEMBL::Web::REST;
-
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
