@@ -70,6 +70,7 @@ our %PLAIN_TEXT_DESCRIPTIONS = (
     'EPO_LOW_COVERAGE'      => 'EPO-LOW-COVERAGE',
     'PECAN'                 => 'Mercator-Pecan',
     'CACTUS_HAL'            => 'Cactus',
+    'SYNTENY'               => 'Synteny',
 );
 
 
