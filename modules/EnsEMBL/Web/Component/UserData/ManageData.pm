@@ -63,7 +63,7 @@ sub content {
   my $other_servers         = {};
   my $other_species_data    = {};
   my $multi_trackhubs       = {};
-  my $html = '';
+  my $html = '<input type="hidden" class="panel_type" value="ManageData" />';
   my @rows;
 
   ## Show table if any user or session record is present
@@ -158,7 +158,7 @@ sub content {
       }
     }
 
-    $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+    $html .= $self->new_table(\@columns, \@rows, { id => 'ManageDataTable', data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
       my $plural = $old_assemblies > 1 ? '' : 's';
       $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
