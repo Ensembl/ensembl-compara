@@ -20,8 +20,10 @@ echo "We are running Perl '$TRAVIS_PERL_VERSION', Coveralls status is set to '$C
 
 # Setup the environment variables
 export ENSEMBL_CVS_ROOT_DIR=$PWD
+export EHIVE_ROOT_DIR=$PWD/ensembl-hive
 export TEST_AUTHOR=$USER
 export PERL5LIB=$PWD/bioperl-live
+export PERL5LIB=$PERL5LIB:$PWD/bioperl-run/lib
 export PERL5LIB=$PERL5LIB:$PWD/modules
 export PERL5LIB=$PERL5LIB:$PWD/travisci/fake_libs/
 export PERL5LIB=$PERL5LIB:$PWD/ensembl/modules
@@ -30,6 +32,7 @@ export PERL5LIB=$PERL5LIB:$PWD/ensembl-hive/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-test/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-funcgen/modules
 export PERL5LIB=$PERL5LIB:$PWD/ensembl-variation/modules
+export PERL5LIB=$PERL5LIB:$PWD/ensembl-analysis/modules
 
 ENSEMBL_PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl,+ignore,ensembl-test,+ignore,ensembl-variation,+ignore,ensembl-funcgen'
 ENSEMBL_TESTER="$PWD/ensembl-test/scripts/runtests.pl"
@@ -59,7 +62,11 @@ else
   rt3=$?
 fi
 
-if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) ]]; then
+# Check that all the Perl files can be compiled
+find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
+rt4=$?
+
+if [[ ($rt1 -eq 0) && ($rt2 -eq 0) && ($rt3 -eq 0) && ($rt4 -eq 0) ]]; then
   if [ "$COVERALLS" = 'true' ]; then
     echo "Running Devel::Cover coveralls report"
     cover --nosummary -report coveralls

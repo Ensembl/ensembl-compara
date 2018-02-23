@@ -100,7 +100,7 @@ sub _get_species {
         if ( length $response->{content} ) {
             my $hash = decode_json( $response->{content} );
 
-            foreach my $genome_count ( keys $hash->{'species'} ) {
+            foreach my $genome_count ( keys %{$hash->{'species'}} ) {
                 $self->param('all_genomes')->{ $hash->{'species'}->[$genome_count]->{'name'} } = "production_reg_conf_ensembl.pl";
             }
         }
@@ -118,7 +118,7 @@ sub _get_species {
         if ( length $response->{content} ) {
             $hash = decode_json( $response->{content} );
 
-            foreach my $genome_count ( keys $hash ) {
+            foreach my $genome_count ( keys %$hash ) {
                 if ( !$self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } ) {
                     $self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } = "production_reg_conf_EG.pl";
                 }

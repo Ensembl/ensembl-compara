@@ -14,15 +14,25 @@ env:
 
 sudo: false
 
+addons:
+  apt:
+    packages:
+    - graphviz
+
 before_install:
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
-    - git clone --branch version/2.4 --depth 1 https://github.com/Ensembl/ensembl-hive.git
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-analysis.git
     - ln -s . ensembl-compara
+    - ln -s Blast.pm.example ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/Blast.pm
+    - ln -s Compara.pm.example ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/Compara.pm
+    - ln -s General.pm.example ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/General.pm
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
+    - git clone --branch release-1-6-9 --depth 1 https://github.com/bioperl/bioperl-run
     - sed -i '/Bio::DB::HTS/d' ensembl-rest/cpanfile
 
 
@@ -32,6 +42,7 @@ install:
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
     - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
     - cpanm --quiet --installdeps --notest --cpanfile ensembl-rest/cpanfile .
+    - cpanm --quiet --installdeps --notest --cpanfile ensembl-hive/cpanfile .
     - cpanm --quiet --installdeps --notest .
     - cpanm --quiet --notest Devel::Cover::Report::Coveralls
 
