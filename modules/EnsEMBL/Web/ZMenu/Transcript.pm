@@ -41,9 +41,15 @@ sub content {
   my @all_introns = @{$transcript->get_all_Introns};
   my (@exons, @introns); 
   
-  $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
+  $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript');
 
-  $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Transcript');
+  # Genscan doesn't have a gene
+  # so check if gene is defined else use transcript info for caption
+  if (defined $gene) {
+    $self->caption($gene->display_xref ? $gene->display_xref->db_display_name.": ".$gene->display_xref->display_id : !$gene ? $stable_id : 'Transcript');
+  } else {
+    $self->caption($transcript->display_xref ? $transcript->display_xref->db_display_name.": ".$transcript->display_xref->display_id : $stable_id);
+  }
     
   if (scalar @click) {
     ## Has user clicked on an exon (or exons)? If yes find out the exon rank to display in zmenu
