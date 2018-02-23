@@ -16,18 +16,26 @@
  */
 
 // JavaScript to control enabling, disabling and deleting of userdata files via the ManageData table 
-Ensembl.Panel.ManageData = Ensembl.Panel.extend({
+Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
 
   init: function () {
     var panel = this;
     this.base();
-    alert('Managing data!');
- 
+    this.elLk.table = this.el.find("#ManageDataTable"); 
+
     this.el.find("._mu_button").each(
       function() {
-        $(this).on({ mouseover: function () {
-                                        alert('Please do not press this button again.');
-                                        } });
+        $(this).on({ click: function () {
+          panel.elLk.table.find(".mass_update").each(
+            function() {
+              if ($(this).is(":checked")) {
+                console.log('Update record: '+$(this).val());                   
+              }
+              else {
+                console.log('No update for '+$(this).val());                   
+              }
+          });             
+        }});
       }
     );
   }
