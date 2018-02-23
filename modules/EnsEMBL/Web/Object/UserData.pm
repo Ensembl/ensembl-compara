@@ -389,6 +389,20 @@ sub thr_fetch {
   return $rest->fetch($endpoint);
 }
 
+sub thr_hub_info {
+### Get information about an individual hub
+  my ($self, $name) = @_;
+
+  ## REST call
+  my $registry = $self->hub->species_defs->TRACKHUB_REGISTRY_URL;
+  my $rest = EnsEMBL::Web::REST->new($self->hub, $registry);
+  return unless $rest;
+
+  my $endpoint = 'api/search';
+  my $args = {'method' => 'post', 'content' => {'query' => $name}};
+  return $rest->fetch($endpoint, $args);
+}
+
 sub thr_search {
   my ($self, $url_params) = @_;
   my $hub = $self->hub;

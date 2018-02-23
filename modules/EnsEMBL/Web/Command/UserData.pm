@@ -113,9 +113,7 @@ sub attach {
   my ($self, $attachable, $filename) = @_;
   my $hub = $self->hub;
 
-  ## For datahubs, pass assembly info so we can check if there's suitable data
   my $ensembl_assemblies = $hub->species_defs->assembly_lookup;
-
   my ($url, $error, $options) = $attachable->check_data($ensembl_assemblies);
   my ($redirect, $params);
 
@@ -135,19 +133,30 @@ sub attach {
     my $name              = $hub->param('name') || $options->{'name'} || $filename;
     $redirect             = $extra_config_page || 'RemoteFeedback';
 
+    my ($flag_info, $code, @assembly_info);
+
+    ## Look up the species and assembly on the Track Hub Registry if possible
+    if ($attachable->name eq 'TRACKHUB' && $hub->param('registry')) {
+      my ($result, $error) = $self->object->thr_hub_info($options->{'name'});
+      foreach my $item (@{$result->{'items'}}) {
+        (my $sp_name = $item->{'species'}{'scientific_name'}) =~ s/ /_/g;
+        my $array = $ensembl_assemblies->{$sp_name.'_'.$item->{'assembly'}{'name'}} 
+                      || $ensembl_assemblies->{$sp_name.'_'.$item->{'assembly'}{'synonym'}}; 
+        push @assembly_info, $array if $array;
+      } 
+    }
+    else {
+      my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
+      foreach (@$assemblies) {
+        ## Try with and without species name, as it depends on format
+        my $array = $ensembl_assemblies->{$_} || $ensembl_assemblies->{$hub->species.'_'.$_};
+        push @assembly_info, $array if $array;
+      }
+    }
     delete $options->{'name'};
 
-    my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-
-    my ($flag_info, $code);
-
-    foreach (@$assemblies) {
-
-      ## Try with and without species name, as it depends on format
-      my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$_}
-                                                    || $ensembl_assemblies->{$hub->species.'_'.$_} || []};
-      
-
+    foreach (@assembly_info) {
+      my ($current_species, $assembly, $is_old) = @$_;
 
       ## This is a bit messy, but there are so many permutations!
       if ($assembly) {
