@@ -67,6 +67,7 @@ div.taxon_selector_list h2 .ss-count.warn {
 
 .species_select_container div.content .vscroll_container {
   flex-grow: 1;
+  overflow: auto;
 }
 
 div.taxon_selector_tree .finder { 
