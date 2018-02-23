@@ -49,18 +49,24 @@ sub json_data {
 
   my $from_rel = $hub->param('release') || $this_release;
   my $json = {};
-  foreach my $sp (keys %$assemblies) {
-    if ($assemblies->{$sp}->{$from_rel} &&
-        !$assemblies->{$sp}->{$from_rel-1} ) {
-      push @{$json->{new_species}}, $sp;
-    }
-    else {
-      if (  $assemblies->{$sp}->{$from_rel} &&
-            $assemblies->{$sp}->{$from_rel-1} &&
-            ($assemblies->{$sp}->{$from_rel}->{assembly} ne
-            $assemblies->{$sp}->{$from_rel-1}->{assembly}) ) {
-        push @{$json->{new_assembly}}, $sp;
 
+  if ($hub->param('release') eq 0) {
+    push @{$json->{new_species}}, keys %{$hub->get_species_info};
+  }
+  else {
+    foreach my $sp (keys %$assemblies) {
+      if ($assemblies->{$sp}->{$from_rel} &&
+          !$assemblies->{$sp}->{$from_rel-1} ) {
+        push @{$json->{new_species}}, $sp;
+      }
+      else {
+        if (  $assemblies->{$sp}->{$from_rel} &&
+              $assemblies->{$sp}->{$from_rel-1} &&
+              ($assemblies->{$sp}->{$from_rel}->{assembly} ne
+              $assemblies->{$sp}->{$from_rel-1}->{assembly}) ) {
+          push @{$json->{new_assembly}}, $sp;
+
+        }
       }
     }
   }
@@ -93,21 +99,23 @@ sub json_data {
       };
 
       my @nodes = map { $self->traverse($_) } @{$division_json->{child_nodes}};
-      my $json = {};
+      my $final_json = {};
+
       if ($#nodes >= 0) {
-        $json = {
+        $final_json = {
           name => 'All Divisions',
-          children => [@nodes]
+          children => [@nodes],
+          total => scalar @{$json->{new_species}}
         };
       }
 
       if ($hub->param('pretty')) {
         print "Release: ", $hub->param('release'),"\n\n";
-        print Data::Dumper::Dumper $json;
+        print Data::Dumper::Dumper $final_json;
         return {};
       }
       else {
-        return $json;
+        return $final_json;
       }
     }
     else {
@@ -130,9 +138,11 @@ sub traverse {
   my @tree;
   my $species_is_available = $self->{species_selector_data}->{available_species}->{$node->{key}} ? 1 : 0;
   my $value = $self->{species_selector_data}->{available_species}->{$node->{key}};
-
   if ($node->{is_leaf} && $species_is_available) {
-    return {name => $node->{key}};
+    return {
+      name => $node->{key},
+      display_name => $node->{display_name}
+    };
   }
   else {
     if ($node->{child_nodes}) {
@@ -145,8 +155,9 @@ sub traverse {
 
       if ($#children >= 0) {
         push @tree, {
-          name => $node->{display_name},
+          name => $node->{display_name} . ' (' . scalar(@children) . ')' ,
           children => [@children],
+          display_name => $node->{display_name}
         };
       }
     }
