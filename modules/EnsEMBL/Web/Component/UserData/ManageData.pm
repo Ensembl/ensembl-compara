@@ -406,7 +406,7 @@ sub table_row {
     $connect_text  = $disconnect ? 'Disable' : 'Enable';
     $connect_text .= ' this track';
   }
-  my $connect_url   = $hub->url({'action' => 'FlipTrack', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}, 'data_type' => $record_data->{'type'}});
+  my $connect_url   = $hub->url({'action' => 'FlipTrack', 'disconnect' => $disconnect, 'record' => $record_data->{'type'}.'_'.$record_data->{'code'}, 'format' => $record_data->{'format'}});
   $connect = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
 
   my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};

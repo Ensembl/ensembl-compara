@@ -29,21 +29,12 @@ sub process {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $record  = $hub->session->get_record_data({'code' => $hub->param('code'), 'type' => $hub->param('data_type')});
   my $disconnect = $hub->param('disconnect');
+  my $flipped = $self->object->flip_records([$hub->param('record')], $disconnect);
 
-  if (keys %$record) {
-    if ($disconnect) {
-      $record->{'disconnected'} = 1;
-    }
-    else {
-      $record->{'disconnected'} = 0;
-    }
-    $hub->session->set_record_data($record);
-  }
-  else {
+  unless ($flipped) {
     my $message;
-    if ($record->{'format'} eq 'TRACKHUB') {
+    if ($hub->param('format') eq 'TRACKHUB') {
       $message  = $disconnect ? 'disconnect' : 'connect';
       $message .= ' your trackhub';
     }
