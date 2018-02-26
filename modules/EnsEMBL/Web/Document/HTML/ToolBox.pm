@@ -45,7 +45,7 @@ sub render {
       $html .= qq(
         <div class="column-four left">
           <div class="plain-box unbordered">
-            <h2><a href="/biomart/martview" class="nodeco">BioMart</a></h2>
+            <h2><a href="/biomart/martview" class="nodeco">BioMart &nbsp;&gt;</a></h2>
             <p>Export custom datasets from Ensembl with this data-mining tool</p>
           </div>
         </div>);
@@ -54,7 +54,7 @@ sub render {
       $html .= qq(
         <div class="column-four left">
           <div class="plain-box unbordered">
-            <h2><a href="/Multi/Tools/Blast?db=core" class="nodeco">BLAST/BLAT</a></h2>
+            <h2><a href="/Multi/Tools/Blast?db=core" class="nodeco">BLAST/BLAT &nbsp;&gt;</a></h2>
             <p>Search our genomes for your DNA or protein sequence</p>
           </div>
         </div>);
@@ -63,7 +63,7 @@ sub render {
       $html .= qq(
         <div class="column-four left">
           <div class="plain-box unbordered">
-            <h2><a href="/info/docs/tools/vep/" class="nodeco">Variant Effect Predictor</a></h2>
+            <h2><a href="/info/docs/tools/vep/" class="nodeco">Variant Effect Predictor &nbsp;&gt;</a></h2>
             <p>Analyse your own variants and predict the functional consequences of
             known and unknown variants</p>
           </div>
