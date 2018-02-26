@@ -42,18 +42,14 @@ sub common_name {
   return $self->hub->species_defs->get_config($name, 'SPECIES_COMMON_NAME');
 }
 
-sub get_genome_db {
-  my ($self, $adaptor, $short_name) = @_;
-
-  my $all_genome_dbs = $adaptor->fetch_all;
-  $short_name =~ tr/\.//d;
-  foreach my $genome_db (@$all_genome_dbs) {
-    if ($genome_db->get_short_name eq $short_name) {
-      return $genome_db;
-    }
+sub combine_names {
+  my ($self, $common_name, $sci_name) = @_;
+  if ($sci_name eq $common_name) {
+      return "<em>$sci_name</em>";
+  } else {
+      return "$common_name (<em>$sci_name</em>)";
   }
 }
-
 
 sub error_message {
   my ($self, $title, $message, $type) = @_;
@@ -169,7 +165,7 @@ sub print_wga_stats {
           my $cgc = $colors[int($gc/25)];
           my $cec = $colors[int($ec/25)];
           $table->add_row({
-            'species' => sprintf('%s (<em>%s</em>)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
+            'species' => $self->combine_names($info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
             'asm'     => $info->{$sp}{'assembly'},
             'gl'      => $self->thousandify($info->{$sp}{'genome_length'}),
             'gc'      => $self->thousandify($info->{$sp}{'genome_coverage'}),
@@ -211,6 +207,41 @@ sub list_mlss_by_method {
 }
 
 
+sub pairwise_mlss_data {
+  my ($self, $methods) = @_;
+
+  my $compara_db = $self->hub->database('compara');
+  return unless $compara_db;
+
+  my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
+
+  my %data;
+  my %synt_methods;
+
+  ## Munge all the necessary information
+  foreach my $method (@{$methods||[]}) {
+    my $mlss_sets  = $mlss_adaptor->fetch_all_by_method_link_type($method);
+    if (@$mlss_sets and ($mlss_sets->[0]->method->class =~ /SyntenyRegion.synteny/)) {
+      $synt_methods{$method} = 1;
+    }
+
+    foreach my $mlss (@$mlss_sets) {
+      my ($gdb1, $gdb2) = @{$mlss->species_set->genome_dbs};
+      my $name1 = $self->hub->species_defs->production_name_mapping($gdb1->name);
+      if ($gdb2) {
+        my $name2 = $self->hub->species_defs->production_name_mapping($gdb2->name);
+        push @{$data{$name1}->{$name2}}, [$method, $mlss->dbID];
+        push @{$data{$name2}->{$name1}}, [$method, $mlss->dbID];
+      } else {
+        # Self alignment
+        push @{$data{$name1}->{$name1}}, [$method, $mlss->dbID];
+      }
+    }
+  }
+  return (\%data, \%synt_methods);
+}
+
+
 sub mlss_data {
   my ($self, $methods) = @_;
 
@@ -229,23 +260,16 @@ sub mlss_data {
 
 
     foreach my $mlss (@$mls_sets) {
-      ## Work out the name of the reference species using the MLSS title
-      my $short_ref_name;
-      if ($method =~ /LASTZ/) {
-        ($short_ref_name) = $mlss->name =~ /\(on (.+)\)/;
-      }
-      else {
-        $short_ref_name = substr($mlss->name, 0, 5);
-      }
-      if ($short_ref_name) {
-        my $ref_genome_db = $self->get_genome_db($genome_adaptor, $short_ref_name);
+      ## MLSS have a special tag to indicate the reference species
+      if ($mlss->has_tag('reference_species')) {
+        my $ref_gdb_name = $mlss->get_value_for_tag('reference_species');
       
         ## Add to full list of species
-        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_genome_db->name);
+        my $ref_name = $self->hub->species_defs->production_name_mapping($ref_gdb_name);
         $species->{$ref_name}++;
 
         ## Build data matrix
-        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set->genome_dbs};
+        my @non_ref_genome_dbs = grep {$_->name ne $ref_gdb_name} @{$mlss->species_set->genome_dbs};
         if (scalar(@non_ref_genome_dbs)) {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
@@ -320,6 +344,7 @@ sub get_species_info {
     $info->{$sp}{'short_name'}     = $short_name;
     $info->{$sp}{'formatted_name'} = $formatted_name; 
     $info->{$sp}{'common_name'}    = $hub->species_defs->get_config($sp, 'SPECIES_COMMON_NAME');
+    $info->{$sp}{'sample_loc'}     = ($hub->species_defs->get_config($sp, 'SAMPLE_DATA') || {})->{'LOCATION_PARAM'};
 
     if ($mlss) {
       my $prod_name = $hub->species_defs->get_config($sp, 'SPECIES_PRODUCTION_NAME');
@@ -387,6 +412,112 @@ sub draw_stepped_table {
   $html .= "</table>\n";
 
   return $html;
+}
+
+
+sub draw_pairwise_alignment_list {
+    my ($self, $species) = @_;
+
+    my $hub  = $self->hub;
+    my ($data, $synt_methods) = $self->pairwise_mlss_data( ['TRANSLATED_BLAT_NET','BLASTZ_NET', 'LASTZ_NET', 'ATAC', 'SYNTENY'] );
+
+    ## Do some munging
+    my ($species_order, $info) = $self->get_species_info([keys %$data], 1);
+
+    ## Output HTML
+    # Outer table has 1 row per query species
+    my $thtml = qq{<table id="genomic_align_table" class="no_col_toggle ss autocenter" style="width: 100%" cellpadding="0" cellspacing="0">};
+
+    my ($i, $j) = (0, 0);
+    foreach my $sp (@$species_order) {
+        next unless $data->{$sp};
+
+	my $ybg = $i++ % 2 ? 'bg1' : 'bg2';
+
+        # Intermediate table has 1 row per target species
+        my $ghtml = sprintf q{
+        <table id="%s_aligns" class="no_col_toggle ss toggle_table hide toggleable autocenter all_species_tables" style="width: 100%;" cellpadding="0" cellspacing="0">
+        }, $sp;
+
+	$j = $i;
+        my $genomic_count = 0;
+        my $synteny_count = 0;
+        foreach my $other (@$species_order) {
+            my $alignments = $data->{$sp}{$other};
+            next unless $alignments;
+            my $xbg = $j++ % 2 ? 'bg1' : 'bg2';
+
+            # Inner table has 1 row per alignment method
+            my $astr = qq{<table cellpadding="0" cellspacing="2" style="width:100%">};
+            foreach my $aln (@$alignments) {
+                my $method = $aln->[0];
+                my $mlss_id = $aln->[1];
+
+                if ($synt_methods->{$method}) {
+                    $synteny_count++;
+                } else {
+                    $genomic_count++;
+                }
+
+		my $sample_location = '&nbsp;';
+		if ($info->{$sp}->{'sample_loc'}) {
+                    if ($synt_methods->{$method}) {
+			$sample_location = sprintf qq{<a href="/%s/Location/Synteny?r=%s;otherspecies=%s">example</a>}, $sp, $info->{$sp}->{'sample_loc'}, $other;
+		    } else {
+			$sample_location = sprintf qq{<a href="/%s/Location/Compara_Alignments/Image?align=%s;r=%s">example</a>}, $sp, $mlss_id, $info->{$sp}->{'sample_loc'};
+		    }
+		}
+                if ($Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method}) {
+                    $method = $Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method};
+                }
+                $astr .= qq{<tr>
+<td style="padding:0px 10px 0px 0px;text-align:right;">&nbsp;</td>
+<td style="padding:0px 10px 0px 0px;text-align:right;widht:20px">$method |</td>
+<td style="padding:0px 10px 0px 0px;text-align:left;width:60px;">$sample_location</td>
+<td style="padding:0px 10px 0px 0px;text-align:left;width:40px;"><a href="/mlss.html?mlss=$mlss_id">stats</a></td><tr>};
+            }
+            $astr .= qq{</table>};
+            my $self_desc = $sp eq $other ? ' [self-alignment]' : '';
+            $ghtml .= sprintf qq{<tr class="%s"><td>%s%s</td><td>%s</td></tr>}, $xbg, $self->combine_names($info->{$other}->{'common_name'}, $info->{$other}->{'long_name'}), $self_desc, $astr;
+        }
+        $ghtml .= qq{</table>};
+
+	my $synteny_str = $synteny_count > 1 ? 'syntenies' : 'synteny';
+	my $chtml = sprintf qq {
+<span style="text-align:left">%s</span> &nbsp; <span style="text-align:left">%s</span>}, $genomic_count ? ("$genomic_count alignment".($genomic_count > 1 ? 's':'')): "&nbsp;", $synteny_count ? "$synteny_count $synteny_str" : "&nbsp;";
+
+	my $sphtml = sprintf qq{
+<tr class="%s">
+  <td>
+    <a title="Click to show/hide" rel="%s_aligns" class="toggle no_img closed" href="#">
+      <span class="open closed" style="width:50%;float:left;">
+        <strong>%s</strong>
+      </span>
+    </a>
+    %s
+    %s
+  </td>
+</tr>}, $ybg, $sp, $self->combine_names($info->{$sp}->{'common_name'}, $info->{$sp}->{'long_name'}), $chtml, $ghtml;
+	$thtml .= $sphtml;
+    }
+    $thtml .= qq{</table>};
+
+    my $html = sprintf qq{
+<div id="GenomicAlignmentsTab" class="js_panel">
+<input type="hidden" class="panel_type" value="Content"/>
+<div class="info-box">
+  <p>
+    <a rel="all_species_tables" href="#" class="closed toggle" title="Expand all tables">
+       <span class="closed">Toggle All</span>
+       <span class="open">Toggle All</span>
+    </a> or click a species names to expand/collapse its alignment list
+  </p>
+  %s
+</div>
+</div>
+}, $thtml;
+
+    return $html;
 }
 
 1;
