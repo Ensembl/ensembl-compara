@@ -259,15 +259,15 @@ sub md_mass_update {
 
 sub delete_files {
   my $self = shift;
-  my @files = $self->hub->param('record');
-  warn ">>> DELETING FILES @files";
-  foreach (@files) {
+  my @records = $self->hub->param('record');
+  foreach (@records) {
     my ($source, $code, $id) = split('_', $_);
+    $code .= '_'.$id;
     if ($source eq 'upload') {
-      #$self->md_delete_upload($source, $code, $id);
+      $self->md_delete_upload($source, $code, $id);
     }
     else {
-      #$self->md_delete_remote($source, $code, $id);
+      $self->md_delete_remote($source, $code, $id);
     }
   }
 }
@@ -344,6 +344,8 @@ sub _delete_record {
 
   foreach my $record_manager (grep $_, $hub->user, $hub->session) {
     my $data            = $record_manager->get_record_data({'type' => $type, 'code' => $code});
+    my @A = keys %{$data||{}};
+    warn ">>> DELETING RECORD @A";
     my $record_id       = $data->{'record_id'};
     my $record_type_id  = $data->{'record_type_id'};
 
