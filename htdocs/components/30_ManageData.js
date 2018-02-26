@@ -27,14 +27,12 @@ Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
       function() {
         $(this).on({ click: function () {
           panel.elLk.url = $(this).attr("href");
-          //console.log('URL = '+panel.elLk.url);
           panel.elLk.table.find(".mass_update").each(
             function() {
               if ($(this).is(":checked")) {
                 panel.elLk.url += ';record='+$(this).val();
               }
           });
-          //console.log('URL now '+panel.elLk.url);
           $(this).attr("href", panel.elLk.url);             
         }});
       }
