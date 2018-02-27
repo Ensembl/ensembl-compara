@@ -31,15 +31,11 @@ use feature 'say';
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $anyErrors = 0;
 
-my ($jsontxt, $xml, $nh, $orthoXml, $phyloXml);
+my ($jsontxt, $xml, $nh, $orthoXml, $phyloXml, $json_leaf);
 my $response = "";
 my $server = "";
 my $num_args = $#ARGV + 1;
 my $sleepTime = 0;
-
-print "\nXXXX\n", $server, "\n\n";
-
-my $subtree_result = '(((((ENSPFOP00000011979:0.015457,ENSXMAP00000013387:0.032852):0.065319,ENSORLP00000021821:0.073657):0.015707,ENSONIP00000005406:0.108887):0.018218,ENSGACP00000005150:0.056991):0.026746,((ENSTNIP00000020640:0.003661,ENSTNIP00000004507:0.047464):0.07026,ENSTRUP00000013256:0.094795):0.065814):0.05792;';
 
 if ($num_args >= 2) {
     print "\nUsage: VerifyRestEndpoints.pl REST_server_location\n";
@@ -47,12 +43,7 @@ if ($num_args >= 2) {
 }
 elsif($num_args == 1){
     $server = $ARGV[0];
-    my $responseIDGet = $browser->get(($server.'/info/ping?content-type=application/json'), {
-	headers => {
-      'Content-type' => 'application/json',
-          'Accept' => 'application/json',
-	},
-				      });
+    my $responseIDGet = $browser->get(($server.'/info/ping?content-type=application/json'), { headers => { 'Content-type' => 'application/json', 'Accept' => 'application/json'} } );
     die "Server unavailable - please check your URL\n" unless $responseIDGet->{status} == 200;
 }
 else{
@@ -64,37 +55,33 @@ sub process_nh_get {
     my ($url, $content_type) = @_;
     $content_type ||= 'text/x-nh';
     my $result = "";
-    my $responseIDGet = $browser->get($url, {
-	headers => {
-      'Content-type' => 'text/x-nh'
-	},
-				      });
+    my $responseIDGet = $browser->get($url, { headers => { 'Content-type' => 'text/x-nh' } } );
 
-#    print Dumper($responseIDGet) , "\n\n\n";
     if($responseIDGet->{status} == 200){
-	try{
-	    $result = $responseIDGet->{content};
-	} catch{
-	    print STDERR "ERROR\n";
-	    return "";
-	};
-#	print $result , "\n\n";
-	sleep($sleepTime);
-	if(ref($result) eq 'ARRAY'){
-	    return defined(@$result[0]) ? $result : ""; #Yo. learn this
-	}
-	else{
-	    return $result;
-	}
+		try {
+	    	$result = $responseIDGet->{content};
+		} 
+		catch {
+	    	print STDERR "ERROR\n";
+	    	return "";
+		};
+
+		sleep($sleepTime);
+		if(ref($result) eq 'ARRAY'){
+	    	return defined(@$result[0]) ? $result : ""; #Yo. learn this
+		}
+		else {
+	    	return $result;
+		}	
     }
-    elsif($responseIDGet->{status} == 400){
-	return 0;
+    elsif ($responseIDGet->{status} == 400) {
+		return 0;
     }
-    elsif($responseIDGet->{status} == 599){
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
+    elsif ($responseIDGet->{status} == 599) {
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
     }
-    else{
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
+    else {
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
     }
 }
 
@@ -102,37 +89,33 @@ sub process_orthoXml_get {
     my ($url, $content_type) = @_;
     $content_type ||= 'text/x-nh';
     my $result = "";
-    my $responseIDGet = $browser->get($url, {
-	headers => {
-      'Content-type' => 'text/x-orthoxml+xml'
-	},
-				      });
+    my $responseIDGet = $browser->get($url, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
 
-#    print Dumper($responseIDGet) , "\n\n\n";
-    if($responseIDGet->{status} == 200){
-	try{
-	    $result = $responseIDGet->{content};
-	} catch{
-	    print STDERR "ERROR\n";
-	    return "";
-	};
-#	print $result , "\n\n";
-	sleep($sleepTime);
-	if(ref($result) eq 'ARRAY'){
-	    return defined(@$result[0]) ? $result : ""; #Yo. learn this
-	}
-	else{
-	    return $result;
-	}
+    if ($responseIDGet->{status} == 200) {
+		try {
+	    	$result = $responseIDGet->{content};
+		} 
+		catch {
+	    	print STDERR "ERROR\n";
+	    	return "";
+		};
+
+		sleep($sleepTime);
+		if (ref($result) eq 'ARRAY') {
+	    	return defined(@$result[0]) ? $result : ""; #Yo. learn this
+		}
+		else{
+	    	return $result;
+		}
     }
-    elsif($responseIDGet->{status} == 400){
-	return 0;
+    elsif ($responseIDGet->{status} == 400) {
+		return 0;
     }
-    elsif($responseIDGet->{status} == 599){
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
+    elsif ($responseIDGet->{status} == 599) {
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
     }
-    else{
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
+    else {
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
     }
 }
 
@@ -140,37 +123,33 @@ sub process_phyloXml_get {
     my ($url, $content_type) = @_;
     $content_type ||= 'text/x-nh';
     my $result = "";
-    my $responseIDGet = $browser->get($url, {
-	headers => {
-      'Content-type' => 'text/x-phyloxml+xml'
-	},
-				      });
+    my $responseIDGet = $browser->get($url, { headers => {'Content-type' => 'text/x-phyloxml+xml' } } );
 
-#    print Dumper($responseIDGet) , "\n\n\n";
     if($responseIDGet->{status} == 200){
-	try{
-	    $result = $responseIDGet->{content};
-	} catch{
-	    print STDERR "ERROR\n";
-	    return "";
-	};
-#	print $result , "\n\n";
-	sleep($sleepTime);
-	if(ref($result) eq 'ARRAY'){
-	    return defined(@$result[0]) ? $result : ""; #Yo. learn this
-	}
-	else{
-	    return $result;
-	}
+		try{
+		    $result = $responseIDGet->{content};
+		} 
+		catch {
+		    print STDERR "ERROR\n";
+		    return "";
+		};
+
+		sleep($sleepTime);
+		if(ref($result) eq 'ARRAY'){
+	    	return defined(@$result[0]) ? $result : ""; #Yo. learn this
+		}
+		else{
+	    	return $result;
+		}
     }
     elsif($responseIDGet->{status} == 400){
-	return 0;
+		return 0;
     }
     elsif($responseIDGet->{status} == 599){
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
     }
     else{
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
     }
 }
 
@@ -178,37 +157,45 @@ sub process_json_get {
     my ($url, $content_type) = @_;
     $content_type ||= 'application/json';
     my $try_decode = "";
-    my $responseIDGet = $browser->get($url, {
-	headers => {
-      'Content-type' => 'application/json',
-      'Accept' => 'application/json',
-	},
-				      });
+    my $responseIDGet = $browser->get($url, { headers => { 'Content-type' => 'application/json', 'Accept' => 'application/json' } } );
 
     if($responseIDGet->{status} == 200){
-	try{
-	    $try_decode = decode_json($responseIDGet->{content});
-	} catch{
-	    print STDERR "ERROR\n";
-	    return "";
-	};
-	sleep($sleepTime);
-	if(ref($try_decode) eq 'ARRAY'){
-	    return defined(@$try_decode[0]) ? $try_decode : "";
-	}
-	else{
-	    return $try_decode;
-	}
+		try{
+		    $try_decode = decode_json($responseIDGet->{content});
+		}
+		catch{
+	    	print STDERR "ERROR\n";
+	    	return "";
+		};
+		sleep($sleepTime);
+		if(ref($try_decode) eq 'ARRAY'){
+	    	return defined(@$try_decode[0]) ? $try_decode : "";
+		}
+		else{
+	    	return $try_decode;
+		}
     }
     elsif($responseIDGet->{status} == 400){
-	return 0;
+		return 0;
     }
     elsif($responseIDGet->{status} == 599){
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status}. " - is your server ";
     }
     else{
-	die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
+		die "Unsuccessful Request - Error Code: ". $responseIDGet->{status};
     }
+}
+
+#fetch_leaf_hash_from_json
+#takes as input a json_hash of a gene tree 
+#traverses the gene tree hash to return an hash of a leaf node  
+sub fetch_leaf_hash_from_json {
+
+	my ($input_json) = @_;
+	while (exists $input_json->{children}) {
+		$input_json = $input_json->{children}[0];
+	}
+	return $input_json;
 }
 
 
@@ -226,131 +213,79 @@ try{
 
 #### ID GET ####
     my $ext = '/genetree/id/ENSGT00390000003602';
-    my $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    my $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-phyloxml+xml',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
     ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-orthoxml+xml',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
     ok($responseIDGet->{success}, "Check orthoXml Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-nh',
-	},
-				      });
-
-    ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
+    $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-nh'} });
+	ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&aligned=1');
- #  print Dumper($jsontxt->{tree}->{children});
-#	say keys $jsontxt->{tree}->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0];
-	ok($jsontxt && $jsontxt->{tree}->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{sequence}->{mol_seq}->{is_aligned}, "Check seqs alignment Validity");
+	$json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
+	ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 1, "Check seqs alignment == 1 Validity");
+
+	$jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&aligned=0');
+	$json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
+	ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 0, "Check seqs alignment == 0 Validity");
 
 	$jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&cigar_line=1');
-	ok($jsontxt && $jsontxt->{tree}->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{children}[0]->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line Validity");
+	$json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
+	ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 1 Validity");
+
+	$jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&cigar_line=0');
+	$json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
+	ok($jsontxt && ! exists $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 0 Validity");
 
 	$ext = '/genetree/id/RF01168?content-type=text/javascript&callback=thisisatest';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	    'Content-type' => 'text/javascript',
-	},
-				   });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/javascript' } } );
     ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback Validity");
 
 	$phyloXml = process_phyloXml_get($server.'/genetree/id/RF01168?content-type=text/x-phyloxml+xml;prune_species=Macaque;prune_species=human;prune_species=Chimpanzee');
-	ok($phyloXml && (index($phyloXml,'ENST00000459475') !=-1), "check prune species Validity");
+	ok( (index($phyloXml,'pan_troglodytes') !=-1) && (index($phyloXml,'macaca_mulatta') !=-1) && (index($phyloXml,'homo_sapiens') !=-1), "check prune species Validity");
 #	diag $nh;
 	$orthoXml = process_orthoXml_get($server.'/genetree/id/RF01168?content-type=text/x-orthoxml+xml;prune_taxon=9598;prune_taxon=9544;prune_taxon=9606');
-	ok($orthoXml && $orthoXml =~ 'ENSMMUT00000052798', "check prune taxon Validity");
+	ok( (index($orthoXml,'pan_troglodytes') !=-1) && (index($orthoXml,'macaca_mulatta') !=-1) && (index($orthoXml,'homo_sapiens') !=-1), "check prune taxon Validity");
 	
-	$nh = process_nh_get($server.'/genetree/id/ENSGT00390000003602?content-type=text/x-nh&subtree_node_id=11416568');
-	is($nh, $subtree_result, "Check subtree Validity"); #I am wary of this test as I am not sure the nodes in the string will always be returned in the same other
-
-	$jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json;prune_species=Macaque;prune_species=human;prune_species=Chimpanzee;sequence=none');
+	$jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json;sequence=none');
 #	diag explain $jsontxt;
-	ok($jsontxt && (index($jsontxt, 'mol_seq') == -1), "check sequence eq none Validity");
+	$json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
+	ok($jsontxt && !(exists $json_leaf->{mol_seq}), "check sequence eq none Validity");
+	
 
 	print "\nTesting GET genetree by member\/id\/\:id \n\n";
 
 	$ext = '/genetree/member/id/ENSG00000157764';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-phyloxml+xml',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
     ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-orthoxml+xml',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
     ok($responseIDGet->{success}, "Check orthoXml Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-nh',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
-    $jsontxt = process_json_get($server.'/genetree/member/id/ENSMUSG00000017167?content-type=application/json;subtree_node_id=4385998');
+    $jsontxt = process_json_get($server.'/genetree/member/id/ENSMUSG00000017167?content-type=application/json');
     ok($jsontxt->{tree}, "check gene tree member  Validity");
 
-    $phyloXml = process_phyloXml_get($server.'/genetree/member/id/ENSMUSG00000017167?content-type=text/x-phyloxml+xml');
-    ok($phyloXml, "check gene tree member phyloXml Validity");
 
     print "\nTesting GET genetree by member symbol\/\:species\/\:symbol \n\n";
 
 	$ext = '/genetree/member/symbol/homo_sapiens/BRCA2';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-phyloxml+xml',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
     ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-nh',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $orthoXml = process_orthoXml_get($server.'/genetree/member/symbol/homo_sapiens/BRCA2?prune_species=cow;content-type=text/x-orthoxml%2Bxml;prune_taxon=9526');
@@ -360,40 +295,23 @@ try{
 	print "\nTesting GET Cafe tree\/id\/\:id \n\n";
 
 	$ext = '/cafe/genetree/id/ENSGT00390000003602';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-nh',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $nh = process_nh_get($server.'/cafe/genetree/id/ENSGT00390000003602?content-type=text/x-nh;nh_format=simple');
     ok($nh, "check cafe tree nh simple format Validity");
 
+ 
     print "\nTesting GET Cafe tree by member\/id\/\:id \n\n";
 
 	$ext = '/cafe/genetree/member/id/ENSG00000157764';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-nh',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
 
@@ -404,55 +322,44 @@ try{
 	print "\nTesting GET Cafe tree by member symbol\/:species\/\:symbol \n\n";
 
 	$ext = '/cafe/genetree/member/symbol/homo_sapiens/BRCA2';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-nh',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $nh = process_nh_get($server.'/cafe/genetree/member/symbol/homo_sapiens/BRCA2?content-type=text/x-nh;nh_format=simple');
     ok($nh, "Check get cafe tree member by symbol Validity");
 
+
     print "\nTesting GET family\/id\/\:id \n\n";
 
 	$ext = '/family/id/PTHR15573';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
     $jsontxt = process_json_get($server.'/family/id/PTHR15573?content-type=application/json');
     ok($jsontxt->{type} eq 'family', "Check get family Validity");
 
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=uniprot');
-    ok($jsontxt->{MEMBERS}->{UNIPROT_proteins}, "Check get family UNIPROT memeber filter Validity");
+    ok( !(exists $jsontxt->{MEMBERS}->{ENSEMBL_gene_members} ), "Check get family UNIPROT memeber filter Validity");
 
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl');
-    ok($jsontxt->{MEMBERS}->{ENSEMBL_gene_members}, "Check get family ensembl member filter Validity");
+    ok( !(exists $jsontxt->{MEMBERS}->{UNIPROT_proteins} ), "Check get family ensembl member filter Validity");
+    
+    $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl;aligned=1');
+    my @fam_mem=keys $jsontxt->{MEMBERS}->{ENSEMBL_gene_members};
+    ok( exists($jsontxt->{MEMBERS}->{ENSEMBL_gene_members}->{$fam_mem[0]}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
 
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl;aligned=0');
-    ok($jsontxt->{MEMBERS}->{ENSEMBL_gene_members}->{ENSLACG00000022687}[0]->{seq}, "Check get family aligned option Validity");
+    @fam_mem=keys $jsontxt->{MEMBERS}->{ENSEMBL_gene_members};
+    ok( !(exists $jsontxt->{MEMBERS}->{ENSEMBL_gene_members}->{$fam_mem[0]}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
+
 
     print "\nTesting GET family member\/id\/\:id \n\n";
 
 	$ext = '/family/member/id/ENSG00000157764';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
 
@@ -463,12 +370,7 @@ try{
 	print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
 
 	$ext = '/family/member/symbol/homo_sapiens/BRCA2';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
 	$jsontxt = process_json_get($server.'/family/member/symbol/homo_sapiens/BRCA2?content-type=application/json;aligned=0;sequence=none;member_source=ensembl');
@@ -478,26 +380,17 @@ try{
 	print "\nTesting GET alignment region\/\:species\/\:region \n\n";
 
 	$ext = '/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?species_set_group=sauropsids';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check json Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-phyloxml+xml',
-	},
-				      });
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
     ok($responseIDGet->{success}, "Check phyloXml Validity");
-
 
     $phyloXml = process_phyloXml_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=text/x-phyloxml;species_set_group=sauropsids;aligned=1');
     ok($phyloXml, "Check get alignment region and align the sequences");
 
     $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106041430-106041480:1?content-type=application/json;method=LASTZ_NET;species_set=taeniopygia_guttata;species_set=gallus_gallus');
-    ok($jsontxt->[0]->{alignments}[0]->{species}, "Check get alignment region method option");
+    ok( index($jsontxt->[0]->{tree},'taeniopygia_guttata') !=-1 && index($jsontxt->[0]->{tree},'gallus_gallus') !=-1, "Check get alignment region method option");
 
     $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=application/json;species_set_group=sauropsids;display_species_set=chicken');
     ok($jsontxt->[0]->{alignments}[0]->{species} eq 'gallus_gallus', "Check alignment region display_species_set option Validity");
@@ -507,40 +400,42 @@ try{
     print "\nTesting GET homology \/id\/\:id \n\n";
 
 	$ext = '/homology/id/ENSG00000157764';
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'application/json',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $responseIDGet = $browser->get($server.$ext, {
-	headers => {
-	        'Content-type' => 'text/x-orthoxml+xml',
-	},
-				      });
-
+    $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-orthoxml+xml'} } );
     ok($responseIDGet->{success}, "Check orthoXml Validity");
 
-
     $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?target_taxon=10090;content-type=application/json');
-    ok($jsontxt->{data}[0]->{homologies}[0]->{source}, "Check homology endpoint target_taxon option Validity");
+    ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == 10090 , "Check homology endpoint target_taxon option Validity");
 
     $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;target_species=cow');
-    ok($jsontxt->{data}[0]->{homologies}[0]->{source}, "Check homology endpoint target_species option Validity");
+    ok($jsontxt->{data}[0]->{homologies}[0]->{target}->{species} eq 'bos_taurus', "Check homology endpoint target_species option Validity");
 
     $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;sequence=cdna;');
-    ok($jsontxt->{data}[0]->{homologies}[0]->{source}, "Check homology endpoint sequence option Validity");
+    ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') == -1 , "Check homology endpoint sequence CDNA option Validity");
+
+    $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;sequence=protein;');
+    ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') != -1 , "Check homology endpoint sequence protein option Validity");
+
+    $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;aligned=0;sequence=none');
+    ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{seq}), "Check homology endpoint sequence none option Validity");
 
     $orthoXml = process_orthoXml_get($server.'/homology/id/ENSG00000157764?content-type=text/x-orthoxml+xml;type=orthologues');
     ok($orthoXml, "Check homology endpoint type option Validity");
 
-    $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;target_species=cow;aligned=0;cigar_line=1');
-    ok($jsontxt->{data}[0]->{homologies}[0]->{source}->{seq} && $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint aligned & cigar line option Validity");
+    $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;aligned=0');
+    ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}), "Check homology endpoint aligned =0 option Validity");
+
+    $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;cigar_line=1');
+    ok( exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint cigar line =1 Validity");
+
+	$jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;cigar_line=0');
+    ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =1 Validity");
 
     $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;format=condensed');
     ok($jsontxt, "Check homology endpoint format Validity");
+
 }catch{
     warn "caught error: $_"; 
 };
