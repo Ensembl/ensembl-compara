@@ -449,4 +449,22 @@ sub get_cigar_breakout {
     return %breakout;
 }
 
+=head2 get_cigar_array
+
+  Arg [1]    : String $cigar_line
+  Example    : my %cigar_breakout = get_cigar_array($cigar_line)
+  Description: Return an array of the cigar line, e.g.: [['M', 34], ['D', 12], ['M', 5] ...]
+
+  Returntype : arrayref
+
+=cut
+
+sub get_cigar_array {
+    my $cigar = shift;
+    my @cigar_array;
+    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+        push(@cigar_array,[$2,$1||1]);
+    }
+    return \@cigar_array;
+}
 1;
