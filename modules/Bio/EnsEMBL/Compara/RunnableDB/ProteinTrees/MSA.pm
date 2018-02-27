@@ -150,6 +150,7 @@ sub write_output {
 
     if ($self->param('single_peptide_tree')) {
         $self->param('protein_tree')->aln_method('identical_seq');
+        $self->param('protein_tree')->aln_length($self->param('protein_tree')->aln_length);
     } else {
         my $method = ref($self);
         $method =~ /::([^:]*)$/;
