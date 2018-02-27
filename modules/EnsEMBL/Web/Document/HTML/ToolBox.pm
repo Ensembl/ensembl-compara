@@ -34,7 +34,7 @@ sub render {
 
     $html .= qq(
       <div class="plain-box no-top-margin">
-        <div class="column-four left">
+        <div style="float:left;width:15%">
           <div class="plain-box unbordered">
             <h2>Tools</h2>
             <p><a href="/info/docs/tools/index.html">All tools</a></p>
@@ -43,27 +43,27 @@ sub render {
 
     if ($sd->ENSEMBL_MART_ENABLED) {
       $html .= qq(
-        <div class="column-four left">
+        <div style="float:left;width:28%">
           <div class="plain-box unbordered">
-            <h2><a href="/biomart/martview" class="nodeco">BioMart</a></h2>
+            <h2><a href="/biomart/martview" class="nodeco">BioMart&nbsp&nbsp;&gt;</a></h2>
             <p>Export custom datasets from Ensembl with this data-mining tool</p>
           </div>
         </div>);
     }
     if ($sd->ENSEMBL_BLAST_ENABLED) {
       $html .= qq(
-        <div class="column-four left">
+        <div style="float:left;width:28%">
           <div class="plain-box unbordered">
-            <h2><a href="/Multi/Tools/Blast?db=core" class="nodeco">BLAST/BLAT</a></h2>
+            <h2><a href="/Multi/Tools/Blast?db=core" class="nodeco">BLAST/BLAT&nbsp&nbsp;&gt;</a></h2>
             <p>Search our genomes for your DNA or protein sequence</p>
           </div>
         </div>);
     }
     if ($sd->ENSEMBL_VEP_ENABLED) {
       $html .= qq(
-        <div class="column-four left">
+        <div style="float:left;width:28%">
           <div class="plain-box unbordered">
-            <h2><a href="/info/docs/tools/vep/" class="nodeco">Variant Effect Predictor</a></h2>
+            <h2><a href="/info/docs/tools/vep/" class="nodeco">Variant Effect Predictor&nbsp;&nbsp;&gt;</a></h2>
             <p>Analyse your own variants and predict the functional consequences of
             known and unknown variants</p>
           </div>
