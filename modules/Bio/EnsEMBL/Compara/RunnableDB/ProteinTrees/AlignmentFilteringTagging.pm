@@ -59,6 +59,9 @@ sub run {
     my $gene_count = $self->_get_gene_count();
     $self->param( 'gene_count', $gene_count );
 
+    my $cigar_breakout = $self->_get_cigar_breakout();
+    $self->param( 'cigar_breakout', $cigar_breakout);
+
     my $gappiness = $self->_get_gappiness();
     my $aligned_proportion = 1-$gappiness;
     $self->param( 'gappiness', $gappiness );
@@ -127,8 +130,8 @@ sub _get_shrinking_factor {
     return $ratio;
 }
 
-sub _get_gappiness {
-    my ( $self, $n_removed_columns ) = @_;
+sub _get_cigar_breakout {
+    my $self = shift;
 
     $self->param( 'gene_tree_id',      $self->param_required('gene_tree_id') );
     $self->param( 'gene_tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
@@ -137,24 +140,40 @@ sub _get_gappiness {
     #Fetch tags
     $self->param( 'cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id( $self->param('gene_tree')->gene_align_id ) );
 
+    my @cigar_breakout;
+
+    print "\ncigar:\n";
+
+    foreach my $member ( @{ $self->param('cigar_lines') } ) {
+
+        #get cigar line
+        my $cigar_line = $member->cigar_line;
+        #print "$cigar_line\n";
+
+        #break the cigar line
+        my %break = $member->get_cigar_breakout( $member->cigar_line );
+
+        push(@cigar_breakout, \%break);
+    }
+
+    return \@cigar_breakout;
+}
+
+sub _get_gappiness {
+    my $self = shift;
+
     #Amount of positions on the alignment
     my $sum = 0;
 
     #Quantity of gaps in the alignment
     my $gaps = 0;
-    foreach my $member ( @{ $self->param('cigar_lines') } ) {
 
-        #get cigar line
-        my $cigar_line = $member->cigar_line;
-
-        #break the cigar line
-        my %break = $member->get_cigar_breakout( $member->cigar_line );
-
+    foreach my $member_break ( @{ $self->param('cigar_breakout') } ) {
         #get percentages
-        foreach my $k ( sort keys %break ) {
-            $sum += $break{$k};
+        foreach my $k ( sort keys %{$member_break} ) {
+            $sum += $member_break->{$k};
             if ( $k eq "D" ) {
-                $gaps += $break{$k};
+                $gaps += $member_break->{$k};
             }
         }
     }
