@@ -341,6 +341,7 @@ sub resource_classes {
          '8Gb_job'          => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '16Gb_job'         => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'         => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '64Gb_job'         => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
     };
 }
 
@@ -1734,7 +1735,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'hmm_thresholding_searches_super_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch',
-            -rc_name        => '32Gb_job',
+            -rc_name        => '64Gb_job',
             -parameters     => {
                                 'hmmer_home'            => $self->o('hmmer3_home'),
                                 'library_name'          => $self->o('compara_hmm_library_name'),
