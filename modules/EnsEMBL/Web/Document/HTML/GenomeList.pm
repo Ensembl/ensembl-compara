@@ -77,11 +77,11 @@ sub _get_dom_tree {
     'class'       => 'column_wrapper',
     'children'    => [{
               'node_name'   => 'div',
-              'class'       => 'column-forty static_all_species',
+              'class'       => 'column-two static_all_species',
               'inner_HTML'  => $list_html,
             }, {
               'node_name'   => 'div',
-              'class'       => 'column-sixty fave-genomes',
+              'class'       => 'column-two fave-genomes',
               'children'    => [{
                         'node_name'   => 'h3',
                         'inner_HTML'  => 'Favourite genomes'
