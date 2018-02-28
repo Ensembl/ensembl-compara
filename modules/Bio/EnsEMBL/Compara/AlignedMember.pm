@@ -190,6 +190,24 @@ sub get_cigar_breakout{
   return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->{'_cigar_line'});
 }
 
+=head2 get_cigar_array
+
+  Arg [1]     : $cigar_line
+  Example     : @cigar_array = $object->get_cigar_array($cigar_line);
+  Description : Getter for the cigar_line array. It returns an array with the quantities
+                of matches or mismatches (M), deletions (D) and insertions (I).
+
+  Returntype  : hashref
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_cigar_array{
+  my $self = shift;
+  return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($self->{'_cigar_line'});
+}
 
 =head2 cigar_start
 
