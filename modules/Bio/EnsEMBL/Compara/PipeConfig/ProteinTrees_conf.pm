@@ -1593,6 +1593,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
+            -parameters         => {
+                member_type             => 'protein',
+                homology_id_threshold   => '100000000',
+            },
             -rc_name       => '500Mb_job',
             -flow_into  => [
                     'write_stn_tags',

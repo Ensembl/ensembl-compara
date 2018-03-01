@@ -47,8 +47,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
-    # FIXME: need to remove the hardcoded member_type
-    my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => 'protein', -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
+    my $clusterset_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all( -tree_type => 'clusterset', -member_type => $self->param( 'member_type' ), -clusterset_id => 'default' )->[0] or die "Could not fetch groupset tree";
     $self->param('clusterset_tree', $clusterset_tree);
 }
 
@@ -162,9 +161,8 @@ sub _get_homology_counts {
     my %homology_counts;
 
     #Compute Homology counts
-    # FIXME: need to remove the hard-coded threshold
-    my $get_all_seqs_sql = "SELECT description, is_tree_compliant, node_type, COUNT(*) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < 100000000 GROUP BY description, is_tree_compliant, node_type";
-    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    my $sql = "SELECT description, is_tree_compliant, node_type, COUNT(*) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < " . $self->param( 'homology_id_threshold' ) . " GROUP BY description, is_tree_compliant, node_type";
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
         my $description       = $row[0];
@@ -186,9 +184,8 @@ sub _get_avg_perc_identity {
     my %avg_perc_identity;
 
     #Compute Average percentage identity
-    # FIXME: need to remove the hard-coded threshold
-    my $get_all_seqs_sql = "SELECT description, is_tree_compliant, ROUND(AVG(perc_id),2) FROM homology JOIN homology_member USING (homology_id) WHERE homology_id < 100000000 GROUP BY description, is_tree_compliant";
-    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    my $sql = "SELECT description, is_tree_compliant, ROUND(AVG(perc_id),2) FROM homology JOIN homology_member USING (homology_id) WHERE homology_id < " . $self->param( 'homology_id_threshold' ) . " GROUP BY description, is_tree_compliant";
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
         my $description       = $row[0];
@@ -212,9 +209,8 @@ sub _get_avg_duplication_confidence_score {
     my %avg_duplication_confidence_score;
 
     #Compute Average duplication confidence score
-    # FIXME: need to remove the hard-coded threshold
-    my $get_all_seqs_sql = "SELECT description, AVG(duplication_confidence_score) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < 100000000 AND node_type = 'duplication' GROUP BY description;";
-    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    my $sql = "SELECT description, AVG(duplication_confidence_score) FROM homology JOIN gene_tree_node_attr ON gene_tree_node_id = node_id WHERE homology_id < " . $self->param( 'homology_id_threshold' ) . " AND node_type = 'duplication' GROUP BY description;";
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
         my $description = $row[0];
@@ -232,9 +228,9 @@ sub _get_number_of_proteins_used {
     my ($self) = @_;
 
     #Compute the number of proteins used in trees
-    my $get_all_seqs_sql = "SELECT SUM(nb_genes_in_tree), SUM(nb_orphan_genes), SUM(nb_genes_in_tree_single_species) FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL)";
+    my $sql = "SELECT SUM(nb_genes_in_tree), SUM(nb_orphan_genes), SUM(nb_genes_in_tree_single_species) FROM species_tree_node_attr JOIN species_tree_node USING (node_id) WHERE node_id IN (SELECT node_id FROM species_tree_node where genome_db_id IS NOT NULL)";
 
-    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
         my $number_of_proteins_used_in_trees           = $row[0];
@@ -245,7 +241,6 @@ sub _get_number_of_proteins_used {
         $self->param( 'number_of_orphan_proteins',                  $number_of_orphan_proteins );
         $self->param( 'number_of_proteins_in_single_species_trees', $number_of_proteins_in_single_species_trees );
     }
-
     $sth->finish();
 }
 
@@ -257,9 +252,8 @@ sub _get_sizes_summary {
     my @count_seq_member_ids;
 
     #Compute Mean and median, max, min cluster sizes, number of proteins per cluster:
-    # FIXME: need to remove the hard-coded mmber_type
-    my $get_all_seqs_sql = "SELECT count(seq_member_id) FROM gene_tree_root JOIN gene_tree_node USING (root_id) where clusterset_id = 'default' and tree_type = 'tree' and member_type = 'protein' and seq_member_id IS NOT NULL GROUP BY root_id";
-    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    my $sql = "SELECT count(seq_member_id) FROM gene_tree_root JOIN gene_tree_node USING (root_id) where clusterset_id = 'default' and tree_type = 'tree' and member_type = " . $self->param( 'member_type' ) . " and seq_member_id IS NOT NULL GROUP BY root_id";
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
         push( @count_seq_member_ids, $row[0] );
@@ -282,17 +276,16 @@ sub _get_sizes_summary {
 # Computes the Gini coefficient which measures the inequality among values.
 sub _compute_gini_coefficient {
     my ($self) = @_;
-    # FIXME: need to remove the hard-coded member_type
 
     # The following code was initially based on a script implemented by Paul Kersey.
     # But the following implementation is more efficient:  http://shlegeris.com/2016/12/29/gini
     # ------------------------------------------------------------------------------
-    my $get_all_seqs_sql = "SELECT b.root_id, count(seq_member_id) AS cni
+    my $sql = "SELECT b.root_id, count(seq_member_id) AS cni
                              FROM gene_tree_root a, gene_tree_node b
                              WHERE a.root_id = b.root_id
                              AND tree_type = 'tree'
                              AND clusterset_id = 'default'
-                             AND member_type = 'protein'
+                             AND member_type = " . $self->param( 'member_type' ) . "
                              AND seq_member_id is NOT NULL
                              GROUP BY root_id
                              ORDER BY cni";
@@ -301,14 +294,13 @@ sub _compute_gini_coefficient {
     my $subsum                      = 0;
     my $cluster_count               = 0;
 
-    my $sth = $self->compara_dba->dbc->prepare( $get_all_seqs_sql, { 'mysql_use_result' => 1 } );
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
         $sum_of_absolute_differences += $cluster_count*$row[1] - $subsum;
         $subsum += $row[1];
         $cluster_count++;
     }
-
     $sth->finish();
 
     my $gini_coefficient = $sum_of_absolute_differences/$subsum/$cluster_count;
@@ -322,8 +314,7 @@ sub _get_mean_cluster_size_per_protein  {
     my ($self) = @_;
 
     #Compute the mean cluster size per protein
-    # FIXME: need to remove the hard-coded member_type
-    my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = 'protein' AND tree_type = 'tree'";
+    my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = " . $self->param( 'member_type' ) . " AND tree_type = 'tree'";
 
     my $mean_cluster_size_per_protein = $self->compara_dba->dbc->sql_helper->execute_single_result(-SQL => $sql);
 
