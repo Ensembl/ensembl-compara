@@ -139,9 +139,6 @@ form.homepage-search-form div.ff-notes p.search-example { margin: 0 0 16px; }
 
 form.homepage-search-form fieldset { display: inline; }
 
-form.homepage-search-form .ftext   { width: 180px; }
-form.homepage-search-form .fselect { width: 182px; }
-
 form.homepage-search-form span.inp-group { white-space: nowrap; }
 
 form.search-form          input.ftext          
