@@ -953,7 +953,7 @@ sub snpedia {
                   $show ? 'open' : 'closed',        
                   $show ? 'Hide' : 'Show',
                   $show ? '' : 'display:none',
-                  join('', map "<p>$_</p>", @{$snpedia_wiki_results->{desc}}),
+                  join('', map "<p>$_</p>", grep {$_ =~ /\w+/} @{$snpedia_wiki_results->{desc}}),
                   $snpedia_search_link
                 );
       }
