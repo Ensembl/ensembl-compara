@@ -214,9 +214,11 @@ sub _run_HMM_search {
         #Create the final hash
         foreach my $seq_id ( keys %hmm_annot ) {
             foreach my $hmm_id ( keys %{ $hmm_annot{$seq_id} } ) {
-                $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'eval'}  = $hmm_annot{$seq_id}{$hmm_id}{'eval'};
-                $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'score'} = $hmm_annot{$seq_id}{$hmm_id}{'score'};
-                $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'bias'}  = $hmm_annot{$seq_id}{$hmm_id}{'bias'};
+                if ( exists$stable_root_id_map{$hmm_id}) {
+                    $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'eval'} = $hmm_annot{$seq_id}{$hmm_id}{'eval'};
+                    $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'score'} = $hmm_annot{$seq_id}{$hmm_id}{'score'};
+                    $self->param('all_hmm_annots')->{$seq_id}->{ $stable_root_id_map{$hmm_id} }->{'bias'}  = $hmm_annot{$seq_id}{$hmm_id}{'bias'};
+                }
             }
         }
 
