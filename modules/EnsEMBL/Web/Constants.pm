@@ -48,19 +48,16 @@ sub SEARCH_CONFIG {
                 'form_classes'  => [qw(homepage-search-form no-sel)],
                 'show_species'  => 1,
                 'search_prompt' => ' ', ## leave blank for now
-                'input_size'    => '50', 
               },
     'help' => {
                 'form_classes'  => [qw(no-sel no-ac)],
                 'sample_data'   => ['biotype', 'API tutorial', 'citing Ensembl'],
                 'search_prompt' => 'Search help and documentation&hellip;',
-                'input_size'    => '50', 
                 'is_encoded'    => 1,
               },
     'species' => {
-                'input_size' => '50', 
-                'is_encoded'    => 1,
-                'inline'        => 1,
+                'is_encoded'      => 1,
+                'inline'          => 1,
               },
   };
 }

@@ -123,7 +123,7 @@ sub render {
                   'name'        => 'q', 
                   'id'          => 'q',
                   'value'       => $search_prompt, 
-                  'size'        => $config->{'input_size'}, 
+                  'size'        => 50, 
                   'class'       => 'query input inactive',
                   'is_encoded'  => $config->{'is_encoded'} || 0,
                   'notes'       => $examples,
