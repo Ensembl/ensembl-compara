@@ -693,7 +693,7 @@ CREATE TABLE dnafrag_region (
 @colour #FF8500
 
 @example    The following query refers to the LastZ alignment between medaka and zebrafish:
-    @sql    SELECT genomic_align_block.* FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE method_link_id = 16 AND species_set_header.name = "O.lat-D.rer" ORDER BY genomic_align_block_id LIMIT 4;
+    @sql    SELECT genomic_align_block.* FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE method_link_id = 16 AND species_set_header.name = "D.rer-O.lat" ORDER BY genomic_align_block_id LIMIT 4;
 
 @column genomic_align_block_id       Internal unique ID
 @column method_link_species_set_id   External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -800,10 +800,10 @@ If the original sequence is <code>AACGCTT</code>, the aligned sequence will be:<
     </table>
 
 @example    The following query corresponds to the 4x2 sequences included in the alignment described above (see @link genomic_align_block table description).
-    @sql    SELECT genomic_align.* FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) JOIN genomic_align USING (genomic_align_block_id) WHERE method_link_id = 16 AND species_set_header.name = "O.lat-D.rer" ORDER BY genomic_align_block_id LIMIT 8;
+    @sql    SELECT genomic_align.* FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) JOIN genomic_align USING (genomic_align_block_id) WHERE method_link_id = 16 AND species_set_header.name = "D.rer-O.lat" ORDER BY genomic_align_block_id LIMIT 8;
 
 @example    Here is a better way to get this by joining the @link dnafrag and @link genome_db tables:
-    @sql    SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) JOIN genomic_align USING (genomic_align_block_id) JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE method_link_id = 16 AND species_set_header.name = "O.lat-D.rer" ORDER BY genomic_align_block_id LIMIT 8;
+    @sql    SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align_block JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) JOIN genomic_align USING (genomic_align_block_id) JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE method_link_id = 16 AND species_set_header.name = "D.rer-O.lat" ORDER BY genomic_align_block_id LIMIT 8;
 
 @colour #FF8500
 
@@ -1160,7 +1160,7 @@ CREATE TABLE exon_boundaries (
 @colour   #FFCC66
 
 @example   The following query shows the projections of the mouse gene Pdk3 to all the other species
-@sql       SELECT ss.stable_id, gs.name, source_stable_id FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection_stable_id ON seq_member_id = target_seq_member_id WHERE source_stable_id = "ENSMUSG00000035232"
+@sql       SELECT ss.stable_id, gs.name, source_stable_id FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection_stable_id ON seq_member_id = target_seq_member_id WHERE source_stable_id = "ENSMUST00000045748"
 
 @column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_stable_id
 @column source_stable_id            The stable ID of the source of the projection
@@ -1187,8 +1187,8 @@ CREATE TABLE seq_member_projection_stable_id (
        populate @link seq_member_projection_stable_id and then copy the data whilst transforming the stable_id into a seq_member_id
 @colour   #FFCC66
 
-@example   The following query shows the projections of the mouse gene Pdk3 to all the other species
-@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id=target_seq_member_id WHERE ss.stable_id = "ENSMUSP00000036604";
+@example   The following query shows the projections of the gene AGO2 with the Anole lizard and the zebrafinch
+@sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name, identity FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id=target_seq_member_id WHERE ss.stable_id IN ("ENSACAP00000000183", "ENSTGUP00000014905");
 
 @column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_seq_member_id
 @column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
