@@ -25,7 +25,7 @@
 * `DnaFrag::isMT()`
 * `DnaFrag::dna_type()`
 
-## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 92
+## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 94
 
 * `Taggable::get_value_for_XXX()`
 * `Taggable::get_all_values_for_XXX()`
