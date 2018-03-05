@@ -37,7 +37,7 @@ import datetime
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('.'))
 
 # -- General configuration ------------------------------------------------
 
@@ -51,6 +51,12 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.pngmath',
+    'sphinx.ext.graphviz',
+    'xhive.code_doc',
+    'xhive.analysis_diagram',
+    'xhive.misc',
+    'xhive.pipeline',
+    'xhive.sql_schema',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -225,7 +231,13 @@ latex_elements = {
 #'pointsize': '10pt',
 
 # Additional stuff for the LaTeX preamble.
-#'preamble': '',
+'preamble': r'''
+\usepackage{pdflscape}
+\usepackage{charter}
+\usepackage[defaultsans]{lato}
+\usepackage{inconsolata}
+\usepackage{verbatim}
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

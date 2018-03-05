@@ -33,6 +33,12 @@ User documentation
 
    api/README
 
+.. toctree::
+   :caption: Database schema
+   :maxdepth: 1
+
+   schema
+
 .. _prod-docs:
 
 Data-production documentation
