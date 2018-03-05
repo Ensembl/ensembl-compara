@@ -62,7 +62,7 @@ extensions = [
 
 if not os.path.islink('xhive'):
     os.environ["EHIVE_ROOT_DIR"] = ehive_target_dir = os.path.join(os.environ["PWD"], os.path.pardir, "ehive")
-    shutil.rmtree(ehive_target_dir)
+    shutil.rmtree(ehive_target_dir, True)
     subprocess.check_call(['git', 'clone', '--branch', 'master', '--depth', '1', 'https://github.com/Ensembl/ensembl-hive.git', ehive_target_dir])
     os.symlink(ehive_target_dir + "/docs/xhive", "xhive")
 
