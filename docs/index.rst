@@ -20,7 +20,6 @@ The main documentation is organized into a couple sections:
 
 * :ref:`user-docs`
 * :ref:`prod-docs`
-* :ref:`dev-docs`
 
 .. _user-docs:
 
@@ -32,6 +31,12 @@ User documentation
    :maxdepth: 1
 
    api/README
+
+.. toctree::
+   :caption: Database schema
+   :maxdepth: 1
+
+   schema
 
 .. _prod-docs:
 
@@ -67,12 +72,4 @@ Data-production documentation
    production/READMEs/stable_id_mapping.rst
    production/READMEs/test_db.md
    production/READMEs/import_ucsc_chain_net.rst
-
-
-.. _dev-docs:
-
-Developer documentation
-=======================
-
-TODO
 

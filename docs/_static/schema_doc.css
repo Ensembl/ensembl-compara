@@ -1,0 +1,24 @@
+
+/*
+ * CSS for the schema-documentation page
+ */
+
+/* Prefixed with .rst-content so that it only applies to the main page, not
+ * the left-hand-side menu
+ * In both cases, we expect this HTML structure: <div><span></span>...</div>
+ * where the <div> has one of the below classes. <div> will probably redefine
+ * its border colour, and <span> its background colour
+ */
+.rst-content .sql_schema_table_square_bullet                   { border-bottom: 1px solid; border-top: 2px solid; padding-top: 5px; padding-bottom: 8px; }
+.rst-content .sql_schema_table_square_bullet span:first-child  { padding-top: 2px; padding-bottom: 2px; padding-left: 10px; padding-right: 10px; margin-left: 5px; margin-right: 10px; box-shadow: 1px 1px 2px #888; vertical-align: middle; }
+.rst-content .sql_schema_table_round_bullet  span:first-child  { padding: 5px; border-radius: 5px; margin-right: 5px; box-shadow: 1px 1px 2px #888; vertical-align: middle; }
+
+/* For the overview table that lists all the categories and tables */
+.sql-schema-table th { padding: 0px !important; }
+
+/* Background colour to make the headings stand out.
+ * Not too wide <div> so that the permalinks icon are shown on the right.
+ */
+h2 .sql_schema_table_square_bullet { background-color: #F4F4F4; min-width: 80%; display: inline-block; }
+h3 .sql_schema_table_round_bullet  { background-color: #F4F4F4; display: inline-block; }
+
