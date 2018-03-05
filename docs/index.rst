@@ -20,7 +20,6 @@ The main documentation is organized into a couple sections:
 
 * :ref:`user-docs`
 * :ref:`prod-docs`
-* :ref:`dev-docs`
 
 .. _user-docs:
 
@@ -73,12 +72,4 @@ Data-production documentation
    production/READMEs/stable_id_mapping.rst
    production/READMEs/test_db.md
    production/READMEs/import_ucsc_chain_net.rst
-
-
-.. _dev-docs:
-
-Developer documentation
-=======================
-
-TODO
 
