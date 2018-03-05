@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::QfoBlastProteinTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Sanger::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
 sub default_options {
