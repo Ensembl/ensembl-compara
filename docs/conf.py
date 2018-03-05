@@ -63,7 +63,7 @@ source_parsers = {
     '.md': CommonMarkParser,
 }
 
-year = datetime.datetime.now().year
+authors = [u'Ensembl']
 
 # The suffix of source filenames.
 source_suffix = ['.rst', '.md']
@@ -76,7 +76,11 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Ensembl Compara documentation'
-copyright = u'{0}, Ensembl'.format(year)
+project_lc = u'ensembl_compara_doc'
+
+copyright_owner = u'EMBL-European Bioinformatics Institute'
+copyright_dates = u'[2016-%d]' % datetime.datetime.now().year
+copyright = copyright_dates + ' ' + copyright_owner
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -159,7 +163,7 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = []
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -208,7 +212,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ensembl_compara_doc'
+htmlhelp_basename = project_lc
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -228,8 +232,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'ensembl_compara_doc.tex', u'Ensembl Compara documentation',
-   u'Ensembl-compara', 'manual'),
+  (master_doc, project_lc+'.tex', project,
+   authors[0], 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -258,8 +262,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'ensembl_compara_doc.tex', u'Ensembl Compara documentation',
-     [u'Ensembl-compara'], 1)
+    (master_doc, project_lc, project,
+     authors, 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -272,8 +276,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ensembl_compara_doc', u'Ensembl Compara documentation',
-   u'Ensembl-compara', 'ensembl_compara_doc', 'One line description of project.',
+  (master_doc, project_lc, project,
+   authors[0], project_lc, 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -293,13 +297,13 @@ texinfo_documents = [
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'ensembl_compara_doc'
-epub_author = u'Ensembl-compara'
-epub_publisher = u'Ensembl-compara'
-epub_copyright = u'{0}, Ensembl Compara'.format(year)
+epub_title = project
+epub_author = authors[0]
+epub_publisher = copyright_owner
+epub_copyright = copyright
 
 # The basename for the epub file. It defaults to the project name.
-#epub_basename = u'ensembl_compara_doc'
+epub_basename = project_lc
 
 # The HTML theme for the epub output. Since the default themes are not optimized
 # for small screen space, using the same theme for HTML and epub output is
