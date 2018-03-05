@@ -33,6 +33,7 @@ import os
 import sphinx_rtd_theme
 import subprocess
 import datetime
+import shutil
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -58,6 +59,12 @@ extensions = [
     'xhive.pipeline',
     'xhive.sql_schema',
 ]
+
+if not os.path.islink('xhive'):
+    os.environ["EHIVE_ROOT_DIR"] = ehive_target_dir = os.path.join(os.environ["PWD"], os.path.pardir, "ehive")
+    shutil.rmtree(ehive_target_dir)
+    subprocess.check_call(['git', 'clone', '--branch', 'master', '--depth', '1', 'https://github.com/Ensembl/ensembl-hive.git', ehive_target_dir])
+    os.symlink(ehive_target_dir + "/docs/xhive", "xhive")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
