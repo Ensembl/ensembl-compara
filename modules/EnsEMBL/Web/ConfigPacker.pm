@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ use warnings;
 no warnings qw(uninitialized);
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
-
-use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
@@ -1073,7 +1071,8 @@ sub _build_compara_mlss {
   my $sth = $dbh->prepare(qq(
     select mlss.method_link_species_set_id,
            ss.species_set_id,
-           ml.method_link_id
+           ml.method_link_id,
+           mlss.url
       from method_link_species_set as mlss
       join species_set as ss
         on mlss.species_set_id = ss.species_set_id
@@ -1082,8 +1081,8 @@ sub _build_compara_mlss {
   ));
   $sth->execute;
   my %mlss;
-  while(my ($mlss_id,$ss_id,$ml_id) = $sth->fetchrow_array) {
-    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id };
+  while (my ($mlss_id, $ss_id, $ml_id, $url) = $sth->fetchrow_array) {
+    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id, URL => $url };
   }
   $dest->{'MLSS_IDS'} = \%mlss;
 }
@@ -1520,6 +1519,7 @@ sub _munge_meta {
     species.url                   SPECIES_URL
     species.stable_id_prefix      SPECIES_PREFIX
     species.display_name          SPECIES_COMMON_NAME
+    species.common_name           SPECIES_DB_COMMON_NAME
     species.production_name       SPECIES_PRODUCTION_NAME
     species.scientific_name       SPECIES_SCIENTIFIC_NAME
     assembly.accession            ASSEMBLY_ACCESSION
@@ -1554,6 +1554,8 @@ sub _munge_meta {
   } else {
     $self->tree->{'DISPLAY_NAME'} = $meta_info->{1}{'species.display_name'}[0];
   }
+
+  # my $div = from_json('{"key":"All Divisions","display_name":"All Divisions","is_internal_node":"true","child_nodes":[{"key":"primates","taxa": ["Primates"],"display_name":"Primates","is_internal_node":"true"},{"key":"rodents","taxa": ["Rodentia", "Lagomorpha"],"display_name":"Rodents & Lagomorphs","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"Mice","taxa": ["Mus"],"display_name":"Mice","extras_key":"mouse","is_internal_node":"true"},{"key":"lagomorpha","taxa": ["Lagomorpha"],"display_name":"Lagomorphs","is_internal_node":"true"},{"key":"other_rodents","taxa": ["Rodentia"],"display_name":"Other Rodents","is_internal_node":"true"}]},{"key":"other_mammals","display_name":"Other Mammals","taxa": ["Carnivora", "Cetartiodactyla", "Xenarthra", "Metatheria", "Monotremata"],"is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"carnivores","taxa": ["Carnivora"],"display_name":"Carnivores","is_internal_node":"true"},{"key":"ungulates","taxa": ["Cetartiodactyla"],"display_name":"Ungulates","is_internal_node":"true"},{"key":"other_placental","taxa": ["Xenarthra", "Afrotheria"],"display_name":"Other Placental","is_internal_node":"true"},{"key":"marsupials_monotremes","taxa": ["Metatheria", "Monotremata"],"display_name":"Marsupials and Monotremes","is_internal_node":"true"}]},{"key":"non_vertebrates","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia", "Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha", "Xenopus"],"display_name":"Other Vertebrates","is_internal_node":"true","is_submenu":"true","child_nodes":[{"key":"bird_and_reptiles","taxa": ["Aves", "Lepidosauria", "Testudines", "Crocodylia"],"display_name":"Birds and Reptiles","is_internal_node":"true"},{"key":"fish","taxa": ["Chondrichthyes", "Dipnoi", "Actinopterygii", "Hyperotreti", "Hyperoartia", "Coelacanthimorpha"],"display_name":"Fish","is_internal_node":"true"},{"key":"others","display_name":"Others","is_internal_node":"true"}]},{"key":"other_species","display_name":"Other Species","is_internal_node":"true"}]}');
 
   while (my ($species_id, $meta_hash) = each (%$meta_info)) {
     next unless $species_id && $meta_hash && ref($meta_hash) eq 'HASH';

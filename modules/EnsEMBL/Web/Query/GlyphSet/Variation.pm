@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ sub href {
 
   # Fix URL encoding issue with the "<>" characters
   my $var = $f->variation_name;
-  $var =~ s/(<|>)/_/g;
+  $var =~ s/(<|>)/_/g if $var;
 
   return {
     species  => $args->{'species'},
@@ -185,12 +185,16 @@ sub fetch_features {
   my $sets = $args->{'config'}{'sets'};
   my $set_name = $args->{'config'}{'set_name'};
   my $var_db = $args->{'var_db'} || 'variation';
-  my $slice = $args->{'slice'}; 
+  my $slice = $args->{'slice'};
+  my $slice_length = $args->{'slice_length'} || 0;
  
   my $vdb = $adaptors->variation_db_adaptor($var_db,$species);
   return [] unless $vdb;
   my $orig_failed_flag = $vdb->include_failed_variations;
   $vdb->include_failed_variations(0);
+
+  # dont calculate consequences over a certain slice length
+  my $no_cons = $slice_length > 1e5 ? 1 : 0;
  
   my $snps;
   # different retrieval method for somatic mutations
@@ -224,8 +228,15 @@ sub fetch_features {
         
       # Reset the flag for displaying of failed variations to its original state
       $vdb->include_failed_variations($orig_failed_flag);
+    } elsif ($id =~ /^variation_vcf/) {
+      my $vca = $vdb->get_VCFCollectionAdaptor;
+      my $vcf_id = $id;
+      $vcf_id =~ s/^variation_vcf_//;
+      if(my $vc = $vca->fetch_by_id($vcf_id)) {
+        @vari_features = @{$vc->get_all_VariationFeatures_by_Slice($slice, $no_cons)};
+      }
     } else {
-      my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_SO_terms($slice) || []}; 
+      my @temp_variations = @{$vdb->get_VariationFeatureAdaptor->fetch_all_by_Slice_constraint($slice, undef, $no_cons) || []};
       
       ## Add a filtering step here
       # Make "most functional" snps appear first; filter by source/set

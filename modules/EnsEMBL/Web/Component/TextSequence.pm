@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -243,8 +243,10 @@ sub set_variations {
         $snps = $vf_adaptor->fetch_all_with_maf_by_Slice($slice_data->{'slice'},abs $config->{'hide_rare_snps'},$config->{'hide_rare_snps'}>0);
       }
       else {
-        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},
-                         @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
+        my @snps_list = (
+          @{$vf_adaptor->fetch_all_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)},
+          @{$vf_adaptor->fetch_all_somatic_by_Slice_SO_terms($slice_data->{'slice'}, $config->{'consequence_filter'}, 1)}
+        );
         $snps = \@snps_list;
       }
     };

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1541,16 +1541,33 @@ sub get_genetic_variations {
 sub get_transcript_variations {
   my ($self,$vf_cache) = @_;
 
+  my $tvs = $self->__data->{'tv_cache'} ||= $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ], undef, 1);
+
   # Most VFs will be in slice for transcript, so cache them.
   if($vf_cache and !$self->__data->{'vf_cache'}) {
-    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
-    $self->__data->{'vf_cache'} = {};
-    my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice);
-    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
-    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice);
-    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+
+    # if fetched from VCF, VFs will already be attached to TVs
+    my $need_db_fetch = 0;
+    foreach my $tv(@$tvs) {
+      if(my $vf = $tv->{base_variation_feature} || $tv->{variation_feature}) {
+        $self->__data->{'vf_cache'}{$vf->dbID} = $vf;
+      }
+      else {
+        $need_db_fetch = 1;
+      }
+    }
+
+    if($need_db_fetch) {
+      my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
+      $self->__data->{'vf_cache'} = {};
+      my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice, undef, 1);
+      $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+      $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice, undef, 1);
+      $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    }
   }
-	return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
+
+	return $tvs;
 }
 
 sub transcript_variation_to_variation_feature {

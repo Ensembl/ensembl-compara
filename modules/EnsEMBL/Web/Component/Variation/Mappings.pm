@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,15 +54,15 @@ sub content {
   my $html        = qq{<a id="}.$self->{'id'}.qq{_top"></a>};
 
   # get variation feature object
-  my ($vf_obj)  = grep {$_->dbID eq $vf} @{$self->object->get_variation_features};
+  my $vf_obj = $object->get_selected_variation_feature;
+  return [] unless $vf_obj;
+
   my ($var_start,$var_end);
-  if ($vf_obj) {
-    $var_start = $vf_obj->seq_region_start <= $vf_obj->seq_region_end ? $vf_obj->seq_region_start : $vf_obj->seq_region_end;
-    $var_end   = $vf_obj->seq_region_start <= $vf_obj->seq_region_end ? $vf_obj->seq_region_end : $vf_obj->seq_region_start;
-  }
+  $var_start = $vf_obj->seq_region_start <= $vf_obj->seq_region_end ? $vf_obj->seq_region_start : $vf_obj->seq_region_end;
+  $var_end   = $vf_obj->seq_region_start <= $vf_obj->seq_region_end ? $vf_obj->seq_region_end : $vf_obj->seq_region_start;
 
   if ($object->Obj->failed_description =~ /match.+reference\ allele/) {
-    my ($feature_slice) = map $_->dbID == $vf ? $_->feature_Slice : (), @{$object->Obj->get_all_VariationFeatures};
+    my $feature_slice = $object->slice;
       
     $html .= $self->_warning(
       'Warning',
@@ -138,162 +138,160 @@ sub content {
   );
   my $motif_table = $self->new_table(\@motif_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
 
-  
-  foreach my $varif_id (grep $_ eq $hub->param('vf'), keys %mappings) {
+  my $selected_mapping = $object->selected_variation_feature_mapping;
 
-    # get variation feature object
-    my ($vf_obj) = grep {$_->dbID eq $varif_id} @{$self->object->get_variation_features};
+  foreach my $transcript_data (@{$selected_mapping->{'transcript_vari'} || []}) {
 
-    foreach my $transcript_data (@{$mappings{$varif_id}{'transcript_vari'}}) {
-      # Transcript
-      my $trans_name = $transcript_data->{'transcriptname'};
-      my $trans      = $trans_adaptor->fetch_by_stable_id($trans_name);
-      my $trans_type = '<b>biotype: </b>' . $trans->biotype;
-      my $tva        = $transcript_data->{'tva'};
-      my @tva_cons   = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$tva->get_all_OverlapConsequences || []}}});
-      my $tva_colour = (scalar @tva_cons > 0) ? $colourmap->hex_by_name($var_styles->{lc $tva_cons[0]->SO_term}->{'default'}) : undef; 
-      # Gene
-      my $gene       = $trans->get_Gene();
-      my $gene_name  = $gene ? $gene->stable_id : '';
-      my @entries    = grep $_->database eq 'HGNC', @{$gene->get_all_DBEntries};
-      my $gene_hgnc  = scalar @entries ? '<b>HGNC: </b>' . $entries[0]->display_id : '';
+    # Transcript
+    my $trans_name = $transcript_data->{'transcriptname'};
+    my $trans      = $trans_adaptor->fetch_by_stable_id($trans_name);
+    my $trans_type = '<b>biotype: </b>' . $trans->biotype;
+    my $tva        = $transcript_data->{'tva'};
+    my @tva_cons   = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$tva->get_all_OverlapConsequences || []}}});
+    my $tva_colour = (scalar @tva_cons > 0) ? $colourmap->hex_by_name($var_styles->{lc $tva_cons[0]->SO_term}->{'default'}) : undef; 
+    # Gene
+    my $gene       = $trans->get_Gene();
+    my $gene_name  = $gene ? $gene->stable_id : '';
+    my @entries    = grep $_->database eq 'HGNC', @{$gene->get_all_DBEntries};
+    my $gene_hgnc  = scalar @entries ? '<b>HGNC: </b>' . $entries[0]->display_id : '';
 
-      my ($gene_url, $transcript_url);
-      
-      # Create links to non-LRG genes and transcripts
-      if ($trans_name !~ m/^LRG/) {
-        $gene_url = $hub->url({
-          type   => 'Gene',
-          action => $self->gene_action,
-          db     => 'core',
-          r      => undef,
-          g      => $gene_name,
-          v      => $name,
-          source => $source
-        });
-      
-        $transcript_url = $hub->url({
-          type   => 'Transcript',
-          action => 'Variation_Transcript/Table',
-          db     => 'core',
-          r      => undef,
-          t      => $trans_name,
-          v      => $name,
-          source => $source
-        });
-      } else {
-        $gene_url = $hub->url({
-          type     => 'LRG',
-          action   => 'Variation_LRG',
-          function => 'Table',
-          db       => 'core',
-          r        => undef,
-          lrg      => $gene_name,
-          v        => $name,
-          source   => $source,
-          __clear  => 1
-        });
-      
-        $transcript_url = $hub->url({
-          type     => 'LRG',
-          action   => 'Variation_LRG',
-          function => 'Table',
-          db       => 'core',
-          r        => undef,
-          lrg      => $gene_name,
-          lrgt     => $trans_name,
-          v        => $name,
-          source   => $source,
-          __clear  => 1
-        });
-      }
-      
-      # HGVS
-      my $hgvs;
-      
-      unless ($object->is_somatic_with_different_ref_base) {
-        $hgvs  = $tva->hgvs_transcript          if defined $tva->hgvs_transcript;
-        $hgvs .= '<br />' .  $tva->hgvs_protein if defined $tva->hgvs_protein;
-      }
-
-      # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
-      
-      my $codon = $transcript_data->{'codon'} || '-';
-      
-      if ($codon ne '-') {
-        $codon =~ s/([ACGT])/<b>$1<\/b>/g;
-        $codon =~ tr/acgt/ACGT/;
-      }
-      
-      my $strand = $trans->strand < 1 ? '-' : '+';
-      
-      # consequence type
-      my $type = $self->render_consequence_type($tva);
-      
-      my $a = $transcript_data->{'vf_allele'};
-      
-      # sift
-      my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
-      my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-      
-      # Allele
-      my $allele = (length($a) > $max_length) ? substr($a,0,$max_length).'...' : $a;
-      
-      my $html_full_tr_allele;
-      
-      unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
-        my $tr_allele = sprintf "(%s)",$transcript_data->{'tr_allele'};
-        $allele .= " <small>".$self->trim_large_string($tr_allele,'tr_'.$transcript_data->{transcriptname},sub {
-          # trim to 20 but include the brackets
-          local $_ = shift;
-          return $_ if(length $_ < 20);
-          s/^.//; s/.$//;
-          return "(".substr($_,0,20)."...)";
-        })."</small>";
-      }
-
-      # Variant position
-      my $trans_length = $trans->length;
-
-      my $cds_length = 0;
-      foreach my $cds (@{$trans->get_all_CDS}){
-        $cds_length += $cds->length;
-      }
-
-      my $pr_length = 0;
-      my $translation = $trans->translation;
-      $pr_length = $translation->length if ($translation);
-      
-      my $cdna_overlap = $self->_overlap_glyph(1, $trans_length, $transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans, 'Transcript', 1, $tva_colour);
-      my $cds_overlap  = $self->_overlap_glyph(1, $cds_length, $transcript_data->{'cds_start'}, $transcript_data->{'cds_end'}, $trans, 'CDS', 1, $tva_colour);
-      my $pr_overlap   = $self->_overlap_glyph(1, $pr_length, $transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $trans, 'Protein', 1, $tva_colour);
-
-      my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
-      my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
-      my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
-      my $trans_display      = $trans->version ? "$trans_name.".$trans->version : $trans_name;
-
-      my $row = {
-        allele    => $allele,
-        gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
-        trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_display</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
-        type      => $type,
-        trans_pos => $trans_length_label . $cdna_overlap,
-        cds_pos   => $cds_length_label . $cds_overlap,
-        prot_pos  => $pr_length_label . $pr_overlap,
-        aa        => $transcript_data->{'pepallele'} || '-',
-        codon     => $codon,
-        sift      => $sift,
-        polyphen  => $poly,
-        detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $varif_id, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${varif_id}_${a}"),
-      };
-      
-      $table->add_row($row);
-      $flag = 1;
+    my ($gene_url, $transcript_url);
+    
+    # Create links to non-LRG genes and transcripts
+    if ($trans_name !~ m/^LRG/) {
+      $gene_url = $hub->url({
+        type   => 'Gene',
+        action => $self->gene_action,
+        db     => 'core',
+        r      => undef,
+        g      => $gene_name,
+        v      => $name,
+        source => $source
+      });
+    
+      $transcript_url = $hub->url({
+        type   => 'Transcript',
+        action => 'Variation_Transcript/Table',
+        db     => 'core',
+        r      => undef,
+        t      => $trans_name,
+        v      => $name,
+        source => $source
+      });
+    } else {
+      $gene_url = $hub->url({
+        type     => 'LRG',
+        action   => 'Variation_LRG',
+        function => 'Table',
+        db       => 'core',
+        r        => undef,
+        lrg      => $gene_name,
+        v        => $name,
+        source   => $source,
+        __clear  => 1
+      });
+    
+      $transcript_url = $hub->url({
+        type     => 'LRG',
+        action   => 'Variation_LRG',
+        function => 'Table',
+        db       => 'core',
+        r        => undef,
+        lrg      => $gene_name,
+        lrgt     => $trans_name,
+        v        => $name,
+        source   => $source,
+        __clear  => 1
+      });
     }
     
-    next unless $hub->database('regulation');
-        
+    # HGVS
+    my $hgvs;
+    
+    unless ($object->is_somatic_with_different_ref_base) {
+      $hgvs  = $tva->hgvs_transcript          if defined $tva->hgvs_transcript;
+      $hgvs .= '<br />' .  $tva->hgvs_protein if defined $tva->hgvs_protein;
+    }
+
+    # Now need to add to data to a row, and process rows somehow so that a gene ID is only displayed once, regardless of the number of transcripts;
+    
+    my $codon = $transcript_data->{'codon'} || '-';
+    
+    if ($codon ne '-') {
+      $codon =~ s/([ACGT])/<b>$1<\/b>/g;
+      $codon =~ tr/acgt/ACGT/;
+    }
+    
+    my $strand = $trans->strand < 1 ? '-' : '+';
+    
+    # consequence type
+    my $type = $self->render_consequence_type($tva);
+    
+    my $a = $transcript_data->{'vf_allele'};
+    
+    # sift
+    my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
+    my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+    
+    # Allele
+    my $allele = (length($a) > $max_length) ? substr($a,0,$max_length).'...' : $a;
+    
+    my $html_full_tr_allele;
+    
+    unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
+      my $tr_allele = sprintf "(%s)",$transcript_data->{'tr_allele'};
+      $allele .= " <small>".$self->trim_large_string($tr_allele,'tr_'.$transcript_data->{transcriptname},sub {
+        # trim to 20 but include the brackets
+        local $_ = shift;
+        return $_ if(length $_ < 20);
+        s/^.//; s/.$//;
+        return "(".substr($_,0,20)."...)";
+      })."</small>";
+    }
+
+    # Variant position
+    my $trans_length = $trans->length;
+
+    my $cds_length = 0;
+    foreach my $cds (@{$trans->get_all_CDS}){
+      $cds_length += $cds->length;
+    }
+
+    my $pr_length = 0;
+    my $translation = $trans->translation;
+    $pr_length = $translation->length if ($translation);
+    
+    my $cdna_overlap = $self->_overlap_glyph(1, $trans_length, $transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans, 'Transcript', 1, $tva_colour);
+    my $cds_overlap  = $self->_overlap_glyph(1, $cds_length, $transcript_data->{'cds_start'}, $transcript_data->{'cds_end'}, $trans, 'CDS', 1, $tva_colour);
+    my $pr_overlap   = $self->_overlap_glyph(1, $pr_length, $transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $trans, 'Protein', 1, $tva_colour);
+
+    my $trans_length_label = $self->_overlap_glyph_label($transcript_data->{'cdna_start'}, $transcript_data->{'cdna_end'}, $trans_length);
+    my $cds_length_label   = $self->_overlap_glyph_label($transcript_data->{'cds_start'},  $transcript_data->{'cds_end'}, $cds_length);
+    my $pr_length_label    = $self->_overlap_glyph_label($transcript_data->{'translation_start'}, $transcript_data->{'translation_end'}, $pr_length);
+    my $trans_display      = $trans->version ? "$trans_name.".$trans->version : $trans_name;
+
+    my $row = {
+      allele    => $allele,
+      gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
+      trans     => qq{<a href="$transcript_url" class="mobile-nolink">$trans_display</a> ($strand)<br/><span class="small" style="white-space:nowrap;">$trans_type</span>},
+      type      => $type,
+      trans_pos => $trans_length_label . $cdna_overlap,
+      cds_pos   => $cds_length_label . $cds_overlap,
+      prot_pos  => $pr_length_label . $pr_overlap,
+      aa        => $transcript_data->{'pepallele'} || '-',
+      codon     => $codon,
+      sift      => $sift,
+      polyphen  => $poly,
+      detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $vf, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${vf}_${a}"),
+    };
+    
+    $table->add_row($row);
+    $flag = 1;
+  }
+  
+  
+  if($hub->database('regulation')) {
+      
     ## Reg feats ##
     # reset allele string if recalculating for HGMD
     $vf_obj->allele_string('A/C/G/T') if $hub->param('recalculate');
@@ -322,7 +320,7 @@ sub content {
       my $var_pos_start = $var_start - $rf->seq_region_start + 1;
       my $var_pos_end   = $var_end - $rf->seq_region_start + 1;
       my $reg_length = $rf->seq_region_end - $rf->seq_region_start + 1;
- 
+
       my $reg_length_label = $self->_overlap_glyph_label($var_pos_start, $var_pos_end, $reg_length);
 
       for my $rfva (@{ $rfv->get_all_alternate_RegulatoryFeatureVariationAlleles }) {
@@ -607,12 +605,10 @@ sub detail_panel {
     my $display_allele = $self->trim_large_string($allele,'allele_'.$t_data->{transcriptname},50);
     $t_allele = $self->trim_large_string($t_allele,'t_allele_'.$t_data->{transcriptname},50);
         
-    # HGVS
-    my $hgvs_c = $self->trim_large_string($tva->hgvs_transcript,'hgvs_c_'.$t_data->{transcriptname},60);
-    my $hgvs_p = $self->trim_large_string($tva->hgvs_protein,'hgvs_p_'.$t_data->{transcriptname},60);
-
     
-    my %ens_term = map { $_->display_term => 1 } @$ocs;
+    ## HGVS ##
+    my $hgvs_c = $tva->hgvs_transcript;
+    my $hgvs_p = $tva->hgvs_protein;
     
     my %data = (
       allele     => $display_allele,
@@ -621,13 +617,11 @@ sub detail_panel {
       gene       => qq{<a href="$gene_url">$gene_id</a>},
       transcript => qq{<a href="$tr_url">$tr_id</a>},
       protein    => $prot_id ? qq{<a href="$prot_url">$prot_id</a>} : '-',
-      ens_term   => join(', ', keys(%ens_term)),
       so_term    => join(', ', map { sprintf '%s - <i>%s</i> (%s)', $_->label, $_->description, $hub->get_ExtURL_link($_->SO_accession, 'SEQUENCE_ONTOLOGY', $_->SO_accession) } @$ocs),
       hgvs       => join('<br />', grep $_, $hgvs_c, $hgvs_p) || '-',
     );
     
     if($tv->affects_cds) {
-      #$data{context} = $self->render_context($tv, $tva);
       
       my $context_url = $hub->url({
         type   => 'Transcript',
@@ -641,7 +635,8 @@ sub detail_panel {
       
       $data{'context'} = qq{<a href="$context_url">Show in transcript</a>};
       
-      # work out which exon it is in
+
+      ## Exon - work out which exon it is in ##
       my @exons       = @{$tr->get_all_Exons};      
       my $exon_number = 0;
       my $exon;
@@ -670,18 +665,29 @@ sub detail_panel {
       $data{'exon_coord'} =
         ($tv->cdna_start - $exon->cdna_start($tr) + 1) .
         ($tv->cdna_end == $tv->cdna_start ? '' : '-' . ($tv->cdna_end - $exon->cdna_start($tr) + 1));
-        
-      # protein domains
-      my @strings;
 
+
+      ## Protein domains ##
+      my %domains;
+
+      # Store protein domain info by source 
       for my $feat (@{$tv->get_overlapping_ProteinFeatures}) {
-          my $label = $feat->analysis->display_label.': '.$feat->hseqname;
-          push @strings, $label;
+        my $domain_source = $feat->analysis->display_label;
+        my $domain_id     = $feat->hseqname;
+
+        if ($domains{$domain_source}) {
+          push(@{$domains{$domain_source}}, $domain_id);
+        }
+        else {
+          $domains{$domain_source} = [$domain_id];
+        }
+      }
+      foreach my $domain_src (sort(keys(%domains))) {
+        $data{domains} .= "<b>$domain_src</b><div class=\"column-right\"><ul class=\"compact\"><li>".join('</li><li>', @{$domains{$domain_src}})."</li></ul></div>";
       }
 
-      $data{domains} = join '<br/>', @strings if @strings;
-      
-      # find vars in same AA
+
+      ## Find vars in same AA ##
       my @same_aa;
       
       foreach my $other_vf(@{$vf_adaptor->fetch_all_by_Slice($vf->feature_Slice->expand(3, 3))}) {
@@ -702,26 +708,23 @@ sub detail_panel {
       
       $data{same_aa} = (join ", ", @same_aa) || "-";
     }
-    
-    #$data{'context'} =
-    #  $self->context_image($tva).
-    #  $self->render_context($tv, $tva);
-    
+
+    my $var_strand = ($vf->seq_region_strand == 1) ? 'forward' : 'reverse';
+
     my @rows = (
-      { name       => 'Variation name'             },      
-      { gene       => 'Gene'                       },
-      { transcript => 'Transcript'                 },
-      { protein    => 'Protein'                    },
-      { allele     => 'Allele (variation)'         },
-      { t_allele   => 'Allele (transcript)'        },
-      { so_term    => 'Consequence (SO term)'      },
-      { ens_term   => 'Consequence (Old Ensembl term)' },
-      { hgvs       => 'HGVS names'                 },
-      { exon       => 'Exon'                       },
-      { exon_coord => 'Position in exon'           },
-      { domains    => 'Overlapping protein domains'},
-      { same_aa    => 'Variants in same codon'     },
-      { context    => 'Context'                    },
+      { name       => 'Variation name'                       },
+      { gene       => 'Gene'                                 },
+      { transcript => 'Transcript'                           },
+      { protein    => 'Protein'                              },
+      { allele     => "Allele (reference $var_strand strand)"},
+      { t_allele   => 'Allele (transcript strand)'           },
+      { so_term    => 'Consequence (SO term)'                },
+      { hgvs       => 'HGVS names'                           },
+      { exon       => 'Exon'                                 },
+      { exon_coord => 'Position in exon'                     },
+      { domains    => 'Overlapping protein domains'          },
+      { same_aa    => 'Variants in same codon'               },
+      { context    => 'Context'                              },
     );
     
     my $table = $self->new_table([{ key => 'name' }, { key => 'value'}], [], { header => 'no', class => 'cellwrap_inside' });

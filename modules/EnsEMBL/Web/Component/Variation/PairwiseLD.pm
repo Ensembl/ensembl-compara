@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,21 +106,11 @@ sub content_results {
     return qq{<div class="js_panel">$html</div>};
   }
 
-  my %mappings = %{$object->variation_feature_mapping}; # determine correct SNP location
-  my ($vf, $loc);
+  my ($vf, $loc) = (
+    $object->get_selected_variation_feature,
+    $object->selected_variation_feature_mapping
+  );
 
-  if (keys %mappings == 1) {
-    ($loc) = values %mappings; 
-  } else {
-    $loc = $mappings{$hub->param('vf')};
-  }
-  # get the VF that matches the selected location
-  foreach (@{$object->get_variation_features}) {
-    if ($_->seq_region_start == $loc->{'start'}) {
-      $vf = $_;
-      last;
-    }
-  }
   my $seq_region_name = $vf->seq_region_name;
   my @vfs2 = grep { $_->slice->is_reference } @{$second_variant->get_all_VariationFeatures};
   my @vfs = ($vf);

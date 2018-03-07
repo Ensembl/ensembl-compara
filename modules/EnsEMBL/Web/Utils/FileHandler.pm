@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ sub file_get_contents {
   if ($iterate_sub) {
     my $i = 0;
     while ($_ = $file_handle->getline) { # getline doesn't assign $_ automatically
-      my $line = $iterate_sub->($i++);
-      push @lines, $line if defined $line;
+      my @tmp_line = $iterate_sub->($i++);
+      foreach(@tmp_line) {push @lines, $_ if defined $_}
     }
   } else {
     @lines = $file_handle->getlines;

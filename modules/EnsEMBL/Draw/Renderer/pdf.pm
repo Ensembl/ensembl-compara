@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -112,20 +112,15 @@ sub render_Rect {
   if ($a - $x < 1) { $a += 1; }
   if ($b - $y < 1) { $b += 1; }
 
-  if(defined $gcolour) {
-    unless( $gcolour eq 'transparent' ) {
-      $self->fillcolor( $gcolour );
-      $self->strokecolor( $gcolour );
-      $self->rect($x,$y,$a-$x,$b-$y);
-      # $self->stroke();
-      $self->fill($glyph->{'alpha'});
-    }
-  } elsif(defined $gbordercolour) {
-    unless( $gbordercolour eq 'transparent' ) {
-      $self->strokecolor( $gbordercolour );
-      $self->rect($x,$y,$a-$x,$b-$y);
-      $self->stroke($glyph->{'alpha'});
-    }
+  if (defined $gcolour && $gcolour ne 'transparent' ) {
+    $self->fillcolor( $gcolour );
+    $self->rect($x,$y,$a-$x,$b-$y);
+    $self->fill($glyph->{'alpha'});
+  } 
+  if (defined $gbordercolour && $gbordercolour ne 'transparent' ) {
+    $self->strokecolor( $gbordercolour );
+    $self->rect($x,$y,$a-$x,$b-$y);
+    $self->stroke($glyph->{'alpha'});
   }
 
   if($glyph->{'pattern'}) {

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -318,7 +318,8 @@ sub add_variations {
 
   my $object = $self->object || $hub->core_object('transcript');
   my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
-  my $variation_features    = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($slice);
+  my $vf_slice = $slice->strand == -1 ? $slice->invert : $slice;
+  my $variation_features    = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($vf_slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($vf_slice);
   my @transcript_variations;
   my @transcript_variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
   if($config->{'hide_rare_snps'}) {
@@ -345,6 +346,7 @@ sub add_variations {
     }
 
     my $vf    = $transcript_variation->variation_feature;
+    $vf       = $vf->transfer($slice) if ($vf->slice + 0) ne ($slice + 0);
     my $name  = $vf->variation_name;
     my $start = $vf->start - 1;
     my $end   = $vf->end   - 1;

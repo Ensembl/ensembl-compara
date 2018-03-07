@@ -114,18 +114,34 @@ sub _get_transcript_variations {
 
   my $trans = $args->{'transcript'};
   my $ads = $self->source('Adaptors');
+  my $tva = $ads->transcript_variation_adaptor($args->{'species'});
+  my $tvs = $tva->fetch_all_by_Transcripts_with_constraint([ $trans ], undef, 1);
+
   # Most VFs will be in slice for transcript, so cache them.
   if($vf_cache and !$self->{'vf_cache'}) {
 
-    my $vfa = $ads->variation_feature_adaptor($args->{'species'}); 
-    $self->{'vf_cache'} = {};
-    my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
-    $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
-    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
-    $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    # if fetched from VCF, VFs will already be attached to TVs
+    my $need_db_fetch = 0;
+    foreach my $tv(@$tvs) {
+      if(my $vf = $tv->{base_variation_feature} || $tv->{variation_feature}) {
+        $self->{'vf_cache'}{$vf->dbID} = $vf;
+      }
+      else {
+        $need_db_fetch = 1;
+      }
+    }
+
+    if($need_db_fetch) {
+      my $vfa = $ads->variation_feature_adaptor($args->{'species'}); 
+      $self->{'vf_cache'} = {};
+      my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
+      $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+      $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
+      $self->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    }
   }
-  my $tva = $ads->transcript_variation_adaptor($args->{'species'});
-  return $tva->fetch_all_by_Transcripts_with_constraint([ $trans ]);
+
+  return $tvs;
 }
 
 sub _get_variation_data {

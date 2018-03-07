@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ sub get_data {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
-    my $features_list = $hub->get_query('GlyphSet::Variation')->go($self,{
+    my $features_list = $self->{_data} ||= $hub->get_query('GlyphSet::Variation')->go($self,{
       species => $self->{'config'}{'species'},
       slice => $self->{'container'},
       id => $self->{'my_config'}->id,
@@ -103,6 +103,7 @@ sub get_data {
       var_db => $self->my_config('db') || 'variation',
       config_type => $self->{'config'}{'type'},
       type => $self->type,
+      slice_length => $slice_length,
     });
     if (!scalar(@$features_list)) {
       my $track_name = $self->my_config('name'); 

@@ -51,12 +51,13 @@
 }
 
 div.taxon_selector_list h2 .ss-count {
-  font-size: 14px;
+  font-size: 10px;
   position: absolute;
-  padding: 7px 12px;
-  background: [[OK_DARK]];
+  padding: 2px 5px;
   margin: -4px 0px 0 0;
-  right: 10px;
+  margin: -8px 0px;
+  border-radius: 20%;
+  background: [[OK_DARK]];
   color: [[WHITE]];
 }
 
@@ -66,6 +67,7 @@ div.taxon_selector_list h2 .ss-count.warn {
 
 .species_select_container div.content .vscroll_container {
   flex-grow: 1;
+  overflow: auto;
 }
 
 div.taxon_selector_tree .finder { 
@@ -142,14 +144,19 @@ div.taxon_selector_list .selected-sp-img img{
 div.taxon_selector_list li span.remove {
   cursor: pointer;
   font-size: 18px;
-  padding: 12px 12px;
+  padding: 4px 8px;
   right: 0;
   color: [[MEDIUM_GREY]];
   font-weight: 100;
+  margin: 7px;
+  box-sizing: border-box;
 }
 div.taxon_selector_list li span.remove:hover {
-  background-color: [[SEVERE_MEDIUM]];
-  color: [[WHITE]];
+  color: [[MEDIUM_GREY]];
+  border: 1px solid [[MEDIUM_GREY]];
+  margin: 6px;
+  border-radius: 50%;
+
 }
 /*
 div.taxon_selector_hint         { margin: 0.25em 0.25em 0.5em 0.25em; border: 1px [[CONTRAST_BORDER]] solid; padding: 4px; background-color: [[CONTRAST_BG]]; overflow: hidden; }
@@ -261,13 +268,13 @@ div.taxon_selector_tree .ss_breadcrumbs li {
   list-style: none;
 }
 div.taxon_selector_tree .ss_breadcrumbs li.active a {
-  background: [[CONTRAST_DARK]]; 
+  background: [[MAIN_DARK]];
 }
 div.taxon_selector_tree .ss_breadcrumbs li.completed a {
   background: [[MAIN_DARK]]; 
 }
 div.taxon_selector_tree .ss_breadcrumbs li.active a:after {
-  border-left: 30px solid [[CONTRAST_DARK]];
+  border-left: 30px solid [[MAIN_DARK]];
 }
 div.taxon_selector_tree .ss_breadcrumbs li.completed a:after {
   border-left: 30px solid [[MAIN_DARK]];
@@ -280,7 +287,7 @@ div.taxon_selector_tree .ss_breadcrumbs li a {
   position: relative; 
   display: block;
   float: left;
-  text-transform: uppercase;
+  /*text-transform: uppercase;*/
   font-size: 12px;
 }
 div.taxon_selector_tree .ss_breadcrumbs li a:after { 
@@ -322,9 +329,6 @@ div.species_division_buttons {
   display: flex;
   flex-wrap: wrap;
 }
-div.species_division_buttons a {
-  margin-right: 8px;
-}
 div.species_division_buttons a:hover {
   color: [[WHITE]];
   background-color: [[MAIN_DARK]];
@@ -342,14 +346,14 @@ div.species_division_buttons a.active {
     cursor: pointer;
     border: 1px solid [[MAIN_DARK]];
     box-sizing: border-box;
-    border-radius: 2px;
+    border-radius: 6px;
     display: inline-block;
     height: 24px;
     line-height: 24px;
     outline: 0;
-    padding: 0 1.1rem;
-    margin: 4px 0px;
-    text-transform: uppercase;
+    padding: 0 0.6rem;
+    margin: 4px;
+    /*text-transform: uppercase;*/
     vertical-align: middle;
     -webkit-tap-highlight-color: transparent;
 }
@@ -402,9 +406,9 @@ div.taxon_selector .ss-buttons button{
   margin-right: 16px;
   font-weight: 100;
   font-size: 14px;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
-  border-radius: 3px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 6px;
   border: 1px solid [[PALE_GREY]];
   display: inline-block;
   cursor: pointer;

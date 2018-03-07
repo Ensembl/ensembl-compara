@@ -1,5 +1,5 @@
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-# Copyright [2016-2017] EMBL-European Bioinformatics Institute
+# Copyright [2016-2018] EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -101,7 +101,6 @@ our $UPLOAD_SIZELIMIT_WITHOUT_INDEX   = 10 * 1024 * 1024; # 10MB max allowed for
 our $TRACKHUB_TIMEOUT                 = 60 * 60 * 24;     # Timeout for outgoing trackhub requests
 our $ENSEMBL_ORM_DATABASES            = {};               # Hash to contain DB settings for databases connected via ensembl-orm (Used in SpeciesDefs::register_orm_databases)
 our $ENSEMBL_API_VERBOSITY            = 'WARNING';        # OFF, EXCEPTION, WARNING, DEPRECATE, INFO, ALL
-our $ENSEMBL_SPECIES_SELECT_DIVISION  = defer { "$ENSEMBL_DOCROOT/e_species_divisions.json" }; # JSON file used by Species Selector on multiple views
 our $ENSEMBL_SKIP_RSS                 = 0;      # set to 1 in sandboxes to avoid overloading blog
 our $ENSEMBL_EXTERNAL_SEARCHABLE      = 0;      # No external bots allowed by default (used to create default robots.txt)
 our $ENSEMBL_CUSTOM_ROBOTS_TXT        = 0;      # If set to true will use robots.txt from a plugin instead of using the default one
@@ -129,6 +128,7 @@ our $ENSEMBL_DEBUG_IMAGES         = 0; # change these to 1 to prevent css minifi
 ## Other DEBUG flags
 our $ENSEMBL_DEBUG_HANDLER_ERRORS   = 1; # Shows messages from EnsEMBL::Web::Apache::*
 our $ENSEMBL_DEBUG_CACHE            = 0; # Turns debug messages on for EnsEMBL::Web::Cache
+our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::Web::SpeciesDefs
 ###############################################################################
 
 
@@ -184,8 +184,9 @@ our $GOOGLE_SITEMAPS_URL          = '/sitemaps';                                
 
 ###############################################################################
 ## Content dirs
-our @ENSEMBL_CONF_DIRS    = ("$ENSEMBL_WEBROOT/conf");                                      # locates plugin SiteDefs.pm and ini-files
-our @ENSEMBL_HTDOCS_DIRS  = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
+our @ENSEMBL_CONF_DIRS               = ("$ENSEMBL_WEBROOT/conf");                                      # locates plugin SiteDefs.pm and ini-files
+our @ENSEMBL_HTDOCS_DIRS             = ($ENSEMBL_DOCROOT, "$ENSEMBL_SERVERROOT/biomart-perl/htdocs");  # locates static content
+our $ENSEMBL_TAXONOMY_DIVISION_FILE  = ("$ENSEMBL_DOCROOT/e_divisions.json");
 ###############################################################################
 
 

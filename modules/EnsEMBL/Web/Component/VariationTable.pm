@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ use Bio::EnsEMBL::Variation::Utils::VariationEffect qw($UPSTREAM_DISTANCE $DOWNS
 use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
+
+use Scalar::Util qw(looks_like_number);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
@@ -295,7 +297,7 @@ sub make_table {
       v      => undef # remove the 'v' param from the links if already present
     }
   },{
-    _key => 'vf', _type => 'numeric unshowable no_filter'
+    _key => 'vf', _type => 'string unshowable no_filter'
   },{
     _key => 'location', _type => 'position unshowable',
     label => 'Location', sort_for => 'chr',
@@ -504,12 +506,12 @@ sub variation_table {
       my $tvs = $self->_get_transcript_variations($transcript->Obj);
     
       my @tv_sorted;
-      foreach my $transcript_variation (@$tvs) {
-        my $raw_id = $transcript_variation->{_variation_feature_id};
+      foreach my $tv (@$tvs) {
+        my $raw_id = $tv->{_variation_feature_id};
 
-        my $snp = $vfs->{$raw_id};
-        next unless $snp;
-        push @var_ids,$snp->get_Variation_dbID();
+        my $vf = $vfs->{$raw_id};
+        next unless $vf;
+        push @var_ids,$vf->get_Variation_dbID();
       }
     }
     %handles = %{$vfa->_get_all_subsnp_handles_from_variation_ids(\@var_ids)};
@@ -539,29 +541,26 @@ sub variation_table {
     }
     my $chr = $transcript->seq_region_name;
     my @tv_sorted;
-    foreach my $transcript_variation (@$tvs) {
-      my $raw_id = $transcript_variation->{_variation_feature_id};
+    foreach my $tv (@$tvs) {
+      my $vf = $self->_get_vf_from_tv($tv, $vfs);
+      next unless $vf;
 
-      my $snp = $vfs->{$raw_id};
-      next unless $snp;
-
-      push @tv_sorted,[$transcript_variation,$snp->seq_region_start];
+      push @tv_sorted,[$tv,$vf->seq_region_start];
     }
     @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
 
-    foreach my $transcript_variation (@tv_sorted) {
-      my $raw_id = $transcript_variation->{_variation_feature_id};
-      my $snp = $vfs->{$raw_id};
-      next unless $snp;
+    foreach my $tv (@tv_sorted) {
+      my $vf = $self->_get_vf_from_tv($tv, $vfs);
+      next unless $vf;
 
-      my ($start, $end) = ($snp->seq_region_start,$snp->seq_region_end);
+      my ($start, $end) = ($vf->seq_region_start,$vf->seq_region_end);
       if($lrg_strand) {
         $start = $start*$lrg_strand + $lrg_correction;
         $end = $end*$lrg_strand + $lrg_correction;
         ($start,$end) = ($end,$start) if $lrg_strand < 0;
       }
 
-      my $tvas = $transcript_variation->get_all_alternate_TranscriptVariationAlleles;
+      my $tvas = $tv->get_all_alternate_TranscriptVariationAlleles;
 
       foreach my $tva (@$tvas) {
         next if $callback->free_wheel();
@@ -570,31 +569,31 @@ sub variation_table {
         if (1) {#$tva && $end >= $tr_start - $extent && $start <= $tr_end + $extent) {
           my $row;
 
-          my $variation_name = $snp->variation_name;
-          my $url = ";vf=$raw_id";
+          my $variation_name = $vf->variation_name;
+          my $vf_dbID = $vf->dbID;
           $row->{'ID'} = $variation_name;
-          my $source = $snp->source_name;
+          my $source = $vf->source_name;
           $row->{'Source'} = $source;
 
           unless($callback->phase eq 'outline') {
-            my $evidences            = $snp->get_all_evidence_values || [];
-            my $clin_sigs            = $snp->get_all_clinical_significance_states || [];
-            my $var_class            = $snp->var_class;
-            my $translation_start    = $transcript_variation->translation_start;
+            my $evidences            = $vf->get_all_evidence_values || [];
+            my $clin_sigs            = $vf->get_all_clinical_significance_states || [];
+            my $var_class            = $vf->var_class;
+            my $translation_start    = $tv->translation_start;
             my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('', '');
             my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
-            my $allele_string        = $snp->allele_string;
+            my $allele_string        = $vf->allele_string;
             
             # Sort out consequence type string
             my $type = $self->new_consequence_type($tva);
             
-            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
+            my $sifts = $self->classify_sift_polyphen($tva->sift_prediction, $tva->sift_score);
             my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
             
             # Adds LSDB/LRG sources
             if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
-              my $var         = $snp->variation;
+              my $var         = $vf->variation;
               my $syn_sources = $var->get_all_synonym_sources;
               
               foreach my $s_source (@$syn_sources) {
@@ -605,11 +604,11 @@ sub variation_table {
               }
             }
             
-            my $gmaf   = $snp->minor_allele_frequency; # global maf
+            my $gmaf   = $vf->minor_allele_frequency; # global maf
             my $gmaf_allele;
             if(defined $gmaf) {
               $gmaf = sprintf("%.3f",$gmaf);
-              $gmaf_allele = $snp->minor_allele;
+              $gmaf_allele = $vf->minor_allele;
             }
 
             my $status = join('~',@$evidences);
@@ -618,18 +617,18 @@ sub variation_table {
             my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript->version ? $transcript_stable_id.".".$transcript->version : $transcript_stable_id;
           
             my $more_row = {
-              vf         => $raw_id,
+              vf         => $vf_dbID,
               class      => $var_class,
               Alleles    => $allele_string,
               vf_allele  => $vf_allele,
-              Ambiguity  => $snp->ambig_code,
+              Ambiguity  => $vf->ambig_code,
               gmaf       => $gmaf   || '-',
               gmaf_allele => $gmaf_allele || '-',
               status     => $status,
               clinsig    => $clin_sig,
               chr        => "$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
               location   => "$chr:".($start>$end?$end:$start),
-              Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
+              Submitters => %handles && defined($handles{$vf->{_variation_id}}) ? join(", ", @{$handles{$vf->{_variation_id}}}) : undef,
               snptype    => $type,
               Transcript => $transcript_name,
               LRGTranscript => $transcript_name,
@@ -659,10 +658,36 @@ sub _get_transcript_variations {
   my $self = shift;
   my $tr   = shift;
 
-  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
-  my $all_snps = $tva->fetch_all_by_Transcripts([$tr]);
-  push @$all_snps, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
-  return $all_snps;
+  my $tr_id = $tr ? $tr->dbID : 0;
+  my $cache = $self->{_transcript_variations} ||= {};
+
+  if(!exists($cache->{$tr_id})) {
+
+    my $vfs = $self->_get_variation_features();
+
+    my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+    my @tvs = ();
+
+    # deal with VFs with (from database) and without dbID (from VCF)
+    my $have_vfs_with_id = 0;
+    foreach my $vf(values %$vfs) {
+      if(looks_like_number($vf->dbID)) {
+        $have_vfs_with_id = 1;
+      }
+      else {
+        push @tvs, @{$vf->get_all_TranscriptVariations([$tr])};
+      }
+    }
+    
+    if($have_vfs_with_id) {
+      push @tvs, @{$tva->fetch_all_by_Transcripts([$tr])};
+      push @tvs, @{$tva->fetch_all_somatic_by_Transcripts([$tr])};
+    }
+
+    $cache->{$tr_id} = \@tvs;
+  }
+
+  return $cache->{$tr_id};
 }
 
 sub _get_variation_features {
@@ -681,6 +706,22 @@ sub _get_variation_features {
   }
 
   return $self->{_variation_features};
+}
+
+sub _get_vf_from_tv {
+  my ($self, $tv, $vfs) = @_;
+
+  my $vf; 
+
+  if(my $raw_id = $tv->{_variation_feature_id}) {
+    $vfs ||= $self->_get_variation_features();
+    $vf = $vfs->{$raw_id};
+  }
+  else {
+    $vf = $tv->variation_feature;
+  }
+
+  return $vf;
 }
 
 sub create_so_term_subsets {

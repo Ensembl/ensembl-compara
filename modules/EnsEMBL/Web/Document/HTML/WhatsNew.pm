@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ sub render {
 
   return $html if ($species_defs->ENSEMBL_SUBTYPE eq 'Archive');
   
-  $html .= $self->show_twitter();
+  #$html .= $self->show_twitter();
 
   return $html;
 }
@@ -90,7 +90,7 @@ sub show_headlines {
   my $release_id = $hub->species_defs->ENSEMBL_VERSION;
 
   my $header_text = $self->news_header($hub, $release_id);
-  my $headlines   = qq{<h2 class="box-header"><img src="/i/24/announcement.png" style="vertical-align:middle" /> What's New in $header_text</h2>};
+  my $headlines   = qq{<h2 class="box-header">$header_text</h2>};
 
   my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
 

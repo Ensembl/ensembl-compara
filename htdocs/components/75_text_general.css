@@ -1,6 +1,6 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * Copyright [2016-2017] EMBL-European Bioinformatics Institute
+ * Copyright [2016-2018] EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ div.column-wrapper          { overflow: hidden; position:relative; } /* wraps th
 div.column-two              { float: left; width:50%;       } /* actual column for 2 col layout */
 div.column-three            { float: left; width:33.3%;     } /* actual column for 3 col layout */
 div.column-four             { float: left; width:25%;       } /* actual column for 4 col layout */
+div.column-six              { float: left; width:16.6%;       } /* actual column for 6 col layout */
 div.column-padding          { margin-left: 0.5em; margin-right: 0.5em; } /* inner div for columns to provide padding */
 
 div.column-left             { margin-left: 0;       margin-right: 0.5em; }
@@ -97,7 +98,7 @@ body.ie67 div.column-left,
 body.ie67 div.column-middle,
 body.ie67 div.column-right,
 body.ie67 div.box-left,
-body.ie67 div.box-right,,
+body.ie67 div.box-right,
 body.ie67 div.column-padding  { zoom: 100% }
 
 

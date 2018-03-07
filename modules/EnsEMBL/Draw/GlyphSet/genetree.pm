@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -430,6 +430,10 @@ sub _init {
   my $alignment_width  = $align_bitmap_width - 20;
   my $alignment_length = 0;
 
+  if ($tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    $alignment_length = $tree->tree->aln_length;
+  } else {
+
   #Find the alignment length from the first alignment
   my @cigar = grep {$_} split(/(\d*[GDMmXI])/, $alignments[0]->[1]);
   for my $cigElem ( @cigar ) {
@@ -441,6 +445,9 @@ sub _init {
       $alignment_length += $cigCount;
     }
   }
+
+  }
+
   $alignment_length ||= $alignment_width; # All nodes collapsed
   my $min_length      = int($alignment_length / $alignment_width);   
   my $alignment_scale = $alignment_width / $alignment_length;   
@@ -806,8 +813,18 @@ sub features {
       }
     }
   } elsif ($f->{'_collapsed'}) { # Collapsed node
+    unless ($tree->tree->{_consensus_cigar_line_hash}) {
+      my $gtos_adaptor = $tree->adaptor->db->get_GeneTreeObjectStoreAdaptor;
+      my $json_string = $gtos_adaptor->fetch_by_GeneTree_and_label($tree->tree, 'consensus_cigar_line');
+      if ($json_string) {
+        $tree->tree->{_consensus_cigar_line_hash} = JSON->new->decode($json_string);
+      } else {
+        $tree->tree->{_consensus_cigar_line_hash} = {};
+      }
+    }
     $f->{'_name'}       = $tree->name;
-    $f->{'_cigar_line'} = $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');
+    $f->{'_cigar_line'}   = $tree->tree->{_consensus_cigar_line_hash}->{$tree->node_id};
+    $f->{'_cigar_line'} ||= $tree->consensus_cigar_line if UNIVERSAL::can($tree, 'consensus_cigar_line');   # Until all the EG divisions have updated their database
   } elsif ($tree->is_leaf && $tree->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     my $name = $tree->{_subtree}->stable_id;
     $name = $tree->{_subtree}->get_tagvalue('model_id') unless $name;

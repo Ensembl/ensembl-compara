@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -75,24 +75,13 @@ sub summary_table {
     { key => 'plot',     title => 'LD plot',             sort => 'none', align => 'center', help => $plot_help    },
   ], [], { data_table => 1 });
   
-  my ($loc, $vf);
-  if (keys %mappings == 1) {
-    ($loc) = values %mappings;
-  } else { 
-    $loc = $mappings{$hub->param('vf')};
-  }
-  
-  # get the VF that matches the selected location  
-  foreach (@{$object->get_variation_features}) {
-    if ($_->seq_region_start == $loc->{'start'} && $_->seq_region_end == $loc->{'end'} && $_->seq_region_name eq $loc->{'Chr'}) {
-      $vf = $_;
-      last;
-    }
-  }
+  my ($loc, $vf) = ($object->selected_variation_feature_mapping, $object->get_selected_variation_feature);
+  $vf ||= $variation->variation_feature;
 
   # Building population tree
   my %pop_data;
   my $pop_adaptor = $variation->adaptor->db->get_PopulationAdaptor();
+
   foreach my $pop (@pops) {
     my $pop_id = $pop->dbID;
     my $name   = $pop->name;
@@ -261,25 +250,12 @@ sub linked_var_table {
   my $only_phenotypes = $hub->param('only_phenotypes') eq 'yes';
   my @colour_scale    = $hub->colourmap->build_linear_gradient(40, '#0000FF', '#770088', '#BB0044', 'red'); # define a colour scale for p-values
   my %mappings        = %{$object->variation_feature_mapping};  # first determine correct SNP location 
-  my ($vf, $loc);
-
-  if (keys %mappings == 1) {
-    ($loc) = values %mappings;
-  } else { 
-    $loc = $mappings{$hub->param('vf')};
-  }
+  my ($loc, $vf) = ($object->selected_variation_feature_mapping, $object->get_selected_variation_feature);
+  $vf ||= $variation->variation_feature;
   
-  # get the VF that matches the selected location  
-  foreach (@{$object->get_variation_features}) {
-    if ($_->seq_region_start == $loc->{'start'} && $_->seq_region_end == $loc->{'end'} && $_->seq_region_name eq $loc->{'Chr'}) {
-      $vf = $_;
-      last;
-    }
-  }
-  
-  my $vf_dbID             = $vf->dbID;
   my $vf_start            = $vf->seq_region_start;
   my $vf_end              = $vf->seq_region_end;
+  my $vf_dbID             = $vf->dbID;
   my $temp_slice          = $vf->feature_Slice->expand($max_distance, $max_distance);
   my $pop_id              = $pop->dbID;
   my $pop_name            = $pop->name;
@@ -298,13 +274,12 @@ sub linked_var_table {
   ], [], { data_table => 1 });
   
   # do some filtering
-  my @old_values = @{$ldca->fetch_by_Slice($temp_slice, $pop)->get_all_ld_values};
+  # my @old_values = @{$ldca->fetch_by_Slice($temp_slice, $pop)->get_all_ld_values};
+  my @old_values = @{$ldca->fetch_by_VariationFeature($vf, $pop, $max_distance)->get_all_ld_values};
   
   my (@new_values, @other_vfs);
   
   foreach my $ld (@old_values) {
-    next unless $ld->{'variation1'}->dbID == $vf_dbID || $ld->{'variation2'}->dbID == $vf_dbID;
-    next unless $ld->{'population_id'} == $pop_id;
     next unless $ld->{'r2'}      >= $min_r2;
     next unless $ld->{'d_prime'} >= $min_d_prime;
     

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ sub variation_content {
   my $hub        = $self->hub;
   my $variation  = $object->Obj;  
   my $seq_region = $feature->seq_region_name . ':';  
-  my $chr_start  = $feature->start;
-  my $chr_end    = $feature->end;
+  my $chr_start  = $feature->seq_region_start;
+  my $chr_end    = $feature->seq_region_end;
   my $allele     = $feature->allele_string;
   my @failed     = @{$feature->variation->get_all_failed_descriptions};
   my $position   = "$seq_region$chr_start";
@@ -81,8 +81,8 @@ sub variation_content {
   # If we have an LRG in the URL, get the LRG coordinates as well
   if ($self->{'lrg_slice'}) {
     my $lrg_feature = $feature->transfer($self->{'lrg_slice'});
-    my $lrg_start   = $lrg_feature->start;
-    my $lrg_end     = $lrg_feature->end;
+    my $lrg_start   = $lrg_feature->seq_region_start;
+    my $lrg_end     = $lrg_feature->seq_region_end;
     $lrg_position   = $lrg_feature->seq_region_name . ":$lrg_start";
     
     if ($lrg_end < $lrg_start) {
@@ -99,6 +99,7 @@ sub variation_content {
   my @entries = ({ type => 'Class', label => $feature->var_class });
 
   push @entries, { type => 'Location', label => $position };
+  push @entries, { type => 'Source',   label => $feature->source_name };
  
   if (scalar @failed) {
     push @entries, { type => 'Failed status', label_html => sprintf '<span style="color:red">%s</span>', shift @failed };

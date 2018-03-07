@@ -821,17 +821,17 @@ sub add_alignments {
 
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
-  my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/genome/compara/analyses.html';
+  my $static     = '/info/genome/compara/analyses.html';
   my $prod_name  = $species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
   my $map        = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP');
   my $comp_key   = ucfirst($prod_name);
 
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
-    next unless $row->{'species'}{$species};
+    next unless $row->{'species'}{$comp_key};
 
     if ($row->{'class'} =~ /pairwise_alignment/) {
       my ($other_species) = grep { !/^$comp_key$|ancestral_sequences$/ } keys %{$row->{'species'}};
-      $other_species ||= $species if scalar keys %{$row->{'species'}} == 1;
+      $other_species ||= $comp_key if scalar keys %{$row->{'species'}} == 1;
       ## Map back to actual species URL
       $other_species = $map->{lc $other_species};
       my $other_label     = $species_defs->species_label($other_species, 'no_formatting');
@@ -1370,6 +1370,8 @@ sub add_sequence_variations {
     $self->add_sequence_variations_default($key, $hashref, $options);
   }
 
+  $self->add_sequence_variations_vcf($key, $hashref, $options);
+
   $self->add_track('information', 'variation_legend', 'Variant Legend', 'variation_legend', { strand => 'r' });
 }
 
@@ -1564,6 +1566,32 @@ sub add_sequence_variations_default {
         $variation_sets->append_child($set_variation);
       }
     }
+  }
+}
+
+sub add_sequence_variations_vcf {
+  my ($self, $key, $hashref, $options) = @_;
+
+  my $hub = $self->hub;
+  my $c = $hub->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+  return unless $c->{'ENABLED'};
+
+  # my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_menu_node('variants', 'Sequence variants');
+  my $menu = $self->get_node('variation');
+
+  my $vcf_menu = $self->create_menu_node('vcf_collections', 'VCF tracks');
+  $menu->append_child($vcf_menu);
+
+  my $db  = $hub->database('variation', $self->species);
+  my $ad  = $db->get_VCFCollectionAdaptor();
+
+  foreach my $coll(@{$ad->fetch_all_for_web}) {
+    $vcf_menu->append_child($self->create_track_node("variation_vcf_".$coll->id, $coll->id, {
+      %$options,
+      caption     => $coll->id,
+      description => $coll->description,
+      db          => 'variation',
+    }));
   }
 }
 

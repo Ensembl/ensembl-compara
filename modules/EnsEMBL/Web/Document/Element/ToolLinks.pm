@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,11 +34,12 @@ sub links {
   my @links;
 
   push @links, 'mart',          '<a class="constant" href="/biomart/martview">BioMart</a>' if $sd->ENSEMBL_MART_ENABLED;
+  push @links, 'blast',        '<a class="constant" href="/Multi/Tools/Blast?db=core">BLAST</a>' if $sd->ENSEMBL_BLAST_ENABLED;
+  push @links, 'vep',          '<a class="constant" href="/info/docs/tools/vep/">VEP</a>' if $sd->ENSEMBL_VEP_ENABLED;
   push @links, 'tools',         '<a class="constant" href="/info/docs/tools/index.html">Tools</a>';
   push @links, 'download',      '<a class="constant" href="/downloads.html">Downloads</a>';
-  push @links, 'documentation', '<a class="constant" href="/info/">Help &amp; Documentation</a>';
+  push @links, 'documentation', '<a class="constant" href="/info/">Help &amp; Docs</a>';
   push @links, 'blog',          qq(<a class="constant" href="$blog">Blog</a>) if $blog;
-  push @links, 'mirrors',       '<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>' if keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}};
 
   return \@links;
 }

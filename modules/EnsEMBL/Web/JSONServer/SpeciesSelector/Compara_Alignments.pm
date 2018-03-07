@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ use warnings;
 
 use JSON;
 use HTML::Entities qw(encode_entities);
-use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use parent qw(EnsEMBL::Web::JSONServer::SpeciesSelector);
 no warnings 'numeric';
 
@@ -43,7 +42,6 @@ sub json_fetch_species {
   my $extra_inputs = join '', map qq(<input type="hidden" name="$_" value="$url->[1]{$_}" />), sort keys %{$url->[1] || {}};
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
   my $species_info = $hub->get_species_info;
-  my $extras       = {};
   my $species      = $sd->IS_STRAIN_OF ? ucfirst $sd->SPECIES_PRODUCTION_NAME($hub->species) : $hub->species;
   my $species_hash_multiple = ();
 
@@ -70,7 +68,7 @@ sub json_fetch_species {
       $t_child->{key}        = join '_', ('species', $row->{id}, lc($prod_name));
       $t_child->{title}      = encode_entities($species_info->{$url_name}->{common});
       $t_child->{value}      = $row->{id};
-      $t_child->{icon}       = '/i/species/16/' . $url_name . '.png'; 
+      $t_child->{img_url}       = $sd->ENSEMBL_IMAGE_ROOT . '/species/' . $url_name . '.png';
       $t_child->{searchable} = 0;
       push @children, $t_child;
     }
@@ -100,8 +98,7 @@ sub json_fetch_species {
   }
 
   # For the variation compara view, only allow multi-way alignments
-  my $species_hash_pairwise = {};
-  my $all_species = {};
+  my $available_species_map = {};
 
   if ($hub->type ne 'Variation') {
     my $available_alignments = {};
@@ -121,36 +118,24 @@ sub json_fetch_species {
     foreach my $align_id (keys %$final_alignments) {
       foreach (keys %{$final_alignments->{$align_id}->{'species'}}) {
         if ($alignments->{$align_id}{'species'}->{$species} && $_ ne $species) {
-
           $_ = $hub->species_defs->production_name_mapping($_);
-          my $common_name = $species_info->{$_}->{common} || '';
-          my $assembly_version = $common_name eq 'Mouse' && $species_info->{$_}->{assembly_version} ? ' (' . $species_info->{$_}->{assembly_version} . ')' : '';
-
-          my $t = {};
-          $t->{scientific} = $_;
-          $t->{key} = $_;
-          $t->{common} = $species_info->{$_}->{common};
-          $t->{value} = $align_id;
-
-          if ($species_info->{$_}->{strain_collection} and $species_info->{$_}->{strain} !~ /reference/) {
-            push @{$extras->{$species_info->{$_}->{strain_collection}}->{'strains'}->{data}}, $t;
-            $all_species->{$species_info->{$_}->{strain_collection}} = $t;
-          }
-          else {
-            $species_hash_pairwise->{$_} = $t;
-            $all_species->{$_} = $t;
-          }
+          $available_species_map->{$_} = $align_id;
         }
       }
     }
   }
 
-  my $file = $sd->ENSEMBL_SPECIES_SELECT_DIVISION;
-  my $division_json = from_json(file_get_contents($file));
   my $json = {};
-  my $internal_node_select = 0;
-  my $available_internal_nodes = $self->get_available_internal_nodes($division_json, $all_species);
-  my @dyna_tree = $self->json_to_dynatree($division_json, $species_hash_pairwise, $available_internal_nodes, $internal_node_select, $extras);
+  my $sp_assembly_map = $sd->SPECIES_ASSEMBLY_MAP;
+
+  $self->{species_selector_data} = {
+    division_json => $sd->ENSEMBL_TAXONOMY_DIVISION,
+    sp_assembly_map => $sd->SPECIES_ASSEMBLY_MAP,
+    available_species => $available_species_map,
+    internal_node_select => 0
+  };
+
+  my @dyna_tree = $self->create_tree();
 
   if (scalar @dyna_tree) {
     my $dynatree_pairwise = {};
@@ -160,7 +145,7 @@ sub json_fetch_species {
     $dynatree_pairwise->{is_submenu} = 1;
     $dynatree_pairwise->{isInternalNode} = "true";
     $dynatree_pairwise->{unselectable} = "true";
-    push @{$dynatree_pairwise->{children}}, @{$dyna_tree[0]->{children}};
+    push @{$dynatree_pairwise->{children}}, ($#dyna_tree >=0 && $dyna_tree[0]->{children}) ? @{$dyna_tree[0]->{children}} : [];
 
     # Push pairwise tree into dynatree root node;
     if (scalar(@{$dynatree_pairwise->{children}}) > 0) {

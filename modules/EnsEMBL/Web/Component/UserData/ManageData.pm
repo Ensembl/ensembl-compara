@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,18 +54,65 @@ sub content {
   my $species_defs    = $hub->species_defs;
   my $img_url         = $self->img_url;
   my $not_found       = 0;
-  my $records_data    = $self->object->get_userdata_records;
+  my $all_records     = $self->object->get_userdata_records;
 
-  my (@data, @rows);
+  my @current_records; # Records relevant to this species
+  my $old_assemblies        = 0;
+  my $data_on_this_species  = 0;
+  my $data_elsewhere        = 0;
+  my $other_servers         = {};
+  my $other_species_data    = {};
+  my $multi_trackhubs       = {};
   my $html = '';
+  my @rows;
 
   ## Show table if any user or session record is present
-  if (@$records_data) {
+  if (@$all_records) {
 
-    my $old_assemblies  = 0;
-    my $here            = $hub->species_defs->ENSEMBL_SERVERNAME;
-    my $data_elsewhere  = 0;
-    my %other_servers;
+    ## Do some preliminary processing to decide which records to show, and to
+    ## build messages for unshown records
+    my $here = $hub->species_defs->ENSEMBL_SERVERNAME;
+
+    foreach my $record_data (@$all_records) {
+      my @assemblies = split(', ', $record_data->{'assembly'});
+      ## check if we have current assemblies
+      $old_assemblies++ if (scalar(@assemblies) < 1);
+      foreach (@assemblies) {
+        $old_assemblies++ if ($_ ne $hub->species_defs->get_config($record_data->{'species'}, 'ASSEMBLY_VERSION'));
+      }
+
+      ## Hide saved records that were not uploaded on the current server
+      if ($record_data->{'site'} && $record_data->{'site'} ne $here) {
+        $data_elsewhere = 1;
+        $other_servers->{$record_data->{'site'}} = 1;
+        next;
+      }
+
+      ## Data was uploaded on release 84, before we added the site to records
+      if (!$record_data->{'site'}) {
+        my $path_to_file = $hub->species_defs->ENSEMBL_USERDATA_DIR.'/'.$record_data->{'file'};
+        unless (-e $path_to_file) {
+          $data_elsewhere = 1;
+          next;
+        }
+      }
+    
+      ## Data is not on the current species
+      if ($record_data->{'species'} ne $hub->species) {
+        if ($record_data->{'format'} eq 'TRACKHUB') {
+          $multi_trackhubs->{$record_data->{'url'}}{$record_data->{'species'}} = 1;
+        } 
+        $other_species_data->{$record_data->{'species'}} = 1;
+        next;
+      }
+
+      ## Record is on current species and assembly - yay!
+      push @current_records, $record_data;
+    }
+  }
+
+  ## Now loop through the desired records to show table rows
+  if (@current_records) {
 
     $html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
 
@@ -78,30 +125,7 @@ sub content {
       { key => 'actions',   title => 'Actions',       width => '150px', align => 'center',  sort => 'none'                  },
     );
 
-    foreach my $record_data (@$records_data) {
-      my @assemblies = split(', ', $record_data->{'assembly'});
-      ## check if we have current assemblies
-      $old_assemblies++ if (scalar(@assemblies) < 1);
-      foreach (@assemblies) {
-        $old_assemblies++ if ($_ ne $hub->species_defs->get_config($record_data->{'species'}, 'ASSEMBLY_VERSION'));
-      }
-
-      ## Hide saved records that were not uploaded on the current server
-      if ($record_data->{'site'} && $record_data->{'site'} ne $here) {
-        $data_elsewhere = 1;
-        $other_servers{$record_data->{'site'}} = 1;
-        next;
-      }
-
-      ## Data was uploaded on release 84, before we added the site to records
-      if (!$record_data->{'site'}) {
-        my $path_to_file = $hub->species_defs->ENSEMBL_USERDATA_DIR.'/'.$record_data->{'file'};
-        unless (-e $path_to_file) {
-          $data_elsewhere = 1;
-          next;
-        }
-      }
-
+    foreach my $record_data (@current_records) {
       if ($record_data->{'filename'}) {
         my %args = (
                     'hub'             => $hub,
@@ -121,9 +145,12 @@ sub content {
         }
       }
 
-      my $row = $self->table_row($record_data);
+      my $row = $self->table_row($record_data, $multi_trackhubs->{$record_data->{'url'}});
 
-      push @rows, $row;
+      if ($row) {
+        push @rows, $row;
+        $data_on_this_species++;
+      }
     }
 
     $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
@@ -136,9 +163,9 @@ sub content {
 
     if ($data_elsewhere) {
       my $message;
-      if (scalar keys %other_servers) {
+      if (scalar keys %$other_servers) {
         $message = 'You also have uploaded data saved on the following sites:<br /><ul>';
-        foreach (keys %other_servers) {
+        foreach (keys %$other_servers) {
           $message .= sprintf('<li><a href="//%s">%s</a></li>', $_, $_);
         }
         $message .= '</ul>';
@@ -148,9 +175,21 @@ sub content {
       }
       $html .= $self->info_panel('Saved data on other servers', $message);
     }
+  
   }
 
   $html  .= $self->group_shared_data;
+
+  if (keys %{$other_species_data}) {
+    my @species_list;
+    foreach (keys %{$other_species_data}) {
+      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+    }
+    my $also = $data_on_this_species > 0 ? 'also' : '';
+    my $message = sprintf('You %s have data for the following other species: %s', $also, join(', ', @species_list)); 
+    $html .= $self->info_panel('Data on other species', $message);
+  }
+
   $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
   $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
 
@@ -160,7 +199,7 @@ sub content {
   else {
     my $trackhub_search = $self->trackhub_search;
 
-    if (scalar @$records_data) {
+    if (scalar @current_records) {
       my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link data" style="display:inline-block" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
       ## Show 'add more' link at top as well, if table is long
       if (scalar(@rows) > 10) {
@@ -185,12 +224,13 @@ sub _icon_inner {
 sub _icon {
   my ($self, $params) = @_;
   $params->{'link'} ||= '%s';
-  $params->{$_} ||= '' for qw(link_class link_extra class);
+  $params->{$_} ||= '' for qw(link_class class);
 
-  my $title = ucfirst $params->{'class'};
-     $title =~ s/_icon$//;
-
-  $params->{'title'} ||= $title;
+  unless ($params->{'title'}) {
+    my $title = ucfirst $params->{'class'};
+    $title =~ s/_icon$//;
+    $params->{'title'} = $title;
+  }
 
   my $inner = $self->_icon_inner($params);
 
@@ -203,12 +243,9 @@ sub _no_icon {
 }
 
 sub table_row {
-  my ($self, $record_data, $sharers) = @_;
+  my ($self, $record_data, $multi_trackhub, $sharers) = @_;
   my $hub          = $self->hub;
   my $img_url      = $self->img_url.'16/';
-  my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
-  my $title        = $sharers ? ' title="This data is shared with other users"' : '';
-  my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
   my $group_sharing_info = $hub->user && $hub->user->find_admin_groups ? 'You cannot share temporary data with a group until you save it to your account.' : '';
   my $user_record  = $record_data->{'record_type'} eq 'user';
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
@@ -221,7 +258,7 @@ sub table_row {
 
   if ($record_data->{'prefix'} && $record_data->{'prefix'} eq 'download') {
     my $format   = $record_data->{'format'} eq 'report' ? 'txt' : $record_data->{'format'};
-       $download = $self->_icon({ link => sprintf('/%s/download?file=%s;prefix=download;format=%s', $hub->species, $record_data->{'filename'}, $format), class => 'download_icon', title => 'Download' });
+       $download = $self->_icon({ link => sprintf('/%s/download?file=%s;prefix=download;format=%s', $hub->species, $record_data->{'filename'}, $format), class => 'download_icon' });
   }
 
   if ($user_record) {
@@ -234,7 +271,7 @@ sub table_row {
     $url_params{'code'} = $record_data->{'code'};
 
     if ($hub->users_available) {
-      my $save_html = $self->_icon({ link_class => 'modal_link', class => 'save_icon', title => '%s' });
+      my $save_html = $self->_icon({ link_class => 'modal_link', class => 'save_icon'});
       my $save_url  = $hub->url({ action => 'ModifyData', function => $record_data->{'url'} ? 'save_remote' : 'save_upload', code => $record_data->{'code'}, __clear => 1 });
 
       $save = sprintf $save_html, $hub->user ? ($save_url, 'Save to account') : ($hub->url({ type => 'Account', action => 'Login', __clear => 1, then => uri_escape($save_url), modal_tab => 'modal_user_data' }), 'Log in to save');
@@ -278,7 +315,7 @@ sub table_row {
     $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($record_data->{'species'}, 'SPECIES_COMMON_NAME') });
     my $sample_data = $hub->species_defs->get_config($record_data->{'species'}, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
-    (my $menu_name = $record_data->{'name'}) =~ s/ /_/g;
+    (my $menu_name = $self->strip_HTML($record_data->{'name'})) =~ s/ /_/g;
     $config_link = $hub->url({
         species  => $record_data->{'species'},
         type     => 'Location',
@@ -295,7 +332,30 @@ sub table_row {
 
   my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
-  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => lc($record_data->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload', %url_params });
+
+  ## DELETE ICON
+  #my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
+  #my $title        = $sharers ? ' title="This data is shared with other users"' : '';
+  my $title = '';
+  my $delete_class = 'modal_link';
+  my $delete_function;
+
+  if ($multi_trackhub) { 
+    my @species_list;
+    foreach (keys %$multi_trackhub) {
+      push @species_list, $hub->species_defs->get_config($_, 'SPECIES_COMMON_NAME');
+    }
+    $title = sprintf('Delete this trackhub? This will also delete associated data on these species: %s', join(', ', @species_list));
+  }
+  my $delete = $self->_icon({ link_class => $delete_class, class => 'delete_icon', title => $title });
+  if ($record_data->{'format'} eq 'TRACKHUB') {
+    $delete_function = 'delete_trackhub';
+  }
+  else {
+    $delete_function = lc($record_data->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload';
+  }
+  my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $delete_function, %url_params });
+
   if ($record_data->{'format'} eq 'TRACKHUB' || $record_data->{'type'} eq 'upload' && $record_data->{'url'}) {
     my ($reload_action, $reload_text);
     if ($record_data->{'format'} eq 'TRACKHUB') {
@@ -349,15 +409,17 @@ sub group_shared_data {
   );
 
   my $html = '';
+  my $other_species_count = 0;
 
   foreach my $group (@groups) {
     my @rows;
 
     foreach (grep $_, $group->records('uploads'), $group->records('urls')) {
-      push @rows, {
-        %{$self->table_row($_)},
-        share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->group_id, __clear => 1 }))
-      };
+      my $row = $self->table_row($_);
+      if ($row) {
+        push @rows, {%$row, share => sprintf('<a href="%s" class="modal_link">Unshare</a>', $hub->url({ action => 'Unshare', id => $_->id, webgroup_id => $group->group_id, __clear => 1 }))
+        };
+      }
     }
 
     next unless scalar @rows;

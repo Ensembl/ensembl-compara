@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ sub feature_group {
   my( $self, $f ) = @_; 
   next unless ( $f && $f->isa('Bio::EnsEMBL::Funcgen::ProbeFeature'));
   my ($vendor_name, $array_name ) = split (/__/, $self->my_config('array')); 
-  if ( $f->probeset_id) { 
+  if ( $f->probe_set_id) { 
     return $f->probe->probeset->name;
   } else { 
     return $f->probe->get_probename($array_name);
@@ -73,7 +73,7 @@ sub href {
   my ($self, $f ) = @_;
   my ($vendor, $array_name ) = split (/__/, $self->my_config('array'));
   my ($probe_name, $probe_type);
-  if ( $f->probeset_id) {
+  if ( $f->probe_set_id) {
     $probe_name = $f->probe->probeset->name;
     $probe_type = 'pset';
   } else { 

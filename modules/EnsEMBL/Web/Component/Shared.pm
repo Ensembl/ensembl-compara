@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -897,6 +897,9 @@ sub check_for_missing_species {
     $title .= ' and ';
   }
 
+  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+  warn Dumper($missing_hash);
+
   my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
@@ -908,11 +911,25 @@ sub check_for_missing_species {
       $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
     } else {
       my $str = '';
-      $str = $missing_hash->{strains} ? @{$missing_hash->{strains}} . ' strain' : '';
-      $str .= $missing_hash->{strains} && @{$missing_hash->{strains}} > 1 ? 's' : '';
-      $str .= $missing_hash->{species} ? ' and ' . @{$missing_hash->{species}} . ' species' : '';
+      my $count = 0;
 
-      $warnings .= sprintf('<p>The following %s have no alignment in this region:<ul><li>%s</li></ul></p>',
+      if ($missing_hash->{strains}) {
+        $count = scalar @{$missing_hash->{strains}};
+        $str .= "$count strain";
+        $str .= 's' if $count > 1;
+      }
+
+      $str .= ' and ' if ($missing_hash->{strains} && $missing_hash->{species});
+      
+      if ($missing_hash->{species}) {
+        my $sp_count = @{$missing_hash->{species}};
+        $str .= "$sp_count species";
+        $count += $sp_count;
+      }
+
+      $str .= $count > 1 ? ' have' : ' has';
+
+      $warnings .= sprintf('<p>The following %s no alignment in this region:<ul><li>%s</li></ul></p>',
                                  $str,
                                  join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
                             );
@@ -1073,6 +1090,10 @@ sub _sort_similarity_links {
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
 
       if ($link) {
+        ## KEGG Enzyme xrefs are compound, consisting of pathway and enzyme ids.
+        ## Need to modify the xref for linkouts to work.
+        $link =~ s/%2B/&multi_query=/ if $externalDB eq 'KEGG_Enzyme';
+        
         $text = qq{<a href="$link" class="constant">$word</a>};
       } else {
         $text = $word;
@@ -1444,7 +1465,7 @@ sub render_consequence_type {
       $self->coltab($_->label, $hex, $_->description);
     }
     @consequences;
-  my $rank = $consequences[0]->rank;
+  my $rank = @consequences ? $consequences[0]->rank : undef;
       
   return ($type) ? qq{<span class="hidden">$rank</span>$type} : '-';
 }

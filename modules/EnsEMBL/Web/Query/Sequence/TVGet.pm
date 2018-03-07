@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,16 +55,28 @@ sub _transcript_variation_to_variation_feature {
 }
 
 sub _build_vf_cache {
-  my ($self,$config,$trans,$cache) = @_;
+  my ($self,$config,$trans,$cache,$tvs) = @_;
 
-  my $ad = $self->source('Adaptors');
-  my $vfa = $ad->variation_feature_adaptor($config->{'species'});
-  my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
-  return if @$vfs > 60000;
-  $cache->{$_->dbID} = $_ for(@$vfs);
-  $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
-  return if @$vfs > 60000;
-  $cache->{$_->dbID} = $_ for(@$vfs);
+  my $need_db_fetch = 0;
+  foreach my $tv(@$tvs) {
+    if(my $vf = $tv->{base_variation_feature} || $tv->{variation_feature}) {
+      $cache->{$vf->dbID} = $vf;
+    }
+    else {
+      $need_db_fetch = 1;
+    }
+  }
+
+  if($need_db_fetch) {
+    my $ad = $self->source('Adaptors');
+    my $vfa = $ad->variation_feature_adaptor($config->{'species'});
+    my $vfs = $vfa->fetch_all_by_Slice_constraint($trans->feature_Slice);
+    return if @$vfs > 60000;
+    $cache->{$_->dbID} = $_ for(@$vfs);
+    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($trans->feature_Slice);
+    return if @$vfs > 60000;
+    $cache->{$_->dbID} = $_ for(@$vfs);
+  }
 }
 
 sub _get_transcript_variations {
@@ -72,7 +84,7 @@ sub _get_transcript_variations {
 
   my $ad = $self->source('Adaptors');
   my $tva = $ad->transcript_variation_adaptor($config->{'species'});
-  return $tva->fetch_all_by_Transcripts_with_constraint([ $trans ]);
+  return $tva->fetch_all_by_Transcripts_with_constraint([ $trans ], undef, 1);
 }
 
 sub _get_variation_data {
@@ -87,9 +99,13 @@ sub _get_variation_data {
   }
   my @data;
 
+  # get TVs first
+  my $tvs = $self->_get_transcript_variations($config,$transcript);
+
   my $vf_cache = {};
-  $self->_build_vf_cache($config,$transcript,$vf_cache);
-  foreach my $tv (@{$self->_get_transcript_variations($config,$transcript)}) {
+  $self->_build_vf_cache($config,$transcript,$vf_cache,$tvs);
+  
+  foreach my $tv (@{$tvs}) {
     my $pos = $tv->translation_start;
 
     next unless $tv->cdna_start && $tv->cdna_end;

@@ -1,7 +1,7 @@
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-Copyright [2016-2017] EMBL-European Bioinformatics Institute
+Copyright [2016-2018] EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,13 +37,13 @@ sub initialize_new {
   my $flanking          = $hub->param('select_sequence') || $vc->get('select_sequence');
   my $flank_size        = $hub->param('flank_size') || $vc->get('flank_size');
   my @flank             = $flanking eq 'both' ? ($flank_size, $flank_size) : $flanking eq 'up' ? ($flank_size) : (undef, $flank_size);
-  my %mappings          = %{$object->variation_feature_mapping}; 
-  my $v                 = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$vf};
-  my $variation_feature = $object->Obj->get_VariationFeature_by_dbID($vf);
+  my $v                 = $object->selected_variation_feature_mapping;
+  my $variation_feature = $object->get_selected_variation_feature;
   my $variation_string  = $variation_feature->ambig_code || '[' . $variation_feature->allele_string . ']';
-  my $chr_end           = $variation_feature->slice->end;
+  my $chr_end           = $variation_feature->slice->seq_region_Slice->end;
   my $slice_start       = $v->{'start'} - $flank[0] > 1        ? $v->{'start'} - $flank[0] : 1;
   my $slice_end         = $v->{'end'}   + $flank[1] > $chr_end ? $chr_end                  : $v->{'end'} + $flank[1];
+
   my $slice_adaptor     = $hub->get_adaptor('get_SliceAdaptor');
   my @order             = $v->{'strand'} == 1 ? qw(up var down) : qw(down var up);
   my @sequence;
@@ -110,7 +110,7 @@ sub content {
   my $html; 
   my $hub           = $self->hub;
   my $variation     = $object->Obj;
-  my $align_quality = $variation->get_VariationFeature_by_dbID($hub->param('vf'))->flank_match;
+  my $align_quality = $object->get_selected_variation_feature->flank_match;
 
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
