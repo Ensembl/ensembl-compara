@@ -10,7 +10,7 @@ requires 'XML::Writer';
 requires 'Parse::RecDescent';
 requires 'Capture::Tiny';
 requires 'Set::IntervalTree';
-requires 'Set::Jaccard::SimilarityCoefficient', '0.5.1';
+requires 'Set::Jaccard::SimilarityCoefficient', '==0.5.1';
 requires 'namespace::autoclean';
 
 test_requires 'Test::Exception';
