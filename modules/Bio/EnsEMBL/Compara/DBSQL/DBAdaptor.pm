@@ -244,6 +244,20 @@ sub go_figure_compara_dba {
     }
 }
 
+sub url {
+    my $self = shift;
+
+    my $dbc = $self->dbc;
+
+    my $url = $dbc->driver . "://" . $dbc->user;
+    $url .= ":" . $dbc->pass if $dbc->pass;
+    $url .= '@' . $dbc->host;
+    $url .= ":" . $dbc->port if $dbc->port;
+    $url .= "/" . $dbc->dbname;
+
+    return $url;
+}
+
 
 1;
 
