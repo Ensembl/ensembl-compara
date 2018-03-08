@@ -66,7 +66,27 @@ sub content {
                           CACTUS_HAL_PW => $self->param('opt_pairwise_cactus_hal_pw') || ''
                         };
 
-  my $join_alignments = grep $_ ne 'off', values %$methods;
+  my ($join_alignments, $cacti);
+
+  while (my($key, $opt) = each(%$methods)) {
+    if ($opt ne 'off') {
+      $join_alignments = 1;
+      $cacti++ if $key eq 'CACTUS_HAL_PW';
+    } 
+  }
+
+  ## CACTUS_HAL alignments use a _lot_ of memory, so warn the user
+  $self->hub->session->delete_records({'type' => 'message', 'code' => 'too_many_cacti'});
+  my $cactus_limit = 8;
+  if ($cacti && $max > $cactus_limit) {
+    $hub->session->set_record_data({
+          'type'      => 'message',
+          'function'  => '_warning',
+          'code'      => "too_many_cacti",
+          'message'   => "You have attached more than $cactus_limit CACTUS_HAL pairwise alignments. Owing to memory limits on this machine, some of these alignments might not be drawn.",
+    });
+  } 
+
   my $connect_genes   = $self->param('opt_join_genes_bottom') eq 'on';
 
   my $compara_db      = $connect_genes ? EnsEMBL::Web::DBSQL::DBConnection->new($primary_species)->_get_compara_database : undef;
