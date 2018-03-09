@@ -101,7 +101,7 @@ sub transcript_table {
     }
   }
   if (%unique_synonyms) {
-    my $syns = join ', ', keys %unique_synonyms;
+    my $syns = join ', ', sort keys %unique_synonyms;
     $syns_html = "<p>$syns</p>";
     $table->add_row('Synonyms', $syns_html);
   }
