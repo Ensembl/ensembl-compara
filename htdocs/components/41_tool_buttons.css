@@ -47,7 +47,6 @@
   -webkit-border-radius: 6px 0px 0px 6px;
   border-radius: 6px 0px 0px 6px;
 }
-
 .tool_buttons .group .last { 
   -moz-border-radius: 0px 6px 6px 0px;
   -webkit-border-radius: 0px 6px 6px 0px;
@@ -73,6 +72,8 @@
 .tool_buttons a.unstyled:hover { text-decoration: underline; color: [[HOVER]]; }
 .tool_buttons a.disabled { background-color: [[MEDIUM_GREY]] !important; cursor: default;  }
 .tool_buttons .group.disabled { background-color: [[PALE_GREY]]; padding: 0; }
+.tool_buttons a.inline-button { display: inline-block; padding: 6px 14px 4px 34px!important; }
+.tool_buttons span.button-label {display: inline-block;margin-bottom:6px;font-size:16px;font-weight:bold;}
      
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }
@@ -87,6 +88,8 @@
 .tool_buttons .load         { background-image: url(/i/16/rev/paste.png);         }
 .tool_buttons .enable       { background-image: url(/i/16/rev/check.png);         }
 .tool_buttons .disable      { background-image: url(/i/16/rev/cross.png);         }
+.tool_buttons .connect      { background-image: url(/i/16/rev/connect.png);       }
+.tool_buttons .disconnect   { background-image: url(/i/16/rev/disconnect.png);    }
 .tool_buttons .delete       { background-image: url(/i/16/rev/trash.png);         }
 .tool_buttons .list         { background-image: url(/i/16/rev/list.png);          }
 .tool_buttons .share        { background-image: url(/i/16/rev/share.png);         }

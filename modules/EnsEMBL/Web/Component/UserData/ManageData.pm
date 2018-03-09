@@ -63,15 +63,21 @@ sub content {
   my $other_servers         = {};
   my $other_species_data    = {};
   my $multi_trackhubs       = {};
-  my $html = '';
+  my $html = '<input type="hidden" class="panel_type" value="ManageData" />';
   my @rows;
 
   ## Show table if any user or session record is present
   if (@$all_records) {
 
+    my $old_assemblies  = 0;
+    my $here            = $hub->species_defs->ENSEMBL_SERVERNAME;
+    my $data_elsewhere  = 0;
+    my %other_servers;
+
+    $html .= $self->_add_buttons;
+
     ## Do some preliminary processing to decide which records to show, and to
     ## build messages for unshown records
-    my $here = $hub->species_defs->ENSEMBL_SERVERNAME;
 
     foreach my $record_data (@$all_records) {
       my @assemblies = split(', ', $record_data->{'assembly'});
@@ -114,14 +120,15 @@ sub content {
   ## Now loop through the desired records to show table rows
   if (@current_records) {
 
-    $html .= sprintf '<div class="js_panel" id="ManageData"><form action="%s">', $hub->url({'action' => 'ModifyData', 'function' => 'mass_update'});
+    my $checkbox = qq(<br/><input type="checkbox" id="selectAllFiles" title="Select All"/>);
 
     my @columns = (
+      { key => 'check',     title => 'Select',        width => '10%',   align => 'center',  sort => 'none', 'extra_HTML' => $checkbox },
       { key => 'type',      title => 'Type',          width => '10%',   align => 'left'                                     },
       { key => 'name',      title => 'Source',        width => '30%',   align => 'left',    sort => 'html', class => 'wrap' },
       { key => 'species',   title => 'Species',       width => '20%',   align => 'left',    sort => 'html'                  },
-      { key => 'assembly',  title => 'Assembly',      width => '15%',   align => 'left',    sort => 'html'                  },
-      { key => 'date',      title => 'Last updated',  width => '20%',   align => 'left',    sort => 'numeric_hidden'        },
+      { key => 'assembly',  title => 'Assembly',      width => '10%',   align => 'left',    sort => 'html'                  },
+      { key => 'date',      title => 'Last updated',  width => '10%',   align => 'left',    sort => 'numeric_hidden'        },
       { key => 'actions',   title => 'Actions',       width => '150px', align => 'center',  sort => 'none'                  },
     );
 
@@ -153,13 +160,11 @@ sub content {
       }
     }
 
-    $html .= $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+    $html .= $self->new_table(\@columns, \@rows, { id => 'ManageDataTable', data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
       my $plural = $old_assemblies > 1 ? '' : 's';
       $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
-
-    $html .= '</form></div>';
 
     if ($data_elsewhere) {
       my $message;
@@ -200,7 +205,7 @@ sub content {
     my $trackhub_search = $self->trackhub_search;
 
     if (scalar @current_records) {
-      my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link data" style="display:inline-block" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
+      my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link inline-button data" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
       ## Show 'add more' link at top as well, if table is long
       if (scalar(@rows) > 10) {
         $html = $more.$html;
@@ -240,6 +245,27 @@ sub _icon {
 
 sub _no_icon {
   return '';
+}
+
+sub _add_buttons {
+### Buttons for applying methods to all selected files
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  my $html = '<div class="tool_buttons">
+  <span class="button-label">Update selected</span>: ';
+
+  my @buttons = qw(connect disconnect delete);
+
+  foreach (@buttons) {
+    my $url = $hub->url({'action' => 'ModifyData', 'function' => 'mass_update', 'mu_action' => $_});
+    $html .= sprintf '<a href="%s" class="%s _mu_button inline-button modal_link">%s</a>', 
+                        $url, $_, ucfirst($_);
+  }
+
+  $html .= '</div>';
+
+  return $html;
 }
 
 sub table_row {
@@ -370,15 +396,20 @@ sub table_row {
     $reload = $self->_icon({'link' => $reload_url, 'title' => $reload_text, 'link_class' => 'modal_link', 'class' => 'reload_icon'});
   }
 
+  my $connect_text;
+  my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
+  my $sprite_class  = $disconnect ? 'sprite' : 'sprite_disabled';
   if ($record_data->{'format'} eq 'TRACKHUB') {
-    my $disconnect    = $record_data->{'disconnected'} ? 0 : 1;
     ## 'Disabled' class will show 'connect' version of icon in swp sprite
-    my $sprite_class  = $disconnect ? 'sprite' : 'sprite_disabled';
-    my $connect_text  = $disconnect ? 'Disconnect' : 'Reconnect';
-    $connect_text    .= ' this track hub';
-    my $connect_url   = $hub->url({'action' => 'FlipTrackHub', 'disconnect' => $disconnect, 'code' => $record_data->{'code'}});
-    $connect          = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
+    $connect_text  = $disconnect ? 'Disconnect' : 'Reconnect';
+    $connect_text .= ' this track hub';
   }
+  else {
+    $connect_text  = $disconnect ? 'Disable' : 'Enable';
+    $connect_text .= ' this track';
+  }
+  my $connect_url   = $hub->url({'action' => 'FlipTrack', 'disconnect' => $disconnect, 'record' => $record_data->{'type'}.'_'.$record_data->{'code'}, 'format' => $record_data->{'format'}});
+  $connect = $self->_icon({'link' => $connect_url, 'title' => $connect_text, 'link_class' => 'modal_link', 'class' => "connect_icon $sprite_class"});
 
   my $checkbox = sprintf '<input type="checkbox" class="mass_update" value="%s_%s" />', $record_data->{'type'}, $record_data->{'code'};
 

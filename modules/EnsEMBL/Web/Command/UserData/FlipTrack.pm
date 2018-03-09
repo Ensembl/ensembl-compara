@@ -17,9 +17,9 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::UserData::FlipTrackHub;
+package EnsEMBL::Web::Command::UserData::FlipTrack;
 
-## Flip a trackhub's "disconnected" status between on (1) and off (0)
+## Flip a track's status between on (1) and off (0)
 
 use strict;
 
@@ -29,29 +29,28 @@ sub process {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $record  = $hub->session->get_record_data({'code' => $hub->param('code'), 'type' => 'url'});
   my $disconnect = $hub->param('disconnect');
+  my $flipped = $self->object->flip_records([$hub->param('record')], $disconnect);
 
-  if (keys %$record) {
-    if ($disconnect) {
-      $record->{'disconnected'} = 1;
+  unless ($flipped) {
+    my $message;
+    if ($hub->param('format') eq 'TRACKHUB') {
+      $message  = $disconnect ? 'disconnect' : 'connect';
+      $message .= ' your trackhub';
     }
     else {
-      $record->{'disconnected'} = 0;
+      $message = $disconnect ? 'disable' : 'enable';
+      $message .= ' your track';
     }
-    $hub->session->set_record_data($record);
-  }
-  else {
-    my $verb = $disconnect ? 'disconnect' : 'connect';
     $hub->session->set_record_data({
-      type     => 'message',
-      code     => 'trackhub_flip_error',
-      message  => "Sorry, we were unable to $verb your trackhub.",
-      function => '_error'
-    });
+        type     => 'message',
+        code     => 'track_flip_error',
+        message  => "Sorry, we could not $message.",
+        function => '_error'
+      });
   }
  
-  my $url_params      = {};
+  my $url_params = {};
   $url_params->{ __clear} = 1;
   $url_params->{reload}   = 1;
   $url_params->{'action'} = 'ManageData';

@@ -96,6 +96,31 @@ sub get_userdata_records {
   return \@records;
 }
 
+sub flip_records {
+## Set 'disconnect' flag on one or more records
+  my ($self, $records, $disconnect)  = @_;
+  $disconnect ||= 0;
+  my $hub   = $self->hub;
+  my $count = 0;
+
+  foreach (@{$records||[]}) {
+    my ($manager, $record);
+    my ($type, $code, $id) = split('_', $_);
+    $code .= '_'.$id;
+
+    foreach my $m (grep $_, $hub->user, $hub->session) {
+      $record = $m->get_record_data({'type' => $type, 'code' => $code});
+      $manager = $m;
+      last if $record;
+    }
+    next unless ($record && keys %$record);
+    $record->{'disconnected'} = $disconnect;
+    $manager->set_record_data($record);
+    $count++;
+  }
+  return $count;
+}
+
 ############### methods reached directly by url mapping via ModifyData command #########################
 
 sub md_rename_session_record {
@@ -223,44 +248,40 @@ sub md_delete_remote {
 }
 
 sub md_mass_update {
-### Catchall method for enable/disable/delete buttons
+### Catchall method for connect/disconnect/delete buttons
   my $self = shift;
-  if ($self->hub->param('enable_button')) {
-    $self->enable_files;
-  }
-  elsif ($self->hub->param('disable_button')) {
-    $self->disable_files;
-  }
-  elsif ($self->hub->param('delete_button')) {
-    $self->delete_files;
-  }
+  my $method = $self->hub->param('mu_action').'_files';
+  $self->$method;
+  return undef;
 }
 
 ######## 
 
 sub delete_files {
   my $self = shift;
-  my @files = $self->hub->param('files');
-  #warn ">>> DELETING FILES @files";
-  foreach (@files) {
+  my @records = $self->hub->param('record');
+  foreach (@records) {
     my ($source, $code, $id) = split('_', $_);
+    $code .= '_'.$id;
     if ($source eq 'upload') {
-      #$self->md_delete_upload($source, $code, $id);
+      $self->md_delete_upload($source, $code, $id);
     }
     else {
-      #$self->md_delete_remote($source, $code, $id);
+      $self->md_delete_remote($source, $code, $id);
     }
   }
 }
 
-sub enable_files {
+sub connect_files {
   my $self = shift;
-
+  my @records = $self->hub->param('record');
+  $self->flip_records([@records]);
 }
 
-sub disable_files {
+sub disconnect_files {
   my $self = shift;
-
+  my @records = $self->hub->param('record');
+  $self->flip_records([@records], 1);
 }
 
 sub _set_error_message {
@@ -323,6 +344,8 @@ sub _delete_record {
 
   foreach my $record_manager (grep $_, $hub->user, $hub->session) {
     my $data            = $record_manager->get_record_data({'type' => $type, 'code' => $code});
+    my @A = keys %{$data||{}};
+    warn ">>> DELETING RECORD @A";
     my $record_id       = $data->{'record_id'};
     my $record_type_id  = $data->{'record_type_id'};
 

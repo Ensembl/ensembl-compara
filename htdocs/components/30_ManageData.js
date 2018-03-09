@@ -16,17 +16,41 @@
  */
 
 // JavaScript to control enabling, disabling and deleting of userdata files via the ManageData table 
-
-Ensembl.Panel.ConnectData = Ensembl.Panel.extend({
+Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
 
   init: function () {
-    // Update config tree when a hub is (dis)connected
-    this.el.find(".connect_icon").each( 
-      function () {
-        $(this).on({ mouseover: function () { alert('Icon!'); } });
+    var panel = this;
+    this.base();
+    this.elLk.table = this.el.find("#ManageDataTable"); 
+
+    this.el.find("._mu_button").each(
+      function() {
+        $(this).on({ click: function () {
+          panel.elLk.url = $(this).attr("href");
+          panel.elLk.table.find(".mass_update").each(
+            function() {
+              if ($(this).is(":checked")) {
+                panel.elLk.url += ';record='+$(this).val();
+              }
+          });
+          $(this).attr("href", panel.elLk.url);             
+        }});
       }
     );
+
+    // 'Select all' option
+    this.elLk.selectAll = this.el.find("#selectAllFiles");
+    this.elLk.selectAll.on({ click: function() {
+      panel.elLk.table.find(".mass_update").each(
+        function() {
+          if (panel.elLk.selectAll.is(":checked")) {
+            $(this).prop('checked', true);  
+          }
+          else {
+            $(this).prop('checked', false);  
+          }
+        });
+    }});
   }
 
 });
-
