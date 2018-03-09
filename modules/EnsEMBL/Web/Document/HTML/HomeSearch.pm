@@ -19,14 +19,15 @@ limitations under the License.
 
 package EnsEMBL::Web::Document::HTML::HomeSearch;
 
-### Generates the search form used on the main home page and species
-### home pages, with sample search terms taken from ini files
+### Generates the search form used on the species home page
+### with sample search terms taken from ini files
 
 use strict;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
 use EnsEMBL::Web::Form;
+use EnsEMBL::Web::Constants;
 
 sub render {
   my ($self, $is_help) = @_;
@@ -37,37 +38,48 @@ sub render {
   my $species_defs        = $hub->species_defs;
   my $page_species        = $hub->species || 'Multi';
   my $species_name        = $page_species eq 'Multi' ? '' : $species_defs->DISPLAY_NAME;
+  my $favourites          = $hub->get_favourite_species;
   my $search_url          = $species_defs->ENSEMBL_WEB_ROOT . "$page_species/Psychic";
   my $default_search_code = $species_defs->ENSEMBL_DEFAULT_SEARCHCODE;
-  $is_help              ||= $hub->type eq 'Help';
-  my $is_home_page        = !$is_help && $page_species eq 'Multi';
-  my $input_size          = $is_home_page ? 30 : 50;
-  my $favourites          = $hub->get_favourite_species;
-  my $q                   = $hub->param('q');
+
+  ## Get appropriate configuration
+  my $config;
+  my $all_configs         = EnsEMBL::Web::Constants::SEARCH_CONFIG;
+  if ($is_help || $hub->type eq 'Help') {
+    $config = $all_configs->{'help'};
+  }
+  elsif ($hub->species) {
+    $config = $all_configs->{'species'};
+  }
+  else {
+    $config = $all_configs->{'home'};
+  }
 
   # form
   my @class = ('search-form','clear');
-  push @class,'homepage-search-form' if $is_home_page;
-  push @class,'no-ac' if $is_help;
-  push @class,'no-sel' if $is_home_page or $is_help;
-
+  push @class, @{$config->{'form_classes'}||[]};
   my $form = EnsEMBL::Web::Form->new({'action' => $search_url, 'method' => 'get', 'skip_validation' => 1, 'class' => \@class});
   $form->add_hidden({'name' => 'site', 'value' => $default_search_code});
 
+  if ($config->{'header'}) {
+    my $header = $form->add_field({'type' => 'Div', 'children' => [['h3', { inner_HTML => $config->{'header'}}]]});
+  }
+
   # examples
   my ($examples, $extra_params, %sample_data, @keys);
+  my $inline = $config->{'inline'};
 
-  if ($is_help) {
-    @keys = ('biotype', 'API tutorial', 'citing Ensembl');
+  if ($config->{'sample_data'}) {
+    @keys = @{$config->{'sample_data'}}; 
     %sample_data = map { $_ => $_ } @keys;
     $extra_params = ';species=help';
   }
   else {
-    if ($is_home_page) {
-      %sample_data = %{$species_defs->get_config('MULTI', 'GENERIC_DATA')};
-    } else {
+    if ($hub->species) {
       %sample_data = %{$species_defs->SAMPLE_DATA || {}};
       $sample_data{'GENE_TEXT'} = "$sample_data{'GENE_TEXT'}" if $sample_data{'GENE_TEXT'};
+    } else {
+      %sample_data = %{$species_defs->get_config('MULTI', 'GENERIC_DATA')};
     }
     @keys = qw(GENE_TEXT LOCATION_TEXT VARIATION_TEXT SEARCH_TEXT);
   }
@@ -78,13 +90,10 @@ sub render {
   }
   $examples = qq(<p class="search-example">e.g. $examples</p>) if $examples;
 
-  # form field
-  my $f_params = {'notes' => $examples};
-  $f_params->{'label'} = 'Search' if $is_home_page;
-  my $field = $form->add_field($f_params);
-
   # species dropdown
-  if ($page_species eq 'Multi' && !$is_help) {
+  if ($config->{'show_species'}) {
+    my $field = $form->add_field({});
+
     my $species_info = $hub->get_species_info;
     my %species      = map { $species_info->{$_}{'common'} => $_ } grep { $species_info->{$_}{'is_reference'} } sort keys %$species_info;
     my %common_names = reverse %species;
@@ -92,6 +101,7 @@ sub render {
     $field->add_element({
       'type'    => 'dropdown',
       'name'    => 'species',
+      'label'   => 'Search',
       'id'      => 'species',
       'class'   => 'input',
       'values'  => [
@@ -102,21 +112,24 @@ sub render {
         {'value' => '', 'caption' => '---', 'disabled' => 1},
         map({'value' => $species{$_}, 'caption' => $_}, sort { uc $a cmp uc $b } keys %species)
       ]
-    }, 1)->first_child->after('label', {'inner_HTML' => 'for', 'for' => 'q'});
+    }, $inline)->first_child->after('label', {'inner_HTML' => '&nbsp;for', 'for' => 'q'});
+
   }
 
   # search input box & submit button
-  my $q_params = {'type' => 'string', 'value' => $q, 'id' => 'q', 'size' => $input_size, 'name' => 'q', 'class' => 'query input inactive'};
-  unless ($is_home_page) {
-    $species_name = 'Help and documentation' if $is_help;
-    $q_params->{'value'}      = "Search $species_name&hellip;";
-    $q_params->{'is_encoded'} = 1;
-  }
-  $field->add_element($q_params, 1);
-  $field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
-
-  my $elements_wrapper = $field->elements->[0];
-  $elements_wrapper->append_child('span', {'class' => 'inp-group', 'children' => [ splice @{$elements_wrapper->child_nodes}, 0, 2 ]})->after({'node_name' => 'wbr'}) for (0..1);
+  my $search_prompt = defined($config->{'search_prompt'}) ? $config->{'search_prompt'}
+                                                          : "Search $species_name&hellip;";
+  my $q_params = {'type'        => 'string', 
+                  'name'        => 'q', 
+                  'id'          => 'q',
+                  'value'       => $search_prompt, 
+                  'size'        => 50, 
+                  'class'       => 'query input inactive',
+                  'is_encoded'  => $config->{'is_encoded'} || 0,
+                  'notes'       => $examples,
+                  };
+  my $q_field = $form->add_field($q_params, $inline);
+  $q_field->add_element({'type' => 'submit', 'value' => 'Go'}, 1);
 
   return sprintf '<div id="SpeciesSearch" class="js_panel"><input type="hidden" class="panel_type" value="SearchBox" />%s</div>', $form->render;
 }

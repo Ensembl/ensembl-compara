@@ -48,10 +48,11 @@ use EnsEMBL::Web::Apache::SpeciesHandler;
 use EnsEMBL::Web::Apache::ServerError;
 use EnsEMBL::Web::Apache::Extension;
 
-our $preload_time;
-#BEGIN { $preload_time = time; }
+our $start_time;
+BEGIN { $start_time = time; }
 use Preload;
-#BEGIN { warn sprintf("preload took %dms\n",(time-$preload_time)*1000); }
+#BEGIN { warn sprintf("preload took %dms\n",(time-$start_time)*1000); }
+
 
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 
@@ -427,6 +428,15 @@ sub selfcheck_down {
   return 0;
 }
 
+sub howsitgoing {
+  my ($r) = @_;
+
+  $r->print("\n");
+
+  my $uptime = time - $start_time;
+  $r->print("uptime: $uptime\n");
+}
+
 sub handler {
   ## This is the main handler that gets called to generate a response for the given request
   ## @param Apache2::RequestRec request object
@@ -446,10 +456,11 @@ sub handler {
     $r->content_type('text/plain');
     if(lb_force_down() || selfcheck_down()) {
       $r->status(HTTP_SERVICE_UNAVAILABLE);
-      $r->print("503 Sticky wicket");
+      $r->print("503 Sticky wicket\n");
       return HTTP_SERVICE_UNAVAILABLE; # 503, not 500, so e! deosn't catch it
     } else {
-      $r->print("200 Mustn't grumble");
+      $r->print("200 Mustn't grumble\n");
+      howsitgoing($r);
       return OK;
     }
   }

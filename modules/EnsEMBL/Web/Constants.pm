@@ -40,6 +40,29 @@ sub RENDERERS {
 
 }
 
+sub SEARCH_CONFIG {
+### Configuration options for the large search box, depending on context
+  return {
+    'home' => {
+                'header'        => 'Search',
+                'form_classes'  => [qw(homepage-search-form no-sel)],
+                'show_species'  => 1,
+                'search_prompt' => ' ', ## leave blank for now
+              },
+    'help' => {
+                'form_classes'  => [qw(no-sel no-ac)],
+                'sample_data'   => ['biotype', 'API tutorial', 'citing Ensembl'],
+                'search_prompt' => 'Search help and documentation&hellip;',
+                'is_encoded'    => 1,
+              },
+    'species' => {
+                'is_encoded'      => 1,
+                'inline'          => 1,
+              },
+  };
+}
+
+
 sub ICON_MAPPINGS {
 ### Metadata for the icons that appear on the configuration bar
 ### attached to images

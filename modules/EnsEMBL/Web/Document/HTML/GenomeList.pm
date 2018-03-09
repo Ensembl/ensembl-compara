@@ -57,13 +57,13 @@ sub _get_dom_tree {
 
   my $sitename  = $self->hub->species_defs->ENSEMBL_SITETYPE;
   my $list_html = sprintf qq(<h3>All genomes</h3>
-    <p><select class="_all_species"><option value="">-- Select a species --</option></select></p>
+    %s
     <ul class="space-above">
       <li><a href="%s">View full list of all %s species</a></li>
       <li class="customise-species-list"><a class="_list_edit modal_link" href="%s">Edit your favourites</a></li>
     </ul>
     ), 
-    $self->species_list_url, $sitename, $hub->url({qw(type Account action Login)});
+    $self->add_species_dropdown, $self->species_list_url, $sitename, $hub->url({qw(type Account action Login)});
 
   my $sort_html = qq(<p>For easy access to commonly used genomes, drag from the bottom list to the top one</p>
         <p><strong>Favourites</strong></p>
@@ -77,11 +77,11 @@ sub _get_dom_tree {
     'class'       => 'column_wrapper',
     'children'    => [{
               'node_name'   => 'div',
-              'class'       => 'column-forty static_all_species',
+              'class'       => 'column-two static_all_species',
               'inner_HTML'  => $list_html,
             }, {
               'node_name'   => 'div',
-              'class'       => 'column-sixty fave-genomes',
+              'class'       => 'column-two fave-genomes',
               'children'    => [{
                         'node_name'   => 'h3',
                         'inner_HTML'  => 'Favourite genomes'
@@ -137,6 +137,8 @@ sub _get_dom_tree {
           }]
     });
 }
+
+sub add_species_dropdown { '<p><select class="_all_species"><option value="">-- Select a species --</option></select></p>' }
 
 sub species_list_url { return '/info/about/species.html'; }
 

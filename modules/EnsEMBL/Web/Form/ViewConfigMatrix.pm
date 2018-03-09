@@ -300,9 +300,11 @@ sub build {
   }
 
   my $html = sprintf(qq(
-    <h1>$matrix_data->{'section'}</h1>
-    <div class="toggle_tutorial"></div>
-    $tutorials{'video'}
+    <div class="header_tutorial_wrapper">
+      <h1>$matrix_data->{'section'}</h1>
+      <div class="toggle_tutorial"></div>
+      $tutorials{'video'}
+    </div>
     <div class="header_wrapper">
       <h2>%s</h2>
       %s

@@ -95,13 +95,12 @@ sub content {
   if ($align) {
       $align_blocks = $object->get_align_blocks($slice, $align, $cdb);
 
-      #find out if this species is low_coverage by looking at the un-restricted genomic_align from the first block and the alignment is EPO_LOW_COVERAGE 
+      #find out if this species is low_coverage and the alignment is EPO_LOW_COVERAGE
       if ($method_type =~ /EPO_LOW_COVERAGE/ && @$align_blocks) {
-          my $first_gab = $align_blocks->[0];
-          my $ga_adaptor = $compara_db->get_adaptor('GenomicAlign');
-          my $ref_ga = $ga_adaptor->fetch_by_dbID($first_gab->reference_genomic_align->original_dbID);
-          my $whole_cigar_line = $ref_ga->cigar_line;
-          $is_low_coverage_species = 1 if ($whole_cigar_line =~ /X/);
+          # The species is not low-coverage if it's been used in one of the EPO alignments
+          $is_low_coverage_species = !scalar( grep {($_->{type} eq 'EPO') && $_->{species}->{$object->species}}
+                                              values %{$hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}}
+                                            );
       }
 
       #Group alignments together by group_id and/or dbID

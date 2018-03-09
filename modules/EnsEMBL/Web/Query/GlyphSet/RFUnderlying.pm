@@ -49,10 +49,20 @@ sub fixup {
 
 sub get {
   my ($self,$args) = @_;
-
   return [] unless defined $args->{'feature'};
-  my $out = eval { $args->{'feature'}->get_underlying_structure($args->{'epigenome'}); };
-  return $@ ? [] : [ map { +{ locus => $_ } } @{$out} ];
+
+  my $f = $args->{'feature'};
+  my $out = [$f->bound_start, $f->start];
+  ## Add motif feature coordinates if any
+  my $mfs = eval { $f->fetch_overlapping_MotifFeatures; };
+  unless ($@) {
+    foreach (@{$mfs||[]}) {
+      push @$out, $_->start, $_->end;
+    }
+  }
+  push @$out, $f->end, $f->bound_end;
+
+  return [ map { +{ locus => $_ } } @{$out} ];
 }
 
 1;

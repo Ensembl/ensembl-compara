@@ -90,6 +90,7 @@ sub content {
     my $colour_key = $activity;
     if ($activity eq 'Active') {
       $colour_key = $object->feature_type->name;
+      $colour_key = "Promoter" if $colour_key eq 'Promoter Flanking Region';
     }
     my $tooltip = '';
     if ($activity eq 'Na') {

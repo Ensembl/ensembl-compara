@@ -1,3 +1,4 @@
+requires 'Apache2::RequestUtil';
 requires 'Archive::Zip';
 requires 'Cache::Memcached';
 requires 'CGI::Session';

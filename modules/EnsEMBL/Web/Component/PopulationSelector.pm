@@ -25,15 +25,19 @@ use base qw(EnsEMBL::Web::Component::MultiSelector);
 
 sub _init {
   my $self = shift;
- 
+  my $hub = $self->hub;
+
   $self->SUPER::_init;
- 
+
   $self->{'link_text'}       = 'Select populations';
   $self->{'included_header'} = 'Selected Populations';
   $self->{'excluded_header'} = 'Unselected Populations';
   $self->{'url_param'}       = 'pop';
   $self->{'rel'}             = 'modal_select_populations';
-  $self->{'url'}             = $self->hub->url({action => 'LD'}, 1);
+
+  # if referer_action param exists then get action from it else get it from hub itself
+  # referer_action will be used by the view configs while action itself is usually used if a user selects select population directly from the sidebar
+  $self->{'url'} = $hub->url({ action => ($hub->param('referer_action') || $hub->action) }, 1);
 }
 
 sub content_ajax {

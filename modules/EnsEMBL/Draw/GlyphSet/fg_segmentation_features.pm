@@ -78,7 +78,7 @@ sub fetch_features_from_file {
   my $out = $self->SUPER::get_data($bigbed_file);
 
   ## Create legend
-  my $legend_entries = [];
+  my $legend_entries = $self->{'legend'}{'fg_segmentation_features_legend'}{'entries'};
   foreach (@$out) {
     foreach my $f (@{$_->{'features'}||[]}) {
       $f->{'label'} =~ /_(\w+)_/;
@@ -86,7 +86,7 @@ sub fetch_features_from_file {
       push @$legend_entries, [$colour_key, $f->{'colour'}];
     }
   }
-  $self->{'legend'}{'fg_segmentation_features_legend'} ||= { priority => 1020, legend => [], entries => $legend_entries };
+  $self->{'legend'}{'fg_segmentation_features_legend'} = { priority => 1020, legend => [], entries => $legend_entries };
 
   return $out;
 }

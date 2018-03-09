@@ -1,0 +1,46 @@
+/* Very simple 6-column grid, loosely based on https://github.com/zachacole/Simple-Grid
+Classes have been renamed to avoid clashes with existing CSS  */
+
+.grid-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.grid-row {
+  position: relative;
+  width: 100%;
+}
+
+.grid-col-1,
+.grid-col-2,
+.grid-col-4,
+.grid-col-6 {
+  width: 99%;
+  float: left;
+  margin: 0.5em 0.5%;
+  min-height: 0.125em;
+}
+
+.grid-col-1 {
+  width: 15.66%;
+}
+
+.grid-col-2 {
+  width: 32.33%;
+}
+
+.grid-col-4 {
+  width: 65.66%;
+}
+
+.grid-col-6 {
+  width: 99%;
+}
+
+.grid-row::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
