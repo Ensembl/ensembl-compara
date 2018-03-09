@@ -120,8 +120,10 @@ sub content {
   ## Now loop through the desired records to show table rows
   if (@current_records) {
 
+    my $checkbox = qq(<br/><input type="checkbox" id="selectAllFiles" title="Select All"/>);
+
     my @columns = (
-      { key => 'check',     title => 'Select',        width => '10%',   align => 'center' },
+      { key => 'check',     title => 'Select',        width => '10%',   align => 'center',  sort => 'none', 'extra_HTML' => $checkbox },
       { key => 'type',      title => 'Type',          width => '10%',   align => 'left'                                     },
       { key => 'name',      title => 'Source',        width => '30%',   align => 'left',    sort => 'html', class => 'wrap' },
       { key => 'species',   title => 'Species',       width => '20%',   align => 'left',    sort => 'html'                  },

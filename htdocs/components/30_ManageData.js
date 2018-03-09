@@ -37,6 +37,20 @@ Ensembl.Panel.ManageData = Ensembl.Panel.ModalContent.extend({
         }});
       }
     );
+
+    // 'Select all' option
+    this.elLk.selectAll = this.el.find("#selectAllFiles");
+    this.elLk.selectAll.on({ click: function() {
+      panel.elLk.table.find(".mass_update").each(
+        function() {
+          if (panel.elLk.selectAll.is(":checked")) {
+            $(this).prop('checked', true);  
+          }
+          else {
+            $(this).prop('checked', false);  
+          }
+        });
+    }});
   }
 
 });
