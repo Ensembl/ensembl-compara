@@ -41,6 +41,7 @@ sub content {
   my $width       = 118;
   my $large_width = 135;
   my $max_width   = 150;
+  my $max_pie_chart_count = 35;
   my (@graphs, $pop_tree, %sub_pops, @alleles);
 
   my $vf         = $hub->param('vf');
@@ -81,7 +82,12 @@ sub content {
   }
   
   # Create graphs
+  my $population_count = scalar keys %$pop_freq;
+  my $too_many_populations = ($population_count > $max_pie_chart_count);
   foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$pop_freq) {
+    if ($too_many_populations) {
+      next if ($pop_name !~ /ALL/);
+    }
     my $values     = '';
     my $short_name = $self->get_short_name($pop_name);
     my $pop_desc   = $pop_freq->{$pop_name}{'desc'};
