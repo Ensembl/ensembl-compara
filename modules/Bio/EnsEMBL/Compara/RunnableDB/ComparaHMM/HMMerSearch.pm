@@ -92,6 +92,8 @@ sub write_output {
 
     if ( $self->param('store_all_hits') ) {
 
+        $self->compara_dba->dbc->disconnect_if_idle;
+
         my $target_table = $self->param_required('target_table');
 
         #Individual queries are too slow in this case, so we need to bulk the INSERT statements.
@@ -107,7 +109,8 @@ sub write_output {
 
         #Store all at once:
         print "Storing all the hits at once:\n" if ($self->debug);
-        bulk_insert($self->compara_dba->dbc, 'hmm_thresholding', \@bulk_array, ['seq_member_id', 'root_id', 'evalue', 'score', 'bias'], 'INSERT IGNORE');
+        my $dbc_copy = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
+        bulk_insert($dbc_copy, 'hmm_thresholding', \@bulk_array, ['seq_member_id', 'root_id', 'evalue', 'score', 'bias'], 'INSERT IGNORE');
 
     }
     else {
