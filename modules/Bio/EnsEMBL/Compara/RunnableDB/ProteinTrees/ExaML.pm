@@ -32,7 +32,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML;
 
 use strict;
 use warnings;
-use Time::HiRes qw(time gettimeofday tv_interval);
+
+use Path::Tiny;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML');
 
@@ -143,11 +144,9 @@ sub write_output {
 sub worker_temp_directory_name {
     my $self = shift @_;
 
-    my $username = $ENV{'USER'};
-    my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
-    my $worker_dir = $self->param('examl_dir')."/worker_${username}.${worker_id}/";
-    #system("chmod 775 -R $worker_id");
-    return $self->param('examl_dir')."/worker_${username}.${worker_id}/";
+    my $default_temp_directory_name = $self->SUPER::worker_temp_directory_name(@_);
+    my $name = path($default_temp_directory_name)->basename;
+    return $self->param('examl_dir')."/$name/";
 }
 
 
