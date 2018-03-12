@@ -80,6 +80,8 @@ foreach my $emf_file (@ARGV) {
       push(@$data, {type => "SCORE", values => []});
     } elsif ($_ =~ /^TREE (.+)/) {
       print MAF "# tree: $1\n"
+    } elsif ($_ =~ /^ID (.+)/) {
+      print MAF "# id: $1\n"
     } elsif ($_ =~ /^DATA/) {
       if ($mode eq "header") {
         $mode = "data";

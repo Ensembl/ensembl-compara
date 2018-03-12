@@ -973,6 +973,7 @@ sub print_my_emf {
        }
      }
 }
+  print "ID ", $genomic_align_block->dbID, "\n";
   print "DATA\n";
   print join("\n", @$aligned_seqs);
   print "\n//\n";
@@ -996,6 +997,7 @@ sub print_my_maf {
   my ($genomic_align_block) = @_;
 
   print "a";
+  print "# id: ", $genomic_align_block->dbID, "\n"
   if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignBlock") && defined $genomic_align_block->score) {
     print " score=", $genomic_align_block->score;
   }
