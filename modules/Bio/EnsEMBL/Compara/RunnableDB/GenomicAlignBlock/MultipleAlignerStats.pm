@@ -191,6 +191,11 @@ sub write_statistics {
     my ($num_blocks) = $sth->fetchrow_array();
     $sth->finish;
 
+    # EPO alignments have blocks for the ancestral sequences
+    if ($method_link_species_set->method->class eq 'GenomicAlignTree.ancestral_alignment') {
+        $num_blocks = int($num_blocks / 2);
+    }
+
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
     #Calculate the genome and coding_exon statistics
