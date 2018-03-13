@@ -305,7 +305,7 @@ return
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],
                 '3->A' => [ 'ortheus' ],
-		'A->1' => [ 'update_max_alignment_length' ],
+		'A->1' => [ 'remove_dodgy_ancestral_blocks' ],
 	},
 },
 # find the most likely strand orientation for genomic regions which enredo was unable to determine the
@@ -428,6 +428,11 @@ return
         -failed_job_tolerance => 100,
 },
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
+            {  -logic_name => 'remove_dodgy_ancestral_blocks',
+               -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DeleteDodgyAncestralBlocks',
+               -flow_into  => [ 'update_max_alignment_length' ],
+            },
+
             {  -logic_name => 'update_max_alignment_length',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
                 -parameters => {
