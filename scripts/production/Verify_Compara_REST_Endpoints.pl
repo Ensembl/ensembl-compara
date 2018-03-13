@@ -50,7 +50,10 @@ else{
     $server = 'https://rest.ensembl.org';
 }
 
-#wont be using this as we can guarantee the newick tree will be returned in the same order all the time
+# FIXME: replace all tabs with spaces
+
+# FIXME: all process_*_get functions have the same structure -> factor out !
+
 sub process_nh_get {
     my ($url, $content_type) = @_;
     $content_type ||= 'text/x-nh';
@@ -59,6 +62,7 @@ sub process_nh_get {
 
     if($responseIDGet->{status} == 200){
 		try {
+                    # FIXME: parse the newick
 	    	$result = $responseIDGet->{content};
 		} 
 		catch {
@@ -67,6 +71,7 @@ sub process_nh_get {
 		};
 
 		sleep($sleepTime);
+                # FIXME: not needed
 		if(ref($result) eq 'ARRAY'){
 	    	return defined(@$result[0]) ? $result : ""; #Yo. learn this
 		}
@@ -93,6 +98,7 @@ sub process_orthoXml_get {
 
     if ($responseIDGet->{status} == 200) {
 		try {
+                    # FIXME: decode the XML
 	    	$result = $responseIDGet->{content};
 		} 
 		catch {
@@ -101,6 +107,7 @@ sub process_orthoXml_get {
 		};
 
 		sleep($sleepTime);
+                # FIXME: not needed
 		if (ref($result) eq 'ARRAY') {
 	    	return defined(@$result[0]) ? $result : ""; #Yo. learn this
 		}
@@ -127,6 +134,7 @@ sub process_phyloXml_get {
 
     if($responseIDGet->{status} == 200){
 		try{
+                    # FIXME: decode the XML
 		    $result = $responseIDGet->{content};
 		} 
 		catch {
@@ -135,6 +143,7 @@ sub process_phyloXml_get {
 		};
 
 		sleep($sleepTime);
+                # FIXME: not needed
 		if(ref($result) eq 'ARRAY'){
 	    	return defined(@$result[0]) ? $result : ""; #Yo. learn this
 		}
@@ -168,6 +177,7 @@ sub process_json_get {
 	    	return "";
 		};
 		sleep($sleepTime);
+                # FIXME: needed ?
 		if(ref($try_decode) eq 'ARRAY'){
 	    	return defined(@$try_decode[0]) ? $try_decode : "";
 		}
@@ -246,9 +256,11 @@ try{
     ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback Validity");
 
 	$phyloXml = process_phyloXml_get($server.'/genetree/id/RF01168?content-type=text/x-phyloxml+xml;prune_species=Macaque;prune_species=human;prune_species=Chimpanzee');
+        # FIXME rewrite this Test::XPath, see ensembl-rest/t/gene_tree.t
 	ok( (index($phyloXml,'pan_troglodytes') !=-1) && (index($phyloXml,'macaca_mulatta') !=-1) && (index($phyloXml,'homo_sapiens') !=-1), "check prune species Validity");
 #	diag $nh;
 	$orthoXml = process_orthoXml_get($server.'/genetree/id/RF01168?content-type=text/x-orthoxml+xml;prune_taxon=9598;prune_taxon=9544;prune_taxon=9606');
+        # FIXME rewrite this Test::XPath, see ensembl-rest/t/gene_tree.t
 	ok( (index($orthoXml,'pan_troglodytes') !=-1) && (index($orthoXml,'macaca_mulatta') !=-1) && (index($orthoXml,'homo_sapiens') !=-1), "check prune taxon Validity");
 	
 	$jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json;sequence=none');
@@ -289,6 +301,7 @@ try{
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $orthoXml = process_orthoXml_get($server.'/genetree/member/symbol/homo_sapiens/BRCA2?prune_species=cow;content-type=text/x-orthoxml%2Bxml;prune_taxon=9526');
+    # FIXME: need to check that the XML has the right nodes
     ok($orthoXml, "Check gene tree by symbol Validity");
 
 
@@ -302,6 +315,7 @@ try{
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $nh = process_nh_get($server.'/cafe/genetree/id/ENSGT00390000003602?content-type=text/x-nh;nh_format=simple');
+    # FIXME: check validity with something like fetch_leaf_hash_from_json
     ok($nh, "check cafe tree nh simple format Validity");
 
  
@@ -329,6 +343,7 @@ try{
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $nh = process_nh_get($server.'/cafe/genetree/member/symbol/homo_sapiens/BRCA2?content-type=text/x-nh;nh_format=simple');
+    # FIXME: check validity with something like fetch_leaf_hash_from_json
     ok($nh, "Check get cafe tree member by symbol Validity");
 
 
@@ -387,6 +402,8 @@ try{
     ok($responseIDGet->{success}, "Check phyloXml Validity");
 
     $phyloXml = process_phyloXml_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=text/x-phyloxml;species_set_group=sauropsids;aligned=1');
+    # FIXME: need to check that there is a node for taeniopygia_guttata and
+    # say another for gallus_gallus
     ok($phyloXml, "Check get alignment region and align the sequences");
 
     $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106041430-106041480:1?content-type=application/json;method=LASTZ_NET;species_set=taeniopygia_guttata;species_set=gallus_gallus');
@@ -422,6 +439,7 @@ try{
     ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{seq}), "Check homology endpoint sequence none option Validity");
 
     $orthoXml = process_orthoXml_get($server.'/homology/id/ENSG00000157764?content-type=text/x-orthoxml+xml;type=orthologues');
+    # FIXME: need to check that the XML has the right nodes
     ok($orthoXml, "Check homology endpoint type option Validity");
 
     $jsontxt = process_json_get($server.'/homology/id/ENSG00000157764?content-type=application/json;aligned=0');
