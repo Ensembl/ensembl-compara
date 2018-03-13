@@ -128,6 +128,7 @@ sub default_options {
     			                               #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
     			                               #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
                 'masking_options' => '{default_soft_masking => 1}',
+                # if you have a specific selection of repeat elements for the masking
                 #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
             },
     	     #non human example

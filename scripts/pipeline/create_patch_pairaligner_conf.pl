@@ -206,7 +206,9 @@ my $dna_collection;
 %{$dna_collection->{homo_sapiens_mammal}} = ('chunk_size' => 30000000,
 					     'overlap'    => 0,
 					     'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
-					     'masking_options_file' => "'" . $ENV{'ENSEMBL_CVS_ROOT_DIR'}."/ensembl-compara/scripts/pipeline/human36.spec'");
+                                             # if you have a specific selection of repeat elements for the masking
+					     #'masking_options_file' => "'" . $ENV{'ENSEMBL_CVS_ROOT_DIR'}."/ensembl-compara/scripts/pipeline/human36.spec'"
+                                             );
 
 %{$dna_collection->{mus_musculus_exception}} = ('chunk_size' => 30000000,
 					      'overlap'    => 0,
