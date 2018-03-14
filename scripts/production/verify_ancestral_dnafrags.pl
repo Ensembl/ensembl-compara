@@ -76,39 +76,84 @@ $compara_sth->execute($ancestral_gdb_id);
 my $ancestral_sth = $ancestral_dba->dbc->prepare($ancestral_sql, { 'mysql_use_result' => 1 });
 $ancestral_sth->execute();
 
+my @differences;
+my @extra_compara;
+my @extra_ancestral;
+
 my $compara_row = $compara_sth->fetch;
 my $ancestral_row = $ancestral_sth->fetch;
 my $n = 1;
-# While there are rows
+
 while ($compara_row && $ancestral_row) {
-    unless (eq_deeply($compara_row, $ancestral_row)) {
-        local $Data::Dumper::Indent = 0;
-        local $Data::Dumper::Terse  = 1;
-        die sprintf("Rows num. $n differ: compara=%s vs ancestral=%s\n", Dumper($compara_row), Dumper($ancestral_row));
-    }
-    # Go to the next rows, using the fact that the rows are sorted by name
+
+    print "Fetched $n rows from the compara database\n" unless $n%100_000;
+
+    # Compare the rows and categorize them as equal, same name but
+    # different, different names
     if ($compara_row->[1] eq $ancestral_row->[1]) {
+        unless (eq_deeply($compara_row, $ancestral_row)) {
+            local $Data::Dumper::Indent = 0;
+            local $Data::Dumper::Terse  = 1;
+            push @differences, sprintf("%s: compara=%s vs ancestral=%s", $compara_row->[1], Dumper($compara_row), Dumper($ancestral_row));
+        }
         $compara_row = $compara_sth->fetch;
         $ancestral_row = $ancestral_sth->fetch;
         $n++;
+
     } elsif ($compara_row->[1] le $ancestral_row->[1]) {
+        push @extra_compara, $compara_row->[1];
         $compara_row = $compara_sth->fetch;
         $n++;
+
     } else {
+        push @extra_ancestral, $ancestral_row->[1];
         $ancestral_row = $ancestral_sth->fetch;
     } 
 }
 
-# Test if there are some rows remaining in one table
+# Pull the remaining rows
 if ($ancestral_row) {
-    $n = 0;
-    $n++ while $ancestral_sth->fetch;
-    die "$n rows remaining in the ancestral database\n";
+    do {
+        push @extra_ancestral, $ancestral_row->[1];
+    } while ($ancestral_row = $ancestral_sth->fetch);
 } elsif ($compara_row) {
-    $n = 0;
-    $n++ while $compara_sth->fetch;
-    die "$n rows remaining in the compara database\n";
+    do {
+        push @extra_compara, $compara_row->[1];
+    } while ($compara_row = $compara_sth->fetch);
 }
 
-print "Both databases are in sync\n";
 
+sub print_summary {
+    my ($title, $elements) = @_;
+
+    # Breakdown the differences by mlss_id
+    my %elts_by_mlss_id;
+    foreach my $e (@$elements) {
+        if ($e =~ /^Ancestor_(\d+)_/) {
+            my $mlss_id = $1;
+            push @{$elts_by_mlss_id{$mlss_id}}, $e;
+        }
+    }
+
+    # For each mlss_id, print the counts and the first 5 offending rows
+    my $sample = 5;
+    print scalar(@$elements), " $title\n";
+    foreach my $mlss_id (keys %elts_by_mlss_id) {
+        print "\t", scalar(@{$elts_by_mlss_id{$mlss_id}}), " in mlss_id=$mlss_id\n";
+        my $n = 0;
+        foreach my $e (@{$elts_by_mlss_id{$mlss_id}}) {
+            print "\t\t$e\n";
+            $n++;
+            last if $n == $sample;
+        }
+        if (scalar(@{$elts_by_mlss_id{$mlss_id}}) > $sample) {
+            print "\t\t...\n";
+        }
+    }
+}
+
+# Print the final summary
+print_summary('different rows', \@differences);
+print_summary('extra in compara', \@extra_compara);
+print_summary('extra in ancestral', \@extra_ancestral);
+exit(@differences && @extra_compara && @extra_ancestral);
