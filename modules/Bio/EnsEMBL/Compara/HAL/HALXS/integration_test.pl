@@ -194,10 +194,16 @@ my $c = 0;
 
 my $slice_gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_Slice( $mlss, $slice, $limit_number );
 
+#my $dafa = $registry->get_adaptor($compara_alias, "compara", 'DnaAlignFeature');
+#use Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor;
 $c = 0;
 foreach my $gab ( @$slice_gabs ) {
 	print "$c : " . $gab->toString . "\n";
 	$c++;
+        #my $xxx = Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor::_convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures([$gab]);
+        #$xxx->[0]->alignment_strings;
+        #use Data::Dumper;
+        #print Dumper($xxx);
 }
 print "Got $c blocks! Yay!\n\n";
 
