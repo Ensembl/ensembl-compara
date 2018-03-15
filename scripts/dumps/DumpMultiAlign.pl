@@ -334,6 +334,7 @@ use Bio::SimpleAlign;
 use Bio::AlignIO;
 use Bio::LocatableSeq;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable;
 use Getopt::Long;
 use Pod::Usage;
 
@@ -456,12 +457,10 @@ if ($method_link_species_set->method->class eq "ConservationScore.conservation_s
       if (!$method_link_species_set);
 }
 
-# When run on a production database, the connections to the core databases
-# will have disconnect_when_inactive set to 1.
-# For pairwise alignments, we consider that we can afford staying asleep
-# half of the time, with the benefit of not losing the connection
-if (scalar(@{$method_link_species_set->species_set->genome_dbs}) <= 2) {
-    map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$method_link_species_set->species_set->genome_dbs};
+# Do not disconnect from the database between each block
+$_->db_adaptor->dbc->disconnect_when_inactive(0) for @{$method_link_species_set->species_set->genome_dbs};
+if ($method_link_species_set->method->class =~ /ancestral_alignment/) {
+    $compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('ancestral_sequences')->db_adaptor->dbc->disconnect_when_inactive(0);
 }
 
 warn "Dumping ", $method_link_species_set->name, "\n" if $debug;
@@ -855,8 +854,12 @@ sub print_my_emf {
     $all_genomic_aligns = $genomic_align_block->get_all_GenomicAligns()
   }
   my $reverse = 1 - $genomic_align_block->original_strand;
-  foreach my $this_genomic_align (@{$all_genomic_aligns}) {
-    next if (!defined($this_genomic_align));
+
+  $all_genomic_aligns = [grep {defined $_} @$all_genomic_aligns];
+
+  Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable->iterate_by_dbc($all_genomic_aligns,
+      sub {my $this_genomic_align = shift; return $this_genomic_align->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $this_genomic_align = shift;
 
     #find species_name
     my $species_name;
@@ -882,7 +885,7 @@ sub print_my_emf {
       }
     } else {
       if ($masked_seq == 1) {
-        next if (!$this_genomic_align->get_Slice);
+        return if (!$this_genomic_align->get_Slice);
         $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
       } elsif ($masked_seq == 2) {
         $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
@@ -912,7 +915,9 @@ sub print_my_emf {
       $aligned_seqs->[$i] .= substr($aligned_sequence, $i, 1);
     }
     $aligned_sequence = undef;
-  }
+
+  });
+
   if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
     foreach my $this_genomic_align_tree (@{$genomic_align_block->get_all_sorted_genomic_align_nodes()}) {
       my $genomic_align_group = $this_genomic_align_tree->genomic_align_group;
