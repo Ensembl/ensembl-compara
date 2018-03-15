@@ -165,13 +165,6 @@ sub write_output {
             # Perhaps not a MEMLIMIT, after all. Let's die and hope that
             # next run will be better
             die "There is no output file !\n";
-            #my $new_job = $self->dataflow_output_id(undef, $self->param('escape_branch'));
-            #if (scalar(@$new_job)) {
-                #$self->input_job->autoflow(0);
-                #$self->complete_early('Probably not enough memory. Switching to the _himem analysis.');
-            #} else {
-                #die 'Error in the alignment but cannot switch to an analysis with more memory.';
-            #}
         }
     }
 

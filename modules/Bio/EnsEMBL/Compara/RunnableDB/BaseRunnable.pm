@@ -341,5 +341,29 @@ sub elevate_privileges {
 }
 
 
+=head2 complete_early_if_branch_connected
+
+  Arg[1]      : (string) message
+  Arg[2]      : (integer) branch number
+  Description : Wrapper around complete_early that first checks that the
+                branch is connected to something.
+  Returntype  : void if the branch is not connected. Otherwise doesn't return
+
+=cut
+
+sub complete_early_if_branch_connected {
+    my ($self, $message, $branch_code) = @_;
+
+    # just return if no corresponding gc_dataflow rule has been defined
+    return unless $self->input_job->analysis->dataflow_rules_by_branch->{$branch_code};
+
+    # TODO: flowing to $branch_code can be done by complete_early in eHive 2.5
+    if (defined $branch_code) {
+        $self->dataflow_output_id(undef, $branch_code);
+        $self->input_job->autoflow(0);
+    }
+    $self->complete_early($message);
+}
+
 
 1;

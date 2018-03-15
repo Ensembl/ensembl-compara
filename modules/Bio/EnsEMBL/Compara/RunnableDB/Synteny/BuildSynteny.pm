@@ -101,10 +101,8 @@ sub run {
       #recheck err file
       if ($command->err =~ /QuickSort/) {
           $self->warning("Error even after sorting gff_file");
-          my $j = $self->dataflow_output_id(undef, -1);
-          unless (@$j) {
-              die "No more _himem analysis. Giving up";
-          }
+          $self->complete_early_if_branch_connected("Trying with more memory", -1);
+          die "No more _himem analysis. Giving up";
       }
   }
 

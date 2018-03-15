@@ -212,16 +212,8 @@ sub run {
           } elsif ($err_msg =~ /Java heap space/ || $err_msg =~ /GC overhead limit exceeded/ || $err_msg =~ /Cannot allocate memory/ || $err_msg =~ /OutOfMemoryError/) {
 
               #Flow to next memory.
-              my $num_jobs = $self->dataflow_output_id(undef, -1);
-
-              #Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
-              if (@$num_jobs == 0) {
-                  throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
-              }
-
-              #Don't want to flow to gerp jobs here
-              $self->input_job->autoflow(0);
-              $self->complete_early( "Not enough memory available in this analysis. New job created in the #-1 branch\n" );
+              $self->complete_early_if_branch_connected("Not enough memory available in this analysis. New job created in the #-1 branch\n", -1);
+              throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
           }
       }
       die "There were errors when running Ortheus. Please investigate\n" if %err_msgs;

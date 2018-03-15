@@ -295,14 +295,11 @@ sub run_generic_command {
     my $run_cmd = $self->run_command($cmd, { timeout => $self->param('cmd_max_runtime') } );
     if ($run_cmd->exit_code) {
         if ($run_cmd->exit_code == -2) {
-            $self->dataflow_output_id(undef, -2);
-            $self->input_job->autoflow(0);
-            $self->complete_early(sprintf("The command is taking more than %d seconds to complete .\n", $self->param('cmd_max_runtime')));
+            $self->complete_early_if_branch_connected(sprintf("The command is taking more than %d seconds to complete .\n", $self->param('cmd_max_runtime')), -2);
         } elsif ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
-            $self->dataflow_output_id(undef, -1);
-            $self->input_job->autoflow(0);
-            $self->complete_early("Java heap space is out of memory.\n");
+            $self->complete_early_if_branch_connected("Java heap space is out of memory.\n", -1);
         }
+        # We may land here if the -2 or -1 branch if not connected
         $run_cmd->die_with_log;
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);

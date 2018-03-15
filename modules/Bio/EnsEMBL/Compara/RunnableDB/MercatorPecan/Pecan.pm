@@ -178,15 +178,8 @@ sub write_output {
     #If job failed due to insufficient heap space, flow into new analysis
     if ($self->param('more_heap')) {
 	#Flow to next memory. 
-	my $num_jobs = $self->dataflow_output_id(undef, 2);
+        $self->complete_early_if_branch_connected("Need more memory.\n", 2);
 
-	#Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
-	if (@$num_jobs == 0) {
-	    throw("Pecan ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
-	}
-
-	#Don't want to flow to gerp jobs here
-	$self->input_job->autoflow(0);
     } else {
 	#Job succeeded, write output
         $self->call_within_transaction( sub {
