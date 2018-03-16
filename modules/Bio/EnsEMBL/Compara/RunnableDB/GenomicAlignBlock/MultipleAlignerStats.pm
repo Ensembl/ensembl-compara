@@ -101,6 +101,9 @@ sub fetch_input {
 
   $self->param('species', $genome_db->name);
 
+  my $species_tree_node = $mlss->species_tree->root->find_leaves_by_field('genome_db_id', $self->param('genome_db_id'))->[0];
+  $self->param('species_tree_node', $species_tree_node);
+
    #Create url from db_adaptor
   my $url = $genome_db->db_adaptor->url;
 
@@ -178,22 +181,18 @@ sub dump_bed_file {
 sub write_statistics {
     my ($self, $genome_bed, $coding_exon_bed) = @_;
 
-    my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
-    
-    if (!$method_link_species_set) {
-	$self->throw(" ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID (" . $self->param('mlss_id') . ")\n");
-    }
+    my $species_tree_node = $self->param('species_tree_node');
 
     #Calculate the genome and coding_exon statistics
     my $genome_db = $self->param('genome_db');
     my ($coverage, $coding_exon_coverage) = $self->calc_stats($self->param('dbc_url'), $genome_db, $genome_bed, $coding_exon_bed);
 
     #write information to method_link_species_set_tag table
-    $method_link_species_set->store_tag("genome_coverage_" . $genome_db->dbID, $coverage->{both});
-    $method_link_species_set->store_tag("genome_length_" . $genome_db->dbID, $coverage->{total});
+    $species_tree_node->store_tag('genome_coverage', $coverage->{both});
+    $species_tree_node->store_tag('genome_length', $coverage->{total});
 
-    $method_link_species_set->store_tag("coding_exon_coverage_" . $genome_db->dbID, $coding_exon_coverage->{both});
-    $method_link_species_set->store_tag("coding_exon_length_" . $genome_db->dbID, $coding_exon_coverage->{total});
+    $species_tree_node->store_tag('coding_exon_coverage', $coding_exon_coverage->{both});
+    $species_tree_node->store_tag('coding_exon_length', $coding_exon_coverage->{total});
 
 }
 
