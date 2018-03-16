@@ -202,36 +202,36 @@ try{
     $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-nh'} });
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
-    $jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&aligned=1');
+    $jsontxt = process_json_get($server.'/genetree/id/ENSGT00390000003602?content-type=application/json&aligned=1');
     $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
     ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 1, "Check seqs alignment == 1 Validity");
 
-    $jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&aligned=0');
+    $jsontxt = process_json_get($server.'/genetree/id/ENSGT00390000003602?content-type=application/json&aligned=0');
     $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
     ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{is_aligned} == 0, "Check seqs alignment == 0 Validity");
 
-    $jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&cigar_line=1');
+    $jsontxt = process_json_get($server.'/genetree/id/ENSGT00390000003602?content-type=application/json&cigar_line=1');
     $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
     ok($jsontxt && $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 1 Validity");
 
-    $jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json&cigar_line=0');
+    $jsontxt = process_json_get($server.'/genetree/id/ENSGT00390000003602?content-type=application/json&cigar_line=0');
     $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
     ok($jsontxt && ! exists $json_leaf->{sequence}->{mol_seq}->{cigar_line}, "Check cigar line == 0 Validity");
 
-    $ext = '/genetree/id/RF01168?content-type=text/javascript&callback=thisisatest';
+    $ext = '/genetree/id/ENSGT00390000003602?content-type=text/javascript&callback=thisisatest';
     $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/javascript' } } );
     ok((substr($responseIDGet->{'content'}, 0, 11) eq "thisisatest"), "Check Callback Validity");
 
-    $phyloXml = process_phyloXml_get($server.'/genetree/id/RF01168?content-type=text/x-phyloxml+xml;prune_species=Macaque;prune_species=Chimpanzee');
+    $phyloXml = process_phyloXml_get($server.'/genetree/id/ENSGT00390000003602?content-type=text/x-phyloxml+xml;prune_species=Macaque;prune_species=Chimpanzee');
     ok( verify_xml_leaf($phyloXml->{phylogeny}, 'Chimpanzee') && verify_xml_leaf($phyloXml->{phylogeny}, 'Macaque') , "check prune species Validity");
 #    diag $nh;
 
-    $orthoXml = process_orthoXml_get($server.'/genetree/id/RF01168?content-type=text/x-orthoxml+xml;prune_taxon=9598;prune_taxon=9544;prune_taxon=9606');
+    $orthoXml = process_orthoXml_get($server.'/genetree/id/ENSGT00390000003602?content-type=text/x-orthoxml+xml;prune_taxon=9598;prune_taxon=9544;prune_taxon=9606');
     my @pruned_species = keys $orthoXml->{species} ;
     my %pruned_species = map {$_ => 1} @pruned_species;
     ok( (exists($pruned_species{'pan_troglodytes'})) && (exists($pruned_species{'macaca_mulatta'})) && (exists($pruned_species{'homo_sapiens'} )), "check prune taxon Validity");
 
-    $jsontxt = process_json_get($server.'/genetree/id/RF01168?content-type=application/json;sequence=none');
+    $jsontxt = process_json_get($server.'/genetree/id/ENSGT00390000003602?content-type=application/json;sequence=none');
 #    diag explain $jsontxt;
     $json_leaf = fetch_leaf_hash_from_json($jsontxt->{tree});
     ok($jsontxt && !(exists $json_leaf->{mol_seq}), "check sequence eq none Validity");
