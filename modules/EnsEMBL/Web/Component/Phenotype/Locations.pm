@@ -276,15 +276,20 @@ sub pf_link {
   my $type = shift;
   my $ph_id = shift;
 
+  my $hub = $self->hub;
+
   my $link;
   my $pf_name = $feature->object_id;
+  my $pf_name_label = $pf_name;
 
   if ($type eq 'QTL') {
     my $source = $feature->source_name;
     $source =~ s/ /\_/g;
-    my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $self->hub->species)));
+    $source .= '_SEARCH' if ($source eq 'RGD');
 
-    return ($pf_name,$self->hub->get_ExtURL($source,{ ID => $pf_name, SP => $species}),undef);
+    my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $hub->species)));
+
+    return ($pf_name_label,$hub->get_ExtURL($source,{ ID => $pf_name, TYPE => $type, SP => $species}),undef);
   }
 
   # link to gene or variation page
@@ -318,7 +323,7 @@ sub pf_link {
       $id_param   => $pf_name,
       __clear     => 1
     };
-    return ($display_label,$self->hub->url($params),$extra_id);
+    return ($display_label,$hub->url($params),$extra_id);
   }
 }
 
@@ -361,10 +366,10 @@ sub source_url {
     ));
   }
   if ($source_uc eq 'RGD') {
-    return ($source,undef) if (!$ext_id);
+    $ext_id = $pf->object_id if (!$ext_id);
     return ($source,$hub->get_ExtURL(
       $source_uc.'_SEARCH',
-      { ID => $ext_id }
+      { ID => $ext_id, TYPE => $pf->type }
     ));
   }
   if ($source_uc eq 'ZFIN') {
@@ -430,7 +435,7 @@ sub study_urls {
     }
   }
   elsif($xref) {
-    push @links,[undef,$xref];
+    push @links,[undef,$xref] if ($xref ne 'NULL');
   }
   return \@links;
 }
