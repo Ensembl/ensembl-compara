@@ -43,6 +43,8 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+        'host' => 'mysql-ens-compara-prod-1',
+        'port' => 4485,
 
         # Where dumps are created
         'export_dir'    => '/hps/nobackup/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
@@ -80,7 +82,7 @@ sub pipeline_wide_parameters {
         'compara_url'   => $self->o('compara_url'),
 
         'export_dir'    => $self->o('export_dir'),
-        'output_dir'    => '#export_dir#/#dirname#',
+        'output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
         'output_file'   => '#output_dir#/gerp_constrained_elements.#name#.bed',
     };
 }
@@ -125,7 +127,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name     => 'check_not_empty',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckNotEmpty'
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckNotEmpty',
             -parameters     => {
                 'min_number_of_lines'   => 1,   # The header is always present
                 'filename'              => '#output_file#',

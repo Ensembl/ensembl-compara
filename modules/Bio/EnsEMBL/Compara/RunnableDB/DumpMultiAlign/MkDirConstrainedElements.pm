@@ -58,7 +58,7 @@ sub write_output {
     $dirname =~ s/[\W\s]+/_/g;
     $dirname =~ s/_$//;
 
-    my $output_dir = $self->param_required('export_dir').'/'.$dirname;
+    my $output_dir = $self->param_required('export_dir').'/bed/ensembl-compara/'.$dirname;
     remove_tree($output_dir);
     make_path($output_dir);
 
