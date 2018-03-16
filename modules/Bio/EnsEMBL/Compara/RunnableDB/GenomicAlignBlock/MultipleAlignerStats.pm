@@ -177,26 +177,12 @@ sub dump_bed_file {
 #
 sub write_statistics {
     my ($self, $genome_bed, $coding_exon_bed) = @_;
-    my $verbose = 0;
+
     my $method_link_species_set = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
     
     if (!$method_link_species_set) {
 	$self->throw(" ** ERROR **  Cannot find any MethodLinkSpeciesSet with this ID (" . $self->param('mlss_id') . ")\n");
     }
-
-    #Fetch the number of genomic_align_blocks
-    my $sql = "SELECT count(*) FROM genomic_align_block WHERE method_link_species_set_id = " . $method_link_species_set->dbID;
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute();
-    my ($num_blocks) = $sth->fetchrow_array();
-    $sth->finish;
-
-    # EPO alignments have blocks for the ancestral sequences
-    if ($method_link_species_set->method->class eq 'GenomicAlignTree.ancestral_alignment') {
-        $num_blocks = int($num_blocks / 2);
-    }
-
-    $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
     #Calculate the genome and coding_exon statistics
     my $genome_db = $self->param('genome_db');
