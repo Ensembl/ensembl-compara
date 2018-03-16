@@ -63,21 +63,20 @@ if ( $html ) {
 }
 
 for my $m ( @$mlss ){
-	for my $g ( @{$m->species_set->genome_dbs} ) {
-		my $this_genomedb_id = $g->dbID;
-		my $coding_exon_bp_coverage = $m->get_tagvalue("coding_exon_coverage_$this_genomedb_id");
-		my $coding_exon_length      = $m->get_tagvalue("coding_exon_length_$this_genomedb_id");
-		my $genome_bp_coverage      = $m->get_tagvalue("genome_coverage_$this_genomedb_id");
-		my $genome_length           = $m->get_tagvalue("genome_length_$this_genomedb_id");
+	for my $stn (@{$m->species_tree->root->get_all_leaves}) {
+		my $coding_exon_bp_coverage = $stn->get_tagvalue("coding_exon_coverage");
+		my $coding_exon_length      = $stn->get_tagvalue("coding_exon_length");
+		my $genome_bp_coverage      = $stn->get_tagvalue("genome_coverage");
+		my $genome_length           = $stn->get_tagvalue("genome_length");
 
 		my $genome_cov_perc = $genome_length ? sprintf("%.3f", ($genome_bp_coverage/$genome_length) * 100) : 'N/A';
 		my $exon_cov_perc   = $coding_exon_length ? sprintf("%.3f", ($coding_exon_bp_coverage/$coding_exon_length) * 100) : 'N/A';
 
 		if ( $html ) {
-			$html_output .= '<tr>' . _html_tag_list( [ $g->name, $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
+			$html_output .= '<tr>' . _html_tag_list( [ $stn->name, $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
 			$html_output .= "\n";
 		} else {
-			print join("\t", _pad_name($g->name), $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
+			print join("\t", _pad_name($stn->name), $m->dbID, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
 			print "\n";
 		}
 	}
