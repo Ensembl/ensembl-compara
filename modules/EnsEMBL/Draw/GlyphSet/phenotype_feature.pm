@@ -116,10 +116,11 @@ sub href {
   elsif($type eq 'QTL') {
     my $source = $f->source_name;
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $hub->species)));
-    
+
+    $source .= '_SEARCH' if ($source eq 'RGD');
     $link = $hub->get_ExtURL(
       $source,
-      { ID => $f->object_id, SP => $species}
+      { ID => $f->object_id, TYPE => $type, SP => $species}
     );
   }
   
