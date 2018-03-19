@@ -31,6 +31,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Production::GeneSet;
 use Bio::EnsEMBL::Compara::Production::HomologySet;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 $| = 1;
 
@@ -157,6 +158,8 @@ sub load_homology_set
          (time() - $starttime), scalar(@{$homology_list}));
 
   $starttime = time();
+  my $sms_homology = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $homology_list->[0]->adaptor->db->get_AlignedMemberAdaptor, $homology_list );
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $homology_list->[0]->adaptor->db->get_GeneMemberAdaptor, $sms_homology );
   my $homology_set = new Bio::EnsEMBL::Compara::Production::HomologySet;
   $homology_set->add(@{$homology_list});
   printf("%1.3f sec to load HomologySet\n", (time() - $starttime));
