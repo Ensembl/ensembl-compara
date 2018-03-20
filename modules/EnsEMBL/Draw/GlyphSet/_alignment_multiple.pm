@@ -229,18 +229,19 @@ sub element_features {
 
   my $ss = eval {$db->get_adaptor('SpeciesSet')->_uncached_fetch_by_dbID($mlss_conf->{'SPECIES_SET'})};
   return [] if $@;
-  my $ml = $db->get_adaptor('Method')->_uncached_fetch_by_dbID($mlss_conf->{'METHOD_LINK'});
+
+  ## Get file URL (only needed by HAL alignments) 
+  my $sd = $self->{'config'}->hub->species_defs;
+  my $datafile_root = $sd->DATAFILE_ROOT.'/'.$sd->SUBDOMAIN_DIR;;
+  my $ma = $db->get_adaptor('MethodLinkSpeciesSet');
+  $ma->base_dir_location($datafile_root);
   my $url = $mlss_conf->{'URL'};
-  if ($url) {
-    my $sd = $self->{'config'}->hub->species_defs;
-    my $datafile_root = $sd->DATAFILE_ROOT.'/'.$sd->SUBDOMAIN_DIR;;
-    $url =~ s/#base_dir#/$datafile_root/;
-  }
-  return [] if $ml->type eq 'CACTUS_HAL';
+
+  my $ml = $db->get_adaptor('Method')->_uncached_fetch_by_dbID($mlss_conf->{'METHOD_LINK'});
 
   my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
     -DBID         => $id,
-    -ADAPTOR      => $db->get_adaptor('MethodLinkSpeciesSet'),
+    -ADAPTOR      => $ma,
     -METHOD       => $ml,
     -SPECIES_SET  => $ss,
     -URL          => $url
