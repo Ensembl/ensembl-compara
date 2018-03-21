@@ -474,7 +474,7 @@ sub draw_pairwise_alignment_list {
 <td style="padding:0px 10px 0px 0px;text-align:right;">&nbsp;</td>
 <td style="padding:0px 10px 0px 0px;text-align:right;widht:20px">$method |</td>
 <td style="padding:0px 10px 0px 0px;text-align:left;width:60px;">$sample_location</td>
-<td style="padding:0px 10px 0px 0px;text-align:left;width:40px;"><a href="/mlss.html?mlss=$mlss_id">stats</a></td><tr>};
+<td style="padding:0px 10px 0px 0px;text-align:left;width:40px;"><a href="/info/genome/compara/mlss.html?mlss=$mlss_id">stats</a></td><tr>};
             }
             $astr .= qq{</table>};
             my $self_desc = $sp eq $other ? ' [self-alignment]' : '';
