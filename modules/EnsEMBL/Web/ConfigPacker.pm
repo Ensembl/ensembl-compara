@@ -990,6 +990,8 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_HELP'}{$row->[0]} = $row->[1];
   }
 
+  ## TODO - break this up into 'glossary' and 'tooltips'
+
   ## Get glossary
   $t_aref = $dbh->selectall_arrayref(
     'select data from help_record where type = "glossary" and status = "live"'
