@@ -64,7 +64,8 @@ sub default_options {
         # By default, the pipeline will follow the "locator" of each
         # genome_db. You only have to set reg_conf if the locators
         # are missing.
-        'registry' => '',
+        # 'registry' => '',
+        'reg_conf' => undef,
         'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
 
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
@@ -133,12 +134,12 @@ sub pipeline_wide_parameters {
         'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-        'registry'      => $self->o('registry'),
+        'registry'      => $self->o('registry') || $self->o('reg_conf'),
         'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),
 
-        output_dir      => '#export_dir#/#base_filename#',
+        output_dir      => '#export_dir#/#format#/ensembl-compara/#aln_type#/#base_filename#',
         output_file_gen => '#output_dir#/#base_filename#.#region_name#.#format#',
         output_file     => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
     };
@@ -157,23 +158,19 @@ sub resource_classes {
     };
 }
 
+sub pipeline_create_commands {
+    my $self = shift;
+
+    return [
+        @{ $self->SUPER::pipeline_create_commands },
+        $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)' ),
+        $self->db_cmd( 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)' ),
+    ];
+}
+
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-
-        {   -logic_name     => 'create_tracking_tables',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters     => {
-                'sql'    => [
-                    #Store DumpMultiAlign other_gab genomic_align_block_ids
-                    'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)',
-                    #Store DumpMultiAlign healthcheck results
-                    'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)',
-                ],
-            },
-            -input_ids     => [ {} ],
-        },
-
         {   -logic_name    => 'MLSSJobFactory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
             -parameters    => {
@@ -186,7 +183,8 @@ sub pipeline_analyses {
                 },
             ],
             -flow_into      => {
-                '2' => [ 'count_blocks' ],
+                '2->A' => [ 'count_blocks' ],
+                'A->2' => [ 'md5sum_factory' ],
             },
             -rc_name => 'default_with_registry',
         },
@@ -198,17 +196,12 @@ sub pipeline_analyses {
                 'inputquery'    => 'SELECT COUNT(*) AS num_blocks FROM genomic_align_block WHERE method_link_species_set_id = #mlss_id#',
             },
             -flow_into  => {
-                '2->A' => WHEN(
+                2 => WHEN(
                     '#split_by_chromosome#' => [ 'initJobs' ],
                     '!#split_by_chromosome# && #split_size#>0' => { 'createOtherJobs' => {'do_all_blocks' => 1} },
                     '!#split_by_chromosome# && #split_size#==0' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
                 ),
-                'A->2' => WHEN(
-                        '#run_emf2maf#' => [ 'move_maf_files' ],
-                        ELSE 'md5sum'
-                    ),
             },
-            -wait_for   => 'create_tracking_tables',
             -rc_name    => 'default_with_registry',
         },
 
@@ -254,6 +247,7 @@ sub pipeline_analyses {
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
                 '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress' ],
+                # '!#make_tar_archive#' => [ 'compress' ],
             ) ],
         },
         {   -logic_name     => 'emf2maf',
@@ -269,19 +263,20 @@ sub pipeline_analyses {
                 'cmd'           => 'gzip -f -9 #output_file#',
             },
         },
+
+        {   -logic_name     => 'md5sum_factory',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUMFactory',
+            -flow_into     => {
+                '2->A' => [ 'md5sum' ],
+                'A->1' => [ 'pipeline_end' ],
+            },
+        },
         {   -logic_name     => 'md5sum',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'cd #output_dir#; md5sum *.#format#* > MD5SUM',
             },
             -flow_into      =>  [ 'readme' ],
-        },
-        {   -logic_name     => 'move_maf_files',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'           => 'mv #output_dir#/*.maf* #output_dir#.maf/'
-            },
-            -flow_into      => { 1 => { 'md5sum' => [undef, { 'format' => 'maf', 'base_filename' => '#base_filename#.maf'} ] } },
         },
         {   -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
@@ -294,8 +289,12 @@ sub pipeline_analyses {
         {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#',
+                'cmd'           => 'cd #export_dir#; tar czf #base_filename#.tar.gz #base_filename#; rm -r #base_filename#',
             },
+        },
+
+        {   -logic_name     => 'pipeline_end',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
     ];
 }

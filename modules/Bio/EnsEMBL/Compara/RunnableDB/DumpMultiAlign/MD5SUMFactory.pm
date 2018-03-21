@@ -28,41 +28,48 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements
+Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::Emf2Maf
 
 =head1 SYNOPSIS
 
-Find the best directory name to dump some constrained elements, and creates it
+This RunnableDB module is part of the DumpMultiAlign pipeline.
+
+=head1 DESCRIPTION
+
+The RunnableDB module runs emf2maf on a emf file
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements;
+
+package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUMFactory;
 
 use strict;
 use warnings;
 
-use File::Path qw(make_path remove_tree);
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
 sub write_output {
-    my $self = shift;
+	my $self = shift;
 
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
+	my $output_id = {
+		output_dir    => $self->param_required('output_dir'),
+		format        => $self->param_required('format'),
+		base_filename => $self->param_required('base_filename'),
+	};
 
-    my $dirname = $mlss->name;
-    if ($mlss->name =~ /^Gerp Constrained Elements \((.*)\)$/) {
-        $dirname = $1.".gerp_constrained_elements";
-    }
-    $dirname =~ s/[\W\s]+/_/g;
-    $dirname =~ s/_$//;
+	$output_id->{export_dir} = $self->param('output_dir');
+	my $base_filename = $self->param('base_filename');
+	$output_id->{export_dir} =~ s/$base_filename//;
 
-    my $output_dir = $self->param_required('export_dir').'/bed/ensembl-compara/'.$dirname;
-    remove_tree($output_dir);
-    make_path($output_dir);
+	$self->dataflow_output_id( $output_id, 2 );
 
-    $self->dataflow_output_id( {'dirname' => $dirname} );
+	# add extra
+	if ( $self->param('run_emf2maf') ) {
+		$output_id->{format} = 'maf';
+		$output_id->{output_dir} =~ s/emf/maf/;
+		$output_id->{export_dir} =~ s/emf/maf/;
+		$self->dataflow_output_id($output_id, 2);
+	}
 }
 
 1;

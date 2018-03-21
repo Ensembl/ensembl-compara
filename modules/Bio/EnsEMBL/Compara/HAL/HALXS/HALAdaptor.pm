@@ -59,6 +59,13 @@ sub new {
     my($class, $path, $use_hal_genomes) = @_;
     my $self = {};
     bless $self, $class;
+    unless (-r $path) {
+        if (-e $path) {
+            die "'$path' cannot be read";
+        } else {
+            die "'$path' doesn\'t exist";
+        }
+    }
     $self->{'hal_fd'} = HALXS::_open_hal($path);
     # if (defined $use_hal_genomes && $use_hal_genomes) {
     #     $self->{'use_hal_genomes'} = 1;
@@ -97,12 +104,14 @@ sub seqs_in_genome {
 sub msa_blocks {
     my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
     $max_ref_gap ||= 0;
+    die "Need some target species" unless $targets_str;
     return HALXS::_get_multiple_aln_blocks( $self->{'hal_fd'}, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
 }
 
 sub pairwise_blocks {
     my ( $self, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg ) = @_;
 
+    die "Need the name of the target species" unless $target;
     my @blocks;
     if ( $target_seq_reg ){
         @blocks = HALXS::_get_pairwise_blocks_filtered($self->{'hal_fd'}, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg);

@@ -149,6 +149,7 @@ my $species_name = "homo_sapiens";
 my $alignment_set = "primates";
 my $dir = '';
 my $debug = 0;
+my $max_files_per_dir = 500000;
 my ( $default_aln_alias, $default_anc_alias ) = ( 'Multi', 'ancestral_curr' );
 my ( $help, $mlss_id, $alignment_db, $ancestral_db, $registry_file );
 
@@ -272,13 +273,24 @@ print_header($species_scientific_name, $species_assembly, $compara_dbc, $mlss);
 my $slices = $slice_adaptor->fetch_all("toplevel", undef, 0, 1);
 my $step = 10000000;
 
+# sometimes too many files for a single directory will be created
+# partition the files into subdirs if this is the case
+# my $partition_files = ( scalar @$slices >= $max_files_per_dir ) ? 1 : 0;
+
 foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
-  open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
-  print FASTA ">ANCESTOR_for_", $slice->name, "\n";
-  open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
+
+  if ( $slice->coord_system_name eq 'chromosome' ) { # one file per chr
+      open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
+      open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
+  } else { # one file per-coord_system for non-chromosomes
+      open(FASTA, '>>', "$dir/${species_production_name}_ancestor_".$slice->coord_system_name.".fa") or die;
+      open(BED, '>>', "$dir/${species_production_name}_ancestor_".$slice->coord_system_name.".bed") or die;
+  }
+
+  print FASTA ">ANCESTOR_for_", $slice->name, "\n";  
   my $num_of_blocks = 0;
   for (my $start = 1; $start <= $length; $start += $step) {
     my $end = $start + $step - 1;
