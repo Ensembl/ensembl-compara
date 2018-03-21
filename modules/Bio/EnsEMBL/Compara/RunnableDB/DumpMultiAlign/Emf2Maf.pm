@@ -56,6 +56,31 @@ sub param_defaults {
     }
 }
 
+sub fetch_input {
+    my $self = shift;
+
+    my $emf_file = $self->param_required('output_file');
+    my $cmd = $self->param_required('emf2maf_program') . " $emf_file; ";
+
+    my $maf_file = $emf_file;
+    $maf_file =~ s/(\.emf)?$//;
+    $maf_file .= ".maf";
+
+    my $maf_dest = $maf_file;
+    $maf_dest =~ s/\/emf\//\/maf\//;
+    $self->param('maf_file', $maf_dest);
+
+    # deal with wildcards
+    if ( $maf_dest =~ /\*/ ) {
+        my @dirs = split('/', $maf_dest);
+        pop @dirs;
+        $cmd .= "mv $maf_file " . join('/', @dirs);
+    } else {
+        $cmd .= "mv $maf_file $maf_dest";
+    }
+    $self->param('cmd', $cmd);
+}
+
 sub write_output {
     my $self = shift;
 
@@ -74,8 +99,8 @@ sub write_output {
 sub _healthcheck {
     my ($self) = @_;
 
-    my $output_file = $self->param('output_file');
-    $output_file =~ s/\.emf$/.maf/;
+    my $output_file = $self->param('maf_file');
+    # $output_file =~ s/\.emf$/.maf/;
     my $cmd = "grep ^a $output_file | wc -l";
 
     my $num_blocks = `$cmd`;

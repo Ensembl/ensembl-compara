@@ -119,7 +119,6 @@ sub _test_mlss {
         }
     }
 
-    my $output_dir = $self->param_required('export_dir').'/'.$filename;
     my $output_id = {
         mlss_id         => $mlss->dbID,
         dump_mlss_id    => $mlss_id,            # Could be the mlss_id of conservation scores
@@ -129,16 +128,25 @@ sub _test_mlss {
         is_pairwise_aln => ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0),
     };
 
-    remove_tree($output_dir);
-    make_path($output_dir);
+    # mimic directory structure of FTP server
+    my $aln_type = $output_id->{is_pairwise_aln} ? 'pairwise_alignments' : 'multiple_alignments';
+    $output_id->{aln_type} = $aln_type;
 
+    my $output_dir = $self->param_required('export_dir');
     if ($self->param('format') eq 'emf+maf') {
         $output_id->{format} = 'emf';
         $output_id->{run_emf2maf} = 1;
-        remove_tree($output_dir.'.maf');
-        make_path($output_dir.'.maf');
+
+        foreach my $format ( 'emf', 'maf' ) {
+            my $output_dir = "$output_dir/$format/ensembl-compara/$aln_type/$filename";
+            # remove_tree($output_dir);
+            make_path($output_dir);
+        }
     } else {
         $output_id->{run_emf2maf} = 0;
+        my $output_dir = $self->param_required('export_dir').'/'.$self->param('format')."/ensembl-compara/$aln_type/$filename";
+        # remove_tree($output_dir);
+        make_path($output_dir);
     }
 
     # Override autoflow and make sure the descendant jobs have all the
