@@ -137,6 +137,7 @@ body.ie67 .plain-box      { zoom: 100%; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
 .unbordered p { margin-bottom:8px; }
 .tinted-box   { background-color:[[MAIN_LIGHT]]; border-color: [[MAIN_MEDIUM]]; }
+.tinted-box a { color:[[LINK_DARK]]; }
 .info-box     { background-color:[[CONTRAST_MEDIUM]]; border-color:[[CONTRAST_DARK]]; }
 .alert-box    { background-color:[[MODERATE_LIGHT]]; border-color:[[MODERATE_DARK]]; }
 .embedded-box { margin:16px 0; padding:8px; }
