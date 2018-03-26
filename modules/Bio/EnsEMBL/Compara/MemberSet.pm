@@ -457,7 +457,7 @@ sub clear {
 sub get_all_GeneMembers {
     my ($self,$genome_db_id) = @_;
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->adaptor->db->get_GeneMemberAdaptor, $self->get_all_Members) if $self->adaptor;
 
     my %seen_gene_members = ();
     foreach my $member (@{$self->get_all_Members}) {

@@ -956,7 +956,7 @@ sub string_tree {
 
 sub print_tree {
     my $self = shift;
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->adaptor->db->get_DnaFragAdaptor, $self->get_all_Members) if $self->adaptor;
     return $self->root->print_tree(@_);
 }
 

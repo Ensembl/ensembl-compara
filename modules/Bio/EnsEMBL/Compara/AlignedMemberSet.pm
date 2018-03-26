@@ -679,7 +679,7 @@ sub get_4D_SimpleAlign {
     my $keep_gaps = shift;
     my $aa_must_be_identical = shift;
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, 'cds', $self);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, 'cds', $self) if $self->adaptor;
 
     my $sa = Bio::SimpleAlign->new();
 
