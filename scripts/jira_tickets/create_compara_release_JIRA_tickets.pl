@@ -326,7 +326,7 @@ sub parse_tickets_file {
             'priority'    => { 'name' => $priority },
             'fixVersions' => [
                 { 'name' => $fixVersions },
-                { 'name' => 'Ensembl ' . $parameters->{release} }
+                #{ 'name' => 'Ensembl ' . $parameters->{release} }
             ],
             'duedate'     => $due_date,
             'components'  => \@components,
