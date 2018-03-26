@@ -288,7 +288,7 @@ sub parse_tickets_file {
 
     my ( $parameters, $tickets_tsv, $logger ) = @_;
     my @tickets;
-    local $/ = "\r";
+
     open (my $tsv, '<:encoding(UTF-8)', $tickets_tsv) or die "Could not open file '$tickets_tsv' $!";;
 
 #    my $header = readline $tsv;
