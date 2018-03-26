@@ -368,10 +368,10 @@ sub replace_placeholders {
 
     $line =~ s/<RelCo>/$parameters->{relco}/g;
     $line =~ s/<version>/$parameters->{release}/g;
-    $line =~ s/<preHandover_date>/$parameters->{dates}->{preHandover}/g;
-    $line =~ s/<handover_date>/$parameters->{dates}->{handover}/g;
-    $line =~ s/<codeBranching_date>/$parameters->{dates}->{codeBranching}/g;
-    $line =~ s/<release_date>/$parameters->{dates}->{release}/g;
+    #$line =~ s/<preHandover_date>/$parameters->{dates}->{preHandover}/g;
+    #$line =~ s/<handover_date>/$parameters->{dates}->{handover}/g;
+    #$line =~ s/<codeBranching_date>/$parameters->{dates}->{codeBranching}/g;
+    #$line =~ s/<release_date>/$parameters->{dates}->{release}/g;
 
     return $line;
 }
