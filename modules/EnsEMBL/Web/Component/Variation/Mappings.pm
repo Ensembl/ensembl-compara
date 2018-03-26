@@ -138,7 +138,7 @@ sub content {
   );
   my $motif_table = $self->new_table(\@motif_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
 
-  my $selected_mapping = $object->selected_variation_feature_mapping;
+  my $selected_mapping = $object->selected_variation_feature_mapping($hub->param('recalculate'));
 
   foreach my $transcript_data (@{$selected_mapping->{'transcript_vari'} || []}) {
 
