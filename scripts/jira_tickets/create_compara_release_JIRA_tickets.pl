@@ -53,13 +53,10 @@ sub main {
     GetOptions(
         'relco=s'    => \$relco,
         'release=i'  => \$release,
-        'password=s' => \$password,
-        'p=s'        => \$password,
+        'password|p=s' => \$password,
         'tickets=s'  => \$tickets_tsv,
-        'config=s'   => \$config,
-        'c=s'        => \$config,
-        'help'       => \$help,
-        'h'          => \$help,
+        'config|c=s' => \$config,
+        'help|h'     => \$help,
     );
 
     # ------------
