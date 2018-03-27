@@ -89,7 +89,7 @@ sub main {
     # parse tickets file
     # ------------------
     my $tickets = parse_tickets_file( $parameters, $tickets_tsv, $logger );
-    print Dumper($tickets);
+    $logger->info('Tickets to submit: '. Dumper($tickets));
 
     # --------------------------------
     # get existing tickets for current
@@ -504,7 +504,7 @@ sub post_request {
 
     my $host = 'https://www.ebi.ac.uk/panda/jira/';
     my $url  = $host . $endpoint;
-    print '\n\n-------------' . $url . "\n\n";
+    $logger->info("Request on $url\n");
     my $json_content = encode_json($content);
 
     my $request = HTTP::Request->new( 'POST', $url );
