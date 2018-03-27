@@ -84,6 +84,8 @@ sub main {
     $parameters->{relco}    = $relco;
     $parameters->{password} = $password;
     $parameters->{release}  = $release;
+    # And substitute fresh values
+    $parameters->{tickets}->{fixVersion} = replace_placeholders($parameters->{tickets}->{fixVersion}, $parameters);
 
     # ------------------
     # parse tickets file
@@ -95,9 +97,11 @@ sub main {
     # get existing tickets for current
     # release from the JIRA server
     # --------------------------------
+    my $fixVersion = $parameters->{tickets}->{fixVersion};
+    $fixVersion =~ s/ /\\u0020/g;
     my $existing_tickets_response
         = post_request( 'rest/api/latest/search',
-        { "jql" => 'fixVersion=Ensembl\\u0020'  . $parameters->{release} },
+        { "jql" => sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $fixVersion) },
         $parameters, $logger );
     my $existing_tickets
         = decode_json( $existing_tickets_response->content() );
