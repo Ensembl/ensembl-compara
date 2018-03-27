@@ -26,7 +26,6 @@ ENSCOMPARASW	Sub-task	Run Mammal EPO	Release <version> Production pipelines main
 ENSCOMPARASW	Sub-task	Run Mammal EPO_low	Release <version> Production pipelines main site		Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Mainsite
 ENSCOMPARASW	Sub-task	Run Primate EPO	Release <version> Production pipelines main site		Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Mainsite
 ENSCOMPARASW	Sub-task	Run Amniotes pecan	Release <version> Production pipelines main site		Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-Mainsite
-ENSCOMPARASW	Sub-task	Handover of Homologies data	Release <version> Production  pipelines main site		Major	Ensembl <version>		Release process	
 ENSCOMPARASW	Task	Release <version> Production pipelines GRCh37		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-GRCh37site[edit]
 ENSCOMPARASW	Sub-task	GRCh37 tasks	Release <version> Production pipelines GRCh37	<RelCo>	Major	Ensembl <version>		Release tasks	relco_doc#Releasecoordinationdocumentation-GRCh37site[edit]
 ENSCOMPARASW	Task	Release <version> End of production window		<RelCo>	Major	Ensembl <version>		Release process	relco_doc#Releasecoordinationdocumentation-Endofproductionwindow
