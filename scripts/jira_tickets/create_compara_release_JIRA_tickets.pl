@@ -524,7 +524,7 @@ sub post_request {
 
     if ( $response->code() == 403 ) {
         $logger->error(
-            'Your do not have permission to submit JIRA tickets programmatically',
+            'You do not have permission to submit JIRA tickets programmatically',
             0, 0
         );
     }
