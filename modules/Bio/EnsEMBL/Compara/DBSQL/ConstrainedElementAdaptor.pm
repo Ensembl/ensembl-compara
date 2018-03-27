@@ -19,18 +19,15 @@ limitations under the License.
 
 package Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor;
 
-use vars qw(@ISA);
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConstrainedElement;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
-use Data::Dumper;
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
 =head2 store
@@ -119,34 +116,6 @@ sub delete_by_MethodLinkSpeciesSet {
 # Delete constrtained element entries by mlss_id
   my $sth = $self->prepare($cons_ele_sql);
   $sth->execute($mlss_obj->dbID);
-  $sth->finish;
-}
-
-
-=head2 delete_by_dbID
-
-  Arg  1     : int $constrained_element_id
-  Example    : $constrained_element_adaptor->delete_by_dbID(123);
-  Description: It removes constrained elements with the specified ID
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub delete_by_dbID {
-  my ($self, $constrained_element_id) = @_;
-
-  if (!defined($constrained_element_id)) {
-    throw("undefined Constrained Element ID");
-  }
-
-  my $cons_ele_sql =
-        qq{DELETE FROM constrained_element WHERE constrained_element_id = ?};
-  
-# Delete constrtained element entries by mlss_id
-  my $sth = $self->prepare($cons_ele_sql);
-  $sth->execute($constrained_element_id);
   $sth->finish;
 }
 
@@ -414,5 +383,15 @@ sub count_by_mlss_id {
 
     return $count;
 }
+
+#
+# INTERNAL METHODS
+#
+###################
+
+sub _tables {
+    return (['constrained_element', 'ce']);
+}
+
 
 1;
