@@ -63,8 +63,7 @@ sub content {
   my $other_servers         = {};
   my $other_species_data    = {};
   my $multi_trackhubs       = {};
-  my $html = '<input type="hidden" class="panel_type" value="ManageData" />';
-  my @rows;
+  my ($table, @boxes);
 
   ## Show table if any user or session record is present
   if (@$all_records) {
@@ -73,8 +72,6 @@ sub content {
     my $here            = $hub->species_defs->ENSEMBL_SERVERNAME;
     my $data_elsewhere  = 0;
     my %other_servers;
-
-    $html .= $self->_add_buttons;
 
     ## Do some preliminary processing to decide which records to show, and to
     ## build messages for unshown records
@@ -120,6 +117,7 @@ sub content {
   ## Now loop through the desired records to show table rows
   if (@current_records) {
 
+    my @rows;
     my $checkbox = qq(<br/><input type="checkbox" id="selectAllFiles" title="Select All"/>);
 
     my @columns = (
@@ -160,10 +158,11 @@ sub content {
       }
     }
 
-    $html .= $self->new_table(\@columns, \@rows, { id => 'ManageDataTable', data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+    $table  = $self->_add_buttons;
+    $table .= $self->new_table(\@columns, \@rows, { id => 'ManageDataTable', data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
       my $plural = $old_assemblies > 1 ? '' : 's';
-      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
+      push @boxes, $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
 
     if ($data_elsewhere) {
@@ -178,12 +177,12 @@ sub content {
       else {
         $message = sprintf 'You also have uploaded data saved on other %s sites (e.g. a mirror or archive) that we cannot show here.', $hub->species_defs->ENSEMBL_SITETYPE;
       }
-      $html .= $self->info_panel('Saved data on other servers', $message);
+      push @boxes, $self->info_panel('Saved data on other servers', $message);
     }
   
   }
 
-  $html  .= $self->group_shared_data;
+  my $group_data = $self->group_shared_data;
 
   if (keys %{$other_species_data}) {
     my @species_list;
@@ -192,32 +191,42 @@ sub content {
     }
     my $also = $data_on_this_species > 0 ? 'also' : '';
     my $message = sprintf('You %s have data for the following other species: %s', $also, join(', ', @species_list)); 
-    $html .= $self->info_panel('Data on other species', $message);
+    push @boxes, $self->info_panel('Data on other species', $message);
   }
 
-  $html  .= $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
-  $html  .= '<div class="modal_reload"></div>' if $hub->param('reload');
+  push @boxes, $self->_warning('File not found', sprintf('<p>The file%s marked not found %s unavailable. Please try again later.</p>', $not_found == 1 ? ('', 'is') : ('s', 'are')), '100%') if $not_found;
 
+  ## Assemble final HTML
+  my $html = '<input type="hidden" class="panel_type" value="ManageData" />';
   if ($hub->referer->{'ENSEMBL_ACTION'} eq 'ProteinSummary') {
-    $html .= $self->info_panel('Custom Tracks Unavailable', 'Sorry, you cannot upload or attach tracks on this view.');
+    $html = $self->info_panel('Custom Tracks Unavailable', 'Sorry, you cannot upload or attach tracks on this view.');
   }
   else {
-    my $trackhub_search = $self->trackhub_search;
+    my ($table_or_form, $repeat_buttons);
 
-    if (scalar @current_records) {
-      my $more  = sprintf '<p class="tool_buttons"><a href="%s" class="modal_link inline-button data" rel="modal_user_data">Add more data</a> %s', $hub->url({'action'=>'SelectFile'}), $trackhub_search;
+    my @buttons = ($self->trackhub_search);
+
+    if (@current_records) {
+      unshift @buttons, sprintf '<a href="%s" class="modal_link inline-button data" rel="modal_user_data">Add more data</a>', $hub->url({'action'=>'SelectFile'});
+
       ## Show 'add more' link at top as well, if table is long
-      if (scalar(@rows) > 10) {
-        $html = $more.$html;
-      }
+      $repeat_buttons = 1 if (scalar(@current_records) > 10);
+      $table_or_form = $table;
 
-      $html .= $more if scalar(@rows);
     }
     else {
-      $html .= $trackhub_search;
-      $html .= $self->userdata_form;
+      $table_or_form = $self->userdata_form;
     }
+
+    my $nav_buttons = sprintf '<p class="tool_buttons">%s</p>', join(' ', @buttons);
+
+    $html .= $nav_buttons if $repeat_buttons;
+    $html .= $table_or_form;
+    $html .= $nav_buttons;
+    $html .= join(' ', @boxes);
   }
+
+  $html .= '<div class="modal_reload"></div>' if $hub->param('reload');
   return $html;
 }
 
