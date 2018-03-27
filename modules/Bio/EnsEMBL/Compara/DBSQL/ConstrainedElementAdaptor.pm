@@ -155,30 +155,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             my $dnafrag_adp = $self->db->get_DnaFragAdaptor;
             my $dnafrag = $dnafrag_adp->fetch_by_Slice($this_slice);
             next unless $dnafrag; # Some contigs may not be mapped to any top-level regions
-            my $sql = qq{
-		WHERE
-		method_link_species_set_id = ?
-		AND
-		dnafrag_id = ? 
-	    };
-            my ($lower_bound);
-
-            if(defined($this_slice->start) && defined($this_slice->end) && 
-               ($this_slice->start <= $this_slice->end)) {
-                my $max_alignment_length = $mlss_obj->max_alignment_length;
-                $lower_bound = $this_slice->start - $max_alignment_length;
-                $sql .= qq{
-				AND
-				dnafrag_end >= ?
-				AND
-				dnafrag_start <= ?
-				AND
-				dnafrag_start >= ?
-			};
-	}
-            
-            my $these_constrained_elements = $self->_fetch_all_ConstrainedElements($sql,
-                                                  $mlss_obj->dbID, $dnafrag->dbID, $this_slice->start, $this_slice->end, $lower_bound, $this_slice, $offset);
+            my $these_constrained_elements = $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_obj, $dnafrag, $this_slice->start, $this_slice->end, $this_slice, $offset);
 
             push @$constrained_elements, @$these_constrained_elements;
         }
@@ -202,7 +179,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 =cut
 
 sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
-	my ($self, $mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end) = @_;
+	my ($self, $mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end, $slice, $offset) = @_;
         assert_ref($mlss_obj, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss_obj');
         assert_ref($dnafrag_obj, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag_obj');
 
@@ -231,7 +208,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 		dnafrag_start >= ?
 	};
 	return $self->_fetch_all_ConstrainedElements($sql,
-			$mlss_obj->dbID, $dnafrag_obj->dbID, $dnafrag_start, $dnafrag_end, $lower_bound);
+			$mlss_obj->dbID, $dnafrag_obj->dbID, $dnafrag_start, $dnafrag_end, $lower_bound, $slice, $offset);
 }
 
 
