@@ -101,9 +101,6 @@ sub userdata_form {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  ## Only show this form on 'Manage Data' if there are no records
-  return if $hub->action eq 'ManageData' && @{$self->object->get_userdata_records};
-
   my $sd              = $hub->species_defs;
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
