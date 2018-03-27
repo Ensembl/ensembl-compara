@@ -114,18 +114,6 @@ sub main {
         }
     }
 
-    # --------------------
-    # validate JIRA fields
-    # --------------------
-    # for my $ticket ( @{$tickets} ) {
-
-       # $logger->info( 'Validating' . ' "' . $ticket->{summary} . '" ... ' );
-
-        # validate_fields( $ticket, $parameters, $logger );
-        # $logger->info("Done\n");
-
-    # }
-
     # -----------------------
     # create new JIRA tickets
     # -----------------------
@@ -405,63 +393,6 @@ sub get_parent_key {
     return $parent->{'key'};
 }
 
-# sub validate_fields {
-#     my ( $ticket, $parameters, $logger ) = @_;
-
-#     # my %fields_to_be_validated = (
-#     #     'project'     => 1,
-#     #     'issuetype'   => 1,
-#     #     'reporter'    => 1,
-#     #     'assignee'    => 1,
-#     #     'priority'    => 1,
-#     #     'fixVersions' => 1,
-#     #     'components'  => 1,
-#     # );
-
-#     my %fields_to_be_validated = (
-#         'project'   => $ticket->{'project'}->{'key'},
-#         'issuetype' => $ticket->{'issuetype'}->{'name'},
-#         'reporter'  => $ticket->{'reporter'}->{'name'},
-#         'priority'  => $ticket->{'priority'}->{'name'},
-
-#         #     # 'fixversion' => 1,
-#         #     # 'component'  => 1
-#         ,
-#     );
-
-#     if ( $ticket->{'assignee'}->{'name'} ) {
-#         $fields_to_be_validated{'assignee'} = $ticket->{'assignee'}->{'name'};
-#     }
-
-#     my $endpoint = 'rest/api/latest/search';
-
-#     for my $key ( keys %fields_to_be_validated ) {
-#         my $value = $fields_to_be_validated{$key};
-#         my ( $response, $content );
-
-#         # if ( $fields_to_be_validated{ lc $key } ) {
-#         # if ( ref($value) ne 'ARRAY' ) {
-#         $content = { "jql" => "$key = $value", "maxResults" => 1 };
-#         $response = post_request( $endpoint, $content, $parameters, $logger );
-
-#         # say $key . "\t" . $value;
-
-#         # }
-#         # else {
-#         #     for my $element ( @{$value} ) {
-#         #         $content
-#         #             = { "jql" => "$key=$element", "maxResults" => 1 };
-#         #         $response
-#         #             = post_request( $endpoint, $content, $parameters,
-#         #             $logger );
-#         #         say $key . "\t" . $element;
-#         #     }
-#         # }
-#         # }
-
-#     }
-
-# }
 
 =head2 create_ticket
 
