@@ -105,25 +105,13 @@ sub main {
         $parameters, $logger );
     my $existing_tickets
         = decode_json( $existing_tickets_response->content() );
-
-    # --------------------
-    # check for duplicates
-    # --------------------
-    my %tickets_to_skip;
-    for my $ticket ( @{$tickets} ) {
-        my $duplicate = check_for_duplicate( $ticket, $existing_tickets );
-
-        if ($duplicate) {
-            $tickets_to_skip{ $ticket->{summary} } = $duplicate;
-        }
-    }
+    $parameters->{existing_tickets} = {map {$_->{fields}->{summary} => $_->{key}} @{$existing_tickets->{issues}}};
+    $logger->info('Existing tickets: ' . Dumper($parameters->{existing_tickets}));
 
     # -----------------------
     # create new JIRA tickets
     # -----------------------
     for my $ticket ( @{$tickets} ) {
-        $logger->info( 'Creating' . ' "' . $ticket->{summary} . '" ... ' );
-
         # if the ticket to be submitted is a subtask then fetch the parent key and
         # replace the parent summary with the parent key
         if ( $ticket->{'issuetype'}->{'name'} eq 'Sub-task' ) {
@@ -131,20 +119,8 @@ sub main {
                 = get_parent_key( $ticket->{'parent'}, $parameters, $logger );
                 $ticket->{'parent'} = { 'key'  => $parent_key };
         }
-
-        if ( $tickets_to_skip{ $ticket->{summary} } ) {
-            $logger->info(
-                'Skipped: This seems to be a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
-                    . $tickets_to_skip{ $ticket->{summary} }
-                    . "\n" );
-        }
-        else {
             my $ticket_key = create_ticket( $ticket, $parameters, $logger );
-            $logger->info( "Done\t" . $ticket_key . "\n" );
-        }
-
     }
-
 }
 
 =head2 set_parameters
@@ -413,12 +389,26 @@ sub get_parent_key {
 
 sub create_ticket {
     my ( $ticket, $parameters, $logger ) = @_;
+
+    $logger->info( 'Creating' . ' "' . $ticket->{summary} . '" ... ' );
+
+    # First check if the ticket already exists
+    if (my $existing_ticket_key = $parameters->{existing_tickets}->{ $ticket->{summary} }) {
+        $logger->info(
+            'Skipped: This seems to be a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
+                . $existing_ticket_key
+                . "\n" );
+        return $existing_ticket_key;
+    }
+
     my $endpoint = 'rest/api/latest/issue';
 
     my $content = { 'fields' => $ticket };
     my $response = post_request( $endpoint, $content, $parameters, $logger );
 
-    return decode_json( $response->content() )->{'key'};
+    my $ticket_key = decode_json( $response->content() )->{'key'};
+    $logger->info( "Done\t" . $ticket_key . "\n" );
+    return $ticket_key;
 }
 
 =head2 post_request
@@ -473,34 +463,6 @@ sub post_request {
     return $response;
 }
 
-=head2 check_for_duplicate
-
-  Arg[1]      : Hashref $ticket - holds the data for the ticket which is about
-                to be submitted
-  Arg[2]      : Hashref $existing_tickets - holds the data for all tickets that
-                already exist on the JIRA server for the current EnsEMBL release
-  Example     : my $duplicate = check_for_duplicate($ticket, $existing_tickets);
-  Description : Checks whether the ticket which is about to be submitted exists
-                already on the JIRA server and returns the relevant key if this
-                is true
-  Return type : String
-  Exceptions  : none
-
-=cut
-
-sub check_for_duplicate {
-    my ( $ticket, $existing_tickets ) = @_;
-    my $duplicate;
-
-    for my $existing_ticket ( @{ $existing_tickets->{issues} } ) {
-        if ( $ticket->{summary} eq $existing_ticket->{fields}->{summary} ) {
-            $duplicate = $existing_ticket->{key};
-            last;
-        }
-    }
-
-    return $duplicate;
-}
 
 sub usage {
     print <<EOF;
