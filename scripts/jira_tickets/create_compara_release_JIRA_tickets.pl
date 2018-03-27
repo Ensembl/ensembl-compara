@@ -101,7 +101,7 @@ sub main {
     $fixVersion =~ s/ /\\u0020/g;
     my $existing_tickets_response
         = post_request( 'rest/api/latest/search',
-        { "jql" => sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $fixVersion) },
+        { "maxResults" => 300, "jql" => sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $fixVersion) },
         $parameters, $logger );
     my $existing_tickets
         = decode_json( $existing_tickets_response->content() );
