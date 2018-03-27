@@ -320,11 +320,8 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
 
 sub fetch_all_by_dbID_list {
 	my ($self, $constrained_element_ids) = @_;
-	if(defined($constrained_element_ids)) {
-		throw("Arg-1 needs to be a listref of dbIDs") unless (
-			ref($constrained_element_ids) eq "ARRAY");
-	}
-	my @constrained_elements;
+
+	assert_ref($constrained_element_ids, 'ARRAY', 'constrained_element_ids');
 	my $sql = qq{
 		WHERE
 		ce.constrained_element_id = ?

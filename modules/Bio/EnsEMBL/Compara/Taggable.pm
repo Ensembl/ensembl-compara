@@ -47,6 +47,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
+use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 =head2 add_tag
 
@@ -364,7 +365,7 @@ sub set_tagvalue_hash {
     my $self = shift;
     my $tags = shift;
 
-    throw("Must give a reference hash in set_tagvalue_hash()") unless ref($tags) and (ref($tags) eq 'HASH');
+    assert_ref($tags, 'HASH', 'tags');
     $self->{'_tags'} = $tags;
 }
 
