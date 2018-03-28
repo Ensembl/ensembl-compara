@@ -649,8 +649,7 @@ sub _print {    ## DEPRECATED
 =head2 toString
 
   Example    : print $conservation_score->toString();
-  Description: used for debugging, returns a string with the key descriptive
-               elements of this conservation score
+  Description: Returns a description of this object as a string
   Returntype : none
   Exceptions : none
   Caller     : general

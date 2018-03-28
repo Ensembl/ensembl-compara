@@ -349,8 +349,7 @@ sub genome_db {
 =head2 toString
 
   Example    : print $member->toString();
-  Description: used for debugging, returns a string with the key descriptive
-               elements of this member
+  Description: Returns a description of this object as a string
   Returntype : none
   Exceptions : none
   Caller     : general

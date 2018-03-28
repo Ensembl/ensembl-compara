@@ -87,8 +87,7 @@ sub consensus {
 =head2 toString
 
   Example    : print $hmm_profile->toString();
-  Description: used for debugging, returns a string with the key descriptive
-               elements of this HMM profile
+  Description: Returns a description of this object as a string
   Returntype : none
   Exceptions : none
   Caller     : general

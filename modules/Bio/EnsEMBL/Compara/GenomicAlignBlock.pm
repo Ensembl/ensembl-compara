@@ -1505,8 +1505,7 @@ sub _print {    ## DEPRECATED
 =head2 toString
 
   Example    : print $genomic_align_block->toString();
-  Description: used for debugging, returns a string with the key descriptive
-               elements of this alignment block
+  Description: Returns a description of this object as a string
   Returntype : none
   Exceptions : none
   Caller     : general
