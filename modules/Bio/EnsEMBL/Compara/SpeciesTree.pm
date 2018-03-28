@@ -146,6 +146,26 @@ sub label {
 }
 
 
+=head2 toString
+
+  Example     : $member_set->toString();
+  Description : Returns a description of this object as a string
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    return sprintf('SpeciesTree dbID=%s "%s" on "%s" MLSS',
+        $self->dbID || '?',
+        $self->label,
+        $self->adaptor ? $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->method_link_species_set_id)->name : $self->method_link_species_set_id,
+    );
+}
+
+
 sub root {
     my ($self, $node) = @_;
 
