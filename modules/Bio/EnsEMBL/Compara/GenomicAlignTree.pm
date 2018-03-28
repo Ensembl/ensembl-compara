@@ -815,6 +815,21 @@ sub print {
 }
 
 
+=head2 _toString
+
+  Description : Helper method for NestedSet::toString and NestedSet::string_node that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+    return $self->genomic_align_group ? $self->genomic_align_group->toString : $self->SUPER::_toString(@_);
+}
+
+
 =head2 get_all_nodes_from_leaves_to_this
 
   Arg[1]      : Bio::EnsEMBL::Compara::GenomicAlignTree $all_nodes
