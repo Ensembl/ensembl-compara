@@ -778,6 +778,24 @@ sub release_tree {
 }
 
 
+=head2 _toString
+
+  Description : Helper method for MemberSet::toString that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+    return sprintf('GeneTree(%s %s in %s clusterset)',
+        $self->member_type,
+        $self->tree_type,
+        $self->clusterset_id,
+    );
+}
+
 
 ##########################
 # GeneTreeNode interface #

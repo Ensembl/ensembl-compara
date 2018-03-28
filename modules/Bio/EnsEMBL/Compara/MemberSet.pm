@@ -797,4 +797,41 @@ sub has_species_by_name {
 }
 
 
+=head2 toString
+
+  Example     : $member_set->toString();
+  Description : Returns a description of this object as a string
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $str = $self->_toString;
+    $str .= sprintf(' dbID=%s', $self->dbID || '?');
+    $str .= sprintf(' stable_id=%s%s', $self->stable_id, ($self->version ? '.'.$self->version : '')) if $self->stable_id;
+    $str .= sprintf(' description=%s', $self->description) if $self->description;
+    $str .= sprintf(' with %d members', scalar(@{$self->get_all_Members}));
+    return $str;
+}
+
+
+=head2 _toString
+
+  Description : Helper method for toString that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+    my $object_type = ref($self);
+    $object_type =~ s/^.*:://;
+    return $object_type;
+}
+
 1;

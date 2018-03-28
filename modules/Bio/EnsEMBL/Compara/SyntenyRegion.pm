@@ -186,4 +186,29 @@ sub _regions {
   return $obj->{'regions'};
 }
 
+
+=head2 toString
+
+  Example     : $synteny_region->toString();
+  Description : Returns a description of this object as a string
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    my $regions = $self->get_all_DnaFragRegions;
+    my $str = sprintf('SyntenyRegion dbID=%s', $self->dbID || '?');
+    if (!$regions) {
+        return $str;
+    } elsif (scalar(@$regions) == 2) {
+        return sprintf('%s between %s and %s', $str, $regions->[0]->toString, $regions->[1]->toString);
+    } else {
+        return sprintf('%s between %d regions', $str, scalar(@$regions));
+    }
+}
+
+
 1;

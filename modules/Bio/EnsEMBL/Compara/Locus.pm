@@ -407,4 +407,25 @@ sub genome_db {
 }
 
 
+=head2 toString
+
+  Example     : $locus->toString();
+  Description : Returns a description of this object as a string
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    return sprintf('%s:%s:%s-%s%s',
+        $self->dnafrag->genome_db->name,
+        $self->dnafrag->name,
+        $self->dnafrag_start,
+        $self->dnafrag_end,
+        $self->dnafrag_strand < 0 ? '(-1)' : '',
+    );
+}
+
 1;

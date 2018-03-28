@@ -546,5 +546,26 @@ sub display_id {
 }
 
 
+=head2 toString
+
+  Example     : $dnafrag->toString();
+  Description : Returns a description of this object as a string
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    return sprintf('DnaFrag %s:%s (%s) dbID=%s',
+        $self->genome_db->name,
+        $self->name,
+        $self->coord_system_name,
+        $self->dbID || '?',
+    );
+}
+
+
 1;
 

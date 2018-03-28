@@ -952,5 +952,22 @@ sub update_alignment_stats {
 }
 
 
+=head2 _toString
+
+  Description : Helper method for MemberSet::toString that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+    my $str = $self->SUPER::_toString();
+    my $extra = $self->aln_method || '';
+    $extra .= 'on '.$self->seq_type if $self->seq_type;
+    $str .= "($extra)" if $extra;
+    return $str;
+}
 
 1;

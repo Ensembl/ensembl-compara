@@ -736,6 +736,7 @@ sub toString {
     $str .= ' score='.$self->score if defined $self->score;
     $str .= ' p_value='.$self->p_value if defined $self->p_value;
     my $dnafrag = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->reference_dnafrag_id);
+    # If only ConstrainedElement could be a Locus
     $str .= sprintf(' %s:%d-%d%s', $dnafrag->name, $self->seq_region_start, $self->seq_region_end, ($self->strand < 0 ? '(-1)' : ''));
     return $str;
 }
