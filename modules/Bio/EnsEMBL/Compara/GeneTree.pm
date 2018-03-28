@@ -270,6 +270,22 @@ sub root_id {
     return $self->{'_root_id'};
 }
 
+
+=head2 dbID
+
+  Description : Alias of root_id, i.e. Getter for the root_id of the root node of the tree.
+  Returntype  : Integer
+  Example     : my $root_node_id = $tree->dbID();
+  Caller      : General
+
+=cut
+
+sub dbID {
+    my $self = shift;
+    return $self->root_id(@_);
+}
+
+
 =head2 gene_align_id
 
   Description : Getter/Setter for the gene_align_id field. This field would map
