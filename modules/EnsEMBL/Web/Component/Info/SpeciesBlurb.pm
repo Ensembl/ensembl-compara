@@ -50,8 +50,8 @@ sub content {
   $side_menu
 <div class="column-wrapper">  
   <div class="column-one">
-    <div class="column-padding no-left-margin">
-      <a href="$path"><img src="/i/species/48/$species.png" class="species-img float-left" alt="" /></a>
+    <div class="column-padding no-left-margin species-box">
+      <a href="$path"><img class="badge-48" src="/i/species/$species.png" class="species-img float-left" alt="" /></a>
       <h1 class="no-bottom-margin">$common_name assembly and gene annotation</h1>
     </div>
   </div>

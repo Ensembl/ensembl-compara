@@ -96,7 +96,7 @@ sub render {
   }
 
   ## Display all the species in data table
-  my $html = "<h3>Available genomes</h3>";
+  my $html = '<h3 class="clear-left">Available genomes</h3>';
 
   if ($species_defs->ENSEMBL_SERVERNAME eq 'grch37.ensembl.org') {
     ## Hardcode this because the version is actually updated when the site is upgraded
