@@ -131,9 +131,10 @@ sub content {
   my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
   my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => 'Image', gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
+  my $html                 = '<input type="hidden" class="panel_type" value="ComparaTree" />';
   my (%hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id);
 
-  my $html                 = sprintf '<h3>GeneTree%s</h3>%s', $link, $self->new_twocol(
+  $html                 .= sprintf '<h3>GeneTree%s</h3>%s', $link, $self->new_twocol(
     ['Number of genes',             scalar(@$leaves)                                                  ],
     ['Number of speciation nodes',  $self->get_num_nodes_with_tag($tree, 'node_type', 'speciation')   ],
     ['Number of duplication',       $self->get_num_nodes_with_tag($tree, 'node_type', 'duplication')  ],

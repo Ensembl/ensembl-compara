@@ -87,7 +87,7 @@ sub _init {
           {'clade' => $clade, 'colour' => $colour};
     }
   }
-  
+
   # Create a sorted list of tree nodes sorted by rank then id
   my @nodes = ( sort { ($a->{_rank} <=> $b->{_rank}) * 10  
                            + ( $a->{_id} <=> $b->{_id}) } 
@@ -151,7 +151,7 @@ sub _init {
   my @labels;
   my $node_href;
   my $border_colour;
-#use Data::Dumper; warn Dumper(@nodes);
+
   foreach my $f (@nodes) {
      # Ensure connector enters at base of node glyph
     my $parent_node = $Nodes{$f->{_parent}} || {x=>0};
@@ -183,11 +183,10 @@ sub _init {
       $node_colour = '#FE9929' if($f->{_n_members} >= 11 && $f->{_n_members} <= 15);
       $node_colour = '#EC7014' if($f->{_n_members} >= 16 && $f->{_n_members} <= 20);
       $node_colour = '#CC4C02' if($f->{_n_members} >= 21 && $f->{_n_members} <= 25);
-      $node_colour = '#8C2D04' if($f->{_n_members} >= 25);     
-      
+      $node_colour = '#8C2D04' if($f->{_n_members} >= 25);
     }
 
-    if ($f->{label}) {
+    if ( $f->{label} && $f->{label} !~ m/homologs/ ) {
       if( $f->{_genes}->{$other_gene} ){
         $bold = 1;
         $label_colour = "ff6666";
@@ -204,6 +203,7 @@ sub _init {
         $bold = defined($other_genome_db_id);
       }
     }
+
     if ($f->{_fg_colour}) {
       # Use this foreground colour for this node if not already set
       $node_colour = $f->{_fg_colour} if (!$node_colour);
