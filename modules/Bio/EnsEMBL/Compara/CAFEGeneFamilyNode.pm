@@ -73,7 +73,7 @@ sub cafe_gene_family_id {
 =head2 n_members
 
     Arg[1]      : (opt.) <int>
-    Example     : my $n_members = $tree->n_memberse
+    Example     : my $n_members = $tree->n_members
     Description : Getter/Setter for the number of members in the node
                   (gene counts for leaves and CAFE-estimated counts for internal nodes)
     ReturnType  : scalar
@@ -197,6 +197,27 @@ sub lca_reroot {
         }
     }
     $self->throw("LCA node not found in the tree");
+}
+
+
+=head2 _toString
+
+  Description : Helper method for NestedSet::toString and NestedSet::string_node that provides class-specific information
+  Returntype  : String
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _toString {
+    my $self = shift;
+
+    return sprintf('%d members (pvalue=%s)%s%s',
+        $self->n_members,
+        $self->pvalue || 'N/A',
+        $self->is_node_significant ? ' significant' : '',
+        $self->is_expansion ? ' expansion' : $self->is_contraction ? ' contraction' : '',
+    );
 }
 
 

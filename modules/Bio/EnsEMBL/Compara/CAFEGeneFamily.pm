@@ -315,4 +315,24 @@ sub get_expansions {
 }
 
 
+=head2 toString
+
+  Example     : $member_set->toString();
+  Description : Returns a description of this object as a string
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub toString {
+    my $self = shift;
+    return sprintf('CAFEGeneFamily dbID=%s on gene_tree_root_id=%d. pvalue_avg=%s',
+        $self->cafe_gene_family_id|| '?',
+        $self->gene_tree_root_id,
+        $self->pvalue_avg,
+    );
+}
+
+
 1;
