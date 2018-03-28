@@ -16,12 +16,6 @@
 * `GenomicAlignBlock::_print()`
 * `ConservationScore::_print()`
 
-
-## DnaFrag methods, to be removed in Ensembl 91
-
-* `DnaFrag::isMT()`
-* `DnaFrag::dna_type()`
-
 ## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 94
 
 * `Taggable::get_value_for_XXX()`
@@ -37,6 +31,8 @@
 
 ## Ensembl 93
 
+* `DnaFrag::isMT()`
+* `DnaFrag::dna_type()`
 * `MethodLinkSpeciesSet::species_set_obj()`
 
 ## Ensembl 92

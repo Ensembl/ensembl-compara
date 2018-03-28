@@ -546,20 +546,5 @@ sub display_id {
 }
 
 
-sub isMT {  ## DEPRECATED
-    my ($self) = @_;
-    deprecate("DnaFrag::isMT() is deprecated and will be removed in Ensembl 91. Please check cellular_component() instead\n");
-    return $self->cellular_component eq 'MT';
-}
-
-
-sub dna_type {  ## DEPRECATED
-    my $self = shift;
-    deprecate("DnaFrag::dna_type() is deprecated and will be removed in Ensembl 91. Please use cellular_component() instead\n");
-    return $self->cellular_component(@_);
-}
-
-
 1;
-
 
