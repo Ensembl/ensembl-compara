@@ -167,11 +167,12 @@ package Bio::EnsEMBL::Compara::GenomicAlign;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Mapper;
 
 use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
@@ -1044,8 +1045,6 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$genomic_align->_print() is deprecated and will be removed in e88. Use $genomic_align->toString() instead.');
-
   my $verbose = verbose;
   verbose(0);
   
@@ -1107,32 +1106,16 @@ sub _print {    ## DEPRECATED
 
 sub toString {
     my $self = shift;
-    # my $str = 'GenomicAlign';
-    # if ($self->original_dbID) {
-    #     $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID);
-    # } else {
-    #     $str .= sprintf(' dbID=%s (block_id=%d)', $self->dbID, $self->genomic_align_block_id);
-    # }
-    # $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
-    # $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
-    # return $str;
-
-    my $str = "Bio::EnsEMBL::Compara::GenomicAlign object ($self)
-        dbID = ".($self->dbID or "-undef-")."
-        adaptor = ".($self->adaptor or "-undef-")."
-        genomic_align_block = ".($self->genomic_align_block or "-undef-")."
-        genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
-        method_link_species_set = ".($self->method_link_species_set or "-undef-")."
-        method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
-        dnafrag_start = ".($self->dnafrag_start or "-undef-")."
-        dnafrag_end = ".($self->dnafrag_end or "-undef-")."
-        dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
-        dnafrag_name = ".($self->dnafrag->name)."
-        genome_db_name = ".($self->dnafrag->genome_db->name)."
-        cigar_line = ".($self->cigar_line or "-undef-")."
-        visible = ".($self->visible or "-undef-")."
-        original_sequence = ".($self->original_sequence or "-undef-")."
-        aligned_sequence = ".($self->aligned_sequence or "-undef-")."\n";
+    my $str = 'GenomicAlign';
+    if ($self->original_dbID) {
+        $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID);
+    } else {
+        $str .= sprintf(' dbID=%s (block_id=%d)', $self->dbID, $self->genomic_align_block_id);
+    }
+    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
+    my %cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->cigar_line);
+    $str .= ' cigar_line:' . join(',', map {$cigar_breakout{$_}.'*'.$_} sort keys %cigar_breakout);
     return $str;
 }
 

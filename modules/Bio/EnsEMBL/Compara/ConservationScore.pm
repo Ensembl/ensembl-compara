@@ -87,7 +87,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(warning throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(warning throw);
 
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
@@ -620,8 +620,6 @@ sub _reverse_score {
 
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
-
-  deprecate('$conservation_score->_print() is deprecated and will be removed in e88. Use $conservation_score->toString() instead.');
 
 #  my $verbose = verbose;
 #  verbose(0);

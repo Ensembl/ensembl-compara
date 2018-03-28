@@ -10,12 +10,6 @@
 
 # Deprecated methods scheduled for deletion
 
-## Methods removed in favour of toString() in Ensembl 88
-
-* `GenomicAlign::_print()`
-* `GenomicAlignBlock::_print()`
-* `ConservationScore::_print()`
-
 ## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 94
 
 * `Taggable::get_value_for_XXX()`

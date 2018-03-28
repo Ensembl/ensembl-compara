@@ -160,7 +160,7 @@ use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
@@ -1467,8 +1467,6 @@ sub get_GenomicAlignTree {
 sub _print {    ## DEPRECATED
   my ($self, $FILEH) = @_;
 
-  deprecate('$genomic_align_block->_print() is deprecated and will be removed in e88. Use $genomic_align_block->toString() instead.');
-
   $FILEH ||= \*STDOUT;
   print $FILEH
 "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
@@ -1515,46 +1513,17 @@ sub _print {    ## DEPRECATED
 sub toString {
     my $self = shift;
 
-    my $str = "Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
-      dbID = " . ($self->dbID or "-undef-") . "
-      adaptor = " . ($self->adaptor or "-undef-") . "
-      method_link_species_set = " . ($self->method_link_species_set or "-undef-") . "
-      method_link_species_set_id = " . ($self->method_link_species_set_id or "-undef-") . "
-      genomic_aligns = " . (scalar(@{$self->genomic_align_array}) or "-undef-") . "
-      score = " . ($self->score or "-undef-") . "
-      length = " . ($self->length or "-undef-") . "
-      alignments: \n";
-
-    foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
-        my $species_name = $this_genomic_align->genome_db->name;
-        my $slice = $this_genomic_align->dnafrag->slice;
-
-        $slice = $slice->sub_Slice(
-                  $this_genomic_align->dnafrag_start,
-                  $this_genomic_align->dnafrag_end,
-                  $this_genomic_align->dnafrag_strand
-              );
-
-        if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
-          $str .= "    * " . $this_genomic_align->genome_db->name . " " . ($slice?$slice->name:"--error--") . "\n";
-        } else {
-          $str .= "    - " . $this_genomic_align->genome_db->name . " " . ($slice?$slice->name:"--error--") . "\n";
-        }
+    my $str = 'GenomicAlignBlock';
+    if ($self->original_dbID) {
+        $str .= sprintf(' restricted from dbID=%s', $self->original_dbID);
+    } else {
+        $str .= sprintf(' dbID=%s', $self->dbID);
     }
-
+    $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
+    $str .= ' score='.$self->score if defined $self->score;
+    $str .= ' length='.$self->length if defined $self->length;
+    $str .= ' with ' . scalar(@{$self->genomic_align_array}) . ' GenomicAligns';
     return $str;
-    # my $self = shift;
-    # my $str = 'GenomicAlignBlock';
-    # if ($self->original_dbID) {
-    #     $str .= sprintf(' restricted from dbID=%s', $self->original_dbID);
-    # } else {
-    #     $str .= sprintf(' dbID=%s', $self->dbID);
-    # }
-    # $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
-    # $str .= ' score='.$self->score if defined $self->score;
-    # $str .= ' length='.$self->length if defined $self->length;
-    # $str .= ' with ' . scalar(@{$self->genomic_align_array}) . ' GenomicAligns';
-    # return $str;
 }
 
 
