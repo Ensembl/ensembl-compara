@@ -67,7 +67,7 @@ CREATE TABLE `share_url` (
   `data` text NOT NULL,
   `share_type` varchar(10) NOT NULL,
   `used` int(10) NOT NULL DEFAULT '0',
-  `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `created_at` timestamp,
   PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
