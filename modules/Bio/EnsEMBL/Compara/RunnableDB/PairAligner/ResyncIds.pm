@@ -27,7 +27,30 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ResyncIds
 
 =head1 DESCRIPTION
 
-This module rewrite the genomic_align(_block) entries so that the dbIDs are in the range of method_link_species_set_id * 10**10
+This module rewrites the dnafrag_id and (method_link_)species_set_id when
+the production database is out of sync with the master database.
+
+It requires four parameters:
+
+=over
+
+=item master_db
+
+The master database
+
+=item compara_db
+
+The LastZ database
+
+=item mlss_id
+
+The correct method_link_species_set_id (must be present in the master database)
+
+=item out_of_sync_mlss_id
+
+The wrong method_link_species_set_id (used in the LastZ database)
+
+=back
 
 =head1 CONTACT
 
