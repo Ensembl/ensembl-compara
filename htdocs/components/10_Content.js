@@ -20,7 +20,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.base();
     
     this.xhr = false;
-
+    
     var fnEls = {
       ajaxLoad:         $('.ajax', this.el),
       hideHints:        $('.hint', this.el),
@@ -41,8 +41,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       $.extend(fnEls.ajaxLoad, this.el);
     }
     
-    $.extend(this.elLk, fnEls);    
-    
+    $.extend(this.elLk, fnEls);
+
+    this.toggleable();  
     $(this).afterimage();
 
     for (var fn in fnEls) {
@@ -208,7 +209,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   toggleable: function () {
     var panel     = this;
     var toTrigger = {};
-
+    
     $('a.toggle, .ajax_add', this.el).on('click', function (e) {
       
       e.preventDefault();

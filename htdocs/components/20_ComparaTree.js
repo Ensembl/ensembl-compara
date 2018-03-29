@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-Ensembl.Panel.ComparaTree = Ensembl.Panel.Content.extend({
+Ensembl.Panel.ComparaTree = Ensembl.Panel.ImageMap.extend({
   init: function () {
-    this.base();
+    this.base.apply(this, arguments);
 
     this.elLk.highlightLink = this.el.find('.switch_highlighting');
 
@@ -30,7 +30,6 @@ Ensembl.Panel.ComparaTree = Ensembl.Panel.Content.extend({
 
       // the page is reloaded after clicked on the switching link and the cookie value is inversed
       // might need to find a better way to do this
-      // location.href = location.href;
       Ensembl.LayoutManager.reloadPage();
     });
   }
