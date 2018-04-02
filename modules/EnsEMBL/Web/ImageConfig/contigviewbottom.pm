@@ -90,6 +90,11 @@ sub update_from_url {
       $attach = 1;
       ($url, $renderer) = split /=/, $v;
     }
+    else {
+      if ($v =~/^http|^ftp/) {
+        $url = $v;
+      }
+    }
 
     if ($attach) {
       ## Backwards compatibility with 'contigviewbottom=url:http...'-type parameters
