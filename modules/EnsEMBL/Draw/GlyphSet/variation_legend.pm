@@ -43,6 +43,7 @@ sub _init {
   $self->init_legend();
 
   foreach (sort { $labels{$a}[0] <=> $labels{$b}[0] } keys %$features) {
+    next unless $labels{$_}[1];
     $self->add_to_legend({
       legend => $labels{$_}[1],
       colour => $features->{$_},
