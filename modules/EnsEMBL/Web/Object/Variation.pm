@@ -1245,8 +1245,9 @@ sub variation_feature_mapping { ## used for snpview
 
 sub selected_variation_feature_mapping {
   my $self = shift;
+  my $recalculate = shift;
 
-  my $mappings = $self->variation_feature_mapping;
+  my $mappings = $self->variation_feature_mapping($recalculate);
   my $param = $self->param('vf');
 
   return $param ? $mappings->{$param} : {};
