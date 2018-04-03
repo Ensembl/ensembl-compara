@@ -234,7 +234,7 @@ sub _create_exon_structure {
           $exon->{'utr_5'} = $coding_start;
         }
         if ($coding_end < $e->{'end'}) {
-          $exon->{'utr_3'} = $coding_end;
+          $exon->{'utr_3'} = $coding_end - 1;
         }
       }
     }
