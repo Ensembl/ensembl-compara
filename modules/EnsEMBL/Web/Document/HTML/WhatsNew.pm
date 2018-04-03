@@ -30,7 +30,7 @@ use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
-use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file/;
+use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file write_file/;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -169,7 +169,7 @@ sub read_rss_file {
   my $items = [];
   my $args = {'no_exception' => 1};
 
-  if (file_exists($rss_path, $args)) {
+  if (file_exists($rss_path, $args) && -M $rss_path < 1) {
     my $content = read_file($rss_path, $args);
     if ($content) {
       ## Does this feed work best with XML::Atom or XML:RSS? 
@@ -179,13 +179,13 @@ sub read_rss_file {
   }
   else {
     ## Fall back to fetching feed if no file cached
-    $items = $self->get_rss_feed($hub, $rss_url, $limit);
+    $items = $self->get_rss_feed($hub, $rss_url, $rss_path, $limit);
   }
   return $items;
 }
 
 sub get_rss_feed {
-  my ($self, $hub, $rss_url, $limit) = @_;
+  my ($self, $hub, $rss_url, $output_path, $limit) = @_;
   if (!$hub || !$rss_url) {
     return [];
   }
@@ -201,6 +201,8 @@ sub get_rss_feed {
   if ($response->is_success) {
     ## Does this feed work best with XML::Atom or XML:RSS? 
     my $rss_type = $rss_url =~ /atom/ ? 'atom' : 'rss';
+    ## Write content to tmp directory in case server has no cron job to fetch it
+    my $error = write_file($output_path, {'content' => $response->decoded_content, 'nice' => 1});
     $items = $self->process_xml($rss_type, $response->decoded_content, $limit);
   }
   else {
