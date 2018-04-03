@@ -39,11 +39,10 @@ sub new {
   if ($species_defs) {
     ## Optionally, add drawing code colours from Ensembl "stylesheet"
     my %ensembl_colours = qw(
-      CONTRAST_BORDER   background0
-      CONTRAST_BG       background3
-
+      IMAGE_BG0         background0
       IMAGE_BG1         background1
       IMAGE_BG2         background2
+      IMAGE_BG3         background3
 
       CONTIGBLUE1       contigblue1
       CONTIGBLUE2       contigblue2
