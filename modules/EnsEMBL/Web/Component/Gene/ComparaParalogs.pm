@@ -96,6 +96,9 @@ sub content {
       
       my $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>} . join '<br />', @external;
 
+      my @seq_region_split_array = split(/:/, $paralogue->{'location'});
+      my $paralogue_seq_region = $seq_region_split_array[0];
+
       my $links = ($availability->{'has_pairwise_alignments'}) ?
         sprintf (
         '<ul class="compact"><li class="first"><a href="%s" class="notext">Region Comparison</a></li>',
@@ -103,7 +106,7 @@ sub content {
           type   => 'Location',
           action => 'Multi',
           g1     => $stable_id,
-          s1     => $spp . '--' . $self->object->seq_region_name,
+          s1     => $spp . '--' . $paralogue_seq_region,
           r      => undef,
           config => 'opt_join_genes_bottom=on',
         })
