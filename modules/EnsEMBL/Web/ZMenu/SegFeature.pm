@@ -133,7 +133,6 @@ sub _types_by_colour {
     my $hexcol = lc $colourmap->hex_by_name($raw_col);
     $lookup->{$hexcol} = $colours->{$col}{'text'};
   }
-  use Data::Dumper; warn Dumper($lookup);
   return $lookup;
 }
 
