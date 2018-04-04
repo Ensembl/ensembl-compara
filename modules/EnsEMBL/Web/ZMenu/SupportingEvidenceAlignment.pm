@@ -34,9 +34,14 @@ sub content {
   if ($hit_db =~ /^Uniprot/){
     $link_name =~ s/(\w*)\.\d+/$1/;
   }
+  ## And ENA adds version numbers that aren't used in URL
+  if ($hit_db eq 'EMBL') {
+    $link_name =~ s/#\w+//;
+  }
 
   my $hit_length = $hub->param('hit_length');
   my $hit_url    = $hub->get_ExtURL_link($link_name, $hit_db, $link_name);
+
   my $tsid       = $hub->param('t_version') ? $hub->param('t').".".$hub->param('t_version') : $hub->param('t');
   my $esid       = $hub->param('exon');
 
