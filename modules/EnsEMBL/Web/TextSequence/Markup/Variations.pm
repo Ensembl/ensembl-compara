@@ -21,6 +21,7 @@ package EnsEMBL::Web::TextSequence::Markup::Variations;
 
 use strict;
 use warnings;
+no warnings qw(uninitialized);
 
 use parent qw(EnsEMBL::Web::TextSequence::Markup);
 

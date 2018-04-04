@@ -897,9 +897,6 @@ sub check_for_missing_species {
     $title .= ' and ';
   }
 
-  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-  warn Dumper($missing_hash);
-
   my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
