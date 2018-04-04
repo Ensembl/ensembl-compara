@@ -27,6 +27,8 @@ use base qw(EnsEMBL::Web::ConfigPacker_base);
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
+use JSON qw(from_json);
+
 sub munge {
   my ($self, $func) = @_;
   
