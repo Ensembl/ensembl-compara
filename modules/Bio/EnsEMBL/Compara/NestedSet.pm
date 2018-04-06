@@ -425,7 +425,7 @@ sub traverse_tree {
 
   Overview   : returns a sorted list of NestedSet nodes directly under this parent node
                sort so that internal nodes<leaves and then on distance
-  Example    : my @kids = @{$object->ordered_children()};
+  Example    : my @kids = @{$object->sorted_children()};
   Returntype : array reference of Bio::EnsEMBL::Compara::NestedSet objects (could be empty)
   Exceptions : none
   Caller     : general
