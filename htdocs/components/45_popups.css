@@ -90,6 +90,7 @@ body.ie6 .floating_popup .spinner      { background-color: [[MAIN_V_LIGHT]]; bor
 
 .zmenu .loc-icon-a:hover .loc-icon,
 .zmenu .loc-icon:hover                 { background-color: [[MAIN_V_DARK]]; border: 2px solid [[MAIN_V_DARK]]; }
+.zmenu .refresh-zmenu                  { cursor: pointer; }
 
 body.ie  .zmenu_holder .grid           { width: 200px; }
 body.ie  .zmenu_holder div.header      { width: 202px; }

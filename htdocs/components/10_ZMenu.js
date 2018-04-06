@@ -146,6 +146,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     });
     
     this.getContent();
+
+    // Refresh zmenu on click for timeouts
+    $('.refresh-zmenu', this.el).on('click', function() {
+      $(this).closest('tbody').hide();
+      panel.elLk.loading.show();
+      panel.populateAjax(panel.href, $(this).parents('tbody'), 1);
+      return false;
+    })
   },
   
   getContent: function () {
@@ -194,11 +202,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.elLk.container.find('._mr_remove').off().on('click', function(e) { Ensembl.markLocation(false); panel.hide(); });
   },
 
-  populate: function (link, extra) {
+  populate: function (link, extra, error) {
     var menu    = this.title.toString().split('; ');
     var caption = menu.shift();
     
-    this.buildMenu(menu, caption, link, extra, true);
+    this.buildMenu(menu, caption, link, extra, true, error);
   },
   
   populateDas: function () {
@@ -272,6 +280,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var timeout = this.timeout;
         url     = url || this.href;
 
+    var force = false;
+    var ajaxError = true;
+
     url = this.convertQuickUrl(url);
     if (url && url.match('/ZMenu/')) {
       $.extend($.ajax({
@@ -280,7 +291,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
         dataType: this.crossOrigin ? 'jsonp' : 'json',
         context:  this,
         success:  $.proxy(this.buildMenuAjax,  this),
-        error:    $.proxy(this.populateNoAjax, this)
+        error:    $.proxy(this.populateNoAjax, this, force, ajaxError)
       }), { timeout: timeout, expand: expand });
     } else {
       this.populateNoAjax();
@@ -292,7 +303,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var length    = features.length;
     var cols      = Math.min(length, 5);
     var div, feature, i, j, body, subheader, row;
-    
+
     if (jqXHR.timeout !== this.timeout) {
       return;
     } else if (length === 0) {
@@ -361,7 +372,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
   },
 
-  populateNoAjax: function (force) {
+  populateNoAjax: function (force, error) {
     if (this.das && force !== true) {
       this.populated = true;
       this.show();
@@ -380,8 +391,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       extra += this.row(' ', '<a class="loc-icon-a _location_change" href="' + this.zoomURL(1) + '"><span class="loc-icon loc-pin"></span>Centre on feature</a>');
       extra += this.row(' ', '<a class="loc-icon-a _location_change" href="' + this.baseURL.replace(/%s/, loc[1]) + '"><span class="loc-icon loc-zoom"></span>Zoom to feature</a>');
     }
-    
-    this.populate(true, extra);
+
+    this.populate(true, extra, error);
   },
   
   populateRegion: function () {
@@ -559,19 +570,23 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.buildMenu(menu, caption);
   },
 
-  buildMenu: function (content, caption, link, extra, decodeHTML) {
+  buildMenu: function (content, caption, link, extra, decodeHTML, error) {
     var body = [];
     var i    = content.length;
     var menu, title, parse, j, row;
     
-    caption = caption || 'Menu';
+    caption = caption || (error ? 'Message' : 'Menu');
     extra   = extra   || '';
-    
-    if (link === true && this.href) {
+
+    if (error === true) {
+      extra = this.row('<p>Still loading data... <a class="refresh-zmenu"> Please click here to refresh </a> this menu. </p> <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.</p>') + extra;
+    }
+    else if (link === true && this.href) {
       title = this.title ? this.title.split('; ')[0] : caption;
       extra = this.row('Link', '<a href="' + this.href + '">' + title + '</a>') + extra;
     }
-    
+
+
     while (i--) {
       parse = this.coloured ? content[i].match(/\[(.+)\]/) : null;
       
