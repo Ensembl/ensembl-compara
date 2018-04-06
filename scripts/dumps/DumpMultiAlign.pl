@@ -1002,7 +1002,7 @@ sub print_my_maf {
   my ($genomic_align_block) = @_;
 
   print "a";
-  print "# id: ", $genomic_align_block->dbID, "\n"
+  print "# id: ", $genomic_align_block->dbID, "\n";
   if (UNIVERSAL::isa($genomic_align_block, "Bio::EnsEMBL::Compara::GenomicAlignBlock") && defined $genomic_align_block->score) {
     print " score=", $genomic_align_block->score;
   }
