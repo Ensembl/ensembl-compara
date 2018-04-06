@@ -58,7 +58,6 @@ sub run {
 
     #
     #Copy README.{format} to output_dir eg README.emf
-    #Currently there is only a README.emf
     #
     my $from = $INC{"Bio/EnsEMBL/Compara/RunnableDB/DumpMultiAlign/Readme.pm"};
     my $format = $self->param('format');
@@ -67,7 +66,7 @@ sub run {
     my $to = $self->param('output_dir');
     my $cmd = "cp $from $to";
 
-    #Check README file and directory exist (do not for maf)
+    #Check README file and directory exist
     if (-e $from && -e $to) { 
         $self->run_command($cmd, { die_on_failure => 1 });
     }

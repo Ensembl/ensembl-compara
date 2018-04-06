@@ -1,0 +1,72 @@
+#### README ####
+
+Please send comments or questions to http://lists.ensembl.org/mailman/listinfo/dev.
+
+----------------------------------------------
+Multiple Alignment Format (MAF) FLATFILE DUMPS
+----------------------------------------------
+This directory contains Compara MAF flatfile dumps.  To ease
+downloading of the files, an MAF file is created for each chromosome.
+All files are then compacted with GNU Zip for storage efficiency.
+
+----------
+FILE NAMES
+----------
+The files are consistently named following this pattern:
+<species>.<assembly>.<release>.<data type>.<region>.maf.gz
+
+EXAMPLE MAF whole-genome multiple alignment (compara) data file names
+Compara.pecan_7_way.chr13_1.maf.gz
+Compara.pecan_gerp_10_way.chr3_5.maf.gz
+Compara.pecan_gerp_10_way.others_1.maf.gz
+
+-----------
+FILE FORMAT
+-----------
+
+The MAF format specification can be found on the UCSC website: https://genome.ucsc.edu/FAQ/FAQformat.html#format5
+
+We add extra information in the form of comments
+
+a) Description of "composite" sequences
+# epo2x composite sequence: mesocricetus_auratus KB708322.1_11360002442546 is: scaffold:MesAur1.0:KB708322.1:593611:593796:1 + scaffold:MesAur1.0:KB708322.1:594574:595896:1
+
+In EPO_LOW_COVERAGE alignments, we sometimes concatenate the scaffolds of
+some species and consider the result as a single sequence that is aligned
+to the other species. We name these sequences "composite" and we list at
+the top of the section the list of underlying scaffolds they are made of.
+
+b) the tree linking the various sequences (in Newick format)
+# tree: (Hsap_11_134959233_135017027[-]:0.00825809999999999,Ggor_11_135146106_135206808[-]:0.008760400000000002)Aseq_Ancestor_1102_1085092_1_57552[+]:0.007914300000000013;
+
+The node names follow the pattern: "species_chromosome_start_end[strand]",
+with Ensembl-style coordinates, i.e. 1-based regardless of the orientation.
+
+Also note that for EPO alignments, the sequences are listed following an
+in-order traversal of the tree (i.e. child1_subtree, node, child2_subtree),
+whereas the Newick format is basically a post-order traversal of the tree.
+
+c) conservation scores
+# gerp scores: 0.74 0.74 -0.36 -0.33 0.74 -0.45
+
+This is the list of the GERP conservation score computed for each position of the alignment
+
+-------------------
+GENOMIC COORDINATES
+-------------------
+
+The coordinates shown in the "s" lines follow the MAF convention, i.e.:
+> This is a zero-based number. If the strand field is "-" then this is the
+> start relative to the reverse-complemented source sequence
+
+For instance, "Ppan_11_133841373_133858123[+]" (the name of the sequence in
+the tree) corresponds to the sequence header "pan_paniscus.11 133841372 16751 + 134183262":
+ - [it's on the positive strand]
+ - 133841372=133841373-1
+ - 16751=133858123-133841373+1
+"Mspr_9_24484589_24506699[-]" corresponds to "mus_spretus_spreteij.9 101742604 22111 - 126249303":
+ - [it's on the negative strand]
+ - 126249303 is the length of the chromosome
+ - 101742604=126249303-24506699
+ - 22111=24506699-24484589+1 
+
