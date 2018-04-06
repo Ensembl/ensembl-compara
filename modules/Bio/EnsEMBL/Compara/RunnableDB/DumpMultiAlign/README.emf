@@ -1,10 +1,5 @@
 #### README ####
 
-IMPORTANT: Please note you can download correlation data tables,
-supported by Ensembl, via the highly customisable BioMart and
-EnsMart data mining tools. See http://www.ensembl.org/multi/martview or
-http://www.ebi.ac.uk/biomart/ for more information.
-
 Please send comments or questions to http://lists.ensembl.org/mailman/listinfo/dev.
 
 -----------------------------------------
@@ -105,6 +100,7 @@ SEQ Ornithorhynchus_anatinus ENSOANP00000021778 Ultra102 388659 395409 -1 ENSOAN
 
 #Data Block
 #the data lock starts with DATA
+#the columns represent the sequences of the SEQ headers in the same order
 #spaces are optional between columns representing SEQ and SCORE lines
 
 
