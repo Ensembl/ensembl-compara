@@ -858,7 +858,7 @@ sub print_my_emf {
   $all_genomic_aligns = [grep {defined $_} @$all_genomic_aligns];
 
   Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable->iterate_by_dbc($all_genomic_aligns,
-      sub {my $this_genomic_align = shift; return $this_genomic_align->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $this_genomic_align = shift; return $this_genomic_align->genome_db->db_adaptor->dbc;},
       sub {my $this_genomic_align = shift;
 
     #find species_name
