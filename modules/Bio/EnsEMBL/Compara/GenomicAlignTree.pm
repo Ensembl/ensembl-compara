@@ -567,9 +567,8 @@ sub get_all_sorted_genomic_align_nodes {
     $reference_genomic_align_node = $self->reference_genomic_align_node;
   }
 
-  my $children = $self->children;
+  my $children = $self->sorted_children;
   if (@$children >= 1) {
-    $children = [sort _sort_children @$children];
     push(@$sorted_genomic_align_nodes, @{$children->[0]->get_all_sorted_genomic_align_nodes(
             $reference_genomic_align_node)});
     push(@$sorted_genomic_align_nodes, $self);
@@ -808,7 +807,7 @@ sub print {
       print " " x 10, $this_genomic_align->aligned_sequence("+FAKE_SEQ"), "\n";
     }
   }
-  foreach my $node (sort _sort_children @{$self->children}) {
+  foreach my $node (@{$self->sorted_children}) {
     $node->print($level, $reference_genomic_align);
   }
   $level--;
@@ -845,7 +844,7 @@ sub _toString {
 sub get_all_nodes_from_leaves_to_this {
   my $self = shift(@_);
   my $all_nodes = (shift or []);
-  foreach my $node (sort _sort_children @{$self->children}) {
+  foreach my $node (@{$self->sorted_children}) {
     $all_nodes = $node->get_all_nodes_from_leaves_to_this($all_nodes);
   }
   push(@$all_nodes, $self);
@@ -882,29 +881,35 @@ sub get_all_leaves {
 }
 
 
-=head2 sort_children
+=head2 sorted_children
 
-  Arg         : none
-  Example     : sort_children @$children
-  Description : sort the nodes of a Bio::EnsEMBL::Compara::GenomicAlignTree object
-  Returntype  : int (-1,0,1)
-  Exceptions  : none
-  Caller      : general
-  Status      : At risk
+  Overview   : returns a sorted list of the child nodes (according to _cmp_children)
+  Example    : my @children = @{$tree->sorted_children()};
+  Returntype : array reference of Bio::EnsEMBL::Compara::GenomicAlignTree objects (could be empty)
+  Exceptions : none
+  Caller     : general
 
 =cut
 
-sub sort_children {
-  my ($self) = @_;
+sub sorted_children {
+  my $self = shift;
 
-  my @sortedkids = sort _sort_children @{$self->children};
+  my @sortedkids = sort _cmp_children @{$self->children};
   return \@sortedkids;
 }
 
-=head2 _sort_children
+
+sub sort_children { ## DEPRECATED
+  my ($self) = @_;
+
+  deprecate('GenomicAlignTree::sort_children() is deprecated and will be removed in e97. Use sorted_children() instead');
+  return $self->sorted_children;
+}
+
+=head2 _cmp_children
 
   Arg         : none
-  Example     : sort _sort_children @$children
+  Example     : sort _cmp_children @$children
   Description : sort function for sorting the nodes of a Bio::EnsEMBL::Compara::GenomicAlignTree object
   Returntype  : int (-1,0,1)
   Exceptions  : none
@@ -913,7 +918,7 @@ sub sort_children {
 
 =cut
 
-sub _sort_children {
+sub _cmp_children {
   my $reference_genomic_align_node;
 
   if (defined ($a->root) && defined($b->root) && $a->root eq $b->root and $a->root->reference_genomic_align_node) {
@@ -946,7 +951,7 @@ sub _sort_children {
                 name, dnafrag name and the start position
   Returntype  : string 
   Exceptions  : none
-  Caller      : _sort_children
+  Caller      : _cmp_children
   Status      : At risk
 
 =cut
