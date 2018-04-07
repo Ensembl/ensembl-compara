@@ -1319,7 +1319,7 @@ sub annotate_node_type {
     my $leaf_names;
 
     #find the 2 children of a node
-    my $children = $self->sorted_children;
+    my $children = $self->children;
     my $child1 = $children->[0];
     my $child2 = $children->[1];
 
