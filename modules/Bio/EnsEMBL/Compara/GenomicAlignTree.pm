@@ -525,7 +525,7 @@ sub name {
           $genomic_align_group->dnafrag_start."_".$genomic_align_group->dnafrag_end."[".
           (($genomic_align_group->dnafrag_strand eq "-1")?"-":"+")."]";
     } else {
-      $self->{_name} = join("-", map {
+      $self->{_name} = join("-", sort map {
       	my $name = $_->genomic_align_group->genome_db->name;
       	if($name =~ /(.)[^ ]+_(.{3})/) {
       		$name = "$1$2";
