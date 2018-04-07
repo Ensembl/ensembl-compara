@@ -90,6 +90,20 @@ SEQ Canis_familiaris ENSCAFP00000029327 5 66656398 66666500 -1 ENSCAFG0000001980
 SEQ Drosophila_melanogaster CG5439-PA 2L 13177251 13178813 1 CG5439 CG5439
 SEQ Ornithorhynchus_anatinus ENSOANP00000021778 Ultra102 388659 395409 -1 ENSOANG00000013809 NULL
 
+# The SEQ section may list ancestral sequences too, following an
+# in-order traversal of the tree (see the TREE section below)
+
+#In EPO_LOW_COVERAGE alignments, the SEQ header may show a chromosome name of the form Composite_123456789.
+#This indicates that the sequence of the species is actually made of
+#several scaffolds concatenated together
+#In those cases, the SEQ line will be preceded by a comment listing all the
+#scaffolds that make up this "Composite" sequence
+
+# Then may follow a TREE pragma with the Newick-encoded phyogenetic tree
+# linking those sequences.
+TREE (Hsap_11_134959233_135017027[-]:0.00825809999999999,Ggor_11_135146106_135206808[-]:0.008760400000000002)Aseq_Ancestor_1102_1085092_1_57552[+]:0.007914300000000013;
+# The node names follow the pattern: "species_chromosome_start_end[strand]"
+# and match the coordinates found in the SEQ lines
 
 # data lines one per bp based on the sequence coordinates in the Data Header
 # gap character "-"
