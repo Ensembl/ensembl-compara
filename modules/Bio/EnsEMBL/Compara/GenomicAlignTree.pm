@@ -1337,6 +1337,7 @@ sub annotate_node_type {
         my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
         if ($duplications->{$name}) {
             $self->node_type("duplication");
+            last;
         }
     }
 
