@@ -137,11 +137,10 @@ sub content {
       $content .= $html;
     }
   }
-  
+
   foreach my $panel (@{$self->{'panels'}}) {
     $content .= $panel->content;
   }
-  
   $content .= '</form>' if $self->{'form'};
   
   return $content;
@@ -175,7 +174,7 @@ sub get_json {
 sub init {
   my $self       = shift;
   my $controller = shift;
-  
+
   if ($controller->request eq 'ssi') {
     my $page = $controller->page;
     my $html = $controller->content =~ /<body.*?>(.*?)<\/body>/sm ? $1 : $controller->content;
@@ -200,7 +199,6 @@ sub init {
       my $page = $controller->page;
       $page->{'format'} = 'HTML';
       $page->set_doc_type('HTML', '4.01 Trans');
-      
       $self->add_error_panels([ map @$_, values %{$hub->problem} ]);
       $self->add_panel_first($_) for reverse @$errors;
       
@@ -275,16 +273,23 @@ sub add_error_panels {
   
   foreach my $problem (sort { $a->isFatal <=> $b->isFatal } grep !$_->isRedirect, @$problems) {
     my $desc = $problem->description;
+    # This class will stop any further ajax panel calls
+    my $fatalClass = $problem->isFatal ? 'fatal' : '';
     $desc    = "<p>$desc</p>" unless $desc =~ /<p/;
-    
+
+    my $caption = $problem->name;
     $self->add_panel_first(
       EnsEMBL::Web::Document::Panel->new(
         hub     => $self->hub,
-        caption => $problem->name,
         content => qq{
-          $desc
-          $example_html
-          <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.</p>
+          <div class="error left-margin right-margin $fatalClass">
+            <h3>$caption</h3>
+            <div class="error-pad">
+              <p>$desc</p>
+              $example_html
+              <p>If you think this is an error, or you have any questions, please <a href="/Help/Contact" class="popup">contact our HelpDesk team</a>.</p>
+            </div>
+          </div>
         }
       )
     );

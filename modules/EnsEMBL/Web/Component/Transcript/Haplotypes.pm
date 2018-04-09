@@ -48,7 +48,7 @@ sub buttons {
   push @buttons, {
       'url'       => $url,
       'caption'   => 'Export data as JSON',
-      'class'     => 'export',
+      'class'     => 'export popup',
     };
 
   my $type = $self->hub->param('ht_type') || 'protein';

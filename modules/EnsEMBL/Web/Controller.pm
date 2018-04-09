@@ -23,6 +23,7 @@ use strict;
 use warnings;
 
 use URI;
+use List::MoreUtils qw(uniq);
 
 use Bio::EnsEMBL::Registry;
 
@@ -457,7 +458,7 @@ sub render_page {
   my @order    = map $_->[0], @{$page->head_order}, @{$page->body_order};
   my $content  = {};
 
-  foreach my $element (@order) {
+  foreach my $element (uniq(@order)) {
     my $module = $elements->{$element};
     $module->init($self) if ($module && $module->can('init'));
   }
