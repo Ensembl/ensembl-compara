@@ -76,7 +76,12 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var panel = this;
     
     $('.navbar', this.el).width(Ensembl.width);
-    
+
+    if ($.find('.js_panel .error.fatal').length) {
+      // Return false if there are any fatal errors displayed
+      return false;
+    }
+
     this.elLk.ajaxLoad.each(function () {
       var el    = $(this);
       var url   = el.find('input.ajax_load').val();
