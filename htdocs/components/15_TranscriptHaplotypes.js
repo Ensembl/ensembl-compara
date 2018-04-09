@@ -37,6 +37,8 @@ Ensembl.Panel.TranscriptHaplotypes = Ensembl.Panel.Content.extend({
       panel.renderHaplotypePanel(this.rel);
     });
 
+    this.el.find('.tool_buttons a.popup').removeAttr('rel');
+
     // init zmenus
     this.el.find('a.zmenu').on('click', function(e) {
       e.preventDefault();
