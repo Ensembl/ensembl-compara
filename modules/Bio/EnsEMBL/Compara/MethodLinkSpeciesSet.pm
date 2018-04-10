@@ -373,5 +373,34 @@ sub species_tree {
     return $species_tree;
 }
 
+=head2 filename
+
+  Example     : $mlss->filename();
+  Description : Returns a nicely formatted directory/file name for this MLSS
+  Returntype  : string
+
+=cut
+
+sub filename {
+    my $self = shift;
+
+    my $name = $self->species_set->name;
+    $name =~ s/collection-//;
+
+    if ( $self->species_set->size > 2 && $self->method->class !~ /tree_node$/ ) {
+        $name = $self->species_set->size . "_$name";
+    }
+    
+    # expand species names to include assembly
+    if ( $self->species_set->size == 2 ) {
+        my @gdbs = @{$self->species_set->genome_dbs};
+        $name = $gdbs[0]->get_short_name . "_" . $gdbs[0]->assembly . '.v.';
+        $name .= $gdbs[1]->get_short_name . "_" . $gdbs[1]->assembly;
+    }
+
+    my $type = $self->method->type;
+    my $dir = lc "$name.$type";
+    return $dir;
+}
 
 1;
