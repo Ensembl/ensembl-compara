@@ -81,7 +81,7 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-        {   -logic_name => 'mk_dump_dir',
+        {   -logic_name => 'mk_species_trees_dump_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'cmd'           => ['mkdir', '-p', '#dump_dir#'],

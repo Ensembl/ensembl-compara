@@ -92,7 +92,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name     => 'mkdir',
+        {   -logic_name     => 'mkdir_constrained_elems',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements',
             -parameters     => {
                 'compara_db'    => '#compara_url#',
@@ -102,10 +102,10 @@ sub pipeline_analyses {
                     'mlss_id'   => $self->o('mlss_id'),
                 },
             ],
-            -flow_into      => [ 'genomedb_factory' ],
+            -flow_into      => [ 'genomedb_factory_ce' ],
         },
 
-        {   -logic_name     => 'genomedb_factory',
+        {   -logic_name     => 'genomedb_factory_ce',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters     => {
                 'compara_db'            => '#compara_url#',
@@ -113,7 +113,7 @@ sub pipeline_analyses {
             },
             -flow_into      => {
                 '2->A' => [ 'dump_constrained_elements' ],
-                'A->1' => [ 'md5sum' ],
+                'A->1' => [ 'md5sum_ce' ],
             },
         },
 
@@ -132,25 +132,25 @@ sub pipeline_analyses {
                 'min_number_of_lines'   => 1,   # The header is always present
                 'filename'              => '#output_file#',
             },
-            -flow_into      => [ 'compress' ],
+            -flow_into      => [ 'compress_ce' ],
         },
 
-        {   -logic_name     => 'compress',
+        {   -logic_name     => 'compress_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'   => [qw(gzip -f -9 #output_file#)],
             },
         },
 
-        {   -logic_name     => 'md5sum',
+        {   -logic_name     => 'md5sum_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'   => 'cd #output_dir#; md5sum *.bed.gz > MD5SUM',
             },
-            -flow_into      =>  [ 'readme' ],
+            -flow_into      =>  [ 'readme_ce' ],
         },
 
-        {   -logic_name     => 'readme',
+        {   -logic_name     => 'readme_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'   => [qw(cp -af #ce_readme# #output_dir#/README)],

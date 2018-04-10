@@ -18,7 +18,10 @@ limitations under the License.
 =cut
 
 =head1 SYNOPSIS
+ 
+ Pipeline for dumping ancestral alleles for the FTP.
 
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf 
 
 =cut
 
@@ -37,15 +40,18 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'reg_conf' => undef,
         'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
 
         'compara_db' => 'compara_curr',
+        'ancestral_db' => 'ancestral_curr', # assume reg_conf is up-to-date
+
         'reg_conf'   => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
     	'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl",
     	'stats_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_stats.pl",
 
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+
+        # 'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+    	'dump_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
     };
 }
 
@@ -60,8 +66,8 @@ sub pipeline_wide_parameters {
 
         'reg_conf'   => $self->o('reg_conf'),
         'compara_db' => $self->o('compara_db'),
-        'export_dir' => $self->o('export_dir'),
-        'output_dir' => "#export_dir#/fasta/ancestral_alleles",
+        'dump_dir' => $self->o('dump_dir'),
+        'output_dir' => "#dump_dir#/fasta/ancestral_alleles",
     };
 }
 
@@ -69,7 +75,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-    	{	-logic_name => 'mk_dump_dir',
+    	{	-logic_name => 'mk_ancestral_dump_dir',
     		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     		-parameters => {
     			cmd => 'mkdir -p #output_dir#'
@@ -100,7 +106,7 @@ sub pipeline_analyses {
         	-parameters => {
         		species_outdir => '#output_dir#/#species_dir#',
         		cmd => join('; ', 
-        			'perl #dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db compara_curr --ancestral_db ancestral_curr',
+        			'perl #dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db#',
         			'cd #species_outdir#',
         			'perl #stats_program# > summary.txt',
         			),

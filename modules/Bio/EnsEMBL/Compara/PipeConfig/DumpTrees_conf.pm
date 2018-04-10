@@ -161,7 +161,7 @@ sub hive_meta_table {
 
                     * 'archive_long_files'  zip the long dumps
 
-                    * 'md5sum'              compute md5sum for compressed files
+                    * 'md5sum_tree'         compute md5sum for compressed files
 
 
 =cut
@@ -180,7 +180,7 @@ sub _pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'pipeline_start',
+        {   -logic_name => 'dump_trees_pipeline_start',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'readme_dir'    => $self->o('readme_dir'),
@@ -199,7 +199,7 @@ sub _pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -flow_into => {
                 '2->A' => [ 'mk_work_dir' ],
-                'A->1' => [ 'md5sum_factory' ],
+                'A->1' => [ 'md5sum_tree_factory' ],
             },
         },
 
@@ -472,18 +472,18 @@ sub _pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'md5sum_factory',
+        {   -logic_name => 'md5sum_tree_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'     => [ [ '#emf_dir#' ], [ '#xml_dir#' ], [ '#tsv_dir#' ] ],
                 'column_names'  => [ 'directory' ],
             },
             -flow_into => {
-                2 => [ 'md5sum' ],
+                2 => [ 'md5sum_tree' ],
             },
         },
 
-        {   -logic_name => 'md5sum',
+        {   -logic_name => 'md5sum_tree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'cmd' => 'cd #directory# ; md5sum *.gz >MD5SUM',

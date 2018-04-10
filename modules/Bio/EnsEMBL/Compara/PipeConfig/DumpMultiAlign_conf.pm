@@ -151,10 +151,10 @@ sub resource_classes {
     my $reg_options = $self->o('registry') ? '--reg_conf '.$self->o('registry') : '';
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-        'crowd_long' => { 'LSF' => '-q long -C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
+        # 'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
         'default_with_registry' => { 'LSF' => ['', $reg_options], 'LOCAL' => ['', $reg_options] },
-        'crowd_with_registry' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options], 'LOCAL' => ['', $reg_options] },
+        '2Gb_job' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options], 'LOCAL' => ['', $reg_options] },
+        '2Gb_job_long' => { 'LSF' => ['-q long -C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options] },
     };
 }
 
@@ -171,7 +171,7 @@ sub pipeline_create_commands {
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name    => 'MLSSJobFactory',
+        {   -logic_name    => 'DumpMultiAlign_MLSSJobFactory',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
             -parameters    => {
                 'method_link_types' => $self->o('method_link_types'),
@@ -184,7 +184,7 @@ sub pipeline_analyses {
             ],
             -flow_into      => {
                 '2->A' => [ 'count_blocks' ],
-                'A->2' => [ 'md5sum_factory' ],
+                'A->2' => [ 'md5sum_aln_factory' ],
             },
             -rc_name => 'default_with_registry',
         },
@@ -233,45 +233,45 @@ sub pipeline_analyses {
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-            -rc_name => 'crowd_long',
+            -rc_name => '2Gb_job_long',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'crowd_with_registry',
+            -rc_name => '2Gb_job',
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
             -analysis_capacity => 50,
-            -rc_name => 'crowd',
+            -rc_name => '2Gb_job',
             -max_retry_count    => 0,
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
-                '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress' ],
-                # '!#make_tar_archive#' => [ 'compress' ],
+                '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress_aln' ],
+                # '!#make_tar_archive#' => [ 'compress_aln' ],
             ) ],
         },
         {   -logic_name     => 'emf2maf',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf',
-            -rc_name        => 'crowd',
+            -rc_name        => '2Gb_job',
             -flow_into => [
-                WHEN( '!#make_tar_archive#' => { 'compress' => [ undef, { 'format' => 'maf'} ] } ),
+                WHEN( '!#make_tar_archive#' => { 'compress_aln' => [ undef, { 'format' => 'maf'} ] } ),
             ],
         },
-        {   -logic_name     => 'compress',
+        {   -logic_name     => 'compress_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'gzip -f -9 #output_file#',
             },
         },
 
-        {   -logic_name     => 'md5sum_factory',
+        {   -logic_name     => 'md5sum_aln_factory',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUMFactory',
             -flow_into     => {
-                '2->A' => [ 'md5sum' ],
+                '2->A' => [ 'md5sum_aln' ],
                 'A->1' => [ 'pipeline_end' ],
             },
         },
-        {   -logic_name     => 'md5sum',
+        {   -logic_name     => 'md5sum_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'cmd'           => 'cd #output_dir#; md5sum *.#format#* > MD5SUM',
