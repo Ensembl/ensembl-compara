@@ -42,7 +42,7 @@ sub default_options {
     'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
     'port' => 4401,
 
-    'work_dir' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/EPO_2X/' . 'release_' . $self->o('rel_with_suffix') . '/',
+    'work_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/EPO_2X/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
     'pipeline_db' => {
         -host   => $self->o('host'),

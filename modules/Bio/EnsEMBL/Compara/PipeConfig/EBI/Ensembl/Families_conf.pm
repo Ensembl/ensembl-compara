@@ -83,7 +83,7 @@ sub default_options {
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
-        'hmm_library_basedir' => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
+        'hmm_library_basedir' => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
         # code directories:
         'blast_bin_dir'     => $self->check_dir_in_cellar('blast/2.2.30/bin'),
@@ -93,7 +93,7 @@ sub default_options {
         'hmmer2_home'       => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
 
         # data directories:
-        'work_dir'      => '/hps/nobackup/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
+        'work_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
         'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('ensembl_release').'/',
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off

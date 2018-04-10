@@ -71,7 +71,7 @@ sub default_options {
 
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'work_dir'         => '/hps/nobackup/production/ensembl/' .
+            'work_dir'         => '/hps/nobackup2/production/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),

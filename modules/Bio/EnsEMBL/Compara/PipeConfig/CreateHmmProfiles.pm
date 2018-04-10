@@ -98,7 +98,7 @@ sub default_options {
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
     # dependent parameters: updating 'base_dir' should be enough
-        'work_dir'              =>  '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
+        'work_dir'              =>  '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -193,7 +193,7 @@ sub default_options {
         # The location of the HMM library:
         'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}."/",
         'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
-        'treefam_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
+        'treefam_hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
         'treefam_only_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18_only_TF_hmmer3/',
         'seed_hmm_library_basedir'      => '/hps/nobackup/production/ensembl/compara_ensembl/seed_hmms/',
         'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',

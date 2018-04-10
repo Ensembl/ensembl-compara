@@ -79,7 +79,7 @@ sub default_options {
     #default parameters for the geneset qc
 
     # dependent parameters: updating 'base_dir' should be enough
-        'base_dir'              => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/',
+        'base_dir'              => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
@@ -120,7 +120,7 @@ sub default_options {
        # HMMer versions could be either 2 or 3
        #HMMER 2
        'hmm_library_version'       => '2',
-       'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
+       'hmm_library_basedir'       => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
        #HMMER 3
        #'hmm_library_version'       => '3',

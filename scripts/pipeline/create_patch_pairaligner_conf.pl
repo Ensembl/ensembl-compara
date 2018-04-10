@@ -135,7 +135,7 @@ my @all_genome_dbs = ($patched_genome_db);
 print STDERR "Generating a configuration file for $patched_species\n";
 
 #Set default dump_dir
-$dump_dir = "/hps/nobackup/production/ensembl/" . $ENV{USER} ."/release_" . $patched_genome_db->db_adaptor->get_MetaContainer->get_schema_version() . "_patches/nib_files/" unless ($dump_dir);
+$dump_dir = "/hps/nobackup2/production/ensembl/" . $ENV{USER} ."/release_" . $patched_genome_db->db_adaptor->get_MetaContainer->get_schema_version() . "_patches/nib_files/" unless ($dump_dir);
 print STDERR "NIB files will be dumped in $dump_dir\n";
 
 #find list of LASTZ_NET alignments in master

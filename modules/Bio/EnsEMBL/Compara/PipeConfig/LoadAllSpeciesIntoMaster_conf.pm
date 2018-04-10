@@ -72,7 +72,7 @@ sub default_options {
         'email'                     => $self->o('ENV', 'USER').'@ebi.ac.uk',
         'host'                      => 'mysql-ens-compara-prod-4:4401',
         'master_db_ro'              => 'mysql://ensro\@mysql-ens-compara-prod-4:4401/treefam_master',
-        'work_dir'                  => '/hps/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
+        'work_dir'                  => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
         'registry_source'           => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR').'/ensembl-compara/scripts/pipeline/',
         'update_genome_bin'         => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR').'/ensembl-compara/scripts/pipeline/update_genome.pl',
         'collection_all_species'    => 'ensembl_plus_eg',

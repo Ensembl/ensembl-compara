@@ -71,7 +71,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
 	#pecan mlss_id
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'work_dir'              => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
+        'work_dir'              => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
         'species_set_name'      => 'amniotes',
         'do_not_reuse_list'     => [ ],
 

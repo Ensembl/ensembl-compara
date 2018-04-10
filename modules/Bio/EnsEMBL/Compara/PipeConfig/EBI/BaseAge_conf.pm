@@ -78,7 +78,7 @@ sub default_options {
             'big_bed_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
 
             #Locations to write output files
-            'bed_dir'        => sprintf('/hps/nobackup/production/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
+            'bed_dir'        => sprintf('/hps/nobackup2/production/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
 
             #Number of workers to run base_age analysis
             'base_age_capacity'        => 100,

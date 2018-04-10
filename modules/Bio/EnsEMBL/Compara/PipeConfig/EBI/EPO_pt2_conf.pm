@@ -91,7 +91,7 @@ sub default_options {
         'trim_anchor_align_capacity'    => 150,
 
 	 # place to dump the genome sequences
-    'seq_dump_loc' => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/genome_seq/' ,
+    'seq_dump_loc' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/genome_seq/' ,
     'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
      };
 }

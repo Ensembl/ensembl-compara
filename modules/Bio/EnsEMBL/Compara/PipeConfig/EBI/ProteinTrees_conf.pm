@@ -58,7 +58,7 @@ sub default_options {
 
     # User details
         'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
-        'base_dir'              => '/hps/nobackup/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
+        'base_dir'              => '/hps/nobackup2/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
 
     # executable locations:
         'hcluster_exe'              => $self->check_exe_in_cellar('hclustersg/0.5.0/bin/hcluster_sg'),

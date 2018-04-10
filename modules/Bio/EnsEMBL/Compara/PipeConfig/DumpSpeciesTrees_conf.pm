@@ -61,7 +61,7 @@ sub default_options {
         'port'              => 4485,
 
         #Locations to write output files
-        'dump_dir'          => '/hps/nobackup/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
+        'dump_dir'          => '/hps/nobackup2/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
 
         # Script to dump a tree
         'dump_species_tree_exe'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/examples/species_getSpeciesTree.pl',
