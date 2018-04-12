@@ -103,7 +103,6 @@ sub default_options {
     'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
     'pecan_exe_dir'             => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
 
-    'production_db_url'         => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_92',
     # connection parameters to various databases:
 
         'staging_loc' => {                     # general location of half of the current release core databases

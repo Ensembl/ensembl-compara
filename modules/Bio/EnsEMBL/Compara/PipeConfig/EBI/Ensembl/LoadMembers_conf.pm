@@ -135,10 +135,6 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
         'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_90',
-
-        # Production database (for the biotypes)
-        #'production_db_url'     => 'mysql://anonymous@ensembldb.ensembl.org:5306/ensembl_production_89',
-        'production_db_url'     => 'mysql://ensro@mysql-ens-sta-1:4519/ensembl_production_91',
     };
 }
 

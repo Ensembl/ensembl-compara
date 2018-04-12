@@ -96,8 +96,6 @@ sub fetch_input {
     my $core_db = $genome_db->db_adaptor() or die "Can't connect to genome database for id=$genome_db_id";
     $self->param('core_db', $core_db);
 
-    $self->_load_biotype_groups($self->param_required('production_db_url'));
-
     return;
 }
 
@@ -200,12 +198,11 @@ sub store_ncrna_gene {
         if ($self->param('store_genes') and (! $gene_member_stored)) {
             print STDERR "    gene    " . $gene->stable_id if ($self->debug);
 
-            my $biotype_group = $self->param('biotype_groups')->{lc $gene->biotype};
             $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                                                                             -gene => $gene,
                                                                             -dnafrag => $dnafrag,
                                                                             -genome_db => $self->param('genome_db'),
-                                                                            -biotype_group => $biotype_group,
+                                                                            -biotype_group => $gene->get_Biotype->biotype_group,
                                                                            );
             print STDERR " => gene_member " . $gene_member->stable_id if ($self->debug);
 
@@ -289,16 +286,6 @@ sub _ncrna_description {
     return $description;
 }
 
-sub _load_biotype_groups {
-    my ($self, $production_db_url) = @_;
-
-    my $gene_biotype_sql = q{SELECT name, IF(is_current=1, IF(is_dumped=1, biotype_group, 'current_notdumped'), 'notcurrent') AS biotype_group FROM biotype WHERE object_type = "gene" AND FIND_IN_SET('core', db_type)};
-
-    my $production_dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $production_db_url);
-    my %biotype_groups = map {lc($_->[0]) => $_->[1]} @{ $production_dbc->db_handle->selectall_arrayref($gene_biotype_sql) };
-    $self->param('biotype_groups', \%biotype_groups);
-    $production_dbc->disconnect_if_idle();
-}
 
 sub _store_seq_member_projection {
     my ($self, $seq_member, $transcript) = @_;

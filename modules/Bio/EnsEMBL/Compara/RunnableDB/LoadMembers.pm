@@ -125,8 +125,6 @@ sub fetch_input {
         die "Either 'include_reference' or 'include_nonreference' or both have to be true";
     }
 
-    $self->_load_biotype_groups($self->param_required('production_db_url'));
-
     my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
     my %all_dnafrags_by_name = map {$_->name => $_} @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db) };
     $self->param('all_dnafrags_by_name', \%all_dnafrags_by_name);
@@ -186,8 +184,6 @@ sub loadMembersFromCoreSlices {
         }
     }
 
-    my $biotype_groups= $self->param('biotype_groups');
-
   #from core database, get all slices, and then all genes in slice
   #and then all transcripts in gene to store as members in compara
 
@@ -246,15 +242,14 @@ sub loadMembersFromCoreSlices {
 
     } else {
        foreach my $gene (@relevant_genes) {
-          my $biotype = lc $gene->biotype;
-          die "Unknown biotype ".$gene->biotype." for ".$gene->stable_id."\n" unless $biotype_groups->{$biotype};
+          my $biotype_group = lc $gene->get_Biotype->biotype_group;
 
           my $gene_member;
 
-          if ($self->param('store_coding') && (($biotype_groups->{$biotype} eq 'coding') or ($biotype_groups->{$biotype} eq 'LRG'))) {
+          if ($self->param('store_coding') && (($biotype_group eq 'coding') or ($biotype_group eq 'LRG'))) {
               $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
               
-          } elsif ( $self->param('store_ncrna') && ($biotype_groups->{$biotype} =~ /noncoding$/) ) {
+          } elsif ( $self->param('store_ncrna') && ($biotype_group =~ /noncoding$/) ) {
               $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
 
           } elsif ( $self->param('store_others') ) {
@@ -263,7 +258,7 @@ sub loadMembersFromCoreSlices {
           }
 
           unless ($gene_member) {
-              $self->warning($gene->stable_id." could not be stored -- ".$biotype_groups->{$biotype});
+              $self->warning($gene->stable_id." could not be stored -- ".$biotype_group);
               next;
           }
 
@@ -358,7 +353,7 @@ sub store_protein_coding_gene_and_all_transcripts {
                     -GENE       => $gene,
                     -DNAFRAG    => $dnafrag,
                     -GENOME_DB  => $self->param('genome_db'),
-                    -BIOTYPE_GROUP => $self->param('biotype_groups')->{lc $gene->biotype},
+                    -BIOTYPE_GROUP => $gene->get_Biotype->biotype_group,
                 );
                 print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
                 $gene_member_adaptor->store($gene_member);
@@ -445,13 +440,11 @@ sub store_gene_generic {
         if ($self->param('store_genes') and (! $gene_member_stored)) {
             print STDERR "    gene    " . $gene->stable_id if ($self->debug);
 
-            $self->_load_biotype_groups($self->param_required('production_db_url'));
-            my $biotype_group = $self->param('biotype_groups')->{lc $gene->biotype};
             $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                                                                             -gene => $gene,
                                                                             -dnafrag => $dnafrag,
                                                                             -genome_db => $self->param('genome_db'),
-                                                                            -biotype_group => $biotype_group,
+                                                                            -biotype_group => $gene->get_Biotype->biotype_group,
                                                                            );
             print STDERR " => gene_member " . $gene_member->stable_id if ($self->debug);
 

@@ -54,8 +54,6 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults()},
 
-        'production_db_url'             => 'DUMMY',     # Dummy value to make fetch_input not crash on its absence. It is never used anyway because _load_biotype_groups is overriden
-
         'store_exon_coordinates'        => 0,
     };
 }
@@ -96,11 +94,6 @@ sub run {
     } );
 
     print("loaded $n_genes_loaded genes\n");
-}
-
-sub _load_biotype_groups {
-    my $self = shift;
-    $self->param('biotype_groups', {'lrg_gene' => 'LRG'});
 }
 
 
