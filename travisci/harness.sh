@@ -53,14 +53,14 @@ rt1=$?
 PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${CORE_SCRIPTS[@]}"
 rt2=$?
 
-if [[ "$TRAVIS_PERL_VERSION" != "5.14" ]]; then
-  echo "Skipping ensembl-rest test suite"
-  rt3=0
-else
+#if [[ "$TRAVIS_PERL_VERSION" != "5.14" ]]; then
+  #echo "Skipping ensembl-rest test suite"
+  #rt3=0
+#else
   echo "Running ensembl-rest test suite using $PERL5LIB"
   PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${REST_SCRIPTS[@]}"
   rt3=$?
-fi
+#fi
 
 # Check that all the Perl files can be compiled
 find docs modules scripts sql travisci -iname '*.t' -o -iname '*.pl' -o -iname '*.pm' \! -name 'LoadSynonyms.pm' \! -name 'HALAdaptor.pm' \! -name 'HALXS.pm' -print0 | xargs -0 -n 1 perl -c
