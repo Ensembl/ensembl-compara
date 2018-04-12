@@ -25,6 +25,7 @@ use Data::Dumper;
 use namespace::autoclean;
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Try::Tiny;
 
 sub convert {
   my ($caller, $fam, @args) = @_;
@@ -107,52 +108,74 @@ sub cigar_line {
 
 sub _family_object_to_hash {
   my ($self, $fam) = @_;
-  my $hash = {
-    type => 'family',
-  };
+  my $family_hash = {};
+  if(($fam->can('stable_id')) && ($fam->can('description'))) {
+    $family_hash->{family_stable_id} = $fam->stable_id();
+    $family_hash->{description} = $fam->description();
+  } 
+  else {
+    die "\n the family object does not return a stable id or description \n";
+  }
 
-  if($fam->can('stable_id')) {
-    $hash->{id} = $fam->stable_id();
-  }    
-
+  $family_hash->{members} = [];
   # Bulk-load of all we need
   my $compara_dba = $fam->adaptor->db;
   my $members = $fam->get_all_Members;
-  if (($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'ensembl') ) { 
-    $hash->{MEMBERS}{ENSEMBL_gene_members}={};
-  }
-  if ( ($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'uniprot') ) {
-    $hash->{MEMBERS}{UNIPROT_proteins}=[];
-  }
-
   foreach my $this_member (@{$members}) {
+    my $member_hash = {};
     if  ( ($this_member->source_name() eq 'ENSEMBLPEP') and ( ($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'ensembl') ) ){
-      my $gene_mem_stable_id = $this_member->gene_member->stable_id();
-      if (! defined $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id} ){
-        $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id} = [];
-      }
-      my $temp_hash = {protein_stable_id => $this_member->stable_id() };
+      $member_hash->{protein_stable_id} = $this_member->stable_id();
+      $member_hash->{gene_stable_id} = $this_member->gene_member->stable_id();
+      $member_hash->{description} = $this_member->gene_member->description();
+      $member_hash->{genome} = $this_member->genome_db->name();
+      $member_hash->{source_name} = $this_member->source_name();
       if ($self->aligned) { 
-        $temp_hash->{protein_alignment} = $this_member->alignment_string($self->seq_type);
+        my $temp_aln; 
+        try {
+          $temp_aln = $this_member->alignment_string($self->seq_type);
+        } catch {
+          warn "caught error : the member has no alignment \n";
+        };
+        if ($temp_aln) { 
+          $member_hash->{protein_alignment} = $temp_aln;
+        }
+        else{
+          $member_hash->{protein_seq} = $this_member->other_sequence($self->seq_type);
+        }
       }
       elsif (!$self->no_seq) {
-        $temp_hash->{seq} = $this_member->other_sequence($self->seq_type);
+        $member_hash->{protein_seq} = $this_member->other_sequence($self->seq_type);
       }
-      push @{ $hash->{MEMBERS}{ENSEMBL_gene_members}{$gene_mem_stable_id} }, $temp_hash;
+      push @{ $family_hash->{members} } , $member_hash;
     }
 
-    if ( ($this_member->source_name() =~ /Uniprot/) and ( ($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'uniprot') ) ) {
-
-      my $temp_hash1 = {protein_stable_id => $this_member->stable_id() };
+    if  ( ($this_member->source_name() =~ /Uniprot/) and ( ($self->{_member_source} eq 'all') || ($self->{_member_source} eq 'uniprot') ) ){
+      $member_hash->{protein_stable_id} = $this_member->stable_id();
+      $member_hash->{description} = $this_member->description();
+      $member_hash->{genome} = $this_member->taxon->name();
+      $member_hash->{source_name} = $this_member->source_name();
       if ($self->aligned) { 
-        $temp_hash1->{protein_alignment} = $this_member->alignment_string($self->seq_type);
+        my $temp_aln; 
+        try {
+          $temp_aln = $this_member->alignment_string($self->seq_type);
+        } catch {
+          warn "caught error : the member has no alignment \n";
+        };
+        if ($temp_aln) { 
+          $member_hash->{protein_alignment} = $temp_aln;
+        }
+        else{
+          $member_hash->{protein_seq} = $this_member->other_sequence($self->seq_type);
+        }
       }
       elsif (!$self->no_seq) {
-        $temp_hash1->{seq} = $this_member->other_sequence($self->seq_type);
+        $member_hash->{protein_seq} = $this_member->other_sequence($self->seq_type);
       }
-      push @{ $hash->{MEMBERS}{UNIPROT_proteins} }, $temp_hash1;
+      push @{ $family_hash->{members} } , $member_hash;
     }
   }
-  return $hash;
+  return $family_hash
+
 }
+
 1;
