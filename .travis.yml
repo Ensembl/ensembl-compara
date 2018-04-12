@@ -2,7 +2,6 @@ language: "perl"
 
 perl:
   - "5.14"
-  - "5.10"
   - "5.26"
 
 env:
@@ -56,13 +55,11 @@ jobs:
   - stage: trigger_dependent_builds
     script: "./travisci/trigger-dependent-build.sh"
 
-# Get the matrix to only build coveralls support when on 5.10
+# Get the matrix to only build coveralls support when on 5.26
 matrix:
   exclude:
-    - perl: "5.10"
-      env: COVERALLS=true
     - perl: "5.14"
-      env: COVERALLS=false
-    - perl: "5.26"
       env: COVERALLS=true
+    - perl: "5.26"
+      env: COVERALLS=false
 
