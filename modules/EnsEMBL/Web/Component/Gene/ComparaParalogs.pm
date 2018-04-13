@@ -94,7 +94,8 @@ sub content {
         g      => $stable_id
       });
       
-      my $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a></p>} . join '<br />', @external;
+      # Need to have one white space character after the anchor tag to make sure there will be a space between the stable ID and gene symbol in the generated CSV file (for download)
+      my $id_info = qq{<p class="space-below"><a href="$link_url">$stable_id</a>&nbsp;</p>} . join '<br />', @external;
 
       my @seq_region_split_array = split(/:/, $paralogue->{'location'});
       my $paralogue_seq_region = $seq_region_split_array[0];
