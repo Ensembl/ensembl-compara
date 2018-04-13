@@ -320,21 +320,19 @@ try{
     ok($responseIDGet->{success}, "Check JSON Validity");
 
     $jsontxt = process_json_get($server.'/family/id/PTHR15573?content-type=application/json');
-    ok($jsontxt->{type} eq 'family', "Check get family Validity");
+    ok($jsontxt->{family_stable_id} eq 'PTHR15573', "Check get family Validity");
 
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=uniprot');
-    ok( !(exists $jsontxt->{MEMBERS}->{ENSEMBL_gene_members} ), "Check get family UNIPROT memeber filter Validity");
+    ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter Validity");
 
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl');
-    ok( !(exists $jsontxt->{MEMBERS}->{UNIPROT_proteins} ), "Check get family ensembl member filter Validity");
+    ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter Validity");
     
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl;aligned=1');
-    my @fam_mem=keys $jsontxt->{MEMBERS}->{ENSEMBL_gene_members};
-    ok( exists($jsontxt->{MEMBERS}->{ENSEMBL_gene_members}->{$fam_mem[0]}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
+    ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
 
     $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl;aligned=0');
-    @fam_mem=keys $jsontxt->{MEMBERS}->{ENSEMBL_gene_members};
-    ok( !(exists $jsontxt->{MEMBERS}->{ENSEMBL_gene_members}->{$fam_mem[0]}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
+    ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 Validity");
 
 
     print "\nTesting GET family member\/id\/\:id \n\n";
@@ -345,7 +343,7 @@ try{
 
 
     $jsontxt = process_json_get($server.'/family/member/id/ENSG00000157764?content-type=application/json;aligned=0;sequence=none');
-    ok($jsontxt->{1}->{type} eq 'family', "Check get family by member Validity");
+    ok($jsontxt->{1}->{family_stable_id}, "Check get family by member Validity");
 
 
     print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
@@ -355,7 +353,7 @@ try{
     ok($responseIDGet->{success}, "Check JSON Validity");
 
     $jsontxt = process_json_get($server.'/family/member/symbol/homo_sapiens/BRCA2?content-type=application/json;aligned=0;sequence=none;member_source=ensembl');
-    ok($jsontxt->{1}->{type} eq 'family', "Check family member by species symbol Validity");
+    ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol Validity");
 
 
     print "\nTesting GET alignment region\/\:species\/\:region \n\n";
