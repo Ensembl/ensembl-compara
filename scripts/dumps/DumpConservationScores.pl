@@ -87,7 +87,7 @@ my $seq_region_name;
 my $seq_region_start;
 my $seq_region_end;
 my $automatic_bsub = 0;
-my $bsub_options = '-qlong -R"select[mem>2500] rusage[mem=2500]" -M2500000';
+my $bsub_options = '-R"select[mem>2500] rusage[mem=2500]" -M2500';
 my $out_filename;
 my $add_seq_name_prefix = 0;
 my $seq_name_prefix = "";
