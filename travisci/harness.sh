@@ -50,6 +50,7 @@ fi
 echo "Running ensembl-compara test suite using $PERL5LIB"
 PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${COMPARA_SCRIPTS[@]}"
 rt1=$?
+echo "Running ensembl test suite using $PERL5LIB"
 PERL5OPT="$EFFECTIVE_PERL5OPT" perl $ENSEMBL_TESTER "${CORE_SCRIPTS[@]}"
 rt2=$?
 
