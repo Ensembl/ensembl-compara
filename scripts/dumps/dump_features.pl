@@ -278,12 +278,17 @@ if ($regions) {
   $all_slices = $slice_adaptor->fetch_all("toplevel");
 }
 
-foreach my $slice (sort {
+# If the slices come from a BED file, preserve their order. Otherwise, sort !
+unless ($regions) {
+  $all_slices = [sort {
     if (!$lex_sort and $a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
         $a->seq_region_name <=> $b->seq_region_name
     } else {
         $a->seq_region_name cmp $b->seq_region_name}}
-            @$all_slices) {
+            @$all_slices];
+}
+
+foreach my $slice (@$all_slices) {
   # print STDERR $slice->name, "\n";
   my $name = $slice->seq_region_name;
 
