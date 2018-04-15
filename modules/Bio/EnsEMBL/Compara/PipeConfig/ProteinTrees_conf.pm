@@ -187,7 +187,7 @@ sub default_options {
         'species_tree_input_file'   => undef,
         # When automatically binarizing the tree, should we assume timetree tags to be there ?
         'use_timetree_times'        => 0,
-        # you can define your own species_tree for 'notung'. It *has* to be binary
+        # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
 
     # homology_dnds parameters:

@@ -79,6 +79,7 @@ sub pipeline_analyses_cafe {
              -logic_name => 'CAFE_species_tree',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
              -parameters => {
+                             'binary_species_tree_input_file' => $self->o('binary_species_tree_input_file'),
                              'cafe_species' => $self->o('cafe_species'),
                              'label'        => $self->o('full_species_tree_label')
                             },

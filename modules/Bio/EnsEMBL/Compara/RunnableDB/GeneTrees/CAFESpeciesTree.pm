@@ -81,9 +81,27 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    # Get the species-tree and make a copy to work on it
-    my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), $self->param('label'));
-    $full_species_tree->root( $full_species_tree->root->copy(undef, $self->compara_dba->get_SpeciesTreeNodeAdaptor) );
+    my $full_species_tree;
+
+    if(my $binary_species_tree_input_file = $self->param('binary_species_tree_input_file')) {     # load the tree given from a file
+        die "The file '$binary_species_tree_input_file' cannot be open for reading" unless(-r $binary_species_tree_input_file);
+        my $species_tree_string = $self->_slurp($binary_species_tree_input_file);
+        my $species_tree_root = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( $species_tree_string, $self->compara_dba );
+        $species_tree_root->print_tree(0.3) if $self->debug;
+
+        $full_species_tree = Bio::EnsEMBL::Compara::SpeciesTree->new();
+        $full_species_tree->method_link_species_set_id($self->param_required('mlss_id'));
+        $full_species_tree->root($species_tree_root);
+
+        foreach my $n (@{$species_tree_root->get_all_nodes}) {
+            die $n->name." is not binary" if $n->get_child_count > 2;
+        }
+
+    } else {
+        # Fetch the species-tree from the database and make a copy to work on it
+        $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), $self->param_required('label'));
+        $full_species_tree->root( $full_species_tree->root->copy(undef, $self->compara_dba->get_SpeciesTreeNodeAdaptor) );
+    }
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 
     my $cafe_species = $self->param('cafe_species') || [];
