@@ -28,22 +28,24 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::ConvertToBigWig
+Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::DumpConservationScores
 
-=head1 DESCRIPTION
+=head1 SYNOPSIS
 
-This Runnable is a simple extension of eHive's SystemCmd to convert bedGraph
-files to bigWig.
-The only addition is that we need to fetch the size of the chromosomes from the database
+Wrapper around dump_features.pl to dump conservation scores, but for
+a given list of regions given in the "chunkset" parameter.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::ConvertToBigWig;
+package Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::DumpConservationScores;
 
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+use File::Basename;
+use File::Path qw(make_path);
+
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
@@ -52,8 +54,8 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-
-        'cmd' => [ '#big_wig_exe#', '#bedgraph_file#', '#chrom_sizes#', '#bigwig_file#' ],
+        'this_bedgraph' => '#work_dir#/#hash_dir#/#name#.#chunkset_id#.bedgraph',
+        'cmd'           => '#dump_features_program# --feature cs_#mlss_id# --compara_url #compara_url# --species #name# --regions "#regions_bed_file#" --reg_conf "#registry#" > #this_bedgraph#',
     }
 }
 
@@ -61,22 +63,17 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
 
-    my $genome_db_id = $self->param_required('genome_db_id');
-   
-    my $filename = $self->worker_temp_directory . "/chrom_size.$genome_db_id.txt";
+    my $filename = $self->worker_temp_directory . "/regions.bed";
     open(my $fh, '>', $filename);
-
-    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $self->param_required('compara_url') );
-    my $sql = q{SELECT dnafrag.name, length FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1};
-    my $sth = $dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
-    $sth->execute($genome_db_id);
-    while (my $aref = $sth->fetchrow_arrayref) {
-        print $fh join("\t", @$aref), "\n";
+    foreach my $aref (@{$self->param_required('chunkset')}) {
+        print $fh join("\t", $aref->[0], $aref->[1]-1, $aref->[2]), "\n";
     }
-
     close $fh;
+    $self->param('regions_bed_file', $filename);
 
-    $self->param('chrom_sizes', $filename);
+    $self->param('hash_dir', dir_revhash($self->param_required('chunkset_id')));
+
+    make_path(dirname($self->param_required('this_bedgraph')));
 }
 
 

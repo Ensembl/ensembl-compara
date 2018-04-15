@@ -27,7 +27,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpConservationScores_conf;
 
 use strict;
 use warnings;
-no warnings 'qw';
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores;
@@ -61,9 +60,12 @@ sub pipeline_wide_parameters {
         'registry'      => $self->o('registry'),
         'compara_url'   => $self->o('compara_url'),
 
+        'work_dir'      => $self->o('work_dir'),
+        'chromsize_file'=> '#work_dir#/gerp_conservation_scores.#name#.chromsize',
+        'bedgraph_file' => '#work_dir#/gerp_conservation_scores.#name#.bedgraph',
+
         'export_dir'    => $self->o('export_dir'),
         'output_dir'    => '#export_dir#/#dirname#',
-        'bedgraph_file' => '#output_dir#/gerp_conservation_scores.#name#.bedgraph',
         'bigwig_file'   => '#output_dir#/gerp_conservation_scores.#name#.bw',
     };
 }

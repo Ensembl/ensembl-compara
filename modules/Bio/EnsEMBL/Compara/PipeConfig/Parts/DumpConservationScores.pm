@@ -55,42 +55,52 @@ sub pipeline_analyses_dump_conservation_scores {
                 'extra_parameters'      => [ 'name' ],
             },
             -flow_into      => {
-                '2->A' => { 'dump_conservation_scores' => INPUT_PLUS() },
+                '2->A' => { 'region_factory' => INPUT_PLUS() },
                 'A->1' => [ 'md5sum_cs' ],
             },
         },
 
-        {   -logic_name     => 'dump_conservation_scores',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        {   -logic_name     => 'region_factory',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ChunkAndGroupDnaFrags',
             -parameters     => {
-                'cmd'   => '#dump_features_program# --feature cs_#mlss_id# --compara_url #compara_url# --species #name# --lex_sort --reg_conf "#registry#" > #bedgraph_file#',
+                'chunk_size'    => 10_000_000,
             },
+            -flow_into      => {
+                '2->A' => { 'dump_conservation_scores' => INPUT_PLUS() },
+                'A->1' => [ 'concatenate_bedgraph_files' ],
+            },
+        },
+
+        {   -logic_name     => 'dump_conservation_scores',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::DumpConservationScores',
             -analysis_capacity => $self->o('capacity'),
             -rc_name        => 'crowd',
-            -flow_into      => [ 'convert_to_bigwig' ],
+            -flow_into      => {
+                1 => '?accu_name=all_bedgraph_files&accu_address=[chunkset_id]&accu_input_variable=this_bedgraph',
+            },
+        },
+
+        {   -logic_name     => 'concatenate_bedgraph_files',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateFiles',
+            -parameters     => {
+                'input_files'   => '#all_bedgraph_files#',
+                'output_file'   => '#bedgraph_file#',
+            },
+            -flow_into      => 'convert_to_bigwig',
         },
 
         {   -logic_name     => 'convert_to_bigwig',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::ConvertToBigWig',
-            -parameters     => {
-                'compara_db'    => '#compara_url#',
-                'big_wig_exe'   => $self->o('big_wig_exe'),
-            },
-            -rc_name        => 'crowd',
-            -flow_into      => [ 'compress_cs' ],
-        },
-
-        {   -logic_name     => 'compress_cs',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => [qw(gzip -f -9 #bedgraph_file#)],
+                'cmd'   => [ $self->o('big_wig_exe'), '#bedgraph_file#', '#chromsize_file#', '#bigwig_file#' ],
             },
+            -rc_name        => 'crowd',
         },
 
         {   -logic_name     => 'md5sum_cs',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => 'cd #output_dir#; md5sum *.bedgraph.gz *.bw > MD5SUM',
+                'cmd'   => 'cd #output_dir#; md5sum *.bw > MD5SUM',
             },
             -flow_into      =>  [ 'readme_cs' ],
         },

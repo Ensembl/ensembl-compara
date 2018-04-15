@@ -41,6 +41,9 @@ sub default_options {
         # Where dumps are created
         'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix').'/cs',
 
+        # Where to keep temporary files
+        'work_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix').'/work/cs',
+
         # How many species can be dumped in parallel
         'capacity'    => 50,
 

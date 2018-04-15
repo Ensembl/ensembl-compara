@@ -1,4 +1,4 @@
-The bedGraph and bigWig files in this directory represent conservation scores as computed by the GERP software:
+The bigWig files in this directory represent conservation scores as computed by the GERP software:
 http://mendel.stanford.edu/SidowLab/downloads/gerp/
 on Multiple Sequence Alignments (MSA) of whole-genomes
 
