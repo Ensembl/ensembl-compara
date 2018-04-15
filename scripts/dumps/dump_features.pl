@@ -278,9 +278,6 @@ if ($regions) {
   $all_slices = $slice_adaptor->fetch_all("toplevel");
 }
 
-# For fast access find all the karyotype-level slices
-my %karyo_hash = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype() };
-
 foreach my $slice (sort {
     if (!$lex_sort and $a->seq_region_name=~/^\d+$/ and $b->seq_region_name =~/^\d+$/) {
         $a->seq_region_name <=> $b->seq_region_name
@@ -289,7 +286,6 @@ foreach my $slice (sort {
             @$all_slices) {
   # print STDERR $slice->name, "\n";
   my $name = $slice->seq_region_name;
-  $name = 'chr'.$name if $karyo_hash{$name};
 
   # Check if the connection is still on
   $slice_adaptor->dbc->reconnect()  unless $slice_adaptor->dbc->db_handle->ping;
