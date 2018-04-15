@@ -28,16 +28,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateFiles
+Bio::EnsEMBL::Hive::RunnableDB::FTPDumps::ConcatenateBedGraphFiles
 
 =head1 SYNOPSIS
 
-Generic runnable that can concatenate some files ("input_files" parameter)
-into a new output file ("output_file" parameter).
+This Runnable concatenates as many bedGraph files as requested into one.
+It takes care of removing the track headers from the second file onwards.
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateFiles;
+package Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateBedGraphFiles;
 
 use strict;
 use warnings;
@@ -48,12 +48,14 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub run {
     my $self = shift;
 
-    my $output_file = $self->param_required('output_file');
+    my $output_file = $self->param_required('bedgraph_file');
     unlink $output_file;
 
-    foreach my $input_file (@{$self->param_required('input_files')}) {
-        die "Undefined input file" unless $input_file;
-        $self->run_system_command("cat '$input_file' >> '$output_file'", { die_on_failure => 1 });
+    $self->run_system_command(['cp', shift @{$self->param_required('all_bedgraph_files')}, $output_file], { die_on_failure => 1 });
+
+    foreach my $input_file (@{$self->param('all_bedgraph_files')}) {
+        die unless $input_file;
+        $self->run_system_command("tail -n+2 '$input_file' >> '$output_file'", { die_on_failure => 1 });
     }
 }
 

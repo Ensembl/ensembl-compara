@@ -81,11 +81,7 @@ sub pipeline_analyses_dump_conservation_scores {
         },
 
         {   -logic_name     => 'concatenate_bedgraph_files',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateFiles',
-            -parameters     => {
-                'input_files'   => '#all_bedgraph_files#',
-                'output_file'   => '#bedgraph_file#',
-            },
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateBedGraphFiles',
             -flow_into      => 'convert_to_bigwig',
         },
 
