@@ -32,6 +32,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
@@ -73,68 +74,11 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    return [
+    
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles::pipeline_analyses_dump_anc_alleles($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [ {} ];
 
-    	{	-logic_name => 'mk_ancestral_dump_dir',
-    		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-    		-parameters => {
-    			cmd => 'mkdir -p #output_dir#'
-    		},
-    		-input_ids  => [ {} ],
-    		-flow_into => ['fetch_genome_dbs'],
-    		# -flow_into => {
-      #           '2->A' => [ 'fetch_genome_dbs' ],
-      #           'A->1' => [ 'md5sum' ],
-      #       },
-    	},
-
-        {   -logic_name     => 'fetch_genome_dbs',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpAncestralAlleles::GenomeDBFactory',
-            -parameters     => {
-                compara_db => $self->o('compara_db'),
-                reg_conf   => $self->o('reg_conf'),
-            },
-            # -flow_into  => [ 'get_ancestral_sequence' ],
-            -flow_into => {
-            	'2->A' => [ 'get_ancestral_sequence' ],
-            	'A->1' => [ 'md5sum' ],
-            }
-        },
-
-        {	-logic_name => 'get_ancestral_sequence',
-        	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        	-parameters => {
-        		species_outdir => '#output_dir#/#species_dir#',
-        		cmd => join('; ', 
-        			'perl #dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db#',
-        			'cd #species_outdir#',
-        			'perl #stats_program# > summary.txt',
-        			),
-        	},
-        	-flow_into => [ 'tar' ],
-        	-analysis_capacity => 2,
-        },
-
-        {	-logic_name => 'tar',
-        	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        	-parameters => {
-        		cmd => join( '; ',
-        			'cd #output_dir#',
-        			'tar cfvz #species_dir#.tar.gz #species_dir#/'
-        		)
-        	}
-        },
-
-        {	-logic_name => 'md5sum',
-        	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        	-parameters => {
-        		cmd => join( '; ',
-        			'cd #output_dir#',
-        			'md5sum *.tar.gz > MD5SUM'
-        		)
-        	}
-        }
-    ];
+    return $pipeline_analyses;
 }
 
 1;

@@ -55,7 +55,9 @@ sub default_options {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    my $pa = $self->_pipeline_analyses();
+    
+    my $pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
+    $pa->[0]->{'-input_ids'} = [{}];  
     $pa->[1]->{'-parameters'} = {
         'inputquery'    => 'SELECT clusterset_id, member_type FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL GROUP BY clusterset_id, member_type',
         'db_conn'       => '#rel_db#',

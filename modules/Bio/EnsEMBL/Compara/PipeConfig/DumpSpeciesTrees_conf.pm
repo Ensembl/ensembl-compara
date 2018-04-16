@@ -46,6 +46,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
@@ -80,51 +81,10 @@ sub pipeline_wide_parameters {
 sub pipeline_analyses {
     my ($self) = @_;
 
-    return [
-        {   -logic_name => 'mk_species_trees_dump_dir',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd'           => ['mkdir', '-p', '#dump_dir#'],
-            },
-            -input_ids  => [{ }],
-            -flow_into  => 'dump_factory',
-        },
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees::pipeline_analyses_dump_species_trees($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [{}];
 
-        {   -logic_name => 'dump_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'db_conn'       => '#compara_url#',
-                'inputquery'    => 'SELECT method_link_species_set_id, label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
-            },
-            -flow_into => {
-                2 => WHEN( '((#method_link_id# eq "401") || (#method_link_id# eq "402")) && (#label# ne "cafe")' => {'dump_one_tree_without_distances' => INPUT_PLUS() },
-                           ELSE { 'dump_one_tree_with_distances' => INPUT_PLUS() },
-                ),
-            },
-        },
-
-        {   -logic_name => 'dump_one_tree_with_distances',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd'           => '#dump_species_tree_exe# -url #compara_url# -mlss_id #method_link_species_set_id# -label "#label#" -with_distances > "#dump_dir#/#name#_#label#.nh"',
-            },
-            -flow_into  => [ 'sanitize_file' ],
-        },
-
-        {   -logic_name => 'dump_one_tree_without_distances',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd'           => '#dump_species_tree_exe# -url #compara_url# -mlss_id #method_link_species_set_id# -label "#label#" > "#dump_dir#/#name#_#label#.nh"',
-            },
-            -flow_into  => [ 'sanitize_file' ],
-        },
-
-        {   -logic_name => 'sanitize_file',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd'           => 'cd "#dump_dir#"; sed -i "s/:0;/;/" "#name#_#label#.nh"; sed -i "s/  */_/g" "#name#_#label#.nh"',
-            },
-        },
-    ];
+    return $pipeline_analyses;
 }
+
 1;

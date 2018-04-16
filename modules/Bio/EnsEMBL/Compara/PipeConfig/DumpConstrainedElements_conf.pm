@@ -35,7 +35,7 @@ use warnings;
 no warnings 'qw';
 
 use Bio::EnsEMBL::Hive::Version 2.4;
-
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
@@ -90,73 +90,11 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    return [
+    
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements::pipeline_analyses_dump_constrained_elems($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [ { mlss_id => $self->o('mlss_id') } ];
 
-        {   -logic_name     => 'mkdir_constrained_elems',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements',
-            -parameters     => {
-                'compara_db'    => '#compara_url#',
-            },
-            -input_ids      => [
-                {
-                    'mlss_id'   => $self->o('mlss_id'),
-                },
-            ],
-            -flow_into      => [ 'genomedb_factory_ce' ],
-        },
-
-        {   -logic_name     => 'genomedb_factory_ce',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -parameters     => {
-                'compara_db'            => '#compara_url#',
-                'extra_parameters'      => [ 'name' ],
-            },
-            -flow_into      => {
-                '2->A' => [ 'dump_constrained_elements' ],
-                'A->1' => [ 'md5sum_ce' ],
-            },
-        },
-
-        {   -logic_name     => 'dump_constrained_elements',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_url #compara_url# --species #name# --reg_conf "#registry#" > #output_file#',
-            },
-            -analysis_capacity => $self->o('capacity'),
-            -flow_into      => [ 'check_not_empty' ],
-        },
-
-        {   -logic_name     => 'check_not_empty',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckNotEmpty',
-            -parameters     => {
-                'min_number_of_lines'   => 1,   # The header is always present
-                'filename'              => '#output_file#',
-            },
-            -flow_into      => [ 'compress_ce' ],
-        },
-
-        {   -logic_name     => 'compress_ce',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'   => [qw(gzip -f -9 #output_file#)],
-            },
-        },
-
-        {   -logic_name     => 'md5sum_ce',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'   => 'cd #output_dir#; md5sum *.bed.gz > MD5SUM',
-            },
-            -flow_into      =>  [ 'readme_ce' ],
-        },
-
-        {   -logic_name     => 'readme_ce',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'   => [qw(cp -af #ce_readme# #output_dir#/README)],
-            },
-        },
-    ];
+    return $pipeline_analyses;
 }
 
 1;
