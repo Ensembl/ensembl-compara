@@ -56,6 +56,9 @@ sub param_defaults {
         	'LASTZ_NET' => 1, 'EPO' => 1, 'EPO_LOW_COVERAGE' => 1, 'PECAN' => 1,
         	'GERP_CONSTRAINED_ELEMENT' => 1, 'GERP_CONSERVATION_SCORE' => 1,
         },
+        
+        target_dir => '#dump_dir#',
+        # work_dir   => '#dump_dir#/dump_hash',
     };
 }
 
