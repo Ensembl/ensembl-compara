@@ -106,6 +106,12 @@ sub fetch_input {
 				push( @{$dumps{DumpConservationScores}}, $mlss );
 			}
 		} else {
+			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
+			if ( $method_class =~ /^ConstrainedElement/ ) {
+				push( @{$dumps{DumpConstrainedElements}}, $mlss );
+				next;
+			}
+			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
 			# don't flow trees for copying - they are always dumped fresh
 			next if $mlss->method->class =~ /tree_node$/;
 			# old analysis! can be copied from prev release FTP location

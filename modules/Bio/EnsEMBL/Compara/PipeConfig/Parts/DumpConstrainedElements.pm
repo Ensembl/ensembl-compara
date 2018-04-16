@@ -59,7 +59,7 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'dump_constrained_elements',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --reg_conf "#registry#" > #bed_file#',
+                'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#',
             },
             -hive_capacity => $self->o('dump_ce_capacity'),
             -flow_into      => [ 'check_not_empty' ],
@@ -71,20 +71,22 @@ sub pipeline_analyses_dump_constrained_elems {
                 'min_number_of_lines'   => 1,   # The header is always present
                 'filename'              => '#bed_file#',
             },
-            -flow_into      => [ 'compress_ce' ],
+            -flow_into      => [ 'convert_to_bigbed' ],
         },
 
-        {   -logic_name     => 'compress_ce',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        {   -logic_name     => 'convert_to_bigbed',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConvertToBigBed',
             -parameters     => {
-                'cmd'   => [qw(gzip -f -9 #bed_file#)],
+                'big_bed_exe'   => $self->o('big_bed_exe'),
+                'autosql_file'  => $self->o('bigbed_autosql'),
+                'bed_type'      => 'bed3+3',
             },
         },
 
         {   -logic_name     => 'md5sum_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => 'cd #ce_output_dir#; md5sum *.bed.gz > MD5SUM',
+                'cmd'   => 'cd #ce_output_dir#; md5sum *.bb > MD5SUM',
             },
             -flow_into      =>  [ 'readme_ce' ],
         },

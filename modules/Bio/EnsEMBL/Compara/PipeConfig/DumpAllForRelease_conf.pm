@@ -161,9 +161,11 @@ sub default_options {
         
         # constrained elems & conservation scores
         'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
+        'big_bed_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
         'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
     	'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
+        'bigbed_autosql'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/constrainedelements_autosql.as",
 
     	# species tree options
     	'dump_species_tree_exe'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/examples/species_getSpeciesTree.pl',
@@ -243,7 +245,8 @@ sub pipeline_wide_parameters {
         'bedgraph_file'  => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.bedgraph',
         'chromsize_file' => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.chromsize',
         'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.#assembly#.bw',
-        'bed_file'       => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
+        'bed_file'       => '#work_dir#/#dirname#/gerp_constrained_elements.#name#.bed',
+        'bigbed_file'    => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',
 
         # species trees
         'dump_species_tree_exe'  => $self->o('dump_species_tree_exe'),

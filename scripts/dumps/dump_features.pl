@@ -523,15 +523,15 @@ foreach my $slice (@$all_slices) {
   } elsif ($feature =~ /^ce_?(\d+)/) {
     my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     my $dnafrag_id = $dnafrag->dbID;
-    my $sql = "SELECT dnafrag_start, dnafrag_end FROM constrained_element WHERE".
+    my $sql = "SELECT constrained_element_id, dnafrag_start, dnafrag_end, score, p_value FROM constrained_element WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID.
         " ORDER BY dnafrag_start";
     my $sth = $dnafrag_adaptor->db->dbc->prepare($sql);
     $sth->execute();
-    my ($start, $end);
-    $sth->bind_columns(\$start, \$end);
+    my ($constrained_element_id, $start, $end, $score, $pvalue);
+    $sth->bind_columns(\$constrained_element_id, \$start, \$end, \$score, \$pvalue);
     while ($sth->fetch) {
-      print join("\t", $name, ($start - 1), $end), "\n";
+      print join("\t", $name, ($start - 1), $end, $constrained_element_id, $score, $pvalue), "\n";
     }
     $sth->finish();
     next;
