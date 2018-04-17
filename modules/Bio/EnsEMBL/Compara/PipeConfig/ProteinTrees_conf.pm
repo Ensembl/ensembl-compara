@@ -218,7 +218,9 @@ sub default_options {
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 900,
         'blastpu_capacity'          => 150,
-        'mcoffee_capacity'          => 600,
+        'mcoffee_short_capacity'    => 600,
+        'mafft_capacity'            => 2500,
+        'mafft_himem_capacity'      => 1200,
         'split_genes_capacity'      => 600,
         'alignment_filtering_capacity'  => 400,
         'cluster_tagging_capacity'  => 200,
@@ -250,10 +252,12 @@ sub default_options {
         'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
 
-    # hive priority for non-LOCAL health_check analysis:
+    # hive priority values for some analyses:
         'hc_priority'               => -10,
-
-    # prioriy for running TreeBest himem:
+        'mcoffee_himem_priority'    => 40,
+        'mafft_himem_priority'      => 35,
+        'mafft_priority'            => 30,
+        'mcoffee_priority'          => 20,
         'treebest_long_himem_priority' => 20,
 
     #default maximum retry count:
@@ -1638,7 +1642,7 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -hive_capacity        => $self->o('mcoffee_short_capacity'),
             -batch_size           => 20,
             -rc_name    => '1Gb_job',
             -flow_into => {
@@ -1655,8 +1659,8 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
-            -hive_capacity => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
+            -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1669,8 +1673,9 @@ sub core_pipeline_analyses {
                 'mafft_home'                 => $self->o('mafft_home'),
                 'escape_branch'              => -1,
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -hive_capacity        => $self->o('mafft_capacity'),
             -rc_name    => '2Gb_job',
+            -priority   => $self->o('mafft_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
@@ -1689,13 +1694,14 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
+                'cmd_max_runtime'       => '43200',
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
+            -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
@@ -1707,8 +1713,9 @@ sub core_pipeline_analyses {
             -parameters => {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -hive_capacity        => $self->o('mafft_himem_capacity'),
             -rc_name    => '8Gb_job',
+            -priority   => $self->o('mafft_himem_priority'),
         },
 
         {   -logic_name     => 'exon_boundaries_prep',
