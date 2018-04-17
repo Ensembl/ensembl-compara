@@ -94,7 +94,7 @@ use Bio::EnsEMBL::Registry;
 
 
 ## Command-line options
-my ($db_copy_client, $endpoint_uri, $source_server_url, $target_server_url, $ensadmin_psw, $help);
+my ($db_copy_client, $endpoint_uri, $source_server_url, $target_server_url, $ensadmin_psw, $force, $help);
 
 GetOptions(
         's|source_server_url'   => \$source_server_url,
@@ -102,6 +102,7 @@ GetOptions(
         'u|endpoint_uri'        => \$endpoint_uri,
         'c|db_copy_client'      => \$db_copy_client,
         'p|ensadmin_psw=s'      => \$ensadmin_psw,
+        'f|force!'              => \$force,
 
         'h|help'                => \$help,
 );
@@ -179,6 +180,8 @@ if (@db_clash) {
         warn "\t", $a->[0], "\t", join(" ", @{$a->[1]}), "\n";
     }
 }
+
+die "Add the --force option if you want to carry on with the copy of the other databases\n" if !$force && (@existing_dbs || @db_clash);
 
 foreach my $dbname (@databases_to_copy) {
     my @cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
