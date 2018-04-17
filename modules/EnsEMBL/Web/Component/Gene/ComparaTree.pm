@@ -210,14 +210,7 @@ sub content {
       $highlight_gene = undef;
     }
   } else {
-    $html .= $self->_info('Highlighted genes', 
-      sprintf(
-        '<p><i>%s</i> %s gene and its paralogues are highlighted. <a href="#" class="switch_highlighting off">Click here to enable highlighting of %s homologues</a>.</p>',
-        $hub->species_defs->get_config($hub->species_defs->production_name_mapping($member->genome_db->name), 'SPECIES_COMMON_NAME'),
-        $highlight_gene_display_label,
-        $hub->species_defs->get_config($highlight_species, 'SPECIES_COMMON_NAME')
-      )
-    );
+    $html .= $self->_info('Highlighted genes', '<p>Highlighting is turned off. <a href="#" class="switch_highlighting off">Click here to switch on highlighting</a>.</p>');
   }
   
   # Get all the genome_db_ids in each clade
