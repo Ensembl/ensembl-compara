@@ -63,7 +63,8 @@ sub default_options {
         'rel_with_suffix' => '#curr_release#',
         'division'        => 'ensembl',
 
-        'dump_dir'     => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_test_#curr_release#',
+        # 'dump_dir'     => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_test_#curr_release#',
+        'dump_dir'     => '/gpfs/nobackup/ensembl/'.$ENV{'USER'}.'/dumps_test_#curr_release#',
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
 
         'reg_conf'     => '/homes/carlac/src/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
@@ -136,14 +137,16 @@ sub default_options {
         	GERP_CONSERVATION_SCORE => ['bed/ensembl-compara'],
         },
 
-        ################
-        # HACK FOR NOW #
-        ################
+        # tree dump options
         'clusterset_id' => undef,
         'member_type'   => undef,
-        'big_wig_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
+        
+        # constrained elems & conservation scores
+        'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
+        'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+        'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
+    	'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
     };
-    # print Dumper $do;
     return $do;
 }
 
@@ -167,8 +170,25 @@ sub pipeline_wide_parameters {
         'dump_dir'     => '#dump_dir#',
         'ftp_root'     => '#ftp_root#',  
         'division'    => $self->o('division'),
-        # 'basename'      => '#member_type#_#clusterset_id#',
-        # 'name_root'     => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',     
+
+        # tree params
+        'basename'      => '#member_type#_#clusterset_id#',
+        'name_root'     => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
+
+        # ancestral alleles
+        'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
+
+        # constrained elems & conservation scores
+        'dump_features_program' => $self->o('dump_features_program'),
+        'cs_readme'             => $self->o('cs_readme'),
+        'ce_readme'             => $self->o('ce_readme'),
+        
+        'export_dir'    => $self->o('dump_dir'),
+        'cs_output_dir' => '#export_dir#/compara/conservation_scores/#dirname#',
+        'ce_output_dir' => '#export_dir#/bed/ensembl-compara/#dirname#',
+        'bedgraph_file' => '#output_dir#/gerp_conservation_scores.#name#.bedgraph',
+        'bigwig_file'   => '#output_dir#/gerp_conservation_scores.#name#.bw',
+        'bed_file'      => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
     }
 }
 
@@ -221,6 +241,7 @@ sub pipeline_analyses {
 
         #------------------------------------------------------------------#
         # create dummy analyses to make it clearer which pipeline is which #
+        # and to pass any additional pipeline-specific parameters          #
         #------------------------------------------------------------------#
         {	-logic_name => 'DumpMultiAlign_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
@@ -229,14 +250,11 @@ sub pipeline_analyses {
         {	-logic_name => 'DumpTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-parameters => { 
-        		# 'tsv_dir'   => $self->o('tsv_dir'),
-        		# 'xml_dir'   => $self->o('xml_dir'),
-        		# 'emf_dir'   => $self->o('emf_dir'),
-        		'basename'  => '#member_type#_#clusterset_id#',
-		        'name_root' => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
+        		# 'basename'  => '#member_type#_#clusterset_id#',
+		        # 'name_root' => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
 		        'base_dir'  => '#dump_dir#',
 		    },
-        	-flow_into  => { 1 => {'dump_trees_pipeline_start' => INPUT_PLUS()} },
+        	-flow_into => [ 'dump_trees_pipeline_start' ],
         },
         {	-logic_name => 'DumpConstrainedElements_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
@@ -244,7 +262,11 @@ sub pipeline_analyses {
         },
         {	-logic_name => 'DumpConservationScores_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        	-flow_into  => [ 'mkdir_conservation_scores' ],
+        	-parameters => {
+        		'export_dir' => '#dump_dir#',
+        	},
+        	# -flow_into  => { 1 => {'mkdir_conservation_scores' => INPUT_PLUS()} },
+        	-flow_into => [ 'mkdir_conservation_scores' ],
         },
         {	-logic_name => 'DumpSpeciesTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',

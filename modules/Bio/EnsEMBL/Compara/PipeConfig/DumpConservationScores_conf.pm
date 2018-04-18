@@ -58,15 +58,17 @@ sub pipeline_wide_parameters {
         'cs_readme'             => $self->o('cs_readme'),
 
         'registry'      => $self->o('registry'),
-        'compara_url'   => $self->o('compara_url'),
+        'compara_db'    => $self->o('compara_url'),
 
         'work_dir'      => $self->o('work_dir'),
         'chromsize_file'=> '#work_dir#/gerp_conservation_scores.#name#.chromsize',
         'bedgraph_file' => '#work_dir#/gerp_conservation_scores.#name#.bedgraph',
 
         'export_dir'    => $self->o('export_dir'),
-        'output_dir'    => '#export_dir#/#dirname#',
-        'bigwig_file'   => '#output_dir#/gerp_conservation_scores.#name#.bw',
+
+        'cs_output_dir' => '#export_dir#/compara/conservation_scores/#dirname#',
+        'bedgraph_file' => '#cs_output_dir#/gerp_conservation_scores.#name#.bedgraph',
+        'bigwig_file'   => '#cs_output_dir#/gerp_conservation_scores.#name#.bw',
     };
 }
 
