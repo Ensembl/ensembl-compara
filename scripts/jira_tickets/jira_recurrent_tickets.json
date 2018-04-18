@@ -38,6 +38,24 @@
       "subtasks" : [
          {
             "assignee" : "<RelCo>",
+            "component" : "Release tasks",
+            "description" : "relco_doc#Releasecoordinationdocumentation-Patchthetestdatabases",
+            "summary" : "Patch the test DBs"
+         },
+         {
+            "assignee" : "<RelCo>",
+            "component" : "Release process",
+            "description" : "relco_doc#Releasecoordinationdocumentation-Branchthecode",
+            "summary" : "Branch code"
+         },
+         {
+            "assignee" : "<RelCo>",
+            "component" : "Release process",
+            "description" : "relco_doc#Releasecoordinationdocumentation-Specializethebranch",
+            "summary" : "Specialize the branch"
+         },
+         {
+            "assignee" : "<RelCo>",
             "component" : "Release process",
             "description" : "relco_doc#Releasecoordinationdocumentation-Updatetable.sqlandcreatepatchfiles",
             "summary" : "update master tables and create patch files"
@@ -256,24 +274,6 @@
       "component" : "Release process",
       "description" : "relco_doc#Releasecoordinationdocumentation-Post-handover",
       "subtasks" : [
-         {
-            "assignee" : "<RelCo>",
-            "component" : "Release tasks",
-            "description" : "relco_doc#Releasecoordinationdocumentation-Patchthetestdatabases",
-            "summary" : "Patch the test DBs"
-         },
-         {
-            "assignee" : "<RelCo>",
-            "component" : "Release process",
-            "description" : "relco_doc#Releasecoordinationdocumentation-Branchthecode",
-            "summary" : "Branch code"
-         },
-         {
-            "assignee" : "<RelCo>",
-            "component" : "Release process",
-            "description" : "relco_doc#Releasecoordinationdocumentation-Specializethebranch",
-            "summary" : "Specialize the branch"
-         },
          {
             "assignee" : "<RelCo>",
             "component" : "Release tasks",
