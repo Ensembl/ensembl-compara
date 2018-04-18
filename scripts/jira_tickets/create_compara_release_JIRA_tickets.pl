@@ -128,7 +128,7 @@ sub main {
         my $ticket_key = create_ticket( $ticket, $parameters, $logger );
         if ($ticket->{'subtasks'}) {
             foreach my $subtask (@{$ticket->{'subtasks'}}) {
-                $subtask->{'parent'} = { 'key'  => $ticket_key };
+                $subtask->{'jira'}->{'parent'} = { 'key'  => $ticket_key };
                 my $subtask_key = create_ticket( $subtask, $parameters, $logger );
             }
         }
@@ -332,7 +332,7 @@ sub create_ticket {
 
     my $endpoint = 'rest/api/latest/issue';
 
-    my $content = { 'fields' => $ticket };
+    my $content = { 'fields' => $ticket->{jira} };
     my $response = post_request( $endpoint, $content, $parameters, $logger );
 
     my $ticket_key = decode_json( $response->content() )->{'key'};
