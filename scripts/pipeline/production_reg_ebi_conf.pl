@@ -37,7 +37,7 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
   # Bio::EnsEMBL::Registry->load_registry_from_url(
   #   'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/92');
   Bio::EnsEMBL::Registry->load_registry_from_url(
-    'mysql://ensro@mysql-ens-vertannot-staging:4573/92');
+    'mysql://ensro@mysql-ens-vertannot-staging:4573/93');
 
 
 # Add in extra cores from genebuild server
