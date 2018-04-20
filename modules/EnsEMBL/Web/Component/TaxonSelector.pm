@@ -53,7 +53,7 @@ sub _init {
   $self->{caller}          = $hub->param('referer_action');
 
   $self->{multiselect}     = $self->param('multiselect');
-  $self->{selection_limit} = 67;
+  $self->{selection_limit} = 68;
   $self->{is_blast}        = 0,
   $self->{entry_node}      = undef;
 }
