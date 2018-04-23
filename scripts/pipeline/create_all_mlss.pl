@@ -270,6 +270,8 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
 }
 
 $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
+
+        print "1. Collections that need to be created:\n\n";
         foreach my $collection_name (sort keys %collections) {
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
@@ -288,6 +290,8 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 print "AFTER STORING: ", $collection->toString, "\n\n";
             }
         }
+
+        print "2. MethodLinkSpeciesSets that need to be created:\n\n";
         foreach my $mlss (@mlsss) {
             my $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
             # Check if it is already in the database
