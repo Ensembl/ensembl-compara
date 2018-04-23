@@ -89,6 +89,7 @@ my $release;
 my $xml_config;
 my $xml_schema;
 my $verbose;
+my $dry_run;
 
 GetOptions(
     'help'          => \$help,
@@ -98,6 +99,7 @@ GetOptions(
     'schema=s'      => \$xml_schema,
     'release'       => \$release,
     'verbose'       => \$verbose,
+    'dryrun|dry_run'=> \$dry_run,
 );
 
 # Print Help and exit if help is requested
@@ -317,6 +319,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 print "AFTER STORING: ", $mlss->toString, "\n\n";
             }
         }
+        die "Aborted: 'dry_run' mode requested\n" if $dry_run;
     } );
 
 
