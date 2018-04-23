@@ -60,6 +60,9 @@ package Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Method;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+
 
 =head2 update_dnafrags
 
@@ -118,6 +121,132 @@ sub update_dnafrags {
         }
         print "  ok!\n\n";
     }
+}
+
+
+sub create_species_set {
+    my ($genome_dbs, $species_set_name) = @_;
+    $species_set_name ||= join('-', sort map {$_->get_short_name} @{$genome_dbs});
+    return Bio::EnsEMBL::Compara::SpeciesSet->new(
+        -GENOME_DBS => $genome_dbs,
+        -NAME => $species_set_name,
+    );
+}
+
+sub _get_species_set_display_name {
+    my ($species_set) = @_;
+    my $ss_name = $species_set->name;
+    $ss_name =~ s/collection-//;
+    return $ss_name;
+}
+
+sub create_mlss {
+    my ($method, $species_set, $mlss_name, $ss_display_name, $source, $url) = @_;
+    if (ref($species_set) eq 'ARRAY') {
+        $species_set = create_species_set($species_set);
+    }
+    $ss_display_name ||= _get_species_set_display_name($species_set);
+    $mlss_name ||= sprintf('%s %s', $ss_display_name, lc $Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method->type} || die "No description for ".$method->type);
+    return Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -SPECIES_SET => $species_set,
+        -METHOD => $method,
+        -NAME => $mlss_name,
+        -SOURCE => $source,
+        -URL => $url,
+    );
+}
+
+sub create_mlsss_on_singletons {
+    my ($method, $genome_dbs) = @_;
+    return [map {create_mlss($method, [$_])} @$genome_dbs];
+}
+
+sub create_mlsss_on_pairs {
+    my ($method, $genome_dbs, $source, $url) = @_;
+    my @mlsss;
+    my @input_genome_dbs = @$genome_dbs;
+    while (my $gdb1 = shift @input_genome_dbs) {
+        foreach my $gdb2 (@input_genome_dbs) {
+            push @mlsss, create_mlss($method, [$gdb1, $gdb2], undef, undef, $source, $url);
+        }
+    }
+    return \@mlsss;
+}
+
+sub create_self_wga_mlss {
+    my ($method, $gdb) = @_;
+    my $method_display_name = lc $method->type;
+    $method_display_name =~ tr/_/-/;
+    my $species_set = create_species_set([$gdb]);
+    my $mlss_name = sprintf('%s self-%s', $gdb->get_short_name, $method_display_name);
+    return create_mlss($method, $species_set, $mlss_name);
+}
+
+sub create_pairwise_wga_mlss {
+    my ($compara_dba, $method, $ref_gdb, $nonref_gdb) = @_;
+    my @mlsss;
+    my $method_display_name = lc $method->type;
+    $method_display_name =~ tr/_/-/;
+    my $species_set = create_species_set([$ref_gdb, $nonref_gdb]);
+    my $mlss_name = sprintf('%s %s (on %s)', $species_set->name, $method_display_name, $ref_gdb->get_short_name);
+    push @mlsss, create_mlss($method, $species_set, $mlss_name);
+    if ($ref_gdb->has_karyotype and $nonref_gdb->has_karyotype) {
+        my $synt_method = $compara_dba->get_MethodAdaptor->fetch_by_type('SYNTENY');
+        push @mlsss, create_mlss($synt_method, $species_set);
+    }
+    return \@mlsss;
+}
+
+sub create_multiple_wga_mlss {
+    my ($compara_dba, $method, $species_set, $ss_display_name, $with_gerp, $source, $url) = @_;
+    my @mlsss;
+    my $ss_size = scalar(@{$species_set->genome_dbs});
+    $ss_display_name ||= _get_species_set_display_name($species_set);
+    my $mlss_name = sprintf('%d %s %s', $ss_size, $ss_display_name, $Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method->type});
+    push @mlsss, create_mlss($method, $species_set, $mlss_name);
+    if ($with_gerp) {
+        my $ce_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSTRAINED_ELEMENT');
+        $mlss_name = sprintf('Gerp Constrained Elements (%d %s)', $ss_size, $ss_display_name);
+        push @mlsss, create_mlss($ce_method, $species_set, $mlss_name);
+        my $cs_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSERVATION_SCORE');
+        $mlss_name = sprintf('Gerp Conservation Scores (%d %s)', $ss_size, $ss_display_name);
+        push @mlsss, create_mlss($cs_method, $species_set, $mlss_name);
+    }
+    if ($method->type eq 'CACTUS_HAL') {
+        my $pw_method = $compara_dba->get_MethodAdaptor->fetch_by_type('CACTUS_HAL_PW');
+        push @mlsss, @{ create_mlsss_on_pairs($pw_method, $species_set->genome_dbs, $source, $url) };
+    }
+    return \@mlsss;
+}
+
+sub create_assembly_patch_mlsss {
+    my ($compara_dba, $genome_db) = @_;
+    my $species_set = create_species_set([$genome_db]);
+    my @mlsss;
+    {
+        my $method = $compara_dba->get_MethodAdaptor->fetch_by_type('LASTZ_PATCH');
+        my $mlss_name = sprintf('%s lastz-patch', $species_set->name);
+        push @mlsss, create_mlss($method, $species_set, $mlss_name);
+    }
+    {
+        my $method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_PROJECTIONS');
+        my $mlss_name = sprintf('%s patch projections', $species_set->name);
+        push @mlsss, create_mlss($method, $species_set, $mlss_name);
+    }
+    return \@mlsss,
+}
+
+sub create_homology_mlsss {
+    my ($compara_dba, $method, $species_set, $ss_display_name) = @_;
+    my @mlsss;
+    push @mlsss, create_mlss($method, $species_set, undef, $ss_display_name);
+    if (($method->type eq 'PROTEIN_TREES') or ($method->type eq 'NC_TREES')) {
+        my $orth_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES');
+        push @mlsss, @{ create_mlsss_on_pairs($orth_method, $species_set->genome_dbs) };
+        my $para_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_PARALOGUES');
+        push @mlsss, @{ create_mlsss_on_singletons($para_method, $species_set->genome_dbs) };
+    }
+    return \@mlsss;
 }
 
 
