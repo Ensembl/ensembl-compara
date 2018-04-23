@@ -70,7 +70,16 @@ our %PLAIN_TEXT_DESCRIPTIONS = (
     'EPO_LOW_COVERAGE'      => 'EPO-Low-Coverage',
     'PECAN'                 => 'Mercator-Pecan',
     'CACTUS_HAL'            => 'Cactus',
+    'CACTUS_HAL_PW'         => 'Cactus (restricted)',
     'SYNTENY'               => 'Synteny',
+    'FAMILY'                => 'Families',
+    'PROTEIN_TREES'         => 'Protein-trees',
+    'NC_TREES'              => 'ncRNA-trees',
+    'SPECIES_TREE'          => 'Species-tree',
+    'ENSEMBL_HOMOLOGUES'    => 'Homologues',
+    'ENSEMBL_ORTHOLOGUES'   => 'Orthologues',
+    'ENSEMBL_PARALOGUES'    => 'Paralogues',
+    'ENSEMBL_PROJECTIONS'   => 'Patch projections'
 );
 
 
