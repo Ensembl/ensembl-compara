@@ -222,6 +222,14 @@ foreach my $collection_node (@{$division_node->findnodes('collections/collection
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
 }
 
+foreach my $xml_ref_to_all_node (@{$division_node->findnodes('pairwise_alignments/ref_to_all')}) {
+    my $ref_gdb = find_genome_from_xml_node_attribute($xml_ref_to_all_node, 'ref_species');
+    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_ref_to_all_node->getAttribute('method') );
+    my $genome_dbs = make_species_set_from_XML_node($xml_ref_to_all_node->getChildrenByTagName('species_set')->[0], $division_species_set->genome_dbs);
+    $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID} @$genome_dbs];
+    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
+}
+
 foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_alignment')}) {
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
     my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($xml_msa, $method, $division_species_set->genome_dbs) };
@@ -285,6 +293,16 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
                 $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
                 next;
+            }
+            # Special case for LastZ alignments: we still have some equivalent BlastZ alignments
+            if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
+                $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs);
+                # Check if it is already in the database
+                if ($exist_mlss and $exist_mlss->is_current) {
+                    $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
+                    $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
+                    next;
+                }
             }
             if ($verbose) {
                 print "MLSS: ", $mlss->name, "\n";

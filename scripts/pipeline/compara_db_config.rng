@@ -57,6 +57,15 @@
     </choice>
   </define>
   <!-- /new_species_set_or_collection -->
+  <define name="pairwise_methods">
+    <attribute name="method" blockly:blockName="Alignment method">
+      <choice>
+        <value>LASTZ_NET</value>
+        <value>TRANSLATED_BLAT_NET</value>
+      </choice>
+    </attribute>
+  </define>
+  <!-- /pairwise_methods -->
   <start>
     <element name="compara_db" blockly:blockName="Compara database">
       <attribute name="division" blockly:blockName="Division name"/>
@@ -70,6 +79,20 @@
         </element>
       </optional>
       <!-- /collections -->
+      <optional>
+        <element name="pairwise_alignments" blockly:blockName="Pairwise alignments">
+          <oneOrMore>
+            <choice>
+              <element name="ref_to_all" blockly:blockName="One-vs-all">
+                <attribute name="ref_species" blockly:blockName="Reference species"/>
+                <ref name="pairwise_methods"/>
+                <ref name="new_species_set_or_collection"/>
+              </element>
+            </choice>
+          </oneOrMore>
+        </element>
+      </optional>
+      <!-- /pairwise_alignments -->
       <optional>
         <element name="multiple_alignments" blockly:blockName="Multiple alignments">
           <oneOrMore>
