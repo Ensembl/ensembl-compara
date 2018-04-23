@@ -53,6 +53,9 @@
       </element>
       <element name="species_set" blockly:blockName="New species-set">
         <ref name="new_species_set"/>
+        <optional>
+          <attribute name="in_collection" blockly:blockName="within this collection"/>
+        </optional>
       </element>
     </choice>
   </define>

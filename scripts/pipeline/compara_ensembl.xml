@@ -16,17 +16,13 @@
   <pairwise_alignments>
     <!-- reference genome vs whole clade -->
     <ref_to_all method="LASTZ_NET" ref_species="homo_sapiens">
-      <species_set>
-        <taxonomic_group taxon_name="Chordata">
-          <ref_for_taxon name="mus_musculus"/>
-        </taxonomic_group>
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Chordata"/>
       </species_set>
     </ref_to_all>
     <ref_to_all method="LASTZ_NET" ref_species="mus_musculus">
-      <species_set>
-        <taxonomic_group taxon_name="Rodentia">
-          <ref_for_taxon name="mus_musculus"/>
-        </taxonomic_group>
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Rodentia"/>
       </species_set>
    </ref_to_all>
     <ref_to_all method="LASTZ_NET" ref_species="gallus_gallus">

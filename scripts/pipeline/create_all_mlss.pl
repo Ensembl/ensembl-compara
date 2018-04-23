@@ -157,6 +157,11 @@ sub find_collection_from_xml_node_attribute {
 sub make_species_set_from_XML_node {
     my ($xml_ss, $pool) = @_;
 
+    if ($xml_ss->hasAttribute('in_collection')) {
+        my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
+        $pool = $collection->genome_dbs;
+    }
+
     my $genome_dba = $compara_dba->get_GenomeDBAdaptor;
     my @selected_gdbs;
     foreach my $xml_taxon (@{$xml_ss->getChildrenByTagName('taxonomic_group')}) {
