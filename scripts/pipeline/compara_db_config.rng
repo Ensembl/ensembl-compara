@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" xmlns:blockly="http://blockly.com/">
+  <define name="new_species_set">
+    <oneOrMore>
+      <choice>
+        <element name="taxonomic_group" blockly:blockName="Taxonomy-based definition">
+          <choice>
+            <attribute name="taxon_id" blockly:blockName="Taxon ID"/>
+            <attribute name="taxon_name" blockly:blockName="Taxon name"/>
+          </choice>
+          <optional>
+            <attribute name="only_with_karyotype" blockly:blockName="Only species with a karyotype">
+              <choice>
+                <value blockly:blockName="Yes">1</value>
+                <value blockly:blockName="No">0</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute name="only_high_coverage" blockly:blockName="Only high-coverage genomes">
+              <choice>
+                <value blockly:blockName="Yes">1</value>
+                <value blockly:blockName="No">0</value>
+              </choice>
+            </attribute>
+          </optional>
+          <zeroOrMore>
+            <element name="ref_for_taxon" blockly:blockName="Reference genome (replaces other genomes)">
+              <attribute name="name" blockly:blockName="Reference name"/>
+              <optional>
+                <attribute name="taxon_id" blockly:blockName="Taxonomic scope (ID)"/>
+              </optional>
+            </element>
+          </zeroOrMore>
+        </element>
+        <element name="genome" blockly:blockName="Genome">
+          <attribute name="name" blockly:blockName="Name"/>
+        </element>
+      </choice>
+    </oneOrMore>
+  </define>
+  <!-- /new_species_set -->
+  <define name="new_named_species_set">
+    <!-- This attribute assumes the ref is included in an element -->
+    <attribute name="name" blockly:blockName="Name"/>
+    <ref name="new_species_set"/>
+  </define>
+  <!-- /new_named_species_set -->
+  <define name="new_species_set_or_collection">
+    <choice>
+      <element name="collection" blockly:blockName="Collection name">
+        <text/>
+      </element>
+      <element name="species_set" blockly:blockName="New species-set">
+        <ref name="new_species_set"/>
+      </element>
+    </choice>
+  </define>
+  <!-- /new_species_set_or_collection -->
+  <start>
+    <element name="compara_db" blockly:blockName="Compara database">
+      <attribute name="division" blockly:blockName="Division name"/>
+      <optional>
+        <element name="collections" blockly:blockName="Collections">
+          <oneOrMore>
+            <element name="collection" blockly:blockName="Collection definition">
+              <ref name="new_named_species_set"/>
+            </element>
+          </oneOrMore>
+        </element>
+      </optional>
+      <!-- /collections -->
+      <optional>
+        <element name="multiple_alignments" blockly:blockName="Multiple alignments">
+          <oneOrMore>
+            <element name="multiple_alignment" blockly:blockName="Multiple alignment">
+              <attribute name="method" blockly:blockName="Alignment method">
+                <choice>
+                  <value>PECAN</value>
+                  <value>EPO</value>
+                  <value>EPO_LOW_COVERAGE</value>
+                  <value>CACTUS_HAL</value>
+                </choice>
+              </attribute>
+              <choice>
+                <attribute name="collection" blockly:blockName="Collection name"/>
+                <element name="species_set" blockly:blockName="New named species-set">
+                  <optional>
+                    <attribute name="in_collection" blockly:blockName="within this collection"/>
+                  </optional>
+                  <optional>
+                    <attribute name="display_name" blockly:blockName="Display name (for the MLSS only)"/>
+                  </optional>
+                  <ref name="new_named_species_set"/>
+                </element>
+              </choice>
+              <optional>
+                <attribute name="gerp" blockly:blockName="Run GERP">
+                  <choice>
+                    <value blockly:blockName="Yes">1</value>
+                    <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
+            </element>
+          </oneOrMore>
+        </element>
+      </optional>
+      <!-- /multiple_alignments -->
+      <optional>
+        <element name="self_alignments" blockly:blockName="Self-alignments">
+          <zeroOrMore>
+            <element name="genome" blockly:blockName="Genome">
+              <attribute name="name" blockly:blockName="Name"/>
+            </element>
+          </zeroOrMore>
+        </element>
+      </optional>
+      <!-- /self_alignments -->
+      <optional>
+        <element name="assembly_patches" blockly:blockName="Assembly patches">
+          <zeroOrMore>
+            <element name="genome" blockly:blockName="Genome">
+              <attribute name="name" blockly:blockName="Name"/>
+            </element>
+          </zeroOrMore>
+        </element>
+      </optional>
+      <!-- /assembly_patches -->
+      <element name="families" blockly:blockName="Protein-families">
+        <oneOrMore>
+          <element name="family" blockly:blockName="Protein-families">
+            <attribute name="collection" blockly:blockName="Collection name"/>
+          </element>
+        </oneOrMore>
+      </element>
+      <element name="gene_trees" blockly:blockName="Gene-trees">
+        <oneOrMore>
+          <choice>
+            <element name="protein_trees" blockly:blockName="Protein-trees">
+              <attribute name="collection" blockly:blockName="Collection name"/>
+            </element>
+            <element name="nc_trees" blockly:blockName="ncRNA-trees">
+              <attribute name="collection" blockly:blockName="Collection name"/>
+            </element>
+          </choice>
+        </oneOrMore>
+      </element>
+      <element name="species_trees" blockly:blockName="Species-trees">
+        <oneOrMore>
+          <element name="species_tree" blockly:blockName="Species-tree">
+            <attribute name="collection" blockly:blockName="Collection name"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </element>
+  </start>
+</grammar>

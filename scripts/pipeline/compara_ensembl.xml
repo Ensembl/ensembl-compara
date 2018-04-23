@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="ensembl">
+  <collections>
+    <collection name="default">
+      <taxonomic_group taxon_name="Chordata">
+        <ref_for_taxon name="mus_musculus"/>
+      </taxonomic_group>
+      <genome name="drosophila_melanogaster"/>
+      <genome name="caenorhabditis_elegans"/>
+      <genome name="saccharomyces_cerevisiae"/>
+    </collection>
+    <collection name="murinae">
+      <taxonomic_group taxon_name="Murinae"/>
+    </collection>
+  </collections>
+  <multiple_alignments>
+    <multiple_alignment method="EPO">
+      <species_set name="primates" in_collection="default">
+        <taxonomic_group taxon_name="Primates" only_with_karyotype="1"/>
+        <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE">
+      <species_set name="primates" in_collection="default">
+        <taxonomic_group taxon_name="Primates"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO">
+      <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
+        <taxonomic_group taxon_name="Eutheria" only_with_karyotype="1"/>
+        <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
+        <taxonomic_group taxon_name="Eutheria"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO">
+      <species_set name="sauropsids" in_collection="default">
+        <taxonomic_group taxon_name="Sauropsida" only_with_karyotype="1"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="sauropsids" in_collection="default">
+        <taxonomic_group taxon_name="Sauropsida"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO">
+      <species_set name="fish" in_collection="default">
+        <taxonomic_group taxon_name="Actinopterygii" only_with_karyotype="1"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="fish" in_collection="default">
+        <taxonomic_group taxon_name="Actinopterygii"/>
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="PECAN" gerp="1">
+      <species_set name="amniotes" display_name="amniota vertebrates" in_collection="default">
+        <taxonomic_group taxon_name="Amniota" only_with_karyotype="1"/>
+        <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
+      </species_set>
+    </multiple_alignment>
+    <multiple_alignment method="CACTUS_HAL">
+      <species_set name="murinae" in_collection="murinae">
+        <!--mus_caroli and mus_pahari are not in the set, so we can't take the whole collection-->
+        <taxonomic_group taxon_name="Mus musculus"/>
+        <genome name="mus_spretus"/>
+        <genome name="rattus_norvegicus"/>
+      </species_set>
+    </multiple_alignment>
+  </multiple_alignments>
+  <self_alignments>
+    <genome name="homo_sapiens"/>
+  </self_alignments>
+  <assembly_patches>
+    <genome name="homo_sapiens"/>
+    <genome name="mus_musculus"/>
+  </assembly_patches>
+  <families>
+    <family collection="default"/>
+  </families>
+  <gene_trees>
+    <protein_trees collection="default"/>
+    <protein_trees collection="murinae"/>
+    <nc_trees collection="default"/>
+    <nc_trees collection="murinae"/>
+  </gene_trees>
+  <species_trees>
+    <species_tree collection="ensembl"/>
+  </species_trees>
+</compara_db>
