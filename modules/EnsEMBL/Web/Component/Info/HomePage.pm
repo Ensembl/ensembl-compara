@@ -22,7 +22,6 @@ package EnsEMBL::Web::Component::Info::HomePage;
 use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
-use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 
 use parent qw(EnsEMBL::Web::Component::Info);
 
@@ -53,8 +52,7 @@ sub content {
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
   
   return sprintf('
-    <div class="box-left"><div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div></div>
-    %s
+    <div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
@@ -62,39 +60,12 @@ sub content {
     %s',
     $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
-    $species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} ? '<div class="box-right"><div class="round-box info-box unbordered">' . $self->whats_new_text . '</div></div>' : '',
     $self->assembly_text,
     $self->genebuild_text,
     $self->compara_text,
     $self->variation_text,
     $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : ''
   );
-}
-
-sub whats_new_text {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $species_defs = $hub->species_defs;
-  my $news_url     = $hub->url({ action => 'WhatsNew' });
-
-  my $html = sprintf(
-    q{<h2><a href="%s" title="More release news"><img src="%s24/announcement.png" style="vertical-align:middle" alt="" /></a> What's New in %s release %s</h2>},
-    $news_url,
-    $self->img_url,
-    $species_defs->SPECIES_COMMON_NAME,
-    $species_defs->ENSEMBL_VERSION,
-  );
-
-  if ($species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
-    my $changes = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub)->fetch_changelog({ release => $species_defs->ENSEMBL_VERSION, species => $hub->species, limit => 3 });
-    
-    $html .= '<ul>';
-    $html .= qq(<li><a href="$news_url#change_$_->{'id'}" class="nodeco">$_->{'title'}</a></li>) for @$changes;
-    $html .= '</ul>';
-    $html .= qq(<div style="text-align:right;margin-top:-1em;padding-bottom:8px"><a href="$news_url" class="nodeco">More news</a>...</div>);
-  }
-
-  return $html;
 }
 
 sub assembly_text {

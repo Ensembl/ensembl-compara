@@ -19,9 +19,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Document::HTML::WhatsNew;
 
-### This module outputs a selection of news headlines from  
-### the ensembl_production database
-### If a blog URL is configured, it will also try to pull in the RSS feed
+### This module uses our blog's RSS feed to create a list of headlines
+### Note that the RSS XML is cached to avoid saturating our blog's bandwidth! 
 
 use strict;
 
@@ -29,114 +28,44 @@ use Encode          qw(encode_utf8 decode_utf8);
 use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
-use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::File::Utils::IO qw/file_exists read_file write_file/;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $species_defs = $hub->species_defs;
-  my $html;
+  my $self  = shift;
+  my $sd    = $self->hub->species_defs;
 
-  return if $SiteDefs::ENSEMBL_SKIP_RSS;
+  return if ($SiteDefs::ENSEMBL_SKIP_RSS || !$sd->ENSEMBL_BLOG_URL);
 
-  my ($headlines, @links, $blog);
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
-    ($headlines, @links) = $self->show_headlines;
-  }
+  my $html = sprintf '<h2 class="box-header">%s %s Release %s (%s)</h2>', $sd->ENSEMBL_SITETYPE, 
+                $sd->ENSEMBL_SUBTYPE, $sd->ENSEMBL_VERSION, $sd->ENSEMBL_RELEASE_DATE;
 
-  $html .= $headlines if $headlines;
+  $html .= $self->_include_blog($self->hub, $sd->ENSEMBL_VERSION);
 
-  if ($species_defs->ENSEMBL_BLOG_URL) {
-    push @links, qq(<a href="//www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
-    $blog = $self->_include_blog($hub);
-  }
-  if (scalar(@links)) {
-    $html .= sprintf('<p>%s</p>', join(' | ', @links));
-  }
-  $html .= $blog if $blog;
+  $html .= qq(<h2 class="box-header">Other news from our blog</h2>);
 
-  return $html if ($species_defs->ENSEMBL_SUBTYPE eq 'Archive');
-  
-  #$html .= $self->show_twitter();
+  $html .= $self->_include_blog($self->hub);
+
+  $html .= $self->show_twitter if $self->can('show_twitter');
 
   return $html;
 }
 
-sub show_twitter {
-  my $self          = shift;
-  my $species_defs  = $self->hub->species_defs;
-  my $twitter_html  = '';
+sub _include_blog {
+  my ($self, $hub, $version) = @_;
+  my ($rss_path, $rss_url, $limit);
 
-  my $twitter_user = $species_defs->ENSEMBL_TWITTER_ACCOUNT;
-  my $widget_id    = $species_defs->TWITTER_FEED_WIDGET_ID;
-  if ($twitter_user && $widget_id) {
-    $twitter_html = sprintf(qq(<a class="twitter-timeline" href="https://twitter.com/%s" height="400" data-widget-id="%s">Recent tweets from @%s</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>),
-                $twitter_user, $widget_id, $twitter_user);
-  }
-
-  return qq(<div class="homepage-twitter">$twitter_html</div>);
-}
-
-sub show_headlines {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $species_defs = $hub->species_defs;
-  my ($headlines, @links);
-
-  my $release_id = $hub->species_defs->ENSEMBL_VERSION;
-
-  my $header_text = $self->news_header($hub, $release_id);
-  my $headlines   = qq{<h2 class="box-header">$header_text</h2>};
-
-  my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
-
-  if ($first_production) {
-    if ($release_id >= $first_production) {
-
-      my $news_url     = '/info/website/news.html?id='.$release_id;
-      my @items = ();
-
-      my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
-      if ($adaptor) {
-        @items = @{$adaptor->fetch_headlines({'release' => $release_id, limit => 5})};
-      }   
-
-      if (scalar @items > 0) {
-        $headlines .= "<ul>\n";
-
-        ## format news headlines
-        foreach my $item (@items) {
-          $headlines .= qq|<li><strong><a href="$news_url#change_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong></li>\n|;
-        }
-        $headlines .= "</ul>\n";
-        push @links, qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
-
-      }
-      else {
-        $headlines .= "<p>No news is currently available for release $release_id.</p>\n";
-      }
-    }
-
-    if ($release_id > $first_production) {
-      push @links, qq(<a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a>);
-    }
+  if ($version) {
+    return '<p>Release headlines go here</p>';
   }
   else {
-    $headlines .= "<p>No news is currently available for release $release_id.</p>\n";
+    $rss_path  = $hub->species_defs->ENSEMBL_TMP_DIR.'/rss.xml';
+    $rss_url   = $hub->species_defs->ENSEMBL_BLOG_RSS;
+    $limit     = 3;
   }
-  return ($headlines, @links);
-}
 
-sub _include_blog {
-  my ($self, $hub) = @_;
-
-  my $rss_path  = $hub->species_defs->ENSEMBL_TMP_DIR.'/rss.xml';
-  my $rss_url   = $hub->species_defs->ENSEMBL_BLOG_RSS;
-  my $items     = $self->read_rss_file($hub, $rss_path, $rss_url, 3); 
+  my $items     = $self->read_rss_file($hub, $rss_path, $rss_url, $limit); 
   my $html;
 
   if (scalar(@{$items||[]})) {
