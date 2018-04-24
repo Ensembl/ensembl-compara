@@ -84,13 +84,6 @@ sub init {
       title => sprintf('%s (%s)', $species_defs->ENSEMBL_SITE_NAME_SHORT, substr($species_defs->SPECIES_BIO_SHORT, 0, 5))
     });
   }
-  
-  $self->add_link({
-    rel   => 'alternate',
-    type  => 'application/rss+xml',
-    href  => '/common/rss.xml',
-    title => 'Ensembl website news feed'
-  });
 }
 
 1;

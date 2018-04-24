@@ -47,8 +47,6 @@ sub new {
     none => { none => '' },
     HTML => { '5' => '' },
     XML => {
-      'rss version="0.91"' => '"http://my.netscape.com/publish/formats/rss-0.91.dtd"',
-      'rss version="2.0"'  => '"http://www.silmaril.ie/software/rss2.dtd"',
       'xhtml'              => '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"'
     }
   };
