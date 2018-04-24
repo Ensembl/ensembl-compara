@@ -113,6 +113,11 @@
          },
          {
             "component" : "Release tasks",
+            "description" : "relco_doc#Releasecoordinationdocumentation-Production",
+            "summary" : "Run the Create Species Tree pipeline"
+         },
+         {
+            "component" : "Release tasks",
             "description" : "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary" : "Run the Family pipeline"
          },
