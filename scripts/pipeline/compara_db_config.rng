@@ -86,7 +86,7 @@
         <element name="pairwise_alignments" blockly:blockName="Pairwise alignments">
           <oneOrMore>
             <choice>
-              <element name="ref_to_all" blockly:blockName="One-vs-all">
+              <element name="one_vs_all" blockly:blockName="One vs all">
                 <attribute name="ref_species" blockly:blockName="Reference species"/>
                 <ref name="pairwise_methods"/>
                 <ref name="new_species_set_or_collection"/>

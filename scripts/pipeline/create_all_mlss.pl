@@ -229,10 +229,10 @@ foreach my $collection_node (@{$division_node->findnodes('collections/collection
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
 }
 
-foreach my $xml_ref_to_all_node (@{$division_node->findnodes('pairwise_alignments/ref_to_all')}) {
-    my $ref_gdb = find_genome_from_xml_node_attribute($xml_ref_to_all_node, 'ref_species');
-    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_ref_to_all_node->getAttribute('method') );
-    my $genome_dbs = make_species_set_from_XML_node($xml_ref_to_all_node->getChildrenByTagName('species_set')->[0], $division_species_set->genome_dbs);
+foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/one_vs_all')}) {
+    my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_species');
+    my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
+    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_species_set->genome_dbs);
     $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID} @$genome_dbs];
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
 }
