@@ -69,6 +69,11 @@
         <taxonomic_group taxon_name="Amphibia"/>
       </species_set>
     </one_vs_all>-->
+    <one_vs_all method="LASTZ_NET" ref_species="bos_taurus">
+      <species_set>
+        <taxonomic_group taxon_name="Cetartiodactyla"/>
+      </species_set>
+    </one_vs_all>
     <!-- Empty at the moment -->
     <!--<one_vs_all method="LASTZ_NET" ref_species="latimeria_chalumnae">
       <species_set>
