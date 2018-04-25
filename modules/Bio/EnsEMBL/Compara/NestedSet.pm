@@ -1140,6 +1140,8 @@ sub _internal_newick_format_ryo {
     if ($@) {
         throw("Something bad happened while trying to stringify the tree: $@\n");
     }
+    # Remove the trailing branch length (distance_to_parent doesn't make sense on a root node)
+    $newick_str =~ s/:0$//;
     return "$newick_str;";
 }
 

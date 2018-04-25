@@ -93,7 +93,7 @@ sub pipeline_analyses_dump_species_trees {
         {   -logic_name => 'sanitize_file',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => 'cd "#dump_dir#"; sed -i "s/:0;/;/" "#name#_#label#.nh"; sed -i "s/  */_/g" "#name#_#label#.nh"',
+                'cmd'           => ['sed', '-i', 's/  */_/g', '#dump_dir#/#name#_#label#.nh'],
             },
         },
     ];

@@ -154,7 +154,6 @@ sub fetch_input {
               $self->complete_early('Less than 3 species in this block. Cannot run GERP. (have you asked to skip too many species ?)');
 	  }
 	  $tree_string = $gat->newick_format("simple");
-          $tree_string=~s/:0;/;/; # Remove unused node at end
 
 	  $self->param('modified_tree_file', $self->worker_temp_directory . "/" . $TREE_FILE);
 
