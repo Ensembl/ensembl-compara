@@ -186,14 +186,14 @@ sub make_species_set_from_XML_node {
             my $ref_taxon = $taxon_id ? $compara_dba->get_NCBITaxonAdaptor->fetch_by_dbID($taxon_id) : $gdb->taxon;
             $some_genome_dbs = [grep {(($_->taxon_id != $ref_taxon->dbID) && !$_->taxon->has_ancestor($ref_taxon)) || ($_->name eq $gdb->name)} @$some_genome_dbs];
         }
-        push @selected_gdbs, @$some_genome_dbs;
+        push @selected_gdbs, sort {$a->dbID <=> $b->dbID} @$some_genome_dbs;
     }
     foreach my $xml_genome (@{$xml_ss->getChildrenByTagName('genome')}) {
         my $gdb = find_genome_from_xml_node_attribute($xml_genome, 'name');
         push @selected_gdbs, $gdb;
     }
-    my %selected_gdb_ids = map {$_->dbID => 1} @selected_gdbs;
-    return [grep {$selected_gdb_ids{$_->dbID}} @$pool];
+    my %allowed_gdb_ids = map {$_->dbID => 1} @$pool;
+    return [grep {delete $allowed_gdb_ids{$_->dbID}} @selected_gdbs];
 }
 
 sub make_named_species_set_from_XML_node {
