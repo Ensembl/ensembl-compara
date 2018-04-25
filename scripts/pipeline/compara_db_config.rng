@@ -86,8 +86,22 @@
         <element name="pairwise_alignments" blockly:blockName="Pairwise alignments">
           <oneOrMore>
             <choice>
+              <element name="pairwise_alignment" blockly:blockName="One vs one">
+                <attribute name="ref_species" blockly:blockName="Reference species"/>
+                <attribute name="target_species" blockly:blockName="Target species"/>
+                <ref name="pairwise_methods"/>
+              </element>
               <element name="one_vs_all" blockly:blockName="One vs all">
                 <attribute name="ref_species" blockly:blockName="Reference species"/>
+                <ref name="pairwise_methods"/>
+                <ref name="new_species_set_or_collection"/>
+              </element>
+              <element name="all_vs_one" blockly:blockName="All vs one">
+                <attribute name="target_species" blockly:blockName="Target (non-reference) species"/>
+                <ref name="pairwise_methods"/>
+                <ref name="new_species_set_or_collection"/>
+              </element>
+              <element name="all_vs_all" blockly:blockName="All vs all">
                 <ref name="pairwise_methods"/>
                 <ref name="new_species_set_or_collection"/>
               </element>

@@ -33,9 +33,10 @@
     <one_vs_all method="LASTZ_NET" ref_species="danio_rerio">
       <species_set>
         <taxonomic_group taxon_name="Actinopterygii"/>
-        <taxonomic_group taxon_name="Cephalochordata"/>
+        <!-- Included in an all-vs-all rule further down -->
+        <!--<taxonomic_group taxon_name="Cephalochordata"/>
         <taxonomic_group taxon_name="Tunicata"/>
-        <taxonomic_group taxon_name="Cyclostomata"/>
+        <taxonomic_group taxon_name="Cyclostomata"/>-->
       </species_set>
     </one_vs_all>
     <one_vs_all method="LASTZ_NET" ref_species="oryzias_latipes">
@@ -58,11 +59,12 @@
         <taxonomic_group taxon_name="Feliformia"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="ciona_intestinalis">
+    <!-- Included in an all-vs-one rule further down -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="ciona_intestinalis">
       <species_set>
         <taxonomic_group taxon_name="Ciona"/>
       </species_set>
-    </one_vs_all>
+    </one_vs_all>-->
     <!-- Empty at the moment -->
     <!--<one_vs_all method="LASTZ_NET" ref_species="xenopus_tropicalis">
       <species_set>
@@ -87,11 +89,12 @@
         <taxonomic_group taxon_name="Prototheria"/>
       </species_set>
     </one_vs_all>-->
-    <one_vs_all method="LASTZ_NET" ref_species="petromyzon_marinus">
+    <!-- Included in an all-vs-all rule further down -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="petromyzon_marinus">
       <species_set>
         <taxonomic_group taxon_name="Cyclostomata"/>
       </species_set>
-    </one_vs_all>
+    </one_vs_all>-->
     <!-- Empty at the moment -->
     <!--<one_vs_all method="LASTZ_NET" ref_species="equus_caballus">
       <species_set>
@@ -110,6 +113,22 @@
         <taxonomic_group taxon_name="Testudines"/>
       </species_set>
     </one_vs_all>-->
+    <all_vs_one method="LASTZ_NET" target_species="ciona_savignyi">
+      <species_set>
+        <genome name="danio_rerio"/>
+        <genome name="gallus_gallus"/>
+        <genome name="ciona_intestinalis"/>
+      </species_set>
+    </all_vs_one>
+    <!-- between refs -->
+    <all_vs_all method="LASTZ_NET">
+      <species_set>
+        <genome name="danio_rerio"/>
+        <genome name="petromyzon_marinus"/>
+        <genome name="ciona_intestinalis"/>
+        <genome name="eptatretus_burgeri"/>
+      </species_set>
+    </all_vs_all>
   </pairwise_alignments>
   <multiple_alignments>
     <multiple_alignment method="EPO">
