@@ -297,6 +297,8 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set, undef, $display_name);
 }
 
+my %mlss_ids_to_find = map {$_->dbID => $_} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_current};
+
 $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
         print "1. Collections that need to be created:\n\n";
@@ -326,6 +328,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if ($exist_mlss and $exist_mlss->is_current) {
                 $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
                 $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
+                delete $mlss_ids_to_find{$exist_mlss->dbID};
                 next;
             }
             # Special case for LastZ alignments: we still have some equivalent BlastZ alignments
@@ -335,6 +338,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 if ($exist_mlss and $exist_mlss->is_current) {
                     $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
                     $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
+                    delete $mlss_ids_to_find{$exist_mlss->dbID};
                     next;
                 }
             }
@@ -357,6 +361,11 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             $compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss);
             if ($verbose) {
                 print "AFTER STORING: ", $mlss->toString, "\n\n";
+            }
+        }
+        if ($verbose) {
+            foreach my $mlss (values %mlss_ids_to_find) {
+                print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
             }
         }
         die "Aborted: 'dry_run' mode requested\n" if $dry_run;
