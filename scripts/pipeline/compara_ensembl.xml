@@ -63,32 +63,36 @@
         <taxonomic_group taxon_name="Ciona"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="xenopus_tropicalis">
+    <!-- Empty at the moment -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="xenopus_tropicalis">
       <species_set>
         <taxonomic_group taxon_name="Amphibia"/>
       </species_set>
-    </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="latimeria_chalumnae">
+    </one_vs_all>-->
+    <!-- Empty at the moment -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="latimeria_chalumnae">
       <species_set>
         <taxonomic_group taxon_name="Coelacanthimorpha"/>
         <taxonomic_group taxon_name="Dipnoi"/>
       </species_set>
-    </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="ornithorhynchus_anatinus">
+    </one_vs_all>-->
+    <!-- Empty at the moment -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="ornithorhynchus_anatinus">
       <species_set>
         <taxonomic_group taxon_name="Prototheria"/>
       </species_set>
-    </one_vs_all>
+    </one_vs_all>-->
     <one_vs_all method="LASTZ_NET" ref_species="petromyzon_marinus">
       <species_set>
         <taxonomic_group taxon_name="Cyclostomata"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="equus_caballus">
+    <!-- Empty at the moment -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="equus_caballus">
       <species_set>
         <taxonomic_group taxon_name="Perissodactyla"/>
       </species_set>
-    </one_vs_all>
+    </one_vs_all>-->
   </pairwise_alignments>
   <multiple_alignments>
     <multiple_alignment method="EPO">
