@@ -93,6 +93,18 @@
         <taxonomic_group taxon_name="Perissodactyla"/>
       </species_set>
     </one_vs_all>-->
+    <!-- Empty at the moment -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="anolis_carolinensis">
+      <species_set>
+        <taxonomic_group taxon_name="Lepidosauria"/>
+      </species_set>
+    </one_vs_all>-->
+    <!-- Empty at the moment -->
+    <!--<one_vs_all method="LASTZ_NET" ref_species="pelodiscus_sinensis">
+      <species_set>
+        <taxonomic_group taxon_name="Testudines"/>
+      </species_set>
+    </one_vs_all>-->
   </pairwise_alignments>
   <multiple_alignments>
     <multiple_alignment method="EPO">
