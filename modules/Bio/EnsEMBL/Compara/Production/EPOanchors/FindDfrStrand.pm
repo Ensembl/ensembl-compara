@@ -112,6 +112,7 @@ sub fetch_input {
 			open($bl2seq_fh, "$command |") or throw("Error opening command: $command"); # run the command
 			# parse_bl2seq returns a hashref of the scores and the number of hits to each query strand
 			push(@$blastResults, $self->parse_bl2seq($bl2seq_fh));
+			close($bl2seq_fh);
 		}   
 	} 
 	foreach my $this_result ( @$blastResults ) {
