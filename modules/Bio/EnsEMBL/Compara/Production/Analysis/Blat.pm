@@ -1,4 +1,5 @@
 =head1 LICENSE
+
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2018] EMBL-European Bioinformatics Institute
 # 
@@ -47,7 +48,7 @@ Bio::EnsEMBL::Compara::Production::Analysis::Blat
  where @results is an array of SeqFeatures, each one representing an aligment (e.g. a transcript), 
  and each feature contains a list of alignment blocks (e.g. exons) as sub_SeqFeatures, which are
  in fact feature pairs.
- 
+
 =head1 DESCRIPTION
 
 Blat takes a Bio::Seq (or Bio::PrimarySeq) object and runs Blat
@@ -126,7 +127,7 @@ sub run {
   info("Running blat to pipe...\n$cmd\n");
   print("Running blat to pipe...\n$cmd\n");
 
-  open($blat_output_pipe, "$cmd |") ||
+  open($blat_output_pipe, '-|', $cmd) ||
     throw("Error opening Blat cmd <$cmd>." .
 	  " Returned error $? BLAT EXIT: '" .
 	  ($? >> 8) . "'," ." SIGNAL '" . ($? & 127) .
@@ -534,7 +535,7 @@ sub query {
 }
 
 =head2 database
-  
+
     Title   :   database
     Usage   :   $self->database($seq)
     Function:   Get/set method for database.  If set with a Bio::Seq object it
