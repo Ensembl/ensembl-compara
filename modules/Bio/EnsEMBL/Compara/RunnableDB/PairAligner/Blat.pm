@@ -27,26 +27,12 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Analysis::RunnableDB::Blat->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
 
 This object wraps Bio::EnsEMBL::Analysis::Runnable::Blat to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Analysis::DBSQL::Obj is
-required for database access.
+extraction of appropriate parameters.
 
 =cut
 
