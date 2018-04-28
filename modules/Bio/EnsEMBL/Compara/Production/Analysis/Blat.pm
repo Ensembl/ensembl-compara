@@ -30,11 +30,11 @@ Kathryn Beal
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Blat - 
+Bio::EnsEMBL::Compara::Production::Analysis::Blat
 
 =head1 SYNOPSIS
 
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blat->new(
+  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Blat->new(
 								 -database    => $self->database,
 								 -query  => $self->query,
 								 -program        => $self->program,
@@ -61,7 +61,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Analysis::Runnable::Blat;
+package Bio::EnsEMBL::Compara::Production::Analysis::Blat;
 
 use warnings ;
 use vars qw(@ISA);
