@@ -56,8 +56,6 @@ use File::Basename;
 
 =head2 run_analysis
 
-  Arg [1]    : Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
-  Arg [2]    : string, program name
   Description: run treebest if more than 3 sequences in the alignment else run 
                semphy
   Returntype : none
@@ -77,9 +75,9 @@ sub run_analysis {
   #treebest phyml needs at least 4 sequences to run. If I have less than
   #4, then run semphy instead.
   if ($num_sequences < 4) {
-      run_semphy_2x($self);
+      return run_semphy_2x($self);
   } else {
-      run_treebest_2x($self);
+      return run_treebest_2x($self);
   }
 }
 
@@ -115,11 +113,10 @@ sub run_treebest_2x {
     #Check I don't already have a tree
     return if ($self->tree_string);
 
-    chdir $self->worker_temp_directory;
-    my $tree_file = "output.$$.tree";
+    my $tree_file = $self->worker_temp_directory."/output.$$.tree";
 
     #write species tree (with taxon_ids) to file in workdir
-    my $species_tree_file = "species_tree.$$.tree";
+    my $species_tree_file = $self->worker_temp_directory."/species_tree.$$.tree";
     $self->_spurt($species_tree_file, $self->get_taxon_tree);
 
     #Run treebeset
@@ -137,6 +134,8 @@ sub run_treebest_2x {
 	  $newick =~ s/[\r\n]+$//;
 	  rearrange_multi_fasta_file($newick, $self->param('multi_fasta_file'));
       }
+
+    return $tree_file;
 }
 
 
@@ -158,13 +157,10 @@ sub run_semphy_2x {
     #Check I don't already have a tree
     return if ($self->tree_string);
 
-    chdir $self->worker_temp_directory;
-    my $tree_file = "output.$$.tree";
+    my $tree_file = $self->worker_temp_directory."/output.$$.tree";
 
     #Run semphy directly
-    my $command = $self->param('semphy_exe') . " --treeoutputfile=" . $tree_file . " -a 4 --hky -J -H -S --ACGprob=0.300000,0.200000,0.200000 --sequence=" . $self->param('multi_fasta_file');
-
-    print "Running semphy $command\n";
+    my $command = [$self->param('semphy_exe'), "--treeoutputfile=$tree_file", qw(-a 4 --hky -J -H -S), '--ACGprob=0.300000,0.200000,0.200000', '--sequence='.$self->param('multi_fasta_file')];
 
     #run semphy to create tree
     $self->run_command($command, { die_on_failure => 1 });
@@ -177,6 +173,7 @@ sub run_semphy_2x {
 	  rearrange_multi_fasta_file($newick, $self->param('multi_fasta_file'));
       }
     #print "FINAL tree string $tree_string\n";
+    return $tree_file;
 }
 
 

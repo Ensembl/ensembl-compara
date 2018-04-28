@@ -131,8 +131,8 @@ sub run
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment::run_analysis($self);
-  $self->_parse_results();
+  my $tree_file = Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment::run_analysis($self);
+  $self->_parse_results($tree_file);
 }
 
 =head2 write_output
@@ -259,7 +259,7 @@ sub _write_gerp_dataflow {
 =cut
 
 sub _parse_results {
-    my ($self) = @_;
+    my ($self, $tree_file) = @_;
 
     #Taken from Analysis/Runnable/LowCoverageGenomeAlignment.pm module
     print "PARSE RESULTS\n" if $self->debug;
@@ -288,8 +288,6 @@ sub _parse_results {
     ## ((1:0.0157,0:0.0697):0.0000,2:0.0081);
     ## /tmp/file3.fa /tmp/file1.fa /tmp/file2.fa
     ## ----------------------------------
-
-    my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
 
     #print "tree_file $tree_file\n";
 
