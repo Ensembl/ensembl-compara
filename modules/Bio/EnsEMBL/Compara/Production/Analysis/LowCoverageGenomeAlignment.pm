@@ -29,18 +29,6 @@
 
 Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
 
-=head1 SYNOPSIS
-
-  my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
-     (-workdir => $workdir,
-      -multi_fasta_file => "/path/to/mfa/file",
-      -tree_string => $tree_string,
-      -taxon_species_tree => "tree in Newick format"
-      -parameters => $parameters, (optional),
-      -options => $options);
-  $runnable->run;
-  my @output = @{$runnable->output};
-
 =head1 DESCRIPTION
 
 This module creates a new tree for those alignments which contain a segmental duplication. The module will runs treeBest where there are more than 3 sequences in an alignment, otherwise it will run semphy. This module is still under development.
@@ -65,88 +53,6 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Data::Dumper;
 use File::Basename;
 
-use Bio::EnsEMBL::Analysis::Runnable;
-our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
-
-=head2 new
-
-  Arg [1]   : -workdir => "/path/to/working/directory"
-  Arg [2]   : -multi_fasta_file => "/path/to/mfa/file"
-  Arg [3]   : -tree_string => $tree_string (optional)
-  Arg [4]   : -taxon_species_tree => $taxon_species_tree
-  Arg [5]   : -parameters => $parameters (optional)
-  Arg [6]   : -options => $options (optional)
-
-  Function  : contruct a new Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
-  runnable
-  Returntype: Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
-  Exceptions: none
-  Example   :
-
-=cut
-
-
-sub new {
-  my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
-  my ($workdir, $multi_fasta_file, $tree_string, $taxon_species_tree, $semphy_exe, $treebest_exe, $parameters, $options) =
-        rearrange(['WORKDIR', 'MULTI_FASTA_FILE', 'TREE_STRING',
-		   'TAXON_SPECIES_TREE', 'SEMPHY_EXE', 'TREEBEST_EXE', 'PARAMETERS', 'OPTIONS'], @args);
-
-  chdir $self->workdir;
-  $self->multi_fasta_file($multi_fasta_file) if (defined $multi_fasta_file);
-  $self->tree_string($tree_string) if (defined $tree_string);
-  $self->taxon_species_tree($taxon_species_tree) if (defined $taxon_species_tree);
-  $self->semphy_exe($semphy_exe) if (defined $semphy_exe);
-  $self->treebest_exe($treebest_exe) if (defined $treebest_exe);
-
-  $self->parameters($parameters) if (defined $parameters);
-  $self->options($options) if (defined $options);
-
-  return $self;
-}
-
-sub multi_fasta_file {
-  my $self = shift;
-  $self->{'_multi_fasta_file'} = shift if(@_);
-  return $self->{'_multi_fasta_file'};
-}
-
-sub tree_string {
-  my $self = shift;
-  $self->{'_tree_string'} = shift if(@_);
-  return $self->{'_tree_string'};
-}
-
-sub semphy_exe {
-  my $self = shift;
-  $self->{'_semphy_exe'} = shift if(@_);
-  return $self->{'_semphy_exe'};
-}
-
-sub treebest_exe {
-  my $self = shift;
-  $self->{'_treebest_exe'} = shift if(@_);
-  return $self->{'_treebest_exe'};
-}
-
-sub taxon_species_tree {
-  my $self = shift;
-  $self->{'_taxon_species_tree'} = shift if(@_);
-  return $self->{'_taxon_species_tree'};
-}
-
-sub parameters {
-  my $self = shift;
-  $self->{'_parameters'} = shift if(@_);
-  return $self->{'_parameters'};
-}
-
-sub options {
-  my $self = shift;
-  $self->{'_options'} = shift if(@_);
-  return $self->{'_options'};
-}
 
 =head2 run_analysis
 
@@ -163,24 +69,18 @@ sub options {
 =cut
 
 sub run_analysis {
-  my ($self, $program) = @_;
+  my ($self) = @_;
 
   #find how many sequences are in the mfa file
-  my $num_sequences = get_num_sequences($self->multi_fasta_file);
+  my $num_sequences = get_num_sequences($self->param('multi_fasta_file'));
   
   #treebest phyml needs at least 4 sequences to run. If I have less than
   #4, then run semphy instead.
   if ($num_sequences < 4) {
-      $self->run_semphy_2x;
+      run_semphy_2x($self);
   } else {
-      $self->run_treebest_2x;
+      run_treebest_2x($self);
   }
-
-  #move this to compara module instead because it is easier to keep track
-  #of the 2x composite fragments. And also it removes the need to create
-  #compara objects in analysis module.
-  #$self->parse_results;
-  return 1;
 }
 
 #Find how many sequences in mfa file
@@ -216,7 +116,7 @@ sub run_treebest_2x {
     #Check I don't already have a tree
     return if ($self->tree_string);
      
-    chdir $self->workdir;
+    chdir $self->worker_temp_directory;
     my $tree_file = "output.$$.tree";
 
     #write species tree (with taxon_ids) to file in workdir
@@ -226,15 +126,12 @@ sub run_treebest_2x {
     close(F);
 
     #Run treebeset
-    my $command = $self->treebest_exe ." phyml -Snf $species_tree_file " . $self->multi_fasta_file . " | " . $self->treebest_exe . " sdi -rs $species_tree_file - > $tree_file";
+    my $command = $self->param('treebest_exe') ." phyml -Snf $species_tree_file " . $self->param('multi_fasta_file') . " | " . $self->param('treebest_exe') . " sdi -rs $species_tree_file - > $tree_file";
 
     print "Running treebest $command\n";
 
     #run treebest to create tree
-    unless (system($command) == 0) {
-	throw("treebest execution failed\n");
-	os_error_warning($command);
-    }
+    $self->run_command($command, { die_on_failure => 1 });
      
     #read in new tree
     if (-e $tree_file) {
@@ -246,7 +143,7 @@ sub run_treebest_2x {
 	  }
 	  close(F);
 	  $newick =~ s/[\r\n]+$//;
-	  rearrange_multi_fasta_file($newick, $self->multi_fasta_file);
+	  rearrange_multi_fasta_file($newick, $self->param('multi_fasta_file'));
       }
 }
 
@@ -269,19 +166,16 @@ sub run_semphy_2x {
     #Check I don't already have a tree
     return if ($self->tree_string);
 
-    chdir $self->workdir;
+    chdir $self->worker_temp_directory;
     my $tree_file = "output.$$.tree";
 
     #Run semphy directly
-    my $command = $self->semphy_exe . " --treeoutputfile=" . $tree_file . " -a 4 --hky -J -H -S --ACGprob=0.300000,0.200000,0.200000 --sequence=" . $self->multi_fasta_file;
+    my $command = $self->param('semphy_exe') . " --treeoutputfile=" . $tree_file . " -a 4 --hky -J -H -S --ACGprob=0.300000,0.200000,0.200000 --sequence=" . $self->param('multi_fasta_file');
 
     print "Running semphy $command\n";
 
     #run semphy to create tree
-    unless (system($command) == 0) {
-	throw("semphy execution failed\n");
-	os_error_warning($command);
-    }
+    $self->run_command($command, { die_on_failure => 1 });
       
     #read in new tree
     if (-e $tree_file) {
@@ -290,53 +184,9 @@ sub run_semphy_2x {
 	  my ($newick) = <F>;
 	  close(F);
 	  $newick =~ s/[\r\n]+$//;
-	  rearrange_multi_fasta_file($newick, $self->multi_fasta_file);
+	  rearrange_multi_fasta_file($newick, $self->param('multi_fasta_file'));
       }
     #print "FINAL tree string $tree_string\n";
-}
-
-
-=head2 os_error_warning
-
-  Arg [1]    : string: The command line argument of an exec() or
-              system() call.
-  Example    : (system($command) == 0) || os_error_warning($command);
-  Description: Evaluates an eventual operating system error in
-               $! ($OS_ERROR) or the 16 bit wait(2) status word in
-               $? ($CHILD_ERROR) after an exec() or system() call.
-               It generates a warning message in both cases.
-  Returntype : bool: true on success.
-  Exceptions : none
-  Caller     : general
-  Status     : At Risk
-
-=cut
-
-sub os_error_warning {
-  my $command = shift;
-  my $warning = '';
-
-  $warning .= 'Encountered ';
-  if ($!) {
-    $warning .= "OS_ERROR \'$!\'";
-  } else {
-    $warning .= 'CHILD_ERROR ';
-    $warning .= 'Exit code: ';
-    $warning .= ($? >> 8);
-    $warning .= ' ';
-    $warning .= 'Signal: ';
-    $warning .= ($? & 127);
-    $warning .= ' ';
-    if ($? & 128) {
-      $warning .= ' ';
-      $warning .= 'Core dump ';
-    }
-  }
-  $warning .= " on following command:\n";
-  $warning .= $command;
-  warning($warning);
-
-  return 1;
 }
 
 

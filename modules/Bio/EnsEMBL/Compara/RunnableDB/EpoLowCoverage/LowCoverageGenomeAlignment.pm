@@ -47,12 +47,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlig
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
+use Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -119,7 +121,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #check that have genomic_aligns (may not have if removed some because they
   #consist entirely of Ns)
@@ -127,21 +128,10 @@ sub run
 
   print "tmp " . $self->worker_temp_directory . " mfa=" . $self->param('multi_fasta_file') . " tree=" . $self->tree_string . " taxon=" . $self->get_taxon_tree . "\n" if $self->debug;
 
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment(
-      -analysis => $fake_analysis,
-      -workdir => $self->worker_temp_directory,
-      -multi_fasta_file => $self->param('multi_fasta_file'),
-      -tree_string => $self->tree_string,
-      -taxon_species_tree => $self->get_taxon_tree,
-      -semphy_exe => $self->param('semphy_exe'),
-      -treebest_exe => $self->param('treebest_exe'),
-      );
-  $self->param('runnable', $runnable);
-
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
-  $runnable->run_analysis;
+  Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment::run_analysis($self);
   $self->_parse_results();
 }
 
@@ -193,7 +183,7 @@ sub _write_output {
   
   my $gata = $self->compara_dba->get_GenomicAlignTreeAdaptor;
 
-  foreach my $genomic_align_tree (@{$self->param('runnable')->output}) {
+  my $genomic_align_tree = $self->param('low_cov_output');
       my $all_nodes;
 
       foreach my $genomic_align_node (@{$genomic_align_tree->get_all_nodes}) {
@@ -235,7 +225,6 @@ sub _write_output {
 	  $self->_write_gerp_dataflow($genomic_align_tree->modern_genomic_align_block_id,
 					  $mlss);
       }
-  }
 
   chdir("$self->worker_temp_directory");
   foreach(glob("*")){
@@ -300,7 +289,6 @@ sub _parse_results {
     ## /tmp/file3.fa /tmp/file1.fa /tmp/file2.fa
     ## ----------------------------------
 
-    my $workdir;
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
 
     #print "tree_file $tree_file\n";
@@ -675,8 +663,7 @@ sub _parse_results {
 
     #print $tree->newick_format("simple"), "\n";
     #print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
-    #$self->output([$tree]);
-    $self->param('runnable')->output([$tree]);
+    $self->param('low_cov_output', $tree);
 }
 
 #Fix the group_id so that it starts with the current mlss_id not that of
