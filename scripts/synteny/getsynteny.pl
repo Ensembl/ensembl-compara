@@ -20,7 +20,6 @@ use warnings;
 
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Analysis;
 use Getopt::Long;
 
 my $usage = "
