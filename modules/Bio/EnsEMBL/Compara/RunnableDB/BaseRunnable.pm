@@ -329,6 +329,8 @@ sub run_command {
     $self->disconnect_from_databases;
 
     return Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, $options);
+    #my @ret_vals = $self->run_system_command($cmd, $options);
+    #return Bio::EnsEMBL::Compara::Utils::RunCommand->new_object($self->debug, $options->{description}, @ret_vals);
 }
 
 

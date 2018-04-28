@@ -54,6 +54,21 @@ use IPC::Open3;
 use Data::Dumper;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+sub new_object {
+    my ($class, $debug, $description, $return_value, $stderr, $flat_cmd, $stdout, $runtime_msec) = @_;
+
+    print STDERR "OUTPUT: ", $stdout, "\n\n" if ($debug);
+    print STDERR "ERROR : ", $stderr, "\n\n" if ($debug);
+
+    my $self = $class->new();
+    $self->{_out} = $stdout;
+    $self->{_err} = $stderr;
+    $self->{_exit_code} = $return_value;
+    $self->{_runtime_msec} = $runtime_msec;
+    $self->{_purpose} = $description ? $description . " ($flat_cmd)" : "run '$flat_cmd'";
+    return $self;
+}
+
 
 sub new_and_exec {
     my ($class, $cmd, $options) = @_;
