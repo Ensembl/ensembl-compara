@@ -15,7 +15,6 @@ Necessary code API and executables
 - ensembl
 - ensembl-compara
 - ensembl-hive
-- ensembl-analysis
 
 Code checkout
 ~~~~~~~~~~~~~
@@ -26,14 +25,13 @@ Code checkout
       git clone https://github.com/Ensembl/ensembl.git
       git clone https://github.com/Ensembl/ensembl-compara.git
       git clone https://github.com/Ensembl/ensembl-hive.git
-      git clone https://github.com/Ensembl/ensembl-analysis.git
 
 in tcsh
 
 .. code-block:: tcsh
 
     setenv BASEDIR   /some/path/to/modules
-    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-hive/modules:${BASEDIR}/ensembl-analysis/modules
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-hive/modules
     setenv PATH $PATH:${BASEDIR}/ensembl-compara/script/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 in bash
@@ -41,7 +39,7 @@ in bash
 .. code-block:: bash
 
     BASEDIR=/some/path/to/modules
-    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-hive/modules:${BASEDIR}/ensembl-analysis/modules
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-hive/modules
     PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 Update the master database

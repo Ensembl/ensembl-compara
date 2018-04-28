@@ -32,7 +32,6 @@ EnsEMBL and BioPerl software:
 :bioperl-live:           BioPerl 1.2.3
 :ensembl:                Core API on which the rest of ensembl APIs are based
 :ensembl-compara:        Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-:ensembl-analysis:       Some of the pipeline runnables live here
 :ensembl-hive:           The system to run pipelines
 
 

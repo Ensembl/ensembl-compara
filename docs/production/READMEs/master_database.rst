@@ -30,7 +30,6 @@ Code API needed
 - ensembl
 - ensembl-compara
 - ensembl-hive
-- ensembl-analysis
 
 Code checkout
 ~~~~~~~~~~~~~
@@ -41,7 +40,6 @@ Code checkout
       git clone https://github.com/Ensembl/ensembl.git
       git clone https://github.com/Ensembl/ensembl-compara.git
       git clone https://github.com/Ensembl/ensembl-hive.git
-      git clone https://github.com/Ensembl/ensembl-analysis.git
 
 By default, the latest stable version of the API is checked out.
 Do "git checkout release/XXXX" (where XXXX is the API version you are interested in -e.g. 73- ) in each of the above directories should you need a specific version.
@@ -51,7 +49,7 @@ Then, in tcsh
 .. code-block:: tcsh
 
     setenv BASEDIR   /some/path/to/modules
-    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-analysis/modules
+    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules
     setenv PATH $PATH:${BASEDIR}/ensembl-compara/script/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 Or in bash
@@ -59,7 +57,7 @@ Or in bash
 .. code-block:: bash
 
     BASEDIR=/some/path/to/modules
-    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules:${BASEDIR}/ensembl-analysis/modules
+    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/bioperl-live:${BASEDIR}/ensembl-compara/modules
     PATH=$PATH:${BASEDIR}/ensembl-compara/scripts/pipeline:${BASEDIR}/ensembl-hive/scripts
 
 
