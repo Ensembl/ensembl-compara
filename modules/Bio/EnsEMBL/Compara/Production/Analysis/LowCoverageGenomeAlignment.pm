@@ -27,11 +27,11 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment - 
+Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
 
 =head1 SYNOPSIS
 
-  my $runnable = new Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
+  my $runnable = new Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
      (-workdir => $workdir,
       -multi_fasta_file => "/path/to/mfa/file",
       -tree_string => $tree_string,
@@ -51,7 +51,7 @@ This module creates a new tree for those alignments which contain a segmental du
 =cut
 
 
-package Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment;
+package Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
 
 use strict;
 use warnings;
@@ -77,9 +77,9 @@ our @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
   Arg [5]   : -parameters => $parameters (optional)
   Arg [6]   : -options => $options (optional)
 
-  Function  : contruct a new Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
+  Function  : contruct a new Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
   runnable
-  Returntype: Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
+  Returntype: Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
   Exceptions: none
   Example   :
 
@@ -150,7 +150,7 @@ sub options {
 
 =head2 run_analysis
 
-  Arg [1]    : Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment
+  Arg [1]    : Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment
   Arg [2]    : string, program name
   Description: run treebest if more than 3 sequences in the alignment else run 
                semphy
