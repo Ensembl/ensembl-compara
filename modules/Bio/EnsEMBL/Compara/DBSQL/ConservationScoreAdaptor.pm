@@ -87,6 +87,7 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
+use Bio::EnsEMBL::Compara::Utils::Projection;
 use Config;
 
 #global variables
@@ -202,8 +203,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	return $scores;
     }
 
-    my $filter_projections = 1;
-    my $projection_segments = $orig_slice->adaptor->fetch_normalized_slice_projection($orig_slice, $filter_projections);
+    my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($orig_slice);
 
     foreach my $this_projection_segment (@$projection_segments) {
         my $offset    = $this_projection_segment->from_start();

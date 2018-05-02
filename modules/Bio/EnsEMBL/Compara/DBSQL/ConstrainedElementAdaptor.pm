@@ -27,6 +27,8 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
+use Bio::EnsEMBL::Compara::Utils::Projection;
+
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
@@ -140,8 +142,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         assert_ref($mlss_obj, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss_obj');
         assert_ref($slice_obj, 'Bio::EnsEMBL::Slice', 'slice_obj');
 
-        my $filter_projections = 1;
-        my $projection_segments = $slice_obj->adaptor->fetch_normalized_slice_projection($slice_obj, $filter_projections);
+        my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($slice_obj);
         return [] if(!@$projection_segments);
 
         my $constrained_elements;

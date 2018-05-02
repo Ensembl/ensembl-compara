@@ -130,6 +130,8 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
+use Bio::EnsEMBL::Compara::Utils::Projection;
+
 use List::Util qw( max );
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
@@ -554,8 +556,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   my $genome_db = $genome_db_adaptor->fetch_by_Slice($reference_slice);
 
 #  my $projection_segments = $reference_slice->project('toplevel');
-  my $filter_projections = 1;
-  my $projection_segments = $slice_adaptor->fetch_normalized_slice_projection($reference_slice, $filter_projections);
+  my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($reference_slice);
   return [] if(!@$projection_segments);
 
   foreach my $this_projection_segment (@$projection_segments) {
