@@ -235,7 +235,7 @@ sub load_input_trees {
   for my $other_tree (values %{$tree->alternative_trees}) {
     my $tag = $other_tree->clusterset_id;
     $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-X}:%{d}');
-    print STDERR $self->param('inputtrees_unrooted')->{$tag} if ($self->debug);
+    print STDERR $self->param('inputtrees_unrooted')->{$tag}, "\n" if ($self->debug);
   }
 }
 
