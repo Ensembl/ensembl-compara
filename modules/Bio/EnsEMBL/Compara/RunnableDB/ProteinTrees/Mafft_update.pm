@@ -130,8 +130,8 @@ sub get_msa_command_line {
 
 	print "members to update:\n" if ( $self->debug );
     my @members_to_print;
+    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
     foreach my $updated_member_stable_id ( keys %members_2_b_updated ) {
-        my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
         my $seq_member = $seq_member_adaptor->fetch_by_stable_id($updated_member_stable_id);
         print "$updated_member_stable_id|".$seq_member->seq_member_id."|".$seq_member->sequence_id."\n" if ( $self->debug );
         push @members_to_print, $seq_member;
