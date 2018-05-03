@@ -62,7 +62,7 @@ sub default_options {
              'curr_core_sources_locs' => [ $self->o('staging_loc') ],
              'curr_core_dbs_locs' => undef,
 
-	    'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/',
+	    'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/lastz_'.$self->o('mlss_id').'/',
 
             # Capacities
             'pair_aligner_analysis_capacity' => 700,
