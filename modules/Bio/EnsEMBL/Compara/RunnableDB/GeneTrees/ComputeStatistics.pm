@@ -252,7 +252,7 @@ sub _get_sizes_summary {
     my @count_seq_member_ids;
 
     #Compute Mean and median, max, min cluster sizes, number of proteins per cluster:
-    my $sql = "SELECT count(seq_member_id) FROM gene_tree_root JOIN gene_tree_node USING (root_id) where clusterset_id = 'default' and tree_type = 'tree' and member_type = " . $self->param( 'member_type' ) . " and seq_member_id IS NOT NULL GROUP BY root_id";
+    my $sql = "SELECT count(seq_member_id) FROM gene_tree_root JOIN gene_tree_node USING (root_id) where clusterset_id = 'default' and tree_type = 'tree' and member_type = '" . $self->param( 'member_type' ) . "' and seq_member_id IS NOT NULL GROUP BY root_id";
     my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute();
     while ( my @row = $sth->fetchrow_array() ) {
@@ -285,7 +285,7 @@ sub _compute_gini_coefficient {
                              WHERE a.root_id = b.root_id
                              AND tree_type = 'tree'
                              AND clusterset_id = 'default'
-                             AND member_type = " . $self->param( 'member_type' ) . "
+                             AND member_type = '" . $self->param( 'member_type' ) . "'
                              AND seq_member_id is NOT NULL
                              GROUP BY root_id
                              ORDER BY cni";
@@ -314,7 +314,7 @@ sub _get_mean_cluster_size_per_protein  {
     my ($self) = @_;
 
     #Compute the mean cluster size per protein
-    my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = " . $self->param( 'member_type' ) . " AND tree_type = 'tree'";
+    my $sql = "SELECT AVG(gene_count) FROM gene_tree_root_attr JOIN gene_tree_root USING (root_id) JOIN gene_tree_node USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = 'default' AND member_type = '" . $self->param( 'member_type' ) . "' AND tree_type = 'tree'";
 
     my $mean_cluster_size_per_protein = $self->compara_dba->dbc->sql_helper->execute_single_result(-SQL => $sql);
 
