@@ -3153,6 +3153,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'homology_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name       => '500Mb_job',
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
