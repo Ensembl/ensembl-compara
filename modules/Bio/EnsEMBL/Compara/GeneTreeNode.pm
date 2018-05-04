@@ -310,6 +310,8 @@ sub _toString {
         $str .= " B=$bootstrap_value";
     }
 
+    $str ||= $self->SUPER::_toString();
+
     return $str;
 }
 
