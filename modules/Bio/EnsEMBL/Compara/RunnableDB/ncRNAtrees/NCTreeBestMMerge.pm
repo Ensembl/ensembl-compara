@@ -237,7 +237,7 @@ sub load_input_trees {
     # to check again (and TreeBest segfaults without printing any
     # meaningful messages)
     foreach my $n (@{$other_tree->get_all_nodes}) {
-        if (scalar(@{$n->children}) < 2) {
+        if (scalar(@{$n->children}) == 1) {
             die sprintf("node_id=%d in root_id=%d (%s) is unary", $n->node_id, $other_tree->root_id, $other_tree->clusterset_id);
         }
     }
