@@ -51,7 +51,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param( 'compara_dba',       $self->get_cached_compara_dba('compara_db') );
+    $self->param( 'compara_dba',       $self->compara_dba );
     $self->param( 'reuse_compara_dba', $self->get_cached_compara_dba('reuse_db') );
 
     #get current tree adaptor
