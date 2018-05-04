@@ -295,10 +295,10 @@ sub release_tree {
 sub _toString {
     my $self = shift;
 
-    my $str = $self->node_type;
+    my $str = $self->node_type || '';
 
     # Only show the duplication confidence score for duplications at ancestral taxa
-    if (($self->node_type eq 'duplication') and $self->species_tree_node and !$self->species_tree_node->genome_db_id) {
+    if ($self->node_type and ($self->node_type eq 'duplication') and $self->species_tree_node and !$self->species_tree_node->genome_db_id) {
         my $sis = ($self->duplication_confidence_score // 0) * 100;
         $str .= sprintf(' (SIS=%.2f)', $sis);
     }
