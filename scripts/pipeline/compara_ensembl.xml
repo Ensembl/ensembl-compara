@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compara_db division="ensembl">
   <collections>
+    <!-- Here we define the species-sets used for the homology pipelines -->
     <collection name="default">
       <taxonomic_group taxon_name="Chordata">
+        <!-- But exclude everything below mus_musculus -->
         <ref_for_taxon name="mus_musculus"/>
       </taxonomic_group>
       <genome name="drosophila_melanogaster"/>
@@ -12,15 +14,18 @@
     <collection name="murinae">
       <taxonomic_group taxon_name="Murinae"/>
     </collection>
+    <!-- We could define other useful species sets -->
   </collections>
   <pairwise_alignments>
-    <!-- reference genome vs whole clade -->
+    <!-- First, our top four species, which are references for all chordates -->
     <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
+      <!-- "default" collection means that the mouse strains are excluded (because only the reference mouse deserves to be aligned to human) -->
       <species_set in_collection="default">
         <taxonomic_group taxon_name="Chordata"/>
       </species_set>
     </one_vs_all>
     <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus">
+      <!-- "default" collection means that the mouse strains are excluded (because we have the Cactus alignment for those) -->
       <species_set in_collection="default">
         <taxonomic_group taxon_name="Rodentia"/>
       </species_set>
@@ -159,6 +164,7 @@
     <pairwise_alignment method="LASTZ_NET" ref_genome="anolis_carolinensis" target_genome="pelodiscus_sinensis"/>
   </pairwise_alignments>
   <multiple_alignments>
+    <!-- Primates -->
     <multiple_alignment method="EPO">
       <species_set name="primates" in_collection="default">
         <taxonomic_group taxon_name="Primates" only_with_karyotype="1"/>
@@ -170,6 +176,7 @@
         <taxonomic_group taxon_name="Primates"/>
       </species_set>
     </multiple_alignment>
+    <!-- Mammals, excl. the mouse strains -->
     <multiple_alignment method="EPO">
       <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
         <taxonomic_group taxon_name="Eutheria" only_with_karyotype="1"/>
@@ -181,6 +188,7 @@
         <taxonomic_group taxon_name="Eutheria"/>
       </species_set>
     </multiple_alignment>
+    <!-- Sauropsids -->
     <multiple_alignment method="EPO">
       <species_set name="sauropsids" in_collection="default">
         <taxonomic_group taxon_name="Sauropsida" only_with_karyotype="1"/>
@@ -191,6 +199,7 @@
         <taxonomic_group taxon_name="Sauropsida"/>
       </species_set>
     </multiple_alignment>
+    <!-- Fishes -->
     <multiple_alignment method="EPO">
       <species_set name="fish" in_collection="default">
         <taxonomic_group taxon_name="Actinopterygii" only_with_karyotype="1"/>
@@ -201,15 +210,17 @@
         <taxonomic_group taxon_name="Actinopterygii"/>
       </species_set>
     </multiple_alignment>
+    <!-- Amniotes, excl. mouse strains -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates" in_collection="default">
         <taxonomic_group taxon_name="Amniota" only_with_karyotype="1"/>
         <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
       </species_set>
     </multiple_alignment>
+    <!-- Mouse strains -->
     <multiple_alignment method="CACTUS_HAL">
       <species_set name="murinae" in_collection="murinae">
-        <!--mus_caroli and mus_pahari are not in the set, so we can't take the whole collection-->
+        <!-- We can't take the whole collection because mus_caroli and mus_pahari are not in the alignment -->
         <taxonomic_group taxon_name="Mus musculus"/>
         <genome name="mus_spretus"/>
         <genome name="rattus_norvegicus"/>
