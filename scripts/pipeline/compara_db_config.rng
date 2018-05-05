@@ -100,7 +100,14 @@
               <element name="one_vs_all" blockly:blockName="One vs all">
                 <attribute name="ref_genome" blockly:blockName="Reference genome"/>
                 <ref name="pairwise_methods"/>
-                <ref name="new_species_set_or_collection"/>
+                <optional>
+                  <choice>
+                    <attribute name="against" blockly:blockName="Target (non-reference) taxon name"/>
+                    <group>
+                      <ref name="new_species_set_or_collection"/>
+                    </group>
+                  </choice>
+                </optional>
               </element>
               <element name="all_vs_one" blockly:blockName="All vs one">
                 <attribute name="target_genome" blockly:blockName="Target (non-reference) genome"/>

@@ -30,11 +30,7 @@
         <taxonomic_group taxon_name="Rodentia"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
-      <species_set>
-        <taxonomic_group taxon_name="Sauropsida"/>
-      </species_set>
-    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus" against="Sauropsida"/>
     <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
       <species_set>
         <!-- Include urochordates, cephalochordates, cyclostomes, cartilaginous fishes, ray-finned fishes, coelacanths and lungfishes -->
@@ -42,51 +38,25 @@
         <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes">
-      <species_set>
-        <taxonomic_group taxon_name="Actinopterygii"/>
-      </species_set>
-    </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
-      <species_set>
-        <taxonomic_group taxon_name="Metatheria"/>
-      </species_set>
-    </one_vs_all>
+    <!-- Fish -->
+    <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes" against="Actinopterygii"/>
+    <!-- Mammals -->
+    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris">
       <species_set>
         <taxonomic_group taxon_name="Carnivora"/>
         <genome name="equus_caballus"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus">
-      <species_set>
-        <taxonomic_group taxon_name="Feliformia"/>
-      </species_set>
-    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia"/>
     <!-- Included in an all-vs-one rule further down -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis">
-      <species_set>
-        <taxonomic_group taxon_name="Ciona"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona"/>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis">
-      <species_set>
-        <taxonomic_group taxon_name="Amphibia"/>
-      </species_set>
-    </one_vs_all>-->
-    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
-      <species_set>
-        <taxonomic_group taxon_name="Cetartiodactyla"/>
-      </species_set>
-    </one_vs_all>
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia"/>-->
+    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" against="Cetartiodactyla"/>
     <pairwise_alignment method="LASTZ_NET" ref_genome="sus_scrofa" target_genome="ovis_aries"/>
     <!-- Equivalent to just one alignment at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="ovis_aries">
-      <species_set>
-        <taxonomic_group taxon_name="Caprinae"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae"/>-->
     <pairwise_alignment method="LASTZ_NET" ref_genome="ovis_aries" target_genome="capra_hircus"/>
     <!-- Empty at the moment -->
     <one_vs_all method="LASTZ_NET" ref_genome="latimeria_chalumnae">
@@ -97,35 +67,15 @@
       </species_set>
     </one_vs_all>
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus">
-      <species_set>
-        <taxonomic_group taxon_name="Prototheria"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" against="Prototheria"/>-->
     <!-- Included in an all-vs-all rule further down -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus">
-      <species_set>
-        <taxonomic_group taxon_name="Cyclostomata"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata"/>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="equus_caballus">
-      <species_set>
-        <taxonomic_group taxon_name="Perissodactyla"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis">
-      <species_set>
-        <taxonomic_group taxon_name="Lepidosauria"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Lepidosauria"/>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="pelodiscus_sinensis">
-      <species_set>
-        <taxonomic_group taxon_name="Testudines"/>
-      </species_set>
-    </one_vs_all>-->
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="pelodiscus_sinensis" against="Testudines"/>-->
     <all_vs_one method="LASTZ_NET" target_genome="ciona_savignyi">
       <species_set>
         <genome name="danio_rerio"/>
