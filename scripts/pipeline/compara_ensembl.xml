@@ -24,14 +24,14 @@
         <taxonomic_group taxon_name="Chordata"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus">
+    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus" ref_amongst="Chordata">
       <!-- "default" collection means that the mouse strains are excluded (because we have the Cactus alignment for those) -->
       <species_set in_collection="default">
         <taxonomic_group taxon_name="Rodentia"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus" against="Sauropsida"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus" against="Sauropsida" ref_amongst="Chordata"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio" ref_amongst="Chordata">
       <species_set>
         <!-- Include urochordates, cephalochordates, cyclostomes, cartilaginous fishes, ray-finned fishes, coelacanths and lungfishes -->
         <taxonomic_group taxon_name="Chordata"/>
@@ -41,77 +41,30 @@
     <!-- Fish -->
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes" against="Actinopterygii"/>
     <!-- Mammals -->
-    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris">
-      <species_set>
-        <taxonomic_group taxon_name="Carnivora"/>
-        <genome name="equus_caballus"/>
-      </species_set>
-    </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia"/>
-    <!-- Included in an all-vs-one rule further down -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona"/>-->
-    <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia"/>-->
-    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" against="Cetartiodactyla"/>
-    <pairwise_alignment method="LASTZ_NET" ref_genome="sus_scrofa" target_genome="ovis_aries"/>
-    <!-- Equivalent to just one alignment at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae"/>-->
-    <pairwise_alignment method="LASTZ_NET" ref_genome="ovis_aries" target_genome="capra_hircus"/>
-    <!-- Empty at the moment -->
-    <one_vs_all method="LASTZ_NET" ref_genome="latimeria_chalumnae">
+    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria" ref_amongst="Amniota"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia" ref_amongst="Carnivora"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" against="Cetartiodactyla" ref_amongst="Eutheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae" ref_amongst="Cetartiodactyla"/>
+    <!-- Early vertebrates and other chordates -->
+    <!-- FIXME create a collection for those -->
+    <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
+    <!-- These genomes are currently the only ones in their clades, so no alignment within the "against"/"species_set" -->
+    <!-- However they will be aligned against the other reference genomes in "ref_amongst" -->
+    <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla" ref_amongst="Laurasiatheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Suina" ref_amongst="Laurasiatheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Lepidosauria" ref_amongst="Sauropsida"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="pelodiscus_sinensis" against="Testudines" ref_amongst="Sauropsida"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia" ref_amongst="Euteleostomi"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" against="Prototheria" ref_amongst="Euteleostomi"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="latimeria_chalumnae" ref_amongst="Euteleostomi">
       <species_set>
         <!--Coelacanths and lungfishes -->
         <taxonomic_group taxon_name="Sarcopterygii"/>
         <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
     </one_vs_all>
-    <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" against="Prototheria"/>-->
-    <!-- Included in an all-vs-all rule further down -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata"/>-->
-    <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla"/>-->
-    <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Lepidosauria"/>-->
-    <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_genome="pelodiscus_sinensis" against="Testudines"/>-->
-    <all_vs_one method="LASTZ_NET" target_genome="ciona_savignyi">
-      <species_set>
-        <genome name="danio_rerio"/>
-        <genome name="gallus_gallus"/>
-        <genome name="ciona_intestinalis"/>
-      </species_set>
-    </all_vs_one>
-    <!-- between refs -->
-    <all_vs_all method="LASTZ_NET">
-      <species_set>
-        <genome name="danio_rerio"/>
-        <genome name="petromyzon_marinus"/>
-        <genome name="ciona_intestinalis"/>
-        <genome name="eptatretus_burgeri"/>
-      </species_set>
-    </all_vs_all>
-    <all_vs_all method="LASTZ_NET">
-      <species_set>
-        <genome name="mus_musculus"/>
-        <genome name="gallus_gallus"/>
-        <genome name="danio_rerio"/>
-        <genome name="xenopus_tropicalis"/>
-        <genome name="monodelphis_domestica"/>
-        <genome name="latimeria_chalumnae"/>
-      </species_set>
-    </all_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus">
-      <species_set>
-        <genome name="ornithorhynchus_anatinus"/>
-        <genome name="bos_taurus"/>
-        <genome name="canis_familiaris"/>
-        <genome name="sus_scrofa"/>
-        <genome name="ciona_intestinalis"/>
-      </species_set>
-    </one_vs_all>
-    <pairwise_alignment method="LASTZ_NET" ref_genome="anolis_carolinensis" target_genome="pelodiscus_sinensis"/>
   </pairwise_alignments>
   <multiple_alignments>
     <!-- Primates -->

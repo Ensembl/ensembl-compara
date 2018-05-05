@@ -264,6 +264,8 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $target_gdb) };
 }
 
+# @refs will contain triplets: reference_genome_db, alignment_method, target_taxon_gdb_ids
+my @refs;
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/one_vs_all')}) {
     my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
@@ -276,6 +278,16 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
     }
     $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID} @$genome_dbs];
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
+    my $target_ref_gdbs;
+    if ($xml_one_vs_all_node->hasAttribute('ref_amongst')) {
+        my $taxon_name = $xml_one_vs_all_node->getAttribute('ref_amongst');
+        $target_ref_gdbs = fetch_genome_dbs_by_taxon_name($taxon_name, $division_genome_dbs);
+    } elsif (my ($xml_ref_set) = $xml_one_vs_all_node->getChildrenByTagName('ref_genome_set')) {
+        $target_ref_gdbs = make_species_set_from_XML_node($xml_ref_set, $division_genome_dbs);
+    }
+    if ($target_ref_gdbs and scalar(@$target_ref_gdbs)) {
+        push @refs, [$ref_gdb, $method, {map {$_->dbID => 1} @$target_ref_gdbs}];
+    }
 }
 
 foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignments/all_vs_one')}) {
@@ -291,6 +303,18 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
     my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     while (my $ref_gdb = shift @$genome_dbs) {
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
+    }
+}
+
+# References between themselves
+while (my $aref1 = shift @refs) {
+    my ($gdb1, $method1, $pool1) = @$aref1;
+    foreach my $aref2 (@refs) {
+        my ($gdb2, $method2, $pool2) = @$aref2;
+        # As long as each genome is in the target scope of the other
+        if ($pool1->{$gdb2->dbID} and $pool2->{$gdb1->dbID}) {
+            push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method1, $gdb1, $gdb2) };
+        }
     }
 }
 

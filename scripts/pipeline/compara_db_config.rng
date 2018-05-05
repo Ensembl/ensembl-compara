@@ -66,6 +66,22 @@
     </choice>
   </define>
   <!-- /new_species_set_or_collection -->
+  <define name="ref_species_set_or_collection">
+    <optional>
+      <element name="ref_genome_set" blockly:blockName="Reference genomes">
+        <choice>
+          <attribute name="collection" blockly:blockName="Collection name"/>
+          <group>
+            <optional>
+              <attribute name="in_collection" blockly:blockName="within this collection"/>
+            </optional>
+            <ref name="new_species_set"/>
+          </group>
+        </choice>
+      </element>
+    </optional>
+  </define>
+  <!-- /ref_species_set_or_collection -->
   <define name="pairwise_methods">
     <attribute name="method" blockly:blockName="Alignment method">
       <choice>
@@ -105,6 +121,14 @@
                     <attribute name="against" blockly:blockName="Target (non-reference) taxon name"/>
                     <group>
                       <ref name="new_species_set_or_collection"/>
+                    </group>
+                  </choice>
+                </optional>
+                <optional>
+                  <choice>
+                    <attribute name="ref_amongst" blockly:blockName="Also align against references genomees within this taxon"/>
+                    <group>
+                      <ref name="ref_species_set_or_collection"/>
                     </group>
                   </choice>
                 </optional>
