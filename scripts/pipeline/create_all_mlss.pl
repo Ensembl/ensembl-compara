@@ -121,6 +121,7 @@ if ($compara =~ /mysql:\/\//) {
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
 }
+my $genome_dba = $compara_dba->get_GenomeDBAdaptor;
 
 unless ($xml_schema) {
     die "Need to give the --schema option or set the ENSEMBL_CVS_ROOT_DIR environment variable to use the default" unless $ENV{ENSEMBL_CVS_ROOT_DIR};
@@ -142,7 +143,7 @@ my @mlsss;
 sub find_genome_from_xml_node_attribute {
     my ($xml_node, $attribute_name) = @_;
     my $species_name = $xml_node->getAttribute($attribute_name);
-    my $gdb = $compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
+    my $gdb = $genome_dba->fetch_by_name_assembly($species_name) || throw("Cannot find $species_name in the available list of GenomeDBs");
     return $gdb;
 }
 
@@ -162,7 +163,6 @@ sub make_species_set_from_XML_node {
         $pool = $collection->genome_dbs;
     }
 
-    my $genome_dba = $compara_dba->get_GenomeDBAdaptor;
     my @selected_gdbs;
     foreach my $xml_taxon (@{$xml_ss->getChildrenByTagName('taxonomic_group')}) {
         my $some_genome_dbs;
