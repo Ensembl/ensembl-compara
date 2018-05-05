@@ -166,13 +166,13 @@
   <multiple_alignments>
     <!-- Primates -->
     <multiple_alignment method="EPO">
-      <species_set name="primates" in_collection="default">
+      <species_set name="primates">
         <taxonomic_group taxon_name="Primates" only_with_karyotype="1"/>
         <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE">
-      <species_set name="primates" in_collection="default">
+      <species_set name="primates">
         <taxonomic_group taxon_name="Primates"/>
       </species_set>
     </multiple_alignment>
@@ -190,23 +190,23 @@
     </multiple_alignment>
     <!-- Sauropsids -->
     <multiple_alignment method="EPO">
-      <species_set name="sauropsids" in_collection="default">
+      <species_set name="sauropsids">
         <taxonomic_group taxon_name="Sauropsida" only_with_karyotype="1"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
-      <species_set name="sauropsids" in_collection="default">
+      <species_set name="sauropsids">
         <taxonomic_group taxon_name="Sauropsida"/>
       </species_set>
     </multiple_alignment>
     <!-- Fishes -->
     <multiple_alignment method="EPO">
-      <species_set name="fish" in_collection="default">
+      <species_set name="fish">
         <taxonomic_group taxon_name="Actinopterygii" only_with_karyotype="1"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
-      <species_set name="fish" in_collection="default">
+      <species_set name="fish">
         <taxonomic_group taxon_name="Actinopterygii"/>
       </species_set>
     </multiple_alignment>
