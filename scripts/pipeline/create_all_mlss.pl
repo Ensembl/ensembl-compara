@@ -36,6 +36,14 @@ This script reads an XML configuration file that describes which analyses
 are performed in a given Compara database. It then creates all the
 necessary MethodLinkSpeciesSet objects.
 
+=head1 SYNOPSIS
+
+    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl --help
+
+    perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl \
+         --compara $(mysql-ens-compara-prod-1 details url ensembl_compara_master) \
+         --xml $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_ensembl.xml --release
+
 =head1 OPTIONS
 
 =head2 GETTING HELP
@@ -44,7 +52,7 @@ necessary MethodLinkSpeciesSet objects.
 
 =item B<[--help]>
 
-  Prints help message and exits.
+Prints help message and exits.
 
 =back
 
@@ -55,18 +63,43 @@ necessary MethodLinkSpeciesSet objects.
 =item B<[--reg_conf registry_configuration_file]>
 
 The Bio::EnsEMBL::Registry configuration file. If none given,
-the one set in ENSEMBL_REGISTRY will be used if defined, if not
-~/.ensembl_init will be used.
+the L<--compara> option must be a URL.
 
 =item B<[--compara compara_db_name_or_alias]>
 
 The compara database to update. You can use either the original name or any of the
 aliases given in the registry_configuration_file. DEFAULT VALUE: compara_master
+(assumes the L<--reg_conf> option is given).
+
+=item B<--xml xml_configuration_file>
+
+The XML configuration file of the analyses to define in the Compara database.
+See scripts/pipeline/compara_ensembl.xml for an example
+
+=item B<[--schema rng_schema_file]>
+
+The RelaxNG definition of the XML files. Defaults to $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_db_config.rng
+
+=back
+
+=head2 BEHAVIOUR CONFIGURATION
+
+=over
 
 =item B<[--release]>
 
 Mark all the objects that are created / used (GenomeDB, SpeciesSet, MethodLinkSpeciesSet)
-as "current", i.e. with a first_release and an undefined last_release
+as "current", i.e. with a first_release and an undefined last_release.
+Default: not set
+
+=item B<[--dry-run]>
+
+When given, the script will not store / update anything in the database.
+Default: not set (i.e. the database *will* be updated)
+
+=item B<[--verbose]>
+
+Print more details about the MLSSs that are being defined.
 
 =back
 
