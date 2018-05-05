@@ -202,7 +202,7 @@ sub make_species_set_from_XML_node {
             my $ref_taxon = $taxon_id ? $compara_dba->get_NCBITaxonAdaptor->fetch_by_dbID($taxon_id) : $gdb->taxon;
             $some_genome_dbs = [grep {(($_->taxon_id != $ref_taxon->dbID) && !$_->taxon->has_ancestor($ref_taxon)) || ($_->name eq $gdb->name)} @$some_genome_dbs];
         }
-        push @selected_gdbs, sort {$a->dbID <=> $b->dbID} @$some_genome_dbs;
+        push @selected_gdbs, @$some_genome_dbs;
     }
     foreach my $xml_genome (@{$xml_ss->getChildrenByTagName('genome')}) {
         my $gdb = find_genome_from_xml_node_attribute($xml_genome, 'name');
@@ -237,7 +237,7 @@ my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
 my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
 $collections{$division_name} = $division_species_set;
-my $division_genome_dbs = $division_species_set->genome_dbs;
+my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
@@ -373,7 +373,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
         }
         if ($verbose) {
-            foreach my $mlss (values %mlss_ids_to_find) {
+            foreach my $mlss (sort {$a->dbID <=> $b->dbID} values %mlss_ids_to_find) {
                 print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
             }
         }
