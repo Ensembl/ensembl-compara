@@ -390,10 +390,21 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
 
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_current};
 
+my @mlsss_created;
+my @mlsss_existing;
+
 $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
-        print "1. Collections that need to be created:\n\n";
+        if ($verbose) {
+            print "\n0. Division:\n\n" if $verbose;
+            print "DIVISION: ", $division_name, "\n";
+            print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @{$division_genome_dbs};
+            print "=", scalar(@{$division_genome_dbs}), " genomes\n\n";
+            print "1. Collections that need to be created:\n\n";
+        }
+
         foreach my $collection_name (sort keys %collections) {
+            next if $collection_name eq $division_name;
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
             my $exist_set = $compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($collection->genome_dbs);
@@ -414,7 +425,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
         }
 
-        print "2. MethodLinkSpeciesSets that need to be created:\n\n";
+        print "2. MethodLinkSpeciesSets that need to be created:\n" if $verbose;
         foreach my $mlss (@mlsss) {
             # Check if it is already in the database
             my $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
@@ -423,47 +434,56 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs);
             }
             if ($exist_mlss and $exist_mlss->is_current) {
-                $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
-                $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
+                push @mlsss_existing, $exist_mlss;
                 delete $mlss_ids_to_find{$exist_mlss->dbID};
                 next;
             }
             if ($verbose) {
-                print "MLSS: ", $mlss->name, "\n";
+                print "\nMLSS: ", $mlss->name, "\n";
                 print "METHOD: ", $mlss->method->type, "\n";
-                print "SS: ", $mlss->species_set->name, "\n";
+                print "SS: ", $mlss->species_set->name, "(", scalar(@{$mlss->species_set->genome_dbs}), ")\n";
                 print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @{$mlss->species_set->genome_dbs};
-                print "=", scalar(@{$mlss->species_set->genome_dbs}), "\n";
             }
             # Special case for syntenies: when the synteny has already been tried and failed (due to low coverage), we don't need to try again
             if (!$exist_mlss and ($mlss->method->type eq 'SYNTENY')) {
                 my $lastz_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('LASTZ_NET', $mlss->species_set->genome_dbs);
                 if ($lastz_mlss and $lastz_mlss->has_tag('low_synteny_coverage')) {
-                    print "DISCARDED (low_synteny_coverage)\n\n";
+                    print "DISCARDED (low_synteny_coverage)\n";
                     next;
                 }
             }
+            push @mlsss_created, $mlss;
             unless ($dry_run) {
                 $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
                 $compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss) if $release;
             }
             if ($verbose) {
-                print "AFTER STORING: ", $mlss->toString, "\n\n";
+                print "NEW MLSS:", $mlss->toString, "\n";
             }
         }
         if ($verbose) {
+            print "\n";
             foreach my $mlss (sort {$a->dbID <=> $b->dbID} values %mlss_ids_to_find) {
+                next if $mlss->method->type eq 'SYNTENY';
                 print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
             }
         }
     } );
 
 
-print "Summary:\n--------\n";
 my $current_version = software_version();
-my %methods_worth_reporting = map {$_ => 1} qw(EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSTRAINED_ELEMENT GERP_CONSERVATION_SCORE PROTEIN_TREES NC_TREES SPECIES_TREE);
-foreach my $mlss (@mlsss) {
-    if ($methods_worth_reporting{$mlss->method->type} and $mlss->first_release and ($mlss->first_release == $current_version)) {
+my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE PROTEIN_TREES NC_TREES SPECIES_TREE);
+
+print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+foreach my $mlss (@mlsss_created) {
+    if ($methods_worth_reporting{$mlss->method->type}) {
+        print $mlss->toString, "\n";
+    }
+}
+
+print "\nWhat else is new in e$current_version ?\n-------------------------\n";
+foreach my $mlss (@mlsss_existing) {
+    if ($methods_worth_reporting{$mlss->method->type} and ($mlss->first_release == $current_version)) {
         print $mlss->toString, "\n";
     }
 }
