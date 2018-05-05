@@ -132,7 +132,7 @@ GetOptions(
     'schema=s'      => \$xml_schema,
     'release'       => \$release,
     'verbose'       => \$verbose,
-    'dryrun|dry_run'=> \$dry_run,
+    'dryrun|dry_run|dry-run'    => \$dry_run,
 );
 
 # Print Help and exit if help is requested
