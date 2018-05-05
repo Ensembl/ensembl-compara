@@ -154,11 +154,16 @@ sub find_collection_from_xml_node_attribute {
     return $collection;
 }
 
+sub intersect_with_pool {
+    my ($genome_dbs, $pool) = @_;
+    my %selected_gdb_ids = map {$_->dbID => 1} @$genome_dbs;
+    return [grep {$selected_gdb_ids{$_->dbID}} @$pool];
+}
+
 sub fetch_genome_dbs_by_taxon_id {
     my ($taxon_id, $pool) = @_;
     my $genome_dbs = $genome_dba->fetch_all_by_ancestral_taxon_id($taxon_id);
-    my %gdb_ids_in_taxon = map {$_->dbID => 1} @$genome_dbs;
-    return [grep {$gdb_ids_in_taxon{$_->dbID}} @$pool];
+    return intersect_with_pool($genome_dbs, $pool);
 }
 
 sub fetch_genome_dbs_by_taxon_name {
@@ -203,8 +208,7 @@ sub make_species_set_from_XML_node {
         my $gdb = find_genome_from_xml_node_attribute($xml_genome, 'name');
         push @selected_gdbs, $gdb;
     }
-    my %allowed_gdb_ids = map {$_->dbID => 1} @$pool;
-    return [grep {delete $allowed_gdb_ids{$_->dbID}} @selected_gdbs];
+    return intersect_with_pool(\@selected_gdbs, $pool);
 }
 
 sub make_named_species_set_from_XML_node {
