@@ -56,9 +56,7 @@
   <!-- /new_named_species_set -->
   <define name="new_species_set_or_collection">
     <choice>
-      <element name="collection" blockly:blockName="Collection name">
-        <text/>
-      </element>
+      <attribute name="collection" blockly:blockName="Collection name"/>
       <element name="species_set" blockly:blockName="New species-set">
         <ref name="new_species_set"/>
         <optional>
