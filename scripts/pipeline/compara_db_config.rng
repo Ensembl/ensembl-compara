@@ -17,7 +17,7 @@
             </attribute>
           </optional>
           <optional>
-            <attribute name="only_with_karyotype" blockly:blockName="Only species with a karyotype">
+            <attribute name="only_with_karyotype" blockly:blockName="Only genomes with a karyotype">
               <choice>
                 <value blockly:blockName="Yes">1</value>
                 <value blockly:blockName="No">0</value>
@@ -95,17 +95,17 @@
           <oneOrMore>
             <choice>
               <element name="pairwise_alignment" blockly:blockName="One vs one">
-                <attribute name="ref_species" blockly:blockName="Reference species"/>
-                <attribute name="target_species" blockly:blockName="Target species"/>
+                <attribute name="ref_genome" blockly:blockName="Reference genome"/>
+                <attribute name="target_genome" blockly:blockName="Target genome"/>
                 <ref name="pairwise_methods"/>
               </element>
               <element name="one_vs_all" blockly:blockName="One vs all">
-                <attribute name="ref_species" blockly:blockName="Reference species"/>
+                <attribute name="ref_genome" blockly:blockName="Reference genome"/>
                 <ref name="pairwise_methods"/>
                 <ref name="new_species_set_or_collection"/>
               </element>
               <element name="all_vs_one" blockly:blockName="All vs one">
-                <attribute name="target_species" blockly:blockName="Target (non-reference) species"/>
+                <attribute name="target_genome" blockly:blockName="Target (non-reference) genome"/>
                 <ref name="pairwise_methods"/>
                 <ref name="new_species_set_or_collection"/>
               </element>

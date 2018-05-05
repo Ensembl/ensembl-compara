@@ -15,76 +15,76 @@
   </collections>
   <pairwise_alignments>
     <!-- reference genome vs whole clade -->
-    <one_vs_all method="LASTZ_NET" ref_species="homo_sapiens">
+    <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
       <species_set in_collection="default">
         <taxonomic_group taxon_name="Chordata"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="mus_musculus">
+    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus">
       <species_set in_collection="default">
         <taxonomic_group taxon_name="Rodentia"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="gallus_gallus">
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus">
       <species_set>
         <taxonomic_group taxon_name="Sauropsida"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="danio_rerio">
+    <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio">
       <species_set>
         <!-- Include urochordates, cephalochordates, cyclostomes, cartilaginous fishes, ray-finned fishes, coelacanths and lungfishes -->
         <taxonomic_group taxon_name="Chordata"/>
         <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="oryzias_latipes">
+    <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes">
       <species_set>
         <taxonomic_group taxon_name="Actinopterygii"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="monodelphis_domestica">
+    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
       <species_set>
         <taxonomic_group taxon_name="Metatheria"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="canis_familiaris">
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris">
       <species_set>
         <taxonomic_group taxon_name="Carnivora"/>
         <genome name="equus_caballus"/>
       </species_set>
     </one_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="felis_catus">
+    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus">
       <species_set>
         <taxonomic_group taxon_name="Feliformia"/>
       </species_set>
     </one_vs_all>
     <!-- Included in an all-vs-one rule further down -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="ciona_intestinalis">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis">
       <species_set>
         <taxonomic_group taxon_name="Ciona"/>
       </species_set>
     </one_vs_all>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="xenopus_tropicalis">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis">
       <species_set>
         <taxonomic_group taxon_name="Amphibia"/>
       </species_set>
     </one_vs_all>-->
-    <one_vs_all method="LASTZ_NET" ref_species="bos_taurus">
+    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus">
       <species_set>
         <taxonomic_group taxon_name="Cetartiodactyla"/>
       </species_set>
     </one_vs_all>
-    <pairwise_alignment method="LASTZ_NET" ref_species="sus_scrofa" target_species="ovis_aries"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="sus_scrofa" target_genome="ovis_aries"/>
     <!-- Equivalent to just one alignment at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="ovis_aries">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="ovis_aries">
       <species_set>
         <taxonomic_group taxon_name="Caprinae"/>
       </species_set>
     </one_vs_all>-->
-    <pairwise_alignment method="LASTZ_NET" ref_species="ovis_aries" target_species="capra_hircus"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="ovis_aries" target_genome="capra_hircus"/>
     <!-- Empty at the moment -->
-    <one_vs_all method="LASTZ_NET" ref_species="latimeria_chalumnae">
+    <one_vs_all method="LASTZ_NET" ref_genome="latimeria_chalumnae">
       <species_set>
         <!--Coelacanths and lungfishes -->
         <taxonomic_group taxon_name="Sarcopterygii"/>
@@ -92,36 +92,36 @@
       </species_set>
     </one_vs_all>
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="ornithorhynchus_anatinus">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus">
       <species_set>
         <taxonomic_group taxon_name="Prototheria"/>
       </species_set>
     </one_vs_all>-->
     <!-- Included in an all-vs-all rule further down -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="petromyzon_marinus">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus">
       <species_set>
         <taxonomic_group taxon_name="Cyclostomata"/>
       </species_set>
     </one_vs_all>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="equus_caballus">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="equus_caballus">
       <species_set>
         <taxonomic_group taxon_name="Perissodactyla"/>
       </species_set>
     </one_vs_all>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="anolis_carolinensis">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis">
       <species_set>
         <taxonomic_group taxon_name="Lepidosauria"/>
       </species_set>
     </one_vs_all>-->
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="pelodiscus_sinensis">
+    <!--<one_vs_all method="LASTZ_NET" ref_genome="pelodiscus_sinensis">
       <species_set>
         <taxonomic_group taxon_name="Testudines"/>
       </species_set>
     </one_vs_all>-->
-    <all_vs_one method="LASTZ_NET" target_species="ciona_savignyi">
+    <all_vs_one method="LASTZ_NET" target_genome="ciona_savignyi">
       <species_set>
         <genome name="danio_rerio"/>
         <genome name="gallus_gallus"/>
@@ -147,7 +147,7 @@
         <genome name="latimeria_chalumnae"/>
       </species_set>
     </all_vs_all>
-    <one_vs_all method="LASTZ_NET" ref_species="mus_musculus">
+    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus">
       <species_set>
         <genome name="ornithorhynchus_anatinus"/>
         <genome name="bos_taurus"/>
@@ -156,7 +156,7 @@
         <genome name="ciona_intestinalis"/>
       </species_set>
     </one_vs_all>
-    <pairwise_alignment method="LASTZ_NET" ref_species="anolis_carolinensis" target_species="pelodiscus_sinensis"/>
+    <pairwise_alignment method="LASTZ_NET" ref_genome="anolis_carolinensis" target_genome="pelodiscus_sinensis"/>
   </pairwise_alignments>
   <multiple_alignments>
     <multiple_alignment method="EPO">

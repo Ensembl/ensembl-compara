@@ -257,14 +257,14 @@ foreach my $collection_node (@{$division_node->findnodes('collections/collection
 }
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/pairwise_alignment')}) {
-    my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_species');
-    my $target_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'target_species');
+    my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
+    my $target_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'target_genome');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $target_gdb) };
 }
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/one_vs_all')}) {
-    my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_species');
+    my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
     my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID} @$genome_dbs];
@@ -272,7 +272,7 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
 }
 
 foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignments/all_vs_one')}) {
-    my $target_gdb = find_genome_from_xml_node_attribute($xml_all_vs_one_node, 'target_species');
+    my $target_gdb = find_genome_from_xml_node_attribute($xml_all_vs_one_node, 'target_genome');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_all_vs_one_node->getAttribute('method') );
     my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_one_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     $genome_dbs = [grep {$_->dbID ne $target_gdb->dbID} @$genome_dbs];
