@@ -94,7 +94,7 @@
             <choice>
               <element name="pairwise_alignment" blockly:blockName="One vs one">
                 <attribute name="ref_genome" blockly:blockName="Reference genome"/>
-                <attribute name="target_genome" blockly:blockName="Target genome"/>
+                <attribute name="target_genome" blockly:blockName="Target (non-reference) genome"/>
                 <ref name="pairwise_methods"/>
               </element>
               <element name="one_vs_all" blockly:blockName="One vs all">
