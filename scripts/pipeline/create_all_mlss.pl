@@ -185,7 +185,8 @@ sub make_species_set_from_XML_node {
       my $some_genome_dbs;
       if ($child->nodeName eq 'taxonomic_group') {
         my $xml_taxon = $child;
-        if (my $taxon_id = $xml_taxon->getAttribute('taxon_id')) {
+        if ($xml_taxon->hasAttribute('taxon_id')) {
+            my $taxon_id = $xml_taxon->getAttribute('taxon_id');
             $some_genome_dbs = fetch_genome_dbs_by_taxon_id($taxon_id, $pool);
         } else {
             my $taxon_name = $xml_taxon->getAttribute('taxon_name');
