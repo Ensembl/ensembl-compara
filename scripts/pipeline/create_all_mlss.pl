@@ -339,24 +339,17 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
         print "2. MethodLinkSpeciesSets that need to be created:\n\n";
         foreach my $mlss (@mlsss) {
-            my $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
             # Check if it is already in the database
+            my $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
+            # Special case for LastZ alignments: we still have some equivalent BlastZ alignments
+            if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
+                $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs);
+            }
             if ($exist_mlss and $exist_mlss->is_current) {
                 $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
                 $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
                 delete $mlss_ids_to_find{$exist_mlss->dbID};
                 next;
-            }
-            # Special case for LastZ alignments: we still have some equivalent BlastZ alignments
-            if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
-                $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs);
-                # Check if it is already in the database
-                if ($exist_mlss and $exist_mlss->is_current) {
-                    $mlss->first_release($exist_mlss->first_release); # Needed for the check $methods_worth_reporting
-                    $mlss->dbID($exist_mlss->dbID); # Needed for the check $methods_worth_reporting
-                    delete $mlss_ids_to_find{$exist_mlss->dbID};
-                    next;
-                }
             }
             if ($verbose) {
                 print "MLSS: ", $mlss->name, "\n";
