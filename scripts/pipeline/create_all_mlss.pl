@@ -405,8 +405,10 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @{$collection->genome_dbs};
                 print "=", scalar(@{$collection->genome_dbs}), " genomes\n";
             }
-            $compara_dba->get_SpeciesSetAdaptor->store($collection);
-            $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection);
+            unless ($dry_run) {
+                $compara_dba->get_SpeciesSetAdaptor->store($collection);
+                $compara_dba->get_SpeciesSetAdaptor->make_object_current($collection) if $release;
+            }
             if ($verbose) {
                 print "AFTER STORING: ", $collection->toString, "\n\n";
             }
@@ -441,8 +443,10 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                     next;
                 }
             }
-            $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-            $compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss);
+            unless ($dry_run) {
+                $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
+                $compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss) if $release;
+            }
             if ($verbose) {
                 print "AFTER STORING: ", $mlss->toString, "\n\n";
             }
@@ -452,7 +456,6 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
             }
         }
-        die "Aborted: 'dry_run' mode requested\n" if $dry_run;
     } );
 
 
