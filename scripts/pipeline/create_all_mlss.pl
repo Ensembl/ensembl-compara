@@ -154,6 +154,18 @@ sub find_collection_from_xml_node_attribute {
     return $collection;
 }
 
+sub fetch_genome_dbs_by_taxon_id {
+    my ($taxon_id, $pool) = @_;
+    my $genome_dbs = $genome_dba->fetch_all_by_ancestral_taxon_id($taxon_id);
+    my %gdb_ids_in_taxon = map {$_->dbID => 1} @$genome_dbs;
+    return [grep {$gdb_ids_in_taxon{$_->dbID}} @$pool];
+}
+
+sub fetch_genome_dbs_by_taxon_name {
+    my ($taxon_name, $pool) = @_;
+    my $taxon = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_name($taxon_name) || throw "Cannot find a taxon named '$taxon_name' in the database";
+    return fetch_genome_dbs_by_taxon_id($taxon->dbID, $pool);
+}
 
 sub make_species_set_from_XML_node {
     my ($xml_ss, $pool) = @_;
@@ -167,11 +179,10 @@ sub make_species_set_from_XML_node {
     foreach my $xml_taxon (@{$xml_ss->getChildrenByTagName('taxonomic_group')}) {
         my $some_genome_dbs;
         if (my $taxon_id = $xml_taxon->getAttribute('taxon_id')) {
-            $some_genome_dbs = $genome_dba->fetch_all_by_ancestral_taxon_id($taxon_id);
+            $some_genome_dbs = fetch_genome_dbs_by_taxon_id($taxon_id, $pool);
         } else {
             my $taxon_name = $xml_taxon->getAttribute('taxon_name');
-            my $taxon = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_name($taxon_name);
-            $some_genome_dbs = $genome_dba->fetch_all_by_ancestral_taxon_id($taxon->dbID);
+            $some_genome_dbs = fetch_genome_dbs_by_taxon_name($taxon_name, $pool);
         }
         if ($xml_taxon->hasAttribute('only_with_karyotype') and $xml_taxon->getAttribute('only_with_karyotype')) {
             $some_genome_dbs = [grep {$_->has_karyotype} @$some_genome_dbs];
