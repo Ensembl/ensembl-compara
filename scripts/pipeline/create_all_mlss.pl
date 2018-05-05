@@ -237,9 +237,10 @@ my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
 my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
 $collections{$division_name} = $division_species_set;
+my $division_genome_dbs = $division_species_set->genome_dbs;
 
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
-    my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_species_set->genome_dbs);
+    my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
 }
@@ -254,7 +255,7 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/one_vs_all')}) {
     my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_species');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
-    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_species_set->genome_dbs);
+    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID} @$genome_dbs];
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
 }
@@ -262,14 +263,14 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
 foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignments/all_vs_one')}) {
     my $target_gdb = find_genome_from_xml_node_attribute($xml_all_vs_one_node, 'target_species');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_all_vs_one_node->getAttribute('method') );
-    my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_one_node->getChildrenByTagName('species_set')->[0], $division_species_set->genome_dbs);
+    my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_one_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     $genome_dbs = [grep {$_->dbID ne $target_gdb->dbID} @$genome_dbs];
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $_, $target_gdb) } for @$genome_dbs;
 }
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_one_vs_all_node->getAttribute('method') );
-    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_species_set->genome_dbs);
+    my $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     while (my $ref_gdb = shift @$genome_dbs) {
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
     }
@@ -277,7 +278,7 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
 
 foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_alignment')}) {
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
-    my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($xml_msa, $method, $division_species_set->genome_dbs) };
+    my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs) };
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlss($compara_dba, $method, $species_set, $display_name, ($xml_msa->getAttribute('gerp') // 0)) };
 }
 
@@ -294,21 +295,21 @@ foreach my $xml_asm_patch (@{$division_node->findnodes('assembly_patches/genome'
 
 my $fam_method = $compara_dba->get_MethodAdaptor->fetch_by_type('FAMILY');
 foreach my $fam_node (@{$division_node->findnodes('families/family')}) {
-    my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($fam_node, $fam_method, $division_species_set->genome_dbs) };
+    my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($fam_node, $fam_method, $division_genome_dbs) };
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($fam_method, $species_set, undef, $display_name);
 }
 
 foreach my $gt (qw(protein nc)) {
     my $gt_method = $compara_dba->get_MethodAdaptor->fetch_by_type((uc $gt).'_TREES');
     foreach my $gt_node (@{$division_node->findnodes("gene_trees/${gt}_trees")}) {
-        my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($gt_node, $gt_method, $division_species_set->genome_dbs) };
+        my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($gt_node, $gt_method, $division_genome_dbs) };
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_homology_mlsss($compara_dba, $gt_method, $species_set, $display_name) }
     }
 }
 
 my $st_method = $compara_dba->get_MethodAdaptor->fetch_by_type('SPECIES_TREE');
 foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')}) {
-    my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($st_node, $st_method, $division_species_set->genome_dbs) };
+    my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($st_node, $st_method, $division_genome_dbs) };
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set, undef, $display_name);
 }
 
