@@ -9,6 +9,14 @@
             <attribute name="taxon_name" blockly:blockName="Taxon name"/>
           </choice>
           <optional>
+            <attribute name="exclude" blockly:blockName="Exclude those genomes">
+              <choice>
+                <value blockly:blockName="Yes">1</value>
+                <value blockly:blockName="No">0</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
             <attribute name="only_with_karyotype" blockly:blockName="Only species with a karyotype">
               <choice>
                 <value blockly:blockName="Yes">1</value>

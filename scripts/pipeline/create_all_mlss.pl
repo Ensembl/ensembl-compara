@@ -181,8 +181,10 @@ sub make_species_set_from_XML_node {
     }
 
     my @selected_gdbs;
-    foreach my $xml_taxon (@{$xml_ss->getChildrenByTagName('taxonomic_group')}) {
-        my $some_genome_dbs;
+    foreach my $child ($xml_ss->childNodes()) {
+      my $some_genome_dbs;
+      if ($child->nodeName eq 'taxonomic_group') {
+        my $xml_taxon = $child;
         if (my $taxon_id = $xml_taxon->getAttribute('taxon_id')) {
             $some_genome_dbs = fetch_genome_dbs_by_taxon_id($taxon_id, $pool);
         } else {
@@ -202,11 +204,20 @@ sub make_species_set_from_XML_node {
             my $ref_taxon = $taxon_id ? $compara_dba->get_NCBITaxonAdaptor->fetch_by_dbID($taxon_id) : $gdb->taxon;
             $some_genome_dbs = [grep {(($_->taxon_id != $ref_taxon->dbID) && !$_->taxon->has_ancestor($ref_taxon)) || ($_->name eq $gdb->name)} @$some_genome_dbs];
         }
+      } elsif ($child->nodeName eq 'genome') {
+        my $gdb = find_genome_from_xml_node_attribute($child, 'name');
+        $some_genome_dbs = [$gdb];
+      } elsif ($child->nodeName =~ /^#(comment|text)$/) {
+        next;
+      } else {
+        throw(sprintf('Unknown child: %s (line %d)', $child->nodeName, $child->line_number));
+      }
+      if ($child->hasAttribute('exclude') and $child->getAttribute('exclude')) {
+        my %gdb_ids_to_remove = map {$_->dbID => 1} @$some_genome_dbs;
+        @selected_gdbs = grep {!$gdb_ids_to_remove{$_->dbID}} @selected_gdbs;
+      } else {
         push @selected_gdbs, @$some_genome_dbs;
-    }
-    foreach my $xml_genome (@{$xml_ss->getChildrenByTagName('genome')}) {
-        my $gdb = find_genome_from_xml_node_attribute($xml_genome, 'name');
-        push @selected_gdbs, $gdb;
+      }
     }
     return intersect_with_pool(\@selected_gdbs, $pool);
 }

@@ -32,11 +32,9 @@
     </one_vs_all>
     <one_vs_all method="LASTZ_NET" ref_species="danio_rerio">
       <species_set>
-        <taxonomic_group taxon_name="Actinopterygii"/>
-        <!-- Included in an all-vs-all rule further down -->
-        <!--<taxonomic_group taxon_name="Cephalochordata"/>
-        <taxonomic_group taxon_name="Tunicata"/>
-        <taxonomic_group taxon_name="Cyclostomata"/>-->
+        <!-- Include urochordates, cephalochordates, cyclostomes, cartilaginous fishes, ray-finned fishes, coelacanths and lungfishes -->
+        <taxonomic_group taxon_name="Chordata"/>
+        <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
     </one_vs_all>
     <one_vs_all method="LASTZ_NET" ref_species="oryzias_latipes">
@@ -86,12 +84,13 @@
     </one_vs_all>-->
     <pairwise_alignment method="LASTZ_NET" ref_species="ovis_aries" target_species="capra_hircus"/>
     <!-- Empty at the moment -->
-    <!--<one_vs_all method="LASTZ_NET" ref_species="latimeria_chalumnae">
+    <one_vs_all method="LASTZ_NET" ref_species="latimeria_chalumnae">
       <species_set>
-        <taxonomic_group taxon_name="Coelacanthimorpha"/>
-        <taxonomic_group taxon_name="Dipnoi"/>
+        <!--Coelacanths and lungfishes -->
+        <taxonomic_group taxon_name="Sarcopterygii"/>
+        <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
-    </one_vs_all>-->
+    </one_vs_all>
     <!-- Empty at the moment -->
     <!--<one_vs_all method="LASTZ_NET" ref_species="ornithorhynchus_anatinus">
       <species_set>
