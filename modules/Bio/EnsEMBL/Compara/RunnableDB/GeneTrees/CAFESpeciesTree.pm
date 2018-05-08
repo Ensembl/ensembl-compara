@@ -174,7 +174,7 @@ sub run {
             Bio::EnsEMBL::Compara::Utils::SpeciesTree::ultrametrize_from_timetree($species_tree_root);
             print "AFTER ultrametrize_from_timetree:\n";
         } else {
-            $self->para('use_timetree', 0);
+            $self->param('use_timetree', 0);
         }
     }
     unless ($self->param('use_timetree')) {
