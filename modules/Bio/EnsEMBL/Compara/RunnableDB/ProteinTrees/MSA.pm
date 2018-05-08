@@ -291,6 +291,7 @@ sub parse_and_store_alignment_into_proteintree {
   return 0 unless($msa_output and -e $msa_output);
 
   $self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
+  $self->param('protein_tree')->seq_type('cds') if $self->param('cdna');
 
   return 1;
 }
@@ -302,7 +303,7 @@ sub _store_aln_tags {
 
     print "Storing Alignment tags...\n";
 
-    my $sa = $tree->get_SimpleAlign;
+    my $sa = $tree->get_SimpleAlign(-SEQ_TYPE => $self->param('cdna') ? 'cds' : undef);
 
     # Alignment percent identity.
     my $aln_pi = $sa->average_percentage_identity;

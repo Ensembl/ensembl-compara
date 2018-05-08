@@ -94,6 +94,7 @@ sub fetch_input {
         -FORMAT => 'fasta',
         -ID_TYPE => 'SEQUENCE',
         -STOP2X => 1,
+        -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef,
     );
     unless(-e $input_aln and -s $input_aln) {
         die "There are no alignments in '$input_aln', cannot continue";
@@ -136,7 +137,7 @@ sub get_msa_command_line {
         print "$updated_member_stable_id|".$seq_member->seq_member_id."|".$seq_member->sequence_id."\n" if ( $self->debug );
         push @members_to_print, $seq_member;
     }
-    Bio::EnsEMBL::Compara::MemberSet->new(-MEMBERS => \@members_to_print)->print_sequences_to_file($new_seq_file, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE_ID');
+    Bio::EnsEMBL::Compara::MemberSet->new(-MEMBERS => \@members_to_print)->print_sequences_to_file($new_seq_file, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE_ID', -SEQ_TYPE => $self->param('cdna') ? 'cds' : undef);
 
 
     #--------------------------------------------------------------------------------------------------------------
