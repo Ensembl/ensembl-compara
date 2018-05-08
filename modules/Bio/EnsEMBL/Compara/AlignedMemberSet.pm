@@ -394,7 +394,7 @@ sub get_SimpleAlign {
             rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES ANNOTATIONS)], @args);
     }
 
-    die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
+    die "-SEQ_TYPE and \$self->seq_type cannot have different (defined) values" if $seq_type and $self->seq_type and ($seq_type ne $self->seq_type);
     $seq_type = $self->seq_type unless $seq_type;
 
     my $sa = Bio::SimpleAlign->new();
@@ -428,6 +428,12 @@ sub get_SimpleAlign {
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         next if $removed_members->{$member->dbID};
+
+        # When seq_types are consistent (there is a die above that ensures
+        # that both can't be set to different values) prevent the x3 expansion
+        if ($seq_type and $self->seq_type) {
+            $member->{_expansion_factor} = 1;
+        }
 
         my $seqstr = $member->alignment_string($seq_type);
         next unless $seqstr;
