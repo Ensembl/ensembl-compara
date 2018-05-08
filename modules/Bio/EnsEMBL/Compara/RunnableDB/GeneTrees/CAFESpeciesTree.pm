@@ -55,6 +55,7 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
+use Bio::EnsEMBL::Compara::SpeciesTree;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -94,6 +95,7 @@ sub fetch_input {
         $full_species_tree->root($species_tree_root);
 
         foreach my $n (@{$species_tree_root->get_all_nodes}) {
+            $n->adaptor($self->compara_dba->get_SpeciesTreeNodeAdaptor);
             die $n->name." is not binary" if $n->get_child_count > 2;
         }
 
