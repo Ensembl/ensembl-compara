@@ -154,7 +154,6 @@ sub _load_remote_url_tracks {
   my $saved_config    = $self->get_user_settings->{'nodes'} || {};
 
   my %tracks_data;
-warn Data::Dumper::Dumper ['>>>>>>>>>>>.'];
 
   foreach my $record (@$session_records, @$user_records) {
 
