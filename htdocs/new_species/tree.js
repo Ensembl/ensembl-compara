@@ -188,7 +188,7 @@ else {
       if(!source._children && !source.children) {
         document.getElementById('sci').innerHTML = '(' + source.name + ')';
         document.getElementById('common').innerHTML = source.display_name;
-        document.getElementById('img').src = 'http://www.ensembl.org/i/species/48/' + source.name + '.png';
+        document.getElementById('img').src = 'http://www.ensembl.org/i/species/' + source.name + '.png';
       }
       else {
         document.getElementById('sci').innerHTML = source.name;
@@ -289,7 +289,7 @@ else {
             .style("fill-opacity", 0);
 
         nodeEnter.append("image")
-            .attr("xlink:href", function(d) { if (!d.children) return 'http://www.ensembl.org/i/species/16/' + d.name + '.png' })
+            .attr("xlink:href", function(d) { if (!d.children) return 'http://www.ensembl.org/i/species/' + d.name + '.png' })
             .attr("x", "-6px")
             .attr("y", "-6px")
             .attr("width", "12px")
