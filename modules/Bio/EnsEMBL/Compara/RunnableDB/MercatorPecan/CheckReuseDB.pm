@@ -61,14 +61,18 @@ sub run {
      
      my $reuse_list;
      foreach my $dnafrag (@$reuse_dnafrags) {
-	 $reuse_list->{$dnafrag->dbID}{$dnafrag->name}{$dnafrag->length}{$dnafrag->coord_system_name} = 1;
+        if ($dnafrag->is_reference) {
+            $reuse_list->{$dnafrag->dbID}{$dnafrag->name}{$dnafrag->length}{$dnafrag->coord_system_name} = 1;
+        }
      }
 
      my $curr_dnafrags = $self->compara_dba->get_DnafragAdaptor->fetch_all_by_GenomeDB_region($gdb);
 
      my $curr_list;
      foreach my $dnafrag (@$curr_dnafrags) {
-	 $curr_list->{$dnafrag->dbID}{$dnafrag->name}{$dnafrag->length}{$dnafrag->coord_system_name} = 1;
+        if ($dnafrag->is_reference) {
+            $curr_list->{$dnafrag->dbID}{$dnafrag->name}{$dnafrag->length}{$dnafrag->coord_system_name} = 1;
+        }
      }
 
      my ($removed, $remained1, $old_names) = $self->check_presence($reuse_list, $curr_list);
