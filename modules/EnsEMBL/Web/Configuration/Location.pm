@@ -131,7 +131,15 @@ sub populate_tree {
   
 
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
-  
+
+  $variation_menu->append($self->create_node('Variant/Table', 'Variant table',
+    [qw(
+      botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
+      vartable EnsEMBL::Web::Component::Location::VariationTable
+    )],
+    { 'availability' => 'slice' }
+  ));
+
   $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
     [qw(
       summary EnsEMBL::Web::Component::Location::Summary
