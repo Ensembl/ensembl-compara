@@ -143,7 +143,7 @@ Ensembl.LayoutManager.extend({
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
 
-    this.showCookieMessage();
+    this.showGDPRCookieBanner();
     this.showTemporaryMessage();
     this.showMirrorMessage();
   },
@@ -286,21 +286,28 @@ Ensembl.LayoutManager.extend({
     }
   },
 
-  showCookieMessage: function() {
-    var cookiesAccepted = Ensembl.cookie.get('cookies_ok');
+  showGDPRCookieBanner: function() {
+    var service_id = 'ensembl-website-browsing';
+    var cookie_for_all_sites = true;
+    var cookiesAccepted = Ensembl.cookie.get(service_id);
 
     if (!cookiesAccepted) {
-      $(['<div class="cookie-message hidden">',
-          '<p class="msg">We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.',
-            '<span class="more-info"> Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</span>',
-          '</p>',
-          '<a class="more-info-link" href="/info/about/legal/privacy.html">More</a>',
-          '<span class="close">x</span>',
-        '</div>'
-      ].join(''))
-        .appendTo(document.body).show().find('span.close').on('click', function (e) {
-          Ensembl.cookie.set('cookies_ok', 'yes');
-          $(this).parents('div').first().fadeOut(200);
+      $([ "<div class='cookie-message'>",
+            "<p class='msg'>",
+              "This website uses cookies. By continuing to browse this site, you are agreeing to the use of our site cookies. We also collect some information [text goes here, please review and aggree].",
+              " To find out more, see our ",
+              "<a target='_blank' href='' class='white-color'>privacy policy</a>",
+            "</p>",
+            '<a class="more-info-link" href="/info/about/legal/privacy.html">More</a>',
+            "<div class='agree-button'>",
+              "<a id='gdpr-agree' class='button no-underline'> I agree</a>",
+            "</div>",
+          "</div>"
+        ].join(''))
+        .appendTo(document.body).show().find('#gdpr-agree').on('click', function (e) {
+          Ensembl.cookie.set(service_id, 'true', '', true, cookie_for_all_sites);
+          $(this).addClass('clicked')
+                 .closest('.cookie-message').delay(1000).fadeOut(100);
       });
       return true;
     }

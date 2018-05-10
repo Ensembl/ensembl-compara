@@ -204,7 +204,7 @@ div.tmp-message.tm-left                           { left: 20px; margin-left: 0; 
 div.tmp-message.tm-warning                        { background-color: [[MODERATE_DARK]]; }
 div.tmp-message.tm-error                          { background-color: [[SEVERE_DARK]];   }
 div.tmp-message.tm-info                           { background-color: [[PALE_GREY]]; color: [[V_DARK_GREY]]; }
-div.cookie-message div,div.tmp-message div.close  { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
+div.tmp-message div.close                         { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
 div.cookie-message p, div.tmp-message p           { margin: 0; line-height: 30px; text-align: center; }
 div.cookie-message p a, div.tmp-message p a       { color: inherit; font-weight: bold; }
 
@@ -225,10 +225,10 @@ div.redirect-message {
   font-weight: 100;
   padding: 0px;
   font-size: 1em;
+  justify-content: space-evenly;
 
 }
 div.cookie-message p.msg{
-  width: 100%;
   padding: 6px;
   font-weight: 100;
 }
@@ -266,6 +266,35 @@ div.cookie-message a.more-info-link {
 }
 div.cookie-message a.more-info-link:hover {
   background-color: [[WHITE]];
+}
+
+div.cookie-message div.agree-button {
+    cursor: pointer;
+    background: rgba(148, 148, 148, 0.7);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    min-width: 96px;
+}
+
+div.cookie-message div.agree-button a.button{
+  background-color: transparent !important;
+  color: #ccc!important;
+  font-size: 1.1em;
+  margin: auto;
+  margin-right: auto !important;
+  padding: auto;
+}
+
+div.cookie-message div.agree-button a.button :hover{
+  color: #fff!important;
+}
+
+div.cookie-message div.agree-button a.button.clicked{
+  color: #fff!important;
+  background: url(/i/16/rev/check.png) no-repeat left center;
+  padding: 6px 15px 2px 32px!important;
+  background-position-x: 8px;
 }
 
 @media screen and (max-width: 1201px) {
