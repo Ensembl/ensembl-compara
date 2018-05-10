@@ -132,6 +132,11 @@ our $ENSEMBL_DEBUG_CACHE            = 0; # Turns debug messages on for EnsEMBL::
 our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::Web::SpeciesDefs
 ###############################################################################
 
+###############################################################################
+## GDPR parameters - set to blank by default, for internal mirrors
+our $GDPR_VERSION                   = 0;
+our $GDPR_SERVICE_ID                = '';
+###############################################################################
 
 ###############################################################################
 ## Cookies and cookie encryption
