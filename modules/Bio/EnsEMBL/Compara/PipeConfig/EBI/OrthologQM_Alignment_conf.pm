@@ -124,7 +124,7 @@ sub default_options {
             $self->o('previous_rel_db'),
             # list of databases with EPO or LASTZ data
         ],
-        'previous_rel_db'  => 'mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_#expr( #current_release# - 1 )expr#',
+        'previous_rel_db'  => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_#expr( #current_release# - 1 )expr#',
         'species_set_name' => 'collection-default',
     };
 }

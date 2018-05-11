@@ -122,10 +122,10 @@ sub default_options {
         'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #release# - 1)expr#',
 
         # Protein Tree database. Once the members are loaded, it is fine to start the families pipeline
-        'protein_trees_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',
+        'protein_trees_db' => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',
 
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
 
 } ## end sub default_options
 

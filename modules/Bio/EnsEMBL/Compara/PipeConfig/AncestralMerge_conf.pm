@@ -66,7 +66,7 @@ sub default_options {
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@mysql-ens-compara-prod-1:4485/ensembl_ancestral_91',
+        'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_91',
 
         # map EPO mlss_ids to their source ancestral db
         'epo_mlsses' => [ # this table needs to be edited prior to running the pipeline:
