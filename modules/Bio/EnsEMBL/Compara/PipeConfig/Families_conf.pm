@@ -219,6 +219,7 @@ sub pipeline_analyses {
             -parameters => {
                 'extra_parameters'  => ['name'],
             },
+            -rc_name    => '250Mb_job',
             -flow_into => {
                 '2->A' => [ 'genome_member_copy' ],
                 'A->1' => [ 'hc_nonref_members' ],
