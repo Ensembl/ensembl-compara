@@ -88,11 +88,11 @@ sub get_num_sequences {
     my ($mfa) = @_;
  
     my $cnt = 0;
-    open (MFA, "$mfa") || throw("Couldn't open $mfa");
-    while (<MFA>) {
+    open (my $mfa_fh, '<', $mfa) || throw("Couldn't open $mfa");
+    while (<$mfa_fh>) {
 	$cnt++ if (/^>/);
     }
-    close(MFA);
+    close($mfa_fh);
 
     return $cnt;
 }
@@ -112,18 +112,15 @@ sub get_num_sequences {
 sub run_treebest_2x {
     my ($self) = @_;
 
-
     #Check I don't already have a tree
     return if ($self->tree_string);
-     
+
     chdir $self->worker_temp_directory;
     my $tree_file = "output.$$.tree";
 
     #write species tree (with taxon_ids) to file in workdir
     my $species_tree_file = "species_tree.$$.tree";
-    open(F, ">$species_tree_file") || throw("Couldn't open $species_tree_file for writing");
-    print (F $self->taxon_species_tree);
-    close(F);
+    $self->_spurt($species_tree_file, $self->get_taxon_tree);
 
     #Run treebeset
     my $command = $self->param('treebest_exe') ." phyml -Snf $species_tree_file " . $self->param('multi_fasta_file') . " | " . $self->param('treebest_exe') . " sdi -rs $species_tree_file - > $tree_file";
@@ -136,12 +133,7 @@ sub run_treebest_2x {
     #read in new tree
     if (-e $tree_file) {
 	  ## Treebest estimated the tree. Overwrite the order of the fasta files and get the tree
-	  open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
-	  my $newick;
-	  while (<F>) {
-	      $newick .= $_;
-	  }
-	  close(F);
+	  my $newick = $self->_slurp($tree_file);
 	  $newick =~ s/[\r\n]+$//;
 	  rearrange_multi_fasta_file($newick, $self->param('multi_fasta_file'));
       }
@@ -180,9 +172,7 @@ sub run_semphy_2x {
     #read in new tree
     if (-e $tree_file) {
 	  ## Semphy estimated the tree. Overwrite the order of the fasta files and get the tree
-	  open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
-	  my ($newick) = <F>;
-	  close(F);
+          my $newick = $self->_slurp($tree_file);
 	  $newick =~ s/[\r\n]+$//;
 	  rearrange_multi_fasta_file($newick, $self->param('multi_fasta_file'));
       }
@@ -206,11 +196,11 @@ sub rearrange_multi_fasta_file {
      }
 
     my %mfa_data;
-    open(MFA, $mfa_file) || throw("Could not open mfa file <$mfa_file>");
+    open(my $mfa_fh, '<', $mfa_file) || throw("Could not open mfa file <$mfa_file>");
 
     my $name;
     my $seq;
-    while (<MFA>) {
+    while (<$mfa_fh>) {
 	next if (/^\s*$/);
 	chomp;
 	
@@ -225,23 +215,23 @@ sub rearrange_multi_fasta_file {
 	}
     }
     $mfa_data{$name} = $seq;
-    close(MFA);
+    close($mfa_fh);
 
     #overwrite existing mfa file
-    open MFA, ">$mfa_file" || throw("Couldn't open $mfa_file");
+    open($mfa_fh, '>', $mfa_file) || throw("Couldn't open $mfa_file");
 
     foreach my $ordered_name (@$ordered_names) {
 	#for ancestral 
 	next if (!defined $mfa_data{$ordered_name->{name}});
 
-	print MFA ">".$ordered_name->{leaf} . "\n";
+	print $mfa_fh ">".$ordered_name->{leaf} . "\n";
 	my $seq = $mfa_data{$ordered_name->{name}};
 	$seq =~ s/(.{80})/$1\n/g;
 	
 	chomp $seq;
-	print MFA $seq,"\n";
+	print $mfa_fh $seq,"\n";
     }
-    close MFA;
+    close $mfa_fh;
 }
 
 1;
