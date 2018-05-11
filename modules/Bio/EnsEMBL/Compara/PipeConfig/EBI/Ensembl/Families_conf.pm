@@ -119,7 +119,7 @@ sub default_options {
         'HMMer_classify_capacity' => 1500,
 
         # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #release# - 1)expr#',
+        'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #ensembl_release# - 1)expr#',
 
         # Protein Tree database. Once the members are loaded, it is fine to start the families pipeline
         'protein_trees_db' => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',

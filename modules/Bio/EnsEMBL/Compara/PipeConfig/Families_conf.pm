@@ -137,6 +137,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
         'mlss_id'           => $self->o('mlss_id'),
+        'ensembl_release'   => $self->o('ensembl_release'),
         'blast_params'      => $self->o('blast_params'),
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
