@@ -582,6 +582,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => $self->o('mafft_capacity'),
             -rc_name       => 'BigMafft',
+            -priority      => 10,
             -flow_into     => {
                 1  => [ 'consensifier_himem' ],
                 -1 => [ 'mafft_huge' ],
@@ -594,6 +595,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'mafft_threads'     => 8,
             },
+            -priority      => 20,
             -flow_into     => {
                 1  => [ 'consensifier_himem' ],
             },
@@ -621,6 +623,7 @@ sub pipeline_analyses {
                             AND source_name IN (#member_sources_to_delete#);'
                 ],
             },
+            -priority  => 20,
             -flow_into => {
                 1  => [ 'mafft_huge' ],
             },
