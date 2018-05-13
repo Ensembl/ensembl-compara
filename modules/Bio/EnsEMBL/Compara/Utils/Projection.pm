@@ -82,10 +82,10 @@ sub project_Slice_to_reference_toplevel {
     } else {
         # The slice is not top-level. Let's project it up
         $projection_segments = $slice->project('toplevel');
-        # When the projection is not possible (none of $slice is included
+        # By the way, when the projection is not possible (none of $slice is included
         # in a toplevel), $projection_segments will contain a copy of the
-        # original slice. Remove it !
-        $projection_segments = [grep {$_->to_Slice ne $slice} @$projection_segments];
+        # original slice. This is fine and gives us a chance to fetch some
+        # alignments etc, if we have computed them on this region.
     }
 
     return $projection_segments;

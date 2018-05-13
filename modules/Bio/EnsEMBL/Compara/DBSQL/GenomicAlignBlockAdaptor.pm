@@ -555,7 +555,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
   my $genome_db = $genome_db_adaptor->fetch_by_Slice($reference_slice);
 
-#  my $projection_segments = $reference_slice->project('toplevel');
   my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($reference_slice);
   return [] if(!@$projection_segments);
 
