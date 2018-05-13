@@ -277,9 +277,8 @@ sub start_server_on_port {
           return 0;
       }
   }
+  $self->say_with_header("Server still not ready. Aborting");
   $self->stop_server;
-  system('cp', '-a', $log_file, $self->param_required('seq_dump_loc').'/../');
-  $self->say_with_header("Failed to start server; see log: $log_file");
   return 0;
 }
 
