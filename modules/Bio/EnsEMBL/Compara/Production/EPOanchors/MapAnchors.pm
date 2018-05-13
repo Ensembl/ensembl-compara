@@ -256,25 +256,20 @@ sub start_server_on_port {
   }
   $self->param('server_pid', $pid);
 
-  my ($server_starting, $cycles) = (1, 0);
-  while ($server_starting) {
-    if ($cycles < 50) {
+  my $cycles = 0;
+  while ($cycles < 50) {
       sleep 5;
       $cycles++;
       my $started_message = `tail -1 $log_file`;
       if ($started_message =~ /listening on port/) {
-        $server_starting = 0;
+          $self->say_with_header("Server started on port $port");
+          return 1;
       }
-    } else {
-      $self->stop_server;
-      system('cp', '-a', $log_file, '/homes/muffato/nfs/hps/mammals_epo_anchor_mapping_91_new_schema/');
-      #$self->throw("Failed to start server; see log: $log_file");
-      $self->say_with_header("Failed to start server; see log: $log_file");
-      return 0;
-    }
   }
-  $self->say_with_header("Server started on port $port");
-  return 1;
+  $self->stop_server;
+  system('cp', '-a', $log_file, $self->param_required('seq_dump_loc').'/../');
+  $self->say_with_header("Failed to start server; see log: $log_file");
+  return 0;
 }
 
 sub stop_server {
