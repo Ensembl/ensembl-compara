@@ -262,7 +262,7 @@ sub start_server_on_port {
       sleep 2;
       $cycles++;
       my $started_message = `tail -1 $log_file`;
-      if ($started_message =~ /Message: listening on port/) {
+      if ($started_message =~ /listening on port/) {
         $server_starting = 0;
       }
     } else {
