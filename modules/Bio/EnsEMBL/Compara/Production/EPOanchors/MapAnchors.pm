@@ -57,6 +57,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors;
 use strict;
 use warnings;
 use Data::Dumper;
+use POSIX ":sys_wait_h";
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -259,11 +260,21 @@ sub start_server_on_port {
   my $cycles = 0;
   while ($cycles < 50) {
       sleep 5;
+      # Check if the server has exited
+      if (waitpid($pid, WNOHANG)) {
+          system('cp', '-a', $log_file, $self->param_required('seq_dump_loc').'/../');
+          $self->say_with_header("Server exited by itself (address already in use ?). See log: $log_file");
+          return 0;
+      }
       $cycles++;
       my $started_message = `tail -1 $log_file`;
       if ($started_message =~ /listening on port/) {
           $self->say_with_header("Server started on port $port");
           return 1;
+      } elsif ($started_message =~ /Address already in use/) {
+          $self->stop_server;
+          $self->say_with_header("Failed to start server: Address already in use");
+          return 0;
       }
   }
   $self->stop_server;
