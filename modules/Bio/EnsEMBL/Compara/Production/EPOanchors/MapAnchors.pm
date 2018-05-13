@@ -259,7 +259,7 @@ sub start_server_on_port {
   my ($server_starting, $cycles) = (1, 0);
   while ($server_starting) {
     if ($cycles < 50) {
-      sleep 2;
+      sleep 5;
       $cycles++;
       my $started_message = `tail -1 $log_file`;
       if ($started_message =~ /listening on port/) {
