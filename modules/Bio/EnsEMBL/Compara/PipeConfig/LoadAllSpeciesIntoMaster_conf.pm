@@ -97,12 +97,16 @@ sub resource_classes {
 
 
 
-sub pipeline_create_commands {
+sub pipeline_checks_pre_init {
     my ($self) = @_;
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db_ro') and not $self->o('ncbi_db');
+}
 
+
+sub pipeline_create_commands {
+    my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         'mkdir -p '.$self->o('work_dir'),
