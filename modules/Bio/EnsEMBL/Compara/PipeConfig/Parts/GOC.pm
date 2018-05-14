@@ -168,7 +168,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_genetic_distance',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
             -flow_into => {
-                1 =>    ['threshold_calculator'],
+                1 =>    { 'threshold_calculator' => INPUT_PLUS },
                -1 =>    [ 'get_genetic_distance_himem' ],  # MEMLIMIT
                 },
             -hive_capacity  =>  $self->o('goc_stats_capacity'),
@@ -178,7 +178,7 @@ sub pipeline_analyses_goc {
             -logic_name => 'get_genetic_distance_himem',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance',
             -flow_into => {
-                1 =>    ['threshold_calculator'],
+                1 =>    { 'threshold_calculator' => INPUT_PLUS },
                 },
             -hive_capacity  =>  $self->o('goc_stats_capacity'),
             -rc_name        => '2Gb_job',
