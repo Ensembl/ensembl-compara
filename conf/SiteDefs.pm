@@ -133,12 +133,6 @@ our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::W
 ###############################################################################
 
 ###############################################################################
-## GDPR parameters - set to blank by default, for internal mirrors
-our $GDPR_VERSION                   = 0;
-our $GDPR_SERVICE_ID                = '';
-###############################################################################
-
-###############################################################################
 ## Cookies and cookie encryption
 our $ENSEMBL_USER_COOKIE          = 'ENSEMBL_WWW_USER';     # Cookie name for User cookie (if user plugin is enabled)
 our $ENSEMBL_USER_COOKIEHOST      = '';                     # Cookie host for User cookie
