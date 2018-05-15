@@ -31,7 +31,7 @@ sub configure {
   my ($self, $params) = @_;
 
   $self->append_children(@{$params->{'children'}}) 					if $params->{'children'};
-  $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
+  $self->set_attribute('id',    $params->{'wrapper_id'})    if defined $params->{'wrapper_id'};
   $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
 	$self->set_flag($self->ELEMENT_HAS_WRAPPER) 							if $params->{'force_wrapper'};
 }
