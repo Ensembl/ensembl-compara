@@ -289,9 +289,10 @@ Ensembl.LayoutManager.extend({
   showGDPRCookieBanner: function() {
     var service_id = 'ensembl-website-browsing';
     var cookie_for_all_sites = true;
-    var cookiesAccepted = Ensembl.cookie.get(service_id);
+    var cookiesVersion = Ensembl.cookie.get(service_id);
+    Ensembl.gdpr_version = $('#gdpr_version').val();
 
-    if (!cookiesAccepted) {
+    if (!cookiesVersion || (cookiesVersion !== Ensembl.gdpr_version)) {
       $([ "<div class='cookie-message'>",
             "<p class='msg'>",
               "This website uses cookies. By continuing to browse this site, you are agreeing to the use of our site cookies. We also collect some information [text goes here, please review and aggree].",
@@ -305,7 +306,7 @@ Ensembl.LayoutManager.extend({
           "</div>"
         ].join(''))
         .appendTo(document.body).show().find('#gdpr-agree').on('click', function (e) {
-          Ensembl.cookie.set(service_id, 'true', '', true, cookie_for_all_sites);
+          Ensembl.cookie.set(service_id, Ensembl.gdpr_version, '', true, cookie_for_all_sites);
           $(this).addClass('clicked')
                  .closest('.cookie-message').delay(1000).fadeOut(100);
       });

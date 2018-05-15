@@ -205,6 +205,7 @@ sub render_page_end {
 
   ## JAVASCRIPT AND OTHER STUFF THAT NEEDS TO BE HIDDEN AT BOTTOM OF PAGE
   my $species_path        = $hub->species_defs->species_path;
+  my $gdpr_version        = $hub->species_defs->GDPR_ACCOUNTS_VERSION;
   my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $ensembl_image_root  = $hub->species_defs->ENSEMBL_IMAGE_ROOT;
@@ -221,6 +222,7 @@ sub render_page_end {
     <fieldset>$core_params_html</fieldset>
   </form>
   <input type="hidden" id="species_path" name="species_path" value="$species_path" />
+  <input type="hidden" id="gdpr_version" name="gdpr_version" value="$gdpr_version" />
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
   <input type="hidden" id="ensembl_image_root" name="ensembl_image_root" value="$ensembl_image_root" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
