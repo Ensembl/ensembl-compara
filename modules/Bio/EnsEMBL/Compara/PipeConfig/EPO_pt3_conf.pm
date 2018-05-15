@@ -101,7 +101,7 @@ sub default_options {
         # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
         'add_non_nuclear_alignments' => 1,
 
-        'gerp_window_sizes'    => '[1,10,100,500]', #gerp window sizes
+        'gerp_window_sizes'    => [1,10,100,500], #gerp window sizes
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
