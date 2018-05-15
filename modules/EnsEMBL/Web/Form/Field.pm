@@ -34,7 +34,7 @@ use base qw(EnsEMBL::Web::DOM::Node::Element::Div);
 
 use constant {
   CSS_CLASS                   => 'form-field',
-  CSS_CLASS_MULTIPE_ELEMENTS  => 'ff-multi',
+  CSS_CLASS_MULTIPLE_ELEMENTS => 'ff-multi',
   CSS_CLASS_NOTES             => 'ff-notes',
   CSS_CLASS_LABEL             => 'ff-label',
   CSS_CLASS_ELEMENT_DIV       => 'ff-right',
@@ -165,7 +165,7 @@ sub add_element {
   }
 
   # add a class to the field to adjust padding among multiple elements/notes
-  $self->set_attribute('class', $self->CSS_CLASS_MULTIPE_ELEMENTS) if grep {$_->node_name eq 'div'} @$children;
+  $self->set_attribute('class', $self->CSS_CLASS_MULTIPLE_ELEMENTS) if grep {$_->node_name eq 'div'} @$children;
 
   unless ($div) {
     $div = $self->dom->create_element('div');
