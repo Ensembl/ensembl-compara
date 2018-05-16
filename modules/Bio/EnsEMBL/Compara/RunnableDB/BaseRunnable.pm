@@ -77,6 +77,14 @@ sub param_defaults {
 
 sub compara_dba {
     my $self = shift @_;
+
+    if (!$self->param_is_defined('compara_db') and !$self->worker->adaptor) {
+        # go_figure_compara_dba won't be able to create a DBAdaptor, so let's
+        # just print a nicer error message
+        $self->input_job->transient_error(0);
+        $self->throw('In standaloneJob mode, $self->compara_dba requires the -compara_db parameter to be defined on the command-line');
+    }
+
     return $self->_cached_compara_dba('compara_db', @_);
 }
 
