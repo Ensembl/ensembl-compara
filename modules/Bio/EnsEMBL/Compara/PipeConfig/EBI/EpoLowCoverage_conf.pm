@@ -35,23 +35,12 @@ sub default_options {
 
         #'species_set_name'  => 'primates',
 
-	'rel_suffix'	=> $self->o('species_set_name') . '_' . $self->o('ensembl_release'),
-	'ensembl_release' => 92,
 	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
     'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
     'port' => 4401,
 
-    'work_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/EPO_2X/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-    'pipeline_db' => {
-        -host   => $self->o('host'),
-        -port   => $self->o('port'),
-        -user   => 'ensadmin',
-        -pass   => $self->o('password'),
-        -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
-        -driver => 'mysql',
-    },
+    'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
