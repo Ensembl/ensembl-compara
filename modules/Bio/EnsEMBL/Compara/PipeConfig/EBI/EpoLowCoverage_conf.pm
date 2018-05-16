@@ -125,6 +125,7 @@ sub resource_classes {
          '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
 	 	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
          '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
+         '8Gb'   => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
     };
 }
 
