@@ -351,7 +351,7 @@ sub _parse_results {
     $alignment_file = $self->param('multi_fasta_file');
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
-    open(F, $alignment_file) || throw("Could not open $alignment_file");
+    open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
 
@@ -381,7 +381,7 @@ sub _parse_results {
     my @ga_lengths;
     my $ga_deletions;
 
-    while (<F>) {
+    while (<$fh>) {
 	next if (/^\s*$/);
 	chomp;
 	## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
@@ -605,7 +605,7 @@ sub _parse_results {
 	    $seq .= $_;
 	}
     }
-    close F;
+    close $fh;
 
     #last genomic_align
     print "Last genomic align\n" if ($self->debug);
@@ -1365,7 +1365,7 @@ sub _dump_fasta_and_mfa {
   $self->param('multi_fasta_file', $mfa_file);
 
   print "mfa_file $mfa_file\n" if $self->debug;
-  open MFA, ">$mfa_file" || throw("Couldn't open $mfa_file");
+  open my $mfa_fh, '>', $mfa_file || throw("Couldn't open $mfa_file");
 
   $self->iterate_by_dbc(\@seqs,
       sub {my $seq_id = shift; my $ga = $all_genomic_aligns->[$seq_id-1]; return (ref($ga) eq 'ARRAY' ? undef : $ga->genome_db->db_adaptor->dbc);},
@@ -1380,7 +1380,7 @@ sub _dump_fasta_and_mfa {
     if (!UNIVERSAL::isa($ga, 'Bio::EnsEMBL::Compara::GenomicAlign')) {
 	print "FOUND 2X GENOME\n" if $self->debug;
 	print "num of frags " . @$ga . "\n" if $self->debug;
-	$self->_dump_2x_fasta($ga, $file, $seq_id, \*MFA);
+	$self->_dump_2x_fasta($ga, $file, $seq_id, $mfa_fh);
 	return;
     }
 
@@ -1388,10 +1388,10 @@ sub _dump_fasta_and_mfa {
     $file .= "_" . $ga->genome_db->taxon_id . ".fa";
     print "file $file\n" if $self->debug;
     
-    #print MFA ">SeqID" . $seq_id . "\n";
+    #print $mfa_fh ">SeqID" . $seq_id . "\n";
 
-    #print MFA ">seq" . $seq_id . "\n";
-    print MFA ">seq" . $seq_id . "_" . $ga->genome_db->taxon_id . "\n";
+    #print $mfa_fh ">seq" . $seq_id . "\n";
+    print $mfa_fh ">seq" . $seq_id . "_" . $ga->genome_db->taxon_id . "\n";
 
     print ">DnaFrag", $ga->dnafrag->dbID, "|", $ga->dnafrag->name, ".",
         $ga->dnafrag_start, "-", $ga->dnafrag_end, ":", $ga->dnafrag_strand,"\n" if $self->debug;
@@ -1417,12 +1417,12 @@ sub _dump_fasta_and_mfa {
     my $aligned_seq = $ga->aligned_sequence;
     $aligned_seq =~ s/(.{60})/$1\n/g;
     $aligned_seq =~ s/\n$//;
-    print MFA $aligned_seq, "\n";
+    print $mfa_fh $aligned_seq, "\n";
 
     push @{$self->fasta_files}, $file;
     push @{$self->species_order}, $ga->dnafrag->genome_db_id;
   });
-  close MFA;
+  close $mfa_fh;
 
   return 1;
 }
@@ -1822,9 +1822,9 @@ sub _dump_2x_fasta {
 
     $file .= "_" . $ga_frags->[0]->{taxon_id} . ".fa";
 
-    #print MFA ">SeqID" . $seq_id . "\n";
-    #print MFA ">seq" . $seq_id . "\n";
-    print MFA ">seq" . $seq_id . "_" . $ga_frags->[0]->{taxon_id} . "\n";
+    #print $mfa_fh ">SeqID" . $seq_id . "\n";
+    #print $mfa_fh ">seq" . $seq_id . "\n";
+    print $mfa_fh ">seq" . $seq_id . "_" . $ga_frags->[0]->{taxon_id} . "\n";
     my $aligned_seq = $ga_frags->[0]->{aligned_seq};
     my $seq = $aligned_seq;
     $seq =~ tr/-//d;
