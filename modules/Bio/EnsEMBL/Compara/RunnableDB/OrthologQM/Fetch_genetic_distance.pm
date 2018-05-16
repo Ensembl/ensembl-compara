@@ -57,15 +57,8 @@ sub fetch_input {
 	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
   my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
 
-  $self->param('homology_adaptor', $self->compara_dba->get_HomologyAdaptor);
-	my $homology = $self->param('homology_adaptor')->fetch_all_by_MethodLinkSpeciesSet($mlss);
-  $self->param('species_tree_adap' , $self->compara_dba->get_SpeciesTreeAdaptor );
+  $self->param('species_tree', $mlss->species_tree);
 
-  my $species_tree_root_id = $homology->[0]->species_tree_node()->_root_id();
-
-  $self->param('species_tree', $self->param('species_tree_adap')->fetch_by_root_id($species_tree_root_id));
-
-	$self->param('mlss', $mlss);
   $self->param('genome_dbs' , $mlss->species_set()->genome_dbs());
 
   print "------------START OF Fetch_genetic_distance ------------\n mlss_id --------- $mlss_id \n" if ($self->debug);

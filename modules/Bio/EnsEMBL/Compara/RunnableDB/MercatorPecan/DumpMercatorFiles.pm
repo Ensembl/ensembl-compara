@@ -107,12 +107,12 @@ sub dumpMercatorFiles {
  $core_dba->dbc->prevent_disconnect( sub {
   my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
   my $assembly_mapper_adaptor = $core_dba->get_AssemblyMapperAdaptor();
-  my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
   my $seq_level_coord_system = $coord_system_adaptor->fetch_sequence_level;
-  my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems($chromosome_coord_system, $seq_level_coord_system);
   foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
       print $fh $df->name . "\t" . $df->length,"\n";
       if ($max_gap and $df->coord_system_name eq "chromosome") {
+        my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
+        my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems($chromosome_coord_system, $seq_level_coord_system);
 
 	  my @mappings = $assembly_mapper->map($df->name, 1, $df->length, 1, $chromosome_coord_system);
 	  

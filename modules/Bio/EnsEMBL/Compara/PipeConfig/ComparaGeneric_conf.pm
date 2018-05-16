@@ -94,6 +94,9 @@ sub pipeline_create_commands {
     # $self->o() parameters it needs, once to get the actual list of
     # commands ($self->o() values are all present only the second time)
     my $second_pass     = scalar(keys %{$self->root}) > 1;
+    # Alternatively, just flag the first pass locally
+    #my $second_pass     = $self->{'_first_pass_done'};
+    #$self->{'_first_pass_done'} = 1;
 
     # Pre-checks framework: only run them once we have all the values in $self->o()
     $self->check_all_executables_exist if $second_pass;

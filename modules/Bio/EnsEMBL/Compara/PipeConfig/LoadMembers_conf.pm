@@ -150,7 +150,7 @@ sub resource_classes {
 }
 
 
-sub pipeline_create_commands {
+sub pipeline_checks_pre_init {
     my ($self) = @_;
 
     # There must be some species on which to compute trees
@@ -164,8 +164,6 @@ sub pipeline_create_commands {
     die "collection can not be defined in the absence of a master dabase" if $self->o('collection') and not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('reuse_member_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('reuse_member_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
-
-    return $self->SUPER::pipeline_create_commands;  # Nothing more than what the parent class wants
 }
 
 

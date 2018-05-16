@@ -221,11 +221,8 @@ if ($collection) {
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
     my $ini_coll_ss = $ss_adaptor->fetch_collection_by_name($collection);
     if ($ini_coll_ss) {
-        if ($species) {
-            $species = $new_genome_dbs->[0]->name;  # In case the name given on the command line is not a production name
-            # In "species" mode, update the species but keep the other ones
-            push @$new_genome_dbs, grep {$_->name ne $species} @{$ini_coll_ss->genome_dbs};
-        }
+        my %is_new = map {$_->name => 1} @$new_genome_dbs;
+        push @$new_genome_dbs, grep {!$is_new{$_->name}} @{$ini_coll_ss->genome_dbs};
     } else {
         print "*** The collection '$collection' does not exist in the database. It will now be created.\n";
     }

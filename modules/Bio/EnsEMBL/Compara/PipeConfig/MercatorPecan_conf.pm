@@ -567,7 +567,7 @@ sub pipeline_analyses {
                  'semphy_exe'                 => $self->o('semphy_exe'),
              },
              -max_retry_count => 1,
-             -priority => 1,
+             -priority => 15,
 	     -rc_name => '7Gb',
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
@@ -591,7 +591,7 @@ sub pipeline_analyses {
                  'semphy_exe'                 => $self->o('semphy_exe'),
              },
              -max_retry_count => 1,
-             -priority => 1,
+             -priority => 20,
 	     -rc_name => '14Gb',
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
@@ -615,7 +615,7 @@ sub pipeline_analyses {
                  'semphy_exe'                 => $self->o('semphy_exe'),
              },
              -max_retry_count => 1,
-             -priority => 1,
+             -priority => 40,
 	     -rc_name => '30Gb',
              -flow_into => {
                  1 => [ 'gerp' ],

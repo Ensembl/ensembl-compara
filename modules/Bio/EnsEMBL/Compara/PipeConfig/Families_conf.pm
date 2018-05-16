@@ -137,6 +137,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
         'mlss_id'           => $self->o('mlss_id'),
+        'ensembl_release'   => $self->o('ensembl_release'),
         'blast_params'      => $self->o('blast_params'),
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
@@ -218,6 +219,7 @@ sub pipeline_analyses {
             -parameters => {
                 'extra_parameters'  => ['name'],
             },
+            -rc_name    => '250Mb_job',
             -flow_into => {
                 '2->A' => [ 'genome_member_copy' ],
                 'A->1' => [ 'hc_nonref_members' ],
@@ -580,6 +582,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily',
             -hive_capacity => $self->o('mafft_capacity'),
             -rc_name       => 'BigMafft',
+            -priority      => 10,
             -flow_into     => {
                 1  => [ 'consensifier_himem' ],
                 -1 => [ 'mafft_huge' ],
@@ -592,6 +595,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'mafft_threads'     => 8,
             },
+            -priority      => 20,
             -flow_into     => {
                 1  => [ 'consensifier_himem' ],
             },
@@ -619,6 +623,7 @@ sub pipeline_analyses {
                             AND source_name IN (#member_sources_to_delete#);'
                 ],
             },
+            -priority  => 20,
             -flow_into => {
                 1  => [ 'mafft_huge' ],
             },

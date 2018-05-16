@@ -45,7 +45,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'ensembl_release' => 92,
+        'curr_release'    => $ENV{CURR_ENSEMBL_RELEASE},
         'pipeline_name'   => 'species_tree_' . $self->o('ensembl_release'),
         'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_conf.pl',
         'collection'      => 'ensembl', # build tree with everything by default
@@ -63,6 +63,7 @@ sub default_options {
 
         'master_db'          => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
         'dump_genome_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/dumps/dump_genome.pl',
+        'linuxbrew_bin'      => $self->o('ENV', 'LINUXBREW_HOME') . '/bin',
         'rapidnj_exe'        => $self->o('linuxbrew_bin').'/rapidnj',
         'erable_exe'         => $self->o('linuxbrew_bin').'/erable',
         'multifasta_dir'     => undef, # define if species multifastas have been pre-dumped

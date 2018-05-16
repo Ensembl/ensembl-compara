@@ -233,9 +233,18 @@ sub load_input_trees {
 
   my $gdbid2stn = $self->param('species_tree')->get_genome_db_id_2_node_hash();
   for my $other_tree (values %{$tree->alternative_trees}) {
+    # Should not happen because of other healthchecks, but it never hurts
+    # to check again (and TreeBest segfaults without printing any
+    # meaningful messages)
+    foreach my $n (@{$other_tree->get_all_nodes}) {
+        if (scalar(@{$n->children}) == 1) {
+            die sprintf("node_id=%d in root_id=%d (%s) is unary", $n->node_id, $other_tree->root_id, $other_tree->clusterset_id);
+        }
+    }
+
     my $tag = $other_tree->clusterset_id;
     $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-X}:%{d}');
-    print STDERR $self->param('inputtrees_unrooted')->{$tag} if ($self->debug);
+    print STDERR $self->param('inputtrees_unrooted')->{$tag}, "\n" if ($self->debug);
   }
 }
 

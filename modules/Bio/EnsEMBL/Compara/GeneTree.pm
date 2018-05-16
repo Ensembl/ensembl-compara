@@ -622,7 +622,8 @@ sub expand_subtrees {
 
 sub minimize_tree {
     my $self = shift;
-    $self->{'_root'} = $self->{'_root'}->minimize_tree;
+    # Using $self->root may trigger a loading of the tree
+    $self->{'_root'} = $self->root->minimize_tree;
 }
 
 

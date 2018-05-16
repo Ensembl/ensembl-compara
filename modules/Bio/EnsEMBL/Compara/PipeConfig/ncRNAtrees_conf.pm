@@ -92,6 +92,7 @@ sub default_options {
 
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
+            'binary_species_tree_input_file'   => undef, # you can define your own species_tree for 'CAFE'. It *has* to be binary
             'skip_epo'                 => 0,   # Never tried this one. It may fail
             'create_ss_picts'          => 0,
 
@@ -481,7 +482,8 @@ sub pipeline_analyses {
                                      },
               -flow_into          => [ 'write_stn_tags',
                                         WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
-                                        WHEN('#initialise_cafe_pipeline#', 'make_full_species_tree'),
+                                        WHEN('#initialise_cafe_pipeline# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
+                                        WHEN('#initialise_cafe_pipeline# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
                                     ],
               %hc_params,
             },

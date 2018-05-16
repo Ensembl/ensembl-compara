@@ -33,7 +33,10 @@ use Term::ReadKey;
 
 use Bio::EnsEMBL::Utils::Logger;
 use Bio::EnsEMBL::ApiVersion;
+use Bio::EnsEMBL::Utils::IO qw (slurp);
+
 use Data::Dumper;
+
 main();
 
 sub main {
@@ -48,13 +51,13 @@ sub main {
     # ----------------------------
     # read command line parameters
     # ----------------------------
-    my ( $relco, $release, $password, $help, $tickets_tsv, $config );
+    my ( $relco, $release, $password, $help, $tickets_json, $config );
 
     GetOptions(
         'relco=s'    => \$relco,
         'release=i'  => \$release,
         'password|p=s' => \$password,
-        'tickets=s'  => \$tickets_tsv,
+        'tickets=s'  => \$tickets_json,
         'config|c=s' => \$config,
         'help|h'     => \$help,
     );
@@ -69,8 +72,8 @@ sub main {
     # ---------------------------------
     # deal with command line parameters
     # ---------------------------------
-    ( $relco, $release, $password, $tickets_tsv, $config )
-        = set_parameters( $relco, $release, $password, $tickets_tsv, $config,
+    ( $relco, $release, $password, $tickets_json, $config )
+        = set_parameters( $relco, $release, $password, $tickets_json, $config,
         $logger );
 
     # ---------------------------
@@ -90,7 +93,17 @@ sub main {
     # ------------------
     # parse tickets file
     # ------------------
-    my $tickets = parse_tickets_file( $parameters, $tickets_tsv, $logger );
+    my $tickets = decode_json slurp($tickets_json) or die "Could not open file '$tickets_json' $!";;
+
+    # ----------------------
+    # convert to JIRA format
+    # ----------------------
+    foreach my $ticket (@$tickets) {
+        json_to_jira($ticket, 'Task', $parameters, $logger);
+        if ($ticket->{'subtasks'}) {
+            json_to_jira($_, 'Sub-task', $parameters, $logger) for @{$ticket->{'subtasks'}};
+        }
+    }
     $logger->info('Tickets to submit: '. Dumper($tickets));
 
     # --------------------------------
@@ -112,14 +125,13 @@ sub main {
     # create new JIRA tickets
     # -----------------------
     for my $ticket ( @{$tickets} ) {
-        # if the ticket to be submitted is a subtask then fetch the parent key and
-        # replace the parent summary with the parent key
-        if ( $ticket->{'issuetype'}->{'name'} eq 'Sub-task' ) {
-            my $parent_key
-                = get_parent_key( $ticket->{'parent'}, $parameters, $logger );
-                $ticket->{'parent'} = { 'key'  => $parent_key };
+        my $ticket_key = create_ticket( $ticket, $parameters, $logger );
+        if ($ticket->{'subtasks'}) {
+            foreach my $subtask (@{$ticket->{'subtasks'}}) {
+                $subtask->{'jira'}->{'parent'} = { 'key'  => $ticket_key };
+                my $subtask_key = create_ticket( $subtask, $parameters, $logger );
+            }
         }
-            my $ticket_key = create_ticket( $ticket, $parameters, $logger );
     }
 }
 
@@ -128,7 +140,7 @@ sub main {
   Arg[1]      : String $relco - a Regulation team member name or JIRA username
   Arg[2]      : Integer $release - the EnsEMBL release version
   Arg[3]      : String $password - user's JIRA password
-  Arg[4]      : String $tickets_tsv - path to the tsv file that holds the input
+  Arg[4]      : String $tickets_json - path to the json file that holds the input
   Arg[5]      : String $config - path to the config file holding handover dates
   Arg[6]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
   Description : Makes sure that the parameters provided through the command line
@@ -140,20 +152,20 @@ sub main {
 =cut
 
 sub set_parameters {
-    my ( $relco, $release, $password, $tickets_tsv, $config, $logger ) = @_;
+    my ( $relco, $release, $password, $tickets_json, $config, $logger ) = @_;
 
     $relco = $ENV{'USER'} if !$relco;
     $relco = validate_user_name( $relco, $logger );
 
     $release = Bio::EnsEMBL::ApiVersion->software_version() if !$release;
 
-    $tickets_tsv = $FindBin::Bin . '/jira_recurrent_tickets.tsv'
-        if !$tickets_tsv;
+    $tickets_json = $FindBin::Bin . '/jira_recurrent_tickets.json'
+        if !$tickets_json;
 
-    if ( !-e $tickets_tsv ) {
+    if ( !-e $tickets_json ) {
         $logger->error(
             'Tickets file '
-                . $tickets_tsv
+                . $tickets_json
                 . ' not found! Please specify one using the -tickets option!',
             0, 0
         );
@@ -171,7 +183,7 @@ sub set_parameters {
     }
 
     printf( "\trelco: %s\n\trelease: %i\n\ttickets: %s\n\tconfig: %s\n",
-        $relco, $release, $tickets_tsv, $config );
+        $relco, $release, $tickets_json, $config );
     print "Are the above parameters correct? (y,N) : ";
     my $response = readline();
     chomp $response;
@@ -191,7 +203,7 @@ sub set_parameters {
         print "\n";
     }
 
-    return ( $relco, $release, $password, $tickets_tsv, $config );
+    return ( $relco, $release, $password, $tickets_json, $config );
 }
 
 =head2 validate_user_name
@@ -233,92 +245,41 @@ sub validate_user_name {
     }
 }
 
-# sub check_dates {
-# }
 
-=head2 parse_tickets_file
+sub json_to_jira {
+    my ($json_hash, $issuetype, $parameters, $logger) = @_;
 
-  Arg[1]      : Hashref $parameters - parameters from command line and config
-  Arg[2]      : String $tickets_tsv - path to the tsv file that holds the input
-  Arg[3]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $tickets = parse_tickets_file( $parameters, $tickets_tsv, $logger );
-  Description : Reads the tsv input file, replaces placeholder tags and returns
-                a listref of tickets to be submitted
-  Return type : Listref
-  Exceptions  : none
-
-=cut
-
-sub parse_tickets_file {
-
-    my ( $parameters, $tickets_tsv, $logger ) = @_;
-    my @tickets;
-
-    open (my $tsv, '<:encoding(UTF-8)', $tickets_tsv) or die "Could not open file '$tickets_tsv' $!";;
-
-#    my $header = readline $tsv;
-    my $header = <$tsv>;
-    chomp $header;
-    while ( readline $tsv ) {
-        my $line = $_;
-        chomp $line;
-        print "\n this is the raw line \n $line \n ";
-        $line = replace_placeholders( $line, $parameters );
-        print "\n this is the line after replace_placeholders sub \n $line \n ";
-        my ($project,          $issue_type,  $summary,
-            $parent_summary,   $assignee,
-            $priority,         $fixVersions, $due_date,
-            $component_string, $description
-        ) = split /\t/, $line;
-
-        if ($assignee) {
-            $assignee = validate_user_name( $assignee, $logger );
-        }
-        
-        my @components;
-        my @comps = split /,/, $component_string;
-        print "\n component!!!!!! \n";
-        print Dumper(\@comps);
-        for my $comp (@comps) {
-            push @components, { 'name' => $comp };
-        }
-
-        my %ticket = (
-            'project'     => { 'key'  => $project },
-            'issuetype'   => { 'name' => $issue_type },
-            'summary'     => $summary,
-            # the parent summary is replaced by the parent key
-            # just before the ticket submission
-            'parent'      => $parent_summary,
-            'assignee'    => { 'name' => $assignee },
-            'priority'    => { 'name' => $priority },
-            'fixVersions' => [
-                { 'name' => $fixVersions },
-                #{ 'name' => 'Ensembl ' . $parameters->{release} }
-            ],
-            'duedate'     => $due_date,
-            'components'  => \@components,
-            'description' => $description,
-        );
-        print "\n this is the ticket -------======= \n\n";
-        print Dumper(\%ticket);
-        # delete empty fields from ticket
-        for my $key ( keys %ticket ) {
-            if ( !$ticket{$key} ) {
-                delete $ticket{$key};
-            }
-        }
-        print "\n this is the ticket after deleting empty fields-------======= \n\n";
-        print Dumper(\%ticket);
-        push @tickets, \%ticket;
+    # We can define one or many components
+    my @components;
+    if ($json_hash->{'component'}) {
+        push @components, { 'name' => $json_hash->{'component'} };
+    } else {
+        push @components, { 'name' => $_ } for @{$json_hash->{'components'}};
     }
 
-    return \@tickets;
+    my %ticket = (
+        'project'     => { 'key'  => $json_hash->{'project'} || $parameters->{'tickets'}->{'project'} },
+        'issuetype'   => { 'name' => $issuetype },
+        'summary'     => replace_placeholders( $json_hash->{'summary'}, $parameters ),
+        'priority'    => { 'name' => $json_hash->{'priority'} || $parameters->{'tickets'}->{'priority'} },
+        'fixVersions' => [
+            { 'name' => $parameters->{'tickets'}->{'fixVersion'} },
+        ],
+        'components'  => \@components,
+        'description' => replace_placeholders( $json_hash->{'description'}, $parameters ),
+    );
+
+    if ($json_hash->{'assignee'}) {
+        $ticket{'assignee'} = { 'name' => validate_user_name( replace_placeholders( $json_hash->{'assignee'}, $parameters), $logger ) };
+    }
+
+    $json_hash->{'jira'} = \%ticket;
+    return \%ticket;
 }
 
 =head2 replace_placeholders
 
-  Arg[1]      : String $line - One line from the tsv input file
+  Arg[1]      : String $line - One line from the json input file
   Arg[2]      : Hashref $parameters - parameters from command line and config
   Example     : $line = replace_placeholders( $line, $parameters );
   Description : Replaces the placeholder tags with valid values and returns a
@@ -339,38 +300,6 @@ sub replace_placeholders {
     #$line =~ s/<release_date>/$parameters->{dates}->{release}/g;
 
     return $line;
-}
-
-=head2 get_parent_key
-
-  Arg[1]      : String $summary - Summary of the parent ticket
-  Arg[2]      : Hashref $parameters - parameters from command line and config
-  Arg[3]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $parent_key
-                = get_parent_key( $ticket->{'parent'}, $parameters, $logger );
-  Description : Gets the ticket key of the parent task
-  Return type : String
-  Exceptions  : none
-
-=cut
-
-sub get_parent_key {
-    my ( $summary, $parameters, $logger ) = @_;
-
-    # jql=summary ~ "Update declarations" AND fixVersion %3D release-88
-    my $content
-        = {   "jql" => 'fixVersion=Ensembl\\u0020'
-            . $parameters->{release}
-            . ' and summary ~ "'
-            . $summary
-            . '"' };
-
-    my $response = post_request( 'rest/api/latest/search',
-        $content, $parameters, $logger );
-
-    my $parent = decode_json( $response->content() )->{'issues'}->[0];
-
-    return $parent->{'key'};
 }
 
 
@@ -403,7 +332,7 @@ sub create_ticket {
 
     my $endpoint = 'rest/api/latest/issue';
 
-    my $content = { 'fields' => $ticket };
+    my $content = { 'fields' => $ticket->{jira} };
     my $response = post_request( $endpoint, $content, $parameters, $logger );
 
     my $ticket_key = decode_json( $response->content() )->{'key'};
@@ -473,7 +402,7 @@ create_JIRA_tickets.pl -relco <string> -password <string> -release <integer> -ti
 -password | -p       JIRA password. Will need to be typed in standard input if not supplied.
 -release             EnsEMBL Release. Optional, will be inferred from EnsEMBL API if not supplied.
 -tickets             File that holds the input data for creating the JIRA tickets in tab separated format.
-                     If not supplied, the script is looking for the default one 'jira_recurrent_tickets.tsv'
+                     If not supplied, the script is looking for the default one 'jira_recurrent_tickets.json'
                      in the same directory as the executable.
 -config              Configuration parameters file, currently holds the handover deadlines, may be expanded
                      in the future. If not supplied, the script is looking for the default one 'jira.conf'
@@ -485,4 +414,3 @@ EOF
     exit 0;
 }
 
-#TODO check date timeline

@@ -214,6 +214,16 @@ sub default_options {
     };
 }
 
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        'skip_pairaligner_stats'    => $self->o('skip_pairaligner_stats'),
+        'patch_alignments'          => $self->o('patch_alignments'),
+    };
+}
+
+
 sub pipeline_create_commands {
     my ($self) = @_;
     print "pipeline_create_commands\n";

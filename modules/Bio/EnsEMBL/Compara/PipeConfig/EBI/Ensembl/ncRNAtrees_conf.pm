@@ -119,6 +119,7 @@ sub default_options {
             'initialise_cafe_pipeline'  => 1,
             # Use production names here
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
+            'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
             # Other parameters
             'infernal_mxsize'       => 10000,

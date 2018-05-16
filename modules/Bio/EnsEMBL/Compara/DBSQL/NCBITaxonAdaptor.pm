@@ -188,6 +188,9 @@ sub fetch_node_by_name {
     throw ("name is undefined");
   }
 
+  my $candidates = $self->fetch_all_nodes_by_name($name, 'scientific name');
+  return $candidates->[0] if scalar(@$candidates);
+
   my $join = [[['ncbi_taxa_name', 'n'], 't.taxon_id = n.taxon_id']];
   my $constraint = 'n.name = ?';
   $self->bind_param_generic_fetch($name, SQL_VARCHAR);

@@ -49,7 +49,7 @@ sub resource_classes {
             '1Gb'         => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
             'long'        => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
             'crowd'       => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-            'crowd_himem' => { 'LSF' => '-C0 -M6000 -R"select[mem>6000] rusage[mem=6000]"' },
+            'crowd_himem' => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
     };
 }
 

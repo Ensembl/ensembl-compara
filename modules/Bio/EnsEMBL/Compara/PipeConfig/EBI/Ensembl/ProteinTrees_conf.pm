@@ -103,6 +103,8 @@ sub default_options {
     # alignment filtering options
 
     # species tree reconciliation
+        # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
+        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -131,7 +133,9 @@ sub default_options {
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 1500,
         'blastpu_capacity'          => 150,
-        'mcoffee_capacity'          => 600,
+        'mcoffee_short_capacity'    => 600,
+        'mafft_capacity'            => 2500,
+        'mafft_himem_capacity'      => 1200,
         'split_genes_capacity'      => 600,
         'alignment_filtering_capacity'  => 200,
         'cluster_tagging_capacity'  => 100,
