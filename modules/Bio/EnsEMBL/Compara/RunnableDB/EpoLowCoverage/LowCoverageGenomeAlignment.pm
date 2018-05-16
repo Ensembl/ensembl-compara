@@ -613,7 +613,7 @@ sub _parse_results {
 	print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
 
 	#starting offset
-	my $offset = $num_frag_pads[0];
+	my $offset = $num_frag_pads[0] // 0;
 
 	#how many X's to add at the start and end of the cigar_line
 	my ($start_X , $end_X);
@@ -622,7 +622,7 @@ sub _parse_results {
 	for (my $i = 0; $i < @$genomic_aligns_2x_array; $i++) {
 	    my $genomic_align = $genomic_aligns_2x_array->[$i];
 
- 	    my $num_pads = $num_frag_pads[$i+1];
+ 	    my $num_pads = $num_frag_pads[$i+1] // 0;
  	    my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
 
  	    print "extract_sequence $offset " .($offset+$ga_length) . " num pads $num_pads\n" if ($self->debug); 
