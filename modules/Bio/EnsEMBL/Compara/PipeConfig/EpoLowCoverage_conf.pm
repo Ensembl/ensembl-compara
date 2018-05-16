@@ -199,7 +199,7 @@ sub pipeline_analyses {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			       'A->1' => [ 'make_species_tree' ],    # backbone
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '1Gb',
 	    },
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
@@ -208,7 +208,7 @@ sub pipeline_analyses {
 			'registry_dbs'  => [ $self->o('staging_loc1')], #, $self->o('livemirror_loc')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_name => '100Mb',
+		-rc_name => '1Gb',
 	    },
 
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
@@ -217,7 +217,7 @@ sub pipeline_analyses {
 		-parameters    => { 
                                    'species_tree_input_file' => $self->o('species_tree_file'),
 				  },
-		-rc_name => '100Mb',
+		-rc_name => '1Gb',
 		-flow_into => [ 'create_default_pairwise_mlss'],
 	    },
 
@@ -235,7 +235,7 @@ sub pipeline_analyses {
 			       1 => [ 'import_alignment' ],
 			       2 => [ '?table_name=pipeline_wide_parameters' ],
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '1Gb',
 	    },
 
 # ------------------------------------------------[Import the high coverage alignments]---------------------------------------------------
