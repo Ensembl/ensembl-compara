@@ -86,7 +86,7 @@ sub write_output {
     my $self = shift;
     
     my @sqls = (
-        'DELETE genomic_align_tree FROM genomic_align JOIN genomic_align_tree USING (node_id) WHERE genomic_align_block_id = ?',
+        'DELETE genomic_align, genomic_align_tree FROM genomic_align JOIN genomic_align_tree USING (node_id) WHERE genomic_align_block_id = ?',
         'DELETE genomic_align WHERE genomic_align_block_id = ?',
         'DELETE genomic_align_block WHERE genomic_align_block_id = ?',
         # NOTE: maybe we should clean up the ancestral dnafrags too ?
