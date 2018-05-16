@@ -138,13 +138,6 @@ sub run
       );
   $self->param('runnable', $runnable);
 
-  #disconnect pairwise compara database
-  if (defined $self->param('pairwise_compara_dba')) {
-      foreach my $dba (values %{$self->param('pairwise_compara_dba')}) {
-	  $dba->dbc->disconnect_if_idle;
-      }
-  }
-
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
@@ -1093,18 +1086,17 @@ sub _load_2XGenomes {
   #Find the LASTZ_NET alignments between the reference species and each
   #2X genome.
 
-  foreach my $mlss_id (keys %$pairwise_locations) {
+  #create all the adaptors now so that we can detect shared connections
+  my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-URL => $pairwise_locations->{$_})} keys %$pairwise_locations);
+
+  $self->iterate_by_dbc([keys %$pairwise_locations],
+    sub {my $mlss_id = shift; return $pairwise_compara_dba{$mlss_id}->dbc;},
+    sub {my $mlss_id = shift;
+
       my $target_species;
 
       #open compara database containing 2x genome vs $ref_name blastz results
-      #my $compara_db_url = $param->{'compara_db_url'};
-      my $compara_db_url = $pairwise_locations->{$mlss_id};
-
-      my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
-
-      #need to store this to allow disconnect when call ortheus
-      my $pairwise_compara_dba = $self->param('pairwise_compara_dba');
-      $pairwise_compara_dba->{$compara_dba->dbc->dbname} = $compara_dba;
+      my $compara_dba = $pairwise_compara_dba{$mlss_id};
 
       #Get pairwise genomic_align_block adaptor
       my $pairwise_gaba = $compara_dba->get_GenomicAlignBlockAdaptor;
@@ -1133,7 +1125,7 @@ sub _load_2XGenomes {
       my $ga_frag_array = $self->_create_frag_array($pairwise_gaba, $pairwise_mlss, $ref_gas);
   
       #not found 2x genome
-      next if (!defined $ga_frag_array);
+      return if (!defined $ga_frag_array);
 
       #must first sort so I have a reasonable chance of finding duplicates
 
@@ -1182,7 +1174,7 @@ sub _load_2XGenomes {
 
 	  #push @{$self->param('ga_frag')}, $ga_frag_array->[$longest_ref_region];
 	  #push @{$self->param('2x_dnafrag_region')}, $ga_frag_array->[$longest_ref_region]->[0]->{genomic_align};
-	  next;
+	  return;
       }
 
       #Found more than one reference region in this synteny block
@@ -1246,7 +1238,7 @@ sub _load_2XGenomes {
 	  #push @{$self->param('2x_dnafrag_region')}, $ga_frag_array->[$longest_ref_region]->[0]->{genomic_align};
 
       }
-  } 
+  }, 'do_disconnect');
 }
 
 sub _construct_pairwise_locations {
