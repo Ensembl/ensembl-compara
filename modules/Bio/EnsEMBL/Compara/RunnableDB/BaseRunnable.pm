@@ -208,7 +208,7 @@ sub iterate_by_dbc {
     foreach my $obj (@$objects) {
         my $dbc = $dbc_getter->($obj);
         # The DBC could be a Proxy, in which case need to look into the "real" one
-        $dbc = $dbc->__proxy if $dbc->isa('Bio::EnsEMBL::DBSQL::ProxyDBConnection');
+        $dbc = $dbc->__proxy if $dbc && $dbc->isa('Bio::EnsEMBL::DBSQL::ProxyDBConnection');
         my $dbc_str = "$dbc";
         push @{$objects_per_dbc_str{$dbc_str}}, $obj;
         $dbc_str_2_dbc{$dbc_str} = $dbc;
@@ -216,9 +216,13 @@ sub iterate_by_dbc {
 
     # Make parameter to control prevent_disconnect ?
     foreach my $dbc_str (keys %dbc_str_2_dbc) {
+      if ($dbc_str_2_dbc{$dbc_str}) {
         $dbc_str_2_dbc{$dbc_str}->prevent_disconnect( sub {
                 $callback->($_) for @{$objects_per_dbc_str{$dbc_str}};
             } );
+      } else {
+        $callback->($_) for @{$objects_per_dbc_str{$dbc_str}};
+      }
     }
 }
 
