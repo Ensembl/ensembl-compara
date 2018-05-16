@@ -201,7 +201,7 @@ sub disconnect_from_hive_database {
 =cut
 
 sub iterate_by_dbc {
-    my ($self, $objects, $dbc_getter, $callback) = @_;
+    my ($self, $objects, $dbc_getter, $callback, $do_disconnect) = @_;
 
     my %objects_per_dbc_str;
     my %dbc_str_2_dbc;
@@ -220,6 +220,7 @@ sub iterate_by_dbc {
         $dbc_str_2_dbc{$dbc_str}->prevent_disconnect( sub {
                 $callback->($_) for @{$objects_per_dbc_str{$dbc_str}};
             } );
+        $dbc_str_2_dbc{$dbc_str}->disconnect_if_idle if $do_disconnect;
       } else {
         $callback->($_) for @{$objects_per_dbc_str{$dbc_str}};
       }
