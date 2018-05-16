@@ -119,6 +119,7 @@ my $help;
 my $reg_conf;
 my $compara = 'compara_master';
 my $release;
+my $retire_unmatched;
 my $xml_config;
 my $xml_schema;
 my $verbose;
@@ -132,6 +133,7 @@ GetOptions(
     'schema=s'      => \$xml_schema,
     'release'       => \$release,
     'verbose'       => \$verbose,
+    'retire_unmatched'          => \$retire_unmatched,
     'dryrun|dry_run|dry-run'    => \$dry_run,
 );
 
@@ -392,6 +394,7 @@ my %mlss_ids_to_find = map {$_->dbID => $_} @{$compara_dba->get_MethodLinkSpecie
 
 my @mlsss_created;
 my @mlsss_existing;
+my @mlsss_retired;
 
 $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
@@ -461,11 +464,17 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 print "NEW MLSS:", $mlss->toString, "\n";
             }
         }
-        if ($verbose) {
+
+        if ($retire_unmatched) {
             print "\n";
             foreach my $mlss (sort {$a->dbID <=> $b->dbID} values %mlss_ids_to_find) {
-                next if $mlss->method->type eq 'SYNTENY';
-                print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
+                push @mlsss_retired, $mlss;
+                unless ($dry_run) {
+                    $compara_dba->get_MethodLinkSpeciesSetAdaptor->retire_object($mlss);
+                }
+                if ($verbose) {
+                    print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
+                }
             }
         }
     } );
@@ -476,6 +485,13 @@ my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET EPO EPO_LOW_COVERAGE PE
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 foreach my $mlss (@mlsss_created) {
+    if ($methods_worth_reporting{$mlss->method->type}) {
+        print $mlss->toString, "\n";
+    }
+}
+
+print "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+foreach my $mlss (@mlsss_retired) {
     if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
     }
