@@ -1845,8 +1845,10 @@ sub _create_mfa {
 
     my $species_order = $self->species_order;
 
-    
-    foreach my $ga_frag_array (@$pairwise_frags) {
+    $self->iterate_by_dbc($pairwise_frags,
+      sub {my $ga_frag_array = shift; return $ga_frag_array->[0]->{genomic_align}->genome_db->db_adaptor->dbc},
+      sub {my $ga_frag_array = shift;
+
 	my $multi_ref_ga = $ga_frag_array->[0]->{ref_ga};
 	my $multi_mapper = $multi_ref_ga->get_Mapper;
 	#my $multi_gab_length = length($multi_ref_ga->aligned_sequence);
@@ -1862,9 +1864,7 @@ sub _create_mfa {
 	    my $pairwise_ref_ga = $pairwise_gab->reference_genomic_align;
 
             my $pairwise_fixed_seq;
-            $pairwise_non_ref_ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 	        $pairwise_fixed_seq = $pairwise_non_ref_ga->aligned_sequence("+FIX_SEQ");
-            });
 	    
 	    #undef($pairwise_non_ref_ga->{'aligned_sequence'});
 
@@ -1905,7 +1905,7 @@ sub _create_mfa {
 	#   print substr($aligned_sequence, $x, 80), "\n";
 	#  print substr($multi_ref_ga->aligned_sequence, $x, 80), "\n\n";
 	#}
-    }
+    });
 }
 
 
