@@ -106,7 +106,7 @@ our @EXPORT_OK;
 
 use constant MAX_FILE_SIZE_FOR_MYSQLIMPORT => 10_000_000;   # How much space can we safely assume is available on /tmp
 use constant MAX_STATEMENT_LENGTH => 1_000_000;             # Related to MySQL's "max_allowed_packet" parameter
-use constant ROWS_SLOW_MYSQLIMPORT => 100_000;              # Heuristics: importing that amount of rows is going to take some time, so disconnect from the source database if possible
+use constant MAX_ROWS_WHILE_CONNECTED => 100_000;           # Heuristics: reading/writing that amount of rows is going to take some time, so disconnect from the other database if possible
 
 use Data::Dumper;
 use File::Temp qw/tempfile/;
@@ -398,11 +398,12 @@ sub copy_data_in_text_mode {
             print $fh $row;
             $file_size += length($row);
             $nrows++;
+            $to_dbc->disconnect_if_idle if $nrows >= MAX_ROWS_WHILE_CONNECTED;
         }
         close($fh);
         unless ($curr_row) {
             $sth->finish;
-            $from_dbc->disconnect_if_idle if $nrows >= ROWS_SLOW_MYSQLIMPORT;
+            $from_dbc->disconnect_if_idle if $nrows >= MAX_ROWS_WHILE_CONNECTED;
         }
         if ($nrows) {
             my @cmd = ('mysqlimport', "-h$host", "-P$port", "-u$user", $pass ? ("-p$pass") : (), '--local', '--lock-tables', $replace ? '--replace' : '--ignore', $dbname, $filename);
