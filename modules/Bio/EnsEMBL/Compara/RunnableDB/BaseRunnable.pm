@@ -209,7 +209,7 @@ sub iterate_by_dbc {
         my $dbc = $dbc_getter->($obj);
         # The DBC could be a Proxy, in which case need to look into the "real" one
         $dbc = $dbc->__proxy if $dbc && $dbc->isa('Bio::EnsEMBL::DBSQL::ProxyDBConnection');
-        my $dbc_str = "$dbc";
+        my $dbc_str = defined $dbc ? "$dbc" : '';
         push @{$objects_per_dbc_str{$dbc_str}}, $obj;
         $dbc_str_2_dbc{$dbc_str} = $dbc;
     }
