@@ -1368,7 +1368,7 @@ sub _dump_fasta_and_mfa {
   open MFA, ">$mfa_file" || throw("Couldn't open $mfa_file");
 
   $self->iterate_by_dbc(\@seqs,
-      sub {my $seq_id = shift; return $all_genomic_aligns->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $seq_id = shift; my $ga = $all_genomic_aligns->[$seq_id-1]; return (ref($ga) eq 'ARRAY' ? undef : $ga->genome_db->db_adaptor->dbc);},
       sub {my $seq_id = shift;
 
     my $ga = $all_genomic_aligns->[$seq_id-1];
