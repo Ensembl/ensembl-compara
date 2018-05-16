@@ -151,7 +151,7 @@ sub create_mlss {
         -SPECIES_SET => $species_set,
         -METHOD => $method,
         -NAME => $mlss_name,
-        -SOURCE => $source,
+        -SOURCE => $source || 'ensembl',
         -URL => $url,
     );
 }
