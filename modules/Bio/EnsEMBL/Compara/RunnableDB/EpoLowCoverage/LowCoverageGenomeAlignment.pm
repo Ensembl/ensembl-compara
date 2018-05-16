@@ -1051,10 +1051,6 @@ sub _load_GenomicAligns {
 sub _load_2XGenomes {
   my ($self, $genomic_align_block_id) = @_;
 
-  #extract location of pairwise blocks
-  my $pairwise_exception_location = $self->param('pairwise_exception_location');
-  my $default_location = $self->param('pairwise_default_location');
-
   my $pairwise_locations = $self->_construct_pairwise_locations();
 
 
