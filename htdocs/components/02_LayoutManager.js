@@ -291,15 +291,20 @@ Ensembl.LayoutManager.extend({
     var cookie_for_all_sites = true;
     var cookiesVersion = Ensembl.cookie.get(service_id);
     Ensembl.gdpr_version = $('#gdpr_version').val();
+    Ensembl.policy_url = $('#gdpr_policy_url').val();
 
     if (!cookiesVersion || (cookiesVersion !== Ensembl.gdpr_version)) {
       $([ "<div class='cookie-message'>",
             "<p class='msg'>",
               "This website uses cookies. By continuing to browse this site, you are agreeing to the use of our site cookies. We also collect some information [text goes here, please review and aggree].",
               " To find out more, see our ",
-              "<a target='_blank' href='' class='white-color'>privacy policy</a>",
+              "<a target='_blank' href='",
+              Ensembl.policy_url,
+              "' class='white-color'>privacy policy</a>",
             "</p>",
-            '<a class="more-info-link" href="/info/about/legal/privacy.html">More</a>',
+            "<a class='more-info-link' href='",
+            Ensembl.policy_url,
+            "'>More</a>",
             "<div class='agree-button'>",
               "<a id='gdpr-agree' class='button no-underline'> I agree</a>",
             "</div>",
