@@ -1654,7 +1654,6 @@ EnsEMBL::Web::Data::Bio::Slice
 EnsEMBL::Web::Data::Bio::Transcript
 EnsEMBL::Web::Data::Bio::Variation
 EnsEMBL::Web::Data::Bio::Xref
-EnsEMBL::Web::DBSQL::ProductionAdaptor
 EnsEMBL::Web::Document::Element::Acknowledgements
 EnsEMBL::Web::Document::Element::BodyJavascript
 EnsEMBL::Web::Document::Element::BreadCrumbs
