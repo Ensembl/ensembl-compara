@@ -205,7 +205,7 @@ sub render_page_end {
 
   ## JAVASCRIPT AND OTHER STUFF THAT NEEDS TO BE HIDDEN AT BOTTOM OF PAGE
   my $species_path        = $hub->species_defs->species_path;
-  my $gdpr_version        = $hub->species_defs->GDPR_ACCOUNTS_VERSION;
+  my $gdpr_version        = $hub->species_defs->GDPR_VERSION;
   my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $ensembl_image_root  = $hub->species_defs->ENSEMBL_IMAGE_ROOT;
