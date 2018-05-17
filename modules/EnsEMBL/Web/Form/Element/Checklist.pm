@@ -72,6 +72,7 @@ sub configure {
       $_ = {'value' => $_, 'caption' => $_} unless ref $_ eq 'HASH';
       $_->{'checked'} = $_->{'checked'} || exists $_->{'value'} && defined $_->{'value'} && exists $checked_values->{$_->{'value'}} ? 1 : 0;
       $_->{'id'} = $params->{'id'} if (scalar(@{$params->{'values'}}) == 1);
+      $_->{'class'} = $params->{'class'};
       $self->add_option($_);
     }
   }
@@ -81,6 +82,7 @@ sub add_option {
   ## Adds an option to the dropdown
   ## @params HashRef with following keys:
   ##  - id          Id attribute of <input>
+  ##  - class       Class attribute of <input>
   ##  - value       goes in value attribute of the option
   ##  - label       Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
   ##  - caption     Same as label (label takes precedence if both provided)
