@@ -291,29 +291,31 @@ Ensembl.LayoutManager.extend({
     var cookie_for_all_sites = true;
     var cookiesVersion = Ensembl.cookie.get(service_id);
     Ensembl.gdpr_version = $('#gdpr_version').val();
-    Ensembl.policy_url = $('#gdpr_policy_url').val();
+    Ensembl.policy_url = $('#gdpr_policy_url').val() || "";
+    Ensembl.terms_url = $('#terms_url').val() || "";
 
     if (!cookiesVersion || (cookiesVersion !== Ensembl.gdpr_version)) {
       $([ "<div class='cookie-message'>",
             "<p class='msg'>",
-              "This website uses cookies. By continuing to browse this site, you are agreeing to the use of our site cookies. We also collect some information [text goes here, please review and aggree].",
-              " To find out more, see our ",
+              "This website requires cookies, and the limited processing of your personal data in order to function. By using the site you are agreeing to this as outlined in our ",
               "<a target='_blank' href='",
               Ensembl.policy_url,
-              "' class='white-color'>privacy policy</a>",
+              "'>Privacy Policy</a>",
+              " and <a target='_blank' href='",
+              Ensembl.terms_url,
+              "'> Terms of Use </a>",
             "</p>",
             "<a class='more-info-link' href='",
             Ensembl.policy_url,
-            "'>More</a>",
+            "'>Privacy Policy</a>",
             "<div class='agree-button'>",
-              "<a id='gdpr-agree' class='button no-underline'> I agree</a>",
+              "<a id='gdpr-agree' class='button no-underline'> Dismiss </a>",
             "</div>",
           "</div>"
         ].join(''))
         .appendTo(document.body).show().find('#gdpr-agree').on('click', function (e) {
           Ensembl.cookie.set(service_id, Ensembl.gdpr_version, '', true, cookie_for_all_sites);
-          $(this).addClass('clicked')
-                 .closest('.cookie-message').delay(1000).fadeOut(100);
+          $(this).closest('.cookie-message').delay(1000).fadeOut(100);
       });
       return true;
     }
