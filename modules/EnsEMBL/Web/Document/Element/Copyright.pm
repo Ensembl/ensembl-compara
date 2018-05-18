@@ -35,9 +35,13 @@ sub new {
 sub sitename :lvalue { $_[0]{'sitename'}; }
 
 sub content {
+  my $self = shift;
   my @time = localtime;
   my $year = @time[5] + 1900;
+  my $url  = $self->hub->species_defs->GDPR_POLICY_URL;
   
+  my $privacy_link = $url ? qq((<a href="//www.ensembl.org/info/about/legal/privacy.html">Privacy policy</a>)) : '';  
+
   return qq{
     <div class="column-two left">
       <p>&copy; $year <span class="print_hide"><a href="//www.ebi.ac.uk/" style="white-space:nowrap">EMBL-EBI</a></span>

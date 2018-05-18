@@ -133,6 +133,11 @@ our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::W
 ###############################################################################
 
 ###############################################################################
+## Privacy Policy URL - needed for email footers 
+###############################################################################
+our $GDPR_POLICY_URL              = 'http://www.ensembl.org/info/about/legal/privacy.html';
+
+###############################################################################
 ## Cookies and cookie encryption
 our $ENSEMBL_USER_COOKIE          = 'ENSEMBL_WWW_USER';     # Cookie name for User cookie (if user plugin is enabled)
 our $ENSEMBL_USER_COOKIEHOST      = '';                     # Cookie host for User cookie
