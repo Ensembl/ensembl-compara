@@ -158,10 +158,6 @@ sub pipeline_analyses {
                      -batch_size        => $self->o('hc_batch_size'),
                     );
 
-    my %backbone_params = (
-                           -meadow_type       => 'LOCAL',
-                          );
-
     my %raxml_parameters = (
         'raxml_pthread_exe_sse3'     => $self->o('raxml_pthread_exe_sse3'),
         'raxml_pthread_exe_avx'      => $self->o('raxml_pthread_exe_avx'),
@@ -192,7 +188,7 @@ sub pipeline_analyses {
                                 '1->A'  => [ 'copy_tables_factory' ],
                                 'A->1'  => [ 'backbone_fire_classify_genes' ],
                                },
-                %backbone_params,
+                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -204,7 +200,6 @@ sub pipeline_analyses {
                                '1->A'   => [ 'load_rfam_models' ],
                                'A->1'   => [ 'backbone_fire_tree_building' ],
                               },
-                %backbone_params,
             },
 
             {   -logic_name => 'backbone_fire_tree_building',
@@ -216,13 +211,12 @@ sub pipeline_analyses {
                                 '1->A'  => [ 'clusters_factory' ],
                                 'A->1'  => [ 'backbone_pipeline_finished' ],
                                },
-                %backbone_params,
             },
 
             {   -logic_name => 'backbone_pipeline_finished',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => ['notify_pipeline_completed'],
-                %backbone_params,
+                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'notify_pipeline_completed',
