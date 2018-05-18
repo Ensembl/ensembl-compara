@@ -56,7 +56,15 @@ sub url {
 sub email_footer {
   ## Returns the generic email footer
   ## @return Text String
-  return sprintf "\n\nMany thanks,\n\nThe %s web team\n\n%1\$s Privacy Statement: www.ensembl.org/info/about/legal/privacy.html\n\n", $_[0]->site_name;
+  my $self = shift;
+ 
+  my $footer = sprintf "\n\nMany thanks,\n\nThe %s web team\n\n", $self->site_name;
+
+  if ($self->hub->species_defs->GDPR_POLICY_URL) {
+    $footer .= sprintf "%s Privacy Statement: %s\n\n", $self->site_name, $self->hub->species_defs->GDPR_POLICY_URL;
+  }
+
+  return $footer;
 }
 
 sub hub         :lvalue { $_[0]->{'hub'};         }
