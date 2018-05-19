@@ -56,7 +56,9 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
+use List::Util qw(shuffle);
 use POSIX ":sys_wait_h";
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -227,7 +229,7 @@ sub start_server {
     my %bad_ports = map {$_ => 1} split(/\n/, $netstat_output);
 
     # Start at default port; if something is already running, try another one
-    foreach my $port (12886..42886) {
+    foreach my $port (shuffle 12886..42886) {
         next if $bad_ports{$port};
         if ($self->start_server_on_port($port)) {
             $self->param('server_loc', "localhost:$port");
