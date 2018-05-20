@@ -347,6 +347,7 @@ sub _parse_results {
 
     foreach my $this_file (@$ordered_fasta_files) {
 	push(@$ids, qx"head -1 $this_file");
+        throw("Cannot read from $this_file") if $?;
 	#print "add ids $this_file " . $ids->[-1] . "\n";
     }
     #print join(" :: ", @$ids), "\n\n";
