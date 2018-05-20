@@ -703,13 +703,12 @@ sub core_pipeline_analyses {
                 '2->A' => {
                     'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' },
                 },
-                'A->1' => [ 'create_mlss_ss' ],
+                'A->1' => [ 'member_copy_factory' ],
             },
         },
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -flow_into  => [ 'genome_member_copy' ],
             -batch_size => 10,
             -hive_capacity => 30,
             -max_retry_count => 2,
@@ -861,6 +860,18 @@ sub core_pipeline_analyses {
             -rc_name => '8Gb_job',
         },
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
+
+        {   -logic_name => 'member_copy_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'extra_parameters'  => [ 'is_polyploid' ],
+            },
+            -rc_name => '4Gb_job',
+            -flow_into => {
+                '2->A' => [ 'genome_member_copy' ],
+                'A->1' => [ 'create_mlss_ss' ],
+            },
+        },
 
         {   -logic_name => 'genome_member_copy',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyCanonRefMembersByGenomeDB',

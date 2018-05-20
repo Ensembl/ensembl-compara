@@ -228,7 +228,6 @@ sub store_and_dataflow_genome_db {
 
     $self->dataflow_output_id( {
         'genome_db_id' => $genome_db_id,
-        'is_polyploid' => $genome_db->is_polyploid,
     }, $branch);
 }
 
