@@ -76,6 +76,11 @@ sub new_and_exec {
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
     $runCmd->{_purpose} = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
+    if (($runCmd->exit_code >= 256) or (($options->{'use_bash_pipefail'} or $use_bash_errexit) and ($runCmd->exit_code >= 128))) {
+        # The process was killed. Perhaps a MEMLIMIT ? Wait a little bit to
+        # allow LSF to kill this process too
+        sleep(30);
+    }
     $runCmd->die_with_log if $runCmd->exit_code && $options->{die_on_failure};
     return $runCmd;
 }
