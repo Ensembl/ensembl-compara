@@ -309,7 +309,7 @@ sub _parse_results {
 	    $ordered_fasta_files = undef;
 	    my $all_leaves = $this_tree->get_all_leaves;
 	    foreach my $this_leaf (@$all_leaves) {
-		push @$ordered_fasta_files, $this_leaf->name . ".fa";
+		push @$ordered_fasta_files, $self->worker_temp_directory . "/" . $this_leaf->name . ".fa";
 	    }
 	    
 	    $self->fasta_files(@$ordered_fasta_files);
