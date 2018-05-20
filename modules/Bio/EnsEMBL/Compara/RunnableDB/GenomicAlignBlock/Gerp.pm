@@ -418,13 +418,13 @@ sub run_gerp_v2 {
     if (defined $self->param('depth_threshold')) {
         $command .= " -d " . $self->param('depth_threshold');
     }
-    my $cmd_status = $self->run_command($command, { die_on_failure => 1 });
+    my $cmd_status = $self->run_command($command);
     if ($cmd_status->exit_code) {
         if ($cmd_status->err =~ /The matrix is too big .* and is causing an integer overflow. Aborting/) {
             $self->input_job->autoflow(0);
             $self->complete_early("Cannot run GERP (integer overflow). Discarding this family");
         }
-        die "GERP failed:".$cmd_status->err;
+        $cmd_status->die_with_log;
     }
 }
 

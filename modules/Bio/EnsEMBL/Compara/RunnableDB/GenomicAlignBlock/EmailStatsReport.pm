@@ -47,6 +47,9 @@ sub param_defaults {
 sub fetch_input {
 	my $self = shift;
 
+        # In case it is still a Bio::EnsEMBL::DBSQL::DBConnection
+        bless $self->compara_dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
+
 	# build epo_stats.pl command
 	my $stats_exe = $self->param_required('stats_exe');
 	my $epo_url   = $self->compara_dba->dbc->url;

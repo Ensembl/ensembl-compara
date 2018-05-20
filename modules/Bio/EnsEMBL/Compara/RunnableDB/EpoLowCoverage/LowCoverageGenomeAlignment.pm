@@ -138,13 +138,6 @@ sub run
       );
   $self->param('runnable', $runnable);
 
-  #disconnect pairwise compara database
-  if (defined $self->param('pairwise_compara_dba')) {
-      foreach my $dba (values %{$self->param('pairwise_compara_dba')}) {
-	  $dba->dbc->disconnect_if_idle;
-      }
-  }
-
   #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 
@@ -351,7 +344,7 @@ sub _parse_results {
     $alignment_file = $self->param('multi_fasta_file');
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
-    open(F, $alignment_file) || throw("Could not open $alignment_file");
+    open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
 
@@ -381,7 +374,7 @@ sub _parse_results {
     my @ga_lengths;
     my $ga_deletions;
 
-    while (<F>) {
+    while (<$fh>) {
 	next if (/^\s*$/);
 	chomp;
 	## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
@@ -605,7 +598,7 @@ sub _parse_results {
 	    $seq .= $_;
 	}
     }
-    close F;
+    close $fh;
 
     #last genomic_align
     print "Last genomic align\n" if ($self->debug);
@@ -613,7 +606,7 @@ sub _parse_results {
 	print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
 
 	#starting offset
-	my $offset = $num_frag_pads[0];
+	my $offset = $num_frag_pads[0] // 0;
 
 	#how many X's to add at the start and end of the cigar_line
 	my ($start_X , $end_X);
@@ -622,7 +615,7 @@ sub _parse_results {
 	for (my $i = 0; $i < @$genomic_aligns_2x_array; $i++) {
 	    my $genomic_align = $genomic_aligns_2x_array->[$i];
 
- 	    my $num_pads = $num_frag_pads[$i+1];
+ 	    my $num_pads = $num_frag_pads[$i+1] // 0;
  	    my $ga_length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
 
  	    print "extract_sequence $offset " .($offset+$ga_length) . " num pads $num_pads\n" if ($self->debug); 
@@ -1051,10 +1044,6 @@ sub _load_GenomicAligns {
 sub _load_2XGenomes {
   my ($self, $genomic_align_block_id) = @_;
 
-  #extract location of pairwise blocks
-  my $pairwise_exception_location = $self->param('pairwise_exception_location');
-  my $default_location = $self->param('pairwise_default_location');
-
   my $pairwise_locations = $self->_construct_pairwise_locations();
 
 
@@ -1097,18 +1086,17 @@ sub _load_2XGenomes {
   #Find the LASTZ_NET alignments between the reference species and each
   #2X genome.
 
-  foreach my $mlss_id (keys %$pairwise_locations) {
+  #create all the adaptors now so that we can detect shared connections
+  my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-URL => $pairwise_locations->{$_})} keys %$pairwise_locations);
+
+  $self->iterate_by_dbc([keys %$pairwise_locations],
+    sub {my $mlss_id = shift; return $pairwise_compara_dba{$mlss_id}->dbc;},
+    sub {my $mlss_id = shift;
+
       my $target_species;
 
       #open compara database containing 2x genome vs $ref_name blastz results
-      #my $compara_db_url = $param->{'compara_db_url'};
-      my $compara_db_url = $pairwise_locations->{$mlss_id};
-
-      my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
-
-      #need to store this to allow disconnect when call ortheus
-      my $pairwise_compara_dba = $self->param('pairwise_compara_dba');
-      $pairwise_compara_dba->{$compara_dba->dbc->dbname} = $compara_dba;
+      my $compara_dba = $pairwise_compara_dba{$mlss_id};
 
       #Get pairwise genomic_align_block adaptor
       my $pairwise_gaba = $compara_dba->get_GenomicAlignBlockAdaptor;
@@ -1137,7 +1125,7 @@ sub _load_2XGenomes {
       my $ga_frag_array = $self->_create_frag_array($pairwise_gaba, $pairwise_mlss, $ref_gas);
   
       #not found 2x genome
-      next if (!defined $ga_frag_array);
+      return if (!defined $ga_frag_array);
 
       #must first sort so I have a reasonable chance of finding duplicates
 
@@ -1186,7 +1174,7 @@ sub _load_2XGenomes {
 
 	  #push @{$self->param('ga_frag')}, $ga_frag_array->[$longest_ref_region];
 	  #push @{$self->param('2x_dnafrag_region')}, $ga_frag_array->[$longest_ref_region]->[0]->{genomic_align};
-	  next;
+	  return;
       }
 
       #Found more than one reference region in this synteny block
@@ -1250,7 +1238,7 @@ sub _load_2XGenomes {
 	  #push @{$self->param('2x_dnafrag_region')}, $ga_frag_array->[$longest_ref_region]->[0]->{genomic_align};
 
       }
-  } 
+  }, 'do_disconnect');
 }
 
 sub _construct_pairwise_locations {
@@ -1365,10 +1353,10 @@ sub _dump_fasta_and_mfa {
   $self->param('multi_fasta_file', $mfa_file);
 
   print "mfa_file $mfa_file\n" if $self->debug;
-  open MFA, ">$mfa_file" || throw("Couldn't open $mfa_file");
+  open my $mfa_fh, '>', $mfa_file || throw("Couldn't open $mfa_file");
 
   $self->iterate_by_dbc(\@seqs,
-      sub {my $seq_id = shift; return $all_genomic_aligns->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc;},
+      sub {my $seq_id = shift; my $ga = $all_genomic_aligns->[$seq_id-1]; return (ref($ga) eq 'ARRAY' ? undef : $ga->genome_db->db_adaptor->dbc);},
       sub {my $seq_id = shift;
 
     my $ga = $all_genomic_aligns->[$seq_id-1];
@@ -1380,7 +1368,7 @@ sub _dump_fasta_and_mfa {
     if (!UNIVERSAL::isa($ga, 'Bio::EnsEMBL::Compara::GenomicAlign')) {
 	print "FOUND 2X GENOME\n" if $self->debug;
 	print "num of frags " . @$ga . "\n" if $self->debug;
-	$self->_dump_2x_fasta($ga, $file, $seq_id, \*MFA);
+	$self->_dump_2x_fasta($ga, $file, $seq_id, $mfa_fh);
 	return;
     }
 
@@ -1388,10 +1376,10 @@ sub _dump_fasta_and_mfa {
     $file .= "_" . $ga->genome_db->taxon_id . ".fa";
     print "file $file\n" if $self->debug;
     
-    #print MFA ">SeqID" . $seq_id . "\n";
+    #print $mfa_fh ">SeqID" . $seq_id . "\n";
 
-    #print MFA ">seq" . $seq_id . "\n";
-    print MFA ">seq" . $seq_id . "_" . $ga->genome_db->taxon_id . "\n";
+    #print $mfa_fh ">seq" . $seq_id . "\n";
+    print $mfa_fh ">seq" . $seq_id . "_" . $ga->genome_db->taxon_id . "\n";
 
     print ">DnaFrag", $ga->dnafrag->dbID, "|", $ga->dnafrag->name, ".",
         $ga->dnafrag_start, "-", $ga->dnafrag_end, ":", $ga->dnafrag_strand,"\n" if $self->debug;
@@ -1417,12 +1405,12 @@ sub _dump_fasta_and_mfa {
     my $aligned_seq = $ga->aligned_sequence;
     $aligned_seq =~ s/(.{60})/$1\n/g;
     $aligned_seq =~ s/\n$//;
-    print MFA $aligned_seq, "\n";
+    print $mfa_fh $aligned_seq, "\n";
 
     push @{$self->fasta_files}, $file;
     push @{$self->species_order}, $ga->dnafrag->genome_db_id;
   });
-  close MFA;
+  close $mfa_fh;
 
   return 1;
 }
@@ -1822,9 +1810,9 @@ sub _dump_2x_fasta {
 
     $file .= "_" . $ga_frags->[0]->{taxon_id} . ".fa";
 
-    #print MFA ">SeqID" . $seq_id . "\n";
-    #print MFA ">seq" . $seq_id . "\n";
-    print MFA ">seq" . $seq_id . "_" . $ga_frags->[0]->{taxon_id} . "\n";
+    #print $mfa_fh ">SeqID" . $seq_id . "\n";
+    #print $mfa_fh ">seq" . $seq_id . "\n";
+    print $mfa_fh ">seq" . $seq_id . "_" . $ga_frags->[0]->{taxon_id} . "\n";
     my $aligned_seq = $ga_frags->[0]->{aligned_seq};
     my $seq = $aligned_seq;
     $seq =~ tr/-//d;
@@ -1857,8 +1845,10 @@ sub _create_mfa {
 
     my $species_order = $self->species_order;
 
-    
-    foreach my $ga_frag_array (@$pairwise_frags) {
+    $self->iterate_by_dbc($pairwise_frags,
+      sub {my $ga_frag_array = shift; return $ga_frag_array->[0]->{genomic_align}->genome_db->db_adaptor->dbc},
+      sub {my $ga_frag_array = shift;
+
 	my $multi_ref_ga = $ga_frag_array->[0]->{ref_ga};
 	my $multi_mapper = $multi_ref_ga->get_Mapper;
 	#my $multi_gab_length = length($multi_ref_ga->aligned_sequence);
@@ -1874,9 +1864,7 @@ sub _create_mfa {
 	    my $pairwise_ref_ga = $pairwise_gab->reference_genomic_align;
 
             my $pairwise_fixed_seq;
-            $pairwise_non_ref_ga->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 	        $pairwise_fixed_seq = $pairwise_non_ref_ga->aligned_sequence("+FIX_SEQ");
-            });
 	    
 	    #undef($pairwise_non_ref_ga->{'aligned_sequence'});
 
@@ -1917,7 +1905,7 @@ sub _create_mfa {
 	#   print substr($aligned_sequence, $x, 80), "\n";
 	#  print substr($multi_ref_ga->aligned_sequence, $x, 80), "\n\n";
 	#}
-    }
+    });
 }
 
 
