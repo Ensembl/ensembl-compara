@@ -124,7 +124,7 @@ sub run_treebest_2x {
     print "Running treebest $command\n";
 
     #run treebest to create tree
-    $self->run_command($command, { die_on_failure => 1 });
+    $self->run_command($command, { die_on_failure => 1, use_bash_pipefail => 1 });
      
     #read in new tree
     if (-e $tree_file) {
