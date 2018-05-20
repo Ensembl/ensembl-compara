@@ -226,13 +226,10 @@ sub _write_output {
 					  $mlss);
       }
 
-  chdir("$self->worker_temp_directory");
-  foreach(glob("*")){
       #DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
       #to clean up after each job otherwise you get files left over from
       #the previous job.
-      unlink($_);
-  }
+      $self->cleanup_worker_temp_directory;
   
   return 1;
 }
