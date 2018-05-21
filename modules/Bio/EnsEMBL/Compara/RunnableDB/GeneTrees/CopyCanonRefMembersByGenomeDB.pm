@@ -71,7 +71,7 @@ sub run {
         $self->param( 'exclude_tables', \%exclude_tables );
     }
 
-    $self->_copy_data_wrapper_join('dnafrag');
+    $self->_copy_data_wrapper('dnafrag', 'SELECT * FROM dnafrag');
     $self->_copy_data_wrapper_join('gene_member');
     $self->_copy_data_wrapper_join('sequence', 'sequence USING (sequence_id)');
     $self->_copy_data_wrapper_join('seq_member');
