@@ -251,20 +251,6 @@ div.redirect-message span.close:hover,
 div.cookie-message span.close:hover{
   background : [[CONTRAST_DARK]];
 }
-div.cookie-message a.more-info-link {
-  display: none;
-}
-div.cookie-message a.more-info-link {
-  display: none;
-  align-items: center;
-  cursor: pointer;
-  text-decoration: none;
-  padding: 8px;
-  background-color: [[V_DARK_GREY]];
-  border-right: 1px solid [[MEDIUM_GREY]];
-  border-left: 1px solid [[MEDIUM_GREY]];
-  font-weight: 400;
-}
 
 div.cookie-message div.agree-button {
     cursor: pointer;
@@ -272,7 +258,7 @@ div.cookie-message div.agree-button {
     text-align: center;
     display: flex;
     align-items: center;
-    /*min-width: 96px;*/
+    min-width: 96px;
 }
 
 div.cookie-message div.agree-button a.button{
@@ -292,39 +278,4 @@ div.cookie-message div.agree-button a.button.clicked{
   background: url(/i/16/rev/check.png) no-repeat left center;
   padding: 6px 15px 2px 32px!important;
   background-position-x: 8px;
-}
-
-@media screen and (max-width: 810px) {
-  div.cookie-message {
-    height: 40px;
-  }
-  div.cookie-message div.agree-button {
-    /*min-width: 160px;*/
-    /*font-size: 0.9em;*/
-  }
-  div.cookie-message p.msg{
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-size: 0.9em;
-  }
-  div.cookie-message p.msg span.more-info {
-    display: none;
-  }
-  div.cookie-message a.more-info-link {
-    display: flex;
-    font-size: 12px;
-    min-width: 76px;
-    color: [[CONTRAST_DARK]];
-  }
-}
-
-@media screen and (max-width: 694px) {
-  div.redirect-message p.msg{
-    display: flex;
-    flex-direction: column;
-    padding: 4px;
-    font-size: 0.9em;
-  }
 }

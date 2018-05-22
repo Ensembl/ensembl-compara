@@ -207,6 +207,8 @@ sub render_page_end {
   my $species_path        = $hub->species_defs->species_path;
   my $gdpr_version        = $hub->species_defs->GDPR_VERSION;
   my $gdpr_policy_url     = $hub->species_defs->GDPR_POLICY_URL;
+  my $gdpr_terms_url      = $hub->species_defs->GDPR_TERMS_URL;
+  my $gdpr_cookie_name    = $hub->species_defs->GDPR_COOKIE_NAME;
   my $species_common_name = $hub->species_defs->SPECIES_COMMON_NAME;
   my $max_region_length   = 1000100 * ($hub->species_defs->ENSEMBL_GENOME_SIZE || 1);
   my $ensembl_image_root  = $hub->species_defs->ENSEMBL_IMAGE_ROOT;
@@ -225,6 +227,8 @@ sub render_page_end {
   <input type="hidden" id="species_path" name="species_path" value="$species_path" />
   <input type="hidden" id="gdpr_version" name="gdpr_version" value="$gdpr_version" />
   <input type="hidden" id="gdpr_policy_url" name="gdpr_policy_url" value="$gdpr_policy_url" />
+  <input type="hidden" id="gdpr_terms_url" name="gdpr_terms_url" value="$gdpr_terms_url" />
+  <input type="hidden" id="gdpr_cookie_name" name="gdpr_cookie_name" value="$gdpr_cookie_name" />
   <input type="hidden" id="species_common_name" name="species_common_name" value="$species_common_name" />
   <input type="hidden" id="ensembl_image_root" name="ensembl_image_root" value="$ensembl_image_root" />
   <input type="hidden" id="max_region_length" name="max_region_length" value="$max_region_length" />
