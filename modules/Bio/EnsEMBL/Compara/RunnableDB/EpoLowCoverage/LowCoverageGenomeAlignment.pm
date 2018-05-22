@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::Runnable::EpoLowCoverage::LowCoverageGenomeAlignment
 
 =head1 DESCRIPTION
 
-This module acts as a layer between the Hive system and the Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment module since the ensembl-analysis API does not know about ensembl-compara
+This module acts as a layer between the Hive system and the Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment module
 
 This module is the alternative module to Ortheus.pm for aligning low coverage (2X) genomes. This takes an existing high coverage alignment and maps the pairwise BlastZ-Net alignments of the low coverage genomes to the human sequence in the high coverage alignment. Any insertions in the low coverage alignments are removed, that is, no gaps are added to the human sequence. In regions where there are duplications, a phylogenetic tree is generated using either treeBest where there are more than 3 sequences in the alignment or semphy where there are 3 or less sequences. This module is still under development.
 

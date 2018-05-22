@@ -38,8 +38,8 @@ Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan
 
 =head1 DESCRIPTION
 
-This module acts as a layer between the Hive system and the Bio::EnsEMBL::Analysis::Runnable::Pecan
-module since the ensembl-analysis API does not know about ennembl-compara
+This module acts as a layer between the Hive system and the Bio::EnsEMBL::Compara::Production::Analysis::Pecan
+module
 
 Pecan wants the files to be provided in the same order as in the tree string. This module starts
 by getting all the DnaFragRegions of the SyntenyRegion and then use them to edit the tree (some

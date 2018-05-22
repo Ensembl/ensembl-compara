@@ -32,8 +32,7 @@ Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator
 
 =head1 DESCRIPTION
 
-Wrapper around Bio::EnsEMBL::Analysis::Runnable::Mercator
-Create Pecan jobs
+Wrapper around Bio::EnsEMBL::Compara::Production::Analysis::Mercator
 
 Supported keys:
     'mlss_id' => <number>
