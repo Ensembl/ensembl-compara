@@ -28,7 +28,7 @@ use Getopt::Long;
 
 my $reg_conf;
 my $url = 'mysql://anonymous@ensembldb.ensembl.org/';
-my $compara_url;
+my ($compara_url, $compara_db);
 my $species = "Homo sapiens";
 my $component;
 my $regions;
@@ -71,9 +71,10 @@ FEATURES
 Options:
 * --url URL [default = $url]
       The URL for the ensembl database
-* --compara_url
-      The URL for the ensembl compara database if it is not
-      a release one (or it lives in a diff. server)
+* --compara_db
+      Specify the ensembl compara database if it is not a
+      release one (or it lives in a diff. server). Can be a
+      URL or registry alias (--compara_url being retired)
 * --species [default = $species]
       The name of the species
 * --component [optional]
@@ -91,6 +92,7 @@ GetOptions(
   'url=s' => \$url,
   'urls=s' => \@$urls,
   'compara_url=s' => \$compara_url,
+  'compara_db=s' => \$compara_db,
   'species=s' => \$species,
   'component=s' => \$component,
   'regions=s' => \$regions,
@@ -118,6 +120,9 @@ if ($help || !$feature) {
   exit(0);
 }
 
+# keep until $compara_url is retired from use
+$compara_db = $compara_url if defined $compara_url;
+
 #Load core
 if ($reg_conf) {
   $reg->load_all($reg_conf,1);
@@ -140,8 +145,9 @@ if ($reg_conf) {
 
 #Load compara from url or Multi.
 my $compara_dba;
-if ($compara_url) {
-    $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+if ($compara_db) {
+    # $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$compara_url);
+    $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db );
 } else {
     #May not need compara if dumping say, core toplevel.
     eval {
@@ -519,9 +525,11 @@ foreach my $slice (@$all_slices) {
   } elsif ($feature =~ /^ce_?(\d+)/) {
     my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     my $dnafrag_id = $dnafrag->dbID;
-    my $sql = "SELECT dnafrag_start, dnafrag_end FROM constrained_element WHERE".
-        " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID.
-        " ORDER BY dnafrag_start";
+    # my $sql = "SELECT dnafrag_start, dnafrag_end FROM constrained_element WHERE".
+    #     " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID.
+    #     " ORDER BY dnafrag_start";
+    my $sql = "SELECT dnafrag_start, dnafrag_end FROM (SELECT dnafrag_start, dnafrag_end FROM constrained_element WHERE".
+        " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID. " LIMIT 10) d ORDER BY dnafrag_start";
     my $sth = $dnafrag_adaptor->db->dbc->prepare($sql);
     $sth->execute();
     my ($start, $end);
@@ -536,7 +544,7 @@ foreach my $slice (@$all_slices) {
     my $it = $slice->sub_Slice_Iterator(1_000_000);
     while ($it->has_next()) {
         my $sub_slice = $it->next();
-        warn $sub_slice->name();
+        print STDERR $sub_slice->name() . "\n";
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
         next unless @$scores;
         # Sort by position and decreasing score, so that we get the best score first

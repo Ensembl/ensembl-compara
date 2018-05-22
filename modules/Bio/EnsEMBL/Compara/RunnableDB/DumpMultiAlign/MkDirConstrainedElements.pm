@@ -51,16 +51,11 @@ sub write_output {
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
 
-    my $dirname = $mlss->name;
-    if ($mlss->name =~ /^Gerp Constrained Elements \((.*)\)$/) {
-        $dirname = $1.".gerp_constrained_elements";
-    }
-    $dirname =~ s/[\W\s]+/_/g;
-    $dirname =~ s/_$//;
+    my $dirname = $mlss->filename;
 
     my $output_dir = $self->param_required('export_dir').'/bed/ensembl-compara/'.$dirname;
-    remove_tree($output_dir);
-    make_path($output_dir);
+    # remove_tree($output_dir);
+    make_path($output_dir) unless -d $output_dir;
 
     $self->dataflow_output_id( {'dirname' => $dirname} );
 }

@@ -22,7 +22,7 @@ limitations under the License.
 Initialise the pipeline on compara1 and dump the constrained elements of mlss_id 836
 found at cc21_ensembl_compara_86 on compara5
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_url mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1 -registry $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_db mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1 -registry $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl
 
 Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
 
@@ -43,7 +43,7 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'mkdir_constrained_elems',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements',
             -parameters     => {
-                'compara_db'    => '#compara_url#',
+                'compara_db'    => '#compara_db#',
             },
             # -input_ids      => [
             #     {
@@ -56,7 +56,7 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'genomedb_factory_ce',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters     => {
-                'compara_db'            => '#compara_url#',
+                'compara_db'            => '#compara_db#',
                 'extra_parameters'      => [ 'name' ],
             },
             -flow_into      => {
@@ -68,9 +68,9 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'dump_constrained_elements',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_url #compara_url# --species #name# --reg_conf "#registry#" > #output_file#',
+                'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --reg_conf "#registry#" > #bed_file#',
             },
-            -analysis_capacity => $self->o('capacity'),
+            -analysis_capacity => $self->o('dump_ce_capacity'),
             -flow_into      => [ 'check_not_empty' ],
         },
 
@@ -78,7 +78,7 @@ sub pipeline_analyses_dump_constrained_elems {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckNotEmpty',
             -parameters     => {
                 'min_number_of_lines'   => 1,   # The header is always present
-                'filename'              => '#output_file#',
+                'filename'              => '#bed_file#',
             },
             -flow_into      => [ 'compress_ce' ],
         },
@@ -86,14 +86,14 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'compress_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => [qw(gzip -f -9 #output_file#)],
+                'cmd'   => [qw(gzip -f -9 #bed_file#)],
             },
         },
 
         {   -logic_name     => 'md5sum_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => 'cd #output_dir#; md5sum *.bed.gz > MD5SUM',
+                'cmd'   => 'cd #ce_output_dir#; md5sum *.bed.gz > MD5SUM',
             },
             -flow_into      =>  [ 'readme_ce' ],
         },
@@ -101,7 +101,7 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'readme_ce',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => [qw(cp -af #ce_readme# #output_dir#/README)],
+                'cmd'   => [qw(cp -af #ce_readme# #ce_output_dir#/README)],
             },
         },
     ];

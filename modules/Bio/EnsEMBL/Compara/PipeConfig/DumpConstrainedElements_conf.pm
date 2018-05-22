@@ -54,7 +54,7 @@ sub default_options {
         'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
 
         # How many species can be dumped in parallel
-        'capacity'    => 50,
+        'dump_ce_capacity'    => 50,
     };
 }
 
@@ -79,11 +79,11 @@ sub pipeline_wide_parameters {
         'ce_readme'             => $self->o('ce_readme'),
 
         'registry'      => $self->o('registry'),
-        'compara_url'   => $self->o('compara_url'),
+        'compara_db'   => $self->o('compara_url'),
 
         'export_dir'    => $self->o('export_dir'),
-        'output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
-        'output_file'   => '#output_dir#/gerp_constrained_elements.#name#.bed',
+        'ce_output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
+        'bed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
     };
 }
 
