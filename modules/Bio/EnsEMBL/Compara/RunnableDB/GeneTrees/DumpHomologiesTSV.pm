@@ -103,6 +103,7 @@ sub fetch_input {
         $self->param('extra_filter', 'AND gm1.genome_db_id = '.$genome_db_id);
 
         make_path(dirname($self->param('output_file')));
+        $compara_dba->dbc->disconnect_if_idle; # hive code will open a new connection regardless
     }
 
     $self->SUPER::fetch_input();

@@ -173,6 +173,7 @@ sub pipeline_analyses_dump_trees {
                     'archive_long_files' => { 'full_name' => '#file#', },
                     }
             },
+            -analysis_capacity => $self->o('dump_hom_capacity'),
         },
 
         {   -logic_name => 'dump_all_trees_orthoxml',
@@ -211,6 +212,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
+            -analysis_capacity => $self->o('dump_hom_capacity'),
           },
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
@@ -222,6 +224,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
+            -analysis_capacity => $self->o('dump_per_genome_cap'),
           },
 
         {   -logic_name => 'create_dump_jobs',
@@ -253,10 +256,34 @@ sub pipeline_analyses_dump_trees {
                         { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
                     ],
                 },
+                -1 => [ 'dump_a_tree_himem' ],
             },
-            -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
+            -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
             -rc_name       => '2Gb_job',
+        },
+
+        {   -logic_name    => 'dump_a_tree_himem',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'production_registry' => $self->o('production_registry'),
+                'dump_script'       => $self->o('dump_script'),
+                'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
+                'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
+                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
+            },
+            -flow_into     => {
+                1 => {
+                    'validate_xml' => [
+                        { 'schema' => 'orthoxml', 'filename' => '#base_filename#.orthoxml.xml' },
+                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.phyloxml.xml' },
+                        { 'schema' => 'phyloxml', 'filename' => '#base_filename#.cafe_phyloxml.xml' },
+                    ],
+                },
+            },
+            -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
+            -batch_size    => $self->o('batch_size'),
+            -rc_name       => '10Gb_job',
         },
 
         {   -logic_name    => 'validate_xml',
@@ -265,7 +292,7 @@ sub pipeline_analyses_dump_trees {
                 'xmllint_exe'   => $self->o('xmllint_exe'),
                 'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
             },
-            -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
+            -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
             -rc_name       => '2Gb_job',
         },
@@ -275,11 +302,9 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'inputlist'         => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta', 'nt.fasta' ],
                 'column_names'      => [ 'extension' ],
-                'basename'      => '#member_type#_#clusterset_id#',
-                'name_root'     => 'Compara.#rel_with_suffix#.#basename#', 
             },
             -flow_into => {
-                1 => { 'generate_tarjobs' => INPUT_PLUS( { 'dump_file_name' => '#name_root#.#extension#' } )},
+                1 => [ 'generate_tarjobs' ],
                 2 => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
             },
         },
@@ -306,7 +331,7 @@ sub pipeline_analyses_dump_trees {
                 'column_names'      => [ 'extension' ],
             },
             -flow_into => {
-                2 => { 'tar_dumps_factory'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#', 'basename' => '#basename#'} },
+                2 => { 'tar_dumps_factory'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
             },
         },
 

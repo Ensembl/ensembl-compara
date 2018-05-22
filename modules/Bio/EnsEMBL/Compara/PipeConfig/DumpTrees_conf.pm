@@ -80,8 +80,10 @@ sub default_options {
         'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
         'rel_db'        => 'compara_curr',
 
-        'capacity'    => 100,                                                       # how many trees can be dumped in parallel
-        'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
+        'dump_trees_capacity' => 100,   # how many trees can be dumped in parallel
+        'dump_hom_capacity'   => 10,    # how many homologies can be dumped in parallel
+        'dump_per_genome_cap' => 50,
+        'batch_size'          => 25,    # how may trees' dumping jobs can be batched together
 
         'dump_per_species_tsv'  => 0,
         'max_files_per_tar'     => 500,
@@ -132,6 +134,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dump_per_species_tsv'  => $self->o('dump_per_species_tsv'),
 
         'rel_db'        => $self->o('rel_db'),
+
+        'dump_trees_capacity' => $self->o('dump_trees_capacity'),
+        'dump_hom_capacity'   => $self->o('dump_hom_capacity'  ),
+        'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
     };
 }
 
