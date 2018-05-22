@@ -97,17 +97,8 @@ sub _test_mlss {
     my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($species_name)
                              || $genome_db_adaptor->fetch_by_registry_name($species_name);
     $genome_db->db_adaptor || die "I don't know where the '$species_name' core database is. Have you defined the Registry ?\n";
-
-    my $filename;
-    if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
-        my ($non_ref_gdb) = grep {$_->dbID != $genome_db->dbID} @{$mlss->species_set->genome_dbs};
-        $non_ref_gdb //= $genome_db;    # for self-alignments
-        $filename = sprintf("%s.%s.vs.%s.%s.%s", $genome_db->name, $genome_db->assembly, $non_ref_gdb->name, $non_ref_gdb->assembly, lc $mlss->method->type);
-    } else {
-        $filename = $mlss->name;
-    }
-    $filename =~ s/[\W\s]+/_/g;
-    $filename =~ s/_$//;
+    
+    my $filename = $mlss->filename;
 
     if ($self->param('add_conservation_scores')) {
         foreach my $method (@{ $compara_dba->get_MethodAdaptor->fetch_all_by_class_pattern('ConservationScore.conservation_score') }) {

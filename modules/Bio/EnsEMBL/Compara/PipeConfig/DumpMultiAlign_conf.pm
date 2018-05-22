@@ -99,7 +99,7 @@ sub default_options {
         # alignment blocks into chunks
         'split_by_chromosome'   => 1,
 
-        'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
+        'dump_aln_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
 
         # Method link types of mlss_id to retrieve
@@ -108,6 +108,8 @@ sub default_options {
         # Specific mlss_id to dump. Leave undef as the pipeline can detect
         # it automatically
         'mlss_id'   => undef,
+
+        'dump_aln_capacity' => 100,
     };
 }
 
@@ -128,7 +130,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'dump_program'      => $self->o('dump_program'),
+        'dump_aln_program'      => $self->o('dump_aln_program'),
         'emf2maf_program'   => $self->o('emf2maf_program'),
 
         'make_tar_archive'      => $self->o('make_tar_archive'),

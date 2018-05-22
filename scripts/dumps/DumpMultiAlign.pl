@@ -724,6 +724,7 @@ sub print_header {
       print "# Region: ",
         $slice->adaptor->db->get_MetaContainer->get_scientific_name, 
           " ", $slice->name, "\n";
+        $slice->adaptor->dbc->disconnect_if_idle();
     }
     print "# File $num\n" if ($num);
   }

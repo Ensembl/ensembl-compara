@@ -102,7 +102,7 @@ sub pipeline_analyses_dump_multi_align {
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -analysis_capacity => 50,
+            -analysis_capacity => $self->o('dump_aln_capacity'),
             -rc_name => '2Gb_job',
             -max_retry_count    => 0,
             -flow_into => [ WHEN(
