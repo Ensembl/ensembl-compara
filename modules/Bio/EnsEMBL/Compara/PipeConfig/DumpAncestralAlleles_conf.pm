@@ -47,8 +47,8 @@ sub default_options {
         'ancestral_db' => 'ancestral_curr', # assume reg_conf is up-to-date
 
         'reg_conf'   => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-    	'dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl",
-    	'stats_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_stats.pl",
+    	'ancestral_dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl",
+    	'ancestral_stats_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_stats.pl",
 
 
         # 'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
@@ -62,13 +62,13 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'dump_program'  => $self->o('dump_program'),
-        'stats_program' => $self->o('stats_program'),
+        'ancestral_dump_program'  => $self->o('ancestral_dump_program'),
+        'ancestral_stats_program' => $self->o('ancestral_stats_program'),
 
         'reg_conf'   => $self->o('reg_conf'),
         'compara_db' => $self->o('compara_db'),
         'dump_dir' => $self->o('dump_dir'),
-        'output_dir' => "#dump_dir#/fasta/ancestral_alleles",
+        'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
     };
 }
 

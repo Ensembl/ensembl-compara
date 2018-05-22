@@ -40,7 +40,7 @@ sub pipeline_analyses_dump_anc_alleles {
     	{	-logic_name => 'mk_ancestral_dump_dir',
     		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     		-parameters => {
-    			cmd => 'mkdir -p #output_dir#'
+    			cmd => 'mkdir -p #anc_output_dir#'
     		},
     		# -input_ids  => [ {} ],
     		-flow_into => ['fetch_genome_dbs'],
@@ -61,11 +61,11 @@ sub pipeline_analyses_dump_anc_alleles {
         {	-logic_name => 'get_ancestral_sequence',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         	-parameters => {
-        		species_outdir => '#output_dir#/#species_dir#',
+        		species_outdir => '#anc_output_dir#/#species_dir#',
         		cmd => join('; ', 
-        			'perl #dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db#',
+        			'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db#',
         			'cd #species_outdir#',
-        			'perl #stats_program# > summary.txt',
+        			'perl #ancestral_stats_program# > summary.txt',
         			),
         	},
         	-flow_into => [ 'tar' ],
@@ -76,7 +76,7 @@ sub pipeline_analyses_dump_anc_alleles {
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         	-parameters => {
         		cmd => join( '; ',
-        			'cd #output_dir#',
+        			'cd #anc_output_dir#',
         			'tar cfvz #species_dir#.tar.gz #species_dir#/'
         		)
         	}
@@ -86,7 +86,7 @@ sub pipeline_analyses_dump_anc_alleles {
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         	-parameters => {
         		cmd => join( '; ',
-        			'cd #output_dir#',
+        			'cd #anc_output_dir#',
         			'md5sum *.tar.gz > MD5SUM'
         		)
         	}
