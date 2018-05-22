@@ -104,7 +104,7 @@ sub write_output {
   my $adaptor   = $self->param('adaptor');
   my $ncsl      = $self->param('ncsl');
 
-  my $master_dbc = $self->dbc('master_db');
+  my $master_dbc = $self->get_cached_compara_dba('master_db')->dbc();
   $self->elevate_privileges($master_dbc);
   my $time_when_started_storing = time();  
   eval {
