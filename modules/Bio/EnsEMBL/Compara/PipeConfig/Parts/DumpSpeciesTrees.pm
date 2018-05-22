@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_url <url_of_the_compara_db>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_db <url_of_the_compara_db>
 
 =head1 DESCRIPTION  
 
@@ -58,13 +58,13 @@ sub pipeline_analyses_dump_species_trees {
                 'cmd'           => ['mkdir', '-p', '#dump_dir#'],
             },
             # -input_ids  => [{ }],
-            -flow_into  => 'dump_factory',
+            -flow_into  => ['dump_factory'],
         },
 
         {   -logic_name => 'dump_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'       => '#compara_url#',
+                'db_conn'       => '#compara_db#',
                 'inputquery'    => 'SELECT method_link_species_set_id, label, method_link_id, replace(name, " ", "_") as name FROM species_tree_root JOIN method_link_species_set USING (method_link_species_set_id)',
             },
             -flow_into => {
@@ -77,7 +77,7 @@ sub pipeline_analyses_dump_species_trees {
         {   -logic_name => 'dump_one_tree_with_distances',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => '#dump_species_tree_exe# -url #compara_url# -mlss_id #method_link_species_set_id# -label "#label#" -with_distances > "#dump_dir#/#name#_#label#.nh"',
+                'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# -mlss_id #method_link_species_set_id# -label "#label#" -with_distances > "#dump_dir#/#name#_#label#.nh"',
             },
             -flow_into  => [ 'sanitize_file' ],
         },
@@ -85,7 +85,7 @@ sub pipeline_analyses_dump_species_trees {
         {   -logic_name => 'dump_one_tree_without_distances',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'           => '#dump_species_tree_exe# -url #compara_url# -mlss_id #method_link_species_set_id# -label "#label#" > "#dump_dir#/#name#_#label#.nh"',
+                'cmd'           => '#dump_species_tree_exe# -compara_db #compara_db# -reg_conf #reg_conf# -mlss_id #method_link_species_set_id# -label "#label#" > "#dump_dir#/#name#_#label#.nh"',
             },
             -flow_into  => [ 'sanitize_file' ],
         },

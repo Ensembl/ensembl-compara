@@ -55,7 +55,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        #'compara_url'      => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
+        #'compara_db' => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
 
         #Connection parameters for production database (the rest is defined in the base class)
         'host'              => 'mysql-ens-compara-prod-1.ebi.ac.uk',
@@ -73,7 +73,7 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         'dump_dir'      => $self->o('dump_dir'),
-        'compara_url'   => $self->o('compara_url'),
+        'compara_db'    => $self->o('compara_url'),
         'dump_species_tree_exe' => $self->o('dump_species_tree_exe'),
     };
 }

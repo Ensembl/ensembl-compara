@@ -28,13 +28,14 @@ use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 # Script to print the species-tree used by a given method
 #
 
-my $url = 'mysql://anonymous@ensembldb.ensembl.org/ensembl_compara_'.software_version();
+my $url;
 my $mlss_id;
 my $method = 'PROTEIN_TREES';
 my $ss_name;
 my $label = 'default';
 my $with_distances;
 my $ascii_scale;
+my ($reg_conf, $compara_db);
 
 GetOptions(
        'url=s'          => \$url,
@@ -44,10 +45,15 @@ GetOptions(
        'label=s'        => \$label,
        'with_distances' => \$with_distances,
        'ascii_scale=f'  => \$ascii_scale,
+       'reg_conf=s'     => \$reg_conf,
+       'compara_db=s'   => \$compara_db,
 );
 
+$compara_db = $url if !$compara_db && defined $url;
 
-my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url => $url) or die "Must define a url";
+my $registry = 'Bio::EnsEMBL::Registry';
+$registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
+my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db ) or die "Must define a url or (reg_conf & alias)";
 
 my $mlss;
 if ($mlss_id) {
