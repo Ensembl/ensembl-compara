@@ -57,7 +57,8 @@ sub param_defaults {
         	'GERP_CONSTRAINED_ELEMENT' => 1, 'GERP_CONSERVATION_SCORE' => 1,
         },
         
-        target_dir => '#dump_dir#',
+        target_dir     => '#dump_dir#',
+        reuse_prev_rel => 1,
         # work_dir   => '#dump_dir#/dump_hash',
     };
 }
@@ -72,14 +73,22 @@ sub fetch_input {
 	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') );
 
 	my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	my $release_mlsses = $mlssa->fetch_all_by_release($curr_release);
+	my @release_mlsses;
+	my $mlss_ids = $self->param('mlss_ids');
+	if ( $mlss_ids ) {
+		foreach my $mlss_id ( @$mlss_ids ) {
+			push( @release_mlsses, $mlssa->fetch_by_dbID($mlss_id) );
+		}
+	} else {
+		@release_mlsses = @{ $mlssa->fetch_all_by_release($curr_release) };		
+	}
 
 	# first, split new mlsses into categories
-	my (%dumps, @copy_jobs);
-	foreach my $mlss ( @$release_mlsses ) {
+	my (%dumps, @copy_jobs, %method_types);
+	foreach my $mlss ( @release_mlsses ) {
 		my $method_class = $mlss->method->class;
-		if ( $mlss->first_release == $curr_release ) {
-			# new analysis! must be dumped
+		if ( $mlss_ids || $mlss->first_release == $curr_release ) {
+			# new analysis/user defined mlss! must be dumped
 			if ( $method_class =~ /^GenomicAlign/ ) { # all alignments
 				push( @{$dumps{DumpMultiAlign}}, $mlss )
 			}
@@ -102,16 +111,18 @@ sub fetch_input {
 
 	# generate job lists for each dump type
 	my %all_dump_jobs;
-	$all_dump_jobs{DumpMultiAlign}          = $self->_dump_multialign_jobs( $dumps{DumpMultiAlign} );
-	$all_dump_jobs{DumpTrees}               = $self->_dump_trees_jobs( $dumps{DumpTrees} );
-	$all_dump_jobs{DumpConstrainedElements} = $self->_dump_constrainedelems_jobs( $dumps{DumpConstrainedElements} );
-	$all_dump_jobs{DumpConservationScores}  = $self->_dump_conservationscores_jobs( $dumps{DumpConservationScores} );
+	$all_dump_jobs{DumpMultiAlign}          = $self->_dump_multialign_jobs( $dumps{DumpMultiAlign} ) if $dumps{DumpMultiAlign};
+	$all_dump_jobs{DumpTrees}               = $self->_dump_trees_jobs( $dumps{DumpTrees} ) if $dumps{DumpTrees};
+	$all_dump_jobs{DumpConstrainedElements} = $self->_dump_constrainedelems_jobs( $dumps{DumpConstrainedElements} ) if $dumps{DumpConstrainedElements};
+	$all_dump_jobs{DumpConservationScores}  = $self->_dump_conservationscores_jobs( $dumps{DumpConservationScores} ) if $dumps{DumpConservationScores};
 	
-	# always add these
-	$all_dump_jobs{DumpSpeciesTrees}        = $self->_dump_speciestree_job; # doesn't require mlsses
-	$all_dump_jobs{DumpAncestralAlleles}    = $self->_dump_anc_allele_jobs; 
-
-	if ( $self->param('lastz_patch_dbs') ) {
+	# always add these when mlss_ids have not been defined
+	unless ( $mlss_ids ) {
+		$all_dump_jobs{DumpSpeciesTrees}        = $self->_dump_speciestree_job; # doesn't require mlsses
+		$all_dump_jobs{DumpAncestralAlleles}    = $self->_dump_anc_allele_jobs; 
+	}
+	
+	if ( !$mlss_ids && $self->param('lastz_patch_dbs') ) {
 		my ( $lastz_patch_jobs, $copy_jobs_no_patches ) = $self->_add_lastz_patches( \@copy_jobs );
 		$all_dump_jobs{DumpMultiAlignPatches} = $lastz_patch_jobs;
 		@copy_jobs = @$copy_jobs_no_patches;
@@ -128,38 +139,54 @@ sub write_output {
 	my $dump_jobs = $self->param('dump_jobs');
 	print "TO DUMP: \n";
 	print Dumper $dump_jobs;
-	$self->dataflow_output_id( $dump_jobs->{DumpMultiAlign}, 1 );
-	$self->dataflow_output_id( $dump_jobs->{DumpTrees}, 2 );
-	$self->dataflow_output_id( $dump_jobs->{DumpConstrainedElements}, 3 );
-	$self->dataflow_output_id( $dump_jobs->{DumpConservationScores},  4 );
-	$self->dataflow_output_id( $dump_jobs->{DumpSpeciesTrees}, 5 );
-	$self->dataflow_output_id( $dump_jobs->{DumpAncestralAlleles}, 6 );
+	$self->dataflow_output_id( $dump_jobs->{DumpMultiAlign}, 1 ) if $dump_jobs->{DumpMultiAlign};
+	$self->dataflow_output_id( $dump_jobs->{DumpTrees}, 2 ) if $dump_jobs->{DumpTrees};
+	$self->dataflow_output_id( $dump_jobs->{DumpConstrainedElements}, 3 ) if $dump_jobs->{DumpConstrainedElements};
+	$self->dataflow_output_id( $dump_jobs->{DumpConservationScores},  4 ) if $dump_jobs->{DumpConservationScores};
+	$self->dataflow_output_id( $dump_jobs->{DumpSpeciesTrees}, 5 ) if $dump_jobs->{DumpSpeciesTrees};
+	$self->dataflow_output_id( $dump_jobs->{DumpAncestralAlleles}, 6 ) if $dump_jobs->{DumpAncestralAlleles};
 
-	if ( $self->param('lastz_patch_dbs') ) {
-		$self->dataflow_output_id( $dump_jobs->{DumpMultiAlignPatches}, 7 );
-		$self->dataflow_output_id( {}, 8 ); # to patch mlss factory
-	}
+	$self->dataflow_output_id( $dump_jobs->{DumpMultiAlignPatches}, 7 ) if ( $dump_jobs->{DumpMultiAlignPatches} && $self->param('lastz_patch_dbs'));
+
+	return 1 unless ( $self->param_required('reuse_prev_rel') );
 
 	my $copy_jobs = $self->param('copy_jobs');
+	return 1 unless $copy_jobs->[0];
 	print "\n\nTO COPY: \n";
 	print '(' . join(', ', @$copy_jobs) . ")\n";
-	$self->dataflow_output_id( { mlss_ids => $copy_jobs }, 9 );
+	$self->dataflow_output_id( { mlss_ids => $copy_jobs }, 8 );
 }
 
 sub _dump_multialign_jobs {
 	my ($self, $mlss_list) = @_;
 	my %alignment_dump_options = %{$self->param_required('alignment_dump_options')};
 
+	my @jobs;
+
+	# if the mlss_ids have been user-defined, don't bundle them by method_link_type
+	if ( $self->param('mlss_ids') ) {
+		foreach my $mlss ( @$mlss_list ) {
+			my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
+			my $this_type = $mlss->method->type;
+			$this_job{mlss_id} = $mlss->dbID;
+			foreach my $opt ( keys %{$alignment_dump_options{$this_type}} ) {
+				$this_job{$opt} = $alignment_dump_options{$this_type}->{$opt};
+			}
+			push( @jobs, \%this_job );
+		}
+		return \@jobs;
+	}
+
+	# otherwise, group by method_link_type, flowing only 1 job per type
 	# uniqify the list of method link types
 	my %aln_types;
 	foreach my $mlss ( @$mlss_list ) {
 		$aln_types{$mlss->method->type} = 1;
 	}
 
-	my @jobs;
 	foreach my $type ( keys %aln_types ) {
 		my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
-		$this_job{method_link_type} = $type;
+		$this_job{method_link_types} = $type;
 		foreach my $opt ( keys %{$alignment_dump_options{$type}} ) {
 			$this_job{$opt} = $alignment_dump_options{$type}->{$opt};
 		}
@@ -248,34 +275,48 @@ sub _member_type_clusterset_from_mlss {
 }
 
 sub _add_lastz_patches {
-	my ($self, $copy_jobs) = @_;
+	my ( $self, $copy_jobs ) = @_;
 
 	my (@patch_dump_jobs, %pruned_copy_jobs);
 	foreach my $patch_db ( @{$self->param('lastz_patch_dbs')} ) {
-		# first, create a DumpMultiAlign job for each db
-		my %this_job = %{$self->param('default_dump_options')->{DumpMultiAlign}};
-		$this_job{compara_db} = $patch_db;
-		$this_job{method_link_type} = 'LASTZ_NET';
-		$this_job{format} = 'maf'; # don't add make_tar_archive - will be adding to dir and tarring later
-		push( @patch_dump_jobs, \%this_job );
+		my $patch_mlss_ids = $self->_find_mlsses_with_alignment( $patch_db );
+		foreach my $mlss_id ( @$patch_mlss_ids ) {
+			my %this_job = %{$self->param('default_dump_options')->{DumpMultiAlign}};
+			$this_job{compara_db} = $patch_db;
+			$this_job{mlss_id} = $mlss_id->[0];
+			$this_job{format} = 'maf'; # don't add make_tar_archive - will be adding to dir and tarring later
+			push( @patch_dump_jobs, \%this_job );
+		}
 
 		# remove MLSSes from copy jobs if adding patches
 		# don't want to copy directly from prev FTP - need to top up the tar.gz first
-		if ($self->param('reg_conf')) {
-			my $registry = 'Bio::EnsEMBL::Registry';
-		  	$registry->load_all($self->param('reg_conf'));
-		}
-		my $patch_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $patch_db );
-		my $patch_mlss_adap = $patch_dba->get_MethodLinkSpeciesSetAdaptor;
-		my %patch_mlss_ids = map { $_->dbID => 1 } @{ $patch_mlss_adap->fetch_all_by_method_link_type("LASTZ_NET") };
-
+		my %patch_mlss_hash = map { $_ => 1 } @$patch_mlss_ids;
 		foreach my $copy_mlss_id ( @$copy_jobs ) {
-			$pruned_copy_jobs{$copy_mlss_id} = 1 unless $patch_mlss_ids{$copy_mlss_id};
+			$pruned_copy_jobs{$copy_mlss_id} = 1 unless $patch_mlss_hash{$copy_mlss_id};
 		}
 	}
 
 	my @new_copy_mlsses = keys %pruned_copy_jobs;
-	return ( \@patch_dump_jobs, \@new_copy_mlsses );
+	return ( \@patch_dump_jobs, \@new_copy_mlsses );	
+}
+
+sub _find_mlsses_with_alignment {
+	my ( $self, $aln_db ) = @_;
+
+	if ($self->param('reg_conf')) {
+		my $registry = 'Bio::EnsEMBL::Registry';
+	  	$registry->load_all($self->param('reg_conf'));
+	}
+
+	my $aln_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $aln_db );
+	my $curr_release = $self->param('curr_release'); # add filter for old mlsses only - new ones will be dumped from scratch
+	my $sql = "SELECT method_link_species_set_id FROM method_link_species_set WHERE method_link_species_set_id IN (SELECT DISTINCT(method_link_species_set_id) FROM genomic_align_block) and method_link_id = 16 and first_release < $curr_release";
+	my $sth = $aln_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
+    $sth->execute() or die "Cannot execute '$sql' on '$aln_db'\n";
+    my $aln_mlss_list = $sth->fetchall_arrayref;
+
+    return [] unless $aln_mlss_list->[0];
+    return $aln_mlss_list;
 }
 
 1;

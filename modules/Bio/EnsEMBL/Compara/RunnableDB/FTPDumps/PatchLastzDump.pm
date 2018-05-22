@@ -41,22 +41,22 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{$self->SUPER::param_defaults},
+# sub param_defaults {
+#     my $self = shift;
+#     return {
+#         %{$self->SUPER::param_defaults},
         
-		'compara_db' => '#patch_db#',
-	}
-}
+# 		'compara_db' => '#patch_db#',
+# 	}
+# }
 
 sub fetch_input {
 	my $self = shift;
 
 	my $mlss_id = $self->param_required('mlss_id');
-	my $patch_db = $self->param_required('patch_db');
+	my $compara_db = $self->param_required('compara_db');
 	
-	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $patch_db );
+	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db );
 	my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 	my $mlss_filename = $mlss->filename;
 	$self->param( 'mlss_filename', $mlss_filename );
@@ -93,10 +93,21 @@ sub run {
 
 	my $tmp_dir = $self->worker_temp_directory;
 	print "TMP_DIR: $tmp_dir\n";
-	# my $untar_cmd = "cd $tmp_dir; tar xfz $prev_rel_tarball; pwd -P; ls";
-	my $untar_cmd = "cd $tmp_dir; tar xfz $prev_rel_tarball";
-	my $untar_run = $self->run_command($untar_cmd);
-    print "STDOUT: '" . $untar_run->out . "'\n";
+
+	# some archives are .tar.gz, some just .tar
+	my $tar_opts = 'xf';
+	$tar_opts .= 'z' if $prev_rel_tarball =~ /gz$/;
+
+	# use -C and --strip-components to specify the name of the unzipped directory
+	# this is only important in the transition period, where extracted dirs may still be
+	# using the old standards, while the tar.gz may be using the new naming standard
+	my @untar_cmd = (
+		"cd $tmp_dir",
+		"mkdir -p $mlss_filename",
+		"tar $tar_opts $prev_rel_tarball -C $mlss_filename --strip-components 1"
+	);
+	my $untar_run = $self->run_command( join("; ", @untar_cmd) );
+	die $untar_run->err if $untar_run->err;
 
     my @merge_cmd = (
     	"cd $patch_dump_dir",
