@@ -284,6 +284,7 @@ sub tweak_analyses {
         if (stringify($self->default_options()->{'goc_taxlevels'}) eq stringify($self->o('goc_taxlevels'))) {
             $analyses_by_name->{'goc_group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
             $analyses_by_name->{'rib_fire_homology_id_mapping'}->{'-parameters'}->{'goc_taxlevels'} = $tl;
+            $analyses_by_name->{'rib_fire_goc'}->{'-parameters'}->{'taxlevels'} = $tl;
         }
     }
 }
