@@ -393,14 +393,46 @@ sub filename {
     
     # expand species names to include assembly
     if ( $self->species_set->size == 2 ) {
-        my @gdbs = @{$self->species_set->genome_dbs};
-        $name = $gdbs[0]->get_short_name . "_" . $gdbs[0]->assembly . '.v.';
-        $name .= $gdbs[1]->get_short_name . "_" . $gdbs[1]->assembly;
+        my ($ref_gdb, $nonref_gdb) = $self->_find_pairwise_ref($self->species_set->genome_dbs);
+        $name = $ref_gdb->get_short_name . "_" . $ref_gdb->assembly . '.v.';
+        $name .= $nonref_gdb->get_short_name . "_" . $nonref_gdb->assembly;
+    } elsif ( $self->species_set->size == 1 && $self->method->class =~ /pairwise/ ) { # self alignment!
+        my $self_aln_gdb = $self->species_set->genome_dbs->[0];
+        my $species_label = $self_aln_gdb->get_short_name . "_" . $self_aln_gdb->assembly;
+        $name = "$species_label.v.$species_label";
     }
 
     my $type = $self->method->type;
     my $dir = lc "$name.$type";
     return $dir;
+}
+
+sub _find_pairwise_ref {
+    my ( $self, $genome_dbs ) = @_;
+
+    # first, check for mlss_tags
+    my $ref_name = $self->_getter_setter_for_tag('reference_species');
+    $ref_name ||= '';
+    if ( $genome_dbs->[0]->name eq $ref_name ) {
+        return @$genome_dbs; # list was already in correct order
+    } elsif ( $genome_dbs->[0]->name eq $ref_name ) {
+        return ( $genome_dbs->[1], $genome_dbs->[0] );
+    } else {
+        # if tag is not set, always place usual references at the start
+        my @ref_list = ( 'homo_sapiens', 'mus_musculus', 'gallus_gallus', 'oryzias_latipes' );
+        foreach my $ref_name ( @ref_list ) {
+            if ( grep { $genome_dbs->[0]->name eq $_ } @ref_list ) {
+                return @$genome_dbs; # order was already correct
+            } elsif ( grep { $genome_dbs->[1]->name eq $_ } @ref_list ) {
+                return ( $genome_dbs->[1], $genome_dbs->[0] );
+            }
+        }
+
+        # finally, give up and return alphabetical order
+        my @sorted = @$genome_dbs;
+        @sorted = sort { $a->name cmp $b->name } @sorted;
+        return @sorted; 
+    }
 }
 
 1;
