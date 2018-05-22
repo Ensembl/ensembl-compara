@@ -60,26 +60,30 @@ sub default_options {
         ######################################################
         # Review these options prior to running each release #
         ######################################################
-
-        'curr_release' => 92,
-        'dump_root'    => '/gpfs/nobackup/ensembl/'.$ENV{'USER'}.'/dumps_test_#curr_release#',
-        'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp',
-        # 'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
-        # 'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps/release-#curr_release#',
+        
+        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
+        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_#curr_release#',
+        'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # USE THIS PATH FOR RELEASE 93 ONLY !!
         # 'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
 
-        'reg_conf'     => '/homes/carlac/projects/dump_all_for_release/reg_conf.pl',
+        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => 'ancestral_curr',
 
         # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
-        'lastz_patch_dbs' => [
-        	'mysql://ensadmin:ensembl@mysql-ens-compara-prod-3:4523/carlac_lastz_human_patches_92',
-			'mysql://ensadmin:ensembl@mysql-ens-compara-prod-3:4523/carlac_lastz_mouse_patches_92',
-        ],
-        # 'lastz_patch_dbs' => undef,
+        #  'lastz_patch_dbs' => [
+        #  	'mysql://ensadmin:ensembl@mysql-ens-compara-prod-3:4523/carlac_lastz_human_patches_92',
+		#   'mysql://ensadmin:ensembl@mysql-ens-compara-prod-3:4523/carlac_lastz_mouse_patches_92',
+        #  ],
+        'lastz_patch_dbs' => undef,
 
         ######################################################
+        ######################################################
+
+
+        # ----------------------------------------------------- #
+        # the following options should remain largely unchanged #
+        # ----------------------------------------------------- #
 
         # capacities for heavy-hitting jobs
 		'dump_aln_capacity'   => 80,
