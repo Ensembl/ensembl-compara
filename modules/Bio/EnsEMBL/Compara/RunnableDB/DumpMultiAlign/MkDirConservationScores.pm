@@ -51,22 +51,16 @@ sub write_output {
 
     print "Fetching mlss " . $self->param_required('mlss_id') . "\n" if $self->debug;
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
-    print "Got mlss!\n\n" if $self->debug;
 
-    # my $dirname = $mlss->name;
-    # if ($mlss->name =~ /^Gerp Conservation Scores \((.*)\)$/) {
-    #     $dirname = $1.".gerp_conservation_scores";
-    # }
-    # $dirname =~ s/[\W\s]+/_/g;
-    # $dirname =~ s/_$//;
-    my $dirname = $mlss->filename;    
+    my $dirname = $mlss->filename;
+    $self->param( 'dirname', $dirname );
 
-    my $output_dir = $self->param_required('export_dir').'/'.$dirname;
+    my $output_dir = $self->param_required('cs_output_dir');
     print "Output dir: $output_dir\n\n" if $self->debug;
     # remove_tree($output_dir);
     make_path($output_dir);
 
-    $self->dataflow_output_id( {'dirname' => $dirname} );
+    $self->dataflow_output_id( {'dirname' => $dirname}, 1 );
 }
 
 1;

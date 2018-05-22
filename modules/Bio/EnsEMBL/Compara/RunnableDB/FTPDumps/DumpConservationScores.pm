@@ -47,15 +47,15 @@ use File::Path qw(make_path);
 
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults() },
-        'this_bedgraph' => '#work_dir#/#hash_dir#/#name#.#chunkset_id#.bedgraph',
-        'cmd'           => '#dump_features_program# --feature cs_#mlss_id# --compara_url #compara_url# --species #name# --regions "#regions_bed_file#" --reg_conf "#registry#" > #this_bedgraph#',
+        'this_bedgraph' => '#work_dir#/#dirname#/#hash_dir#/#name#.#chunkset_id#.bedgraph',
+        'cmd'           => '#dump_features_program# --feature cs_#mlss_id# --compara_db #compara_db# --species #name# --regions "#regions_bed_file#" --reg_conf "#registry#" > #this_bedgraph#',
     }
 }
 
@@ -71,10 +71,38 @@ sub fetch_input {
     close $fh;
     $self->param('regions_bed_file', $filename);
 
-    $self->param('hash_dir', dir_revhash($self->param_required('chunkset_id')));
+    my $rev_hash = dir_revhash($self->param_required('chunkset_id'));
+    $self->param('hash_dir', $rev_hash);
 
     make_path(dirname($self->param_required('this_bedgraph')));
 }
 
+sub write_output {
+    my $self = shift @_;
+
+    # check for empty files
+    if ( $self->_check_if_empty_record ) {
+        $self->input_job->autoflow(0);
+        my $empty_file_msg = "No conservation scores found for these regions in " . $self->param('name') . "... Skipping!\n";
+        $self->complete_early( $empty_file_msg );
+    }
+
+    $self->SUPER::write_output();
+}
+
+#
+# Check file has data, not just a header
+#
+sub _check_if_empty_record {
+    my ($self) = @_;
+    
+    my $output_file = $self->param('this_bedgraph');
+
+    my $wc_cmd = "wc -l $output_file | awk '{print \$1}'";
+    my $run_cmd = $self->run_command($wc_cmd, { die_on_failure => 1 });
+
+    return 1 if ( int($run_cmd->out) < 2 ); # file contains nothing/header only
+    return 0; # file contains records
+}
 
 1;

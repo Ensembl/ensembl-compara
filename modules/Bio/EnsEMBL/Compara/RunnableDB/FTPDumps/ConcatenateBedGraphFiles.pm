@@ -51,10 +51,12 @@ sub run {
     my $output_file = $self->param_required('bedgraph_file');
     unlink $output_file;
 
-    $self->run_system_command(['cp', shift @{$self->param_required('all_bedgraph_files')}, $output_file], { die_on_failure => 1 });
+    # for some reason, all_bedgraph_files can contain undefs - filter them out
+    my @all_bedgraph_files = grep { defined $_ } @{$self->param_required('all_bedgraph_files')};
 
-    foreach my $input_file (@{$self->param('all_bedgraph_files')}) {
-        die unless $input_file;
+    $self->run_system_command(['cp', shift @all_bedgraph_files, $output_file], { die_on_failure => 1 });
+
+    foreach my $input_file ( @all_bedgraph_files ) {
         $self->run_system_command("tail -n+2 '$input_file' >> '$output_file'", { die_on_failure => 1 });
     }
 }

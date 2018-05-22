@@ -130,7 +130,7 @@ eval{
 
 
 my $usage = qq{
-perl dump_conservationScores_in_wigfix.pl
+perl DumpConservationScores.pl
   Getting help"
     [--help]
 
@@ -387,6 +387,7 @@ sub write_wigFix {
 
 	#Get scores
 	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
+	$slice_adaptor->dbc->disconnect_if_idle();
 	my $found_min_score = 0;
 	for(my$i=0;$i<@$scores;$i++) {
 #	    if (defined $scores->[$i]->diff_score and $scores->[$i]->expected_score >= $min_expected_score) {
@@ -481,6 +482,7 @@ sub write_bed {
 	
 	#Get scores
 	my $scores = $cs_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $chunk_slice, $display_size, "AVERAGE");
+	$slice_adaptor->dbc->disconnect_if_idle();
 	for(my$i=0;$i<@$scores;$i++) {
 	    if (defined $scores->[$i]->diff_score) {
 		#the following if-elsif-else should prevent the printing of scores from overlapping genomic_align_blocks

@@ -56,6 +56,7 @@ sub pipeline_wide_parameters {
 
         'dump_features_program' => $self->o('dump_features_program'),
         'cs_readme'             => $self->o('cs_readme'),
+        'dump_cs_capacity'      => 100,
 
         'registry'      => $self->o('registry'),
         'compara_db'    => $self->o('compara_url'),

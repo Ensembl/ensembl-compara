@@ -95,7 +95,8 @@ sub create_chunks_and_write_chromsize_file {
     open(my $fh, '>', $chromsize_file) or die "Cannot open $chromsize_file for writing";
 
     # Iterator so that we don't use too much memory
-    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $self->param_required('compara_url') );
+    my $dbc = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') )->dbc;
+
     my $sql = q{SELECT name, length FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1 ORDER BY name COLLATE latin1_bin};
     my $sth = $dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute($self->param_required('genome_db_id'));
