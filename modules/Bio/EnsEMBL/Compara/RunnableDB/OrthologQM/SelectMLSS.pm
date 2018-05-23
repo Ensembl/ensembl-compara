@@ -194,7 +194,7 @@ sub _map_mlss_to_db {
 	# my %mlss_db_mapping = %{ $self->param('mlss_db_mapping') };
 	my %mlss_db_mapping;
 
-	if ( $aln_dbs ) {
+	if ( $aln_dbs and scalar @$aln_dbs > 0 ) {
 		foreach my $db_url ( @$aln_dbs ) {
 			my $this_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $db_url );
 			my $mlss_adap = $this_dba->get_MethodLinkSpeciesSetAdaptor;
