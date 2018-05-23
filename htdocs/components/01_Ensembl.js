@@ -116,13 +116,24 @@ Ensembl.extend({
   },
 
   cookie: {
-    set: function (name, value, expiry, unescaped) {
+    set: function (name, value, expiry, unescaped, all_sites) {
+      var domain = document.domain;
+      // all_sites is set to true if you want the cookie to be set for all sites (*.ebi.ac.uk)
+      if (all_sites) {
+        var re = new RegExp(/(.*?)\.?([^\.]*?)\.(ac\.uk|org)$/);
+        var _match = document.domain.match(re);
+        if (_match) {
+          domain = _match[2] ? _match[2] + "." + _match[3] : document.domain;
+        }
+      }
+
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
-        '; expires=',
+        '; domain='+ domain +'; expires=',
         ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970 00:00:00 GMT' : expiry ? expiry : 'Tue, 19 Jan 2038 00:00:00 GMT'),
         '; path=/'
       ].join('');
+
       document.cookie = cookie;
       
       return value;

@@ -143,7 +143,7 @@ Ensembl.LayoutManager.extend({
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
 
-    this.showCookieMessage();
+    this.showGDPRCookieBanner();
     this.showTemporaryMessage();
     this.showMirrorMessage();
   },
@@ -286,21 +286,34 @@ Ensembl.LayoutManager.extend({
     }
   },
 
-  showCookieMessage: function() {
-    var cookiesAccepted = Ensembl.cookie.get('cookies_ok');
+  showGDPRCookieBanner: function() {
+    var cookie_name = $('#gdpr_cookie_name').val();
+    var cookie_for_all_sites = true;
+    var cookiesVersion = Ensembl.cookie.get(cookie_name);
+    Ensembl.gdpr_version = $('#gdpr_version').val();
+    Ensembl.gdpr_policy_url = $('#gdpr_policy_url').val();
+    Ensembl.gdpr_terms_url = $('#gdpr_terms_url').val();
 
-    if (!cookiesAccepted) {
-      $(['<div class="cookie-message hidden">',
-          '<p class="msg">We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.',
-            '<span class="more-info"> Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a>.</span>',
-          '</p>',
-          '<a class="more-info-link" href="/info/about/legal/privacy.html">More</a>',
-          '<span class="close">x</span>',
-        '</div>'
-      ].join(''))
-        .appendTo(document.body).show().find('span.close').on('click', function (e) {
-          Ensembl.cookie.set('cookies_ok', 'yes');
-          $(this).parents('div').first().fadeOut(200);
+    if (Ensembl.gdpr_version && (!cookiesVersion || (cookiesVersion !== Ensembl.gdpr_version))) {
+      $([ "<div class='cookie-message'>",
+            "<p class='msg'>",
+              "This website requires cookies, and the limited processing of your personal data in order to function. By using the site you are agreeing to this as outlined in our ",
+              "<a target='_blank' href='",
+              Ensembl.gdpr_policy_url,
+              "'>Privacy Policy</a>",
+              " and <a target='_blank' href='",
+              Ensembl.gdpr_terms_url,
+              "'> Terms of Use </a>",
+            "</p>",
+            "<div class='agree-button'>",
+              "<a id='gdpr-agree' class='button no-underline'> I Agree </a>",
+            "</div>",
+          "</div>"
+        ].join(''))
+        .appendTo(document.body).show().find('#gdpr-agree').on('click', function (e) {
+          Ensembl.cookie.set(cookie_name, Ensembl.gdpr_version, '', true, cookie_for_all_sites);
+          $(this).addClass('clicked')
+                 .closest('.cookie-message').delay(1000).fadeOut(100);
       });
       return true;
     }

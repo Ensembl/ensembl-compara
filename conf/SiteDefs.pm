@@ -133,9 +133,13 @@ our $ENSEMBL_WARN_DATABASES         = 0; # Shows missing databases in EnsEMBL::W
 ###############################################################################
 
 ###############################################################################
-## Privacy Policy URL - needed for email footers 
+## GDPR variables
+## Some variables are assigned null for external users to override
 ###############################################################################
-our $GDPR_POLICY_URL              = 'http://www.ensembl.org/info/about/legal/privacy.html';
+our $GDPR_VERSION                 = '';
+our $GDPR_COOKIE_NAME             = '';
+our $GDPR_POLICY_URL              = 'https://www.ebi.ac.uk/data-protection/ensembl/privacy-notice';
+our $GDPR_TERMS_URL               = 'https://www.ebi.ac.uk/about/terms-of-use';
 
 ###############################################################################
 ## Cookies and cookie encryption
