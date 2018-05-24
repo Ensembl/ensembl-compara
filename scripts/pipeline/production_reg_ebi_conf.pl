@@ -34,10 +34,10 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 # -------------------------CORE DATABASES--------------------------------------
 
 # The majority of core databases live on staging servers:
-  # Bio::EnsEMBL::Registry->load_registry_from_url(
-  #   'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/92');
-  Bio::EnsEMBL::Registry->load_registry_from_url(
-    'mysql://ensro@mysql-ens-vertannot-staging:4573/93');
+   Bio::EnsEMBL::Registry->load_registry_from_url(
+     'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/93');
+  #Bio::EnsEMBL::Registry->load_registry_from_url(
+  #  'mysql://ensro@mysql-ens-vertannot-staging:4573/93');
 
 
 # Add in extra cores from genebuild server
@@ -85,24 +85,24 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 #);
 
 # Reindexed mouse strains protein trees
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-3',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4523,
-#     -species => 'murinae_ptrees',
-#     -dbname => 'carlac_murinae_reindex_protein_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-1',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4485,
+     -species => 'murinae_ptrees',
+     -dbname => 'mateus_murinae_protein_trees_93',
+);
 
 # Reindexed mouse strains ncRNA trees
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-2',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4522,
-#     -species => 'murinae_nctrees',
-#     -dbname => 'muffato_murinae_ncrna_trees_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-2',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4485,
+     -species => 'murinae_nctrees',
+     -dbname => 'mateus_murinae_ncrna_trees_93',
+);
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
@@ -181,14 +181,14 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 # current release database on one of Compara servers:
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#    -host => 'mysql-ens-compara-prod-1',
-#    -user => 'ensadmin',
-#    -pass => $ENV{'ENSADMIN_PSW'},
-#    -port => 4485,
-#    -species => 'compara_curr',
-#    -dbname => 'ensembl_compara_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -species => 'compara_curr',
+    -dbname => 'ensembl_compara_93',
+);
 
 # previous ancestral database on one of Compara servers:
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -212,15 +212,15 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 #    -dbname => 'ensembl_ancestral_92',
 #);
 
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#    -host => 'mysql-ens-compara-prod-3',
-#    -user => 'ensadmin',
-#    -pass => $ENV{'ENSADMIN_PSW'},
-#    -port => 4523,
-#    -group => 'core',
-#    -species => 'ancestral_curr',
-#    -dbname => 'ensembl_ancestral_92',
-#);
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4523,
+    -group => 'core',
+    -species => 'ancestral_curr',
+    -dbname => 'ensembl_ancestral_93',
+);
 
 # ensembl production (maintained by production team):
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(

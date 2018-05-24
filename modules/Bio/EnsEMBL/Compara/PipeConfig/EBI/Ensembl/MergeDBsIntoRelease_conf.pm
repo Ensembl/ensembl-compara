@@ -75,18 +75,18 @@ sub default_options {
 
         # All the source databases
         'src_db_aliases'    => {
-           'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-           'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_protein_trees_92',
-           'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_92',
-           'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_families_92',
-           'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_murinae_reindex_protein_92',
-           'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/muffato_murinae_ncrna_trees_92',
-           'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_alt_allele_import_92',
-           'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2:4522/carlac_load_members_92',
+            'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_protein_trees_93',
+            'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_compara_nctrees_93',
+            'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_families_93',
+            'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mateus_murinae_protein_trees_93',
+            'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mateus_murinae_ncrna_trees_93',
+            'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mateus_alt_allele_import_93',
+            'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2:4522/mateus_load_members_93',
         },
 
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_92',
+        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_93',
 
         # From these databases, only copy these tables
         'only_tables'       => {
@@ -114,8 +114,9 @@ sub default_options {
             # 'protein_db'        => [qw(gene_tree_node)],
             # 'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
-            # 'mouse_prot_db'  => [qw(prev_rel_gene_member prev_ortholog_goc_metric)],
-            # 'mouse_ncrna_db' => [qw(prev_ortholog_goc_metric)],
+            # 'mouse_prot_db'  => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
+            # 'mouse_ncrna_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
+            # 'projection_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection)],
         },
 
    };
