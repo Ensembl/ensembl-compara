@@ -37,7 +37,7 @@ use the mlss id to get the species genome db ids and then get their last common 
 
 Example run
 
-  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance  -goc_mlss_id <>
+  standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Fetch_genetic_distance  -mlss_id <>
 
 =cut
 
@@ -53,7 +53,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 
 	my $self = shift;
-	my $mlss_id = $self->param_required('goc_mlss_id');
+	my $mlss_id = $self->param_required('mlss_id');
+
 	$self->param('mlss_adaptor', $self->compara_dba->get_MethodLinkSpeciesSetAdaptor);
   my $mlss = $self->param('mlss_adaptor')->fetch_by_dbID($mlss_id);
 
