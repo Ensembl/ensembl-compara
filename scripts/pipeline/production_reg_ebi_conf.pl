@@ -213,10 +213,10 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 #);
 
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-3',
+    -host => 'mysql-ens-compara-prod-1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4523,
+    -port => 4485,
     -group => 'core',
     -species => 'ancestral_curr',
     -dbname => 'ensembl_ancestral_93',
