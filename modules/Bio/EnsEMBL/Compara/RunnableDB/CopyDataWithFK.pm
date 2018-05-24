@@ -56,8 +56,6 @@ sub param_defaults {
     return {
         %{ $self->SUPER::param_defaults(@_) },
 
-        'do_transactions'       => 1,
-
         'expand_tables'         => 1,
 
         'rfam_model_id'         => undef,
