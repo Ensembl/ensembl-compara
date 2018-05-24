@@ -910,14 +910,9 @@ sub _add_file_format_track {
   my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
   my ($desc, $url);
 
-  my $datafile_base_path = $self->hub->species_defs->DATAFILE_BASE_PATH;
-  if ($args{'source'}{'source_name'} =~ /Age of base/i) {
-    $datafile_base_path = $self->hub->species_defs->DATAFILE_BASE_PATH_TMP;
-  }
-
   if ($args{'internal'}) {
     $desc = $args{'description'};
-    $url = join '/', $datafile_base_path, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
+    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_VERSION, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
     if ($args{'source'}{'source_type'} =~ /^session|user$/i) {
