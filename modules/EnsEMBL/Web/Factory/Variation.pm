@@ -84,7 +84,7 @@ sub createObjects {
       $self->delete_param('vf');
     }
     
-    $self->param('vdb', 'variation');
+    $self->param('vdb', 'variation') unless $self->param('vdb');
     $self->param('v', $variation->name) unless $self->param('v'); # For same reason as vf check above
     $self->delete_param('snp');
   } else { 
