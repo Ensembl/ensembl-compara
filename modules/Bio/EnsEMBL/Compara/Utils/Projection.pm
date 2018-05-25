@@ -26,7 +26,6 @@ package Bio::EnsEMBL::Compara::Utils::Projection;
 
 use strict;
 use warnings;
-
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 
@@ -91,4 +90,43 @@ sub project_Slice_to_reference_toplevel {
     return $projection_segments;
 }
 
+
+=head2 project_Slice_to_target_genome
+
+    Arg[1]      : Bio::EnsEMBL::Slice $slice
+    Arg[2]      : Bio::EnsEMBL::COMPARA::MethodLinkSpeciesSet $mlss
+    Arg[3]      : (Optional) the name of the target species if the mlss is for a multiple genome alignment
+    Example     : $object_name->project_Slice_to_target_genome();
+    Description : This script takes as input the desired coordinates on the genome of a given species and uses the genomic aligns block object and the mapper object to map those coordinates
+                    to their corresponding aligned coordinates on a target species genome.
+    Returntype  : Arrayref of paired hash objects each pair respresenting a one to one mapping of the aligned coordinates on both source and target species
+    Exceptions  : none
+    Caller      : general
+    Status      : Stable
+=cut
+
+sub project_Slice_to_target_genome {
+    my ($slice, $mlss, $target_sp) = @_;
+
+    if ($mlss->method()->class ne 'GenomicAlignBlock.pairwise_alignment' && $target_sp eq '') {
+    die "you have given an mlss for a multiple WGA but have forgotten to give your preferred target species";
+    }
+
+    my $gblock_adap = $mlss->adaptor->db->get_GenomicAlignBlockAdaptor;
+    my $gdb_adap = $mlss->adaptor->db->get_GenomeDBAdaptor;
+
+    my $all_genomic_align_blocks = $gblock_adap->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
+    my $ref_sp = $gdb_adap->fetch_by_Slice($slice)->name;
+
+    my ($slice_start,$slice_end,$slice_strand) = ($slice->start, $slice->end, $slice->strand);
+    my ($linked, @overall_linked);
+
+    foreach my $gab (@{$all_genomic_align_blocks}) {
+        $linked = $gab->get_mapper_coordinates($slice_start,$slice_end,$ref_sp, $target_sp);
+        push (@overall_linked, @$linked);
+    }
+
+    return \@overall_linked; 
+
+}
 1;

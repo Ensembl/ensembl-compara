@@ -1500,6 +1500,102 @@ sub _print {    ## DEPRECATED
 }
 
 
+=head2 get_mapper_coordinates
+
+Arg [1]    : start coordinates
+Arg [2]    : end coordinates
+Arg [3]    : source species registry name 
+Arg [4]    : (optional) target species registry name
+Example    : $genomic_align_block->get_mapper_coordinates(167602,167999,'gasterosteus_aculeatus','oryzias_latipes')
+Description: maps the aligned coordinates from the source species to the target species
+Returntype : An array of paired Bio::EnsEMBL::Mapper::Coordinate hashes
+Exceptions : throw if genomic align block is for multiple WGAs and ref and target species  are not given by the user
+Caller     : object::methodname
+
+=cut
+
+sub get_mapper_coordinates {
+  my ($self, $start,$end, $source_species, $target_species) = @_;
+  my $genomic_alns = $self->get_all_GenomicAligns();
+  my ($ref_sp_obj, $target_sp_obj,$genome_dbs, $strand, @linked, $gdb_adap,$ref_coord_system_name, $ref_seq_reqion_name, $target_coord_system_name, $target_seq_reqion_name);
+  my $include_original_region = 1; # we want map_coordinates to return the original regions as well as the mapped regions in the result since we don't need this. 
+  if ($self->method_link_species_set->method->class ne 'GenomicAlignBlock.pairwise_alignment') { #check if this a multiple WGA genomic align block
+    if (!(defined ($source_species) || !(defined($target_species)))) {
+      die "this genomic aligns block is for multiple WGAs, you forgot the specify your interested reference and target species";
+    }
+    else {
+      $gdb_adap = $self->adaptor->db->get_GenomeDBAdaptor;
+      $ref_sp_obj = $gdb_adap->fetch_by_registry_name($source_species);
+      $target_sp_obj = $gdb_adap->fetch_by_registry_name($target_species);
+    }
+  }
+  else{
+    unless (defined($source_species) && defined($target_species)) {
+      $genome_dbs = $self->method_link_species_set->species_set->genome_dbs();
+      $ref_sp_obj = $genome_dbs->[0];
+      $target_sp_obj = $genome_dbs->[1];
+    }
+    else {
+      if (defined($source_species) && defined($target_species) ) {
+        $ref_sp_obj = $gdb_adap->fetch_by_registry_name($source_species);
+        $target_sp_obj = $gdb_adap->fetch_by_registry_name($target_species);
+      }
+      else{ 
+        if (defined($source_species) ) {
+          $ref_sp_obj = $gdb_adap->fetch_by_registry_name($source_species);
+          $target_sp_obj = $genome_dbs->[0]->dbID() == $ref_sp_obj->dbID() ? $genome_dbs->[1] : $genome_dbs->[0];
+        }
+        if (defined($target_species)){
+          $target_sp_obj = $gdb_adap->fetch_by_registry_name($target_species);
+          $ref_sp_obj = $genome_dbs->[0]->dbID() == $target_sp_obj->dbID() ? $genome_dbs->[1] : $genome_dbs->[0];
+        }
+      }
+    }
+  }
+
+  my $ga_array = $self->get_all_GenomicAligns([$ref_sp_obj->dbID]);
+  $strand = $ga_array->[0]->dnafrag_strand;
+  $ref_coord_system_name = $ga_array->[0]->dnafrag->coord_system_name;
+  $ref_seq_reqion_name = $ga_array->[0]->dnafrag->name;
+  my $ref_mapper = $ga_array->[0]->get_Mapper();
+  $ga_array = $self->get_all_GenomicAligns([$target_sp_obj->dbID]);
+  $target_coord_system_name = $ga_array->[0]->dnafrag->coord_system_name;
+  $target_seq_reqion_name = $ga_array->[0]->dnafrag->name;
+  my $target_mapper = $ga_array->[0]->get_Mapper();
+  my @ref_mapper_linked_with_coords = $ref_mapper->map_coordinates('SEQUENCE', $start, $end, $strand,'sequence', $include_original_region); # return the array of seq + aln mapper pair objects for the ref species
+
+  foreach my $ref_Seq_aln_mapper_pair (@ref_mapper_linked_with_coords) {
+    if (ref($ref_Seq_aln_mapper_pair->{original}) eq 'Bio::EnsEMBL::Mapper::Gap' ) { #gaps do not have coordinates in the seqs. so we romove then
+      next;
+    }
+    else{ 
+      my $ref_aln_coord = $ref_Seq_aln_mapper_pair->{mapped}; #get the alnment coords for the mapped ref sequence
+      $strand = $ref_aln_coord->{strand};
+      my @aln_target_links = $target_mapper->map_coordinates('ALIGNMENT',$ref_aln_coord->{start}, $ref_aln_coord->{end}, $strand,'alignment',$include_original_region); #map the alignment coordinates from the ref species genomic_aligns mapper object to the sequence coordinate of the target species genomic_aligns mapper object
+      foreach my $target_linked_coord (@aln_target_links) {
+        my $target_aln_coord = $target_linked_coord->{original}; #returns the targets aln coords
+        my @aln_ref_links = $ref_mapper->map_coordinates('ALIGNMENT',$target_aln_coord->{start}, $target_aln_coord->{end}, $strand,'alignment',$include_original_region); #map the alignment coordinates from the target species genomic_aligns mapper object back to the sequence coordinate of the ref species genomic_aligns mapper object. This allows us to retrieve genuine 1 to 1 mapped coordinates
+        $aln_ref_links[0]->{mapped}->{species} = $ref_sp_obj->name;
+        $aln_ref_links[0]->{mapped}->{coord_system} = $ref_coord_system_name;
+        $aln_ref_links[0]->{mapped}->{seq_region} = $ref_seq_reqion_name;
+        delete $aln_ref_links[0]->{mapped}->{rank};
+        delete $aln_ref_links[0]->{mapped}->{id};
+        my $tmp = $aln_ref_links[0]->{mapped}; # a clonky way to unbless this object as we are only interested in the hash
+        my %unblessed_ref = %$tmp;
+        $target_linked_coord->{mapped}->{species}=$target_sp_obj->name;
+        $target_linked_coord->{mapped}->{coord_system} = $target_coord_system_name ;
+        $target_linked_coord->{mapped}->{seq_region} = $target_seq_reqion_name;
+        delete $target_linked_coord->{mapped}->{rank};
+        delete $target_linked_coord->{mapped}->{id};
+        $tmp = $target_linked_coord->{mapped};
+        my %unblessed_target = %$tmp;
+        push (@linked, {from => \%unblessed_ref, to => \%unblessed_target});
+      }
+    }
+  }
+  return \@linked;
+}
+
 =head2 toString
 
   Example    : print $genomic_align_block->toString();
