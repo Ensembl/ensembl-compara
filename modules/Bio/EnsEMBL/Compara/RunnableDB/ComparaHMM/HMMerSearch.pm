@@ -92,6 +92,7 @@ sub write_output {
 
     if ( $self->param('store_all_hits') ) {
 
+        # Disconnect this DBConnection since we want to open a new one below
         $self->compara_dba->dbc->disconnect_if_idle;
 
         my $target_table = $self->param_required('target_table');
@@ -108,6 +109,7 @@ sub write_output {
 
         #Store all at once:
         print "Storing all the hits at once:\n" if ($self->debug);
+        # Make a eHive DBConnection to cope with "Too many connections" errors
         my $dbc_copy = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $self->compara_dba->dbc);
         bulk_insert($dbc_copy, 'hmm_thresholding', \@bulk_array, ['seq_member_id', 'root_id', 'evalue', 'score', 'bias'], 'INSERT IGNORE');
 
