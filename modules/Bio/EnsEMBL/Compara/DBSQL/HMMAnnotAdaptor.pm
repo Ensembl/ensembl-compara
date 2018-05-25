@@ -46,6 +46,8 @@ use warnings;
 
 use DBI qw(:sql_types);
 
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
 
@@ -88,25 +90,26 @@ sub fetch_all_seqs_under_the_diversity_levels {
 }
 
 
-sub store_hmmclassify_result {
-    my ($self, $seq_member_id, $model_id, $evalue, $table) = @_;
+=head2 store_rows
 
-    $table = "hmm_annot" if (!defined($table));
+  Arg[1]      : Array-ref of rows to be inserted in the hmm_annot table (each row is itself
+                an array-ref)
+  Example     : $hmm_annot_adaptor->store_rows(\@bulk_data);
+  Description : Store (efficiently) many rows in the hmm_annot table. Each row must have all
+                the columns defined (3 at the moment: "seq_member_id", "model_id", "evalue").
+                The method uses INSERT IGNORE in order to top up the existing data (assuming
+                the data that are there are correct).
+  Returntype  : Number of rows inserted
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
 
-    my $sql = "INSERT INTO hmm_annot(seq_member_id, model_id, evalue) VALUES (?,?,?)";
-    my $sth = $self->prepare($sql);
-    $sth->execute($seq_member_id, $model_id, $evalue);
-    $sth->finish();
-}
+=cut
 
-sub store_hmmclassify_all_results {
-    my ($self, $seq_member_id, $model_id, $evalue, $table) = @_;
-
-    #INSERT IGNORE to be able to rerun jobs
-    my $sql = "INSERT IGNORE INTO $table(seq_member_id, root_id, evalue) VALUES (?,?,?)";
-    my $sth = $self->prepare($sql);
-    $sth->execute($seq_member_id, $model_id, $evalue);
-    $sth->finish();
+sub store_rows {
+    my $self = shift;
+    my $all_rows = shift;
+    return bulk_insert($self->dbc, 'hmm_annot', $all_rows, ['seq_member_id', 'model_id', 'evalue'], 'INSERT IGNORE');
 }
 
 1;

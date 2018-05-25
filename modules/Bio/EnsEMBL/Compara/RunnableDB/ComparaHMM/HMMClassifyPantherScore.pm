@@ -106,10 +106,12 @@ sub write_output {
     my ($self) = @_;
     my $adaptor = $self->compara_dba->get_HMMAnnotAdaptor();
     my $all_hmm_annots = $self->param('all_hmm_annots');
-        # Store into table 'hmm_annot'
+    my @all_data;
     foreach my $seq_id (keys %$all_hmm_annots) {
-        $adaptor->store_hmmclassify_result($seq_id, @{$all_hmm_annots->{$seq_id}});
+        push @all_data, [$seq_id, @{$all_hmm_annots->{$seq_id}}];
     }
+        # Store into table 'hmm_annot'
+    $adaptor->store_rows(\@all_data);
 }
 
 

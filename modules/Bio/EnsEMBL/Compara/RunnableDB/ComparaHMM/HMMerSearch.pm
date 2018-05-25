@@ -101,7 +101,6 @@ sub write_output {
 
         foreach my $seq_id ( keys %{ $self->param('all_hmm_annots') } ) {
             foreach my $hmm_id ( keys %{ $self->param('all_hmm_annots')->{$seq_id} } ) {
-                #$adaptor->store_hmmclassify_all_results( $seq_id, $hmm_id, $all_hmm_annots->{$seq_id}->{$hmm_id}, $target_table );
                 my @hit_array = [ $seq_id, $hmm_id, $all_hmm_annots->{$seq_id}->{$hmm_id}->{'eval'}, $all_hmm_annots->{$seq_id}->{$hmm_id}->{'score'}, $all_hmm_annots->{$seq_id}->{$hmm_id}->{'bias'} ];
                 push(@bulk_array, @hit_array);
             }
@@ -114,9 +113,7 @@ sub write_output {
 
     }
     else {
-        foreach my $seq_id ( keys %$all_hmm_annots ) {
-            $adaptor->store_hmmclassify_result( $seq_id, @{ $all_hmm_annots->{$seq_id} } );
-        }
+        $adaptor->store_rows( [values %$all_hmm_annots] );
     }
 }
 
@@ -253,7 +250,7 @@ sub _run_HMM_search {
         }
 
         foreach my $seq_id ( keys %hmm_annot ) {
-            $self->param('all_hmm_annots')->{$seq_id} = [ $hmm_annot{$seq_id}{'hmm_id'}, $hmm_annot{$seq_id}{'eval'} ];
+            $self->param('all_hmm_annots')->{$seq_id} = [ $seq_id, $hmm_annot{$seq_id}{'hmm_id'}, $hmm_annot{$seq_id}{'eval'} ];
         }
     } ## end else [ if ( $self->param('store_all_hits'...))]
 
