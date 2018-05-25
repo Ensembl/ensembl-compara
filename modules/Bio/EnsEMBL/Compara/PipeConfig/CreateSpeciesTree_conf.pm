@@ -45,7 +45,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'curr_release'    => $ENV{CURR_ENSEMBL_RELEASE},
+        'curr_release'    => $self->o('ensembl_release'),
         'pipeline_name'   => 'species_tree_' . $self->o('ensembl_release'),
         'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_conf.pl',
         'collection'      => 'ensembl', # build tree with everything by default
