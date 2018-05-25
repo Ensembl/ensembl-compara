@@ -38,7 +38,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'reg_conf' => undef,
-        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
 
         'compara_db' => 'compara_curr',
         'reg_conf'   => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
