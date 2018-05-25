@@ -122,9 +122,6 @@ sub default_options {
 
     # executable locations:
 
-    # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_library_basedir'       => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
-
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
         'blast_factory_capacity'    =>  50,

@@ -38,6 +38,13 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf ...
 
+
+e93 protein-trees
+    -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_93) -prev_rel_db $(mysql-ens-compara-prod-3 details url carlac_murinae_reindex_protein_92)
+
+e93 ncRNA-trees
+    -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_93) -prev_rel_db $(mysql-ens-compara-prod-2 details url muffato_murinae_ncrna_trees_92)
+
 e91 protein-trees
 
     -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_91) -prev_rel_db $(mysql-ens-compara-prod-3 details url carlac_murinae_protein_trees_90)

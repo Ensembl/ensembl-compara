@@ -106,8 +106,8 @@ sub default_options {
     # connection parameters to various databases:
 
         'staging_loc' => {                     # general location of half of the current release core databases
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
+            -host   => 'mysql-ens-vertannot-staging',
+            -port   => 4573,
             -user   => 'ensro',
             -pass   => '',
         },

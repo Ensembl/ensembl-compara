@@ -41,8 +41,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
-
         'compara_db' => 'compara_curr',
         'ancestral_db' => 'ancestral_curr', # assume reg_conf is up-to-date
 

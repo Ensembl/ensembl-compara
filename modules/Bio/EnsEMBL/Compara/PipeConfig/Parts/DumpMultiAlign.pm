@@ -36,7 +36,7 @@ sub pipeline_analyses_dump_multi_align {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
             -parameters    => {
                 'method_link_types' => $self->o('method_link_types'),
-                'from_first_release' => $self->o('curr_release'),
+                'from_first_release' => $self->o('ensembl_release'),
             },
             # -input_ids     => [
             #     {

@@ -93,10 +93,20 @@ sub default_options {
         'cdhit_exe'                 => $self->check_exe_in_cellar('cd-hit/4.6.8/bin/cd-hit'),
 
         # HMM specific parameters
+        # HMMer versions could be either 2 or 3
         # The location of the HMM library:
-        'hmm_library_basedir'           => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_91/',
-        'hmm_library_name'              => 'compara_hmm_91.hmm3',
-        'hmmer_search_cutoff'           => '1e-23',
+
+        #HMMER 2
+        'hmm_library_version'           => '2',
+        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
+
+        #HMMER 3
+        #'hmm_library_version'       => '3',
+        #'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_91/',
+        #'hmm_library_name'              => 'compara_hmm_91.hmm3',
+        #'hmmer_search_cutoff'           => '1e-23',
+
+
     };
 }
 
