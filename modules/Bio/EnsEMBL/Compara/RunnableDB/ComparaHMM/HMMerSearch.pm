@@ -167,10 +167,10 @@ sub _run_HMM_search {
     my $worker_temp_directory = $self->worker_temp_directory;
     my $cmd;
     if ( $self->param('hmmer_cutoff') ) {
-        $cmd = $hmmer_home . "/hmmsearch --cpu 1 -E $hmmer_cutoff --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
+        $cmd = [$hmmer_home . '/hmmsearch', '--cpu', 1, '-E', $hmmer_cutoff, '--noali', '--tblout', "$fastafile.out", $hmmLibrary, $fastafile];
     }
     else {
-        $cmd = $hmmer_home . "/hmmsearch --cpu 1 --noali --tblout $fastafile.out " . $hmmLibrary . " " . $fastafile;
+        $cmd = [$hmmer_home . '/hmmsearch', '--cpu', 1, '--noali', '--tblout', "$fastafile.out", $hmmLibrary, $fastafile];
     }
 
     my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
