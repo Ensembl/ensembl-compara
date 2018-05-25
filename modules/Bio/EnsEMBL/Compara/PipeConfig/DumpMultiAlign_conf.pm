@@ -61,12 +61,15 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # This pipeline takes the release number from the "ensembl_release"
+        # parameter, which by default comes from the Core API
+        # 'ensembl_release' => 92
+
         # By default, the pipeline will follow the "locator" of each
         # genome_db. You only have to set reg_conf if the locators
         # are missing.
         # 'registry' => '',
         'reg_conf' => undef,
-        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
 
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
@@ -175,7 +178,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MLSSJobFactory',
             -parameters    => {
                 'method_link_types' => $self->o('method_link_types'),
-                'from_first_release' => $self->o('curr_release'),
+                'from_first_release' => $self->o('ensembl_release'),
             },
             -input_ids     => [
                 {
