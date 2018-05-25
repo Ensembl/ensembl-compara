@@ -98,7 +98,7 @@ sub default_options {
 
         #HMMER 2
         'hmm_library_version'           => '2',
-        'hmm_library_basedir'           => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_91/',
+        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
         #HMMER 3
         #'hmm_library_version'       => '3',
