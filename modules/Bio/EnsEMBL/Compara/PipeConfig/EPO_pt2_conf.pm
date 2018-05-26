@@ -174,7 +174,7 @@ sub pipeline_analyses {
                 },
                 -flow_into => {
                     '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
-                    '1->A' => [ 'populate_compara_tables' ],
+                    '1->A' => [ 'populate_method_link_table' ],
                     'A->1' => [ 'create_mlss_ss' ],
                 },
             },
@@ -220,7 +220,7 @@ sub pipeline_analyses {
                 -flow_into => [ 'reuse_anchor_align_factory' ],
             },
 
-            {   -logic_name => 'populate_compara_tables',
+            {   -logic_name => 'populate_method_link_table',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters => {
                     'sql' => [
@@ -296,7 +296,7 @@ sub pipeline_analyses {
 	    {	-logic_name     => 'map_anchors',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
 		-parameters => {
-			'mapping_exe' => $self->o('mapping_exe'),
+			'mapping_exe' => $self->o('exonerate_exe'),
 	                'mapping_params' => $self->o('mapping_params'),
 		},
                 -flow_into => {
@@ -311,7 +311,7 @@ sub pipeline_analyses {
 	    {	-logic_name     => 'map_anchors_himem',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
 		-parameters => {
-			'mapping_exe' => $self->o('mapping_exe'),
+			'mapping_exe' => $self->o('exonerate_exe'),
 	                'mapping_params' => $self->o('mapping_params'),
 		},
                 -batch_size => $self->o('map_anchors_batch_size'),

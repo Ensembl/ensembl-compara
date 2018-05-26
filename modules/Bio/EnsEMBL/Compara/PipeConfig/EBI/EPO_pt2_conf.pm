@@ -80,7 +80,7 @@ sub default_options {
 	'compara_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_generate_anchors_sauropsids',
     'reuse_db' => undef,
 
-    'mapping_exe'    => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'),
+    'exonerate_exe'  => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'),
     'ortheus_c_exe'  => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
 
         # Capacities

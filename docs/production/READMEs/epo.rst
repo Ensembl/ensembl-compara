@@ -99,7 +99,7 @@ You will need the database containing the anchor set from the 1st part (set in '
  
 You will also need to install the following executables and set their locations:
 
-- `exonerate <http://www.ebi.ac.uk/~guy/exonerate/>`_ set in ``mapping_exe``
+- `exonerate <http://www.ebi.ac.uk/~guy/exonerate/>`_ set in ``exonerate_exe``
 
 Configuration of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
