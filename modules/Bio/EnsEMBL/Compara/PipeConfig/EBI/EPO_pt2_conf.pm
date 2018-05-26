@@ -37,6 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt2_conf
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
     #6. Fix the code when it crashes
+
 =head1 DESCRIPTION  
 
     This configuaration file gives defaults for mapping (using exonerate at the moment) anchors to a set of target genomes (dumped text files)
