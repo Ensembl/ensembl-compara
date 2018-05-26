@@ -158,6 +158,28 @@ sub pipeline_analyses {
 
     return [
 
+        {   -logic_name => 'copy_table_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist' => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'genome_db' ],
+                'column_names' => [ 'table' ],
+            },
+            -input_ids => [{}],
+            -flow_into => {
+                2 => { 'copy_table' => { 'table' => '#table#' } },
+            },
+        },
+
+        {   -logic_name    => 'copy_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => '#master_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+            },
+            -analysis_capacity => 10,
+        },
+
         {
           -logic_name => 'syntheny_pipeline_entry_pt',
           -module     =>  'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
@@ -296,7 +318,6 @@ sub pipeline_analyses {
                            },
               
             },
-            @{$self->init_basic_tables_analyses('#master_db#', undef, 1, 0, 0, [{}])},
 
             { -logic_name => 'load_dnafrag_regions',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions',

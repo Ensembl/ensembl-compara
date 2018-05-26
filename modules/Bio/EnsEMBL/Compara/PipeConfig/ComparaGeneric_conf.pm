@@ -127,40 +127,6 @@ sub pipeline_create_commands {
     ];
 }
 
-sub init_basic_tables_analyses {
-    my ($self, $source_db, $target_analysis, $with_genome_db, $with_species_tree, $with_dnafrag, $input_ids) = @_;
-
-    return [
-
-        {   -logic_name => 'copy_table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist' => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node',
-                                 $with_dnafrag ? ('dnafrag') : (),
-                                 $with_genome_db ? ('genome_db') : (),
-                                 $with_species_tree ? ('species_tree_node', 'species_tree_root') : (),
-                ],
-                'column_names' => [ 'table' ],
-            },
-            -input_ids => $input_ids,
-            -flow_into => {
-                ($target_analysis ? '2->A' : 2) => { 'copy_table' => { 'table' => '#table#' } },
-                ($target_analysis ? ( 'A->1' => [ $target_analysis ] ) : ()),
-            },
-        },
-
-        {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => $source_db,
-                'mode'          => 'overwrite',
-                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-            },
-            -analysis_capacity => 10,
-        },
-
-    ];
-}
 
 ## Default pipeline_analyses, as in HiveGeneric
 sub core_pipeline_analyses {

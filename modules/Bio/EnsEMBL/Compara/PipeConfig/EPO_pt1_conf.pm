@@ -138,7 +138,29 @@ sub pipeline_analyses {
 
 return [
 # ------------------------------------- set up the necessary database tables
-    @{$self->init_basic_tables_analyses('#compara_pairwise_db#', 'delete_from_copied_tables', 1, 0, 1, [{}])},
+
+        {   -logic_name => 'copy_table_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist' => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag', 'genome_db' ],
+                'column_names' => [ 'table' ],
+            },
+            -input_ids => [{}],
+            -flow_into => {
+                '2->A' => { 'copy_table' => { 'table' => '#table#' } },
+                'A->1' => [ 'delete_from_copied_tables' ],
+            },
+        },
+
+        {   -logic_name    => 'copy_table',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => '#compara_pairwise_db#',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+            },
+            -analysis_capacity => 10,
+        },
 
 {
   -logic_name => 'delete_from_copied_tables',
