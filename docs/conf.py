@@ -104,6 +104,8 @@ if not os.path.islink('xhive'):
     shutil.rmtree(ehive_target_dir, True)
     subprocess.check_call(['git', 'clone', '--branch', 'master', '--depth', '1', 'https://github.com/Ensembl/ensembl-hive.git', ehive_target_dir])
     os.symlink(os.path.join(ehive_target_dir, "docs", "xhive"), "xhive")
+else:
+    subprocess.check_call(['git', 'pull'], cwd = "xhive")
 ehive_root_dir = os.path.join(os.path.realpath('xhive'), os.path.pardir, os.path.pardir)
 os.environ.setdefault("ENSEMBL_CVS_ROOT_DIR", "")
 from xhive import setup_if_needed
