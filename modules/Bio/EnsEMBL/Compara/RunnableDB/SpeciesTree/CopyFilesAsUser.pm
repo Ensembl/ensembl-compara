@@ -40,10 +40,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CopyFilesAsUser;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
-# use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {
 	my $self = shift;
@@ -57,18 +55,8 @@ sub fetch_input {
 	foreach my $f ( @filelist ) {
 		$cmd .= "cp $f $dest_dir; ";
 	}
-	print "cmd: $cmd\n\n";
 	$self->param('cmd', $cmd);
 }
 
-sub run {
-	my $self = shift;
-
-	my $cmd = $self->param_required('cmd');
-	my $options = {};
-    $options->{debug} = $self->debug;
-
-	Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, $options);
-}
 
 1;
