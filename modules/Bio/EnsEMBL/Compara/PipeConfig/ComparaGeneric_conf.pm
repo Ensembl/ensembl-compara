@@ -128,6 +128,41 @@ sub pipeline_create_commands {
 }
 
 
+=head2 pipeline_create_commands_lfs_setstripe
+
+  Arg[1]      : Arrayef of variable names
+  Arg[2]      : (optional) username to become
+  Example     : $self->pipeline_create_commands_lfs_setstripe('fasta_dir');
+  Description : Helper method to build the commands necessary to stripe a Lustre
+                filesystem (if on Lustre). The directories come from calling
+                $self->o() on the variable names.
+                Optionally, the commands will be prefixed with "become" if the
+                directory belongs to another user.
+  Returntype  : List of strings (commands)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub pipeline_create_commands_lfs_setstripe {
+    my $self = shift;
+    my $dirs = shift;
+    my $user = shift;
+
+    # Do we need to "become" someone else ?
+    $user = $user ? "become -- $user" : '';
+
+    # Prepare the list of directories
+    $dirs = [$dirs] unless ref($dirs);
+    my @dirs = map {$self->o($_)} @$dirs;
+
+    # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
+    my @cmds = map {qq{which lfs && $user lfs getstripe $_ >/dev/null 2>/dev/null && $user lfs setstripe $_ -c -1 || echo "Striping is not available on this system"}} @dirs;
+    return @cmds;
+}
+
+
 ## Default pipeline_analyses, as in HiveGeneric
 sub core_pipeline_analyses {
     my $self = shift;

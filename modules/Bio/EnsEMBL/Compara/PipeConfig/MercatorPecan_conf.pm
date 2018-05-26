@@ -150,9 +150,9 @@ sub pipeline_create_commands {
         
         'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('mercator_dir'),
-        'which lfs && lfs getstripe '.$self->o('blastdb_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('blastdb_dir').' -c -1 || echo "Striping is not available on this system" ',
         'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
         'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+        $self->pipeline_create_commands_lfs_setstripe('blastdb_dir'),
      ];
 }
 

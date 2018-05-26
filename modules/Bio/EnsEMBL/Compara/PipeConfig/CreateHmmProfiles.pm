@@ -381,12 +381,8 @@ sub pipeline_create_commands {
         'become -- compara_ensembl mkdir -p '.$self->o('panther_hmm_library_basedir'),
         'become -- compara_ensembl mkdir -p '.$self->o('seed_hmm_library_basedir'),
 
-            # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
-        'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
-        'which lfs && become -- compara_ensembl lfs getstripe ' . $self->o('compara_hmm_library_basedir'). ' && become -- compara_ensembl lfs setstripe '.$self->o('compara_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
-        'which lfs && become -- compara_ensembl lfs getstripe ' . $self->o('panther_hmm_library_basedir'). ' && become -- compara_ensembl lfs setstripe '.$self->o('panther_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
-        'which lfs && become -- compara_ensembl lfs getstripe ' . $self->o('seed_hmm_library_basedir'). ' && become -- compara_ensembl lfs setstripe '.$self->o('seed_hmm_library_basedir').' -c -1 || echo "Striping is not available on this system" ',
-
+        $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
+        $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], 'compara_ensembl'),
     ];
 }
 
