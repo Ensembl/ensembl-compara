@@ -86,7 +86,7 @@ sub default_options {
 
       'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
-      'bl2seq' => undef,
+      'bl2seq_exe' => undef,
 
       # Dump directory
       'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',

@@ -117,7 +117,7 @@ return
      'input_query'  => q{SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE
   aa.dnafrag_strand WHEN 1 THEN "+" ELSE "-" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN
   dnafrag df ON aa.dnafrag_id = df.dnafrag_id INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE
-  aa.method_link_species_set_id = #mapping_mlssid#
+  aa.method_link_species_set_id = #trimmed_mapping_mlssid#
   ORDER BY gdb.name, df.name, aa.dnafrag_start},
   },
    -flow_into => [ 'run_enredo' ],
@@ -193,7 +193,7 @@ return
 	-logic_name => 'find_dnafrag_region_strand',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
-		bl2seq_exe => $self->o('bl2seq'),
+		bl2seq_exe => $self->o('bl2seq_exe'),
         blastn_exe  => $self->o('blastn'),
 		bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
@@ -208,7 +208,7 @@ return
 	-logic_name => 'find_dnafrag_region_strand_more_mem',
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
-		bl2seq_exe => $self->o('bl2seq'),
+		bl2seq_exe => $self->o('bl2seq_exe'),
         blastn_exe  => $self->o('blastn'),
         bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
