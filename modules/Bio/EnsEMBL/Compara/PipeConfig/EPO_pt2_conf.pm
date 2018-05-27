@@ -381,7 +381,6 @@ sub pipeline_analyses {
         # some jobs just will not run, no matter how much memory is allocated - ignore them
         {   -logic_name => 'ignore_huge_trim_anchor_align', 
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -meadow_type=> 'LOCAL',
         },
     ];
 }	
