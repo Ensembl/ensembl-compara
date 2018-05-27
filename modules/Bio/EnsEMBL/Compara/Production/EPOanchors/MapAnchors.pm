@@ -230,23 +230,21 @@ sub start_server {
     # Get the list of ports that are in use
     my $netstat_output = `netstat -nt4 | tail -n+3 | awk '{print \$4}' | cut -d: -f2 | sort -nu`;
     my %bad_ports = map {$_ => 1} split(/\n/, $netstat_output);
+    my @available_ports = grep {!$bad_ports{$_}} (shuffle 12886..42886);
 
-    # Start at default port; if something is already running, try another one
-    foreach my $port (shuffle 12886..42886) {
-        next if $bad_ports{$port};
-        if ($self->start_server_on_port($port)) {
-            $self->param('target_file', "localhost:$port");
-            return;
-        } else {
-            # Most of the time, if we fail once, we're going to fail more
-            # Let's just bail out
-            foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
-                $self->dataflow_output_id( { 'min_anchor_id' => $anchor_id, 'max_anchor_id' => $anchor_id }, 2);
-            }
-            $self->complete_early('Port taken. Trying without a server');
+    # We try one of them
+    my $candidate_port = $available_ports[0];
+    if ($self->start_server_on_port($candidate_port)) {
+        $self->param('target_file', "localhost:$candidate_port");
+    } else {
+        # If we can't start the server on one port, there is more than 80%
+        # chance we'll have to try several more ports. Instead of spending
+        # too much time, we just bail out !
+        foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
+            $self->dataflow_output_id( { 'min_anchor_id' => $anchor_id, 'max_anchor_id' => $anchor_id }, 2);
         }
+        $self->complete_early('Port taken. Trying without a server');
     }
-    $self->throw("Failed to find an available port for exonerate-server");
 }
 
 sub start_server_on_port {
