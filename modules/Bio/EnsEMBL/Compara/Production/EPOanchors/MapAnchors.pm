@@ -82,15 +82,18 @@ sub fetch_input {
         my $min_anc_id = $self->param('min_anchor_id');
         my $max_anc_id = $self->param('max_anchor_id');
 	$sth->execute( $min_anc_id, $max_anc_id );
+        my %all_anchor_ids;
 	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
 	foreach my $anc_seq( @{ $sth->fetchall_arrayref } ){
+                $all_anchor_ids{$anc_seq->[0]} = 1;
 		print $fh ">", $anc_seq->[0], "\n", $anc_seq->[1], "\n";
 	}
         close($fh);
         $sth->finish;
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
+        $self->param('all_anchor_ids', [keys %all_anchor_ids]);
 
         return unless $self->param('with_server');
         $self->param('index_file', "$genome_db_file.esi");
@@ -234,6 +237,13 @@ sub start_server {
         if ($self->start_server_on_port($port)) {
             $self->param('server_loc', "localhost:$port");
             return;
+        } else {
+            # Most of the time, if we fail once, we're going to fail more
+            # Let's just bail out
+            foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
+                $self->dataflow_output_id( { 'min_anchor_id' => $anchor_id, 'max_anchor_id' => $anchor_id }, 2);
+            }
+            $self->complete_early('Port taken. Trying without a server');
         }
     }
     $self->throw("Failed to find an available port for exonerate-server");

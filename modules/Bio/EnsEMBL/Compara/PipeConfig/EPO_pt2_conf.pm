@@ -325,6 +325,7 @@ sub pipeline_analyses {
                         'with_server' => 1,
 		},
                 -flow_into => {
+                    2 => { 'map_anchors_no_server' => INPUT_PLUS() },
                     -1 => 'map_anchors_himem',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
@@ -342,11 +343,42 @@ sub pipeline_analyses {
                         'server_exe' => $self->o('server_exe'),
                         'with_server' => 1,
 		},
+                -flow_into => {
+                    2 => { 'map_anchors_no_server_himem' => INPUT_PLUS() },
+                },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
                 -rc_name => 'mem14000',
 		-max_retry_count => 1,
 	    },
+
+            {   -logic_name     => 'map_anchors_no_server',
+                -module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
+                -parameters => {
+                    'mapping_exe' => $self->o('exonerate_exe'),
+                    'mapping_params' => $self->o('mapping_params'),
+                },
+                -flow_into => {
+                    -1 => 'map_anchors_no_server_himem',
+                },
+                -batch_size => $self->o('map_anchors_batch_size'),
+                -hive_capacity => $self->o('map_anchors_capacity'),
+                -rc_name => 'mem7500',
+                -priority => -10,
+                -max_retry_count => 1,
+            },
+
+            {   -logic_name     => 'map_anchors_no_server_himem',
+                -module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors',
+                -parameters => {
+                    'mapping_exe' => $self->o('exonerate_exe'),
+                    'mapping_params' => $self->o('mapping_params'),
+                },
+                -batch_size => $self->o('map_anchors_batch_size'),
+                -hive_capacity => $self->o('map_anchors_capacity'),
+                -rc_name => 'mem14000',
+                -max_retry_count => 1,
+            },
 
 	    {	-logic_name     => 'remove_overlaps',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps',
