@@ -128,6 +128,42 @@ sub pipeline_create_commands {
 }
 
 
+=head2 pipeline_create_commands_rm_mkdir
+
+  Arg[1]      : Arrayef of variable names
+  Arg[2]      : (optional) username to become
+  Example     : $self->pipeline_create_commands_rm_mkdir('fasta_dir');
+  Description : Helper method to build the commands necessary to delete and
+                create some directories. The directories come from calling
+                $self->o() on the variable names.
+                Optionally, the commands will be prefixed with "become" if the
+                directory belongs to another user.
+  Returntype  : List of strings (commands)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub pipeline_create_commands_rm_mkdir {
+    my $self = shift;
+    my $dirs = shift;
+    my $user = shift;
+
+    # Do we need to "become" someone else ?
+    $user = $user ? "become -- $user" : '';
+
+    # Prepare the list of directories
+    $dirs = [$dirs] unless ref($dirs);
+    my @dirs = map {$self->o($_)} @$dirs;
+
+    my @cmds;
+    push @cmds, map {qq{$user rm -rf $_}} @dirs;
+    push @cmds, map {qq{$user mkdir -p $_}} @dirs;
+    return @cmds;
+}
+
+
 =head2 pipeline_create_commands_lfs_setstripe
 
   Arg[1]      : Arrayef of variable names
