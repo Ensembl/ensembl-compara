@@ -463,7 +463,7 @@ return
             {   -logic_name => 'healthcheck_factory',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into => {
-                               '2->A' => WHEN( '#run_gerp#' => {
+                               '1->A' => WHEN( '#run_gerp#' => {
                                      'conservation_score_healthcheck'  => [
                                                                            {'test' => 'conservation_jobs', 'logic_name'=>'gerp','method_link_type'=>'EPO'},
                                                                            {'test' => 'conservation_scores'},
