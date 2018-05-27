@@ -94,6 +94,7 @@ sub fetch_input {
         $anchor_dba->dbc->disconnect_if_idle;
 	$self->param('query_file', $query_file);
         $self->param('all_anchor_ids', [keys %all_anchor_ids]);
+        $self->param('target_file', $genome_db_file);
 
         return unless $self->param('with_server');
         $self->param('index_file', "$genome_db_file.esi");
@@ -107,8 +108,7 @@ sub run {
         $self->dbc->disconnect_if_idle();
 	my $program = $self->param_required('mapping_exe');
 	my $query_file = $self->param_required('query_file');
-	my $target_file = $self->param_required('genome_db_file');
-	   $target_file = $self->param('server_loc') if $self->param('with_server');
+	my $target_file = $self->param_required('target_file');
 	my $option_st;
 	while( my ($opt, $opt_value) = each %{ $self->param_required('mapping_params') } ) {
 		$option_st .= " --" . $opt . " " . $opt_value; 
@@ -235,7 +235,7 @@ sub start_server {
     foreach my $port (shuffle 12886..42886) {
         next if $bad_ports{$port};
         if ($self->start_server_on_port($port)) {
-            $self->param('server_loc', "localhost:$port");
+            $self->param('target_file', "localhost:$port");
             return;
         } else {
             # Most of the time, if we fail once, we're going to fail more
