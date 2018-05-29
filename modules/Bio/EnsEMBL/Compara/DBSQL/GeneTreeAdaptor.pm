@@ -424,6 +424,9 @@ sub delete_tree {
 
     assert_ref($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
 
+    # Make sure the tags are loaded (so that we can access "mcoffee_score")
+    $tree->_load_tags;
+
     # Remove all the nodes but the root
     my $gene_tree_node_Adaptor = $self->db->get_GeneTreeNodeAdaptor;
     for my $node (@{$tree->get_all_nodes}) {
@@ -449,6 +452,11 @@ sub delete_tree {
     unless ($tree->ref_root_id) {
         # The alignment only if it exists (In NCRecoverEPO we don't have an alignment yet)
         $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id) if (defined $tree->gene_align_id);
+
+        # Remove the "mcoffee_score" alignment too
+        if (my $mcoffee_scores_gene_align_id = $tree->get_value_for_tag('mcoffee_scores_gene_align_id')) {
+            $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($mcoffee_scores_gene_align_id);
+        }
 
         # The HMM profile
         my $root_id = $tree->root->node_id;
