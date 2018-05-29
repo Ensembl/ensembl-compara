@@ -72,7 +72,7 @@ sub configure {
       $_ = {'value' => $_, 'caption' => $_} unless ref $_ eq 'HASH';
       $_->{'checked'} = $_->{'checked'} || exists $_->{'value'} && defined $_->{'value'} && exists $checked_values->{$_->{'value'}} ? 1 : 0;
       $_->{'id'} = $params->{'id'} if (scalar(@{$params->{'values'}}) == 1);
-      $_->{'class'} = $params->{'class'};
+      $_->{'class'} = $params->{'class'} if $params->{'class'};
       $self->add_option($_);
     }
   }
