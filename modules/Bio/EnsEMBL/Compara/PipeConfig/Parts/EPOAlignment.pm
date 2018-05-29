@@ -111,7 +111,6 @@ return
  -logic_name => 'dump_mappings_to_file',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
-     'db_conn'      => '#compara_mapped_anchor_db#',
      'output_file'  => '#enredo_mapping_file#',
      'append'       => [ '-N', '-B', '-q' ],
      'input_query'  => q{SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE

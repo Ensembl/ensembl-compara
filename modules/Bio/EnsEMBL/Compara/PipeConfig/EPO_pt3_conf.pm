@@ -147,7 +147,7 @@ sub pipeline_wide_parameters {
 	};
 }
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
 	my ($self) = @_;
 
         return [
@@ -187,6 +187,13 @@ sub pipeline_analyses {
 
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAlignment::pipeline_analyses_epo_alignment($self) },
         ];
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'dump_mappings_to_file'}->{'-parameters'}->{'db_conn'} = '#compara_mapped_anchor_db#';
 }
 
 1;
