@@ -116,7 +116,7 @@ return
      'input_query'  => q{SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE
   aa.dnafrag_strand WHEN 1 THEN "+" ELSE "-" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN
   dnafrag df ON aa.dnafrag_id = df.dnafrag_id INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE
-  aa.method_link_species_set_id = #mlss_id#
+  aa.method_link_species_set_id = #mlss_id# AND untrimmed_anchor_align_id IS NOT NULL
   ORDER BY gdb.name, df.name, aa.dnafrag_start},
   },
    -flow_into => [ 'run_enredo' ],
