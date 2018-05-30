@@ -24,6 +24,7 @@ use warnings;
 no warnings "uninitialized";
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::REST;
 
 use base qw(EnsEMBL::Web::Component::Help);
 
@@ -37,26 +38,58 @@ sub _init {
 sub content {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
-  my $table   = $self->new_twocol({'striped' => 1});
-  my $words   = [];
+  my $ols     = $hub->species_defs->ENSEMBL_GLOSSARY_URL;
+  my ($html, $table);
 
-  if ($hub->param('word')) {
-    $words = [$adaptor->fetch_glossary_by_word($hub->param('word'))];
-  }
-  elsif ($hub->param('id')) {
-    $words = $adaptor->fetch_help_by_ids([ $hub->param('id') ]);
+  if ($ols) {
+    ## Use the new Ontology Lookup Service
+    my $rest = EnsEMBL::Web::REST->new($self->hub, $ols);
+    if ($rest) {
+      my $endpoint = 'api/ontologies/ensemblglossary/terms?size=500';
+      my $response = $rest->fetch($endpoint);
+      my $terms    = $response->{'_embedded'}{'terms'};
+      #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+      #warn Dumper($terms);
+      $table = $self->new_table([
+                {'key' => 'term', 'title' => 'Term'},
+                {'key' => 'desc', 'title' => 'Description'},
+              ]);
+      $html .= sprintf '<p>Found %s terms:</p>', scalar @{$terms||[]};;
+
+      foreach my $term (sort {$a->{'label'} cmp $b->{'label'}} @{$terms||[]}) {
+        $table->add_row({'term' => $term->{'label'}, 'desc' => join(' ', @{$term->{'description'}||[]})}); 
+      }
+    }
+    else {
+      my $site_url = $ols.'ontologies/ensemblglossary/';
+      $html .= $self->_warning('REST error', qq(Could not contact EBI Ontology Lookup Service. Please try again later, or visit the <a href="$site_url">OLS website</a> to browse the ontology directly.));
+    }
   }
   else {
-    $words = $adaptor->fetch_glossary;
+    ## Fallback - get old glossary from database
+    ## TODO - remove once OLS is completed
+    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+    my $words   = [];
+    $table      = $self->new_twocol({'striped' => 1});
+
+    if ($hub->param('word')) {
+      $words = [$adaptor->fetch_glossary_by_word($hub->param('word'))];
+    }
+    elsif ($hub->param('id')) {
+      $words = $adaptor->fetch_help_by_ids([ $hub->param('id') ]);
+    }
+    else {
+      $words = $adaptor->fetch_glossary;
+    }
+
+    $table->add_row(
+      $_->{'word'} . ( $_->{'expanded'} ? " ($_->{'expanded'})" : '' ),
+      $_->{'meaning'}
+    ) for @$words;
   }
+  $html .= $table->render;
 
-  $table->add_row(
-    $_->{'word'} . ( $_->{'expanded'} ? " ($_->{'expanded'})" : '' ),
-    $_->{'meaning'}
-  ) for @$words;
-
-  return sprintf '<h2>Glossary</h2>%s', $table->render;
-}
+  return $html;
+} 
 
 1;

@@ -992,15 +992,40 @@ sub _summarise_website_db {
     $self->db_tree->{'ENSEMBL_HELP'}{$row->[0]} = $row->[1];
   }
 
-  ## TODO - break this up into 'glossary' and 'tooltips'
-
   ## Get glossary
-  $t_aref = $dbh->selectall_arrayref(
-    'select data from help_record where type = "glossary" and status = "live"'
-  );
-  foreach my $row (@$t_aref) {
-    my $entry = eval($row->[0]);
-    $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
+  my $ols = $SiteDefs::ENSEMBL_GLOSSARY_URL;
+  if ($ols) {
+    my $endpoint = $ols.'api/ontologies/ensemblglossary/terms?size=500';
+    my $response = read_file($endpoint,{
+                    proxy => $SiteDefs::HTTP_PROXY,
+                    nice => 1,
+                    no_exception => 1,
+                  });
+    if($response->{'error'}) {
+      warn "ERROR FROM OLS SERVER at $endpoint\n";
+    }
+    else {
+      my $in;
+      eval { $in = from_json($response->{'content'}); };    
+      if ($@) {
+        warn "ERROR FROM OLS SERVER: $@\n";
+      }
+      else {
+        foreach (@{$in->{'_embedded'}{'terms'}||[]}) {
+          next unless scalar @{$_->{'description'}||[]};
+          $self->db_tree->{'ENSEMBL_GLOSSARY'}{$_->{'label'}} = $_->{'description'}[0];
+        }
+      }
+    }
+  }
+  else {
+    $t_aref = $dbh->selectall_arrayref(
+      'select data from help_record where type = "glossary" and status = "live"'
+    );
+    foreach my $row (@$t_aref) {
+      my $entry = eval($row->[0]);
+      $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
+    }
   }
 
   ## Get attrib text lookup
