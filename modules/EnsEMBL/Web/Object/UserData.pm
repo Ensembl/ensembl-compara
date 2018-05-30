@@ -111,7 +111,7 @@ sub flip_records {
     foreach my $m (grep $_, $hub->user, $hub->session) {
       $record = $m->get_record_data({'type' => $type, 'code' => $code});
       $manager = $m;
-      last if $record;
+      last if ($record && keys %$record);
     }
     next unless ($record && keys %$record);
     $record->{'disconnected'} = $disconnect;
