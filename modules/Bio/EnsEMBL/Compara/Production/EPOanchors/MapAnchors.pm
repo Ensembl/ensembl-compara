@@ -65,8 +65,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub pre_cleanup {
-	my ($self) = @_;
-        $self->compara_dba->dbc->do('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?', undef, $self->param('min_anchor_id'), $self->param('max_anchor_id'), $self->param('genome_db_id'));
+    my ($self) = @_;
+    if ($self->param('_range_list')) {
+        $self->compara_dba->dbc->do(sprintf('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id IN (%s) AND genome_db_id = ?', join(',', @{$self->param('_range_list')})),
+            undef, $self->param_required('genome_db_id'));
+    } else {
+        $self->compara_dba->dbc->do('DELETE anchor_align FROM anchor_align JOIN dnafrag USING (dnafrag_id) WHERE anchor_id BETWEEN ? AND ? AND genome_db_id = ?',
+            undef, $self->param_required('min_anchor_id'), $self->param_required('max_anchor_id'), $self->param_required('genome_db_id'));
+    }
 }
 
 sub fetch_input {
@@ -78,10 +84,21 @@ sub fetch_input {
         $self->dbc->disconnect_if_idle();
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
 	my $genome_db_file = $self->param_required('genome_db_file');
-	my $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
-        my $min_anc_id = $self->param('min_anchor_id');
-        my $max_anc_id = $self->param('max_anchor_id');
+        my $sth;
+        my $min_anc_id;
+        my $max_anc_id;
+        if ($self->param('_range_list')) {
+            $sth = $anchor_dba->dbc->prepare(sprintf('SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id IN (%s)', join(',', @{$self->param('_range_list')})));
+            $min_anc_id = $self->param('_range_list')->[0];
+            $max_anc_id = $self->param('_range_list')->[-1];
+            $sth->execute;
+
+        } else {
+        $sth = $anchor_dba->dbc->prepare("SELECT anchor_id, sequence FROM anchor_sequence WHERE anchor_id BETWEEN  ? AND ?");
+        $min_anc_id = $self->param('min_anchor_id');
+        $max_anc_id = $self->param('max_anchor_id');
 	$sth->execute( $min_anc_id, $max_anc_id );
+        }
         my %all_anchor_ids;
 	my $query_file = $self->worker_temp_directory  . "anchors." . join ("-", $min_anc_id, $max_anc_id );
 	open(my $fh, '>', $query_file) || die("Couldn't open $query_file");
@@ -133,6 +150,18 @@ sub run {
         close($out_fh);
 
         $self->stop_server if $self->param('with_server');
+
+        if ($self->param('retry')) {
+            $self->warning('did '.$self->param('retry').' attempts');
+        }
+
+        # Since exonerate-server seems to be missing some hits, we fallback
+        # to a standard exonerate alignment when a hit is missing
+        foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
+            unless ($hits and $hits->{$anchor_id}) {
+                $self->dataflow_output_id( { 'anchor_id' => $anchor_id }, 3);
+            }
+        }
 
 	if (!$hits) {
 		$self->warning("Exonerate didn't find any hits");
@@ -240,10 +269,12 @@ sub start_server {
         # If we can't start the server on one port, there is more than 80%
         # chance we'll have to try several more ports. Instead of spending
         # too much time, we just bail out !
-        foreach my $anchor_id (@{$self->param('all_anchor_ids')}) {
-            $self->dataflow_output_id( { 'min_anchor_id' => $anchor_id, 'max_anchor_id' => $anchor_id }, 2);
+        my $retry = $self->param('retry') + 1;
+        if ($retry > 20) {
+            die "Still failing to start the server after $retry attempts";
         }
-        $self->complete_early('Port taken. Trying without a server');
+        $self->dataflow_output_id( { 'retry' => $retry }, 2);
+        $self->complete_early('Port already taken. New job created');
     }
 }
 

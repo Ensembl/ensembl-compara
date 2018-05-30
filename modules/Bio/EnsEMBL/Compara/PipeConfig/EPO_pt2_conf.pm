@@ -310,7 +310,8 @@ sub pipeline_analyses {
 			'anchor_batch_size' => $self->o('anchor_batch_size'),
 		},
 		-flow_into => {
-			2 => [ 'map_anchors' ],
+                        '2->A' => { 'map_anchors' => INPUT_PLUS() },
+                        'A->1' => [ 'missing_anchors_factory' ],
 		},
 		-rc_name => 'mem7500',
 		-hive_capacity => $self->o('low_capacity'),
@@ -325,7 +326,8 @@ sub pipeline_analyses {
                         'with_server' => 1,
 		},
                 -flow_into => {
-                    2 => { 'map_anchors_no_server' => INPUT_PLUS() },
+                    2 => { 'map_anchors' => INPUT_PLUS() },
+                    3 => [ '?accu_name=inputlist&accu_address=[]&accu_input_variable=anchor_id' ],
                     -1 => 'map_anchors_himem',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
@@ -344,7 +346,8 @@ sub pipeline_analyses {
                         'with_server' => 1,
 		},
                 -flow_into => {
-                    2 => { 'map_anchors_no_server_himem' => INPUT_PLUS() },
+                    2 => { 'map_anchors_himem' => INPUT_PLUS() },
+                    3 => [ '?accu_name=inputlist&accu_address=[]&accu_input_variable=anchor_id' ],
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
@@ -378,6 +381,19 @@ sub pipeline_analyses {
                 -hive_capacity => $self->o('map_anchors_capacity'),
                 -rc_name => 'mem14000',
                 -max_retry_count => 1,
+            },
+
+            {   -logic_name     => 'missing_anchors_factory',
+                -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -parameters => {
+                    'contiguous'    => 0,
+                    'step'          => 50,
+                    'column_names'  => [ 'anchor_id' ],
+                },
+                -rc_name => 'mem14000',
+                -flow_into => {
+                    2 => { 'map_anchors_no_server' => INPUT_PLUS(), },
+                },
             },
 
 	    {	-logic_name     => 'remove_overlaps',
