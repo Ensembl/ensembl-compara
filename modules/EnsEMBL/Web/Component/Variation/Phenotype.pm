@@ -77,7 +77,7 @@ sub add_table_columns {
   my ($self, $table, $column_flags) = @_;
   
   my $is_somatic = $self->object->Obj->is_somatic;
-  my $study      = ($is_somatic && $self->object->Obj->source =~ /COSMIC/i) ? 'Tumour site' : 'Study';
+  my $study      = ($is_somatic && $self->object->Obj->source =~ /COSMIC/i) ? 'Tumour site' : 'External reference';
   
   $table->add_columns(
     { key => 'disease', title => 'Phenotype, disease and trait', align => 'left', sort => 'html' },
@@ -147,9 +147,10 @@ sub table_data {
   my $review_status   = 'review_status';
   my $variation_names = 'variation_names';
   my @stats_col = ('p_value','odds_ratio','beta_coef');
+  my $submitter_max_length = 20;
 
-  foreach my $pf (@$external_data) { 
-    
+  foreach my $pf (@$external_data) {
+
     my $phenotype = $pf->phenotype->description;
     my $disorder  = $phenotype;
     
@@ -158,22 +159,34 @@ sub table_data {
       $disorder =~ s/\:/\: /;
       $disorder =~ s/\_/ /g;
     }
-    
+ 
     my @data_row;
 
     if (exists $rows{lc $disorder}) { 
       @data_row = @{$rows{lc $disorder}};
     }
-    
-    my $id                 = $pf->{'_phenotype_id'};
-    my $source_name        = $pf->source_name;
-    my $study_name         = $pf->study ? $pf->study->name : '';
-    my $disease_url        = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder }); 
-    my $external_id        = ($pf->external_id) ? $pf->external_id : $study_name;
-    my $source             = $self->source_link($source_name, $external_id, $pf->external_reference, 1);
-    my $external_reference = $self->external_reference_link($pf->external_reference) || $pf->external_reference; # use raw value if can't be made into a link
-    my $associated_studies = $pf->associated_studies; # List of Study objects
-    my $attributes         = $pf->get_all_attributes();
+
+    my $id                   = $pf->{'_phenotype_id'};
+    my $pf_id                = $pf->dbID;
+    my $source_name          = $pf->source_name;
+    my $study_name           = $pf->study ? $pf->study->name : '';
+    my $disease_url          = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $id, name => $disorder });
+    my $external_id          = ($pf->external_id) ? $pf->external_id : $study_name;
+    my $external_reference   = $self->external_reference_link($pf->external_reference) || $pf->external_reference; # use raw value if can't be made into a link
+    my $associated_studies   = $pf->associated_studies; # List of Study objects
+    my $attributes           = $pf->get_all_attributes();
+    my $submitter_names_list = $pf->submitter_names;
+ 
+    my $source = $self->source_link($source_name, $external_id, $pf->external_reference, 1);
+    if ($submitter_names_list && $source_name =~ /clinvar/i) {
+      my $submitter_names = join('|',@$submitter_names_list);
+      my $submitter_label = $submitter_names;
+         $submitter_label = substr($submitter_names,0,$submitter_max_length).'...' if (length($submitter_names) > $submitter_max_length);
+      my $submitter_prefix  = 'Submitter';
+         $submitter_prefix .= 's' if (scalar(@$submitter_names_list) > 1);
+      $source .= " [$submitter_label]";
+      $source = qq{<span class="hidden export">$source_name [$submitter_names]</span><span class="_ht _no_export" title="$submitter_prefix: $submitter_names">$source</span>}; 
+    }
 
     my $clin_sign_list = $pf->clinical_significance;
     my $clin_sign;
@@ -216,9 +229,22 @@ sub table_data {
     }
     
     # Add the supporting evidence source(s)
-    my $a_study_source;
+    my $evidence_list;
     if (defined($associated_studies)) {
-      $a_study_source = $self->supporting_evidence_link($associated_studies, $pf->external_reference, $pf->dbID);
+       $evidence_list = $self->supporting_evidence_link($associated_studies, $pf->external_reference);
+    }
+    if ($source_name =~ /clinvar/i) {
+      if ($attributes->{'MIM'}) {
+        my @data = split(',',$attributes->{'MIM'});
+        foreach my $ext_ref (@data) {
+          $external_reference .= ', ' if ($external_reference && $external_reference ne '');
+          $external_reference .= $hub->get_ExtURL_link('MIM:'.$ext_ref, 'OMIM', $ext_ref);
+        }
+      }
+      if ($attributes->{'pubmed_id'}) {
+        my @data = split(',',$attributes->{'pubmed_id'});
+        $evidence_list = $self->other_supporting_evidence_link(\@data, 'pubmed_id', $evidence_list);
+      }
     }
 
     if ($is_somatic && $disorder =~ /COSMIC/) {
@@ -348,20 +374,25 @@ sub table_data {
 
     my $term_html = '-';
     if ($terms) {
-      my $div_id = $pf->dbID."_term";
+      my $div_id = $pf_id."_term";
       $term_html = $self->display_items_list($div_id, 'ontology terms', 'terms', $terms, $terms);
     }
     $row->{terms} = $term_html;
 
     my $accession_html = '-';
     if ($accessions) {
-      my $div_id = $pf->dbID."_accession";
+      my $div_id = $pf_id."_accession";
       $accession_html = $self->display_items_list($div_id, 'ontology accessions', 'accessions', $accessions, $accessions_no_url);
     }
     $row->{accessions} = $accession_html;
 
-    if ($a_study_source){
-      $row->{s_evidence} = $a_study_source;
+    if ($evidence_list){
+      # Display the data
+      my $div_id = $pf_id."_evidence";
+      my @url_data = values(%$evidence_list);
+      my @export_data = keys(%$evidence_list);
+      my $ev_html = $self->display_items_list($div_id, 'evidence', 'Evidence', \@url_data, \@export_data, 1);
+      $row->{s_evidence} = $ev_html;
       $column_flags{s_evidence} = 1;
     }
     else {
@@ -524,9 +555,7 @@ sub external_reference_link {
 
 # Supporting evidence links
 sub supporting_evidence_link {
-  my ($self, $associated, $ext_id, $pf_id) = @_;
-  my $as_html = '';
-  my $count = 0;
+  my ($self, $associated, $ext_id) = @_;
   my %asso_with_url;
 
   # Add the URL
@@ -546,19 +575,26 @@ sub supporting_evidence_link {
       if ($st->name) { $a_source = $st->name; }
       $asso_with_url{$st->name} = qq{<a rel="external" href="$a_url">$a_source</a>};
     }
-    $count++;
   }
-
-  # Display the data
-  if (%asso_with_url) {
-    my $div_id = $pf_id."_evidence";
-    my @url_data = values(%asso_with_url);
-    my @export_data = keys(%asso_with_url);
-    $as_html = $self->display_items_list($div_id, 'evidence', 'Evidence', \@url_data, \@export_data, 1);
-  }
-
-  return $as_html;
+  return \%asso_with_url;
 }
+
+# Other supporting evidence links
+sub other_supporting_evidence_link {
+  my ($self, $evidence_list, $type, $evidence_with_url) = @_;
+
+  if ($type =~ /^pubmed/i) {
+    foreach my $evidence (@{$evidence_list}) {
+      my $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
+         $link =~ s/###ID###/$evidence/;
+      my $label = "PMID:$evidence";
+      $evidence_with_url->{$label} = qq{<a rel="external" href="$link">$label</a>};
+    }
+  }
+
+  return $evidence_with_url;
+}
+
 
 sub allele_link {
   my ($self, $study, $allele) = @_;

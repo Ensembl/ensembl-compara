@@ -1588,12 +1588,13 @@ sub vep_icon {
 }
 
 sub display_items_list {
-  my ($self, $div_id, $title, $label, $display_data, $export_data, $no_count_label) = @_;
+  my ($self, $div_id, $title, $label, $display_data, $export_data, $no_count_label, $specific_count) = @_;
 
   my $html = "";
   my @sorted_data = ($display_data->[0] =~ /^<a/i) ? @{$display_data} : sort { lc($a) cmp lc($b) } @{$display_data};
   my $count = scalar(@{$display_data});
-  if ($count > 5) {
+  my $count_threshold = ($specific_count) ? $specific_count : 5;
+  if ($count >= $count_threshold) {
     $html = sprintf(qq{
         <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
         <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>

@@ -96,7 +96,8 @@ sub table_content {
       my $external_id  = ($pf->external_id) ? $pf->external_id : undef;
       my $attribs      = $pf->get_all_attributes;
       my $source       = $pf->source_name;  
-      my ($source_text,$source_url) = $self->source_url($pf_name, $source, $external_id, $attribs->{'xref_id'}, $pf);
+#      my ($source_text,$source_url) = $self->source_url($pf_name, $source, $external_id, $attribs{'xref_id'}, $pf);
+      my ($source_text,$source_url) = $self->source_url($pf_name, $source, $external_id, $attribs, $pf);
 
       my @reported_genes = split(/,/,$pf->associated_gene);
 
@@ -121,13 +122,34 @@ sub table_content {
       }
 
       my $studies = $self->study_urls($study_xref);
-      my @study_links = map { $_->[0]||'' } @$studies;
-      my @study_texts = map { $_->[1]||'' } @$studies;
-      my @gene_texts = map { $_->[0]||'' } @assoc_genes;
-      my @gene_links = map { $_->[1]||'' } @assoc_genes;
-      my @gene_titles = map { $_->[2]||'' } @assoc_genes;
-
       my ($name_id,$name_url,$name_extra) = $self->pf_link($pf,$pf->type,$pf->phenotype_id);
+
+      # ClinVar specific data
+      my $evidence_list;
+      my $submitter_list = [];
+      if ($source =~ /clinvar/i) {
+        if ($attribs->{'MIM'}) {
+          my @data = split(',',$attribs->{'MIM'});
+          foreach my $ext_ref (@data) {
+            push(@$studies, [$hub->get_ExtURL('OMIM', $ext_ref),'MIM:'.$ext_ref]);
+          }
+        }
+        if ($attribs->{'pubmed_id'}) {
+          my @data = split(',',$attribs->{'pubmed_id'});
+          $evidence_list = $self->supporting_evidence_link(\@data, 'pubmed_id');
+        }
+        # Submitter data
+        $submitter_list = $pf->submitter_names;
+      }
+ 
+      my @study_links    = map { $_->[0]||'' } @$studies;
+      my @study_texts    = map { $_->[1]||'' } @$studies;
+      my @evidence_links = ($evidence_list) ? values(%$evidence_list) : ();
+      my @evidence_texts = ($evidence_list) ? keys(%$evidence_list) : ();
+      my @gene_texts     = map { $_->[0]||'' } @assoc_genes;
+      my @gene_links     = map { $_->[1]||'' } @assoc_genes;
+      my @gene_titles    = map { $_->[2]||'' } @assoc_genes;
+
 
       my $row = {
            name_id          => $name_id,
@@ -139,6 +161,9 @@ sub table_content {
            phe_link         => $source_url,
            study_links      => join('>','',@study_links),
            study_texts      => join('>','',@study_texts),
+           study_submitter  => join(', ',@$submitter_list),
+           evidence_links   => join('>','',@evidence_links),
+           evidence_texts   => join('>','',@evidence_texts),
            gene_links       => join('>','',@gene_links),
            gene_texts       => join('>','',@gene_texts),
            gene_titles      => join('>','',@gene_titles),
@@ -233,14 +258,27 @@ sub make_table {
     filter_sorted => 1,
     primary => 2,
   },{
+    _key => 'study_submitter', _type => 'string no_filter',
+    label => 'Submitter',
+    helptip => 'Submitter reporting the association',
+  },{
     _key => 'study_texts', _type => 'string no_filter',
-    label => 'Study',
-    helptip => 'Link to the pubmed article or other source showing the association',
+    label => 'External reference',
+    helptip => 'Link to the data source showing the association',
     url_column => 'study_links',
     url_rel => 'external',
     width => 0.8,
   },{
     _key => 'study_links', _type => 'string no_filter unshowable',
+  },{
+    _key => 'evidence_texts', _type => 'string no_filter',
+    label => 'Supporting evidence',
+    helptip => 'Link to the PubMed article describing the association',
+    url_column => 'evidence_links',
+    url_rel => 'external',
+    width => 0.8,
+  },{
+    _key => 'evidence_links', _type => 'string no_filter unshowable',
   });
 
   $table->add_columns(\@columns,\@exclude);
@@ -345,12 +383,14 @@ sub phenotype_url{
 
 # External link to the data association source
 sub source_url {
-  my ($self, $obj_name, $source, $ext_id, $ext_ref_id, $pf) = @_;
+  my ($self, $obj_name, $source, $ext_id, $attribs, $pf) = @_;
 
   my $hub = $self->hub();
 
   my $source_uc = uc $source;
      $source_uc =~ s/\s/_/g;
+
+  my $ext_ref_id = $attribs->{'xref_id'};
 
   if ($source =~ /^animal.qtldb/i) {
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $hub->species)));
@@ -438,6 +478,23 @@ sub study_urls {
     push @links,[undef,$xref] if ($xref ne 'NULL');
   }
   return \@links;
+}
+
+# Supporting evidence links
+sub supporting_evidence_link {
+  my ($self, $evidence_list, $type) = @_;
+  my %evidence_with_url;
+
+  if ($type =~ /^pubmed/i) {
+    foreach my $evidence (@{$evidence_list}) {
+      my $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
+         $link =~ s/###ID###/$evidence/;
+      my $label = "PMID:$evidence";
+      $evidence_with_url{$label} = qq{<a rel="external" href="$link">$label</a>};
+    }
+  }
+
+  return \%evidence_with_url;
 }
 
 1;
