@@ -523,9 +523,9 @@ sub parse_results {
 
     if (-e $tree_file) {
             ## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
-        open(F, $tree_file) || throw("Could not open tree file <$tree_file>");
-        my ($newick, $files) = <F>;
-        close(F);
+        open(my $fh, '<', $tree_file) || throw("Could not open tree file <$tree_file>");
+        my ($newick, $files) = <$fh>;
+        close($fh);
         $newick =~ s/[\r\n]+$//;
         $self->param('tree_string', $newick);
 
@@ -550,7 +550,7 @@ sub parse_results {
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
     
-    open(F, $alignment_file) || throw("Could not open $alignment_file");
+    open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
 
@@ -580,7 +580,7 @@ sub parse_results {
     my $genomic_aligns_2x_array = [];
     my @num_frag_pads;
 
-    while (<F>) {
+    while (<$fh>) {
 	next if (/^\s*$/);
 	chomp;
 	## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
@@ -765,7 +765,7 @@ sub parse_results {
 	    $seq .= $_;
 	}
     }
-    close F;
+    close $fh;
 
     #last genomic_align
     print "Last genomic align\n" if ($self->debug);
