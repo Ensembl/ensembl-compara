@@ -442,7 +442,7 @@ sub get_data {
     ## Get path to bigWig file
     if (grep { $display_style eq $_ } qw(tiling tiling_feature signal signal_feature)) {
       
-      my $alignment        = $peak_calling->fetch_Alignment;
+      my $alignment        = $peak_calling->fetch_signal_Alignment;
       my $bigwig_file      = $alignment->fetch_bigwig_DataFile;
       my $bigwig_file_name = $bigwig_file->path;
       
