@@ -244,9 +244,6 @@ sub write_fasta {
   my $data_object = $hub->core_object($data_type);
   my @data        = $component->get_export_data;
 
-  ## Do a bit of munging of this data, according to export options selected
-  my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
-
   ## Only expand flank for variant export - gene flanks already added elsewhere
   my $slice       = $hub->param('flank_size') ? $self->object->expand_slice($data_object->slice) : $data_object->slice;
 
@@ -260,7 +257,12 @@ sub write_fasta {
   my $intron_id;
 
   my $output = {
-      cdna    => sub { my ($t, $id, $type) = @_; [[ $t->stable_id." $id cdna:$type", $t->spliced_seq ]] },
+      cdna    => sub { 
+                      my ($t, $id, $type) = @_; 
+                      my $full_id = $t->display_id;
+                      $full_id .= '.'.$t->version if $t->version;
+                      $id = "$full_id $id" unless $id eq $full_id; 
+                      [[ "$id cdna:$type", $t->spliced_seq ]] },
       coding  => sub { my ($t, $id, $type) = @_; [[ "$id cds:$type", $t->translateable_seq ]] },
       peptide => sub { my ($t, $id, $type) = @_; eval { [[ "$id peptide: " . $t->translation->stable_id . " pep:$type", $t->translate->seq ]] }},
       utr3    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr3:$type", $t->three_prime_utr->seq ]] }},
@@ -278,7 +280,11 @@ sub write_fasta {
     ## Only applicable to actual transcripts
     foreach my $transcript (@data) {
       my @id_info = EnsEMBL::Web::Object::Transcript::display_xref(undef, $transcript);
-      my $id  = $id_info[0] || $transcript->display_id;
+      my $id  = $id_info[0];
+      if (!$id) {
+        $id = $transcript->display_id;
+        $id .= '.'.$transcript->version if $transcript->version;
+      }
       my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
                       ? $transcript->analysis->logic_name 
                       : $transcript->biotype;
