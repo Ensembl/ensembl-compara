@@ -151,6 +151,7 @@ sub fetch_input {
     ## Dumps fasta files for the DnaFragRegions. Fasta files order must match the entries in the
     ## newick tree. The order of the files will match the order of sequences in the tree_string.
 
+    $self->compara_dba->dbc->disconnect_if_idle;
     $self->_dump_fasta;
 
   return 1;
@@ -1041,7 +1042,10 @@ sub _dump_fasta {
   $self->param('fasta_files', []);
   $self->param('species_order', []);
 
-  foreach my $seq_id (@seqs) {
+  $self->iterate_by_dbc(\@seqs,
+    sub {my $seq_id = shift; return $all_dnafrag_regions->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc; },
+    sub {my $seq_id = shift;
+
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
 
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
@@ -1058,8 +1062,6 @@ sub _dump_fasta {
 
     print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, "|", $dfr->dnafrag->genome_db->name, "|", $dfr->dnafrag->genome_db_id, "|",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand," $seq_id***\n" if $self->debug;
-
-    $dfr->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
 
 # my $slice = $dfr->dnafrag->slice->sub_Slice($dfr->dnafrag_start,$dfr->dnafrag_end,$dfr->dnafrag_strand);
  
@@ -1078,11 +1080,10 @@ sub _dump_fasta {
             $seq,
         ));
 
-    } );
-
     push @{$self->param('fasta_files')}, $file;
     push @{$self->param('species_order')}, $dfr->dnafrag->genome_db_id;
-  }
+
+  }, 'do_disconnect');
 
   return 1;
 }
