@@ -117,7 +117,7 @@ Ensembl.extend({
 
   cookie: {
     set: function (name, value, expiry, unescaped, all_sites) {
-      var domain = document.domain;
+      var domain = null;
       // all_sites is set to true if you want the cookie to be set for all sites (*.ebi.ac.uk)
       if (all_sites) {
         var re = new RegExp(/(.*?)\.?([^\.]*?)\.(ac\.uk|org)$/);
@@ -129,7 +129,7 @@ Ensembl.extend({
 
       var cookie = [
         unescaped === true ? (name + '=' + (value || '')) : (escape(name) + '=' + escape(value || '')),
-        '; domain='+ domain +'; expires=',
+        (domain?'; domain='+ domain:'') +'; expires=',
         ((expiry === -1 || value === '') ? 'Thu, 01 Jan 1970 00:00:00 GMT' : expiry ? expiry : 'Tue, 19 Jan 2038 00:00:00 GMT'),
         '; path=/'
       ].join('');
