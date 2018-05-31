@@ -25,10 +25,6 @@ use parent qw(EnsEMBL::Web::Query::Generic::GlyphSet);
 
 our $VERSION = 1;
 
-use Time::HiRes qw(time);
-our $start_time;
-BEGIN { $start_time = time; }
-
 sub precache {
   return {
     'rfunder-all' => {
@@ -59,7 +55,6 @@ sub get {
   my $out = [$f->bound_start, $f->start];
   ## Add motif feature coordinates if any 
   my $mfs = eval { $f->fetch_overlapping_MotifFeatures; };
-  warn sprintf("Fetching Motif Features took %dms\n",(time-$start_time)*1000); 
   unless ($@) {
     foreach (@{$mfs||[]}) {
       push @$out, $_->start, $_->end;
