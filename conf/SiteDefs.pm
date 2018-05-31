@@ -254,9 +254,10 @@ our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|
 
 ###############################################################################
 ## Page specific configurations
-our $FLANK5_PERC                  = 0.02; # % 5' flanking region for images (used for region comparison and location view)
-our $FLANK3_PERC                  = 0.02; # % 3' flanking region for images (used for region comparison and location view)
-our $ENSEMBL_ALIGNMENTS_HIERARCHY = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
+our $FLANK5_PERC                        = 0.02; # % 5' flanking region for images (used for region comparison and location view)
+our $FLANK3_PERC                        = 0.02; # % 3' flanking region for images (used for region comparison and location view)
+our $ENSEMBL_ALIGNMENTS_HIERARCHY       = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
+our $ALIGNMENTS_SPECIES_SELECTION_LIMIT = 68;
 ###############################################################################
 
 
