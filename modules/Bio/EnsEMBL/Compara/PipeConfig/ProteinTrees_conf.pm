@@ -1637,6 +1637,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mcoffee_short',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
+                'cmd_max_runtime'       => '21600',  # 6 hours
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
@@ -1654,6 +1655,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mcoffee',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
+                'cmd_max_runtime'       => '43200',     # 12 hours
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),

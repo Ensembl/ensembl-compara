@@ -252,9 +252,7 @@ sub tweak_analyses {
     ## Here we bump the resource class of some commonly MEMLIMIT
     ## failing analyses. Are these really EG specific?
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
