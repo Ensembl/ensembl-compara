@@ -105,8 +105,7 @@ sub pipeline_create_commands {
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-          'if [ -d '.$self->o('work_dir').' ]; then rm -r '.$self->o('work_dir'). '; fi', #remove old copy of dump dir
-          'mkdir -p '.$self->o('work_dir'), #Make dump_dir directory
+        $self->pipeline_create_commands_rm_mkdir('work_dir'),
     ];
 }
 

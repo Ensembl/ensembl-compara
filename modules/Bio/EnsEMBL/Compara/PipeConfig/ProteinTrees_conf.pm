@@ -121,6 +121,7 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
+        'dump_pafs_dir'         => $self->o('dump_dir') . '/pafs',
         'examl_dir'             => $self->o('work_dir') . '/examl',
 
     # "Member" parameters:
@@ -437,13 +438,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        'rm -rf '.$self->o('cluster_dir'),
-        'mkdir -p '.$self->o('cluster_dir'),
-        'mkdir -p '.$self->o('dump_dir'),
-        'mkdir -p '.$self->o('dump_dir').'/pafs',
-        'mkdir -p '.$self->o('examl_dir'),
-        'mkdir -p '.$self->o('fasta_dir'),
-
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'fasta_dir']),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
     ];
 }
@@ -464,6 +459,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'fasta_dir'     => $self->o('fasta_dir'),
         'examl_dir'     => $self->o('examl_dir'),
         'dump_dir'      => $self->o('dump_dir'),
+        'dump_pafs_dir' => $self->o('dump_pafs_dir'),
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
         'hmm_library_version'   => $self->o('hmm_library_version'),
 
@@ -1353,7 +1349,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'    => 'peptide_align_feature_#genome_db_id#',
-                'output_file'   => '#dump_dir#/pafs/peptide_align_feature_#genome_db_id#.sql.gz',
+                'output_file'   => '#dump_pafs_dir#/peptide_align_feature_#genome_db_id#.sql.gz',
                 'exclude_ehive' => 1,
             },
             -analysis_capacity => $self->o('reuse_capacity'),

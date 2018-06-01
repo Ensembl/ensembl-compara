@@ -371,16 +371,8 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        'rm -rf '.$self->o('cluster_dir'),
-        'mkdir -p '.$self->o('cluster_dir'),
-        'mkdir -p '.$self->o('dump_dir'),
-        'mkdir -p '.$self->o('dump_dir').'/pafs',
-        'mkdir -p '.$self->o('fasta_dir'),
-        'mkdir -p '.$self->o('tmp_hmmsearch'),
-        'become -- compara_ensembl mkdir -p '.$self->o('compara_hmm_library_basedir'),
-        'become -- compara_ensembl mkdir -p '.$self->o('panther_hmm_library_basedir'),
-        'become -- compara_ensembl mkdir -p '.$self->o('seed_hmm_library_basedir'),
-
+        $self->pipeline_create_commands_rm_mkdir(['cluster_dir', 'dump_dir', 'fasta_dir', 'tmp_hmmsearch']),
+        $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], 'compara_ensembl'),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
         $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], 'compara_ensembl'),
     ];

@@ -246,10 +246,7 @@ sub pipeline_create_commands {
         coding_exon_length          INT(10) DEFAULT 0
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-       'rm -rf '.$self->o('dump_dir').' '.$self->o('output_dir').' '.$self->o('bed_dir'), #Cleanup dump_dir directory
-       'mkdir -p '.$self->o('dump_dir'), #Make dump_dir directory
-       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
-       'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+       $self->pipeline_create_commands_rm_mkdir(['dump_dir', 'output_dir', 'bed_dir']),
     ];
 }
 
