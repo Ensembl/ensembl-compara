@@ -191,7 +191,7 @@ sub default_options {
 
         # HMM specific parameters
         # The location of the HMM library:
-        'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}."/",
+        'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$self->o('ensembl_release')."/",
         'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
         'treefam_hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
         'treefam_only_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18_only_TF_hmmer3/',
@@ -216,7 +216,7 @@ sub default_options {
         'hmm_library_name'          => 'panther_12_0.hmm3',
         
         #Compara HMM profile name:
-        'compara_hmm_library_name'  => 'compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}.'.hmm3',
+        'compara_hmm_library_name'  => 'compara_hmm_'.$self->o('ensembl_release').'.hmm3',
 
         #URL to find the PANTHER profiles:
         'panther_url'               => 'ftp://ftp.pantherdb.org/panther_library/current_release/',

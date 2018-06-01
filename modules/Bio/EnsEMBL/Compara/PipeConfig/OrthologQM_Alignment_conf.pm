@@ -108,7 +108,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name'    => 'wga_' . $self->o('current_release'),
+        'pipeline_name'    => 'wga_' . $self->o('rel_with_suffix'),
 
         'species1'         => undef,
         'species2'         => undef,
@@ -159,6 +159,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        'ensembl_release' => $self->o('ensembl_release'),
         'orth_batch_size' => 10,
     };
 }
