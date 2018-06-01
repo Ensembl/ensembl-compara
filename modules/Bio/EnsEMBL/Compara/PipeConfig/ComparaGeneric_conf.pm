@@ -93,10 +93,8 @@ sub pipeline_create_commands {
     # eHive calls pipeline_create_commands twice: once to know which
     # $self->o() parameters it needs, once to get the actual list of
     # commands ($self->o() values are all present only the second time)
-    my $second_pass     = scalar(keys %{$self->root}) > 1;
-    # Alternatively, just flag the first pass locally
-    #my $second_pass     = $self->{'_first_pass_done'};
-    #$self->{'_first_pass_done'} = 1;
+    my $second_pass     = exists $self->{'_is_second_pass'};
+    $self->{'_is_second_pass'} = $second_pass;
 
     # Pre-checks framework: only run them once we have all the values in $self->o()
     $self->check_all_executables_exist if $second_pass;
@@ -156,6 +154,9 @@ sub pipeline_create_commands_rm_mkdir {
     # Prepare the list of directories
     $dirs = [$dirs] unless ref($dirs);
     my @dirs = map {$self->o($_)} @$dirs;
+    if ($self->{'_is_second_pass'}) {
+        die "'#' is not allowed in directory names: $_" for grep {/#/} @dirs;
+    }
 
     my @cmds;
     push @cmds, map {qq{$user rm -rf $_}} @dirs;
@@ -192,6 +193,9 @@ sub pipeline_create_commands_lfs_setstripe {
     # Prepare the list of directories
     $dirs = [$dirs] unless ref($dirs);
     my @dirs = map {$self->o($_)} @$dirs;
+    if ($self->{'_is_second_pass'}) {
+        die "'#' is not allowed in directory names: $_" for grep {/#/} @dirs;
+    }
 
     # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
     my @cmds = map {qq{which lfs && $user lfs getstripe $_ >/dev/null 2>/dev/null && $user lfs setstripe $_ -c -1 || echo "Striping is not available on this system"}} @dirs;
