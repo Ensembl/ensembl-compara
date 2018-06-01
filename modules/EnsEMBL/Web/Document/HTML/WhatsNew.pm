@@ -199,27 +199,51 @@ sub process_xml {
 sub _get_json {
   my ($self, $tag, $output_path)  = @_;
   my $sd    = $self->hub->species_defs;
-  my $rest  = EnsEMBL::Web::REST->new($self->hub, $sd->BLOG_REST_URL); 
-  my $content;
+  my ($rest, $response, $error, $content, $args, $token);
 
-  if ($sd->BLOG_REST_USER && $sd->BLOG_REST_PASS) {
+  if ($sd->BLOG_REST_AUTH) {
     ## Authenticate so we can get private posts, e.g. on test site
+    $rest  = EnsEMBL::Web::REST->new($self->hub, $sd->BLOG_REST_AUTH); 
+    $args = {
+              'method' => 'post', 
+              'content' => {
+                            'username' => $sd->BLOG_REST_USER,
+                            'password' => $sd->BLOG_REST_PASS,
+                            }
+              };
+    ($response, $error) = $rest->fetch('token', $args);
+    if ($error) {
+      warn "!!! AUTHENTICATION ERROR ".$error->[0];
+      return undef;
+    }
+    elsif (!$response->{'token'}) {
+      warn "!!! AUTHENTICATION ERROR: ".$response->[0]; 
+      return undef;
+    }
+    else {
+      $token = $response->{'token'};
+      #warn ">>> GOT TOKEN $token";
+      $args  = {'headers' => {'Authorization' => "Bearer $token"}};
+    }
   }
   
   ## Now fetch the release news using the tag
+  $rest  = EnsEMBL::Web::REST->new($self->hub, $sd->BLOG_REST_URL); 
 
   ## Find out the ID of this tag
-  my ($response, $error)  = $rest->fetch("tags?slug=$tag");
+  #warn ">>> GETTING ID FOR TAG $tag";
+  ($response, $error)  = $rest->fetch("tags?slug=$tag");
   if ($error) {
-    warn ">>> REST ERROR ".$response;
+    warn "!!! REST ERROR ".$response->[0];
     return undef;
   }
   my $tag_id    = $response->[0]{'id'};
-  
+  #warn "... TAG $tag HAS ID $tag_id";
   ## Finally, fetch the actual post
-  ($response, $error) = $rest->fetch("posts?tags=$tag_id");
+  #warn ">>> FETCHING POSTS FOR THIS TAG";
+  ($response, $error) = $rest->fetch("posts?tags=$tag_id", $args);
   if ($error) {
-    warn ">>> REST ERROR ".$response;
+    warn "!!! REST ERROR ".$response->[0];
     return undef;
   }
 
