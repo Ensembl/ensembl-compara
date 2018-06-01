@@ -98,7 +98,7 @@ sub fetch_url {
   my $type  = $content_type{lc($format)};
   $args->{'headers'}{'Content-Type'} ||= $type;
 
-  if ($args->{'method'} && $args->{'method'} eq 'post') {
+  if ($args->{'method'} && $args->{'method'} eq 'post' && $args->{'content'}) {
     my $json = to_json($args->{'content'});
     $args->{'headers'}{'Content'} = $json;
     delete $args->{'content'};
