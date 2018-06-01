@@ -96,7 +96,6 @@ sub table_content {
       my $external_id  = ($pf->external_id) ? $pf->external_id : undef;
       my $attribs      = $pf->get_all_attributes;
       my $source       = $pf->source_name;  
-#      my ($source_text,$source_url) = $self->source_url($pf_name, $source, $external_id, $attribs{'xref_id'}, $pf);
       my ($source_text,$source_url) = $self->source_url($pf_name, $source, $external_id, $attribs, $pf);
 
       my @reported_genes = split(/,/,$pf->associated_gene);
@@ -144,8 +143,8 @@ sub table_content {
  
       my @study_links    = map { $_->[0]||'' } @$studies;
       my @study_texts    = map { $_->[1]||'' } @$studies;
-      my @evidence_links = ($evidence_list) ? values(%$evidence_list) : ();
       my @evidence_texts = ($evidence_list) ? keys(%$evidence_list) : ();
+      my @evidence_links = ($evidence_list) ? map { $evidence_list->{$_} } @evidence_texts : ();
       my @gene_texts     = map { $_->[0]||'' } @assoc_genes;
       my @gene_links     = map { $_->[1]||'' } @assoc_genes;
       my @gene_titles    = map { $_->[2]||'' } @assoc_genes;
@@ -455,6 +454,7 @@ sub study_urls {
   my @links;
   my $link;
   if ($xref =~ /(pubmed|PMID)/) {
+    $xref =~ s/\s+//g;
     foreach my $pmid (split(',',$xref)) {
       my $id = $pmid;
          $id =~ s/pubmed\///;
@@ -487,10 +487,11 @@ sub supporting_evidence_link {
 
   if ($type =~ /^pubmed/i) {
     foreach my $evidence (@{$evidence_list}) {
+      $evidence =~ s/\s+//g;
       my $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
          $link =~ s/###ID###/$evidence/;
       my $label = "PMID:$evidence";
-      $evidence_with_url{$label} = qq{<a rel="external" href="$link">$label</a>};
+      $evidence_with_url{$label} = $link;
     }
   }
 
