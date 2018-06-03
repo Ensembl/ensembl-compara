@@ -172,6 +172,10 @@ sub _write_output {
     $self->dataflow_output_id({"gene_tree_id" => $root_id_1}, 2);
     $self->dataflow_output_id({"gene_tree_id" => $root_id_2}, 2);
 
+    # Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
+    # NB: this will be testing $self->param('gene_tree_id')
+    Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call( $self, 'supertrees' );
+
 } ## end sub _write_output
 
 sub _do_splittree_loop {
@@ -390,11 +394,5 @@ sub _rec_update_tags {
 
 } ## end sub _rec_update_tags
 
-# Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
-# NB: this will be testing $self->param('gene_tree_id')
-sub post_healthcheck {
-    my $self = shift;
-    Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call( $self, 'supertrees' );
-}
 
 1;

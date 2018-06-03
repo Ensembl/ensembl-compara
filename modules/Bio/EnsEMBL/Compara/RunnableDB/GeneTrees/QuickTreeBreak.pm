@@ -225,13 +225,9 @@ sub _write_output {
     }
 
     $self->rec_update_tags($self->param('gene_tree')->root);
-}
 
-
-# Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
-# NB: this will be testing $self->param('gene_tree_id')
-sub post_healthcheck {
-    my $self = shift;
+    # Wrapper around Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks
+    # NB: this will be testing $self->param('gene_tree_id')
     Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks::_embedded_call($self, 'supertrees');
 }
 
