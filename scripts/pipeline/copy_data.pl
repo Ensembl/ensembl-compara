@@ -315,6 +315,24 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             " JOIN species_tree_root str using(root_id)" .
             " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
 
+  #And their tags
+  copy_data($from_dbc, $to_dbc,
+            "species_tree_node_tag",
+            "SELECT stnt.* " .
+            " FROM species_tree_node stn" .
+            " JOIN species_tree_node_tag stnt USING (node_id)" .
+            " JOIN species_tree_root str using(root_id)" .
+            " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
+
+  #And their attributes
+  copy_data($from_dbc, $to_dbc,
+            "species_tree_node_attr",
+            "SELECT stna.* " .
+            " FROM species_tree_node stn" .
+            " JOIN species_tree_node_attr stna USING (node_id)" .
+            " JOIN species_tree_root str using(root_id)" .
+            " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
+
   #Copy the species_tree_root data if present
   copy_table($from_dbc, $to_dbc,
             "species_tree_root",
