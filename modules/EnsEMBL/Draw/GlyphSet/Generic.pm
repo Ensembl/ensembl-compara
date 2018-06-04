@@ -143,7 +143,7 @@ sub get_strand_filters {
 
 sub my_empty_label {
   my $self = shift;
-  return sprintf('No features from %s on this strand', $self->my_config('name'));
+  return sprintf('No features from %s in this location on this strand', $self->my_config('name'));
 }
 
 1;
