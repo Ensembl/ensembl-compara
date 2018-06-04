@@ -1523,20 +1523,16 @@ sub render_var_coverage {
   my ($f_s, $f_e, $v_s, $v_e, $color) = @_;
 
   my $render;
+  my $var_render;
 
   $color ||= 'red';
 
   my $total_width = 100;
   my $left_width  = 0;
+  my $right_width = 0;
+  my $small_var   = 0;
 
   my $scale = $total_width / ($f_e - $f_s + 1);
-
-  # left part
-  if($v_s > $f_s) {
-    $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
-    $left_width-- if ($left_width == $total_width);
-    $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
-  }
 
   # middle part
   if ($v_s <= $f_e && $v_e >= $f_s) {
@@ -1545,10 +1541,27 @@ sub render_var_coverage {
 
     my $bp = ($e - $s) + 1;
 
-    my $right_width = sprintf("%.0f", $bp * $scale);
-       $right_width = 1 if ($right_width < 1 || $left_width == ($total_width - 1));
-    $render .= sprintf(qq{<div class="var_trans_pos_sub" style="width:%ipx;background-color:%s"></div>}, $right_width, $color);
+    $right_width = sprintf("%.0f", $bp * $scale);
+    if (($right_width <= 2) || $left_width == $total_width) {
+      $right_width = 3;
+      $small_var   = 1;
+    }
+    $var_render = sprintf(qq{<div class="var_trans_pos_sub" style="width:%ipx;background-color:%s"></div>}, $right_width, $color);
   }
+
+  # left part
+  if($v_s > $f_s) {
+    $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
+    if ($left_width == $total_width)  {
+      $left_width -= $right_width;
+      $left_width = 0 if ($left_width < 0);
+    }
+    elsif ($small_var && $left_width > 0) {
+      $left_width--;
+    }
+    $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
+  }
+  $render .= $var_render if ($var_render);
 
   if ($render) {
     $render = qq{<div class="var_trans_pos">$render</div>};
@@ -1588,12 +1601,13 @@ sub vep_icon {
 }
 
 sub display_items_list {
-  my ($self, $div_id, $title, $label, $display_data, $export_data, $no_count_label) = @_;
+  my ($self, $div_id, $title, $label, $display_data, $export_data, $no_count_label, $specific_count) = @_;
 
   my $html = "";
   my @sorted_data = ($display_data->[0] =~ /^<a/i) ? @{$display_data} : sort { lc($a) cmp lc($b) } @{$display_data};
   my $count = scalar(@{$display_data});
-  if ($count > 5) {
+  my $count_threshold = ($specific_count) ? $specific_count : 5;
+  if ($count >= $count_threshold) {
     $html = sprintf(qq{
         <a title="Click to show the list of %s" rel="%s" href="#" class="toggle_link toggle closed _slide_toggle _no_export">%s</a>
         <div class="%s"><div class="toggleable" style="display:none"><span class="hidden export">%s</span><ul class="_no_export">%s</ul></div></div>
