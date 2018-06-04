@@ -320,7 +320,10 @@ sub _munge_format_info {
                 'class' => "_stt__$_ _action_$_",
                 };
     $info->{'group'} = $optgroup if $optgroup;
-    $info->{'selected'} = 'selected' if $self->hub->param('format') eq $_;
+    ## Select format (default to FASTA if available and another format not already set)
+    if ($_ eq $self->hub->param('format') || (!$self->hub->param('format') && $_ eq 'FASTA')) {
+      $info->{'selected'} = 'selected';
+    }
     push @munged_info, $info;
   }
   return @munged_info;
