@@ -35,6 +35,10 @@ sub content {
   my $no_snps     = shift;
   my $ic_type     = shift || 'gene_variation';  
   my $hub         = $self->hub;
+
+  ## View retired for human genes
+  return if ($hub->species eq 'Homo_sapiens' && $ic_type eq 'gene_variation');
+
   my $object      = $self->object || $hub->core_object(lc($hub->param('data_type')));
   my $image_width = $self->image_width     || 800;  
   my $context     = $hub->param('context') || 100; 
