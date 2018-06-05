@@ -218,7 +218,10 @@ sub populate_tree {
   ));
   
   $var_menu->append($self->create_node('Variation_Gene/Image',  'Variant image',
-    [qw( image EnsEMBL::Web::Component::Gene::VariationImage )],
+    [qw( 
+        notice  EnsEMBL::Web::Component::Gene::RetirementNotice 
+        image   EnsEMBL::Web::Component::Gene::VariationImage 
+      )],
     { 'availability' => 'gene database:variation core not_patch' }
   ));
 	
