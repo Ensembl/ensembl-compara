@@ -268,13 +268,21 @@ sub core_object {
   my $self = shift;
   my $name = shift;
 
+  ## Hack for inconsistent capitalisation
+  if ($name =~ /lrg/i) {
+    $name = 'LRG';
+  }
+  else {
+    $name = ucfirst($name);
+  }
+
   if($name eq 'parameters') { ## TODO - replace the usage with core_params method
     return $self->{'core_params'};
   }
 
   my $object;
   if ($self->{'builder'}) {
-    $object = $self->{'builder'}->object(ucfirst $name); 
+    $object = $self->{'builder'}->object($name); 
   }
   return $object;
 }
