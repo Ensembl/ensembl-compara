@@ -125,8 +125,6 @@ sub content {
           <h2>Reference materials</h2>
           <ul>
             <li><a href="/info/genome/variation/index.html">Ensembl variation documentation portal</a></li>
-            <li><a href="/info/genome/variation/data_description.html">Ensembl variation data description</a></li>
-            <!--<li><a href="/info/website/tutorials/variations_worked_example.pdf">Website Walkthrough - Variations</a></li>-->
             <li><a href="/info/website/tutorials/Ensembl_variation_quick_reference_card.pdf">Variation Quick Reference card</a></li>
           </ul>
         </div>
