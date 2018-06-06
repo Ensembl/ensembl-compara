@@ -262,7 +262,8 @@ sub _objs_from_sth {
 sub _uncached_fetch_by_dbID {
     my ($self, $id) = @_;
     $self->bind_param_generic_fetch($id, SQL_INTEGER);
-    return $self->generic_fetch_one('sh.species_set_id = ?');
+    # Cannot use generic_fetch_one because it adds "LIMIT 1" and only the first genome_db would be listed
+    return $self->generic_fetch('sh.species_set_id = ?')->[0];
 }
 
 
