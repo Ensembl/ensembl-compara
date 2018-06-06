@@ -104,6 +104,7 @@ sub seqs_in_genome {
 
 sub msa_blocks {
     my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
+    # Default values from hal2maf
     $max_ref_gap ||= 0;
     confess "Need some target species" unless $targets_str;
     return HALXS::_get_multiple_aln_blocks( $self->{'hal_fd'}, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );

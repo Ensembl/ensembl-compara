@@ -1305,7 +1305,8 @@ sub _get_GenomicAlignBlocks_from_HAL {
       shift @hal_targets unless ( defined $hal_targets[0] );
       my $targets_str = join(',', @hal_targets);
 
-      my $max_ref_gap = 50;
+      # Default values for Ensembl
+      my $max_ref_gap = $num_targets > 1 ? 500 : 50;
       my $maf_file_str = $hal_adaptor->msa_blocks( $targets_str, $ref, $hal_seq_reg, $start-1, $end, $max_ref_gap );
 
       # check if MAF is empty
