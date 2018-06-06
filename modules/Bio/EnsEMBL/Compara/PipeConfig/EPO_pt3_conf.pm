@@ -158,7 +158,7 @@ return
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
                 -parameters => {
                     'db_conn'      => '#compara_mapped_anchor_db#',
-                    'inputlist'    => [ 'method_link', 'genome_db', 'species_set', 'species_set_header', 'method_link_species_set', 'anchor_align', 'dnafrag', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
+                    'inputlist'    => [ 'method_link', 'genome_db', 'species_set', 'species_set_header', 'method_link_species_set', 'dnafrag', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
                     'column_names' => [ 'table' ],
                 },
                 -input_ids => [{}],
