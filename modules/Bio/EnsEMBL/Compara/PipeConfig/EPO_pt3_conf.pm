@@ -282,6 +282,7 @@ return
     -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
     -parameters    => {
         'locator'   => '#ancestral_db#',
+        'master_db' => '#compara_master#',
     },
 },
 # ------------------------------------- run enredo
