@@ -45,8 +45,13 @@ sub content {
     ## Use the new Ontology Lookup Service
 
     ## Embedded search
-    #$html .= '<h2>Search for a term</h2>';
+    $html .= '<h2>Search for a term</h2>';
 
+    my $form = $self->new_form({'class' => 'freeform'});
+    $form->add_field({'type' => 'String', 'name' => 'query'});
+    $form->add_button({'type' => 'Submit', 'value' => 'Search'});
+    $html .= $form->render;
+  
     ## Show table of terms
     my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
     if (keys %glossary) {
