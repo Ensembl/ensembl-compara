@@ -297,7 +297,7 @@ sub pipeline_analyses {
                 -parameters => {
                     'esd2esi_exe' => $self->o('esd2esi_exe'),
                     'fasta2esd_exe' => $self->o('fasta2esd_exe'),
-                    'cmd' => '#fasta2esd_exe# #genome_dump_file# #genome_dump_file#.esd && #esd2esi_exe# #genome_dump_file#.esd #genome_dump_file#.esi',
+                    'cmd' => 'rm -f #genome_dump_file#.esd #genome_dump_file#.esi && #fasta2esd_exe# #genome_dump_file# #genome_dump_file#.esd && #esd2esi_exe# #genome_dump_file#.esd #genome_dump_file#.esi',
                 },
                 -flow_into  => [ 'map_anchors_factory' ],
                 -rc_name => 'mem7500',
