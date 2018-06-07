@@ -428,6 +428,12 @@ sub core_pipeline_analyses {
             -max_retry_count    => 1,
     );
 
+    my %blastp_parameters = (
+        'blast_bin_dir'             => $self->o('blast_bin_dir'),
+        'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
+        'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+    );
+
     return [
 
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
@@ -961,9 +967,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+                %blastp_parameters,
             },
             -rc_name       => '250Mb_6_hour_job',
             -flow_into => {
@@ -977,9 +981,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+                %blastp_parameters,
             },
             -rc_name       => '2Gb_6_hour_job',
             -flow_into => {
@@ -993,9 +995,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+                %blastp_parameters,
             },
             -rc_name       => '250Mb_job',
             -flow_into => {
@@ -1008,9 +1008,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+                %blastp_parameters,
             },
             -rc_name       => '2Gb_job',
             -priority      => 20,

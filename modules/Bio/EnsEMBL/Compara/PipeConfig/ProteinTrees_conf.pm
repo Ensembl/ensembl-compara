@@ -557,6 +557,12 @@ sub core_pipeline_analyses {
         'output_clusterset_id'      => 'notung',
     );
 
+    my %blastp_parameters = (
+        'blast_bin_dir'             => $self->o('blast_bin_dir'),
+        'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
+        'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+    );
+
     return [
 
 # ---------------------------------------------[backbone]--------------------------------------------------------------------------------
@@ -1179,9 +1185,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+                %blastp_parameters,
             },
             -rc_name       => '250Mb_job',
             -flow_into => {
@@ -1194,9 +1198,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
+                %blastp_parameters,
             },
             -rc_name       => '1Gb_job',
             -hive_capacity => $self->o('blastpu_capacity'),
@@ -1310,10 +1312,8 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
                 'allow_same_species_hits'   => 1,
+                %blastp_parameters,
             },
             -batch_size    => 25,
             -rc_name       => '250Mb_job',
@@ -1326,10 +1326,8 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp_himem',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
-                'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
-                'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
                 'allow_same_species_hits'   => 1,
+                %blastp_parameters,
             },
             -batch_size    => 25,
             -rc_name       => '1Gb_job',
