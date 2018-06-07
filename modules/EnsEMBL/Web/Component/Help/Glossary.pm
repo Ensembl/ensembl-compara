@@ -38,26 +38,34 @@ sub _init {
 sub content {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $ols     = $hub->species_defs->ENSEMBL_GLOSSARY_URL;
+  my $ols     = $hub->species_defs->ENSEMBL_GLOSSARY_REST;
   my ($html, $table);
 
   if ($ols) {
     ## Use the new Ontology Lookup Service
+
+    ## Embedded search
+    #$html .= '<h2>Search for a term</h2>';
+
+    ## Show table of terms
     my $rest = EnsEMBL::Web::REST->new($self->hub, $ols);
     if ($rest) {
-      my $endpoint = 'api/ontologies/ensemblglossary/terms?size=500';
-      my $response = $rest->fetch($endpoint);
-      my $terms    = $response->{'_embedded'}{'terms'};
-      #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-      #warn Dumper($terms);
-      $table = $self->new_table([
+      my $endpoint = 'terms?size=500';
+      my ($response, $error) = $rest->fetch($endpoint);
+      unless ($error) {
+        $html .= '<h2>Browse full list of terms</h2>';
+        my $terms    = $response->{'_embedded'}{'terms'};
+        warn sprintf '<p>Found %s terms:</p>', scalar @{$terms||[]};
+        #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+        #warn Dumper($terms);
+        $table = $self->new_table([
                 {'key' => 'term', 'title' => 'Term'},
                 {'key' => 'desc', 'title' => 'Description'},
               ]);
-      $html .= sprintf '<p>Found %s terms:</p>', scalar @{$terms||[]};;
 
-      foreach my $term (sort {$a->{'label'} cmp $b->{'label'}} @{$terms||[]}) {
-        $table->add_row({'term' => $term->{'label'}, 'desc' => join(' ', @{$term->{'description'}||[]})}); 
+        foreach my $term (sort {$a->{'label'} cmp $b->{'label'}} @{$terms||[]}) {
+          $table->add_row({'term' => $term->{'label'}, 'desc' => join(' ', @{$term->{'description'}||[]})}); 
+        }
       }
     }
     else {
