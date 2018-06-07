@@ -55,16 +55,30 @@ sub content {
       unless ($error) {
         $html .= '<h2>Browse full list of terms</h2>';
         my $terms    = $response->{'_embedded'}{'terms'};
-        warn sprintf '<p>Found %s terms:</p>', scalar @{$terms||[]};
-        #use Data::Dumper; $Data::Dumper::Sortkeys = 1;
-        #warn Dumper($terms);
         $table = $self->new_table([
                 {'key' => 'term', 'title' => 'Term'},
                 {'key' => 'desc', 'title' => 'Description'},
-              ]);
+                {'key' => 'more', 'title' => 'Read more'},
+              ], [], {'class' => 'padded-cell'});
 
-        foreach my $term (sort {$a->{'label'} cmp $b->{'label'}} @{$terms||[]}) {
-          $table->add_row({'term' => $term->{'label'}, 'desc' => join(' ', @{$term->{'description'}||[]})}); 
+        foreach my $term (sort { lc $a->{'label'} cmp lc $b->{'label'} } @{$terms||[]}) {
+          ## Some entries are headers, not actual terms, so skip them
+          next unless $term->{'description'};
+          ## Link to Wikipedia if available
+          my $more = '';
+          if ($term->{'annotation'}{'hasDbXref'}) {
+            foreach (@{$term->{'annotation'}{'hasDbXref'}}) {
+              if ($_ =~ /wikipedia/) {
+                $more = qq(<a href="$_">Wikipedia</a>);
+              }
+            }
+          }      
+
+          $table->add_row({
+                            'term' => $term->{'label'}, 
+                            'desc' => join(' ', @{$term->{'description'}||[]}),
+                            'more' => $more,
+                          }); 
         }
       }
     }
