@@ -130,6 +130,7 @@ sub default_options {
         'allow_missing_cds_seqs'    => 0,
 
     # blast parameters:
+        # Amount of sequences to be included in each blast job
         'num_sequences_per_blast_job'   => 500,
 
         # define blast parameters and evalues for ranges of sequence-length

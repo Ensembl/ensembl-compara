@@ -110,18 +110,17 @@ sub default_options {
         'allow_missing_cds_seqs'    => 0,
 
     # blast parameters:
-    # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
+        # Amount of sequences to be included in each blast job
+        'num_sequences_per_blast_job'   => 100,
 
         # define blast parameters and evalues for ranges of sequence-length
+        # Important note: -max_hsps parameter is only available on ncbi-blast-2.3.0 or higher.
         'all_blast_params'          => [
             [ 0,   35,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM30 -word_size 2',    '1e-4'  ],
             [ 35,  50,       '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix PAM70 -word_size 2',    '1e-6'  ],
             [ 50,  100,      '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM80 -word_size 2', '1e-8'  ],
             [ 100, 10000000, '-seg no -max_hsps 1 -use_sw_tback -num_threads 1 -matrix BLOSUM62 -word_size 3', '1e-10' ],  # should really be infinity, but ten million should be big enough
         ],
-
-        # Amount of sequences to be included in each blast job
-        'step'  => 100,
 
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
@@ -947,6 +946,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'unannotated_all_vs_all_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotatedMembers',
+            -parameters => {
+                'step'              => $self->o('num_sequences_per_blast_job'),
+            },
             -rc_name       => '16Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -961,7 +963,6 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
-                'step'                      => $self->o('step'),
                 'evalue_limit'              => "#expr( #all_blast_params#->[#param_index#]->[3])expr#",
             },
             -rc_name       => '250Mb_6_hour_job',
@@ -975,7 +976,6 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp_unannotated_himem',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
-                'step'                      => $self->o('step'),
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
@@ -992,7 +992,6 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp_unannotated_no_runlimit',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
-                'step'                      => $self->o('step'),
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
@@ -1008,7 +1007,6 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'blastp_unannotated_himem_no_runlimit',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
-                'step'                      => $self->o('step'),
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => "#expr( #all_blast_params#->[#param_index#]->[2])expr#",
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
