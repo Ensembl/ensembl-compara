@@ -993,38 +993,37 @@ sub _summarise_website_db {
   }
 
   ## Get glossary
-  my $ols = $SiteDefs::ENSEMBL_GLOSSARY_URL;
+  my $ols = $SiteDefs::ENSEMBL_GLOSSARY_REST;
   if ($ols) {
-    my $endpoint = $ols.'api/ontologies/ensemblglossary/terms?size=500';
-    my $response = read_file($endpoint,{
-                    proxy => $SiteDefs::HTTP_PROXY,
-                    nice => 1,
-                    no_exception => 1,
-                  });
-    if($response->{'error'}) {
-      warn "ERROR FROM OLS SERVER at $endpoint\n";
-    }
-    else {
-      my $in;
-      eval { $in = from_json($response->{'content'}); };    
-      if ($@) {
-        warn "ERROR FROM OLS SERVER: $@\n";
-      }
-      else {
-        foreach (@{$in->{'_embedded'}{'terms'}||[]}) {
-          next unless scalar @{$_->{'description'}||[]};
-          $self->db_tree->{'ENSEMBL_GLOSSARY'}{$_->{'label'}} = $_->{'description'}[0];
+    my $endpoint = $ols.'/terms?size=500';
+    my $data     = $self->_get_rest_data($endpoint);
+    if ($data) {
+      foreach my $term (@{$data->{'_embedded'}{'terms'}||[]}) {
+        next unless scalar @{$term->{'description'}||[]};
+        ## Get parent for this term
+        $endpoint = $ols.'/terms/http%253A%252F%252Fensembl.org%252Fglossary%252F'.$term->{'short_form'}.'/hierarchicalParents'; 
+        my $parent_data = $self->_get_rest_data($endpoint);
+        my $parents = [];
+        foreach (@{$parent_data->{'_embedded'}{'terms'}||[]}) {
+          push @$parents, $_->{'label'};
         }
+
+        ## Get Wikipedia entry
+        my $wiki;
+        my $xrefs = $term->{'annotation'}{'hasDbXref'} || [];
+        foreach (@$xrefs) {
+          if ($_ =~ /wikipedia/) {
+            $wiki = $_;
+            last;
+          }
+        }
+
+        $self->db_tree->{'ENSEMBL_GLOSSARY'}{$term->{'label'}} = {
+                                                              'desc'    => $term->{'description'}[0],
+                                                              'parents' => $parents,
+                                                              'wiki'    => $wiki,      
+                                                              };
       }
-    }
-  }
-  else {
-    $t_aref = $dbh->selectall_arrayref(
-      'select data from help_record where type = "glossary" and status = "live"'
-    );
-    foreach my $row (@$t_aref) {
-      my $entry = eval($row->[0]);
-      $self->db_tree->{'ENSEMBL_GLOSSARY'}{$entry->{'word'}} = $entry->{'meaning'}; 
     }
   }
 
@@ -1034,11 +1033,33 @@ sub _summarise_website_db {
   );
   foreach my $row (@$t_aref) {
     my $entry = eval($row->[0]);
-    $self->db_tree->{'TEXT_LOOKUP'}{$entry->{'word'}} = $entry->{'meaning'}; 
+    $self->db_tree->{'TEXT_LOOKUP'}{$entry->{'word'}} = {'desc' => $entry->{'meaning'}}; 
   }
 
 
   $dbh->disconnect();
+}
+
+sub _get_rest_data {
+  my ($self, $endpoint) = @_;
+  my $data = '';
+
+  my $response = read_file($endpoint,{
+                    proxy => $SiteDefs::HTTP_PROXY,
+                    nice => 1,
+                    no_exception => 1,
+                  });
+  if($response->{'error'}) {
+    warn "REST ERROR at $endpoint\n";
+  }
+  else {
+    eval { $data = from_json($response->{'content'}); };    
+    if ($@) {
+      warn "ERROR FROM REST SERVER: $@\n";
+      $data = '';
+    }
+  }
+  return $data;
 }
 
 sub _summarise_archive_db {
@@ -1801,5 +1822,6 @@ sub _munge_species_url_map {
 
   $multi_tree->{'ENSEMBL_SPECIES_URL_MAP'} = \%species_map;
 }
+
 
 1;

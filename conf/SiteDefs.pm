@@ -225,6 +225,9 @@ our $BLOG_RELEASE_TAG     = 'release_news_e';
 our $BLOG_REST_URL        = 'http://www.ensembl.info/wp-json/wp/v2';
 ###############################################################################
 
+## REST services used by e.g. ConfigPacker
+
+our $ENSEMBL_GLOSSARY_REST = 'https://www.ebi.ac.uk/ols/api/ontologies/ensemblglossary';
 
 ###############################################################################
 ## See Memoize.pm for meaning of these

@@ -39,7 +39,7 @@ sub content {
   my $self    = shift;
   my $hub     = $self->hub;
   my $ols     = $hub->species_defs->ENSEMBL_GLOSSARY_REST;
-  my ($html, $table);
+  my $html;
 
   if ($ols) {
     ## Use the new Ontology Lookup Service
@@ -48,68 +48,43 @@ sub content {
     #$html .= '<h2>Search for a term</h2>';
 
     ## Show table of terms
-    my $rest = EnsEMBL::Web::REST->new($self->hub, $ols);
-    if ($rest) {
-      my $endpoint = 'terms?size=500';
-      my ($response, $error) = $rest->fetch($endpoint);
-      unless ($error) {
-        $html .= '<h2>Browse full list of terms</h2>';
-        my $terms    = $response->{'_embedded'}{'terms'};
-        $table = $self->new_table([
-                {'key' => 'term', 'title' => 'Term'},
-                {'key' => 'desc', 'title' => 'Description'},
-                {'key' => 'more', 'title' => 'Read more'},
-              ], [], {'class' => 'padded-cell'});
+    my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+    if (keys %glossary) {
+      $html .= '<h2>Browse full list of terms</h2>';
+      my $table = $self->new_table([
+                                  {'key' => 'term', 'title' => 'Term'},
+                                  {'key' => 'type', 'title' => 'Category'},
+                                  {'key' => 'desc', 'title' => 'Description'},
+                                  {'key' => 'more', 'title' => 'Read more'},
+                                ], [], {'class' => 'padded-cell'});
 
-        foreach my $term (sort { lc $a->{'label'} cmp lc $b->{'label'} } @{$terms||[]}) {
-          ## Some entries are headers, not actual terms, so skip them
-          next unless $term->{'description'};
-          ## Link to Wikipedia if available
-          my $more = '';
-          if ($term->{'annotation'}{'hasDbXref'}) {
-            foreach (@{$term->{'annotation'}{'hasDbXref'}}) {
-              if ($_ =~ /wikipedia/) {
-                $more = qq(<a href="$_">Wikipedia</a>);
-              }
-            }
-          }      
-
-          $table->add_row({
-                            'term' => $term->{'label'}, 
-                            'desc' => join(' ', @{$term->{'description'}||[]}),
-                            'more' => $more,
-                          }); 
+      foreach my $term (sort { lc $a cmp lc $b } keys %glossary) {
+        ## Show parent, to disambiguate similar terms
+        my $entry = $glossary{$term};
+        my $type;
+        if ($entry->{'parents'}) {
+          $type = join(', ', @{$entry->{'parents'}});
         }
+        else {
+          $type = '-';
+        }
+
+        ## Link to Wikipedia if available
+        my $more = '';
+        if ($entry->{'wiki'}) {
+          $more = sprintf '<a href="%s">Wikipedia</a>', $entry->{'wiki'};
+        }      
+
+        $table->add_row({
+                          'term' => $term, 
+                          'type' => $type,
+                          'desc' => $entry->{'desc'},
+                          'more' => $more,
+                        }); 
       }
-    }
-    else {
-      my $site_url = $ols.'ontologies/ensemblglossary/';
-      $html .= $self->_warning('REST error', qq(Could not contact EBI Ontology Lookup Service. Please try again later, or visit the <a href="$site_url">OLS website</a> to browse the ontology directly.));
+      $html .= $table->render;
     }
   }
-  else {
-    ## Fallback - get old glossary from database
-    ## TODO - remove once OLS is completed
-    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
-    my $words   = [];
-    $table      = $self->new_twocol({'striped' => 1});
-
-    if ($hub->param('word')) {
-      $words = [$adaptor->fetch_glossary_by_word($hub->param('word'))];
-    }
-    elsif ($hub->param('id')) {
-      $words = $adaptor->fetch_help_by_ids([ $hub->param('id') ]);
-    }
-    else {
-      $words = $adaptor->fetch_glossary;
-    }
-
-    $table->add_row(
-      $_->{'word'} . ( $_->{'expanded'} ? " ($_->{'expanded'})" : '' ),
-      $_->{'meaning'}
-    ) for @$words;
-  }
-  $html .= $table->render;
 
   return $html;
 } 
