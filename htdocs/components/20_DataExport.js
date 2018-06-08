@@ -21,14 +21,25 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     var panel = this;
     this.base();
 
-    this.elLk.form        = this.el.find('form').first();
-    this.elLk.images      = this.elLk.form.find('div._export_formats div').on('click',  function() { panel.selectOption(this.firstChild.innerHTML); });
+    this.elLk.form    = this.el.find('form').first();
+    this.elLk.buttons = this.elLk.form.find('input.export_buttons');
+
+    // Select format by clicking on image
+    this.elLk.images = this.elLk.form.find('div._export_formats div');
+    if (this.elLk.images.length == 1) {
+      // If only one format, automatically enable download buttons
+      this.elLk.buttons.removeClass('disabled').prop('disabled', 0);;
+    }
+    else {
+      this.elLk.images.on('click',  function() { panel.selectOption(this.firstChild.innerHTML); });
+    }
+
+    // Or select via dropdown
     this.elLk.dropdown    = this.elLk.form.find('select._export_formats').on('change',  function() { panel.selectOption(this.value, true); });
     this.elLk.compression = this.elLk.form.find('input[name="compression"]');
-    this.elLk.buttons     = this.elLk.form.find('input.export_buttons');
 
     this.elLk.buttons.on('click', function() {
-      if(panel.elLk.dropdown.val() !== '') {
+      if (panel.elLk.images.length == 1 || panel.elLk.dropdown.val() !== '') {
         panel.elLk.compression.val(this.name);
         panel.elLk.form.trigger('submit');
       }
