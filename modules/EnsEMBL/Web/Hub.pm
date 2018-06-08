@@ -276,7 +276,7 @@ sub core_object {
     $name = ucfirst($name);
   }
 
-  if($name eq 'parameters') { ## TODO - replace the usage with core_params method
+  if($name eq 'Parameters') { ## TODO - replace the usage with core_params method
     return $self->{'core_params'};
   }
 
