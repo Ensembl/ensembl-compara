@@ -103,7 +103,7 @@ sub transcript_table {
   if (%unique_synonyms) {
     my $syns = join ', ', sort keys %unique_synonyms;
     $syns_html = "<p>$syns</p>";
-    $table->add_row('Synonyms', $syns_html);
+    $table->add_row('Gene Synonyms', $syns_html);
   }
 
   my $seq_region_name  = $object->seq_region_name;
