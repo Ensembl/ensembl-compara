@@ -334,6 +334,8 @@ sub get_species_info {
       $genome_db_name_hash->{$species_tree_name} = $genome_db;
     }
   }
+  my $genome_db_id_2_node_hash = $mlss && $mlss->species_tree && $mlss->species_tree->get_genome_db_id_2_node_hash;
+
   ## Now munge information for selected species
   foreach my $sp (@$species_order) {
     my $display_name = $hub->species_defs->get_config($sp, 'SPECIES_SCIENTIFIC_NAME');
@@ -354,7 +356,7 @@ sub get_species_info {
       my $id = $gdb->dbID;
       my @stats = qw(genome_coverage genome_length coding_exon_coverage coding_exon_length);
       foreach (@stats) {
-        $info->{$sp}{$_} = $mlss->get_value_for_tag($_.'_'.$id);
+        $info->{$sp}{$_} = $genome_db_id_2_node_hash ? $genome_db_id_2_node_hash->{$id}->get_value_for_tag($_) : $mlss->get_value_for_tag($_.'_'.$id);
       }
     }
   }
