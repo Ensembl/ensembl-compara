@@ -198,7 +198,7 @@ sub pipeline_create_commands_lfs_setstripe {
     }
 
     # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
-    my @cmds = map {qq{which lfs && $user lfs getstripe $_ >/dev/null 2>/dev/null && $user lfs setstripe $_ -c -1 || echo "Striping is not available on this system"}} @dirs;
+    my @cmds = map {qq{which lfs > /dev/null && $user lfs getstripe $_ >/dev/null 2>/dev/null && $user lfs setstripe $_ -c -1 || echo "Striping is not available on this system"}} @dirs;
     return @cmds;
 }
 
