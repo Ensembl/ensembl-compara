@@ -63,7 +63,9 @@ use strict;
 use warnings;
 
 use Data::Dumper;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -85,6 +87,9 @@ sub fetch_input {
     " and method_link_species_set_id = ". $self->param('input_method_link_species_set_id')
       if (!$anchor_aligns and !scalar(@$anchor_aligns));
   $self->param('anchor_aligns', $anchor_aligns);
+  # Preload all we need from the Compara DB
+  $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
   $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
 
