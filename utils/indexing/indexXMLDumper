@@ -65,9 +65,9 @@ GetOptions('species=s'        => \$species_list,
            'log=s'            => \$log,
            'dir=s'            => \$dir,
            'check_xml'        => \$check_xml,
-	   'help'             => \$help,
-	   'tmpdir=s'         => \$tmpdir,
-	   'array'	      => \$array,
+     'help'             => \$help,
+     'tmpdir=s'         => \$tmpdir,
+     'array'        => \$array,
          );
 
 if ($help){
@@ -89,19 +89,22 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
 
 # used to boost certain records
 my $boosts = {
-	      'GeneTrans' => {
-			      'core'    => 40,
-			      'is_ref'  => 10,
-                              'non_ref' => 0,
-			     },
-	      'Family' => {
-			   'species' => 50,
-                           'ms'      => 10,
-			  },
-	      'GeneTree' => {
-			     'All' => 50,
-			    },
-	     };
+        'GeneTrans' => {
+          'core'    => 40,
+          'is_ref'  => 10,
+          'non_ref' => 0,
+        },
+        'Family' => {
+          'species' => 50,
+          'ms'      => 10,
+        },
+        'GeneTree' => {
+          'All' => 50,
+        },
+        'PhenotypeOntlogy' => {
+          'All' => 50,
+        }, 
+      };
 
 # redirect STDOUT and STDERR to a file if not in debug mode
 if ($debug) {
@@ -166,7 +169,7 @@ else {
 
 # where are xml files put on the filesystem ?
 my %shards = (
-  Domain              => 'ensembl_core',	
+  Domain              => 'ensembl_core',  
   Family              => 'ensembl_core',
   Gene                => 'ensembl_core',
   GeneTree            => 'ensembl_core',
@@ -262,7 +265,7 @@ foreach my $index (@indexes) {
       $conf->{'variation_dbh'} = DBI->connect( "dbi:mysql:$variation->{'NAME'};host=$variation->{'HOST'};port=$variation->{'PORT'}",
                                                $variation->{'USER'},
                                                $variation->{'PASS'},
-					        { PrintError => 1, RaiseError => 0} );
+                  { PrintError => 1, RaiseError => 0} );
       $conf->{'variation_details'} = $variation;
       $conf->{'variation_dbname'}  = $variation->{'NAME'};
     }
@@ -278,7 +281,7 @@ foreach my $index (@indexes) {
       $conf->{'website'}{'dbh'}  = DBI->connect("dbi:mysql:$website->{'NAME'};host=$website->{'HOST'};port=$website->{'PORT'}",
                                                 $website->{'USER'},
                                                 $website->{'PASS'},
-						 { PrintError => 1, RaiseError => 0} );
+             { PrintError => 1, RaiseError => 0} );
     }
     else {
       $conf->{'species'}             = $species;
@@ -307,7 +310,7 @@ foreach my $index (@indexes) {
         $conf->{'dbh'} = DBI->connect("dbi:mysql:$core->{'NAME'};host=$core->{'HOST'};port=$core->{'PORT'}",
                                       $core->{'USER'},
                                       $core->{'PASS'},
- 				       {PrintError => 1, RaiseError => 0}
+                {PrintError => 1, RaiseError => 0}
                                     );
         if ( ! $conf->{'dbh'}) {
           print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}."\n";
@@ -318,7 +321,7 @@ foreach my $index (@indexes) {
           $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
                                                 $compara->{'USER'},
                                                 $compara->{'PASS'},
-						  {PrintError => 1, RaiseError => 0}
+              {PrintError => 1, RaiseError => 0}
                                               );
         }
         my $function = "dump$index";
@@ -1003,8 +1006,10 @@ sub PhenLine {
                     $id);
   $species =~ s/_/ /;
   $name = &clean($name,'name');
+  my $boost = $is_ont ? $boosts->{'PhenotypeOntlogy'}{'All'} : '';
+  my $doc = $boost ? qq(doc boost="$boost") : 'doc';
   my $xml = qq(
-<doc>
+<$doc>
   <field name="id">$id</field>
   <field name="name">$name</field>);
   foreach my $syn (@$synonyms) {
@@ -1784,8 +1789,8 @@ sub dumpFamily {
     my (%genes,%proteins,%transcripts);
     foreach my $gene_id (split ',',$gene_member_ids) {
       if ($gene_members->{$gene_id}) {
-	my $stable_id = $gene_members->{$gene_id}{'stable_id'};
-	my $display_label = $gene_names->{$stable_id} || 'none';
+  my $stable_id = $gene_members->{$gene_id}{'stable_id'};
+  my $display_label = $gene_names->{$stable_id} || 'none';
         $genes{$stable_id}{display_label} = $display_label;
       }
     }
@@ -1793,8 +1798,8 @@ sub dumpFamily {
       if ($protein_members->{$tl_id}) {
         my $tl_sid = $protein_members->{$tl_id}{'stable_id'};
         $proteins{$tl_sid}++;
-	my $t_sid = $transl->{$tl_sid}{'trans'};
-	$transcripts{$t_sid}++;
+  my $t_sid = $transl->{$tl_sid}{'trans'};
+  $transcripts{$t_sid}++;
       }
     }
     if (%genes) {
@@ -2324,7 +2329,7 @@ sub dumpGene {
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-	  (my $old_gsi) = keys %{$old->{'gsid'}};
+    (my $old_gsi) = keys %{$old->{'gsid'}};
           &p( GeneTransLine('Gene',
                        $dbspecies,
                        $old->{'gsid'},
@@ -2698,7 +2703,7 @@ sub dumpTranscript {
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-	  (my $old_tsi) = keys %{$old->{'tsid'}};
+    (my $old_tsi) = keys %{$old->{'tsid'}};
           &p( GeneTransLine('Transcript',
                         $dbspecies,
                         $old->{'tsid'},
