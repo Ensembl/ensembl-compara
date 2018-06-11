@@ -359,6 +359,17 @@ sub hover_label_tabs {
       $_->{'current'} ? qq(<img src="${img_url}tick.png" class="tick" alt="Selected" title="Selected" />) : '';
   }
 
+  ## Horrible hack to fix file attachment
+  if ($label->{'conf_url'} && $label->{'conf_url'} =~ /contigviewbottom=url_/) {
+    $label->{'conf_url'} =~ /(url_[\w]+)/;
+    my $track_id = $1;
+    (my $code = $track_id) =~ s/^url_//;
+    my $record = $self->hub->session->get_record_data({'type' => 'url', 'code' => $code});
+    my $url = $record->{'url'};
+    (my $new_link = $label->{'conf_url'}) =~ s/$track_id/url:$url/;
+    $label->{'conf_url'} = $new_link;
+  }
+
   $label->{'conf_url'} = $sd->ENSEMBL_BASE_URL.$label->{'conf_url'} if $label->{'conf_url'};
 
   $renderers .= qq(<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>) if $subset;
