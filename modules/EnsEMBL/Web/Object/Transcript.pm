@@ -130,7 +130,8 @@ sub count_prot_domains {
 sub count_prot_variations {
   my $self = shift;
   return 0 unless $self->species_defs->databases->{'DATABASE_VARIATION'};
-  return scalar grep $_->translation_start, @{$self->get_transcript_variations};
+  my $count = $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->count_all_by_Transcript($self->Obj);
+  return $count;
 }
 
 sub count_supporting_evidence {
