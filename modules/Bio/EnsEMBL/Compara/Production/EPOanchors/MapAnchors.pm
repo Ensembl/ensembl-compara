@@ -274,6 +274,7 @@ sub start_server {
             die "Still failing to start the server after $retry attempts";
         }
         $self->dataflow_output_id( { 'retry' => $retry }, 2);
+        $self->input_job->lethal_for_worker(1); # Since the host is not cooperating, we should leave
         $self->complete_early('Port already taken. New job created');
     }
 }
