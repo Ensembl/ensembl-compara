@@ -316,7 +316,7 @@ foreach my $index (@indexes) {
           print LOG "WARNING: Unable to get database connection for ".$core->{'NAME'}."\n";
           exit;
         }
-        if ($index =~ /Family|GeneTree/) {
+        if ($index =~ /Family|GeneTree|Gene/) {
           my $compara = $PD->{'MULTI'}{'databases'}{'DATABASE_COMPARA'};
           $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
                                                 $compara->{'USER'},
@@ -2168,6 +2168,21 @@ sub dumpGene {
   $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
   my $total_c;
+
+# lookup orthologs for later
+  my $has_orthologues = ();
+  my $sql = qq(
+       SELECT stable_id
+         FROM gene_member gm, gene_member_hom_stats gmhs
+        WHERE gm.gene_member_id = gmhs.gene_member_id
+          AND gmhs.collection = 'default'
+          AND gmhs.orthologues);
+  my $sth = $conf->{'dbh_compara'}->prepare($sql);
+  $sth->execute;
+  while (my $r = $sth->fetchrow_arrayref()) {
+      $has_orthologues->{$r->[0]}=1;
+   }
+
  DB:
   foreach my $db ( sort { $b cmp $a } keys %dbs) {
     my $dbname    = $dbs{$db};
@@ -2242,7 +2257,7 @@ sub dumpGene {
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
-    #    warn Dumper(\%xrefs); exit;
+#        warn Dumper(\%xrefs); exit;
 
     my %gene_trans_syns = ();
     if ($sitetype eq 'Vega') {
@@ -2329,7 +2344,7 @@ sub dumpGene {
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
-    (my $old_gsi) = keys %{$old->{'gsid'}};
+         (my $old_gsi) = keys %{$old->{'gsid'}};
           &p( GeneTransLine('Gene',
                        $dbspecies,
                        $old->{'gsid'},
@@ -2346,6 +2361,7 @@ sub dumpGene {
                        '',
                        $gene_locations->{$old_gsi},
                        $has_patches,
+                       $has_orthologues->{$gsid} ? 1 : 0,
                        $db,
                        $counter),
               $fh);
@@ -2416,6 +2432,7 @@ sub dumpGene {
                         '',
                         $gene_locations->{$old_gsi},
                         $has_patches,
+                        $has_orthologues->{$old->{'gsid'}} ? 1 : 0,
                         $db,
                         $counter),
           $fh);
@@ -2720,6 +2737,7 @@ sub dumpTranscript {
                         $old->{'domains'},
                         $trans_locations->{$old_tsi},
                         $has_patches,
+                        '',
                         $db,
                         $counter),
               $fh);
@@ -2804,6 +2822,7 @@ sub dumpTranscript {
                         $old->{'domains'},
                         $trans_locations->{$old_tsi},
                         $has_patches,
+                        '',
                         $db,
                         $counter),
           $fh) if ($old->{'tsid'});
@@ -2820,7 +2839,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $domains, $feat_loc, $has_patches, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $domains, $feat_loc, $has_patches, $has_orthologues, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2850,9 +2869,14 @@ sub GeneTransLine {
     $loc = $feat_loc->{'sr_name'} .':'. $feat_loc->{'seq_region_start'} .'-'. $feat_loc->{'seq_region_end'} .':'. $feat_loc->{'seq_region_strand'};
   }
 
-  my $quick_links;
+  my @quick_links;
   if ($type eq 'Transcript') {
-    $quick_links = %{$tlsids} ? 'protein:1' : 'protein:0';
+    my $value = %{$tlsids} ? 'protein:1' : 'protein:0';
+    push @quick_links, $value; 
+  }
+  else {
+    my $value = $has_orthologues ? 'orthologues:1' : 'orthologues:0';
+    push @quick_links, $value;  
   }
 
   $species =~ s/_/ /;
@@ -2876,9 +2900,9 @@ sub GeneTransLine {
   <field name="ref_boost">$ref_boost_value</field>);
   }
   $xml .= &common_fields($species,$type,$db);
-  if ($quick_links) {
+  foreach (@quick_links) {
    $xml .=qq(
-  <field name="quick_links">$quick_links</field>);
+  <field name="quick_links">$_</field>);
   }
   my (%seen_labels,%seen_syns,%seen_sources,%labels);
 
