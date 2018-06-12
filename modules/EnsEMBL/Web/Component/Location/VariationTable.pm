@@ -129,15 +129,17 @@ sub clinsig_classes {
   $clinsig_order{$clinsig_order[$_]} = $_ for(0..$#clinsig_order);
 
   my $clinsig_col = $table->column('clinsig');
-  foreach my $cs_img (keys %clinsig_order) {
-    my $cs = $cs_img;
-    $cs =~ s/-/ /g;
-    $clinsig_col->icon_url($cs,sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
-    $clinsig_col->icon_helptip($cs,$cs);
-    $clinsig_col->icon_export($cs,$cs);
-    $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
+  if ($clinsig_col) {
+    foreach my $cs_img (keys %clinsig_order) {
+      my $cs = $cs_img;
+      $cs =~ s/-/ /g;
+      $clinsig_col->icon_url($cs,sprintf("%s/val/clinsig_%s.png",$self->img_url,$cs_img));
+      $clinsig_col->icon_helptip($cs,$cs);
+      $clinsig_col->icon_export($cs,$cs);
+      $clinsig_col->icon_order($cs,$clinsig_order{$cs_img});
+    }
+    $clinsig_col->filter_maybe_blank(1);
   }
-  $clinsig_col->filter_maybe_blank(1);
 }
 
 
