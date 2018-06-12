@@ -122,7 +122,7 @@ sub write_output {
     
     #Create a table (other_gab) to store the genomic_align_block_ids
     my $sql_cmd = "INSERT INTO other_gab (genomic_align_block_id) VALUES (?)";
-    my $dump_sth = $self->db->dbc->prepare($sql_cmd);
+    my $dump_sth = $self->data_dbc->prepare($sql_cmd);
 
     foreach my $gab_id (sort {$a <=> $b} @$gab_ids) {
 	$dump_sth->execute($gab_id);

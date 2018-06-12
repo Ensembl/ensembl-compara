@@ -55,7 +55,7 @@ sub fetch_input {
 	my %max_quality;
 
 	my $sql = 'select MAX(wga_cov) from ( select alignment_mlss, AVG(quality_score) wga_cov from ortholog_quality where homology_id = ? group by alignment_mlss ) wga';
-	my $sth = $self->db->dbc->prepare($sql);
+	my $sth = $self->data_dbc->prepare($sql);
 	foreach my $oid ( @orth_ids ){
 		$sth->execute($oid);
 		$max_quality{$oid} = $sth->fetchrow_arrayref->[0] or $self->warning("Cannot find quality scores in db for homology id $oid");

@@ -123,7 +123,7 @@ sub _healthcheck {
 	#Store results in table. Not really necessary but good to have 
 	#visual confirmation all is well
 	my $sql = "INSERT INTO healthcheck (filename, expected,dumped) VALUES (?,?,?)";
-	my $sth = $self->db->dbc->prepare($sql);
+	my $sth = $self->data_dbc->prepare($sql);
 	$sth->execute($self->param('output_file'), $self->param('num_blocks'), $num_blocks);
 	$sth->finish();
     }
@@ -137,7 +137,7 @@ sub _write_gab_file {
     my ($self) = @_;
 
     my $sql = "SELECT genomic_align_block_id FROM other_gab WHERE genomic_align_block_id BETWEEN ? AND ?";
-    my $sth = $self->db->dbc->prepare($sql);
+    my $sth = $self->data_dbc->prepare($sql);
     $sth->execute($self->param('start'), $self->param('end'));
     
     my $worker_temp_directory   = $self->worker_temp_directory;

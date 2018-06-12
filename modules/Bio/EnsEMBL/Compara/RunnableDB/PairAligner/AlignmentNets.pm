@@ -191,7 +191,7 @@ sub fetch_input {
 sub delete_alignments {
   my ($self, $mlss, $qy_dnafrag, $start, $end) = @_;
 
-  my $dbc = $self->db->dbc;
+  my $dbc = $self->data_dbc;
   my $sql = "select ga1.genomic_align_block_id, ga1.genomic_align_id, ga2.genomic_align_id from genomic_align ga1, genomic_align ga2 where ga1.genomic_align_block_id=ga2.genomic_align_block_id and ga1.dnafrag_id = ? and ga1.dnafrag_id!=ga2.dnafrag_id and ga1.method_link_species_set_id = ?";
 
   my $sth;
