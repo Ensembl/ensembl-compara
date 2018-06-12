@@ -129,6 +129,9 @@ sub resource_classes {
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
          '512Gb_job'    => {'LSF' => '-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
 
+         '250Mb_6_hour_job' => {'LSF' => '-C0 -W 6:00 -M250   -R"select[mem>250]   rusage[mem=250]"' },
+         '2Gb_6_hour_job'   => {'LSF' => '-C0 -W 6:00 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+
          '8Gb_4c_job'   => {'LSF' => '-n 4 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"' },
 
          '4Gb_8c_job'   => {'LSF' => '-n 8 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"' },

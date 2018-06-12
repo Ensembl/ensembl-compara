@@ -1175,7 +1175,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'step'              => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '8Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_unannotated' ],
@@ -1189,9 +1189,10 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '250Mb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
+               -2 => 'break_batch_unannotated',
             },
             -hive_capacity => $self->o('blastpu_capacity'),
         },
@@ -1202,8 +1203,44 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '1Gb_job',
+            -rc_name       => '2Gb_6_hour_job',
+            -flow_into => {
+               -2 => 'break_batch_unannotated',
+            },
+            -priority      => 20,
             -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+        {   -logic_name         => 'blastp_unannotated_no_runlimit',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
+            -parameters         => {
+                'blast_db'                  => '#fasta_dir#/unannotated.fasta',
+                %blastp_parameters,
+            },
+            -rc_name       => '250Mb_job',
+            -flow_into => {
+               -1 => [ 'blastp_unannotated_himem_no_runlimit' ],  # MEMLIMIT
+            },
+            -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+        {   -logic_name         => 'blastp_unannotated_himem_no_runlimit',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
+            -parameters         => {
+                'blast_db'                  => '#fasta_dir#/unannotated.fasta',
+                %blastp_parameters,
+            },
+            -rc_name       => '2Gb_job',
+            -priority      => 20,
+            -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+
+        {   -logic_name    => 'break_batch_unannotated',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BreakUnannotatedBlast',
+            -flow_into  => {
+                2 => 'blastp_unannotated_no_runlimit',
+            }
         },
 
         {   -logic_name => 'hcluster_dump_input_all_pafs',
@@ -1318,9 +1355,10 @@ sub core_pipeline_analyses {
                 %blastp_parameters,
             },
             -batch_size    => 25,
-            -rc_name       => '250Mb_job',
+            -rc_name       => '250Mb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_himem' ],  # MEMLIMIT
+               -2 => [ 'break_batch' ],   # RUNLIMIT
             },
             -hive_capacity => $self->o('blastp_capacity'),
         },
@@ -1336,6 +1374,25 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('blastp_capacity'),
         },
 
+        {   -logic_name    => 'break_batch',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BreakUnannotatedBlast',
+            -flow_into  => {
+                2 => 'blastp_no_runlimit',
+            }
+        },
+
+        {   -logic_name         => 'blastp_no_runlimit',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
+            -parameters         => {
+                'allow_same_species_hits'   => 1,
+                %blastp_parameters,
+            },
+            -rc_name       => '250Mb_job',
+            -flow_into => {
+               -1 => [ 'blastp_himem' ],  # MEMLIMIT
+            },
+            -hive_capacity => $self->o('blastp_capacity'),
+        },
 
         {   -logic_name         => 'hc_pafs',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
