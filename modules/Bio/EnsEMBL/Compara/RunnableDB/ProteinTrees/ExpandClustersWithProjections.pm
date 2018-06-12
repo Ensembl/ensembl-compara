@@ -68,6 +68,13 @@ FROM gene_tree_node gtn JOIN seq_member_projection smp ON gtn.seq_member_id = sm
 LEFT JOIN gene_tree_node gtn2 ON gtn2.seq_member_id = smp.target_seq_member_id WHERE gtn2.seq_member_id IS NULL
 ';
 
+my $sql_update_gene_count = 'UPDATE gene_tree_root_attr
+  JOIN (SELECT root_id, COUNT(seq_member_id) AS real_size FROM gene_tree_node GROUP BY root_id) _t USING (root_id)
+  JOIN gene_tree_root USING (root_id)
+SET gene_count = real_size
+WHERE tree_type = "tree"
+';
+
 my $sql_unexpandable_members = 'SELECT source_seq_member_id, target_seq_member_id
 FROM seq_member_projection smp JOIN seq_member ON source_seq_member_id = seq_member_id LEFT JOIN gene_tree_node gtn1 USING (seq_member_id) LEFT JOIN gene_tree_node gtn2 ON gtn2.seq_member_id = smp.target_seq_member_id
 WHERE gtn1.node_id IS NULL
@@ -85,6 +92,7 @@ sub run {
 
     # Add genes to the clusters
     $self->compara_dba->dbc->do($sql_expand_clusters);
+    $self->compara_dba->dbc->do($sql_update_gene_count);
 
     # Find the source genes that are not in clusters
     my %allclusters = ();

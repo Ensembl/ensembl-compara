@@ -93,7 +93,6 @@ sub default_options {
         'allow_ambiguity_codes'     => 1,
 
     # blast parameters:
-        'num_sequences_per_blast_job'   => 5000,
         # cdhit is used to filter out proteins that are too close to each other
         'cdhit_identity_threshold' => 0.99,
 
@@ -253,9 +252,7 @@ sub tweak_analyses {
     ## Here we bump the resource class of some commonly MEMLIMIT
     ## failing analyses. Are these really EG specific?
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
-    $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
@@ -268,6 +265,9 @@ sub tweak_analyses {
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
+    }
+    if ($self->o('division') eq 'fungi') {
+        $analyses_by_name->{'num_sequences_per_blast_job'}->{'-parameters'} = 5000;
     }
 
     # Leave this untouched: it is an extremely-hacky way of setting "taxlevels" to

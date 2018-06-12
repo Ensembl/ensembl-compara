@@ -42,6 +42,7 @@ BEGIN {
     unshift @INC, "$volume$directory/blib/arch"; # path to built .so file
 }
 
+use Carp;
 use ExtUtils::testlib;
 use HALXS;
 
@@ -103,15 +104,16 @@ sub seqs_in_genome {
 
 sub msa_blocks {
     my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
+    # Default values from hal2maf
     $max_ref_gap ||= 0;
-    die "Need some target species" unless $targets_str;
+    confess "Need some target species" unless $targets_str;
     return HALXS::_get_multiple_aln_blocks( $self->{'hal_fd'}, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
 }
 
 sub pairwise_blocks {
     my ( $self, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg ) = @_;
 
-    die "Need the name of the target species" unless $target;
+    confess "Need the name of the target species" unless $target;
     my @blocks;
     if ( $target_seq_reg ){
         @blocks = HALXS::_get_pairwise_blocks_filtered($self->{'hal_fd'}, $target, $ref, $hal_seq_reg, $start, $end, $target_seq_reg);

@@ -62,7 +62,7 @@ sub default_options {
 
     # executable locations:
         'hcluster_exe'              => $self->check_exe_in_cellar('hclustersg/0.5.0/bin/hcluster_sg'),
-        'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336'),
+        'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336_3'),
         'mafft_home'                => $self->check_dir_in_cellar('mafft/7.305'),
         'extaligners_exe_dir'       => $self->o('linuxbrew_home').'/bin/',   # We expect the latest version of each aligner to be symlinked there
         'trimal_exe'                => $self->check_exe_in_cellar('trimal/1.4.1/bin/trimal'),
