@@ -1150,7 +1150,6 @@ sub add_regulation_builds {
       foreach (@{$all_types{$set}||[]}) {
         #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
-          warn "... ROW ".$_;
           $matrix_rows{$cell_line}{$set}{$_->name} ||= {
                             row         => $_->name,
                             group       => $_->class,
