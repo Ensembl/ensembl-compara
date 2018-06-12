@@ -75,7 +75,7 @@ sub fetch_input {
 	my $dba = $self->get_cached_compara_dba('pipeline_url');
 	# if ( $self->param('alt_aln_db') ) { $dba = $self->get_cached_compara_dba('alt_aln_db'); }
 	# else { $dba = $self->compara_dba }
-	my $do_disconnect = $dba->dbc ne $self->dbc;
+	my $do_disconnect = $self->dbc and ($dba->dbc ne $self->dbc);
 	
 	my $mlss_adap       = $dba->get_MethodLinkSpeciesSetAdaptor;
 	my $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;

@@ -78,7 +78,7 @@ sub fetch_input {
         $gblock_adap     = $dba->get_GenomicAlignBlockAdaptor;
         $dnafrag_adaptor = $dba->get_DnaFragAdaptor;
 
-        $self->db->dbc->disconnect_if_idle;
+        $self->disconnect_from_hive_database;
 
 	my %aln_ranges;
 	my @orth_batch = @{ $self->param_required('orth_batch') };
