@@ -228,6 +228,8 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
+        # CreateReuseSpeciesSets/PrepareSpeciesSetsMLSS may want to create new
+        # entries. We need to make sure they don't collide with the master database
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {

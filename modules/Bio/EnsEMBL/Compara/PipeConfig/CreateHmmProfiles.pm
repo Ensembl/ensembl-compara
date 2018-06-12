@@ -511,6 +511,8 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'offset_tables' ],
         },
 
+        # CreateReuseSpeciesSets/PrepareSpeciesSetsMLSS may want to create new
+        # entries. We need to make sure they don't collide with the master database
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {

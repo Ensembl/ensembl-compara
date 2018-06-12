@@ -149,7 +149,7 @@ sub pipeline_analyses {
                 -input_ids => [{}],
                 -flow_into => {
                     '2->A' => { 'copy_table' => { 'src_db_conn' => '#db_conn#', 'table' => '#table#' } },
-                    'A->1' => [ 'load_genomedb_factory' ],
+                    'A->1' => [ 'offset_tables' ],
                 },
             },
 
@@ -163,6 +163,19 @@ sub pipeline_analyses {
 
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
+
+        # CreateReuseSpeciesSets/PrepareSpeciesSetsMLSS may want to create new
+        # entries. We need to make sure they don't collide with the master database
+        {   -logic_name => 'offset_tables',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql'   => [
+                    'ALTER TABLE species_set_header      AUTO_INCREMENT=10000001',
+                    'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
+                ],
+            },
+            -flow_into      => [ 'load_genomedb_factory' ],
+        },
 
             {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',

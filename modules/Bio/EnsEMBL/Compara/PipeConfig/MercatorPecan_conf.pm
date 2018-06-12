@@ -228,6 +228,10 @@ sub pipeline_analyses {
 				'sql'   => [
 					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#mlss_id# * 10**10) + 1)expr#',
 					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#mlss_id# * 10**10) + 1)expr#',
+                                            # CreateReuseSpeciesSets/PrepareSpeciesSetsMLSS may want to create new
+                                            # entries. We need to make sure they don't collide with the master database
+                                            'ALTER TABLE species_set_header      AUTO_INCREMENT=10000001',
+                                            'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
 					   ],
 			       },
 		-flow_into => {
