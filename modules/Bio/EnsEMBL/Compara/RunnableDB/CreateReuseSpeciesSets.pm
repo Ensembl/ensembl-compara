@@ -120,8 +120,8 @@ sub write_output {
 
     my $all_gdbs = $self->param('genome_dbs');
 
-    $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @$all_gdbs] );
     $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @$all_gdbs] );
+    $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @$all_gdbs] );
 
     $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
         'param_name' => 'species_count',
