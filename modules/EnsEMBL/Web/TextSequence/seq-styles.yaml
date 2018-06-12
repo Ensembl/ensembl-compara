@@ -23,7 +23,7 @@
   class: e0
   text:
     exons_case: ALTERNATING EXONS
-    _else: Alternating exons
+    _else: An exon
   source: sequence_markup
   section: exons
   name: exon0
@@ -34,7 +34,7 @@
     _else: e1
   text:
     exons_case: alternating exons
-    _else: Alternating exons
+    _else: Another exon
   source: sequence_markup
   section: exons
   name: exon1
