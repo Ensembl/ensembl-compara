@@ -98,9 +98,9 @@ sub initialize {
     
     push @data, $export ? $exon_seq : {
       Number     => $i,
-      exint      => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $exon_id),
-      Start      => $self->thousandify($strand == 1 ? $exon_start : $exon_end),
-      End        => $self->thousandify($strand == 1 ? $exon_end   : $exon_start),
+      exint      => $exon_id,
+      Start      => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $self->thousandify($strand == 1 ? $exon_start : $exon_end)),
+      End        => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($exon_start - 50) . '-' . ($exon_end + 50) }), $self->thousandify($strand == 1 ? $exon_end   : $exon_start)),
       StartPhase => $exon->phase     >= 0 ? $exon->phase     : '-',
       EndPhase   => $exon->end_phase >= 0 ? $exon->end_phase : '-',
       Length     => $self->thousandify(scalar @$exon_seq),
@@ -116,9 +116,9 @@ sub initialize {
       
       push @data, $export ? $intron_seq : {
         Number   => '&nbsp;',
-        exint    => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $intron_id),
-        Start    => $self->thousandify($strand == 1 ? $intron_start : $intron_end),
-        End      => $self->thousandify($strand == 1 ? $intron_end   : $intron_start),
+        exint    => $intron_id,
+        Start    => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $self->thousandify($strand == 1 ? $intron_start : $intron_end)),
+        End      => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', r => "$chr_name:" . ($intron_start - 50) . '-' . ($intron_end + 50) }), $self->thousandify($strand == 1 ? $intron_end   : $intron_start)),
         Length   => $self->thousandify($intron_length),
         Sequence => $self->build_sequence($intron_seq, $config)
       };
