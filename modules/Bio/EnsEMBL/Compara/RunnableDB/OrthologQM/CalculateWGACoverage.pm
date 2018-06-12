@@ -121,7 +121,6 @@ sub fetch_input {
 	
 	# disconnect from compara_db
 	$dba->dbc->disconnect_if_idle();
-	$self->db->dbc->disconnect_if_idle;
 
 	$self->param( 'aln_ranges', \%aln_ranges );
 }
