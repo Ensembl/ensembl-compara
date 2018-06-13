@@ -61,6 +61,10 @@ sub json_fetch_species {
     my $type = lc $alignment->{'type'};
     my ($s)  = grep /--$alignment->{'target_name'}$/, keys %{$alignment->{'species'}};
     my ($sp, $target) = split '--', $s;
+
+    # Check for alignment availability in the region
+    next if !$hub->get_adaptor('get_GenomicAlignBlockAdaptor', 'compara')->_has_alignment_for_region($alignment->{id}, $primary_species, $chr, $start, $end, $sp, $target);
+
     s/_/ /g for $type, $target;
 
     $available_species{$s} = $species_defs->species_label($sp, 1) . (grep($target eq $_, @$chromosomes) ? ' chromosome' : '') . " $target - $type";
