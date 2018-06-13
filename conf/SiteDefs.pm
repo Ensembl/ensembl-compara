@@ -227,7 +227,8 @@ our $BLOG_REST_URL        = 'http://www.ensembl.info/wp-json/wp/v2';
 
 ## REST services used by e.g. ConfigPacker
 
-our $ENSEMBL_GLOSSARY_REST = 'https://www.ebi.ac.uk/ols/api/ontologies/ensemblglossary';
+our $OLS_REST_API          = 'https://www.ebi.ac.uk/ols/api/';
+our $ENSEMBL_GLOSSARY_REST = $OLS_REST_API.'ontologies/ensemblglossary';
 
 ###############################################################################
 ## See Memoize.pm for meaning of these
