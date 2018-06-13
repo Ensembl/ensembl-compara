@@ -323,7 +323,8 @@ sub _get_pages {
           'Transcript Image' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'Variation_Transcript/Image',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_trans_image',
                                   'caption' => 'Image showing all variants within the same transcript as this one',
@@ -333,7 +334,8 @@ sub _get_pages {
           'Transcript Table' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'Variation_Transcript/Table',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_trans_table',
                                   'caption' => 'Table of variants within the same transcript as this one',
@@ -354,7 +356,8 @@ sub _get_pages {
           'Exons' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'Exons',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_exons',
                                   'caption' => 'Sequences of individual exons of a transcript indicating the positioning of variants',
@@ -364,7 +367,8 @@ sub _get_pages {
           'Protein Summary' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'ProteinSummary',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_protein',
                                   'caption' => "Variants on a protein's domains",
@@ -375,7 +379,8 @@ sub _get_pages {
           'cDNA Sequence' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'Sequence_cDNA',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_cdna_seq',
                                   'caption' => 'Variants on cDNA sequence',
@@ -385,7 +390,8 @@ sub _get_pages {
           'Protein Sequence' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'Sequence_Protein',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_protein_seq',
                                   'caption' => 'Variants on protein sequence',
@@ -396,7 +402,8 @@ sub _get_pages {
           'Variation Protein' => {
                                   'link_to'     => {'type'    => 'Transcript',
                                                     'action'  => 'ProtVariations',
-                                                    'v'      => $v,
+                                                    'v'       => $v,
+                                                    't'       => $t,
                                                     },
                                   'img'     => 'variation_protvars',
                                   'caption' => 'Table of variants for a protein',
