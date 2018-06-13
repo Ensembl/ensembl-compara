@@ -66,7 +66,6 @@ sub build {
 
       push @columns, {
         name      => $_->id,
-        label     => $_->get('c_header'),
         display   => $_->get('display'),
         x         => $x,
         renderers => $renderers,
@@ -276,7 +275,6 @@ sub build {
     (my $x_class    = lc $x) =~ s/[^\w-]/_/g;
     my $display     = $_->{'display'};
     my $name        = $_->{'name'};
-    my $label       = $_->{'label'};
     my $i           = 0;
     my $classes     = join ' ', grep { ++$i % 2 } @{$_->{'renderers'}};
     my $popup_menu  = $renderer_template[0];
@@ -284,7 +282,7 @@ sub build {
        $popup_menu .= $renderer_template[2];
 
     $headers_html[0] .= sprintf(
-      qq(<th class="$x_class"><p>$label</p>$select_all_col%s</th>),
+      qq(<th class="$x_class"><p>$x</p>$select_all_col%s</th>),
       $x, $x_class, $x_class, $x_class, $c == $tutorial_col - 2 ? $tutorials{'col'} : ''
     );
 
