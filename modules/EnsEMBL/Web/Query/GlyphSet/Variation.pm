@@ -251,7 +251,7 @@ sub fetch_features {
     $vdb->include_failed_variations($orig_failed_flag);  
     $snps = \@vari_features;
   }
-
+  #warn ">>> FOUND ".scalar @$snps." SNPs";
   return $snps||[];
 }
 

@@ -105,6 +105,7 @@ sub get_data {
       type => $self->type,
       slice_length => $slice_length,
     });
+    #warn "... NOW HAVE ".scalar @$features_list." SNPS TO DRAW";
     if (!scalar(@$features_list)) {
       my $track_name = $self->my_config('name'); 
       $self->errorTrack("No $track_name data for this region");
