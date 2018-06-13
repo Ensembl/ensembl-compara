@@ -906,7 +906,7 @@ sub _summarise_funcgen_db {
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
         select
-            epigenome.name,
+            epigenome.display_label,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
         from
@@ -916,7 +916,7 @@ sub _summarise_funcgen_db {
         where
             class in ($classes)
         group by
-            epigenome.name,
+            epigenome.display_label,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
     ));
