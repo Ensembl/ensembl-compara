@@ -18,6 +18,9 @@ addons:
     packages:
     - graphviz
 
+services:
+  - mysql
+
 before_install:
     - git clone --branch release/93 --depth 1 https://github.com/Ensembl/ensembl-test.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch release/93 --depth 1 https://github.com/Ensembl/ensembl-rest.git || git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
