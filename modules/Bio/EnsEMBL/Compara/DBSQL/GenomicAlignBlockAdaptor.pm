@@ -907,6 +907,62 @@ sub _fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit {
 }
 
 
+sub _has_alignment_for_region {
+  my ($self, $method_link_species_set_id, $species1, $region_name1, $start, $end, $species2, $region_name2) = @_;
+
+  my $genome_db1 = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species1);
+  my $dnafrag1 = $self->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db1, $region_name1);
+  my $genome_db2 = $self->db->get_GenomeDBAdaptor->fetch_by_name_assembly($species2);
+  my $dnafrag2 = $self->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db2, $region_name2);
+
+  my $method_link_species_set = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($method_link_species_set_id);
+  if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
+        #return $self->fetch_all_by_MethodLinkSpeciesSet_Slice( $method_link_species_set, $dnafrag->slice );
+
+        my $ref = $dnafrag1->genome_db;
+        my @targets = ( $dnafrag2->genome_db );
+
+        my $block_start = defined $start ? $start : $dnafrag1->slice->start;
+        my $block_end   = defined $end ? $end : $dnafrag1->slice->end;
+        my $alns = $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $ref, \@targets, $dnafrag1, $block_start, $block_end, 1, $dnafrag2 );
+        return scalar(@$alns);
+  }
+
+  my $dnafrag_id1 = $dnafrag1->dbID;
+  my $dnafrag_id2 = $dnafrag2->dbID;
+  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
+
+  my $sql = qq{
+          SELECT
+              1
+          FROM
+              genomic_align ga1, genomic_align ga2
+          WHERE
+              ga1.genomic_align_block_id = ga2.genomic_align_block_id
+              AND ga1.genomic_align_id != ga2.genomic_align_id
+              AND ga2.method_link_species_set_id = $method_link_species_set_id
+              AND ga1.dnafrag_id = $dnafrag_id1 AND ga2.dnafrag_id = $dnafrag_id2
+      };
+  if (defined($start) and defined($end)) {
+    my $max_alignment_length = $method_link_species_set->max_alignment_length;
+    my $lower_bound = $start - $max_alignment_length;
+    $sql .= qq{
+            AND ga1.dnafrag_start <= $end
+            AND ga1.dnafrag_start >= $lower_bound
+            AND ga1.dnafrag_end >= $start
+        };
+  }
+
+  $sql .= qq{ LIMIT 1};
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my ($found) = $sth->fetchrow_array;
+  $sth->finish;
+  return $found;
+}
+
+
 =head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
