@@ -61,7 +61,7 @@ my $gene_path        = $SiteDefs::ENSEMBL_NCBIBLAST_DATA_PATH."/";
 
 warn "\n\n COPYING blast files for ".$SiteDefs::SUBDOMAIN_DIR." release $current_release. Running the following commands: \n\n";
 
-if($SiteDefs::SUBDOMAIN_DIR eq 'www') {
+if($SiteDefs::SUBDOMAIN_DIR eq 'grch37') {
   warn "mkdir -p $blast_path \n";
   system("mkdir -p $blast_path");
 
