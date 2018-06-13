@@ -141,7 +141,9 @@ sub run {
 sub write_output {
     my ($self) = @_;
     my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
-    $anchor_align_adaptor->store_exonerate_hits($self->param('records'));
+    if (my $records = $self->param('records')) {
+        $anchor_align_adaptor->store_exonerate_hits($records);
+    }
 }
 
 sub process_exonerate_hits {
