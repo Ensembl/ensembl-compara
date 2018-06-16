@@ -188,6 +188,7 @@ sub pipeline_analyses {
                                 '1->A'  => [ 'copy_tables_factory' ],
                                 'A->1'  => [ 'backbone_fire_classify_genes' ],
                                },
+                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -215,6 +216,7 @@ sub pipeline_analyses {
             {   -logic_name => 'backbone_pipeline_finished',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => ['notify_pipeline_completed'],
+                -meadow_type=> 'LOCAL',
             },
 
             {   -logic_name => 'notify_pipeline_completed',

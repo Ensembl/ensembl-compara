@@ -392,6 +392,7 @@ sub pipeline_analyses {
 # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
             {   -logic_name => 'healthcheck_factory',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -meadow_type=> 'LOCAL',
                 -flow_into => {
                                '1->A' => WHEN( '#run_gerp#' => {
                                      'conservation_score_healthcheck'  => [
