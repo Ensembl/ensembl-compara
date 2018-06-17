@@ -63,7 +63,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run {
     my ($self) = @_;
-    my $genome_dump_file = $self->param_required('genome_dump_file');
     my $batch_size = $self->param_required('anchor_batch_size');
     die "'anchor_batch_size' must be non-zero\n" unless $batch_size;
     my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
@@ -82,15 +81,13 @@ sub run {
             $max_anchor_id = $ref->[0];
         }
         unless ($count % $batch_size) {
-            push(@anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id, 'genome_db_file' => "$genome_dump_file",
-                    'genome_db_id' => $self->param('genome_db_id'), });
+            push @anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id };
             $min_anchor_id = undef;
         }
         $count++;
     }
     if (defined $min_anchor_id) {
-        push(@anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id, 'genome_db_file' => "$genome_dump_file",
-                'genome_db_id' => $self->param('genome_db_id'), });
+        push @anchor_ids, { 'min_anchor_id' => $min_anchor_id, 'max_anchor_id' => $max_anchor_id };
     }
     $self->param('query_and_target', \@anchor_ids);
 }
