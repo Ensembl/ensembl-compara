@@ -93,12 +93,13 @@ sub fetch_input {
     }
     make_path(dirname($genome_dump_file), {verbose => 1,});
 
+    my $dnafrag_names_2_dbID = {};
+
     open(my $filehandle, '>', $genome_dump_file) or die "can't open $genome_dump_file for writing\n";
     my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new($filehandle,
 		  sub{
 			my $slice = shift;
-			return join(":", $slice->coord_system_name(), $slice->coord_system->version(), 
-					$slice->seq_region_name(), 1, $slice->length, 1); 
+                        return $dnafrag_names_2_dbID->{ $slice->seq_region_name() };
 		}); 
     $serializer->chunk_factor($self->param('chunk_factor'));
     $serializer->line_width($self->param('seq_width'));
@@ -118,6 +119,7 @@ sub fetch_input {
 
     $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             foreach my $ref_dnafrag( @$dnafrags ) {
+                $dnafrag_names_2_dbID->{$ref_dnafrag->name} = $ref_dnafrag->dbID;
                 $serializer->print_Seq($ref_dnafrag->slice);
             }
         });

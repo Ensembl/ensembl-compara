@@ -78,9 +78,6 @@ sub pre_cleanup {
 sub fetch_input {
 	my ($self) = @_;
 
-        my $target_genome_db = $self->compara_dba()->get_adaptor("GenomeDB")->fetch_by_dbID( $self->param('genome_db_id') );
-        $self->param('target_genome_db', $target_genome_db);
-
         $self->dbc->disconnect_if_idle();
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
 	my $genome_db_file = $self->param_required('genome_db_file');
@@ -136,16 +133,15 @@ sub run {
 	open( $out_fh, '-|', $command ) or die("Error opening exonerate command: $? $!"); #run mapping program
 	$self->param('out_file', $out_fh);
 
-        my ($hits, $target2dnafrag);
+        my $hits;
         while(my $mapping = <$out_fh>) {
 	next unless $mapping =~/^vulgar:/;
-	my($anchor_info, $targ_strand, $targ_info, $targ_from, $targ_to, $score) = (split(" ",$mapping))[1,8,5,6,7,9];
+	my($anchor_info, $targ_strand, $targ_dnafrag, $targ_from, $targ_to, $score) = (split(" ",$mapping))[1,8,5,6,7,9];
 	($targ_from, $targ_to) = ($targ_to, $targ_from) if ($targ_from > $targ_to); #exonerate can switch these around
 		$targ_strand = $targ_strand eq "+" ? "1" : "-1";
 		$targ_from++; #modify the exonerate start position
 		my($anchor_name, $anc_org) = split(":", $anchor_info);
-		push(@{$hits->{$anchor_name}{$targ_info}}, [ $targ_from, $targ_to, $targ_strand, $score, $anc_org ]);
-		$target2dnafrag->{$targ_info}++;
+		push(@{$hits->{$anchor_name}{$targ_dnafrag}}, [ $targ_from, $targ_to, $targ_strand, $score, $anc_org ]);
 	}
         close($out_fh);
 
@@ -169,16 +165,7 @@ sub run {
 	}
 	my $hit_numbers = $self->merge_overlapping_target_regions($hits);
 
-        # Will reconnect in this loop
-        my $dnafrag_adaptor = $self->compara_dba()->get_adaptor("DnaFrag");
-        my $target_genome_db = $self->param_required('target_genome_db');
-	foreach my $target_info (sort keys %{$target2dnafrag}) {
-		my($coord_sys, $dnafrag_name) = (split(":", $target_info))[0,2];
-		$target2dnafrag->{$target_info} = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($target_genome_db, $coord_sys, $dnafrag_name)->[0];
-		die "no dnafrag found\n" unless($target2dnafrag->{$target_info});
-		$target2dnafrag->{$target_info} = $target2dnafrag->{$target_info}->dbID;
-	}
-	my $records = $self->process_exonerate_hits($hits, $target2dnafrag, $hit_numbers);	
+	my $records = $self->process_exonerate_hits($hits, $hit_numbers);
         $self->param('records', $records);
 }
 
@@ -192,13 +179,12 @@ sub write_output {
 
 sub process_exonerate_hits {
 	my $self = shift;
-	my($hits, $target2dnafrag, $hit_numbers) = @_;
+	my($hits, $hit_numbers) = @_;
 	my @records_to_load;
 	foreach my $anchor_id (sort keys %{$hits}) {
-		foreach my $targ_dnafrag_info (sort keys %{$hits->{$anchor_id}}) {
-			my $dnafrag_id = $target2dnafrag->{$targ_dnafrag_info};
-			foreach my $hit_position (@{$hits->{$anchor_id}->{$targ_dnafrag_info}}) {
-				my $index = join(":", $anchor_id, $targ_dnafrag_info, $hit_position->[0]);
+		foreach my $dnafrag_id (sort keys %{$hits->{$anchor_id}}) {
+			foreach my $hit_position (@{$hits->{$anchor_id}->{$dnafrag_id}}) {
+				my $index = join(":", $anchor_id, $dnafrag_id, $hit_position->[0]);
 				my $number_of_org_hits = keys %{$hit_numbers->{$index}->{anc_orgs}};
 				my $number_of_seq_hits = $hit_numbers->{$index}->{seq_nums};
 				push @records_to_load, [$self->param('mapping_mlssid'), $anchor_id, $dnafrag_id, @{$hit_position}[0..3], $number_of_org_hits, $number_of_seq_hits];
@@ -214,6 +200,7 @@ sub merge_overlapping_target_regions { #merge overlapping target regions hit by 
 	my $HIT_NUMS;
 	foreach my $anchor(sort {$a <=> $b} keys %{$mapped_anchors}) {
 	        foreach my $targ_info(sort keys %{$mapped_anchors->{$anchor}}) {
+	                # $targ_info is in fact a dnafrag_id
 	                @{$mapped_anchors->{$anchor}{$targ_info}} = sort {$a->[0] <=> $b->[0]} @{$mapped_anchors->{$anchor}{$targ_info}};
 	                for(my$i=0;$i<@{$mapped_anchors->{$anchor}{$targ_info}};$i++) {
 	                        my $anc_look_up_name = join(":", $anchor, $targ_info, $mapped_anchors->{$anchor}{$targ_info}->[$i]->[0]);
