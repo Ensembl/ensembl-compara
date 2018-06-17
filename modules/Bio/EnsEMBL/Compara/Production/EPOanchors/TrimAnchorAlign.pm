@@ -165,9 +165,7 @@ sub _dump_fasta {
       $self->complete_early( "Not enough sequences in current anchor - omitting" );
   }
 
-  $self->iterate_by_dbc($all_anchor_aligns,
-      sub {my $anchor_align = shift; return $anchor_align->dnafrag->genome_db->db_adaptor->dbc;},
-      sub {my $anchor_align = shift;
+  foreach my $anchor_align (@$all_anchor_aligns) {
 
     my $anchor_align_id = $anchor_align->dbID;
     $tree_str .= "aa$anchor_align_id:0.1,";
@@ -176,7 +174,9 @@ sub _dump_fasta {
     my $header = join("", ">AnchorAlign", $anchor_align_id, "|", $anchor_align->dnafrag->name, ".",
         $anchor_align->dnafrag_start, "-", $anchor_align->dnafrag_end, ":",
         $anchor_align->dnafrag_strand);
-    my $seq = $anchor_align->seq;
+    my $fa_path = $self->param_required('genome_dumps')->{$anchor_align->genome_db->dbID};
+    my $seq = $anchor_align->seq_from_fasta($fa_path);
+
     if ($seq =~ /[^ACTGactgNnXx]/) {
       print STDERR "AnchorAlign $anchor_align_id contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
       $seq =~ s/[^ACTGactgNnXx]/N/g;
@@ -188,7 +188,7 @@ sub _dump_fasta {
 
     push @{$self->param('fasta_files')}, $file;
 
-  } );
+  }
 
   substr($tree_str, -1, 1, ");");
   $self->param('tree_string', $tree_str);

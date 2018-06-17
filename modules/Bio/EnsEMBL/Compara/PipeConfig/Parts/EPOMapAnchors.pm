@@ -119,7 +119,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                     'mode'          => 'insertignore',
                 },
 		-hive_capacity => $self->o('low_capacity'),
-                -flow_into => [ 'check_reusability' ],
+                -flow_into => [ 'check_reusability', 'dump_genome_sequence' ],
             },
 
             {   -logic_name => 'check_reusability',
@@ -149,7 +149,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -flow_into => {
                     '2->A' => [ 'reuse_anchor_align' ],
-                    'A->1' => [ 'dump_genome_sequence_factory' ],
+                    'A->1' => [ 'map_anchor_align_genome_factory' ],
                 },
             },
 
@@ -164,13 +164,13 @@ sub pipeline_analyses_epo_anchor_mapping {
 		-hive_capacity => $self->o('low_capacity'),
             },
 
-            {   -logic_name     => 'dump_genome_sequence_factory',
+            {   -logic_name     => 'map_anchor_align_genome_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -parameters => {
                     'species_set_id'    => '#nonreuse_ss_id#',
                 },
                 -flow_into => {
-                    '2->A'  => [ 'dump_genome_sequence' ],
+                    '2->A'  => { 'build_exonerate_index' => { 'genome_db_id' => '#genome_db_id#', 'genome_dump_file' => '#expr(#genome_dumps#->{#genome_db_id#})expr#' } },
                     'A->1'  => [ 'remove_overlaps' ],
                 },
             },
@@ -180,12 +180,22 @@ sub pipeline_analyses_epo_anchor_mapping {
 		-parameters => {
                     'cellular_components_only' => sprintf(q{#expr(%s ? ['NUC'] : [])expr#}, $self->o('only_nuclear_genome')),
 		},
-		-flow_into => { 1 => {'index_genome_sequence' => INPUT_PLUS() } },
+		-flow_into => {
+                    1 => [ 'build_faidx_index', '?accu_name=genome_dumps&accu_address={genome_db_id}&accu_input_variable=genome_dump_file' ],
+                },
 		-rc_name => 'mem7500',
 		-hive_capacity => $self->o('low_capacity'),
 	    },
 
-            {   -logic_name => 'index_genome_sequence',
+            {   -logic_name => 'build_faidx_index',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+                -parameters => {
+                    'samtools_exe'  => $self->o('samtools_exe'),
+                    'cmd' => ['#samtools_exe#', 'faidx', '#genome_dump_file#'],
+                },
+            },
+
+            {   -logic_name => 'build_exonerate_index',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
                 -parameters => {
                     'esd2esi_exe' => $self->o('esd2esi_exe'),
@@ -303,7 +313,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                                 'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align WHERE untrimmed_anchor_align_id IS NULL AND is_overlapping = 0",
                                },  
                 -flow_into => {
-                               2 => [ 'trim_anchor_align' ],
+                               2 => { 'trim_anchor_align' => INPUT_PLUS() },
                               },  
 		-rc_name => 'mem3500',
             },  

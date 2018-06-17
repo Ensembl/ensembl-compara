@@ -95,6 +95,7 @@ sub default_options {
         'server_exe'        => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate-server'),
         'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/fasta2esd'),
         'esd2esi_exe'       => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/esd2esi'),
+        'samtools_exe'      => $self->check_exe_in_cellar('samtools/1.6/bin/samtools'),
         'gerp_exe_dir'      => $self->check_dir_in_cellar('gerp/20080211/bin'),
         'java_exe'          => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
         'ortheus_bin_dir'   => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
