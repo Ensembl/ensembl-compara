@@ -746,4 +746,30 @@ sub _get_unique_key {
     return join('_____', lc $self->name, lc $self->assembly);
 }
 
+
+=head2 faidx_helper
+
+  Arg[1]      : String $filename. A Fasta dump of this genome
+  Example     : $genome_db->faidx_helper("$dump_path/".$genome->dbID.".fa");
+  Description : Return an instance of Bio::DB::HTS::Faidx constructed on the given file.
+                The instance is cached and returned upon subsequent calls, WITHOUT checking
+                if the file names are actually the same.
+  Returntype  : Bio::DB::HTS::Faidx instance
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub faidx_helper {
+    my $self = shift;
+    unless ($self->{_faidx_helper}) {
+        throw('Need the path to the Fasta file') unless @_;
+        throw($_[0] . ' cannot be read') unless -e $_[0];
+        require Bio::DB::HTS::Faidx;
+        $self->{_faidx_helper} = Bio::DB::HTS::Faidx->new(@_);
+    }
+    return $self->{_faidx_helper};
+}
+
+
 1;

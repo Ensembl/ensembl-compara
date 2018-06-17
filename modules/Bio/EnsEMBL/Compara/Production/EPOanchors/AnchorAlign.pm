@@ -35,7 +35,10 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign;
 
 use strict;
 use warnings;
+
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Sequence qw/reverse_comp/;
+
 use Bio::EnsEMBL::Compara::DnaFrag;
 
 use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
@@ -149,6 +152,19 @@ sub seq {
   $self->{'_seq'} = $seq;
 
   return $self->{'_seq'};
+}
+
+sub seq_from_fasta {
+    my $self = shift;
+    my $fasta = shift;
+
+    # Sequence names in the Fasta file are expected to be dnafrag_ids
+    my $faidx_helper = $self->genome_db->faidx_helper($fasta);
+    my $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
+    die "sequence length doesn't match !" if length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
+    reverse_comp(\$seq) if $self->dnafrag_strand < 0;
+
+    return $seq;
 }
 
 1;
