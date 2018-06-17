@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf -password <your_password> -mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -compara_master <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf -password <your_password> -mlss_id <your_current_epo_mlss_id> -species_set_name <the name of the species set> -compara_mapped_anchor_db <db name from epo_pt2 pipeline> -master_db <>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -139,7 +139,7 @@ sub pipeline_wide_parameters {
 		%{$self->SUPER::pipeline_wide_parameters},
                 'ancestral_db' => $self->o('ancestral_db'),
 		'enredo_mapping_file' => $self->o('enredo_mapping_file'),
-		'compara_master' => $self->o('compara_master'),
+		'master_db' => $self->o('master_db'),
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
  		'mapping_mlssid' => $self->o('mapping_mlssid'),
 		'mlss_id' => $self->o('mlss_id'),
@@ -180,7 +180,7 @@ return
             {   -logic_name    => 'copy_mlss',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
                 -parameters    => {
-                    'src_db_conn'   => '#compara_master#',
+                    'src_db_conn'   => '#master_db#',
                     'mode'          => 'topup',
                     'table'         => 'method_link_species_set',
                     'where'         => 'method_link_species_set_id = #mlss_id#',
@@ -269,7 +269,7 @@ return
             -logic_name => 'find_ancestral_seq_gdb',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'compara_db'    => '#compara_master#',
+                'compara_db'    => '#master_db#',
                 'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_name_assembly', $self->o('ancestral_sequences_name')] ],
                 'column_names2getters'  => { 'master_dbID' => 'dbID' },
             },
@@ -282,7 +282,6 @@ return
     -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
     -parameters    => {
         'locator'   => '#ancestral_db#',
-        'master_db' => '#compara_master#',
     },
 },
 # ------------------------------------- run enredo
@@ -481,9 +480,6 @@ return
 
         {   -logic_name    => 'register_mlss',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -parameters    => {
-                'master_db'     => '#compara_master#',
-            },
             -flow_into     => [ 'multiplealigner_stats_factory' ],
         },
 

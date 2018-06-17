@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
 	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
         'password' - your mysql password
 	'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
-	'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
+	'master_db' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
         The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
 
     #4. Run init_pipeline.pl script:
@@ -126,7 +126,7 @@ sub pipeline_wide_parameters {
 		'trimmed_mapping_mlssid' => $self->o('trimmed_mapping_mlssid'),
 		'seq_dump_loc' => $self->o('seq_dump_loc'),
 		'compara_anchor_db' => $self->o('compara_anchor_db'),
-		'master_db' => $self->o('compara_master'),
+		'master_db' => $self->o('master_db'),
 		'reuse_db' => $self->o('reuse_db'),
 	};
 	

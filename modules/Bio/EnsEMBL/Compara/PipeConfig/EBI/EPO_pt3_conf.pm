@@ -116,7 +116,7 @@ sub default_options {
       },
 
       # master db
-      'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+      'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
       # anchor mappings
       #'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_anchor_mapping_91',
