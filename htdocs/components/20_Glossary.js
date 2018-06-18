@@ -38,7 +38,7 @@ Ensembl.Panel.Glossary = Ensembl.Panel.extend({
     this.elLk.glossaryResults.children().hide().end().removeClass('hidden').append('<p>Loading ...</p>');
 
     $.ajax({
-      url       : this.glossaryRestURL + '&query=' + this.elLk.glossaryInput.val(),
+      url       : this.glossaryRestURL + '&q=' + this.elLk.glossaryInput.val(),
       dataType  : 'jsonp',
       context   : this,
       success   : function(json) { this.showGlossaryResults(json); this.elLk.glossaryResults.children('p').remove(); },
