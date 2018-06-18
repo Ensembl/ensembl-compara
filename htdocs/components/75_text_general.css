@@ -65,6 +65,7 @@ pre.wrap              { white-space: pre-wrap; }
 .bg2    { background: [[MAIN_V_LIGHT]];         }
 .bg3    { background: [[V_LIGHT_GREY]];      }
 .bg4    { background: [[CONTRAST_MEDIUM]];     }
+.hl     { background: [[CONTRAST_MEDIUM]];   }
 .hilite { background: [[CONTRAST_DARK]]; }
 .red    { color: [[SEVERE_DARK]] }
 

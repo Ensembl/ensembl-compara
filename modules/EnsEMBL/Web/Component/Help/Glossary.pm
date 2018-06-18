@@ -39,23 +39,28 @@ sub content {
   my $self    = shift;
   my $hub     = $self->hub;
   my $ols     = $hub->species_defs->ENSEMBL_GLOSSARY_REST;
-  my $html;
+  my $html    = '<div id="Glossary" class="js_panel">';
 
   if ($ols) {
     ## Use the new Ontology Lookup Service
 
     ## Embedded search
+    $html .= '<input type="hidden" class="panel_type" value="Glossary">';
     $html .= '<h2>Search for a term</h2>';
 
-    my $form = $self->new_form({'class' => 'freeform'});
+    my $search = $hub->species_defs->OLS_REST_API.'search?ontology=ensemblglossary';
+
+    my $form = $self->new_form({'class' => 'freeform _glossary_search', 'method' => 'get'});
     $form->add_field({'type' => 'String', 'name' => 'query'});
-    $form->add_button({'type' => 'Submit', 'value' => 'Search'});
+    $form->add_hidden({'name' => 'glossary_search_endpoint', 'value' => $search, 'class' => 'js_param' });
+    $form->add_button({'type' => 'Submit', 'value' => 'Search', 'class' => '_rest_search'});
     $html .= $form->render;
-  
+    $html .= '<div class="_glossary_results hidden"></div>';
+
     ## Show table of terms
     my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
     if (keys %glossary) {
-      $html .= '<h2>Browse full list of terms</h2>';
+      $html .= '<h2 class="top-margin">Browse full list of terms</h2>';
       my $table = $self->new_table([
                                   {'key' => 'term', 'title' => 'Term'},
                                   {'key' => 'type', 'title' => 'Category'},
@@ -90,6 +95,8 @@ sub content {
       $html .= $table->render;
     }
   }
+
+  $html .= '</div>';
 
   return $html;
 } 
