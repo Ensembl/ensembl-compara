@@ -58,8 +58,13 @@ Ensembl.Panel.Glossary = Ensembl.Panel.extend({
       message += ':</p>';
       this.elLk.glossaryResults.append(message);
       var list = this.elLk.glossaryResults.append('<dl>');
+      var myRegEx = new RegExp('(' + this.elLk.glossaryInput.val() + ')', "ig");
       $.each(results, function(i,obj) {
-        list.append('<dt>' + obj.label + '</dt><dd>' + obj.description[0]+ '</dd>');
+        // Highlight matching terms
+        var term    = obj.label.replace(myRegEx, '<span class="hl">' + "$1" + '</span>');
+        var desc    = obj.description[0].replace(myRegEx, '<span class="hl">' + "$1" + '</span>');
+        // Append to list
+        list.append('<dt>' + term + '</dt><dd>' + desc + '</dd>');
       });
     }
     else {
