@@ -48,7 +48,7 @@ sub content {
     $html .= '<input type="hidden" class="panel_type" value="Glossary">';
     $html .= '<h2>Search for a term</h2>';
 
-    my $search = $hub->species_defs->OLS_REST_API.'/search?ontology=ensemblglossary';
+    my $search = $hub->species_defs->OLS_REST_API.'search?ontology=ensemblglossary';
 
     my $form = $self->new_form({'class' => 'freeform _glossary_search', 'method' => 'get'});
     $form->add_field({'type' => 'String', 'name' => 'query'});
