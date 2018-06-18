@@ -35,36 +35,35 @@ Ensembl.Panel.Glossary = Ensembl.Panel.extend({
 
   fetchGlossary: function() {
 
-    this.elLk.glossaryResults.children().hide().end().removeClass('hidden').append('<p>Loading ...</p>');
+    this.elLk.glossaryResults.children().remove().end().removeClass('hidden').append('<p class="_loading">Loading ...</p>');
 
     $.ajax({
-      url       : this.glossaryRestURL + '&q=' + this.elLk.glossaryInput.val(),
+      url       : this.glossaryRestURL + '&rows=100&q=' + this.elLk.glossaryInput.val(),
       dataType  : 'json',
       context   : this,
-      success   : function(json) { this.showGlossaryResults(json); this.elLk.glossaryResults.children('p').remove(); },
+      success   : function(json) { this.showGlossaryResults(json); this.elLk.glossaryResults.children('._loading').remove(); },
       error     : function(jqXHR) { this.showError((jqXHR.responseJSON || {}).error) }
     });
   },
 
   showGlossaryResults: function(data) {
-    var list    = this.elLk.glossaryResults.children().filter('li').remove().end().show().find('ul');
     var count   = data.response.numFound;
     var results = data.response.docs;
-    console.log(list);
 
     if (count > 0) {
       var message = '<p class="top-margin">Found ' + count + ' matching terms';
-      if (count > 10) {
-        message += ' - showing first 10';
+      if (count > 100) {
+        message += ' - showing first 100';
       }
       message += ':</p>';
-      this.elLk.glossaryResults.before(message);
+      this.elLk.glossaryResults.append(message);
+      var list = this.elLk.glossaryResults.append('<dl>');
       $.each(results, function(i,obj) {
-        $(list).append('<li>' + obj.label + '</li>');
+        list.append('<dt>' + obj.label + '</dt><dd>' + obj.description[0]+ '</dd>');
       });
     }
     else {
-      this.elLk.glossaryResults.before('<p>No results found.</p>');
+      this.elLk.glossaryResults.append('<p>No results found.</p>');
     }
   },
 
@@ -76,7 +75,7 @@ Ensembl.Panel.Glossary = Ensembl.Panel.extend({
     } else {
       err = 'Error loading glossary results from OLS';
     }
-    this.elLk.glossaryResults.children('li').show().end().children('p').html(err).show();
+    this.elLk.glossaryResults.append('<p>' + err + '</p>');
   }
 
 

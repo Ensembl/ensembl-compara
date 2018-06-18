@@ -55,7 +55,7 @@ sub content {
     $form->add_hidden({'name' => 'glossary_search_endpoint', 'value' => $search, 'class' => 'js_param' });
     $form->add_button({'type' => 'Submit', 'value' => 'Search', 'class' => '_rest_search'});
     $html .= $form->render;
-    $html .= '<div class="_glossary_results hidden"><ul></ul></div>';
+    $html .= '<div class="_glossary_results hidden"></div>';
 
     ## Show table of terms
     my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
