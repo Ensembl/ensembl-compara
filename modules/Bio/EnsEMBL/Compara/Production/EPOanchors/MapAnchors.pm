@@ -149,7 +149,7 @@ sub run {
         $self->stop_server if $self->param('with_server');
 
         if ($self->param('retry')) {
-            $self->warning('did '.$self->param('retry').' attempts');
+            $self->warning('Server started after '.$self->param('retry').' attempts');
         }
 
         # Since exonerate-server seems to be missing some hits, we fallback
@@ -290,20 +290,19 @@ sub start_server_on_port {
   my $cycles = 0;
   while ($cycles < 50) {
       sleep 5;
-      # Check if the server has exited
-      if (waitpid($pid, WNOHANG)) {
-          system('cp', '-a', $log_file, $self->param_required('seq_dump_loc').'/../');
-          $self->say_with_header("Server exited by itself (address already in use ?). See log: $log_file");
-          return 0;
-      }
       $cycles++;
       my $started_message = `tail -1 $log_file`;
       if ($started_message =~ /listening on port/) {
-          $self->say_with_header("Server started on port $port");
+          $self->say_with_header("Server started on port $port after $cycles cycles");
           return 1;
+
       } elsif ($started_message =~ /Address already in use/) {
           $self->stop_server;
-          $self->say_with_header("Failed to start server: Address already in use");
+          $self->warning("Failed to start server: Address already in use");
+          return 0;
+
+      } elsif (waitpid($pid, WNOHANG)) {
+          $self->warning("Server exited by itself: $started_message");
           return 0;
       }
   }
