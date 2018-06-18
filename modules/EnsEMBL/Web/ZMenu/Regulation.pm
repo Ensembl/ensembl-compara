@@ -85,8 +85,6 @@ sub content {
     }
   }
   
-  $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
-
   $self->_add_nav_entries;
   
   my %motif_features = %{$object->get_motif_features($epigenome)};
