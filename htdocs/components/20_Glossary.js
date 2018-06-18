@@ -39,7 +39,7 @@ Ensembl.Panel.Glossary = Ensembl.Panel.extend({
 
     $.ajax({
       url       : this.glossaryRestURL + '&q=' + this.elLk.glossaryInput.val(),
-      dataType  : 'jsonp',
+      dataType  : 'json',
       context   : this,
       success   : function(json) { this.showGlossaryResults(json); this.elLk.glossaryResults.children('p').remove(); },
       error     : function(jqXHR) { this.showError((jqXHR.responseJSON || {}).error) }
@@ -47,11 +47,25 @@ Ensembl.Panel.Glossary = Ensembl.Panel.extend({
   },
 
   showGlossaryResults: function(data) {
-    var list  = this.elLk.glossaryResults.children().filter('li').remove().end().show().find('ul');
+    var list    = this.elLk.glossaryResults.children().filter('li').remove().end().show().find('ul');
+    var count   = data.response.numFound;
+    var results = data.response.docs;
+    console.log(list);
 
-    $.each(data._embedded.terms, function(obj) {
-      console.log(obj.label);
-    });
+    if (count > 0) {
+      var message = '<p class="top-margin">Found ' + count + ' matching terms';
+      if (count > 10) {
+        message += ' - showing first 10';
+      }
+      message += ':</p>';
+      this.elLk.glossaryResults.before(message);
+      $.each(results, function(i,obj) {
+        $(list).append('<li>' + obj.label + '</li>');
+      });
+    }
+    else {
+      this.elLk.glossaryResults.before('<p>No results found.</p>');
+    }
   },
 
   showError: function(err) {
