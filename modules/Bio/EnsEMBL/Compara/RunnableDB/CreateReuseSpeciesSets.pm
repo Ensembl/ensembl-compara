@@ -60,7 +60,8 @@ sub fetch_input {
         warn "Storing without a reference_db\n" if($self->debug());
     }
 
-    $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
+    my $all_genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+    $self->param('genome_dbs', [grep {$_->name ne 'ancestral_sequences'} @$all_genome_dbs]);
 }
 
 sub _has_duplicates {
