@@ -174,7 +174,7 @@ sub pipeline_analyses {
                 {
                     'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                     'registry'          => $self->o('registry'),
-                    'recompute_existing_syntenies' => $self->o('recompute_existing_syntenies'),
+                    'from_first_release'    => $self->o('curr_release'),
                 },
             
             -wait_for   => [ 'copy_table', 'copy_table_factory' ],
