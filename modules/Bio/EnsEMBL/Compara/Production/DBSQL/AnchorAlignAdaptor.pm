@@ -108,6 +108,12 @@ sub store_exonerate_hits {
         return bulk_insert($self->dbc, 'anchor_align', $batch_records, [qw(method_link_species_set_id anchor_id dnafrag_id dnafrag_start dnafrag_end dnafrag_strand score num_of_organisms num_of_sequences)]);
 }
 
+sub store_trimmed_anchor_hits {
+    my $self = shift;
+    my $batch_records = shift;
+    return bulk_insert($self->dbc, 'anchor_align', $batch_records, [qw(method_link_species_set_id anchor_id dnafrag_id dnafrag_start dnafrag_end dnafrag_strand score num_of_organisms num_of_sequences evalue untrimmed_anchor_align_id)]);
+}
+
 
 ###############################################################################
 #

@@ -134,11 +134,7 @@ sub write_output {
   my ($self) = @_;
 
   my $anchor_align_adaptor = $self->compara_dba()->get_AnchorAlignAdaptor();
-  foreach my $this_trimmed_anchor_align (@{$self->param('trimmed_anchor_aligns')}) {
-    $anchor_align_adaptor->store($this_trimmed_anchor_align);
-  }
-
-  return 1;
+  $anchor_align_adaptor->store_trimmed_anchor_hits( $self->param('trimmed_anchor_aligns') );
 }
 
 
@@ -308,7 +304,7 @@ sub get_best_trimming_position {
 
 sub get_trimmed_anchor_aligns {
   my ($self, $best_position) = @_;
-  my $trimmed_anchor_aligns;
+  my @trimmed_anchor_aligns_data;
 
   my $aligned_sequences = $self->param('aligned_sequences');
 # #   while (my ($align_anchor_id, $aligned_sequence) = each %$aligned_sequences) {
@@ -355,18 +351,23 @@ sub get_trimmed_anchor_aligns {
     if ($end - $start + 1 != 2) {
       die "Wrong length $start $end";
     }
-    my $new_anchor_align;
-    %$new_anchor_align = %$this_anchor_align;
-    bless $new_anchor_align, ref($this_anchor_align);
-    delete($new_anchor_align->{'_seq'});
-    delete($new_anchor_align->{'dbID'});
-    $new_anchor_align->dnafrag_start($start);
-    $new_anchor_align->dnafrag_end($end);
-    $new_anchor_align->untrimmed_anchor_align_id($this_anchor_align->dbID);
-    push(@$trimmed_anchor_aligns, $new_anchor_align);
+    my @new_anchor_align_data = (
+        $this_anchor_align->method_link_species_set_id,
+        $this_anchor_align->anchor_id,
+        $this_anchor_align->dnafrag_id,
+        $start,
+        $end,
+        $this_anchor_align->dnafrag_strand,
+        $this_anchor_align->score,
+        $this_anchor_align->num_of_organisms,
+        $this_anchor_align->num_of_sequences,
+        $this_anchor_align->evalue,
+        $this_anchor_align->dbID,
+    );
+    push @trimmed_anchor_aligns_data, \@new_anchor_align_data;
   }
 
-  return $trimmed_anchor_aligns;
+  return \@trimmed_anchor_aligns_data;
 }
 
 1;
