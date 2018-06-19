@@ -55,34 +55,34 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 #-------------------------HOMOLOGY DATABASES-----------------------------------
 
 # Individual pipeline database for ProteinTrees:
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-1',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4485,
-#     -species => 'compara_ptrees',
-#     -dbname => 'waakanni_protein_trees_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-1',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4485,
+     -species => 'compara_ptrees',
+     -dbname => 'waakanni_protein_trees_93',
+);
 
 # Individual pipeline database for Families:
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-1',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4485,
-#     -species => 'compara_families',
-#     -dbname => 'waakanni_families_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-1',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4485,
+     -species => 'compara_families',
+     -dbname => 'muffato_families_93',
+);
 
 # Individual pipeline database for ncRNAtrees:
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-4',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4401,
-#     -species => 'compara_nctrees',
-#     -dbname => 'mateus_compara_nctrees_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-4',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4401,
+     -species => 'compara_nctrees',
+     -dbname => 'carlac_compara_nctrees_93',
+);
 
 # Reindexed mouse strains protein trees
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
