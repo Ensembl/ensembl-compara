@@ -294,8 +294,8 @@
          {
             "assignee" : "<RelCo>",
             "component" : "Release tasks",
-            "description" : "Update the Jira_recurrent_tickets.txt with any changes to the release process or tasks that has taken during the current release",
-            "summary" : "Update the Jira_recurrent_tickets.txt"
+            "description" : "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
+            "summary" : "Update the jira_recurrent_tickets.json"
          }
       ],
       "summary" : "Release <version> Post-handover"
