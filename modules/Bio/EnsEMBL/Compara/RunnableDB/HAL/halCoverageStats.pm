@@ -46,7 +46,7 @@ sub param_defaults {
 #        'mlss_id' => 835, #mouse strain MSA mlss id
 #        'genome_db_id'  => 134,
 #        'temp_hal_species_name' => 'simHuman_chr6', #C57B6J',
-#        'compara_db' => 'mysql://ensadmin:ensembl@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_92',
+#        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_92',
 #        'temp_hal_path'  => '/homes/waakanni/cactus_linuxbrew/cactus/example_SM_local/result.hal',
 #        'species_name_mapping' => {134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'},
 #        'temp_result' => 'SPRET_EiJ, 2.62559e+09, 1.52198e+08, 5.94547e+07, 3.6716e+07, 2.54746e+07, 1.92152e+07, 1.48778e+07, 1.17484e+07, 9.18044e+06, 7.23219e+06, 5.58522e+06, 4.42185e+06, 3.53558e+06, 2.6432e+06, 1.98818e+06, 1.53266e+06, 1.16407e+06, 896452, 664648, 507556, 387216, 292926, 226926, 183318, 146694, 114219, 60113, 24716, 17940, 15388, 15358, 15358, 15358, 15358, 15358, 15358, 14782, 11970, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
