@@ -202,15 +202,15 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 );
 
 # current ancestral database on one of Compara servers. This alias is need for the epo data dumps to work:
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#    -host => 'mysql-ens-compara-prod-3',
-#    -user => 'ensadmin',
-#    -pass => $ENV{'ENSADMIN_PSW'},
-#    -port => 4523,
-#    -group => 'core',
-#    -species => 'ancestral_sequences',
-#    -dbname => 'ensembl_ancestral_92',
-#);
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4523,
+    -group => 'core',
+    -species => 'ancestral_sequences',
+    -dbname => 'ensembl_ancestral_93',
+);
 
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host => 'mysql-ens-compara-prod-1',
