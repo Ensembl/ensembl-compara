@@ -217,7 +217,7 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     # Build the species-tree once all the GenomeDBs have been loaded
-    $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = [ 'make_species_tree', 'find_ancestral_seq_gdb' ];
+    $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = [ 'make_species_tree' ];
 
     # Remove the semaphore as "remove_overlaps" is in another part of the pipeline
     $analyses_by_name->{'map_anchor_align_genome_factory'}->{'-flow_into'} = { 2 => $analyses_by_name->{'map_anchor_align_genome_factory'}->{'-flow_into'}->{'2->A'} };
@@ -228,7 +228,6 @@ sub tweak_analyses {
         '2->A' => $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'}->{2},
         'A->1' => [ 'dump_mappings_to_file' ],
     };
-    delete $analyses_by_name->{'store_ancestral_species_name'}->{'-flow_into'};
 
     # Remove the dataflow as "load_dnafrag_region" is in another part of the pipeline
     delete $analyses_by_name->{'run_enredo'}->{'-flow_into'};
