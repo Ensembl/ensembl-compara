@@ -10,6 +10,11 @@
 
 # Deprecated methods scheduled for deletion
 
+## get VariationFeatures for AlignSlice, to be removed in Ensembl 95 
+
+* `AlignSlice::Slice::get_all_VariationFeatures_by_VariationSet`
+* `AlignSlice::Slice::get_all_genotyped_VariationFeatures`
+
 ## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 94
 
 * `Taggable::get_value_for_XXX()`
