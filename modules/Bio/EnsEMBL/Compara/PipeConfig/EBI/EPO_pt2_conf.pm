@@ -93,7 +93,7 @@ sub default_options {
         'map_anchors_batch_size'        => 10,
         'map_anchors_capacity'          => 1000,
         'trim_anchor_align_batch_size'  => 20,
-        'trim_anchor_align_capacity'    => 150,
+        'trim_anchor_align_capacity'    => 500,
 
 	 # place to dump the genome sequences
     'seq_dump_loc' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/genome_seq/' ,
