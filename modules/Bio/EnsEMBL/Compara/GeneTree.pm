@@ -138,9 +138,6 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
-use Data::Dumper;
-$Data::Dumper::Maxdepth=2;
-
 use strict;
 use warnings;
 
@@ -526,17 +523,7 @@ sub alignment {
     }
 
     my $self_members = $self->get_all_Members;
-
-    # debugging #
-    # my @member_ids = sort map {$_->dbID} @$self_members;
-    # my @cigar_ids = sort keys %cigars;
-    # print Dumper \@cigar_ids;
-    # print Dumper \@member_ids;
-    # print scalar(keys %cigars) . " cigars vs " . scalar @member_ids . " members!\n";
-
-    #############
-
-    # die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
+    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
 
     if ( scalar(keys %cigars) != scalar(@$self_members) ) {
         if ( $ignore_mismatch ) {
