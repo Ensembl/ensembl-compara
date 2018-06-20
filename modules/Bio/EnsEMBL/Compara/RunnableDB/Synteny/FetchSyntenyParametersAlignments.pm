@@ -52,7 +52,6 @@ sub param_defaults {
     return {
         # When to create jobs
         recompute_failed_syntenies      => 0,   # boolean
-        recompute_existing_syntenies    => 0,   # boolean
         create_missing_synteny_mlsss    => 1,   # boolean
 
         # By default, we'll test all the pairwise alignments found in the db
@@ -69,8 +68,8 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
 
-    if ((not $self->param_required('recompute_existing_syntenies')) and (not $self->param_required('create_missing_synteny_mlsss'))) {
-        die "At least one of 'recompute_existing_syntenies' / 'create_missing_synteny_mlsss' must be set.\n"
+    if ((not $self->param_required('from_first_release')) and (not $self->param_required('create_missing_synteny_mlsss'))) {
+        die "At least one of 'from_first_release' / 'create_missing_synteny_mlsss' must be set.\n"
     }
 
     if ($self->param("registry")) {
@@ -164,8 +163,9 @@ sub _check_pairwise {
         $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->store($master_synt_mlss, 0);
         # It has to be stored also in the current database
         $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($master_synt_mlss);
-    } elsif (not $self->param('recompute_existing_syntenies')) {
-        $self->warning(sprintf("Discarding '%s' because its MLSS already exists in the master database", $mlss->name));
+
+    } elsif ( $master_synt_mlss->first_release < $self->param('from_first_release') ) {
+        $self->warning(sprintf("Discarding '%s' because its MLSS already exists in the master database and is not set to recompute by 'from_first_release'", $mlss->name));
         return;
     }
     # It should be in the current database
