@@ -454,6 +454,7 @@ sub update_collection {
             $old_ss->name('tmp'.$old_ss->name);
             $self->update_header($old_ss);
         }
+        $self->retire_object($old_ss);
     }
 
     return $species_set;

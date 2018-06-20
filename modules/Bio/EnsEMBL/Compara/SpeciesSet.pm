@@ -188,7 +188,7 @@ sub toString {
     my $txt = sprintf('SpeciesSet dbID=%s', $self->dbID || '?');
     $txt .= ' ' . ($self->name ? sprintf('"%s"', $self->name) : '(unnamed)');
     if ($self->size <= 5) {
-        $txt .= "', genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
+        $txt .= ", genome_dbs=[".join(', ', map { $_->name.'('.($_->dbID || '?').')'} sort {$a->dbID <=> $b->dbID} @{ $self->genome_dbs })."]";
     } else {
         $txt .= sprintf("', %d genome_dbs", $self->size);
     }

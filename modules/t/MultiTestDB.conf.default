@@ -23,6 +23,7 @@
     'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'felis_catus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'pan_troglodytes' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'test_master' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
  }
 
 #uncomment to use preloaded databases (useful when doing lots of testing)

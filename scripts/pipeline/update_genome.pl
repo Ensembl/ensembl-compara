@@ -125,17 +125,12 @@ File that contains the production names of all the species to import.
 Mainly used by Ensembl Genomes, this allows a bulk import of many species.
 In this mode, --species and --taxon_id are ignored.
 
-=item B<[--collection collection_name]>
-
-When --file_of_production_names is given, a collection species-set can be
-created with all the species listed in the file.
-When --file_of_production_names is not given, the species will be added to
-the collection.
-
 =item B<[--release]>
 
-Mark all the GenomeDBs that are created (and the collection if --collection
-is given) as "current", i.e. with a first_release and an undefined last_release
+Mark all the GenomeDBs that are created as "current", i.e. with a first_release 
+and an undefined last_release. In cases of a new assembly, all species_sets, 
+collections and method_link_species_sets associated with the old assembly will
+be retired.
 
 =back
 
@@ -162,7 +157,6 @@ my $taxon_id;
 my $force = 0;
 my $offset = 0;
 my $file;
-my $collection;
 my $release;
 
 GetOptions(
@@ -173,8 +167,7 @@ GetOptions(
     "taxon_id=i" => \$taxon_id,
     "force!" => \$force,
     'offset=i' => \$offset,
-    'file_of_production_names=s' => \$file,
-    'collection=s' => \$collection,
+    'file|file_of_production_names=s' => \$file,
     'release' => \$release,
   );
 
@@ -200,222 +193,29 @@ if ($compara =~ /mysql:\/\//) {
     $compara_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 }
 throw ("Cannot connect to database [$compara]") if (!$compara_dba);
+my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
 
-my $new_genome_dbs = [];
 
+# create the list of species
+my @species_list;
 if ($species) {
     die "--species and --file_of_production_names cannot be given at the same time.\n" if $file;
-    push @$new_genome_dbs, @{ process_species($species) };
+    push @species_list, $species;
 } else {
     $taxon_id = undef;
-    $species = undef;
     my $names = slurp_to_array($file, "chomp");
     foreach my $species (@$names) {
         #left and right trim for unwanted spaces
         $species =~ s/^\s+|\s+$//g;
-        push @$new_genome_dbs, @{ process_species($species) };
+        push @species_list, $species;
     }
 }
 
-if ($collection) {
-    my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
-    my $ini_coll_ss = $ss_adaptor->fetch_collection_by_name($collection);
-    if ($ini_coll_ss) {
-        my %is_new = map {$_->name => 1} @$new_genome_dbs;
-        push @$new_genome_dbs, grep {!$is_new{$_->name}} @{$ini_coll_ss->genome_dbs};
-    } else {
-        print "*** The collection '$collection' does not exist in the database. It will now be created.\n";
-    }
-    $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        my $new_collection_ss = $ss_adaptor->update_collection($collection, $ini_coll_ss, $new_genome_dbs);
-        # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-        $ss_adaptor->make_object_current($new_collection_ss) if $release;
-    });
+
+# run the update
+my $new_genome_dbs = [];
+foreach my $this_species ( @species_list ) {
+    push @$new_genome_dbs, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($compara_dba, $this_species, -RELEASE => $release, -FORCE => $force, -TAXON_ID => $taxon_id, -OFFSET => $offset) };
 }
 
 exit(0);
-
-
-=head2 process_species
-
-  Arg[1]      : string $string
-  Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags
-  Returntype  : arrayref of Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions  : none
-
-=cut
-
-sub process_species {
-    my $species = shift;
-
-    my $species_no_underscores = $species;
-    $species_no_underscores =~ s/\_/\ /;
-
-    my $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species, "core");
-    if(! $species_db) {
-        $species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($species_no_underscores, "core");
-    }
-    throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
-
-    my $gdbs = $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        my $genome_db = update_genome_db($species_db, $compara_dba, $force);
-        print "GenomeDB after update: ", $genome_db->toString, "\n\n";
-        Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $genome_db, $species_db);
-        my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_dba);
-        foreach my $component_gdb (@$component_genome_dbs) {
-            Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_dnafrags($compara_dba, $component_gdb, $species_db);
-        }
-        print_method_link_species_sets_to_update($compara_dba, $genome_db);
-        return [$genome_db, @$component_genome_dbs];
-    } );
-    $species_db->dbc()->disconnect_if_idle();
-    return $gdbs;
-}
-
-
-=head2 update_genome_db
-
-  Arg[1]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[3]      : bool $force
-  Description : This method takes all the information needed from the
-                species database in order to update the genome_db table
-                of the compara database
-  Returns     : The new Bio::EnsEMBL::Compara::GenomeDB object
-  Exceptions  : throw if the genome_db table is up-to-date unless the
-                --force option has been activated
-
-=cut
-
-sub update_genome_db {
-  my ($species_dba, $compara_dba, $force) = @_;
-
-  my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-  my $genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
-
-  if ($genome_db and $genome_db->dbID) {
-    if (not $force) {
-      my $species_production_name = $genome_db->name;
-      my $this_assembly = $genome_db->assembly;
-      throw "GenomeDB with this name [$species_production_name] and assembly".
-        " [$this_assembly] is already in the compara DB [$compara]\n".
-        "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
-    }
-  } elsif ($force and $species) {
-    print "GenomeDB with this name [$species] and the correct assembly".
-        " is not in the compara DB [$compara]\n".
-        "You don't need the --force option!!";
-    print "Press [Enter] to continue or Ctrl+C to cancel...";
-    <STDIN>;
-  }
-
-
-  if ($genome_db) {
-
-    print "GenomeDB before update: ", $genome_db->toString, "\n";
-
-    # Get fresher information from the core database
-    $genome_db->db_adaptor($species_dba, 1);
-    $genome_db->last_release(undef);
-
-    # And store it back in Compara
-    $genome_db_adaptor->update($genome_db);
-
-  }
-  ## New genome or new assembly!!
-  else {
-
-    $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($species_dba);
-    $genome_db->taxon_id( $taxon_id ) if $taxon_id;
-
-    if (!defined($genome_db->name)) {
-      throw "Cannot find species.production_name in meta table for ".($species_dba->locator).".\n";
-    }
-    if (!defined($genome_db->taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for ".($species_dba->locator).".\n".
-          "   You can use the --taxon_id option";
-    }
-    print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
-
-    #New ID search if $offset is true
-
-    if($offset) {
-        my ($max_id) = $compara_dba->dbc->db_handle->selectrow_array('select max(genome_db_id) from genome_db where genome_db_id > ?', undef, $offset);
-    	if(!$max_id) {
-    		$max_id = $offset;
-    	}
-      $genome_db->dbID($max_id + 1);
-    }
-
-    $genome_db_adaptor->store($genome_db);
-
-  }
-  $genome_db_adaptor->make_object_current($genome_db) if $release;
-  return $genome_db;
-}
-
-
-=head2 update_component_genome_dbs
-
-  Description : Updates all the genome components (only for polyploid genomes)
-  Returns     : -none-
-  Exceptions  : none
-
-=cut
-
-sub update_component_genome_dbs {
-    my ($principal_genome_db, $species_dba, $compara_dba) = @_;
-
-    my @gdbs = ();
-    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    foreach my $c (@{$species_dba->get_GenomeContainer->get_genome_components}) {
-        my $copy_genome_db = $principal_genome_db->make_component_copy($c);
-        $genome_db_adaptor->store($copy_genome_db);
-        push @gdbs, $copy_genome_db;
-        print "Component '$c' genome_db: ", $copy_genome_db->toString(), "\n";
-    }
-    return \@gdbs;
-}
-
-
-=head2 print_method_link_species_sets_to_update
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Description : This method prints all the genomic MethodLinkSpeciesSet
-                that need to be updated (those which correspond to the
-                $genome_db).
-                NB: Only method_link with a dbID<200 || dbID>=500 are taken into
-                account (they should be the genomic ones)
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub print_method_link_species_sets_to_update {
-  my ($compara_dba, $genome_db) = @_;
-
-  my $method_link_species_set_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
-  my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
-
-  my $method_link_species_sets;
-  foreach my $this_genome_db (@{$genome_db_adaptor->fetch_all()}) {
-    next if ($this_genome_db->name ne $genome_db->name);
-    foreach my $this_method_link_species_set (@{$method_link_species_set_adaptor->fetch_all_by_GenomeDB($this_genome_db)}) {
-      next unless $this_method_link_species_set->is_current;
-      $method_link_species_sets->{$this_method_link_species_set->method->dbID}->
-          {join("-", sort map {$_->name} @{$this_method_link_species_set->species_set->genome_dbs})} = $this_method_link_species_set;
-    }
-  }
-
-  print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
-  foreach my $this_method_link_id (sort {$a <=> $b} keys %$method_link_species_sets) {
-    next if ($this_method_link_id > 200) and ($this_method_link_id < 500); # Avoid non-genomic method_link_species_set
-    foreach my $this_method_link_species_set (values %{$method_link_species_sets->{$this_method_link_id}}) {
-      printf "%8d: ", $this_method_link_species_set->dbID,;
-      print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
-    }
-  }
-
-}
-

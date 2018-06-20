@@ -566,10 +566,15 @@ sub make_object_current {
     foreach my $other_gdb (@{ $self->_id_cache->get_all_by_additional_lookup('name', lc $gdb->name) }) {
         # But of course not the given one
         next if $other_gdb->dbID == $gdb->dbID;
+
+        # save time retiring already-retired objects
+        next unless $other_gdb->is_current;
+        
         # Be careful about polyploid genomes and their components
         # Let's not retire a component of $gdb, or vice-versa
         next if $gdb->is_polyploid and $other_gdb->genome_component and ($other_gdb->principal_genome_db->dbID == $gdb->dbID);
         next if $other_gdb->is_polyploid and $gdb->genome_component and ($gdb->principal_genome_db->dbID == $other_gdb->dbID);
+        
         $self->retire_object($other_gdb);
     }
 }

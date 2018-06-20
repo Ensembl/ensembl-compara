@@ -32,9 +32,13 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 DESCRIPTION
 
-This script's main purpose is to edit a "collection" species-set for a release.
-It will prompt for GenomeDBs to add / remove from the current collection (if it
-exists, otherwise it makes a new one) and store the selection.
+This script's main purpose is to edit a "collection" species-set for a release, given
+a file of species names (--file).
+
+It has two modes, --new and --update:
+  --new    : create a new collection containing only the species listed in the input file
+  --update : add the species to an existing collection
+
 first_release and last_release will be updated accordingly
 
 =head1 SYNOPSIS
@@ -45,6 +49,8 @@ first_release and last_release will be updated accordingly
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_url
     --collection collection_name
+    --file|file_of_production_names file listing species production names (1 per line)
+    --new|--update
 
 =head1 OPTIONS
 
@@ -69,6 +75,16 @@ The name of the collection to edit
 =item B<--compara compara_db_name_or_alias>
 
 The compara database to update. You can use either a Registry name or a URL
+
+=item B<--new>
+
+Create a new collection containing ONLY the species in the file
+
+=item B<--update>
+
+Update an existing collection with the species in the file. Note: this will
+result in old assemblies being replaced with their newer counterparts
+
 
 =item B<[--reg_conf registry_configuration_file]>
 
@@ -100,38 +116,44 @@ database (and would be happy with a read-only connection).
 
 =cut
 
+use Pod::Usage;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
-
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use Getopt::Long;
+
+use Data::Dumper;
+$Data::Dumper::Maxdepth=3;
+
 
 my $help;
 my $reg_conf;
 my $compara;
 my $collection_name;
-my $dry_run = 1;
+my $dry_run = 0;
 my $file;
+my ( $new, $update );
 
 GetOptions(
-    "help" => \$help,
-    "reg_conf=s" => \$reg_conf,
-    "compara=s" => \$compara,
-    'collection=s'  => \$collection_name,
-    "dry_run|dry-run!" => \$dry_run,
-    'file_of_production_names=s' => \$file,
+    "help!"                      => \$help,
+    "reg_conf=s"                 => \$reg_conf,
+    "compara=s"                  => \$compara,
+    'collection=s'               => \$collection_name,
+    "dry_run|dry-run!"           => \$dry_run,
+    'file|file_of_production_names=s' => \$file,
+    'new!'                       => \$new,
+    'update!'                    => \$update,
   );
 
 $| = 0;
 
 # Print Help and exit if help is requested
-if ($help or !$collection_name or !$compara) {
-    use Pod::Usage;
-    pod2usage({-exitvalue => 0, -verbose => 2});
-}
+pod2usage({-exitvalue => 0, -verbose => 2}) if ($help || !$collection_name || !$compara || !$file);
+
+die "Unknown action! Please specify the --new or --update flag\n\n\n" unless ( $new || $update );
 
 # Find the Compara databae
 my $compara_dba;
@@ -149,197 +171,13 @@ if ($compara =~ /mysql:\/\//) {
 }
 die "Cannot connect to database [$compara]" if (!$compara_dba);
 
-warn "*** This script thinks that the Ensembl version is ".software_version().". Panic if it's wrong !\n";
+# parse input file
+open(my $species_fh, '<', $file) or die "Cannot open file '$file'\n";
+my @requested_species_names = <$species_fh>;
+chomp @requested_species_names;
 
-my $collection_ss = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($collection_name);
-my $all_current_gdbs = [grep {($_->is_current or not $_->has_been_released) and ($_->name ne 'ancestral_sequences')} @{$compara_dba->get_GenomeDBAdaptor->fetch_all()}];
-my @new_collection_gdbs = ();
-
-my %preselection = ();
-if ($file) {
-  $preselection{$_} = 1 for @{ slurp_to_array($file, 1) };
-}
-
-if ($collection_ss) {
-    ## Here we are in "update mode"
-    warn "Found a collection named '$collection_name': species_set_id=".($collection_ss->dbID)."\n";
-
-    my @gdbs_in_current_collection = @{$collection_ss->genome_dbs};
-    my %collection_species_by_name = (map {$_->name => $_} @gdbs_in_current_collection);
-
-    # new species
-    my @new_species = grep {not exists $collection_species_by_name{$_->name}} @$all_current_gdbs;
-    push @new_collection_gdbs, ask_for_genome_dbs('Select the new species to add to the collection', \@new_species);
-
-    # forcedly-updated species
-    my @forced_updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID != $_->dbID) and $_->is_current} @$all_current_gdbs;
-    push @new_collection_gdbs, ask_for_genome_dbs('Species that must be updated (because they are newer)', \@forced_updated_species, 1);
-
-    # updated species: only show the more recent ones (i.e. higher genome_db_id)
-    my @updated_species = grep {exists $collection_species_by_name{$_->name} and ($collection_species_by_name{$_->name}->dbID < $_->dbID) and not $_->is_current} @$all_current_gdbs;
-    push @new_collection_gdbs, ask_for_genome_dbs('Select the species to update', \@updated_species);
-
-    # Species to potentially remove
-    my %confirmed_names = map {$_->name => 1} @new_collection_gdbs;
-    my @unconfirmed_species= grep {not exists $confirmed_names{$_->name}} @gdbs_in_current_collection;
-    if ($file) {
-        my %new_preselection = map {$_->name => 1} grep {!$preselection{$_->name}} @unconfirmed_species;
-        %preselection = %new_preselection;
-    }
-    my @to_delete_species = ask_for_genome_dbs('Select the species to remove', \@unconfirmed_species);
-    my %deleted_names = map {$_->name => 1} @to_delete_species;
-    push @new_collection_gdbs, grep {not exists $deleted_names{$_->name}} @unconfirmed_species;
-
-    # Let's compute a summary of the differences
-    print "\nSummary\n";
-    my %new_collection_species_by_name = (map {$_->name => $_} @new_collection_gdbs);
-    foreach my $name (sort keys %collection_species_by_name) {
-        if ($new_collection_species_by_name{$name}) {
-            if ($collection_species_by_name{$name}->assembly ne $new_collection_species_by_name{$name}->assembly) {
-                print "Updated: $name: ", $collection_species_by_name{$name}->assembly, " -> ", $new_collection_species_by_name{$name}->assembly, "\n";
-            }
-        } else {
-            print "Removed: $name (", $collection_species_by_name{$name}->assembly, ")\n";
-        }
-    }
-    foreach my $name (sort keys %new_collection_species_by_name) {
-        unless ($collection_species_by_name{$name}) {
-            print "Added: $name (", $new_collection_species_by_name{$name}->assembly, ")\n";
-        }
-    }
-
-} else {
-    ## Here we create a new collection from scratch
-    push @new_collection_gdbs, ask_for_genome_dbs('select the species in the collection', $all_current_gdbs);
-}
-
-# FIXME check if it deals correctly with polyploid genomes
-warn "The new collection will be composed of ".scalar(@new_collection_gdbs)." GenomeDBs\n";
-print "Press Enter to continue\n";
-<>;
-
-$compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-    my $new_collection_ss = $compara_dba->get_SpeciesSetAdaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
-    # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-    $compara_dba->get_SpeciesSetAdaptor->make_object_current($new_collection_ss);
-    print_method_link_species_sets_to_update($compara_dba, $collection_ss) if $collection_ss;
-    die "Dry-run mode required. Now aborting the transaction. Review the above-mentionned changes and re-run with the --nodry-run option\n" if $dry_run;
-} );
+Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, $collection_name, \@requested_species_names, $dry_run ) if ($update);
+Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, $collection_name, \@requested_species_names, $dry_run ) if ($new);
 
 exit(0);
-
-
-sub ask_for_genome_dbs {
-    my $title = shift;
-    my $all_genome_dbs = shift;
-    my $should_select_all = shift;
-    return () unless scalar(@$all_genome_dbs);
-
-    my $genome_dbs_hash = {map {$_->dbID => $_} @{$all_genome_dbs}};
-    my $genome_dbs_in = {map {$_->dbID => $_} grep {$preselection{$_->name}} @{$all_genome_dbs}};
-    $genome_dbs_in = $genome_dbs_hash if $should_select_all and !$file;
-    my $dont_ask = ($file or $should_select_all);
-
-    while (1) {
-        print "Selection of species:\n";
-
-        foreach my $this_genome_db (sort {
-            ($a->is_current <=> $b->is_current)
-                or
-            ($a->name cmp $b->name)} @{$all_genome_dbs}) {
-            my $dbID = $this_genome_db->dbID;
-            my $name = $this_genome_db->name;
-            my $assembly = $this_genome_db->assembly;
-            my $state = $genome_dbs_in->{$this_genome_db->dbID} ? ' [SELECTED]' : '';
-            if ($this_genome_db->is_current) {
-                printf " %5d.$state $name $assembly\n", $dbID;
-            } else {
-                printf " %5d.$state ($name $assembly)\n", $dbID;
-            }
-        }
-
-        if ($dont_ask) {
-            print "Nothing to edit.\n";
-            last;
-        }
-
-        print "$title\nAdd or remove a GenomeDB by typing its dbID. Type 'all' to select all, or 'none' to clear the selection. Press enter to finish.   ";
-        my $answer;
-        chomp ($answer = <>);
-        if ($answer) {
-            if ($answer eq 'all') {
-                $genome_dbs_in = {%$genome_dbs_hash};
-            } elsif ($answer eq 'none') {
-                $genome_dbs_in = {};
-            } elsif (not $answer =~ /^\d+$/) {
-                print "\nERROR: '$answer' is not a number, try again\n";
-            } elsif (not exists $genome_dbs_hash->{$answer}) {
-                print "\nERROR: '$answer' is not a valid GenomeDB ID, try again\n";
-            } else {
-                if (exists $genome_dbs_in->{$answer}) {
-                    delete $genome_dbs_in->{$answer};
-                } else {
-                    $genome_dbs_in->{$answer} = $genome_dbs_hash->{$answer};
-                }
-            }
-        } else {
-            last;
-        }
-    }
-    return values %$genome_dbs_in;
-}
-
-=head2 update_component_genome_dbs
-
-  Description : Updates all the genome components (only for polyploid genomes)
-  Returns     : -none-
-  Exceptions  : none
-
-=cut
-
-sub update_component_genome_dbs {
-    my ($principal_genome_db, $species_dba, $compara_dba) = @_;
-
-    my @gdbs = ();
-    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    foreach my $c (@{$species_dba->get_GenomeContainer->get_genome_components}) {
-        my $copy_genome_db = $principal_genome_db->make_component_copy($c);
-        $genome_db_adaptor->store($copy_genome_db);
-        push @gdbs, $copy_genome_db;
-        print "Component '$c' genome_db: ", $copy_genome_db->toString(), "\n";
-    }
-    return \@gdbs;
-}
-
-
-
-=head2 print_method_link_species_sets_to_update
-
-  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::SpeciesSet $collection_ss
-  Description : This method prints all the genomic MethodLinkSpeciesSet
-                that need to be updated (those which correspond to the
-                $collection_ss species-set).
-  Returns     : -none-
-  Exceptions  :
-
-=cut
-
-sub print_method_link_species_sets_to_update {
-    my ($compara_dba, $collection_ss) = @_;
-
-    my $method_link_species_sets = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_species_set_id($collection_ss->dbID);
-
-    print "List of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet to update:\n";
-    foreach my $this_method_link_species_set (sort {$a->dbID <=> $b->dbID} @$method_link_species_sets) {
-        printf "%8d: ", $this_method_link_species_set->dbID,;
-        print $this_method_link_species_set->method->type, " (", $this_method_link_species_set->name, ")\n";
-        if ($this_method_link_species_set->url) {
-            $this_method_link_species_set->url('');
-            $compara_dba->dbc->do('UPDATE method_link_species_set SET url = "" WHERE method_link_species_set_id = ?', undef, $this_method_link_species_set->dbID);
-        }
-    }
-    print "  NONE\n" unless scalar(@$method_link_species_sets);
-
-}
 
