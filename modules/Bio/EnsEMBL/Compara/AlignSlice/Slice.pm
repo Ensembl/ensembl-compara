@@ -67,7 +67,7 @@ use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Compara::AlignSlice::Translation;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning info verbose);
 use Scalar::Util qw(weaken);
 
 
@@ -1995,7 +1995,7 @@ sub get_all_VariationFeatures {
 
 sub get_all_VariationFeatures_by_VariationSet {
   my $self = shift;
-
+  deprecate('get_all_VariationFeatures_by_VariationSet is deprecated and will be removed in e95.');
   return $self->_method_returning_simple_features("get_all_VariationFeatures_by_VariationSet", @_)
 }
 
@@ -2018,7 +2018,7 @@ sub get_all_VariationFeatures_by_VariationSet {
 
 sub get_all_genotyped_VariationFeatures {
   my $self = shift;
-
+  deprecate('get_all_genotyped_VariationFeatures is deprecated and will be removed in e95.');
   return $self->_method_returning_simple_features("get_all_genotyped_VariationFeatures", @_)
 }
 
