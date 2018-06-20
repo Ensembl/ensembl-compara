@@ -138,6 +138,9 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
+use Data::Dumper;
+$Data::Dumper::Maxdepth=2;
+
 use strict;
 use warnings;
 
@@ -503,6 +506,7 @@ sub preload {
 sub alignment {
     my $self = shift;
     my $other_gene_align = shift;
+    my $ignore_mismatch = shift || 0; # ignore mismatches between the size of the alignment vs the tree
 
     if (not $other_gene_align) {
         $self->{_alignment} = $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $self->{_alignment};
@@ -522,7 +526,28 @@ sub alignment {
     }
 
     my $self_members = $self->get_all_Members;
-    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
+
+    # debugging #
+    # my @member_ids = sort map {$_->dbID} @$self_members;
+    # my @cigar_ids = sort keys %cigars;
+    # print Dumper \@cigar_ids;
+    # print Dumper \@member_ids;
+    # print scalar(keys %cigars) . " cigars vs " . scalar @member_ids . " members!\n";
+
+    #############
+
+    # die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
+
+    if ( scalar(keys %cigars) != scalar(@$self_members) ) {
+        if ( $ignore_mismatch ) {
+            # prune the alignment to match the member set
+            foreach my $member_id ( keys %cigars ) {
+                delete $cigars{$member_id} unless grep { $_->dbID == $member_id } @$self_members;
+            }
+        } else {
+            die "The alignment has a different number of taxa than the gene tree";
+        }
+    }
 
     # Assigns it
     foreach my $leaf (@$self_members) {

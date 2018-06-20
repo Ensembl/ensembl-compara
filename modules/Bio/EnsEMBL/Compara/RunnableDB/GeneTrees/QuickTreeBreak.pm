@@ -164,7 +164,7 @@ sub run {
     print STDERR $supertree->root->string_tree if $self->debug;
     my @nodes_to_delete = reverse($supertree->root->get_all_subnodes);;
     $self->param('nodes_to_delete', \@nodes_to_delete);
-    print STDERR "found ", scalar(@nodes_to_delete), " to delete\n";
+    print STDERR " found ", scalar(@nodes_to_delete), " to delete\n";
 
     $supertree->root->release_children;
     $supertree->clear();

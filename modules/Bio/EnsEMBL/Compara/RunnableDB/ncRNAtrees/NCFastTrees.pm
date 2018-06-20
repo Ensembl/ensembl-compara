@@ -94,7 +94,7 @@ sub fetch_input {
 
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($self->param_required('alignment_id'));
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
-    $nc_tree->alignment($aln);
+    $nc_tree->alignment($aln, 1); # 1 turns on option to ignore size mismatches between $aln and $nc_tree
 
     $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree, 1));
 }
