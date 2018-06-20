@@ -72,8 +72,8 @@ sub default_options {
 
         # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
         #  'lastz_patch_dbs' => [
-        #  	'mysql://ensadmin:ensembl@mysql-ens-compara-prod-3:4523/carlac_lastz_human_patches_92',
-		#   'mysql://ensadmin:ensembl@mysql-ens-compara-prod-3:4523/carlac_lastz_mouse_patches_92',
+        #  	'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_lastz_human_patches_92',
+		#   'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_lastz_mouse_patches_92',
         #  ],
         'lastz_patch_dbs' => undef,
 
