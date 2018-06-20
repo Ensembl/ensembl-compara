@@ -91,6 +91,8 @@ sub param_defaults {
             'sort_clusters'         => 1,
             'immediate_dataflow'    => 1,
             'member_type'           => 'ncrna',
+            'mirbase_url'           => 'ftp://mirbase.org/pub/mirbase/21/',
+            'mirbase_file'          => 'miFam.dat.gz',
     };
 }
 
@@ -292,8 +294,8 @@ sub load_mirbase_families {
   print STDERR "fetching mirbase families...\n" if ($self->debug);
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  my $url  = 'ftp://mirbase.org/pub/mirbase/CURRENT/';
-  my $file = 'miFam.dat.gz';
+  my $url  = $self->param_required('mirbase_url');
+  my $file = $self->param_required('mirbase_file');
 
   my $tmp_file = $worker_temp_directory . "/" .$file;
   my $mifam = $tmp_file;

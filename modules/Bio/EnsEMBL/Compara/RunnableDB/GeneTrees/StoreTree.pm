@@ -23,7 +23,6 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-
 use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
@@ -218,6 +217,7 @@ sub store_genetree
     # Note that the direct methods here are faster than calling
     # sync_tags_to_database() on each node
     my $all_nodes = $tree->get_all_nodes;
+    print join("\n", map {$_->node_id} @$all_nodes) . "\n" if $self->debug;
     my @leaves = grep {$_->is_leaf} @$all_nodes;
     $treenode_adaptor->_wipe_all_tags($tree->root);
     $treenode_adaptor->_wipe_all_tags(\@leaves, 1);
@@ -311,6 +311,7 @@ sub parse_newick_into_tree {
   # List all the GeneTreeNode that have to be stored
   my %old_leaves;
   foreach my $node (@{$tree->get_all_leaves}) {
+    bless $node, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $old_leaves{$node->seq_member_id} = $node;
   }
   # Top it up with the genes that have been hidden (split genes, long branches, etc)
@@ -362,9 +363,10 @@ sub parse_newick_into_tree {
   }
 
   foreach my $leaf (@{$newroot->get_all_leaves}) {
+    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     my $seq_member_id = $leaf->name();
     my $old_leaf = $old_leaves{$seq_member_id};
-    if (not $old_leaf) {
+    if (!$old_leaf) {
       #In case the tree is been updated (copied from previous_db) we need to:
       #set the updated node to use the temporary id "0" to avoid dammaging other trees in the database
       #We set the children_loaded=1 to tell the API not to load the leaf
@@ -378,7 +380,6 @@ sub parse_newick_into_tree {
       $leaf->node_id($old_leaf->node_id);
       $leaf->adaptor($old_leaf->adaptor);
     }
-    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";
