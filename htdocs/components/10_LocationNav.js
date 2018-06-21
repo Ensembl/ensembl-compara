@@ -402,6 +402,10 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         }
 
         var rs = panel.rescale(panel.currentLocations(), panel._pos2val(ui.value));
+        // Max window size is 1MB
+        if (rs['r'][2] - rs['r'][1] > 1000000) {
+          rs['r'][2] = rs['r'][1] + 1000000; 
+        }
 
         if (panel.refreshOnly) {
           Ensembl.updateLocation(rs['r'][0] + ':' + rs['r'][1] + '-' + rs['r'][2]);
