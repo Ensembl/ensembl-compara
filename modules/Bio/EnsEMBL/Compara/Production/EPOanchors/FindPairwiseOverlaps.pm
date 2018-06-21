@@ -55,6 +55,7 @@ sub fetch_input {
 	my (@multi_gab_overlaps, @mlss);
         my $methods = $compara_pairwise_dba->get_MethodAdaptor->fetch_all_by_class_pattern('GenomicAlignBlock.pairwise_alignment');
         my $main_mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
+        $self->disconnect_from_databases;
         foreach my $non_ref_genome_db (@{$main_mlss->species_set->genome_dbs}) {
                 next if $non_ref_genome_db->dbID == $ref_genome_db->dbID;
                 my $species_set = $compara_pairwise_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( [$ref_genome_db, $non_ref_genome_db] )
