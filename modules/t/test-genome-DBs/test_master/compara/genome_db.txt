@@ -55,3 +55,7 @@
 133	6239	caenorhabditis_elegans	WBcel215	2012-03-WormBase	0	0	\N	\N	C.elegans	\N	80	\N
 135	9615	canis_familiaris	CanFam3.1	2011-11-Ensembl	0	0	\N	\N	Dog	\N	80	\N
 136	13735	pelodiscus_sinensis	PelSin_1.0	2011-11-Ensembl	0	0	\N	\N	Chinese softshell turtle	\N	80	\N
+137	12345	triticum_aestivum	IWGSC1	2010-01-IWGSC	0	0	\N	\N	Wheat	\N	80	\N
+138	12345	triticum_aestivum	IWGSC1	2010-01-IWGSC	0	0	A	\N	Wheat	\N	80	\N
+139	12345	triticum_aestivum	IWGSC1	2010-01-IWGSC	0	0	B	\N	Wheat	\N	80	\N
+140	12345	triticum_aestivum	IWGSC1	2010-01-IWGSC	0	0	D	\N	Wheat	\N	80	\N

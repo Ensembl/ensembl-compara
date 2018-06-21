@@ -537,10 +537,17 @@ sub retire_object {
     my ($self, $gdb) = @_;
     # Update the fields in the table
     $self->SUPER::retire_object($gdb);
+
     # Also update the linked SpeciesSets
     my $ss_adaptor = $self->db->get_SpeciesSetAdaptor;
     foreach my $ss (@{$ss_adaptor->fetch_all_by_GenomeDB($gdb)}) {
         $ss_adaptor->retire_object($ss);
+    }
+
+    # also retire components of polyploid genomes
+    return unless $gdb->is_polyploid;
+    foreach my $component_gdb ( @{$gdb->component_genome_dbs} ) {
+        $self->retire_object($component_gdb);
     }
 }
 

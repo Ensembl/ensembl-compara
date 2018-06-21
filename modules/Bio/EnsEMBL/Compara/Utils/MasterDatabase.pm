@@ -166,21 +166,21 @@ sub update_genome {
     }
     throw ("Cannot connect to database [${species_no_underscores} or ${species}]") if (!$species_db);
 
-    my ( $new_genome_db, $new_dnafrags );
+    my ( $new_genome_db, $component_genome_dbs, $new_dnafrags );
     my $gdbs = $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         $new_genome_db = _update_genome_db($species_db, $compara_dba, $release, $force, $taxon_id, $offset);
         print "GenomeDB after update: ", $new_genome_db->toString, "\n\n";
         print "Fetching DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
         $new_dnafrags = update_dnafrags($compara_dba, $new_genome_db, $species_db);
-        my $component_genome_dbs = _update_component_genome_dbs($new_genome_db, $species_db, $compara_dba);
+        $component_genome_dbs = _update_component_genome_dbs($new_genome_db, $species_db, $compara_dba);
         foreach my $component_gdb (@$component_genome_dbs) {
             $new_dnafrags += update_dnafrags($compara_dba, $component_gdb, $species_db);
         }
         print_method_link_species_sets_to_update_by_genome_db($compara_dba, $new_genome_db);
-        return [$new_genome_db, @$component_genome_dbs, $new_dnafrags];
+        # return [$new_genome_db, $component_genome_dbs, $new_dnafrags];
     } );
     $species_db->dbc()->disconnect_if_idle();
-    return [$new_genome_db, undef, $new_dnafrags];
+    return [$new_genome_db, $component_genome_dbs, $new_dnafrags];
 }
 
 
@@ -264,13 +264,13 @@ sub _update_genome_db {
 sub _update_component_genome_dbs {
     my ($principal_genome_db, $species_dba, $compara_dba) = @_;
 
-    my @gdbs = ();
+    my @gdbs;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
     foreach my $c (@{$species_dba->get_GenomeContainer->get_genome_components}) {
         my $copy_genome_db = $principal_genome_db->make_component_copy($c);
         $genome_db_adaptor->store($copy_genome_db);
         push @gdbs, $copy_genome_db;
-        print "Component '$c' genome_db: ", $copy_genome_db->toString(), "\n";
+        print "Component '$c' genome_db:\n\t", $copy_genome_db->toString(), "\n";
     }
     return \@gdbs;
 }
@@ -341,7 +341,7 @@ sub _prev_genome_db {
     my $genome_db_adaptor = $compara_dba->get_adaptor("GenomeDB");
 
     my $prev_gdb;
-    my @this_species_gdbs = sort { $a->first_release <=> $b->first_release } grep { $_->name eq $gdb->name && $_->dbID != $gdb->dbID } @{$genome_db_adaptor->fetch_all()};
+    my @this_species_gdbs = sort { $a->first_release <=> $b->first_release } grep { $_->name eq $gdb->name && $_->dbID != $gdb->dbID && defined $gdb->first_release } @{$genome_db_adaptor->fetch_all()};
     return undef unless scalar @this_species_gdbs >= 1;
     return pop @this_species_gdbs;
 }

@@ -23,6 +23,7 @@
     'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'felis_catus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'pan_troglodytes' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'triticum_aestivum' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
     'test_master' => {'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor'},
  }
 
