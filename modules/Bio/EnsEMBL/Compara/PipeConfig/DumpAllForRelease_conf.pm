@@ -240,7 +240,7 @@ sub pipeline_wide_parameters {
         'work_dir'       => '#dump_root#/dump_hash',
 
         'bedgraph_file'  => '#cs_output_dir#/gerp_conservation_scores.#name#.bedgraph',
-        'chromsize_file' => '#work_dir#/gerp_conservation_scores.#name#.chromsize',
+        'chromsize_file' => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.chromsize',
         'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.bw',
         'bed_file'       => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
 
