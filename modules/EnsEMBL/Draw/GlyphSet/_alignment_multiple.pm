@@ -258,8 +258,8 @@ sub element_features {
     my $is_low_coverage_species = 0;
     unless ($constrained_element) {
         # The species is not low-coverage if it's been used in one of the EPO alignments
-        $is_low_coverage_species = !scalar( grep {($_->{type} eq 'EPO') && $_->{species}->{$object->species}}
-                                            values %{$self->{'config'}->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}}
+        $is_low_coverage_species = !scalar( grep {($_->{type} eq 'EPO') && $_->{species}->{$self->species}}
+                                            values %{$sd->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}}
                                           );
     }
 
