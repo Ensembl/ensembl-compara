@@ -162,49 +162,13 @@ sub core_pipeline_analyses {
 
     return [
 
-        {   -logic_name => 'backbone_prepare_databases',
+        {   -logic_name => 'start_prepare_databases',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids => [{}],
+            -input_ids  => [{}],
             -flow_into  => {
                 '1->A' => [ 'copy_table_factory', 'set_internal_ids', 'drop_ancestral_db' ],
-                'A->1' => 'backbone_align_anchors',
+                'A->1' => 'reuse_anchor_align_factory',
             }
-        },
-
-        {   -logic_name => 'backbone_align_anchors',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => [ 'reuse_anchor_align_factory' ],
-                'A->1' => 'backbone_build_syntenic_regions',
-            }
-        },
-
-        {   -logic_name => 'backbone_build_syntenic_regions',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => [ 'remove_overlaps' ],
-                'A->1' => 'backbone_ortheus_alignments',
-            }
-        },
-
-        {   -logic_name => 'backbone_ortheus_alignments',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => [ 'load_dnafrag_region' ],
-                'A->1' => 'backbone_alignment_post_processing',
-            }
-        },
-
-        {   -logic_name => 'backbone_alignment_post_processing',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => [ 'remove_dodgy_ancestral_blocks' ],
-                'A->1' => 'backbone_end',
-            }
-        },
-
-        {   -logic_name => 'backbone_end',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors::pipeline_analyses_epo_anchor_mapping($self) },
@@ -216,26 +180,14 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    # Build the species-tree once all the GenomeDBs have been loaded
+    # Move "make_species_tree" right after "create_mlss_ss" and disconnect it from "reuse_anchor_align_factory"
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = [ 'make_species_tree' ];
-
-    # Remove the semaphore as "remove_overlaps" is in another part of the pipeline
-    $analyses_by_name->{'map_anchor_align_genome_factory'}->{'-flow_into'} = { 2 => $analyses_by_name->{'map_anchor_align_genome_factory'}->{'-flow_into'}->{'2->A'} };
-
-    # Move "dump_mappings_to_file" to after having trimmed the anchors
     delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+
+    # Do "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
         '2->A' => $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'}->{2},
         'A->1' => [ 'dump_mappings_to_file' ],
-    };
-
-    # Remove the dataflow as "load_dnafrag_region" is in another part of the pipeline
-    delete $analyses_by_name->{'run_enredo'}->{'-flow_into'};
-
-    # Remove the semaphore as "remove_dodgy_ancestral_blocks" is in another part of the pipeline
-    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'} = {
-        '2' => $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'2->A'},
-        '3' => $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'3->A'},
     };
 }
 
