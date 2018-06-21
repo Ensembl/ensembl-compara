@@ -98,9 +98,9 @@ sub render_content {
 
 sub stats_table {
   my ($self, $gene_name) = @_;
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
-  my $pf_adaptor    = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $pf_adaptor   = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
   my ($total_counts, %phenotypes, @va_ids);
 
   my $columns = [
@@ -193,6 +193,7 @@ sub variation_table {
      $phenotype_sql =~ s/'/\\'/; # Escape quote character
   my $db_adaptor = $hub->database('variation');
   my $pf_adaptor = $db_adaptor->get_PhenotypeFeatureAdaptor;
+  my $max_items_per_source = 2;
   my (@rows, %list_sources, %list_phe, $list_variations);
   
   # create some URLs - quicker than calling the url method for every variation
@@ -206,12 +207,17 @@ sub variation_table {
   
   my $all_flag = ($phenotype eq 'ALL') ? 1 : 0;
 
+  my $submitter_max_length = 20;
+
   my $pf_list = ($all_flag == 0) ? $pf_adaptor->fetch_all_by_associated_gene_phenotype_description($gene_name,$phenotype) : $pf_adaptor->fetch_all_by_associated_gene($gene_name);
 
-  foreach my $pf (grep {$_->type eq 'Variation'} @$pf_list) {
+  foreach my $pf_gene_asso (grep {$_->type eq 'Variation'} @$pf_list) {
+
+    my $pf = $pf_adaptor->fetch_by_dbID($pf_gene_asso->dbID);
 
     #### Phenotype ####
-    my $phe_source = $pf->source_name;
+    my $phe_source   = $pf->source_name;
+
     next if ($self->check_source($phe_source));
 
     my $var      = $pf->object;
@@ -253,7 +259,7 @@ sub variation_table {
       
     # List the phenotype sources for the variation
     my $ref_source = $pf->external_reference;
-       $ref_source = $pf->external_id if (!$ref_source);
+    $ref_source = $pf->external_id if (!$ref_source);
 
     $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
     
@@ -266,6 +272,23 @@ sub variation_table {
       }
       else {
         $list_sources{$var_name}{$phe_source}{'ref'} = ['no_ref'];
+      }
+    }
+
+    # List sumbitters and study (ClinVar)
+    if ($phe_source =~ /clinvar/i) {
+      my $submitter_names_list = $pf->submitter_names;
+      if ($submitter_names_list) {
+        foreach my $submitter_name (@$submitter_names_list) {
+          $list_sources{$var_name}{$phe_source}{'submitter'}{$ref_source}{$submitter_name} = 1;
+        }
+      }
+      my $attributes = $pf->get_all_attributes();
+      if ($attributes->{'MIM'}) {
+        my @studies = split(',',$attributes->{'MIM'});
+        foreach my $study (@studies) {
+          $list_sources{$var_name}{$phe_source}{'clinvar_study'}{$ref_source}{$study} = 1;
+        }
       }
     }
 
@@ -282,7 +305,8 @@ sub variation_table {
   }  
 
   foreach my $var_name (sort (keys %list_sources)) {
-    my @sources_list;
+    my %sources_list;
+    my %source_exp_list;
     my @ext_ref_list;
     my @pvalues_list;
     my ($max_exp, $max_pval);
@@ -290,15 +314,43 @@ sub variation_table {
 
       foreach my $ref (@{$list_sources{$var_name}{$p_source}{'ref'}}) {
         # Source link 
-        my $s_link = $self->source_link($p_source, $ref, $var_name, $gene_name, $phenotype);
-        if (!grep {$s_link eq $_} @sources_list) {
-          push(@sources_list, $s_link);
+        my $s_link   = $self->source_link($p_source, $ref, $var_name, $gene_name, $phenotype);
+        my $exp_data = $p_source; 
+        
+        # Sumbitter data (ClinVar)
+        if ($list_sources{$var_name}{$p_source}{'submitter'} && $list_sources{$var_name}{$p_source}{'submitter'}{$ref}) {
+          my @submitter_names_list = keys(%{$list_sources{$var_name}{$p_source}{'submitter'}{$ref}});
+          my $submitter_names = join('|',@submitter_names_list);
+          my $submitter_label = $submitter_names;
+             $submitter_label = substr($submitter_names,0,$submitter_max_length).'...' if (length($submitter_names) > $submitter_max_length);
+          my $submitter_prefix  = 'Submitter';
+             $submitter_prefix .= 's' if (scalar(@submitter_names_list) > 1);
+          $s_link .= " [$submitter_label]";
+          $s_link = qq{<span class="_ht" title="$submitter_prefix: $submitter_names">$s_link</span>};
+          $exp_data = "$p_source [$submitter_names]";
         }
+        if (!grep {$s_link eq $_} @{$sources_list{$p_source}}) {
+          push(@{$sources_list{$p_source}}, $s_link);
+        }
+        $source_exp_list{$p_source}{$exp_data} = 1;
+
         # Study link
         my $ext_link = $self->external_reference_link($p_source, $ref, $phenotype);
-        next if ($ext_link eq '-');
-        if (!grep {$ext_link eq $_} @ext_ref_list) {
+        if ($ext_link ne '-' && !grep {$ext_link eq $_} @ext_ref_list) {
           push(@ext_ref_list, $ext_link);
+        }
+
+        # Study link (ClinVar)
+        if ($p_source =~ /clinvar/i) {
+          if ($list_sources{$var_name}{$p_source}{'clinvar_study'} && $list_sources{$var_name}{$p_source}{'clinvar_study'}{$ref}) {
+            my @data = keys(%{$list_sources{$var_name}{$p_source}{'clinvar_study'}{$ref}});
+            foreach my $ext_ref (@data) {
+              my $clinvar_ext_link = $hub->get_ExtURL_link('MIM:'.$ext_ref, 'OMIM', $ext_ref);
+              if (!grep {$clinvar_ext_link eq $_} @ext_ref_list) {
+                push(@ext_ref_list, $clinvar_ext_link);
+              }
+            }
+          }
         }
       }
 
@@ -322,7 +374,7 @@ sub variation_table {
       }
     }
 
-    if (scalar(@sources_list)) {  
+    if (scalar(keys(%sources_list))) {  
     
       my $var_url = "$base_url;v=$var_name";
 
@@ -331,12 +383,28 @@ sub variation_table {
 
       @pvalues_list = map { $self->render_p_value($_, 1) } @pvalues_list;
 
+      my $source_data = "";
+      foreach my $source (sort(keys(%sources_list))) {
+        my $div_id = 'src_'.$var_name.'_'.$source;
+           $div_id =~ s/ //g;
+        my @export_data = $source_exp_list{$source};
+        my $source_content = $self->display_items_list($div_id,"$source entries",$source,$sources_list{$source},\@export_data,1,$max_items_per_source);
+
+        $source_data .= ', ' if ($source_data ne "");
+        if (scalar(@{$sources_list{$source}}) < $max_items_per_source ) {
+          $source_data .= sprintf(qq{<span class="_no_export">%s</span><span class="hidden export">%s</span>}, $source_content,join(',',@export_data));
+        }
+        else {
+          $source_data .= $source_content;
+        }
+      }
+
       my $row = {
             ID      => qq{<a href="$var_url">$var_name</a>},
             class   => $list_variations->{$var_name}{'class'},
             Alleles => $list_variations->{$var_name}{'allele'},
             chr     => $list_variations->{$var_name}{'chr'},
-            psource => join(', ',@sources_list),
+            psource => $source_data,
             pstudy  => (scalar @ext_ref_list) ? join(', ',@ext_ref_list) : '-',
             pvalue  => (scalar @pvalues_list) ? qq{<span class="hidden">$max_exp.$max_pval</span>} . join(', ', @pvalues_list) : '-'
       };
