@@ -101,6 +101,7 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 
+use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 =head2 new
 
@@ -366,6 +367,46 @@ sub get_Slice {
     return $slice;
   }
   return undef;
+}
+
+
+=head2 get_sequence
+
+  Arg[1]      : (optional) String $mask
+  Example     : $anchor_align->get_sequence('soft');
+  Description : Return the sequence of this genomic location. If possible, the sequence will
+                be read from an indexed Fasta file; otherwise from the core database.
+                Masking can be requested with the $mask parameter: undef, 'soft' or 'hard'
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_sequence {
+    my $self = shift;
+    my $mask = shift;
+
+    my $seq;
+    if (my $faidx_helper = $self->genome_db->get_faidx_helper($mask)) {
+        # Sequence names in the Fasta file are expected to be dnafrag_ids;
+        # Coordinates are 0-based
+        $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
+        die "sequence length doesn't match !" if length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
+        reverse_comp(\$seq) if $self->dnafrag_strand < 0;
+
+    } elsif ($mask) {
+        if ($mask =~ /soft/i) {
+            $seq = $self->get_Slice()->get_repeatmasked_seq(undef, 1)->seq;
+        } else {
+            $seq = $self->get_Slice()->get_repeatmasked_seq()->seq;
+        }
+    } else {
+        $seq = $self->get_Slice()->seq;
+    }
+
+    return $seq;
 }
 
 

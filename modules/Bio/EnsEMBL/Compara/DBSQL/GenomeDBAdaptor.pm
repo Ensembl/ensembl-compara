@@ -81,6 +81,31 @@ sub object_class {
 }
 
 
+
+################
+# Faidx helper #
+################
+
+=head2 dump_dir_location
+
+  Example     : $genomedb_adaptor->dump_dir_location($path);
+  Description : Getter/setter for the base location of the genome dumps.
+                This is used to find .fa and .fai files for GenomeDBs.
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub dump_dir_location {
+    my $self = shift;
+    if (@_) {
+        $self->{'_dump_dir_location'} = shift;
+    }
+    return $self->{'_dump_dir_location'};
+}
+
+
+
 ###################
 # fetch_* methods #
 ###################

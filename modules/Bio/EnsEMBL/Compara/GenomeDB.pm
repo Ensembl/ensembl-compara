@@ -747,28 +747,68 @@ sub _get_unique_key {
 }
 
 
-=head2 faidx_helper
+=head2 _get_genome_dump_path
 
-  Arg[1]      : String $filename. A Fasta dump of this genome
-  Example     : $genome_db->faidx_helper("$dump_path/".$genome->dbID.".fa");
-  Description : Return an instance of Bio::DB::HTS::Faidx constructed on the given file.
-                The instance is cached and returned upon subsequent calls, WITHOUT checking
-                if the file names are actually the same.
-  Returntype  : Bio::DB::HTS::Faidx instance
+  Arg[1]      : String $dir. Base directory in which to find / place the Fasta files
+  Arg[2]      : (optional) String $mask
+  Example     : $genome_db->_get_genome_dump_path($base_dir);
+  Description : Returns the expected path for the Fasta dump of this genome, masked or
+                not, according to $mask. This method guarantees that all pipelines agree
+                on where to find the file.
+                To behave nicely at scale, the files are expected to be spread according
+                to the dbID of the GenomeDB, using eHive's dir_revhash, e.g.
+                "123456789" => "9/8/7/6/5/4/3/2", and to be named "$name.$assembly.$mask.fa".
+  Returntype  : String
   Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _get_genome_dump_path {
+    my $self = shift;
+    my $dir  = shift;
+    my $mask = shift;
+
+    require Bio::EnsEMBL::Hive::Utils;
+    my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) : '';
+
+    my $filename = $self->name . '.' . $self->assembly . ($mask ? '.' . $mask : '') . '.fa';
+    return "$dir/$subdir/$filename";
+}
+
+
+=head2 get_faidx_helper
+
+  Arg[1]      : (optional) String $mask
+  Example     : $genome_db->get_faidx_helper('hard');
+  Description : Return the instance of Bio::DB::HTS::Faidx for this type of Fasta file, if
+                a directory has been registered (see L<GenomeDBADaptor::dump_dir_location>).
+                Masking can be requested with the $mask parameter: undef, 'soft' or 'hard'
+  Returntype  : Bio::DB::HTS::Faidx instance
+  Exceptions  : Will die if dump_dir_location is set but the file is not found
   Caller      : general
 
 =cut
 
-sub faidx_helper {
+sub get_faidx_helper {
     my $self = shift;
-    unless ($self->{_faidx_helper}) {
-        throw('Need the path to the Fasta file') unless @_;
-        throw($_[0] . ' cannot be read') unless -e $_[0];
-        require Bio::DB::HTS::Faidx;
-        $self->{_faidx_helper} = Bio::DB::HTS::Faidx->new(@_);
+    my $mask = shift;
+
+    my $faidx_key = '_faidx_helper_' . ($mask // '');
+    unless (exists $self->{$faidx_key}) {
+        $self->{$faidx_key} = undef;
+        if ($self->adaptor and (my $dump_dir_location = $self->adaptor->dump_dir_location)) {
+            my $path = $self->_get_genome_dump_path($dump_dir_location, $mask);
+            if (-e $path) {
+                require Bio::DB::HTS::Faidx;
+                $self->{$faidx_key} = Bio::DB::HTS::Faidx->new($path);
+            } else {
+                die "Could not find $path";
+            }
+        }
     }
-    return $self->{_faidx_helper};
+    return $self->{$faidx_key};
 }
 
 
