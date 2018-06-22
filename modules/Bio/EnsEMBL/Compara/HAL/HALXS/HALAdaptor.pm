@@ -103,11 +103,12 @@ sub seqs_in_genome {
 }
 
 sub msa_blocks {
-    my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap ) = @_;
+    my ( $self, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap, $max_block_length ) = @_;
     # Default values from hal2maf
     $max_ref_gap ||= 0;
+    $max_block_length ||= 1000;
     confess "Need some target species" unless $targets_str;
-    return HALXS::_get_multiple_aln_blocks( $self->{'hal_fd'}, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap );
+    return HALXS::_get_multiple_aln_blocks( $self->{'hal_fd'}, $targets_str, $ref, $hal_seq_reg, $start, $end, $max_ref_gap, $max_block_length );
 }
 
 sub pairwise_blocks {

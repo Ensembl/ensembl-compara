@@ -236,7 +236,7 @@ void _get_pairwise_blocks_filtered(int fileHandle, char *querySpecies, char *tar
 }
 
 // pass querySpecies as a comma-seperated string
-void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGap) {
+void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targetSpecies, char *targetChrom, int targetStart, int targetEnd, int maxRefGap, int maxBlockLength) {
     //int maxRefGap, bool showAncestors, bool printTree, int maxBlockLen ) {
     Inline_Stack_Vars;
     Inline_Stack_Reset;
@@ -316,7 +316,7 @@ void _get_multiple_aln_blocks( int halfileHandle, char *querySpecies, char *targ
 
     // print MAF to buffer
     char *errStr = NULL;
-    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, 0, &errStr );
+    halGetMAF( stream, halfileHandle, query_species, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, maxBlockLength, 0, &errStr );
     fclose (stream);
     
     //SV *maf = newSVpv(bp, strlen(bp));
@@ -424,19 +424,20 @@ _get_pairwise_blocks_filtered (fileHandle, querySpecies, targetSpecies, targetCh
         return; /* assume stack size is correct */
 
 void
-_get_multiple_aln_blocks (halfileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap)
+_get_multiple_aln_blocks (halfileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, maxBlockLength)
 	int	halfileHandle
 	char *	querySpecies
 	char *	targetSpecies
 	char *	targetChrom
 	int	targetStart
 	int	targetEnd
-    int maxRefGap
+	int maxRefGap
+	int maxBlockLength
         PREINIT:
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        _get_multiple_aln_blocks(halfileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap);
+        _get_multiple_aln_blocks(halfileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, maxRefGap, maxBlockLength);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
