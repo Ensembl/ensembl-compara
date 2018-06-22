@@ -119,7 +119,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                     'mode'          => 'insertignore',
                 },
 		-hive_capacity => $self->o('low_capacity'),
-                -flow_into => [ 'check_reusability', 'dump_genome_sequence' ],
+                -flow_into => [ 'check_reusability' ],
             },
 
             {   -logic_name => 'check_reusability',
@@ -170,40 +170,9 @@ sub pipeline_analyses_epo_anchor_mapping {
                     'species_set_id'    => '#nonreuse_ss_id#',
                 },
                 -flow_into => {
-                    '2->A'  => { 'build_exonerate_index' => { 'genome_db_id' => '#genome_db_id#', 'genome_dump_file' => '#expr(#genome_dumps#->{#genome_db_id#})expr#' } },
+                    '2->A'  => [ 'map_anchors_factory' ],
                     'A->1'  => [ 'remove_overlaps' ],
                 },
-            },
-
-	    {	-logic_name     => 'dump_genome_sequence',
-		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence',
-		-parameters => {
-                    'cellular_components_only' => sprintf(q{#expr(%s ? ['NUC'] : [])expr#}, $self->o('only_nuclear_genome')),
-		},
-		-flow_into => {
-                    1 => [ 'build_faidx_index', '?accu_name=genome_dumps&accu_address={genome_db_id}&accu_input_variable=genome_dump_file' ],
-                },
-		-rc_name => 'mem7500',
-		-hive_capacity => $self->o('low_capacity'),
-	    },
-
-            {   -logic_name => 'build_faidx_index',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-                -parameters => {
-                    'samtools_exe'  => $self->o('samtools_exe'),
-                    'cmd' => ['#samtools_exe#', 'faidx', '#genome_dump_file#'],
-                },
-            },
-
-            {   -logic_name => 'build_exonerate_index',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-                -parameters => {
-                    'esd2esi_exe' => $self->o('esd2esi_exe'),
-                    'fasta2esd_exe' => $self->o('fasta2esd_exe'),
-                    'cmd' => 'rm -f #genome_dump_file#.esd #genome_dump_file#.esi && #fasta2esd_exe# #genome_dump_file# #genome_dump_file#.esd && #esd2esi_exe# #genome_dump_file#.esd #genome_dump_file#.esi',
-                },
-                -flow_into  => [ 'map_anchors_factory' ],
-                -rc_name => 'mem7500',
             },
 
 	    {	-logic_name     => 'map_anchors_factory',

@@ -108,6 +108,9 @@ sub default_options {
 
         'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
+        # Where we get the genomes from
+        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+
         # Databases
         'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
         # database containing the anchors for mapping

@@ -87,8 +87,8 @@ sub fetch_input {
     " and method_link_species_set_id = ". $self->param('method_link_species_set_id')
       if (!$anchor_aligns and !scalar(@$anchor_aligns));
   $self->param('anchor_aligns', $anchor_aligns);
-  # Preload all we need from the Compara DB
-  $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
+  # Preload GenomeDBs and DnaFrags from the Compara DB and set the genome dump directory
+  $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
   $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
@@ -170,8 +170,7 @@ sub _dump_fasta {
     my $header = join("", ">AnchorAlign", $anchor_align_id, "|", $anchor_align->dnafrag->name, ".",
         $anchor_align->dnafrag_start, "-", $anchor_align->dnafrag_end, ":",
         $anchor_align->dnafrag_strand);
-    my $fa_path = $self->param_required('genome_dumps')->{$anchor_align->genome_db->dbID};
-    my $seq = $anchor_align->seq_from_fasta($fa_path);
+    my $seq = $anchor_align->get_sequence;
 
     if ($seq =~ /[^ACTGactgNnXx]/) {
       print STDERR "AnchorAlign $anchor_align_id contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";

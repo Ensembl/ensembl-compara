@@ -95,8 +95,8 @@ sub default_options {
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,
 
-	 # place to dump the genome sequences
-    'seq_dump_loc' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/genome_seq/' ,
+	 # place to get the genome dumps
+    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
     'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
      };
 }

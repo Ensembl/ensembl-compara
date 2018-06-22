@@ -91,7 +91,6 @@ sub default_options {
         'enredo_output_file'    => $self->o('work_dir').'/enredo_output.txt',
         'bed_dir'               => $self->o('work_dir').'/bed',
         'feature_dir'           => $self->o('work_dir').'/feature_dump',
-        'seq_dump_loc'          => $self->o('work_dir').'/genome_seq',
         'enredo_mapping_file'   => $self->o('work_dir').'/enredo_input.txt',
         'bl2seq_dump_dir'       => $self->o('work_dir').'/bl2seq', # location for dumping sequences to determine strand (for bl2seq)
         'bl2seq_file_stem'      => '#bl2seq_dump_dir#/bl2seq',
@@ -122,8 +121,7 @@ sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'bed_dir', 'feature_dir', 'seq_dump_loc', 'bl2seq_dump_dir']),
-        $self->pipeline_create_commands_lfs_setstripe('seq_dump_loc'),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'bed_dir', 'feature_dir', 'bl2seq_dump_dir']),
     ];
 }
 
@@ -140,7 +138,7 @@ sub pipeline_wide_parameters {
         'feature_dir'           => $self->o('feature_dir'),
         'enredo_output_file'    => $self->o('enredo_output_file'),
         'bed_dir'               => $self->o('bed_dir'),
-        'seq_dump_loc'          => $self->o('seq_dump_loc'),
+        'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
         'enredo_mapping_file'   => $self->o('enredo_mapping_file'),
         'bl2seq_dump_dir'       => $self->o('bl2seq_dump_dir'),
         'bl2seq_file_stem'      => $self->o('bl2seq_file_stem'),

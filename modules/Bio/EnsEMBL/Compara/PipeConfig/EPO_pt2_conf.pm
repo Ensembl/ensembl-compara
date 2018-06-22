@@ -90,14 +90,6 @@ sub default_options {
     };
 }
 
-sub pipeline_create_commands {
-    my ($self) = @_; 
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-        $self->pipeline_create_commands_rm_mkdir('seq_dump_loc'),
-        $self->pipeline_create_commands_lfs_setstripe('seq_dump_loc'),
-           ];  
-}
 
 sub resource_classes {
     my ($self) = @_; 
@@ -117,7 +109,7 @@ sub pipeline_wide_parameters {
 		%{$self->SUPER::pipeline_wide_parameters},
 
                 'mlss_id' => $self->o('mlss_id'),
-		'seq_dump_loc' => $self->o('seq_dump_loc'),
+		'genome_dumps_dir' => $self->o('genome_dumps_dir'),
 		'compara_anchor_db' => $self->o('compara_anchor_db'),
 		'master_db' => $self->o('master_db'),
 		'reuse_db' => $self->o('reuse_db'),
