@@ -50,32 +50,40 @@ sub _render {
 }
 
 sub get_data {
-  my $self        = shift;
-  my $types       = $self->my_config('types');
-  my $logic_names = $self->my_config('logic_names');
+  my $self = shift;
 
-  my $features    = [];
-  my @repeats     = map { my $t = $_; map @{$self->{'container'}->get_all_RepeatFeatures($t, $_)}, @$types } @$logic_names;
-  if (!scalar @repeats) {
+  my $repeats = $self->features || [];
+  if (!scalar @$repeats) {
     $self->no_features;
     return [];
   }
 
   my $colours   = [$self->my_colour('repeat'), $self->my_colour('repeat', 'alt')];
+  my $features  = [];
   my $i;
-  foreach (@repeats) {
+
+  foreach (@$repeats) {
     my $colour = ($i % 2 == 0) ? $colours->[0] : $colours->[1];
     push @$features, {
                       'start'   => $_->start,
                       'end'     => $_->end,
                       'colour'  => $colour,
                       'title'   => $self->title($_),
-                      'href'    => $self->href($_),
                       };
     $i++;
   }
 
   return [{'features' => $features}];
+}
+
+sub features {
+  ## Get raw API objects - needed by zmenu
+  my $self        = shift;
+  my $types       = $self->my_config('types');
+  my $logic_names = $self->my_config('logic_names');
+
+  my @repeats = map { my $t = $_; map @{$self->{'container'}->get_all_RepeatFeatures($t, $_)}, @$types } @$logic_names;
+  return \@repeats;
 }
 
 sub title      { return sprintf '%s; bp: %s-%s; length: %s', $_[1]->repeat_consensus->name, $_[1]->seq_region_start, $_[1]->seq_region_end, $_[1]->length; }

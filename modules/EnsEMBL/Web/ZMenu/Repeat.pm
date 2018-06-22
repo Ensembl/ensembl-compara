@@ -21,7 +21,7 @@ package EnsEMBL::Web::ZMenu::Repeat;
 
 use strict;
 
-use EnsEMBL::Draw::GlyphSet::_repeat;
+use EnsEMBL::Draw::GlyphSet::repeat;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -33,7 +33,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    @features = @{EnsEMBL::Draw::GlyphSet::_repeat->new($click_data)->features};
+    @features = @{EnsEMBL::Draw::GlyphSet::repeat->new($click_data)->features};
     @features = () unless grep $_->dbID eq $id, @features;
   }
   
