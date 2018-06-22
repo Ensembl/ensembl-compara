@@ -61,7 +61,6 @@ sub default_options {
         'mash_sketch_size'  => 1000000, 
 
         'master_db'          => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_master",
-        'dump_genome_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/dumps/dump_genome.pl',
         'rapidnj_exe'        => $self->check_exe_in_cellar('rapidnj/2.3.2/bin/rapidnj'),
         'erable_exe'         => $self->check_exe_in_cellar('erable/1.0/bin/erable'),
         'multifasta_dir'     => undef, # define if species multifastas have been pre-dumped
