@@ -104,7 +104,7 @@ sub get_go_list {
   my $dbname_to_match = shift || join '|', @$ontologies;
   my $ancestor=shift;
   my $gene = $self->gene;
-  my $goadaptor = $self->hub->database('go');
+  my $goadaptor = $self->hub->get_adaptor('get_OntologyTermAdaptor', 'go');
 
   my @goxrefs = @{$gene->get_all_DBLinks};
   my @my_transcripts= @{$self->Obj->get_all_Transcripts};
@@ -157,10 +157,10 @@ sub get_go_list {
 
       $hash{$go2} = 1;
 
-      if (my $goa = $goadaptor->get_GOTermAdaptor) {
+      if ($goadaptor) {
         my $term;
         eval { 
-          $term = $goa->fetch_by_accession($go); 
+          $term = $goadaptor->fetch_by_accession($go); 
         };
 
         warn $@ if $@;
@@ -171,10 +171,10 @@ sub get_go_list {
         my $has_ancestor = (!defined ($ancestor));
         if (!$has_ancestor){
           $has_ancestor=($go eq $ancestor);
-          my $term = $goa->fetch_by_accession($go);
+          my $term = $goadaptor->fetch_by_accession($go);
 
           if ($term) {
-            my $ancestors = $goa->fetch_all_by_descendant_term($term);
+            my $ancestors = $goadaptor->fetch_all_by_descendant_term($term);
             for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
               $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
             }
