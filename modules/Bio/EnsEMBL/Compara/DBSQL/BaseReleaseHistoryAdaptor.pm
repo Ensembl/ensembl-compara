@@ -188,11 +188,11 @@ sub _find_most_recent {
         my $g = shift;
         # Sort criteria
         #  1. is_current
-        #  2. highest last_release
-        #  3. highest first_release
+        #  2. highest first_release
+        #  3. highest last_release
         # NOTE: this formula works as long as the release number is < 10000
         my $unit = 10000;
-        return ((($g->is_current ? 1 : 0) * $unit + ($g->last_release || 0)) * $unit + ($g->first_release || 0));
+        return ((($g->is_current ? 1 : 0) * $unit + ($g->first_release || 0)) * $unit + ($g->last_release || 0));
     };
 
     my $best_score = max map {$score->($_)} @$object;

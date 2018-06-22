@@ -214,7 +214,11 @@ sub toString {
     if ($self->is_current) {
         return '[current]';
     } elsif ($self->has_been_released) {
-        return '[retired]';
+        if ($self->first_release > software_version()) {
+            return '[scheduled]';
+        } else {
+            return '[retired]';
+        }
     } else {
         return '[unreleased]';
     }
