@@ -17,27 +17,67 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::_repeat;
+package EnsEMBL::Draw::GlyphSet::repeat;
 
 ### Draws repeat feature tracks as simple (grey) blocks
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet_simple);
+use EnsEMBL::Draw::Style::Feature;
 
-sub features {
+use base qw(EnsEMBL::Draw::GlyphSet::Simple);
+
+sub render_normal {
+  my $self = shift;
+  $self->{'my_config'}->set('bumped', 1);
+  $self->{'my_config'}->set('depth', 20);
+  return $self->_render;
+}
+
+sub render_compact {
+  my $self = shift;
+  return $self->_render;
+}
+
+sub _render {
+  my $self = shift;
+  $self->{'my_config'}->set('striped', 1);
+
+  my $data = $self->get_data;
+  my $config = $self->track_style_config;
+  my $style  = EnsEMBL::Draw::Style::Feature->new($config, $data);
+  $self->push($style->create_glyphs);
+}
+
+sub get_data {
   my $self        = shift;
   my $types       = $self->my_config('types');
   my $logic_names = $self->my_config('logic_names');
-  my @repeats     = sort { $a->seq_region_start <=> $b->seq_region_end } map { my $t = $_; map @{$self->{'container'}->get_all_RepeatFeatures($t, $_)}, @$types } @$logic_names;
 
-  $self->errorTrack(sprintf 'No %s features in this region', $self->my_config('name')) unless scalar @repeats >= 1 || $self->{'config'}->get_option('opt_empty_tracks') == 0;
-  
-  return \@repeats;
+  my $features    = [];
+  my @repeats     = map { my $t = $_; map @{$self->{'container'}->get_all_RepeatFeatures($t, $_)}, @$types } @$logic_names;
+  if (!scalar @repeats) {
+    $self->no_features;
+    return [];
+  }
+
+  my $colours   = [$self->my_colour('repeat'), $self->my_colour('repeat', 'alt')];
+  my $i;
+  foreach (@repeats) {
+    my $colour = ($i % 2 == 0) ? $colours->[0] : $colours->[1];
+    push @$features, {
+                      'start'   => $_->start,
+                      'end'     => $_->end,
+                      'colour'  => $colour,
+                      'title'   => $self->title($_),
+                      'href'    => $self->href($_),
+                      };
+    $i++;
+  }
+
+  return [{'features' => $features}];
 }
 
-sub colour_key { return 'repeat'; }
-sub class      { return 'group'; }
 sub title      { return sprintf '%s; bp: %s-%s; length: %s', $_[1]->repeat_consensus->name, $_[1]->seq_region_start, $_[1]->seq_region_end, $_[1]->length; }
 
 sub href {

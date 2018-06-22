@@ -109,12 +109,8 @@ sub get_colours {
 sub ok_feature {
 ### Check if this feature is OK to display
 ### @param feature - some kind of feature object
-### The following two parameters are only required if the track
-### is optimizable (currently only possible for repeats)
-### @param previous_start Integer (optional) - start of previous feature
-### @param previous_end Integer (optional) - end of previous feature
 ### @return array - start and end of feature
-  my ($self, $f, $previous_start, $previous_end) = @_;
+  my ($self, $f) = @_;
 
   my $fstrand = $f->strand || -1;
   my $strand_flag = $self->my_config('strand');
@@ -131,10 +127,6 @@ sub ok_feature {
   $start            = 1             if $start < 1;
   $end              = $slice_length if $end > $slice_length;
 
-  my $optimizable   = $self->my_config('optimizable') && $self->my_config('depth') < 1;
-  my $pix_per_bp    = $self->scalex;
-  return 0 if $optimizable && ($slice->strand < 0 ? $previous_start - $start < 0.5 / $pix_per_bp : $end - $previous_end < 0.5 / $pix_per_bp);
-  
   return ($start, $end);
 }
 

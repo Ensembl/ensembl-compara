@@ -632,8 +632,7 @@ sub add_repeat_features {
 
   my $data    = $hashref->{'repeat_feature'}{'analyses'};
   my %options = (
-    glyphset    => '_repeat',
-    optimizable => 1,
+    glyphset    => 'repeat',
     depth       => 0.5,
     bump_width  => 0,
     strand      => 'r',
@@ -647,7 +646,7 @@ sub add_repeat_features {
     description => 'All repeats',
     colourset   => 'repeat',
     display     => 'off',
-    renderers   => [qw(off Off normal On)],
+    renderers   => [qw(off Off compact Compact normal Expanded)],
     %options
   }));
 
@@ -683,7 +682,7 @@ sub add_repeat_features {
           colours     => $colours,
           description => "$data->{$key_2}{'desc'} ($key_3)",
           display     => 'off',
-          renderers   => [qw(off Off normal On)],
+          renderers   => [qw(off Off compact Compact normal Expanded)],
           %options
         }));
       }
