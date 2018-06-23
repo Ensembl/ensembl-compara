@@ -65,6 +65,7 @@ sub param_defaults {
         # List of GenomeDB attribute names that will be added to the output_ids
         'extra_parameters'  => [],
         'genome_db_data_source' => undef,   # Alternative source for these attributes
+        'fetch_methods'     => 0,
 
         'fan_branch_code'   => 2,
         
@@ -126,6 +127,16 @@ sub fetch_input {
         $genome_dbs = [map {$genomedb_adaptor->fetch_by_dbID($_->dbID)} @$genome_dbs];
     }
 
+    my %extra_data = map {$_->dbID => {}} @$genome_dbs;
+    $self->param('extra_data', \%extra_data);
+
+    foreach my $genome_db (@$genome_dbs) {
+        my $mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_GenomeDB($genome_db);
+        my %method_hash;
+        $method_hash{$_->method->type}++ for @$mlsss;
+        $extra_data{$genome_db->dbID}->{'methods'} = \%method_hash;
+    }
+
     $self->param('genome_dbs', $genome_dbs);
 }
 
@@ -133,8 +144,9 @@ sub fetch_input {
 sub write_output {
     my $self = shift;
     
+    my $extra_data = $self->param('extra_data');
     foreach my $gdb (@{$self->param('genome_dbs')}) {
-        my $h = { 'genome_db_id' => $gdb->dbID };
+        my $h = { 'genome_db_id' => $gdb->dbID, %{ $extra_data->{$gdb->dbID} } };
         foreach my $p (@{$self->param('extra_parameters')}) {
             $h->{$p} = $gdb->$p;
         }
