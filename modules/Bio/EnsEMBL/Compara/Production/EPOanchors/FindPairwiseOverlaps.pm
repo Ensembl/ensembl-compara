@@ -34,7 +34,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my ($self) = @_;
 	# $compara_pairwise_dba is the pairwise alignments db
-	my $compara_pairwise_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor( %{ $self->param('compara_pairwise_db') } );
+	my $compara_pairwise_dba = $self->get_cached_compara_dba('compara_pairwise_db');
 	$self->param('compara_pairwise_dba', $compara_pairwise_dba);
 	my $reference_genome_db_name = $self->param_required('reference_genome_db_name');
 	my $ref_genome_db = $self->compara_dba->get_GenomedbAdaptor()->fetch_by_name_assembly($reference_genome_db_name);
