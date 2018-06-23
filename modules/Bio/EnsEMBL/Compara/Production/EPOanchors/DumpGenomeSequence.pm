@@ -75,6 +75,8 @@ sub param_defaults {
         # They have a default value in the serializer itself, but can be redefined here
         'seq_width'     => undef,   # Characters per line in the FASTA file. Defaults to 60
         'chunk_factor'  => undef,   # Number of lines to be buffered by the serializer. Defauls to 1,000
+
+        'repeat_masked' => undef,   # undef, "hard", or "soft"
     }
 }
 
@@ -117,10 +119,20 @@ sub fetch_input {
         $dnafrags = [grep {!excl{$_->cellular_component}} @$dnafrags];
     }
 
+    my $mask = $self->param('repeat_masked');
+
     $genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             foreach my $ref_dnafrag( @$dnafrags ) {
                 $dnafrag_names_2_dbID->{$ref_dnafrag->name} = $ref_dnafrag->dbID;
-                $serializer->print_Seq($ref_dnafrag->slice);
+                if ($mask) {
+                    if ($mask =~ /soft/i) {
+                        $serializer->print_Seq($ref_dnafrag->slice->get_repeatmasked_seq(undef, 1));
+                    } elsif ($mask =~ /hard/i) {
+                        $serializer->print_Seq($ref_dnafrag->slice->get_repeatmasked_seq());
+                    }
+                } else {
+                    $serializer->print_Seq($ref_dnafrag->slice);
+                }
             }
         });
 	close($filehandle);
