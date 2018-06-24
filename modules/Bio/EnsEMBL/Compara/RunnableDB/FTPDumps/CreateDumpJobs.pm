@@ -65,8 +65,7 @@ sub fetch_input {
 
 	my $curr_release = $self->param_required('curr_release');
 
-	my $registry = 'Bio::EnsEMBL::Registry';
-	$registry->load_all($self->param('reg_conf'), 0, 0, 0, "throw_if_missing") if $self->param('reg_conf');
+        $self->load_registry($self->param('reg_conf')) if $self->param('reg_conf');
 	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') );
 
 	my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -307,11 +306,6 @@ sub _add_lastz_patches {
 
 sub _find_mlsses_with_alignment {
 	my ( $self, $aln_db ) = @_;
-
-	if ($self->param('reg_conf')) {
-		my $registry = 'Bio::EnsEMBL::Registry';
-	  	$registry->load_all($self->param('reg_conf'));
-	}
 
 	my $aln_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $aln_db );
 	my $curr_release = $self->param('curr_release'); # add filter for old mlsses only - new ones will be dumped from scratch

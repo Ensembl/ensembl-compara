@@ -42,10 +42,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
-	if ($self->param('reg_conf')) {
-		my $registry = 'Bio::EnsEMBL::Registry';
-	  	$registry->load_all($self->param('reg_conf'));
-	}
+        $self->load_registry($self->param('reg_conf')) if $self->param('reg_conf');
 
 	my @dataflow_jobs;
 	foreach my $patch_db ( @{ $self->param('lastz_patch_dbs') } ) {

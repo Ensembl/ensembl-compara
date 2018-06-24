@@ -52,8 +52,7 @@ sub param_defaults {
 sub fetch_input {
 	my $self = shift;
 
-	my $registry = 'Bio::EnsEMBL::Registry';
-  	$registry->load_all($self->param_required('reg_conf'));
+        $self->load_registry($self->param('reg_conf')) if $self->param('reg_conf');
 	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('compara_db') );
 
 	my @copy_jobs;
