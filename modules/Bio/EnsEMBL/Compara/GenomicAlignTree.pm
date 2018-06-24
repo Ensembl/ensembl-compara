@@ -1144,11 +1144,7 @@ sub repeatmask {
       
     foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
       if ($mask && $this_genomic_align->dnafrag->name !~ /Ancestor/) {
-	if ($mask =~ /^soft/) {
-	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-	  } elsif ($mask =~ /^hard/) {
-	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
-	  }
+        $this_genomic_align->original_sequence($this_genomic_align->get_sequence($mask));
       }
     }
   }
