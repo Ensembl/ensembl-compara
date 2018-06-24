@@ -862,17 +862,7 @@ sub original_sequence {
       # ...from the dnafrag object. Uses dnafrag, dnafrag_start and dnafrag_methods instead of the attibutes
       # in the <if> clause because the attributes can be retrieved from other sources if they have not been
       # already defined.
-      $self->dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
-          if ($self->dnafrag->slice) {
-              $self->{'original_sequence'} = $self->dnafrag->slice->subseq(
-                  $self->dnafrag_start,
-                  $self->dnafrag_end,
-                  $self->dnafrag_strand
-              );
-          } else {
-              warning("Could not get a Slice from this dnafrag");
-          }
-      } );
+      $self->{'original_sequence'} = $self->get_sequence;
     } else {
       warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->original_sequence".
           " You either have to specify more information (see perldoc for".
