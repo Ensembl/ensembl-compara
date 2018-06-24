@@ -121,6 +121,9 @@ sub fetch_input {
   # Initialize the array
   $self->param('fasta_files', []);
 
+  # Preload GenomeDBs and set the genome dump directory
+  $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
   $self->_load_DnaFragRegions($self->param_required('synteny_region_id'));
@@ -621,18 +624,14 @@ sub _dump_fasta {
     @seqs = (1..scalar(@$all_dnafrag_regions));
   }
 
-  $self->iterate_by_dbc(\@seqs,
-      sub {my $seq_id = shift; return $all_dnafrag_regions->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc;},
-      sub {my $seq_id = shift;
+  foreach my $seq_id (@seqs) {
 
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
     my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
 
-    my $slice = $dfr->slice;
-    throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
-    my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
+    my $seq = $dfr->get_sequence('soft');
     if ($seq =~ /[^ACTGactgNnXx]/) {
-      print STDERR $slice->name, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
+      print STDERR $dfr->toString, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
       $seq =~ s/[^ACTGactgNnXx]/N/g;
     }
     $seq =~ s/(.{80})/$1\n/g;
@@ -648,7 +647,7 @@ sub _dump_fasta {
 
     #push @{$self->fasta_files}, $file;
     #push @{$self->species_order}, $dfr->dnafrag->genome_db_id;
-  } );
+  };
 
   return 1;
 }

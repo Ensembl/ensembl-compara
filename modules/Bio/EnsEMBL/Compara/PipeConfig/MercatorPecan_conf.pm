@@ -139,6 +139,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'mlss_id'        => $self->o('mlss_id'),
+        'genome_dumps_dir' => $self->o('genome_dumps_dir'),
     };
 }
 

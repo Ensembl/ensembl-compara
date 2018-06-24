@@ -144,6 +144,7 @@ sub pipeline_wide_parameters {
 		'mlss_id' => $self->o('mlss_id'),
 		'enredo_output_file' => $self->o('enredo_output_file'),
                 'run_gerp' => $self->o('run_gerp'),
+                'genome_dumps_dir' => $self->o('genome_dumps_dir'),
 	};
 }
 

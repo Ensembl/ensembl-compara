@@ -142,6 +142,9 @@ sub fetch_input {
   ## DnaFragRegions are in random order
   $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param_required('synteny_region_id')) );
 
+  # Preload GenomeDBs and set the genome dump directory
+  $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
     if ($self->get_species_tree) {
@@ -1042,9 +1045,7 @@ sub _dump_fasta {
   $self->param('fasta_files', []);
   $self->param('species_order', []);
 
-  $self->iterate_by_dbc(\@seqs,
-    sub {my $seq_id = shift; return $all_dnafrag_regions->[$seq_id-1]->dnafrag->genome_db->db_adaptor->dbc; },
-    sub {my $seq_id = shift;
+  foreach my $seq_id (@seqs) {
 
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
 
@@ -1063,13 +1064,9 @@ sub _dump_fasta {
     print ">DnaFrag", $dfr->dnafrag_id, "|", $dfr->dnafrag->name, "|", $dfr->dnafrag->genome_db->name, "|", $dfr->dnafrag->genome_db_id, "|",
         $dfr->dnafrag_start, "-", $dfr->dnafrag_end, ":", $dfr->dnafrag_strand," $seq_id***\n" if $self->debug;
 
-# my $slice = $dfr->dnafrag->slice->sub_Slice($dfr->dnafrag_start,$dfr->dnafrag_end,$dfr->dnafrag_strand);
- 
-    my $slice = $dfr->slice;
-    throw("Cannot get slice for DnaFragRegion in DnaFrag #".$dfr->dnafrag_id) if (!$slice);
-    my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
+    my $seq = $dfr->get_sequence('soft');
     if ($seq =~ /[^ACTGactgNnXx]/) {
-      print STDERR $slice->name, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
+      print STDERR $dfr->toString, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
       $seq =~ s/[^ACTGactgNnXx]/N/g;
     }
     $seq =~ s/(.{80})/$1\n/g;
@@ -1083,7 +1080,7 @@ sub _dump_fasta {
     push @{$self->param('fasta_files')}, $file;
     push @{$self->param('species_order')}, $dfr->dnafrag->genome_db_id;
 
-  }, 'do_disconnect');
+  };
 
   return 1;
 }
