@@ -100,24 +100,29 @@ sub pipeline_analyses {
                     'all_current'       => $self->o('all_current'),
                 }],
             -flow_into  => {
-                2 => { 'genome_dump' => INPUT_PLUS() }, # To allow propagating "reg_conf" if the latter is defined at the job level
+                2 => { 'genome_dump_unmasked' => INPUT_PLUS(), 'genome_dump_masked' => INPUT_PLUS(), }, # To allow propagating "reg_conf" if the latter is defined at the job level
             },
             -rc_name    => '250Mb_job',
         },
 
-        {   -logic_name => 'genome_dump',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpGenomeSequence',
+        {   -logic_name => 'genome_dump_unmasked',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpUnmaskedGenomeSequence',
+            -parameters => {
+                'force_redump'  => $self->o('force_redump'),
+            },
+            -flow_into  => [ 'build_faidx_index', WHEN('#methods#->{"EPO"}' => [ 'build_exonerate_esd_index' ]), ],
+            -rc_name    => '4Gb_job',
+            -priority   => 10,
+            -hive_capacity  => $self->o('dump_capacity'),
+        },
+
+        {   -logic_name => 'genome_dump_masked',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMaskedGenomeSequence',
             -parameters => {
                 'force_redump'  => $self->o('force_redump'),
             },
             -flow_into  => {
-                ## All files must be indexed with faidx so that fetching sequences is quick
-                # Unmasked DNA. Also need build_exonerate_es*_index for exonerate_server (EPO pipeline)
-                2 => [ 'build_faidx_index', WHEN('#methods#->{"EPO"}' => [ 'build_exonerate_esd_index' ]), ],
-                # Soft-masked DNA
-                3 => [ 'build_faidx_index' ],
-                # Hard-masked DNA
-                4 => [ 'build_faidx_index' ],
+                2 => [ 'build_faidx_index' ],
             },
             -rc_name    => '4Gb_job',
             -hive_capacity  => $self->o('dump_capacity'),
