@@ -42,6 +42,9 @@ sub default_options {
 
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
+    # place to get the genome dumps
+    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
         -host   => 'mysql-ens-compara-prod-1',

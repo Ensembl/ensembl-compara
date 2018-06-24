@@ -1341,9 +1341,7 @@ sub _dump_fasta_and_mfa {
   print "mfa_file $mfa_file\n" if $self->debug;
   open my $mfa_fh, '>', $mfa_file || throw("Couldn't open $mfa_file");
 
-  $self->iterate_by_dbc(\@seqs,
-      sub {my $seq_id = shift; my $ga = $all_genomic_aligns->[$seq_id-1]; return (ref($ga) eq 'ARRAY' ? undef : $ga->genome_db->db_adaptor->dbc);},
-      sub {my $seq_id = shift;
+  foreach my $seq_id (@seqs) {
 
     my $ga = $all_genomic_aligns->[$seq_id-1];
 
@@ -1370,13 +1368,10 @@ sub _dump_fasta_and_mfa {
     print ">DnaFrag", $ga->dnafrag->dbID, "|", $ga->dnafrag->name, ".",
         $ga->dnafrag_start, "-", $ga->dnafrag_end, ":", $ga->dnafrag_strand,"\n" if $self->debug;
 
-    my $slice = $ga->get_Slice;
-    throw("Cannot get slice for DnaFragRegion in DnaFrag #".$ga->dnafrag->dbID) if (!$slice);
-    
-    my $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
+    my $seq = $ga->get_sequence('soft');
 
     if ($seq =~ /[^ACTGactgNnXx]/) {
-      print STDERR $slice->name, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
+      print STDERR $ga->toString, " contains at least one non-ACTGactgNnXx character. These have been replaced by N's\n";
       $seq =~ s/[^ACTGactgNnXx]/N/g;
     }
     $seq =~ s/(.{80})/$1\n/g;
@@ -1395,7 +1390,7 @@ sub _dump_fasta_and_mfa {
 
     push @{$self->fasta_files}, $file;
     push @{$self->species_order}, $ga->dnafrag->genome_db_id;
-  });
+  }
   close $mfa_fh;
 
   return 1;

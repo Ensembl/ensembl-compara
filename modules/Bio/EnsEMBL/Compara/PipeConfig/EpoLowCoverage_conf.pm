@@ -90,6 +90,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
             'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'mlss_id' => $self->o('low_epo_mlss_id'),
                                'run_gerp' => $self->o('run_gerp'),
+                       'genome_dumps_dir' => $self->o('genome_dumps_dir'),
     };
 }
 
