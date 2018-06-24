@@ -396,14 +396,18 @@ sub get_sequence {
         die "sequence length doesn't match !" if length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
         reverse_comp(\$seq) if $self->dnafrag_strand < 0;
 
-    } elsif ($mask) {
-        if ($mask =~ /soft/i) {
-            $seq = $self->get_Slice()->get_repeatmasked_seq(undef, 1)->seq;
-        } else {
-            $seq = $self->get_Slice()->get_repeatmasked_seq()->seq;
-        }
     } else {
-        $seq = $self->get_Slice()->seq;
+        $self->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
+            if ($mask) {
+                if ($mask =~ /soft/i) {
+                    $seq = $self->get_Slice()->get_repeatmasked_seq(undef, 1)->seq;
+                } else {
+                    $seq = $self->get_Slice()->get_repeatmasked_seq()->seq;
+                }
+            } else {
+                $seq = $self->get_Slice()->seq;
+            }
+        });
     }
 
     return $seq;
