@@ -122,6 +122,7 @@ sub pipeline_wide_parameters {
 		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
 		'max_frag_diff' => $self->o('max_frag_diff'),
 	        'reference_genome_db_name' => $self->o('reference_genome_db_name'),
+                'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
 	};
 	
 }

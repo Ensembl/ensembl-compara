@@ -75,6 +75,9 @@ sub default_options {
         #location of full species tree, will be pruned
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
+        # Where we get the genomes from
+        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
 
         # connection parameters to various databases:

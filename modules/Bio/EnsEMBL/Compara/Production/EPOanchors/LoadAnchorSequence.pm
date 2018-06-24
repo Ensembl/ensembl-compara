@@ -26,6 +26,7 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::LoadAnchorSequence;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -42,6 +43,9 @@ sub fetch_input {
 	my $anchor_id = $self->param('anchor_id');
 	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign"); 
 	my $anchor_aligns = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id($anchor_id, $trimmed_anchor_mlssid);
+        # Preload GenomeDBs and DnaFrags from the Compara DB and set the genome dump directory
+        $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
 	my @anchor;
 	foreach my $anchor_align (@$anchor_aligns) {
 		my($df_id,$anc_start,$anc_end,$df_strand)=($anchor_align->dnafrag_id,
@@ -55,10 +59,13 @@ sub fetch_input {
 		$anc_end += $mid_size - 2;
 		$anc_start = $anc_start < 1 ? 1 : $anc_start;   # The minimum position on a DnaFrag is 1
 		$anc_end = $anc_end > $dnafrag->length ? $dnafrag->length : $anc_end;    # The maximum position on a DnaFrag is its length
-		my $anc_seq;
-                $dnafrag->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
-                    $anc_seq = $dnafrag->slice->sub_Slice($anc_start,$anc_end,$df_strand)->seq;
-                } );
+                my $ext_anchor = Bio::EnsEMBL::Compara::Locus->new_fast( {
+                        'dnafrag'         => $dnafrag,
+                        'dnafrag_start'   => $anc_start,
+                        'dnafrag_end'     => $anc_end,
+                        'dnafrag_strand'  => $df_strand,
+                    } );
+                my $anc_seq = $ext_anchor->get_sequence;
 		my @NS=$anc_seq=~/(N)/g;
 		my $ns=join("",@NS);
 		my $ratio = 0;

@@ -78,6 +78,9 @@ sub fetch_input {
     throw("MethodLinkSpeciesSet->dbID is not defined for this LowCoverageAlignment job");
   }
 
+  # Set the genome dump directory
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+
   #load from genomic_align_block ie using in 2X mode
   $self->_load_GenomicAligns($self->param('genomic_align_block_id'));
 
