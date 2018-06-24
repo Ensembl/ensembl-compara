@@ -858,10 +858,8 @@ sub summary_as_hash {
 
     #No repeat masking for ancestral sequences
     if ($mask) {
-        if ($mask =~ /^soft/ && $seq_region !~ /Ancestor/) {
-            $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-        } elsif ($mask =~ /^hard/ && $seq_region !~ /Ancestor/) {
-            $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+        if ($seq_region !~ /Ancestor/) {
+            $genomic_align->original_sequence($genomic_align->get_sequence($mask));
         }
     }
 
