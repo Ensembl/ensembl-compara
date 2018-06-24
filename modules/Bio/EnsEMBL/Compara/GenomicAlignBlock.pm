@@ -1480,20 +1480,10 @@ sub _print {    ## DEPRECATED
   alignments: \n";
   foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
     my $species_name = $this_genomic_align->genome_db->name;
-    my $slice = $this_genomic_align->dnafrag->slice;
-
-    $slice = $slice->sub_Slice(
-              $this_genomic_align->dnafrag_start,
-              $this_genomic_align->dnafrag_end,
-              $this_genomic_align->dnafrag_strand
-          );
-
     if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
-      print $FILEH "    * ", $this_genomic_align->genome_db->name, " ",
-          ($slice?$slice->name:"--error--"), "\n";
+      print $FILEH "    * ", $this_genomic_align->toString, "\n";
     } else {
-      print $FILEH "    - ", $this_genomic_align->genome_db->name, " ",
-          ($slice?$slice->name:"--error--"), "\n";
+      print $FILEH "    - ", $this_genomic_align->toString, "\n";
     }
   }
 
