@@ -69,7 +69,6 @@ sub param_defaults {
     return {
              'library_name'        => '#hmm_library_name#',
              'hmmpress_exe'        => '#hmmer_home#/hmmpress',
-             'compara_hmm_lib'     => '#panther_hmm_library_basedir#',
          };
 }
 
@@ -79,7 +78,8 @@ sub fetch_input {
     $self->require_executable('hmmpress_exe');
     $self->param_required('library_name');
     $self->param_required('hmmer_home');
-    $self->param_required('compara_hmm_lib');
+    $self->param_required('worker_compara_hmm_lib');
+    $self->param_required('target_compara_hmm_lib') if $self->param('store_in_warehouse');
 }
 
 sub run {
@@ -90,6 +90,12 @@ sub run {
 
     #run hmmpress
     $self->_hmm_press_profiles;
+
+    #copy hmm profile to shared compara dir
+    $self->_copy_hmm_profiles;
+
+    #generate README file
+    $self->_create_readme;
 }
 
 ##########################################
@@ -105,7 +111,7 @@ sub _fetch_and_concatenate_hmm_profiles{
     print STDERR "fetching hmm profiles ...\n" if ( $self->debug );
 
     #New compara HMM library
-    my $hmm_file = $self->param('compara_hmm_lib') . "/" . $self->param('library_name');
+    my $hmm_file = $self->param('worker_compara_hmm_lib') . "/" . $self->param('library_name');
     open my $hmm_fh , ">" . $hmm_file || die "Could not open local hmm_library file.";
 
     #Running sql query
@@ -126,12 +132,11 @@ sub _hmm_press_profiles {
     my $self = shift;
     print STDERR "running hmmpress on concatenated profiles ...\n" if ( $self->debug );
 
-    my $local_hmm_library =  $self->param('compara_hmm_lib') . "/" . $self->param('library_name');
+    my $local_hmm_library =  $self->param('worker_compara_hmm_lib') . "/" . $self->param('library_name');
     my $cmd = "rm -f $local_hmm_library.* ; ";
     $cmd .= join( ' ', $self->param('hmmpress_exe'), $local_hmm_library );
 
     #print "\n\n>>>$cmd<<<\n";
-
     my $cmd_out = $self->run_command( $cmd, { die_on_failure => 1 } );
     unless ( ( -e $self->param('local_hmm_library') ) and ( -s $self->param('local_hmm_library') ) ) {
 
@@ -140,5 +145,29 @@ sub _hmm_press_profiles {
     }
 }
 
+# Copy the hmm profiles from the faster hps directory to the slower but backedup shared compara directory.
+sub _copy_hmm_profiles{
+    my $self = shift;
+    my $hmm_file = $self->param('worker_compara_hmm_lib') . "/" . $self->param('library_name');
+    my $cmd = "cp $hmm_file*";
+    $cmd .= join( ' ', $self->param('target_compara_hmm_lib'));
+    my $cmd_out = $self->run_command( $cmd, { die_on_failure => 1 } );
+}
+
+# Create README file with the list of the genomes considered (name, genebuild, assembly, locator)
+sub _create_readme{
+    my $self = shift;
+    my $filename = $self->param_required('readme_file');
+    open my $fh, '>', $filename || die ("Cannot open $filename");
+
+    my $mlss    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id')) or die "Could not fetch mlss with dbID=$self->param('mlss_id')";
+    my $genome_dbs = $mlss->species_set->genome_dbs;
+
+    print $fh "species_name\tgenome_db_id\tassembly_name\tlocator\n";
+    foreach my $gdb (@{$genome_dbs}) {
+        print $fh $gdb->name . "\t" . $gdb->dbID . "\t" . $gdb->assembly . "\t" . $gdb->locator . "\n";
+    }
+    close($fh);
+}
 
 1;
