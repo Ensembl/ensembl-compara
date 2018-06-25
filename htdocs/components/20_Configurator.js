@@ -229,7 +229,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       e.preventDefault();
       return;
 
-
+      /*
       panel.elLk.saveAsInputs.each(function () {
         var el = $(this);
         
@@ -251,6 +251,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       Ensembl.EventManager.trigger('modalOverlayShow', panel.elLk.saveAs);
       
       return false;
+      */
     });
     
     function saveAsState() {
