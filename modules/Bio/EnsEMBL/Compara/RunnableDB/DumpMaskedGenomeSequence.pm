@@ -161,8 +161,8 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-    $self->dataflow_output_id( {'genome_dump_file' => $self->param('soft_masked_file')}, 2 );
-    $self->dataflow_output_id( {'genome_dump_file' => $self->param('hard_masked_file')}, 2 );
+    $self->dataflow_output_id( {'mask' => 'soft', 'genome_dump_file' => $self->param('soft_masked_file')}, 2 );
+    $self->dataflow_output_id( {'mask' => 'hard', 'genome_dump_file' => $self->param('hard_masked_file')}, 2 );
 }
 
 1;
