@@ -105,7 +105,7 @@ sub default_options {
         'tmp_hmmsearch'         => $self->o('work_dir') . '/tmp_hmmsearch',
         'seed_hmm_library_basedir'                  => $self->o('work_dir') . '/seed_hmms',
         'panther_hmm_library_basedir'               => $self->o('work_dir') . '/hmm_panther_12',
-        'worker_compara_hmm_library_basedir'        => $self->o('work_dir') . '/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE},
+        'worker_compara_hmm_library_basedir'        => $self->o('work_dir') . '/compara_hmm_'.$self->o('ensembl_release'),
         'worker_treefam_only_hmm_library_basedir'   => $self->o('work_dir') . '/treefam_hmms/2015-12-18_only_TF_hmmer3/',
 
     # "Member" parameters:
@@ -196,12 +196,12 @@ sub default_options {
         # The location of the HMM library:
         'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$self->o('ensembl_release')."/",
         'shared_compara_basedir'                    => '/nfs/production/panda/ensembl/warehouse/compara/',
-        'target_compara_hmm_library_basedir'        => $self->o('shared_compara_basedir') . '/treefam_hmms/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}."/",
+        'target_compara_hmm_library_basedir'        => $self->o('shared_compara_basedir') . '/treefam_hmms/compara_hmm_'.$self->o('ensembl_release')."/",
         'treefam_hmm_library_basedir'               => $self->o('shared_compara_basedir') . '/treefam_hmms/2015-12-18/',
         'target_treefam_only_hmm_library_basedir'   => $self->o('shared_compara_basedir') . '/2015-12-18_only_TF_hmmer3/',
 
         #README file with the list of all names, genome_ids, assemblies, etc
-        'readme_file'                   => $self->o('target_compara_hmm_library_basedir') . '/README_hmm_profiles'.$ENV{CURR_ENSEMBL_RELEASE}.'.txt',
+        'readme_file'                   => $self->o('target_compara_hmm_library_basedir') . '/README_hmm_profiles'.$self->o('ensembl_release').'.txt',
 
         'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',
         'hmm_thresholding_table'        => 'hmm_thresholding',
