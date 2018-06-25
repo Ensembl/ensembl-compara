@@ -132,7 +132,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'samtools_exe'  => $self->o('samtools_exe'),
-                'cmd'           => ['become', '#shared_user#', '#samtools_exe#', 'faidx', '#genome_dump_file#'],
+                'input_file'    => '#genome_dump_file#',
+                'output_file'   => '#genome_dump_file#.fai',
+                'command'       => '#samtools_exe# faidx #input_file#',
+                # Rerun the command if the output file is missing or if the input file has been recently modified
+                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || become #shared_user# #command#',
             },
             -rc_name    => '100Mb_job',
         },
@@ -141,7 +145,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'fasta2esd_exe' => $self->o('fasta2esd_exe'),
-                'cmd'           => 'become #shared_user# rm -f #genome_dump_file#.esd && become #shared_user# #fasta2esd_exe# #genome_dump_file# #genome_dump_file#.esd',
+                'input_file'    => '#genome_dump_file#',
+                'output_file'   => '#genome_dump_file#.esd',
+                'tmp_file'      => '#output_file#.tmp',
+                'command'       => '#fasta2esd_exe# #input_file# #tmp_file#',
+                # 1. Rerun the command if the output file is missing or if the input file has been recently modified
+                # 2. Run the command in a pseudo-transaction manner, i.e.  the output file is only modified if the command succeeds
+                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (become #shared_user# rm --force #tmp_file# && become #shared_user# #command# && become #shared_user# mv --force #tmp_file# #output_file#)',
             },
             -flow_into  => [ 'build_exonerate_esi_index' ],
             -rc_name    => '1Gb_job',
@@ -151,7 +161,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'esd2esi_exe'   => $self->o('esd2esi_exe'),
-                'cmd'           => 'become #shared_user# rm -f #genome_dump_file#.esi && become #shared_user# #esd2esi_exe# #genome_dump_file#.esd #genome_dump_file#.esi',
+                'input_file'    => '#genome_dump_file#.esd',
+                'output_file'   => '#genome_dump_file#.esi',
+                'tmp_file'      => '#output_file#.tmp',
+                'command'       => '#esd2esi_exe# #input_file# #tmp_file#',
+                # 1. Rerun the command if the output file is missing or if the input file has been recently modified
+                # 2. Run the command in a pseudo-transaction manner, i.e.  the output file is only modified if the command succeeds
+                'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (become #shared_user# rm --force #tmp_file# && become #shared_user# #command# && become #shared_user# mv --force #tmp_file# #output_file#)',
             },
             -rc_name    => '2Gb_job',
         },
