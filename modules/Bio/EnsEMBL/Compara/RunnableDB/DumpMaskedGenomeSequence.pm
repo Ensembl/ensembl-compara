@@ -86,7 +86,7 @@ sub fetch_input {
     $self->param('hard_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'hard'));
 
     # The expected file size: DNA + line-returns + dnafrag name + ">" + line-return
-    my $sql = 'SELECT SUM(length + CEIL(length/?) + CEIL(LOG10(dnafrag_id)) + 2) FROM dnafrag WHERE genome_db_id = ?';
+    my $sql = 'SELECT SUM(length + CEIL(length/?) + FLOOR(LOG10(dnafrag_id)) + 3) FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1';
     my ($ref_size) = $self->compara_dba->dbc->db_handle->selectrow_array($sql, undef, $self->param('seq_width'), $genome_db->dbID);
 
     # If all the files are there, we're good to go
