@@ -146,7 +146,7 @@ sub run {
     $self->run_command($cmd, { die_on_failure => 1 });
 
     # Copy the file
-    $cmd = ['become', $shared_user, 'cp', '--preserve=timestamps', $tmp_dump_file, $soft_masked_file];
+    $cmd = ['become', $shared_user, 'cp', '--force', '--preserve=timestamps', $tmp_dump_file, $soft_masked_file];
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$soft_masked_file size mismatch" if $ref_size != -s $soft_masked_file;
 

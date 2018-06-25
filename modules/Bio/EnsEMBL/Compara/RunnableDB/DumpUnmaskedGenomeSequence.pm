@@ -144,7 +144,7 @@ sub run {
     $self->run_command($cmd, { die_on_failure => 1 });
 
     # Copy the file
-    $cmd = ['become', $shared_user, 'cp', '--preserve=timestamps', $tmp_dump_file, $unmasked_file];
+    $cmd = ['become', $shared_user, 'cp', '--force', '--preserve=timestamps', $tmp_dump_file, $unmasked_file];
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$unmasked_file size mismatch" if $ref_size != -s $unmasked_file;
 }
