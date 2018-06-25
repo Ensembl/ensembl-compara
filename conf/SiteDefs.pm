@@ -220,9 +220,6 @@ our $GRAPHIC_TTF_PATH     = "/etc/fonts";
 our $GEOCITY_DAT          = "$ENSEMBL_SERVERROOT/geocity/GeoLiteCity.dat";
 our $ENSEMBL_JAVA         = "java"; # For js/css minification
 
-## Fetching news headlines from the blog
-our $BLOG_RELEASE_TAG     = 'release_news_e';
-our $BLOG_REST_URL        = 'http://www.ensembl.info/wp-json/wp/v2';
 ###############################################################################
 
 ## REST services used by e.g. ConfigPacker
