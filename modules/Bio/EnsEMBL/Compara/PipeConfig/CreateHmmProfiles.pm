@@ -103,6 +103,10 @@ sub default_options {
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
         'tmp_hmmsearch'         => $self->o('work_dir') . '/tmp_hmmsearch',
+        'seed_hmm_library_basedir'                  => $self->o('work_dir') . '/seed_hmms',
+        'panther_hmm_library_basedir'               => $self->o('work_dir') . '/hmm_panther_12',
+        'worker_compara_hmm_library_basedir'        => $self->o('work_dir') . '/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE},
+        'worker_treefam_only_hmm_library_basedir'   => $self->o('work_dir') . '/treefam_hmms/2015-12-18_only_TF_hmmer3/',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
@@ -191,10 +195,14 @@ sub default_options {
         # HMM specific parameters
         # The location of the HMM library:
         'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$self->o('ensembl_release')."/",
-        'panther_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_12/',
-        'treefam_hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18/',
-        'treefam_only_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18_only_TF_hmmer3/',
-        'seed_hmm_library_basedir'      => '/hps/nobackup/production/ensembl/compara_ensembl/seed_hmms/',
+        'shared_compara_basedir'                    => '/nfs/production/panda/ensembl/warehouse/compara/',
+        'target_compara_hmm_library_basedir'        => $self->o('shared_compara_basedir') . '/treefam_hmms/compara_hmm_'.$ENV{CURR_ENSEMBL_RELEASE}."/",
+        'treefam_hmm_library_basedir'               => $self->o('shared_compara_basedir') . '/treefam_hmms/2015-12-18/',
+        'target_treefam_only_hmm_library_basedir'   => $self->o('shared_compara_basedir') . '/2015-12-18_only_TF_hmmer3/',
+
+        #README file with the list of all names, genome_ids, assemblies, etc
+        'readme_file'                   => $self->o('target_compara_hmm_library_basedir') . '/README_hmm_profiles'.$ENV{CURR_ENSEMBL_RELEASE}.'.txt',
+
         'seed_hmm_library_name'         => 'seed_hmm_compara.hmm3',
         'hmm_thresholding_table'        => 'hmm_thresholding',
         'hmmer_search_cutoff'           => '1e-23',
@@ -395,7 +403,7 @@ sub pipeline_wide_parameters {
         'dump_dir'      => $self->o('dump_dir'),
         'tmp_hmmsearch' => $self->o('tmp_hmmsearch'),
 
-        'compara_hmm_library_basedir'   => $self->o('compara_hmm_library_basedir'),
+        'target_compara_hmm_library_basedir'   => $self->o('target_compara_hmm_library_basedir'),
         'panther_hmm_library_basedir'   => $self->o('panther_hmm_library_basedir'),
         'seed_hmm_library_basedir'      => $self->o('seed_hmm_library_basedir'),
         'seed_hmm_library_name'         => $self->o('seed_hmm_library_name'),
@@ -782,7 +790,7 @@ sub core_pipeline_analyses {
                                 'hmmer_home'                => $self->o('hmmer3_home'),
                                 'panther_hmm_library_name'  => $self->o('hmm_library_name'),
                                 'treefam_hmm_lib'           => $self->o('treefam_hmm_library_basedir'),
-                                'treefam_only_hmm_lib'      => $self->o('treefam_only_hmm_library_basedir'),
+                                'target_treefam_only_hmm_lib'      => $self->o('target_treefam_only_hmm_library_basedir'),
                                 'panther_hmm_lib'           => $self->o('panther_hmm_library_basedir'),
                                 'seed_hmm_library_basedir'  => $self->o('seed_hmm_library_basedir'),
                                 'seed_hmm_library_name'     => $self->o('seed_hmm_library_name'),
@@ -1661,7 +1669,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                                     'library_name'      => $self->o('compara_hmm_library_name'),
                                     'hmmer_home'        => $self->o('hmmer3_home'),
-                                    'compara_hmm_lib'   => $self->o('compara_hmm_library_basedir'),
+                                    'worker_compara_hmm_lib'   => $self->o('worker_compara_hmm_library_basedir'),
             },
             -flow_into => {
                1 => [ 'hmm_thresholding_factory' ],
@@ -1686,7 +1694,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                                 'hmmer_home'            => $self->o('hmmer3_home'),
                                 'library_name'          => $self->o('compara_hmm_library_name'),
-                                'library_basedir'       => $self->o('compara_hmm_library_basedir'),
+                                'library_basedir'       => $self->o('worker_compara_hmm_library_basedir'),
                                 'target_table'          => $self->o('hmm_thresholding_table'),
                                 'source_clusterset_id'  => 'filter_level_4',
                                 'fetch_all_seqs'        => 1,
@@ -1705,7 +1713,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                                 'hmmer_home'            => $self->o('hmmer3_home'),
                                 'library_name'          => $self->o('compara_hmm_library_name'),
-                                'library_basedir'       => $self->o('compara_hmm_library_basedir'),
+                                'library_basedir'       => $self->o('worker_compara_hmm_library_basedir'),
                                 'target_table'          => $self->o('hmm_thresholding_table'),
                                 'source_clusterset_id'  => 'filter_level_4',
                                 'fetch_all_seqs'        => 1,
@@ -1725,7 +1733,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                                 'hmmer_home'            => $self->o('hmmer3_home'),
                                 'library_name'          => $self->o('compara_hmm_library_name'),
-                                'library_basedir'       => $self->o('compara_hmm_library_basedir'),
+                                'library_basedir'       => $self->o('worker_compara_hmm_library_basedir'),
                                 'target_table'          => $self->o('hmm_thresholding_table'),
                                 'source_clusterset_id'  => 'filter_level_4',
                                 'fetch_all_seqs'        => 1,
@@ -1766,7 +1774,11 @@ sub core_pipeline_analyses {
             -parameters         => {
                                     'library_name'      => $self->o('compara_hmm_library_name'),
                                     'hmmer_home'        => $self->o('hmmer3_home'),
-                                    'compara_hmm_lib'   => $self->o('compara_hmm_library_basedir'),
+                                    'readme_file'       => $self->o('readme_file'),
+                                    'store_in_warehouse'=> 1,
+                                    'target_compara_hmm_lib'   => $self->o('target_compara_hmm_library_basedir'),
+                                    'worker_compara_hmm_lib'   => $self->o('worker_compara_hmm_library_basedir'),
+
             },
         },
 
