@@ -274,6 +274,10 @@ sub write_fasta {
   my $options = EnsEMBL::Web::Constants::FASTA_OPTIONS;
   my @selected_options = $hub->param('extra');
   my $sequence = grep /sequence/, @selected_options;
+
+  ## Skip the next section if we're only exporting genomic sequence
+  @selected_options = () if ($sequence && $sequence == scalar @selected_options);
+
   my ($result, @errors);
 
   if (scalar @selected_options) {
