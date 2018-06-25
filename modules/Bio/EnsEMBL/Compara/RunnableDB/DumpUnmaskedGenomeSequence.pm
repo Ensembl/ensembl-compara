@@ -147,13 +147,14 @@ sub run {
     $cmd = ['become', $shared_user, 'cp', '--force', '--preserve=timestamps', $tmp_dump_file, $unmasked_file];
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$unmasked_file size mismatch" if $ref_size != -s $unmasked_file;
+
+    unlink $tmp_dump_file;
 }
 
 
 sub write_output {
     my ($self) = @_;
     $self->dataflow_output_id( {'genome_dump_file' => $self->param('unmasked_file')} );
-    unlink $self->param('genome_dump_file');
 }
 
 1;

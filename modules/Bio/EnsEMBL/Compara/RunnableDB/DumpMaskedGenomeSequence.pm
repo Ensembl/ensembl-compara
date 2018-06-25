@@ -154,6 +154,8 @@ sub run {
     $cmd = qq{become $shared_user bash -c "tr a-z N < '$tmp_dump_file' > '$hard_masked_file'"};
     $self->run_command($cmd, { die_on_failure => 1 });
     die "$hard_masked_file size mismatch" if $ref_size != -s $hard_masked_file;
+
+    unlink $tmp_dump_file;
 }
 
 
@@ -161,7 +163,6 @@ sub write_output {
     my ($self) = @_;
     $self->dataflow_output_id( {'genome_dump_file' => $self->param('soft_masked_file')}, 2 );
     $self->dataflow_output_id( {'genome_dump_file' => $self->param('hard_masked_file')}, 2 );
-    unlink $self->param('genome_dump_file');
 }
 
 1;
