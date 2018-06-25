@@ -381,7 +381,12 @@ sub fasta {
     my $intron_id;
     
     my $output = {
-      cdna    => sub { my ($t, $id, $type) = @_; [[ "$id cdna:$type", $t->spliced_seq ]] },
+      cdna    => sub {
+                      my ($t, $id, $type) = @_;
+                      my $full_id = $t->display_id;
+                      $full_id .= '.'.$t->version if $t->version;
+                      $id = "$full_id $id" unless $id eq $full_id;
+                      [[ "$id cdna:$type", $t->spliced_seq ]] },
       coding  => sub { my ($t, $id, $type) = @_; [[ "$id cds:$type", $t->translateable_seq ]] },
       peptide => sub { my ($t, $id, $type) = @_; eval { [[ "$id peptide: " . $t->translation->stable_id . " pep:$type", $t->translate->seq ]] }},
       utr3    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr3:$type", $t->three_prime_utr->seq ]] }},
@@ -394,8 +399,9 @@ sub fasta {
     
     foreach (@$trans_objects) {
       my $transcript = $_->Obj;
-      my $id         = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
-      my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->biotype;
+      my $id    = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
+      $id      .= '.'.$transcript->version if $transcript->version;
+      my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->biotype;
       
       $intron_id = 1;
       
