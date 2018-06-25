@@ -142,8 +142,8 @@ sub fetch_input {
   ## DnaFragRegions are in random order
   $self->param('dnafrag_regions', $self->get_DnaFragRegions($self->param_required('synteny_region_id')) );
 
-  # Preload GenomeDBs and set the genome dump directory
-  $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+  # Set the genome dump directory
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
 
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)

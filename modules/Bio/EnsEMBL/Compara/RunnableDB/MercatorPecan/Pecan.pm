@@ -121,8 +121,8 @@ sub fetch_input {
   # Initialize the array
   $self->param('fasta_files', []);
 
-  # Preload GenomeDBs and set the genome dump directory
-  $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+  # Set the genome dump directory
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order

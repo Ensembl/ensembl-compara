@@ -43,8 +43,8 @@ sub fetch_input {
 	my $anchor_id = $self->param('anchor_id');
 	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign"); 
 	my $anchor_aligns = $anchor_align_adaptor->fetch_all_by_anchor_id_and_mlss_id($anchor_id, $trimmed_anchor_mlssid);
-        # Preload GenomeDBs and DnaFrags from the Compara DB and set the genome dump directory
-        $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+        # Set the genome dump directory
+        $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
         Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
 	my @anchor;
 	foreach my $anchor_align (@$anchor_aligns) {

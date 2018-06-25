@@ -78,10 +78,11 @@ sub pre_cleanup {
 sub fetch_input {
 	my ($self) = @_;
 
+        my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
+        my $genome_db_file = $genome_db->_get_genome_dump_path($self->param_required('genome_dumps_dir'));
         $self->dbc->disconnect_if_idle();
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
-	my $genome_db_file = $self->param_required('genome_dump_file');
         my $sth;
         my $min_anc_id;
         my $max_anc_id;

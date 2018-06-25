@@ -88,7 +88,7 @@ sub fetch_input {
       if (!$anchor_aligns and !scalar(@$anchor_aligns));
   $self->param('anchor_aligns', $anchor_aligns);
   # Preload GenomeDBs and DnaFrags from the Compara DB and set the genome dump directory
-  $_->register_fasta_base_directory($self->param_required('genome_dumps_dir')) for @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all };
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
   $self->compara_dba()->dbc->disconnect_if_idle();
   $self->_dump_fasta();
