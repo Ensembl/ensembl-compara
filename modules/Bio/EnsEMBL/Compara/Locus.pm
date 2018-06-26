@@ -399,10 +399,12 @@ sub get_sequence {
     } else {
         $self->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
             if ($mask) {
-                if ($mask =~ /soft/i) {
+                if ($mask =~ /^soft/i) {
                     $seq = $self->get_Slice()->get_repeatmasked_seq(undef, 1)->seq;
-                } else {
+                } elsif ($mask =~ /^hard/i) {
                     $seq = $self->get_Slice()->get_repeatmasked_seq()->seq;
+                } else {
+                    throw("Unknown masking option '$mask'");
                 }
             } else {
                 $seq = $self->get_Slice()->seq;
