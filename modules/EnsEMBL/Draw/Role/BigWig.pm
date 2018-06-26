@@ -67,18 +67,28 @@ sub get_data {
 
       ## Otherwise constrain to configured view limits 
       unless(defined $min_score) {
-        if (scalar @viewLimits) {
+        if (defined($self->my_config('y_min'))) { ## Give priority to user settings
+          $min_score = $self->my_config('y_min');
+          $_->{'metadata'}{'y_min'} = $min_score;
+        } 
+        elsif (scalar @viewLimits) {
           $min_score = $viewLimits[0];
           $_->{'metadata'}{'y_min'} = $min_score;
-        } else {
+        }
+        else {
           $min_score = $_->{'metadata'}{'min_score'};
         }
       }
       unless(defined $max_score) {
-        if (scalar @viewLimits) {
+        if (defined($self->my_config('y_max'))) { ## Give priority to user settings
+          $max_score = $self->my_config('y_max');
+          $_->{'metadata'}{'y_max'} = $max_score;
+        } 
+        elsif (scalar @viewLimits) {
           $max_score = $viewLimits[1];
           $_->{'metadata'}{'y_max'} = $max_score;
-        } else {
+        } 
+        else {
           $max_score = $_->{'metadata'}{'max_score'};
         }
       }
@@ -91,7 +101,6 @@ sub get_data {
       if ($gang and $gang->{'min'}) {
         $min_score = $gang->{'min'};
       }
-
       $_->{'metadata'}{'max_score'} = $max_score;
       $_->{'metadata'}{'min_score'} = $min_score;
     }
