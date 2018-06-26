@@ -92,6 +92,7 @@ sub create_glyphs {
     elsif (defined($metadata->{'y_max'})) {
       $graph_conf->{'cutoff_max'} = $metadata->{'y_max'}; 
     }
+
     if (defined($metadata->{'y_min'})) {
       $graph_conf->{'cutoff_min'} = $metadata->{'y_min'}; 
     }
@@ -144,6 +145,7 @@ sub create_glyphs {
 
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
+  warn ">>> DRAWING STANDARD WIGGLE";
 
   return unless $features && @$features;
 
@@ -153,6 +155,7 @@ sub draw_wiggle {
   }
   my ($previous_x,$previous_y);
   my $plain_x = 0;
+
   for (my $i = 0; $i < @$features; $i++) {
     my $f = $features->[$i];
     unless(ref($f) eq 'HASH') {
@@ -173,6 +176,12 @@ sub draw_wiggle {
     if ($current_score =~ /INF/) {
       $colour   = 'black';
       $ok_score = $current_score eq '-INF' ? $c->{'min_score'} : $c->{'max_score'};
+    }
+    elsif (defined($c->{'cutoff_min'}) && $current_score < $c->{'cutoff_min'}) {
+      $ok_score = $c->{'cutoff_min'};
+    }
+    elsif (defined($c->{'cutoff_max'}) && $current_score > $c->{'cutoff_max'}) {
+      $ok_score = $c->{'cutoff_max'};
     }
     else {
       $colour   = $self->set_colour($c, $f);
