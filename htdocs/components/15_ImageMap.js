@@ -418,9 +418,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         hoverLabel = panel.elLk.hoverLabels.filter('.' + hoverLabel);
 
-        var share_url = hoverLabel.find('.hl-content ._copy_url').val();
+        var share_url_input = hoverLabel.find('.hl-content ._copy_url');
+        var share_url = ($('<a/>', {'href': share_url_input.val()})).prop('href');
+        share_url_input.val(share_url);
+
         // Create an href from <a> and get a valid url
-        hoverLabel.find('.hl-content ._copy_url').val(($('<a/>', {'href': share_url})).prop('href'));
+        hoverLabel.find('.hl-content ._copy_url').val(share_url);
 
         if (hoverLabel.length) {
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
@@ -617,7 +620,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // while url input is focused, don't hide the hover label
     .find('input._copy_url').off().on('click focus blur', function(e) {
-      $(this).val(this.defaultValue).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
+      $(this).val(this.value).select().closest('._label_layer').toggleClass('focused', e.type !== 'blur');
     });
   },
 
