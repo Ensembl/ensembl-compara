@@ -126,10 +126,10 @@ Ensembl.DataTable = {
           this.data({ hiddenCols: hiddenCols, sorting: sorting });
           return;
         }
-        
+
         this.fnSettings().oInit.fnInitComplete.call(this);
         this.data('export', false);
-        
+
         for (var i = 0; i < tableSettings.aoOpenRows.length; i++) {
           tableSettings.aoOpenRows[i].nTr.className = tableSettings.aoOpenRows[i].nParent.className;
         }
@@ -465,7 +465,32 @@ Ensembl.DataTable = {
       var classNames = [];
       var dataTable  = $('#' + this.name, panel.el).dataTable();
       var settings   = dataTable.fnSettings();
-      
+
+      if (this.checked) {
+        if (this.value === 'all') {
+          // if all checkbox gets selected then unselect all the other checkboxes
+          $('input.table_filter[name=' + this.name + ']', panel.el).not('[value=all]', panel.el).prop('checked', false);
+        } else {
+          // if a checkbox is selected while all is already selected then unselect all
+          if ($('input.table_filter[name=' + this.name + '][value=all]', panel.el).prop('checked') === true) {
+            $('input.table_filter[name=' + this.name + '][value=all]', panel.el).prop('checked', false);
+          }
+
+          var checkboxCount = $('input.table_filter[name=' + this.name + ']', panel.el).length;
+
+          // if all checkboxes are selected (with or without all) then select only all
+          if ($('input.table_filter[name=' + this.name + ']:checked', panel.el).length >= (checkboxCount - 1)) {
+            $('input.table_filter[name=' + this.name + ']:checked', panel.el).prop('checked', false);
+            $('input.table_filter[name=' + this.name + '][value=all]', panel.el).prop('checked', true);
+          };
+        }
+      } else {
+        // if all checkboxes are unselected then select all
+        if ($('input.table_filter[name=' + this.name + ']:checked', panel.el).length === 0) {
+          $('input.table_filter[name=' + this.name + '][value=all]', panel.el).prop('checked', true);
+        }
+      }
+  
       $('input.table_filter[name=' + this.name + ']', panel.el).each(function () {
         if (this.checked) {
           classNames.push(' ' + this.value + ' ');
@@ -481,8 +506,10 @@ Ensembl.DataTable = {
       dataTable.fnFilter($('.dataTables_filter input', settings.nTableWrapper).val());
       
       dataTable = null;
+
+      Ensembl.EventManager.trigger('dataTableFilterUpdated', classNames);
     });
-    
+
     filters = null;
   }
 };

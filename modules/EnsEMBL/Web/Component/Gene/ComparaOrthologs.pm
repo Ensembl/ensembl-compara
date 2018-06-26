@@ -69,13 +69,13 @@ sub content {
   
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
-  );
+  ); 
   
   my %orthologue_list;
   my %skipped;
 
   my %not_seen = $self->_get_all_analysed_species($cdb);
-  
+
   delete $not_seen{$hub->species}; #deleting current species
 
   for (keys %not_seen) {
@@ -85,7 +85,7 @@ sub content {
     #do not show strain species on main species view
     if(!$self->is_strain && $species_defs->get_config($_, 'IS_STRAIN_OF')) { delete $not_seen{$_}; }
   }
-  
+
   foreach my $homology_type (@orthologues) {
     foreach (keys %$homology_type) {
       (my $species = $_) =~ tr/ /_/;
@@ -102,7 +102,7 @@ sub content {
       delete $not_seen{$species};
     }
   }
-  
+
   return '<p>No orthologues have been identified for this gene</p>' unless keys %orthologue_list;
 
   my %orthologue_map = qw(SEED BRH PIP RHS);
@@ -135,11 +135,12 @@ sub content {
 
     foreach my $set (@$set_order) {
       my $set_info = $species_sets->{$set};
-      
+      my $species_selected = $set eq 'all' ? 'checked="checked"' : ''; # select all species by default
+
       my $none_title = $set_info->{'none'} ? sprintf('<a href="#list_no_ortho">%d</a>', $set_info->{'none'}) : 0;
       push @rows, {
         'set'       => "<strong>$set_info->{'title'}</strong> (<i>$set_info->{'all'} species</i>)<br />$set_info->{'desc'}",
-        'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" />},
+        'show'      => qq{<input type="checkbox" class="table_filter" title="Check to show these species in table below" name="orthologues" value="$set" $species_selected />},
         '1:1'       => $set_info->{'1-to-1'}       || 0,
         '1:many'    => $set_info->{'1-to-many'}    || 0,
         'many:many' => $set_info->{'Many-to-many'} || 0,
@@ -293,7 +294,7 @@ sub content {
       });
 
       my $table_details = {
-        'Species'    => join('<br />(', split /\s*\(/, $species_defs->species_label($species)),
+        'Species'    => join('<br />(', split(/\s*\(/, $species_defs->species_label($species))),
         'Type'       => $self->html_format ? glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues").qq{<p class="top-margin"><a href="$tree_url">View Gene Tree</a></p>} : glossary_helptip($hub, ucfirst $orthologue_desc, ucfirst "$orthologue_desc orthologues") ,
         'dN/dS'      => qq{<span class="$dnds_class">$orthologue_dnds_ratio</span>},
         'identifier' => $self->html_format ? $id_info : $stable_id,
@@ -305,7 +306,7 @@ sub content {
         'options'    => { class => join(' ', @{$sets_by_species->{$species} || []}) }
       };      
       $table_details->{'Gene name(Xref)'}=$orthologue->{'display_id'} if(!$self->html_format);
-      
+
       push @rows, $table_details;
     }
   }
@@ -333,13 +334,21 @@ sub content {
   }   
  
   if (%not_seen) {
+    my $no_ortho_species_html = '';
+
+    foreach (keys %not_seen) {
+      if ($sets_by_species->{$_}) {
+        $no_ortho_species_html .= '<li class="'. join(' ', @{$sets_by_species->{$_}}) .'">'. $species_defs->species_label($_) .'</li>';
+      }
+    }
+
     $html .= '<br /><a name="list_no_ortho"/>' . $self->_info(
       'Species without orthologues',
       sprintf(
-        '<p>%d species are not shown in the table above because they don\'t have any orthologue with %s.<ul><li>%s</li></ul></p>',
+        '<p><span class="no_ortho_count">%d</span> species are not shown in the table above because they don\'t have any orthologue with %s.<ul id="no_ortho_species">%s</ul></p> <input type="hidden" class="panel_type" value="ComparaOrtholog" />',
         scalar(keys %not_seen),
         $self->object->Obj->stable_id,
-        join "</li>\n<li>", sort map {$species_defs->species_label($_)} keys %not_seen,
+        $no_ortho_species_html
       )
     );
   }
