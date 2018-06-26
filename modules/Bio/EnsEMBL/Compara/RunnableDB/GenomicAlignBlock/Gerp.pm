@@ -108,6 +108,9 @@ sub fetch_input {
   #create a Compara::DBAdaptor which shares the same DBI handle
   #with $self->db (Hive DBAdaptor)
 
+  # Set the genome dump directory
+  $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($self->param('genomic_align_block_id'));
 
@@ -311,9 +314,7 @@ sub _writeMultiFastaAlignment {
     # Disconnecting
     $self->compara_dba->dbc->disconnect_if_idle();
 
-    $self->iterate_by_dbc($segments,
-        sub { my $this_segment = shift; return ($this_segment->isa('Bio::EnsEMBL::Compara::GenomicAlignTree') ? $this_segment->genomic_align_group : $this_segment)->genome_db->db_adaptor->dbc },
-        sub { my $this_segment = shift;
+    foreach my $this_segment (@$segments) {
 
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
         #$seq_name =~ s/(\w*) (\w*)/$1_$2/;
@@ -335,7 +336,7 @@ sub _writeMultiFastaAlignment {
         print ALIGN ">$seq_name\n$aligned_sequence\n";
 	free_aligned_sequence($this_segment);
 
-    } );
+    }
 
     close ALIGN;
 }
