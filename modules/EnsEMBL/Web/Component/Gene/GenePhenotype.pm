@@ -195,8 +195,9 @@ sub gene_phenotypes {
     }
   }
 
+  my $add_s = scalar @rows == 1 ? '' : 's';
+  $html = qq{<a id="gene_phenotype"></a><h2>Phenotype$add_s, disease$add_s and trait$add_s associated with this gene $g_name</h2>};
   if (scalar @rows) {
-    $html = qq{<a id="gene_phenotype"></a><h2>Phenotype(s), disease(s) and trait(s) associated with this gene $g_name</h2>};
     my @columns = (
       { key => 'phenotype', align => 'left', title => 'Phenotype, disease and trait' },
       { key => 'source',    align => 'left', title => 'Source'    }
@@ -219,7 +220,7 @@ sub gene_phenotypes {
     }
   }
   else {
-    $html = "<p>No phenotype, disease or trait has been associated with this gene $g_name.</p>";
+    $html .= "<p>None found.</p>";
   }
   return $html;
 }
