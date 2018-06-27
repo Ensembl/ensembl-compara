@@ -40,7 +40,8 @@ sub configure {
   $self->first_child->set_attributes({
     'class' => 'species-tag',
     'style' => {
-      'background-image' => sprintf('url(%sspecies/16/%s.png)', $sd->img_url, $sd->ENSEMBL_PRIMARY_SPECIES)
+      'background-image' => sprintf('url(%sspecies/%s.png)', $sd->img_url, $sd->ENSEMBL_PRIMARY_SPECIES),
+      'background-size' => '16px'
     }
   });
 }
