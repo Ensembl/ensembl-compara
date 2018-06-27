@@ -103,7 +103,7 @@ sub hive_meta_table {
     my ($self) = @_;
     return {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-        # 'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     };
 }
 
