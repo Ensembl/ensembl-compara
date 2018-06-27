@@ -20,14 +20,15 @@
     var urls = [urls_in];
     var texts = [texts_in];
     var titles = [titles_in];
-    if((urls_in||'').charAt(0) == '>') {
-      urls = urls_in.substring(1).split('>');
-      texts = texts_in.substring(1).split('>');
+    if((urls_in||'').charAt(0) == '\r') {
+      urls = urls_in.substring(1).split('\r');
+      texts = texts_in.substring(1).split('\r');
     }
-    if((titles_in||'').charAt(0) == '>') {
-      titles = titles_in.substring(1).split('>');
+    if((titles_in||'').charAt(0) == '\r') {
+      titles = titles_in.substring(1).split('\r');
     }
     html = "";
+
     for(var i=0;i<texts.length;i++) {
       if(i) { html += ', '; }
       var here = texts[i];
