@@ -714,13 +714,18 @@ sub species_stats {
   });
   my $prov_name = $sd->PROVIDER_NAME;
   if ($prov_name) {
-    $prov_name =~ s/_/ /;
-    my $prov_url  = $sd->PROVIDER_URL;
-    $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
-    my $provider = $prov_url && $prov_name ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $prov_name) : $prov_name;
+    my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
+    my @providers;
+    foreach my $pv (@prov_names) {
+      $prov_name =~ s/_/ /;
+      my $prov_url  = $sd->PROVIDER_URL;
+      $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
+      my $provider = $prov_url && $pv ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $pv) : $pv;
+      push @providers, $provider;
+    }
     $summary->add_row({
       'name' => '<b>Annotation provider</b>',
-      'stat' => $provider, 
+      'stat' => join(', ', @providers), 
     });
   }
   my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
