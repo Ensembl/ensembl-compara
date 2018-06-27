@@ -158,14 +158,14 @@ sub table_content {
            feature_type     => $feat_type,
            phe_source       => $source_text,
            phe_link         => $source_url,
-           study_links      => join('>','',@study_links),
-           study_texts      => join('>','',@study_texts),
+           study_links      => join("\r",'',@study_links),
+           study_texts      => join("\r",'',@study_texts),
            study_submitter  => join(', ',@$submitter_list),
-           evidence_links   => join('>','',@evidence_links),
-           evidence_texts   => join('>','',@evidence_texts),
-           gene_links       => join('>','',@gene_links),
-           gene_texts       => join('>','',@gene_texts),
-           gene_titles      => join('>','',@gene_titles),
+           evidence_links   => join("\r",'',@evidence_links),
+           evidence_texts   => join("\r",'',@evidence_texts),
+           gene_links       => join("\r",'',@gene_links),
+           gene_texts       => join("\r",'',@gene_texts),
+           gene_titles      => join("\r",'',@gene_titles),
       };
 
       if (!$hub->param('ph')) {
