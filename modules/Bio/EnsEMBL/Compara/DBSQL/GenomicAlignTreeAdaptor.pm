@@ -293,7 +293,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
   foreach my $this_projection_segment (@$projection_segments) {
     my $this_slice = $this_projection_segment->to_Slice;
-    my $coord_system_name = $this_slice->coord_system->name;
     my $this_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
             $genome_db, $this_slice->seq_region_name
         );
