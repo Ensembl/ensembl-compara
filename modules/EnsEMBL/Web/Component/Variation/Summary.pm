@@ -575,13 +575,14 @@ sub location {
   my $id  = $object->name;
   my (@rows, $location, $location_link);
   
-  if(my $selected_mapping = $object->selected_variation_feature_mapping) {
+  my $selected_mapping = $object->selected_variation_feature_mapping;
+
+  if ($selected_mapping && scalar(keys(%$selected_mapping))!=0) {
     my $variation = $object->Obj;
     my $type      = $selected_mapping->{'Type'};
     my $region    = $selected_mapping->{'Chr'}; 
     my $start     = $selected_mapping->{'start'};
     my $end       = $selected_mapping->{'end'};
-
 
     my $coord = "$region:$start-$end";
     if ($start == $end) {
@@ -609,7 +610,7 @@ sub location {
     );
   }
   else {
-    $location = "This variant maps to $count genomic locations; <b>None selected</b>";
+    $location_link = "This variant maps to $count genomic locations. Please select a location in the box above.";
   }
 
   my $vcf = $self->to_VCF;
