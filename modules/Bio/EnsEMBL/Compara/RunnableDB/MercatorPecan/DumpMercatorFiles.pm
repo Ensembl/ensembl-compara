@@ -105,22 +105,29 @@ sub dumpMercatorFiles {
   open(my $fh, '>', $file);
   my $core_dba = $gdb->db_adaptor;
  $core_dba->dbc->prevent_disconnect( sub {
+
   my $coord_system_adaptor = $core_dba->get_CoordSystemAdaptor();
   my $assembly_mapper_adaptor = $core_dba->get_AssemblyMapperAdaptor();
   my $seq_level_coord_system = $coord_system_adaptor->fetch_sequence_level;
+  my $coord_systems = $coord_system_adaptor->fetch_all_by_attrib('default_version');;
+  my %coord_systems_by_name = map {$_->name => $_} @$coord_systems;
+  my %assembly_mappers = map {$_->name => $assembly_mapper_adaptor->fetch_by_CoordSystems($_, $seq_level_coord_system)} grep {$_->name ne $seq_level_coord_system->name} @$coord_systems;
+
   foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
       print $fh $df->name . "\t" . $df->length,"\n";
-      if ($max_gap and $df->coord_system_name eq "chromosome") {
-        my $chromosome_coord_system = $coord_system_adaptor->fetch_by_name("chromosome");
-        my $assembly_mapper = $assembly_mapper_adaptor->fetch_by_CoordSystems($chromosome_coord_system, $seq_level_coord_system);
-
-	  my @mappings = $assembly_mapper->map($df->name, 1, $df->length, 1, $chromosome_coord_system);
+      if ($max_gap and $df->length > $max_gap and $assembly_mappers{$df->coord_system_name}) {
+          # Avoid large assembly gaps: when a gap larger than "maximum_gap" is
+          # found, break the region as if they were several chromosomes in order
+          # to ensure Mercator won't link cliques on both sides of the gap.
+          my @mappings = $assembly_mappers{$df->coord_system_name}->map($df->name, 1, $df->length, 1, $coord_systems_by_name{$df->coord_system_name});
 	  
 	  my $part = 1;
 	  foreach my $this_mapping (@mappings) {
 	      next if ($this_mapping->isa("Bio::EnsEMBL::Mapper::Coordinate"));
 	      next if ($this_mapping->length < $max_gap);
 	      # print join(" :: ", $df->name, $this_mapping->length, $this_mapping->start, $this_mapping->end), "\n";
+              # This method currently assumes that no original chromosome name
+              # end with --X where X is any number.
 	      print $fh $df->name . "--$part\t" . $df->length,"\n";
 	      $dnafrags->{$df->dbID}->{$this_mapping->start} = $df->name."--".$part;
 	      $part++;
