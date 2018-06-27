@@ -110,7 +110,15 @@ sub run {
 
 	foreach my $gdb ( @{ $self->param_required('genome_dbs') } ) {
 		my $mash_path = $self->find_file_for_gdb($self->param_required('sketch_dir'), $gdb, ['msh']);
-		my $dump_path = $self->find_file_for_gdb($self->param('multifasta_dir'), $gdb, ['fa', 'fa\.gz']);
+
+                my $dump_path;
+
+                if ($self->param_exists('genome_dumps_dir')) {
+                    $dump_path = $gdb->_get_genome_dump_path($self->param('genome_dumps_dir'));
+                    die "$dump_path could not be found. Please rerun DumpGenomes_conf" unless -e $dump_path;
+                } elsif ($self->param('multifasta_dir')) {
+                    $dump_path = $self->find_file_for_gdb($self->param('multifasta_dir'), $gdb, ['fa', 'fa\.gz']);
+                }
 
 		if ( -e $mash_path ) {
 			push( @path_list, $mash_path );
