@@ -71,7 +71,8 @@ use warnings;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
-use Bio::EnsEMBL::Utils::Exception qw( throw warning );
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw( throw warning deprecate);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::Utils::Cache;
@@ -174,9 +175,38 @@ sub fetch_by_GenomeDB_and_name {
 }
 
 
-=head2 fetch_all_by_GenomeDB_region
+sub fetch_all_by_GenomeDB_region {  # DEPRECATED
+  my ($self, $genome_db, $coord_system_name, $name, $is_reference, $cellular_component) = @_;
+
+  deprecate('DnaFragAdaptor::fetch_all_by_GenomeDB_region is deprecated and will be removed in e98. Please use fetch_all_by_GenomeDB instead');
+
+  if ($name) {
+      # Names are unique within each GenomeDB
+      my $df = $self->fetch_by_GenomeDB_and_name($genome_db, $name);
+      return $df ? [$df] : [];
+  } else {
+      return $self->fetch_all_by_GenomeDB(
+          -COORD_SYSTEM_NAME    => $coord_system_name,
+          -IS_REFERENCE         => $is_reference,
+          -CELLULAR_COMPONENT   => $cellular_component,
+      );
+  }
+}
+
+
+=head2 fetch_all_by_GenomeDB
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB
+  Arg [-COORD_SYSTEM_NAME] (opt)
+             : String. Only returns DnaFrags on this coordinate system
+  Arg [-IS_REFERENCE] (opt)
+             : Boolean. Only returns DnaFrags that are reference (or not)
+  Arg [-CELLULAR_COMPONENT] (opt)
+             : String. Only returns DnaFrags that belong to this component
+               Currently one of 'NUC', 'MT', 'PT'
+  Arg [-CODON_TABLE_ID] (opt)
+             : Integer. Only returns DnaFrags that are translated with this codon table
+  Example    : $human_scaffolds = $dnafrag_adaptor->fetch_all_by_GenomeDB($human_gdb, -COORD_SYSTEM_NAME => 'scaffold', -CELLULAR_COMPONENT => 'NUC', );
   Arg [2]    : (optional) string $coord_system_name
   Arg [3]    : (optional) string $name
   Arg [4]    : (optional) boolean $is_reference
@@ -193,10 +223,14 @@ sub fetch_by_GenomeDB_and_name {
 
 =cut
 
-sub fetch_all_by_GenomeDB_region {
-  my ($self, $genome_db, $coord_system_name, $name, $is_reference, $cellular_component) = @_;
+sub fetch_all_by_GenomeDB {
+  my $self      = shift;
+  my $genome_db = shift;
 
   assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
+
+  my ($coord_system_name, $is_reference, $cellular_component, $codon_table_id) =
+    rearrange([qw(COORD_SYSTEM_NAME IS_REFERENCE CELLULAR_COMPONENT CODON_TABLE_ID)], @_);
 
   my $gdb_id = $genome_db->dbID;
 
@@ -218,11 +252,6 @@ sub fetch_all_by_GenomeDB_region {
    }
   }
 
-  if(defined $name) {
-    $sql .= ' AND df.name = ?';
-    $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-  }
-
   if(defined $is_reference) {
     $sql .= ' AND df.is_reference = ?';
     $self->bind_param_generic_fetch($is_reference, SQL_INTEGER);
@@ -231,6 +260,11 @@ sub fetch_all_by_GenomeDB_region {
   if(defined $cellular_component) {
     $sql .= ' AND df.cellular_component = ?';
     $self->bind_param_generic_fetch($cellular_component, SQL_VARCHAR);
+  }
+
+  if(defined $codon_table_id) {
+    $sql .= ' AND df.codon_table_id = ?';
+    $self->bind_param_generic_fetch($codon_table_id, SQL_INTEGER);
   }
 
   return $self->generic_fetch($sql);

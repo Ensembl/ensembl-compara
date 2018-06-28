@@ -10,6 +10,8 @@
 
 # Deprecated methods scheduled for deletion
 
+* `DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region()` in Ensembl 98
+
 ## get VariationFeatures for AlignSlice, to be removed in Ensembl 95 
 
 * `AlignSlice::Slice::get_all_VariationFeatures_by_VariationSet`
