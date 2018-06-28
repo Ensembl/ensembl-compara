@@ -52,7 +52,6 @@ my $force = 0; #use slice even if it has no karyotype
 my $output_dir = "";
 my $ref_coord_system_name = undef;
 my $non_ref_coord_system_name = undef;
-my @karyotype_coord_system_names = ('chromosome', 'group');
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -120,36 +119,29 @@ if ($mlss_id) {
 }
 
 my $qy_dnafrags;
-unless (defined $seq_region) {
-  foreach my $n ($ref_coord_system_name ? ($ref_coord_system_name) : @karyotype_coord_system_names) {
-    push @$qy_dnafrags, @{$dfa->fetch_all_by_GenomeDB_region($qy_gdb, $n)};
-  }
-} else {
+if ($seq_region) {
   $qy_dnafrags = [ $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $seq_region) ];
+} elsif ($force) {
+  $qy_dnafrags = $dfa->fetch_all_by_GenomeDB($qy_gdb);
+} else {
+  $qy_dnafrags = $dfa->fetch_all_karyotype_DnaFrags_by_GenomeDB($qy_gdb);
 }
-
-my %qy_karyotypes = map {$_->seq_region_name => 1} @{$qy_gdb->db_adaptor->get_SliceAdaptor->fetch_all_karyotype()};
-my %tg_karyotypes = map {$_->seq_region_name => 1} @{$tg_gdb->db_adaptor->get_SliceAdaptor->fetch_all_karyotype()};
-
 $qy_gdb->db_adaptor->dbc->disconnect_if_idle;
+
+my $tg_dnafrags;
+if ($force) {
+  $tg_dnafrags = $dfa->fetch_all_by_GenomeDB($tg_gdb);
+} else {
+  $tg_dnafrags = $dfa->fetch_all_karyotype_DnaFrags_by_GenomeDB($tg_gdb);
+}
 $tg_gdb->db_adaptor->dbc->disconnect_if_idle;
 
 foreach my $qy_dnafrag (@{$qy_dnafrags}) {
-  #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
-
-  next unless ($qy_karyotypes{$qy_dnafrag->name} || $force);
 
   my $seq_region_name = $qy_dnafrag->name;
   open(my $synt_file, ">", "${output_dir}/${seq_region_name}.syten.gff");
 
-  my $tg_dnafrags;
-  foreach my $n ($non_ref_coord_system_name ? ($non_ref_coord_system_name) : @karyotype_coord_system_names) {
-    push @$tg_dnafrags, @{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, $n)};
-  }
-
   foreach my $tg_dnafrag (@$tg_dnafrags) {
-    #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
-    next unless ($tg_karyotypes{$tg_dnafrag->name} || $force);
 
     my $start = 1;
     my $chunk = 5000000;

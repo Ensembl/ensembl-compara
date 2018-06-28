@@ -41,9 +41,6 @@ Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes
 This module lists all the chromosomes (or similar sequence structures) that can be used to draw synteny maps.
 
 Supported keys:
- - default_coord_system_names: The default list of coord_system_name to consider when generating the list of dnafrags
-                               Make the list empty to test them all. Only the ones that have the has_karyotype() flag
-                               switched on the core database will be used
  - include_non_karyotype: boolean (default 0). Set to 1 if you want to list dnafrags that are not on the karyotype
 
 =head1 APPENDIX
@@ -62,7 +59,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'default_coord_system_names'    => [ 'chromosome', 'group' ],       # The default list of coord_system_name to consider when generating the list of dnafrags
         'include_non_karyotype'  => 0,
     }
 }
@@ -81,32 +77,11 @@ sub fetch_input {
     # All the reference dnafrags
         or die "Could not find the species named '".$self->param('species_name')."' in the database\n";
  #   
-    my $all_dnafrags = [];
-    if (scalar(@{$self->param('default_coord_system_names')})) {
-        # Either from a predefined list of coord_system_name
-        foreach my $cs_name (@{$self->param('default_coord_system_names')}) {
-            push @$all_dnafrags, @{ $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($genome_db, $cs_name, undef, 1) };
-        }
-    } else {
-        # Or all of them
-        push @$all_dnafrags, @{ $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1) };
-    }
+    my $all_dnafrags = $self->param('include_non_karyotype') ? $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db)
+                                                             : $self->compara_dba->get_DnaFragAdaptor->fetch_all_karyotype_DnaFrags_by_GenomeDB($genome_db);
+    $self->param('dnafrags_for_karyotype', $all_dnafrags);
 
-    if ($self->param('include_non_karyotype')) {
-        warn "Using all the dnafrags (".scalar(@$all_dnafrags).") regardless of the has_karyotype() flag\n";
-        $self->param('dnafrags_for_karyotype', $all_dnafrags);
-        return;
-    }
-
-    # All the karyotype-level slices
-    print Dumper($genome_db->db_adaptor());
-    my $all_karyo_slices = $genome_db->db_adaptor->get_SliceAdaptor->fetch_all_karyotype();
-    my %karyo_slice_names = map {$_->seq_region_name => 1} @$all_karyo_slices;
-
-    # Intersect both lists
-    my @dnafrags_for_karyotype = sort {$a->name cmp $b->name} grep {$karyo_slice_names{$_->name}} @$all_dnafrags;
-    $self->param('dnafrags_for_karyotype', \@dnafrags_for_karyotype);
-    warn "Found ".scalar(@dnafrags_for_karyotype)." dnafrags to use\n";
+    warn "Found ".scalar(@$all_dnafrags)." dnafrags to use\n";
 }
 
 

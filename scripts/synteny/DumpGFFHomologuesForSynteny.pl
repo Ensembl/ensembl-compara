@@ -82,6 +82,7 @@ die "Cannot connect to compara database: $dbname\n" if (!$compara_dba);
 
 my $gdba = $compara_dba->get_GenomeDBAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my $dfa = $compara_dba->get_DnaFragAdaptor;
 my $ha = $compara_dba->get_HomologyAdaptor;
 
 my $qy_gdb = $gdba->fetch_by_registry_name($qy_species);
@@ -89,11 +90,18 @@ my $tg_gdb = $gdba->fetch_by_registry_name($tg_species);
 my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type, [$qy_gdb, $tg_gdb]);
 
 
+my %check_dnafrags;
 if ($include_non_karyotype) {
   warn "Using all the dnafrags regardless of the has_karyotype() flag\n";
 }
 else {
   warn "Using ONLY the dnafrags with has_karyotype() flag set. Only homolog members on real chromosomes \n";
+  my $qy_dnafrags = $dfa->fetch_all_karyotype_DnaFrags_by_GenomeDB($qy_gdb);
+  $check_dnafrags{$_->dbID} = 1 for @$qy_dnafrags;
+  $qy_gdb->db_adaptor->dbc->disconnect_if_idle;
+  my $tg_dnafrags = $dfa->fetch_all_karyotype_DnaFrags_by_GenomeDB($tg_gdb);
+  $check_dnafrags{$_->dbID} = 1 for @$tg_dnafrags;
+  $tg_gdb->db_adaptor->dbc->disconnect_if_idle;
 }
 
 my @A_ortholog_types = split(",", $ortholog_type) ;
@@ -115,8 +123,7 @@ foreach my $ortho_type (@A_ortholog_types) {
       print STDERR "=== TEST NEW HOMOLOGY! ===\n" ;
       foreach my $member (@{$homol->get_all_Members}) {
         if (! $include_non_karyotype) { #check if we don't want to include members that are not on chromosomes
-          my $CSN =$member->dnafrag()->coord_system_name();
-          if ($CSN ne "chromosome" ){ #check if this member is not on a chromosome
+          if ($check_dnafrags{$member->dnafrag_id}) { #check if this member is not on a chromosome
             next; #this means some of the variable will be empty hence we won't dump the this homology in the gff file
           }
         }

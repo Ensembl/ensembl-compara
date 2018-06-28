@@ -237,6 +237,47 @@ sub fetch_all_by_GenomeDB_region {
 }
 
 
+=head2 fetch_all_karyotype_DnaFrags_by_GenomeDB
+
+  Arg [1]     : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg [2]     : (optional) Boolean: $ordered
+  Example     : my $karyo_dnafrags = $dnafrag_adaptor->fetch_all_karyotype_DnaFrags_by_GenomeDB($genome_db);
+  Description : Returns all the DnaFrags that constitute the karyotype of this
+                genome.
+                When $ordered is set, the list will be ordered by the karyotype
+                rank (i.e from 1 to 22 etc)
+  Returntype  : Arrayref of DnaFrags
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_karyotype_DnaFrags_by_GenomeDB {
+    my $self = shift;
+
+    my $genome_db = shift;
+    my $ordered   = shift;
+
+    die "DnaFragAdaptor::fetch_all_karyotype_DnaFrags_by_GenomeDB requires the Registry to be loaded and the GenomeDB to be linked to a core database" unless $genome_db->db_adaptor;
+
+    my $karyo_slices = $genome_db->db_adaptor->get_SliceAdaptor->fetch_all_karyotype();
+    my %ranks_by_name = map {$_->name => $_->karyotype_rank} @$karyo_slices;
+
+    my @dnafrags;
+    $self->split_and_callback([keys %ranks_by_name], 'name', SQL_VARCHAR, sub {
+        $self->bind_param_generic_fetch($genome_db->dbID, SQL_INTEGER);
+        push @dnafrags, @{ $self->generic_fetch('df.genome_db_id = ? AND '.(shift)) };
+    } );
+
+    if ($ordered) {
+        return [sort {$ranks_by_name{$a->name} <=> $ranks_by_name{$b->name}} @dnafrags];
+    } else {
+        return \@dnafrags;
+    }
+}
+
+
 =head2 fetch_by_Slice
 
   Arg [1]    : Bio::EnsEMBL::Slice $slice
