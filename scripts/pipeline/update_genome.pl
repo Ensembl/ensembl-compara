@@ -229,7 +229,10 @@ if ($collection) {
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         my $new_collection_ss = $ss_adaptor->update_collection($collection, $ini_coll_ss, $new_genome_dbs);
         # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-        $ss_adaptor->make_object_current($new_collection_ss) if $release;
+        if ( $release ) {
+            $ss_adaptor->retire_object($ini_coll_ss);
+            $ss_adaptor->make_object_current($new_collection_ss);  
+        }
     });
 }
 
