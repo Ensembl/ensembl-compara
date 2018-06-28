@@ -143,7 +143,7 @@ is( $new_dnafrags, 0, 'correct number of dnafrags added' );
 is( $new_gdb->first_release, $v, 'principal genome is now released' );
 is( $old_wheat_gdb->last_release, $v-1, 'old principal genome retired' );
 # check components
-my @comp_release = map {$_->first_release} @$component_gdbs;
+@comp_release = map {$_->first_release} @$component_gdbs;
 is_deeply( \@comp_release, [$v, $v, $v], 'components now released' );
 my @old_comp_release = map {$_->last_release} @{ $old_wheat_gdb->component_genome_dbs };
 is_deeply( \@old_comp_release, [$v-1, $v-1, $v-1], 'old components retired' );
@@ -164,25 +164,26 @@ ok( $new_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collecti
 is( $new_collection->name, 'collection-test_col', 'new collection created with correct name' );
 my @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
 is_deeply( \@gdb_ids, [141, 1002], 'correct genome dbs included' );
+is( $new_collection->first_release, undef, 'collection is unreleased' );
 
 
 ## Test 2: update an intermediate collection that has not been through a release yet 
 ## (i.e. first_release = software_version(); retirement should result in NULL first & last release)
 my $updated_collection;
-ok( $updated_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, 'test_col', ['pongo_abelii', 'nomascus_leucogenys'] ) );
+ok( $updated_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, 'test_col', ['pongo_abelii', 'nomascus_leucogenys'], -RELEASE => 1 ) );
 is( $updated_collection->name, 'collection-test_col', 'collection updated with correct name' );
 @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $updated_collection->genome_dbs };
 is_deeply( \@gdb_ids, [60, 115, 141, 1002], 'correct genome dbs included' );
 $new_collection = $ss_adaptor->fetch_by_dbID( $new_collection->dbID ); # re-read from db for updated release metadata
 is_deeply( [$new_collection->first_release, $new_collection->last_release], [undef, undef], 'intermediate collection retired correctly' );
+is_deeply( [$updated_collection->first_release, $updated_collection->last_release], [$v, undef], 'updated collection released' );
 
-
-## Test 3: update a collection that has been released already 
-## (i.e. first_release < software_version() retirement should result in NULL last_release ONLY)
-ok( $updated_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, 'update_test', ['homo_sapiens', 'pan_troglodytes', 'gorilla_gorilla'] ) );
+## Test 3: update a collection that has been released already - check retirement
+ok( $updated_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, 'update_test', ['homo_sapiens', 'pan_troglodytes', 'gorilla_gorilla'], -RELEASE => 1 ) );
 is( $updated_collection->name, 'collection-update_test', 'collection updated with correct name' );
 my $old_collection = $ss_adaptor->fetch_by_dbID( 12345 ); # re-read from db for updated release metadata
 is_deeply( [$old_collection->first_release, $old_collection->last_release], [80, $v-1], 'old collection retired correctly' );
+is_deeply( [$updated_collection->first_release, $updated_collection->last_release], [$v, undef], 'updated collection released' );
 @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $updated_collection->genome_dbs };
 is_deeply( \@gdb_ids, [60, 115, 123, 141, 1002], 'correct genome dbs included' );
 

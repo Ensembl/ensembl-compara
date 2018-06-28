@@ -365,7 +365,12 @@ sub _prev_genome_db {
 =cut
 
 sub new_collection {
-    my ( $compara_dba, $collection_name, $species_names, $dry_run ) = @_;
+    # my ( $compara_dba, $collection_name, $species_names, $dry_run ) = @_;
+    my $compara_dba = shift;
+    my $collection_name = shift;
+    my $species_names = shift;
+    my($release, $dry_run) = rearrange([qw(RELEASE DRY_RUN)], @_);
+
 
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
     my $collection_ss;
@@ -379,7 +384,7 @@ sub new_collection {
         $ss_adaptor->store($new_collection_ss) || die "Could not store species set collection-$collection_name";
         
         # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-        $ss_adaptor->make_object_current($new_collection_ss);
+        $ss_adaptor->make_object_current($new_collection_ss) if $release;
         die "\n\n*** Dry-run mode requested. No changes were made to the database ***\n\nThe following collection WOULD have been created:\n" . $new_collection_ss->toString . "\n\n" if $dry_run;
         print "\nStored: " . $new_collection_ss->toString . "\n\n";
     } );
@@ -401,8 +406,11 @@ sub new_collection {
 =cut
 
 sub update_collection {
-    my ( $compara_dba, $collection_name, $species_names, $dry_run ) = @_;
-
+    # my ( $compara_dba, $collection_name, $species_names ) = @_;
+    my $compara_dba = shift;
+    my $collection_name = shift;
+    my $species_names = shift;
+    my($release, $dry_run) = rearrange([qw(RELEASE DRY_RUN)], @_);
 
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
     my $collection_ss;
@@ -433,10 +441,12 @@ sub update_collection {
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         $new_collection_ss = $ss_adaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
-        $ss_adaptor->retire_object($collection_ss);
 
-        # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-        $ss_adaptor->make_object_current($new_collection_ss);
+        if ( $release ) {
+            $ss_adaptor->retire_object($collection_ss);
+            $ss_adaptor->make_object_current($new_collection_ss);
+        }
+        
         print_method_link_species_sets_to_update_by_collection($compara_dba, $collection_ss);
         die "\n\n*** Dry-run mode requested. No changes were made to the database ***\n\nThe following collection WOULD have been created:\n" . $new_collection_ss->toString . "\n\n" if $dry_run;
         print "\nStored: " . $new_collection_ss->toString . "\n\n";

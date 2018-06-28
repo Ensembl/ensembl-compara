@@ -51,6 +51,8 @@ first_release and last_release will be updated accordingly
     --collection collection_name
     --file|file_of_production_names file listing species production names (1 per line)
     --new|--update
+    [--dry_run]
+    [--release]
 
 =head1 OPTIONS
 
@@ -105,6 +107,10 @@ will still ask the uer to confirm the selection.
 
 =over
 
+=item B<[--release]>
+
+Release the newly created collection (default is to remain unreleased)
+
 =item B<[--[no]dry-run]>
 
 In dry-run mode (the default), the script does not write into the master
@@ -136,6 +142,7 @@ my $collection_name;
 my $dry_run = 0;
 my $file;
 my ( $new, $update );
+my $release = 0;
 
 GetOptions(
     "help!"                      => \$help,
@@ -146,6 +153,7 @@ GetOptions(
     'file|file_of_production_names=s' => \$file,
     'new!'                       => \$new,
     'update!'                    => \$update,
+    'release!'                   => \$release,
   );
 
 $| = 0;
@@ -176,8 +184,8 @@ open(my $species_fh, '<', $file) or die "Cannot open file '$file'\n";
 my @requested_species_names = <$species_fh>;
 chomp @requested_species_names;
 
-Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, $collection_name, \@requested_species_names, $dry_run ) if ($update);
-Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, $collection_name, \@requested_species_names, $dry_run ) if ($new);
+Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, $collection_name, \@requested_species_names, -DRY_RUN => $dry_run, -RELEASE => $release ) if ($update);
+Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, $collection_name, \@requested_species_names, -DRY_RUN => $dry_run, -RELEASE => $release ) if ($new);
 
 exit(0);
 
