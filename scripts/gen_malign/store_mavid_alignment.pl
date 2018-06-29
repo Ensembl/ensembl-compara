@@ -285,16 +285,11 @@ sub get_this_dnafrag {
   my ($genome_db, $fragment_type, $fragment_name) = @_;
 
   return if (!$fragment_name);
-  my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, $fragment_type, $fragment_name);
-  my $dnafrag;
-  foreach my $this_dnafrag (@$dnafrags) {
-    if ($this_dnafrag->coord_system_name eq $fragment_type && $this_dnafrag->name eq $fragment_name) {
-      $dnafrag = $this_dnafrag;
-      last;
-    }
+  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $fragment_name);
+  if ($dnafrag and ($dnafrag->coord_system_name ne $fragment_type)) {
+      #returns null if the dnafrag does not exist in the database
+      return undef;
   }
-  
-  #returns null if the dnafrag does not exist in the database
   return $dnafrag;
 }
 

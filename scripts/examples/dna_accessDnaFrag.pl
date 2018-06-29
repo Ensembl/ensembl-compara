@@ -42,9 +42,7 @@ my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi', 'compara');
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
 
 # get dnafrag for human chr 18
-my $dnafrag_list = $comparaDBA->get_DnaFragAdaptor->
-     fetch_all_by_GenomeDB_region($humanGDB, 'chromosome', "18");
-my $dnafrag = shift @{$dnafrag_list};
+my $dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($humanGDB, '18');
 
 # get its core Slice and subslice it
 my $slice = $dnafrag->slice;
