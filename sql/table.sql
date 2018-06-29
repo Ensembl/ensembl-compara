@@ -1932,7 +1932,7 @@ CREATE TABLE hmm_curated_annot (
 CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many'),
+  description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many') NOT NULL,
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
   dn                          float(10,5),
   ds                          float(10,5),
@@ -2261,5 +2261,7 @@ INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type',
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_93_94_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_93_94_b.sql|homology_description_not_null');
 
 
