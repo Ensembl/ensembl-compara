@@ -718,6 +718,21 @@ sub get_all_overlapping_regulatory_motifs {
 } 
 
 
+=head2 feature_so_acc
+
+  Example     : $ce_so_acc = $ce->feature_so_acc;
+  Description : This method returns a string containing the SO accession number of ConstrainedElement.
+  Returns     : string (Sequence Ontology accession number)
+
+=cut
+
+sub feature_so_acc {
+  my $self = shift;
+
+  return 'SO:0001009';
+}
+
+
 =head2 toString
 
   Example    : print $member->toString();
