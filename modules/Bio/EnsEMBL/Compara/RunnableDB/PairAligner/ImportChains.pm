@@ -117,14 +117,14 @@ sub fetch_input {
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
 
-  my $ref_dnafrags = $dfa->fetch_all_by_GenomeDB_region($ref_gdb);
+  my $ref_dnafrags = $dfa->fetch_all_by_GenomeDB($ref_gdb);
   foreach my $ref_dnafrag (@$ref_dnafrags) {
       ######### needed for output ######################################
       my $ucsc_name = $self->get_ucsc_name($ref_gdb->dbID, $ref_dnafrag->name);
       $self->param('query_DnaFrag_hash')->{$ucsc_name} = $ref_dnafrag if (defined $ucsc_name);
   }
 
-  my $non_ref_dnafrags = $dfa->fetch_all_by_GenomeDB_region($non_ref_gdb);
+  my $non_ref_dnafrags = $dfa->fetch_all_by_GenomeDB($non_ref_gdb);
   foreach my $non_ref_dnafrag (@$non_ref_dnafrags) {
       ######### needed for output ######################################
       my $ucsc_name = $self->get_ucsc_name($non_ref_gdb->dbID, $non_ref_dnafrag->name);

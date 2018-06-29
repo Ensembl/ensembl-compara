@@ -157,8 +157,8 @@ sub write_output {
   my $ref_genome_db = $self->param('ref_genome_db');
   my $non_ref_genome_db = $self->param('non_ref_genome_db');
   my $mlss_id = $self->param('mlss_id');
-  my $ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($ref_genome_db, undef, undef, 1);
-  my $non_ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, undef, undef, 1);
+  my $ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($ref_genome_db, -IS_REFERENCE => 1);
+  my $non_ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($non_ref_genome_db, -IS_REFERENCE => 1);
 
   my $output_hash = {};
   foreach my $dnafrag (@$ref_dnafrags) {

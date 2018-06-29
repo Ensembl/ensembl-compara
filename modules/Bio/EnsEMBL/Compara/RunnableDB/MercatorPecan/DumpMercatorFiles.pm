@@ -113,7 +113,7 @@ sub dumpMercatorFiles {
   my %coord_systems_by_name = map {$_->name => $_} @$coord_systems;
   my %assembly_mappers = map {$_->name => $assembly_mapper_adaptor->fetch_by_CoordSystems($_, $seq_level_coord_system)} grep {$_->name ne $seq_level_coord_system->name} @$coord_systems;
 
-  foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($gdb)}) {
+  foreach my $df (@{$dfa->fetch_all_by_GenomeDB($gdb)}) {
       print $fh $df->name . "\t" . $df->length,"\n";
       if ($max_gap and $df->length > $max_gap and $assembly_mappers{$df->coord_system_name}) {
           # Avoid large assembly gaps: when a gap larger than "maximum_gap" is

@@ -87,7 +87,7 @@ sub update_dnafrags {
 
     $species_dba //= $genome_db->db_adaptor;
     my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
-    my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db);
+    my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db);
     my $old_dnafrags_by_name;
     foreach my $old_dnafrag (@$old_dnafrags) {
         $old_dnafrags_by_name->{$old_dnafrag->name} = $old_dnafrag;

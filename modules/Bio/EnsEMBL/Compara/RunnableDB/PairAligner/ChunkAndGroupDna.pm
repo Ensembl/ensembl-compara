@@ -231,7 +231,7 @@ sub create_chunks
   } else {
       #default for $include_non_reference = 0, $include_duplicates = 0
     $chromosomes = $SliceAdaptor->fetch_all('toplevel',undef, $self->param('include_non_reference'), $self->param('include_duplicates'));
-    $preloaded_dnafrags = { map {$_->name => $_} @{ $dnafragDBA->fetch_all_by_GenomeDB_region($genome_db) } }
+    $preloaded_dnafrags = { map {$_->name => $_} @{ $dnafragDBA->fetch_all_by_GenomeDB($genome_db) } }
   }
  } );
 

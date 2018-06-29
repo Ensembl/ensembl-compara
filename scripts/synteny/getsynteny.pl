@@ -107,7 +107,7 @@ if (defined $chr_names and $chr_names ne "all") {
     push @{$dfgs}, $dfa->fetch_by_GenomeDB_and_name($gdb1, $chr_name);
   }
 } else {
-  $dfgs = $dfa->fetch_all_by_GenomeDB_region($gdb1);
+  $dfgs = $dfa->fetch_all_by_GenomeDB($gdb1);
 }
 
 my $total_nb_syntenies = 0;

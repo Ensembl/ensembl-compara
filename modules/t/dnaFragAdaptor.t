@@ -106,27 +106,32 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_GenomeDB_an
 
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region method", sub {
 
-    my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
-                                                                  $genome_db_adaptor->fetch_by_dbID($genome_db_id),
-                                                                  $coord_system_name,
-                                                                  $dnafrag_name
-                                                                 );
-    is(@$dnafrags, 1);
-    isa_ok($dnafrags->[0], 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching all by GenomeDB and region");
-    is($dnafrags->[0]->dbID, $dnafrag_id, "Fetching all by GenomeDB and region. Checking dbID");
-    is($dnafrags->[0]->length, $dnafrag_length, "Fetching all by GenomeDB and region. Checking length");
-    is($dnafrags->[0]->name, $dnafrag_name, "Fetching all by GenomeDB and region. Checking name");
-    is($dnafrags->[0]->genome_db_id, $genome_db_id, "Fetching all by GenomeDB and region. Checking genome_db_id");
-    is($dnafrags->[0]->coord_system_name, $coord_system_name, "Fetching all by GenomeDB and region. Checking coord_system_name");
-
+  my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB(
+                                                         $genome_db_adaptor->fetch_by_dbID($genome_db_id),
+                                                         -COORD_SYSTEM_NAME => $coord_system_name,
+                                                        );
+  is(@$dnafrags, 2);
+  foreach my $dnafrag (@$dnafrags) {
+    isa_ok($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', "Fetching all by GenomeDB and region");
+    if ($dnafrag->name eq $dnafrag_name) {
+      is($dnafrag->dbID, $dnafrag_id, "Fetching all by GenomeDB and region. Checking dbID");
+      is($dnafrag->length, $dnafrag_length, "Fetching all by GenomeDB and region. Checking length");
+    } else {
+      is($dnafrag->dbID, 12179424, "Fetching all by GenomeDB and region. Checking dbID");
+      is($dnafrag->length, 171115067, "Fetching all by GenomeDB and region. Checking length");
+    }
+    is($dnafrag->genome_db_id, $genome_db_id, "Fetching all by GenomeDB and region. Checking genome_db_id");
+    is($dnafrag->coord_system_name, $coord_system_name, "Fetching all by GenomeDB and region. Checking coord_system_name");
+  }
+  done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region method (all genomes) and fetch_all method", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB method (all genomes) and fetch_all method", sub {
 
     my $num_of_dnafrags = 0;
 
     foreach my $this_species_name (@species_names) {
-        my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
+        my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB(
                                                                    $genome_db_adaptor->fetch_by_name_assembly($this_species_name)
                                                                   );
         my $fail = "";

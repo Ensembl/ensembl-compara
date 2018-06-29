@@ -125,7 +125,7 @@ sub store_synteny {
   foreach my $cellular_component (qw(MT PT)) {
       my @regions;
       foreach my $genome_db (@$genome_dbs) {
-          foreach my $dnafrag (@{ $dfa->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1, $cellular_component) }) {
+          foreach my $dnafrag (@{ $dfa->fetch_all_by_GenomeDB($genome_db, -CELLULAR_COMPONENT => $cellular_component) }) {
               push @regions, [$cellular_component, $dnafrag->genome_db_id, $dnafrag->name.'--1', 1, $dnafrag->length, '+'];
           }
       }

@@ -384,7 +384,7 @@ my $tBinomial = get_binomial_name($tSpecies);
 my $tTaxon_id = get_taxon_id($tSpecies);
 my $tgdb = $gdba->fetch_by_name_assembly($tBinomial) or die " Can't get fetch_by_name_assembly($tBinomial)\n";
 my %tdnafrags;
-foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($tgdb)}) {
+foreach my $df (@{$dfa->fetch_all_by_GenomeDB($tgdb)}) {
   $tdnafrags{$df->name} = $df;
 }
 # Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL
@@ -402,7 +402,7 @@ if ($qSpecies eq $tSpecies) {
   $qBinomial = get_binomial_name($qSpecies);
   $qTaxon_id = get_taxon_id($qSpecies);
   $qgdb = $gdba->fetch_by_name_assembly($qBinomial) or die " Can't get fetch_by_name_assembly($qBinomial)\n";
-  foreach my $df (@{$dfa->fetch_all_by_GenomeDB_region($qgdb)}) {
+  foreach my $df (@{$dfa->fetch_all_by_GenomeDB($qgdb)}) {
     $qdnafrags{$df->name} = $df;
   }
   # Mitonchondrial chr. is called "M" in UCSC and "MT" in EnsEMBL

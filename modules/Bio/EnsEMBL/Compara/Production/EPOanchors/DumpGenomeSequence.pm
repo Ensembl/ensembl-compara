@@ -106,7 +106,7 @@ sub fetch_input {
     $serializer->chunk_factor($self->param('chunk_factor'));
     $serializer->line_width($self->param('seq_width'));
 
-    my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($genome_db, undef, undef, 1);
+    my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db, -IS_REFERENCE => 1);
     $self->compara_dba->dbc->disconnect_if_idle();
 
     # Cellular-component filtering

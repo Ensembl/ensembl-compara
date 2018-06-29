@@ -431,7 +431,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
   #       my $ref_gdb = pop( @genome_dbs );
 
   #       my $dnafrag_adaptor = $method_link_species_set->adaptor->db->get_DnaFragAdaptor;
-  #       my @ref_dnafrags = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region( $ref_gdb ) };     
+  #       my @ref_dnafrags = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB( $ref_gdb ) };
 
   #       my @all_gabs;
   #       foreach my $dnafrag ( @ref_dnafrags ){

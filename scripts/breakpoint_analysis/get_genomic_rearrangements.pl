@@ -91,8 +91,8 @@ if ($EPO) {
 	$mlss =  $mlss_adap->fetch_by_method_link_type_species_set_name( 'EPO', 'collection-mammals_with_mouse' );
 	my $ref_gdb = $GDB_adaptor->fetch_by_name_assembly($ref);
 	my $non_ref_gdb = $GDB_adaptor->fetch_by_name_assembly($non_ref);
-	my @dnafrags_sp1 = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region( $ref_gdb, 'chromosome' ) };
-	my @dnafrags_sp2 = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region( $non_ref_gdb, 'chromosome' ) };
+	my @dnafrags_sp1 = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB( $ref_gdb, -COORD_SYSTEM_NAME => 'chromosome' ) };
+	my @dnafrags_sp2 = @{ $dnafrag_adaptor->fetch_all_by_GenomeDB( $non_ref_gdb, -COORD_SYSTEM_NAME => 'chromosome' ) };
 
 	$ref_gdbID = $ref_gdb->dbID();
  	$non_ref_gdbID = $non_ref_gdb->dbID();

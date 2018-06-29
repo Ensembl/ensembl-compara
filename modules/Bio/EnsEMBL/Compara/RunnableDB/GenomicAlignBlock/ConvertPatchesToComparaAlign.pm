@@ -69,7 +69,7 @@ sub fetch_input {
     my $self = shift;
 
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
-    my %dnafrags_hash = map {$_->name => $_->dbID} @{ $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($genome_db) };
+    my %dnafrags_hash = map {$_->name => $_->dbID} @{ $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db) };
     $self->param('dnafrags_hash', \%dnafrags_hash);
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids($self->param_required('lastz_patch_method'), [$self->param('genome_db_id')]);

@@ -126,7 +126,7 @@ sub fetch_input {
     }
 
     my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
-    my %all_dnafrags_by_name = map {$_->name => $_} @{ $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db) };
+    my %all_dnafrags_by_name = map {$_->name => $_} @{ $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db) };
     $self->param('all_dnafrags_by_name', \%all_dnafrags_by_name);
 }
 

@@ -57,7 +57,7 @@ sub run {
 
      my $reuse_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('reuse_url'));
      my $gdb = $reuse_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
-     my $reuse_dnafrags = $reuse_dba->get_DnafragAdaptor->fetch_all_by_GenomeDB_region($gdb);
+     my $reuse_dnafrags = $reuse_dba->get_DnafragAdaptor->fetch_all_by_GenomeDB($gdb);
      
      my $reuse_list;
      foreach my $dnafrag (@$reuse_dnafrags) {
@@ -66,7 +66,7 @@ sub run {
         }
      }
 
-     my $curr_dnafrags = $self->compara_dba->get_DnafragAdaptor->fetch_all_by_GenomeDB_region($gdb);
+     my $curr_dnafrags = $self->compara_dba->get_DnafragAdaptor->fetch_all_by_GenomeDB($gdb);
 
      my $curr_list;
      foreach my $dnafrag (@$curr_dnafrags) {
