@@ -95,7 +95,7 @@ sub dumpMercatorFiles {
 
   my $max_gap = $self->param('maximum_gap');
 
-  my $gdb_id = $self->param('genome_db_id');
+  my $gdb_id = $self->param_required('genome_db_id');
 
   my $dnafrags;
 
