@@ -679,7 +679,7 @@ sub clinical_significance {
   
   my $src = $self->img_url.'/16/info12.png';
   my $img = qq{<img src="$src" class="_ht" style="vertical-align:bottom;margin-bottom:2px;" title="Click to see all the clinical significances"/>};
-  my $info_link = qq{<a href="/info/genome/variation/phenotype/phenotype_association.html#clin_significance" target="_blank">$img</a>};
+  my $info_link = qq{<a href="/info/genome/variation/phenotype/phenotype_annotation.html#clin_significance" target="_blank">$img</a>};
 
   my %clin_sign_icon;
   foreach my $cs (@{$clin_sign}) {
