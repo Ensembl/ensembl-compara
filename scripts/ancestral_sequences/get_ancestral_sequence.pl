@@ -282,7 +282,7 @@ foreach my $slice (@$slices) {
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
 
-  if ( $slice->coord_system_name eq 'chromosome' ) { # one file per chr
+  if ( $slice->has_karyotype ) { # one file per chr
       open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
       open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   } else { # one file per-coord_system for non-chromosomes
