@@ -52,5 +52,11 @@ Ensembl.Panel.ComparaOrtholog = Ensembl.Panel.Content.extend({
     });
 
     $('.no_ortho_count').text(noOrthoCount);
+
+    if (noOrthoCount === 0) {
+      $('#no_ortho_message_pad').hide();
+    } else {
+      $('#no_ortho_message_pad').show();
+    }
   }
 });

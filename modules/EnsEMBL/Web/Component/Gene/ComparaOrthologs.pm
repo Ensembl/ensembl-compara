@@ -66,7 +66,7 @@ sub content {
   my $species_name = $species_defs->DISPLAY_NAME;
   my $strain_url   = $species_defs->IS_STRAIN_OF ? "Strain_" : "";
   my $strain_param = ";strain=1" if($self->is_strain);
-  
+
   my @orthologues = (
     $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
   ); 
@@ -332,7 +332,7 @@ sub content {
       )
     );
   }   
- 
+
   if (%not_seen) {
     my $no_ortho_species_html = '';
 
@@ -349,7 +349,9 @@ sub content {
         scalar(keys %not_seen),
         $self->object->Obj->stable_id,
         $no_ortho_species_html
-      )
+      ),
+      undef,
+      'no_ortho_message_pad'
     );
   }
 
