@@ -124,14 +124,15 @@ sub pipeline_analyses {
            },
 
             {  -logic_name => 'base_age_factory',
-               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DnaFragFactory',
                -parameters => {
-                               'db_conn'     => $self->o('compara_url'),
-                               'ref_species' => $self->o('ref_species'),
-                               'inputquery'    => "SELECT dnafrag.name as seq_region FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'",
+                               'compara_db'     => $self->o('compara_url'),
+                               'genome_db_name' => $self->o('ref_species'),
+                               'only_karyotype' => 1,
+                               'extra_parameters'  => [ 'name' ],
                               },
                -flow_into => {
-                              '2->A' => [ 'base_age' ],
+                              '2->A' => { 'base_age' => { 'seq_region' => '#name#', }, },
                               'A->1' => [ 'big_bed' ],
                              },
                -rc_name => '100Mb',

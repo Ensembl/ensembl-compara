@@ -108,7 +108,6 @@ sub default_options {
             'max_alignment_length' => 100, 
 
             'seq_region' => '',
-            'coord_system_name' => 'chromosome',
             'mlss_id' => undef,  #method_link_species_set_id for the alignment. Define on the command line.
 
             #verbose output written to separate file "indel_"
@@ -275,18 +274,15 @@ sub pipeline_analyses {
 
             #Find all dnafrags for ref_species
             {   -logic_name => 'chunked_jobs_factory',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DnaFragFactory',
                 -parameters => {
-                                'db_conn'    => $self->o('compara_url'),
-                                'ref_species' => $self->o('ref_species'),
-                                'coord_system_name' => $self->o('coord_system_name'),
-                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND is_reference = 1 ORDER BY seq_region",
-
-                                #Development testing only. Create jobs for chr 22 only
-#                                'inputquery' => "SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = \"#ref_species#\" AND coord_system_name= \"#coord_system_name#\" AND is_reference = 1 AND dnafrag.name = \"22\" ORDER BY seq_region",
+                                'compara_db'        => $self->o('compara_url'),
+                                'genome_db_name'    => $self->o('ref_species'),
+                                'only_karyotype'    => 1,
+                                'extra_parameters'  => [ 'name' ],
                                },
                 -flow_into => {
-                               '2' => [ 'create_chunked_jobs' ],
+                               '2' => { 'create_chunked_jobs' => { 'seq_region' => '#name#' }, },
                               },
             },
 
