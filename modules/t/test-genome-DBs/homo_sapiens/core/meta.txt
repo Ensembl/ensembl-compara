@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	93
+1	\N	schema_version	94
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -233,3 +233,6 @@
 1789	\N	patch	patch_92_93_a.sql|schema_version
 1790	\N	patch	patch_92_93_b.sql|biotype_table
 1791	\N	patch	patch_92_93_c.sql|collate_index_interpro
+1792	\N	patch	patch_93_94_a.sql|schema_version
+1793	\N	patch	patch_93_94_b.sql|nullable_ox_analysis
+1794	\N	patch	patch_93_94_c.sql|default_aln_type
