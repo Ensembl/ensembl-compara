@@ -54,6 +54,8 @@ use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 use Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Projection;
+
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor);
 
 ###########################
@@ -288,7 +290,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   my $genome_db = $self->db->get_GenomeDBAdaptor->fetch_by_Slice($reference_slice);
   my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor($reference_slice);
 
-  my $projection_segments = $reference_slice->project('toplevel');
+  my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($reference_slice);
   return [] if(!@$projection_segments);
 
   foreach my $this_projection_segment (@$projection_segments) {

@@ -124,6 +124,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 use Bio::EnsEMBL::Compara::SyntenyRegion;
+use Bio::EnsEMBL::Compara::Utils::Projection;
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
@@ -191,7 +192,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
   my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
 
-  my $projection_segments = $reference_slice->project('toplevel');
+  my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($reference_slice);
   return [] if(!@$projection_segments);
 
   foreach my $this_projection_segment (@$projection_segments) {
