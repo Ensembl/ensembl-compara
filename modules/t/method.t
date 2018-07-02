@@ -37,16 +37,19 @@ subtest "Test Bio::EnsEMBL::Compara::Method::new(ALL) method", sub {
     my $method_id = 1;
     my $type = "LASTZ_NET";
     my $class = "GenomicAlignBlock.pairwise_alignment";
-    my $string = "Method dbID=$method_id '$type', class='$class'";
+    my $display_name = 'LastZ';
+    my $string = "Method dbID=$method_id $type ($display_name) ~$class";
 
     my $method = new Bio::EnsEMBL::Compara::Method(
                                                    -dbID => $method_id,
                                                    -type => $type,
+                                                   -display_name => $display_name,
                                                    -class => $class);
     isa_ok($method, "Bio::EnsEMBL::Compara::Method");
     is($method->dbID, $method_id);
     is($method->type, $type);
     is($method->class, $class);
+    is($method->display_name, $display_name);
     is ($method->toString, $string);
 
     done_testing();

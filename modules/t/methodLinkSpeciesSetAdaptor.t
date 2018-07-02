@@ -283,6 +283,7 @@ subtest "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method", sub {
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $all_mlss->{$this_method_link_species_set_id}->{method_link_id}, 
                                                     -type => $all_mlss->{$this_method_link_species_set_id}->{type},
+                                                    -display_name => $all_mlss->{$this_method_link_species_set_id}->{display_name},
                                                     -class => $all_mlss->{$this_method_link_species_set_id}->{class});
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
@@ -314,6 +315,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $all_mlss->{$this_method_link_species_set_id}->{method_link_id}, 
                                                     -type => $all_mlss->{$this_method_link_species_set_id}->{type},
+                                                    -display_name => $all_mlss->{$this_method_link_species_set_id}->{display_name},
                                                     -class => $all_mlss->{$this_method_link_species_set_id}->{class});
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
@@ -346,6 +348,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
                                                     -type => "BLASTZ_NET",
+                                                    -display_name => 'BlastZ alignment',
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
@@ -382,6 +385,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
 
     my $new_method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
                                                     -type => "BLASTZ_NET",
+                                                    -display_name => 'BlastZ alignment',
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
 
     my $new_species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
@@ -397,6 +401,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $all_mlss->{$this_method_link_species_set_id}->{method_link_id}, 
                                                     -type => $all_mlss->{$this_method_link_species_set_id}->{type},
+                                                    -display_name => $all_mlss->{$this_method_link_species_set_id}->{display_name},
                                                     -class => $all_mlss->{$this_method_link_species_set_id}->{class});
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
@@ -429,6 +434,7 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
                                                     -type => "BLASTZ_NET",
+                                                    -display_name => 'BlastZ alignment',
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(

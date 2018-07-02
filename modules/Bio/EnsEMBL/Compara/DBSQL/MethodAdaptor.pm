@@ -94,6 +94,7 @@ sub _columns {
         m.method_link_id
         m.type
         m.class
+        m.display_name
     );
 }
 
@@ -111,6 +112,7 @@ sub _objs_from_sth {
             'dbID',
             '_type',
             '_class',
+            '_display_name',
         ] );
 }
 
@@ -184,6 +186,7 @@ sub store {
             {
                 'type'              => $method->type,
                 'class'             => $method->class,
+                'display_name'      => $method->display_name,
             }, {
                 'method_link_id'    => $method->dbID,
             } );
@@ -196,6 +199,7 @@ sub store {
                 'method_link_id'    => $method->dbID,
                 'type'              => $method->type,
                 'class'             => $method->class,
+                'display_name'      => $method->display_name,
             }, 'method_link_id');
         $self->attach($method, $dbID);
     }

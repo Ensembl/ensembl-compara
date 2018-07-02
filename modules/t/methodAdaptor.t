@@ -111,10 +111,12 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor::store", sub {
     my $new_method_id = 1001;
     my $new_type = "LASTZ_RAW";
     my $class = "GenomicAlignBlock.pairwise_alignment";
+    my $new_dislay_name = 'LastZ (raw blocks)';
 
     my $new_method = new Bio::EnsEMBL::Compara::Method(
                                                    -dbID => $new_method_id,
                                                    -type => $new_type,
+                                                   -display_name => $new_dislay_name,
                                                    -class => $class);
 
     $method_adaptor->store($new_method);

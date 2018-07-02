@@ -103,11 +103,12 @@ sub new {
 
     my $self = $class->SUPER::new(@_);
 
-    my ($type, $mclass) =
-        rearrange([qw(TYPE CLASS)], @_);
+    my ($type, $mclass, $display_name) =
+        rearrange([qw(TYPE CLASS DISPLAY_NAME)], @_);
 
     $self->type($type)        if (defined ($type));
     $self->class($mclass)     if (defined ($mclass));
+    $self->display_name($display_name) if (defined ($display_name));
 
     return $self;
 }
@@ -153,6 +154,26 @@ sub class {
 }
 
 
+=head2 display_name
+
+  Arg [1]    : (opt.) string display_name
+  Example    : my $display_name = $method->display_name();
+  Example    : $method->display_name('LastZ');
+  Description: Getter/Setter for the display_name of this method
+  Returntype : string display_name
+
+=cut
+
+sub display_name {
+    my $self = shift;
+    my $display_name = shift;
+
+    $self->{'_display_name'} = $display_name if ($display_name);
+
+    return $self->{'_display_name'};
+}
+
+
 =head2 toString
 
   Args       : (none)
@@ -165,7 +186,7 @@ sub class {
 sub toString {
     my $self = shift;
 
-    return "Method dbID=".($self->dbID || '?')." '".$self->type."', class='".$self->class."'";
+    return sprintf('Method dbID=%s %s (%s) ~%s', ($self->dbID || '?'), $self->type, $self->display_name, $self->class);
 }
 
 1;

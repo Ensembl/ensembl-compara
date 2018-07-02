@@ -535,7 +535,7 @@ sub create_mlss {
         $species_set = create_species_set($species_set);
     }
     $ss_display_name ||= _get_species_set_display_name($species_set);
-    $mlss_name ||= sprintf('%s %s', $ss_display_name, lc $Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method->type} || die "No description for ".$method->type);
+    $mlss_name ||= sprintf('%s %s', $ss_display_name, lc $method->display_name || die "No description for ".$method->type);
     return Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -SPECIES_SET => $species_set,
         -METHOD => $method,
@@ -591,7 +591,7 @@ sub create_multiple_wga_mlss {
     my @mlsss;
     my $ss_size = scalar(@{$species_set->genome_dbs});
     $ss_display_name ||= _get_species_set_display_name($species_set);
-    my $mlss_name = sprintf('%d %s %s', $ss_size, $ss_display_name, $Bio::EnsEMBL::Compara::Method::PLAIN_TEXT_DESCRIPTIONS{$method->type});
+    my $mlss_name = sprintf('%d %s %s', $ss_size, $ss_display_name, $method->display_name);
     push @mlsss, create_mlss($method, $species_set, $mlss_name);
     if ($with_gerp) {
         my $ce_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSTRAINED_ELEMENT');

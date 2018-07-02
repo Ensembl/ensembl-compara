@@ -14,3 +14,5 @@
 16	\N	patch	patch_91_92_c.sql|gene_tree_root_tag_255
 18	\N	patch	patch_92_93_a.sql|schema_version
 20	\N	patch	patch_93_94_a.sql|schema_version
+21	\N	patch	patch_93_94_b.sql|homology_description_not_null
+22	\N	patch	patch_93_94_c.sql|method_link_display_name

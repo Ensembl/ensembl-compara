@@ -277,8 +277,9 @@ CREATE TABLE species_set_tag (
      @sql                             SELECT * FROM method_link;
 
 @column method_link_id           Internal unique ID
-@column type                     The common name of the linking method between species
-@column class                    Description of type of data associated with the \"type\" field and the main table to find these data
+@column type                     The code used to refer to this linking method
+@column class                    Description of type of data associated with the \"type\" field. Used to match similar types
+@column display_name             Plain English description of this method
 
 @see method_link_species_set
 @see species_set
@@ -288,6 +289,7 @@ CREATE TABLE method_link (
   method_link_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   type                        varchar(50) DEFAULT '' NOT NULL,
   class                       varchar(50) DEFAULT '' NOT NULL,
+  display_name                varchar(255) DEFAULT '' NOT NULL,
 
   PRIMARY KEY (method_link_id),
   UNIQUE KEY type (type)
@@ -2263,5 +2265,7 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_93_94_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_93_94_b.sql|homology_description_not_null');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_93_94_c.sql|method_link_display_name');
 
 
