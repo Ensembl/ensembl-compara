@@ -296,7 +296,7 @@ sub fetch_all_karyotype_DnaFrags_by_GenomeDB {
     die "DnaFragAdaptor::fetch_all_karyotype_DnaFrags_by_GenomeDB requires the Registry to be loaded and the GenomeDB to be linked to a core database" unless $genome_db->db_adaptor;
 
     my $karyo_slices = $genome_db->db_adaptor->get_SliceAdaptor->fetch_all_karyotype();
-    my %ranks_by_name = map {$_->name => $_->karyotype_rank} @$karyo_slices;
+    my %ranks_by_name = map {$_->seq_region_name => $_->karyotype_rank} @$karyo_slices;
 
     my @dnafrags;
     $self->split_and_callback([keys %ranks_by_name], 'name', SQL_VARCHAR, sub {
