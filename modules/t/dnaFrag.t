@@ -29,8 +29,6 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 
 my $species = [
         "homo_sapiens",
-        "felis_catus",
-        "rattus_norvegicus",
     ];
 
 #####################################################################
@@ -51,7 +49,8 @@ foreach my $this_species (@$species) {
 ##
 #####################################################################
 
-my $sth = $compara_dba->dbc->prepare("SELECT dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference FROM dnafrag LIMIT 1");
+# genome_db_id 90 is human
+my $sth = $compara_dba->dbc->prepare("SELECT dnafrag_id, length, name, genome_db_id, coord_system_name, is_reference FROM dnafrag WHERE genome_db_id = 90 LIMIT 1");
 $sth->execute();
 my ($dbID, $length, $name, $genome_db_id, $coord_system_name, $is_reference) = $sth->fetchrow_array();
 $sth->finish();

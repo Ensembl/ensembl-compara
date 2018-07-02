@@ -27,9 +27,6 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
-my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
-my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
-my $rattus_norvegicus = Bio::EnsEMBL::Test::MultiTestDB->new("rattus_norvegicus");
 
 my $compara_db = $multi->get_DBAdaptor( "compara" );
   
@@ -79,8 +76,7 @@ foreach my $row (@$all_rows) {
 # Check premises
 # 
 debug( "Check premises" );
-ok(defined($multi) and defined($homo_sapiens) and defined($mus_musculus) and defined($rattus_norvegicus)
-    and defined($compara_db));
+ok(defined($multi) and defined($compara_db));
 
 
 # 
