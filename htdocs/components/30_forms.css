@@ -130,6 +130,8 @@ div.inline-label {
   width: 206px;
   margin: 0 0 3px;
   padding-left: 4px;
+  height: 20px;
+  font-size: 12px;
 }
 .ffile {
   margin: 0 0 3px;
@@ -160,6 +162,7 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 .fselect {
   width: 210px;
   margin-bottom: 3px;
+  height: 24px;
 }
 .ff-inline .ftext, .ff-inline .ftextarea, .ff-inline .fselect, .ff-inline .fbutton, .ff-inline .ffile {
   width: auto;

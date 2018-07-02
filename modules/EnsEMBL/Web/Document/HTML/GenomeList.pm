@@ -138,7 +138,7 @@ sub _get_dom_tree {
     });
 }
 
-sub add_species_dropdown { '<p><select class="_all_species"><option value="">-- Select a species --</option></select></p>' }
+sub add_species_dropdown { '<p><select class="fselect _all_species"><option value="">-- Select a species --</option></select></p>' }
 
 sub species_list_url { return '/info/about/species.html'; }
 
