@@ -269,8 +269,7 @@ CREATE TABLE `gene_tree_root_attr` (
   `ratio_species_genes` float DEFAULT NULL,
   `model_name` varchar(40) DEFAULT NULL,
   `division` varchar(10) DEFAULT NULL,
-  PRIMARY KEY (`root_id`),
-  KEY `lca_node_id` (`lca_node_id`)
+  PRIMARY KEY (`root_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `gene_tree_root_tag` (

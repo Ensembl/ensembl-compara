@@ -474,10 +474,10 @@ CREATE TABLE `method_link_species_set_attr` (
   `n_goc_50` int(11) DEFAULT NULL,
   `n_goc_75` int(11) DEFAULT NULL,
   `n_goc_100` int(11) DEFAULT NULL,
-  `perc_orth_above_goc_thresh` int(11) DEFAULT NULL,
+  `perc_orth_above_goc_thresh` float DEFAULT NULL,
   `goc_quality_threshold` int(11) DEFAULT NULL,
   `wga_quality_threshold` int(11) DEFAULT NULL,
-  `perc_orth_above_wga_thresh` int(11) DEFAULT NULL,
+  `perc_orth_above_wga_thresh` float DEFAULT NULL,
   `threshold_on_ds` int(11) DEFAULT NULL,
   PRIMARY KEY (`method_link_species_set_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -487,8 +487,7 @@ CREATE TABLE `method_link_species_set_tag` (
   `tag` varchar(50) NOT NULL,
   `value` mediumtext NOT NULL,
   PRIMARY KEY (`method_link_species_set_id`,`tag`),
-  KEY `tag` (`tag`),
-  KEY `tag_2` (`tag`)
+  KEY `tag` (`tag`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `ncbi_taxa_name` (
@@ -674,8 +673,7 @@ CREATE TABLE `species_tree_node_tag` (
   `tag` varchar(50) NOT NULL,
   `value` mediumtext NOT NULL,
   KEY `node_id_tag` (`node_id`,`tag`),
-  KEY `tag` (`tag`),
-  KEY `tag_2` (`tag`)
+  KEY `tag` (`tag`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `species_tree_root` (
