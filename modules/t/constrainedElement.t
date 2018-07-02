@@ -108,6 +108,7 @@ subtest "Test Bio::EnsEMBL::Compara::ConstrainedElement new(ALL) method", sub {
     is($ce->slice, $slice, "slice");
     is($ce->reference_dnafrag_id, $dnafrag_id, "dnafrag_id");
     is_deeply($ce->alignment_segments, $alignment_segments, "alignment_segments");
+    is($ce->feature_so_acc, 'SO:0001009', 'ConstrainedElement feature SO acc is correct (DNA_constraint_sequence)');
 
     done_testing();
 };
