@@ -481,7 +481,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
 
 my $current_version = software_version();
-my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE PROTEIN_TREES NC_TREES SPECIES_TREE);
+my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE GERP_CONSTRAINED_ELEMENT PROTEIN_TREES NC_TREES SPECIES_TREE);
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 foreach my $mlss (@mlsss_created) {
