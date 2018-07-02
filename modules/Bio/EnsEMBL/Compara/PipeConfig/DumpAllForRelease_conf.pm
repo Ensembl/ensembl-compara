@@ -147,6 +147,7 @@ sub default_options {
         'emf2maf_program'     => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
         'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
         'split_by_chromosome' => 1,
+        'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
 
         # tree dump options
         'clusterset_id' => undef,
@@ -206,6 +207,7 @@ sub pipeline_wide_parameters {
         'dump_dir'        => $self->o('dump_dir'),
         'ftp_root'        => $self->o('ftp_root'),  
         'division'        => $self->o('division'),
+        'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
