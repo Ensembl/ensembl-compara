@@ -531,7 +531,7 @@ sub create_mlss {
         $ss_display_name ||= $species_set->name;
         $ss_display_name =~ s/collection-//;
         my $ss_size = scalar(@{$species_set->genome_dbs});
-        $ss_display_name = "$ss_size $ss_display_name" if $ss_size > 2;
+        $ss_display_name = "$ss_size $ss_display_name" if $ss_display_name ne 'default' && $ss_size > 2;
     }
     $mlss_name ||= sprintf('%s %s', $ss_display_name, $method->display_name || die "No description for ".$method->type);
     return Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
