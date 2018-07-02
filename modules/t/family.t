@@ -20,7 +20,6 @@ use warnings;
 use Test::More;
 use Test::Exception;
 
-use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils; 
 use Bio::EnsEMBL::Compara::Family;
 
