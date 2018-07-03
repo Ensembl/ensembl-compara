@@ -260,6 +260,19 @@ sub source_name {
 }
 
 
+=head2 gene_member_id
+
+  Arg [1]    : (opt) integer
+  Description: Getter/Setter for the gene member id
+
+=cut
+
+sub gene_member_id {
+  my $self = shift;
+  $self->{'_gene_member_id'} = shift if (@_);
+  return $self->{'_gene_member_id'};
+}
+
 =head2 taxon_id
 
   Arg [1]    : (opt) integer
