@@ -32,6 +32,9 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Production::GeneSet;
 use Bio::EnsEMBL::Compara::Production::HomologySet;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::Homology;
+use Bio::EnsEMBL::Compara::GeneMember;
 
 $| = 1;
 
@@ -55,10 +58,12 @@ $self->{'newDups'} = 0;
 my $help;
 my $url1 = undef;
 my $url2 = undef;
-my $gdb1 = 1;
-my $gdb2 = 2;
+my $gdb1 = undef;
+my $gdb2 = undef;
 my $conf = undef;
 my $best = 0;
+my $file1 = undef;
+my $file2 = undef;
 
 GetOptions('help'   => \$help,
            'url1=s' => \$url1,
@@ -66,11 +71,13 @@ GetOptions('help'   => \$help,
            'gdb1=i' => \$gdb1,
            'gdb2=i' => \$gdb2,
            'conf=s' => \$conf,
+           'file1=s' => \$file1,
+           'file2=s' => \$file2,
            'best'   => \$best);
 
 if ($help) { usage(); }
 
-unless($url1 && $url2) {
+unless(($url1 && $url2) || ($file1 && $file2 )) {
   print "\nERROR : must specify a compara database url for both --url1 anf --url2\n\n";
   usage();
 }
@@ -80,16 +87,26 @@ unless ($conf) {
   usage();
 }
 
-$self->{$url1} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url1 );
-$self->{$url2} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url2 );
+  my $url1_needs_para;
+  my $url2_needs_para;
+  my $url1_needs_orthopara;
+  my $url2_needs_orthopara;
+  #my $homology_description_ranking_set1;
+  #my $homology_description_ranking_set2;
 
-my ($homology_description_ranking_set1, $homology_description_ranking_set2) = @{do($conf)};
-my @para_desc = qw(within_species_paralog other_paralog gene_split);
-my $url1_needs_para = scalar(grep {$homology_description_ranking_set1->{$_}}  @para_desc);
-my $url2_needs_para = scalar(grep {$homology_description_ranking_set2->{$_}}  @para_desc);
-my @orthopara_desc = qw(apparent_ortholog_one2one possible_ortholog between_species_paralog);
-my $url1_needs_orthopara = scalar(grep {$homology_description_ranking_set1->{$_}}  @orthopara_desc);
-my $url2_needs_orthopara = scalar(grep {$homology_description_ranking_set2->{$_}}  @orthopara_desc);
+  my ($homology_description_ranking_set1, $homology_description_ranking_set2) = @{do($conf)};
+
+if ( $url1 && $url2 ) {
+    $self->{$url1} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url1 );
+    $self->{$url2} = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $url2 );
+
+    my @para_desc = qw(within_species_paralog other_paralog gene_split);
+    $url1_needs_para = scalar( grep { $homology_description_ranking_set1->{$_} } @para_desc );
+    $url2_needs_para = scalar( grep { $homology_description_ranking_set2->{$_} } @para_desc );
+    my @orthopara_desc = qw(apparent_ortholog_one2one possible_ortholog between_species_paralog);
+    $url1_needs_orthopara = scalar( grep { $homology_description_ranking_set1->{$_} } @orthopara_desc );
+    $url2_needs_orthopara = scalar( grep { $homology_description_ranking_set2->{$_} } @orthopara_desc );
+}
 
 print STDERR "\nranking for homology description of set 1\n";
 foreach my $desc (sort {$homology_description_ranking_set1->{$a} <=> $homology_description_ranking_set1->{$b}} keys %$homology_description_ranking_set1) {
@@ -119,6 +136,8 @@ sub usage {
   print " --url2 <str>            : url of compara DB \n";
   print " --gdb1 <int>            : genome_db_id of first genome\n";
   print " --gdb2 <int>            : genome_db_id of second genome\n";
+  print " --file1 <str>            : tabular file containing one homology pair per line and its type, e.g.:ENSG00000256574 ENSMUSG00000053391  ortholog_one2one\n";
+  print " --file2 <str>            : tabular file containing one homology pair per line and its type, e.g.:ENSG00000256574 ENSMUSG00000053391  ortholog_one2one\n";
   print " --conf <str>            : path to configuration file. An example is given\n";
   print "                           ensembl-compara/scripts/compare/homology_diff.conf\n";
   print " --best                  : will print out numbers on the basis of gene counts,\n";
@@ -171,23 +190,132 @@ sub compare_homology_sets
 {
   my $self = shift;
 
-  my $homology_set1;
+        #Create the HomologySets
+        my $homology_set1 = new Bio::EnsEMBL::Compara::Production::HomologySet;
+        my $homology_set2 = new Bio::EnsEMBL::Compara::Production::HomologySet;
 
-  print "\n$url1 -- in the final table shown in left down\n";
-  $homology_set1 = load_homology_set($self, 'ENSEMBL_ORTHOLOGUES',[$gdb1,$gdb2],$url1);
-  $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1,$gdb2],$url1)) if $url1_needs_orthopara;
-  $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1],$url1)) if $url1_needs_para;
-  $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb2],$url1)) if $url1_needs_para;
-  $homology_set1->print_stats;
+        #Reading homologies from files
+        if ( $file1 && $file2 ) {
 
-  my $homology_set2;
+            my %homology_list;
 
-  print "\n$url2 -- in the final table shown in horizontal right\n";
-  $homology_set2 = load_homology_set($self, 'ENSEMBL_ORTHOLOGUES',[$gdb1,$gdb2],$url2);
-  $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1,$gdb2],$url2)) if $url2_needs_orthopara;
-  $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1],$url2)) if $url2_needs_para;
-  $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb2],$url2)) if $url2_needs_para;
-  $homology_set2->print_stats;
+            my @files = ( $file1, $file2 );
+
+            #Hash with all the raw homologies
+            my %homologies_from_file;
+            my %species_list;
+            my %species_stable_id_map;
+            my $counter_set = 1;
+
+            foreach my $file (@files) {
+                open my $fh, "<", $file || die "Could not open $file";
+                while (<$fh>) {
+                    chomp($_);
+                    my @tok           = split( /\t/, $_ );
+                    my $homology_id   = $tok[0];
+                    my $stable_id     = $tok[1];
+                    my $species_name  = $tok[2];
+                    my $homology_type = $tok[3];
+
+                    $species_stable_id_map{$stable_id} = $species_name;
+                    $species_list{$species_name}       = 1;
+
+                    $homologies_from_file{$counter_set}{$homology_id}{$stable_id} = $homology_type;
+                }
+                close($fh);
+                $counter_set++;
+            }
+
+            my %taxon_ids;
+            my %genome_db_ids;
+            #We have no taxon nor genome_db_ids when reading homologies from files.
+            #Here we add these values in order to correctly build the objects.
+            my $taxon        = 777;
+            my $genome_db_id = 1;
+            foreach my $species ( keys %species_list ) {
+                $taxon_ids{$species}     = $taxon;
+                $genome_db_ids{$species} = $genome_db_id;
+                $taxon++;
+                $genome_db_id++;
+            }
+
+            foreach my $set ( keys %homologies_from_file ) {
+
+                foreach my $homology_id ( keys %{ $homologies_from_file{$set} } ) {
+
+                    my ( $stable_id_1, $stable_id_2 ) = keys( $homologies_from_file{$set}{$homology_id} );
+
+                    die "Missing stable_id for homology: $homology_id in set: $set" if ( !$stable_id_1 && !$stable_id_2 );
+
+                    my $homology_type = $homologies_from_file{$set}{$homology_id}{$stable_id_1};
+
+                    $gdb1 = $genome_db_ids{ $species_stable_id_map{$stable_id_1} };
+                    $gdb2 = $genome_db_ids{ $species_stable_id_map{$stable_id_2} };
+
+                    my $taxon_1 = $taxon_ids{ $species_stable_id_map{$stable_id_1} };
+                    my $taxon_2 = $taxon_ids{ $species_stable_id_map{$stable_id_2} };
+
+                    my $gene_member_id_1 = $taxon_1 . $gdb1;
+                    my $gene_member_id_2 = $taxon_2 . $gdb2;
+
+                    #print "$stable_id_1|$gdb1|$species_stable_id_map{$stable_id_1}|$taxon_ids{$species_stable_id_map{$stable_id_1}}\n";
+                    #print "$stable_id_2|$gdb2|$species_stable_id_map{$stable_id_2}|$taxon_ids{$species_stable_id_map{$stable_id_2}}\n";
+
+                    #my $gene_member_1 = Bio::EnsEMBL::Compara::GeneMember->new( -stable_id => $stable_id_1, -source_name => 'EXTERNALGENE', -genome_db_id => $gdb1, -id => 111 );
+                    #my $gene_member_2 = Bio::EnsEMBL::Compara::GeneMember->new( -stable_id => $stable_id_2, -source_name => 'EXTERNALGENE', -genome_db_id => $gdb2, -id => 222 );
+                    my $gene_member_1 = Bio::EnsEMBL::Compara::GeneMember->new( -stable_id => $stable_id_1, -source_name => 'EXTERNALGENE', -genome_db_id => $gdb1 );
+                    my $gene_member_2 = Bio::EnsEMBL::Compara::GeneMember->new( -stable_id => $stable_id_2, -source_name => 'EXTERNALGENE', -genome_db_id => $gdb2 );
+                    $gene_member_1->taxon_id($taxon_1);
+                    $gene_member_2->taxon_id($taxon_2);
+
+                    #Create new AlignedMembers to attach the the homologies
+                    my $aligned_member_1 = Bio::EnsEMBL::Compara::AlignedMember->new( -stable_id => $stable_id_1, -source_name => 'EXTERNALGENE', -genome_db_id => $gdb1, );
+                    my $aligned_member_2 = Bio::EnsEMBL::Compara::AlignedMember->new( -stable_id => $stable_id_2, -source_name => 'EXTERNALGENE', -genome_db_id => $gdb2, );
+                    $aligned_member_1->gene_member($gene_member_1);
+                    $aligned_member_2->gene_member($gene_member_2);
+                    $aligned_member_1->gene_member_id($gene_member_id_1);
+                    $aligned_member_2->gene_member_id($gene_member_id_2);
+
+                    #Create the homology and add its 2 members and description
+                    my $homology = new Bio::EnsEMBL::Compara::Homology;
+                    $homology->add_Member($aligned_member_1);
+                    $homology->add_Member($aligned_member_2);
+                    $homology->description($homology_type);
+
+                    #Add the homology to the homology_list array
+                    push( @{ $homology_list{$set} }, $homology );
+                } ## end foreach my $homology_id ( keys...)
+            } ## end foreach my $set ( keys %homologies_from_file)
+
+            print "Homologies in set_1:" . scalar( @{ $homology_list{1} } ) . "\n";
+            print "Homologies in set_2:" . scalar( @{ $homology_list{2} } ) . "\n";
+
+            #HOMOLOGY 1
+            $homology_set1->add( @{ $homology_list{1} } );
+
+            #HOMOLOGY 2
+            $homology_set2->add( @{ $homology_list{2} } );
+
+        } ## end if ( $file1 && $file2 )
+        elsif ( $url1 && $url2 ) {
+            print "\n$url1 -- in the final table shown in left down\n";
+            $homology_set1 = load_homology_set($self, 'ENSEMBL_ORTHOLOGUES',[$gdb1,$gdb2],$url1);
+            $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1,$gdb2],$url1)) if $url1_needs_orthopara;
+            $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1],$url1)) if $url1_needs_para;
+            $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb2],$url1)) if $url1_needs_para;
+
+
+            print "\n$url2 -- in the final table shown in horizontal right\n";
+            $homology_set2 = load_homology_set($self, 'ENSEMBL_ORTHOLOGUES',[$gdb1,$gdb2],$url2);
+            $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1,$gdb2],$url2)) if $url2_needs_orthopara;
+            $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1],$url2)) if $url2_needs_para;
+            $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb2],$url2)) if $url2_needs_para;
+        }
+
+        print "Printing Stats set_1:\n";
+        $homology_set1->print_stats;
+        print "Printing Stats set_1:\n\n";
+        $homology_set2->print_stats;
 
   my $missing1 = $homology_set2->gene_set->relative_complement($homology_set1->gene_set);
   printf("\n%d genes in set1 not in set2\n", $missing1->size);
@@ -198,18 +326,7 @@ sub compare_homology_sets
   my $cross_hash = crossref_homologies_by_type($homology_set1, $homology_set2);
   print_conversion_stats($homology_set1, $homology_set2, $cross_hash);
 
-  #my $gset = $cross_hash->{'_missing'}->{'RHS'}->gene_set;
-  #my $gset_genome_hash = $gset->hashref_by_genome;
-  #foreach my $type (keys(%$gset_genome_hash)) {
-  #  my $geneSet = $gset_genome_hash->{$type};
-  #  printf("  %d : %d\n", $type, $geneSet->size);
-  #}
-  #my $tset = $homology_set1->subset_containing_genes($gset);
-  #$tset->print_stats;
-  #$cross_hash = $tset->crossref_homologies_by_type($homology_set2);
-  #print_conversion_stats($tset, $homology_set2, $cross_hash);
-
-  if($best) {
+if ( $best && ( $url1 && $url2 ) ) {
     printf("\nBest homology for gene\n");
     my $genememberDBA = $self->{$url1}->get_GeneMemberAdaptor;
     my $gdba = $self->{$url1}->get_GenomeDBAdaptor;
@@ -231,7 +348,6 @@ sub compare_homology_sets
 }
 
 
-
 sub crossref_homologies_by_type {
   my $homologyset1 = shift;
   my $homologyset2 = shift;
@@ -249,24 +365,27 @@ sub crossref_homologies_by_type {
   }
   
   foreach my $homology (@{$homologyset1->list}) {
+
     my $type1 = $homology->description;
-    if (scalar @{$homology->method_link_species_set->species_set->genome_dbs} == 1) {
-      my $gdb = $homology->method_link_species_set->species_set->genome_dbs->[0];
-      $type1 .= "_".$gdb->dbID;
-      unless (defined $homology_description_ranking_set1->{$type1}) {
-        $homology_description_ranking_set1->{$type1} = $homology_description_ranking_set1->{$homology->description};
-      }
-    }
+
+    #if (scalar @{$homology->method_link_species_set->species_set->genome_dbs} == 1) {
+    #  my $gdb = $homology->method_link_species_set->species_set->genome_dbs->[0];
+    #  $type1 .= "_".$gdb->dbID;
+    #  unless (defined $homology_description_ranking_set1->{$type1}) {
+    #    $homology_description_ranking_set1->{$type1} = $homology_description_ranking_set1->{$homology->description};
+    #  }
+    #}
+
     $other_homology = $homologyset2->find_homology_like($homology);
     if($other_homology) {
       my $other_type = $other_homology->description;
-      if (scalar @{$other_homology->method_link_species_set->species_set->genome_dbs} == 1) {
-        my $gdb = $other_homology->method_link_species_set->species_set->genome_dbs->[0];
-        $other_type .= "_".$gdb->dbID;
-        unless (defined $homology_description_ranking_set2->{$other_type}) {
-          $homology_description_ranking_set2->{$other_type} = $homology_description_ranking_set2->{$other_homology->description};
-        }
-      }
+      #if (scalar @{$other_homology->method_link_species_set->species_set->genome_dbs} == 1) {
+      #  my $gdb = $other_homology->method_link_species_set->species_set->genome_dbs->[0];
+      #  $other_type .= "_".$gdb->dbID;
+      #  unless (defined $homology_description_ranking_set2->{$other_type}) {
+      #    $homology_description_ranking_set2->{$other_type} = $homology_description_ranking_set2->{$other_homology->description};
+      #  }
+      #}
       $conversion_hash->{$type1}->{$other_type}->add($homology);
     } else {
       $conversion_hash->{$type1}->{'_new'}->add($homology);
@@ -279,13 +398,13 @@ sub crossref_homologies_by_type {
   
   foreach my $homology (@{$homologyset2->list}) {
     my $type2 = $homology->description;
-    if (scalar @{$homology->method_link_species_set->species_set->genome_dbs} == 1) {
-      my $gdb = $homology->method_link_species_set->species_set->genome_dbs->[0];
-      $type2 .= "_".$gdb->dbID;
-      unless (defined $homology_description_ranking_set2->{$type2}) {
-        $homology_description_ranking_set2->{$type2} = $homology_description_ranking_set2->{$homology->description};
-      }
-    }
+    #if (scalar @{$homology->method_link_species_set->species_set->genome_dbs} == 1) {
+    #  my $gdb = $homology->method_link_species_set->species_set->genome_dbs->[0];
+    #  $type2 .= "_".$gdb->dbID;
+    #  unless (defined $homology_description_ranking_set2->{$type2}) {
+    #    $homology_description_ranking_set2->{$type2} = $homology_description_ranking_set2->{$homology->description};
+    #  }
+    #}
     unless($homologyset1->has_homology($homology)) {
       $conversion_hash->{'_missing'}->{$type2}->add($homology);
       $conversion_hash->{'_missing'}->{'TOTAL'}->add($homology);
@@ -296,7 +415,6 @@ sub crossref_homologies_by_type {
   
   return $conversion_hash;
 }
-
 
 sub crossref_genes_to_best_homology {
   #this is a hacked method.  Do not try to reuse for it will likely break.
@@ -324,23 +442,23 @@ sub crossref_genes_to_best_homology {
     my $type2 = '_new';
     if (defined $homology1) {
       $type1 = $homology1->description;
-      if (scalar @{$homology1->method_link_species_set->species_set->genome_dbs} == 1) {
-        my ($gdb) = @{$homology1->method_link_species_set->species_set->genome_dbs};
-        $type1 .= "_".$gdb->dbID;
-        unless (defined $homology_description_ranking_set1->{$type1}) {
-          $homology_description_ranking_set1->{$type1} = $homology_description_ranking_set1->{$homology1->description};
-        }
-      }
+      #if (scalar @{$homology1->method_link_species_set->species_set->genome_dbs} == 1) {
+      #  my ($gdb) = @{$homology1->method_link_species_set->species_set->genome_dbs};
+      #  $type1 .= "_".$gdb->dbID;
+      #  unless (defined $homology_description_ranking_set1->{$type1}) {
+      #    $homology_description_ranking_set1->{$type1} = $homology_description_ranking_set1->{$homology1->description};
+      #  }
+      #}
     }
     if (defined $homology2) {
       $type2 = $homology2->description;
-      if (scalar @{$homology2->method_link_species_set->species_set->genome_dbs} == 1) {
-        my ($gdb) = @{$homology2->method_link_species_set->species_set->genome_dbs};
-        $type2 .= "_".$gdb->dbID;
-        unless (defined $homology_description_ranking_set2->{$type2}) {
-          $homology_description_ranking_set2->{$type2} = $homology_description_ranking_set2->{$homology2->description};
-        }
-      }
+      #if (scalar @{$homology2->method_link_species_set->species_set->genome_dbs} == 1) {
+      #  my ($gdb) = @{$homology2->method_link_species_set->species_set->genome_dbs};
+      #  $type2 .= "_".$gdb->dbID;
+      #  unless (defined $homology_description_ranking_set2->{$type2}) {
+      #    $homology_description_ranking_set2->{$type2} = $homology_description_ranking_set2->{$homology2->description};
+      #  }
+      #}
     }
     $conversion_hash->{$type1}->{$type2}->add($gene);
 
@@ -359,9 +477,8 @@ sub print_conversion_stats
   my $set1 = shift;
   my $set2 = shift;
   my $conversion_hash = shift;
-  
-  my @set1Types = (sort({$homology_description_ranking_set1->{$a} <=> $homology_description_ranking_set1->{$b} || $a cmp $b} @{$set1->types}), '_missing', 'TOTAL');
 
+  my @set1Types = (sort({$homology_description_ranking_set1->{$a} <=> $homology_description_ranking_set1->{$b} || $a cmp $b} @{$set1->types}), '_missing', 'TOTAL');
   my @set2Types = (sort({$homology_description_ranking_set2->{$a} <=> $homology_description_ranking_set2->{$b} || $a cmp $b} @{$set2->types}), '_new', 'TOTAL');
 
   my $longest_type_string_length = 0;
