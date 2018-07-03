@@ -403,7 +403,7 @@ sub toString {
   Example    : my $key = $homology->homology_key;
   Description: returns a string uniquely identifying this homology in world space.
                uses the gene_stable_ids of the members and orders them by taxon_id
-               and concatonates them together.  
+               and concatenates them together.
   Returntype : string
   Exceptions :
   Caller     :
