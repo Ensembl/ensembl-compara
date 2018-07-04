@@ -600,9 +600,7 @@ sub dumpVariation {
   my $conf = shift;
   my $VariationDB = $conf->{'variation_dbname'};
   return unless $VariationDB;
-
   my $counter   = make_counter(0);
-  my $sql_batch = 50000; #how much do we split the heavy sql query into
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
   my $start_time = time;
@@ -628,11 +626,11 @@ sub dumpVariation {
   my $sth;
   my ($hgvs_sth);
   my $all_hgvs_names = on_disk_set('all_hgvs_names');
+  my $sql_batch = 250000000; #split the HGVS query into batches of this size
   if ($dbspecies ne 'omo_sapiens') {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     my $i = 0;
-    my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
-#split query
+    my $continue = 1;
     while($continue) {
       $sth = $conf->{'variation_dbh'}->prepare(qq(
         SELECT variation_id, hgvs_name
@@ -3383,7 +3381,6 @@ sub on_disk_set {
 my $SYNC_COUNT = 0;
 sub set_add {
   my ($var,$k,$v) = @_;
-
   $var->{$k}.="\t$v";
   $SYNC_COUNT++;
   unless($SYNC_COUNT%1000000) {
