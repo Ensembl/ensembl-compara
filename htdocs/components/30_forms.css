@@ -162,7 +162,9 @@ input.fbutton.disabled, input.fbutton.disabled:active {
 .fselect {
   width: 210px;
   margin-bottom: 3px;
-  height: 24px;
+  min-height: 24px;
+  max-height: 100px;
+  overflow: auto;
 }
 .ff-inline .ftext, .ff-inline .ftextarea, .ff-inline .fselect, .ff-inline .fbutton, .ff-inline .ffile {
   width: auto;
