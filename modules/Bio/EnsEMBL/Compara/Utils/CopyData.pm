@@ -55,8 +55,9 @@ copying homology_member too when asked to copy homology.
 
 =head2 :insert export-tag
 
-single_insert() and bulk_insert() are simple methods to run INSERT statements.
-bulk_insert() is optimized to insert large chunks of data
+single_insert(), bulk_insert() and bulk_insert_iterator() are simple
+methods to run INSERT statements.  bulk_insert() and bulk_insert_iterator()
+are optimized to insert large chunks of data.
 
 =head1 SYNOPSIS
 
@@ -95,12 +96,13 @@ our @EXPORT_OK;
     copy_data_pp
     copy_table
     bulk_insert
+    bulk_insert_iterator
     single_insert
 );
 %EXPORT_TAGS = (
   'row_copy'    => [qw(copy_data_with_foreign_keys_by_constraint clear_copy_data_cache)],
   'table_copy'  => [qw(copy_data copy_data_pp copy_table)],
-  'insert'      => [qw(bulk_insert single_insert)],
+  'insert'      => [qw(bulk_insert bulk_insert_iterator single_insert)],
   'all'         => [@EXPORT_OK]
 );
 
@@ -111,6 +113,7 @@ use constant MAX_ROWS_WHILE_CONNECTED => 100_000;           # Heuristics: readin
 use Data::Dumper;
 use File::Temp qw/tempfile/;
 
+use Bio::EnsEMBL::Utils::Iterator;
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
@@ -612,17 +615,44 @@ sub single_insert {
 =cut
 
 sub bulk_insert {
-    my ($dest_dbc, $table_name, $data, $col_names, $insertion_mode) = @_;
+    my ($dest_dbc, $table_name, $data, @args) = @_;
+
+    return bulk_insert_iterator($dest_dbc, $table_name, Bio::EnsEMBL::Utils::Iterator->new($data), @args);
+}
+
+
+=head2 bulk_insert_iterator
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection $dest_dbc
+  Arg[2]      : string $table_name
+  Arg[3]      : Bio::EnsEMBL::Utils::Iterator over the data to insert
+  Arg[4]      : (opt) arrayref of strings $col_names (defaults to the column-order at the database level)
+  Arg[5]      : (opt) string $insertion_mode (default: 'INSERT')
+
+  Description : Execute extended INSERT statements (or whatever flavour selected in $insertion_mode)
+                on $dest_dbc to push the data returned by the iterator $data_iterator.  Each element
+                in the iterator corresponds to a row, in the same order as in $col_names (if provided)
+                or the columns in the table itself.  The method returns the total number of rows inserted
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub bulk_insert_iterator {
+    my ($dest_dbc, $table_name, $data_iterator, $col_names, $insertion_mode) = @_;
 
     my $insert_n   = 0;
     my $to_dbh = $dest_dbc->db_handle;
-    while (@$data) {
+    while ($data_iterator->has_next) {
         my $insert_sql = ($insertion_mode || 'INSERT') . ' INTO ' . $table_name;
         $insert_sql .= ' (' . join(',', @$col_names) . ')' if $col_names;
         $insert_sql .= ' VALUES ';
         my $first = 1;
-        while (@$data and (length($insert_sql) < MAX_STATEMENT_LENGTH)) {
-            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {$to_dbh->quote($_)} @{shift @$data}) . ')';
+        while ($data_iterator->has_next and (length($insert_sql) < MAX_STATEMENT_LENGTH)) {
+            my $row = $data_iterator->next;
+            $insert_sql .= ($first ? '' : ', ') . '(' . join(',', map {$to_dbh->quote($_)} @$row) . ')';
             $first = 0;
         }
         my $this_time = $dest_dbc->do($insert_sql) or die "Could not execute the insert because of ".$dest_dbc->db_handle->errstr;
