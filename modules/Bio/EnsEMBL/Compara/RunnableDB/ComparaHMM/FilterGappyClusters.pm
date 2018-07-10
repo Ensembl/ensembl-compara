@@ -52,7 +52,6 @@ use warnings;
 
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Hive::Process');
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {

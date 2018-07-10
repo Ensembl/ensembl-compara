@@ -52,8 +52,9 @@ use warnings;
 
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Hive::Process');
-use base ( 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::StableId::Adaptor' );
+use Bio::EnsEMBL::Compara::StableId::Adaptor;
+
+use base ( 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable' );
 
 sub param_defaults {
     return {
@@ -166,7 +167,7 @@ sub _store_mapping {
             my $to_ncs   = $adaptor->fetch_ncs( $curr_release, $type, $self->compara_dba->dbc() );
             my $ncsl     = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new( -FROM => $from_ncs, -TO => $to_ncs );
 
-            $mapping_session_id = $self->get_mapping_session_id( $ncsl, $timestamp, $dbc );
+            $mapping_session_id = $adaptor->get_mapping_session_id( $ncsl, $timestamp, $dbc );
 
             my $ms_sth = $dbc->prepare("INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, prefix, when_mapped ) VALUES (?, ?, ?, ?, ?, FROM_UNIXTIME(?))");
             $ms_sth->execute( $mapping_session_id, $type, $ncsl->from->release(), $ncsl->to->release(), $prefix, $timestamp );
