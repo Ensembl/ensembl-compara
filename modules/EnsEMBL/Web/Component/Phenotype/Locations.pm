@@ -160,7 +160,7 @@ sub table_content {
            phe_link         => $source_url,
            study_links      => join("\r",'',@study_links),
            study_texts      => join("\r",'',@study_texts),
-           study_submitter  => join(', ',@$submitter_list),
+           study_submitter  => join(', ', $submitter_list ? @$submitter_list : ()),
            evidence_links   => join("\r",'',@evidence_links),
            evidence_texts   => join("\r",'',@evidence_texts),
            gene_links       => join("\r",'',@gene_links),
