@@ -113,7 +113,6 @@ sub default_options {
         # define which params should ALWAYS be passed to each dump pipeline
         'default_dump_options' => {
         	DumpMultiAlign          => { 
-        		compara_db       => '#compara_db#', 
         		registry         => '#reg_conf#',
         		curr_release     => '#curr_release#',
          		make_tar_archive => 0,
@@ -142,10 +141,6 @@ sub default_options {
         		dump_dir    => '#dump_dir#/compara/species_trees',
         	},
         	DumpAncestralAlleles => {
-        		compara_db   => '#compara_db#',
-        		dump_dir     => '#dump_dir#',
-        		reg_conf     => '#reg_conf#',
-        		ancestral_db => '#ancestral_db#',
         	},
         },
 

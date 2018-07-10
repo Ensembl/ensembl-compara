@@ -37,21 +37,12 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'mkdir_conservation_scores',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConservationScores',
-            -parameters     => {
-                'compara_db'    => '#compara_db#',
-            },
-            # -input_ids      => [
-            #     {
-            #         'mlss_id'   => $self->o('mlss_id'),
-            #     },
-            # ],
             -flow_into      => [ 'genomedb_factory_cs' ],
         },
 
         {   -logic_name     => 'genomedb_factory_cs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters     => {
-                'compara_db'            => '#compara_db#',
                 'extra_parameters'      => [ 'name' ],
             },
             -flow_into      => {
