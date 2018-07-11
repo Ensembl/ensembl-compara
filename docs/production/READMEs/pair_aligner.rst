@@ -181,11 +181,10 @@ b) ``ref_species``. This defines the which species in the pair to use as the ref
 
 c) ``default_chunks``. Chunking parameters for the reference and non-reference species.
 
-Especially, you may want to change ``masking_options`` to mask only certain
-type of repeat logic_name analysis, e.g.
+Especially, you may want to change ``masking_options`` to change the type
+os masking, e.g.
 
 * ``'masking_options' => "{default_soft_masking => 1}"``, 0 for hard masking, comment the line for no masking
-* ``'masking_options' => "{default_soft_masking => 1, logic_names => ["RepeatMask", "Dust", "TRF"]}"``, if you want to mask only certain type of repeat logic_name analysis.
 
 Then you can add the ``masking_options_file`` parameter and point at a file
 containing a perl hash reference of the following format::

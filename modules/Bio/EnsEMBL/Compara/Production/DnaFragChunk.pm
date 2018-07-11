@@ -152,11 +152,10 @@ sub _fetch_masked_sequence {
 
   if(defined($self->masking_options)) {
     $masking_options = eval($self->masking_options);
-    my $logic_names = $masking_options->{'logic_names'};
     my $soft_masking = $masking_options->{'default_soft_masking'} // 1;
     #printf("getting %s masked sequence...\n", $soft_masking ? 'SOFT' : 'HARD');
 
-    my $masked_slice = $slice->get_repeatmasked_seq($logic_names, $soft_masking, $masking_options);
+    my $masked_slice = $slice->get_repeatmasked_seq(undef, $soft_masking, $masking_options);
     $seq = Bio::PrimarySeq->new( -id => $id, -seq => $masked_slice->seq);
   }
   else {  # no masking options set, so get unmasked sequence
