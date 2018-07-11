@@ -979,20 +979,16 @@ sub _load_GenomicAligns {
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
-  $self->iterate_by_dbc( $gab->get_all_GenomicAligns,
-      sub {my $ga = shift; return $ga->dnafrag->genome_db->db_adaptor->dbc;},
-      sub {my $ga = shift;
 
+  foreach my $ga (@{ $gab->get_all_GenomicAligns }) {
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
 
-      my $slice = $ga->get_Slice();
-      my $seqlevel = $slice->coord_system->adaptor->fetch_sequence_level();
-      my @projection = @{$slice->project($seqlevel->name(), $seqlevel->version())};
-      if (@projection > 0) {
+      my $sequence = $ga->get_sequence();
+      if ($seq =~ /[ATGCatgc]/) {
 	  push(@{$genomic_aligns}, $ga);
       }
-  });
+  }
 
   #only store genomic_aligns if there are more than 1 genomic_align left in the
   #genomic_align_block
