@@ -143,19 +143,8 @@ sub create_chunks
   my $collectionDBA = $self->compara_dba->get_DnaCollectionAdaptor;
   my $masking_options;
 
-  #Get masking_options
-  #Check only have either masking_options_file OR masking_options set
-  if ($self->param('masking_options_file') && $self->param('masking_options')) {
-      throw("ERROR: Only 'masking_options_file' or 'masking_options' maybe defined, not both");
-  }
-  
   #set masking_options parameter
-  if ($self->param('masking_options_file')) {
-      if (! -e $self->param('masking_options_file')) {
-          throw("ERROR: masking_options_file " . $self->param('masking_options_file') . " does not exist\n");
-      }
-      $masking_options = do($self->param('masking_options_file'));
-  } elsif ($self->param('masking_options')) {
+  if ($self->param('masking_options')) {
       $masking_options = $self->param('masking_options');
   }
 

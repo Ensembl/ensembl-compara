@@ -517,16 +517,11 @@ sub get_chunking {
        $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
    }
 
-   #set masking_option if neither masking_option_file or masking_options has been set
-   unless (defined $dna_collection->{'masking_options'} || defined $dna_collection->{'masking_options_file'}) {
+   #set masking_option if masking_options has not been set
+   unless (defined $dna_collection->{'masking_options'}) {
        $dna_collection->{'masking_options'} = $default_chunk->{'masking_options'};
    }
    
-   #Check that only masking_options OR masking_options_file have been defined
-   if (defined $dna_collection->{'masking_options'} && defined $dna_collection->{'masking_options_file'}) {
-       throw("Both masking_options and masking_options_file have been defined. Please only define EITHER masking_options OR masking_options_file");
-   }
-
    unless (defined $dna_collection->{'dump_loc'}) {
        $dna_collection->{'dump_loc'} = $default_chunk->{'dump_loc'};
    }
@@ -567,11 +562,6 @@ sub get_default_chunking {
     #include_non_reference (haplotypes) and masking_options
     unless (defined $dna_collection->{'include_non_reference'}) {
 	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
-    }
-
-    #masking option file (currently only set for human which is always reference)
-    unless (defined $dna_collection->{'masking_options_file'}) {
-	$dna_collection->{'masking_options_file'} = $default_chunk->{'masking_options_file'};
     }
 
     #masking_option
@@ -721,7 +711,7 @@ sub parse_defaults {
             #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
             #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
 
-            my @chunk_keys_checks = ( "masking_options_file", "masking_options" );
+            my @chunk_keys_checks = ( "masking_options" );
             foreach my $key (@chunk_keys_checks) {
                 if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
                     throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
@@ -1000,33 +990,17 @@ sub write_parameters_to_mlss_tag {
             #skip dump_loc
             next if (defined $ref_dna_collection->{$key} && $key eq "dump_loc");
             
-            #Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
-            if ($key eq "masking_options_file") {
-                my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-                if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
-                    $ref_collection->{$key} = '$ENSEMBL_CVS_ROOT_DIR'.$1;
-                }
-            } else {
                 $ref_collection->{$key} =  $ref_dna_collection->{$key};
-            }
         }
     }
     my $non_ref_collection;
     
     foreach my $key (keys %$non_ref_dna_collection) {
         if (defined $non_ref_dna_collection->{$key} && $key ne "genome_db") {
-            #Convert masking_options_file to $ENSEMBL_CVS_ROOT_DIR if defined
             #skip dump_loc
             next if (defined $non_ref_dna_collection->{$key} && $key eq "dump_loc");
             
-            if ($key eq "masking_options_file") {
-                my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
-                if ($ENV{'ENSEMBL_CVS_ROOT_DIR'} && $non_ref_dna_collection->{$key} =~ /^$ensembl_cvs_root_dir(.*)/) {
-                    $non_ref_collection->{$key} = '$ENSEMBL_CVS_ROOT_DIR'.$1;
-                }
-            } else {
                 $non_ref_collection->{$key} =  $non_ref_dna_collection->{$key};
-            }
         }
     }
     #print "mlss_id " . $mlss->dbID . "\n";

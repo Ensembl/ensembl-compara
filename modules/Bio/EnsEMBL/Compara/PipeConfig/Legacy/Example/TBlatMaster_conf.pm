@@ -74,7 +74,6 @@ sub default_options {
 					       'dump_dir' => $self->o('dump_dir'),
 					       #human
 					       'include_non_reference' => 1,
-					       'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
 					       'region' => 'chromosome:22',
 					       #non-human
 					       #'masking_options' => '{default_soft_masking => 1}',

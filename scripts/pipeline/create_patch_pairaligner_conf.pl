@@ -210,7 +210,6 @@ my $dna_collection;
 					     'overlap'    => 0,
 					     'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
                                              # if you have a specific selection of repeat elements for the masking
-					     #'masking_options_file' => "'" . $ENV{'ENSEMBL_CVS_ROOT_DIR'}."/ensembl-compara/scripts/pipeline/human36.spec'"
                                              );
 
 %{$dna_collection->{mus_musculus_exception}} = ('chunk_size' => 30000000,
@@ -320,11 +319,7 @@ if ($print_dna_collection) {
     print " 'chunk_size'            => " . $dna_collection->{$ref_mammal}{'chunk_size'} . ",\n";
     print " 'overlap'               => " . $dna_collection->{$ref_mammal}{'overlap'} . ",\n";
     print " 'include_non_reference' => " . $dna_collection->{$ref_mammal}{'include_non_reference'} . ",\n";  
-    if ($dna_collection->{$ref_mammal}{'masking_options_file'}) {
-        print " 'masking_options_file'  => " . $dna_collection->{$ref_mammal}{'masking_options_file'} . "\n";
-    } else {
         print " 'masking_options'       => " . $dna_collection->{$ref_exception}{'masking_options'} . "\n";
-    }
     print "},\n";
 
     #Exceptions (primates)

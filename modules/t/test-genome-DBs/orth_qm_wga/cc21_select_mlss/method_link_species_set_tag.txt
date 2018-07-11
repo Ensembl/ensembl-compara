@@ -16,7 +16,7 @@
 719	param	T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac
 719	reference_species	homo_sapiens
 719	ref_coding_exon_length	35228305
-719	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+719	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"overlap" => 0}
 719	ref_genome_coverage	81899388
 719	ref_genome_length	3096649726
 719	ref_insertions	357644

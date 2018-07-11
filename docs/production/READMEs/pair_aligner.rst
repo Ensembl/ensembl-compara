@@ -186,23 +186,6 @@ os masking, e.g.
 
 * ``'masking_options' => "{default_soft_masking => 1}"``, 0 for hard masking, comment the line for no masking
 
-Then you can add the ``masking_options_file`` parameter and point at a file
-containing a perl hash reference of the following format::
-
-    {
-    "repeat_name_L1P" => 0,
-    "repeat_class_SINE/Alu" => 0,
-    "repeat_name_L1PA7" => 0,
-    "repeat_name_L1PA3" => 0,
-    "repeat_name_PRIMA4-int" => 0
-    }
-
-You can set the masking to 0 (hard) or 1 (soft) for particular repeat_name or repeat_class as defined in the repeat_consensus
-table in the core database.
-
-If both ``masking_options_file`` and ``masking_options`` are specified, ``masking_options_file`` has priority over ``masking_options``.
-
-
 d) ``pair_aligner_options``
 
 e) ``cellular-component`` restrictions
