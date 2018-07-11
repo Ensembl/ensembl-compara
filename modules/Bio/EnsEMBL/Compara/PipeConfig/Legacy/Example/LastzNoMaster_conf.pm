@@ -65,7 +65,7 @@ sub default_options {
    			    'non_reference' => {'chunk_size'      => 10100000,
    						'group_set_size'  => 10100000,
    						'overlap'         => 100000,
-   						'masking_options' => '{default_soft_masking => 1}',
+   						'masking'         => 'soft',
 					        'region'          => 'chromosome:16'},
    			    },
 

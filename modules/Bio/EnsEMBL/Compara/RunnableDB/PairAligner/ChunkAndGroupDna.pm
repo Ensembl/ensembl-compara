@@ -141,12 +141,7 @@ sub create_chunks
 
   my $genome_db = $self->param('genome_db');
   my $collectionDBA = $self->compara_dba->get_DnaCollectionAdaptor;
-  my $masking_options;
-
-  #set masking_options parameter
-  if ($self->param('masking_options')) {
-      $masking_options = $self->param('masking_options');
-  }
+  my $masking = $self->param('masking');
 
   if ($self->param('collection_id')) {
     $self->param('dna_collection') = $collectionDBA->fetch_by_dbID($self->param('collection_id'));
@@ -155,7 +150,7 @@ sub create_chunks
     $self->param('dna_collection', new Bio::EnsEMBL::Compara::Production::DnaCollection);
     $self->param('dna_collection')->description($self->param('collection_name'));
     $self->param('dna_collection')->dump_loc($self->param('dump_loc')) if(defined($self->param('dump_loc')));
-    $self->param('dna_collection')->masking_options($masking_options) if(defined($masking_options));
+    $self->param('dna_collection')->masking($masking) if(defined($masking));
     $self->param('dna_collection')->adaptor($collectionDBA);
 
     $collectionDBA->store($self->param('dna_collection'));
@@ -273,7 +268,7 @@ sub create_chunks
       $dnafragDBA->store($dnafrag);
     }
     $dnafrag->{'_slice'} = $chr;
-    $self->create_dnafrag_chunks($dnafrag, $masking_options, $chr->start, $chr->end);
+    $self->create_dnafrag_chunks($dnafrag, $masking, $chr->start, $chr->end);
     #Temporary fix to problem in core when masking haplotypes because the
     #assembly mapper is cached but shouldn't be  
     #if (defined $asm) {
@@ -289,7 +284,7 @@ sub create_chunks
 sub create_dnafrag_chunks {
   my $self = shift;
   my $dnafrag = shift;
-  my $masking_options = shift;
+  my $masking = shift;
   my $region_start = (shift or 1);
   my $region_end = (shift or $dnafrag->length);
 
@@ -328,8 +323,8 @@ sub create_dnafrag_chunks {
     }
     $chunk->dnafrag_end($chunk_end);
     
-    #set chunk masking_options
-    $chunk->masking_options;
+    #set chunk masking
+    $chunk->masking($masking);
 
     # do grouping if requested
     if($self->param('group_set_size') and ($chunk->length < $self->param('group_set_size'))) {

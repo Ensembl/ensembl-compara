@@ -83,7 +83,7 @@ sub run {
   my @db_chunk_files;
   my $db_dna_collection = $self->param('db_DnaFragChunkSet')->dna_collection;
   foreach my $db_chunk (@{$self->param('db_DnaFragChunkSet')->get_all_DnaFragChunks}) {
-      $db_chunk->masking_options($db_dna_collection->masking_options);
+      $db_chunk->masking($db_dna_collection->masking);
     push @db_chunk_files, $self->dumpChunkToWorkdir($db_chunk, $db_dna_collection);
   }
 

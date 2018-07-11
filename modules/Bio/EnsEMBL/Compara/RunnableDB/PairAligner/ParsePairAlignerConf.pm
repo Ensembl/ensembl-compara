@@ -517,9 +517,9 @@ sub get_chunking {
        $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
    }
 
-   #set masking_option if masking_options has not been set
-   unless (defined $dna_collection->{'masking_options'}) {
-       $dna_collection->{'masking_options'} = $default_chunk->{'masking_options'};
+   #set masking_option if maskinghas not been set
+   unless (defined $dna_collection->{'masking'}) {
+       $dna_collection->{'masking'} = $default_chunk->{'masking'};
    }
    
    unless (defined $dna_collection->{'dump_loc'}) {
@@ -559,14 +559,14 @@ sub get_default_chunking {
 	$dna_collection->{'region'} = $default_chunk->{'region'};
     }
  
-    #include_non_reference (haplotypes) and masking_options
+    #include_non_reference (haplotypes)
     unless (defined $dna_collection->{'include_non_reference'}) {
 	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
     }
 
     #masking_option
-    unless (defined $dna_collection->{'masking_options'}) {
-	$dna_collection->{'masking_options'} = $default_chunk->{'masking_options'};
+    unless (defined $dna_collection->{'masking'}) {
+	$dna_collection->{'masking'} = $default_chunk->{'masking'};
     }
     
     #dump location (currently never set for non-reference chunking)
@@ -711,7 +711,7 @@ sub parse_defaults {
             #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
             #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
 
-            my @chunk_keys_checks = ( "masking_options" );
+            my @chunk_keys_checks = ( "masking" );
             foreach my $key (@chunk_keys_checks) {
                 if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
                     throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";

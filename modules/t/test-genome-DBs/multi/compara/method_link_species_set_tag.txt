@@ -16,7 +16,7 @@
 313	non_reference_species	ciona_savignyi
 313	non_ref_coding_coverage	2167403
 313	non_ref_coding_length	13806906
-313	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+313	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 313	non_ref_genome_coverage	2621533
 313	non_ref_genome_length	176989013
 313	num_blocks	37923
@@ -24,7 +24,7 @@
 313	reference_species	gallus_gallus
 313	ref_coding_coverage	3286283
 313	ref_coding_length	24644731
-313	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+313	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 313	ref_genome_coverage	3827100
 313	ref_genome_length	1100480441
 335	ensembl_release	50
@@ -32,7 +32,7 @@
 335	non_reference_species	tetraodon_nigroviridis
 335	non_ref_coding_coverage	11472002
 335	non_ref_coding_length	30080167
-335	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+335	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 335	non_ref_genome_coverage	13558441
 335	non_ref_genome_length	358618246
 335	num_blocks	171906
@@ -40,7 +40,7 @@
 335	reference_species	rattus_norvegicus
 335	ref_coding_coverage	14308066
 335	ref_coding_length	33849387
-335	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+335	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 335	ref_genome_coverage	18834504
 335	ref_genome_length	2718897334
 382	ensembl_release	55
@@ -48,7 +48,7 @@
 382	non_reference_species	sorex_araneus
 382	non_ref_coding_coverage	16857482
 382	non_ref_coding_length	20841358
-382	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+382	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 382	non_ref_genome_coverage	580691524
 382	non_ref_genome_length	2944193050
 382	num_blocks	1229844
@@ -77,7 +77,7 @@
 385	non_reference_species	monodelphis_domestica
 385	non_ref_coding_coverage	26329960
 385	non_ref_coding_length	31790129
-385	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+385	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 385	non_ref_genome_coverage	304720276
 385	non_ref_genome_length	3605631728
 385	num_blocks	742339
@@ -93,7 +93,7 @@
 389	non_reference_species	procavia_capensis
 389	non_ref_coding_coverage	23227063
 389	non_ref_coding_length	27168923
-389	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+389	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 389	non_ref_genome_coverage	869065881
 389	non_ref_genome_length	2993323063
 389	num_blocks	1810427
@@ -148,7 +148,7 @@
 395	non_reference_species	erinaceus_europaeus
 395	non_ref_coding_coverage	19374961
 395	non_ref_coding_length	23708111
-395	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+395	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 395	non_ref_genome_coverage	559094190
 395	non_ref_genome_length	3377524115
 395	num_blocks	1278795
@@ -164,7 +164,7 @@
 396	non_reference_species	tursiops_truncatus
 396	non_ref_coding_coverage	26827254
 396	non_ref_coding_length	28463360
-396	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+396	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 396	non_ref_genome_coverage	1349404790
 396	non_ref_genome_length	2521907548
 396	num_blocks	1965027
@@ -180,7 +180,7 @@
 397	non_reference_species	dipodomys_ordii
 397	non_ref_coding_coverage	23097852
 397	non_ref_coding_length	26615164
-397	non_ref_dna_collection	{'chunk_size' => 1100000, 'overlap' => 100000, 'group_set_size' => 4000000, "masking_options" => "{default_soft_masking => 1}"}
+397	non_ref_dna_collection	{'chunk_size' => 1100000, 'overlap' => 100000, 'group_set_size' => 4000000, "masking" => "soft"}
 397	non_ref_genome_coverage	754925161
 397	non_ref_genome_length	2165294802
 397	num_blocks	1482234
@@ -209,7 +209,7 @@
 401	non_reference_species	choloepus_hoffmanni
 401	non_ref_coding_coverage	15731291
 401	non_ref_coding_length	19729254
-401	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+401	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 401	non_ref_genome_coverage	964508864
 401	non_ref_genome_length	2467493193
 401	num_blocks	1600909
@@ -225,7 +225,7 @@
 402	non_reference_species	tupaia_belangeri
 402	non_ref_coding_coverage	19735315
 402	non_ref_coding_length	24447710
-402	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+402	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 402	non_ref_genome_coverage	999289493
 402	non_ref_genome_length	3670324638
 402	num_blocks	2131069
@@ -332,7 +332,7 @@
 413	non_reference_species	taeniopygia_guttata
 413	non_ref_coding_coverage	16113058
 413	non_ref_coding_length	23632257
-413	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+413	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 413	non_ref_genome_coverage	31143221
 413	non_ref_genome_length	1233169488
 413	num_blocks	343747
@@ -348,7 +348,7 @@
 414	non_reference_species	gasterosteus_aculeatus
 414	non_ref_coding_coverage	12957615
 414	non_ref_coding_length	32649418
-414	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+414	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 414	non_ref_genome_coverage	15126150
 414	non_ref_genome_length	461533448
 414	num_blocks	189249
@@ -364,7 +364,7 @@
 417	non_reference_species	oryzias_latipes
 417	non_ref_coding_coverage	11956141
 417	non_ref_coding_length	30193605
-417	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+417	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 417	non_ref_genome_coverage	14902708
 417	non_ref_genome_length	868983502
 417	num_blocks	189355
@@ -380,7 +380,7 @@
 418	non_reference_species	takifugu_rubripes
 418	non_ref_coding_coverage	12911930
 418	non_ref_coding_length	33921072
-418	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+418	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 418	non_ref_genome_coverage	14888788
 418	non_ref_genome_length	393312790
 418	num_blocks	187664
@@ -396,7 +396,7 @@
 420	non_reference_species	tetraodon_nigroviridis
 420	non_ref_coding_coverage	12178964
 420	non_ref_coding_length	30080167
-420	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+420	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 420	non_ref_genome_coverage	14479103
 420	non_ref_genome_length	358618246
 420	num_blocks	192216
@@ -412,7 +412,7 @@
 421	non_reference_species	gallus_gallus
 421	non_ref_coding_coverage	16757033
 421	non_ref_coding_length	24644731
-421	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+421	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 421	non_ref_genome_coverage	31679058
 421	non_ref_genome_length	1100480441
 421	num_blocks	343898
@@ -428,7 +428,7 @@
 422	non_reference_species	ciona_savignyi
 422	non_ref_coding_coverage	2388478
 422	non_ref_coding_length	13806906
-422	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+422	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 422	non_ref_genome_coverage	2910505
 422	non_ref_genome_length	176989013
 422	num_blocks	55893
@@ -445,7 +445,7 @@
 429	non_reference_species	microcebus_murinus
 429	non_ref_coding_coverage	22634979
 429	non_ref_coding_length	26497276
-429	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+429	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 429	non_ref_genome_coverage	1243859213
 429	non_ref_genome_length	2910103014
 429	num_blocks	1829640
@@ -461,7 +461,7 @@
 430	non_reference_species	macropus_eugenii
 430	non_ref_coding_coverage	20746505
 430	non_ref_coding_length	25589509
-430	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+430	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 430	non_ref_genome_coverage	176573095
 430	non_ref_genome_length	2955773937
 430	num_blocks	578119
@@ -516,7 +516,7 @@
 478	non_reference_species	oryctolagus_cuniculus
 478	non_ref_coding_coverage	27856841
 478	non_ref_coding_length	29950200
-478	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+478	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 478	non_ref_genome_coverage	1221978809
 478	non_ref_genome_length	2737473256
 478	num_blocks	2036094
@@ -532,7 +532,7 @@
 480	non_reference_species	danio_rerio
 480	non_ref_coding_coverage	13029585
 480	non_ref_coding_length	39233654
-480	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+480	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 480	non_ref_genome_coverage	15924292
 480	non_ref_genome_length	1412464843
 480	num_blocks	195763
@@ -548,7 +548,7 @@
 481	non_reference_species	danio_rerio
 481	non_ref_coding_coverage	12262998
 481	non_ref_coding_length	39233654
-481	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+481	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 481	non_ref_genome_coverage	14664101
 481	non_ref_genome_length	1412464843
 481	num_blocks	181341
@@ -556,7 +556,7 @@
 481	reference_species	rattus_norvegicus
 481	ref_coding_coverage	15064578
 481	ref_coding_length	33849387
-481	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+481	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 481	ref_genome_coverage	20101554
 481	ref_genome_length	2718897334
 483	ensembl_release	60
@@ -564,7 +564,7 @@
 483	non_reference_species	ailuropoda_melanoleuca
 483	non_ref_coding_coverage	30151759
 483	non_ref_coding_length	31119599
-483	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+483	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 483	non_ref_genome_coverage	1497681881
 483	non_ref_genome_length	2299492210
 483	num_blocks	2018327
@@ -580,7 +580,7 @@
 484	non_reference_species	danio_rerio
 484	non_ref_coding_coverage	11926266
 484	non_ref_coding_length	39233654
-484	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+484	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 484	non_ref_genome_coverage	14548078
 484	non_ref_genome_length	1412464843
 484	num_blocks	143148
@@ -588,7 +588,7 @@
 484	reference_species	gallus_gallus
 484	ref_coding_coverage	13147920
 484	ref_coding_length	24644731
-484	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+484	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 484	ref_genome_coverage	16617379
 484	ref_genome_length	1100480441
 486	ensembl_release	60
@@ -596,7 +596,7 @@
 486	non_reference_species	takifugu_rubripes
 486	non_ref_coding_coverage	19387054
 486	non_ref_coding_length	33921072
-486	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+486	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 486	non_ref_genome_coverage	25204842
 486	non_ref_genome_length	393312790
 486	num_blocks	310907
@@ -604,7 +604,7 @@
 486	reference_species	danio_rerio
 486	ref_coding_coverage	23921899
 486	ref_coding_length	39233654
-486	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+486	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 486	ref_genome_coverage	34230968
 486	ref_genome_length	1412464843
 490	ensembl_release	60
@@ -612,7 +612,7 @@
 490	non_reference_species	ciona_savignyi
 490	non_ref_coding_coverage	2435776
 490	non_ref_coding_length	13806906
-490	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+490	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 490	non_ref_genome_coverage	3098852
 490	non_ref_genome_length	176989013
 490	num_blocks	65261
@@ -620,7 +620,7 @@
 490	reference_species	danio_rerio
 490	ref_coding_coverage	4862711
 490	ref_coding_length	39233654
-490	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+490	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 490	ref_genome_coverage	6298110
 490	ref_genome_length	1412464843
 491	ensembl_release	60
@@ -628,7 +628,7 @@
 491	non_reference_species	danio_rerio
 491	non_ref_coding_coverage	19418612
 491	non_ref_coding_length	39233654
-491	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+491	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 491	non_ref_genome_coverage	25998761
 491	non_ref_genome_length	1412464843
 491	num_blocks	279983
@@ -636,7 +636,7 @@
 491	reference_species	gasterosteus_aculeatus
 491	ref_coding_coverage	22349928
 491	ref_coding_length	32649418
-491	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+491	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 491	ref_genome_coverage	31499905
 491	ref_genome_length	461533448
 492	ensembl_release	60
@@ -644,7 +644,7 @@
 492	non_reference_species	oryzias_latipes
 492	non_ref_coding_coverage	17815874
 492	non_ref_coding_length	30193605
-492	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+492	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 492	non_ref_genome_coverage	27437647
 492	non_ref_genome_length	868983502
 492	num_blocks	365231
@@ -652,7 +652,7 @@
 492	reference_species	danio_rerio
 492	ref_coding_coverage	24057251
 492	ref_coding_length	39233654
-492	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+492	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 492	ref_genome_coverage	38969728
 492	ref_genome_length	1412464843
 493	ensembl_release	60
@@ -660,7 +660,7 @@
 493	non_reference_species	danio_rerio
 493	non_ref_coding_coverage	18266006
 493	non_ref_coding_length	39233654
-493	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+493	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 493	non_ref_genome_coverage	23541371
 493	non_ref_genome_length	1412464843
 493	num_blocks	249742
@@ -668,7 +668,7 @@
 493	reference_species	tetraodon_nigroviridis
 493	ref_coding_coverage	20723901
 493	ref_coding_length	30080167
-493	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+493	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 493	ref_genome_coverage	28087885
 493	ref_genome_length	358618246
 498	ensembl_release	61
@@ -676,7 +676,7 @@
 498	non_reference_species	meleagris_gallopavo
 498	non_ref_coding_coverage	21944292
 498	non_ref_coding_length	22787503
-498	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+498	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 498	non_ref_genome_coverage	875520119
 498	non_ref_genome_length	1061982190
 498	num_blocks	455970
@@ -684,7 +684,7 @@
 498	reference_species	gallus_gallus
 498	ref_coding_coverage	23466332
 498	ref_coding_length	24644731
-498	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+498	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 498	ref_genome_coverage	942910163
 498	ref_genome_length	1100480441
 499	ensembl_release	61
@@ -692,7 +692,7 @@
 499	non_reference_species	anolis_carolinensis
 499	non_ref_coding_coverage	19569991
 499	non_ref_coding_length	27358934
-499	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+499	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 499	non_ref_genome_coverage	72765433
 499	non_ref_genome_length	1799126364
 499	num_blocks	267654
@@ -700,7 +700,7 @@
 499	reference_species	gallus_gallus
 499	ref_coding_coverage	21206752
 499	ref_coding_length	24644731
-499	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+499	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 499	ref_genome_coverage	77677283
 499	ref_genome_length	1100480441
 503	ensembl_release	61
@@ -708,7 +708,7 @@
 503	non_reference_species	anolis_carolinensis
 503	non_ref_coding_coverage	7436269
 503	non_ref_coding_length	27358934
-503	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+503	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 503	non_ref_genome_coverage	11707054
 503	non_ref_genome_length	1799126364
 503	num_blocks	310701
@@ -724,7 +724,7 @@
 504	non_reference_species	meleagris_gallopavo
 504	non_ref_coding_coverage	443803
 504	non_ref_coding_length	22787503
-504	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+504	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 504	non_ref_genome_coverage	739783
 504	non_ref_genome_length	1061982190
 504	num_blocks	321105
@@ -744,7 +744,7 @@
 513	non_reference_species	xenopus_tropicalis
 513	non_ref_coding_coverage	14255648
 513	non_ref_coding_length	30481746
-513	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+513	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 513	non_ref_genome_coverage	20579489
 513	non_ref_genome_length	1511717716
 513	num_blocks	184575
@@ -752,7 +752,7 @@
 513	reference_species	gallus_gallus
 513	ref_coding_coverage	15583083
 513	ref_coding_length	24644731
-513	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+513	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 513	ref_genome_coverage	23077069
 513	ref_genome_length	1100480441
 514	ensembl_release	62
@@ -760,7 +760,7 @@
 514	non_reference_species	xenopus_tropicalis
 514	non_ref_coding_coverage	11317466
 514	non_ref_coding_length	30481746
-514	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+514	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking" => "soft"}
 514	non_ref_genome_coverage	13407279
 514	non_ref_genome_length	1511717716
 514	num_blocks	160092
@@ -768,7 +768,7 @@
 514	reference_species	tetraodon_nigroviridis
 514	ref_coding_coverage	15706036
 514	ref_coding_length	30080167
-514	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 1000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+514	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 1000, 'group_set_size' => 100000000, "masking" => "soft"}
 514	ref_genome_coverage	18812855
 514	ref_genome_length	358618246
 515	ensembl_release	62
@@ -776,7 +776,7 @@
 515	non_reference_species	xenopus_tropicalis
 515	non_ref_coding_coverage	15171298
 515	non_ref_coding_length	30481746
-515	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+515	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking" => "soft"}
 515	non_ref_genome_coverage	21076422
 515	non_ref_genome_length	1511717716
 515	num_blocks	231313
@@ -792,7 +792,7 @@
 516	non_reference_species	xenopus_tropicalis
 516	non_ref_coding_coverage	12551899
 516	non_ref_coding_length	30481746
-516	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+516	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking" => "soft"}
 516	non_ref_genome_coverage	15502688
 516	non_ref_genome_length	1511717716
 516	num_blocks	191372
@@ -800,7 +800,7 @@
 516	reference_species	danio_rerio
 516	ref_coding_coverage	18218244
 516	ref_coding_length	39233654
-516	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 1000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+516	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 1000, 'group_set_size' => 100000000, "masking" => "soft"}
 516	ref_genome_coverage	22762917
 516	ref_genome_length	1412464843
 521	ensembl_release	63
@@ -808,7 +808,7 @@
 521	non_reference_species	myotis_lucifugus
 521	non_ref_coding_coverage	27544809
 521	non_ref_coding_length	30512546
-521	non_ref_dna_collection	{'chunk_size' => 10010000, 'overlap' => 10000, 'group_set_size' => 10010000, "masking_options" => "{default_soft_masking => 1}"}
+521	non_ref_dna_collection	{'chunk_size' => 10010000, 'overlap' => 10000, 'group_set_size' => 10010000, "masking" => "soft"}
 521	non_ref_genome_coverage	1117054385
 521	non_ref_genome_length	2034575300
 521	num_blocks	1815112
@@ -828,7 +828,7 @@
 530	non_reference_species	petromyzon_marinus
 530	non_ref_coding_coverage	4885202
 530	non_ref_coding_length	12529983
-530	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+530	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 530	non_ref_genome_coverage	6165845
 530	non_ref_genome_length	885534757
 530	num_blocks	98200
@@ -836,7 +836,7 @@
 530	reference_species	danio_rerio
 530	ref_coding_coverage	9817254
 530	ref_coding_length	39233654
-530	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+530	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 530	ref_genome_coverage	11361854
 530	ref_genome_length	1412464843
 531	ensembl_release	64
@@ -844,7 +844,7 @@
 531	non_reference_species	petromyzon_marinus
 531	non_ref_coding_coverage	4872531
 531	non_ref_coding_length	12529983
-531	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+531	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 531	non_ref_genome_coverage	6119830
 531	non_ref_genome_length	885534757
 531	num_blocks	95165
@@ -852,7 +852,7 @@
 531	reference_species	gasterosteus_aculeatus
 531	ref_coding_coverage	9484499
 531	ref_coding_length	32649418
-531	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+531	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 531	ref_genome_coverage	10687539
 531	ref_genome_length	461533448
 534	ensembl_release	64
@@ -860,7 +860,7 @@
 534	non_reference_species	bos_taurus
 534	non_ref_coding_coverage	30460957
 534	non_ref_coding_length	32345388
-534	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+534	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 534	non_ref_genome_coverage	1322460687
 534	non_ref_genome_length	2670422299
 534	num_blocks	2240708
@@ -876,7 +876,7 @@
 535	non_reference_species	sarcophilus_harrisii
 535	non_ref_coding_coverage	25035283
 535	non_ref_coding_length	29265941
-535	non_ref_dna_collection	{'chunk_size' => 10010000, 'overlap' => 10000, 'group_set_size' => 10010000, "masking_options" => "{default_soft_masking => 1}"}
+535	non_ref_dna_collection	{'chunk_size' => 10010000, 'overlap' => 10000, 'group_set_size' => 10010000, "masking" => "soft"}
 535	non_ref_genome_coverage	212567312
 535	non_ref_genome_length	3174693010
 535	num_blocks	579816
@@ -892,7 +892,7 @@
 539	non_reference_species	petromyzon_marinus
 539	non_ref_coding_coverage	4808238
 539	non_ref_coding_length	12529983
-539	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+539	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 1000, 'group_set_size' => 10000000, "masking" => "soft"}
 539	non_ref_genome_coverage	6053336
 539	non_ref_genome_length	885534757
 539	num_blocks	95999
@@ -908,7 +908,7 @@
 544	non_reference_species	sarcophilus_harrisii
 544	non_ref_coding_coverage	26901050
 544	non_ref_coding_length	29265941
-544	non_ref_dna_collection	{'chunk_size' => 10010000, 'overlap' => 10000, 'group_set_size' => 10010000, "masking_options" => "{default_soft_masking => 1}"}
+544	non_ref_dna_collection	{'chunk_size' => 10010000, 'overlap' => 10000, 'group_set_size' => 10010000, "masking" => "soft"}
 544	non_ref_genome_coverage	1587580726
 544	non_ref_genome_length	3174693010
 544	num_blocks	2775298
@@ -916,7 +916,7 @@
 544	reference_species	monodelphis_domestica
 544	ref_coding_coverage	30251863
 544	ref_coding_length	31790129
-544	ref_dna_collection	{'chunk_size' => 10000000, 'overlap' => 0, 'group_set_size' => 10010000, "masking_options" => "{default_soft_masking => 1}"}
+544	ref_dna_collection	{'chunk_size' => 10000000, 'overlap' => 0, 'group_set_size' => 10010000, "masking" => "soft"}
 544	ref_genome_coverage	1703326007
 544	ref_genome_length	3605631728
 545	ensembl_release	65
@@ -924,7 +924,7 @@
 545	non_reference_species	otolemur_garnettii
 545	non_ref_coding_coverage	30036055
 545	non_ref_coding_length	31659618
-545	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+545	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 545	non_ref_genome_coverage	1461710533
 545	non_ref_genome_length	2519404493
 545	num_blocks	2087975
@@ -942,7 +942,7 @@
 549	non_reference_species	gadus_morhua
 549	non_ref_coding_coverage	11492648
 549	non_ref_coding_length	29438356
-549	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+549	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 549	non_ref_genome_coverage	14044746
 549	non_ref_genome_length	832114588
 549	num_blocks	176221
@@ -958,7 +958,7 @@
 552	non_reference_species	gadus_morhua
 552	non_ref_coding_coverage	21198260
 552	non_ref_coding_length	29438356
-552	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+552	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 552	non_ref_genome_coverage	42311150
 552	non_ref_genome_length	832114588
 552	num_blocks	297047
@@ -966,7 +966,7 @@
 552	reference_species	danio_rerio
 552	ref_coding_coverage	28952841
 552	ref_coding_length	39233654
-552	ref_dna_collection	{'chunk_size' => 10000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+552	ref_dna_collection	{'chunk_size' => 10000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 552	ref_genome_coverage	61539380
 552	ref_genome_length	1412464843
 555	ensembl_release	64
@@ -974,7 +974,7 @@
 555	non_reference_species	gadus_morhua
 555	non_ref_coding_coverage	24999993
 555	non_ref_coding_length	29438356
-555	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+555	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 555	non_ref_genome_coverage	74852387
 555	non_ref_genome_length	832114588
 555	num_blocks	300871
@@ -982,7 +982,7 @@
 555	reference_species	gasterosteus_aculeatus
 555	ref_coding_coverage	28382247
 555	ref_coding_length	32649418
-555	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+555	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 555	ref_genome_coverage	81103068
 555	ref_genome_length	461533448
 557	ensembl_release	66
@@ -990,7 +990,7 @@
 557	non_reference_species	pongo_abelii
 557	non_ref_coding_coverage	29328319
 557	non_ref_coding_length	29861178
-557	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+557	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 557	non_ref_genome_coverage	2568389383
 557	non_ref_genome_length	3446771396
 557	num_blocks	548320
@@ -998,7 +998,7 @@
 557	reference_species	homo_sapiens
 557	ref_coding_coverage	34234104
 557	ref_coding_length	35155918
-557	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+557	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 557	ref_genome_coverage	2648804974
 557	ref_genome_length	3098825702
 558	ensembl_release	66
@@ -1006,7 +1006,7 @@
 558	non_reference_species	macaca_mulatta
 558	non_ref_coding_coverage	31439511
 558	non_ref_coding_length	32460852
-558	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+558	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 558	non_ref_genome_coverage	2396889275
 558	non_ref_genome_length	3097179960
 558	num_blocks	827617
@@ -1014,7 +1014,7 @@
 558	reference_species	homo_sapiens
 558	ref_coding_coverage	34311918
 558	ref_coding_length	35155918
-558	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+558	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 558	ref_genome_coverage	2485339367
 558	ref_genome_length	3098825702
 559	ensembl_release	66
@@ -1022,7 +1022,7 @@
 559	non_reference_species	pan_troglodytes
 559	non_ref_coding_coverage	30022305
 559	non_ref_coding_length	30298498
-559	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+559	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 559	non_ref_genome_coverage	2687114585
 559	non_ref_genome_length	3309561368
 559	num_blocks	286994
@@ -1030,7 +1030,7 @@
 559	reference_species	homo_sapiens
 559	ref_coding_coverage	34273542
 559	ref_coding_length	35155918
-559	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+559	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 559	ref_genome_coverage	2744398922
 559	ref_genome_length	3098825702
 560	ensembl_release	66
@@ -1038,7 +1038,7 @@
 560	non_reference_species	gorilla_gorilla
 560	non_ref_coding_coverage	32151459
 560	non_ref_coding_length	32494329
-560	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+560	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 560	non_ref_genome_coverage	2515222201
 560	non_ref_genome_length	3040677044
 560	num_blocks	459184
@@ -1046,7 +1046,7 @@
 560	reference_species	homo_sapiens
 560	ref_coding_coverage	33903612
 560	ref_coding_length	35155918
-560	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+560	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 560	ref_genome_coverage	2591130341
 560	ref_genome_length	3098825702
 561	ensembl_release	66
@@ -1054,7 +1054,7 @@
 561	non_reference_species	nomascus_leucogenys
 561	non_ref_coding_coverage	29635696
 561	non_ref_coding_length	29936644
-561	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+561	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 561	non_ref_genome_coverage	2463035754
 561	non_ref_genome_length	2936035333
 561	num_blocks	544826
@@ -1062,7 +1062,7 @@
 561	reference_species	homo_sapiens
 561	ref_coding_coverage	33706188
 561	ref_coding_length	35155918
-561	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+561	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 561	ref_genome_coverage	2554803234
 561	ref_genome_length	3098825702
 562	ensembl_release	66
@@ -1070,7 +1070,7 @@
 562	non_reference_species	callithrix_jacchus
 562	non_ref_coding_coverage	31559150
 562	non_ref_coding_length	33607040
-562	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+562	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 562	non_ref_genome_coverage	2044784192
 562	non_ref_genome_length	2914958544
 562	num_blocks	1419752
@@ -1078,7 +1078,7 @@
 562	reference_species	homo_sapiens
 562	ref_coding_coverage	33878006
 562	ref_coding_length	35155918
-562	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+562	ref_dna_collection	{'chunk_size' => 30000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 562	ref_genome_coverage	2139093306
 562	ref_genome_length	3098825702
 563	ensembl_release	66
@@ -1099,7 +1099,7 @@
 565	non_reference_species	ciona_intestinalis
 565	non_ref_coding_coverage	2495626
 565	non_ref_coding_length	16105584
-565	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+565	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 565	non_ref_genome_coverage	3040510
 565	non_ref_genome_length	115212710
 565	num_blocks	66602
@@ -1107,7 +1107,7 @@
 565	reference_species	danio_rerio
 565	ref_coding_coverage	4919719
 565	ref_coding_length	39233654
-565	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+565	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 565	ref_genome_coverage	6426590
 565	ref_genome_length	1412464843
 566	ensembl_release	66
@@ -1115,7 +1115,7 @@
 566	non_reference_species	petromyzon_marinus
 566	non_ref_coding_coverage	1446566
 566	non_ref_coding_length	12529983
-566	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+566	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 566	non_ref_genome_coverage	1690084
 566	non_ref_genome_length	885534757
 566	num_blocks	19086
@@ -1123,7 +1123,7 @@
 566	reference_species	ciona_intestinalis
 566	ref_coding_coverage	1652260
 566	ref_coding_length	16105584
-566	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+566	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 566	ref_genome_coverage	1972171
 566	ref_genome_length	115212710
 567	ensembl_release	66
@@ -1131,7 +1131,7 @@
 567	non_reference_species	latimeria_chalumnae
 567	non_ref_coding_coverage	15426997
 567	non_ref_coding_length	30054956
-567	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+567	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 567	non_ref_genome_coverage	21792485
 567	non_ref_genome_length	2860591921
 567	num_blocks	218662
@@ -1139,7 +1139,7 @@
 567	reference_species	xenopus_tropicalis
 567	ref_coding_coverage	17483896
 567	ref_coding_length	30481746
-567	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+567	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 567	ref_genome_coverage	26914896
 567	ref_genome_length	1511717716
 568	ensembl_release	66
@@ -1147,7 +1147,7 @@
 568	non_reference_species	latimeria_chalumnae
 568	non_ref_coding_coverage	14175105
 568	non_ref_coding_length	30054956
-568	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+568	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 568	non_ref_genome_coverage	18289488
 568	non_ref_genome_length	2860591921
 568	num_blocks	218173
@@ -1155,7 +1155,7 @@
 568	reference_species	danio_rerio
 568	ref_coding_coverage	19977213
 568	ref_coding_length	39233654
-568	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking_options" => "{default_soft_masking => 1}"}
+568	ref_dna_collection	{'chunk_size' => 1000000, 'overlap' => 10000, 'group_set_size' => 100000000, "masking" => "soft"}
 568	ref_genome_coverage	25376613
 568	ref_genome_length	1412464843
 569	ensembl_release	66
@@ -1163,7 +1163,7 @@
 569	non_reference_species	ciona_savignyi
 569	non_ref_coding_coverage	11092442
 569	non_ref_coding_length	13806906
-569	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking_options" => "{default_soft_masking => 1}"}
+569	non_ref_dna_collection	{'chunk_size' => 10100000, 'overlap' => 100000, 'group_set_size' => 10100000, "masking" => "soft"}
 569	non_ref_genome_coverage	34534266
 569	non_ref_genome_length	176989013
 569	num_blocks	122740
@@ -1171,7 +1171,7 @@
 569	reference_species	ciona_intestinalis
 569	ref_coding_coverage	13625889
 569	ref_coding_length	16105584
-569	ref_dna_collection	{'chunk_size' => 10000000, 'overlap' => 0, 'group_set_size' => 0, "masking_options" => "{default_soft_masking => 1}"}
+569	ref_dna_collection	{'chunk_size' => 10000000, 'overlap' => 0, 'group_set_size' => 0, "masking" => "soft"}
 569	ref_genome_coverage	36485577
 569	ref_genome_length	115212710
 570	ensembl_release	66
@@ -1179,7 +1179,7 @@
 570	non_reference_species	ciona_intestinalis
 570	non_ref_coding_coverage	2479114
 570	non_ref_coding_length	16105584
-570	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+570	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 570	non_ref_genome_coverage	2957446
 570	non_ref_genome_length	115212710
 570	num_blocks	55364
@@ -1195,7 +1195,7 @@
 571	non_reference_species	latimeria_chalumnae
 571	non_ref_coding_coverage	15730555
 571	non_ref_coding_length	30054956
-571	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+571	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 571	non_ref_genome_coverage	23627954
 571	non_ref_genome_length	2860591921
 571	num_blocks	251730
@@ -1211,7 +1211,7 @@
 572	non_reference_species	latimeria_chalumnae
 572	non_ref_coding_coverage	13455982
 572	non_ref_coding_length	30054956
-572	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking_options" => "{default_soft_masking => 1}"}
+572	non_ref_dna_collection	{'chunk_size' => 25000, 'overlap' => 10000, 'group_set_size' => 10000000, "masking" => "soft"}
 572	non_ref_genome_coverage	17476735
 572	non_ref_genome_length	2860591921
 572	num_blocks	242663
@@ -1227,7 +1227,7 @@
 573	non_reference_species	oreochromis_niloticus
 573	non_ref_coding_coverage	13865296
 573	non_ref_coding_length	37304121
-573	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+573	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking" => "soft","overlap" => 10000}
 573	non_ref_genome_coverage	16262654
 573	non_ref_genome_length	927383394
 573	num_blocks	197965
@@ -1243,7 +1243,7 @@
 574	non_reference_species	oreochromis_niloticus
 574	non_ref_coding_coverage	21585784
 574	non_ref_coding_length	37304121
-574	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+574	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking" => "soft","overlap" => 10000}
 574	non_ref_genome_coverage	29941745
 574	non_ref_genome_length	927383394
 574	num_blocks	363747
@@ -1251,7 +1251,7 @@
 574	reference_species	danio_rerio
 574	ref_coding_coverage	24939691
 574	ref_coding_length	39233654
-574	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch101/ensembl/kb3/pair_aligner/dna_files/release_67//130_110/danio_rerio","group_set_size" => 100000000,"include_non_reference" => 0,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+574	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch101/ensembl/kb3/pair_aligner/dna_files/release_67//130_110/danio_rerio","group_set_size" => 100000000,"include_non_reference" => 0,"masking" => "soft","overlap" => 10000}
 574	ref_genome_coverage	38276515
 574	ref_genome_length	1412464843
 576	ensembl_release	67
@@ -1259,7 +1259,7 @@
 576	non_reference_species	ictidomys_tridecemlineatus
 576	non_ref_coding_coverage	27433177
 576	non_ref_coding_length	28885868
-576	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+576	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 576	non_ref_genome_coverage	1379279831
 576	non_ref_genome_length	2478393770
 576	num_blocks	1977251
@@ -1275,7 +1275,7 @@
 577	non_reference_species	sus_scrofa
 577	non_ref_coding_coverage	26229955
 577	non_ref_coding_length	29803039
-577	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+577	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 577	non_ref_genome_coverage	1283884603
 577	non_ref_genome_length	2808526148
 577	num_blocks	2109059
@@ -1291,7 +1291,7 @@
 579	non_reference_species	bos_taurus
 579	non_ref_coding_coverage	28176193
 579	non_ref_coding_length	32345388
-579	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+579	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 579	non_ref_genome_coverage	1386079210
 579	non_ref_genome_length	2670422299
 579	num_blocks	2703457
@@ -1299,7 +1299,7 @@
 579	reference_species	sus_scrofa
 579	ref_coding_coverage	29449193
 579	ref_coding_length	29803039
-579	ref_dna_collection	{"chunk_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+579	ref_dna_collection	{"chunk_size" => 10000000,"masking" => "soft","overlap" => 0}
 579	ref_genome_coverage	1645352463
 579	ref_genome_length	2808526148
 50026	msa_mlss_id	505
@@ -1309,7 +1309,7 @@
 584	non_reference_species	sus_scrofa
 584	non_ref_coding_coverage	25797254
 584	non_ref_coding_length	29803039
-584	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+584	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 584	non_ref_genome_coverage	692578776
 584	non_ref_genome_length	2808526148
 584	num_blocks	1170013
@@ -1317,7 +1317,7 @@
 584	reference_species	mus_musculus
 584	ref_coding_coverage	32803680
 584	ref_coding_length	35974797
-584	ref_dna_collection	{"chunk_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+584	ref_dna_collection	{"chunk_size" => 10000000,"masking" => "soft","overlap" => 0}
 584	ref_genome_coverage	703605972
 584	ref_genome_length	2730871774
 585	ensembl_release	68
@@ -1325,7 +1325,7 @@
 585	non_reference_species	rattus_norvegicus
 585	non_ref_coding_coverage	31824259
 585	non_ref_coding_length	33849387
-585	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+585	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 585	non_ref_genome_coverage	1721297258
 585	non_ref_genome_length	2718897334
 585	num_blocks	1825207
@@ -1333,7 +1333,7 @@
 585	reference_species	mus_musculus
 585	ref_coding_coverage	34821061
 585	ref_coding_length	35974797
-585	ref_dna_collection	{"chunk_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+585	ref_dna_collection	{"chunk_size" => 10000000,"masking" => "soft","overlap" => 0}
 585	ref_genome_coverage	1869651590
 585	ref_genome_length	2730871774
 586	ensembl_release	68
@@ -1341,7 +1341,7 @@
 586	non_reference_species	bos_taurus
 586	non_ref_coding_coverage	30088889
 586	non_ref_coding_length	32345388
-586	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+586	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 586	non_ref_genome_coverage	709379271
 586	non_ref_genome_length	2670422299
 586	num_blocks	1194781
@@ -1349,7 +1349,7 @@
 586	reference_species	mus_musculus
 586	ref_coding_coverage	34358705
 586	ref_coding_length	35974797
-586	ref_dna_collection	{"chunk_size" => 30000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+586	ref_dna_collection	{"chunk_size" => 30000000,"masking" => "soft","overlap" => 0}
 586	ref_genome_coverage	718099911
 586	ref_genome_length	2730871774
 587	ensembl_release	68
@@ -1357,7 +1357,7 @@
 587	non_reference_species	ornithorhynchus_anatinus
 587	non_ref_coding_coverage	18192785
 587	non_ref_coding_length	22999611
-587	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+587	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 587	non_ref_genome_coverage	77217513
 587	non_ref_genome_length	2073148626
 587	num_blocks	322976
@@ -1365,7 +1365,7 @@
 587	reference_species	mus_musculus
 587	ref_coding_coverage	27275608
 587	ref_coding_length	35974797
-587	ref_dna_collection	{"chunk_size" => 30000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+587	ref_dna_collection	{"chunk_size" => 30000000,"masking" => "soft","overlap" => 0}
 587	ref_genome_coverage	91053706
 587	ref_genome_length	2730871774
 588	ensembl_release	68
@@ -1373,7 +1373,7 @@
 588	non_reference_species	gallus_gallus
 588	non_ref_coding_coverage	19779492
 588	non_ref_coding_length	24644731
-588	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+588	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 588	non_ref_genome_coverage	51889562
 588	non_ref_genome_length	1100480441
 588	num_blocks	264786
@@ -1381,7 +1381,7 @@
 588	reference_species	mus_musculus
 588	ref_coding_coverage	25652704
 588	ref_coding_length	35974797
-588	ref_dna_collection	{"chunk_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+588	ref_dna_collection	{"chunk_size" => 10000000,"masking" => "soft","overlap" => 0}
 588	ref_genome_coverage	65496943
 588	ref_genome_length	2730871774
 589	ensembl_release	68
@@ -1389,7 +1389,7 @@
 589	non_reference_species	danio_rerio
 589	non_ref_coding_coverage	13333410
 589	non_ref_coding_length	39233654
-589	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+589	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking" => "soft","overlap" => 10000}
 589	non_ref_genome_coverage	16042571
 589	non_ref_genome_length	1412464843
 589	num_blocks	197907
@@ -1397,7 +1397,7 @@
 589	reference_species	mus_musculus
 589	ref_coding_coverage	15554120
 589	ref_coding_length	35974797
-589	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch109/ensembl/kb3/pair_aligner/dna_files/release_68//134_110/mus_musculus","group_set_size" => 100000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+589	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch109/ensembl/kb3/pair_aligner/dna_files/release_68//134_110/mus_musculus","group_set_size" => 100000000,"masking" => "soft","overlap" => 10000}
 589	ref_genome_coverage	21453014
 589	ref_genome_length	2730871774
 590	ensembl_release	68
@@ -1405,7 +1405,7 @@
 590	non_reference_species	ciona_intestinalis
 590	non_ref_coding_coverage	2479678
 590	non_ref_coding_length	16105584
-590	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+590	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking" => "soft","overlap" => 10000}
 590	non_ref_genome_coverage	2944576
 590	non_ref_genome_length	115212710
 590	num_blocks	56875
@@ -1413,7 +1413,7 @@
 590	reference_species	mus_musculus
 590	ref_coding_coverage	4123636
 590	ref_coding_length	35974797
-590	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch109/ensembl/kb3/pair_aligner/dna_files/release_68//134_128/mus_musculus","group_set_size" => 100000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+590	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch109/ensembl/kb3/pair_aligner/dna_files/release_68//134_128/mus_musculus","group_set_size" => 100000000,"masking" => "soft","overlap" => 10000}
 590	ref_genome_coverage	6120741
 590	ref_genome_length	2730871774
 591	ensembl_release	68
@@ -1421,7 +1421,7 @@
 591	non_reference_species	xenopus_tropicalis
 591	non_ref_coding_coverage	15285652
 591	non_ref_coding_length	30481746
-591	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+591	non_ref_dna_collection	{"chunk_size" => 25000,"group_set_size" => 10000000,"masking" => "soft","overlap" => 10000}
 591	non_ref_genome_coverage	20488658
 591	non_ref_genome_length	1511717716
 591	num_blocks	232673
@@ -1429,7 +1429,7 @@
 591	reference_species	mus_musculus
 591	ref_coding_coverage	18300150
 591	ref_coding_length	35974797
-591	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch101/ensembl/sf5/pair_aligner/dna_files/release_68//134_116/mus_musculus","group_set_size" => 100000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 10000}
+591	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch101/ensembl/sf5/pair_aligner/dna_files/release_68//134_116/mus_musculus","group_set_size" => 100000000,"masking" => "soft","overlap" => 10000}
 591	ref_genome_coverage	26890838
 591	ref_genome_length	2730871774
 592	ensembl_release	68
@@ -1437,7 +1437,7 @@
 592	non_reference_species	canis_familiaris
 592	non_ref_coding_coverage	30752814
 592	non_ref_coding_length	33003419
-592	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+592	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 592	non_ref_genome_coverage	792163401
 592	non_ref_genome_length	2410960148
 592	num_blocks	1249618
@@ -1445,7 +1445,7 @@
 592	reference_species	mus_musculus
 592	ref_coding_coverage	33986568
 592	ref_coding_length	35974797
-592	ref_dna_collection	{"chunk_size" => 30000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+592	ref_dna_collection	{"chunk_size" => 30000000,"masking" => "soft","overlap" => 0}
 592	ref_genome_coverage	796463525
 592	ref_genome_length	2730871774
 593	ensembl_release	68
@@ -1453,7 +1453,7 @@
 593	non_reference_species	equus_caballus
 593	non_ref_coding_coverage	28524367
 593	non_ref_coding_length	31514871
-593	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+593	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 593	non_ref_genome_coverage	1722762014
 593	non_ref_genome_length	2474912402
 593	num_blocks	1952527
@@ -1461,7 +1461,7 @@
 593	reference_species	canis_familiaris
 593	ref_coding_coverage	31932318
 593	ref_coding_length	33003419
-593	ref_dna_collection	{"chunk_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+593	ref_dna_collection	{"chunk_size" => 10000000,"masking" => "soft","overlap" => 0}
 593	ref_genome_coverage	1757178433
 593	ref_genome_length	2410960148
 594	ensembl_release	68
@@ -1469,7 +1469,7 @@
 594	non_reference_species	ailuropoda_melanoleuca
 594	non_ref_coding_coverage	30363496
 594	non_ref_coding_length	31119599
-594	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+594	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 594	non_ref_genome_coverage	1917324632
 594	non_ref_genome_length	2299492210
 594	num_blocks	1756681
@@ -1477,7 +1477,7 @@
 594	reference_species	canis_familiaris
 594	ref_coding_coverage	32471275
 594	ref_coding_length	33003419
-594	ref_dna_collection	{"chunk_size" => 30000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+594	ref_dna_collection	{"chunk_size" => 30000000,"masking" => "soft","overlap" => 0}
 594	ref_genome_coverage	1961177368
 594	ref_genome_length	2410960148
 601	ensembl_release	68
@@ -1485,7 +1485,7 @@
 601	non_reference_species	mus_musculus
 601	non_ref_coding_coverage	31891046
 601	non_ref_coding_length	35974797
-601	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+601	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 601	non_ref_genome_coverage	898566184
 601	non_ref_genome_length	2730871774
 601	num_blocks	1488960
@@ -1501,7 +1501,7 @@
 602	non_reference_species	canis_familiaris
 602	non_ref_coding_coverage	31411406
 602	non_ref_coding_length	33003419
-602	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+602	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 602	non_ref_genome_coverage	1454540548
 602	non_ref_genome_length	2410960148
 602	num_blocks	2113078
@@ -1517,7 +1517,7 @@
 603	non_reference_species	pelodiscus_sinensis
 603	non_ref_coding_coverage	21956801
 603	non_ref_coding_length	28388868
-603	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+603	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 603	non_ref_genome_coverage	82037120
 603	non_ref_genome_length	2202483752
 603	num_blocks	337210
@@ -1533,7 +1533,7 @@
 596	non_reference_species	pelodiscus_sinensis
 596	non_ref_coding_coverage	21308991
 596	non_ref_coding_length	28388868
-596	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+596	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 596	non_ref_genome_coverage	99748679
 596	non_ref_genome_length	2202483752
 596	num_blocks	721612
@@ -1541,21 +1541,21 @@
 596	reference_species	anolis_carolinensis
 596	ref_coding_coverage	23688760
 596	ref_coding_length	27370256
-596	ref_dna_collection	{"chunk_size" => 10000000,"masking_options" => "{default_soft_masking => 1}","overlap" => 0}
+596	ref_dna_collection	{"chunk_size" => 10000000,"masking" => "soft","overlap" => 0}
 596	ref_genome_coverage	196655651
 596	ref_genome_length	1799143587
-384	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+384	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 384	param	T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac
-384	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking_options" => "{default_soft_masking => 1}","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
-390	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+384	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking" => "soft","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
+390	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 390	param	T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac
-390	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking_options" => "{default_soft_masking => 1}","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
-393	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+390	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking" => "soft","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
+393	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 393	param	T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac
-393	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking_options" => "{default_soft_masking => 1}","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
-405	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+393	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking" => "soft","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
+405	non_ref_dna_collection	{"chunk_size" => 10100000,"collection_name" => "sus_scrofa all","genome_db_id" => 132,"genome_name_assembly" => "sus_scrofa:Sscrofa10.2","group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 405	param	T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac
-405	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking_options" => "{default_soft_masking => 1}","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
+405	ref_dna_collection	{"chunk_size" => 30000000,"collection_name" => "homo_sapiens mammal","genome_db_id" => 90,"genome_name_assembly" => "homo_sapiens:GRCh37","include_non_reference" => 1,"masking" => "soft","masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0,"region" => "chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1"}
 597	max_align	999925
 597	species_tree	((((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.1242,Taeniopygia_guttata:0.1715):0.1992,Anolis_carolinensis:0.4892):0.1051,((((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.2567,Oryctolagus_cuniculus:0.2157):0.0153,(((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0143,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0891):0.0206,((Equus_caballus:0.1094,Canis_familiaris:0.1523):0.0107,(Sus_scrofa:0.0790,Bos_taurus:0.1689):0.0202):0.0329):0.2584,Monodelphis_domestica:0.3408):0.0717,Ornithorhynchus_anatinus:0.4566):0.1095):0;
 50039	msa_mlss_id	597

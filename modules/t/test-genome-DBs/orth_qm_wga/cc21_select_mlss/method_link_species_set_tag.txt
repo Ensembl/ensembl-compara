@@ -5,7 +5,7 @@
 719	max_align	17175
 719	non_reference_species	gallus_gallus
 719	non_ref_coding_exon_length	25934237
-719	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking_options" => "{default_soft_masking => 1}","overlap" => 100000}
+719	non_ref_dna_collection	{"chunk_size" => 10100000,"group_set_size" => 10100000,"masking" => "soft","overlap" => 100000}
 719	non_ref_genome_coverage	66421503
 719	non_ref_genome_length	1046932099
 719	non_ref_insertions	240824

@@ -72,20 +72,20 @@ CREATE TABLE dnafrag_chunk_set (
 -- overview: The dna_collection table is
 --           linked to the dnafrag_chunk_set table and the dnafrag_chunk_set table is linked to the
 --           dnafrag_chunk table. The dna_collection table holds information relevant to all the
---           the underlying dnafrag_chunks ie dump_loc and masking_options. The description field is a unique
+--           the underlying dnafrag_chunks ie dump_loc and masking. The description field is a unique
 --           identifier and is used to retrieve a specific dna_collection since this is known prior
 --           to storage.
 -- semantics:
 --   dna_collection_id   - primary key
 --   description         - unique description of collection
 --   dump_loc            - directory path to dump files
---   masking_options     - masking options
+--   masking             - masking mode (NULL, "soft" or "hard)
 
 CREATE TABLE dna_collection (
  dna_collection_id       int(10) NOT NULL auto_increment,
  description             varchar(255),
  dump_loc                varchar(255),
- masking_options         mediumtext,
+ masking                 varchar(4),
 
  PRIMARY KEY (dna_collection_id),
  UNIQUE (description)

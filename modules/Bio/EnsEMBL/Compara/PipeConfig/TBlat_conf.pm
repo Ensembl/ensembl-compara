@@ -78,12 +78,12 @@ sub default_options {
                     'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
                     # if you have a specific selection of repeat elements for the masking
                     #non-human
-                    'masking_options' => '{default_soft_masking => 1}',
+                    'masking'         => 'soft',
                 },
                 'non_reference' => {'chunk_size'      => 25000,
                     'group_set_size'  => 10000000,
                     'overlap'         => 10000,
-                    'masking_options' => '{default_soft_masking => 1}'
+                    'masking'         => 'soft',
                 },
             },
 

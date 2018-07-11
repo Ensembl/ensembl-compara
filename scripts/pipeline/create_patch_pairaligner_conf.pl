@@ -204,7 +204,8 @@ my $dna_collection;
 %{$dna_collection->{homo_sapiens_exception}} = ('chunk_size' => 30000000,
 					      'overlap'    => 0,
 					      'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
-					      'masking_options' => '"{default_soft_masking => 1}"');
+					      'masking'    => 'soft',
+                                          );
 
 %{$dna_collection->{homo_sapiens_mammal}} = ('chunk_size' => 30000000,
 					     'overlap'    => 0,
@@ -215,25 +216,29 @@ my $dna_collection;
 %{$dna_collection->{mus_musculus_exception}} = ('chunk_size' => 30000000,
 					      'overlap'    => 0,
 					      'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
-					      'masking_options' => '"{default_soft_masking => 1}"');
+					      'masking'    => 'soft',
+                                          );
 
 %{$dna_collection->{mus_musculus_mammal}} = ('chunk_size' => 30000000,
 					     'overlap'    => 0,
 					     'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
-					     'masking_options' => '"{default_soft_masking => 1}"');
+					     'masking'    => 'soft',
+                                         );
 
 
 %{$dna_collection->{exception}} = ('chunk_size' => 10100000,
                                    'group_set_size' => 10100000,
                                    'overlap' => 100000,
                                    'include_non_reference' => ($patched_species_is_alignment_reference ? 0 : 1), # when the patched species is not the reference
-                                   'masking_options' => '"{default_soft_masking => 1}"');
+                                   'masking' => 'soft',
+                               );
 
 %{$dna_collection->{mammal}} = ('chunk_size' => 10100000,
 				'group_set_size' => 10100000,
 				'overlap' => 100000,
                                 'include_non_reference' => ($patched_species_is_alignment_reference ? 0 : 1), # when the patched species is not the reference
-				'masking_options' => '"{default_soft_masking => 1}"');
+				'masking' => 'soft',
+                            );
 
 my $pair_aligner;
 
@@ -307,7 +312,7 @@ if ($print_dna_collection) {
     print " 'chunk_size'            => " . $dna_collection->{$ref_exception}{'chunk_size'} . ",\n";
     print " 'overlap'               => " . $dna_collection->{$ref_exception}{'overlap'} . ",\n";
     print " 'include_non_reference' => " . $dna_collection->{$ref_exception}{'include_non_reference'} . ",\n";  
-    print " 'masking_options'       => " . $dna_collection->{$ref_exception}{'masking_options'} . "\n";
+    print " 'masking'               => " . $dna_collection->{$ref_exception}{'masking'} . "\n";
     print "},\n";
 
     #ref_species (mammals options)
@@ -319,7 +324,7 @@ if ($print_dna_collection) {
     print " 'chunk_size'            => " . $dna_collection->{$ref_mammal}{'chunk_size'} . ",\n";
     print " 'overlap'               => " . $dna_collection->{$ref_mammal}{'overlap'} . ",\n";
     print " 'include_non_reference' => " . $dna_collection->{$ref_mammal}{'include_non_reference'} . ",\n";  
-        print " 'masking_options'       => " . $dna_collection->{$ref_exception}{'masking_options'} . "\n";
+    print " 'masking'               => " . $dna_collection->{$ref_exception}{'masking'} . "\n";
     print "},\n";
 
     #Exceptions (primates)
@@ -333,7 +338,7 @@ if ($print_dna_collection) {
 	print " 'chunk_size'           => " . $dna_collection->{exception}{'chunk_size'} . ",\n";
 	print " 'group_set_size'       => " . $dna_collection->{exception}{'group_set_size'} . ",\n";
 	print " 'overlap'              => " . $dna_collection->{exception}{'overlap'} . ",\n";
-	print " 'masking_options'      => " . $dna_collection->{exception}{'masking_options'} . ",\n";
+	print " 'masking'              => " . $dna_collection->{exception}{'masking'} . ",\n";
 	print "},\n";
     }
 
@@ -348,7 +353,7 @@ if ($print_dna_collection) {
 	print " 'chunk_size'           => " . $dna_collection->{mammal}{'chunk_size'} . ",\n";
 	print " 'group_set_size'       => " . $dna_collection->{mammal}{'group_set_size'} . ",\n";
 	print " 'overlap'              => " . $dna_collection->{mammal}{'overlap'} . ",\n";
-	print " 'masking_options'      => " . $dna_collection->{mammal}{'masking_options'} . ",\n";
+	print " 'masking'              => " . $dna_collection->{mammal}{'masking'} . ",\n";
         if ($dna_collection->{mammal}{'include_non_reference'}) {
             print " 'include_non_reference' => " . $dna_collection->{mammal}{'include_non_reference'} . ",\n";  
         }

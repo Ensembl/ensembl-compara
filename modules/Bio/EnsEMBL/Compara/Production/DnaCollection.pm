@@ -62,11 +62,11 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($description, $dump_loc, $masking_options) = rearrange([qw(DESCRIPTION DUMP_LOC MASKING_OPTIONS)], @args);
+    my ($description, $dump_loc, $masking) = rearrange([qw(DESCRIPTION DUMP_LOC MASKING)], @args);
 
     $self->description($description)         if($description);
     $self->dump_loc($dump_loc)               if($dump_loc);
-    $self->masking_options($masking_options) if($masking_options);
+    $self->masking($masking)                 if($masking);
   }
 
   return $self;
@@ -106,9 +106,9 @@ sub dump_loc {
   return $self->{'_dump_loc'};
 }
 
-=head2 masking_options
+=head2 masking
 
-  Arg [1]    : string $masking_options (optional)
+  Arg [1]    : string $masking(optional)
   Example    :
   Description:
   Returntype : string
@@ -117,10 +117,10 @@ sub dump_loc {
 
 =cut
 
-sub masking_options {
+sub masking {
   my $self = shift;
-  $self->{'_masking_options'} = shift if(@_);
-  return $self->{'_masking_options'};
+  $self->{'_masking'} = shift if(@_);
+  return $self->{'_masking'};
 }
 
 

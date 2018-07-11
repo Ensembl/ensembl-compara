@@ -33,8 +33,7 @@ our $verbose = 1;
 my $description = "homo_sapiens raw";
 my $dbid = 2;
 my $dump_loc = "/lustre/scratch109/ensembl/kb3/scratch/t/Production";
-my $masking_options_default = "{default_soft_masking => 1}";
-my $masking_options_human = '{"repeat_class_RNA" => 0,"repeat_class_SINE/Alu" => 0,"repeat_class_Satellite" => 0,"repeat_class_Satellite/acro" => 0}';
+my $masking = 'soft';
 
 #
 # Compiles
@@ -55,13 +54,14 @@ subtest "Test Bio::EnsEMBL::Compara::Production::DnaCollection new method", sub 
     my $dna_collection = new Bio::EnsEMBL::Compara::Production::DnaCollection(-description => $description,
                                                                               -dbid => $dbid,
                                                                               -dump_loc => $dump_loc,
-                                                                              -masking_options => $masking_options_default);
+                                                                              -masking => $masking
+                                                                          );
     isa_ok($dna_collection, "Bio::EnsEMBL::Compara::Production::DnaCollection");
 
     is($dna_collection->description, $description, "description");
     is($dna_collection->dbID, $dbid, "dbID");
     is($dna_collection->dump_loc, $dump_loc, "dump_loc");
-    is($dna_collection->masking_options, $masking_options_default, "masking_options");
+    is($dna_collection->masking, $masking, "masking");
 
     #Still to do...
     #get_all_dnafrag_chunk_sets

@@ -181,10 +181,11 @@ b) ``ref_species``. This defines the which species in the pair to use as the ref
 
 c) ``default_chunks``. Chunking parameters for the reference and non-reference species.
 
-Especially, you may want to change ``masking_options`` to change the type
-os masking, e.g.
+Especially, you may want to change ``masking`` to mask the repeat elements:
 
-* ``'masking_options' => "{default_soft_masking => 1}"``, 0 for hard masking, comment the line for no masking
+* *undef*: no masking
+* ``soft``: soft masking
+* ``hard``: hard masking
 
 d) ``pair_aligner_options``
 
