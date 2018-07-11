@@ -1587,7 +1587,7 @@ sub _create_frag_array {
 			       ref_ga => $ref_ga,
 			      };
 
-	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_Slice->seq,0,120) . "\n" if $self->debug;
+	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_sequence,0,120) . "\n" if $self->debug;
 	    push @$ga_frags, $ga_fragment;
 	}
 	#add to array of fragments for each reference genomic_align
