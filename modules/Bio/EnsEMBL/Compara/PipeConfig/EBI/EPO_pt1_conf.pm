@@ -35,7 +35,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt1_conf
 	    'core_db_urls' - any additional core dbs (not in 'main_core_dbs')
 
     #1. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt1_conf.pm
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt1_conf -core_db_version
 
     #2. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
@@ -69,9 +69,9 @@ sub default_options {
       	%{$self->SUPER::default_options},
 
         # set up for birds 
-        'species_set_name' => 'sauropsids',
-        'reference_genome_db_name' => 'gallus_gallus',
-
+        'species_set_name' => 'mammals',
+        'reference_genome_db_id' => 150,
+        'list_of_pairwise_mlss_ids' => "1019,1034,706,680,709,1039,677,710,765,1105",
         #location of full species tree, will be pruned
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
@@ -82,9 +82,9 @@ sub default_options {
 
         # connection parameters to various databases:
       	'pipeline_db' => { # the production database itself (will be created)
-        		-host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+        		-host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
             -driver => 'mysql',
-        		-port   => 4485,
+        		-port   => 4522,
             -user   => 'ensadmin',
         		-pass   => $self->o('password'),
         		-dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
@@ -113,7 +113,7 @@ sub default_options {
           
         # any additional core dbs
         'additional_core_db_urls' => { 
-            # 'gallus_gallus' => 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/gallus_gallus_core_88_5',
+            # 'felis_catus' => 'mysql://ensro@mysql-ens-vertannot-staging:4573/felis_catus_core_93_9',
         },  
 
       	
@@ -127,6 +127,7 @@ sub default_options {
         'ortheus_c_exe'   => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
         'ortheus_py'      => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/Ortheus.py'),
         'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
+        'ortheus_bin_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
         'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
         'estimate_tree_exe' => $self->check_file_in_cellar('pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py'),
     };
