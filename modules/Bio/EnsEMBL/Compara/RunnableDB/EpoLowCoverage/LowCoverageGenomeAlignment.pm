@@ -102,8 +102,9 @@ sub fetch_input {
       $self->_dump_fasta_and_mfa;
 
   } else {
-    #throw("Cannot start alignment because some information is missing");
-    print("No valid genomic_aligns left in genomic_align_block. Unable to start alignment\n") if ($self->debug);
+    #do not produce gerp jobs
+    $self->input_job->autoflow(0);
+    $self->complete_early("No valid genomic_aligns left in genomic_align_block. Unable to start alignment");
   }
   return 1;
 }
@@ -124,10 +125,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-
-  #check that have genomic_aligns (may not have if removed some because they
-  #consist entirely of Ns)
-  return if (!$self->param('genomic_aligns'));
 
   print "tmp " . $self->worker_temp_directory . " mfa=" . $self->param('multi_fasta_file') . " tree=" . $self->tree_string . " taxon=" . $self->get_taxon_tree . "\n" if $self->debug;
 
@@ -166,15 +163,6 @@ sub write_output {
 sub _write_output {
   my ($self) = @_;
 
-  #check that have genomic_aligns (may not have if removed some because they
-  #consist entirely of Ns)
-  if (!$self->param('genomic_aligns')) {
-      #do not produce gerp jobs
-      $self->input_job->autoflow(0);
-      return 1;
-  }
-
-  my $use_fresh_connection = 1;
   my $skip_left_right_index = 0;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
