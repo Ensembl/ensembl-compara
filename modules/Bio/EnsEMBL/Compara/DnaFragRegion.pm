@@ -175,21 +175,4 @@ sub slice {
 }
 
 
-=head2 length
-
-  Arg 1       : -none-
-  Example     : $length = $dnafragregion->length;
-  Description : Returns the lenght of this DnaFragRegion
-  Returntype  : integer
-  Exceptions  :
-  Caller      : $object->methodname
-
-=cut
-
-sub length {
-  my ($self) = @_;
-
-  return $self->dnafrag_end - $self->dnafrag_start + 1;
-}
-
 1;

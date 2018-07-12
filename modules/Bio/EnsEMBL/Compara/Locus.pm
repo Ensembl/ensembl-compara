@@ -335,6 +335,22 @@ sub dnafrag_strand {
 }
 
 
+=head2 length
+
+  Example     : $length = $dnafragregion->length;
+  Description : Returns the lenght of this Locus
+  Returntype  : integer
+  Exceptions  : none
+
+=cut
+
+sub length {
+    my ($self) = @_;
+
+    return $self->dnafrag_end - $self->dnafrag_start + 1;
+}
+
+
 =head2 get_Slice
 
   Example    : $slice = $genomic_align->get_Slice();
@@ -389,7 +405,7 @@ sub get_sequence {
         # Sequence names in the Fasta file are expected to be dnafrag_ids;
         # Coordinates are 0-based
         $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
-        die "sequence length doesn't match !" if length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
+        die "sequence length doesn't match !" if CORE::length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
         reverse_comp(\$seq) if $self->dnafrag_strand < 0;
 
     } else {
