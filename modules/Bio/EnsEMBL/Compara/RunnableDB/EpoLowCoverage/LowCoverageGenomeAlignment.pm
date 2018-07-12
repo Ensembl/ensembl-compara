@@ -985,7 +985,7 @@ sub _load_GenomicAligns {
       #complications with treeBest and we end up with very long branch lengths
 
       my $sequence = $ga->get_sequence();
-      if ($seq =~ /[ATGCatgc]/) {
+      if ($sequence =~ /[ATGCatgc]/) {
 	  push(@{$genomic_aligns}, $ga);
       }
   }
