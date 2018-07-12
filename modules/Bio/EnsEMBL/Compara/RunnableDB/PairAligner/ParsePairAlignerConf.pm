@@ -1010,39 +1010,6 @@ sub write_parameters_to_mlss_tag {
 
 }
 
-#
-#Write masking options to method_link_species_set_tag table
-#
-sub write_masking_options {
-    my ($self, $dna_collection, $mlss, $tag) = @_;
-
-    my $masking_options_file = $dna_collection->{'masking_options_file'};
-    if (defined $masking_options_file && ! -e $masking_options_file) {
-	throw("ERROR: masking_options_file $masking_options_file does not exist\n");
-    }
-    my $masking_options = $dna_collection->{'masking_options'};
-
-    my $options_string = "";
-    if (defined $masking_options_file) {
-	my $options_hash_ref = do($masking_options_file);
-
-	return unless($options_hash_ref);
-
-	$options_string = "{\n";
-	foreach my $key (keys %{$options_hash_ref}) {
-	    $options_string .= "'$key'=>'" . $options_hash_ref->{$key} . "',\n";
-	}
-	$options_string .= "}";
-    } elsif (defined $masking_options) {
-	$options_string = $masking_options;
-    } else {
-	#No masking options defined
-	return;
-    }
-    $mlss->store_tag($tag, $options_string);
-
-}
-
 
 #
 #Add dataflows for pair aligner part of pipeline
@@ -1321,24 +1288,6 @@ sub print_conf {
 	    }
 	} else {
 	    print "    $key => " . $conf->{$key} . "\n";
-	}
-    }
-}
-
-sub print_pair_aligner {
-    my ($pair_aligner) = @_;
-
-    foreach my $key (keys %{$pair_aligner}) {
-	if (ref($pair_aligner->{$key}) eq "ARRAY") {
-	    foreach my $ele (@{$pair_aligner->{$key}}) {
-		print "       $ele\n";
-	    }
-	} elsif (ref($pair_aligner->{$key}) eq "HASH") {
-	    foreach my $k (keys %{$pair_aligner->{$key}}) {
-		print "       $k => " . $pair_aligner->{$key}{$k} . "\n";
-	    }
-	} else {
-	    print "    $key => " . $pair_aligner->{$key} . "\n";
 	}
     }
 }
