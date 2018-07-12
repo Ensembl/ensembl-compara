@@ -90,7 +90,9 @@ sub fetch_input {
 		if ( $mlss_ids || $mlss->first_release == $curr_release ) {
 			# new analysis/user defined mlss! must be dumped
 			if ( $method_class =~ /^GenomicAlign/ ) { # all alignments
-				push( @{$dumps{DumpMultiAlign}}, $mlss )
+				push( @{$dumps{DumpMultiAlign}}, $mlss );
+				# only dump ancestors when EPO primates has been run
+				$self->param( 'dump_ancestral_alleles', 1 ) if ( $mlss->method->type eq 'EPO' && $mlss->species_set->name eq 'primates' );
 			}
 			elsif ( $method_class =~ /tree_node$/ ) { # gene trees
 				push( @{$dumps{DumpTrees}}, $mlss );
@@ -119,7 +121,7 @@ sub fetch_input {
 	# always add these when mlss_ids have not been defined
 	unless ( $mlss_ids ) {
 		$all_dump_jobs{DumpSpeciesTrees}        = $self->_dump_speciestree_job; # doesn't require mlsses
-		$all_dump_jobs{DumpAncestralAlleles}    = $self->_dump_anc_allele_jobs; 
+		$all_dump_jobs{DumpAncestralAlleles}    = $self->_dump_anc_allele_jobs if $self->param('dump_ancestral_alleles'); 
 	}
 	
 	if ( !$mlss_ids && $self->param('lastz_patch_dbs') ) {
