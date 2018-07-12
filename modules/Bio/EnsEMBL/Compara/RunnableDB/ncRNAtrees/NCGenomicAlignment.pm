@@ -128,19 +128,11 @@ sub dump_sequences_to_workdir {
 
     my $residues = 0;
     my $count = 0;
+    $cluster->db->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
     foreach my $member (@{$member_list}) {
-      $member->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
-        my $gene = $gene_member -> get_Gene;
-        $self->throw("Error fetching gene") unless (defined $gene);
-        my $slice = $gene->slice->adaptor->fetch_by_Feature($gene, '500%');
-        $self->throw("Error fetching slice") unless (defined $slice);
-        my $seq = $slice->seq;
-        # fetch_by_Feature returns always the + strand
-        if ($gene->strand() < 0) {
-            reverse_comp(\$seq);
-        }
+        my $seq = $gene_member->expand_Locus('500%')->get_sequence();
         $residues += length($seq);
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
@@ -148,7 +140,6 @@ sub dump_sequences_to_workdir {
         print STDERR $member->stable_id. "\n" if ($self->debug);
         print OUTSEQ ">" . $member->seq_member_id . "\n$seq\n";
         print STDERR "sequences $count\n" if ($count % 50 == 0);
-      } );
     }
     close OUTSEQ;
 

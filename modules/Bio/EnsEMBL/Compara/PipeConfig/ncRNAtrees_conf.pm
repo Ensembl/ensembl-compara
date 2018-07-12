@@ -831,6 +831,7 @@ sub pipeline_analyses {
                             'mafft_exe'             => $self->o('mafft_exe'),
                             'raxml_number_of_cores' => 4,
                             'prank_exe'             => $self->o('prank_exe'),
+                            'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
                            },
             -flow_into => {
                            -1 => ['genomic_alignment_himem'],
@@ -894,6 +895,7 @@ sub pipeline_analyses {
                             'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
+                            'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
          -rc_name => '8Gb_8c_job',
@@ -913,6 +915,7 @@ sub pipeline_analyses {
                             'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
+                            'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
          -rc_name => '32Gb_8c_job',

@@ -148,6 +148,48 @@ sub new {
 }
 
 
+=head2 expand_Locus
+
+  Arg [1]     : int size (optional)
+                The desired number of flanking basepairs around the locus.
+                The size may also be provided as a percentage of the locus
+                size such as 200% or 80.5%. In this case, $size represents
+                the new size, e.g. 100% gives no context and 200% gives 50%
+                of the size of the locus on either side of the locus
+  Example     : my $seq_flanking = $gene_member->expand_Locus('500%')->get_sequence();
+  Description : Creates a copy of this Locus with an expanded size
+  Returntype  : Bio::EnsEMBL::Compara::Locus object
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub expand_Locus {
+    my ($self, $size) = @_;
+
+    ## Size may be given as a percentage of the length of the locus
+    ## Size = 100% gives no context
+    ## Size = 200% gives context - 50% the size of the locus either side of locus
+    my $length = $self->length;
+    $size = int(($1-100) * $length / 200) if $size =~ /([\d+\.]+)%/;
+
+    my $start = $self->dnafrag_start - $size;
+    my $end   = $self->dnafrag_end   + $size;
+
+    $start    = 1                      if $start < 1;
+    $end      = $self->dnafrag->length if $end   > $self->dnafrag->length;
+
+    my $hash = {
+        'dnafrag'           => $self->dnafrag,
+        'dnafrag_id'        => $self->dnafrag->dbID,
+        'dnafrag_start'     => $start,
+        'dnafrag_end'       => $end,
+        'dnafrag_strand'    => $self->dnafrag_strand,
+    };
+    return bless $hash, 'Bio::EnsEMBL::Compara::Locus';
+}
+
+
 =head2 dnafrag
 
   Arg [1]     : (optional) Bio::EnsEMBL::Compara::DnaFrag object

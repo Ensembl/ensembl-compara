@@ -76,6 +76,8 @@ sub default_options {
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
 
+            'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+
             # executable locations:
             'cmalign_exe'           => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmalign'),
             'cmbuild_exe'           => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmbuild'),
