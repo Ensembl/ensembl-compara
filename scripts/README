@@ -67,3 +67,6 @@ Used at some point to load the species-tree in the EPO-2X pipeline. Now replaced
 
 Replaced with "standaloneJob.pl Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence"
 
+* scripts/dumps/DumpChromosomeFragments.pl
+
+Removed. Used to dump a genome by splitting each chromosome into chunks
