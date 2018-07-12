@@ -103,6 +103,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:all);
 
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
+
 =head2 new
 
   Arg [-DNAFRAG]
