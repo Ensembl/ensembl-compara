@@ -911,11 +911,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'insert_member_projections',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
             -parameters => {
-                'sql'   => [
-                    'INSERT INTO seq_member_projection (target_seq_member_id, source_seq_member_id) SELECT target_seq_member_id, canonical_member_id FROM seq_member_projection_stable_id JOIN gene_member ON source_stable_id = stable_id',
-                ],
+                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', ],
             },
             -flow_into  => WHEN('#dbID_range_index#' => 'offset_homology_tables' ),
         },

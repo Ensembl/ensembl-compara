@@ -51,6 +51,7 @@ use Carp;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
@@ -171,6 +172,9 @@ sub load_registry {
     # will be correctly recreated later.
     delete $self->{'_cached_dba'};
     delete $self->{'_cached_signature'};
+
+    # Bonus: we setup ProxyDBConnections for all databases
+    Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor->pool_all_DBConnections();
 }
 
 

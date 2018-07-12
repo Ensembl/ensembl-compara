@@ -102,8 +102,9 @@ sub fetch_input {
       $self->_dump_fasta_and_mfa;
 
   } else {
-    #throw("Cannot start alignment because some information is missing");
-    print("No valid genomic_aligns left in genomic_align_block. Unable to start alignment\n") if ($self->debug);
+    #do not produce gerp jobs
+    $self->input_job->autoflow(0);
+    $self->complete_early("No valid genomic_aligns left in genomic_align_block. Unable to start alignment");
   }
   return 1;
 }
@@ -124,10 +125,6 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-
-  #check that have genomic_aligns (may not have if removed some because they
-  #consist entirely of Ns)
-  return if (!$self->param('genomic_aligns'));
 
   print "tmp " . $self->worker_temp_directory . " mfa=" . $self->param('multi_fasta_file') . " tree=" . $self->tree_string . " taxon=" . $self->get_taxon_tree . "\n" if $self->debug;
 
@@ -166,15 +163,6 @@ sub write_output {
 sub _write_output {
   my ($self) = @_;
 
-  #check that have genomic_aligns (may not have if removed some because they
-  #consist entirely of Ns)
-  if (!$self->param('genomic_aligns')) {
-      #do not produce gerp jobs
-      $self->input_job->autoflow(0);
-      return 1;
-  }
-
-  my $use_fresh_connection = 1;
   my $skip_left_right_index = 0;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -991,20 +979,16 @@ sub _load_GenomicAligns {
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
-  $self->iterate_by_dbc( $gab->get_all_GenomicAligns,
-      sub {my $ga = shift; return $ga->dnafrag->genome_db->db_adaptor->dbc;},
-      sub {my $ga = shift;
 
+  foreach my $ga (@{ $gab->get_all_GenomicAligns }) {
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
 
-      my $slice = $ga->get_Slice();
-      my $seqlevel = $slice->coord_system->adaptor->fetch_sequence_level();
-      my @projection = @{$slice->project($seqlevel->name(), $seqlevel->version())};
-      if (@projection > 0) {
+      my $sequence = $ga->get_sequence();
+      if ($sequence =~ /[ATGCatgc]/) {
 	  push(@{$genomic_aligns}, $ga);
       }
-  });
+  }
 
   #only store genomic_aligns if there are more than 1 genomic_align left in the
   #genomic_align_block
@@ -1603,7 +1587,7 @@ sub _create_frag_array {
 			       ref_ga => $ref_ga,
 			      };
 
-	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_Slice->seq,0,120) . "\n" if $self->debug;
+	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_sequence,0,120) . "\n" if $self->debug;
 	    push @$ga_frags, $ga_fragment;
 	}
 	#add to array of fragments for each reference genomic_align

@@ -54,8 +54,7 @@ use warnings;
 use Data::Dumper;
 use Bio::SeqIO;
 
-use base ('Bio::EnsEMBL::Hive::Process');
-use base ( 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::StableId::Adaptor' );
+use base ( 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable' );
 
 sub param_defaults {
     return {

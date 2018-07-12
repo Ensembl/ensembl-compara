@@ -63,8 +63,6 @@ use warnings;
 use File::Find;
 use LWP::Simple;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
-use base ('Bio::EnsEMBL::Hive::Process');
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {

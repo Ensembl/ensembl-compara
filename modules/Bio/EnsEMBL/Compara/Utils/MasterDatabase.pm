@@ -68,6 +68,7 @@ use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Data::Dumper;
 $Data::Dumper::Maxdepth=3;
 
+
 =head2 update_dnafrags
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
@@ -77,8 +78,8 @@ $Data::Dumper::Maxdepth=3;
                 corresponding to the $genome_db. It also gets the list
                 of top_level seq_regions from the species core DB and
                 updates the list of dnafrags in the compara DB.
-  Returns     : -none-
-  Exceptions  :
+  Returns     : Number of new DnaFrags
+  Exceptions  : -none-
 
 =cut
 
@@ -104,7 +105,6 @@ sub update_dnafrags {
 
         my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
 
-
         if (my $old_df = delete $old_dnafrags_by_name->{$slice->seq_region_name}) {
             $new_dnafrag->dbID($old_df->dbID);
             $dnafrag_adaptor->update($new_dnafrag);
@@ -127,6 +127,7 @@ sub update_dnafrags {
     }
     return $new_dnafrags_ids;
 }
+
 
 ############################################################
 #                 update_genome.pl methods                 #
@@ -361,7 +362,7 @@ sub _prev_genome_db {
 	              names (most recent assemblies). To perform the operation WITHOUT
 	              storing to the database, set $dry_run = 1
 	Returns     : Bio::EnsEMBL::Compara::SpeciesSet
-	
+
 =cut
 
 sub new_collection {
@@ -402,7 +403,7 @@ sub new_collection {
 	              names (most recent assemblies). To perform the operation WITHOUT
 	              storing to the database, set $dry_run = 1
 	Returns     : Bio::EnsEMBL::Compara::SpeciesSet
-	
+
 =cut
 
 sub update_collection {
@@ -531,7 +532,7 @@ sub create_mlss {
         $ss_display_name ||= $species_set->name;
         $ss_display_name =~ s/collection-//;
         my $ss_size = scalar(@{$species_set->genome_dbs});
-        $ss_display_name = "$ss_size $ss_display_name" if $ss_size > 2;
+        $ss_display_name = "$ss_size $ss_display_name" if $ss_display_name ne 'default' && $ss_size > 2;
     }
     $mlss_name ||= sprintf('%s %s', $ss_display_name, $method->display_name || die "No description for ".$method->type);
     return Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
