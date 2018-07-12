@@ -35,7 +35,7 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # The majority of core databases live on staging servers:
    Bio::EnsEMBL::Registry->load_registry_from_url(
-     'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/93');
+     'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/94');
   #Bio::EnsEMBL::Registry->load_registry_from_url(
   #  'mysql://ensro@mysql-ens-vertannot-staging:4573/93');
 
@@ -177,7 +177,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_prev',
-    -dbname => 'ensembl_compara_92',
+    -dbname => 'ensembl_compara_93',
 );
 
 # current release database on one of Compara servers:
@@ -187,7 +187,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_curr',
-    -dbname => 'ensembl_compara_93',
+    -dbname => 'ensembl_compara_94',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -195,10 +195,10 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host => 'mysql-ens-compara-prod-1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
+    -port => 4523,
     -group => 'core',
     -species => 'ancestral_prev',
-    -dbname => 'ensembl_ancestral_92',
+    -dbname => 'ensembl_ancestral_93',
 );
 
 # current ancestral database on one of Compara servers. This alias is need for the epo data dumps to work:
@@ -209,7 +209,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4523,
     -group => 'core',
     -species => 'ancestral_sequences',
-    -dbname => 'ensembl_ancestral_93',
+    -dbname => 'ensembl_ancestral_94',
 );
 
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -219,7 +219,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4485,
     -group => 'core',
     -species => 'ancestral_curr',
-    -dbname => 'ensembl_ancestral_93',
+    -dbname => 'ensembl_ancestral_94',
 );
 
 # ensembl production (maintained by production team):
@@ -228,7 +228,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -user => 'ensro',
     -port => 4519,
     -species => 'ensembl_production',
-    -dbname => 'ensembl_production_93',
+    -dbname => 'ensembl_production_94',
     -group => 'production',
 );
 
@@ -251,7 +251,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4522,
     -species => 'compara_members',
-    -dbname => 'mateus_load_members_93',
+    -dbname => 'waakanni_load_members_94',
 );
 
 # # Merge alignments
