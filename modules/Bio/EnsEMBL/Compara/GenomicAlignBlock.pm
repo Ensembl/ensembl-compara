@@ -322,7 +322,6 @@ sub method_link_species_set {
   Returntype : integer
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
-  Caller     : object::methodname
   Status     : Stable
 
 =cut
@@ -769,7 +768,6 @@ sub group_id {
   Returntype : int
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -1379,7 +1377,6 @@ sub restrict_between_alignment_positions {
   Description: Return a Bio::EnsEMBL::Compara::GenomicAlignTree object either from a GenomicAlignTreeAdaptor, a SpeciesTreeAdaptor or from the species set.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree
   Exceptions : throw if duplicate species found but no GenomicAlignTree object in the database
-  Caller     : object::methodname
   Status     : At risk
 
 =cut
@@ -1498,7 +1495,6 @@ Example    : $genomic_align_block->get_mapper_coordinates(167602,167999,'gastero
 Description: maps the aligned coordinates from the source species to the target species
 Returntype : An array of paired Bio::EnsEMBL::Mapper::Coordinate hashes
 Exceptions : throw if genomic align block is for multiple WGAs and ref and target species  are not given by the user
-Caller     : object::methodname
 
 =cut
 

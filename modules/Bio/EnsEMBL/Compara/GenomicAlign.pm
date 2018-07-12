@@ -314,7 +314,6 @@ sub copy {
                $genomic_align_block does not match a previously defined
                genomic_align_block_id
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -383,7 +382,6 @@ sub genomic_align_block {
   Exceptions : thrown if $genomic_align_block_id does not match a previously defined
                genomic_align_block
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -437,7 +435,6 @@ sub genomic_align_block_id {
                $method_link_species_set does not match a previously defined
                method_link_species_set_id
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -499,7 +496,6 @@ sub method_link_species_set {
   Exceptions : thrown if $method_link_species_set_id does not match a previously defined
                method_link_species_set
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -547,7 +543,6 @@ sub method_link_species_set_id {
   Returntype : string $aligned_sequence
   Exceptions : thrown if sequence contains unknown symbols
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -623,7 +618,6 @@ sub aligned_sequence {
   Returntype : int
   Exceptions : none
   Warning    : 
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -669,7 +663,6 @@ sub length {
   Returntype : string
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -730,7 +723,6 @@ sub cigar_line {
                of the array if you want to modify it.
   Returntype : listref of Strings
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -761,7 +753,6 @@ sub get_cigar_arrayref {
   Returntype : int
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -799,7 +790,6 @@ sub visible {
   Returntype : int
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
-  Caller     : object->methodname
   Status     : At risk 
 
 =cut
@@ -833,7 +823,6 @@ sub node_id {
                This sequence depends on the strand defined by the dnafrag_strand attribute.
   Returntype : string $original_sequence
   Exceptions : 
-  Caller     : object->methodname
   Status     : Stable
 
 =cut

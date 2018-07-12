@@ -160,7 +160,6 @@ sub new {
   Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                 object or if $dnafrag does not match a previously defined
                 dnafrag_id
-  Caller      : object->methodname
 
 =cut
 
@@ -209,7 +208,6 @@ sub dnafrag {
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -280,7 +278,6 @@ sub _lazy_getter_setter {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -303,7 +300,6 @@ sub dnafrag_start {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -326,7 +322,6 @@ sub dnafrag_end {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -428,7 +423,6 @@ sub get_sequence {
   Exceptions : thrown if $genomic_align->dnafrag is not
                defined and cannot be fetched from other
                sources.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut

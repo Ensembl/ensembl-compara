@@ -122,7 +122,6 @@ use Data::Dumper;
                do not match this slice will be ignored.
   Returntype : Bio::EnsEMBL::Compara::AlignSlice
   Exceptions : thrown if wrong arguments are given
-  Caller     : $object->methodname
 
 =cut
 
@@ -278,7 +277,6 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
   Returntype : Bio::EnsEMBL::Compara::AlignSlice
   Exceptions : thrown if arg[1] is not a Bio::EnsEMBL::Compara::GenomicAlignBlock
   Exceptions : thrown if $genomic_align_block has no method_link_species_set
-  Caller     : $object->methodname
 
 =cut
 
@@ -329,7 +327,6 @@ sub fetch_by_GenomicAlignBlock {
   Description: Destroy the cache
   Returntype : none
   Exceptions : none
-  Caller     : $object->methodname
 
 =cut
 
@@ -342,12 +339,12 @@ sub flush_cache {
 }
 
 =head2 _get_species_order
+
   Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlignTree $genomic_align_tree
   Example    :
   Description: This method returns a sorted array of species to be used when creating a new Bio::EnsEMBL::Compara::AlignSlice object
   Returntype : array of hashes
   Exceptions : none
-  Caller     : $object->methodname
 
 =cut
 
@@ -391,7 +388,6 @@ sub _get_species_order {
                position.
   Returntype : none
   Exceptions : none
-  Caller     : $object->methodname
 
 =cut
 

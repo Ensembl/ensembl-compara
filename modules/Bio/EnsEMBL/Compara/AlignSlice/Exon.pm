@@ -394,7 +394,6 @@ sub exon {
   Description: Get/set the attribute cigar_line.
   Returntype : string
   Exceptions : none
-  Caller     : object->methodname
 
 =cut
 

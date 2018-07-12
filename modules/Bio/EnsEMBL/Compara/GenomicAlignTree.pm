@@ -1098,7 +1098,6 @@ sub method_link_species_set {
   Description: Getter for the attribute method_link_species_set_id. Takes this from the first 
                Bio::EnsEMBL::Compara::GenomicAlign object
   Returntype : integer
-  Caller     : object::methodname
   Status     : Stable
 
 =cut

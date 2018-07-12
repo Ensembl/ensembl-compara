@@ -501,7 +501,6 @@ sub _objs_from_sth {
  Exceptions  : throw if $new_dnafrag->genome_db is not defined or has
                no dbID.
  Exceptions  : throw if $new_dnafrag has no name
- Caller      : $object->methodname
   Status     : Stable
 
 =cut

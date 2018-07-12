@@ -133,7 +133,6 @@ sub delete_by_MethodLinkSpeciesSet {
   Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement objects
   Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
 	       throw if Arg-2 is not a Bio::EnsEMBL::Slice object
-  Caller     : object::methodname
 
 =cut
 
@@ -175,7 +174,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement objects
   Exceptions : throw if Arg-1 is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet mlss_obj object
 	       throw if Arg-2 is not a Bio::EnsEMBL::Compara::DnaFrag object
-  Caller     : object::methodname
 
 =cut
 
@@ -261,7 +259,6 @@ sub _fetch_all_ConstrainedElements {#used when getting constrained elements by s
   Description: Retrieve the corresponding constrained_elements from a given list of constrained_element_ids 
   Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement constrained_elements 
   Exceptions : throw if Arg-1 is not a listref
-  Caller     : object::methodname
 
 =cut
 
@@ -284,7 +281,6 @@ sub fetch_all_by_dbID_list {
   Description: Retrieve the corresponding constrained_element.
   Returntype : Bio::EnsEMBL::Compara::ConstrainedElement object
   Exceptions : -none-
-  Caller     : object::methodname
 
 =cut
 

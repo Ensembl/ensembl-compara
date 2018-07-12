@@ -185,7 +185,6 @@ sub align_slice {
   Returntype : Bio::EnsEMBL::Compara::GenomeDB object
   Exceptions : This attribute should never be unset. Several methods
                rely on this attribute.
-  Caller     : $object->methodname
 
 =cut
 
@@ -208,7 +207,6 @@ sub genome_db {
   Example    : $slice->display_Slice_name("Homo_sapiens");
   Description: getter/setter for the attribute display_Slice_name
   Returntype : string
-  Caller     : $object->methodname
 
 =cut
 
@@ -625,7 +623,6 @@ sub _get_mapped_Gene {
                document.
   Returntype : listref of Bio::EnsEMBL::Gene objects. (overrides $mapped_genes)
   Exceptions : none
-  Caller     : $object->methodname
 
 =cut
 
@@ -1804,8 +1801,6 @@ sub get_original_seq_region_position {
                object
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock
                objects.
-  Caller     : object::methodname
-  Status     : At risk
 
 =cut
 
