@@ -82,6 +82,7 @@ sub fetch_input {
     $self->param('genome_db', $genome_db);
 
     # Where the files should be
+    $self->param_required('genome_dumps_dir');
     $self->param('soft_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'soft'));
     $self->param('hard_masked_file', $genome_db->_get_genome_dump_path($self->param('genome_dumps_dir'), 'hard'));
 
