@@ -227,8 +227,7 @@ if ($feature =~ /^top/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
   if ($mlss->method->class =~ /^GenomicAlign.*_alignment$/) {
       # Check if there is a corresponding CE MLSS
-      my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = "ConstrainedElement.constrained_element" AND tag = "msa_mlss_id" AND value = ?';
-      my $ce_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->_id_cache->get_by_sql($sql, [$mlss->dbID]);
+      my $ce_mlsss = $mlss->get_all_linked_mlss_by_class_and_reverse_tag('ConstrainedElement.constrained_element', 'msa_mlss_id');
       if (scalar(@$ce_mlsss) == 1) {
           warn sprintf("Automatically switching from mlss_id=%d (%s) to mlss_id=%d (%s)\n", $mlss->dbID, $mlss->method->type, $ce_mlsss->[0]->dbID, $ce_mlsss->[0]->method->type);
           $mlss = $ce_mlsss->[0];
@@ -241,8 +240,7 @@ if ($feature =~ /^top/) {
   $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($1);
   if ($mlss->method->class =~ /^GenomicAlign.*_alignment$/) {
       # Check if there is a corresponding CS MLSS
-      my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = "ConservationScore.conservation_score" AND tag = "msa_mlss_id" AND value = ?';
-      my $cs_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->_id_cache->get_by_sql($sql, [$mlss->dbID]);
+      my $cs_mlsss = $mlss->get_all_linked_mlss_by_class_and_reverse_tag('ConservationScore.conservation_score', 'msa_mlss_id');
       if (scalar(@$cs_mlsss) == 1) {
           warn sprintf("Automatically switching from mlss_id=%d (%s) to mlss_id=%d (%s)\n", $mlss->dbID, $mlss->method->type, $cs_mlsss->[0]->dbID, $cs_mlsss->[0]->method->type);
           $mlss = $cs_mlsss->[0];

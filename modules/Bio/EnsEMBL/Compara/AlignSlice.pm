@@ -852,27 +852,15 @@ sub _get_expanded_conservation_scores {
 sub _get_condensed_conservation_scores {
     my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
 
-    my $all_conservation_scores = [];
-
     throw ("Must have method_link_species_set defined to retrieve conservation scores for a condensed AlignSlice") if (!defined $self->{_method_link_species_set});
     throw ("Must have reference slice defined to retrieve conservation scores for a condensed AlignSlice") if (!defined $self->{'reference_slice'});
 
     # select the conservation score mlss_id linked to the msa
-    my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE type LIKE "%CONSERVATION\_SCORE" AND tag = "msa_mlss_id" AND value = ?';
-    my $sth = $conservation_score_adaptor->prepare($sql);
-    $sth->execute($self->{_method_link_species_set}->dbID);
-    
-    my ($cs_mlss_id) = @{$sth->fetchrow_arrayref};
-    $sth->finish;
+    my $cs_mlsss = $self->{_method_link_species_set}->get_all_linked_mlss_by_class_and_reverse_tag('ConservationScore.conservation_score', 'msa_mlss_id');
 
-    throw ("Unable to find conservation score method_link_species_set for this multiple alignment " . $self->{_method_link_species_set}->dbID) if (!defined $cs_mlss_id);
-    my $mlss_adaptor = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
+    throw ("Unable to find conservation score method_link_species_set for this multiple alignment " . $self->{_method_link_species_set}->dbID) unless @$cs_mlsss;
 
-    my $cs_mlss = $mlss_adaptor->fetch_by_dbID($cs_mlss_id);
-
-    $all_conservation_scores = $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($cs_mlss, $self->{'reference_slice'}, $display_size, $display_type, $window_size);
-    
-    return $all_conservation_scores;
+    return $conservation_score_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($cs_mlsss->[0], $self->{'reference_slice'}, $display_size, $display_type, $window_size);
 }
 
 

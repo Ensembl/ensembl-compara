@@ -457,4 +457,25 @@ sub get_linked_mlss_by_tag {
 }
 
 
+=head2 get_all_linked_mlss_by_class_and_reverse_tag
+
+  Arg[1]      : String $class
+  Arg[2]      : String $tag_name
+  Example     : $ce_mlss = $msa_mlss->get_all_linked_mlss_by_class_and_reverse_tag('ConstrainedElement.constrained_element', 'msa_mlss_id')->[0];
+  Description : Returns all the MLSSs of the required class that link back to this MLSS via the tag.
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_linked_mlss_by_class_and_reverse_tag {
+    my ($self, $class, $tag_name) = @_;
+    return unless $self->adaptor;
+    my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set_tag JOIN method_link_species_set USING (method_link_species_set_id) JOIN method_link USING (method_link_id) WHERE class = ? AND tag = ? AND value = ?';
+    return $self->adaptor->_id_cache->get_by_sql($sql, [$class, $tag_name, $self->dbID]);
+}
+
+
 1;
