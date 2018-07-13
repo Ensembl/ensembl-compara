@@ -51,9 +51,8 @@ my $pecan_species_set_name = "amniotes";
 my @mlss_epos = sort {$a->species_set->dbID <=> $b->species_set->dbID} @{$method_link_species_set_adaptor->fetch_all_by_method_link_type($epo_method_type)};
 my @mlss_pecans = sort {$a->species_set->dbID <=> $b->species_set->dbID} @{$method_link_species_set_adaptor->fetch_all_by_method_link_type($pecan_method_type)};
 
-my $cs_mlss_epo = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($cs_method_type,$mlss_epos[0]->species_set->genome_dbs);
-
-my $cs_mlss_pecan = $method_link_species_set_adaptor->fetch_by_method_link_type_GenomeDBs($cs_method_type,$mlss_pecans[0]->species_set->genome_dbs);
+my $cs_mlss_epo = $mlss_epos[0]->get_all_sister_mlss_by_class('ConservationScore.conservation_score')->[0];
+my $cs_mlss_pecan = $mlss_pecans[0]->get_all_sister_mlss_by_class('ConservationScore.conservation_score')->[0];
 
 #my $cs_mlss_epo = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($cs_method_type, $epo_species_set_name);
 #my $cs_mlss_pecan = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($cs_method_type, $pecan_species_set_name);

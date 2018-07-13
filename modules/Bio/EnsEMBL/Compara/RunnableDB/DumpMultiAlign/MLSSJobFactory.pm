@@ -101,13 +101,9 @@ sub _test_mlss {
     my $filename = $mlss->filename;
 
     if ($self->param('add_conservation_scores')) {
-        foreach my $method (@{ $compara_dba->get_MethodAdaptor->fetch_all_by_class_pattern('ConservationScore.conservation_score') }) {
-            my $cs_mlss = $mlss->adaptor->fetch_by_method_link_id_species_set_id($method->dbID, $mlss->species_set->dbID);
-            if ($cs_mlss) {
-                $mlss_id = $cs_mlss->dbID;
-                last
-            }
-        }
+        my $cs_mlsss = $mlss->get_all_sister_mlss_by_class('ConservationScore.conservation_score');
+        die "No Conservation scores found for ".$mlss->dbID unless @$cs_mlsss;
+        $mlss_id = $cs_mlsss->[0]->dbID;
     }
 
     my $output_id = {

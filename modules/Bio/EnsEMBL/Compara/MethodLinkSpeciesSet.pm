@@ -436,6 +436,26 @@ sub _find_pairwise_ref {
 }
 
 
+=head2 get_all_sister_mlss_by_class
+
+  Arg[1]      : String $class
+  Example     : $mlss->get_all_sister_mlss_by_class('ConstrainedElement.constrained_element');
+  Description : Returns the MLSS with the same species-set but a different method
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_sister_mlss_by_class {
+    my ($self, $class) = @_;
+    return unless $self->adaptor;
+    my $sql = 'SELECT method_link_species_set_id FROM method_link_species_set JOIN method_link USING (method_link_id) WHERE class = ? AND species_set_id = ?';
+    return $self->adaptor->_id_cache->get_by_sql($sql, [$class, $self->species_set->dbID]);
+}
+
+
 =head2 get_linked_mlss_by_tag
 
   Arg[1]      : String $tag_name
