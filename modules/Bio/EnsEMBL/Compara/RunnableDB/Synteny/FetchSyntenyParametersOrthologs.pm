@@ -158,8 +158,9 @@ sub _check_ortholog {
         $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->store($master_synt_mlss, 0);
         # It has to be stored also in the current database
         $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->store($master_synt_mlss);
-    } elsif (not $self->param('recompute_existing_syntenies')) {
-        $self->warning(sprintf("Discarding '%s' because its MLSS already exists in the master database", $mlss->name));
+
+    } elsif ( $master_synt_mlss->first_release < $self->param('from_first_release') ) {
+        $self->warning(sprintf("Discarding '%s' because its MLSS already exists in the master database and is not set to recompute by 'from_first_release'", $mlss->name));
         return;
     }
     # It should be in the current database
