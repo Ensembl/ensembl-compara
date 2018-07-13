@@ -435,4 +435,26 @@ sub _find_pairwise_ref {
     }
 }
 
+
+=head2 get_linked_mlss_by_tag
+
+  Arg[1]      : String $tag_name
+  Example     : $msa_mlss = $cs_mlss->get_linked_mlss_by_tag('msa_mlss_id');
+  Description : Returns the MLSS with the dbID given by the value of the tag
+  Returntype  : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_linked_mlss_by_tag {
+    my ($self, $tag_name) = @_;
+    return unless $self->adaptor;
+    if (my $mlss_id = $self->get_value_for_tag($tag_name)) {
+        return $self->fetch_by_dbID($mlss_id);
+    }
+}
+
+
 1;

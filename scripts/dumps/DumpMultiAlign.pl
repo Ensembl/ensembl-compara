@@ -451,8 +451,7 @@ unless ($method_link_species_set) {
 my $conservation_score_mlss;
 if ($method_link_species_set->method->class eq "ConservationScore.conservation_score") {
   $conservation_score_mlss = $method_link_species_set;
-  my $mlss_id = $conservation_score_mlss->get_value_for_tag('msa_mlss_id');
-  $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID($mlss_id);
+  $method_link_species_set = $conservation_score_mlss->get_linked_mlss_by_tag('msa_mlss_id');
   throw("I cannot find the link from the conservation scores to the original alignments!")
       if (!$method_link_species_set);
 }

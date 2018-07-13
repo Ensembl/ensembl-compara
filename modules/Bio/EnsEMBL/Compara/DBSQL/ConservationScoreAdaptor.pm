@@ -195,11 +195,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     #need to convert conservation score mlss to the corresponding multiple 
     #alignment mlss
 
-    my $ma_mlss_id = $method_link_species_set->get_value_for_tag('msa_mlss_id');
-    my $ma_mlss;
-    if ($ma_mlss_id) {
-	$ma_mlss = $self->db->get_MethodLinkSpeciesSet->fetch_by_dbID($ma_mlss_id);
-    } else {
+    my $msa_mlss = $method_link_species_set->get_linked_mlss_by_tag('msa_mlss_id');
+    unless ($msa_mlss) {
 	return $scores;
     }
 
@@ -213,7 +210,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         
         #print $slice->seq_region_name . " " . $slice->start . " " . $slice->end . " offset=$offset\n";
 
-        my $light_genomic_aligns = $self->_get_all_ref_genomic_aligns($ma_mlss, $slice);
+        my $light_genomic_aligns = $self->_get_all_ref_genomic_aligns($msa_mlss, $slice);
         
         if (scalar(@$light_genomic_aligns == 0)) {
             #print "no genomic_align_blocks found for this slice\n";
@@ -1783,7 +1780,7 @@ sub _add_to_bucket {
 
   Arg  1     : ref to Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object
   Arg  2     : ref to Bio::EnsEMBL::Slice object
-  Example    :  my $light_genomic_aligns = $self->_get_all_ref_genomic_aligns($ma_mlss, $slice);
+  Example    :  my $light_genomic_aligns = $self->_get_all_ref_genomic_aligns($msa_mlss, $slice);
   Description: Retrieve from the database some genomic_align information 
                relating to only the slice species. 
   Returntype : listref of hash containing a subset of genomic_align fields
@@ -1857,7 +1854,9 @@ sub _get_all_ref_genomic_aligns {
 sub count_by_mlss_id {
     my ($self, $mlss_id) = @_;
 
-    my $sql = "SELECT count(*) FROM conservation_score cs JOIN genomic_align_block gab USING(genomic_align_block_id) JOIN method_link_species_set_tag mlss_tag ON(gab.method_link_species_set_id=mlss_tag.value) WHERE mlss_tag.tag = 'msa_mlss_id' AND mlss_tag.method_link_species_set_id = ?";
+    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID;
+    my $msa_mlss = $mlss->get_linked_mlss_by_tag('msa_mlss_id');
+    my $sql = 'SELECT COUNT(*) FROM conservation_score cs JOIN genomic_align_block gab USING(genomic_align_block_id) WHERE gab.method_link_species_set_id = ?';
 
     my $sth = $self->prepare($sql);
     $sth->execute($mlss_id);
