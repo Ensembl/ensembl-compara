@@ -121,13 +121,9 @@ sub read_clusters_from_previous_db {
 
     if (defined $self->param('tags_to_copy')) {
         my $sql_tags = q{SELECT root_id, value FROM gene_tree_root JOIN gene_tree_root_tag USING (root_id) WHERE clusterset_id = ? AND tag = ?};
-        $sth = $reuse_compara_dba->dbc->prepare($sql_tags);
         foreach my $tag (@{$self->param('tags_to_copy')}) {
-            $sth->execute($self->param('source_clusterset_id'), $tag);
-            my $tag_values = $sth->fetchall_arrayref();
-            my %tag_hash = map {$_->[0] => $_->[1]} @$tag_values;
-            map {$allclusters{$_}->{$tag} = $tag_hash{$_}} (grep {exists $tag_hash{$_}} (keys %allclusters));
-            $sth->finish;
+            my $tag_hash = $reuse_compara_dba->dbc->sql_helper->execute_into_hash( -SQL => $sql_tags, -PARAMS => [$self->param('source_clusterset_id'), $tag] );
+            $allclusters{$_}->{$tag} = $tag_hash->{$_} for keys %$tag_hash;
         }
     }
 
