@@ -368,5 +368,11 @@ sub _tables {
     return (['constrained_element', 'ce']);
 }
 
+# To please construct_sql_query
+sub _columns {
+    return qw (
+    );
+}
+
 
 1;
