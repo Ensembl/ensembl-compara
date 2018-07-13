@@ -82,8 +82,8 @@ sub store {
       $dbID = $self->generic_insert('dnafrag_chunk', {
               'dnafrag_id'            => $dfc->dnafrag_id,
               'sequence_id'           => $dfc->sequence_id // 0,
-              'seq_start'             => $dfc->seq_start,
-              'seq_end'               => $dfc->seq_end,
+              'dnafrag_start'         => $dfc->dnafrag_start,
+              'dnafrag_end'           => $dfc->dnafrag_end,
               'dnafrag_chunk_set_id'  => $dfc->dnafrag_chunk_set_id,
           }, 'dnafrag_chunk_id');
   }
@@ -185,8 +185,8 @@ sub _columns {
   return qw (dfc.dnafrag_chunk_id
              dfc.dnafrag_chunk_set_id
              dfc.dnafrag_id
-             dfc.seq_start
-             dfc.seq_end
+             dfc.dnafrag_start
+             dfc.dnafrag_end
              dfc.sequence_id
             );
 }
@@ -197,8 +197,8 @@ sub _unique_attributes {
     return qw(
         dnafrag_chunk_set_id
         dnafrag_id
-        seq_start
-        seq_end
+        dnafrag_start
+        dnafrag_end
     );
 }
 
@@ -209,8 +209,8 @@ sub _objs_from_sth {
           'dbID',
           'dnafrag_chunk_set_id',
           'dnafrag_id',
-          'seq_start',
-          'seq_end',
+          'dnafrag_start',
+          'dnafrag_end',
           'sequence_id',
       ] );
 }
