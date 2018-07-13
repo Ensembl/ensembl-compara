@@ -130,28 +130,18 @@ sub _columns {
   my $self = shift;
 
   return qw (sc.dna_collection_id
+             sc.description
              sc.dnafrag_chunk_set_id);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my @sets = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $chunkSet = Bio::EnsEMBL::Compara::Production::DnaFragChunkSet->new_fast({
-        'adaptor'               => $self,
-        'dbID'                  => $row_hashref->{'dnafrag_chunk_set_id'},
-        '_dna_collection_id'    => $row_hashref->{'dna_collection_id'},
-    });
-
-    push @sets, $chunkSet;
-
-  }
-  $sth->finish;
-
-  return \@sets
+  return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet', [
+          '_dna_collection_id',
+          '_description',
+          'dbID',
+      ] );
 }
 
 

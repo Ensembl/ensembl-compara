@@ -166,39 +166,12 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my %collections_hash = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $collection = $collections_hash{$row_hashref->{'dna_collection_id'}};
-    
-    unless($collection) {
-      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new_fast({
-            'dbID'              => $row_hashref->{'dna_collection_id'},
-            'adaptor'           => $self,
-            '_description'      => $row_hashref->{'description'},
-            '_dump_loc'         => $row_hashref->{'dump_loc'},
-            '_masking_options'  => $row_hashref->{'masking_options'},
-      });
-
-      $collections_hash{$collection->dbID} = $collection;
-    }
-
-    if (defined($row_hashref->{'description'})) {
-      $collection->description($row_hashref->{'description'});
-    }
-    if (defined($row_hashref->{'dump_loc'})) {
-      $collection->dump_loc($row_hashref->{'dump_loc'});
-    }
-    if (defined($row_hashref->{'masking_options'})) {
-      $collection->masking_options($row_hashref->{'masking_options'});
-    }
-  }
-  $sth->finish;
-
-  my @collections = values( %collections_hash );
-
-  return \@collections;
+  return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaCollection', [
+          'dbID',
+          '_description',
+          '_dump_loc',
+          '_masking_options',
+      ] );
 }
 
 1;

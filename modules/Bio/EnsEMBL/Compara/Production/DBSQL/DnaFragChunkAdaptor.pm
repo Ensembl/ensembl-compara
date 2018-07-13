@@ -202,26 +202,14 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my @chunks = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new_fast({
-        'adaptor'               => $self,
-        'dbID'                  => $row_hashref->{'dnafrag_chunk_id'},
-        'seq_start'             => $row_hashref->{'seq_start'} || 0,
-        'seq_end'               => $row_hashref->{'seq_end'} || 0,
-        'sequence_id'           => $row_hashref->{'sequence_id'},
-        'dnafrag_id'            => $row_hashref->{'dnafrag_id'},
-        'dnafrag_chunk_set_id'  => $row_hashref->{'dnafrag_chunk_set_id'},
-    });
-
-    push @chunks, $dfc;
-
-  }
-  $sth->finish;
-
-  return \@chunks
+  return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaFragChunk', [
+          'dbID',
+          'dnafrag_chunk_set_id',
+          'dnafrag_id',
+          'seq_start',
+          'seq_end',
+          'sequence_id',
+      ] );
 }
 
 1;
