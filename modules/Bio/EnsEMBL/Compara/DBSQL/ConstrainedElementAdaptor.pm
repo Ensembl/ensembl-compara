@@ -22,6 +22,8 @@ package Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor;
 use strict;
 use warnings;
 
+use DBI qw(:sql_types);
+
 use Bio::EnsEMBL::Compara::ConstrainedElement;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
@@ -353,13 +355,8 @@ sub _fetch_all_ConstrainedElements_by_dbID {#used when getting constrained eleme
 sub count_by_mlss_id {
     my ($self, $mlss_id) = @_;
 
-    my $sql = "SELECT count(*) FROM constrained_element WHERE method_link_species_set_id=?";
-    my $sth = $self->prepare($sql);
-    $sth->execute($mlss_id);
-    my ($count) = $sth->fetchrow_array();
-    $sth->finish();
-
-    return $count;
+    $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
+    return $self->generic_count('method_link_species_set_id=?');
 }
 
 #
