@@ -472,7 +472,7 @@ sub get_linked_mlss_by_tag {
     my ($self, $tag_name) = @_;
     return unless $self->adaptor;
     if (my $mlss_id = $self->get_value_for_tag($tag_name)) {
-        return $self->fetch_by_dbID($mlss_id);
+        return $self->adaptor->fetch_by_dbID($mlss_id);
     }
 }
 
