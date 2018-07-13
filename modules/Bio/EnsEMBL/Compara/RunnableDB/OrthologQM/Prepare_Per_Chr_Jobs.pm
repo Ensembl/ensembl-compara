@@ -120,17 +120,15 @@ sub fetch_reuse {
 
   # now we create a hash object of homology id mapping for this mlss id 
       my $query = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping where mlss_id = $mlss_id";
-      my $hID_map = $self->compara_dba->dbc->db_handle->selectall_arrayref($query);
-      return unless @$hID_map;
+      my $homologyID_map = $self->compara_dba->dbc->sql_helper->execute_into_hash( -SQL => $query );
 
-      print "\n\n  curr_release_mlss_id   :  $mlss_id : ".scalar(@$hID_map)." homologies mapped\n\n" if ( $self->debug >3 );
-      my %homologyID_map = map { $_->[0] => $_->[1] } @{$hID_map} ;
-      $self->param('homologyID_map', \%homologyID_map);
+      print "\n\n  curr_release_mlss_id   :  $mlss_id : ".scalar(keys %$homologyID_map)." homologies mapped\n\n" if ( $self->debug >3 );
+      $self->param('homologyID_map', $homologyID_map);
 
     #now we will query the ortholog_goc_metric table uploaded from from the previous db using the prev mlss id that maps to the new mlss id
     #since there are a lot of homology_ids to query, use split_and_callback to do it by manageable chunks
     my $prev_goc_hashref = {};
-    $self->compara_dba->get_HomologyAdaptor->split_and_callback( [values %{$self->param('homologyID_map')}], 'homology_id', SQL_INTEGER, sub {
+    $self->compara_dba->get_HomologyAdaptor->split_and_callback( [values %$homologyID_map], 'homology_id', SQL_INTEGER, sub {
             my $homology_id_constraint = shift;
             my $sql = "SELECT * FROM prev_ortholog_goc_metric WHERE $homology_id_constraint";
             my $part_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, ['homology_id', 'stable_id']);
