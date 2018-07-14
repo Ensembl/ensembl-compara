@@ -59,8 +59,6 @@ sub new {
   my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
   $self->{'_object_list'} = [];
-  $self->{'_dnafrag_id_list'} = [];
-  $self->{'_dnafrag_id_hash'} = {};
 
   if (scalar @args) {
     #do this explicitly.
