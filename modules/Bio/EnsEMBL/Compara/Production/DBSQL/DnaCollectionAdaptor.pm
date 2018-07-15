@@ -68,7 +68,7 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
   Arg [1]    : Bio::EnsEMBL::Compara::Production::DnaCollection
   Example    :
-  Description: stores the set of DnaFragChunk objects
+  Description: stores the DnaCollection object
   Returntype : int dbID of DnaCollection
   Exceptions :
   Caller     :

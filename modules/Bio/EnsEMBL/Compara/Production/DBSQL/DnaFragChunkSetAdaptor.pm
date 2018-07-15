@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
+Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor
 
 =cut
 
