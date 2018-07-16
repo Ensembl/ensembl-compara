@@ -45,7 +45,7 @@ sub content {
 
   ## Add export-specific settings
   my $fields_by_format;
-  if ($hub->param('align_type') eq 'msa_dna') {
+  if ($hub->param('align_type') && $hub->param('align_type') eq 'msa_dna') {
     $fields_by_format = {'FASTA' => []};
   }
   else {
