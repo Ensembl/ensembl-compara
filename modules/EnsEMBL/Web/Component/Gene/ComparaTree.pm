@@ -602,7 +602,7 @@ sub get_export_data {
   }
   
   ## First, get tree
-  if ($type && $type eq 'genetree') { 
+  if ($gene && $type && $type eq 'genetree') { 
     $tree = $gene->get_GeneTree($cdb, 1);
   }
   elsif ($hub->species eq 'Multi' && $self->param('gt')) {
