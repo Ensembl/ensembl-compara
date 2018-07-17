@@ -209,7 +209,17 @@ sub _load_remote_url_tracks {
     my $track_data = $tracks_data{$code};
 
     if (lc $track_data->{'format'} eq 'trackhub') {
-      my ($trackhub_menu) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}) : ();
+      my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}) : ();
+
+      if ($hub_info->{'error'}) {
+        $self->hub->session->set_record_data({
+          'type'      => 'message',
+          'function'  => '_warning',
+          'code'      => 'trackhub_barf',
+          'message'   => "Problem parsing hub data: ".join('', @{$hub_info->{'error'}}),
+        });
+        next;
+      }
 
       if ($trackhub_menu && ($trackhub_menu = $self->get_node($trackhub_menu))) {
         $trackhub_menu->set_data('linked_record', $track_data->{'linked_record'});
