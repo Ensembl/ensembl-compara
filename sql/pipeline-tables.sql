@@ -152,8 +152,7 @@ CREATE TABLE `mcl_sparse_matrix` (
     `row_id` int(10) unsigned NOT NULL,     # sequence_id, 1st dimension
     `column_id` int(10) unsigned NOT NULL,  # sequence_id, 2nd dimension
     `value` float DEFAULT NULL,             # the blast score (e-value) on the intersection
-    PRIMARY KEY (`row_id`,`column_id`),
-    KEY `row_id` (`row_id`)
+    PRIMARY KEY (`row_id`,`column_id`)
 ) ENGINE=InnoDB;
 
 -- ----------------------------------------------------------------------------------------------
@@ -177,8 +176,7 @@ CREATE TABLE ktreedist_score (
   scale_factor float DEFAULT NULL,
   symm_difference int(10) unsigned DEFAULT NULL,
   n_partitions int(10) unsigned DEFAULT NULL,
-  UNIQUE KEY tag_node_id (node_id,tag),
-  KEY node_id (node_id),
+  PRIMARY KEY tag_node_id (node_id,tag),
   KEY tag (tag)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -225,7 +223,7 @@ PRIMARY KEY (fam_id)
 
 
 CREATE TABLE split_genes (
-	seq_member_id   	int(10) unsigned UNIQUE NOT NULL,
+	seq_member_id   	int(10) unsigned NOT NULL,
 	gene_split_id	int(10) unsigned NOT NULL AUTO_INCREMENT,
 
 	PRIMARY KEY (seq_member_id),
@@ -293,7 +291,6 @@ CREATE TABLE hmm_thresholding (
       bias                      float,
 
       PRIMARY KEY (root_id,seq_member_id),
-      KEY (root_id),
       KEY (seq_member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;

@@ -760,7 +760,6 @@ CREATE TABLE genomic_align_tree (
 
   PRIMARY KEY node_id (node_id),
   KEY parent_id (parent_id),
-  KEY root_id (root_id),
   KEY left_index (root_id, left_index)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
@@ -923,9 +922,7 @@ CREATE TABLE constrained_element (
 	-- NO PK. this table is voluntarily denormalized.
 
   KEY constrained_element_id_idx (constrained_element_id),
-  KEY mlssid_idx (method_link_species_set_id),
-  KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end),
-  KEY mlssid_dfId_idx (method_link_species_set_id,dnafrag_id)
+  KEY mlssid_dfId_dfStart_dfEnd_idx (method_link_species_set_id,dnafrag_id,dnafrag_start,dnafrag_end)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1438,7 +1435,6 @@ CREATE TABLE family_member (
   FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
   PRIMARY KEY family_seq_member_id (family_id,seq_member_id),
-  KEY (family_id),
   KEY (seq_member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
@@ -1533,7 +1529,6 @@ CREATE TABLE gene_tree_node (
   PRIMARY KEY (node_id),
   KEY parent_id (parent_id),
   KEY seq_member_id (seq_member_id),
-  KEY root_id (root_id),
   KEY root_id_left_index (root_id,left_index)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
@@ -1642,7 +1637,6 @@ CREATE TABLE gene_tree_root_tag (
 	-- NO PK because unicity is not enforced
 
   KEY root_id_tag (root_id, tag),
-  KEY (root_id),
   KEY tag (tag)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
@@ -2122,7 +2116,6 @@ CREATE TABLE homology_member (
   FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
   PRIMARY KEY homology_member_id (homology_id,gene_member_id),
-  KEY (homology_id),
   KEY (gene_member_id),
   KEY (seq_member_id)
 ) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
