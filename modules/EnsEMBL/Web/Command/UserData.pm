@@ -137,22 +137,30 @@ sub attach {
 
     delete $options->{'name'};
 
-    my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
+    my @assemblies = keys %{$options->{'assemblies'}||{}};
+    if (scalar @assemblies < 1) {
+      @assemblies = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION');
+    }
 
-    my ($flag_info, $code);
+    my ($flag_info, $species_position, $code);
 
-    foreach (@$assemblies) {
+    foreach (@assemblies) {
 
       ## Try with and without species name, as it depends on format
       my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies->{$_}
                                                     || $ensembl_assemblies->{$hub->species.'_'.$_} || []};
       
-
-
-      ## This is a bit messy, but there are so many permutations!
       if ($assembly) {
+        ## Munge default positions if there are any
+        my $position = $options->{'assemblies'}{$_}{'defaultPos'};
+        if ($position) {
+          $position =~ s/^chr//i;
+        }
+
+        ## This is a bit messy, but there are so many permutations!
         if ($current_species eq $hub->param('species')) {
           $flag_info->{'species'}{'this'} = 1;
+          $species_position = $position;
           if ($is_old) {
             $flag_info->{'assembly'}{'this_old'} = 1;
           }
@@ -183,7 +191,7 @@ sub attach {
                           species   => $current_species,
                           assembly  => $assembly,
                           timestamp => time,
-                          %$options,
+                          position  => $position,
                         };
           $record->{'disconnected'} = 0 if lc($attachable->name) eq 'trackhub';
           my $data = $hub->session->set_record_data($record);
@@ -214,13 +222,13 @@ sub attach {
     elsif (!$flag_info->{'assembly'}{'this_new'} && !$flag_info->{'assembly'}{'other_new'}) {
       $assembly_flag = 'old_only';
     }
-
     $params = {
                 format          => $attachable->name,
                 name            => $name,
                 species         => $hub->param('species') || $hub->species,
                 species_flag    => $species_flag,
                 assembly_flag   => $assembly_flag,
+                position        => $species_position,
                 code            => $code,
                 };
   }

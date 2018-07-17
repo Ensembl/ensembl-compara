@@ -47,7 +47,7 @@ sub content {
   my $message;
 
   if ($hub->param('format') eq 'TRACKHUB') {
-    $message = $self->get_message($hub->param('species_flag'), $hub->param('assembly_flag'));
+    $message = $self->get_message;
   }
   else {
     $message = qq(<p>Thank you - your remote data was successfully attached. Close this Control Panel to view your data</p>);
@@ -63,14 +63,17 @@ sub content {
 }
 
 sub get_message {
-  my ($self, $species_flag, $assembly_flag) = @_;
-  my $hub         = $self->hub;
-  my $species     = $hub->param('species') || $hub->species;
-  my $reattach    = $hub->param('reattach');
-  my %messages    = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
-  my $trackhub_ok = 1;
-  my $try_archive = 0;
-  my $message     = '';
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $species_flag  = $hub->param('species_flag');
+  my $assembly_flag = $hub->param('assembly_flag');
+  my $species       = $hub->param('species') || $hub->species;
+  my $reattach      = $hub->param('reattach');
+  my %messages      = EnsEMBL::Web::Constants::USERDATA_MESSAGES;
+  my $trackhub_ok   = 1;
+  my $try_archive   = 0;
+  my $message       = '';
 
   if ($assembly_flag) {
     $message = sprintf('<p><strong>%s</strong>', $messages{'hub_'.$assembly_flag}{'message'});
@@ -103,21 +106,22 @@ sub get_message {
     $message = $messages{'hub_ok'}{'message'};
   }
 
+  my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
+  my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
+  my $default_loc = $sample_data->{'LOCATION_PARAM'};
+  my $current_loc = $hub->referer->{'params'}->{'r'}[0];
+  my $params = {
+                  species   => $species,
+                  type      => 'Location',
+                  action    => $page_action,
+                  function  => undef,
+                  r         => $current_loc || $default_loc,
+                };
+
   ## We should only reach this step if the trackhub has a mixture of available species/assemblies 
   ## and unavailable ones, and therefore we want to warn the user before proceeding
   if ($trackhub_ok) {
     my $menu_id     = clean_id($hub->param('name'));
-    my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
-    my $default_loc = $sample_data->{'LOCATION_PARAM'};
-    my $current_loc = $hub->referer->{'params'}->{'r'}[0];
-    my $page_action = $hub->referer->{'ENSEMBL_ACTION'};
-    my $params      = {
-                          species   => $species,
-                          type      => 'Location',
-                          action    => $page_action,,
-                          function  => undef,
-                          r         => $current_loc || $default_loc,
-                      };
     if ($page_action eq 'Multi') {
       foreach (keys %{$hub->referer->{'params'}}) {
         next unless $_ =~ /^[r|s]\d*$/;
@@ -137,6 +141,13 @@ sub get_message {
                             $assembly, $archive_site, $species, $archive_site,
                     );
     }
+  }
+
+  my $position = $hub->param('position');
+  if ($position) {
+    $params->{'r'}  = $position;
+    my $url         = $hub->url($params); 
+    $message       .= sprintf '<p><a href="%s">Go to default location: %s</a>', $url, $position; 
   }
 
   return $message;
