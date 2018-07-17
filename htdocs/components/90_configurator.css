@@ -92,7 +92,6 @@ form.configuration.multi div.config                                 { margin-bot
 form.configuration.multi div.config h3,
 form.configuration.multi div.config h4,
 form.configuration.multi div.config div.select_all                  { display: none!important; }
-form.configuration.multi div.config div.long_label                  { display: none!important; }
 form.configuration.multi div.config ul.config_menu ul.config_menu   { margin-left: 0!important; }
 form.configuration.multi div.favourite_tracks                       { margin-bottom: 0; }
 form.configuration.multi div.favourite_tracks img                   { margin: 0; padding: 0; width: auto; height: auto; }
