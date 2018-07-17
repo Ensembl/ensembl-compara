@@ -87,36 +87,38 @@ sub content {
   
   $self->_add_nav_entries;
   
-  my %motif_features = %{$object->get_motif_features($epigenome)};
-  if (scalar keys %motif_features > 0) {
-    # get region clicked on
-    my $click_start = $hub->param('click_start');
-    my $click_end   = $hub->param('click_end');
-    my ($start, $end, @feat);
-  
-    foreach my $motif (keys %motif_features) {
-      ($start, $end) = split /:/, $motif;
-      push @feat, $motif unless $start > $click_end || $end < $click_start;
-    }
-  
-    $self->add_subheader('Motif Information');
-  
-    my $pwm_table = '
-      <table cellpadding="0" cellspacing="0">
-        <tr><th>Name</th><th>PWM ID</th><th>Score</th></tr>
-    ';
-  
-    foreach my $motif (sort keys %motif_features) {
-      my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
-      my $bm_link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
-      my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
+  if ($epigenome) {
+    my %motif_features = %{$object->get_motif_features($epigenome)};
+    if (scalar keys %motif_features > 0) {
+      # get region clicked on
+      my $click_start = $hub->param('click_start');
+      my $click_end   = $hub->param('click_end');
+      my ($start, $end, @feat);
     
-      $pwm_table .= "<tr$style><td>$name</td><td>$bm_link</td><td>$score</td></tr>";
+      foreach my $motif (keys %motif_features) {
+        ($start, $end) = split /:/, $motif;
+        push @feat, $motif unless $start > $click_end || $end < $click_start;
+      }
+    
+      $self->add_subheader('Motif Information');
+    
+      my $pwm_table = '
+        <table cellpadding="0" cellspacing="0">
+          <tr><th>Name</th><th>PWM ID</th><th>Score</th></tr>
+      ';
+    
+      foreach my $motif (sort keys %motif_features) {
+        my ($name, $score, $binding_matrix_name) = @{$motif_features{$motif}};
+        my $bm_link = $self->hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
+        my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
+      
+        $pwm_table .= "<tr$style><td>$name</td><td>$bm_link</td><td>$score</td></tr>";
+      }
+    
+      $pwm_table .= '</table>';
+    
+      $self->add_entry({ label_html => $pwm_table });
     }
-  
-    $pwm_table .= '</table>';
-  
-    $self->add_entry({ label_html => $pwm_table });
   }
 }
 
