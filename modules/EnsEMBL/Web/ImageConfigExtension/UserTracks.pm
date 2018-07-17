@@ -322,7 +322,7 @@ sub _load_uploaded_tracks {
 }
 
 sub _add_trackhub {
-  my ($self, $menu_name, $url, $is_poor_name, $existing_menu, $force_hide) = @_;
+  my ($self, $menu_name, $url, $existing_menu, $force_hide) = @_;
 
   ## Check if this trackhub is already attached - now that we can attach hubs via
   ## URL, they may not be saved in the imageconfig
@@ -338,10 +338,12 @@ sub _add_trackhub {
     ## Probably couldn't contact the hub
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
-    my $shortLabel = strip_HTML($hub_info->{'details'}{'shortLabel'});
-    $menu_name = $shortLabel if $shortLabel and $is_poor_name;
+    my $description = $hub_info->{'details'}{'longLabel'};
+    if ($hub_info->{'details'}{'descriptionUrl'}) {
+      $description .= sprintf ' <a href="%s">More information</a>', $hub_info->{'details'}{'descriptionUrl'};
+    }
 
-    my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $hub_info->{'details'}{'longLabel'}}));
+    my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $description}));
 
     my $node;
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
@@ -689,7 +691,7 @@ sub load_file_format {
         ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
         my $force_hide = $internal ? 1 : 0;
-        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, undef, $menu, $force_hide);
+        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, $menu, $force_hide);
       }
       else {
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
