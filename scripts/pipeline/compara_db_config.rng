@@ -43,6 +43,14 @@
         </element>
         <element name="genome" blockly:blockName="Genome">
           <attribute name="name" blockly:blockName="Name"/>
+          <optional>
+            <attribute name="exclude" blockly:blockName="Exclude those genomes">
+              <choice>
+                <value blockly:blockName="Yes">1</value>
+                <value blockly:blockName="No">0</value>
+              </choice>
+            </attribute>
+          </optional>
         </element>
       </choice>
     </oneOrMore>
