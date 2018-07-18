@@ -613,7 +613,7 @@ sub _expand_database_templates {
                       };
     foreach (@db_types) {
       my $species_version = $tree->{'general'}{'SPECIES_RELEASE_VERSION'} || 1;
-      my $db_name = sprintf('%s_%s_%s_%s', $filename, lc($_), $SiteDefs::ENSEMBL_VERSION, $species_version);
+      my $db_name = $tree->{'databases'}{'DATABASE_'.$_} || sprintf('%s_%s_%s_%s', $filename, lc($_), $SiteDefs::ENSEMBL_VERSION, $species_version);
       ## Does this database exist?
       $db_details->{'NAME'} = $db_name;
       my $db_exists = $config_packer->db_connect($_, $db_details, 1);
