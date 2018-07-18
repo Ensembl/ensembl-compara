@@ -215,8 +215,13 @@ sub genebuild_text {
     $hub->url({ action => 'Annotation', __clear => 1 }), sprintf($self->{'icon'}, 'info'),
     
     $ftp ? sprintf(
-      '<p><a href="%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
+      '<p><a href="%s/fasta/%s/" class="nodeco">%sDownload FASTA</a> files for genes, cDNAs, ncRNA, proteins</p>', ## Link to FTP site
       $ftp, $sp_prod_name, sprintf($self->{'icon'}, 'download')
+    ) : '',
+    
+    $ftp ? sprintf(
+      '<p><a href="%s/gtf/%s/" class="nodeco">%sDownload GTF</a> or <a href="%s/gff3/%s/" class="nodeco">GFF3</a> files for genes, cDNAs, ncRNA, proteins</p>', ## Link to FTP site
+      $ftp, $sp_prod_name, sprintf($self->{'icon'}, 'download'), $ftp, $sp_prod_name
     ) : '',
     
     $idm_link
