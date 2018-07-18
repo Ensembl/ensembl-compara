@@ -746,8 +746,8 @@ sub _summarise_funcgen_db {
 ### the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
     'select
-      distinct epigenome.name, epigenome.epigenome_id, 
-                epigenome.display_label, epigenome.description
+      distinct epigenome.display_label, epigenome.epigenome_id, 
+                epigenome.description
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
@@ -756,9 +756,9 @@ sub _summarise_funcgen_db {
   );
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_names'}{$cell_type_key} = $row->[2];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[3];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[0];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_names'}{$cell_type_key} = $row->[0];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_ids'}{$cell_type_key} = 1;
   }
@@ -766,7 +766,7 @@ sub _summarise_funcgen_db {
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.name, epigenome.epigenome_id, epigenome.display_label, epigenome.description
+        epigenome.display_label, epigenome.epigenome_id, epigenome.description
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -778,8 +778,8 @@ sub _summarise_funcgen_db {
   );
   foreach my $row (@$c_aref) {
     my $cell_type_key =  $row->[0] .':'. $row->[1];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[2];
-    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[3];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[0];
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 0;
   }
   
@@ -824,7 +824,6 @@ sub _summarise_funcgen_db {
 	          epigenome_id,
 	          epigenome.display_label,
             epigenome.description,
-	          epigenome.name,
             displayable,
             segmentation_file.name
 	        from segmentation_file
@@ -835,19 +834,19 @@ sub _summarise_funcgen_db {
   );
 
   foreach my $C (@$res_cell) {
-    my $key = $C->[0].':'.$C->[4];
+    my $key = $C->[0].':'.$C->[2];
     my $value = {
       name => qq($C->[2]),
       desc => qq(Genome segmentation in $C->[2]),
       epi_desc => qq($C->[3]),
-      disp => $C->[5],
+      disp => $C->[4],
       'web' => {
           celltype      => $C->[1],
           celltypename  => $C->[2],
           'colourset'   => 'fg_segmentation_features',
           'display'     => 'off',
           'key'         => "seg_$key",
-          'seg_name'    => $C->[6],
+          'seg_name'    => $C->[5],
           'type'        => 'fg_segmentation_features'
       },
       count => 1,
@@ -906,7 +905,7 @@ sub _summarise_funcgen_db {
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
         select
-            epigenome.name,
+            epigenome.display_label,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
         from
@@ -916,7 +915,7 @@ sub _summarise_funcgen_db {
         where
             class in ($classes)
         group by
-            epigenome.name,
+            epigenome.display_label,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
     ));
