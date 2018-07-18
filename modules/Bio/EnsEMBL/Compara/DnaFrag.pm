@@ -510,7 +510,6 @@ sub slice {
       # The genome doesn't have a core db
       return undef;
     }
-    $dba->dbc->reconnect_when_lost(1);
 
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }
