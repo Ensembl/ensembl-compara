@@ -105,7 +105,7 @@ sub new {
     my $project_name      = $experiment_group ? $experiment_group->name : '';
     my $source_info       = $experiment->_source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
     my $epigenome         = $peak_calling->fetch_Epigenome;
-    my $epigenome_name    = $epigenome->name;
+    my $epigenome_name    = $epigenome->display_label;
     my $feature_type      = $peak_calling->fetch_FeatureType;
     my $evidence_label    = $feature_type->evidence_type_label;
 
