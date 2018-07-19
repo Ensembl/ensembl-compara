@@ -403,7 +403,7 @@ sub fetch_collection_by_name {
 
     throw('$collection is required') unless $collection;
 
-    my $all_ss = $self->fetch_all_by_name("collection-$collection");
+    my $all_ss = $self->fetch_all_by_name($collection =~ /^collection-/ ? $collection : "collection-$collection");
     return $self->_find_most_recent($all_ss);
 }
 
