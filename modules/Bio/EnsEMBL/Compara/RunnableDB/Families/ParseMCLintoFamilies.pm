@@ -38,18 +38,12 @@ sub run {   # nothing to run, just write_output()
 sub write_output {
     my $self = shift @_;
 
+    my $mlss_id         = $self->param_required('mlss_id');
     my $mcl_name        = $self->param_required('mcl_name');
     my $family_prefix   = $self->param('family_prefix') || 'ENSF';
     my $family_offset   = $self->param('family_offset') || 0;
 
     my $compara_dba     = $self->compara_dba();
-
-        # make sure we have the correct $mlss:
-    my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-        -method             => Bio::EnsEMBL::Compara::Method->new( -type => 'FAMILY'),
-        -species_set    => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $compara_dba->get_GenomeDBAdaptor->fetch_all ),
-    );
-    $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
     my $fa            = $compara_dba->get_FamilyAdaptor();
     my $sma           = $compara_dba->get_SeqMemberAdaptor();
@@ -73,8 +67,7 @@ sub write_output {
         my $family = Bio::EnsEMBL::Compara::Family->new_fast({
             '_stable_id'                    => $family_stable_id,
             '_version'                      => 1,
-            '_method_link_species_set'      => $mlss,
-            '_method_link_species_set_id'   => $mlss->dbID,
+            '_method_link_species_set_id'   => $mlss_id,
             '_description_score'            => 0,
         });
 
