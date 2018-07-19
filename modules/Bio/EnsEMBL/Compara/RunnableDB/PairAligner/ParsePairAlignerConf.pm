@@ -911,6 +911,7 @@ sub write_mlss_entry {
         -type               => $method_link_type,
         -dbID               => $method_link_id,
 	-class              => "GenomicAlignBlock.pairwise_alignment",
+        -display_name       => $method_link_type,
     );
 
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new(
