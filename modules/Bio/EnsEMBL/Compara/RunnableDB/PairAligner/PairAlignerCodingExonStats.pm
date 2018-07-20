@@ -101,6 +101,7 @@ sub run {
 
   my $mlss_id = $self->param('mlss_id');
   my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+  $_->db_adaptor->dbc->disconnect_when_inactive(0) for @{ $mlss->species_set->genome_dbs };
 
   my $dnafrag = $dnafrag_adaptor->fetch_by_dbID($self->param_required('dnafrag_id'));
   $self->param('genome_db', $dnafrag->genome_db);
