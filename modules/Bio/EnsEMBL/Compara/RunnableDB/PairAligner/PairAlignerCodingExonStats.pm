@@ -327,12 +327,16 @@ sub restrict_overlapping_genomic_align_blocks {
                 #$last_end = $ref_ga->dnafrag_start-1;
                 #$last_gab = $last_gab->restrict_between_reference_positions($last_start, $last_end);
 
-                my $rest_gab = $last_gab->restrict_between_reference_positions($last_start, $ref_ga->dnafrag_start-1);
+                my $rest_gab = $last_gab->restrict_between_reference_positions($last_start, $ref_ga->dnafrag_start-1, undef, 'skip_empty_GenomicAligns');
+                # 'skip_empty_GenomicAligns' implies that the resulting GAB may have less than two GAs.
+                # In this case, there is no alignment (it's in a gap), so let's skip the GAB
+                if (scalar(@{$rest_gab->genomic_align_array}) == 2) {
                 push @$restricted_gabs,$rest_gab;
                 #Set 'last' to new gab
                 $last_end = $ref_ga->dnafrag_end;
                 $last_start = $ref_ga->dnafrag_start;
                 $last_gab = $gab;
+                }
 
             } else {
                 #block2 start is the same as block 1 start so use block 2
