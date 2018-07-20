@@ -262,12 +262,8 @@ sub run_generic_command {
         $aln_tree = $gene_tree;
     }
 
-    if (($self->param('aln_format') eq 'phylip') && (!defined($self->param('map_long_seq_names'))) ){
-        $self->param('map_long_seq_names', 1);
-    }
-
     my $map_long_seq_names;
-    if ($self->param('map_long_seq_names')){
+    if ($self->param('map_long_seq_names') // ($self->param('aln_format') eq 'phylip')) {
         $map_long_seq_names = {};
     }
 
