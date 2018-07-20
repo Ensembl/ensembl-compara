@@ -128,7 +128,7 @@ sub dump_sequences_to_workdir {
 
     my $residues = 0;
     my $count = 0;
-    $cluster->db->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+    $cluster->adaptor->db->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
     foreach my $member (@{$member_list}) {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
