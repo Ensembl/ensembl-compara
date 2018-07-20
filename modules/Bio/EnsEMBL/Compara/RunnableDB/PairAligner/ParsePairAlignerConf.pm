@@ -663,6 +663,8 @@ sub parse_defaults {
         $genome_dbs = $ss->genome_dbs;
     }
 
+    die "No genomes were added. Please check if the following parameters are correctly set: (mlss_id || mlss_id_list || collection || core_dbs)" if (!$genome_dbs);
+
     #Create a collection of pairs from the list of genome_dbs
     my $collection;
     if (@$genome_dbs > 2) {
