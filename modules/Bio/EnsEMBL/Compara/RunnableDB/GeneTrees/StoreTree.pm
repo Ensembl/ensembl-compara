@@ -364,7 +364,6 @@ sub parse_newick_into_tree {
   }
 
   foreach my $leaf (@{$newroot->get_all_leaves}) {
-    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     my $seq_member_id = $leaf->name();
     my $old_leaf = $old_leaves{$seq_member_id};
     if (!$old_leaf) {
@@ -381,6 +380,7 @@ sub parse_newick_into_tree {
       $leaf->node_id($old_leaf->node_id);
       $leaf->adaptor($old_leaf->adaptor);
     }
+    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";
