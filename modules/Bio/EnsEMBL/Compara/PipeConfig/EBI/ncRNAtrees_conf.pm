@@ -101,9 +101,6 @@ sub default_options {
             'cafe_shell'            => $self->check_exe_in_cellar('cafe/2.2/bin/cafeshell'),
 
             
-            # Other parameters
-            'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_91',
-
             # connection parameters
 
             'reg1' => {
