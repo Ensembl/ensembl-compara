@@ -205,6 +205,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 1 => 'load_members_factory',
             },
+            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'load_members_factory',
