@@ -3,7 +3,7 @@
 <head>
 <?php
 	# read basic diagraph from file
-	$eg_dot_file = 'compara_ensembl.dot';
+	$eg_dot_file = 'compara_eg.dot';
 	$myfile = fopen($eg_dot_file, "r") or die("Unable to open $eg_dot_file");
 	$eg_digraph = fread($myfile,filesize($eg_dot_file));
 	fclose($myfile);
@@ -11,7 +11,7 @@
 	$eg_digraph = preg_replace('/\}\s?$/', '', $eg_digraph);
 
 	# load ticket mapping
-	$eg_tickets = 'ensembl_jira_tickets.tsv';
+	$eg_tickets = 'eg_jira_tickets.tsv';
 	$ticketfh   = fopen($eg_tickets, "r") or die("Unable to open $eg_tickets");
 	// $ticket_str = fread($ticketfh, filesize($eg_tickets));
 	$ticket_map = array();
