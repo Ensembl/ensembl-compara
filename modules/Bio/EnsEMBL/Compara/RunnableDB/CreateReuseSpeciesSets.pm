@@ -55,6 +55,7 @@ sub fetch_input {
         my $reference_dba = $self->get_cached_compara_dba('master_db');
         $self->param('reference_dba', $reference_dba);
         warn "Storing with a reference_db ($reference_db)\n" if($self->debug());
+        $reference_dba->clear_caches
     } else {
         $self->param('reference_dba', undef);
         warn "Storing without a reference_db\n" if($self->debug());
