@@ -694,6 +694,74 @@ sub get_alignment_of_homologues {
 }
 
 
+=head2 binarize
+
+  Arg [1]     : (optional) Boolean $debug
+  Example     : $gene_tree->binarize();
+  Description : Binarize the gene-tree: first with the species-tree of this gene-tree,
+                and then randomly.  Debug info is printed when $debug is set.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub binarize {
+    my ($self, $debug) = @_;
+
+    #List of multifurcations given a tree.
+    #In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
+    #e.g.:
+    #   multifurcations[0] = (child_1,child2,child3)
+    #   multifurcations[1] = (child_7,child8,child9)
+    #------------------------------------------------
+    my $multifurcations = $self->root->find_multifurcations;
+
+    #IMPORTANT:
+    #----------------------------------------------------------------------------------------------------------------------------
+    # Binarization methods have not been tested with internal multifurcations, only with multifurcations right above the leaves
+    #----------------------------------------------------------------------------------------------------------------------------
+
+    #If there are no multifurcations in this array it means that the tree is already binary
+    #So no need to keep going
+    return unless scalar(@{$multifurcations});
+
+    #------------------
+    # MRCA binarization
+    #------------------
+    print "multifurcated_tree_root before MRCA binarization:\n" if $debug;
+    $self->root->print_tree(10) if $debug;
+
+    # 2 - binarize (MRCA) that structure
+    $self->root->binarize_flat_tree_with_species_tree($self->species_tree, $multifurcations);
+    $self->minimize_tree();
+
+    print "multifurcated_tree_root after MRCA binarization:\n" if $debug;
+    $self->root->print_tree(10) if $debug;
+
+    #After trying to do a MRCA binarization we check again for any left multifurcations to be resolved randomly.
+    #The root node is excluded because unrooted trees are expected to have a multifurcation at the root
+    foreach my $node ($self->root->get_all_subnodes) {
+        next if $node->is_leaf;
+
+        #-------------------------------
+        # Random binarization, per node.
+        #-------------------------------
+        next if scalar(@{$node->children}) <= 2;
+        print "Tree is still not binary\n" if $debug;
+
+        # 3 - binarize (random)
+        print "Performing random binarization on node: $node\n";
+        $node->random_binarize_node();
+    }
+
+    # I don't think we need minimize_tree here
+    #$self->minimize_tree();
+    $self->root->print_tree(10) if $debug;
+}
+
+
 #######################
 # MemberSet interface #
 #######################

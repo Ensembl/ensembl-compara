@@ -27,6 +27,7 @@ use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
@@ -521,6 +522,27 @@ sub store_alternative_tree {
     $self->store_genetree($newtree);
     return $newtree;
 }
+
+
+sub binarize_tree_file {
+    my ($self, $filename, $species_tree) = @_;
+
+    my $newick_multifurcated = $self->_slurp($filename);
+    my $multifurcated_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_multifurcated, "Bio::EnsEMBL::Compara::GeneTreeNode");
+
+    # 2 - wrap in a GeneTree object
+    my $multifurcated_tree = new Bio::EnsEMBL::Compara::GeneTree;
+    $multifurcated_tree->{'_root'} = $multifurcated_tree_root;
+    $multifurcated_tree->{'_species_tree'} = $species_tree;
+
+    # 3 - binarize
+    $multifurcated_tree->binarize($self->debug);
+
+    # 4 - return the new newick
+    my $newick_binary = $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}');
+    $self->_spurt($filename, $newick_binary);
+}
+
 
 sub parse_filtered_align {
     my ($self, $alnfile_ini, $alnfile_filtered, $cdna, $tree_to_delete_nodes) = @_;
