@@ -391,7 +391,7 @@ our $config = {
         tests => [
             {
                 description => 'Each homology must be linked to exactly 2 members',
-                query => 'SELECT homology_id FROM homology LEFT JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# HAVING COUNT(*) != 2',
+                query => 'SELECT homology_id FROM homology LEFT JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# GROUP BY homology_id HAVING COUNT(*) != 2',
             },
             {
                 description => 'A pair of gene can only appear in 1 homology at most',
