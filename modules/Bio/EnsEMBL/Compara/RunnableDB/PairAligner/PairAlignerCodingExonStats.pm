@@ -93,6 +93,7 @@ sub run {
   } else {
       $compara_dba = $self->compara_dba;
   }
+  $compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param('genome_dumps_dir')) if $self->param('genome_dumps_dir');
 
   my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
   my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
