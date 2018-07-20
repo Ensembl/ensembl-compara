@@ -33,7 +33,18 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -mlss_id <your_MLSS_id> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss> -epo_db <most_recent_epo_low_coverage_database>
+
+-epo_db should ideally contain EPO-2X alignments of all the genomes used in the ncRNA-trees. However, due to release coordination considerations, this may not be possible. In this case, you can use the one from the previous release
+
+=head1 EXAMPLES
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf ...
+
+
+e94
+    -mlss_id 40122 -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url ensembl_compara_93) -epo_db $(mysql-ens-compara-prod-1 details url ensembl_compara_93)
+
 
 =head1 DESCRIPTION
 
