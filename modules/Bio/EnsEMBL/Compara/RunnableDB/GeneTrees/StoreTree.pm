@@ -557,9 +557,10 @@ sub store_alternative_tree {
 
 
 sub binarize_tree_file {
-    my ($self, $filename, $species_tree) = @_;
+    my ($self, $filename, $species_tree, $map_long_seq_names) = @_;
 
     my $newick_multifurcated = $self->_slurp($filename);
+    $newick_multifurcated = $self->expand_seq_names($newick_multifurcated, $map_long_seq_names);
     my $multifurcated_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_multifurcated, "Bio::EnsEMBL::Compara::GeneTreeNode");
 
     # 2 - wrap in a GeneTree object
@@ -572,6 +573,7 @@ sub binarize_tree_file {
 
     # 4 - return the new newick
     my $newick_binary = $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}');
+    $newick_binary = $self->shorten_seq_nemes($newick_binary, $map_long_seq_names);
     $self->_spurt($filename, $newick_binary);
 }
 

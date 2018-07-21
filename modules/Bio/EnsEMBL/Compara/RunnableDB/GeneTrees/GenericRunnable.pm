@@ -304,7 +304,7 @@ sub run_generic_command {
 
     if ($self->param('binarize')){
         print "Binarizing tree is active\n" if($self->debug);
-        $self->binarize_tree_file($self->param('output_file'), $self->param('species_tree'));
+        $self->binarize_tree_file($self->param('output_file'), $self->param('species_tree'), $map_long_seq_names);
     }
 
     unless ($self->param('read_tags')) {
