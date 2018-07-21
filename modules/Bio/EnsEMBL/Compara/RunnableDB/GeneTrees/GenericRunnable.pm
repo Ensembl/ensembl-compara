@@ -240,7 +240,6 @@ sub run_generic_command {
     my $self = shift;
 
     my $gene_tree = $self->param('gene_tree');
-    my $newick;
 
     # The order is very important !
     # First, we need to load the species tree to attach the stn_ids tags to the genome_dbs / the gene-tree leaves
