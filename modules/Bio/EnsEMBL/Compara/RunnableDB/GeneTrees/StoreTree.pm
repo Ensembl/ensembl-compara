@@ -197,6 +197,38 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 }
 
 
+sub shorten_seq_nemes {
+    my ($self, $string, $map_long_seq_names) = @_;
+    return $string unless $map_long_seq_names;
+    foreach my $tmp_seq ( keys( %{$map_long_seq_names} ) ) {
+        my $fix_seq = $map_long_seq_names->{$tmp_seq}->{'seq'};
+        my $fix_suf = $map_long_seq_names->{$tmp_seq}->{'suf'};
+
+        my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+        #Replace only whole words:
+        $string =~ s/\b$fix_seq_name\b/$tmp_seq/;
+    }
+    return $string;
+}
+
+
+sub expand_seq_names {
+    my ($self, $string, $map_long_seq_names) = @_;
+    return $string unless $map_long_seq_names;
+    foreach my $tmp_seq ( keys( %$map_long_seq_names ) ) {
+        my $fix_seq = $map_long_seq_names->{$tmp_seq}{'seq'};
+        my $fix_suf = $map_long_seq_names->{$tmp_seq}{'suf'};
+
+        my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+        #Replace only whole words:
+        $string =~ s/\b$tmp_seq\b/$fix_seq_name/;
+    }
+    return $string;
+}
+
+
 sub store_genetree
 {
     my $self = shift;

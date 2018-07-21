@@ -311,20 +311,7 @@ sub run_generic_command {
         my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
         if ($self->param('run_treebest_sdi')) {
             print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
-
-            if (defined $map_long_seq_names){
-                #we need to re-map to the lond indentidiers
-                foreach my $tmp_seq ( keys( %$map_long_seq_names ) ) {
-                    my $fix_seq = $map_long_seq_names->{$tmp_seq}{'seq'};
-                    my $fix_suf = $map_long_seq_names->{$tmp_seq}{'suf'};
-
-                    my $fix_seq_name = "$fix_seq\_$fix_suf";
-
-                    #Replace only whole words:
-                    $output =~ s/\b$tmp_seq\b/$fix_seq_name/;
-                }
-            }
-
+            $output = $self->expand_seq_names($output, $map_long_seq_names);
             $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
         }
 		unless($output){
@@ -345,18 +332,8 @@ sub get_gene_tree_file {
 
     my $newick = $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
 
-    if ($map_long_seq_names){
         #we need to re-map to the small indentidiers
-        foreach my $tmp_seq ( keys( %{$map_long_seq_names} ) ) {
-            my $fix_seq = $map_long_seq_names->{$tmp_seq}->{'seq'};
-            my $fix_suf = $map_long_seq_names->{$tmp_seq}->{'suf'};
-
-            my $fix_seq_name = "$fix_seq\_$fix_suf";
-
-            #Replace only whole words:
-            $newick =~ s/\b$fix_seq_name\b/$tmp_seq/;
-        }
-    }
+    $newick = $self->shorten_seq_nemes($newick, $map_long_seq_names);
 
     return $self->_write_temp_tree_file($gene_tree_file, $newick);
 }
