@@ -581,6 +581,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'output_file'   => '#dump_dir#/snapshot_1_before_clustering.sql.gz',
             },
+            -rc_name       => '1Gb_job',
             -flow_into  => {
                 '1->A'  => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
