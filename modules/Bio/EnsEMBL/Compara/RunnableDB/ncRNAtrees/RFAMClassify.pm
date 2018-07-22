@@ -32,21 +32,6 @@ Questions may also be sent to the Ensembl help desk at
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify
 
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $rfamclassify = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-
-$rfamclassify->fetch_input(); #reads from DB
-$rfamclassify->run();
-$rfamclassify->write_output(); #writes to DB
-
-
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take the descriptions of each
