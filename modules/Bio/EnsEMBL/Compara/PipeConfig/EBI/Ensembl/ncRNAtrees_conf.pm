@@ -86,6 +86,7 @@ sub default_options {
 
             'pipeline_name'    => 'compara_nctrees_'.$self->o('rel_with_suffix'),
 
+            'test_mode' => 1, #set this to 0 if this is production run
 
             # tree break
             'treebreak_gene_count'     => 400,
@@ -135,6 +136,21 @@ sub default_options {
             # Other parameters
             'infernal_mxsize'       => 10000,
 
+            # connection parameters
+
+            'reg1' => {
+                       -host   => 'mysql-ens-sta-1',
+                       -port   => '4519',
+                       -user   => 'ensro',
+                      },
+
+            'master_db' => {
+                            -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+                            -port   => 4485,
+                            -user   => 'ensro',
+                            -pass   => '',
+                            -dbname => 'ensembl_compara_master',
+                           },
     };
 }   
 
