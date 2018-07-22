@@ -408,6 +408,9 @@ sub pipeline_analyses {
 
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
+                -parameters    => {
+                    'mirbase_url'   => $self->o('mirbase_url'),
+                },
                 -flow_into     => [ 'cluster_qc_factory' ],
                 -rc_name       => '2Gb_job',
             },

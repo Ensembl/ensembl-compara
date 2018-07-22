@@ -127,6 +127,9 @@ sub default_options {
             'rfam_expanded_basename' => 'Rfam.cm',
             'rfam_expander'          => 'gunzip ',
 
+            # miRBase database
+            'mirbase_url'           => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mirbase_22',
+
             # CAFE parameters
             'initialise_cafe_pipeline'  => 1,
             # Use production names here
