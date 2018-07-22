@@ -136,7 +136,7 @@ sub run {
         ### ochotona_princeps datafix
 
         foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
-            if ($gene->biotype =~ /rna/i) {
+            if ($gene->get_Biotype->biotype_group =~ /noncoding$/i) {
 #                my $gene_stable_id = $gene->stable_id or die "Could not get stable_id from gene with id=".$gene->dbID();
                 $self->store_ncrna_gene($gene);
 #                push @stable_ids, $gene_stable_id;
