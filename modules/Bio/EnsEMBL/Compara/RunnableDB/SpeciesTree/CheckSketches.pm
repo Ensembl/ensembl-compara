@@ -47,6 +47,7 @@ use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::Utils::DistanceMatrix;
+use File::Basename;
 use Data::Dumper;
 
 sub fetch_input {
@@ -124,7 +125,8 @@ sub run {
 			push( @path_list, $mash_path );
 		} 
 		elsif ( -e $dump_path ) {
-			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, genome_dump_file => => $dump_path } );
+			my $basename = basename($dump_path);
+			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, genome_dump_file => => $dump_path, out_prefix => $basename } );
 		}
 		else {
 			push( @gdb_ids_no_dump, { genome_db_id => $gdb->dbID, genome_dump_file => "$mash_path.fa"} );

@@ -127,7 +127,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CheckSketches',
             -flow_into  => {
                 '2->A' => [ 'dump_genome' ],
-                '3->A' => [ 'mash_sketch' ],
+                '3->A' => { 'mash_sketch' => { 'input_file' => '#genome_dump_file#' } },
                 'A->1' => [ 'mash_paste' ],
                 '4'    => [ 'permute_matrix' ],
             },
@@ -154,7 +154,7 @@ sub pipeline_analyses {
         	-parameters => {
                 'mode'               => 'sketch',
                 'mash_exe'           => $self->o('mash_exe'),
-                'output_dir'            => $self->o('output_dir'),
+                'output_dir'         => $self->o('output_dir'),
                 'additional_options' => '-p 8', # use 8 processes
                 'kmer_size'          => $self->o('mash_kmer_size'),
                 'sketch_size'        => $self->o('mash_sketch_size'),
