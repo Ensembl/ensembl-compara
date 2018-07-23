@@ -94,7 +94,7 @@ sub default_options {
 
         # data directories:
         'work_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
-        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('ensembl_release').'/',
+        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('rel_with_suffix').'/',
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 

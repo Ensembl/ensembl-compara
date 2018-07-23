@@ -73,7 +73,7 @@ sub default_options {
             #Locations to write output files
             #'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
             'chr_sizes_file' => 'chrom.sizes',
-            'big_bed_file'   => 'base_age'.$self->o('ensembl_release').'.bb',
+            'big_bed_file'   => 'base_age'.$self->o('rel_with_suffix').'.bb',
 
           };
 }
