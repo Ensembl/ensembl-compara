@@ -30,6 +30,7 @@ use EnsEMBL::Web::NewTable::NewTable;
 
 use Bio::EnsEMBL::Variation::Utils::VariationEffect;
 
+use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 use Scalar::Util qw(looks_like_number);
 
 use base qw(EnsEMBL::Web::Component::Variation);
@@ -584,7 +585,17 @@ sub variation_table {
             my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
             my $allele_string        = $vf->allele_string;
-            
+           
+            # Reverse complement if it's a LRG table with a LRG mapping to the reverse strand
+            if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable') && $lrg_strand == -1) {
+              my @alleles = split('/',$allele_string);
+              foreach my $l_allele (@alleles) {
+                next if ($l_allele !~ /^[ATGCN]+$/);
+                reverse_comp(\$l_allele);
+              }
+              $allele_string = join('/',@alleles);
+            }
+ 
             # Sort out consequence type string
             my $type = $self->new_consequence_type($tva);
             
