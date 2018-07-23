@@ -20,7 +20,7 @@ limitations under the License.
 package EnsEMBL::Web::ZMenu::TextSequence;
 
 use strict;
-
+use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::ZMenu);
@@ -78,36 +78,59 @@ sub variation_content {
     $position = "$seq_region$chr_start-$chr_end";
   }
   
-  # If we have an LRG in the URL, get the LRG coordinates as well
-  if ($self->{'lrg_slice'}) {
-    my $lrg_feature = $feature->transfer($self->{'lrg_slice'});
-    my $lrg_start   = $lrg_feature->seq_region_start;
-    my $lrg_end     = $lrg_feature->seq_region_end;
-    $lrg_position   = $lrg_feature->seq_region_name . ":$lrg_start";
-    
-    if ($lrg_end < $lrg_start) {
-      $lrg_position = "between $lrg_end & $lrg_start on " . $lrg_feature->seq_region_name;
-    } elsif ($lrg_end > $lrg_start) {
-      $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start-$lrg_end";
-    }
-  }
-  
+  my $lrg_allele = $allele;
+ 
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
-  
+
+  my $allele_strand = ($feature->seq_region_strand == 1) ? '(Forward strand)' : '(Reverse strand)';
+
   $self->caption(sprintf('%s: <a href="%s">%s</a>', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $hub->url({ action => 'Explore', %url_params }), $v), 1);
   
-  my @entries = ({ type => 'Class', label => $feature->var_class });
-
-  push @entries, { type => 'Location', label => $position };
-  push @entries, { type => 'Source',   label => $feature->source_name };
+  my @entries = ({ type => 'Class',  label => $feature->var_class });
+  push @entries, { type => 'Source', label => $feature->source_name };
  
   if (scalar @failed) {
     push @entries, { type => 'Failed status', label_html => sprintf '<span style="color:red">%s</span>', shift @failed };
     push @entries, { type => '',              label_html => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
   }
+  push @entries, { type => 'Location', label => $position };
+  push @entries, { type => 'Alleles',  label => "$allele $allele_strand" };
 
-  push @entries, { type => 'LRG location', label => $lrg_position } if $lrg_position;
-  push @entries, { type => 'Alleles',      label => $allele };
+
+  # If we have an LRG in the URL, get the LRG coordinates as well
+  if ($self->{'lrg_slice'}) {
+    my $lrg_feature = $feature->transfer($self->{'lrg_slice'});
+    my $lrg_start   = $lrg_feature->seq_region_start;
+    my $lrg_end     = $lrg_feature->seq_region_end;
+    my $lrg_mapping_strand = $self->{'lrg_slice'}->feature_Slice->strand;
+
+    $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start";
+
+    if ($lrg_end < $lrg_start) {
+      $lrg_position = "between $lrg_end & $lrg_start on " . $lrg_feature->seq_region_name;
+    } elsif ($lrg_end > $lrg_start) {
+      $lrg_position = $lrg_feature->seq_region_name . ":$lrg_start-$lrg_end";
+    }
+
+    push @entries, { type => 'LRG location', label => $lrg_position } if ($lrg_position);
+
+
+    # Flip the LRG alleles if it maps to the reverse strand
+    if ($lrg_mapping_strand == -1) {
+      my @alleles = split('/',$lrg_allele);
+      foreach my $l_allele (@alleles) {
+        next if ($l_allele !~ /^[ATGCN]+$/);
+        reverse_comp(\$l_allele);
+      }
+      $lrg_allele = join('/',@alleles);
+    }
+    $lrg_allele = substr($lrg_allele, 0, 10) . '...' if length $lrg_allele > 10; # truncate very long allele strings
+    
+    if ($lrg_allele ne $allele) {
+      push @entries, { type => 'LRG alleles', label => $lrg_allele };
+    }
+  }
+
   
   if ($self->{'transcript'}) {
     my $tv = $feature->get_all_TranscriptVariations([$self->{'transcript'}])->[0];
