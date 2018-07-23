@@ -90,6 +90,7 @@
 	        // }
 	        error: function(jqXHR, status, error) {
 		      console.log('Error: ' + (error || jqXHR.crossDomain && 'Cross-Origin Request Blocked' || 'Network issues'));
+		      window.alert('Having trouble contacting Jira - please check that you are logged in');
 		    },
 		    async: false,
 		    crossDomain: true,
