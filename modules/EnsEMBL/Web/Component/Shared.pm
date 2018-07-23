@@ -24,8 +24,6 @@ package EnsEMBL::Web::Component::Shared;
 
 use strict;
 
-use Data::Dumper;
-
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::Util      qw(first);
