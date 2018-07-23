@@ -12,7 +12,7 @@ CREATE TABLE `all_record` (
   PRIMARY KEY (`record_id`),
   UNIQUE KEY `record_type_code` (`record_type`,`record_type_id`,`type`,`code`),
   KEY `record_type_idx` (`record_type_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=399380 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `group_member` (
   `group_member_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -27,7 +27,7 @@ CREATE TABLE `group_member` (
   `modified_by` int(11) DEFAULT NULL,
   `modified_at` datetime DEFAULT NULL,
   PRIMARY KEY (`group_member_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=39174 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=49027 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `login` (
   `login_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -35,7 +35,7 @@ CREATE TABLE `login` (
   `identity` varchar(255) DEFAULT NULL,
   `type` enum('local','openid','ldap') NOT NULL DEFAULT 'local',
   `data` text,
-  `status` enum('active','pending') NOT NULL DEFAULT 'pending',
+  `status` enum('active','pending','disabled') DEFAULT NULL,
   `salt` varchar(8) DEFAULT NULL,
   `created_by` int(11) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE `login` (
   PRIMARY KEY (`login_id`),
   KEY `identityx` (`identity`),
   KEY `user_idx` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27834 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=37358 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `session` (
   `last_session_no` int(10) unsigned NOT NULL DEFAULT '0'
@@ -63,11 +63,11 @@ CREATE TABLE `share_url` (
   `url` text NOT NULL,
   `type` varchar(32) NOT NULL,
   `action` varchar(32) NOT NULL,
-  `function` varchar(32) NOT NULL,
+  `function` varchar(32) DEFAULT NULL,
   `data` text NOT NULL,
   `share_type` varchar(10) NOT NULL,
   `used` int(10) NOT NULL DEFAULT '0',
-  `created_at` timestamp,
+  `created_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -92,7 +92,7 @@ CREATE TABLE `user` (
   `modified_by` int(11) DEFAULT NULL,
   `modified_at` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=119291 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=128800 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `webgroup` (
   `webgroup_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -106,5 +106,4 @@ CREATE TABLE `webgroup` (
   `modified_by` int(11) DEFAULT NULL,
   `modified_at` datetime DEFAULT NULL,
   PRIMARY KEY (`webgroup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=210 DEFAULT CHARSET=latin1;
-
+) ENGINE=InnoDB AUTO_INCREMENT=244 DEFAULT CHARSET=latin1;
