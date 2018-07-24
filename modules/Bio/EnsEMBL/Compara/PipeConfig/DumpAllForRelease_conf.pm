@@ -284,7 +284,6 @@ sub pipeline_analyses {
                     'curr_release'         => $self->o('curr_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
-                    'dump_dir'             => $self->o('dump_dir'),
 
                     'lastz_patch_dbs'      => $self->o('lastz_patch_dbs'),
                     'align_dump_options'   => $self->o('align_dump_options'),
@@ -360,18 +359,12 @@ sub pipeline_analyses {
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
         	-parameters => {
         		'ftp_locations' => $self->o('ftp_locations'),
-        		'dump_dir'      => $self->o('dump_dir'     ),
         	},
         	-flow_into => [ 'symlink_prev_dumps' ],
         },
 
         {	-logic_name => 'symlink_prev_dumps',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
-        	-parameters => {
-        		'curr_release' => $self->o('curr_release'),
-        		'ftp_root'     => $self->o('ftp_root'    ),
-        		'dump_dir'     => $self->o('dump_dir'    ),
-        	},
         	-flow_into => ['create_all_dump_jobs'], # to top up any missing dumps
         },
 
@@ -379,9 +372,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
             -parameters => {
             	'lastz_dump_path' => $self->o('lastz_dump_path'),
-            	'curr_release'    => $self->o('curr_release'   ),
-            	'compara_db'      => $self->o('compara_db'),
-            	'ftp_root'        => $self->o('ftp_root'       ),
             },
             -rc_name => 'default_with_registry',
         },
