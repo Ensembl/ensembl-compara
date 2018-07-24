@@ -112,17 +112,13 @@ sub default_options {
         # define which params should ALWAYS be passed to each dump pipeline
         'default_dump_options' => {
         	DumpMultiAlign          => { 
-        		registry         => '#reg_conf#',
-        		curr_release     => '#curr_release#',
          		make_tar_archive => 0,
         	},
         	DumpConstrainedElements => { 
         		compara_url => '#compara_db#', 
-        		registry    => '#reg_conf#', 
         	},
         	DumpConservationScores  => { 
         		compara_url => '#compara_db#', 
-        		registry    => '#reg_conf#', 
         	},
         	DumpTrees               => { 
         		dump_per_species_tsv => 1,
@@ -130,7 +126,6 @@ sub default_options {
         		rel_db               => '#compara_db#',
         		target_dir           => '#dump_root#/release-#curr_release#',
         		base_dir             => '#dump_root#',
-        		work_dir             => '#dump_root#/dump_hash',
         		emf_dir              => $self->o('emf_dir'),
         		xml_dir              => $self->o('xml_dir'),
         		tsv_dir              => $self->o('tsv_dir'),
