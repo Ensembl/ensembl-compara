@@ -779,6 +779,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
             -rc_name => '250Mb_job',
@@ -794,6 +795,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_4_cores' ],
                        },
             -rc_name => '500Mb_2c_job',
@@ -809,6 +811,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_8_cores' ],
                        },
             -rc_name => '1Gb_4c_job',
