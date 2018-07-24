@@ -146,9 +146,14 @@ sub write_output {
     
     my $extra_data = $self->param('extra_data');
     foreach my $gdb (@{$self->param('genome_dbs')}) {
-        my $h = { 'genome_db_id' => $gdb->dbID, %{ $extra_data->{$gdb->dbID} } };
+        my $h = { 'genome_db_id' => $gdb->dbID };
+        my $d = $extra_data->{$gdb->dbID};
         foreach my $p (@{$self->param('extra_parameters')}) {
-            $h->{$p} = $gdb->$p;
+            if ($gdb->can($p)) {
+                $h->{$p} = $gdb->$p;
+            } else {
+                $h->{$p} = $d->{$p};
+            }
         }
         $self->dataflow_output_id($h, $self->param('fan_branch_code'));
     }

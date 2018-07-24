@@ -88,7 +88,7 @@ sub pipeline_analyses {
         {   -logic_name => 'genome_dump_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'extra_parameters'  => [ 'locator' ],
+                'extra_parameters'  => [ 'locator', 'methods' ],
                 'fetch_methods'     => 1,
             },
             -input_ids  => [{
