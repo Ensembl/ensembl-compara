@@ -34,10 +34,10 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 # -------------------------CORE DATABASES--------------------------------------
 
 # The majority of core databases live on staging servers:
-   Bio::EnsEMBL::Registry->load_registry_from_url(
-     'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/94');
-  #Bio::EnsEMBL::Registry->load_registry_from_url(
-  #  'mysql://ensro@mysql-ens-vertannot-staging:4573/93');
+#   Bio::EnsEMBL::Registry->load_registry_from_url(
+#    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/94');
+  Bio::EnsEMBL::Registry->load_registry_from_url(
+    'mysql://ensro@mysql-ens-vertannot-staging:4573/94');
 
 
 # Add in extra cores from genebuild server

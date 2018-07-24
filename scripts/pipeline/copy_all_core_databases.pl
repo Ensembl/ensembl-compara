@@ -94,7 +94,7 @@ use Bio::EnsEMBL::Registry;
 
 
 ## Command-line options
-my ($db_copy_client, $endpoint_uri, $source_server_url, $target_server_url, $ensadmin_psw, $force, $help);
+my ($db_copy_client, $endpoint_uri, $source_server_url, $target_server_url, $ensadmin_psw, $force, $update, $help);
 
 GetOptions(
         's|source_server_url'   => \$source_server_url,
@@ -103,6 +103,7 @@ GetOptions(
         'c|db_copy_client'      => \$db_copy_client,
         'p|ensadmin_psw=s'      => \$ensadmin_psw,
         'f|force!'              => \$force,
+        'k|update!'          => \$update,  
 
         'h|help'                => \$help,
 );
@@ -151,8 +152,10 @@ Bio::EnsEMBL::Registry->load_registry_from_url($source_server_url);
 my @databases_to_copy;
 my @db_clash;
 my @existing_dbs;
+my @all_dbs_on_source_server;
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
     my $dbname = $db_adaptor->dbc->dbname;
+    push @all_dbs_on_source_server, $dbname;
     if ($existing_target_species{$db_adaptor->species}) {
         my $all_dbs = $existing_target_species{ $db_adaptor->species };
         my @same_dbs = grep {$_ eq $dbname} @$all_dbs;
@@ -181,12 +184,20 @@ if (@db_clash) {
     }
 }
 
-die "Add the --force option if you want to carry on with the copy of the other databases\n" if !$force && (@existing_dbs || @db_clash);
+die "Add the --force option if you want to carry on with the copy of the other databases or --update option to ignore warnings and overwrite all the core db in the target server\n" if (!$force && !$update) && (@existing_dbs || @db_clash);
 
-foreach my $dbname (@databases_to_copy) {
-    my @cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
-    if (system(@cmd)) {
-        die "Could not run the command: ", join(" ", @cmd), "\n";
+unless ($update) {
+    foreach my $dbname (@databases_to_copy) {
+	my @cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
+	if (system(@cmd)) {
+	    die "Could not run the command: ", join(" ", @cmd), "\n";
+	}
+    }
+} else {
+    foreach my $dbname (@all_dbs_on_source_server) {
+        my @cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri, '-p' => "UPDATE", '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
+        if (system(@cmd)) {
+            die "Could not run the command: ", join(" ", @cmd), "\n";
+        }
     }
 }
-

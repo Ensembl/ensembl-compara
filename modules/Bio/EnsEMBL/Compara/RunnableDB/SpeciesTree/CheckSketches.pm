@@ -144,11 +144,18 @@ sub write_output {
 
 	my $mash_dist_file = $self->param('mash_dist_file');
 	if ( $mash_dist_file  ) {
+		print "DEBUG : CheckSketches.pm : write_ouput : we found mash_dist_file : $mash_dist_file \n";
 		$self->dataflow_output_id( {mash_dist_file => $mash_dist_file}, 4 );
 		$self->input_job->autoflow(0);
 		$self->complete_early("Found distance file containing all genome_dbs: $mash_dist_file. Skipping Mash steps.");
 	}
 
+	print "DEBUG : CheckSketches.pm : write_ouput : gdb_ids_no_dump : \n";
+	print Dumper($self->param('gdb_ids_no_dump'));
+	print "\n DEBUG : CheckSketches.pm : write_ouput : gdb_ids_no_sketch : \n";
+	print Dumper($self->param('gdb_ids_no_sketch'));
+	print "\n DEBUG : CheckSketches.pm : write_ouput : mash_file_list : \n";
+	print Dumper($self->param('mash_file_list'));
 	$self->dataflow_output_id( $self->param('gdb_ids_no_dump'), 2 );
 	$self->dataflow_output_id( $self->param('gdb_ids_no_sketch'), 3 );
 	my $input_file = join(' ', @{ $self->param('mash_file_list') });

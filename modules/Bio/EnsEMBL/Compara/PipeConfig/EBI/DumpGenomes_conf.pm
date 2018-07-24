@@ -67,8 +67,8 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'              => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-        'port'              => 4523,
+        'host'              => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'port'              => 4522,
 
         # Where to put the genome dumps
         'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
@@ -82,7 +82,7 @@ sub default_options {
 
         # the registry file to indicate how to get the core databases
         'reg_conf'          => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-        'reg_conf'          => "/homes/muffato/workspace/src/rel93/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+#        'reg_conf'          => "/homes/muffato/workspace/src/rel93/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
 
         # Executables
         'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),

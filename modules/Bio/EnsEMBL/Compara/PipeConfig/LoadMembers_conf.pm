@@ -81,7 +81,7 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
     # "Member" parameters:
-        'allow_ambiguity_codes'     => 0,
+        'allow_ambiguity_codes'     => 1,
         'allow_missing_coordinates' => 0,
         'allow_missing_cds_seqs'    => 0,
         # Genes with these logic_names will be ignored from the pipeline.
