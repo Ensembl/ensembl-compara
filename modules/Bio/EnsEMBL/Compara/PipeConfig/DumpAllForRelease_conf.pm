@@ -203,9 +203,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'reg_conf'        => $self->o('reg_conf'),
         'registry'        => $self->o('reg_conf'),
-        'curr_release'    => $self->o('curr_release'),
         'rel_with_suffix' => $self->o('curr_release'),
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
