@@ -523,7 +523,6 @@ sub alignment {
     }
 
     my $self_members = $self->get_all_Members;
-    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
 
     if ( scalar(keys %cigars) != scalar(@$self_members) ) {
         if ( $ignore_mismatch ) {
