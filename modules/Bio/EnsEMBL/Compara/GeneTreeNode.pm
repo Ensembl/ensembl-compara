@@ -549,7 +549,7 @@ sub binarize_flat_tree_with_species_tree {
         #print "MULT: ", scalar(@species_tree_leaves_in_multifurcation), "\n";
         #print "REM: ", scalar(@nodesToDisavow), "\n";
 
-        my $castedMrca = $mrca->copy('Bio::EnsEMBL::Compara::GeneTreeNode');
+        my $castedMrca = $mrca->copy('Bio::EnsEMBL::Compara::GeneTreeNode', $mrca->adaptor->db->get_GeneTreeNodeAdaptor);
 
         #prune castedMrca sub-tree
         #e.g. when the taxonomic sub-tree has more species that the ones in the gene-tree, in those cases we need to remove the extra leaves.
