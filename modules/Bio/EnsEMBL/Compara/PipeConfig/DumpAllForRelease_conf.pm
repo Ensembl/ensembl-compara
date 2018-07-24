@@ -39,9 +39,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
-use Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
-use Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
-
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
@@ -53,8 +50,6 @@ sub default_options {
     my ($self) = @_;
     my $do = {
         %{$self->SUPER::default_options},
-        %{ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf::default_options($self) },
-        %{ Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf::default_options($self) },
 
         ######################################################
         # Review these options prior to running each release #
@@ -124,11 +119,7 @@ sub default_options {
         		dump_per_species_tsv => 1,
         		production_registry  => '--reg_conf #reg_conf#', 
         		rel_db               => '#compara_db#',
-        		target_dir           => '#dump_root#/release-#curr_release#',
         		base_dir             => '#dump_root#',
-        		emf_dir              => $self->o('emf_dir'),
-        		xml_dir              => $self->o('xml_dir'),
-        		tsv_dir              => $self->o('tsv_dir'),
         	},
         	DumpSpeciesTrees => {
         		compara_url => '#compara_db#',
@@ -149,9 +140,22 @@ sub default_options {
         	GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],
         },
 
+        # DumpMultiAlign options
+        'split_size'          => 200,
+        'masked_seq'          => 1,
+        'dump_aln_program'    => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
+        'emf2maf_program'     => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
+        'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
+        'split_by_chromosome' => 1,
+
         # tree dump options
         'clusterset_id' => undef,
         'member_type'   => undef,
+        'xmllint_exe'   => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
+        'dump_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
+        'readme_dir'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
+        'max_files_per_tar'     => 500,
+        'batch_size'            => 25,    # how may trees' dumping jobs can be batched together
         
         # constrained elems & conservation scores
         'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
@@ -207,6 +211,10 @@ sub pipeline_wide_parameters {
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
         'name_root'           => 'Compara.#curr_release#.#basename#',
+        'target_dir'          => '#dump_dir#',
+        'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
+        'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',
+        'tsv_dir'             => '#target_dir#/tsv/ensembl-compara/homologies/',
 
         # ancestral alleles
         'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",

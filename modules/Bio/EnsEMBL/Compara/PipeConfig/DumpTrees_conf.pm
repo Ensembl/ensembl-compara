@@ -135,6 +135,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'rel_db'        => $self->o('rel_db'),
 
+        'production_registry' => $self->o('production_registry'),
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'  ),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
