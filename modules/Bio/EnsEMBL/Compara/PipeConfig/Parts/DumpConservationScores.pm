@@ -88,7 +88,7 @@ sub pipeline_analyses_dump_conservation_scores {
         {   -logic_name     => 'md5sum_cs',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => 'cd #cs_output_dir#; md5sum *.bedgraph* *.bw > MD5SUM',
+                'cmd'   => 'cd #cs_output_dir#; md5sum *.bw > MD5SUM',
             },
             -flow_into      =>  [ 'readme_cs' ],
         },
