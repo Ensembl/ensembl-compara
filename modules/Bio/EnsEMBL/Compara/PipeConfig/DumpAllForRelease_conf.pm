@@ -174,6 +174,8 @@ sub default_options {
     return $do;
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
+
 sub hive_meta_table {
     my ($self) = @_;
     return {
