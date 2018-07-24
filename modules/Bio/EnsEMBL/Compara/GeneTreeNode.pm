@@ -523,18 +523,16 @@ sub binarize_flat_tree_with_species_tree {
     my $multifurcations = shift;
 
     #fetch specie tree objects for the multifurcated nodes
-    my %species_tree_leaves_in_multifurcation;
     foreach my $multi (@$multifurcations){
+        my @species_tree_leaves_in_multifurcation;
         foreach my $child (@{$multi}){
             my ($name_id, $species_tree_node_id) = split(/\_/,$child->name);
             my $species_tree_node = $species_tree->root->find_leaf_by_node_id($species_tree_node_id);
-            push(@{$species_tree_leaves_in_multifurcation{$multi}}, $species_tree_node);
+            push @species_tree_leaves_in_multifurcation, $species_tree_node;
         }
-    }
 
-    foreach my $multi (@$multifurcations) {
         #get mrca sub-tree
-        my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( [@{$species_tree_leaves_in_multifurcation{$multi}}] );
+        my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( \@species_tree_leaves_in_multifurcation );
 
         #get gene_tree mrca sub-tree
         my $mrcaGeneTree = $self->find_first_shared_ancestor_from_leaves( [@{$multi}] );
@@ -542,7 +540,7 @@ sub binarize_flat_tree_with_species_tree {
         #get mrca leaves
         my @leaves_mrca= @{ $mrca->get_all_leaves() };
         #get node_ids of the leaves in the multifurcations
-        my %stn_ids_to_keep = map {$_->dbID => 1} @{$species_tree_leaves_in_multifurcation{$multi}};
+        my %stn_ids_to_keep = map {$_->dbID => 1} @species_tree_leaves_in_multifurcation;
         #compute the difference
         my @nodesToDisavow = grep {!$stn_ids_to_keep{$_->dbID}} @leaves_mrca;
         #print "TOT: ", scalar(@leaves_mrca), "\n";
