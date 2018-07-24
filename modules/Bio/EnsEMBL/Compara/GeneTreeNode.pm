@@ -511,15 +511,20 @@ sub binarize_flat_tree_with_species_tree {
     my $species_tree    = shift;
 
     #fetch specie tree objects for the multifurcated nodes
+        #print "MULTIFURCATION\n";
         my @species_tree_leaves_in_multifurcation;
         foreach my $child (@{$self->children}){
             my ($name_id, $species_tree_node_id) = split(/\_/,$child->name);
             my $species_tree_node = $species_tree->root->find_leaf_by_node_id($species_tree_node_id);
             push @species_tree_leaves_in_multifurcation, $species_tree_node;
+            #$child->print_node;
+            #$species_tree_node->print_node;
         }
 
         #get mrca sub-tree
         my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( \@species_tree_leaves_in_multifurcation );
+        #print "MRCA\n";
+        #$mrca->print_tree(10);
 
         #get mrca leaves
         my @leaves_mrca= @{ $mrca->get_all_leaves() };
@@ -532,6 +537,8 @@ sub binarize_flat_tree_with_species_tree {
         #print "REM: ", scalar(@nodesToDisavow), "\n";
 
         my $castedMrca = $mrca->copy('Bio::EnsEMBL::Compara::GeneTreeNode', $mrca->adaptor->db->get_GeneTreeNodeAdaptor);
+        #print "AFTER CAST\n";
+        #$castedMrca->print_tree(10);
 
         #prune castedMrca sub-tree
         #e.g. when the taxonomic sub-tree has more species that the ones in the gene-tree, in those cases we need to remove the extra leaves.
@@ -544,6 +551,8 @@ sub binarize_flat_tree_with_species_tree {
             $node->disavow_parent();
             $castedMrca = $castedMrca->minimize_tree;
         }
+        #print "AFTER DISAVOW\n";
+        #$castedMrca->print_tree(10);
 
         #list of all the leaves mapped by taxon_id
         my %leaves_list;
@@ -578,6 +587,8 @@ sub binarize_flat_tree_with_species_tree {
                $leaf->distance_to_parent($branch_length_list{$member});
            }
         }
+        #$castedMrca->print_tree(10);
+        #$self->print_tree(10);
 
         # replace the current (flat) sub-tree with the new one
         $self->parent()->add_child($castedMrca, $self->distance_to_parent);
