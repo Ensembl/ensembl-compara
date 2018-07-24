@@ -203,7 +203,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'registry'        => $self->o('reg_conf'),
+        'registry'        => '#reg_conf#',
         'rel_with_suffix' => $self->o('curr_release'),
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
@@ -229,7 +229,7 @@ sub pipeline_wide_parameters {
         'cs_readme'             => $self->o('cs_readme'),
         'ce_readme'             => $self->o('ce_readme'),
         
-        'export_dir'     => $self->o('dump_dir'),
+        'export_dir'     => '#dump_dir#',
         'ce_output_dir'  => '#export_dir#/bed/ensembl-compara/#dirname#',
         'cs_output_dir'  => '#export_dir#/compara/conservation_scores/#dirname#',
         'work_dir'       => '#dump_root#/dump_hash',
