@@ -61,9 +61,8 @@ sub default_options {
         # Review these options prior to running each release #
         ######################################################
         
-        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
         # Where to put the new dumps and the symlinks
-        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_#curr_release#',
+        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_'.$self->o('rel_with_suffix'),
         # Location of the previous dumps
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
         #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
@@ -97,8 +96,7 @@ sub default_options {
 
 
     	# general settings
-        'pipeline_name'   => 'dump_all_for_release_#curr_release#',
-        'rel_with_suffix' => '#curr_release#',
+        'pipeline_name'   => 'dump_all_for_release_'.$self->o('rel_with_suffix'),
         'division'        => 'ensembl',
         'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?       
@@ -204,7 +202,6 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'registry'        => '#reg_conf#',
-        'rel_with_suffix' => $self->o('curr_release'),
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
         'ftp_root'        => $self->o('ftp_root'),  
@@ -215,7 +212,7 @@ sub pipeline_wide_parameters {
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
-        'name_root'           => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
+        'name_root'           => 'Compara.#curr_release#.#basename#',
 
         # ancestral alleles
         'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
@@ -281,7 +278,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
             -input_ids  => [ {
                     'compara_db'           => $self->o('compara_db'),
-                    'curr_release'         => $self->o('curr_release'),
+                    'curr_release'         => $self->o('ensembl_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
 
