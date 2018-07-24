@@ -597,7 +597,7 @@ sub binarize_flat_tree_with_species_tree {
 
         my $parentMrca = $mrcaGeneTree->parent();
         my $bl = $mrcaGeneTree->distance_to_parent;
-        $mrcaGeneTree->disavow_parent();
+        $mrcaGeneTree->release_tree();
 
         #adding new binary branch
         #We need to add from the casted MRCA tree
