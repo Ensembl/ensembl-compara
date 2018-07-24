@@ -62,9 +62,11 @@ sub default_options {
         ######################################################
         
         'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
+        # Where to put the new dumps and the symlinks
         'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_#curr_release#',
-        'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # USE THIS PATH FOR RELEASE 93 ONLY !!
-        # 'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
+        # Location of the previous dumps
+        'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
+        #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
         'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
         'compara_db'   => 'compara_curr', # can be URL or reg alias
