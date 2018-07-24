@@ -711,11 +711,6 @@ sub binarize {
     my ($self, $debug) = @_;
 
     #List of multifurcations given a tree.
-    #In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
-    #e.g.:
-    #   multifurcations[0] = (child_1,child2,child3)
-    #   multifurcations[1] = (child_7,child8,child9)
-    #------------------------------------------------
     my $multifurcations = $self->root->find_multifurcations;
 
     #IMPORTANT:
@@ -734,7 +729,7 @@ sub binarize {
     $self->root->print_tree(10) if $debug;
 
     # 2 - binarize (MRCA) that structure
-    $self->root->binarize_flat_tree_with_species_tree($self->species_tree, $multifurcations);
+    $_->binarize_flat_tree_with_species_tree($self->species_tree) for @$multifurcations;
     $self->minimize_tree();
 
     print "multifurcated_tree_root after MRCA binarization:\n" if $debug;

@@ -476,15 +476,9 @@ sub keep_nodes_by_taxon_ids {
 
 =head2 find_multifurcations
 
-  Arg [1]     : none
   Example     : my $multifurcations = $multifurcated_tree_root->find_multifurcations;
-  Description : List of multifurcations given a tree.
-                In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
-                e.g.:
-                multifurcations[0] = (child_1,child2,child3)
-                multifurcations[1] = (child_7,child8,child9)
-
-  Returntype  : array reference
+  Description : Return the list of multifurcating nodes under this node.
+  Returntype  : array reference of Bio::EnsEMBL::Compara::GeneTreeNode
   Exceptions  :
   Caller      :
 
@@ -494,12 +488,8 @@ sub find_multifurcations {
     my $self = shift;
 
     my $multifurcations = [];
-    foreach my $node (@{$self->get_all_nodes}) {
-        next if $node->is_leaf;
-        next if (!$node->has_parent);
-        if (scalar(@{$node->children}) > 2) {
-            push(@{$multifurcations},[@{$node->children}]) if scalar(@{$node->children}) > 2;
-        }
+    foreach my $node ($self->get_all_subnodes) {
+        push @{$multifurcations}, $node if scalar(@{$node->children}) > 2;
     }
     return $multifurcations;
 }
@@ -508,9 +498,8 @@ sub find_multifurcations {
 =head2 binarize_flat_tree_with_species_tree
 
   Arg [1]     : Species Tree object
-  Arg [1]     : multifurcation hash from (find_multifurcations)
-  Example     : $multifurcated_tree_root->binarize_flat_tree_with_species_tree($species_tree, $multifurcations);
-  Description : Tries to binarize the genetree using the Species Tree to resolve the multifurcations.
+  Example     : $multifurcated_node->binarize_flat_tree_with_species_tree($species_tree);
+  Description : Tries to binarize this multifurcated node using the Species Tree.
   Returntype  : None
   Exceptions  :
   Caller      :
@@ -520,12 +509,10 @@ sub find_multifurcations {
 sub binarize_flat_tree_with_species_tree {
     my $self            = shift;
     my $species_tree    = shift;
-    my $multifurcations = shift;
 
     #fetch specie tree objects for the multifurcated nodes
-    foreach my $multi (@$multifurcations){
         my @species_tree_leaves_in_multifurcation;
-        foreach my $child (@{$multi}){
+        foreach my $child (@{$self->children}){
             my ($name_id, $species_tree_node_id) = split(/\_/,$child->name);
             my $species_tree_node = $species_tree->root->find_leaf_by_node_id($species_tree_node_id);
             push @species_tree_leaves_in_multifurcation, $species_tree_node;
@@ -533,9 +520,6 @@ sub binarize_flat_tree_with_species_tree {
 
         #get mrca sub-tree
         my $mrca = $species_tree->root->find_first_shared_ancestor_from_leaves( \@species_tree_leaves_in_multifurcation );
-
-        #get gene_tree mrca sub-tree
-        my $mrcaGeneTree = $self->find_first_shared_ancestor_from_leaves( [@{$multi}] );
 
         #get mrca leaves
         my @leaves_mrca= @{ $mrca->get_all_leaves() };
@@ -564,7 +548,7 @@ sub binarize_flat_tree_with_species_tree {
         #list of all the leaves mapped by taxon_id
         my %leaves_list;
         my %branch_length_list;
-        foreach my $leaf (@{$mrcaGeneTree->get_all_leaves}) {
+        foreach my $leaf (@{$self->get_all_leaves}) {
             my ($member_id, $taxon_id) = split(/\_/,$leaf->name);
             push(@{$leaves_list{$taxon_id}},$member_id);
 
@@ -595,15 +579,9 @@ sub binarize_flat_tree_with_species_tree {
            }
         }
 
-        my $parentMrca = $mrcaGeneTree->parent();
-        my $bl = $mrcaGeneTree->distance_to_parent;
-        $mrcaGeneTree->release_tree();
-
-        #adding new binary branch
-        #We need to add from the casted MRCA tree
-        #$parentMrca->add_child($mrcaGeneTree,$bl);
-        $parentMrca->add_child($castedMrca,$bl);
-    }
+        # replace the current (flat) sub-tree with the new one
+        $self->parent()->add_child($castedMrca, $self->distance_to_parent);
+        $self->release_tree();
 }
 
 1;
