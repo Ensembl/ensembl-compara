@@ -189,7 +189,7 @@ sub pipeline_create_commands {
 
     return [
         @{ $self->SUPER::pipeline_create_commands },
-        $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)' ),
+        $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL, PRIMARY KEY (genomic_align_block_id) )' ),
         $self->db_cmd( 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)' ),
     ];
 }
