@@ -37,7 +37,6 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
@@ -289,7 +288,7 @@ sub pipeline_analyses {
                 } ],
             -flow_into  => {
                 '1'    => [ 'DumpMultiAlign_start' ],
-                '2'    => { 'DumpTrees_start' => INPUT_PLUS() }, 
+                '2'    => [ 'DumpTrees_start' ],
                 '3'    => [ 'DumpConstrainedElements_start' ], 
                 '4'    => [ 'DumpConservationScores_start'  ], 
                 '5'    => [ 'DumpSpeciesTrees_start'        ], 
@@ -330,7 +329,6 @@ sub pipeline_analyses {
         		'export_dir' => '#dump_dir#',
         		'work_dir'   => '#work_dir#/conservation_scores_#curr_release#',
         	},
-        	# -flow_into  => { 1 => {'mkdir_conservation_scores' => INPUT_PLUS()} },
         	-flow_into => [ 'mkdir_conservation_scores' ],
         },
         {	-logic_name => 'DumpSpeciesTrees_start',
@@ -345,7 +343,7 @@ sub pipeline_analyses {
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => {
         		'1->A' => [ 'DumpMultiAlign_MLSSJobFactory' ],
-        		'A->1' => { 'patch_lastz_dump' => { mlss_id => '#mlss_id#', compara_db => '#compara_db#' } },
+                        'A->1' => [ 'patch_lastz_dump' ],
         	},
         },
         
