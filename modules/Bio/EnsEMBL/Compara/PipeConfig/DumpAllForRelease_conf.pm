@@ -97,7 +97,7 @@ sub default_options {
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
 
 		# define input options for DumpMultiAlign for each method_link_type
-		'align_dump_options' => {
+        'alignment_dump_options' => {
         	EPO              => {format => 'emf+maf'},
         	EPO_LOW_COVERAGE => {format => 'emf+maf'},
         	PECAN            => {format => 'emf+maf'},
@@ -287,7 +287,7 @@ sub pipeline_analyses {
                     'reg_conf'             => $self->o('reg_conf'),
 
                     'lastz_patch_dbs'      => $self->o('lastz_patch_dbs'),
-                    'align_dump_options'   => $self->o('align_dump_options'),
+                    'alignment_dump_options' => $self->o('alignment_dump_options'),
                     'default_dump_options' => $self->o('default_dump_options'),
                     'ancestral_db'         => $self->o('ancestral_db'),
                 } ],

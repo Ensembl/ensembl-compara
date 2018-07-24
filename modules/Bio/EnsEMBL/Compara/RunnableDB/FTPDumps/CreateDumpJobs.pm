@@ -44,12 +44,12 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'alignment_dump_options' => {
-        	EPO              => {format => 'emf+maf'},
-        	EPO_LOW_COVERAGE => {format => 'emf+maf'},
-        	PECAN            => {format => 'emf+maf'},
-        	LASTZ_NET        => {format => 'maf', make_tar_archive => 1},
-        },
+        #'alignment_dump_options' => {
+                #EPO              => {format => 'emf+maf'},
+                #EPO_LOW_COVERAGE => {format => 'emf+maf'},
+                #PECAN            => {format => 'emf+maf'},
+                #LASTZ_NET        => {format => 'maf', make_tar_archive => 1},
+        #},
 
         # define which method_link_types should be dumpable
         dumpable_method_types => {
