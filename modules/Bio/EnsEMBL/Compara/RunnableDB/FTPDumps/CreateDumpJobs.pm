@@ -51,15 +51,12 @@ sub param_defaults {
                 #LASTZ_NET        => {format => 'maf', make_tar_archive => 1},
         #},
 
-        # define which method_link_types should be dumpable
+        # define which method_link_types should be dumpable (only used to
+        # trigger the copy from the previous release)
         dumpable_method_types => {
         	'LASTZ_NET' => 1, 'EPO' => 1, 'EPO_LOW_COVERAGE' => 1, 'PECAN' => 1,
         	'GERP_CONSTRAINED_ELEMENT' => 1, 'GERP_CONSERVATION_SCORE' => 1,
         },
-        
-        target_dir     => '#dump_dir#',
-        reuse_prev_rel => 1,
-        # work_dir   => '#dump_dir#/dump_hash',
     };
 }
 
