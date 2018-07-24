@@ -713,11 +713,6 @@ sub binarize {
     #List of multifurcations given a tree.
     my $multifurcations = $self->root->find_multifurcations;
 
-    #IMPORTANT:
-    #----------------------------------------------------------------------------------------------------------------------------
-    # Binarization methods have not been tested with internal multifurcations, only with multifurcations right above the leaves
-    #----------------------------------------------------------------------------------------------------------------------------
-
     #If there are no multifurcations in this array it means that the tree is already binary
     #So no need to keep going
     return unless scalar(@{$multifurcations});
@@ -729,7 +724,14 @@ sub binarize {
     $self->root->print_tree(10) if $debug;
 
     # 2 - binarize (MRCA) that structure
-    $_->binarize_flat_tree_with_species_tree($self->species_tree) for @$multifurcations;
+    foreach my $multifurcation (@$multifurcations) {
+        #--------------------------------------------------------------------------------------------
+        # IMPORTANT: This binarization method only works with multifurcations right above the leaves
+        #--------------------------------------------------------------------------------------------
+        unless (grep {!$_->is_leaf} @{$multifurcation->children}) {
+            $multifurcation->binarize_flat_tree_with_species_tree($self->species_tree);
+        }
+    }
     $self->minimize_tree();
 
     print "multifurcated_tree_root after MRCA binarization:\n" if $debug;
