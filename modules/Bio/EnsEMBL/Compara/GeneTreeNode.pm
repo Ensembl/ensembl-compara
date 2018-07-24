@@ -78,6 +78,7 @@ use strict;
 use warnings;
 
 use IO::File;
+use List::Util qw(min);
 
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
@@ -540,29 +541,13 @@ sub binarize_flat_tree_with_species_tree {
 
         #get mrca leaves
         my @leaves_mrca= @{ $mrca->get_all_leaves() };
-
-        #get taxon_ids for the mrca sub-tree
-        my @taxonIdsMrca;
-        foreach my $leaf (@leaves_mrca){
-            push(@taxonIdsMrca,$leaf->dbID);
-            #print $leaf->dbID."\n";
-        }
-
-        #get taxon_ids for the leaves in the multifurcations
-        my @taxonIdsMultifurcation;
-        foreach my $leaf (@{$species_tree_leaves_in_multifurcation{$multi}}){
-            push(@taxonIdsMultifurcation,$leaf->dbID);
-            #print $leaf->dbID."\n";
-        }
-
-        my @nodesToDisavow;
-        my %count;
-        foreach my $e (@taxonIdsMrca, @taxonIdsMultifurcation) { $count{$e}++ }
-        foreach my $e (keys %count) {
-            if ($count{$e} != 2) {
-                push @nodesToDisavow, $e;
-            }
-        }
+        #get node_ids of the leaves in the multifurcations
+        my %stn_ids_to_keep = map {$_->dbID => 1} @{$species_tree_leaves_in_multifurcation{$multi}};
+        #compute the difference
+        my @nodesToDisavow = grep {!$stn_ids_to_keep{$_->dbID}} @leaves_mrca;
+        #print "TOT: ", scalar(@leaves_mrca), "\n";
+        #print "MULT: ", scalar(@species_tree_leaves_in_multifurcation), "\n";
+        #print "REM: ", scalar(@nodesToDisavow), "\n";
 
         my $castedMrca = $mrca->copy('Bio::EnsEMBL::Compara::GeneTreeNode');
 
@@ -570,8 +555,8 @@ sub binarize_flat_tree_with_species_tree {
         #e.g. when the taxonomic sub-tree has more species that the ones in the gene-tree, in those cases we need to remove the extra leaves.
 
         #disavow these nodes from the castedMrca sub-tree
-        foreach my $nodeName (@nodesToDisavow) {
-            my $node = $castedMrca->find_leaf_by_node_id($nodeName);
+        foreach my $stn (@nodesToDisavow) {
+            my $node = $castedMrca->find_leaf_by_node_id($stn->dbID);
             #since nodes are leaves at this point, we can delete them directly.
             #print "disavowing: |" . $node->name() . "|\n";
             $node->disavow_parent();
@@ -593,7 +578,17 @@ sub binarize_flat_tree_with_species_tree {
         #Renaming nodes
         foreach my $leaf (@{$castedMrca->get_all_leaves}) {
            my $taxon_id = $leaf->dbID;
-           foreach my $member (@{$leaves_list{$taxon_id}}) {
+           if (scalar(@{$leaves_list{$taxon_id}}) > 1) {
+               my $min_bl = min(map {$branch_length_list{$_}} @{$leaves_list{$taxon_id}});
+               $leaf->distance_to_parent($min_bl);
+               foreach my $member (@{$leaves_list{$taxon_id}}) {
+                   my $new_name = $member."_".$taxon_id;
+                   my $subleaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
+                   $subleaf->name($new_name);
+                   $leaf->add_child($subleaf, $branch_length_list{$member}-$min_bl);
+               }
+           } else {
+               my $member = $leaves_list{$taxon_id}->[0];
                my $new_name = $member."_".$taxon_id;
                #new name
                $leaf->name($new_name);
