@@ -86,7 +86,7 @@ sub default_options {
         # ----------------------------------------------------- #
 
         # capacities for heavy-hitting jobs
-		'dump_aln_capacity'   => 80,
+        'dump_aln_capacity'   => 400,
 		'dump_trees_capacity' => 10,
 		'dump_ce_capacity'    => 10,
     	'dump_cs_capacity'    => 20,
