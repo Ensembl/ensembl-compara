@@ -87,6 +87,7 @@ use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -588,6 +589,7 @@ sub _load_DnaFragRegions {
   my $sr = $sra->fetch_by_dbID($synteny_region_id);
 
   my $regions = $sr->get_all_DnaFragRegions();
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $regions);
 
   if (scalar(@$regions) == 1) {
       $self->input_job->autoflow(0);

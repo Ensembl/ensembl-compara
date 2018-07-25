@@ -26,6 +26,7 @@ use Time::HiRes qw /time/;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
@@ -119,6 +120,7 @@ sub dump_sequences_to_workdir {
 
     my $member_list = $cluster->get_all_leaves;
     $self->param('tag_gene_count', scalar (@{$member_list}) );
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($cluster->adaptor->db->get_DnaFragAdaptor, $member_list);
 
     open (OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for writing: $!");
     if (scalar @{$member_list} < 2) {

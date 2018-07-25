@@ -55,6 +55,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -979,6 +980,8 @@ sub _load_GenomicAligns {
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
+
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $gab->get_all_GenomicAligns);
 
   foreach my $ga (@{ $gab->get_all_GenomicAligns }) {
       #check that the genomic_align sequence is not just N's. This causes 
