@@ -443,7 +443,8 @@ sub get_sequence {
     my $mask = shift;
 
     my $seq;
-    if (my $faidx_helper = $self->genome_db->get_faidx_helper($mask)) {
+    # Only reference dnafrags are dumped
+    if ($self->dnafrag->is_reference && (my $faidx_helper = $self->genome_db->get_faidx_helper($mask))) {
         # Sequence names in the Fasta file are expected to be dnafrag_ids;
         # Coordinates are 0-based
         $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
