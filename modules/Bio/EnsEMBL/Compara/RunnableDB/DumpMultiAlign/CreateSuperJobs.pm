@@ -66,7 +66,7 @@ sub write_output {
     my $sql = "
     SELECT count(*) 
     FROM genomic_align 
-    LEFT JOIN dnafrag 
+    JOIN dnafrag
     USING (dnafrag_id) 
     WHERE coord_system_name = ? 
     AND genome_db_id= ? 
