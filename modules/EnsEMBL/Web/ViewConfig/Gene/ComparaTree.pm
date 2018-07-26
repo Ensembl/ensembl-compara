@@ -151,20 +151,17 @@ sub init_form_non_cacheable {
   ## @override
   my $self  = shift;
   my $hub   = $self->hub;
-  my $gene  = $hub->core_object('gene');
   my $form  = $self->SUPER::init_form_non_cacheable(@_);
 
-  my %other_clustersets;
-  if ($gene) {
-    my $function        = $self->referer->{'ENSEMBL_FUNCTION'};
-    my $cdb             = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';
-    my $gene_tree       = $gene->get_GeneTree($cdb);
-    my $adaptor         = $self->database($cdb)->get_adaptor('GeneTree');
-    %other_clustersets  = map { $_->clusterset_id => 1 } @{$adaptor->fetch_all_linked_trees($gene_tree->tree)};
+  my $function           = $hub->referer->{'ENSEMBL_FUNCTION'};
+  my $cdb                = $function && $function eq 'pan_compara' ? 'compara_pan_ensembl' : 'compara';
+  my $database           = $hub->database($cdb);
+  my $member             = $database->get_GeneMemberAdaptor->fetch_by_stable_id($hub->core_params->{'g'});
+  my $adaptor            = $database->get_GeneTreeAdaptor;
+  my $gene_tree          = $adaptor->fetch_default_for_Member($member);
+  my %other_clustersets  = map { $_->clusterset_id => 1 } @{$adaptor->fetch_all_linked_trees($gene_tree)};
 
-    $other_clustersets{$gene_tree->tree->clusterset_id} = 1;
-    delete $other_clustersets{'default'};
-  }
+  delete $other_clustersets{'default'};
 
   if (my $dropdown = $form->get_elements_by_name('clusterset_id')->[0]) {
     $dropdown->add_option({ 'value' => $_, 'caption' => $_ }) for sort keys %other_clustersets;
