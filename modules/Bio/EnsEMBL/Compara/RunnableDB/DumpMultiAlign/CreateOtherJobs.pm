@@ -88,8 +88,9 @@ sub skip_genomic_align_block_ids {
 sub all_genomic_align_block_ids {
     my $self = shift @_;
 
-    #Note this is using the database set in $self->param('compara_db').
-    return $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT genomic_align_block_id FROM genomic_align_block WHERE method_link_species_set_id = ?', undef, $self->param('mlss_id'));
+    my $ancestral_gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('ancestral_sequences');
+    my $sql = 'SELECT DISTINCT genomic_align_block_id FROM genomic_align JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = ? AND genome_db_id != ?';
+    return $self->compara_dba->dbc->db_handle->selectcol_arrayref($sql, undef, $self->param('mlss_id'), $ancestral_gdb->dbID);
 }
 
 
