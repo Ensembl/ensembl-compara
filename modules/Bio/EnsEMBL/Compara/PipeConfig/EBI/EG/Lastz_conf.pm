@@ -69,10 +69,10 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-            'host' => 'mysql-eg-prod-2.ebi.ac.uk',
-            'port' => 4239,
-            'user' => 'ensrw',
-            'password' => $self->o('password'),
+            # 'host' => 'mysql-eg-prod-2.ebi.ac.uk',
+            # 'port' => 4239,
+            'user' => 'ensadmin',
+            'password' => $ENV{ENSADMIN_PSW},
 
 	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
@@ -97,13 +97,13 @@ sub default_options {
                 -pass   => '',
                 -db_version => $self->o('rel_with_suffix'),
             },
-            # 'livemirror_loc' => {
-            #     -host   => 'mysql-eg-mirror.ebi.ac.uk',
-            #     -port   => 4205,
-            #     -user   => 'ensro',
-            #     -pass   => '',
-            #     -db_version => 73,
-            # },
+            'livemirror_loc' => {
+                -host   => 'mysql-eg-mirror.ebi.ac.uk',
+                -port   => 4205,
+                -user   => 'ensro',
+                -pass   => '',
+                -db_version => $self->o('rel_with_suffix'),
+            },
 
             #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
             'curr_core_sources_locs'    => [ $self->o('prod_loc') ],
