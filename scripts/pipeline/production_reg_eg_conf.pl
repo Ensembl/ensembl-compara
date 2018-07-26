@@ -37,19 +37,6 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/94');
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/94');
 
-
-# Add in extra cores from genebuild server
-# danio_rerio_core_92_11@mysql-ens-vertannot-staging:4573
-# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#      -host => 'mysql-ens-vertannot-staging',
-#      -user => 'ensro',
-#      -port => 4573,
-#      -species => 'danio_rerio',
-#      -group => 'core',
-#      -dbname => 'danio_rerio_core_92_11',
-#  );
-
-
 #-------------------------HOMOLOGY DATABASES-----------------------------------
 
 # Members

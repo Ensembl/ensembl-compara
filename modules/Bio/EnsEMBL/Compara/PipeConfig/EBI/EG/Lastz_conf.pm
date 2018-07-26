@@ -78,35 +78,35 @@ sub default_options {
 
             'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
-            'staging_loc1' => {
-                -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-                -port   => 4160,
+            # 'staging_loc1' => {
+            #     -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+            #     -port   => 4160,
+            #     -user   => 'ensro',
+            #     -pass   => '',
+            # },
+            # 'staging_loc2' => {
+            #     -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+            #     -port   => 4275,
+            #     -user   => 'ensro',
+            #     -pass   => '',
+            # },
+             'prod_loc' => {
+                -host   => 'mysql-eg-prod-2.ebi.ac.uk',
+                -port   => 4239,
                 -user   => 'ensro',
                 -pass   => '',
+                -db_version => $self->o('rel_with_suffix'),
             },
-            'staging_loc2' => {
-                -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-                -port   => 4275,
-                -user   => 'ensro',
-                -pass   => '',
-            },
-             'prod_loc1' => {
-                -host   => 'mysql-eg-prod-1.ebi.ac.uk',
-                -port   => 4238,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => 74,
-            },
-            'livemirror_loc' => {
-                -host   => 'mysql-eg-mirror.ebi.ac.uk',
-                -port   => 4205,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => 73,
-            },
+            # 'livemirror_loc' => {
+            #     -host   => 'mysql-eg-mirror.ebi.ac.uk',
+            #     -port   => 4205,
+            #     -user   => 'ensro',
+            #     -pass   => '',
+            #     -db_version => 73,
+            # },
 
             #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-            'curr_core_sources_locs'    => [ $self->o('prod_loc1') ],
+            'curr_core_sources_locs'    => [ $self->o('prod_loc') ],
             'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
 
 
@@ -138,10 +138,9 @@ sub default_options {
             'bidirectional' => 1,
 
             #directory to dump nib files
-            'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
-            #'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-            'bed_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-            'output_dir' => '/nfs/panda/ensemblgenomes/production/compara' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+            'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
+            'bed_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+            'output_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
             # Capacities
             'pair_aligner_analysis_capacity' => 100,
