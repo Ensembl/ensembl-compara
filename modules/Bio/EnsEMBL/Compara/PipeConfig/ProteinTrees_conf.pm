@@ -2894,6 +2894,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
+            -priority       => -10,
             -flow_into      => {
                 1   => [ 'hc_tree_homologies' ],
                 -1  => 'ortho_tree_himem',
