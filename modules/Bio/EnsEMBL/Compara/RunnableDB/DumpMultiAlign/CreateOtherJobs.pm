@@ -54,36 +54,18 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub skip_genomic_align_block_ids {
     my $self = shift @_;
 
-    #Note this is using the database set in $self->param('compara_db').
-    my $compara_dba = $self->compara_dba;
+    my $sql = 'SELECT DISTINCT genomic_align_block_id FROM genomic_align JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = ? AND genome_db_id = ?';
 
-    my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
+    my $gab_ids_to_skip = $self->compara_dba->dbc->sql_helper->execute_simple(
+        -SQL => $sql,
+        -PARAMS => [$self->param_required('mlss_id'), $self->param_required('genome_db_id')],
+    );
 
-    my $genome_db = $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $species_name = $genome_db->name;
+    my %gab_ids_to_skip = map {$_ => 1} @$gab_ids_to_skip;
 
-    my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-
-    #
-    #Find genomic_align_blocks which do not contain $self->param('species')
-    #
-    my $gab_ids = [];
-    my $all_genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-    while (my $this_genomic_align_block = shift @$all_genomic_align_blocks) {
-	my $has_skip = 0;
-	foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns()}) {
-	    if (($this_genomic_align->genome_db->name eq $species_name) or
-		($this_genomic_align->genome_db->name eq "ancestral_sequences")) {
-		$has_skip = 1;
-		last;
-	    }
-	}
-        push @$gab_ids, $this_genomic_align_block->dbID unless $has_skip;
-    }
-    return $gab_ids;
+    return [grep {!$gab_ids_to_skip{$_}} @{$self->all_genomic_align_block_ids}];
 }
+
 
 sub all_genomic_align_block_ids {
     my $self = shift @_;
