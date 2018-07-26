@@ -193,7 +193,7 @@ sub add_external_browsers {
   # Links to external browsers - UCSC, NCBI, etc
   my %browsers = %{$species_defs->EXTERNAL_GENOME_BROWSERS || {}};
   $browsers{'UCSC_DB'} = $species_defs->UCSC_GOLDEN_PATH;
-  $browsers{'NCBI_DB'} = $species_defs->NCBI_GOLDEN_PATH;
+  $browsers{'ACCESSION'} = $species_defs->get_config($hub->species, 'ASSEMBLY_ACCESSION');
   $browsers{'EG'}      = $species_defs->ENSEMBL_GENOMES;
   
   my ($chr, $start, $end) = $object ? ($object->seq_region_name, int $object->seq_region_start, int $object->seq_region_end) : ();
@@ -231,10 +231,10 @@ sub add_external_browsers {
     
     delete $browsers{'UCSC_DB'};
   }
-  
-  if ($browsers{'NCBI_DB'}) {
+
+  if ($browsers{'ACCESSION'}) {
     if ($chr) { 
-      $url = $hub->get_ExtURL('EGB_NCBI', { NCBI_DB => $browsers{'NCBI_DB'}, CHR => $chr, START => $start, END => $end });
+      $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
     } else {
       my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
       $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
@@ -242,7 +242,7 @@ sub add_external_browsers {
     
     $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
     
-    delete $browsers{'NCBI_DB'};
+    delete $browsers{'ACCESSION'};
   }
 
   ## Link to previous/next assembly if available  
