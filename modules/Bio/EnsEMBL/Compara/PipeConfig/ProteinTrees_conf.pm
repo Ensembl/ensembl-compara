@@ -2057,6 +2057,7 @@ sub core_pipeline_analyses {
                 'treebest_threshold_n_residues'     => $self->o('treebest_threshold_n_residues'),
                 'treebest_threshold_n_genes'        => $self->o('treebest_threshold_n_genes'),
             },
+            -rc_name        => '250Mb_job',
             -flow_into  => {
                 1 => WHEN (
                     '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)'   => 'treebest_short',
@@ -2861,6 +2862,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'hc_post_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
+            -rc_name    => '250Mb_job',
             -flow_into  => [ 'ortho_tree_decision' ],
             -hive_capacity        => $self->o('hc_post_tree_capacity'),
             %hc_analysis_params,
@@ -2874,6 +2876,7 @@ sub core_pipeline_analyses {
                     'gene_count'          => 0,
                 },
             },
+            -rc_name    => '250Mb_job',
             -flow_into  => {
                 1 => WHEN(
                     '(#tree_gene_count# <= 400)' => 'ortho_tree',
@@ -2914,6 +2917,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
+            -rc_name        => '250Mb_job',
             -flow_into      => [ 'ktreedist', 'consensus_cigar_line_prep' ],
             %hc_analysis_params,
         },
