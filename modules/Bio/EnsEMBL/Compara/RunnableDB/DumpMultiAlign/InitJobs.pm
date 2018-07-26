@@ -62,12 +62,12 @@ sub fetch_input {
     FROM genomic_align JOIN dnafrag USING (dnafrag_id)
     WHERE genome_db_id= ? AND method_link_species_set_id=?";
 
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($genome_db->dbID, $self->param_required('mlss_id'));
-    my @coord_systems_in_aln = map {$_->[0]} @{$sth->fetchall_arrayref};
+    my $coord_systems_in_aln = $self->compara_dba->dbc->sql_helper->execute_simple(
+        -SQL => $sql,
+        -PARAMS => [$genome_db->dbID, $self->param_required('mlss_id')],
+    );
 
-    $self->param('coord_systems', \@coord_systems_in_aln);
-
+    $self->param('coord_systems', $coord_systems_in_aln);
 }
 
 

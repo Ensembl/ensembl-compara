@@ -68,9 +68,10 @@ sub write_output {
     AND genome_db_id= ? 
     AND method_link_species_set_id=?";
 
-    my $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('coord_system_name'),$self->param('genome_db_id'), $self->param('mlss_id'));
-    my ($total_blocks) = $sth->fetchrow_array;
+    my $total_blocks = $compara_dba->dbc->sql_helper->execute_single_result(
+        -SQL => $sql,
+        -PARAMS => [$self->param_required('coord_system_name'), $self->param('genome_db_id'), $self->param_required('mlss_id')],
+    );
 
     # exit if there is nothing to dump
     return unless $total_blocks;
