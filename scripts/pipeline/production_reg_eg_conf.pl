@@ -37,6 +37,17 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/94');
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/94');
 
+# clarify which version of yeast to use
+Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # deregister old version
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-vertannot-staging',
+     -user => 'ensro',
+     -port => 4573,
+     -species => 'saccharomyces_cerevisiae',
+     -group => 'core',
+     -dbname => 'saccharomyces_cerevisiae_core_94_4',
+ );
+
 #-------------------------HOMOLOGY DATABASES-----------------------------------
 
 # Members
