@@ -114,6 +114,10 @@ By default this script dumps for one particular top-level seq_region.
 This option allows to dump, for instance, all the alignments on all
 the top-level supercontig in one go.
 
+=item B<[--no_karyo]>
+
+Exclude the DnaFrags that are on the karyotype
+
 =item B<--seq_region region_name>
 
 Query region name, i.e. the chromosome name
@@ -291,6 +295,8 @@ perl DumpMultiAlign.pl
         sequence region of a given coordinate system. It can also be used
         in conjunction with the --seq_region option to specify the right
         coordinate system.
+    [--no_karyo]
+        Exclude the slices that are on the karyotype
     [--skip_species species]
         Useful for multiple alignments only. This will dump all the
         multiple alignments with no "species" part, i.e. you can get
@@ -356,6 +362,7 @@ my $compara_url;
 my $species;
 my $skip_species;
 my $coord_system;
+my $no_karyo;
 my $seq_region;
 my $seq_region_start;
 my $seq_region_end;
@@ -385,6 +392,7 @@ GetOptions(
     "species=s" => \$species,
     "skip_species=s" => \$skip_species,
     "coord_system=s" => \$coord_system,
+    'no_karyo' => \$no_karyo,
     "seq_region=s" => \$seq_region,
     "seq_region_start=i" => \$seq_region_start,
     "seq_region_end=i" => \$seq_region_end,
@@ -487,6 +495,10 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
       if (!$slice_adaptor);
   if ($coord_system and !$seq_region) {
     @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
+    if ($no_karyo) {
+        my %karyo_slices = map {$_->get_seq_region_id => 1} @{ $slice_adaptor->fetch_all_karyotype };
+        @query_slices = grep {!$karyo_slices{$_->get_seq_region_id}} @query_slices;
+    }
     if (@query_slices == 0) {    
 	warn "No slices found with coord_system $coord_system\n";
 	exit(0);
