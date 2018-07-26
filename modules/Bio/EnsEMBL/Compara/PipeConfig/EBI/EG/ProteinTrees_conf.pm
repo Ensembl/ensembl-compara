@@ -229,7 +229,7 @@ sub default_options {
         'goc_taxlevels'             => [],  # this is the default default
         'goc_taxlevels_fungi'       => [],
         'goc_taxlevels_metazoa'     => ['Diptera', 'Hymenoptera', 'Nematoda'],
-        'goc_taxlevels_plants'      => [],
+        'goc_taxlevels_plants'      => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
         'goc_taxlevels_protists'    => [],
         'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
 
@@ -239,6 +239,8 @@ sub default_options {
         # Do we extract overall statistics for each pair of species ?
         'do_homology_stats'             => 0,
 
+        # this should be 0 for plants
+        'use_quick_tree_break'      => 0,
     };
 }
 
