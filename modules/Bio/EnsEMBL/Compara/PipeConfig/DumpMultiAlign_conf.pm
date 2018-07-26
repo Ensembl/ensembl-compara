@@ -78,6 +78,7 @@ sub default_options {
         #'compara_db' => 'Multi',
 
         'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
 
         # Maximum number of blocks per file
         'split_size' => 200,
@@ -144,6 +145,7 @@ sub pipeline_wide_parameters {
         'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),
+        'genome_dumps_dir' => $self->o('genome_dumps_dir'),
 
         output_dir      => '#export_dir#/#format#/ensembl-compara/#aln_type#/#base_filename#',
         output_file_gen => '#output_dir#/#base_filename#.#region_name#.#format#',
