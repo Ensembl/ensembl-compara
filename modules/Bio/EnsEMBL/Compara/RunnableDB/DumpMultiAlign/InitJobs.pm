@@ -64,11 +64,9 @@ sub fetch_input {
 
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($genome_db->dbID, $self->param_required('mlss_id'));
-    my %coord_systems_in_aln = map {$_->[0] => 1} @{$sth->fetchall_arrayref};
+    my @coord_systems_in_aln = map {$_->[0]} @{$sth->fetchall_arrayref};
 
-    my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} (grep {$coord_systems_in_aln{$_->name}} @$coord_systems));
-
-    $self->param('coord_systems', \@coord_system_names_by_rank);
+    $self->param('coord_systems', \@coord_systems_in_aln);
 
 }
 
