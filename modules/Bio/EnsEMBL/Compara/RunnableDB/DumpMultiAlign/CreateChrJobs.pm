@@ -88,15 +88,13 @@ sub write_output {
     my ($name, $total_blocks);
     $sth->bind_columns(\$name,\$total_blocks);
 
-    my $tag = $self->param('coord_system_name') eq 'chromosome' ? 'chr' : '';
-
     my $split_size = $self->param('split_size');
 
     while (my $row = $sth->fetchrow_arrayref) {
 
         if (not $split_size) {
             my $output_ids = {
-                region_name     => $tag.$name,
+                region_name     => $name,
                 filename_suffix => '',
                 extra_args      => ['--seq_region', $name],
                 num_blocks      => $total_blocks,
@@ -119,7 +117,7 @@ sub write_output {
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
 	    my $output_ids = {
-                region_name     => $tag.$name,
+                region_name     => $name,
                 filename_suffix => "_$chunk",
                 extra_args      => ['--seq_region', $name, '--chunk_num', $chunk],
                 num_blocks      => $this_num_blocks,
