@@ -96,7 +96,7 @@ sub default_options {
 
     # tree building parameters:
         'use_raxml'                 => 0,
-        'use_quick_tree_break'      => 0,
+        'use_quick_tree_break'      => 1,
         'use_notung'                => 0,
         'use_dna_for_phylogeny'     => 0,
 
@@ -181,7 +181,7 @@ sub default_options {
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-        'clustering_mode'           => 'blastp',
+        'clustering_mode'           => 'hybrid',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
