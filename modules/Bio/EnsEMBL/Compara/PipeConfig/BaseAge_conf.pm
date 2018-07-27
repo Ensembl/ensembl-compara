@@ -113,7 +113,7 @@ sub pipeline_analyses {
                               'db_conn' => $self->o('compara_url'),
                               'bed_dir' => $self->o('bed_dir'),
                               'append'  => [qw(-N -q)],
-                              'input_query' => "SELECT concat('chr',dnafrag.name), length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1",
+                              'input_query' => "SELECT dnafrag.name, length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1",
                               'chr_sizes_file' => $self->o('chr_sizes_file'),
                               'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
