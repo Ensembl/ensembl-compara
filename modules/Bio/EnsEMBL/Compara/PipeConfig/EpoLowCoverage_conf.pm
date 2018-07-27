@@ -269,7 +269,7 @@ sub pipeline_analyses {
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size     => 10,
-		-hive_capacity  => 100,
+		-hive_capacity  => 150,
 		#Need a mode to say, do not die immediately if fail due to memory because of memory leaks, rerunning is the solution. Flow to module _again.
 		-flow_into => {
                                2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -289,7 +289,7 @@ sub pipeline_analyses {
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size     => 10,
-		-hive_capacity  => 100,
+		-hive_capacity  => 150,
         -priority       => 15,
 		-flow_into => {
                                2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -310,7 +310,7 @@ sub pipeline_analyses {
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size     => 10,
-		-hive_capacity  => 100,
+		-hive_capacity  => 150,
         -priority       => 20,
 		-flow_into => {
                                2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
