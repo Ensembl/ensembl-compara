@@ -1337,7 +1337,7 @@ sub _dump_fasta_and_mfa {
 	print "FOUND 2X GENOME\n" if $self->debug;
 	print "num of frags " . @$ga . "\n" if $self->debug;
 	$self->_dump_2x_fasta($ga, $file, $seq_id, $mfa_fh);
-	return;
+	next;
     }
 
     #add taxon_id to end of fasta files
