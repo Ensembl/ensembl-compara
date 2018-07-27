@@ -128,7 +128,8 @@ sub run {
         if ( ( $command->exit_code == -2 ) && defined( $self->param('more_cores_branch') ) ) {
             $self->input_job->autoflow(0);
             $self->dataflow_output_id( undef, $self->param('more_cores_branch') );
-            $self->complete_early("Could no complete RAxML (SecStructModelTree) within 12 hours. Dataflowing to the next level capacity.");
+            my $n_hours = $self->param('cmd_max_runtime')/3600;
+            $self->complete_early("Could no complete RAxML (SecStructModelTree) within $n_hours hours. Dataflowing to the next level capacity.");
         }
     }
 
