@@ -62,12 +62,6 @@ sub default_options {
         'bed_dir' => $self->o('work_dir') . '/bed_dir/',
         'output_dir' => $self->o('work_dir') . '/feature_dumps/',
 
-        #
-        #Resource requirements
-        #
-       'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
-       'aligner_capacity' => 2000,
-
        # stats report email
        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };

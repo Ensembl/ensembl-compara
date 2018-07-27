@@ -122,7 +122,6 @@ sub default_options {
      #
      #Resource requirements
      #
-     'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
     'pecan_capacity'        => 500,
     'pecan_himem_capacity'  => 1000,
     'gerp_capacity'         => 500,
@@ -157,22 +156,6 @@ sub pipeline_create_commands {
      ];
 }
 
-# Syntax for LSF farm 3
-#sub resource_classes {
-#    my ($self) = @_;
-#    return {
-#         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-#         '100Mb' =>  { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-#         '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-#         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=11]"' },
-#         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-#         '7Gb' =>  { 'LSF' => '-C0 -M7000 -R"select[mem>7000] rusage[mem=7000]"' },
-#         '14Gb' => { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-#         '30Gb' =>   { 'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
-#         'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=11]"' },
-#         'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3800,'.$self->o('dbresource').'=10:duration=11]"' },
-#    };
-#}
 
 sub pipeline_analyses {
     my ($self) = @_;
