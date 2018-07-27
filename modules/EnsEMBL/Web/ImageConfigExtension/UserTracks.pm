@@ -238,9 +238,9 @@ sub _load_remote_url_tracks {
         );
       } else {
 
-        my $desc = sprintf('Data retrieved from an external webserver. This data is attached %, and comes from URL: <a href="%s">%2$s</a>',
+        my $desc = sprintf('Data retrieved from an external webserver. This data is attached %s, and comes from URL: <a href="%s">%s</a>',
           $track_data->{'source_type'} eq 'session' ? 'temporarily' : 'and saved',
-          encode_entities($track_data->{'source_url'})
+          encode_entities($track_data->{'source_url'}), $track_data->{'source_url'}
         );
 
         $self->_add_flat_file_track($menu, 'url', $code, $track_data->{'source_name'}, $desc, {
