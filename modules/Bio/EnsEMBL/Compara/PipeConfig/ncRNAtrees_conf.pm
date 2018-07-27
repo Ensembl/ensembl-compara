@@ -657,20 +657,14 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'secondary_structure_decision',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
-                -parameters => {
-                    'tags'  => {
-                        'aln_length' => 0,
-                    },
-                },
-
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into => {
                     1 => WHEN(
-                        '(#tree_aln_length# <= 200)'                                    => 'pre_sec_struct_tree_1_core',
-                        '( (#tree_aln_length# > 200) && (#tree_aln_length# < 600) )'    => 'pre_sec_struct_tree_2_cores',
-                        '( (#tree_aln_length# > 600) && (#tree_aln_length# < 1300) )'   => 'pre_sec_struct_tree_4_cores',
-                        '(#tree_aln_length# > 1300)'                                    => 'pre_sec_struct_tree_8_cores',
-                        #'( #tree_aln_length# > 4000 )'                                 => 'pre_sec_struct_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
+                        '(#aln_length# <= 200)'                                 => 'pre_sec_struct_tree_1_core',
+                        '( (#aln_length# > 200) && (#aln_length# <= 600) )'     => 'pre_sec_struct_tree_2_cores',
+                        '( (#aln_length# > 600) && (#aln_length# <= 1300) )'    => 'pre_sec_struct_tree_4_cores',
+                        '(#aln_length# > 1300)'                                 => 'pre_sec_struct_tree_8_cores',
+                        #'( #aln_length# > 4000 )'                              => 'pre_sec_struct_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
                     ),
                 },
                 %decision_analysis_params,

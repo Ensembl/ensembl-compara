@@ -169,7 +169,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->parse_and_store_alignment_into_tree;
+    my $filtered_aln = $self->parse_and_store_alignment_into_tree;
     print STDERR "ALIGNMENT ID IS: ", $self->param('alignment_id'), "\n";
     $self->store_refined_profile if $self->param('refined_profile');
     $self->_store_aln_tags;
@@ -181,6 +181,7 @@ sub write_output {
     $self->dataflow_output_id ( {
                                  'gene_tree_id' => $gene_tree_id,
                                  'alignment_id' => $self->param('alignment_id'),
+                                 'aln_length'   => $filtered_aln->aln_length,
                                 },1
                               );
 }
@@ -389,7 +390,7 @@ sub parse_and_store_alignment_into_tree {
   $aln_io->close;
 
   my $new_align_hash = $self->remove_gaps_in_alignment($ss_cons_string, {%align_hash});
-  $self->store_fasta_alignment($new_align_hash);
+  my $filtered_aln = $self->store_fasta_alignment($new_align_hash);
 
   my $ss_cons_filtered_string = $self->remove_gaps_in_ss_cons($ss_cons_string);
 
@@ -421,7 +422,7 @@ sub parse_and_store_alignment_into_tree {
 
   }
   $self->compara_dba->get_GeneAlignAdaptor->store($tree);
-  return undef;
+  return $filtered_aln;
 }
 
 sub get_cigar_lines {
@@ -534,7 +535,7 @@ sub store_fasta_alignment {
 #    $aln->root->release_tree();
 #    $aln->clear();
 
-    return;
+    return $aln;
 }
 
 sub remove_gaps_in_ss_cons {
