@@ -67,3 +67,7 @@ Used at some point to load the species-tree in the EPO-2X pipeline. Now replaced
 
 Replaced with "standaloneJob.pl Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence"
 
+* scripts/dumps/DumpConservationScores.pl
+
+Removed. Replaced by the DumpConservationScores_conf pipeline
+
