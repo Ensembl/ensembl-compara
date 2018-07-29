@@ -85,7 +85,7 @@ sub default_options {
 		'dump_trees_capacity' => 10,
 		'dump_ce_capacity'    => 10,
     	'dump_cs_capacity'    => 20,
-    	'dump_hom_capacity'   => 2, 
+        'dump_hom_capacity'   => 10,
         'dump_per_genome_cap' => 10,
 
 
