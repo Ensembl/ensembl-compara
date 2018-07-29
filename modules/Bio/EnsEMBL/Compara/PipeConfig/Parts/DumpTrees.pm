@@ -171,7 +171,7 @@ sub pipeline_analyses_dump_trees {
                     'archive_long_files' => { 'full_name' => '#file#', },
                     }
             },
-            -analysis_capacity => $self->o('dump_hom_capacity'),
+            -hive_capacity => $self->o('dump_hom_capacity'),
         },
 
         {   -logic_name => 'dump_all_trees_orthoxml',
@@ -210,7 +210,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
-            -analysis_capacity => $self->o('dump_hom_capacity'),
+            -hive_capacity => $self->o('dump_hom_capacity'),
           },
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
@@ -222,7 +222,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
-            -analysis_capacity => $self->o('dump_per_genome_cap'),
+            -hive_capacity => $self->o('dump_per_genome_cap'),
           },
 
         {   -logic_name => 'create_dump_jobs',

@@ -70,7 +70,7 @@ sub pipeline_analyses_dump_anc_alleles {
         			),
         	},
         	-flow_into => [ 'tar' ],
-        	-analysis_capacity => 2,
+        	-hive_capacity => 2,
         },
 
         {	-logic_name => 'tar',
