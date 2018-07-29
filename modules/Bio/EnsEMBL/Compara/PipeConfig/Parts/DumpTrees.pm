@@ -288,7 +288,6 @@ sub pipeline_analyses_dump_trees {
                 'xmllint_exe'   => $self->o('xmllint_exe'),
                 'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
             },
-            -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
             -rc_name       => '2Gb_job',
         },
@@ -311,7 +310,6 @@ sub pipeline_analyses_dump_trees {
                 'collated_file' => '#emf_dir#/#dump_file_name#',
                 'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #collated_file#',
             },
-            -hive_capacity => 2,
             -flow_into => {
                 1 => WHEN(
                     '-z #collated_file#' => { 'remove_empty_file' => { 'full_name' => '#collated_file#' } },
@@ -338,7 +336,6 @@ sub pipeline_analyses_dump_trees {
                 'contiguous'    => 0,
                 'inputcmd'      => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n',
             },
-            -hive_capacity => 2,
             -flow_into => {
                 2 => [ 'tar_dumps' ],
             },
@@ -353,7 +350,6 @@ sub pipeline_analyses_dump_trees {
                 'tar_archive'   => '#xml_dir#/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
                 'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
-            -hive_capacity => 2,
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
             },
