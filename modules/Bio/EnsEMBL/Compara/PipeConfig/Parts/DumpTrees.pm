@@ -120,6 +120,7 @@ sub pipeline_analyses_dump_trees {
                         AND gtr.clusterset_id = '#clusterset_id#'
                 |,
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 1 => WHEN(
                     '-z #output_file#' => { 'remove_empty_file' => { 'full_name' => '#output_file#' } },
@@ -134,6 +135,7 @@ sub pipeline_analyses_dump_trees {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 2 => WHEN(
                     '#max_hom_id#' => {
@@ -156,6 +158,7 @@ sub pipeline_analyses_dump_trees {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT DISTINCT genome_db_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 2 => 'dump_per_genome_homologies_tsv',
             },
@@ -181,6 +184,7 @@ sub pipeline_analyses_dump_trees {
                 'tree_type'             => 'tree',
             },
             -rc_name => '1Gb_job',
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#file#' } },
                -1 => [ 'dump_all_trees_orthoxml_himem' ],  # MEMLIMIT
@@ -231,6 +235,7 @@ sub pipeline_analyses_dump_trees {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
