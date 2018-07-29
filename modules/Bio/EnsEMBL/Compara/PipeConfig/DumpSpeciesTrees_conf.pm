@@ -61,6 +61,9 @@ sub default_options {
         'host'              => 'mysql-ens-compara-prod-1.ebi.ac.uk',
         'port'              => 4485,
 
+        # The registry file in case the compara databse is a registry name
+        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+
         #Locations to write output files
         'dump_dir'          => '/hps/nobackup2/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
 
@@ -73,7 +76,8 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         'dump_dir'      => $self->o('dump_dir'),
-        'compara_db'    => $self->o('compara_url'),
+        'compara_db'    => $self->o('compara_db'),
+        'reg_conf'      => $self->o('reg_conf'),
         'dump_species_tree_exe' => $self->o('dump_species_tree_exe'),
     };
 }
