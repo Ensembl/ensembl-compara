@@ -33,6 +33,7 @@ my $mlss_id;
 my $method = 'PROTEIN_TREES';
 my $ss_name;
 my $label = 'default';
+my $stn_root_id;
 my $with_distances;
 my $ascii_scale;
 my ($reg_conf, $compara_db);
@@ -43,6 +44,7 @@ GetOptions(
        'method=s'       => \$method,
        'ss_name=s'      => \$ss_name,
        'label=s'        => \$label,
+       'stn_root_id=i'  => \$stn_root_id,
        'with_distances' => \$with_distances,
        'ascii_scale=f'  => \$ascii_scale,
        'reg_conf=s'     => \$reg_conf,
@@ -55,19 +57,24 @@ my $registry = 'Bio::EnsEMBL::Registry';
 $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db ) or die "Must define a url or (reg_conf & alias)";
 
-my $mlss;
-if ($mlss_id) {
-    $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+my $species_tree;
+if ($stn_root_id) {
+    $species_tree = $compara_dba->get_SpeciesTreeAdaptor->fetch_by_dbID($stn_root_id);
+} elsif ($mlss_id) {
+    my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    die "Could not fetch a MLSS with dbID=$mlss_id\n" unless $mlss;
+    $species_tree = $mlss->species_tree($label);
 } elsif ($method) {
+    my $mlss;
     if ($ss_name) {
         $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method, $ss_name);
+        die "Could not fetch a MLSS with the method '$method' and the species set '$ss_name'\n" unless $mlss;
     } else {
         $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method)->[0];
+        die "Could not fetch a MLSS with the method '$method'\n" unless $mlss;
     }
+    $species_tree = $mlss->species_tree($label);
 }
-die "Could not fetch a MLSS with these parameters. Check your mlss_id, method and/or ss_name arguments\n" unless $mlss;
-
-my $species_tree = $mlss->species_tree($label);
 
 if ($ascii_scale) {
     $species_tree->root->print_tree($ascii_scale);
