@@ -3207,6 +3207,19 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
             },
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -flow_into  => {
+                -1 => [ 'homology_id_mapping_himem' ],
+                1 => { 'homology_id_mapping' => INPUT_PLUS() },
+            },
+        },
+
+        {   -logic_name => 'mlss_id_mapping_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
+            -parameters => {
+                'prev_rel_db'   => '#mapping_db#',
+            },
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name   => '1Gb_job',
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
 
