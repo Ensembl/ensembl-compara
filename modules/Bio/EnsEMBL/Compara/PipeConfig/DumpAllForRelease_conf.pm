@@ -221,6 +221,7 @@ sub pipeline_wide_parameters {
         'tsv_dir'             => '#target_dir#/tsv/ensembl-compara/homologies/',
 
         # ancestral alleles
+        'anc_tmp_dir'    => "#work_dir#/ancestral_alleles",
         'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
         'ancestral_dump_program' => $self->o('ancestral_dump_program'),
         'ancestral_stats_program' => $self->o('ancestral_stats_program'),
