@@ -1010,7 +1010,7 @@ sub _user_track_settings {
     @user_renderers = ('off', 'Off', 'signal', 'Wiggle plot');
     $strand = 'f';
   }
-  elsif (uc($format) =~ /BED|GFF|GTF|PSL/) {
+  elsif (uc($format) =~ /BED|GFF|GTF/) {
     @user_renderers = @{$self->_transcript_renderers};
     $default = 'as_transcript_label';
   }
