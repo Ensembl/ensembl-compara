@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-prod_cmd=mysql-eg-prod-1
-prod_db=ensembl_compara_plants_39_92
+prod_cmd=mysql-ens-compara-prod-1
+prod_db=ensembl_compara_plants_hom_40_93
 
 mast_cmd=mysql-ens-compara-prod-2-ensadmin
 mast_db=plants_compara_master_41_94
@@ -32,7 +32,7 @@ $mast_cmd mysqladmin CREATE $mast_db
 
 ## Carefull with this, but lets clean the production database...
 echo "Cleaning the production db"
-${prod_cmd}-ensrw $prod_db --show-warnings -vv -e '
+${prod_cmd}-ensadmin $prod_db --show-warnings -vv -e '
   DELETE g, d FROM genome_db g
   INNER JOIN dnafrag d
   USING (genome_db_id)
