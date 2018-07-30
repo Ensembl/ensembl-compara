@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<compara_db division="ensembl">
+<compara_db division="plants">
 
   <!-- Collections are species-sets that are needed to define several mlsss -->
-  <collections>
+  <!-- <collections>
 
-    <!-- All chordates except the mouse strains, and the three outgroups -->
-    <!-- NB: we have several genomes of the same species, e.g. CHO, NMR -->
     <collection name="plants-default">
       <taxonomic_group taxon_name="Embryophyta"/>
       <genome name="drosophila_melanogaster"/>
@@ -15,14 +13,17 @@
       <genome name="ciona_savignyi"/>
     </collection>
 
-  </collections>
+  </collections> -->
 
   <pairwise_alignments>
 
     <!-- First, our top 3 species, which are references for all plants -->
-    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" ref_amongst="Embryophyta"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" ref_amongst="Embryophyta"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" ref_amongst="Embryophyta"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Viridiplantae" />
+    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Rhodophyta" />
+    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Viridiplantae" />
+    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Rhodophyta" />
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Viridiplantae"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Rhodophyta"/>
 
     <!-- Rice all v all -->
     <all_vs_all method="LASTZ_NET">
@@ -31,25 +32,20 @@
         </species_set>
     </all_vs_all>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" ref_amongst="Embryophyta">
-      <species_set>
-        <taxonomic_group taxon_name="fabids"/>
-        <taxonomic_group taxon_name="rosids"/>
-      </species_set>
-    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="rosids"/>
 
   </pairwise_alignments>
 
-  <self_alignments>
+  <!-- <self_alignments>
     <genome name=" triticum_aestivum"/>
-  </self_alignments>
+  </self_alignments> -->
 
   <gene_trees>
-    <protein_trees collection="plants-default"/>
+    <protein_trees collection="plants"/>
   </gene_trees>
 
   <species_trees>
-    <species_tree collection="plants-default"/>
+    <species_tree collection="plants"/>
   </species_trees>
 
 </compara_db>
