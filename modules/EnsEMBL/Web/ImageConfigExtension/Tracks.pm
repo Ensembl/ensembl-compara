@@ -1063,7 +1063,7 @@ sub add_regulation_builds {
     depth       => 0,
     colourset   => 'fg_regulatory_features',
     display     => 'normal',
-    description => '',
+    description => $self->databases->{'DATABASE_FUNCGEN'}{'tables'}{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'reg_feats'},
     renderers   => [qw(off Off normal On)],
     caption     => 'Regulatory Build',
   }));

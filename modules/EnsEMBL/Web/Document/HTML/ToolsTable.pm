@@ -136,7 +136,7 @@ sub render {
       'desc'  => "This tool calculates population-wide allele frequency for sites within the chromosomal region defined from a VCF file and populations defined in a sample panel file.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => '',
-      'code'  => '',
+      'code'  => sprintf('<a href="https://raw.githubusercontent.com/Ensembl/1000G-tools/master/allelefrequency/calculate_allele_frq_from_vcf.pl" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $img_url),
       'docs'  => sprintf('<a href="/info/docs/tools/allelefrequency/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url),
     });
   }

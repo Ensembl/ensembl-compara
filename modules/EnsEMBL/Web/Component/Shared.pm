@@ -638,6 +638,15 @@ sub _add_gene_counts {
       ($inner,$type) = ($2,$3);
       $name .= "/$5" if $5;
     }
+
+    # Check if current statistic is alt_transcript and our_type is a (alternative sequence).
+    # If yes, make type to be a so that the loop won't go to next early.
+    # Also, push alt_transcript to order so that the statistic will be included in the table.
+    if ($name eq 'alt_transcript' && $our_type eq 'a') {
+      $type = 'a';
+      push @order, 'alt_transcript';
+    }
+
     next unless $type eq $our_type;
     my $i = first_index { $name eq $_ } @order;
     next if $i == -1;
@@ -645,7 +654,7 @@ sub _add_gene_counts {
     $data[$i]->{'_key'} = $name;
     $data[$i]->{'_name'} = $statistic->name if $inner eq '';
     $data[$i]->{'_sub'} = ($name =~ m!/!);
-  } 
+  }
 
   my $counts = $self->new_table($cols, [], $options);
   foreach my $d (@data) {
@@ -769,7 +778,7 @@ sub species_stats {
   } else {
     $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
   }
-  
+
   ## OTHER STATS
   my $rows = [];
   ## Prediction transcripts
@@ -845,7 +854,10 @@ sub check_for_align_problems {
   my $object = $self->object || $self->hub->core_object(lc($self->hub->param('data_type')));
 
   my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
-  push @messages, $self->check_for_missing_species($args);
+
+  if (scalar @messages < 0) {
+    push @messages, $self->check_for_missing_species($args);
+  }
 
   return $self->show_warnings(\@messages);
 }
@@ -892,7 +904,7 @@ sub check_for_missing_species {
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown - use "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+                             '<p>The following %d species in the alignment are not shown. Use "<strong>Configure this page -&gt; 12-way EPO alignment</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
                              join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
                             );

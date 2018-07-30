@@ -480,7 +480,7 @@ sub get_slice_table {
  
   if ($table_rows) { 
     my $rtn = qq(<table class="bottom-margin" cellspacing="0">$table_rows</table>);
-    $rtn    = qq{<p>NOTE: <a href="/info/genome/compara/analyses.html#epo">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
+    $rtn    = qq{<p>NOTE: <a href="/info/genome/compara/ancestral_sequences.html">How ancestral sequences are calculated</a></p>$rtn} if $ancestral_sequences;
     return $return_padding ? ($rtn, "$species_padding,$region_padding,$number_padding") : $rtn;
   }
 }

@@ -23,6 +23,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Variation);
 use Bio::EnsEMBL::Variation::Utils::VariationEffect qw(overlap);
+use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 sub _init {
   my $self = shift;
@@ -223,23 +224,32 @@ sub content {
     }
     
     my $strand = $trans->strand < 1 ? '-' : '+';
-    
+
     # consequence type
     my $type = $self->render_consequence_type($tva);
-    
-    my $a = $transcript_data->{'vf_allele'};
     
     # sift
     my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
     my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
     
     # Allele
+    my $a = $transcript_data->{'vf_allele'};
+    if ($trans->stable_id =~ /^LRG_\d+/) {
+      # LRG allele: reverse complement if LRG maps to the reverse strand of the assembly
+      my $sa = $hub->get_adaptor('get_SliceAdaptor', 'core');
+      my $slice = $sa->fetch_by_region( 'LRG', $trans->get_Gene()->stable_id);
+      my $strand = $slice->feature_Slice->strand;
+      if ($strand == -1 and $a =~ /^[ATGCN]+$/) {
+        reverse_comp(\$a);
+      }
+    }
     my $allele = (length($a) > $max_length) ? substr($a,0,$max_length).'...' : $a;
-    
+ 
     my $html_full_tr_allele;
     
     unless ($transcript_data->{'vf_allele'} =~ /HGMD|LARGE|DEL|INS/) {
-      my $tr_allele = sprintf "(%s)",$transcript_data->{'tr_allele'};
+      my $tr_allele_label = ($trans->stable_id =~ /^LRG_\d+/) ? $a : $transcript_data->{'tr_allele'};
+      my $tr_allele = sprintf "(%s)",$tr_allele_label;
       $allele .= " <small>".$self->trim_large_string($tr_allele,'tr_'.$transcript_data->{transcriptname},sub {
         # trim to 20 but include the brackets
         local $_ = shift;

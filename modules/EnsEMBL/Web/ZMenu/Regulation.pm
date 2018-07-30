@@ -54,15 +54,25 @@ sub content {
   
   $self->add_entry({
     type        => 'Core bp',
-    label       => $object->location_string,
+    label       => sprintf(
+      '%s: %s-%s',
+      $self->neat_sr_name($object->seq_region_type, $object->seq_region_name),
+      $self->thousandify($object->seq_region_start),
+      $self->thousandify($object->seq_region_end)
+    ),
     link        => $object->get_location_url,
     link_class  => '_location_change _location_mark'
   });
-  
+
   unless ($object->bound_start == $object->seq_region_start && $object->bound_end == $object->seq_region_end) {
     $self->add_entry({
       type        => 'Bounds bp',
-      label       => $object->bound_location_string,
+      label       => sprintf(
+        '%s: %s-%s',
+        $self->neat_sr_name($object->seq_region_type, $object->seq_region_name),
+        $self->thousandify($object->bound_start),
+        $self->thousandify($object->bound_end)
+      ),
       link        => $object->get_bound_location_url,
       link_class  => '_location_change _location_mark'
     });

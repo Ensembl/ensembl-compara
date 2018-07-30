@@ -228,7 +228,6 @@ sub _load_remote_url_tracks {
     } else {
 
       my $add_method = sprintf('_add_%s_track', lc $track_data->{'format'});
-
       if ($self->can($add_method)) {
         $self->$add_method(
           'key'      => $code,
@@ -238,9 +237,9 @@ sub _load_remote_url_tracks {
         );
       } else {
 
-        my $desc = sprintf('Data retrieved from an external webserver. This data is attached %, and comes from URL: <a href="%s">%2$s</a>',
+        my $desc = sprintf('Data retrieved from an external webserver. This data is attached %s, and comes from URL: <a href="%s">%s</a>',
           $track_data->{'source_type'} eq 'session' ? 'temporarily' : 'and saved',
-          encode_entities($track_data->{'source_url'})
+          encode_entities($track_data->{'source_url'}), $track_data->{'source_url'}
         );
 
         $self->_add_flat_file_track($menu, 'url', $code, $track_data->{'source_name'}, $desc, {
@@ -736,6 +735,43 @@ sub _add_htslib_track {
   );
 }
 
+sub _add_bigpsl_track {
+  my ($self, %args) = @_;
+
+  ## Get default settings for this format
+  my ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGPSL');
+
+  my $options = {
+    external        => 'external',
+    sub_type        => 'url',
+    colourset       => 'feature',
+    colorByStrand   => $args{'source'}{'colorByStrand'},
+    spectrum        => $args{'source'}{'spectrum'},
+    strand          => $args{'source'}{'strand'} || $strand,
+    style           => $args{'source'}{'style'},
+    longLabel       => $args{'source'}{'longLabel'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || $default,
+  };
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+
+  if ($args{'view'} && $args{'view'} =~ /peaks/i) {
+    $options->{'join'} = 'off';
+  } else {
+    push @$renderers, ('signal', 'Wiggle plot');
+  }
+
+  $self->_add_file_format_track(
+    format      => 'BigBed',
+    description => 'BigPsl file',
+    renderers   => $args{'source'}{'renderers'} || $renderers,
+    options     => $options,
+    %args,
+  );
+}
+
 sub _add_bigbed_track {
   my ($self, %args) = @_;
 
@@ -974,7 +1010,7 @@ sub _user_track_settings {
     @user_renderers = ('off', 'Off', 'signal', 'Wiggle plot');
     $strand = 'f';
   }
-  elsif (uc($format) =~ /BED|GFF|GTF/) {
+  elsif (uc($format) =~ /BED|GFF|GTF|PSL/) {
     @user_renderers = @{$self->_transcript_renderers};
     $default = 'as_transcript_label';
   }

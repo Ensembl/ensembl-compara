@@ -87,6 +87,7 @@ sub USERDATA_FORMATS {
     'bed'         => {'ext' => 'bed',     'label' => 'BED',       'display' => 'feature'},
     'bedgraph'    => {'ext' => 'bed',     'label' => 'bedGraph',  'display' => 'graph'},
     'bigbed'      => {'ext' => 'bb',      'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
+    'bigpsl'      => {'ext' => 'bb',      'label' => 'BigPsl',    'display' => 'graph',   'limit' => 'remote'},
     'bigwig'      => {'ext' => 'bw',      'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
     'cram'        => {'ext' => 'cram',    'label' => 'CRAM',      'display' => 'graph',   'limit' => 'remote'},
     'gff3'        => {'ext' => 'gff3',    'label' => 'GFF3',      'display' => 'feature'},
