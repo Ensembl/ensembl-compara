@@ -177,27 +177,67 @@ sub _pagination {
   my ($self, $args) = @_;
 
   my $no_of_pages = ceil($args->{'total_entries'}/$args->{'entries_per_page'});
+  my $current_page = $args->{'current_page'};
+
+  ## Don't show every page - some species have hundreds of trackhubs!
+  my $page_limit  = 5;
+  my $midpoint    = $page_limit % 2 == 0 ? $page_limit / 2 : $page_limit / 2 + 0.5;
+  my $half_range  = $page_limit % 2 == 0 ? $page_limit / 2 : ($page_limit - 1) / 2; 
+  my $start_page  = $current_page - $half_range;
+  $start_page = 1 if $start_page < 1;
+  $start_page = $no_of_pages - $page_limit + 1 if ($current_page + $half_range) > $no_of_pages; 
 
   my $html = '<div class="list_paginate">Page: <span class="page_button_frame">';
   
   ## Set parameters that don't change 
-  foreach (qw(assembly_key assembly_id data_type thr_species)) {
+  foreach (qw(assembly_key assembly_id assembly_display data_type thr_species common_name)) {
     $args->{'url_params'}{$_} = $self->hub->param($_);
   }
 
-  for (my $page = 1; $page <= $no_of_pages; $page++) {
+  ## Back arrows
+  if ($no_of_pages > $page_limit) {
+    my $text = '&lt;';
+    my ($class, $content, $url);
+
+    ## Double arrow
+    if ($current_page > 1) {
+      $args->{'url_params'}{'page'} = 1;
+      $url = $self->hub->url($args->{'url_params'});
+      $content = sprintf '<a href="%s" class="modal_link nodeco">%s%s</a>', $url, $text, $text;
+    }
+    else {
+      $content = $text.$text;
+      $class = ' paginate_button_disabled';
+    }
+    $html .= sprintf '<div class="paginate_button%s">%s</div>', $class, $content;
+
+    ## Single arrow
+    if ($current_page > $midpoint) {
+      $args->{'url_params'}{'page'} = $current_page - 1;
+      $url = $self->hub->url($args->{'url_params'});
+      $content = sprintf '<a href="%s" class="modal_link nodeco">%s</a>', $url, $text;
+    }
+    else {
+      $content = $text;
+      $class = ' paginate_button_disabled';
+    }
+    $html .= sprintf '<div class="paginate_button%s">%s</div>', $class, $content;
+  }
+
+  for (my $page = $start_page; $page < ($start_page + $page_limit); $page++) {
     my ($classes, $link);
-    if ($page == $args->{'current_page'}) {
+
+    if ($page == $current_page) {
       $classes = 'paginate_active';
     }
     else {
       $classes = 'paginate_button';
       $link = 1;
     }
-    if ($page == 1) {
+    if ($page == $start_page) {
       $classes .= ' first';
     }
-    elsif ($page == $no_of_pages) {
+    elsif ($page == $page_limit) {
       $classes .= ' last';
     }
     if ($link) {
@@ -209,6 +249,38 @@ sub _pagination {
       $html .= sprintf '<div class="%s">%s</div>', $classes, $page;
     }
   } 
+
+  ## Forward arrow
+  if ($no_of_pages > $page_limit) {
+    my $text = '&gt;';
+    my ($class, $content, $url);
+
+    ## Single arrow
+    if ($current_page < ($no_of_pages - $half_range)) {
+      $args->{'url_params'}{'page'} = $current_page + 1;
+      $url = $self->hub->url($args->{'url_params'});
+      $content = sprintf '<a href="%s" class="modal_link nodeco">%s</a>', $url, $text;
+    }
+    else {
+      $content = $text;
+      $class = ' paginate_button_disabled';
+    }
+    $html .= sprintf '<div class="paginate_button%s">%s</div>', $class, $content;
+
+    ## Double arrow
+    if ($current_page < $no_of_pages) {
+      $args->{'url_params'}{'page'} = $no_of_pages;
+      $url = $self->hub->url($args->{'url_params'});
+      $content = sprintf '<a href="%s" class="modal_link nodeco">%s%s</a>', $url, $text, $text;
+    }
+    else {
+      $content = $text.$text;
+      $class = ' paginate_button_disabled';
+    }
+    $html .= sprintf '<div class="paginate_button%s">%s</div>', $class, $content;
+
+  }
+
   $html .= '</span></div><br />';
 
   return $html;
