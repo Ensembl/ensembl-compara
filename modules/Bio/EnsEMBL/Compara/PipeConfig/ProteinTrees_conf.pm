@@ -3196,6 +3196,7 @@ sub core_pipeline_analyses {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
                 },
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => [ 'mlss_id_mapping' ],
             },
@@ -3207,6 +3208,7 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
             },
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name   => '500Mb_job',
             -flow_into  => {
                 -1 => [ 'homology_id_mapping_himem' ],
                 1 => { 'homology_id_mapping' => INPUT_PLUS() },
@@ -3305,6 +3307,7 @@ sub core_pipeline_analyses {
                     'ENSEMBL_PARALOGUES'    => 3,
                 },
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => {
                     'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
@@ -3320,6 +3323,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'member_type'           => 'protein',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -3330,6 +3334,7 @@ sub core_pipeline_analyses {
                 'member_type'           => 'protein',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
