@@ -47,6 +47,28 @@ sub init {
     my $rel          = "modal_config_$action";
        $rel         .= '_' . lc $hub->species if $image_config && $image_config->get_parameter('multi_species') && $hub->referer->{'ENSEMBL_SPECIES'} ne $hub->species;
 
+    if ($image_config) {
+      $self->add_entry({
+        caption => 'Search for track hubs',
+        class   => 'modal_link search',
+        url     => $hub->url({
+          type    => 'UserData',
+          action  => 'TrackHubSearch',
+          __clear => 1
+        })
+      });
+      
+      $self->add_entry({
+        caption => 'Custom tracks',
+        class   => 'modal_link data',
+        url     => $hub->url({
+          type    => 'UserData',
+          action  => 'ManageData',
+          __clear => 1
+        })
+      });
+    }
+
     $self->add_entry({
       caption => 'Manage configurations',
       class   => 'modal_link config-manage',
@@ -79,16 +101,6 @@ sub init {
           })
         });
       }
-      
-      $self->add_entry({
-        caption => 'Custom tracks',
-        class   => 'modal_link data',
-        url     => $hub->url({
-          type    => 'UserData',
-          action  => 'ManageData',
-          __clear => 1
-        })
-      });
     }
   }
 }

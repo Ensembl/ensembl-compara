@@ -77,6 +77,7 @@
      
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }
+.tool_buttons .search       { background-image: url(/i/16/rev/search.png);     }
 .tool_buttons .export       { background-image: url(/i/16/rev/download.png);      }
 .tool_buttons .iexport      { background-image: url(/i/16/rev/picture.png);      }
 .tool_buttons .view         { background-image: url(/i/16/rev/eye.png);           }
