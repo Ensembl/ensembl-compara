@@ -76,7 +76,7 @@ sub default_options {
 
 	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-            'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/plants_compara_master_41_94',
 
             # 'staging_loc1' => {
             #     -host   => 'mysql-eg-staging-1.ebi.ac.uk',
@@ -102,7 +102,7 @@ sub default_options {
                 -port   => 4205,
                 -user   => 'ensro',
                 -pass   => '',
-                -db_version => $self->o('rel_with_suffix'),
+                -db_version => 93,
             },
 
             #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -131,6 +131,7 @@ sub default_options {
 	    #Reference species
 #	    'ref_species' => 'homo_sapiens',
 	    'ref_species' => '',
+        # 'non_ref_species' => undef,
 
             # healthcheck
             'do_compare_to_previous_db' => 0,
