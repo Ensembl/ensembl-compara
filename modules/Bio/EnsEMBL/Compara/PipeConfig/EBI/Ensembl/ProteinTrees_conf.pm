@@ -169,8 +169,8 @@ sub default_options {
         # Where the members come from (as loaded by the LoadMembers pipeline)
         'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
 
-        # If 'prev_rel_db' above is not set, you need to set all the dbs individually
-        #'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
+        # Points to the previous production database. Will be used for various GOC operations.
+        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/waakanni_protein_trees_93',
         #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
 

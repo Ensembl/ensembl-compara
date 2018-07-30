@@ -203,6 +203,9 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         'prev_rel_db' => undef,
 
+        # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
+        'goc_reuse_db'=> undef,
+
     # Configuration of the pipeline worklow
 
         # How will the pipeline create clusters (families) ?

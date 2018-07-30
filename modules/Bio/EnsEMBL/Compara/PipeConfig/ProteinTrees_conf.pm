@@ -328,8 +328,6 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
-        # Defaults to the global reuse database, but can be set differently
-        'goc_reuse_db'                  => $self->o('prev_rel_db'),
         'calculate_goc_distribution'    => 1,
 
     # Extra analyses
