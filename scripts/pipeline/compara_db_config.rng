@@ -221,20 +221,20 @@
           </oneOrMore>
         </element>
       </optional>
-      <element name="gene_trees" blockly:blockName="Gene-trees">
-        <oneOrMore>
-          <choice>
-            <element name="protein_trees" blockly:blockName="Protein-trees">
-              <attribute name="collection" blockly:blockName="Collection name"/>
-            </element>
-            <optional>
+      <optional>
+        <element name="gene_trees" blockly:blockName="Gene-trees">
+          <oneOrMore>
+            <choice>
+              <element name="protein_trees" blockly:blockName="Protein-trees">
+                <attribute name="collection" blockly:blockName="Collection name"/>
+              </element>
               <element name="nc_trees" blockly:blockName="ncRNA-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
               </element>
-            </optional>
-          </choice>
-        </oneOrMore>
-      </element>
+            </choice>
+          </oneOrMore>
+        </element>
+      </optional>
       <optional>
         <element name="species_trees" blockly:blockName="Species-trees">
           <oneOrMore>
