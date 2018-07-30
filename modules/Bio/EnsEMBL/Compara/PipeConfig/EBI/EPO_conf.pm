@@ -139,7 +139,7 @@ sub resource_classes {
         '3.5Gb'     => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
         'mem7500'   => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
         'mem14000'  => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-        'hugemem'   => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
+        '30Gb_job'  => {'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
 
     };
 }
