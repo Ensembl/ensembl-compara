@@ -63,7 +63,7 @@ sub pipeline_analyses_dump_anc_alleles {
         	-parameters => {
                         species_outdir => '#anc_tmp_dir#/#species_dir#',
         		cmd => join('; ', 
-        			'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db#',
+                                'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db# --genome_dumps_dir #genome_dumps_dir#',
         			'cd #species_outdir#',
                     'find . -empty -type f -delete',
                                 'perl #ancestral_stats_program# > summary.txt',
