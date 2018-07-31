@@ -99,7 +99,7 @@ sub default_options {
 
     #ref species for pairwise alignments
  	# 'ref_species' => 'gallus_gallus',    # sauropsids 
-	'ref_species' => 'oryzias_latipes',  # fish
+	#'ref_species' => 'oryzias_latipes',  # fish
 	# 'ref_species' => 'homo_sapiens',       # mammals
 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
