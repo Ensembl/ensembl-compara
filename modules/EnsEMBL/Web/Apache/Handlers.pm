@@ -83,6 +83,18 @@ sub get_redirect_uri {
   ## In a plugin, use this function with PREV to add plugin specific rules
   my ($r, $uri) = @_;
 
+  ## Redirect to OLS
+  if ($uri =~ m|^/glossary/|) {
+    my $ols = $SiteDefs::ENSEMBL_GLOSSARY_URL;
+    if ($uri =~ m|ENSGLOSSARY_(\d+)|) {
+      my $id = $1;
+      return $ols.'/terms?iri=http%3A%2F%2Fensembl.org%2Fglossary%2FENSGLOSSARY_'.$id;
+    }
+    else {
+      return $ols;
+    }
+  }
+
   ## Redirect to contact form
   if ($uri =~ m|^/contact\?$|) {
     return '/Help/Contact';
