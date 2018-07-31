@@ -25,9 +25,64 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
+use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_use);
+
 use parent qw(EnsEMBL::Web::IOWrapper::BigBed);
 
-## BigPsl is basically a BigBed file with custom AutoSQL, so we don't need any special
-## functionality in this wrapper
+## BigPsl is basically a BigBed file with custom AutoSQL, so we need to force
+## use of the BigBed parser
+
+sub open {
+  ## Override the default open method, to force use of the BigBed parser
+  my ($url, $format, $args) = @_;
+  
+  my $class = 'EnsEMBL::Web::IOWrapper::BigPsl';
+  
+  my $wrapper;
+  if (dynamic_use($class, 1)) {
+    my $parser = Bio::EnsEMBL::IO::Parser::open_as('BigBed', $url);
+    
+    if ($parser) {
+    
+      $wrapper = $class->new({
+                              'parser' => $parser,
+                              'format' => $format,
+                              %{$args->{options}||{}}
+                            });
+    }                       
+  } 
+  return $wrapper;
+} 
+
+sub create_structure { 
+  ## Don't use thick start and thick end for Psl
+  my ($self, $feature, $start_coord, $end_coord, $slice_start) = @_;
+  
+  my $block_count   = $self->parser->get_blockCount;
+  my $structure = [];
+
+  if ($block_count) {
+    my @block_starts  = @{$self->parser->get_blockStarts};
+    my @block_lengths = @{$self->parser->get_blockSizes};
+    my $offset        = $start_coord - $slice_start;
+
+    foreach(0..($self->parser->get_blockCount - 1)) {
+      my $start   = shift @block_starts;
+      ## Adjust to be relative to slice
+      $start      = $start + $offset;
+      my $length  = shift @block_lengths;
+      ## Adjust coordinates here to accommodate drawing code without 
+      ## altering zmenu content
+      my $end     = $start + $length - 1;
+
+      push @$structure, {'start' => $start, 'end' => $end};
+    }
+  }
+  else {
+    ## Single-block feature
+    $structure = [{'start' => $feature->{'start'}, 'end' => $feature->{'end'}}];
+  }
+  return $structure;
+}
 
 1;

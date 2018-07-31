@@ -764,7 +764,7 @@ sub _add_bigpsl_track {
   }
 
   $self->_add_file_format_track(
-    format      => 'BigBed',
+    format      => 'BigPsl',
     description => 'BigPsl file',
     renderers   => $args{'source'}{'renderers'} || $renderers,
     options     => $options,

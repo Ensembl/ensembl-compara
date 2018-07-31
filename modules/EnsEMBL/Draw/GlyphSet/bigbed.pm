@@ -55,7 +55,7 @@ sub get_data {
                         };
                         
 
-  my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args);
+  my $iow = $self->get_iow($url, $args);
 
   if ($iow) {
     ## We need to pass 'faux' metadata to the ensembl-io wrapper, because
@@ -132,6 +132,11 @@ sub get_data {
 
   return $data;
 }
+
+sub get_iow { 
+  my ($self, $url, $args) = @_;
+  return EnsEMBL::Web::IOWrapper::Indexed::open($url, 'BigBed', $args); 
+} 
  
 sub extra_metadata {}
  
