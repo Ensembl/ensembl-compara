@@ -139,7 +139,7 @@ $source_server_url .= '/' unless $source_server_url =~ /\/$/;
 $target_server_url .= '/' unless $target_server_url =~ /\/$/;
 
 Bio::EnsEMBL::Registry->load_registry_from_url($target_server_url);
-my %existing_target_species;
+my %existing_target_species; # Hash of Registry names, not production names (usually the same, though)
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
     #$existing_target_species{ $db_adaptor->species } = 1;
     push @{ $existing_target_species{ $db_adaptor->species } }, $db_adaptor->dbc->dbname;
