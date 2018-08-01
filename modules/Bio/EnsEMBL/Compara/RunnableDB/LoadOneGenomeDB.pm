@@ -133,7 +133,7 @@ sub fetch_input {
 
             $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -DBCONN => $dbc );
 
-            $self->param('locator', $core_dba->locator($suffix_separator) );  # substitute the given locator by one in conventional format
+            $self->param('locator', $core_dba->locator);  # substitute the given locator by one in conventional format
         }
         $self->param('core_dba', $core_dba);
     }
@@ -197,7 +197,7 @@ sub write_output {      # store the genome_db and dataflow
 sub create_genome_db {
     my ($self, $core_dba, $asked_genome_db_id, $asked_locator, $asked_genome_component, $master_object) = @_;
 
-    my $locator         = $asked_locator || $core_dba->locator($suffix_separator);
+    my $locator         = $asked_locator || $core_dba->locator;
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor($core_dba, $asked_genome_component);
     if ($master_object) {

@@ -113,6 +113,28 @@ sub pool_one_DBConnection {
 package Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 
+=head2 production_name
+
+  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Example    : my $production_name = $genome_db->db_adaptor->production_name;
+  Description: Gets the production name of this species
+  Returntype : string
+
+=cut
+
+sub production_name {
+    my $core_dba = shift;
+
+    return undef unless $core_dba;
+
+    unless ($core_dba->{'_production_name'}) {
+        $core_dba->{'_production_name'} = $core_dba->get_MetaContainer->get_production_name();
+    }
+
+    return $core_dba->{'_production_name'};
+}
+
+
 =head2 assembly_name
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
@@ -152,16 +174,11 @@ sub assembly_name {
 
 sub locator {
     my $core_dba = shift;
-    my $suffix_separator = shift;
 
     return undef unless $core_dba;
     return undef unless $core_dba->group eq 'core';
 
-    my $species_safe = $core_dba->species();
-    if ($suffix_separator) {
-        # The suffix was added to attain uniqueness and avoid collision, now we have to chop it off again.
-        ($species_safe) = split(/$suffix_separator/, $core_dba->species());
-    }
+    my $species_safe = $core_dba->production_name;
 
     my $dbc = $core_dba->dbc();
 
@@ -183,16 +200,11 @@ sub locator {
 
 sub url {
     my $core_dba = shift;
-    my $suffix_separator = shift;
 
     return undef unless $core_dba;
     return undef unless $core_dba->group eq 'core';
 
-    my $species_safe = $core_dba->species();
-    if ($suffix_separator) {
-        # The suffix was added to attain uniqueness and avoid collision, now we have to chop it off again.
-        ($species_safe) = split(/$suffix_separator/, $core_dba->species());
-    }
+    my $species_safe = $core_dba->production_name;
 
     my $dbc = $core_dba->dbc();
 
