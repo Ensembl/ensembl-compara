@@ -132,9 +132,12 @@ sub assembly_name {
     #return $core_dba->get_CoordSystemAdaptor->get_default_version;
     #return $core_dba->get_GenomeContainer->get_version;
 
-    my ($cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
+    unless (exists $core_dba->{'_assembly_name'}) {
+        my ($cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
+        $core_dba->{'_assembly_name'} = $cs ? $cs->version : '';
+    }
 
-    return $cs ? $cs->version : '';
+    return $core_dba->{'_assembly_name'};
 }
 
 
