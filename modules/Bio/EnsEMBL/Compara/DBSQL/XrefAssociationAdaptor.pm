@@ -166,7 +166,7 @@ sub store_member_associations {
 	};
 	my $member_acc_hash = $callback->( $self, $dba, $db_name );
 	
-	$self->dbc()->sql_helper()->execute_update(-SQL=>$delete_member_sql, -PARAMS=>[$dba->species(),$external_db_id]);
+	$self->dbc()->sql_helper()->execute_update(-SQL=>$delete_member_sql, -PARAMS=>[$dba->production_name(),$external_db_id]);
 	
 	while(my ($sid,$accs) = each %$member_acc_hash) {
 		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
