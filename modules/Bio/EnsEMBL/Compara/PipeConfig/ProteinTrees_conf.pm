@@ -622,6 +622,7 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
+            -rc_name    => '500Mb_job',
             -flow_into  => [ 'notify_pipeline_completed' ],
         },
 
