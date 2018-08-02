@@ -772,6 +772,35 @@ sub _add_bigpsl_track {
   );
 }
 
+sub _add_bigint_track {
+  my ($self, %args) = @_;
+
+  ## Get default settings for this format
+  my ($strand, $renderers, $default) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGINT');
+
+  my $options = {
+    external        => 'external',
+    sub_type        => 'url',
+    colourset       => 'feature',
+    strand          => $args{'source'}{'strand'} || $strand,
+    style           => $args{'source'}{'style'},
+    longLabel       => $args{'source'}{'longLabel'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || $default,
+  };
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+
+  $self->_add_file_format_track(
+    format      => 'BigInt',
+    description => 'BigInteract file',
+    renderers   => $args{'source'}{'renderers'} || $renderers,
+    options     => $options,
+    %args,
+  );
+}
+
 sub _add_bigbed_track {
   my ($self, %args) = @_;
 
@@ -1002,7 +1031,7 @@ sub _user_track_settings {
   my (@user_renderers, $default);
   my $strand = 'b';
 
-  if (lc($format) eq 'pairwise') {
+  if (lc($format) eq 'pairwise' || lc($format) eq 'bigint') {
     @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction');
     $strand = 'f';
   }
