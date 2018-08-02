@@ -75,14 +75,6 @@ sub beekeeper_extra_cmdline_options {
 return $options;
 }
 
-sub resource_classes {
-    my $self = shift;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'crowd' => { 'LSF' => '-q production-rh7 -C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
-    }
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
     # We get the analyses defined in the base class, we add a new one, and

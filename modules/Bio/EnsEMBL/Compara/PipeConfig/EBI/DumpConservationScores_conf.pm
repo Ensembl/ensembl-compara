@@ -52,15 +52,4 @@ sub default_options {
     };
 }
 
-
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_options = $self->o('registry') ? '--reg_conf '.$self->o('registry') : '';
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-    };
-}
-
 1;
