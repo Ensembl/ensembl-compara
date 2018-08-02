@@ -94,7 +94,6 @@ sub pipeline_analyses_dump_multi_align {
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
-            -rc_name => '2Gb_job_long',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },

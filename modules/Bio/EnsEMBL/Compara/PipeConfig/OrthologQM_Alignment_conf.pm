@@ -172,7 +172,6 @@ sub resource_classes {
         '200M_job'               => {'LSF' => '-C0 -M200   -R"select[mem>200]   rusage[mem=200]"' },
         '1Gb_job'                => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
         '2Gb_job'                => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '2Gb_long_job'           => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]" -q long' },
         '4Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', '--reg_conf '.$self->o('reg_conf')] },
     };
 }
@@ -298,7 +297,7 @@ sub pipeline_analyses {
                 1 => [ '?table_name=ortholog_quality' ],
                 2 => [ 'assign_wga_coverage_score' ],
             },
-            -rc_name    => '2Gb_long_job',
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'assign_wga_coverage_score',

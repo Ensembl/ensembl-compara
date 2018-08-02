@@ -159,7 +159,6 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'default_with_registry' => { 'LSF' => ['', $reg_options], 'LOCAL' => ['', $reg_options] },
         '2Gb_job' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options], 'LOCAL' => ['', $reg_options] },
-        '2Gb_job_long' => { 'LSF' => ['-q long -C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options] },
     };
 }
 
