@@ -67,7 +67,6 @@ sub create_hash {
   my $slice_chr     = $slice->seq_region_name;
   my $slice_start   = $slice->start;
   my $slice_end     = $slice->end;
-  warn "@@@ CURRENT COORDS $slice_chr:$slice_start-$slice_end";
 
   ## Get pairwise information
   ## IMPORTANT: use column numbers, not names, because UCSC's spec allows the user 
@@ -79,8 +78,6 @@ sub create_hash {
   my $t_chr   = $parser->get_seqname(13);
   my $t_start = $parser->get_start(14);
   my $t_end   = $parser->get_end(15);
-  warn "<<< SOURCE COORDS $s_chr:$s_start-$s_end";
-  warn ">>> TARGET COORDS $t_chr:$t_start-$t_end";
   
   ## Skip this feature if the interaction crosses chromosomes
   return unless ($s_chr eq $slice_chr && $t_chr eq $slice_chr);
@@ -109,12 +106,12 @@ sub create_hash {
                         });
 
   my $score = $parser->get_score;
-  my $colour = $parser->get_color;
+  my $colour = $parser->get_color || 'black';
   if ($metadata->{'useScore'} || $metadata->{'spectrum'} eq 'on') {
     $colour = $self->convert_to_gradient($score, $colour);
   }
 
-  my $direction = '';
+  my $direction = $s_end < $t_start ? '+' : '-';
   my $feature = {
     'seq_region'    => $slice_chr,
     'direction'     => $direction,
@@ -133,6 +130,8 @@ sub create_hash {
     $feature->{'href'}  = $href;
   }
 
+  use Data::Dumper; $Data::Dumper::Sortkeys = 1;
+  warn Dumper($feature);
   return $feature;
 }
 
