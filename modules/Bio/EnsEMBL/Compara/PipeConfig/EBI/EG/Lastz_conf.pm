@@ -144,14 +144,15 @@ sub default_options {
             'output_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
             # Capacities
-            'pair_aligner_analysis_capacity' => 100,
-            'pair_aligner_batch_size' => 3,
+            'pair_aligner_analysis_capacity' => 500,
+            'pair_aligner_batch_size' => 5,
             'chain_hive_capacity' => 50,
             'chain_batch_size' => 5,
-            'net_hive_capacity' => 20,
+            'net_hive_capacity' => 50,
             'net_batch_size' => 1,
             'filter_duplicates_hive_capacity' => 200,
             'filter_duplicates_batch_size' => 10,
+            'store_sequence_hive_capacity' => 50,
 
 	   };
 }
