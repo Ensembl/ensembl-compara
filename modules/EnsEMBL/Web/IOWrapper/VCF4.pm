@@ -104,12 +104,15 @@ sub create_hash {
     ## Get consequence from database and use it to set colour
     my $colours = $metadata->{'colours'};
     my $colour  = $colours->{'default'}->{'default'} || $metadata->{'colour'};
+    warn ">>> COLOUR $colour";
+    warn "... ADAPTOR ".$self->{'adaptor'};
     my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     my ($consequence, $ambig_code);
     if (defined($parsed_info->{'VE'})) {
       $consequence = (split /\|/, $parsed_info->{'VE'})[0];
     }
     elsif ($self->{'adaptor'}) {
+      warn ">>> DOING DB LOOKUP";
       ## Not defined in file, so look up in database
       my $info_string;
       $info_string .= ";  $_: $parsed_info->{$_}" for sort keys %$parsed_info;
