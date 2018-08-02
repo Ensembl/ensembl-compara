@@ -45,11 +45,11 @@ sub resource_classes {
 
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb'       => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'         => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'long'        => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'crowd'       => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-            'crowd_himem' => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
+            '100Mb_job'       => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
+            '1Gb_job'         => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+            '1.8Gb_job'       => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
+            '8Gb_job'         => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
+            '10Gb_job'        => { 'LSF' => '-C0 -M10000 -R"select[mem>10000] rusage[mem=10000]"' },
     };
 }
 

@@ -161,14 +161,10 @@ sub resource_classes {
 
     return {
             %{$self->SUPER::resource_classes},
-	    'default' => {'LSF' => '-q production-rh7'},
-            '100Mb' => { 'LSF' => '-q production-rh7 -M100 -R"rusage[mem=100]"' },
-	    '500Mb' => { 'LSF' => '-q production-rh7 -M500 -R"rusage[mem=500]"' },
-            '1Gb'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
-            'crowd' => { 'LSF' => '-q production-rh7 -M1800 -R"rusage[mem=1800]"' },
-            'crowd_himem' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
-	    '4.2Gb' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
-	    '8.4Gb' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
+            '1Gb_job'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
+            '3.6Gb_job' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
+            '4.2Gb_job' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
+            '8.4Gb_job' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
     };
 }
 
@@ -180,21 +176,21 @@ sub pipeline_analyses {
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-        'pairaligner_stats'         => 'crowd',
-        'alignment_nets'            => 'crowd',
-        'alignment_nets_himem'      => 'crowd_himem',
-        'create_alignment_nets_jobs'=> 'crowd',
-        'alignment_chains'          => '1Gb',
-        'create_alignment_chains_jobs'  => 'crowd_himem',
-        'create_filter_duplicates_jobs'     => 'crowd',
-        'create_pair_aligner_jobs'  => 'crowd',
-        'populate_new_database' => '8.4Gb',
-        'parse_pair_aligner_conf' => '4.2Gb',
-        'set_internal_ids_collection' => '1Gb',
-        'store_sequence'        => '1Gb',
-        'store_sequence_again'  => 'crowd_himem',
-        $self->o('pair_aligner_logic_name') => 'crowd_himem',
-        $self->o('pair_aligner_logic_name')."_himem1" => '8.4Gb',
+          'pairaligner_stats'                             => '1.8Gb_job',
+          'alignment_nets'                                => '1.8Gb_job',
+          'alignment_nets_himem'                          => '3.6Gb_job',
+          'create_alignment_nets_jobs'                    => '1.8Gb_job',
+          'alignment_chains'                              => '1Gb_job',
+          'create_alignment_chains_jobs'                  => '3.6Gb_job',
+          'create_filter_duplicates_jobs'                 => '1.8Gb_job',
+          'create_pair_aligner_jobs'                      => '1.8Gb_job',
+          'populate_new_database'                         => '8.4Gb_job',
+          'parse_pair_aligner_conf'                       => '4.2Gb_job',
+          'set_internal_ids_collection'                   => '1Gb_job',
+          'store_sequence'                                => '1Gb_job',
+          'store_sequence_again'                          => '3.6Gb_job',
+          $self->o('pair_aligner_logic_name')             => '3.6Gb_job',
+          $self->o('pair_aligner_logic_name') . "_himem1" => '8.4Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
