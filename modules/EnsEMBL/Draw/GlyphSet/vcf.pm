@@ -58,7 +58,6 @@ sub render_histogram {
 sub render_simple {
   my $self = shift;
   my $features = $self->get_data->[0]{'features'};
-  warn "@@@ GOT FEATURES: ".scalar(@$features);
   if ($features) {
     if (scalar @$features > 200) {
       $self->too_many_features;
@@ -151,8 +150,8 @@ sub density_features {
   ## Prepopulate bins, as histogram requires data at every point
   my %density  = map {$_, 0} (1..$im_width);
   foreach (@{$self->{'data'}[0]{'features'}}) {
-    my $key = ($_->{'POS'} - $start) / $divlen;
-    $density{int(($_->{'POS'} - $start) / $divlen)}++;
+    my $key = $_->{'start'} / $divlen;
+    $density{int($_->{'start'} / $divlen)}++;
   }
 
   my $density_features = [];
