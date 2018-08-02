@@ -101,42 +101,15 @@ sub create_hash {
     }
   }
   else {
-    ## Get consequence from database and use it to set colour
-    my $colours = $metadata->{'colours'};
-    my $colour  = $colours->{'default'}->{'default'} || $metadata->{'colour'};
-    warn ">>> COLOUR $colour";
-    warn "... ADAPTOR ".$self->{'adaptor'};
-    my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     my ($consequence, $ambig_code);
     if (defined($parsed_info->{'VE'})) {
       $consequence = (split /\|/, $parsed_info->{'VE'})[0];
     }
-    elsif ($self->{'adaptor'}) {
-      warn ">>> DOING DB LOOKUP";
-      ## Not defined in file, so look up in database
-      my $info_string;
-      $info_string .= ";  $_: $parsed_info->{$_}" for sort keys %$parsed_info;
-      my $snp = {
-        start            => $start,
-        end              => $end,
-        strand           => 1,
-        slice            => $slice,
-        allele_string    => $allele_string,
-        variation_name   => $vf_name,
-        map_weight       => 1,
-        adaptor          => $self->{'adaptor'},
-        seqname          => $info_string ? "; INFO: --------------------------$info_string" : '',
-        consequence_type => $parsed_info->{'SVTYPE'} ? ['COMPLEX_INDEL'] : ['INTERGENIC'],
-      };
-      bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
 
-      $snp->get_all_TranscriptVariations;
-
-      $consequence  = $snp->display_consequence;
-      $ambig_code   = $snp->ambig_code;
-    }
-
-    ## Set colour by consequence
+    ## Set colour by consequence if possible
+    my $colours       = $metadata->{'colours'};
+    my $colour        = $colours->{'default'}->{'default'} || $metadata->{'colour'};
+    my %overlap_cons  = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     if ($consequence && defined($overlap_cons{$consequence})) {
       $colour = $colours->{lc $consequence}->{'default'};
     }
