@@ -52,22 +52,18 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 
 use warnings ;
-use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw( rearrange );
 
-use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
-
-@ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
 sub new {
   my ($class,@args) = @_;
 
-  my $self = $class->SUPER::new(@args);
+  my $self = bless {},$class;
   
   my ($chains,
       $chains_sorted,
@@ -77,6 +73,7 @@ sub new {
       $net_syntenic,
       $net_filter,
       $filter_non_syntenic,
+      $workdir,
       $min_chain_score
       ) = rearrange([qw(
                         CHAINS
@@ -87,6 +84,7 @@ sub new {
                         NETSYNTENIC
                         NETFILTER
                         FILTER_NON_SYNTENIC
+                        WORKDIR
                         MIN_CHAIN_SCORE
                         )],
                     @args);
@@ -106,6 +104,8 @@ sub new {
     throw("You must supply the netFilter executable when doing synteny filtering") 
         if not defined $net_filter;    
   }
+
+  $self->workdir($workdir);
 
   $self->query_length_hash($query_lengths);
   $self->target_length_hash($target_lengths);
@@ -640,6 +640,32 @@ sub _bin_search_end {
 #####################
 # instance vars
 #####################
+
+=head2 workdir
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
+  Arg [2]   : string, path to working directory
+  Function  : If given a working directory which doesnt exist
+  it will be created by as standard it default to the directory
+  specified in General.pm and then to /tmp
+  Returntype: string, directory
+  Exceptions: none
+  Example   : 
+
+=cut
+
+sub workdir{
+  my $self = shift;
+  my $workdir = shift;
+  if($workdir){
+    if(!$self->{'workdir'}){
+      mkdir ($workdir, '777') unless (-d $workdir);
+    }
+    $self->{'workdir'} = $workdir;
+  }
+  return $self->{'workdir'} || tmpdir();
+}
+
 
 sub query_length_hash {
   my ($self, $val) = @_;
