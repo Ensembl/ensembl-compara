@@ -59,7 +59,7 @@ limitations under the License.
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
     remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd 
-    like the final scores written to the homology database, assign this as compara_db and use the alt_aln_db option 
+    like the final scores written to the homology database, assign this as compara_db and use the alt_aln_dbs option
     to specify the location of the alignments. Likewise, if you want the scores written to the alignment-containing
     database, assign it as compara_db and use the alt_homology_db option.
 
