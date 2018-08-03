@@ -48,7 +48,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportNets;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
-use Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
+use Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
@@ -72,7 +72,6 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -209,7 +208,7 @@ sub fetch_input {
       return;
   }
 
-  my %parameters = (-analysis             => $fake_analysis, 
+  my %parameters = (
                     -query_lengths        => \%query_lengths,
                     -target_lengths       => \%target_lengths,
                     -chains               => $features_array,
@@ -218,7 +217,7 @@ sub fetch_input {
                     -workdir              => $self->worker_temp_directory,
 		    -min_chain_score      => $self->param('min_chain_score'));
   
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
+  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets->new(%parameters);
 
   #Store runnable in param
   $self->param('runnable', $runnable);
