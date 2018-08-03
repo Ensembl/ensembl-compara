@@ -618,7 +618,7 @@ sub store {
     $hom->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'homology', 'homology_id') );
   }
 
-  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
+  my $sql = 'INSERT INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored
