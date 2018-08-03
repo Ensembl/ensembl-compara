@@ -44,6 +44,10 @@ limitations under the License.
     To run on a pair of species:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -species1 homo_sapiens -species2 gallus_gallus
 
+    In release mode:
+        # On an ncRNA-trees or protein-trees database, after all the alignments have been merged to the final database
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf -compara_db $(mysql-ens-compara-prod-1-ensadmin details url muffato_compara_nctrees_94) -alt_aln_dbs $(mysql-ens-compara-prod-1 details url ensembl_compara_94) $(mysql-ens-compara-prod-1-ensadmin details hive)
+
 =head1 DESCRIPTION
 
     This pipeline uses whole genome alignments to calculate the coverage of homologous pairs.
