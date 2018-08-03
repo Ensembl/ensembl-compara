@@ -28,7 +28,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::AlignmentNets - 
+Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ Internal methods are usually preceded with a _
 
 # Let the code begin...
 
-package Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
+package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 
 use warnings ;
 use vars qw(@ISA);
