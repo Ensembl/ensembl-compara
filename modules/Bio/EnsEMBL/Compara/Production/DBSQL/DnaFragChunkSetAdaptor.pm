@@ -68,20 +68,13 @@ sub store {
 
   assert_ref($chunkSet, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet', 'chunkSet');
 
-  my $description = $chunkSet->description or undef;
+  my $dbID = $self->generic_insert('dnafrag_chunk_set', {
+          'dna_collection_id'   => $chunkSet->dna_collection_id || $chunkSet->dna_collection->dbID,
+          'description'         => $chunkSet->description || undef,
+      }, 'dnafrag_chunk_set_id');
+  $self->attach($chunkSet, $dbID);
 
-  my $insertCount=0;
-
-  my $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (dna_collection_id, description) VALUES (?,?)");
-  $insertCount = $sth->execute($chunkSet->dna_collection_id || $chunkSet->dna_collection->dbID, $description);
-  $sth->finish;
-
-  if($insertCount>0) {
-    $chunkSet->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk_set', 'dnafrag_chunk_set_id') );
-  }
-
-  return $chunkSet->dbID;
-
+  return $dbID;
 }
 
 #
