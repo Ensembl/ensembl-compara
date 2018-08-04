@@ -131,7 +131,7 @@ sub fetch_input {
   # read the chain file
   ##################################
   my $fh;
-  open $fh, $self->param('chain_file') or throw("Could not open chainfile '" . $self->param('chain_file') . "' for reading\n");
+  open $fh, '<', $self->param('chain_file') or throw("Could not open chainfile '" . $self->param('chain_file') . "' for reading\n");
 
   my $chains = $self->parse_Chain_file($fh, $self->param('seek_offset'), $self->param('num_lines'));
   close($fh);
