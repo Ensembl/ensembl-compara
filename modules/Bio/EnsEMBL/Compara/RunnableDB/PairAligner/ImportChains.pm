@@ -46,15 +46,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportChains;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
-use Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
+
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
 ############################################################
 
@@ -130,20 +127,6 @@ sub fetch_input {
       $self->param('target_DnaFrag_hash')->{$ucsc_name} = $non_ref_dnafrag if (defined $ucsc_name);
   }
 
-  my $features;
-  my $query_slice = "";
-  my $target_slices;
-  @$features = [];
-  @$target_slices = [];
-
-  my %parameters = (
-		   -features       => $features,
-		   -query_slice    => $query_slice,
-		   -target_slices  => $target_slices);
-
-  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains->new(%parameters);
-  $self->param('runnable', $runnable);
-
   ##################################
   # read the chain file
   ##################################
@@ -152,18 +135,9 @@ sub fetch_input {
 
   my $chains = $self->parse_Chain_file($fh, $self->param('seek_offset'), $self->param('num_lines'));
   close($fh);
-  $runnable->output($chains);
 
-}
-
-sub run {
-    my $self = shift;
-
-    #print "RUNNING \n";
-    my $runnable = $self->param('runnable');
-    my $converted_chains = $self->convert_output($runnable->output, 0);
+    my $converted_chains = $self->convert_output($chains, 0);
     $self->param('chains', $converted_chains);
-    rmdir($runnable->workdir) if (defined $runnable->workdir);
 }
 
 
