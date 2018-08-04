@@ -48,8 +48,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportNets;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw );
-
 
 use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets');
 
@@ -104,7 +102,7 @@ sub fetch_input {
 
   }
 
-  throw("No MethodLinkSpeciesSet for method_link_type". $self->param('input_method_link_type') . " and species " . $ref_gdb->name . " and " . $non_ref_gdb->name)
+  $self->throw("No MethodLinkSpeciesSet for method_link_type". $self->param('input_method_link_type') . " and species " . $ref_gdb->name . " and " . $non_ref_gdb->name)
       if not $mlss;
 
   #Check if doing self_alignment where the species_set will contain only one
@@ -117,7 +115,7 @@ sub fetch_input {
   #get Net method_link_species_set_id.
   my $out_mlss = $mlssa->fetch_by_dbID($self->param('output_mlss_id'));
   
-  throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
+  $self->throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'))
       if not $out_mlss;
 
   ######## needed for output####################
@@ -215,7 +213,7 @@ sub fetch_input {
   # read the net file
   ##################################
   my $fh;
-  open $fh, $self->param('net_file') or throw("Could not open net file '" . $self-param('net_file') . "' for reading\n");
+  open $fh, $self->param('net_file') or $self->throw("Could not open net file '" . $self-param('net_file') . "' for reading\n");
   my $res_chains = $self->parse_Net_file($fh);
   close($fh);
   

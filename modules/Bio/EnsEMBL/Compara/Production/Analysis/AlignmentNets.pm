@@ -54,7 +54,6 @@ package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 use warnings ;
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
@@ -87,7 +86,7 @@ sub run_nets {
     my ($file, $hash) = @$el;
     
     open $fh, ">$file" or
-        throw("Could not open seq length file '$file' for writing");
+        $self->throw("Could not open seq length file '$file' for writing");
     foreach my $k (keys %{$hash}) {
       print $fh $k, "\t", $hash->{$k}, "\n";
     }
@@ -120,7 +119,7 @@ sub run_nets {
   # write chains
   ############################## 
   open $fh, ">$chain_file" or 
-      throw("could not open chain file '$chain_file' for writing\n");
+      $self->throw("could not open chain file '$chain_file' for writing\n");
   $self->write_chains($fh);
   close($fh);
   
@@ -138,7 +137,7 @@ sub run_nets {
                    $target_net_file);
 
   system($self->param_required('chainNet_exe'), @arg_list)
-      and throw("Something went wrong with chainNet");
+      and $self->throw("Something went wrong with chainNet");
   
   ##################################
   # Apply the synteny filter if requested
@@ -148,16 +147,16 @@ sub run_nets {
     my $filtered_net_file = "$work_dir/$query_name.query.synteny.net";
     
     system($self->param_required('netSyntenic_exe'), $query_net_file, $syntenic_net_file)
-        and throw("Something went wrong with netSyntenic");
+        and $self->throw("Something went wrong with netSyntenic");
     open(FILTER, $self->param_required('netFilter_exe') . " -syn $syntenic_net_file |") or
-        throw("Could not run netFilter");
+        $self->throw("Could not run netFilter");
     open(FILTERED,">$filtered_net_file")
-        or throw("Could not open filtered net file for writing");
+        or $self->throw("Could not open filtered net file for writing");
     while(<FILTER>) {
       print FILTERED $_;
     }
     close(FILTERED);
-    close(FILTER) or throw("Something went wrong with netFilter");
+    close(FILTER) or $self->throw("Something went wrong with netFilter");
 
     unlink $syntenic_net_file;
     unlink $query_net_file;
@@ -165,7 +164,7 @@ sub run_nets {
   }
   
   open $fh, $query_net_file or 
-      throw("Could not open net file '$query_net_file' for reading\n");
+      $self->throw("Could not open net file '$query_net_file' for reading\n");
   $res_chains = $self->parse_Net_file($fh);
   close($fh);
   

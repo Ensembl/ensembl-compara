@@ -60,8 +60,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw );
-
 use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets');
 
 
@@ -94,7 +92,7 @@ sub fetch_input {
   # and GenomicAlignBlocks
   ################################################################
   my $mlss = $mlssa->fetch_by_dbID($self->param_required('input_mlss_id'))
-              || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
+              || $self->throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
 
   #Check if doing self_alignment where the species_set will contain only one
   #entry
@@ -104,7 +102,7 @@ sub fetch_input {
   }
   
   my $out_mlss = $mlssa->fetch_by_dbID($self->param_required('output_mlss_id'))
-                  || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
+                  || $self->throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
 
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
