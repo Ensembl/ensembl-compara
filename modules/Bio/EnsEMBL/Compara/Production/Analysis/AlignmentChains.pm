@@ -57,16 +57,14 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw( rearrange );
 
-use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 
-@ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
 sub new {
   my ($class,@args) = @_;
 
-  my $self = $class->SUPER::new(@args);
+  my $self = bless {},$class;
   
   my ($features, 
       $query_slice,
@@ -78,6 +76,7 @@ sub new {
       $fa_to_nib,
       $lav_to_axt,
       $axt_chain,
+      $workdir,
 
       ) = rearrange([qw(FEATURES
                         QUERY_SLICE
@@ -89,6 +88,7 @@ sub new {
                         FATONIB
                         LAVTOAXT
                         AXTCHAIN
+                        WORKDIR
                                 )],
                     @args);
 
@@ -98,6 +98,8 @@ sub new {
       if not defined $query_slice;
   throw("You must supply a hash ref of target sequences with -target_slices")
       if not defined $target_slices;
+
+  $self->workdir($workdir);
 
   $self->faToNib($fa_to_nib) if defined $fa_to_nib;
   $self->lavToAxt($lav_to_axt) if defined $lav_to_axt;
@@ -459,6 +461,74 @@ sub parse_Chain_file {
   }
 
   return \@chains;
+}
+
+
+
+######################
+# Runnable framework #
+######################
+
+
+=head2 workdir
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
+  Arg [2]   : string, path to working directory
+  Function  : If given a working directory which doesnt exist
+  it will be created by as standard it default to the directory
+  specified in General.pm and then to /tmp
+  Returntype: string, directory
+  Exceptions: none
+  Example   : 
+
+=cut
+
+
+sub workdir{
+  my $self = shift;
+  my $workdir = shift;
+  if($workdir){
+    if(!$self->{'workdir'}){
+      mkdir ($workdir, '777') unless (-d $workdir);
+    }
+    $self->{'workdir'} = $workdir;
+  }
+  return $self->{'workdir'} || tmpdir();
+}
+
+
+
+
+=head2 output
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
+  Arg [2]   : arrayref of output
+  Arg [3]   : flag to attach the runnable->query as a slice
+  Function  : pushes passed in arrayref onto the output array
+  Returntype: arrayref
+  Exceptions: throws if not passed an arrayref
+  Example   : 
+
+=cut
+
+
+
+sub output{
+  my ($self, $output, $attach_slice) = @_;
+  if(!$self->{'output'}){
+    $self->{'output'} = [];
+  }
+  if($output){
+    throw("Must pass Runnable:output an arrayref not a ".$output)
+      unless(ref($output) eq 'ARRAY');
+    push(@{$self->{'output'}}, @$output);
+  }
+  if($attach_slice) {
+    foreach my $output_unit (@{$output}) {
+      $output_unit->slice($self->{'query'});
+    }
+  }
+  return $self->{'output'};
 }
 
 
