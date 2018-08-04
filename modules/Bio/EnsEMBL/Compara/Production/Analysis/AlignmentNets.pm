@@ -54,96 +54,18 @@ package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 use warnings ;
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Utils::Argument qw( rearrange );
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
-use Bio::EnsEMBL::DnaDnaAlignFeature;
-
-
-sub new {
-  my ($class,@args) = @_;
-
-  my $self = bless {},$class;
-  
-  my ($chains,
-      $chains_sorted,
-      $query_lengths,
-      $target_lengths,
-      $chain_net,
-      $net_syntenic,
-      $net_filter,
-      $filter_non_syntenic,
-      $workdir,
-      $min_chain_score
-      ) = rearrange([qw(
-                        CHAINS
-                        CHAINS_SORTED
-                        QUERY_LENGTHS
-                        TARGET_LENGTHS
-                        CHAINNET
-                        NETSYNTENIC
-                        NETFILTER
-                        FILTER_NON_SYNTENIC
-                        WORKDIR
-                        MIN_CHAIN_SCORE
-                        )],
-                    @args);
-
-  throw("You must supply a ref to array of alignment chains") 
-      if not defined $chains;
-  throw("You must supply a reference to an hash of query seq. lengths") 
-      if not defined $query_lengths;
-  throw("You must supply a reference to an hash of query seq. lengths") 
-      if not defined $target_lengths;
-  throw("You must supply the chainNet executable") 
-      if not defined $chain_net;
-
-  if (defined $filter_non_syntenic) {
-    throw("You must supply the netSyntenic executable when doing synteny filtering") 
-        if not defined $net_syntenic;
-    throw("You must supply the netFilter executable when doing synteny filtering") 
-        if not defined $net_filter;    
-  }
-
-  $self->workdir($workdir);
-
-  $self->query_length_hash($query_lengths);
-  $self->target_length_hash($target_lengths);
-    
-  $self->chainNet($chain_net);
-
-  $self->filter_non_syntenic($filter_non_syntenic) if defined $filter_non_syntenic;
-  $self->netSyntenic($net_syntenic) if defined $net_syntenic;
-  $self->netFilter($net_filter) if defined $net_filter;
-
-  $self->min_chain_score($min_chain_score) if defined $min_chain_score;
-  $self->chains($chains);
-  $self->chains_sorted(defined $chains_sorted ? $chains_sorted : 0 );
-
-  return $self;
-}
+use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
 
-
-
-
-=head2 run
-
-  Title   : run
-  Usage   : $self->run()
-  Function: 
-  Returns : none
-  Args    : 
-
-=cut
-
-sub run {
+sub run_nets {
   my ($self) = @_;
 
   my $res_chains;
 
-  my ($query_name) = keys %{$self->query_length_hash};
-  my $work_dir = $self->workdir . "/$query_name.$$.ChainNet";
+  my ($query_name) = keys %{$self->param('query_length_hash')};
+  my $work_dir = $self->worker_temp_directory. "/$query_name.$$.ChainNet";
   while (-e $work_dir) {
     $work_dir .= ".$$";
   }
@@ -160,8 +82,8 @@ sub run {
   ##############################
   # write the seq length files
   ##############################
-  foreach my $el ([$query_length_file, $self->query_length_hash], 
-                  [$target_length_file, $self->target_length_hash]) {
+  foreach my $el ([$query_length_file, $self->param('query_length_hash')],
+                  [$target_length_file, $self->param('target_length_hash')]) {
     my ($file, $hash) = @$el;
     
     open $fh, ">$file" or
@@ -175,18 +97,19 @@ sub run {
   ##############################
   # sort chains, if necessary
   ##############################
-  if (not $self->chains_sorted) {
-    for(my $i=0; $i < @{$self->chains}; $i++) {
-      if ($self->chains->[$i]->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
-        $self->chains->[$i] = [
+  if (not $self->param('chains_sorted')) {
+    my $chains = $self->param('chains');
+    for(my $i=0; $i < @{$chains}; $i++) {
+      if ($chains->[$i]->[0]->isa("Bio::EnsEMBL::Compara::GenomicAlignBlock")) {
+        $chains->[$i] = [
                                sort {
                                  $a->reference_genomic_align->dnafrag_start <=> 
                                  $a->reference_genomic_align->dnafrag_end 
-                               } @{$self->chains->[$i]}
+                               } @{$chains->[$i]}
                                ];
       } else {
-        $self->chains->[$i] = [
-                               sort { $a->start <=> $b->start } @{$self->chains->[$i]}
+        $chains->[$i] = [
+                               sort { $a->start <=> $b->start } @{$chains->[$i]}
                                ];
       }
     }
@@ -205,8 +128,8 @@ sub run {
   # Get the Nets from chainNet
   ##################################
   my @arg_list;
-  if (defined $self->min_chain_score) {
-    @arg_list = ("-minScore=" . $self->min_chain_score);
+  if (defined $self->param('min_chain_score')) {
+    @arg_list = ("-minScore=" . $self->param('min_chain_score'));
   }
   push @arg_list, ($chain_file, 
                    $query_length_file, 
@@ -214,19 +137,19 @@ sub run {
                    $query_net_file,
                    $target_net_file);
 
-  system($self->chainNet, @arg_list) 
+  system($self->param_required('chainNet_exe'), @arg_list)
       and throw("Something went wrong with chainNet");
   
   ##################################
   # Apply the synteny filter if requested
   ##################################
-  if ($self->filter_non_syntenic) {
+  if ($self->param('filter_non_syntenic')) {
     my $syntenic_net_file = "$work_dir/$query_name.query.synteny_annotated.net";
     my $filtered_net_file = "$work_dir/$query_name.query.synteny.net";
     
-    system($self->netSyntenic, $query_net_file, $syntenic_net_file) 
+    system($self->param_required('netSyntenic_exe'), $query_net_file, $syntenic_net_file)
         and throw("Something went wrong with netSyntenic");
-    open(FILTER, $self->netFilter . " -syn $syntenic_net_file |") or
+    open(FILTER, $self->param_required('netFilter_exe') . " -syn $syntenic_net_file |") or
         throw("Could not run netFilter");
     open(FILTERED,">$filtered_net_file")
         or throw("Could not open filtered net file for writing");
@@ -248,9 +171,8 @@ sub run {
   
   unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
   rmdir $work_dir;
-  $self->output($res_chains);    
   
-  return 1;
+  return $res_chains;
 }
 
 
@@ -262,8 +184,9 @@ sub write_chains {
   # in the absence of a chain score, we will take the score of the 
   # first block in the chain to be the score
 
-  for(my $chain_id=1; $chain_id <= @{$self->chains}; $chain_id++) {
-    my $chain = $self->chains->[$chain_id-1];
+  my $chains = $self->param('chains');
+  for(my $chain_id=1; $chain_id <= @{$chains}; $chain_id++) {
+    my $chain = $chains->[$chain_id-1];
 
     my (@ungapped_features, 
         $chain_score,
@@ -322,8 +245,8 @@ sub write_chains {
           };
 
           if ($target_strand == -1) {
-            $sens_f->{t_start} = $self->target_length_hash->{$tga->dnafrag->name} - $tga->dnafrag_end + 1;
-            $sens_f->{t_end}   = $self->target_length_hash->{$tga->dnafrag->name} - $tga->dnafrag_start + 1;
+            $sens_f->{t_start} = $self->param('target_length_hash')->{$tga->dnafrag->name} - $tga->dnafrag_end + 1;
+            $sens_f->{t_end}   = $self->param('target_length_hash')->{$tga->dnafrag->name} - $tga->dnafrag_start + 1;
           }
 
           push @ungapped_features, $sens_f;
@@ -340,8 +263,8 @@ sub write_chains {
           };
           
           if ($target_strand == -1) {
-            $sens_f->{t_start} = $self->target_length_hash->{$uf->hseqname} - $uf->hend + 1;
-            $sens_f->{t_end}   = $self->target_length_hash->{$uf->hseqname} - $uf->hstart + 1;        
+            $sens_f->{t_start} = $self->param('target_length_hash')->{$uf->hseqname} - $uf->hend + 1;
+            $sens_f->{t_end}   = $self->param('target_length_hash')->{$uf->hseqname} - $uf->hstart + 1;
           }
           
           push @ungapped_features, $sens_f;
@@ -356,12 +279,12 @@ sub write_chains {
     print $fh join(" ",("chain",
            $chain_score,
            $query_name,
-           $self->query_length_hash->{$query_name},
+           $self->param('query_length_hash')->{$query_name},
            $query_strand == -1 ? "-" : "+",
            $ungapped_features[0]->{q_start} - 1,
            $ungapped_features[-1]->{q_end},
            $target_name,
-           $self->target_length_hash->{$target_name},
+           $self->param('target_length_hash')->{$target_name},
            $target_strand == -1 ? "-" : "+",
            $ungapped_features[0]->{t_start} - 1,
            $ungapped_features[-1]->{t_end},
@@ -392,6 +315,8 @@ sub parse_Net_file {
   
   my (%new_chains, %new_chain_scores, @last_gap, @last_parent_chain);
 
+  my $chains = $self->param('chains');
+
   while(<$fh>) {
 
     /(\s+)fill\s+(\d+)\s+(\d+)\s+\S+\s+\S+\s+\d+\s+\d+\s+(.+)$/ and do {
@@ -406,10 +331,10 @@ sub parse_Net_file {
 
       $new_chain_scores{$chain_id} += $score;
 
-      next if (!defined $self->chains->[$chain_id-1]);
+      next if (!defined $chains->[$chain_id-1]);
 
       my ($restricted_fps)
-         = $self->restrict_between_positions($self->chains->[$chain_id-1],
+         = $self->restrict_between_positions($chains->[$chain_id-1],
                                             $q_start,
                                             $q_end);
 
@@ -631,140 +556,6 @@ sub _bin_search_end {
   
   # returns -1 if all blocks to right of $position
   return $right;
-}
-
-
-
-
-
-#####################
-# instance vars
-#####################
-
-=head2 workdir
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
-  Arg [2]   : string, path to working directory
-  Function  : If given a working directory which doesnt exist
-  it will be created by as standard it default to the directory
-  specified in General.pm and then to /tmp
-  Returntype: string, directory
-  Exceptions: none
-  Example   : 
-
-=cut
-
-sub workdir{
-  my $self = shift;
-  my $workdir = shift;
-  if($workdir){
-    if(!$self->{'workdir'}){
-      mkdir ($workdir, '777') unless (-d $workdir);
-    }
-    $self->{'workdir'} = $workdir;
-  }
-  return $self->{'workdir'} || tmpdir();
-}
-
-
-sub query_length_hash {
-  my ($self, $val) = @_;
-  
-  if (defined $val) {
-    $self->{_query_lengths_hashref} = $val;
-  }
-  return $self->{_query_lengths_hashref};
-}
-
-sub target_length_hash {
-  my ($self, $hash_ref) = @_;
-  
-  if (defined $hash_ref) {
-    $self->{_target_lengths_hashref} = $hash_ref;
-  }
-  return $self->{_target_lengths_hashref};
-}
-
-sub chains {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_chains} = $val;
-  }
-
-  return $self->{_chains};
-}
-
-sub chains_sorted {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_chains_sorted} = $val;
-  }
-
-  return $self->{_chains_sorted};
-}
-
-
-sub filter_non_syntenic {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_filter_non_syntenic} = $val;
-  }
-
-  return $self->{_filter_non_syntenic};
-}
-
-
-sub min_chain_score {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_min_chain_score} = $val;
-  }
-
-  if (not exists $self->{_min_chain_score}) {
-    return undef;
-  } else {
-    return $self->{_min_chain_score};
-  }
-}
-
-
-##############
-#### programs
-##############
-
-sub chainNet {
-  my ($self,$arg) = @_;
-  
-  if (defined($arg)) {
-    $self->{_chainNet} = $arg;
-  }
-  
-  return $self->{_chainNet};
-}
-
-sub netSyntenic {
-  my ($self,$arg) = @_;
-  
-  if (defined($arg)) {
-    $self->{_netSyntenic} = $arg;
-  }
-  
-  return $self->{_netSyntenic};
-}
-
-
-sub netFilter {
-  my ($self,$arg) = @_;
-  
-  if (defined($arg)) {
-    $self->{_netFilter} = $arg;
-  }
-  
-  return $self->{_netFilter};
 }
 
 

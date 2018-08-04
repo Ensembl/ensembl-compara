@@ -185,7 +185,7 @@ sub default_options {
 	'net_input_method_link' => [1002, 'LASTZ_CHAIN'],
         'net_output_method_link' => [16, 'LASTZ_NET'],
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
-  	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
+        'net_parameters' => {'max_gap'=>'50', 'chainNet_exe'=>$self->o('chainNet_exe')},
   	'bidirectional' => 0,
 
 	#

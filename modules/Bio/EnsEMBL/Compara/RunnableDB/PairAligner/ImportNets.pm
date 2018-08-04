@@ -47,15 +47,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportNets;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
-use Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
+use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets');
 
 ############################################################
 
@@ -205,48 +201,26 @@ sub fetch_input {
 
   if (!defined $features_array) {
       print "No features found for " .  $ref_dnafrag->name . "\n";
+      $self->param('chains', []);
       return;
   }
 
-  my %parameters = (
-                    -query_lengths        => \%query_lengths,
-                    -target_lengths       => \%target_lengths,
-                    -chains               => $features_array,
-                    -chains_sorted        => 1,
-                    -chainNet             => "",
-                    -workdir              => $self->worker_temp_directory,
-		    -min_chain_score      => $self->param('min_chain_score'));
-  
-  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets->new(%parameters);
+  $self->param('query_length_hash',     \%query_lengths);
+  $self->param('target_length_hash',    \%target_lengths);
+  $self->param('chains',                $features_array);
+  $self->param('chains_sorted',         1);
 
-  #Store runnable in param
-  $self->param('runnable', $runnable);
 
   ##################################
   # read the net file
   ##################################
   my $fh;
   open $fh, $self->param('net_file') or throw("Could not open net file '" . $self-param('net_file') . "' for reading\n");
-  my $res_chains = $runnable->parse_Net_file($fh);
+  my $res_chains = $self->parse_Net_file($fh);
   close($fh);
   
-  $runnable->output($res_chains);
- 
-}
-
-
-sub run {
-    my $self = shift;
-    #print "RUNNING \n";
-
-    if ($self->param('runnable')) {
-        my $runnable = $self->param('runnable');
-        $self->cleanse_output($runnable->output);
-        $self->param('chains', $runnable->output);
-    } else {
-        #Set to empty if no features found
-        $self->param('chains', []);
-    }
+  $self->cleanse_output($res_chains);
+  $self->param('chains', $res_chains);
 }
 
 
