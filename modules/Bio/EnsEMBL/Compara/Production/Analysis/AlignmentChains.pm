@@ -68,7 +68,7 @@ sub run_chains {
   $self->cleanup_worker_temp_directory;
   my $workdir = $self->worker_temp_directory;
 
-  my $query_name = $self->param('query_slice')->seq_region_name;
+  my $query_name = $self->param('query_dnafrag')->name;
 
   my $work_dir = $workdir . "/$query_name.$$.AxtChain";
   my $lav_file = "$work_dir/$query_name.lav";
@@ -190,8 +190,8 @@ sub write_lav {
     push @{$features{$feat->hseqname}{$strand}{$hstrand}}, $feat;
   }
   
-  my $query_length = $self->param('query_slice')->length;
-  my $query_name   = $self->param('query_slice')->seq_region_name;
+  my $query_length = $self->param('query_dnafrag')->length;
+  my $query_name   = $self->param('query_dnafrag')->name;
   
   foreach my $target (sort keys %features) {
 
@@ -204,7 +204,7 @@ sub write_lav {
         my $query_strand = ($qstrand == 1) ? 0 : 1;
         my $target_strand = ($tstrand == 1) ? 0 : 1;
         
-        my $target_length = $self->param('target_slices')->{$target}->length;
+        my $target_length = $self->param('target_dnafrags')->{$target}->length;
 
         print $fh "#:lav\n";
         print $fh "s {\n";
