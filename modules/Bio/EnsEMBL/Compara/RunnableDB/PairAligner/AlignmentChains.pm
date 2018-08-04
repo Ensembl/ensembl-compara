@@ -58,8 +58,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
-use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
+use Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
@@ -82,7 +81,6 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -164,7 +162,7 @@ sub fetch_input {
   
   print STDERR scalar @{$features}," features at time: ",scalar(localtime),"\n";
 
-  my %parameters = (-analysis             => $fake_analysis,
+  my %parameters = (
                     -features             => $features,
                     -workdir              => $self->worker_temp_directory,
 		    -linear_gap           => $self->param('linear_gap'));
@@ -206,7 +204,7 @@ sub fetch_input {
       $parameters{'-' . $program} = $self->param($program);
   }
 
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
+  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains->new(%parameters);
   #Store runnable in param
   $self->param('runnable', $runnable);
 

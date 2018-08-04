@@ -47,7 +47,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportChains;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
-use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
+use Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
@@ -71,7 +71,6 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -137,12 +136,12 @@ sub fetch_input {
   @$features = [];
   @$target_slices = [];
 
-  my %parameters = (-analysis      => $fake_analysis,
+  my %parameters = (
 		   -features       => $features,
 		   -query_slice    => $query_slice,
 		   -target_slices  => $target_slices);
 
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
+  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains->new(%parameters);
   $self->param('runnable', $runnable);
 
   ##################################
