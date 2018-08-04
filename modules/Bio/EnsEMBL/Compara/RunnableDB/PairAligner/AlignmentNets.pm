@@ -30,18 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnable->fetch_input(); #reads from DB
-$runnable->run();
-$runnable->output();
-$runnable->write_output(); #writes to DB
-
 =head1 DESCRIPTION
 
 Given an compara MethodLinkSpeciesSet identifer, and a reference genomic
