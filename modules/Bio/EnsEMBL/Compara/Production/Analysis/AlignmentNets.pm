@@ -85,7 +85,7 @@ sub run_nets {
                   [$target_length_file, $self->param('target_length_hash')]) {
     my ($file, $hash) = @$el;
     
-    open $fh, ">$file" or
+    open $fh, '>', $file or
         $self->throw("Could not open seq length file '$file' for writing");
     foreach my $k (keys %{$hash}) {
       print $fh $k, "\t", $hash->{$k}, "\n";
@@ -118,7 +118,7 @@ sub run_nets {
   ##############################
   # write chains
   ############################## 
-  open $fh, ">$chain_file" or 
+  open $fh, '>', $chain_file or
       $self->throw("could not open chain file '$chain_file' for writing\n");
   $self->write_chains($fh);
   close($fh);
@@ -150,7 +150,7 @@ sub run_nets {
         and $self->throw("Something went wrong with netSyntenic");
     open(FILTER, $self->param_required('netFilter_exe') . " -syn $syntenic_net_file |") or
         $self->throw("Could not run netFilter");
-    open(FILTERED,">$filtered_net_file")
+    open(FILTERED, '>', $filtered_net_file)
         or $self->throw("Could not open filtered net file for writing");
     while(<FILTER>) {
       print FILTERED $_;
