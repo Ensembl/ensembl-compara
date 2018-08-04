@@ -64,10 +64,9 @@ sub run_nets {
   my $res_chains;
 
   my ($query_name) = keys %{$self->param('query_length_hash')};
-  my $work_dir = $self->worker_temp_directory. "/$query_name.$$.ChainNet";
-  while (-e $work_dir) {
-    $work_dir .= ".$$";
-  }
+
+  $self->cleanup_worker_temp_directory;
+  my $work_dir = $self->worker_temp_directory;
   
   my $chain_file = "$work_dir/$query_name.chain";
   my $query_length_file  = "$work_dir/$query_name.query.lengths";
@@ -75,8 +74,6 @@ sub run_nets {
   my $query_net_file     = "$work_dir/$query_name.query.net";
   my $target_net_file    = "$work_dir/$query_name.target.net";
   my $fh;
-  
-  mkdir $work_dir;
   
   ##############################
   # write the seq length files
@@ -157,8 +154,6 @@ sub run_nets {
     close(FILTERED);
     close(FILTER) or $self->throw("Something went wrong with netFilter");
 
-    unlink $syntenic_net_file;
-    unlink $query_net_file;
     $query_net_file = $filtered_net_file;
   }
   
@@ -166,9 +161,6 @@ sub run_nets {
       $self->throw("Could not open net file '$query_net_file' for reading\n");
   $res_chains = $self->parse_Net_file($fh);
   close($fh);
-  
-  unlink $chain_file, $query_length_file, $target_length_file, $query_net_file, $target_net_file;
-  rmdir $work_dir;
   
   return $res_chains;
 }
