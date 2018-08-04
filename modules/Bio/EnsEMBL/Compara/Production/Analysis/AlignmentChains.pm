@@ -96,12 +96,11 @@ sub run_chains {
 
     # prevent extensive disconnections when fetching sequence length etc.
     my $query_slice = $self->param('query_slice');
-    my $disco = $query_slice->adaptor()->dbc->disconnect_when_inactive();
-    $query_slice->adaptor()->dbc->disconnect_when_inactive(0);
+    $query_slice->adaptor()->dbc->prevent_disconnect( sub {
 
     $seqio->write_seq($query_slice); 
 
-    $query_slice->adaptor()->dbc->disconnect_when_inactive($disco);
+    } );
 
     $seqio->close;
     
