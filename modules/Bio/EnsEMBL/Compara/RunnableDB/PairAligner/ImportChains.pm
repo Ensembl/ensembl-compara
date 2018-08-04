@@ -146,15 +146,11 @@ sub fetch_input {
 #
 sub get_ucsc_name {
     my ($self, $genome_db_id, $ensembl_name) = @_;
-    my $sql = "SELECT ucsc FROM ucsc_to_ensembl_mapping WHERE ensembl = '$ensembl_name'";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute();
-    my $ucsc_name;
-    $sth->bind_columns(\$ucsc_name);
-    my $ucsc_nmae = $sth->fetch();
-    $sth->finish();
-    
-    return $ucsc_name;
+    my $sql = "SELECT ucsc FROM ucsc_to_ensembl_mapping WHERE ensembl = ?i";
+    return $self->compara_dba->dbc->sql_helper->execute_single_result(
+        -SQL => $sql,
+        -PARAMS => [$ensembl_name],
+    );
 }
 
 
