@@ -51,92 +51,36 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
 
 use warnings ;
-use vars qw(@ISA);
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Utils::Argument qw( rearrange );
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 
+use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
-sub new {
-  my ($class,@args) = @_;
 
-  my $self = bless {},$class;
-  
-  my ($features, 
-      $query_slice,
-      $query_nib_dir,
-      $target_slices,
-      $target_nib_dir,
-      $min_chain_score,
-      $linear_gap,
-      $fa_to_nib,
-      $lav_to_axt,
-      $axt_chain,
-      $workdir,
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults },
 
-      ) = rearrange([qw(FEATURES
-                        QUERY_SLICE
-                        QUERY_NIB_DIR
-                        TARGET_SLICES
-                        TARGET_NIB_DIR
-                        MIN_CHAIN_SCORE
-                        LINEAR_GAP
-                        FATONIB
-                        LAVTOAXT
-                        AXTCHAIN
-                        WORKDIR
-                                )],
-                    @args);
-
-  throw("You must supply a reference to an array of features with -features\n") 
-      if not defined $features;
-  throw("You must supply a query sequence\n") 
-      if not defined $query_slice;
-  throw("You must supply a hash ref of target sequences with -target_slices")
-      if not defined $target_slices;
-
-  $self->workdir($workdir);
-
-  $self->faToNib($fa_to_nib) if defined $fa_to_nib;
-  $self->lavToAxt($lav_to_axt) if defined $lav_to_axt;
-  $self->axtChain($axt_chain) if defined $axt_chain;
-
-  $self->query_nib_dir($query_nib_dir) if defined $query_nib_dir;
-  $self->target_nib_dir($target_nib_dir) if defined $target_nib_dir;
-
-  $self->query_slice($query_slice);
-  $self->target_slices($target_slices);
-  $self->min_chain_score($min_chain_score) if defined $min_chain_score;
-  $self->linear_gap($linear_gap) if defined $linear_gap;
-  $self->features($features);
-
-  return $self;
+        'min_chain_score'   => 1000,
+        'linear_gap'        => 'medium',
+    };
 }
 
 
-
-
-
-=head2 run
-
-  Title   : run
-  Usage   : $self->run()
-  Function: 
-  Returns : none
-  Args    : 
-
-=cut
-
-sub run {
+sub run_chains {
   my ($self) = @_;
 
-  my $query_name = $self->query_slice->seq_region_name;
+  $self->cleanup_worker_temp_directory;
+  my $workdir = $self->worker_temp_directory;
 
-  my $work_dir = $self->workdir . "/$query_name.$$.AxtChain";
+  my $query_name = $self->param('query_slice')->seq_region_name;
+
+  my $work_dir = $workdir . "/$query_name.$$.AxtChain";
   my $lav_file = "$work_dir/$query_name.lav";
   my $axt_file = "$work_dir/$query_name.axt";
   my $chain_file = "$work_dir/$query_name.chain";
@@ -150,11 +94,10 @@ sub run {
   # write the query in nib format 
   # for use by lavToAxt;
   #################################
-  if ($self->query_nib_dir) {
-    if (not -d $self->query_nib_dir) {
-      throw("Could not fine query nib file directory:" . $self->query_nib_dir);
-    } else {
-      $query_nib_dir = $self->query_nib_dir;
+  if ($self->param('query_nib_dir')) {
+    $query_nib_dir = $self->param('query_nib_dir');
+    if (not -d $query_nib_dir) {
+      throw("Could not fine query nib file directory:" . $query_nib_dir);
     }
   } else { 
     $query_nib_dir = "$work_dir/query_nib";
@@ -164,17 +107,17 @@ sub run {
                                 -file   => ">$query_nib_dir/$query_name.fa");   
 
     # prevent extensive disconnections when fetching sequence length etc.
-    my $disco = $self->query_slice->adaptor()->dbc->disconnect_when_inactive(); 
-    $self->query_slice->adaptor()->dbc->disconnect_when_inactive(0);  
+    my $query_slice = $self->param('query_slice');
+    my $disco = $query_slice->adaptor()->dbc->disconnect_when_inactive();
+    $query_slice->adaptor()->dbc->disconnect_when_inactive(0);
 
-    $seqio->write_seq($self->query_slice); 
+    $seqio->write_seq($query_slice); 
 
-    $self->query_slice->adaptor()->dbc->disconnect_when_inactive($disco);  
+    $query_slice->adaptor()->dbc->disconnect_when_inactive($disco);
 
     $seqio->close;
     
-    system($self->faToNib, "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib") 
-        and throw("Could not convert fasta file $query_nib_dir/$query_name.fa to nib");
+    $self->run_command([$self->param_required('faToNib_exe'), "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib"], { die_on_failure => 1 });
     unlink "$query_nib_dir/$query_name.fa";
     push @nib_files, "$query_nib_dir/$query_name.nib";
   }  
@@ -183,18 +126,19 @@ sub run {
   # write the targets in nib format 
   # for use by lavToAxt;
   #################################  
-  if ($self->target_nib_dir) {
-    if (not -d $self->target_nib_dir) {
-      throw("Could not fine target nib file directory:" . $self->target_nib_dir);
+  if ($self->param('target_nib_dir')) {
+    $target_nib_dir = $self->param('target_nib_dir');
+    if (not -d $target_nib_dir) {
+      throw("Could not fine target nib file directory:" . $target_nib_dir);
     } else {
-      $target_nib_dir = $self->target_nib_dir;
     }
   } else {
     $target_nib_dir =  "$work_dir/target_nib";
     mkdir $target_nib_dir;
 
-    foreach my $nm (keys %{$self->target_slices}) {
-      my $target = $self->target_slices->{$nm};
+    my $target_slices = $self->param('target_slices');
+    foreach my $nm (keys %{$target_slices}) {
+      my $target = $target_slices->{$nm};
       my $target_name = $target->seq_region_name;
       
       my $seqio =  Bio::SeqIO->new(-format => 'fasta',
@@ -202,8 +146,7 @@ sub run {
       $seqio->write_seq($target);
       $seqio->close; 
       
-      system($self->faToNib, "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib") 
-          and throw("Could not convert fasta file $target_nib_dir/$target_name.fa to nib");
+      $self->run_command([$self->param_required('faToNib_exe'), "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib"], { die_on_failure => 1 });
       unlink "$target_nib_dir/$target_name.fa";
       push @nib_files, "$target_nib_dir/$target_name.nib";
     }
@@ -220,38 +163,17 @@ sub run {
   ##############################
   # convert the lav file to axt
   ##############################
-  system($self->lavToAxt, $lav_file, $query_nib_dir, $target_nib_dir, $axt_file)
-      and throw("Could not convert $lav_file to Axt format\n");
+  $self->run_command([$self->param_required('lavToAxt_exe'), $lav_file, $query_nib_dir, $target_nib_dir, $axt_file], { die_on_failure => 1 });
   unlink $lav_file;
 
   ##################################
   # convert the lav file to axtChain
   ##################################
-  my $min_parameter = "-minScore=";
-  if (defined $self->min_chain_score) {
-    $min_parameter .= $self->min_chain_score;
-  } else {
-    # default to the built-in default
-    $min_parameter .= 1000;
-  }
-
+  my $min_parameter = '-minScore=' . $self->param_required('min_chain_score');
   #need to specify linearGap for axtChain
-  my $linearGap_parameter = "-linearGap=";
+  my $linearGap_parameter = '-linearGap=' . $self->param_required('linear_gap');
 
-  if (defined $self->linear_gap) {
-    $linearGap_parameter .= $self->linear_gap;
-  } else {
-    # default to medium
-    $linearGap_parameter .= "medium";
-  }
-
-  system($self->axtChain, $min_parameter, $linearGap_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
-        and throw("Something went wrong with axtChain\n");
-
-#  system($self->axtChain, $min_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file)
-#        and throw("Something went wrong with axtChain\n");
-
-  unlink $axt_file;
+  $self->run_command([$self->param_required('axtChain_exe'), $min_parameter, $linearGap_parameter, $axt_file, $query_nib_dir, $target_nib_dir, $chain_file], { die_on_failure => 1 });
 
   ##################################
   # read the chain file
@@ -260,14 +182,7 @@ sub run {
   my $chains = $self->parse_Chain_file($fh);
   close($fh);
 
-  $self->output($chains);  
-  unlink $chain_file, @nib_files;
-  
-  rmdir $query_nib_dir if not $self->query_nib_dir;
-  rmdir $target_nib_dir if not $self->target_nib_dir;
-  rmdir $work_dir;
-
-  return 1;
+  return $chains;
 }
 
 
@@ -277,7 +192,7 @@ sub write_lav {
   my ($self, $fh) = @_;
 
   my (%features);  
-  foreach my $feat (sort {$a->start <=> $b->start} @{$self->features}) {
+  foreach my $feat (sort {$a->start <=> $b->start} @{$self->param('features')}) {
     my $strand = $feat->strand;
     my $hstrand = $feat->hstrand;
     if ($strand == -1) {
@@ -287,8 +202,8 @@ sub write_lav {
     push @{$features{$feat->hseqname}{$strand}{$hstrand}}, $feat;
   }
   
-  my $query_length = $self->query_slice->length;
-  my $query_name   = $self->query_slice->seq_region_name;
+  my $query_length = $self->param('query_slice')->length;
+  my $query_name   = $self->param('query_slice')->seq_region_name;
   
   foreach my $target (sort keys %features) {
 
@@ -301,7 +216,7 @@ sub write_lav {
         my $query_strand = ($qstrand == 1) ? 0 : 1;
         my $target_strand = ($tstrand == 1) ? 0 : 1;
         
-        my $target_length = $self->target_slices->{$target}->length;
+        my $target_length = $self->param('target_slices')->{$target}->length;
 
         print $fh "#:lav\n";
         print $fh "s {\n";
@@ -462,192 +377,6 @@ sub parse_Chain_file {
 
   return \@chains;
 }
-
-
-
-######################
-# Runnable framework #
-######################
-
-
-=head2 workdir
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
-  Arg [2]   : string, path to working directory
-  Function  : If given a working directory which doesnt exist
-  it will be created by as standard it default to the directory
-  specified in General.pm and then to /tmp
-  Returntype: string, directory
-  Exceptions: none
-  Example   : 
-
-=cut
-
-
-sub workdir{
-  my $self = shift;
-  my $workdir = shift;
-  if($workdir){
-    if(!$self->{'workdir'}){
-      mkdir ($workdir, '777') unless (-d $workdir);
-    }
-    $self->{'workdir'} = $workdir;
-  }
-  return $self->{'workdir'} || tmpdir();
-}
-
-
-
-
-=head2 output
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
-  Arg [2]   : arrayref of output
-  Arg [3]   : flag to attach the runnable->query as a slice
-  Function  : pushes passed in arrayref onto the output array
-  Returntype: arrayref
-  Exceptions: throws if not passed an arrayref
-  Example   : 
-
-=cut
-
-
-
-sub output{
-  my ($self, $output, $attach_slice) = @_;
-  if(!$self->{'output'}){
-    $self->{'output'} = [];
-  }
-  if($output){
-    throw("Must pass Runnable:output an arrayref not a ".$output)
-      unless(ref($output) eq 'ARRAY');
-    push(@{$self->{'output'}}, @$output);
-  }
-  if($attach_slice) {
-    foreach my $output_unit (@{$output}) {
-      $output_unit->slice($self->{'query'});
-    }
-  }
-  return $self->{'output'};
-}
-
-
-
-#####################
-# instance vars
-#####################
-
-sub query_slice {
-  my ($self, $slice) = @_;
-  
-  if (defined $slice) {
-    $self->{_query_slice} = $slice;
-  }
-  return $self->{_query_slice};
-}
-
-sub target_slices {
-  my ($self, $hash_ref) = @_;
-  
-  if (defined $hash_ref) {
-    $self->{_target_slices_hashref} = $hash_ref;
-  }
-  return $self->{_target_slices_hashref};
-}
-
-sub query_nib_dir {
-  my ($self, $val) = @_;
-  
-  if (defined $val) {
-    $self->{_query_nib_dir} = $val;
-  }
-  return $self->{_query_nib_dir};
-}
-
-sub target_nib_dir {
-  my ($self, $val) = @_;
-  
-  if (defined $val) {
-    $self->{_target_nib_dir} = $val;
-  }
-  return $self->{_target_nib_dir};
-}
-
-sub features {
-  my ($self, $features) = @_;
-
-  if (defined $features) {
-    $self->{_features} = $features;
-  }
-
-  return $self->{_features};
-}
-
-sub min_chain_score {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_min_chain_score} = $val;
-  }
-
-  if (not exists $self->{_min_chain_score}) {
-    return undef;
-  } else {
-    return $self->{_min_chain_score};
-  }
-}
-
-sub linear_gap {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_linear_gap} = $val;
-  }
-
-  if (not exists $self->{_linear_gap}) {
-    return undef;
-  } else {
-    return $self->{_linear_gap};
-  }
-}
-
-
-##############
-#### programs
-##############
-
-sub faToNib {
-  my ($self,$arg) = @_;
-  
-  if (defined($arg)) {
-    $self->{'_faToNib'} = $arg;
-  }
-
-  return $self->{'_faToNib'};
-}
-
-
-sub lavToAxt {
-  my ($self,$arg) = @_;
-  
-  if (defined($arg)) {
-    $self->{'_lavToAxt'} = $arg;
-  }
-
-  return $self->{'_lavToAxt'};
-}
-
-
-sub axtChain {
-  my ($self,$arg) = @_;
-  
-  if (defined($arg)) {
-    $self->{'_axtChain'} = $arg;
-  }
-  
-  return $self->{'_axtChain'};
-}
-
 
 
 1;

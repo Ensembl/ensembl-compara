@@ -172,7 +172,7 @@ sub default_options {
 	 #linear_gap=>medium for more closely related species, 'loose' for more distant
 	'linear_gap' => 'medium',
 
-  	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
+        'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib_exe' => $self->o('faToNib_exe'), 'lavToAxt_exe'=> $self->o('lavToAxt_exe'), 'axtChain_exe'=>$self->o('axtChain_exe'), 'max_blocks_for_chaining' => 100000},
 
 	#
         #Default patch_alignments

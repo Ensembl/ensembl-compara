@@ -59,7 +59,7 @@ sub fetch_input {
 
     Title   :   write_output
     Usage   :   $self->write_output()
-    Function:   Writes contents of $self->output into $self->db
+    Function:   Writes contents of $self->param('chains') into $self->compara_dba
     Returns :   1
     Args    :   None
 
@@ -519,23 +519,5 @@ sub delete_alignments {
   }
 }
 
-
-###################################
-
-sub output{
-    my ($self, $output) = @_;
-    if(!$self->param('output')){
-	$self->param('output',[]);
-    }
-    if($output){
-	my $this_output = $self->param('output');
-	if(ref($output) ne 'ARRAY'){
-	    throw('Must pass RunnableDB:output an array ref not a '.$output);
-	}
-	push(@{$this_output}, @$output);
-	$self->param('output', $this_output);
-    }
-    return $self->param('output');
-}
 
 1;
