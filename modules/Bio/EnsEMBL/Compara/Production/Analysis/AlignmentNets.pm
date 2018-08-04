@@ -136,8 +136,7 @@ sub run_nets {
                    $query_net_file,
                    $target_net_file);
 
-  system($self->param_required('chainNet_exe'), @arg_list)
-      and $self->throw("Something went wrong with chainNet");
+  $self->run_command([$self->param_required('chainNet_exe'), @arg_list], { die_on_failure => 1 });
   
   ##################################
   # Apply the synteny filter if requested
@@ -146,8 +145,8 @@ sub run_nets {
     my $syntenic_net_file = "$work_dir/$query_name.query.synteny_annotated.net";
     my $filtered_net_file = "$work_dir/$query_name.query.synteny.net";
     
-    system($self->param_required('netSyntenic_exe'), $query_net_file, $syntenic_net_file)
-        and $self->throw("Something went wrong with netSyntenic");
+    $self->run_command([$self->param_required('netSyntenic_exe'), $query_net_file, $syntenic_net_file], { die_on_failure => 1 });
+
     open(FILTER, $self->param_required('netFilter_exe') . " -syn $syntenic_net_file |") or
         $self->throw("Could not run netFilter");
     open(FILTERED, '>', $filtered_net_file)
