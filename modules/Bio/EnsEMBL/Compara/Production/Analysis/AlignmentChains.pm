@@ -78,8 +78,6 @@ sub run_chains {
 
   mkdir $work_dir;
 
-  my $fh;
-
   #################################
   # write the query in nib format 
   # for use by lavToAxt;
@@ -145,7 +143,7 @@ sub run_chains {
   ##############################
   # write features in lav format
   ############################## 
-  open $fh, ">$lav_file" or 
+  open my $fh, '>', $lav_file or
       throw("could not open lav file '$lav_file' for writing\n");
   $self->write_lav($fh);
   close($fh);
@@ -168,7 +166,7 @@ sub run_chains {
   ##################################
   # read the chain file
   ##################################
-  open $fh, $chain_file or throw("Could not open chainfile '$chain_file' for reading\n");
+  open $fh, '<', $chain_file or throw("Could not open chainfile '$chain_file' for reading\n");
   my $chains = $self->parse_Chain_file($fh);
   close($fh);
 
