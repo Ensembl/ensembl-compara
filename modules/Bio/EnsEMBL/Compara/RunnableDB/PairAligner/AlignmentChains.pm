@@ -157,7 +157,7 @@ sub fetch_input {
       my $query_nib_dir = $self->param('query_nib_dir');
       # If there is no .nib file, preload the sequence
       if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $self->param('query_dnafrag')->name . ".nib")) {
-          print STDERR "reusing the query nib file\n";
+          print STDERR "reusing the query nib file ". $query_nib_dir . "/" . $self->param('query_dnafrag')->name . ".nib" . "\n";
       } else {
           print STDERR "fetching the query sequence\n";
           my $query_slice = $self->param('query_dnafrag')->slice;
@@ -173,7 +173,7 @@ sub fetch_input {
       $self->param('target_dnafrags', {$target_dnafrag->name => $target_dnafrag});
       # If there is no .nib file, preload the sequence
       if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_dnafrag->name . ".nib")) {
-          print STDERR "reusing the target nib file\n";
+          print STDERR "reusing the target nib file" . $target_nib_dir . "/" . $target_dnafrag->name . ".nib" . "\n";
       } else {
           my $target_slice = $target_dnafrag->slice;
           $self->param('target_slices', {$target_dnafrag->name => $target_slice});
