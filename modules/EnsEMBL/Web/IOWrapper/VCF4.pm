@@ -104,6 +104,8 @@ sub create_hash {
     my ($consequence, $ambig_code);
     if (defined($parsed_info->{'VE'})) {
       $consequence = (split /\|/, $parsed_info->{'VE'})[0];
+      ## Set flag so we know we don't need to recalculate in glyphset
+      $metadata->{'has_consequences'} = 1;
     }
 
     ## Set colour by consequence if possible
@@ -114,13 +116,17 @@ sub create_hash {
       $colour = $colours->{lc $consequence}->{'default'};
     }
 
-    $feature->{'start'}         = $start;
-    $feature->{'end'}           = $end;
-    $feature->{'href'}          = $href;
-    $feature->{'type'}          = $type;
-    $feature->{'colour'}        = $colour;
-    $feature->{'label_colour'}  = $metadata->{'label_colour'} || $colour;
-    $feature->{'text_overlay'}  = $ambig_code;
+
+    $feature->{'start'}             = $start;
+    $feature->{'end'}               = $end;
+    $feature->{'href'}              = $href;
+    $feature->{'type'}              = $type;
+    $feature->{'colour'}            = $colour;
+    $feature->{'label_colour'}      = $metadata->{'label_colour'} || $colour;
+    $feature->{'text_overlay'}      = $ambig_code;
+    $feature->{'vf_name'}           = $vf_name;
+    $feature->{'alleles'}           = join('/', @alleles);
+    $feature->{'consequence_type'}  = $parsed_info->{'SVTYPE'} ? ['COMPLEX_INDEL'] : ['INTERGENIC'];
   }
   return $feature;
 }

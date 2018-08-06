@@ -32,6 +32,8 @@ with 'EnsEMBL::Draw::Role::Wiggle';
 with 'EnsEMBL::Draw::Role::Default';
 
 use EnsEMBL::Web::IOWrapper::Indexed;
+use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
+use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
@@ -69,6 +71,37 @@ sub render_simple {
       $self->{'my_config'}->set('show_overlay', 1);
       $self->{'my_config'}->set('default_strand', 1);
       $self->{'my_config'}->set('drawing_style', ['Feature::Variant']);
+
+      ## Loop through features and get consequence colour from db
+      unless ($self->{'data'}[0]{'metadata'}{'has_consequences'}) {
+        my $vfa = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($self->species);
+        my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
+        my $colours = $self->species_defs->colour('variation');
+
+        foreach (@{$self->{'data'}[0]{'features'}||[]}) {     
+          my $snp = {
+                      seqname          => '',
+                      start            => $_->{'start'},
+                      end              => $_->{'end'},
+                      strand           => 1,
+                      slice            => $self->{'container'},
+                      allele_string    => $_->{'alleles'},
+                      variation_name   => $_->{'vf_name'},
+                      map_weight       => 1,
+                      adaptor          => $vfa,
+                      consequence_type => $_->{'consequence_type'}
+                    };
+          bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
+          $snp->get_all_TranscriptVariations;
+          my $consequence  = $snp->display_consequence;
+
+          ## Set colour by consequence
+          if ($consequence && defined($overlap_cons{$consequence})) {
+            $_->{'colour'} = $colours->{lc $consequence}->{'default'};
+          }
+        }
+      }
+
       $self->draw_features;
     }
   }
