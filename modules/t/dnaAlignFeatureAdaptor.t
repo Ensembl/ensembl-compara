@@ -116,7 +116,7 @@ subtest "Test Bio::EnsEMBL::Compara::DnaAlignFeatureAdaptor::fetch_all_by_specie
     is(($matches->[0]->{'hstrand'} == 1 or $matches->[0]->{'hstrand'} == -1), 1,
        "Funny strand");
     is($matches->[0]->{'hspecies'}, "mus_musculus");
-    is($matches->[0]->{'align_type'}, "LASTZ_NET");
+    is($matches->[0]->{'align_type'}, 'ensembl');
     is($matches->[0]->{'group_id'} > 1, 1, "Funny group_id");
     is($matches->[0]->{'level_id'}, 1);
     is($matches->[0]->{'strands_reversed'}, 0);
