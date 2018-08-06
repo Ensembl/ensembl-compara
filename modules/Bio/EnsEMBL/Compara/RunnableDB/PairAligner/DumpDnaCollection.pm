@@ -111,7 +111,7 @@ sub dumpNibFiles {
     die("dump_loc directory is not defined, can not dump nib files\n");
   }
 
-  my $dump_loc = $dna_collection->dump_loc.'/nib_files';
+  my $dump_loc = $dna_collection->dump_loc;
 
   #Make directory if does not exist
   if (!-e $dump_loc) {
