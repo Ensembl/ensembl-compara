@@ -105,7 +105,6 @@ sub run_chains {
     $seqio->close;
     
     $self->run_command([$self->param_required('faToNib_exe'), "$query_nib_dir/$query_name.fa", "$query_nib_dir/$query_name.nib"], { die_on_failure => 1 });
-    unlink "$query_nib_dir/$query_name.fa";
     push @nib_files, "$query_nib_dir/$query_name.nib";
   }  
   
@@ -134,7 +133,6 @@ sub run_chains {
       $seqio->close; 
       
       $self->run_command([$self->param_required('faToNib_exe'), "$target_nib_dir/$target_name.fa", "$target_nib_dir/$target_name.nib"], { die_on_failure => 1 });
-      unlink "$target_nib_dir/$target_name.fa";
       push @nib_files, "$target_nib_dir/$target_name.nib";
     }
   }  
@@ -151,7 +149,6 @@ sub run_chains {
   # convert the lav file to axt
   ##############################
   $self->run_command([$self->param_required('lavToAxt_exe'), $lav_file, $query_nib_dir, $target_nib_dir, $axt_file], { die_on_failure => 1 });
-  unlink $lav_file;
 
   ##################################
   # convert the lav file to axtChain
