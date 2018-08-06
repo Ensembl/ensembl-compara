@@ -226,7 +226,7 @@ sub split_feature {
     }
     
     foreach my $mini_list (@new_feats) {
-      push @split_dafs, Bio::EnsEMBL::DnaDnaAlignFeature->new(-features => $mini_list);
+      push @split_dafs, Bio::EnsEMBL::DnaDnaAlignFeature->new(-features => $mini_list, -align_type => 'ensembl');
     }
 
   } else {

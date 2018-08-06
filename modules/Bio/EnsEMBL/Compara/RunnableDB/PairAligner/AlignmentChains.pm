@@ -155,7 +155,9 @@ sub fetch_input {
          -hstart  => $tg_ga->dnafrag_start,
          -hend    => $tg_ga->dnafrag_end,
          -hstrand => $tg_ga->dnafrag_strand,
-         -cigar_string => $daf_cigar);
+         -cigar_string => $daf_cigar,
+         -align_type => 'ensembl',
+        );
       push @{$features}, $daf;
     }
   }
