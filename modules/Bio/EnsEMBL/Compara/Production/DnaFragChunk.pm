@@ -363,6 +363,7 @@ sub dump_chunks_to_fasta_file
   my $start = 1;
   my $end = $chunk_size;
   my $total_length = $self->length;
+  $end = $total_length if $end > $total_length;
 
   #check to see if the fastafile already exists and delete it if it does.
   if (-e $fastafile) {
