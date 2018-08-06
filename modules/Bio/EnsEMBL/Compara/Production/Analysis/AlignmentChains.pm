@@ -43,6 +43,8 @@ package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains;
 use warnings ;
 use strict;
 
+use Bio::SeqIO;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
