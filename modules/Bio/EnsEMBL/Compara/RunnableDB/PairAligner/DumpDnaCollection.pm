@@ -145,7 +145,7 @@ sub dumpNibFiles {
       }
   }
 
-  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
+  if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $dna_collection->description);}
 
 }
 
