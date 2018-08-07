@@ -154,7 +154,8 @@ sub get_data {
                                },
                };
 
-    my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'VCF4Tabix', $args);
+    #my $iow = EnsEMBL::Web::IOWrapper::Indexed::open($url, 'VCF4Tabix', $args);
+    my $iow = $self->get_iow($url, $args);
 
     if ($iow) {
       my $colours   = $self->species_defs->colour('variation');
@@ -169,6 +170,12 @@ sub get_data {
   }
   return $self->{'data'};
 }
+
+sub get_iow {
+  my ($self, $url, $args) = @_;
+  return EnsEMBL::Web::IOWrapper::Indexed::open($url, 'VCF4Tabix', $args);
+}
+
 
 sub density_features {
 ### Merge the features into bins
