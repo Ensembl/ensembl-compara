@@ -49,6 +49,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -92,6 +94,10 @@ sub fetch_input {
     else {
         $self->param( 'orth_objects', $current_homologs );
     }
+
+    # Preload the members
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($dba->get_AlignedMemberAdaptor, $self->param('orth_objects'));
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($dba->get_GeneMemberAdaptor, $sms);
 
     # disconnect from compara_db
     $dba->dbc->disconnect_if_idle();
