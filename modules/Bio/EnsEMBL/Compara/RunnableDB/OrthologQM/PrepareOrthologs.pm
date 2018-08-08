@@ -125,12 +125,13 @@ sub run {
 
     my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
-        my @gene_members = @{ $orth->get_all_GeneMembers() };
+        my @seq_members = @{ $orth->get_all_Members() };
         my (%orth_ranges, @orth_dnafrags, %orth_exons);
         my $has_transcript_edits = 0;
-        foreach my $gm ( @gene_members ){
-            $has_transcript_edits ||= $gm->get_canonical_SeqMember->has_transcript_edits;
+        foreach my $sm ( @seq_members ){
+            $has_transcript_edits ||= $sm->has_transcript_edits;
 
+            my $gm = $sm->gene_member;
             push( @orth_dnafrags, { id => $gm->dnafrag_id, start => $gm->dnafrag_start, end => $gm->dnafrag_end } );
             $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
             
