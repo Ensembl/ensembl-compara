@@ -32,12 +32,8 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CDHit
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take a ProteinTree as input
-This must already have a multiple alignment run on it. It uses that alignment
-as input create a HMMER HMM profile
-
-input_id/parameters format eg: "{'gene_tree_id'=>1234}"
-    gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
+    This Analysis/RunnableDB is designed to use CDHit to exclude members based on their identity (similarity).
+    The idea is to remove identical or almost identical members in order to improve the efficiency of the pipeline.
 
 =head1 AUTHORSHIP
 
