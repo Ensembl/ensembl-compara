@@ -80,6 +80,8 @@ sub fetch_input {
     #$self->param('current_db_url', $db_url);
     $self->param('current_dba', $dba);
 
+    $self->dbc->disconnect_if_idle() if $self->dbc;
+
     my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
     $self->param('mlss_id', $mlss->dbID);
@@ -112,6 +114,8 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
+
+    $self->dbc->disconnect_if_idle() if $self->dbc;
 
     my @orth_info;
     my $c = 0;
