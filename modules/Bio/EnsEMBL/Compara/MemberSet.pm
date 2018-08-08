@@ -461,13 +461,13 @@ sub get_all_GeneMembers {
 
     my %seen_gene_members = ();
     foreach my $member (@{$self->get_all_Members}) {
-        next unless $member->gene_member_id;
+        next unless $member->stable_id;
         die "Cannot find the GeneMember of ".$member->stable_id unless $member->gene_member;
 
         # The genome_db_id is not the one requested
         next if ((defined $genome_db_id) and ($member->genome_db_id != $genome_db_id));
 
-        $seen_gene_members{$member->gene_member_id} = $member->gene_member;
+        $seen_gene_members{$member->stable_id} = $member->gene_member;
     }
 
     return [values %seen_gene_members];
