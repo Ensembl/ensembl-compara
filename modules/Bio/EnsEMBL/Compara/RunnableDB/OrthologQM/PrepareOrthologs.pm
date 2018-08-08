@@ -101,6 +101,18 @@ sub fetch_input {
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($dba->get_AlignedMemberAdaptor, $self->param('orth_objects'));
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($dba->get_GeneMemberAdaptor, $sms);
 
+    # Preload the exon boundaries for the whole genomes even though some of the members will be reused
+    my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
+    my %exon_boundaries;
+    my $sth = $dba->dbc->prepare($sql);
+    $sth->execute($species1_id, $species2_id);
+    while (my $row = $sth->fetchrow_arrayref()) {
+        my ($gene_member_id, $dnafrag_start, $dnafrag_end) = @$row;
+        push @{ $exon_boundaries{$gene_member_id} }, [$dnafrag_start, $dnafrag_end];
+    }
+    $sth->finish;
+    $self->param('exon_boundaries', \%exon_boundaries);
+
     # disconnect from compara_db
     $dba->dbc->disconnect_if_idle();
 }
@@ -120,12 +132,7 @@ sub run {
     my @orth_info;
     my $c = 0;
 
-    # prepare SQL statement to fetch the exon boundaries for each gene_members
-    my $sql = 'SELECT dnafrag_start, dnafrag_end FROM exon_boundaries WHERE gene_member_id = ?';
-    
-    # my $db = defined $self->db ? $self->db : $self->compara_dba; # mostly for unit test purposes
-    my $db = $self->param('current_dba');
-    my $sth = $db->dbc->prepare($sql);
+    my $exon_boundaries = $self->param('exon_boundaries');
 
     my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
@@ -140,9 +147,7 @@ sub run {
             $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
             
             # get exon locations
-            $sth->execute( $gm->dbID );
-            my $ex_bounds = $sth->fetchall_arrayref([]);
-            $orth_exons{$gm->genome_db_id} = $ex_bounds;
+            $orth_exons{$gm->genome_db_id} = $exon_boundaries->{$gm->dbID};
         }
 
         # When there are transcript edits, the coordinates cannot be
