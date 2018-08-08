@@ -120,7 +120,7 @@ sub run {
     my $sql = 'SELECT dnafrag_start, dnafrag_end FROM exon_boundaries WHERE gene_member_id = ?';
     
     # my $db = defined $self->db ? $self->db : $self->compara_dba; # mostly for unit test purposes
-    my $db = $self->compara_dba;
+    my $db = $self->param('current_dba');
     my $sth = $db->dbc->prepare($sql);
 
     my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
