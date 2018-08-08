@@ -414,7 +414,7 @@ sub homology_key {
   my $self = shift;
   return $self->{'_homology_key'} if(defined($self->{'_homology_key'}));
   
-  my @genes = sort {$a->taxon_id <=> $b->taxon_id || $a->stable_id cmp $b->stable_id} @{$self->gene_list};
+  my @genes = sort {$a->stable_id cmp $b->stable_id} @{$self->gene_list};
   @genes = map ($_->stable_id, @genes);
 
   my $homology_key = join('_', @genes);
