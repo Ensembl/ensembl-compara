@@ -280,8 +280,8 @@ sub calc_stats {
     $self->run_command($cmd, { die_on_failure => 1 });
 
     #Run compare_beds.pl
-    my $compare_beds = $self->param('compare_beds');
-    my $coverage_data = `$compare_beds $genome_bed $alignment_bed --stats`;
+    $cmd = [$self->param_required('compare_beds'), $genome_bed, $alignment_bed, '--stats'];
+    my $coverage_data = $self->run_command($cmd, { die_on_failure => 1 })->out;
     my $coverage = parse_compare_bed_output($coverage_data);
     
     my $str = "*** $species ***\n";
