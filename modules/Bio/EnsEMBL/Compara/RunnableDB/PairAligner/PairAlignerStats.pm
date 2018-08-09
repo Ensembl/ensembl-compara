@@ -215,9 +215,7 @@ sub write_pairaligner_statistics {
 
     #Fetch the number of genomic_align_blocks
     my $sql = "SELECT count(*) FROM genomic_align_block WHERE method_link_species_set_id = " . $method_link_species_set->dbID;
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute();
-    my ($num_blocks) = $sth->fetchrow_array();
+    my $num_blocks = $self->compara_dba->dbc->sql_helper->execute_single_result( -SQL => $sql );
 
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
