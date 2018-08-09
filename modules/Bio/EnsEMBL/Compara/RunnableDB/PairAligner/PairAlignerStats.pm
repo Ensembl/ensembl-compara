@@ -102,6 +102,7 @@ sub fetch_input {
       && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
         ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
   }
+  $non_ref_genome_db ||= $ref_genome_db;
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
 
