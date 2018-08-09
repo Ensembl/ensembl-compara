@@ -73,6 +73,8 @@ sub fetch_input {
 sub write_output {
 	my $self = shift;
 
+        $self->dbc->disconnect_if_idle() if $self->dbc;
+
 	my $homology_adaptor = $self->compara_dba->get_HomologyAdaptor;
 	my %max_quality      = %{ $self->param('max_quality') };
 	foreach my $oid ( keys %max_quality ) {
