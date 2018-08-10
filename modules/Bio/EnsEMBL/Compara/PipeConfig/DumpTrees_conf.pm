@@ -53,6 +53,8 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
