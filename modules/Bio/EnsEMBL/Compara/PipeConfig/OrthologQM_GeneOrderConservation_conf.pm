@@ -72,7 +72,11 @@ sub default_options {
         'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
 #        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
 
+        # mlss_id of the protein-trees. The pipeline will process all the orthologues found there
+        'mlss_id'       => undef,
+        # mlss_id of a specific pair of species
         'goc_mlss_id'   => undef, #'100021',
+
         'goc_taxlevels' => [],
         'goc_threshold' => undef,
         'goc_reuse_db'  => undef,
@@ -89,6 +93,7 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+        'mlss_id' => $self->o('mlss_id'),
         'goc_mlss_id' => $self->o('goc_mlss_id'),
         'compara_db' => $self->o('compara_db'),
         'goc_threshold'  => $self->o('goc_threshold'),
