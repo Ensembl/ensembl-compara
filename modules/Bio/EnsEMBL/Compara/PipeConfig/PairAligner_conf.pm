@@ -657,8 +657,16 @@ sub pipeline_analyses {
               -parameters => {
                   'skip' => $self->o('patch_alignments'),
               },
+              -flow_into => {
+                  2 => [ 'set_internal_ids_slow' ],
+              },
               -analysis_capacity => 1,
               -rc_name => '100Mb_job',
+          },
+          {  -logic_name => 'set_internal_ids_slow',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow.',
+              -analysis_capacity => 1,
+              -rc_name => '8Gb_job',
           },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',

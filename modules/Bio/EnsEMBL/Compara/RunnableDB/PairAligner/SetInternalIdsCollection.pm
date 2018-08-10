@@ -85,7 +85,7 @@ sub _setInternalIds {
     my $magic_number = '1'.('0' x $self->param('mlss_padding_n_zeros'));
 
     # Write new blocks in the correct range
-    my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number) FROM genomic_align WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
+    my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number), COUNT(*), COUNT(DISTINCT genomic_align_id % $magic_number), COUNT(DISTINCT genomic_align_block_id % $magic_number) FROM genomic_align WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
     my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     # Update the dbIDs in genomic_align
     my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number), genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
@@ -95,11 +95,17 @@ sub _setInternalIds {
     # We really need a transaction to ensure we're not screwing the database
     my $dbc = $self->compara_dba->dbc;
     $self->call_within_transaction(sub {
-            my ($min_ga, $min_gab) = $dbc->db_handle->selectrow_array($sql0, undef, $mlss_id);
+            my ($min_ga, $min_gab, $tot_count, $safe_ga_count, $safe_gab_count) = $dbc->db_handle->selectrow_array($sql0, undef, $mlss_id);
             if (not defined $min_ga) {
                 $self->warning("Entries for mlss_id=$mlss_id are already in the correct range. Nothing to do");
                 return;
             };
+            if (($tot_count != $safe_ga_count) or ($tot_count != 2*$safe_gab_count)) {
+                die "genomic_align_id or genomic_align_block_id remainders are not unique. Need a more advanced mapping method";
+                $self->complete_early("genomic_align_id or genomic_align_block_id remainders are not unique. Need a more advanced mapping method");
+                $self->dataflow_output_id(undef, 2);
+                $self->input_job->autoflow(0);
+            }
             my $offset_ga = $mlss_id * $magic_number + 1 - $min_ga;
             my $offset_gab = $mlss_id * $magic_number + 1 - $min_gab;
             print STDERR "Offsets: genomic_align_block_id=$offset_gab genomic_align_id=$offset_ga\n";
