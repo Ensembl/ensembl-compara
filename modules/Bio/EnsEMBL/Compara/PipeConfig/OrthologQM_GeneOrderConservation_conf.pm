@@ -113,9 +113,11 @@ sub resource_classes {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    return [
+    my $a = [
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
 	];
+    $a->[0]->{-input_ids} = [{}];
+    return $a;
 }
 
 1;
