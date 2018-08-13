@@ -310,7 +310,7 @@ sub pipeline_analyses {
                              },
              -flow_into => { 
                               '1' => [ 'load_dnafrag_regions' ],
-                              '2' => { 'delete_synteny' => {'mlss_id' => '#ortholog_mlss_id#'} },
+                              '2' => { 'delete_synteny' => {'mlss_id' => '#expr( #ortholog_mlss_id# || #pairwise_mlss_id# )expr#'} },
                            },
               
             },

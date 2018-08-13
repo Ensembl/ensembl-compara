@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EPO_conf.pm
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf -mlss_id <>
 
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
@@ -67,12 +67,12 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'species_set_name' => 'mammals',
+        'species_set_name' => 'fish',
         #'rel_suffix' => 'b',
 
         # Where the pipeline lives
-        'host' => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port' => 4485,
+        'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'port' => 4522,
 
         'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
 

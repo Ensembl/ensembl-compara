@@ -56,32 +56,32 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # Individual pipeline database for ProteinTrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
-     -species => 'compara_ptrees',
-     -dbname => 'waakanni_protein_trees_93',
-);
-
-# Individual pipeline database for Families:
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
-     -species => 'compara_families',
-     -dbname => 'muffato_families_93',
-);
-
-# Individual pipeline database for ncRNAtrees:
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-ens-compara-prod-4',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4401,
+     -species => 'compara_ptrees',
+     -dbname => 'mateus_protein_trees_94',
+);
+
+# Individual pipeline database for Families:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-3',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4523,
+     -species => 'compara_families',
+     -dbname => 'carlac_families_94',
+);
+
+# Individual pipeline database for ncRNAtrees:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-1',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4485,
      -species => 'compara_nctrees',
-     -dbname => 'carlac_compara_nctrees_93',
+     -dbname => 'muffato_compara_nctrees_94',
 );
 
 # Reindexed mouse strains protein trees
@@ -91,17 +91,17 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4485,
      -species => 'murinae_ptrees',
-     -dbname => 'mateus_murinae_protein_trees_93',
+     -dbname => 'muffato_murinae_protein_trees_94',
 );
 
 # Reindexed mouse strains ncRNA trees
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-2',
+     -host => 'mysql-ens-compara-prod-1',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4485,
      -species => 'murinae_nctrees',
-     -dbname => 'mateus_murinae_ncrna_trees_93',
+     -dbname => 'muffato_murinae_ncrna_trees_94',
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
@@ -213,10 +213,10 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 );
 
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
+    -host => 'mysql-ens-compara-prod-2',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
+    -port => 4522,
     -group => 'core',
     -species => 'ancestral_curr',
     -dbname => 'ensembl_ancestral_94',

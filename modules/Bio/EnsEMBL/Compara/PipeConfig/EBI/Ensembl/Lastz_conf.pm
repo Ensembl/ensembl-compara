@@ -42,8 +42,8 @@ sub default_options {
 
 
 	    'staging_loc' => {
-            -host   => 'mysql-ens-sta-1.ebi.ac.uk',
-            -port   => 4519,
+            -host   => 'mysql-ens-vertannot-staging',
+            -port   => 4573,
             -user   => 'ensro',
             -pass   => '',
         },

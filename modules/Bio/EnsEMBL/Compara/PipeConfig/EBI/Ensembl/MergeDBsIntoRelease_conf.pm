@@ -76,17 +76,17 @@ sub default_options {
         # All the source databases
         'src_db_aliases'    => {
             'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_protein_trees_93',
-            'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_compara_nctrees_93',
-            'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_families_93',
-            'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mateus_murinae_protein_trees_93',
-            'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mateus_murinae_ncrna_trees_93',
-            'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/mateus_alt_allele_import_93',
-            'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2:4522/mateus_load_members_93',
+            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_94',
+            'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_compara_nctrees_94',
+            'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_families_94',
+            'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_murinae_protein_trees_94',
+            'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_murinae_ncrna_trees_94',
+            'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_alt_allele_import_94',
+            'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_load_members_94',
         },
 
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_93',
+        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_94',
 
         # From these databases, only copy these tables
         'only_tables'       => {
@@ -104,7 +104,7 @@ sub default_options {
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
-            'seq_member_projection' => 'protein_db',
+            #'seq_member_projection' => 'protein_db',
             'peptide_align_feature_%' => 'protein_db',
         },
 
@@ -114,8 +114,8 @@ sub default_options {
             # 'protein_db'        => [qw(gene_tree_node)],
             # 'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
-            # 'mouse_prot_db'  => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
-            # 'mouse_ncrna_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
+             'mouse_prot_db'  => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
+             'mouse_ncrna_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
             # 'projection_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection)],
         },
 
