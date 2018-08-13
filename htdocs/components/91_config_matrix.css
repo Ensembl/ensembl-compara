@@ -169,3 +169,62 @@ body.ie67  div.config div.config_matrix .tutorial,
 body.ie67  div.config div.config_matrix .toggle_tutorial,
 body.ie8   div.config div.config_matrix .tutorial.drag  { display: none!important; }
 body.ie8   div.config div.config_matrix .tutorial.col   { margin: -20px 0 0 50px; }
+
+
+/* New matrix wizard styling */
+div.track-panel                       { float: left; width:85%; border: #ccc 1px solid; margin-bottom: 10px; }
+div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 25%; }
+div.result-box a.clearall             { display:inline-block; float: right; }
+h5.result-header                      { display: block; margin-top: 10px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; }
+div.config_wrapper div.config ul.result-list li   { margin: 10px; cursor: default; }
+
+/* customised checkbox */
+.fancy-checkbox                 { width: 15px; height: 15px; display: inline-block; vertical-align: top; background-repeat: no-repeat; background-image: url(/img/dynatree/icons.gif); background-position: 0 0; margin-left: 3px; margin-right: 10px; background-position: 0 -32px;}
+.fancy-checkbox.selected        { background-position: -64px -32px; }
+.fancy-checkbox:hover           { background-position: -16px -32px; }
+.fancy-checkbox.selected:hover  { background-position: -80px -32px; }
+
+div.all-box                                     { display: inline-block; float: right;}
+div.all-box text                                { padding: 5px; }
+div.all-box span.fancy-checkbox.selected        { background-position: -32px -32px; }
+div.all-box span.fancy-checkbox.selected:hover  { background-position: -48px -32px; }
+div.cell-listing div.all-box                    { margin-top: -17px; margin-right: 20px; }
+div.list-all-box                                { margin-right: 75px; margin-top: 40px; }
+
+
+div.tabs                   { display: flex; flex-direction: row; width: 100%; }
+div.track-tab              { background-color: #fff; color: #666666; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px; width: 25%; text-align: center; padding: 5px 5px 10px 5px;}
+div.track-tab.active       { background-color: #eeeeee; border-bottom: 1px solid #eee; color: #000; cursor:  auto; }
+div.track-tab:hover        { background-color: #eeeeee; opacity: 0.5; color: #000; }
+div.track-tab.active:hover { background-color: #eeeeee; opacity: 1; }
+div span.content-id        { display: none; }
+div span.rhsection-id      { display: none; }
+div span.lhsection-id      { display: none; }
+div.tab-content            { display: none; min-height: 300px; width: 100%; }
+div.tab-content.active     { display: inline-block; background-color: #eeeeee; }
+
+div.tabs.cells                                                       { margin: 3em 1em 1em 1em; }
+div.cell-label                                                       { width: 75px; float: left; margin-top: 5px;}
+div.cells div.track-tab, div.experiments div.track-tab               { background-color: #eeeeee;  border: #ccc 1px solid; width: 100px; }
+div.cells div.track-tab:hover, div.experiments div.track-tab:hover   { background-color: #fff; }
+div.cells div.track-tab.active,div.experiments div.track-tab.active  { background-color: #fff;  border: #ccc 1px solid; }
+div.tabs.experiments                                                 { margin: 5px 5px 5px 85px; }
+
+div.cell-listing  { padding-top: 3em; padding-left: 1em; }
+
+/* alphabet ribbon */
+div.larrow, div.rarrow                              { display: inline-block; float: left; color: #000; margin-top: -2px; cursor: pointer; }
+div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: #bebebe; }
+div.letters-ribbon                                  { display: inline-block; float: left; color: #000; font-size: 0.8em; margin-right: 5px; }
+div.alphabet-div                                    { margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
+div.alphabet-div.active                             { cursor: default; background-color: #474747; color: #fff; opacity: 0.9; }
+div.alphabet-div.inactive                           { color: #ababab; }
+div.ribbon-content                                  { display: flex; float: left; clear: left; padding: 1em; margin-left: 5px;}
+div.alphabet-content                                { display: none;  }
+div.alphabet-content.active                         { display: block; }
+div.config_wrapper div.config ul.letter-content li  { margin: 10px; cursor: default; }
+div.config_wrapper div.config ul.list-content       { margin-left: 55px; margin-top: 40px; }
+
+/* apply filter button */
+button.filter         { display:block; margin-top: 50px; width: 100px; color: #fff; background-color: #ccc; border-radius: 3px; height: 30px; outline: none; border: 1px solid white; }
+button.filter.active  { background-color: #6bbd6b; cursor: pointer; }
