@@ -151,8 +151,6 @@ sub usage {
   print " --url2 <str>            : url of compara DB \n";
   print " --gdb1 <int>            : genome_db_id of first genome\n";
   print " --gdb2 <int>            : genome_db_id of second genome\n";
-  print " --file1 <str>            : tabular file containing one homology pair per line and its type, e.g.:ENSG00000256574 ENSMUSG00000053391  ortholog_one2one\n";
-  print " --file2 <str>            : tabular file containing one homology pair per line and its type, e.g.:ENSG00000256574 ENSMUSG00000053391  ortholog_one2one\n";
   print " --conf <str>            : path to configuration file. An example is given\n";
   print "                           ensembl-compara/scripts/compare/homology_diff.conf\n";
   print " --best                  : will print out numbers on the basis of gene counts,\n";
