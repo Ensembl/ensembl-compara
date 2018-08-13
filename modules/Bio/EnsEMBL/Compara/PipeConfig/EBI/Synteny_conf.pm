@@ -51,11 +51,11 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'host'      => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'      => 4485,
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'port'      => 4522,
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/plants_compara_master_41_94',
         'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
-    	'registry'  => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+    	'registry'  => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_eg_conf.pl',
     };
 }
 

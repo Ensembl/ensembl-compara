@@ -120,7 +120,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => 92,
+            -db_version => 93,
         },
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
@@ -131,7 +131,7 @@ sub default_options {
            -port   => 4522,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'muffato_amniotes_mercator_pecan_92',
+           -dbname => 'mateus_amniotes_mercator_pecan_93',
 	   -driver => 'mysql',
         },
 
