@@ -383,7 +383,7 @@ sub _print_format_helper {
 scripts/dumps directory. Alternatively you can download it using the GitHub frontend:
 https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl");
     } elsif ($self->param('format') eq 'maf') {
-        my $txt = "The MAF format is described at https://cgwb.nci.nih.gov/FAQ/FAQformat.html#format5";
+        my $txt = "The MAF format is described at https://genome.ucsc.edu/FAQ/FAQformat.html#format5";
         $txt .= "Please note that MAF format does not support conservation scores." if ($mlss->method->type eq 'EPO_LOW_COVERAGE') or ($mlss->method->type eq 'PECAN');
         $self->_print_paragraph($txt);
     }

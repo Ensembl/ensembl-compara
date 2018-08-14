@@ -70,3 +70,7 @@ Replaced with "standaloneJob.pl Bio::EnsEMBL::Compara::Production::EPOanchors::D
 * scripts/dumps/DumpChromosomeFragments.pl
 
 Removed. Used to dump a genome by splitting each chromosome into chunks
+
+* scripts/dumps/DumpConservationScores.pl
+
+Removed. Replaced by the DumpConservationScores_conf pipeline

@@ -73,10 +73,7 @@ sub fetch_input {
         unlink $pep_file;
         my $member = $family->get_all_Members()->[0];
         my $cigar_line = length($member->sequence).'M';
-        eval {$member->cigar_line($cigar_line) };
-        if($@) {
-            die "could not set the cigar_line for singleton family $family_id, because: $@ ";
-        }
+        $_->cigar_line($cigar_line) for @{ $family->get_all_Members() };
         # by setting this parameter we will trigger the update in write_output()
         $self->param('singleton_relation', $member);
         return;

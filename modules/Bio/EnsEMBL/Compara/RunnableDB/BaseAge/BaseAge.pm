@@ -294,7 +294,7 @@ sub base_age {
                 } else {
                     $name_field = $node_id;
                 }
-                printf BED "chr%s\t%d\t%d\t%s\t%d\t%s\n", $seq_region, ($base-1), $base, $name_field, $normalised_age, $rgb;
+                printf BED "%s\t%d\t%d\t%s\t%d\t%s\n", $seq_region, ($base-1), $base, $name_field, $normalised_age, $rgb;
             }
             
             $base++;

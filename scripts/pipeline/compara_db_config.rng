@@ -43,6 +43,14 @@
         </element>
         <element name="genome" blockly:blockName="Genome">
           <attribute name="name" blockly:blockName="Name"/>
+          <optional>
+            <attribute name="exclude" blockly:blockName="Exclude those genomes">
+              <choice>
+                <value blockly:blockName="Yes">1</value>
+                <value blockly:blockName="No">0</value>
+              </choice>
+            </attribute>
+          </optional>
         </element>
       </choice>
     </oneOrMore>
@@ -204,32 +212,38 @@
         </element>
       </optional>
       <!-- /assembly_patches -->
-      <element name="families" blockly:blockName="Protein-families">
-        <oneOrMore>
-          <element name="family" blockly:blockName="Protein-families">
-            <attribute name="collection" blockly:blockName="Collection name"/>
-          </element>
-        </oneOrMore>
-      </element>
-      <element name="gene_trees" blockly:blockName="Gene-trees">
-        <oneOrMore>
-          <choice>
-            <element name="protein_trees" blockly:blockName="Protein-trees">
+      <optional>
+        <element name="families" blockly:blockName="Protein-families">
+          <oneOrMore>
+            <element name="family" blockly:blockName="Protein-families">
               <attribute name="collection" blockly:blockName="Collection name"/>
             </element>
-            <element name="nc_trees" blockly:blockName="ncRNA-trees">
+          </oneOrMore>
+        </element>
+      </optional>
+      <optional>
+        <element name="gene_trees" blockly:blockName="Gene-trees">
+          <oneOrMore>
+            <choice>
+              <element name="protein_trees" blockly:blockName="Protein-trees">
+                <attribute name="collection" blockly:blockName="Collection name"/>
+              </element>
+              <element name="nc_trees" blockly:blockName="ncRNA-trees">
+                <attribute name="collection" blockly:blockName="Collection name"/>
+              </element>
+            </choice>
+          </oneOrMore>
+        </element>
+      </optional>
+      <optional>
+        <element name="species_trees" blockly:blockName="Species-trees">
+          <oneOrMore>
+            <element name="species_tree" blockly:blockName="Species-tree">
               <attribute name="collection" blockly:blockName="Collection name"/>
             </element>
-          </choice>
-        </oneOrMore>
-      </element>
-      <element name="species_trees" blockly:blockName="Species-trees">
-        <oneOrMore>
-          <element name="species_tree" blockly:blockName="Species-tree">
-            <attribute name="collection" blockly:blockName="Collection name"/>
-          </element>
-        </oneOrMore>
-      </element>
+          </oneOrMore>
+        </element>
+      </optional>
     </element>
   </start>
 </grammar>

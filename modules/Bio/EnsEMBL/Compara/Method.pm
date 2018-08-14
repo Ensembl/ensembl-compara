@@ -108,7 +108,8 @@ sub new {
 
     $self->type($type)        if (defined ($type));
     $self->class($mclass)     if (defined ($mclass));
-    $self->display_name($display_name) if (defined ($display_name));
+
+    $self->display_name($display_name // '');
 
     return $self;
 }

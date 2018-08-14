@@ -563,7 +563,7 @@ sub _convert_GenomicAlignBlocks_into_DnaDnaAlignFeatures {
         'hseqname'     => $qdf_name,
         'hspecies'     => $query_genomic_align->genome_db->name,
         'hslice'       => $top_slice,
-        'align_type'   => $this_genomic_align_block->method_link_species_set->method->type,
+        'align_type'   => 'ensembl', # required by the Core API. Where can we put $this_genomic_align_block->method_link_species_set->method->type ?
         'group_id'     => $ga_group_id,
         'level_id'     => $ga_level_id,
         'strands_reversed' => $ga_strands_reversed});

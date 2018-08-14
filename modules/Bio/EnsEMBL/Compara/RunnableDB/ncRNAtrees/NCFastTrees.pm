@@ -152,6 +152,9 @@ sub _run_fasttree {
 
     $self->run_command($cmd, { die_on_failure => 1 } );
 
+    # FastTree returns multifurcations when the sequences are identical but we need a binary tree
+    $self->binarize_tree_file($fasttree_output, $self->param('species_tree'), $self->param('map_long_seq_names'));
+
     $self->store_newick_into_nc_tree($tag, $fasttree_output);
 
     return 1;

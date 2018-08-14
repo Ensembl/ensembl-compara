@@ -328,8 +328,6 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
-        # Defaults to the global reuse database, but can be set differently
-        'goc_reuse_db'                  => $self->o('prev_rel_db'),
         'calculate_goc_distribution'    => 1,
 
     # Extra analyses
@@ -581,6 +579,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'output_file'   => '#dump_dir#/snapshot_1_before_clustering.sql.gz',
             },
+            -rc_name       => '1Gb_job',
             -flow_into  => {
                 '1->A'  => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
@@ -623,6 +622,7 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
+            -rc_name    => '500Mb_job',
             -flow_into  => [ 'notify_pipeline_completed' ],
         },
 
@@ -2056,6 +2056,7 @@ sub core_pipeline_analyses {
                 'treebest_threshold_n_residues'     => $self->o('treebest_threshold_n_residues'),
                 'treebest_threshold_n_genes'        => $self->o('treebest_threshold_n_genes'),
             },
+            -rc_name        => '250Mb_job',
             -flow_into  => {
                 1 => WHEN (
                     '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)'   => 'treebest_short',
@@ -2860,6 +2861,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'hc_post_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
+            -rc_name    => '250Mb_job',
             -flow_into  => [ 'ortho_tree_decision' ],
             -hive_capacity        => $self->o('hc_post_tree_capacity'),
             %hc_analysis_params,
@@ -2873,6 +2875,7 @@ sub core_pipeline_analyses {
                     'gene_count'          => 0,
                 },
             },
+            -rc_name    => '250Mb_job',
             -flow_into  => {
                 1 => WHEN(
                     '(#tree_gene_count# <= 400)' => 'ortho_tree',
@@ -2890,6 +2893,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
+            -priority       => -10,
             -flow_into      => {
                 1   => [ 'hc_tree_homologies' ],
                 -1  => 'ortho_tree_himem',
@@ -2913,6 +2917,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
+            -rc_name        => '250Mb_job',
             -flow_into      => [ 'ktreedist', 'consensus_cigar_line_prep' ],
             %hc_analysis_params,
         },
@@ -3192,6 +3197,7 @@ sub core_pipeline_analyses {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
                 },
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => [ 'mlss_id_mapping' ],
             },
@@ -3203,6 +3209,20 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
             },
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name   => '500Mb_job',
+            -flow_into  => {
+                -1 => [ 'homology_id_mapping_himem' ],
+                1 => { 'homology_id_mapping' => INPUT_PLUS() },
+            },
+        },
+
+        {   -logic_name => 'mlss_id_mapping_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDMapping',
+            -parameters => {
+                'prev_rel_db'   => '#mapping_db#',
+            },
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name   => '1Gb_job',
             -flow_into => { 1 => { 'homology_id_mapping' => INPUT_PLUS() } },
         },
 
@@ -3288,6 +3308,7 @@ sub core_pipeline_analyses {
                     'ENSEMBL_PARALOGUES'    => 3,
                 },
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => {
                     'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
@@ -3303,6 +3324,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'member_type'           => 'protein',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -3313,6 +3335,7 @@ sub core_pipeline_analyses {
                 'member_type'           => 'protein',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 

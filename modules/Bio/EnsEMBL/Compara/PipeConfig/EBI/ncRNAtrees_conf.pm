@@ -64,17 +64,12 @@ sub default_options {
             # User details
             'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
-            # Must be given on the command line
-            #'mlss_id'          => 40100,
-            
-            'test_mode' => 1, #set this to 0 if this is production run
-
-            # Found automatically if the Core API is in PERL5LIB
-            #'ensembl_release'          => '76',
             'work_dir'         => '/hps/nobackup2/production/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
+
+            'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
 
             # executable locations:
             'cmalign_exe'           => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmalign'),
@@ -97,26 +92,6 @@ sub default_options {
             'quicktree_exe'         => $self->check_exe_in_cellar('quicktree/2.1/bin/quicktree'),
             'r2r_exe'               => $self->check_exe_in_cellar('r2r/1.0.5/bin/r2r'),
             'cafe_shell'            => $self->check_exe_in_cellar('cafe/2.2/bin/cafeshell'),
-
-            
-            # Other parameters
-            'epo_db'                => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_91',
-
-            # connection parameters
-
-            'reg1' => {
-                       -host   => 'mysql-ens-sta-1',
-                       -port   => '4519',
-                       -user   => 'ensro',
-                      },
-
-            'master_db' => {
-                            -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-                            -port   => 4485,
-                            -user   => 'ensro',
-                            -pass   => '',
-                            -dbname => 'ensembl_compara_master',
-                           },
 
            };
 }

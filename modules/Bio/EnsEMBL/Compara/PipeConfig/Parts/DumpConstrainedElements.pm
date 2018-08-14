@@ -42,21 +42,12 @@ sub pipeline_analyses_dump_constrained_elems {
 
         {   -logic_name     => 'mkdir_constrained_elems',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements',
-            -parameters     => {
-                'compara_db'    => '#compara_db#',
-            },
-            # -input_ids      => [
-            #     {
-            #         'mlss_id'   => $self->o('mlss_id'),
-            #     },
-            # ],
             -flow_into      => [ 'genomedb_factory_ce' ],
         },
 
         {   -logic_name     => 'genomedb_factory_ce',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters     => {
-                'compara_db'            => '#compara_db#',
                 'extra_parameters'      => [ 'name' ],
             },
             -flow_into      => {
@@ -70,7 +61,7 @@ sub pipeline_analyses_dump_constrained_elems {
             -parameters     => {
                 'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --reg_conf "#registry#" > #bed_file#',
             },
-            -analysis_capacity => $self->o('dump_ce_capacity'),
+            -hive_capacity => $self->o('dump_ce_capacity'),
             -flow_into      => [ 'check_not_empty' ],
         },
 

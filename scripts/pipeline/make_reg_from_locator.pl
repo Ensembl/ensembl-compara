@@ -19,6 +19,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception;
 use Data::Dumper;
@@ -83,7 +84,7 @@ if($db_name=~/^\d+$/){
    user => $db_connection->user(),
    pass => $pass,
    dbname => $db_connection->dbname(), 
-   species => $db_adaptor->species(), 
+   species => $db_adaptor->production_name(),
    group => $db_adaptor->group() } );
  }
  print_con(\@connection_params) if @connection_params;

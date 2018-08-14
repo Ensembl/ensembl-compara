@@ -37,11 +37,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
-
-use Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
-use Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
@@ -54,17 +50,16 @@ sub default_options {
     my ($self) = @_;
     my $do = {
         %{$self->SUPER::default_options},
-        %{ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf::default_options($self) },
-        %{ Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf::default_options($self) },
 
         ######################################################
         # Review these options prior to running each release #
         ######################################################
         
-        'curr_release' => $ENV{CURR_ENSEMBL_RELEASE},
-        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_#curr_release#',
-        'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # USE THIS PATH FOR RELEASE 93 ONLY !!
-        # 'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
+        # Where to put the new dumps and the symlinks
+        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_'.$self->o('rel_with_suffix'),
+        # Location of the previous dumps
+        'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
+        #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
         'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
         'compara_db'   => 'compara_curr', # can be URL or reg alias
@@ -86,24 +81,23 @@ sub default_options {
         # ----------------------------------------------------- #
 
         # capacities for heavy-hitting jobs
-		'dump_aln_capacity'   => 80,
+        'dump_aln_capacity'   => 400,
 		'dump_trees_capacity' => 10,
 		'dump_ce_capacity'    => 10,
     	'dump_cs_capacity'    => 20,
-    	'dump_hom_capacity'   => 2, 
+        'dump_hom_capacity'   => 10,
         'dump_per_genome_cap' => 10,
 
 
     	# general settings
-        'pipeline_name'   => 'dump_all_for_release_#curr_release#',
-        'rel_with_suffix' => '#curr_release#',
+        'pipeline_name'   => 'dump_all_for_release_'.$self->o('rel_with_suffix'),
         'division'        => 'ensembl',
         'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?       
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
 
 		# define input options for DumpMultiAlign for each method_link_type
-		'align_dump_options' => {
+        'alignment_dump_options' => {
         	EPO              => {format => 'emf+maf'},
         	EPO_LOW_COVERAGE => {format => 'emf+maf'},
         	PECAN            => {format => 'emf+maf'},
@@ -113,39 +107,25 @@ sub default_options {
         # define which params should ALWAYS be passed to each dump pipeline
         'default_dump_options' => {
         	DumpMultiAlign          => { 
-        		compara_db       => '#compara_db#', 
-        		registry         => '#reg_conf#',
-        		curr_release     => '#curr_release#',
          		make_tar_archive => 0,
         	},
         	DumpConstrainedElements => { 
         		compara_url => '#compara_db#', 
-        		registry    => '#reg_conf#', 
         	},
         	DumpConservationScores  => { 
         		compara_url => '#compara_db#', 
-        		registry    => '#reg_conf#', 
         	},
         	DumpTrees               => { 
         		dump_per_species_tsv => 1,
         		production_registry  => '--reg_conf #reg_conf#', 
         		rel_db               => '#compara_db#',
-        		target_dir           => '#dump_root#/release-#curr_release#',
         		base_dir             => '#dump_root#',
-        		work_dir             => '#dump_root#/dump_hash',
-        		emf_dir              => $self->o('emf_dir'),
-        		xml_dir              => $self->o('xml_dir'),
-        		tsv_dir              => $self->o('tsv_dir'),
         	},
         	DumpSpeciesTrees => {
         		compara_url => '#compara_db#',
         		dump_dir    => '#dump_dir#/compara/species_trees',
         	},
         	DumpAncestralAlleles => {
-        		compara_db   => '#compara_db#',
-        		dump_dir     => '#dump_dir#',
-        		reg_conf     => '#reg_conf#',
-        		ancestral_db => '#ancestral_db#',
         	},
         },
 
@@ -160,9 +140,23 @@ sub default_options {
         	GERP_CONSERVATION_SCORE => ['compara/conservation_scores'],
         },
 
+        # DumpMultiAlign options
+        'split_size'          => 200,
+        'masked_seq'          => 1,
+        'dump_aln_program'    => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
+        'emf2maf_program'     => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
+        'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
+        'split_by_chromosome' => 1,
+        'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
+
         # tree dump options
         'clusterset_id' => undef,
         'member_type'   => undef,
+        'xmllint_exe'   => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
+        'dump_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
+        'readme_dir'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
+        'max_files_per_tar'     => 500,
+        'batch_size'            => 25,    # how may trees' dumping jobs can be batched together
         
         # constrained elems & conservation scores
         'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
@@ -181,6 +175,8 @@ sub default_options {
     return $do;
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
+
 sub hive_meta_table {
     my ($self) = @_;
     return {
@@ -194,7 +190,7 @@ sub pipeline_create_commands {
 
     return [
         @{ $self->SUPER::pipeline_create_commands },
-        $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)' ),
+        $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL, PRIMARY KEY (genomic_align_block_id) )' ),
         $self->db_cmd( 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)' ),
     ];
 }
@@ -206,23 +202,26 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'reg_conf'        => $self->o('reg_conf'),
-        'registry'        => $self->o('reg_conf'),
-        'curr_release'    => $self->o('curr_release'),
-        'rel_with_suffix' => $self->o('curr_release'),
+        'registry'        => '#reg_conf#',
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
         'ftp_root'        => $self->o('ftp_root'),  
         'division'        => $self->o('division'),
+        'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
-        'name_root'           => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
+        'name_root'           => 'Compara.#curr_release#.#basename#',
+        'target_dir'          => '#dump_dir#',
+        'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
+        'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',
+        'tsv_dir'             => '#target_dir#/tsv/ensembl-compara/homologies/',
 
         # ancestral alleles
+        'anc_tmp_dir'    => "#work_dir#/ancestral_alleles",
         'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
         'ancestral_dump_program' => $self->o('ancestral_dump_program'),
         'ancestral_stats_program' => $self->o('ancestral_stats_program'),
@@ -234,12 +233,12 @@ sub pipeline_wide_parameters {
         'cs_readme'             => $self->o('cs_readme'),
         'ce_readme'             => $self->o('ce_readme'),
         
-        'export_dir'     => $self->o('dump_dir'),
+        'export_dir'     => '#dump_dir#',
         'ce_output_dir'  => '#export_dir#/bed/ensembl-compara/#dirname#',
         'cs_output_dir'  => '#export_dir#/compara/conservation_scores/#dirname#',
         'work_dir'       => '#dump_root#/dump_hash',
 
-        'bedgraph_file'  => '#cs_output_dir#/gerp_conservation_scores.#name#.bedgraph',
+        'bedgraph_file'  => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.bedgraph',
         'chromsize_file' => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.chromsize',
         'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.bw',
         'bed_file'       => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
@@ -284,19 +283,18 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
             -input_ids  => [ {
                     'compara_db'           => $self->o('compara_db'),
-                    'curr_release'         => $self->o('curr_release'),
+                    'curr_release'         => $self->o('ensembl_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
-                    'dump_dir'             => $self->o('dump_dir'),
 
                     'lastz_patch_dbs'      => $self->o('lastz_patch_dbs'),
-                    'align_dump_options'   => $self->o('align_dump_options'),
+                    'alignment_dump_options' => $self->o('alignment_dump_options'),
                     'default_dump_options' => $self->o('default_dump_options'),
                     'ancestral_db'         => $self->o('ancestral_db'),
                 } ],
             -flow_into  => {
                 '1'    => [ 'DumpMultiAlign_start' ],
-                '2'    => { 'DumpTrees_start' => INPUT_PLUS() }, 
+                '2'    => [ 'DumpTrees_start' ],
                 '3'    => [ 'DumpConstrainedElements_start' ], 
                 '4'    => [ 'DumpConservationScores_start'  ], 
                 '5'    => [ 'DumpSpeciesTrees_start'        ], 
@@ -316,28 +314,14 @@ sub pipeline_analyses {
         },
         {	-logic_name => 'DumpTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        	-parameters => { 
-        		# 'basename'  => '#member_type#_#clusterset_id#',
-		        # 'name_root' => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
-		        'base_dir'  => '#dump_dir#',
-		        'work_dir'  => '#work_dir#/trees_#curr_release#',
-		    },
         	-flow_into => [ 'dump_trees_pipeline_start' ],
         },
         {	-logic_name => 'DumpConstrainedElements_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        	-parameters => {
-        		'work_dir' => '#work_dir#/constrained_elements_#curr_release#',
-        	},
         	-flow_into  => [ 'mkdir_constrained_elems' ],
         },
         {	-logic_name => 'DumpConservationScores_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        	-parameters => {
-        		'export_dir' => '#dump_dir#',
-        		'work_dir'   => '#work_dir#/conservation_scores_#curr_release#',
-        	},
-        	# -flow_into  => { 1 => {'mkdir_conservation_scores' => INPUT_PLUS()} },
         	-flow_into => [ 'mkdir_conservation_scores' ],
         },
         {	-logic_name => 'DumpSpeciesTrees_start',
@@ -352,7 +336,7 @@ sub pipeline_analyses {
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => {
         		'1->A' => [ 'DumpMultiAlign_MLSSJobFactory' ],
-        		'A->1' => { 'patch_lastz_dump' => { mlss_id => '#mlss_id#', compara_db => '#compara_db#' } },
+                        'A->1' => [ 'patch_lastz_dump' ],
         	},
         },
         
@@ -363,18 +347,12 @@ sub pipeline_analyses {
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
         	-parameters => {
         		'ftp_locations' => $self->o('ftp_locations'),
-        		'dump_dir'      => $self->o('dump_dir'     ),
         	},
         	-flow_into => [ 'symlink_prev_dumps' ],
         },
 
         {	-logic_name => 'symlink_prev_dumps',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
-        	-parameters => {
-        		'curr_release' => $self->o('curr_release'),
-        		'ftp_root'     => $self->o('ftp_root'    ),
-        		'dump_dir'     => $self->o('dump_dir'    ),
-        	},
         	-flow_into => ['create_all_dump_jobs'], # to top up any missing dumps
         },
 
@@ -382,9 +360,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
             -parameters => {
             	'lastz_dump_path' => $self->o('lastz_dump_path'),
-            	'curr_release'    => $self->o('curr_release'   ),
-            	'compara_db'      => $self->o('compara_db'),
-            	'ftp_root'        => $self->o('ftp_root'       ),
             },
             -rc_name => 'default_with_registry',
         },

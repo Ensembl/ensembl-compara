@@ -150,6 +150,7 @@ my $alignment_set = "primates";
 my $dir = '';
 my $debug = 0;
 my $max_files_per_dir = 500000;
+my $genome_dumps_dir;
 my ( $default_aln_alias, $default_anc_alias ) = ( 'Multi', 'ancestral_curr' );
 my ( $help, $mlss_id, $alignment_db, $ancestral_db, $registry_file );
 
@@ -162,6 +163,7 @@ GetOptions(
   "alignment_set=s" => \$alignment_set,
   "mlss_id=i" => \$mlss_id,
   "dir=s" => \$dir,
+  'genome_dumps_dir=s' => \$genome_dumps_dir,
   "debug" => \$debug,
 );
 
@@ -224,9 +226,10 @@ else {
     $compara_dba = $reg->get_DBAdaptor( $default_aln_alias, 'compara' );
 }
 
-# When run on a production database, the connections to the core databases
-# will have disconnect_when_inactive set to 1.
-map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+# We get the DNA sequences from the genome dumps, except for the ancestral_sequences
+map {$_->db_adaptor->dbc->disconnect_when_inactive($genome_dumps_dir)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+$compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('ancestral_sequences')->db_adaptor->dbc->disconnect_when_inactive(0);
+$compara_dba->get_GenomeDBAdaptor->dump_dir_location($genome_dumps_dir);
 
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
 my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_production_name();

@@ -795,6 +795,9 @@ sub get_faidx_helper {
     my $self = shift;
     my $mask = shift;
 
+    # Ancestral sequences are not dumped
+    return undef if $self->name eq 'ancestral_sequences';
+
     my $faidx_key = '_faidx_helper_' . ($mask // '');
     unless (exists $self->{$faidx_key}) {
         $self->{$faidx_key} = undef;

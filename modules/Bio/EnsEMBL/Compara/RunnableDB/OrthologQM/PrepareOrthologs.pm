@@ -49,6 +49,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -78,6 +80,8 @@ sub fetch_input {
     #$self->param('current_db_url', $db_url);
     $self->param('current_dba', $dba);
 
+    $self->dbc->disconnect_if_idle() if $self->dbc;
+
     my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
     $self->param('mlss_id', $mlss->dbID);
@@ -93,6 +97,22 @@ sub fetch_input {
         $self->param( 'orth_objects', $current_homologs );
     }
 
+    # Preload the members
+    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($dba->get_AlignedMemberAdaptor, $self->param('orth_objects'));
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($dba->get_GeneMemberAdaptor, $sms);
+
+    # Preload the exon boundaries for the whole genomes even though some of the members will be reused
+    my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
+    my %exon_boundaries;
+    my $sth = $dba->dbc->prepare($sql);
+    $sth->execute($species1_id, $species2_id);
+    while (my $row = $sth->fetchrow_arrayref()) {
+        my ($gene_member_id, $dnafrag_start, $dnafrag_end) = @$row;
+        push @{ $exon_boundaries{$gene_member_id} }, [$dnafrag_start, $dnafrag_end];
+    }
+    $sth->finish;
+    $self->param('exon_boundaries', \%exon_boundaries);
+
     # disconnect from compara_db
     $dba->dbc->disconnect_if_idle();
 }
@@ -107,31 +127,27 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
+    $self->dbc->disconnect_if_idle() if $self->dbc;
+
     my @orth_info;
     my $c = 0;
 
-    # prepare SQL statement to fetch the exon boundaries for each gene_members
-    my $sql = 'SELECT dnafrag_start, dnafrag_end FROM exon_boundaries WHERE gene_member_id = ?';
-    
-    # my $db = defined $self->db ? $self->db : $self->compara_dba; # mostly for unit test purposes
-    my $db = $self->compara_dba;
-    my $sth = $db->dbc->prepare($sql);
+    my $exon_boundaries = $self->param('exon_boundaries');
 
     my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
-        my @gene_members = @{ $orth->get_all_GeneMembers() };
+        my @seq_members = @{ $orth->get_all_Members() };
         my (%orth_ranges, @orth_dnafrags, %orth_exons);
         my $has_transcript_edits = 0;
-        foreach my $gm ( @gene_members ){
-            $has_transcript_edits ||= $gm->get_canonical_SeqMember->has_transcript_edits;
+        foreach my $sm ( @seq_members ){
+            $has_transcript_edits ||= $sm->has_transcript_edits;
 
+            my $gm = $sm->gene_member;
             push( @orth_dnafrags, { id => $gm->dnafrag_id, start => $gm->dnafrag_start, end => $gm->dnafrag_end } );
             $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
             
             # get exon locations
-            $sth->execute( $gm->dbID );
-            my $ex_bounds = $sth->fetchall_arrayref([]);
-            $orth_exons{$gm->genome_db_id} = $ex_bounds;
+            $orth_exons{$gm->genome_db_id} = $exon_boundaries->{$gm->dbID};
         }
 
         # When there are transcript edits, the coordinates cannot be

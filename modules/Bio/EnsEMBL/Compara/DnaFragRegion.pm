@@ -166,7 +166,6 @@ sub synteny_region_id {
   Exceptions  : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
                 coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
                 cannot be retrieved and returns undef.
-  Caller      : $object->methodname
 
 =cut
 
@@ -175,22 +174,5 @@ sub slice {
     return $self->get_Slice();
 }
 
-
-=head2 length
-
-  Arg 1       : -none-
-  Example     : $length = $dnafragregion->length;
-  Description : Returns the lenght of this DnaFragRegion
-  Returntype  : integer
-  Exceptions  :
-  Caller      : $object->methodname
-
-=cut
-
-sub length {
-  my ($self) = @_;
-
-  return $self->dnafrag_end - $self->dnafrag_start + 1;
-}
 
 1;

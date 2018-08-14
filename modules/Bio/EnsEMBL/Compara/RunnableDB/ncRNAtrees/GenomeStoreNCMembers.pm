@@ -136,7 +136,7 @@ sub run {
         ### ochotona_princeps datafix
 
         foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
-            if ($gene->biotype =~ /rna/i) {
+            if ($gene->get_Biotype->biotype_group =~ /noncoding$/i) {
 #                my $gene_stable_id = $gene->stable_id or die "Could not get stable_id from gene with id=".$gene->dbID();
                 $self->store_ncrna_gene($gene);
 #                push @stable_ids, $gene_stable_id;
@@ -162,13 +162,13 @@ sub store_ncrna_gene {
     my $gene_member_stored = 0;
 
     my $merged_short_and_long_ncRNA = 0;
-    my %biotypes = map{$_->biotype => 1}@{$gene->get_all_Transcripts};
-    if ((scalar keys %biotypes > 1) and (defined $biotypes{'lincRNA'})) {
+    my %biotypes = map{$_->get_Biotype->biotype_group => 1}@{$gene->get_all_Transcripts};
+    if ((scalar keys %biotypes > 1) and (defined $biotypes{'lnoncoding'})) {
         $merged_short_and_long_ncRNA = 1;
     }
 
     for my $transcript (@{$gene->get_all_Transcripts}) {
-        next if ($merged_short_and_long_ncRNA and ($transcript->biotype eq 'lincRNA'));
+        next if ($merged_short_and_long_ncRNA and ($transcript->get_Biotype->biotype_group eq 'lnoncoding'));
 
         if (defined $transcript->translation) {
             warn ("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=", $transcript->dbID. ")\n");

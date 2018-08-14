@@ -55,6 +55,8 @@ sub fetch_input {
 
     #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
     my $genome_db         = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
+    my $karyo_dnafrags    = $self->compara_dba->get_DnaFragAdaptor->fetch_all_karyotype_DnaFrags_by_GenomeDB($genome_db);
+    my $non_ref_dnafrags  = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db, -IS_REFERENCE => 0);
     my $coord_systems     = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
 
     my $sql = "
@@ -62,14 +64,13 @@ sub fetch_input {
     FROM genomic_align JOIN dnafrag USING (dnafrag_id)
     WHERE genome_db_id= ? AND method_link_species_set_id=?";
 
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($genome_db->dbID, $self->param_required('mlss_id'));
-    my %coord_systems_in_aln = map {$_->[0] => 1} @{$sth->fetchall_arrayref};
+    my $coord_systems_in_aln = $self->compara_dba->dbc->sql_helper->execute_simple(
+        -SQL => $sql,
+        -PARAMS => [$genome_db->dbID, $self->param_required('mlss_id')],
+    );
 
-    my @coord_system_names_by_rank = map {$_->name} (sort {$a->rank <=> $b->rank} (grep {$coord_systems_in_aln{$_->name}} @$coord_systems));
-
-    $self->param('coord_systems', \@coord_system_names_by_rank);
-
+    $self->param('chrom_dumps', [@$karyo_dnafrags, @$non_ref_dnafrags]);
+    $self->param('coord_systems', $coord_systems_in_aln);
 }
 
 
@@ -77,13 +78,15 @@ sub write_output {
     my $self = shift @_;
 
         my @all_cs = @{$self->param('coord_systems')};
-        #Set up chromosome job
-        my $cs = shift @all_cs;
-        $self->dataflow_output_id( {'coord_system_name' => $cs}, 2) if $cs;
 
-        #Set up supercontig job
-        foreach my $other_cs (@all_cs) {
-            $self->dataflow_output_id( {'coord_system_name' => $other_cs}, 3);
+        #Set up chromosome jobs
+        foreach my $dnafrag (@{$self->param('chrom_dumps')}) {
+            $self->dataflow_output_id( {'dnafrag_name' => $dnafrag->name, 'dnafrag_id' => $dnafrag->dbID}, 2);
+        }
+
+        #Set up coord-system jobs
+        foreach my $cs (@all_cs) {
+            $self->dataflow_output_id( {'coord_system_name' => $cs}, 3);
         }
 
         #Set up other job

@@ -103,6 +103,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:all);
 
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
+
 =head2 new
 
   Arg [-DNAFRAG]
@@ -147,6 +148,48 @@ sub new {
 }
 
 
+=head2 expand_Locus
+
+  Arg [1]     : int size (optional)
+                The desired number of flanking basepairs around the locus.
+                The size may also be provided as a percentage of the locus
+                size such as 200% or 80.5%. In this case, $size represents
+                the new size, e.g. 100% gives no context and 200% gives 50%
+                of the size of the locus on either side of the locus
+  Example     : my $seq_flanking = $gene_member->expand_Locus('500%')->get_sequence();
+  Description : Creates a copy of this Locus with an expanded size
+  Returntype  : Bio::EnsEMBL::Compara::Locus object
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub expand_Locus {
+    my ($self, $size) = @_;
+
+    ## Size may be given as a percentage of the length of the locus
+    ## Size = 100% gives no context
+    ## Size = 200% gives context - 50% the size of the locus either side of locus
+    my $length = $self->length;
+    $size = int(($1-100) * $length / 200) if $size =~ /([\d+\.]+)%/;
+
+    my $start = $self->dnafrag_start - $size;
+    my $end   = $self->dnafrag_end   + $size;
+
+    $start    = 1                      if $start < 1;
+    $end      = $self->dnafrag->length if $end   > $self->dnafrag->length;
+
+    my $hash = {
+        'dnafrag'           => $self->dnafrag,
+        'dnafrag_id'        => $self->dnafrag->dbID,
+        'dnafrag_start'     => $start,
+        'dnafrag_end'       => $end,
+        'dnafrag_strand'    => $self->dnafrag_strand,
+    };
+    return bless $hash, 'Bio::EnsEMBL::Compara::Locus';
+}
+
+
 =head2 dnafrag
 
   Arg [1]     : (optional) Bio::EnsEMBL::Compara::DnaFrag object
@@ -160,7 +203,6 @@ sub new {
   Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                 object or if $dnafrag does not match a previously defined
                 dnafrag_id
-  Caller      : object->methodname
 
 =cut
 
@@ -209,7 +251,6 @@ sub dnafrag {
   Returntype : integer
   Exceptions : thrown if $dnafrag_id does not match a previously defined
                dnafrag
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -280,7 +321,6 @@ sub _lazy_getter_setter {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -303,7 +343,6 @@ sub dnafrag_start {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -326,7 +365,6 @@ sub dnafrag_end {
                to fetch and set all the direct attributes from the database using the dbID
   Returntype : integer
   Exceptions : none
-  Caller     : object->methodname
   Status     : Stable
 
 =cut
@@ -336,6 +374,22 @@ sub dnafrag_strand {
 
   assert_strand($_[0]) if( @_ and defined($_[0]) );
   return $obj->_lazy_getter_setter('dnafrag_strand', @_);
+}
+
+
+=head2 length
+
+  Example     : $length = $dnafragregion->length;
+  Description : Returns the lenght of this Locus
+  Returntype  : integer
+  Exceptions  : none
+
+=cut
+
+sub length {
+    my ($self) = @_;
+
+    return $self->dnafrag_end - $self->dnafrag_start + 1;
 }
 
 
@@ -389,11 +443,12 @@ sub get_sequence {
     my $mask = shift;
 
     my $seq;
-    if (my $faidx_helper = $self->genome_db->get_faidx_helper($mask)) {
+    # Only reference dnafrags are dumped
+    if ($self->dnafrag->is_reference && (my $faidx_helper = $self->genome_db->get_faidx_helper($mask))) {
         # Sequence names in the Fasta file are expected to be dnafrag_ids;
         # Coordinates are 0-based
         $seq = $faidx_helper->get_sequence2_no_length($self->dnafrag_id, $self->dnafrag_start-1, $self->dnafrag_end-1);
-        die "sequence length doesn't match !" if length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
+        die "sequence length doesn't match !" if CORE::length($seq) != ($self->dnafrag_end-$self->dnafrag_start+1);
         reverse_comp(\$seq) if $self->dnafrag_strand < 0;
 
     } else {
@@ -428,7 +483,6 @@ sub get_sequence {
   Exceptions : thrown if $genomic_align->dnafrag is not
                defined and cannot be fetched from other
                sources.
-  Caller     : object->methodname
   Status     : Stable
 
 =cut

@@ -53,6 +53,8 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
@@ -108,6 +110,7 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
          'default'      => {'LSF' => [ '', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ]  },
+         'default_with_registry'      => {'LSF' => [ '', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ]  },
          '1Gb_job'      => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
          '2Gb_job'      => {'LSF' => [ '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
          '4Gb_job'      => {'LSF' => [ '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
@@ -135,6 +138,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'rel_db'        => $self->o('rel_db'),
 
+        'production_registry' => $self->o('production_registry'),
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'  ),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),

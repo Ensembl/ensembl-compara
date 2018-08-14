@@ -68,7 +68,7 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_full_merge_'.$self->o('ensembl_release'),         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_'.$self->o('rel_with_suffix'),         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara3',

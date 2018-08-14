@@ -54,42 +54,29 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub skip_genomic_align_block_ids {
     my $self = shift @_;
 
-    #Note this is using the database set in $self->param('compara_db').
-    my $compara_dba = $self->compara_dba;
+    my $sql = 'SELECT DISTINCT genomic_align_block_id FROM genomic_align JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = ? AND genome_db_id = ?';
 
-    my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
+    my $gab_ids_to_skip = $self->compara_dba->dbc->sql_helper->execute_simple(
+        -SQL => $sql,
+        -PARAMS => [$self->param_required('mlss_id'), $self->param_required('genome_db_id')],
+    );
 
-    my $genome_db = $genome_db_adaptor->fetch_by_dbID($self->param('genome_db_id'));
-    my $species_name = $genome_db->name;
+    my %gab_ids_to_skip = map {$_ => 1} @$gab_ids_to_skip;
 
-    my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-
-    #
-    #Find genomic_align_blocks which do not contain $self->param('species')
-    #
-    my $gab_ids = [];
-    my $all_genomic_align_blocks = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-    while (my $this_genomic_align_block = shift @$all_genomic_align_blocks) {
-	my $has_skip = 0;
-	foreach my $this_genomic_align (@{$this_genomic_align_block->get_all_GenomicAligns()}) {
-	    if (($this_genomic_align->genome_db->name eq $species_name) or
-		($this_genomic_align->genome_db->name eq "ancestral_sequences")) {
-		$has_skip = 1;
-		last;
-	    }
-	}
-        push @$gab_ids, $this_genomic_align_block->dbID unless $has_skip;
-    }
-    return $gab_ids;
+    return [grep {!$gab_ids_to_skip{$_}} @{$self->all_genomic_align_block_ids}];
 }
+
 
 sub all_genomic_align_block_ids {
     my $self = shift @_;
 
-    #Note this is using the database set in $self->param('compara_db').
-    return $self->compara_dba->dbc->db_handle->selectcol_arrayref('SELECT genomic_align_block_id FROM genomic_align_block WHERE method_link_species_set_id = ?', undef, $self->param('mlss_id'));
+    my $ancestral_gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('ancestral_sequences');
+    my $sql = 'SELECT DISTINCT genomic_align_block_id FROM genomic_align JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id = ? AND genome_db_id != ?';
+
+    return $self->compara_dba->dbc->sql_helper->execute_simple(
+        -SQL => $sql,
+        -PARAMS => [$self->param_required('mlss_id'), $ancestral_gdb->dbID],
+    );
 }
 
 
@@ -97,20 +84,15 @@ sub write_output {
     my $self = shift @_;
 
     my $gab_ids;
-    my $extra_args;
     my $region_name;
 
     unless ($self->param('do_all_blocks')) {
         # Here we select the blocks that don't contain $genome_db
-        #Note this is using the database set in $self->param('compara_db').
-        my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
         $gab_ids = $self->skip_genomic_align_block_ids();
-        $extra_args = ['--skip_species', $genome_db->name];
         $region_name = 'other';
     } else {
         # In this mode, we simply take all the blocks
         $gab_ids = $self->all_genomic_align_block_ids();
-        $extra_args = [];
         $region_name = 'all';
     }
 
@@ -138,7 +120,7 @@ sub write_output {
                     'start'                 =>  $start_gab_id,
                     'end'                   =>  $gab_id,
                     'filename_suffix'       =>  '',
-                    'extra_args'            =>  $extra_args,
+                    'extra_args'            =>  [],
                     'num_blocks'            =>  $gab_num,
                 };
 
@@ -164,7 +146,7 @@ sub write_output {
                              'start'                 =>  $start_gab_id,
                              'end'                   =>  $end_gab_id,
                              'filename_suffix'       =>  "_$chunk",
-                             'extra_args'            =>  [@$extra_args, '--chunk_num', $chunk],
+                             'extra_args'            =>  ['--chunk_num', $chunk],
                              'num_blocks'            =>  $this_num_blocks,
                             };
 

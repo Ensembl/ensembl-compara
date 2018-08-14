@@ -65,6 +65,10 @@ sub fetch_input {
     my $cmd = $self->param('cmd');
     push @$cmd, @{$self->param_required('extra_args')};
 
+    if ($self->param('genome_dumps_dir')) {
+        push @$cmd, '--genome_dumps_dir', $self->param('genome_dumps_dir');
+    }
+
     #Write a temporary file to store gabs to dump
     if ($self->param('start') && $self->param('end')) {
         my $tmp_file = $self->_write_gab_file();

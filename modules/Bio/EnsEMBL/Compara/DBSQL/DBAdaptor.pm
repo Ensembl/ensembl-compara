@@ -259,5 +259,26 @@ sub url {
 }
 
 
+=head2 clear_caches
+
+  Example     : $self->compara_dba->clear_caches();
+  Description : Clear all the Object Adaptor caches. This is needed if
+                the objects may have been altered by a separate process.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub clear_caches {
+    my $self = shift;
+    foreach my $object (qw(DnaFrag GenomeDB Method MethodLinkSpeciesSet NCBITaxon SpeciesSet SpeciesTree)) {
+        my $adaptor = $self->get_adaptor($object);
+        $adaptor->_id_cache->clear_cache() if exists $adaptor->{_id_cache};
+    }
+}
+
+
 1;
 

@@ -48,6 +48,7 @@ sub default_options {
     	'ancestral_dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl",
     	'ancestral_stats_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_stats.pl",
 
+        'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
 
         # 'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
     	'dump_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
@@ -65,8 +66,13 @@ sub pipeline_wide_parameters {
 
         'reg_conf'   => $self->o('reg_conf'),
         'compara_db' => $self->o('compara_db'),
+        'ancestral_db' => $self->o('ancestral_db'),
+
         'dump_dir' => $self->o('dump_dir'),
         'anc_output_dir' => "#dump_dir#/fasta/ancestral_alleles",
+        'anc_tmp_dir' => "#dump_dir#/tmp",
+
+        'genome_dumps_dir' => $self->o('genome_dumps_dir'),
     };
 }
 

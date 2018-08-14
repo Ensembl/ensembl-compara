@@ -40,7 +40,7 @@ sub pipeline_analyses_dump_anc_alleles {
     	{	-logic_name => 'mk_ancestral_dump_dir',
     		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     		-parameters => {
-    			cmd => 'mkdir -p #anc_output_dir#'
+                    cmd => 'mkdir -p #anc_output_dir# #anc_tmp_dir#'
     		},
     		# -input_ids  => [ {} ],
     		-flow_into => ['fetch_genome_dbs'],
@@ -61,24 +61,24 @@ sub pipeline_analyses_dump_anc_alleles {
         {	-logic_name => 'get_ancestral_sequence',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         	-parameters => {
-        		species_outdir => '#anc_output_dir#/#species_dir#',
+                        species_outdir => '#anc_tmp_dir#/#species_dir#',
         		cmd => join('; ', 
-        			'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db#',
+                                'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db# --genome_dumps_dir #genome_dumps_dir#',
         			'cd #species_outdir#',
                     'find . -empty -type f -delete',
-        			'perl #ancestral_stats_program# --reg_conf #reg_conf# --species #species_name# --compara #compara_db# > summary.txt',
+                                'perl #ancestral_stats_program# > summary.txt',
         			),
         	},
         	-flow_into => [ 'tar' ],
-        	-analysis_capacity => 2,
+        	-hive_capacity => 400,
         },
 
         {	-logic_name => 'tar',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         	-parameters => {
         		cmd => join( '; ',
-        			'cd #anc_output_dir#',
-        			'tar cfvz #species_dir#.tar.gz #species_dir#/'
+                                    'cd #anc_tmp_dir#',
+                                    'tar cfvz #anc_output_dir#/#species_dir#.tar.gz #species_dir#/'
         		)
         	}
         },

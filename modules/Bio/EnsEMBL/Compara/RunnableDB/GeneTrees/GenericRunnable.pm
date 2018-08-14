@@ -240,7 +240,6 @@ sub run_generic_command {
     my $self = shift;
 
     my $gene_tree = $self->param('gene_tree');
-    my $newick;
 
     # The order is very important !
     # First, we need to load the species tree to attach the stn_ids tags to the genome_dbs / the gene-tree leaves
@@ -262,12 +261,8 @@ sub run_generic_command {
         $aln_tree = $gene_tree;
     }
 
-    if (($self->param('aln_format') eq 'phylip') && (!defined($self->param('map_long_seq_names'))) ){
-        $self->param('map_long_seq_names', 1);
-    }
-
     my $map_long_seq_names;
-    if ($self->param('map_long_seq_names')){
+    if ($self->param('map_long_seq_names') // ($self->param('aln_format') eq 'phylip')) {
         $map_long_seq_names = {};
     }
 
@@ -309,93 +304,14 @@ sub run_generic_command {
 
     if ($self->param('binarize')){
         print "Binarizing tree is active\n" if($self->debug);
-
-        # 1 - parse_newick into genetree-structure
-        my $newick_multifurcated = $self->_slurp($self->param('output_file'));
-        my $multifurcated_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_multifurcated, "Bio::EnsEMBL::Compara::GeneTreeNode");
-
-        #List of multifurcations given a tree.
-        #In order to avoid changing parts of the tree that are not in the multifurcations, we have local MRCAs.
-        #e.g.:
-        #   multifurcations[0] = (child_1,child2,child3)
-        #   multifurcations[1] = (child_7,child8,child9)
-        #------------------------------------------------
-        my $multifurcations = $multifurcated_tree_root->find_multifurcations;
-
-        #IMPORTANT:
-        #----------------------------------------------------------------------------------------------------------------------------
-        # Binarization methods have not been tested with nested multifurcations. At this point we only have "leaves" multifurcations.
-        #----------------------------------------------------------------------------------------------------------------------------
-
-        #If there are no multifurcations in this array it means that the tree is already binary
-        #So no need to keep going
-        if (scalar(@{$multifurcations}) > 0) {
-
-            #fetch species tree
-            my $species_tree = $self->param('species_tree');
-
-            #------------------
-            # MRCA binarization
-            #------------------
-            print "multifurcated_tree_root before MRCA binarization:\n" if ($self->debug);
-            $multifurcated_tree_root->print_tree(10) if ($self->debug);
-
-            # 2 - binarize (MRCA) that structure
-            $multifurcated_tree_root->binarize_flat_tree_with_species_tree($species_tree, $multifurcations);
-            $multifurcated_tree_root->minimize_tree();
-
-            print "multifurcated_tree_root after MRCA binarization:\n" if ($self->debug);
-            $multifurcated_tree_root->print_tree(10) if ($self->debug);
-
-            #After trying to do a MRCA binarization we check again for any left multifurcations to be resolved randomly.
-            foreach my $node (@{$multifurcated_tree_root->get_all_nodes}) {
-                next if $node->is_leaf;
-
-                #-------------------------------
-                # Random binarization, per node.
-                #-------------------------------
-                if (scalar(@{$node->children}) > 2) {
-                    print "Tree is still not binary\n" if($self->debug);
-
-                    # 3 - binarize (random) 
-                    print "Performing random binarization on node: $node\n";
-                    $node->random_binarize_node();
-
-                    #Note the different ryo.
-                    #At this point there is no information on taxon_id. If we try -x it will fail
-                    #print "MULTI:".$multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
-                    #print "BIN:".$binTree_root->newick_format('ryo', '%{-n}:%{d}')."\n" if($self->debug > 1);
-
-                    $multifurcated_tree_root->minimize_tree();
-                    $multifurcated_tree_root->print_tree(10) if($self->debug);
-                }
-            }
-        }
-
-        # 4 - print structure to input_file
-        # ovewrite the output_file with the binirized tree
-        my $newick = $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}');
-        $self->_spurt($self->param('output_file'), $newick);
+        $self->binarize_tree_file($self->param('output_file'), $self->param('species_tree'), $map_long_seq_names);
     }
 
     unless ($self->param('read_tags')) {
         my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
         if ($self->param('run_treebest_sdi')) {
             print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
-
-            if (defined $map_long_seq_names){
-                #we need to re-map to the lond indentidiers
-                foreach my $tmp_seq ( keys( %$map_long_seq_names ) ) {
-                    my $fix_seq = $map_long_seq_names->{$tmp_seq}{'seq'};
-                    my $fix_suf = $map_long_seq_names->{$tmp_seq}{'suf'};
-
-                    my $fix_seq_name = "$fix_seq\_$fix_suf";
-
-                    #Replace only whole words:
-                    $output =~ s/\b$tmp_seq\b/$fix_seq_name/;
-                }
-            }
-
+            $output = $self->expand_seq_names($output, $map_long_seq_names);
             $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
         }
 		unless($output){
@@ -416,18 +332,8 @@ sub get_gene_tree_file {
 
     my $newick = $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
 
-    if ($map_long_seq_names){
         #we need to re-map to the small indentidiers
-        foreach my $tmp_seq ( keys( %{$map_long_seq_names} ) ) {
-            my $fix_seq = $map_long_seq_names->{$tmp_seq}->{'seq'};
-            my $fix_suf = $map_long_seq_names->{$tmp_seq}->{'suf'};
-
-            my $fix_seq_name = "$fix_seq\_$fix_suf";
-
-            #Replace only whole words:
-            $newick =~ s/\b$fix_seq_name\b/$tmp_seq/;
-        }
-    }
+    $newick = $self->shorten_seq_nemes($newick, $map_long_seq_names);
 
     return $self->_write_temp_tree_file($gene_tree_file, $newick);
 }

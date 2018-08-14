@@ -408,6 +408,9 @@ sub pipeline_analyses {
 
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
+                -parameters    => {
+                    'mirbase_url'   => $self->o('mirbase_url'),
+                },
                 -flow_into     => [ 'cluster_qc_factory' ],
                 -rc_name       => '2Gb_job',
             },
@@ -654,20 +657,14 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'secondary_structure_decision',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
-                -parameters => {
-                    'tags'  => {
-                        'aln_length' => 0,
-                    },
-                },
-
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into => {
                     1 => WHEN(
-                        '(#tree_aln_length# <= 200)'                                    => 'pre_sec_struct_tree_1_core',
-                        '( (#tree_aln_length# > 200) && (#tree_aln_length# < 600) )'    => 'pre_sec_struct_tree_2_cores',
-                        '( (#tree_aln_length# > 600) && (#tree_aln_length# < 1300) )'   => 'pre_sec_struct_tree_4_cores',
-                        '(#tree_aln_length# > 1300)'                                    => 'pre_sec_struct_tree_8_cores',
-                        #'( #tree_aln_length# > 4000 )'                                 => 'pre_sec_struct_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
+                        '(#aln_length# <= 200)'                                 => 'pre_sec_struct_tree_1_core',
+                        '( (#aln_length# > 200) && (#aln_length# <= 600) )'     => 'pre_sec_struct_tree_2_cores',
+                        '( (#aln_length# > 600) && (#aln_length# <= 1300) )'    => 'pre_sec_struct_tree_4_cores',
+                        '(#aln_length# > 1300)'                                 => 'pre_sec_struct_tree_8_cores',
+                        #'( #aln_length# > 4000 )'                              => 'pre_sec_struct_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
                     ),
                 },
                 %decision_analysis_params,
@@ -776,6 +773,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
             -rc_name => '250Mb_job',
@@ -791,6 +789,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_4_cores' ],
                        },
             -rc_name => '500Mb_2c_job',
@@ -806,6 +805,7 @@ sub pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_8_cores' ],
                        },
             -rc_name => '1Gb_4c_job',
@@ -831,6 +831,7 @@ sub pipeline_analyses {
                             'mafft_exe'             => $self->o('mafft_exe'),
                             'raxml_number_of_cores' => 4,
                             'prank_exe'             => $self->o('prank_exe'),
+                            'genome_dumps_dir'      => $self->o('genome_dumps_dir'),
                            },
             -flow_into => {
                            -1 => ['genomic_alignment_himem'],
@@ -894,6 +895,7 @@ sub pipeline_analyses {
                             'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
+                            'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
          -rc_name => '8Gb_8c_job',
@@ -913,6 +915,7 @@ sub pipeline_analyses {
                             'raxml_number_of_cores' => 8,
                             'mafft_exe' => $self->o('mafft_exe'),
                             'prank_exe' => $self->o('prank_exe'),
+                            'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
          -rc_name => '32Gb_8c_job',

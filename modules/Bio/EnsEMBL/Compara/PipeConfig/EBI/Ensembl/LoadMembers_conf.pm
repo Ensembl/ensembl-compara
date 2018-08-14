@@ -109,7 +109,7 @@ sub default_options {
             -port   => 4519,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 93,
+            -db_version => 94,
         },
 
         'livemirror_loc' => {
@@ -117,7 +117,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 92,
+            -db_version => 93,
         },
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
@@ -134,7 +134,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_92',
+        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_93',
     };
 }
 

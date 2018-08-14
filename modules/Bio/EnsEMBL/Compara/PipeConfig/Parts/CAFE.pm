@@ -144,6 +144,16 @@ sub pipeline_analyses_cafe {
             -hive_capacity => $self->o('cafe_capacity'),
             -batch_size    => 20,
             -rc_name       => '1Gb_job',
+            -flow_into  => {
+                -1 => [ 'CAFE_json_himem' ],
+            }
+        },
+
+        {   -logic_name    => 'CAFE_json_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE',
+            -hive_capacity => $self->o('cafe_capacity'),
+            -batch_size    => 20,
+            -rc_name       => '2Gb_job',
         },
 
         {   -logic_name         => 'hc_cafe_results',

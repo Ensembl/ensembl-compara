@@ -33,7 +33,18 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -mlss_id <your_MLSS_id> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss> -epo_db <most_recent_epo_low_coverage_database>
+
+-epo_db should ideally contain EPO-2X alignments of all the genomes used in the ncRNA-trees. However, due to release coordination considerations, this may not be possible. In this case, you can use the one from the previous release
+
+=head1 EXAMPLES
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf ...
+
+
+e94
+    -mlss_id 40122 -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url ensembl_compara_93) -epo_db $(mysql-ens-compara-prod-1 details url ensembl_compara_93)
+
 
 =head1 DESCRIPTION
 
@@ -75,6 +86,7 @@ sub default_options {
 
             'pipeline_name'    => 'compara_nctrees_'.$self->o('rel_with_suffix'),
 
+            'test_mode' => 1, #set this to 0 if this is production run
 
             # tree break
             'treebreak_gene_count'     => 400,
@@ -115,6 +127,9 @@ sub default_options {
             'rfam_expanded_basename' => 'Rfam.cm',
             'rfam_expander'          => 'gunzip ',
 
+            # miRBase database
+            'mirbase_url'           => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/mirbase_22',
+
             # CAFE parameters
             'initialise_cafe_pipeline'  => 1,
             # Use production names here
@@ -124,8 +139,21 @@ sub default_options {
             # Other parameters
             'infernal_mxsize'       => 10000,
 
-            # For the homology_id_mapping
-            'prev_rel_db'  => "mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_91",
+            # connection parameters
+
+            'reg1' => {
+                       -host   => 'mysql-ens-sta-1',
+                       -port   => '4519',
+                       -user   => 'ensro',
+                      },
+
+            'master_db' => {
+                            -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+                            -port   => 4485,
+                            -user   => 'ensro',
+                            -pass   => '',
+                            -dbname => 'ensembl_compara_master',
+                           },
     };
 }   
 

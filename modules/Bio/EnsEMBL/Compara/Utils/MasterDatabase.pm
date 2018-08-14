@@ -370,7 +370,7 @@ sub new_collection {
     my $compara_dba = shift;
     my $collection_name = shift;
     my $species_names = shift;
-    my($release, $dry_run) = rearrange([qw(RELEASE DRY_RUN)], @_);
+    my($release, $dry_run, $incl_components) = rearrange([qw(RELEASE DRY_RUN INCL_COMPONENTS)], @_);
 
 
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
@@ -378,6 +378,7 @@ sub new_collection {
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my @new_collection_gdbs = map {_find_most_recent_by_name($genome_db_adaptor, $_)} @$species_names;
+    @new_collection_gdbs = _expand_components(\@new_collection_gdbs) if $incl_components;
 
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
@@ -411,7 +412,7 @@ sub update_collection {
     my $compara_dba = shift;
     my $collection_name = shift;
     my $species_names = shift;
-    my($release, $dry_run) = rearrange([qw(RELEASE DRY_RUN)], @_);
+    my($release, $dry_run, $incl_components) = rearrange([qw(RELEASE DRY_RUN INCL_COMPONENTS)], @_);
 
     my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
     my $collection_ss;
@@ -438,6 +439,7 @@ sub update_collection {
             push( @new_collection_gdbs, $coll_gdb );
         }
     }
+    @new_collection_gdbs = _expand_components(\@new_collection_gdbs) if $incl_components;
 
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
@@ -480,6 +482,25 @@ sub _find_most_recent_by_name {
         $most_recent = $obj if ( !defined $most_recent || $obj->first_release > $most_recent->first_release );
     }
     return $most_recent;
+}
+
+=head2 _expand_components
+
+  Arg[1]      : Arrayref of GenomeDBs
+  Description : expand a list of GenomeDBs to include the component GenomeDBs
+  Returns     : Array of GenomeDBs (same as input if no polyploid genomes are passed)
+
+=cut
+
+sub _expand_components {
+    my $genome_dbs = shift;
+    my @expanded_gdbs;
+    foreach my $gdb ( @$genome_dbs ) {
+        push @expanded_gdbs, $gdb;
+        my $components = $gdb->component_genome_dbs;
+        push @expanded_gdbs, @$components if scalar @$components > 0;
+    }
+    return @expanded_gdbs;
 }
 
 =head2 print_method_link_species_sets_to_update_by_collection

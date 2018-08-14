@@ -275,7 +275,6 @@ sub score {
   Description: Getter/Setter for the attribute method_link_species_set_id.
   Returntype : integer
   Exceptions : returns undef if no ref.method_link_species_set_id
-  Caller     : object::methodname
 
 =cut
 
@@ -325,7 +324,6 @@ sub alignment_segments {
   Description: Getter/Setter for the attribute slice.
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : returns undef if no ref.slice
-  Caller     : object::methodname
 
 =cut
 
@@ -347,7 +345,6 @@ sub slice {
   Description: Getter/Setter for the attribute start.
   Returntype : int
   Exceptions : returns undef if no ref.start
-  Caller     : object::methodname
 
 =cut
 
@@ -369,7 +366,6 @@ sub start {
   Description: Getter/Setter for the attribute end relative to the begining of the slice.
   Returntype : int
   Exceptions : returns undef if no ref.end
-  Caller     : object::methodname
 
 =cut
 
@@ -392,7 +388,6 @@ sub end {
   Description: Getter/Setter for the attribute start relative to the begining of the dnafrag (genomic coords).
   Returntype : int
   Exceptions : returns undef if no ref.seq_region_start
-  Caller     : object::methodname
 
 =cut
 
@@ -416,7 +411,6 @@ sub seq_region_start {
   Description: Getter/Setter for the attribute end relative to the begining of the dnafrag (genomic coords).
   Returntype : int
   Exceptions : returns undef if no ref.seq_region_end
-  Caller     : object::methodname
 
 =cut
 
@@ -441,7 +435,6 @@ sub seq_region_end {
   Description: Getter/Setter for the attribute genomic_align strand.
   Returntype : int
   Exceptions : returns undef if no ref.strand
-  Caller     : object::methodname
 
 =cut
 
@@ -463,7 +456,6 @@ sub strand {
   Description: Getter/Setter for the attribute end.
   Returntype : int
   Exceptions : returns undef if no ref.reference_dnafrag_id 
-  Caller     : object::methodname
 
 =cut
 
@@ -489,7 +481,6 @@ sub reference_dnafrag_id {
   Description: Rebuilds the constrained element alignment
   Returntype : Bio::SimpleAlign object
   Exceptions : throw if you can not get a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object from the constrained element
-  Caller     : object::methodname
 
 =cut
 

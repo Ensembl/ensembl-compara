@@ -182,7 +182,6 @@ sub delete_by_genomic_align_block_id {
                score object (index 0). 
 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore objects. 
-  Caller     : object::methodname
   Status     : At risk
 
 =cut
@@ -425,7 +424,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                conservation score object (index 0). 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
                objects. 
-  Caller     : object::methodname
   Status     : At risk
 
 =cut

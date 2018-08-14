@@ -53,7 +53,7 @@ sub param_defaults {
 
         # So far the problem has been limited to one or two blocks, and I
         # don't want to inadvertently delete the whole alignment !
-        'max_blocks_to_delete'  => 2,
+        'max_blocks_to_delete'  => 3,
     };
 }
 

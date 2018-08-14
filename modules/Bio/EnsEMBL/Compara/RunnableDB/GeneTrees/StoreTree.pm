@@ -27,6 +27,7 @@ use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
@@ -193,6 +194,38 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     }
 
     return $aln_file;
+}
+
+
+sub shorten_seq_nemes {
+    my ($self, $string, $map_long_seq_names) = @_;
+    return $string unless $map_long_seq_names;
+    foreach my $tmp_seq ( keys( %{$map_long_seq_names} ) ) {
+        my $fix_seq = $map_long_seq_names->{$tmp_seq}->{'seq'};
+        my $fix_suf = $map_long_seq_names->{$tmp_seq}->{'suf'};
+
+        my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+        #Replace only whole words:
+        $string =~ s/\b$fix_seq_name\b/$tmp_seq/;
+    }
+    return $string;
+}
+
+
+sub expand_seq_names {
+    my ($self, $string, $map_long_seq_names) = @_;
+    return $string unless $map_long_seq_names;
+    foreach my $tmp_seq ( keys( %$map_long_seq_names ) ) {
+        my $fix_seq = $map_long_seq_names->{$tmp_seq}{'seq'};
+        my $fix_suf = $map_long_seq_names->{$tmp_seq}{'suf'};
+
+        my $fix_seq_name = "$fix_seq\_$fix_suf";
+
+        #Replace only whole words:
+        $string =~ s/\b$tmp_seq\b/$fix_seq_name/;
+    }
+    return $string;
 }
 
 
@@ -363,7 +396,6 @@ sub parse_newick_into_tree {
   }
 
   foreach my $leaf (@{$newroot->get_all_leaves}) {
-    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     my $seq_member_id = $leaf->name();
     my $old_leaf = $old_leaves{$seq_member_id};
     if (!$old_leaf) {
@@ -380,6 +412,7 @@ sub parse_newick_into_tree {
       $leaf->node_id($old_leaf->node_id);
       $leaf->adaptor($old_leaf->adaptor);
     }
+    bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";
@@ -521,6 +554,29 @@ sub store_alternative_tree {
     $self->store_genetree($newtree);
     return $newtree;
 }
+
+
+sub binarize_tree_file {
+    my ($self, $filename, $species_tree, $map_long_seq_names) = @_;
+
+    my $newick_multifurcated = $self->_slurp($filename);
+    $newick_multifurcated = $self->expand_seq_names($newick_multifurcated, $map_long_seq_names);
+    my $multifurcated_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_multifurcated, "Bio::EnsEMBL::Compara::GeneTreeNode");
+
+    # 2 - wrap in a GeneTree object
+    my $multifurcated_tree = new Bio::EnsEMBL::Compara::GeneTree;
+    $multifurcated_tree->{'_root'} = $multifurcated_tree_root;
+    $multifurcated_tree->{'_species_tree'} = $species_tree;
+
+    # 3 - binarize
+    $multifurcated_tree->binarize($self->debug);
+
+    # 4 - return the new newick
+    my $newick_binary = $multifurcated_tree_root->newick_format('ryo', '%{-n}:%{d}');
+    $newick_binary = $self->shorten_seq_nemes($newick_binary, $map_long_seq_names);
+    $self->_spurt($filename, $newick_binary);
+}
+
 
 sub parse_filtered_align {
     my ($self, $alnfile_ini, $alnfile_filtered, $cdna, $tree_to_delete_nodes) = @_;

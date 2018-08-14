@@ -63,6 +63,8 @@ sub default_options {
         'split_size'    => 0,
         'format'        => 'maf',
         'make_tar_archive'  => 1,
+
+        'genome_dumps_dir'  => undef,
     };
 }
 

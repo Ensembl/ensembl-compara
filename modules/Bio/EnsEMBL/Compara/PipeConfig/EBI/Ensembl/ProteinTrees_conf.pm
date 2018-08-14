@@ -96,7 +96,7 @@ sub default_options {
 
     # tree building parameters:
         'use_raxml'                 => 0,
-        'use_quick_tree_break'      => 0,
+        'use_quick_tree_break'      => 1,
         'use_notung'                => 0,
         'use_dna_for_phylogeny'     => 0,
 
@@ -137,7 +137,7 @@ sub default_options {
         'notung_capacity'           => 200,
         'copy_tree_capacity'        => 100,
         'ortho_tree_capacity'       => 250,
-        'quick_tree_break_capacity' => 100,
+        'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
         'other_paralogs_capacity'   => 150,
@@ -169,8 +169,8 @@ sub default_options {
         # Where the members come from (as loaded by the LoadMembers pipeline)
         'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
 
-        # If 'prev_rel_db' above is not set, you need to set all the dbs individually
-        #'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
+        # Points to the previous production database. Will be used for various GOC operations.
+        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/waakanni_protein_trees_93',
         #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
 
@@ -181,7 +181,7 @@ sub default_options {
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-        'clustering_mode'           => 'blastp',
+        'clustering_mode'           => 'hybrid',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'

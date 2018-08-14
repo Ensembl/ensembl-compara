@@ -55,6 +55,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -980,6 +981,8 @@ sub _load_GenomicAligns {
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
 
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $gab->get_all_GenomicAligns);
+
   foreach my $ga (@{ $gab->get_all_GenomicAligns }) {
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
@@ -1058,6 +1061,7 @@ sub _load_2XGenomes {
 
   #create all the adaptors now so that we can detect shared connections
   my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-URL => $pairwise_locations->{$_})} keys %$pairwise_locations);
+  $_->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir')) for values %pairwise_compara_dba;
 
   $self->iterate_by_dbc([keys %$pairwise_locations],
     sub {my $mlss_id = shift; return $pairwise_compara_dba{$mlss_id}->dbc;},
@@ -1337,7 +1341,7 @@ sub _dump_fasta_and_mfa {
 	print "FOUND 2X GENOME\n" if $self->debug;
 	print "num of frags " . @$ga . "\n" if $self->debug;
 	$self->_dump_2x_fasta($ga, $file, $seq_id, $mfa_fh);
-	return;
+	next;
     }
 
     #add taxon_id to end of fasta files

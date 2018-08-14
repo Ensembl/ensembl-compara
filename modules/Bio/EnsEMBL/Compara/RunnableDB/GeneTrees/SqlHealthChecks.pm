@@ -298,7 +298,7 @@ our $config = {
         tests => [
             {
                 description => 'Checks that the gene tree is binary (and minimized)',
-                query => 'SELECT gtn1.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn1 ON gtr.root_id=gtn1.root_id JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY clusterset_id, gtn1.root_id, gtn1.node_id HAVING COUNT(*) != IF(gtn1.node_id!=gtn1.root_id OR clusterset_id IN ("default","murinae") OR clusterset_id LIKE "nj-%" OR clusterset_id LIKE "mur\_nj-%" OR clusterset_id LIKE "mur\_ftga\_%" OR clusterset_id LIKE "phyml-%" OR clusterset_id LIKE "mur\_phyml-%" OR clusterset_id LIKE "rax%" OR clusterset_id LIKE "notung%" OR clusterset_id LIKE "treerecs%" OR clusterset_id LIKE "mur_rax%" OR clusterset_id LIKE "pg\_%" OR clusterset_id LIKE "mur\_pg\_%",2, IF(COUNT(*) = 2 AND COUNT(gtn2.seq_member_id) = 2, 2, 3) )',
+                query => 'SELECT gtn1.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn1 ON gtr.root_id=gtn1.root_id JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY clusterset_id, gtn1.root_id, gtn1.node_id HAVING COUNT(*) != IF(gtn1.node_id!=gtn1.root_id OR clusterset_id IN ("default","murinae") OR clusterset_id LIKE "nj-%" OR clusterset_id LIKE "mur\_nj-%" OR clusterset_id LIKE "phyml-%" OR clusterset_id LIKE "mur\_phyml-%" OR clusterset_id LIKE "rax%" OR clusterset_id LIKE "notung%" OR clusterset_id LIKE "treerecs%" OR clusterset_id LIKE "mur_rax%" OR clusterset_id LIKE "pg\_%" OR clusterset_id LIKE "mur\_pg\_%",2, IF(COUNT(*) = 2 AND COUNT(gtn2.seq_member_id) = 2, 2, 3) )',
             },
 
             {
@@ -391,7 +391,7 @@ our $config = {
         tests => [
             {
                 description => 'Each homology must be linked to exactly 2 members',
-                query => 'SELECT homology_id FROM homology LEFT JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# HAVING COUNT(*) != 2',
+                query => 'SELECT homology_id FROM homology LEFT JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# GROUP BY homology_id HAVING COUNT(*) != 2',
             },
             {
                 description => 'A pair of gene can only appear in 1 homology at most',

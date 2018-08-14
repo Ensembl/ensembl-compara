@@ -282,11 +282,6 @@ sub store {
 
   if ( !defined $fam->method_link_species_set_id && defined $fam->method_link_species_set) {
     $self->db->get_MethodLinkSpeciesSetAdaptor->store($fam->method_link_species_set);
-  }
-
-  if (! defined $fam->method_link_species_set) {
-    throw("Family object has no set MethodLinkSpecies object. Can not store Family object\n");
-  } else {
     $fam->method_link_species_set_id($fam->method_link_species_set->dbID);
   }
 

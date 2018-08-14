@@ -87,6 +87,7 @@ sub pipeline_analyses_goc {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
                 },
             },
+            -rc_name => '500Mb_job',
             -flow_into => {
                 2 => {
                     #'get_orthologs' => { 'goc_mlss_id' => '#homo_mlss_id#' },

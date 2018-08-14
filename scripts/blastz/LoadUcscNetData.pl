@@ -233,6 +233,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::GenomicAlign;
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 
 my $ucsc_dbname;
@@ -422,12 +423,20 @@ if ($show_matrix_to_be_used) {
 
 # Self alignments, or pairwise alignments ?
 my $gdbs = ($tgdb->dbID == $qgdb->dbID) ? [$tgdb] : [$tgdb, $qgdb];
-my $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-$mlssa->store($mlss); # Sets the dbID if already exists, creates and sets the dbID if not!
-my $dest_mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
-    -method => Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type ),
-    -species_set => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $gdbs ),
-);
+my $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($method_link_type, $gdbs);
+unless ($mlss) {
+    my $ssa = Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'SpeciesSet');
+    my $species_set = $ssa->fetch_by_GenomeDBs($gdbs);
+    unless ($species_set) {
+        $species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($gdbs);
+        $ssa->store($species_set);
+    }
+    $mlss = new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet(
+        -METHOD => Bio::EnsEMBL::Registry->get_adaptor($dbname, 'compara', 'Method')->fetch_by_type($method_link_type),
+        -SPECIES_SET => $species_set,
+    );
+    $mlssa->store($mlss); # Will create an mlss_id
+}
 
 
 my $nb_of_net = 0;

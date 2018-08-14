@@ -32,21 +32,6 @@ Questions may also be sent to the Ensembl help desk at
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify
 
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $rfamclassify = Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-
-$rfamclassify->fetch_input(); #reads from DB
-$rfamclassify->run();
-$rfamclassify->write_output(); #writes to DB
-
-
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take the descriptions of each
@@ -91,8 +76,6 @@ sub param_defaults {
             'sort_clusters'         => 1,
             'immediate_dataflow'    => 1,
             'member_type'           => 'ncrna',
-            'mirbase_url'           => 'ftp://mirbase.org/pub/mirbase/21/',
-            'mirbase_file'          => 'miFam.dat.gz',
     };
 }
 
@@ -119,7 +102,15 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
+    # vivification:
+    $self->param('rfamcms', {});
+    $self->build_hash_cms('model_id');
+    #  $self->build_hash_cms('name');
+
+    $self->load_names_model_id();
+
     $self->load_mirbase_families;
+
     $self->run_rfamclassify;
 }
 
@@ -140,12 +131,6 @@ sub write_output {
 sub run_rfamclassify {
     my $self = shift;
 
-    # vivification:
-    $self->param('rfamcms', {});
-
-    $self->build_hash_cms('model_id');
-    $self->load_names_model_id();
-    #  $self->build_hash_cms('name');
     $self->build_hash_models();
 
     my %allclusters;
@@ -206,7 +191,6 @@ sub build_hash_models {
 
     # vivification:
   $self->param('rfamclassify', {});
-  $self->param('orphan_transcript_model_id', {});
 
   foreach my $gdb (@{$self->compara_dba->get_GenomeDBAdaptor->fetch_all()}) {
    my $seq_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($gdb);
@@ -218,41 +202,56 @@ sub build_hash_models {
       my $transcript_member_id = $transc->seq_member_id;
       my $transcript_description = $transc->description;
 
-    $transcript_description =~ /Acc:(\w+)/;
-    my $transcript_model_id = $1;
-    if ($transcript_model_id =~ /MI\d+/) {
-      # We use mirbase families to link
-      my @family_ids = keys %{$self->param('mirbase_families')->{$transcript_model_id}};
-      my $family_id = $family_ids[0];
-      if (defined $family_id) {
-        $transcript_model_id = $family_id;
-      } elsif (defined $gene_description) {
+      # List all the names that can be used to find the RFAM family
+      my @names_to_match;
+      if ($transcript_description && ($transcript_description =~ /Acc:(\w+)/)) {
+          push @names_to_match, $1;
+      }
+      push @names_to_match, $transc->display_label if $transc->display_label;
+      push @names_to_match, $gene->display_label if $gene->display_label;
+      if ($gene_description) {
+        if ($gene_description =~ /Acc:(\w+)/) {
+          push @names_to_match, $1;
+        }
+        if ($gene_description =~ /^(\S+)/) {
+          push @names_to_match, $1;
+        }
+        if ($gene_description =~ /^([^\[]+) \[/) {
+          push @names_to_match, $1;
+        }
         if ($gene_description =~ /\w+\-(mir-\S+)\ / || $gene_description =~ /\w+\-(let-\S+)\ /) {
           # We take the mir and let ids from the gene description
-          $transcript_model_id = $1;
+          my $transcript_model_id = $1;
           # We correct the model_id for genes like 'mir-129-2' which have a 'mir-129' model
           if ($transcript_model_id =~ /(mir-\d+)-\d+/) {
             $transcript_model_id = $1;
           }
-        } else {
-            print STDERR "$transcript_model_id is not a mirbase family and is not a mir or let gene\n" if ($self->debug);
+          push @names_to_match, $transcript_model_id;
         }
-      } else {
-        print STDERR "$transcript_model_id has no description. Cannot guess its family\n" if ($self->debug);
       }
-    }
-    # A simple hash classified by the Acc model ids
-    if (defined $self->param('model_name_ids')->{$transcript_model_id}) {
-        print STDERR "$transcript_model_id has been converted to id " . $self->param('model_name_ids')->{$transcript_model_id} . "\n" if ($self->debug);
-        $transcript_model_id = $self->param('model_name_ids')->{$transcript_model_id};
-    }
+
+      # Check them all against the list of known names / model_ids
+      my $transcript_model_id;
+      foreach my $name (@names_to_match) {
+        if (exists $self->param('rfamcms')->{'model_id'}->{$name}) {
+          $transcript_model_id = $name;
+          last;
+        } elsif (exists $self->param('model_name_ids')->{$name}) {
+          $transcript_model_id = $self->param('model_name_ids')->{$name};
+          last;
+        } elsif (exists $self->param('mirbase_families')->{$name}) {
+          $transcript_model_id = $self->param('mirbase_families')->{$name};
+          last;
+        }
+      }
+
+      unless ($transcript_model_id) {
+        print STDERR "Could not find a family for ".$transc->stable_id." using these names: ".join(' ', @names_to_match)."\n" if $self->debug;
+        next;
+      }
+
     $self->param('rfamclassify')->{$transcript_model_id}{$transcript_member_id} = 1;
     $self->param('classified_members')->{$transcript_member_id} = 1;
-
-    # Store list of orphan ids
-    unless (defined($self->param('rfamcms')->{'model_id'}{$transcript_model_id}) || defined($self->param('rfamcms')->{'name'}{$transcript_model_id})) {
-      $self->param('orphan_transcript_model_id')->{$transcript_model_id}++;     # NB: this data is never used afterwards
-    }
    }
   }
 
@@ -293,44 +292,27 @@ sub load_mirbase_families {
   my $starttime = time();
   print STDERR "fetching mirbase families...\n" if ($self->debug);
 
-  my $worker_temp_directory = $self->worker_temp_directory;
-  my $url  = $self->param_required('mirbase_url');
-  my $file = $self->param_required('mirbase_file');
+  my $mirbase_dbc = new Bio::EnsEMBL::Hive::DBSQL::DBConnection( -url => $self->param_required('mirbase_url') );
 
-  my $tmp_file = $worker_temp_directory . "/" .$file;
-  my $mifam = $tmp_file;
+  my %mirbase_families;
+  $self->param('mirbase_families', \%mirbase_families);
 
-  my $ftp_file = $url . $file;
-  my $status = getstore($ftp_file, $tmp_file);
-  die "load_mirbase_families: error $status on $ftp_file" unless is_success($status);
-
-  $mifam =~ s/\.gz//;
-  my $cmd = "rm -f $mifam";
-  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1, description => 'delete previously downloaded file' } );
-
-  $cmd = "gunzip $tmp_file";
-  $self->run_command("cd $worker_temp_directory; $cmd", { die_on_failure => 1, description => 'expand mirbase families' } );
-
-    # vivfication:
-  $self->param('mirbase_families', {});
-
-  open (FH, $mifam) or $self->throw("Couldnt open miFam file [$mifam]");
-  my $family_ac; my $family_id;
-  while (<FH>) {
-    if ($_ =~ /^AC\s+(\S+)/) {
-      $family_ac = $1;
-    } elsif ($_ =~ /^ID\s+(\S+)/) {
-      $family_id = $1;
-    } elsif ($_ =~ /^MI\s+(\S+)\s+(\S+)/) {
-      my $mi_id = $1; my $mir_id = $2;
-      $self->param('mirbase_families')->{$mi_id}{$family_id}{$family_ac}{$mir_id} = 1;
-    } elsif ($_ =~ /\/\//) {
-    } else {
-      $self->throw("Unexpected line: [$_] in mifam file\n");
+  my $mirbase_sql = 'SELECT prefam_id, mirna_acc, mirna_id, previous_mirna_id FROM mirna JOIN mirna_2_prefam USING (auto_mirna) JOIN mirna_prefam USING (auto_prefam)';
+  my $sth = $mirbase_dbc->prepare($mirbase_sql);
+  $sth->execute();
+  while(my $array = $sth->fetchrow_arrayref()) {
+    my $prefam_id = $array->[0];
+    my $rfam_id = $self->param('model_name_ids')->{$prefam_id} || next;
+    my @names = ($array->[1], $array->[2]);
+    if ($array->[3]) {
+        push @names, split(';', $array->[3]);
+    }
+    foreach my $mirna_name (@names) {
+      $mirbase_families{$mirna_name} = $rfam_id if defined $mirna_name;
     }
   }
 
-  printf("time for mirbase families fetch : %1.3f secs\n" , time()-$starttime);
+  printf("time for mirbase families fetch (%d names): %1.3f secs\n" , scalar(keys %mirbase_families), time()-$starttime);
 }
 
 

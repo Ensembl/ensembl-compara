@@ -100,6 +100,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -1012,6 +1013,7 @@ sub get_DnaFragRegions {
   die "No SyntenyRegion for this dbID '$synteny_region_id'\n" unless $sr;
 
   my $regions = $sr->get_all_DnaFragRegions();
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $regions);
   return [@$regions];
 }
 

@@ -15,7 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=======
 =head1 EXAMPLES
 
 
@@ -45,8 +44,8 @@ sub default_options {
 
 	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
-    'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
-    'port' => 4401,
+    #'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
+    #'port' => 4401,
 
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
@@ -107,7 +106,7 @@ sub default_options {
 
     #ref species for pairwise alignments
  	# 'ref_species' => 'gallus_gallus',    # sauropsids 
-	'ref_species' => 'oryzias_latipes',  # fish
+	#'ref_species' => 'oryzias_latipes',  # fish
 	# 'ref_species' => 'homo_sapiens',       # mammals
 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments

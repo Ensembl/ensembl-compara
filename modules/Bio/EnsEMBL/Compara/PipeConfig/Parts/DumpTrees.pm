@@ -120,6 +120,7 @@ sub pipeline_analyses_dump_trees {
                         AND gtr.clusterset_id = '#clusterset_id#'
                 |,
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 1 => WHEN(
                     '-z #output_file#' => { 'remove_empty_file' => { 'full_name' => '#output_file#' } },
@@ -134,6 +135,7 @@ sub pipeline_analyses_dump_trees {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 2 => WHEN(
                     '#max_hom_id#' => {
@@ -156,6 +158,7 @@ sub pipeline_analyses_dump_trees {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT DISTINCT genome_db_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 2 => 'dump_per_genome_homologies_tsv',
             },
@@ -165,15 +168,13 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
             -parameters => {
                 'compara_db'            => '#rel_db#',
-                'member_type'           => '#member_type#',
-                'clusterset_id'         => '#clusterset_id#',
             },
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#file#', },
                     }
             },
-            -analysis_capacity => $self->o('dump_hom_capacity'),
+            -hive_capacity => $self->o('dump_hom_capacity'),
         },
 
         {   -logic_name => 'dump_all_trees_orthoxml',
@@ -183,6 +184,7 @@ sub pipeline_analyses_dump_trees {
                 'tree_type'             => 'tree',
             },
             -rc_name => '1Gb_job',
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#file#' } },
                -1 => [ 'dump_all_trees_orthoxml_himem' ],  # MEMLIMIT
@@ -212,7 +214,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
-            -analysis_capacity => $self->o('dump_hom_capacity'),
+            -hive_capacity => $self->o('dump_hom_capacity'),
           },
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
@@ -224,7 +226,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
-            -analysis_capacity => $self->o('dump_per_genome_cap'),
+            -hive_capacity => $self->o('dump_per_genome_cap'),
           },
 
         {   -logic_name => 'create_dump_jobs',
@@ -233,6 +235,7 @@ sub pipeline_analyses_dump_trees {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
+            -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 'A->1' => 'generate_collations',
                 '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
@@ -242,7 +245,6 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'production_registry' => $self->o('production_registry'),
                 'dump_script'       => $self->o('dump_script'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
@@ -266,7 +268,6 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'dump_a_tree_himem',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'production_registry' => $self->o('production_registry'),
                 'dump_script'       => $self->o('dump_script'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
@@ -292,7 +293,6 @@ sub pipeline_analyses_dump_trees {
                 'xmllint_exe'   => $self->o('xmllint_exe'),
                 'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
             },
-            -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
             -rc_name       => '2Gb_job',
         },
@@ -315,7 +315,6 @@ sub pipeline_analyses_dump_trees {
                 'collated_file' => '#emf_dir#/#dump_file_name#',
                 'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #collated_file#',
             },
-            -hive_capacity => 2,
             -flow_into => {
                 1 => WHEN(
                     '-z #collated_file#' => { 'remove_empty_file' => { 'full_name' => '#collated_file#' } },
@@ -342,7 +341,6 @@ sub pipeline_analyses_dump_trees {
                 'contiguous'    => 0,
                 'inputcmd'      => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n',
             },
-            -hive_capacity => 2,
             -flow_into => {
                 2 => [ 'tar_dumps' ],
             },
@@ -357,7 +355,6 @@ sub pipeline_analyses_dump_trees {
                 'tar_archive'   => '#xml_dir#/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
                 'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
-            -hive_capacity => 2,
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
             },

@@ -127,7 +127,6 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
                the linked Bio::EnsEMBL::Compara::GenomicAlignBlock or
                the linked Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                are not in the database
-  Caller     : $object->methodname
   Status     : Stable
 
 =cut
@@ -228,7 +227,6 @@ sub delete_by_genomic_align_block_id {
   Exceptions : Returns a ref. to an empty array if there are no matching entries
   Exceptions : Thrown if $genomic_align_block is not a
                Bio::EnsEMBL::Compara::GenomicAlignBlock object
-  Caller     : object::methodname
   Status     : Stable
 
 =cut
@@ -254,7 +252,6 @@ sub fetch_all_by_GenomicAlignBlock {
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : Returns a ref. to an empty array if there are no matching entries
   Exceptions : Thrown if $genomic_align_block is neither a number 
-  Caller     : object::methodname
   Status     : Stable
 
 =cut
@@ -288,7 +285,6 @@ sub fetch_all_by_genomic_align_block_id {
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlign objects
   Exceptions : Returns a ref. to an empty array if there are no matching entries
   Exceptions : Thrown if $node_id is not a number 
-  Caller     : object::methodname
   Status     : At risk
 
 =cut

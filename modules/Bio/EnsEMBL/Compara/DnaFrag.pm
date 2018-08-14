@@ -481,7 +481,6 @@ sub codon_table_id {
  Exceptions : warns when the corresponding Bio::EnsEMBL::Compara::GenomeDB,
               coord_system_name, name or Bio::EnsEMBL::DBSQL::DBAdaptor
               cannot be retrieved and returns undef.
- Caller     : $object->methodname
  Status     : Stable
 
 =cut
@@ -511,7 +510,6 @@ sub slice {
       # The genome doesn't have a core db
       return undef;
     }
-    $dba->dbc->reconnect_when_lost(1);
 
     $self->{'_slice'} = $dba->get_SliceAdaptor->fetch_by_region($self->coord_system_name, $self->name);
   }

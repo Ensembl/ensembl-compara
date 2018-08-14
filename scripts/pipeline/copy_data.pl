@@ -634,6 +634,7 @@ sub copy_genomic_align_blocks {
           AND genomic_align_block_id < $upper_limit");
   $sth->execute();
   my ($count) = $sth->fetchrow_array();
+  $sth->finish();
   if ($count && !$merge) {
     print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
       " ** ERROR **  genomic_align_block table with IDs within the range defined by the\n",
@@ -647,6 +648,7 @@ sub copy_genomic_align_blocks {
           AND genomic_align_id < $upper_limit");
   $sth->execute();
   ($count) = $sth->fetchrow_array();
+  $sth->finish();
   if ($count && !$merge) {
     print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
       " ** ERROR **  genomic_align table with IDs within the range defined by the\n",
@@ -663,6 +665,7 @@ sub copy_genomic_align_blocks {
             AND root_id < $max_root_id");
     $sth->execute();
     my ($count) = $sth->fetchrow_array();
+    $sth->finish();
     if ($count) {
       print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
         " ** ERROR **  genomic_align_tree table with IDs within the range defined by the\n",
@@ -710,6 +713,7 @@ sub copy_genomic_align_blocks {
             my $gt_sth = $to_dbc->prepare("UPDATE genomic_align_tree SET $gt_field = ($gt_field - ?)
                                         WHERE $gt_field = ?");
             $gt_sth->execute($fix_gat, $fix_gat);
+            $gt_sth->finish();
         }
     } else {
       copy_table($from_dbc, $to_dbc, 'genomic_align_tree', "root_id >= $min_root_id AND root_id <= $max_root_id", undef, "skip_disable_keys");
@@ -822,6 +826,7 @@ sub copy_ancestral_dnafrags {
       AND dnafrag_id < $upper_limit");
   $sth->execute();
   ($count) = $sth->fetchrow_array();
+  $sth->finish();
   if ($count) {
       print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
 	" ** ERROR **  dnafrag table with IDs within the range defined by the\n",
@@ -895,6 +900,7 @@ sub copy_conservation_scores {
           AND genomic_align_block_id < $upper_limit");
   $sth->execute();
   my ($count) = $sth->fetchrow_array();
+  $sth->finish();
   if ($count) {
     print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
       " ** ERROR **  conservation_score table with IDs within the range defined by the\n",
@@ -913,6 +919,7 @@ sub copy_conservation_scores {
       WHERE method_link_species_set_id != $gab_mlss_id limit 1");
   $sth->execute();
   ($count) = $sth->fetchrow_array();
+  $sth->finish();
 
   if ($count) {
     ## Other scores are in the from database.
@@ -1006,6 +1013,7 @@ sub copy_constrained_elements {
           AND constrained_element_id < $upper_limit");
   $sth->execute();
   my ($count) = $sth->fetchrow_array();
+  $sth->finish();
   if ($count) {
     print " ** ERROR **  There are $count entries in the release database (TO) in the \n",
       " ** ERROR **  constrained_element table with IDs within the range defined by the\n",
@@ -1086,6 +1094,7 @@ sub fix_genomic_align_table {
     my $sth = $from_dbc->prepare("SELECT dnafrag.* FROM method_link_species_set LEFT JOIN species_set USING (species_set_id) LEFT JOIN dnafrag USING (genome_db_id) LEFT JOIN temp_dnafrag USING (genome_db_id, name, length, coord_system_name) WHERE method_link_species_set_id=$mlss_id AND temp_dnafrag.genome_db_id IS NULL;");
     $sth->execute();
     my $rows = $sth->fetchall_arrayref();
+    $sth->finish();
     if (@$rows) {
 	print "\n** ERROR ** The following dnafrags are present in the production (FROM) dnafrag table and are not present in the release (TO) dnafrag table\n"; 
 	foreach my $row (@$rows) {
@@ -1102,10 +1111,12 @@ sub fix_genomic_align_table {
     #doing this in 2 steps means we don't have to make assumptions as to the column names in the genomic_align table
     $sth = $from_dbc->prepare("INSERT INTO $temp_genomic_align SELECT * FROM genomic_align WHERE method_link_species_set_id=$mlss_id");
     $sth->execute();
+    $sth->finish();
     
     #update the table 
     $sth = $from_dbc->prepare("UPDATE $temp_genomic_align ga, dnafrag df, temp_dnafrag df_temp SET ga.dnafrag_id=df_temp.dnafrag_id WHERE ga.dnafrag_id=df.dnafrag_id AND df.genome_db_id=df_temp.genome_db_id AND df.name=df_temp.name AND df.coord_system_name=df_temp.coord_system_name AND ga.method_link_species_set_id=$mlss_id");
     $sth->execute();
+    $sth->finish();
 
     #delete the temporary dnafrag table
     $from_dbc->db_handle->do("DROP TABLE temp_dnafrag");

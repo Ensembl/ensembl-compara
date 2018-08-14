@@ -400,7 +400,6 @@ sub sub_AlignSlice {
   Description: getter/setter for the adaptor attribute
   Returntype : Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor object
   Exceptions : throw if arg is not a Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor
-  Caller     : $object->methodname
 
 =cut
 
@@ -437,8 +436,6 @@ sub adaptor {
                disabled.
   Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice
                objects.
-  Exceptions : 
-  Caller     : $object->methodname
 
 =cut
 
@@ -482,7 +479,6 @@ sub get_all_Slices {
   Description: getter/setter for the attribute reference_slice
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : throw if arg is not a Bio::EnsEMBL::Slice object
-  Caller     : $object->methodname
 
 =cut
 
@@ -507,7 +503,6 @@ sub reference_Slice {
                stored in the attribute all_genomic_align_blocks
   Returntype : none
   Exceptions : throw if arg is not a Bio::EnsEMBL::Compara::GenomicAlignBlock
-  Caller     : $object->methodname
 
 =cut
 
@@ -532,7 +527,6 @@ sub add_GenomicAlignBlock {
   Description: getter for the attribute all_genomic_align_blocks
   Returntype : listref of Bio::EnsEMBL::Compara::GenomicAlignBlock objects
   Exceptions : none
-  Caller     : $object->methodname
 
 =cut
 
@@ -551,7 +545,6 @@ sub get_all_GenomicAlignBlocks {
                used to create this object
   Returntype : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
   Exceptions : none
-  Caller     : $object->methodname
 
 =cut
 
@@ -649,8 +642,6 @@ sub summary_as_hash {
                 corresponds to the reference Slice and the remaining
                 correspond to the other species.
   Returntype  : Bio::SimpleAlign object
-  Exceptions  : 
-  Caller      : $object->methodname
 
 =cut
 
@@ -711,8 +702,6 @@ sub get_SimpleAlign {
                for more details.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
                objects.
-  Caller     : object::methodname
-  Status     : At risk
 
 =cut
 
@@ -756,8 +745,6 @@ sub get_all_ConservationScores {
                for more details.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
                objects.
-  Caller     : object::methodname
-  Status     : At risk
 
 =cut
 
@@ -844,8 +831,6 @@ sub _get_expanded_conservation_scores {
                for more details.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConservationScore 
                objects.
-  Caller     : object::methodname
-  Status     : At risk
 
 =cut
 
@@ -879,8 +864,6 @@ sub _get_condensed_conservation_scores {
                object
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::ConstrainedElement
                objects.
-  Caller     : object::methodname
-  Status     : At risk
 
 =cut
 

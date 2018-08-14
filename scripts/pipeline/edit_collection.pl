@@ -53,6 +53,7 @@ first_release and last_release will be updated accordingly
     --new|--update
     [--dry_run]
     [--release]
+    [--include_components]
 
 =head1 OPTIONS
 
@@ -116,6 +117,12 @@ Release the newly created collection (default is to remain unreleased)
 In dry-run mode (the default), the script does not write into the master
 database (and would be happy with a read-only connection).
 
+=item B<[--include_components]>
+
+By default, only the principal component for a listed genome is added. Use
+this option if there are polyploid genomes in your input and you wish to 
+add the principal AND component genomes to the collection
+
 =back
 
 =head1 INTERNAL METHODS
@@ -141,6 +148,7 @@ my $compara;
 my $collection_name;
 my $dry_run = 0;
 my $file;
+my $incl_components;
 my ( $new, $update );
 my $release = 0;
 
@@ -151,6 +159,7 @@ GetOptions(
     'collection=s'               => \$collection_name,
     "dry_run|dry-run!"           => \$dry_run,
     'file|file_of_production_names=s' => \$file,
+    'include_components!'        => \$incl_components,
     'new!'                       => \$new,
     'update!'                    => \$update,
     'release!'                   => \$release,
@@ -184,8 +193,8 @@ open(my $species_fh, '<', $file) or die "Cannot open file '$file'\n";
 my @requested_species_names = <$species_fh>;
 chomp @requested_species_names;
 
-Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, $collection_name, \@requested_species_names, -DRY_RUN => $dry_run, -RELEASE => $release ) if ($update);
-Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, $collection_name, \@requested_species_names, -DRY_RUN => $dry_run, -RELEASE => $release ) if ($new);
+Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, $collection_name, \@requested_species_names, -DRY_RUN => $dry_run, -RELEASE => $release, -INCL_COMPONENTS => $incl_components ) if ($update);
+Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection(    $compara_dba, $collection_name, \@requested_species_names, -DRY_RUN => $dry_run, -RELEASE => $release, -INCL_COMPONENTS => $incl_components ) if ($new);
 
 exit(0);
 

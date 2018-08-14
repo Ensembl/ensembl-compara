@@ -59,51 +59,40 @@ sub write_output {
     #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
+    my $name = $self->param_required('dnafrag_name');
+
     #
     #Find chromosome names and numbers of genomic_align_blocks
     #
     my $sql = qq {
     SELECT
-       name,
        count(*)
     FROM
-       dnafrag,
        genomic_align
     WHERE 
-       dnafrag.dnafrag_id = genomic_align.dnafrag_id 
-    AND 
-       genome_db_id = ? 
-    AND 
-       coord_system_name = ? 
+       dnafrag_id = ?
     AND 
        method_link_species_set_id = ? 
-    AND
-       dnafrag_start <= length
-    GROUP BY name};
+    };
 
-    my $sth = $compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('genome_db_id'), 
-		  $self->param('coord_system_name'),
-		  $self->param('mlss_id'));
-    my ($name, $total_blocks);
-    $sth->bind_columns(\$name,\$total_blocks);
-
-    my $tag = $self->param('coord_system_name') eq 'chromosome' ? 'chr' : '';
+    my $total_blocks = $compara_dba->dbc->sql_helper->execute_single_result(
+        -SQL => $sql,
+        -PARAMS => [$self->param_required('dnafrag_id'), $self->param_required('mlss_id')],
+    );
+    return unless $total_blocks;
 
     my $split_size = $self->param('split_size');
 
-    while (my $row = $sth->fetchrow_arrayref) {
-
         if (not $split_size) {
             my $output_ids = {
-                region_name     => $tag.$name,
+                region_name     => $name,
                 filename_suffix => '',
                 extra_args      => ['--seq_region', $name],
                 num_blocks      => $total_blocks,
             };
 
             $self->dataflow_output_id($output_ids, 2);
-            next;
+            return;
         }
 
         my $num_chunks = ceil($total_blocks / $split_size);
@@ -119,7 +108,7 @@ sub write_output {
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
 	    my $output_ids = {
-                region_name     => $tag.$name,
+                region_name     => $name,
                 filename_suffix => "_$chunk",
                 extra_args      => ['--seq_region', $name, '--chunk_num', $chunk],
                 num_blocks      => $this_num_blocks,
@@ -127,7 +116,6 @@ sub write_output {
 	    
 	    $self->dataflow_output_id($output_ids, 2);
 	}
-    }
 }
 
 1;

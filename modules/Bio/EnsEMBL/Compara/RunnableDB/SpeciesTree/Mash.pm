@@ -47,10 +47,8 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {
 	my $self = shift;
-
 	# for use when chaining multiple mash commands together in a pipeline
 	$self->param('input_file', $self->param('mash_output_file')) if $self->param('output_as_input');
-
 	my $mash_exe = $self->param_required('mash_exe');
 	my $mode = $self->param_required('mode');
 	my $additional_options = $self->param('additional_options');
@@ -63,8 +61,7 @@ sub fetch_input {
 	$mash_cmd .= $self->mash_dist_options if $mode eq 'dist';
 	$mash_cmd .= $self->mash_paste_options if $mode eq 'paste';
 	$mash_cmd .= $self->mash_sketch_options if $mode eq 'sketch';	
-	
-	print "\nMASH CMD: $mash_cmd\n\n";
+
 	# replace with $self->run_command
 	# may need to spurt the output as using the arrayref input does not allow for redirection of STDOUT
 	# system($mash_cmd) == 0 or die "Error running command: $mash_cmd";

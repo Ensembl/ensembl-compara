@@ -39,6 +39,7 @@ sub store_newick_into_nc_tree {
 
     print STDERR "load from file $newick_file\n" if($self->debug);
     my $newick = $self->_slurp($newick_file);
+    $newick = $self->expand_seq_names($newick, $self->param('map_long_seq_names'));
     $self->param('output_clusterset_id', lc $tag);
     $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'), undef, 1);
     if (defined($self->param('model'))) {
@@ -64,10 +65,14 @@ sub _dumpMultipleAlignmentToWorkdir {
     my $aln_file = $file_root . ".aln";
     print STDERR "ALN FILE IS: $aln_file\n" if ($self->debug());
 
+    my $map_long_seq_names = {};
+    $self->param('map_long_seq_names', $map_long_seq_names);
+
     my $sa = $tree->print_alignment_to_file($aln_file,
         -FORMAT => 'phylip',
         -ID_TYPE => 'MEMBER',
         -APPEND_SPECIES_TREE_NODE_ID => $self->param('species_tree')->get_genome_db_id_2_node_hash,
+        -MAP_LONG_SEQ_NAMES => $map_long_seq_names,
     );
 
     $self->param('tag_residue_count', $sa->num_sequences * $sa->length);

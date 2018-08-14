@@ -329,10 +329,10 @@ sub fetch_all_by_ancestral_taxon_id {
 sub fetch_by_core_DBAdaptor {
     my ($self, $core_dba, $component) = @_;
     my $was_connected = $core_dba->dbc->connected;
-    my $species_name = $core_dba->get_MetaContainer->get_production_name();
-    return undef unless $species_name;
+    my $species_name = $core_dba->production_name();
     my $species_assembly = $core_dba->assembly_name();
     $core_dba->dbc->disconnect_if_idle() unless $was_connected;
+    return undef unless $species_name;
     return $self->fetch_by_name_assembly($species_name, $species_assembly, $component);
 }
 

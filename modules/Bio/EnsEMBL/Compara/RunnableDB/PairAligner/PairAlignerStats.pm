@@ -102,6 +102,7 @@ sub fetch_input {
       && (!$mlss->has_tag('reference_component') || ($genome_dbs->[0]->genome_component eq $mlss->get_value_for_tag('reference_component')))) {
         ($non_ref_genome_db, $ref_genome_db) = @$genome_dbs;
   }
+  $non_ref_genome_db ||= $ref_genome_db;
   $self->param('ref_genome_db', $ref_genome_db);
   $self->param('non_ref_genome_db', $non_ref_genome_db);
 
@@ -214,9 +215,7 @@ sub write_pairaligner_statistics {
 
     #Fetch the number of genomic_align_blocks
     my $sql = "SELECT count(*) FROM genomic_align_block WHERE method_link_species_set_id = " . $method_link_species_set->dbID;
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute();
-    my ($num_blocks) = $sth->fetchrow_array();
+    my $num_blocks = $self->compara_dba->dbc->sql_helper->execute_single_result( -SQL => $sql );
 
     $method_link_species_set->store_tag("num_blocks", $num_blocks);
 
@@ -281,8 +280,8 @@ sub calc_stats {
     $self->run_command($cmd, { die_on_failure => 1 });
 
     #Run compare_beds.pl
-    my $compare_beds = $self->param('compare_beds');
-    my $coverage_data = `$compare_beds $genome_bed $alignment_bed --stats`;
+    $cmd = [$self->param_required('compare_beds'), $genome_bed, $alignment_bed, '--stats'];
+    my $coverage_data = $self->run_command($cmd, { die_on_failure => 1 })->out;
     my $coverage = parse_compare_bed_output($coverage_data);
     
     my $str = "*** $species ***\n";

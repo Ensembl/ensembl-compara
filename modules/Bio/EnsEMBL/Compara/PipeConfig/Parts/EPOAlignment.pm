@@ -230,7 +230,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-	-hive_capacity => 1000,
+	-hive_capacity => 2000,
 	-max_retry_count => 3,
 	-flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -271,7 +271,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
         },  
         -module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-        -rc_name => 'hugemem',
+        -rc_name => '30Gb_job',
 	-max_retry_count => 1,
 	-flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),

@@ -54,6 +54,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
@@ -92,7 +94,7 @@ sub store_clusterset {
     } else {
         @cluster_list = keys %$allclusters;
     }
-    warn scalar(@cluster_list), " clusters to add\n";
+    warn scalar(@cluster_list), " clusters to add (", sum(map {scalar(@{$_->{members}})} values %$allclusters), " members)\n";
 
     my @allcluster_ids;
     foreach my $cluster_name (@cluster_list) {

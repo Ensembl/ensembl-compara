@@ -68,6 +68,7 @@ sub pipeline_analyses_dump_multi_align {
 
         {  -logic_name  => 'initJobs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs',
+            -hive_capacity => $self->o('dump_aln_capacity'),
             -flow_into => {
                 2 => [ 'createChrJobs' ],
                 3 => [ 'createSuperJobs' ],
@@ -78,6 +79,7 @@ sub pipeline_analyses_dump_multi_align {
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
         {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
+            -hive_capacity => $self->o('dump_aln_capacity'),
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
@@ -86,6 +88,7 @@ sub pipeline_analyses_dump_multi_align {
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
+            -hive_capacity => $self->o('dump_aln_capacity'),
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
@@ -94,6 +97,8 @@ sub pipeline_analyses_dump_multi_align {
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
+            -hive_capacity => $self->o('dump_aln_capacity'),
+            -rc_name => '2Gb_job_long',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
@@ -101,7 +106,7 @@ sub pipeline_analyses_dump_multi_align {
         },
         {  -logic_name    => 'dumpMultiAlign',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
-            -analysis_capacity => $self->o('dump_aln_capacity'),
+            -hive_capacity => $self->o('dump_aln_capacity'),
             -rc_name => '2Gb_job',
             -max_retry_count    => 0,
             -flow_into => [ WHEN(
