@@ -434,7 +434,8 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             my $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
             # Special case for LastZ alignments: we still have some equivalent BlastZ alignments
             if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
-                $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs);
+                # allow for cases where BLASTZ_NET is not in the method_link table - this is the case for EG
+                $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs) if ($compara_dba->get_MethodAdaptor->fetch_by_type('BLASTZ_NET'));
             }
             if ($exist_mlss and $exist_mlss->is_current) {
                 push @mlsss_existing, $exist_mlss;
