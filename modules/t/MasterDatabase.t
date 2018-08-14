@@ -166,8 +166,15 @@ my @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
 is_deeply( \@gdb_ids, [141, 1002], 'correct genome dbs included' );
 is( $new_collection->first_release, undef, 'collection is unreleased' );
 
+## Test 2: create a new collection WITH components
+ok( $new_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, 'test_comp_col', ['homo_sapiens', 'triticum_aestivum'] ) );
+is( $new_collection->name, 'collection-test_comp_col', 'new collection created with correct name' );
+my @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
+is_deeply( \@gdb_ids, [141, 1003], 'correct genome dbs included' );
+is( $new_collection->first_release, undef, 'collection is unreleased' );
 
-## Test 2: update an intermediate collection that has not been through a release yet 
+
+## Test 3: update an intermediate collection that has not been through a release yet 
 ## (i.e. first_release = software_version(); retirement should result in NULL first & last release)
 my $updated_collection;
 ok( $updated_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, 'test_col', ['pongo_abelii', 'nomascus_leucogenys'], -RELEASE => 1 ) );
@@ -178,7 +185,7 @@ $new_collection = $ss_adaptor->fetch_by_dbID( $new_collection->dbID ); # re-read
 is_deeply( [$new_collection->first_release, $new_collection->last_release], [undef, undef], 'intermediate collection retired correctly' );
 is_deeply( [$updated_collection->first_release, $updated_collection->last_release], [$v, undef], 'updated collection released' );
 
-## Test 3: update a collection that has been released already - check retirement
+## Test 4: update a collection that has been released already - check retirement
 ok( $updated_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_collection( $compara_dba, 'update_test', ['homo_sapiens', 'pan_troglodytes', 'gorilla_gorilla'], -RELEASE => 1 ) );
 is( $updated_collection->name, 'collection-update_test', 'collection updated with correct name' );
 my $old_collection = $ss_adaptor->fetch_by_dbID( 12345 ); # re-read from db for updated release metadata
