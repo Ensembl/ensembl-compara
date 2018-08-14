@@ -98,7 +98,6 @@ sub pipeline_analyses_dump_multi_align {
         {  -logic_name    => 'createOtherJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateOtherJobs',
             -hive_capacity => $self->o('dump_aln_capacity'),
-            -rc_name => '2Gb_job_long',
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
