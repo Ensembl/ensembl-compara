@@ -333,7 +333,7 @@ sequences of practically arbitrary length. As input it takes a set of
 sequences and a phylogenetic tree. The parameters and heuristics it employs
 are highly user configurable, it is written entirely in Java and also
 requires the installation of Exonerate.
-Read more about Pecan: http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html");
+Read more about Pecan: https://github.com/benedictpaten/pecan");
 }
 
 sub _print_ortheus_help {
@@ -341,7 +341,7 @@ sub _print_ortheus_help {
     $self->_print_paragraph("Ortheus is a probabilistic method for the inference of ancestor (a.k.a tree)
 alignments. The main contribution of Ortheus is the use of a phylogenetic
 model incorporating gaps to infer insertion and deletion events.
-Read more about Ortheus: http://hgwdev.cse.ucsc.edu/~benedict/code/Ortheus.html");
+Read more about Ortheus: https://github.com/benedictpaten/ortheus");
 }
 
 sub _print_gerp_help {
