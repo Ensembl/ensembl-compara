@@ -144,7 +144,7 @@ sub pipeline_analyses {
                 # Rerun the command if the output file is missing or if the input file has been recently modified
                 'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || become #shared_user# #command#',
             },
-            -rc_name    => '100Mb_job',
+            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'build_exonerate_esd_index',
