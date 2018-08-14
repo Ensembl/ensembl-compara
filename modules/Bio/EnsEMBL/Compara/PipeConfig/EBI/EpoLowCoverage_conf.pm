@@ -17,9 +17,10 @@ limitations under the License.
 
 =head1 EXAMPLES
 
-
+    # Without GERP (primates)
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf $(mysql-ens-compara-prod-1-ensadmin details hive) -species_set_name primates -epo_db $(mysql-ens-compara-prod-1 details url muffato_primates_epo_94) -low_epo_mlss_id 1141 -high_epo_mlss_id 1134 -run_gerp 0 -ref_species homo_sapiens
 
+    # With GERP (mammals, sauropsids, fish)
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf $(mysql-ens-compara-prod-1-ensadmin details hive) -species_set_name fish -epo_db $(mysql-ens-compara-prod-3 details url carlac_fish_epo_94) -low_epo_mlss_id 1333 -high_epo_mlss_id 1332 -ref_species oryzias_latipes
 
 =cut
