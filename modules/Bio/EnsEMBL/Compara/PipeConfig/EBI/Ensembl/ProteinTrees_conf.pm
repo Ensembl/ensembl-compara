@@ -137,7 +137,7 @@ sub default_options {
         'notung_capacity'           => 200,
         'copy_tree_capacity'        => 100,
         'ortho_tree_capacity'       => 250,
-        'quick_tree_break_capacity' => 100,
+        'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
         'other_paralogs_capacity'   => 150,
