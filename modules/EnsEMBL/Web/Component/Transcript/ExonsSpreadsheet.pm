@@ -296,7 +296,8 @@ sub get_flanking_sequence_data {
   $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split '', lc $downstream->{'seq'} ];
   
   if ($config->{'snp_display'} eq 'on') {
-    $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
+    $self->add_variations($config, $upstream->{'slice'}, $upstream->{'sequence'}, 'upstream');
+    $self->add_variations($config, $downstream->{'slice'}, $downstream->{'sequence'}, 'downstream');
   }
   
   my @upstream_sequence   = (@dots, @{$upstream->{'sequence'}});
@@ -308,7 +309,7 @@ sub get_flanking_sequence_data {
 }
 
 sub add_variations {
-  my ($self, $config, $slice, $sequence) = @_;
+  my ($self, $config, $slice, $sequence, $flank) = @_;
 
   my $hub = $self->hub;
 
@@ -320,44 +321,75 @@ sub add_variations {
   my $vf_adaptor = $hub->database('variation')->get_VariationFeatureAdaptor;
   my $vf_slice = $slice->strand == -1 ? $slice->invert : $slice;
   my $variation_features    = $config->{'population'} ? $vf_adaptor->fetch_all_by_Slice_Population($vf_slice, $config->{'population'}, $config->{'min_frequency'}) : $vf_adaptor->fetch_all_by_Slice($vf_slice);
-  my @transcript_variations;
-  my @transcript_variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
-  if($config->{'hide_rare_snps'}) {
-    @transcript_variations = grep {
-      !$self->too_rare_snp($_->variation_feature,$config)
-    } @transcript_variations;
+  my @variations;
+
+  ## Filter and sort variants
+  if ($flank) {
+    @variations = @{$variation_features||[]};
+    if($config->{'hide_rare_snps'}) {
+      @variations = grep {
+        !$self->too_rare_snp($_, $config)
+      } @variations;
+    }
+    if($config->{'hidden_sources'}) {
+      @variations = grep {
+        !$self->hidden_source($_, $config)
+      } @variations;
+    }
+    @variations = grep $_->length <= $config->{'snp_length_filter'}, @variations if $config->{'hide_long_snps'};
+    @variations = (map $_->[1], sort { $b->[0] <=> $a->[0] } map [ $_->length, $_ ], @variations);
   }
-  if($config->{'hidden_sources'}) {
-    @transcript_variations = grep {
-      !$self->hidden_source($_->variation_feature,$config)
-    } @transcript_variations;
+  else {
+    ## Within the transcript we only want transcript variants, so we get the correct consequence
+    @variations = @{$hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
+    if($config->{'hide_rare_snps'}) {
+      @variations = grep {
+        !$self->too_rare_snp($_->variation_feature, $config)
+      } @variations;
+    }
+    if($config->{'hidden_sources'}) {
+      @variations = grep {
+        !$self->hidden_source($_->variation_feature, $config)
+      } @variations;
+    }
+    @variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @variations if $config->{'hide_long_snps'};
+    @variations = (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @variations);
   }
-  @transcript_variations = grep $_->variation_feature->length <= $config->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
-  my $length                = scalar @$sequence - 1;
+  my $length = scalar @$sequence - 1;
   my (%href, %class);
   
-  foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
-    my $consequence = $transcript_variation->consequence_type->[0];
-    my %cf = %{$config->{'consequence_filter'}||{}};
-    delete $cf{'off'} if exists $cf{'off'};
-    if(%cf) {
-      $consequence = lc [ grep $cf{$_}, @{$transcript_variation->consequence_type} ]->[0];
-      next if !$consequence;
+  foreach my $variation (@variations) {
+    my ($name, $start, $end, $consequence, $vf);
+
+    if ($flank) {
+      $name         = $variation->name;
+      $start        = $variation->start;
+      $end          = $variation->end;
+      $consequence  = $flank.'_gene_variant';
+    }
+    else {
+      $consequence = $variation->consequence_type->[0];
+      my %cf = %{$config->{'consequence_filter'}||{}};
+      delete $cf{'off'} if exists $cf{'off'};
+      if(%cf) {
+        $consequence = lc [ grep $cf{$_}, @{$variation->consequence_type} ]->[0];
+        next if !$consequence;
+      }
+
+      $vf    = $variation->variation_feature;
+      $vf    = $vf->transfer($slice) if ($vf->slice + 0) ne ($slice + 0);
+      $name  = $vf->variation_name;
+      $start = $vf->start - 1;
+      $end   = $vf->end   - 1;
     }
 
-    my $vf    = $transcript_variation->variation_feature;
-    $vf       = $vf->transfer($slice) if ($vf->slice + 0) ne ($slice + 0);
-    my $name  = $vf->variation_name;
-    my $start = $vf->start - 1;
-    my $end   = $vf->end   - 1;
-    
     # Variation is an insert if start > end
     ($start, $end) = ($end, $start) if $start > $end;
     
     $start = 0 if $start < 0;
     $end   = $length if $end > $length;
     
-    $consequence ||= lc $transcript_variation->display_consequence;
+    $consequence ||= lc $variation->display_consequence;
     
     $config->{'key'}{'variants'}{$consequence} = 1;
     
@@ -370,14 +402,14 @@ sub add_variations {
       };
       
       push @{$href{$_}{'v'}},  $name;
-      push @{$href{$_}{'vf'}}, $vf->dbID;
+      push @{$href{$_}{'vf'}}, $vf->dbID if $vf;
       if($config->{'variants_as_n'}) {
         $sequence->[$_]{'letter'} = 'N';
       }
     }
   }
   
-  $sequence->[$_]{'class'} .= " $class{$_}"              for keys %class;
+  $sequence->[$_]{'class'} .= " $class{$_}"        for keys %class;
   $sequence->[$_]{'href'}   = $hub->url($href{$_}) for keys %href;
 }
 
