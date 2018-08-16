@@ -402,7 +402,12 @@ sub add_variations {
       };
       
       push @{$href{$_}{'v'}},  $name;
-      push @{$href{$_}{'vf'}}, $vf->dbID if $vf;
+      if ($vf) {
+        push @{$href{$_}{'vf'}}, $vf->dbID;
+      }
+      else {
+        push @{$href{$_}{'flanking_variant'}}, 1;
+      }
       if($config->{'variants_as_n'}) {
         $sequence->[$_]{'letter'} = 'N';
       }
