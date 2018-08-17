@@ -46,7 +46,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
 
 =head1 DESCRIPTION
 
-    The PipeConfig example file for Ensembl Genomes group's version of
+    The PipeConfig example file for the Plants version of
     ProteinTrees pipeline. This file is inherited from & customised further
     within the Ensembl Genomes infrastructure but this file serves as
     an example of the type of configuration we perform.
@@ -131,20 +131,10 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels'                 => [],  # this is the default default
-        'taxlevels_fungi'           => ['Botryosphaeriales', 'Calosphaeriales', 'Capnodiales', 'Chaetothyriales', 'Dothideales', 'Erysiphales', 'Eurotiales', 'Glomerellales', 'Helotiales', 'Hypocreales', 'Microascales', 'Onygenales', 'Ophiostomatales', 'Orbiliales', 'Pleosporales', 'Pneumocystidales', 'Saccharomycetales', 'Sordariales', 'Verrucariales', 'Xylariales', 'Venturiales', 'Agaricales', 'Atheliales', 'Boletales', 'Cantharellales', 'Corticiales', 'Dacrymycetales', 'Geastrales', 'Georgefischeriales', 'Gloeophyllales', 'Jaapiales', 'Malasseziales', 'Mixiales', 'Polyporales', 'Russulales', 'Sebacinales', 'Sporidiobolales', 'Tremellales', 'Ustilaginales', 'Wallemiales', 'Cryptomycota', 'Glomerales ', 'Rhizophydiales'],
-        'taxlevels_metazoa'         => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
-        'taxlevels_plants'          => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
-        'taxlevels_protists'        => ['Alveolata', 'Amoebozoa', 'Choanoflagellida', 'Cryptophyta', 'Fornicata', 'Haptophyceae', 'Kinetoplastida', 'Rhizaria', 'Rhodophyta', 'Stramenopiles'],
-        'taxlevels_vb'              => ['Calyptratae', 'Culicidae'],
+        'taxlevels'                 => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
 
     # GOC parameters
-        'goc_taxlevels'             => [],  # this is the default default
-        'goc_taxlevels_fungi'       => [],
-        'goc_taxlevels_metazoa'     => ['Diptera', 'Hymenoptera', 'Nematoda'],
-        'goc_taxlevels_plants'      => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
-        'goc_taxlevels_protists'    => [],
-        'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
+        'goc_taxlevels'                 => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
 
     # Extra params
         # this should be 0 for plants
@@ -174,30 +164,9 @@ sub tweak_analyses {
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
 
-    # Some parameters can be division-specific
-    if ($self->o('division') eq 'plants') {
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
-    }
-    if ($self->o('division') eq 'fungi') {
-        $analyses_by_name->{'num_sequences_per_blast_job'}->{'-parameters'} = 5000;
-    }
-
-    # Leave this untouched: it is an extremely-hacky way of setting "taxlevels" to
-    # a division-default only if it hasn't been redefined on the command line
-    if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'taxlevels_'.$self->o('division')})) {
-        if (stringify($self->default_options()->{'taxlevels'}) eq stringify($self->o('taxlevels'))) {
-            $analyses_by_name->{'group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
-        }
-    }
-    if (($self->o('division') !~ /^#:subst/) and (my $tl = $self->default_options()->{'goc_taxlevels_'.$self->o('division')})) {
-        if (stringify($self->default_options()->{'goc_taxlevels'}) eq stringify($self->o('goc_taxlevels'))) {
-            $analyses_by_name->{'goc_group_genomes_under_taxa'}->{'-parameters'}->{'taxlevels'} = $tl;
-            $analyses_by_name->{'rib_fire_homology_id_mapping'}->{'-parameters'}->{'goc_taxlevels'} = $tl;
-            $analyses_by_name->{'rib_fire_goc'}->{'-parameters'}->{'taxlevels'} = $tl;
-        }
-    }
 }
 
 
