@@ -136,9 +136,6 @@ sub default_options {
     # GOC parameters
         'goc_taxlevels'                 => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
 
-    # Extra params
-        # this should be 0 for plants
-        'use_quick_tree_break'      => 0,
     };
 }
 
