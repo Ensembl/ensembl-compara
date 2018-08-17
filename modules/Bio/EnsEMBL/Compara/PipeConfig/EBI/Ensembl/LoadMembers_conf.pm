@@ -86,11 +86,6 @@ sub default_options {
         # Store other genes
         'store_others'              => 1,
 
-    # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   3,
-        'hc_capacity'               => 150,
-        'loadmembers_capacity'      =>  30,
-
     # connection parameters to various databases:
 
         # Uncomment and update the database locations

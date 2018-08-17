@@ -30,6 +30,19 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # Work directory
+        'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/lastz_'.$self->o('pipeline_name') . '/' . $self->o('host') . '/',
+
+        # Capacities
+        'pair_aligner_analysis_capacity' => 700,
+        'pair_aligner_batch_size' => 40,
+        'chain_hive_capacity' => 200,
+        'chain_batch_size' => 10,
+        'net_hive_capacity' => 300,
+        'net_batch_size' => 10,
+        'filter_duplicates_hive_capacity' => 200,
+        'filter_duplicates_batch_size' => 10,
+
         #Location of executables
         'pair_aligner_exe'  => $self->check_exe_in_cellar('lastz/1.04.00/bin/lastz'),
         'faToNib_exe'       => $self->check_exe_in_cellar('kent/v335_1/bin/faToNib'),

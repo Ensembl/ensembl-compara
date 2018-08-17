@@ -71,10 +71,6 @@ sub default_options {
 
             # 'host' => 'mysql-eg-prod-2.ebi.ac.uk',
             # 'port' => 4239,
-            'user' => 'ensadmin',
-            'password' => $ENV{ENSADMIN_PSW},
-
-	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
             'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/plants_compara_master_41_94',
 
@@ -137,22 +133,6 @@ sub default_options {
             'do_compare_to_previous_db' => 0,
             # Net
             'bidirectional' => 1,
-
-            #directory to dump nib files
-            'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
-            'bed_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-            'output_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-            # Capacities
-            'pair_aligner_analysis_capacity' => 500,
-            'pair_aligner_batch_size' => 5,
-            'chain_hive_capacity' => 50,
-            'chain_batch_size' => 5,
-            'net_hive_capacity' => 50,
-            'net_batch_size' => 1,
-            'filter_duplicates_hive_capacity' => 200,
-            'filter_duplicates_batch_size' => 10,
-            'store_sequence_hive_capacity' => 50,
 
 	   };
 }

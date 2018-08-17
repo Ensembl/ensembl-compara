@@ -66,18 +66,6 @@ sub default_options {
              'curr_core_sources_locs' => [ $self->o('staging_loc') ],
              'curr_core_dbs_locs' => undef,
 
-	    'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/lastz_'.$self->o('pipeline_name').'/',
-
-            # Capacities
-            'pair_aligner_analysis_capacity' => 700,
-            'pair_aligner_batch_size' => 40,
-            'chain_hive_capacity' => 200,
-            'chain_batch_size' => 10,
-            'net_hive_capacity' => 300,
-            'net_batch_size' => 10,
-            'filter_duplicates_hive_capacity' => 200,
-            'filter_duplicates_batch_size' => 10,
-
 	   };
 }
 
