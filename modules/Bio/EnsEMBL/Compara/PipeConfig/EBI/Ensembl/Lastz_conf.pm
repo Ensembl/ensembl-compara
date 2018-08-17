@@ -14,11 +14,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+=head1 SYNOPSIS
+
 Example1 : 
 init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --pipeline_name LASTZ_hagfish_93 --collection hagfish --host mysql-ens-compara-prod-3 --port 4523 --non_ref_species eptatretus_burgeri
 
 Example2 : 
 init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --pipeline_name LASTZ_human_fish_94 --collection collection-e94_new_species_human_lastz -ref_species homo_sapiens
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf;
