@@ -87,7 +87,6 @@ sub default_options {
 
     # the master database for synchronization of various ids (use undef if you don't have a master database)
     'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
-    'master_db_is_missing_dnafrags' => 0,
 
     'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/carlac_load_members_plants_41_94',
 
