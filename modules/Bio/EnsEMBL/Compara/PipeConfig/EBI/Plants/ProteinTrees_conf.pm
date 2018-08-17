@@ -160,6 +160,8 @@ sub tweak_analyses {
     $analyses_by_name->{'ortho_tree_himem'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
+    $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_job';
+    $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
 
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
