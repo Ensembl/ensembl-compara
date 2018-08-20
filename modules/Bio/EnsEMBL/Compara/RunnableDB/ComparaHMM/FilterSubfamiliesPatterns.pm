@@ -385,7 +385,7 @@ sub _rec_update_tags {
     }
     else {
         #print "CALLING ON SUPERTREE\n";
-        $node->store_tag( 'tree_support', 'quicktree' );
+        $node->store_tag( 'tree_support', 'fasttree' );
         $node->store_tag( 'node_type',    'speciation' );
         foreach my $child ( @{ $node->children } ) {
             $self->_rec_update_tags($child);
