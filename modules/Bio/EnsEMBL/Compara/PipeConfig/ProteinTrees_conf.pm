@@ -3211,7 +3211,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('homology_dNdS_capacity'),
             -rc_name   => '500Mb_job',
             -flow_into  => {
-                -1 => [ 'homology_id_mapping_himem' ],
+                -1 => [ 'mlss_id_mapping_himem' ],
                 1 => { 'homology_id_mapping' => INPUT_PLUS() },
             },
         },

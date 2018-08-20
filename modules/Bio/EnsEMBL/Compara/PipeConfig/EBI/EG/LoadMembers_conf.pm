@@ -68,7 +68,7 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-        'collection'            => 'plants',
+        #'collection'            => 'ensembl',
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
@@ -106,8 +106,8 @@ sub default_options {
         #'port'  => 4522,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
-        # 'master_db_is_missing_dnafrags' => 1,
+        #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+        'master_db_is_missing_dnafrags' => 1,
 
         # Ensembl-specific databases
         #'staging_loc' => {
@@ -118,47 +118,25 @@ sub default_options {
             #-db_version => 90,
         #},
 
-        'eg_mirror_loc' => {
-            -host   => 'mysql-eg-mirror',
-            -port   => 4157,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 93,
-        },
-        'e_mirror_loc' => {
-            -host   => 'mysql-ensembl-mirror',
-            -port   => 4240,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 93,
-        },
-        'eg_prod_loc' => {
-            -host => 'mysql-eg-prod-2',
-            -port => 4239,
-            -user => 'ensro',
-            -pass => '',
-            -db_version => 94
-        },
-        'staging_loc' => {
-            -host => 'mysql-ens-vertannot-staging',
-            -port => 4573,
-            -user => 'ensro',
-            -pass => '',
-            -db_version => 94
-        },
-
+        #'livemirror_loc' => {
+            #-host   => 'mysql-ensembl-mirror.ebi.ac.uk',
+            #-port   => 4240,
+            #-user   => 'ensro',
+            #-pass   => '',
+            #-db_version => 89,
+        #},
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('eg_prod_loc'), $self->o('staging_loc') ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
 
         # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('eg_mirror_loc'), $self->o('e_mirror_loc') ],
+        #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         #'prev_core_sources_locs'   => [ ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
+        #'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
     };
 }
 

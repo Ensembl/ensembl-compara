@@ -14,11 +14,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+=head1 SYNOPSIS
+
 Example1 : 
 init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --pipeline_name LASTZ_hagfish_93 --collection hagfish --host mysql-ens-compara-prod-3 --port 4523 --non_ref_species eptatretus_burgeri
 
 Example2 : 
 init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --pipeline_name LASTZ_human_fish_94 --collection collection-e94_new_species_human_lastz -ref_species homo_sapiens
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf;
@@ -65,18 +69,6 @@ sub default_options {
             # NOTE: you can add example configurations but leave these two lines below as the default
              'curr_core_sources_locs' => [ $self->o('staging_loc') ],
              'curr_core_dbs_locs' => undef,
-
-	    'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/lastz_'.$self->o('pipeline_name').'/',
-
-            # Capacities
-            'pair_aligner_analysis_capacity' => 700,
-            'pair_aligner_batch_size' => 40,
-            'chain_hive_capacity' => 200,
-            'chain_batch_size' => 10,
-            'net_hive_capacity' => 300,
-            'net_batch_size' => 10,
-            'filter_duplicates_hive_capacity' => 200,
-            'filter_duplicates_batch_size' => 10,
 
 	   };
 }

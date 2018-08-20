@@ -96,9 +96,9 @@ sub default_options {
         'store_others'              => 1,
 
     # hive_capacity values for some analyses:
-        #'reuse_capacity'            =>   3,
-        #'hc_capacity'               => 150,
-        #'loadmembers_capacity'      =>  30,
+        'reuse_capacity'            =>   3,
+        'hc_capacity'               => 150,
+        'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,

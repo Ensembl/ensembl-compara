@@ -64,7 +64,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::ProteinTrees_conf');
 
 
 sub default_options {
@@ -73,62 +73,36 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # release 94/EG41 plants settings
-    division => 'plants',
-    mlss_id  => 40138,
-    eg_release => 41,
+    # User details
 
+    # parameters that are likely to change from execution to another:
+        # It is very important to check that this value is current (commented out to make it obligatory to specify)
+        #mlss_id => 40043,
+        # names of species we don't want to reuse this time
+        'do_not_reuse_list' => [],
 
     # custom pipeline name, in case you don't like the default one
-    pipeline_name => $self->o('division').'_prottrees_'.$self->o('eg_release').'_'.$self->o('rel_with_suffix'),
+        # Used to prefix the database name (in HiveGeneric_conf)
+        # Define rel_suffix for re-runs of the pipeline
+        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 
+    # dependent parameters: updating 'base_dir' should be enough
+        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_',
 
-    # connection parameters to various databases:
+    # "Member" parameters:
+        'allow_ambiguity_codes'     => 1,
 
-    # the master database for synchronization of various ids (use undef if you don't have a master database)
-    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
-    'master_db_is_missing_dnafrags' => 0,
+    # blast parameters:
+        # cdhit is used to filter out proteins that are too close to each other
+        'cdhit_identity_threshold' => 0.99,
 
-    'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/carlac_load_members_plants_41_94',
+    # clustering parameters:
 
-    eg_prod_loc => {
-      -host   => 'mysql-eg-prod-2',
-      -port   => 4239,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
+    # tree building parameters:
 
-    e_prod_loc => {
-      -host   => 'mysql-ens-vertannot-staging',
-      -port   => 4573,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
+    # alignment filtering options
 
-    eg_mirror_loc => {
-        -host   => 'mysql-eg-mirror',
-        -port   => 4157,
-        -user   => 'ensro',
-        -db_version => 93,
-    },
-    e_mirror_loc => {
-        -host   => 'mysql-ensembl-mirror',
-        -port   => 4240,
-        -user   => 'ensro',
-        -db_version => 93,
-    },
-
-    # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-    # Add the database entries for the current and previous core databases
-    'curr_core_sources_locs' => [ $self->o('eg_prod_loc'), $self->o('e_prod_loc') ],
-    'prev_core_sources_locs'   => [ $self->o('eg_mirror_loc'), $self->o('e_mirror_loc') ],
-
-    # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-    'prev_rel_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
-
-    # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
-    'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_plants_hom_40_93',
-
+    # species tree reconciliation
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -139,6 +113,117 @@ sub default_options {
         'taxlevels_protists'        => ['Alveolata', 'Amoebozoa', 'Choanoflagellida', 'Cryptophyta', 'Fornicata', 'Haptophyceae', 'Kinetoplastida', 'Rhizaria', 'Rhodophyta', 'Stramenopiles'],
         'taxlevels_vb'              => ['Calyptratae', 'Culicidae'],
 
+    # mapping parameters:
+        'do_stable_id_mapping'      => 1,
+        'do_treefam_xref'           => 1,
+        # The TreeFam release to map to
+        'tf_release'                => '9_69',
+
+    # executable locations:
+
+    # hive_capacity values for some analyses:
+        'reuse_capacity'            =>   3,
+        'blast_factory_capacity'    =>  50,
+        'blastp_capacity'           => 200,
+        'blastpu_capacity'          => 100,
+        'mcoffee_capacity'          => 200,
+        'split_genes_capacity'      => 200,
+        'alignment_filtering_capacity'  => 200,
+        'prottest_capacity'         => 200,
+        'treebest_capacity'         => 200,
+        'raxml_capacity'            => 200,
+        'examl_capacity'            => 400,
+        'notung_capacity'           => 200,
+        'ortho_tree_capacity'       => 200,
+        'quick_tree_break_capacity' => 100,
+        'build_hmm_capacity'        => 200,
+        'ktreedist_capacity'        => 150,
+        'goc_capacity'              => 200,
+        'goc_stats_capacity'        => 15,
+        'genesetQC_capacity'        => 100,
+        'other_paralogs_capacity'   => 100,
+        'homology_dNdS_capacity'    => 200,
+        'hc_capacity'               =>   4,
+        'decision_capacity'         =>   4,
+        'hc_post_tree_capacity'     => 100,
+        'HMMer_classify_capacity'   => 400,
+        'loadmembers_capacity'      =>  30,
+        'HMMer_classifyPantherScore_capacity'   => 1000,
+        'copy_trees_capacity'       => 50,
+        'copy_alignments_capacity'  => 50,
+        'mafft_update_capacity'     => 50,
+        'raxml_update_capacity'     => 50,
+        'ortho_stats_capacity'      => 10,
+        'copy_tree_capacity'        => 100,
+        'cluster_tagging_capacity'  => 200,
+        'cafe_capacity'             => 50,
+
+    # hive priority for non-LOCAL health_check analysis:
+
+    # connection parameters to various databases:
+
+        # the production database itself (will be created)
+        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+        'dbowner' => 'ensembl_compara',
+
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
+        'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+
+    ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
+    ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
+
+    prod_1 => {
+      -host   => 'mysql-eg-prod-1.ebi.ac.uk',
+      -port   => 4238,
+      -user   => 'ensro',
+      -db_version => $self->o('ensembl_release')
+    },
+
+    staging_1 => {
+      -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+      -port   => 4160,
+      -user   => 'ensro',
+      -db_version => $self->o('ensembl_release')
+    },
+
+    staging_2 => {
+      -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+      -port   => 4275,
+      -user   => 'ensro',
+      -db_version => $self->o('ensembl_release')
+    },
+
+        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
+        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+        'curr_core_sources_locs' => [ $self->o('prod_1') ],
+        # Add the database entries for the core databases of the previous release
+        'prev_core_sources_locs'   => [ $self->o('staging_1') ],
+
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => undef,
+
+    # Configuration of the pipeline worklow
+
+        # How will the pipeline create clusters (families) ?
+        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   'hmm' means that the pipeline will run an HMM classification
+        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
+
+        # How much the pipeline will try to reuse from "prev_rel_db"
+        # Possible values: 'clusters' (default), 'blastp', 'members'
+        #   'members' means that only the members are copied over, and the rest will be re-computed
+        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
+        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
+        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
+        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
+        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
+        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
+        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
+
+    # CAFE parameters
+
     # GOC parameters
         'goc_taxlevels'             => [],  # this is the default default
         'goc_taxlevels_fungi'       => [],
@@ -147,9 +232,12 @@ sub default_options {
         'goc_taxlevels_protists'    => [],
         'goc_taxlevels_vb'          => ['Chelicerata', 'Diptera', 'Hemiptera'],
 
-    # Extra params
-        # this should be 0 for plants
-        'use_quick_tree_break'      => 0,
+    # Extra analyses
+        # Do we want the Gene QC part to run ?
+        'do_gene_qc'                    => 0,
+        # Do we extract overall statistics for each pair of species ?
+        'do_homology_stats'             => 0,
+
     };
 }
 
@@ -164,8 +252,8 @@ sub tweak_analyses {
     # prevent principal components from being flowed
     # $analyses_by_name->{'member_copy_factory'}->{'-parameters'}->{'polyploid_genomes'} = 0;
 
-    ## Here we bump the resource class of some commonly MEMLIMIT
-    ## failing analyses. Are these really EG specific?
+    ## Extend this section to redefine the resource names of some analysis
+    ## Here we bump the resource class of some commonly MEMLIMIT failing analyses.
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';

@@ -28,11 +28,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-    Specialized version of the LoadMembers pipeline for Ensembl
+    Specialized version of the LoadMembers pipeline for Ensembl Genomes
 
 =head1 AUTHORSHIP
 
@@ -45,7 +45,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::LoadMembers_conf;
 
 use strict;
 use warnings;
@@ -68,7 +68,7 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-        #'collection'            => 'ensembl',
+        'collection'            => 'plants',
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
@@ -79,12 +79,17 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
     # "Member" parameters:
+        'allow_ambiguity_codes'     => 1,
+        # Genes with these logic_names will be ignored from the pipeline.
+        # Format is { genome_db_id (or name) => [ 'logic_name1', 'logic_name2', ... ] }
+        # An empty string can also be used as the key to define logic_names excluded from *all* species
+        'exclude_gene_analysis'     => {},
         # Store protein-coding genes
         'store_coding'              => 1,
         # Store ncRNA genes
-        'store_ncrna'               => 1,
+        'store_ncrna'               => 0,
         # Store other genes
-        'store_others'              => 1,
+        'store_others'              => 0,
 
     # connection parameters to various databases:
 
@@ -92,44 +97,62 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'  => 4522,
+        #'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        #'port'  => 4522,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
 
         # Ensembl-specific databases
-        'staging_loc' => {
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
+        #'staging_loc' => {
+            #-host   => 'mysql-ens-sta-1',
+            #-port   => 4519,
+            #-user   => 'ensro',
+            #-pass   => '',
+            #-db_version => 90,
+        #},
+
+        'eg_mirror_loc' => {
+            -host   => 'mysql-eg-mirror',
+            -port   => 4157,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 94,
+            -db_version => 93,
         },
-
-        'livemirror_loc' => {
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
+        'e_mirror_loc' => {
+            -host   => 'mysql-ensembl-mirror',
             -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
             -db_version => 93,
         },
+        'eg_prod_loc' => {
+            -host => 'mysql-eg-prod-2',
+            -port => 4239,
+            -user => 'ensro',
+            -pass => '',
+            -db_version => 94
+        },
+        'staging_loc' => {
+            -host => 'mysql-ens-vertannot-staging',
+            -port => 4573,
+            -user => 'ensro',
+            -pass => '',
+            -db_version => 94
+        },
+
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        #'curr_core_registry'        => "registry.conf",
-        #'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_core_sources_locs'    => [ $self->o('eg_prod_loc'), $self->o('staging_loc') ],
 
         # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
+        'prev_core_sources_locs'   => [ $self->o('eg_mirror_loc'), $self->o('e_mirror_loc') ],
         #'prev_core_sources_locs'   => [ ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_93',
+        'reuse_member_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
     };
 }
 

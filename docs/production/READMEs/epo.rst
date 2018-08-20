@@ -63,7 +63,7 @@ You will need 1 pre-existing compara database containing all the pairwise alignm
 You will also need to install the following executables and set their locations:
 
 - `Gerp <http://mendel.stanford.edu/SidowLab/downloads/gerp/index.html>`_ set in ``gerp_exe_dir``
-- `Pecan <http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html>`_ set in ``jar_file`` in ``Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan``
+- `Pecan <https://github.com/benedictpaten/pecan>`_ set in ``jar_file`` in ``Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan``
 
 Configuration of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,9 +147,9 @@ You will also need to install the following executables and set their locations:
 
 - bl2seq (from NCBI), set in the ``bl2seq``
 - gerpcol and gerpelem (`download link <http://mendel.stanford.edu/SidowLab/downloads/gerp/>`_) set in ``gerp_exe_dir``
-- `Pecan <http://hgwdev.cse.ucsc.edu/~benedict/code/Pecan.html>`_ set in ``jar_file``
+- `Pecan <https://github.com/benedictpaten/pecan>`_ set in ``jar_file``
 - `Enredo <https://github.com/jherrero/enredo>`_ set in ``enredo_bin_dir``
-- `Ortheus <http://hgwdev.cse.ucsc.edu/~benedict/code/Ortheus.html>`_
+- `Ortheus <https://github.com/benedictpaten/ortheus>`_
 
 Configuration of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -118,7 +118,6 @@ sub default_options {
       
       # the master database for synchronization of various ids (use undef if you don't have a master database)
       'master_db' => '',
-      'master_db_is_missing_dnafrags' => 1,      
 
       exclude_gene_analysis => {  'macrostomum_lignano_prjna284736' =>  ['mlignano_schatz_gene_bad']  },
 

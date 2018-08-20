@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf
 
     #5. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Lastz_conf --dbname hsap_btau_lastz_64 --password <your password> --mlss_id 534 --pipeline_db -host=compara1 --ref_species homo_sapiens --pipeline_name LASTZ_hs_bt_64 
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -57,7 +57,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::Lastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Lastz_conf;
 
 use strict;
 use warnings;
@@ -69,44 +69,40 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-            'host' => 'mysql-eg-prod-2.ebi.ac.uk',
-            'port' => 4239,
-            'user' => 'ensrw',
-            'password' => $self->o('password'),
+            # 'host' => 'mysql-eg-prod-2.ebi.ac.uk',
+            # 'port' => 4239,
 
-	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/plants_compara_master_41_94',
 
-            'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
-
-            'staging_loc1' => {
-                -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-                -port   => 4160,
+            # 'staging_loc1' => {
+            #     -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+            #     -port   => 4160,
+            #     -user   => 'ensro',
+            #     -pass   => '',
+            # },
+            # 'staging_loc2' => {
+            #     -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+            #     -port   => 4275,
+            #     -user   => 'ensro',
+            #     -pass   => '',
+            # },
+             'prod_loc' => {
+                -host   => 'mysql-eg-prod-2.ebi.ac.uk',
+                -port   => 4239,
                 -user   => 'ensro',
                 -pass   => '',
-            },
-            'staging_loc2' => {
-                -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-                -port   => 4275,
-                -user   => 'ensro',
-                -pass   => '',
-            },
-             'prod_loc1' => {
-                -host   => 'mysql-eg-prod-1.ebi.ac.uk',
-                -port   => 4238,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => 74,
+                -db_version => $self->o('rel_with_suffix'),
             },
             'livemirror_loc' => {
                 -host   => 'mysql-eg-mirror.ebi.ac.uk',
                 -port   => 4205,
                 -user   => 'ensro',
                 -pass   => '',
-                -db_version => 73,
+                -db_version => 93,
             },
 
             #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-            'curr_core_sources_locs'    => [ $self->o('prod_loc1') ],
+            'curr_core_sources_locs'    => [ $self->o('prod_loc') ],
             'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
 
 
@@ -131,27 +127,12 @@ sub default_options {
 	    #Reference species
 #	    'ref_species' => 'homo_sapiens',
 	    'ref_species' => '',
+        # 'non_ref_species' => undef,
 
             # healthcheck
             'do_compare_to_previous_db' => 0,
             # Net
             'bidirectional' => 1,
-
-            #directory to dump nib files
-            'dump_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/' . $self->o('pipeline_name') . '/' . $self->o('host') . '/',
-            #'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-            'bed_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-            'output_dir' => '/nfs/panda/ensemblgenomes/production/compara' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
-
-            # Capacities
-            'pair_aligner_analysis_capacity' => 100,
-            'pair_aligner_batch_size' => 3,
-            'chain_hive_capacity' => 50,
-            'chain_batch_size' => 5,
-            'net_hive_capacity' => 20,
-            'net_batch_size' => 1,
-            'filter_duplicates_hive_capacity' => 200,
-            'filter_duplicates_batch_size' => 10,
 
 	   };
 }
@@ -161,10 +142,14 @@ sub resource_classes {
 
     return {
             %{$self->SUPER::resource_classes},
-            '1Gb_job'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
-            '3.6Gb_job' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
-            '4.2Gb_job' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
-            '8.4Gb_job' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
+	    'default' => {'LSF' => '-q production-rh7'},
+            '100Mb' => { 'LSF' => '-q production-rh7 -M100 -R"rusage[mem=100]"' },
+	    '500Mb' => { 'LSF' => '-q production-rh7 -M500 -R"rusage[mem=500]"' },
+            '1Gb'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
+            'crowd' => { 'LSF' => '-q production-rh7 -M1800 -R"rusage[mem=1800]"' },
+            'crowd_himem' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
+	    '4.2Gb' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
+	    '8.4Gb' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
     };
 }
 
@@ -176,21 +161,21 @@ sub pipeline_analyses {
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-          'pairaligner_stats'                             => '1.8Gb_job',
-          'alignment_nets'                                => '1.8Gb_job',
-          'alignment_nets_himem'                          => '3.6Gb_job',
-          'create_alignment_nets_jobs'                    => '1.8Gb_job',
-          'alignment_chains'                              => '1Gb_job',
-          'create_alignment_chains_jobs'                  => '3.6Gb_job',
-          'create_filter_duplicates_jobs'                 => '1.8Gb_job',
-          'create_pair_aligner_jobs'                      => '1.8Gb_job',
-          'populate_new_database'                         => '8.4Gb_job',
-          'parse_pair_aligner_conf'                       => '4.2Gb_job',
-          'set_internal_ids_collection'                   => '1Gb_job',
-          'store_sequence'                                => '1Gb_job',
-          'store_sequence_again'                          => '3.6Gb_job',
-          $self->o('pair_aligner_logic_name')             => '3.6Gb_job',
-          $self->o('pair_aligner_logic_name') . "_himem1" => '8.4Gb_job',
+        'pairaligner_stats'         => 'crowd',
+        'alignment_nets'            => 'crowd',
+        'alignment_nets_himem'      => 'crowd_himem',
+        'create_alignment_nets_jobs'=> 'crowd',
+        'alignment_chains'          => '1Gb',
+        'create_alignment_chains_jobs'  => 'crowd_himem',
+        'create_filter_duplicates_jobs'     => 'crowd',
+        'create_pair_aligner_jobs'  => 'crowd',
+        'populate_new_database' => '8.4Gb',
+        'parse_pair_aligner_conf' => '4.2Gb',
+        'set_internal_ids_collection' => '1Gb',
+        'store_sequence'        => '1Gb',
+        'store_sequence_again'  => 'crowd_himem',
+        $self->o('pair_aligner_logic_name') => 'crowd_himem',
+        $self->o('pair_aligner_logic_name')."_himem1" => '8.4Gb',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

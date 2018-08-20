@@ -219,15 +219,6 @@ sub default_options {
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},
-
-        '38Gb_job'     => {'LSF' => '-C0 -M38000 -R"select[mem>38000] rusage[mem=38000]"' },
-    }
-}
-
 
 sub tweak_analyses {
     my $self = shift;
@@ -236,7 +227,8 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'CAFE_table'                => '24Gb_job',
-        'hcluster_run'              => '38Gb_job',
+        'hcluster_run'              => '1Gb_job',
+        'hcluster_parse_output'     => '1Gb_job',
         'split_genes'               => '250Mb_job',
         'CAFE_species_tree'         => '24Gb_job',
     );
