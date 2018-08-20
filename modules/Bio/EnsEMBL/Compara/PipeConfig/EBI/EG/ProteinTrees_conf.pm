@@ -267,7 +267,8 @@ sub tweak_analyses {
     if ($self->o('division') eq 'plants') {
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name->{'ktreedist'}->{'-rc_name'} = '4Gb_job';
+        $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
+        $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
     }
     if ($self->o('division') eq 'fungi') {
         $analyses_by_name->{'num_sequences_per_blast_job'}->{'-parameters'} = 5000;

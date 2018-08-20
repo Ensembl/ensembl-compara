@@ -1786,11 +1786,28 @@ sub core_pipeline_analyses {
             -parameters => {
                 'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
             },
+            -flow_into      => {
+                -1 => 'exon_boundaries_prep_himem',
+                1 => WHEN(
+                    '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                    ELSE 'aln_filtering_tagging',
+                ),
+            },
+            -rc_name    => '500Mb_job',
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -batch_size     => 20,
+        },
+
+        {   -logic_name     => 'exon_boundaries_prep_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -parameters => {
+                'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
+            },
             -flow_into      => WHEN(
                 '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'aln_filtering_tagging',
             ),
-            -rc_name    => '500Mb_job',
+            -rc_name    => '1Gb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },
@@ -1838,6 +1855,7 @@ sub core_pipeline_analyses {
                     ELSE 'hc_post_tree',
                 ),
             },
+            -rc_name    => '250Mb_job',
             %decision_analysis_params,
         },
 
@@ -1906,7 +1924,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'aln_filtering_tagging',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging',
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
-            -rc_name    	=> '4Gb_job',
+            -rc_name        => '2Gb_job',
             -batch_size     => 50,
             -flow_into      => [ 'split_genes' ],
         },
