@@ -1906,7 +1906,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'aln_filtering_tagging',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging',
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
-            -rc_name    	=> '4Gb_job',
+            -rc_name        => '2Gb_job',
             -batch_size     => 50,
             -flow_into      => [ 'split_genes' ],
         },
