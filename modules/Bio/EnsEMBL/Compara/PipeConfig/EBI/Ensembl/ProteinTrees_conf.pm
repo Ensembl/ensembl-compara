@@ -207,7 +207,7 @@ sub default_options {
 
     # Extra analyses
         # Export HMMs ?
-        'do_hmm_export'                 => 1,
+        'do_hmm_export'                 => 0,
         # Do we want the Gene QC part to run ?
         'do_gene_qc'                    => 1,
         # Do we extract overall statistics for each pair of species ?
