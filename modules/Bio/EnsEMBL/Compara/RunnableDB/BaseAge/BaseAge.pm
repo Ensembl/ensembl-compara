@@ -158,6 +158,11 @@ sub base_age {
     my $clade = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->param('clade_taxon_id'))->scientific_name();
     my $all_clade_species_name = {map {$_->get_short_name => 1} @{ $compara_dba->get_GenomeDBAdaptor->fetch_all_by_ancestral_taxon_id($self->param('clade_taxon_id')) } };
 
+    my $species_tree = $mlss->species_tree;
+    my $ref_stn = $species_tree->root->find_leaves_by_field('genome_db_id', $dnafrag->genome_db_id)->[0];
+    my $def_root_distance = $ref_stn->distance_to_root;
+    print "STROOT " . $def_root_distance . "\n" if ($self->debug);
+
     print "CLADE $clade\n" if ($self->debug);
 
     #generate bed_file location
@@ -192,7 +197,7 @@ sub base_age {
         my $max_age = @$ancestors;
 
         print "ROOT " . $reference_node->distance_to_root . "\n" if ($self->debug);
-        my $root_distance = $reference_node->distance_to_root ;
+        my $root_distance = $reference_node->distance_to_root || $def_root_distance;
 
         foreach my $this_node (@$ancestors) {
             my $node_distance = $this_node->distance_to_node($reference_node);
