@@ -195,8 +195,9 @@ sub base_age {
         my $root_distance = $reference_node->distance_to_root ;
 
         foreach my $this_node (@$ancestors) {
+            my $node_distance = $this_node->distance_to_node($reference_node);
             print "node " . $this_node->name . "\n" if ($self->debug);
-            print "node " . $this_node->node_id . " " . $this_node->name . " node " . $this_node->distance_to_node($reference_node) . " parent " . $this_node->distance_to_parent . " " . ($this_node->distance_to_node($reference_node)/$root_distance) . "\n" if ($self->debug);
+            print "node " . $this_node->node_id . " " . $this_node->name . " node " . $node_distance . " parent " . $this_node->distance_to_parent . " " . ($node_distance/$root_distance) . "\n" if ($self->debug);
 
             #expect only a single genomic_align for an ancestor
             my $genomic_aligns = $this_node->get_all_genomic_aligns_for_node;
@@ -209,7 +210,7 @@ sub base_age {
             my $ancestral_seq;
             %$ancestral_seq = (name => $this_node->name,
                                node_id => $this_node->node_id,
-                               node_distance => $this_node->distance_to_node($reference_node),
+                               node_distance => $node_distance,
                                aligned_seq => [split(//,$genomic_align->aligned_sequence)]);
             push @$ancestral_seqs, $ancestral_seq;
             
