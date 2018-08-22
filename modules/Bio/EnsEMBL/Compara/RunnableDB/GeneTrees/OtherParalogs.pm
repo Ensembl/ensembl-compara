@@ -177,6 +177,7 @@ sub rec_add_paralogs {
             }
         }
     }
+    print "$ngenepairlinks links on node_id=", $ancestor->node_id, "\n";
     $ngenepairlinks += $self->rec_add_paralogs($child1);
     $ngenepairlinks += $self->rec_add_paralogs($child2);
     return $ngenepairlinks;
