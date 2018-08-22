@@ -172,7 +172,7 @@ body.ie8   div.config div.config_matrix .tutorial.col   { margin: -20px 0 0 50px
 
 
 /* New matrix wizard styling */
-div.track-panel                       { float: left; width:85%; border: #ccc 1px solid; margin-bottom: 10px; }
+div.track-panel                       { float: left; width:85%; border: #ccc 1px solid; }
 div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 25%; }
 div.result-box a.clearall             { display:inline-block; float: right; }
 h5.result-header                      { display: block; margin-top: 10px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; }
@@ -197,9 +197,6 @@ div.track-tab              { background-color: #fff; color: #666666; float: left
 div.track-tab.active       { background-color: #eeeeee; border-bottom: 1px solid #eee; color: #000; cursor:  auto; }
 div.track-tab:hover        { background-color: #eeeeee; opacity: 0.5; color: #000; }
 div.track-tab.active:hover { background-color: #eeeeee; opacity: 1; }
-div span.content-id        { display: none; }
-div span.rhsection-id      { display: none; }
-div span.lhsection-id      { display: none; }
 div.tab-content            { display: none; min-height: 300px; width: 100%; }
 div.tab-content.active     { display: inline-block; background-color: #eeeeee; }
 
@@ -213,7 +210,7 @@ div.tabs.experiments                                                 { margin: 5
 div.cell-listing  { padding-top: 3em; padding-left: 1em; }
 
 /* alphabet ribbon */
-div.larrow, div.rarrow                              { display: inline-block; float: left; color: #000; margin-top: -2px; cursor: pointer; }
+div.larrow, div.rarrow                              { display: inline-block; float: left; color: #000; cursor: pointer; }
 div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: #bebebe; }
 div.letters-ribbon                                  { display: inline-block; float: left; color: #000; font-size: 0.8em; margin-right: 5px; }
 div.alphabet-div                                    { margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
