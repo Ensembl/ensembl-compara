@@ -116,6 +116,7 @@ sub pipeline_analyses {
                               'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
                -input_ids => [{}],
+               -rc_name => '100Mb',
               -flow_into => {
                              '1' => [ 'base_age_factory' ],
                             },
