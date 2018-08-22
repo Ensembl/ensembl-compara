@@ -72,7 +72,7 @@ sub default_options {
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_94_38?group=variation',
+            'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
 
             # executable locations:
             'big_bed_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
