@@ -25,6 +25,9 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf -password <your_password>
 
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf $(mysql-ens-compara-prod-2-ensadmin details hive) \
+                     -compara_url $(mysql-ens-compara-prod-4 details url mateus_mammals_epo_94) \
+
 =head1 DESCRIPTION
 
     Calculate the age of a base ... at the EBI !
