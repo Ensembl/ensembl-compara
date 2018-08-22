@@ -209,7 +209,7 @@ sub base_age {
             my $ancestral_seq;
             %$ancestral_seq = (name => $this_node->name,
                                node_id => $this_node->node_id,
-                               age => $this_node->distance_to_node($reference_node),
+                               node_distance => $this_node->distance_to_node($reference_node),
                                aligned_seq => [split(//,$genomic_align->aligned_sequence)]);
             push @$ancestral_seqs, $ancestral_seq;
             
@@ -251,7 +251,7 @@ sub base_age {
                         #print "SAME " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
                         $clade_name = $ancestral_seq->{name};
                         $node_id = $ancestral_seq->{node_id};
-                        $node_distance = $ancestral_seq->{age};
+                        $node_distance = $ancestral_seq->{node_distance};
                     } else {
                         #Found a difference between ref and ancestor. Stop
                         #print "DIFF " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
