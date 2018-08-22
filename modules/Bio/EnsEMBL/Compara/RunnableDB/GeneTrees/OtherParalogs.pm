@@ -249,7 +249,7 @@ sub get_ancestor_species_hash
         $child->disavow_parent;
 
         foreach my $leaf (@$leaves) {
-            print $leaf->toString if ($self->debug);
+            print $leaf->toString, "\n" if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @sub_taxa, $self->param('gdb_id2stn')->{$leaf->genome_db_id};
             push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->seq_member_id};
