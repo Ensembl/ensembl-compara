@@ -56,10 +56,10 @@ sub build {
     <div style="display: flex">
       <div class="track-panel">
         <div class="tabs track-menu">
-          <div class="track-tab active" id="browse-tab">Browse tracks<span class="content-id">browse-track</span></div>
-          <div class="track-tab" id="search-tab">Search tracks<span class="content-id">search-track</span></div>
-          <div class="track-tab" id="config-tab">Track configuration<span class="content-id">track-config</span></div>
-          <div class="track-tab" id="help-tab" style="border-right: none;">Help<span class="content-id">help-track</span></div>
+          <div class="track-tab active" id="browse-tab">Browse tracks<span class="hidden content-id">browse-track</span></div>
+          <div class="track-tab" id="search-tab">Search tracks<span class="hidden content-id">search-track</span></div>
+          <div class="track-tab" id="config-tab">Track configuration<span class="hidden content-id">track-config</span></div>
+          <div class="track-tab" id="help-tab" style="border-right: none;">Help<span class="hidden content-id">help-track</span></div>
         </div>
         
         <div id="browse-track" class="tab-content active">
@@ -97,21 +97,21 @@ sub build {
         <h5 class="result-header">Cell type</h5>
         <div class="result-content" id="cell">
           <ul class="result-list">
-            <span class="lhsection-id">cell-type-content</span>
+            <span class="hidden lhsection-id">cell-type-content</span>
           </ul>
         </div>
 
         <h5 class="result-header">Experiment type</h5>
         <div class="result-content" id="experiment">
           <ul class="result-list"> 
-            <span class="lhsection-id">experiment-type-content</span>          
+            <span class="hidden lhsection-id">experiment-type-content</span>
           </ul>
         </div> 
 
         <h5 class="result-header">Source</h5>
         <div class="result-content" id="source">
           <ul class="result-list">  
-            <span class="lhsection-id">source-content</span>
+            <span class="hidden lhsection-id">source-content</span>
           </ul>
         </div>         
         
