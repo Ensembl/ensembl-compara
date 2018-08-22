@@ -134,7 +134,8 @@ sub rec_add_paralogs {
     my $ancestor = shift;
 
     $ancestor->print_node if ($self->debug);
-    return unless $ancestor->get_child_count;
+    # Skip the terminal nodes
+    return 0 unless $ancestor->get_child_count;
     my ($child1, $child2) = @{$ancestor->children};
     $child1->print_node if ($self->debug);
     $child2->print_node if ($self->debug);
