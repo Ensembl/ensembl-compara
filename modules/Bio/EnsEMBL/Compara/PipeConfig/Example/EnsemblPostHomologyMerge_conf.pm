@@ -77,7 +77,7 @@ sub default_options {
         'high_confidence_ranges'    => [
             {
                 'range_label'       => 'protein',
-                'range_filter'      => '((homology_id < 100000000) OR (homology_id BETWEEN 300000000 AND 400000000))',
+                'range_filter'      => '((homology_id < 100000000) OR (homology_id BETWEEN 800000000 AND 900000000))',
             },
             {
                 'range_label'       => 'ncrna',
