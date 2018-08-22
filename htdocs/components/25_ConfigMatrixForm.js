@@ -34,7 +34,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.browseTrack  = this.el.find("div#browse-track");
     this.elLk.buttonTab    = this.el.find("div.track-tab");
     this.elLk.contentTab   = this.el.find("div.tab-content");
-    this.elLk.trackList    = this.el.find("ul.result-list");
+    this.elLk.filterList   = this.el.find("ul.result-list");
     this.elLk.filterButton = this.el.find("button.filter");
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
@@ -70,7 +70,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
     });
     
-    panel.clickCheckbox(this.elLk.trackList, 1);
+    panel.clickCheckbox(this.elLk.filterList, 1);
     panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));
   },
   
@@ -87,7 +87,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
   
   // Function to select/unselect checkbox and removing them from the right hand panel (optional) and adding them to the right hand panel (optional)
-  clickCheckbox: function (container, removeElement, addElement) {
+  //Argument: container is an object where the checkbox element is
+  //        : removeElement either 1 or 0 whether to remove element 
+  //        : AddElement is either 1 or 0
+  //        : allBox is Object of select all box, check if it needs to be on or off
+  clickCheckbox: function (container, removeElement, addElement, allBox) {
     var panel = this;
 
     var itemListen = "li";
@@ -97,34 +101,56 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     //clicking checkbox
     $(container).on("click", itemListen, function(e) {
-      console.log(itemListen);
-       if($(this).find("span.fancy-checkbox.selected").length){
-        $(this).find("span.fancy-checkbox").removeClass("selected");
-        
-        //removing element from right hand panel (selection panel) - optional
-        if(removeElement && !this.className.match("noremove")){
-          //unselecting from left hand panel when unselecting/removing in right hand panel
-          var lhsectionId = $(this).closest("ul.result-list").find("span.lhsection-id").html();
-          panel.el.find('div#'+lhsectionId+' li.'+$(this).attr('class')+' span.fancy-checkbox').removeClass("selected");;
-          this.remove();
+      panel.selectBox(this, removeElement, addElement);
+
+      //check whether the select all box is on/off, if it is off and all filters are selected, then make it on and if it is on and all filters are not selected then make it off
+      if(allBox && itemListen === "li"){
+        if(container.find("span.fancy-checkbox.selected").length === container.find("span.fancy-checkbox").length) {
+          allBox.find("span.fancy-checkbox").addClass("selected");
+        } else {
+          allBox.find("span.fancy-checkbox").removeClass("selected");
         }
-        //removing from right hand panel when unselecting in left hand panel
-        if(addElement) {          
-          var rhsectionId = $(this).closest("div.tab-content.active").find('span.rhsection-id').html();
-          var elementClass = $(this).find('text').html().replace(/[^\w\-]/g,'_');
-          panel.el.find('div#'+rhsectionId+' ul li.'+elementClass).remove();
-        }
-      } else {
-        if(addElement) {
-          var rhsectionId = $(this).closest("div.tab-content.active").find('span.rhsection-id').html();
-          var elementClass = $(this).find('text').html().replace(/[^\w\-]/g,'_');
-          $(this).clone().prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
-        }
-        $(this).find("span.fancy-checkbox").addClass("selected");
       }
-      panel.enableFilterButton('div#cell, div#experiment, div#source');
       e.stopPropagation();
     });  
+  },
+  
+  //Function to select filters and adding/removing them in the relevant panel
+  selectBox: function(el, removeElement, addElement) {
+    var panel = this;
+    if($(el).find("span.fancy-checkbox.selected").length){
+      $(el).find("span.fancy-checkbox").removeClass("selected");
+
+      //removing element from right hand panel (selection panel) - optional
+      if(removeElement && !el.className.match("noremove")){
+        //unselecting from left hand panel when unselecting/removing in right hand panel
+        var lhsectionId = $(el).closest("ul.result-list").find("span.lhsection-id").html();
+        var allBoxId    = $(el).find('span.allBox-id').html();
+        panel.el.find('div#'+lhsectionId+' li.'+$(el).attr('class')+' span.fancy-checkbox').removeClass("selected");
+        el.remove();
+  
+        //if select all box is selected, it needs to be unselected if one track is removed
+        if(panel.el.find('div#'+allBoxId+' span.fancy-checkbox.selected').length) {
+          panel.el.find('div#'+allBoxId+' span.fancy-checkbox').removeClass("selected");        
+        }
+      }
+      //removing from right hand panel when unselecting in left hand panel
+      if(addElement) {          
+        var rhsectionId = $(el).closest("div.tab-content.active").find('span.rhsection-id').html();
+        var elementClass = $(el).find('text').html().replace(/[^\w\-]/g,'_');
+        panel.el.find('div#'+rhsectionId+' ul li.'+elementClass).remove();
+      }
+    } else {
+      if(addElement) {
+        var rhsectionId  = $(el).closest("div.tab-content.active").find('span.rhsection-id').html();
+        var elementClass = $(el).find('text').html().replace(/[^\w\-]/g,'_');
+        var allBoxid     = $(el).closest("div.tab-content.active").find('div.all-box').attr("id");
+        
+        $(el).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
+      }
+      $(el).find("span.fancy-checkbox").addClass("selected");
+    }
+    panel.enableFilterButton('div#cell, div#experiment, div#source');    
   },
   
   // Function to show a panel when button is clicked
@@ -146,10 +172,33 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
   },
   
+  //Function to select all filters in a specific panel
+  // Arguments: container where all the filters to be selected are
+  //          : select all box object
+  selectAll: function (container, allBox) {
+    var panel = this;
+    
+    allBox.on("click", function(){
+      $.each(container.find('li'), function(i, ele) {
+        //selecting all of them
+        if(allBox.find("span.fancy-checkbox.selected").length){
+          if(!$(ele).find("span.fancy-checkbox.selected").length){          
+            panel.selectBox(ele, 0, 1);
+          }          
+        }
+        else { //unselecting all of them
+          if($(ele).find("span.fancy-checkbox.selected").length){          
+            panel.selectBox(ele, 0, 1);
+          } 
+        }        
+      });
+    });
+  },
+  
   trackTab: function() {
     var panel = this;
     
-    this.elLk.browseTrack.append('<div class="tabs cells"><div class="cell-label">Track filters</div><div class="track-tab active">Cell type<span class="content-id">cell-type-content</span></div><div class="track-tab">Experiment type<span class="content-id">experiment-type-content</span></div><div class="track-tab">Source<span class="content-id">source-content</span></div></div><div id="cell-type-content" class="tab-content active"><span class="rhsection-id">cell</span></div><div id="experiment-type-content" class="tab-content"><span class="rhsection-id">experiment</span></div><div id="source-content" class="tab-content">Source contents....<span class="rhsection-id">source</span></div>');
+    this.elLk.browseTrack.append('<div class="tabs cells"><div class="cell-label">Track filters</div><div class="track-tab active">Cell type<span class="hidden content-id">cell-type-content</span></div><div class="track-tab">Experiment type<span class="hidden content-id">experiment-type-content</span></div><div class="track-tab">Source<span class="hidden content-id">source-content</span></div></div><div id="cell-type-content" class="tab-content active"><span class="hidden rhsection-id">cell</span></div><div id="experiment-type-content" class="tab-content"><span class="hidden rhsection-id">experiment</span></div><div id="source-content" class="tab-content">Source contents....<span class="hidden rhsection-id">source</span></div>');
 
     //selecting the tab in track filters
     this.elLk.cellTab = this.el.find("div.cells div.track-tab");
@@ -158,7 +207,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
     
     //showing and applying cell types
-    this.displayTrack(Object.keys(panel.json_data.cell_lines).sort(), "div#cell-type-content", "alphabetRibbon");
+    this.displayFilter(Object.keys(panel.json_data.cell_lines).sort(), "div#cell-type-content", "alphabetRibbon");
 
     //showing experiment type tabs
     var experiment_html = '<div class="tabs experiments">';
@@ -175,8 +224,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $.each(panel.json_data.evidence, function(key, item){
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
-      experiment_html += '<div class="track-tab '+active_class+'">'+item.name+'<span class="content-id">'+key+'-content</span></div>';     
-      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'"><span class="rhsection-id">experiment</span></div>';
+      experiment_html += '<div class="track-tab '+active_class+'">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';     
+      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'"><span class="hidden rhsection-id">experiment</span></div>';
       count++;
     });
     experiment_html += '</div>';
@@ -184,7 +233,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     //displaying the experiment types
     $.each(panel.json_data.evidence, function(key, ev){
-      panel.displayTrack(ev.evidence_type, "div#"+key+"-content",ev.listType);
+      panel.displayFilter(ev.evidence_type, "div#"+key+"-content",ev.listType);
     })
     
     //selecting the tab in experiment type
@@ -222,11 +271,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     } 
   },
   
-  //function to display tracks (checkbox label), it can either be inside a letter ribbon or just list
-  displayTrack: function(data, container, listType) {
+  //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
+  displayFilter: function(data, container, listType) {
     var panel       = this;
     var ribbonObj   = {};
-    var countTrack  = 1;
+    var countFilter  = 0;
 
     if(listType && listType === "alphabetRibbon") {      
       //creating obj with alphabet key (a->[], b->[],...)
@@ -246,17 +295,19 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var elementClass = item.replace(/[^\w\-]/g,'_');          
           html += '<li class="noremove '+elementClass+'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
         }
-        countTrack++;
+        countFilter++;
       });
       html += '</ul>';
-      html = '<div class="all-box list-all-box"><span class="fancy-checkbox"></span>Select all<text>('+countTrack+')</text></div>' + html; 
+      html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+countFilter+')</text></div>' + html; 
       panel.el.find(container).append(html);
       
       //clicking select all checkbox
       panel.clickCheckbox(this.el.find(container+" div.all-box"));
+      //selecting all filters
+      panel.selectAll(this.el.find(container+" ul.letter-content"), this.el.find(container+" div.all-box"));
       
-      //clicking checkbox
-      panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1);
+      //clicking checkbox for the filters
+      panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
     }
   },
   
@@ -289,18 +340,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         active_class = "inactive";
       }
       
-      html += '<div class="ribbon_'+letter+' alphabet-div '+active_class+'">'+letter.toUpperCase()+'<span class="content-id">'+letter+'_content</span></div>';
+      html += '<div class="ribbon_'+letter+' alphabet-div '+active_class+'">'+letter.toUpperCase()+'<span class="hidden content-id">'+letter+'_content</span></div>';
       content_html += '<div class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
-    panel.el.find(container).append('<div class="cell-listing"><div class="larrow inactive">&#x25C0;</div><div class="letters-ribbon"></div><div class="rarrow">&#x25B6;</div><div class="ribbon-content"></div><div class="all-box"><span class="fancy-checkbox"></span>Select all<text>('+total_num+')</text></div></div>');    
+    panel.el.find(container).append('<div class="cell-listing"><div class="larrow inactive">&#x25C0;</div><div class="letters-ribbon"></div><div class="rarrow">&#x25B6;</div><div class="ribbon-content"></div><div class="all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+total_num+')</text></div></div>');    
     panel.el.find(container+' div.letters-ribbon').append(html);
     panel.el.find(container+' div.ribbon-content').append(content_html);
 
-    //clicking checkbox
-    panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1);
+    //clicking checkbox for each filter
+    panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
     
     //clicking select all checkbox
     panel.clickCheckbox(this.el.find(container+" div.all-box"));
+   
+    //selecting all filters
+    panel.selectAll(this.el.find(container+" div.ribbon-content"), this.el.find(container+" div.all-box"));
     
     //clicking the alphabet
     panel.elLk.alphabet = panel.el.find(container+' div.alphabet-div');      
