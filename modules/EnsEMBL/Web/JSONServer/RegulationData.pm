@@ -51,7 +51,7 @@ sub json_data {
   foreach my $set (qw(core non_core)) {
     $all_types{$set} = [];
     foreach (@{$evidence_info->{$set}{'classes'}}) {
-      next if $_ eq 'Transcription Factor Complex'; #ignoring this group as its not used
+      next if $_ eq 'Transcription Factor Complex'; #looks like an API bug, this shouldnt be coming back from the API as we dont need this for web display
       
       my $evidence_group = $_ eq 'Transcription Factor' ? 'TFBS' :  $_;
       $evidence_group =~ s/[^\w\-]/_/g;
@@ -97,7 +97,7 @@ sub json_data {
         if ($set_info->{$set}{$_->dbID}) {
           my $hash = {
             evidence_type => $_->name,
-            on            => $default_evidence_types{$_->name} ? 1 : 0
+            defaultOn     => $default_evidence_types{$_->name} ? 1 : 0
           };
           push @$cell_evidence, $hash;
         }
