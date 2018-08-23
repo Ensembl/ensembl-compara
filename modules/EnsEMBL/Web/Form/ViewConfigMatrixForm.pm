@@ -79,7 +79,7 @@ sub build {
         </div>      
       </div>
       <div class="result-box">
-        <a class="small right-margin clearall" href="#">Clear all</a>
+        <span class="small right-margin clearall">Clear all</span>
         
         <h5 class="result-header">Analysis</h5>
         <div class="result-content">
