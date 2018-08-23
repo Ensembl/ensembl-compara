@@ -138,8 +138,7 @@ sub write_output {
 	my $dump_jobs = $self->param('dump_jobs');
 	print "TO DUMP: \n";
 	print Dumper $dump_jobs;
-	$self->input_job->autoflow(0);
-	$self->dataflow_output_id( $dump_jobs->{DumpMultiAlign}, 1 ) if $dump_jobs->{DumpMultiAlign};
+	$self->dataflow_output_id( $dump_jobs->{DumpMultiAlign}, 9 ) if $dump_jobs->{DumpMultiAlign};
 	$self->dataflow_output_id( $dump_jobs->{DumpTrees}, 2 ) if $dump_jobs->{DumpTrees};
 	$self->dataflow_output_id( $dump_jobs->{DumpConstrainedElements}, 3 ) if $dump_jobs->{DumpConstrainedElements};
 	$self->dataflow_output_id( $dump_jobs->{DumpConservationScores},  4 ) if $dump_jobs->{DumpConservationScores};

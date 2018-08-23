@@ -295,7 +295,7 @@ sub pipeline_analyses {
                     'ancestral_db'         => $self->o('ancestral_db'),
                 } ],
             -flow_into  => {
-                '1'    => [ 'DumpMultiAlign_start' ],
+                '9'    => [ 'DumpMultiAlign_start' ],
                 '2'    => [ 'DumpTrees_start' ],
                 '3'    => [ 'DumpConstrainedElements_start' ], 
                 '4'    => [ 'DumpConservationScores_start'  ], 
