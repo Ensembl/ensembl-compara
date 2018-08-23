@@ -115,7 +115,7 @@ sub run {
 
 sub write_output {
 	my $self = shift;
-	$self->dataflow_output_id( { mlss_ids => $self->param('missing_mlsses'), reuse_prev_rel => 0 }, 1 ) if $self->param('missing_mlsses');
+	$self->dataflow_output_id( { mlss_ids => $self->param('missing_mlsses'), reuse_prev_rel => 0 }, 2 ) if $self->param('missing_mlsses');
 }
 
 1;
