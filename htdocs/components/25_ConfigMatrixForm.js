@@ -36,6 +36,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.contentTab   = this.el.find("div.tab-content");
     this.elLk.filterList   = this.el.find("ul.result-list");
     this.elLk.filterButton = this.el.find("button.filter");
+    this.elLk.clearAll     = this.el.find("span.clearall");
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
@@ -64,14 +65,27 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       {
         if(panel.elLk.filterButton.hasClass("_edit")) {
           panel.elLk.filterButton.removeClass("_edit").outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML);
-        }s
+        }
       } else if (selectTab === 'config-tab' && !panel.elLk.filterButton.hasClass("_edit") && panel.elLk.filterButton.hasClass("active")) {
         panel.elLk.filterButton.addClass("_edit").outerWidth("70px").html("Edit");
       }
     });
     
     panel.clickCheckbox(this.elLk.filterList, 1);
-    panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));
+    panel.clearAll(this.elLk.clearAll);
+    panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));    
+  },
+  
+  //function when click clear all link which should reset all the filters
+  clearAll: function (clearLink) {
+    var panel = this;
+    
+  clearLink.on("click",function(e){
+    $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
+      panel.selectBox(ele, 1, 0);
+    });
+  });
+    
   },
   
   // Function to check divs that needs to have content to enable or disable apply filter button
@@ -198,7 +212,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   trackTab: function() {
     var panel = this;
     
-    this.elLk.browseTrack.append('<div class="tabs cells"><div class="cell-label">Track filters</div><div class="track-tab active">Cell type<span class="hidden content-id">cell-type-content</span></div><div class="track-tab">Experiment type<span class="hidden content-id">experiment-type-content</span></div><div class="track-tab">Source<span class="hidden content-id">source-content</span></div></div><div id="cell-type-content" class="tab-content active"><span class="hidden rhsection-id">cell</span></div><div id="experiment-type-content" class="tab-content"><span class="hidden rhsection-id">experiment</span></div><div id="source-content" class="tab-content">Source contents....<span class="hidden rhsection-id">source</span></div>');
+    this.elLk.browseTrack.append('<div class="tabs cells"><div class="cell-label">Track filters</div><div class="track-tab active">Cell type<span class="hidden content-id">cell-type-content</span></div><div class="track-tab">Experiment type<span class="hidden content-id">experiment-type-content</span></div><div class="track-tab">Source<span class="hidden content-id">source-content</span></div></div><div id="cell-type-content" class="tab-content active"><span class="hidden rhsection-id">cell</span></div><div id="experiment-type-content" class="tab-content"><span class="hidden rhsection-id">experiment</span></div><div id="source-content" class="tab-content"><ul class="list-content"><li><span class="fancy-checkbox"></span>Blueprint</li><li><span class="fancy-checkbox"></span>Another source</li></ul><span class="hidden rhsection-id">source</span></div>');
 
     //selecting the tab in track filters
     this.elLk.cellTab = this.el.find("div.cells div.track-tab");
