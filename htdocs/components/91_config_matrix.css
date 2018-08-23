@@ -174,7 +174,7 @@ body.ie8   div.config div.config_matrix .tutorial.col   { margin: -20px 0 0 50px
 /* New matrix wizard styling */
 div.track-panel                       { float: left; width:85%; border: #ccc 1px solid; }
 div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 25%; }
-div.result-box a.clearall             { display:inline-block; float: right; }
+div.result-box span.clearall             { display:inline-block; float: right; color: #697ec9;text-decoration: underline; cursor: pointer}
 h5.result-header                      { display: block; margin-top: 10px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; }
 div.config_wrapper div.config ul.result-list li   { margin: 10px; cursor: default; }
 
