@@ -414,7 +414,6 @@ sub tag_genepairlink
     $self->param('n_stored_homologies', $n);
     print STDERR "$n homologies\n" unless $n % 1000;
 
-    $self->display_link_analysis($genepairlink) if($self->debug>2);
     $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
 
 }
@@ -471,6 +470,7 @@ sub store_gene_link_as_homology {
   my $self = shift;
   my $genepairlink  = shift;
 
+  $self->display_link_analysis($genepairlink) if($self->debug>2);
   my $type = $genepairlink->get_value_for_tag('orthotree_type');
   return unless($type);
   my $is_tree_compliant = $genepairlink->get_value_for_tag('is_tree_compliant');

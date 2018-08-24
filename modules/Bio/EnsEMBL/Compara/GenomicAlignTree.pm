@@ -410,6 +410,26 @@ sub reference_genomic_align_node {
 }
 
 
+=head2 set_alternative_original_sequence
+
+  Arg [1...] : Masking parametes. See L<Locus::get_sequence>
+  Description: Set an "original sequence" in this GenomicAlign with some masking options
+               Call without arguments to reset the original sequence.
+  Returntype : none
+  Exceptions : 
+  Warning    : warns if getting data from other sources fails.
+  Status     : Stable
+
+=cut
+
+sub set_alternative_original_sequence {
+    my $self = shift;
+    foreach my $ga (@{$self->genomic_align_group->get_all_GenomicAligns}) {
+        $ga->set_alternative_original_sequence(@_);
+    }
+}
+
+
 =head2 aligned_sequence
 
   Arg [1]     : -none-

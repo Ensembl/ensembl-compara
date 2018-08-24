@@ -102,7 +102,7 @@ sub default_options {
 
         #HMMER 3
         #'hmm_library_version'       => '3',
-        #'hmm_library_basedir'       => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_91/',
+        #'hmm_library_basedir'       => '/hps/nobackup2/production/ensembl/compara_ensembl/compara_hmm_91/',
         'hmm_library_name'              => 'compara_hmm_91.hmm3',
         'hmmer_search_cutoff'           => '1e-23',
 

@@ -862,6 +862,35 @@ sub original_sequence {
   return $self->{'original_sequence'};
 }
 
+
+=head2 set_alternative_original_sequence
+
+  Arg [1...] : Masking parametes. See L<Locus::get_sequence>
+  Description: Set an "original sequence" in this GenomicAlign with some masking options.
+               Call without arguments to reset the original sequence.
+  Returntype : none
+  Exceptions : 
+  Warning    : warns if getting data from other sources fails.
+  Status     : Stable
+
+=cut
+
+sub set_alternative_original_sequence {
+    my $self = shift;
+    if (defined($self->dnafrag) and defined($self->dnafrag_start) and defined($self->dnafrag_end) and defined($self->dnafrag_strand)) {
+      # ...from the dnafrag object. Uses dnafrag, dnafrag_start and dnafrag_methods instead of the attibutes
+      # in the <if> clause because the attributes can be retrieved from other sources if they have not been
+      # already defined.
+      $self->{'original_sequence'} = $self->get_sequence(@_);
+      $self->{'aligned_sequence'} = undef;
+    } else {
+      warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlign->original_sequence".
+          " You either have to specify more information (see perldoc for".
+          " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
+    }
+}
+
+
 =head2 original_dbID
 
   Args       : none

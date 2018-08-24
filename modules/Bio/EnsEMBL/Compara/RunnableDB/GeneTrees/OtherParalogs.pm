@@ -89,7 +89,7 @@ sub fetch_input {
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
-    $self->delete_old_homologies;
+    $self->delete_old_homologies unless $self->param('_readonly');
 
     my %gdb_id2stn = ();
     foreach my $taxon (@{$self->param('gene_tree')->tree->species_tree->root->get_all_leaves}) {
@@ -134,7 +134,8 @@ sub rec_add_paralogs {
     my $ancestor = shift;
 
     $ancestor->print_node if ($self->debug);
-    return unless $ancestor->get_child_count;
+    # Skip the terminal nodes
+    return 0 unless $ancestor->get_child_count;
     my ($child1, $child2) = @{$ancestor->children};
     $child1->print_node if ($self->debug);
     $child2->print_node if ($self->debug);
@@ -176,6 +177,7 @@ sub rec_add_paralogs {
             }
         }
     }
+    print "$ngenepairlinks links on node_id=", $ancestor->node_id, "\n";
     $ngenepairlinks += $self->rec_add_paralogs($child1);
     $ngenepairlinks += $self->rec_add_paralogs($child2);
     return $ngenepairlinks;
@@ -249,7 +251,7 @@ sub get_ancestor_species_hash
         $child->disavow_parent;
 
         foreach my $leaf (@$leaves) {
-            print $leaf->toString if ($self->debug);
+            print $leaf->toString, "\n" if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @sub_taxa, $self->param('gdb_id2stn')->{$leaf->genome_db_id};
             push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->seq_member_id};
@@ -284,7 +286,7 @@ sub get_ancestor_species_hash
     $node->add_tag("species_hash", $species_hash);
     $node->add_tag("gene_hash", $gene_hash);
     $node->add_tag('lca_taxon', $lca_taxon);
-    $node->store_tag('species_tree_node_id', $lca_taxon->node_id);
+    $node->store_tag('species_tree_node_id', $lca_taxon->node_id) unless $self->param('_readonly');
 
     return $species_hash;
 }

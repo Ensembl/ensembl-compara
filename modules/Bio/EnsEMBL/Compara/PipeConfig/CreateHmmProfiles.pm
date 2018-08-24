@@ -194,7 +194,7 @@ sub default_options {
 
         # HMM specific parameters
         # The location of the HMM library:
-        'compara_hmm_library_basedir'   => '/hps/nobackup/production/ensembl/compara_ensembl/compara_hmm_'.$self->o('ensembl_release')."/",
+        'compara_hmm_library_basedir'               => '/hps/nobackup2/production/ensembl/compara_ensembl/compara_hmm_'.$self->o('ensembl_release')."/",
         'shared_compara_basedir'                    => '/nfs/production/panda/ensembl/warehouse/compara/',
         'target_compara_hmm_library_basedir'        => $self->o('shared_compara_basedir') . '/treefam_hmms/compara_hmm_'.$self->o('ensembl_release')."/",
         'treefam_hmm_library_basedir'               => $self->o('shared_compara_basedir') . '/treefam_hmms/2015-12-18/',

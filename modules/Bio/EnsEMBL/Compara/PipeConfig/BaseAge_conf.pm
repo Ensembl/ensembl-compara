@@ -116,6 +116,7 @@ sub pipeline_analyses {
                               'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
                -input_ids => [{}],
+               -rc_name => '100Mb',
               -flow_into => {
                              '1' => [ 'base_age_factory' ],
                             },
@@ -149,7 +150,7 @@ sub pipeline_analyses {
                              },
               -batch_size => 1,
               -hive_capacity => $self->o('base_age_capacity'),
-              -rc_name => '3.6Gb',
+              -rc_name => '4Gb_job',
               -flow_into => {
                              2 => '?accu_name=bed_files&accu_address={seq_region}',
                             },
@@ -165,7 +166,7 @@ sub pipeline_analyses {
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -rc_name => '1.8Gb',
+               -rc_name => '2Gb_job',
              },
 
      ];

@@ -158,6 +158,11 @@ sub base_age {
     my $clade = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->param('clade_taxon_id'))->scientific_name();
     my $all_clade_species_name = {map {$_->get_short_name => 1} @{ $compara_dba->get_GenomeDBAdaptor->fetch_all_by_ancestral_taxon_id($self->param('clade_taxon_id')) } };
 
+    my $species_tree = $mlss->species_tree;
+    my $ref_stn = $species_tree->root->find_leaves_by_field('genome_db_id', $dnafrag->genome_db_id)->[0];
+    my $def_root_distance = $ref_stn->distance_to_root;
+    print "STROOT " . $def_root_distance . "\n" if ($self->debug);
+
     print "CLADE $clade\n" if ($self->debug);
 
     #generate bed_file location
@@ -192,11 +197,12 @@ sub base_age {
         my $max_age = @$ancestors;
 
         print "ROOT " . $reference_node->distance_to_root . "\n" if ($self->debug);
-        my $root_distance = $reference_node->distance_to_root ;
+        my $root_distance = $reference_node->distance_to_root || $def_root_distance;
 
         foreach my $this_node (@$ancestors) {
+            my $node_distance = $this_node->distance_to_node($reference_node);
             print "node " . $this_node->name . "\n" if ($self->debug);
-            print "node " . $this_node->node_id . " " . $this_node->name . " node " . $this_node->distance_to_node($reference_node) . " parent " . $this_node->distance_to_parent . " " . ($this_node->distance_to_node($reference_node)/$root_distance) . "\n" if ($self->debug);
+            print "node " . $this_node->node_id . " " . $this_node->name . " node " . $node_distance . " parent " . $this_node->distance_to_parent . " " . ($node_distance/$root_distance) . "\n" if ($self->debug);
 
             #expect only a single genomic_align for an ancestor
             my $genomic_aligns = $this_node->get_all_genomic_aligns_for_node;
@@ -209,7 +215,7 @@ sub base_age {
             my $ancestral_seq;
             %$ancestral_seq = (name => $this_node->name,
                                node_id => $this_node->node_id,
-                               age => $this_node->distance_to_node($reference_node),
+                               node_distance => $node_distance,
                                aligned_seq => [split(//,$genomic_align->aligned_sequence)]);
             push @$ancestral_seqs, $ancestral_seq;
             
@@ -251,7 +257,7 @@ sub base_age {
                         #print "SAME " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";
                         $clade_name = $ancestral_seq->{name};
                         $node_id = $ancestral_seq->{node_id};
-                        $node_distance = $ancestral_seq->{age};
+                        $node_distance = $ancestral_seq->{node_distance};
                     } else {
                         #Found a difference between ref and ancestor. Stop
                         #print "DIFF " . ($i+1) . " $base " . $aligned_seq[$i] . " " . $ancestral_seq->{aligned_seq}[$i]. " " . $ancestral_seq->{name} . "\n";

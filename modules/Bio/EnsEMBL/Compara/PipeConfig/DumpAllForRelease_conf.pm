@@ -293,7 +293,7 @@ sub pipeline_analyses {
                     'ancestral_db'         => $self->o('ancestral_db'),
                 } ],
             -flow_into  => {
-                '1'    => [ 'DumpMultiAlign_start' ],
+                '9'    => [ 'DumpMultiAlign_start' ],
                 '2'    => [ 'DumpTrees_start' ],
                 '3'    => [ 'DumpConstrainedElements_start' ], 
                 '4'    => [ 'DumpConservationScores_start'  ], 
@@ -353,7 +353,7 @@ sub pipeline_analyses {
 
         {	-logic_name => 'symlink_prev_dumps',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
-        	-flow_into => ['create_all_dump_jobs'], # to top up any missing dumps
+                -flow_into => { 2 => 'create_all_dump_jobs' }, # to top up any missing dumps
         },
 
         {   -logic_name => 'patch_lastz_dump',

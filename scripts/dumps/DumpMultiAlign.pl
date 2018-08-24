@@ -814,7 +814,7 @@ sub write_genomic_align_block {
       $seq_name = $simple_align->id().":".$seq_name if ($output_format eq "fasta");
       } 
     my $aligned_sequence;
-    $this_genomic_align->original_sequence($this_genomic_align->get_sequence($masked_seq));
+    $this_genomic_align->set_alternative_original_sequence($masked_seq);
     if ($original_seq) {
       $aligned_sequence = $this_genomic_align->original_sequence;
     } else {
@@ -900,11 +900,11 @@ sub print_my_emf {
     if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
       foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
         #next if (!$this_sub_genomic_align->get_Slice);
-        $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_sequence($masked_seq));
+        $this_sub_genomic_align->set_alternative_original_sequence($masked_seq);
       }
     } else {
       #return if (!$this_genomic_align->get_Slice);
-      $this_genomic_align->original_sequence($this_genomic_align->get_sequence($masked_seq));
+      $this_genomic_align->set_alternative_original_sequence($masked_seq);
     }
     if ($original_seq) {
       $aligned_sequence = $this_genomic_align->original_sequence;
@@ -1041,11 +1041,11 @@ sub print_my_maf {
     if (UNIVERSAL::isa($this_genomic_align, "Bio::EnsEMBL::Compara::GenomicAlignGroup")) {
       foreach my $this_sub_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
           next if (!$this_sub_genomic_align->get_Slice);
-          $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_sequence($masked_seq));
+          $this_sub_genomic_align->set_alternative_original_sequence($masked_seq);
       }
     } else {
         next if (!$this_genomic_align->get_Slice);
-        $this_genomic_align->original_sequence($this_genomic_align->get_sequence($masked_seq));
+        $this_genomic_align->set_alternative_original_sequence($masked_seq);
     }
 
     if ($original_seq) {

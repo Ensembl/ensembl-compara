@@ -25,6 +25,9 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf -password <your_password>
 
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::BaseAge_conf $(mysql-ens-compara-prod-2-ensadmin details hive) \
+                     -compara_url $(mysql-ens-compara-prod-4 details url mateus_mammals_epo_94) \
+
 =head1 DESCRIPTION
 
     Calculate the age of a base ... at the EBI !
@@ -54,15 +57,15 @@ sub default_options {
         %{$self->SUPER::default_options},
 
             # Connection parameters for production database (the rest is defined in the base class)
-            'host' => 'mysql-ens-compara-prod-1',
-            'port' => 4485,
+            'host' => 'mysql-ens-compara-prod-2',
+            'port' => 4522,
 
             'ref_species' => 'homo_sapiens',
             #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Location url of database to get EPO GenomicAlignTree objects from
 #            'compara_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/ensembl_compara_' . $self->o('ensembl_release'),
-            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mammals_epo_91',
+            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_mammals_epo_94',
 
             # The name of the alignment
             'species_set_name'  => 'mammals',
@@ -72,7 +75,7 @@ sub default_options {
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_91_38?group=variation',
+            'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
 
             # executable locations:
             'big_bed_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
@@ -94,8 +97,8 @@ sub resource_classes {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
          '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
 	 '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
+         '2Gb_job' => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '4Gb_job' => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
     };
 }
 
