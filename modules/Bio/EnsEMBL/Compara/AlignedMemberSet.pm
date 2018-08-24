@@ -395,6 +395,7 @@ sub get_SimpleAlign {
     }
 
     die "-SEQ_TYPE and \$self->seq_type cannot have different (defined) values" if $seq_type and $self->seq_type and ($seq_type ne $self->seq_type);
+
     $seq_type = $self->seq_type unless $seq_type;
 
     my $sa = Bio::SimpleAlign->new();
@@ -854,6 +855,8 @@ sub update_alignment_stats {
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->adaptor->db->get_SequenceAdaptor, $seq_type, $self) if $self->adaptor;
 
     my $genes = $self->get_all_Members;
+    map {$_->{_expansion_factor} = 1} @$genes;
+
     my $ngenes = scalar(@$genes);
 
     # New cigars

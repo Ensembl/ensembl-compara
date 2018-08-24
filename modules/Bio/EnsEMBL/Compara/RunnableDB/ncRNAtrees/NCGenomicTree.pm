@@ -33,7 +33,7 @@ sub fetch_input {
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->param('gene_tree', $nc_tree);
     $self->_load_species_tree_string_from_db();
-    my $alignment_id = $self->param('alignment_id');
+    my $alignment_id = $self->param('alignment_id') || $nc_tree->gene_align_id;
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
@@ -76,7 +76,7 @@ sub run_ncgenomic_tree {
     }
 
     return if ($newick =~ /^_null_;/);
-    my $tag = "pg_it_" . $method;
+    my $tag = $self->param('output_clusterset_id') || "pg_it_" . $method;
     $self->store_alternative_tree($newick, $tag, $cluster);
 }
 

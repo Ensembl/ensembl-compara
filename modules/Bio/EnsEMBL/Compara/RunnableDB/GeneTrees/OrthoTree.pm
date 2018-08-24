@@ -99,6 +99,7 @@ sub param_defaults {
             '_readonly'             => 0,
             'tag_split_genes'       => 0,
             'input_clusterset_id'   => undef,
+            'old_clusterset_id'   => undef,
     };
 }
 
@@ -126,7 +127,7 @@ sub fetch_input {
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $gene_tree;
     }
 
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, $gene_tree->seq_type, $gene_tree);
     $self->param('gene_tree', $gene_tree->root);
 
     if($self->debug) {
@@ -173,13 +174,16 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
+    $self->disconnect_from_hive_database;
     $self->delete_old_homologies unless $self->param('_readonly');
+    $self->delete_old_homologies("default") unless $self->param('_readonly');
     # Here is how to use server-side prepared statements. They have not
     # proven to be faster, so this is not enabled by default
     #$self->param('homologyDBA')->mysql_server_prepare(1);
     $self->run_analysis;
     #$self->param('homologyDBA')->mysql_server_prepare(0);
     $self->print_summary;
+    $self->dataflow_output_id({'gene_tree_id' => $self->param('gene_tree')->node_id}, 1)
 }
 
 
@@ -229,12 +233,29 @@ sub run_analysis {
     my $leaves1 = $child1->get_all_leaves;
     my $leaves2 = $child2->get_all_leaves;
     my @pair_group;
+    my $pseudogene_child = undef;
+
+
     foreach my $gene1 (@$leaves1) {
      foreach my $gene2 (@$leaves2) {
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
       $genepairlink->add_tag("ancestor", $ancestor);
       $genepairlink->add_tag("subtree1", $child1);
       $genepairlink->add_tag("subtree2", $child2);
+
+      ## Two genes have a pseudogene if one of them is a pseudogene and the other is not
+      ## Or if they are both pseudogene, but their closest pseudogenisation event is different.
+      my $pseudogene_relation = ($gene1->gene_member->biotype_group =~ /pseudogene/ xor $gene2->gene_member->biotype_group =~ /pseudogene/) ||
+                                ($gene1->gene_member->biotype_group =~ /pseudogene/ and $gene2->gene_member->biotype_group =~ /pseudogene/
+                                    and $gene1->parent->get_closest_pseudogenization_node != $gene2->parent->get_closest_pseudogenization_node);
+      if($self->debug > 4) {
+        printf("%s (%s) - %s (%s)", $gene1->gene_member->stable_id, $gene1->gene_member->biotype_group, $gene2->gene_member->stable_id, $gene2->gene_member->stable_id);
+        if($gene1->gene_member->biotype_group =~ /pseudogene/ and $gene2->gene_member->biotype_group =~ /pseudogene/) {
+            printf("   |  %d - %d", $gene1->parent->get_closest_pseudogenization_node->node_id, $gene2->parent->get_closest_pseudogenization_node->node_id);
+        }
+        printf("  | %s Homology\n", $pseudogene_relation ? "Pseudogene" : "Regular");
+      }
+      $genepairlink->add_tag("pseudogene", $pseudogene_relation);
 
       my $node_type = $ancestor->get_value_for_tag('node_type');
       if ($node_type eq 'speciation') {
@@ -256,7 +277,8 @@ sub run_analysis {
       foreach my $genepairlink (@pair_group) {
           my ($pep1, $pep2) = $genepairlink->get_nodes;
           if ($pep1->genome_db_id == $pep2->genome_db_id) {
-              push @good_ones, [$genepairlink, 'within_species_paralog', 1];
+              push @good_ones, [$genepairlink, 'within_species_paralog', 1] unless $genepairlink->get_value_for_tag("pseudogene");
+              push @good_ones, [$genepairlink, 'pseudogene_paralog', 1] if $genepairlink->get_value_for_tag("pseudogene");
           } elsif (($genepairlink->get_value_for_tag('ancestor')->duplication_confidence_score < $self->param('no_between')) and $self->is_closest_homologue($genepairlink)) {
               push @good_ones, [$genepairlink, $self->tag_orthologues($genepairlink), 0];
           }
@@ -341,7 +363,7 @@ sub get_ancestor_species_hash
 
     if($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
         my $node_genome_db_id = $node->genome_db_id;
-        $species_hash->{$node_genome_db_id} = 1;
+        $species_hash->{$node_genome_db_id} = 1 if($node->gene_member->biotype_group !~ /pseudogene/);
         $node->add_tag('species_hash', $species_hash);
         return $species_hash;
     }
@@ -364,8 +386,10 @@ sub get_ancestor_species_hash
 
 sub delete_old_homologies {
     my $self = shift;
+    my $clusterset_id = shift;
 
-    my $tree_node_id = $self->param('gene_tree_id');
+    my $tree_node_id = $self->param('gene_tree')->node_id;
+    $tree_node_id = $self->param('gene_tree')->tree->alternative_trees->{$clusterset_id}->root_id if(defined $clusterset_id and defined($self->param('gene_tree')->tree->alternative_trees->{$clusterset_id}));
 
     # New method all in one go -- requires key on tree_node_id
     print "deleting old homologies\n" if ($self->debug);
@@ -431,6 +455,10 @@ sub tag_orthologues
     my $count1 = $species_hash->{$pep1->genome_db_id};
     my $count2 = $species_hash->{$pep2->genome_db_id};
 
+    if($genepairlink->get_value_for_tag("pseudogene")){
+      return 'pseudogene_ortholog';
+    }
+
     if ($count1 == 1 and $count2 == 1) {
         return 'ortholog_one2one';
     } elsif ($count1 == 1 or $count2 == 1) {
@@ -482,10 +510,18 @@ sub store_gene_link_as_homology {
   my $mlss_type;
   my $gdbs;
   my $gdb1 = $gene1->genome_db;
+  my $gdb2 = $gene2->genome_db;
   $gdb1 = $gdb1->principal_genome_db if $gdb1->genome_component;
   # Here, we need to be smart about choosing the mlss and the homology type
-  if ($type =~ /^ortholog/) {
-      my $gdb2 = $gene2->genome_db;
+  if ($type =~ /^pseudogene/) {
+      if($gdb1 == $gdb2) {
+          $mlss_type = 'ENSEMBL_PSEUDOGENES_PARALOGUES';
+          $gdbs      = [$gdb1];
+      } else {
+          $mlss_type = 'ENSEMBL_PSEUDOGENES_ORTHOLOGUES';
+          $gdbs      = [$gdb1, $gdb2];
+      }
+  } elsif ($type =~ /^ortholog/) {
       $gdb2 = $gdb2->principal_genome_db if $gdb2->genome_component;
       if ($gdb1->is_polyploid and $gdb2->is_polyploid and ($gdb1->dbID == $gdb2->dbID)) {
           $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
@@ -521,9 +557,12 @@ sub store_gene_link_as_homology {
   $homology->method_link_species_set($mlss);
   $homology->_species_tree_node_id($ancestor->get_value_for_tag('species_tree_node_id')) if $ancestor;
   
+  $homology->seq_type($self->param("gene_tree")->tree->seq_type);
   $homology->add_Member($gene1->Bio::EnsEMBL::Compara::AlignedMember::copy);
   $homology->add_Member($gene2->Bio::EnsEMBL::Compara::AlignedMember::copy);
-  $homology->update_alignment_stats;
+  $homology->get_all_Members->[0]->adaptor($gene1->adaptor);
+  $homology->get_all_Members->[1]->adaptor($gene2->adaptor);
+  $homology->update_alignment_stats($self->param("gene_tree")->tree->seq_type);
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;
   $self->param('homology_consistency')->{$key}{$type} = 1;
@@ -555,8 +594,10 @@ sub check_homology_consistency {
         my $count = scalar(keys %{$self->param('homology_consistency')->{$mlss_member_id}});
 
         next if $count == 1;
-        next if $count == 2 and exists $self->param('homology_consistency')->{$mlss_member_id}->{gene_split} and exists $self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog};
+        next if $count == exists ($self->param('homology_consistency')->{$mlss_member_id}->{gene_split}) + exists ($self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog}) + exists ($self->param('homology_consistency')->{$mlss_member_id}->{pseudogene_paralog});
 
+        # next if $count == exists ($self->param('homology_consistency')->{$mlss_member_id}->{gene_split}) + exists ($self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog}) + exists ($self->param('homology_consistency')->{$mlss_member_id}->{pseudogene_paralog});
+        print(keys %{$self->param('homology_consistency')->{$mlss_member_id}}, "\n") if ($self->debug);
         my ($mlss, $seq_member_id) = split("_", $mlss_member_id);
         next if $count > 1 and grep {$_->is_polyploid} @{$self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss)->species_set->genome_dbs};
 

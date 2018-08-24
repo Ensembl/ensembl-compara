@@ -593,5 +593,28 @@ sub binarize_flat_tree_with_species_tree {
     }
 }
 
+=head2 get_closest_pseudogenization_node
+
+  Example     : $gene_tree_node->get_closest_pseudogenization_nodes();
+  Description : Returns the closest parent of the node that is tagged with a pseudogenization event.
+                Returns Undef if no parents has that tag.
+                Returns the node itself if its already a pseudogenization node.
+  Returntype  : Undef or Bio::EnsEMBL::Compara::GeneTreeNode
+  Exceptions  :
+  Caller      :
+
+=cut
+
+sub get_closest_pseudogenization_node {
+    my $self = shift;
+
+    my $parent = $self;
+    while($parent)
+    {
+	return $parent if($parent->has_tag('pseudogene'));
+	$parent = $parent->parent;
+    }
+}
+
 1;
 
