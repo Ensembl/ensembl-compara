@@ -1,0 +1,7 @@
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/Human90.txt	0	homo_sapiens	slice	1	homo_sapiens	gene	8
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/Mouse90.txt	1	mus_musculus	slice	0	mus_musculus	protein	4
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/MouseSpretus90.txt	1	mus_spretus	slice	0	mus_musculus	transcript	7
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/MouseCaroli90.txt	1	mus_caroli	slice	0	mus_musculus	transcript	7
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/MousePahari90.txt	1	mus_pahari	slice	0	mus_musculus	transcript	7
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/HumanMousePseudogeneRel.txt	1	homo_sapiens	slice	4	mus_musculus	slice	0
+/homes/ggiroussens/modules/FilterInput/PseudopipeData/HumanMouseNameBased.txt	0	homo_sapiens	gene	0	mus_musculus	gene	1
