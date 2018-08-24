@@ -145,7 +145,6 @@ sub create_glyphs {
 
 sub draw_wiggle {
   my ($self, $c, $features) = @_;
-  warn ">>> DRAWING STANDARD WIGGLE";
 
   return unless $features && @$features;
 
