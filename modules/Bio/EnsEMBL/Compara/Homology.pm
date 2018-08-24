@@ -100,7 +100,10 @@ our %PLAIN_TEXT_DESCRIPTIONS = (
 
       gene_split                => 'Split genes',
 
-      alt_allele                => 'Alternative alleles'
+      alt_allele                => 'Alternative alleles',
+
+      pseudogene_ortholog      => 'Pseudogenes Orthologues',
+      pseudogene_paralog       => 'Pseudogenes Paralogues',
 );
 
 
@@ -116,6 +119,9 @@ our %PLAIN_TEXT_WEB_DESCRIPTIONS = (
       homoeolog_one2one         => '1-to-1',
       homoeolog_one2many        => '1-to-many',
       homoeolog_many2many       => 'many-to-many',
+
+      pseudogene_ortholog      => 'pseudogenes',
+      pseudogene_paralog       => 'pseudogenes',
 
 );
 
