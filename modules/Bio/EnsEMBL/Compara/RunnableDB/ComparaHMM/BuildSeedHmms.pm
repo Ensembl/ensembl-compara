@@ -166,7 +166,7 @@ sub _fetch_and_compose {
 
         if ( $id =~ /^PTHR/ ) {
 
-            #hmmfetch /hps/nobackup/production/ensembl/compara_ensembl/hmm_panther_11/panther_11_1.hmm3 PTHR32044.curated.30.pir > i
+            #hmmfetch /hps/nobackup2/production/ensembl/compara_ensembl/hmm_panther_11/panther_11_1.hmm3 PTHR32044.curated.30.pir > i
             my $cmd_hmm     = $self->param('hmmfetch_exe') . ' ' . $self->param('panther_lib_file') . "  $id > $tmp_hmm_file";
             my $cmd_hmm_out = $self->run_command( $cmd_hmm, { die_on_failure => 1 } );
             unless ( ( -e $tmp_hmm_file ) and ( -s $tmp_hmm_file ) ) {
@@ -178,7 +178,7 @@ sub _fetch_and_compose {
         }
         elsif ( $id =~ /^TF/ ) {
 
-            #hmmfetch /hps/nobackup/production/ensembl/compara_ensembl/treefam_hmms/hmmer_v3/treefam.hmm3 TF313821 > i
+            #hmmfetch /hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/hmmer_v3/treefam.hmm3 TF313821 > i
             my $cmd_hmm     = $self->param('hmmfetch_exe') . ' ' . $self->param('treefam_lib_file') . "  $id > $tmp_hmm_file";
             my $cmd_hmm_out = $self->run_command( $cmd_hmm, { die_on_failure => 1 } );
             unless ( ( -e $tmp_hmm_file ) and ( -s $tmp_hmm_file ) ) {

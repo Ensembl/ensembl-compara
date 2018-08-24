@@ -84,7 +84,7 @@ sub default_options {
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,
 
-        'work_dir'  => '/hps/nobackup/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
+        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
 
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
