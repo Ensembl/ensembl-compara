@@ -43,10 +43,11 @@ sub fetch_input {
     my $gdb_adaptor         = $self->compara_dba->get_GenomeDBAdaptor;
     my $ncbi_adaptor        = $self->compara_dba->get_NCBITaxonAdaptor;
     my $all_orthology_mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
+    my $all_pseudo_orthology_mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type('ENSEMBL_PSEUDOGENES_ORTHOLOGUES');
 
     # Lookup table for the mlsss that haven't matched any taxa (yet)
     my %mlss_per_gdbs;
-    foreach my $mlss (@$all_orthology_mlsss) {
+    foreach my $mlss (@{$all_orthology_mlsss}, @{$all_pseudo_orthology_mlsss}) {
         my ($gdb1, $gdb2) = @{ $mlss->species_set->genome_dbs };
         $mlss_per_gdbs{$gdb1->dbID."_".$gdb2->dbID} = $mlss;
         $mlss_per_gdbs{$gdb2->dbID."_".$gdb1->dbID} = $mlss;

@@ -269,7 +269,7 @@ sub _compute_ortholog_score {
     $result->{'dnafrag_id'}     = $query_ref_gmem_obj->dnafrag_id();
     $result->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
     $result->{'homology_id'}    = $query;
-    $result->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
+    $result->{'method_link_species_set_id'} = $homology->method_link_species_set_id;
 
 #    print "RESULTS hash--------------->>>>>   \n" if ( $self->debug );
 #    print Dumper($result) if ( $self->debug );

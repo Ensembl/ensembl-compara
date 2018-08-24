@@ -168,11 +168,11 @@ sub pipeline_analyses_hom_stats {
                      HAVING COUNT(*) = COUNT(ss_c.species_set_id)',
                     'ALTER TABLE good_hom_mlss ADD PRIMARY KEY (method_link_species_set_id)',
                     'CREATE TEMPORARY TABLE temp_member_hom_counts AS
-                     SELECT gene_member_id, SUM(method_link_id=201) AS orthologues, SUM(method_link_id=202) AS paralogues, SUM(method_link_id=206) AS homoeologues
+                     SELECT gene_member_id, SUM(method_link_id=201) AS orthologues, SUM(method_link_id=202) AS paralogues, SUM(method_link_id=206) AS homoeologues, SUM(method_link_id=601) AS pseudogenes_orthologues, SUM(method_link_id=602) AS pseudogenes_paralogues
                      FROM homology_member JOIN homology USING (homology_id) JOIN good_hom_mlss USING (method_link_species_set_id)
                      GROUP BY gene_member_id',
                     'UPDATE gene_member_hom_stats g JOIN temp_member_hom_counts t USING (gene_member_id)
-                     SET g.orthologues=t.orthologues, g.paralogues=t.paralogues, g.homoeologues=t.homoeologues
+                     SET g.orthologues=(t.orthologues + t.pseudogenes_orthologues), g.paralogues=(t.paralogues + t.pseudogenes_paralogues), g.homoeologues=t.homoeologues
                      WHERE collection = "#clusterset_id#"',
                     'DROP TABLE good_hom_mlss, temp_member_hom_counts',
                 ],

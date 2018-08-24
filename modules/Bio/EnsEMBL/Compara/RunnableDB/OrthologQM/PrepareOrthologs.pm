@@ -75,24 +75,29 @@ sub fetch_input {
         #$db_url = $self->param('compara_db');
         $dba = $self->compara_dba;
     }
+    $self->param( 'orth_objects', []);
     #$self->param('current_db_url', $db_url);
     $self->param('current_dba', $dba);
 
     my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
-    $self->param('mlss_id', $mlss->dbID);
-
     my $current_homo_adaptor = $dba->get_HomologyAdaptor;
-    my $current_homologs = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-    
-    if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), $current_homologs, $mlss->dbID );
-        $self->param( 'orth_objects', $nonreuse_homologs );
-    }
-    else {
-        $self->param( 'orth_objects', $current_homologs );
-    }
 
+    my $method_type = ['ENSEMBL_PSEUDOGENES_ORTHOLOGUES', 'ENSEMBL_ORTHOLOGUES'];
+    foreach my $this_mlss_type(@$method_type)
+    {
+        my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($this_mlss_type, [$species1_id, $species2_id]);
+        $self->param('mlss_id', $mlss->dbID);
+
+        my $current_homologs = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    
+        if ( defined $self->param('previous_rel_db') ){ # reuse is on
+           my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), $current_homologs, $mlss->dbID );
+           push @{$self->param( 'orth_objects')}, @{$nonreuse_homologs};
+        }
+        else {
+           push @{$self->param( 'orth_objects')}, @{$current_homologs};
+        }
+    }
     # disconnect from compara_db
     $dba->dbc->disconnect_if_idle();
 }
@@ -127,6 +132,7 @@ sub run {
 
             push( @orth_dnafrags, { id => $gm->dnafrag_id, start => $gm->dnafrag_start, end => $gm->dnafrag_end } );
             $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
+            die("Could not find DNA frag Boundaries for gene ", $gm->dbID, "\n") unless (scalar @orth_dnafrags);
             
             # get exon locations
             $sth->execute( $gm->dbID );

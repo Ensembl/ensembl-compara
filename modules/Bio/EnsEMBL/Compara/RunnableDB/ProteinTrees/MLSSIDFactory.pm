@@ -96,6 +96,12 @@ sub fetch_input {
         foreach my $genome_db_id2 (@{$genome_db_ids}) {
             $self->make_dataflow_if_needed('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
         }
+
+        $self->make_dataflow_if_needed('ENSEMBL_PSEUDOGENES_PARALOGUES', [$genome_db_id1]);
+
+        foreach my $genome_db_id2 (@{$genome_db_ids}) {
+            $self->make_dataflow_if_needed('ENSEMBL_PSEUDOGENES_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
+        }
     }
 }
 

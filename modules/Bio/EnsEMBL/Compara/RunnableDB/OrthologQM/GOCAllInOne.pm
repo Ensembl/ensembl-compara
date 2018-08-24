@@ -178,6 +178,7 @@ sub run_one_direction {
 sub write_output {
     my $self = shift;
 
+    $self->disconnect_from_hive_database;
     # IN: (none)
     # OUT: (write in ortholog_goc_metric table)
     Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs::_insert_goc_scores($self, $self->param('goc_score_arrayref'));
