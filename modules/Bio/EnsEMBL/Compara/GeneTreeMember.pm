@@ -120,6 +120,7 @@ sub string_node {
     $str .= " ".$gene_member->stable_id;
     $str .= sprintf(" (%s)", $gene_member->display_label) if $gene_member->display_label;
     $str .= sprintf(" %s:%d-%d", $gene_member->dnafrag->name, $gene_member->dnafrag_start, $gene_member->dnafrag_end) if $gene_member->dnafrag_id;
+    $str .= sprintf(" (%s)", $gene_member->biotype_group);
   } elsif($self->stable_id) {
     $str .= sprintf(" (%d) %s", $self->seq_member_id, $self->stable_id);
   }
