@@ -567,7 +567,7 @@ sub parse_results {
     my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $self->param('tree_string') );
   $tree->print_tree(100);
     
-    print $tree->newick_format("simple"), "\n";
+    print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_->name} @{$tree->get_all_leaves}), "\n";
     print "Reading $alignment_file...\n";
     my $ids;
@@ -592,7 +592,7 @@ sub parse_results {
 
 	if (/^>/) {
 	    print "PARSING $_\n" if ($self->debug);
-	    print $tree->newick_format(), "\n" if ($self->debug);
+	    print $tree->_simple_newick(), "\n" if ($self->debug);
 	    my ($name) = $_ =~ /^>(.+)/;
 	    if (defined($this_genomic_align) and  $seq) {
 		if (@$genomic_aligns_2x_array) {
@@ -664,7 +664,7 @@ sub parse_results {
 			}
 			$this_node = $this_node->find_first_shared_ancestor($other_node);
 		    } else {
-			print $tree->newick_format() if ($self->debug);
+			print $tree->_simple_newick() if ($self->debug);
 			print "LEAF: $this_leaf_name\n" if ($self->debug);
 			$this_node = $tree->find_node_by_name($this_leaf_name);
 		    }
@@ -691,7 +691,7 @@ sub parse_results {
 		print "leaf_name?? $name\n" if ($self->debug);
 		my $this_leaf = $tree->find_node_by_name($name);
 		if (!$this_leaf) {
-		    print $tree->newick_format(), " ****\n" if ($self->debug);
+		    print $tree->_simple_newick(), " ****\n" if ($self->debug);
 		    die "Unable to find_node_by_name $name";
 		}
 		#print "$this_leaf\n";
@@ -818,7 +818,7 @@ sub parse_results {
     }
 
     $self->remove_empty_cols($tree);
-    print $tree->newick_format("simple"), "\n";
+    print $tree->_simple_newick, "\n";
     print join(" -- ", map {$_."+".$_->node_id."+".$_->name} (@{$tree->get_all_nodes()})), "\n";
     $self->param('output', [$tree]);
 

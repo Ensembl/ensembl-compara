@@ -1146,6 +1146,30 @@ sub _internal_newick_format_ryo {
 }
 
 
+=head2 _simple_newick
+
+  Example     : $tree->_simple_newick();
+  Description : Returns a Newick representation of this tree, without invoking the roll-your-own
+                formatter. It is intended to be much faster, and practical when debugging
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _simple_newick {
+    my $self = shift;
+    my $s = $self->get_value_for_tag('name') || $self->node_id;
+    if ($self->is_leaf) {
+        $s ||= "$self";
+    } else {
+        $s = '(' . join(',', sort map {$_->_simple_newick} @{$self->children}) . ')' . ($s || '');
+    }
+    $s .= ':' . $self->distance_to_parent if $self->has_parent;
+    return $s;
+}
+
 
 ##################################
 #
