@@ -105,24 +105,8 @@ use Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-#Padding character and max_pads to be added when creating the 2X genome
-#composite sequence
-my $pad_char = "N";
 
-my $max_pads = 100;
-#my $max_pads = 1000000;
 
-#percentage of max_pads to use ie to use 80% of the actual pad number, set max_pads to be
-#very large (so won't be trimmed) and set max_pad_percent to 0.8. 
-#my $max_pads_percent = 0.8; 
-my $max_pads_percent = 1.0; 
-
-#which method to use for creating the 2X fragments. If this is true (1), use
-#only the pairwise matching blocks. If this is false (0), use the entire net
-#including the inter-block spanning regions aswell. This leads to large regions
-#in the final alignment containing a single sequence but was useful for 
-#aligning gorilla in the 5way primate alignment before gorilla had chromosomes
-my $create_block_frag_array = 1;
 
 =head2 fetch_input
 
@@ -548,8 +532,6 @@ sub parse_results {
     my (@ordered_leaves) = $self->param('tree_string') =~ /[(,]([^(:)]+)/g;
     print "++NEWICK: ", $self->param('tree_string'), "\nLEAVES: ", join(" -- ", @ordered_leaves), "\nFILES: ", join(" -- ", @{$self->param('fasta_files')}), "\n";
 
-    #my $alignment_file = $self->workdir . "/output.$$.mfa";
-
     my $alignment_file = $self->worker_temp_directory . "/output.$$.mfa";
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -598,7 +580,6 @@ sub parse_results {
 		if (@$genomic_aligns_2x_array) {
 		    print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
 		    #starting offset
-		    #my $offset = $max_pads;
 		    my $offset = $num_frag_pads[0];
 		    #how many X's to add at the start of the cigar_line
 		    my $start_X;
@@ -777,7 +758,6 @@ sub parse_results {
 	print "*****FOUND 2x seq " . length($seq) . "\n" if ($self->debug);
 
 	#starting offset
-	#my $offset = $max_pads;
 	my $offset = $num_frag_pads[0];
 
 	#how many X's to add at the start and end of the cigar_line
