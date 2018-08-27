@@ -80,6 +80,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node Bio::EnsEMBL::Storable);
 =cut
 
 sub _attr_to_copy_list {
+    # Note: _distance_to_parent is only used when there is no parent-link
     return qw(_distance_to_parent _left_index _right_index);
 }
 
@@ -122,7 +123,7 @@ sub copy {
 
     $mycopy->{'_children_loaded'} = 1;  # So that leaves know they are leaves
     foreach my $child (@{$self->children}) {
-        $mycopy->add_child($child->copy($class, $adaptor));
+        $mycopy->add_child($child->copy($class, $adaptor), $child->distance_to_parent);
     }
     return $mycopy;
 }
