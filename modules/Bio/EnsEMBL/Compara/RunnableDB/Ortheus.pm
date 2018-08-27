@@ -282,7 +282,7 @@ sub _write_output {
 		  #my $dummy_name = "dummy_" . $$;
 
 		  #Use worker id instead of $$ to create unique name
-		  my $dummy_name = "dummy_" . $self->worker->dbID;
+		  my $dummy_name = "dummy_" . ($self->worker->dbID || $$);
  		  my $slice = new Bio::EnsEMBL::Slice(
  						      -seq_region_name   => $dummy_name,
  						      -start             => 1,
