@@ -1130,7 +1130,7 @@ sub _update_tree {
   my $ordered_dnafrag_regions = [];
 
   my $idx = 1;
-  my $all_leaves = $tree->get_all_leaves;
+  my $all_leaves = $tree->get_all_sorted_leaves;
   foreach my $this_leaf (@$all_leaves) {
     my $these_dnafrag_regions = [];
     my $these_2x_genomes = [];
