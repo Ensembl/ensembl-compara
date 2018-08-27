@@ -352,7 +352,6 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         '250Mb_job'    => {'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
@@ -1215,7 +1214,6 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem_no_runlimit' ],  # MEMLIMIT
             },
@@ -1385,7 +1383,6 @@ sub core_pipeline_analyses {
                 'allow_same_species_hits'   => 1,
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_job',
             -flow_into => {
                -1 => [ 'blastp_himem' ],  # MEMLIMIT
             },
@@ -1511,7 +1508,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            -rc_name            => '250Mb_job',
             -flow_into          => [ 'remove_blacklisted_genes' ],
         },
 
@@ -1855,7 +1851,6 @@ sub core_pipeline_analyses {
                     ELSE 'hc_post_tree',
                 ),
             },
-            -rc_name    => '250Mb_job',
             %decision_analysis_params,
         },
 
@@ -2074,7 +2069,6 @@ sub core_pipeline_analyses {
                 'treebest_threshold_n_residues'     => $self->o('treebest_threshold_n_residues'),
                 'treebest_threshold_n_genes'        => $self->o('treebest_threshold_n_genes'),
             },
-            -rc_name        => '250Mb_job',
             -flow_into  => {
                 1 => WHEN (
                     '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)'   => 'treebest_short',
@@ -2879,7 +2873,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'hc_post_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
-            -rc_name    => '250Mb_job',
             -flow_into  => [ 'ortho_tree_decision' ],
             -hive_capacity        => $self->o('hc_post_tree_capacity'),
             %hc_analysis_params,
@@ -2893,7 +2886,6 @@ sub core_pipeline_analyses {
                     'gene_count'          => 0,
                 },
             },
-            -rc_name    => '250Mb_job',
             -flow_into  => {
                 1 => WHEN(
                     '(#tree_gene_count# <= 400)' => 'ortho_tree',
@@ -2910,7 +2902,6 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'   => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
-            -rc_name        => '250Mb_job',
             -priority       => -10,
             -flow_into      => {
                 1   => [ 'hc_tree_homologies' ],
@@ -2935,7 +2926,6 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -rc_name        => '250Mb_job',
             -flow_into      => [ 'ktreedist', 'consensus_cigar_line_prep' ],
             %hc_analysis_params,
         },
@@ -2989,7 +2979,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -rc_name        => '250Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_aa_v3_himem'
             },
@@ -3064,7 +3053,6 @@ sub core_pipeline_analyses {
                 'dataflow_subclusters' => 1,
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '250Mb_job',
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
                 2 => [ 'tree_backup' ],
@@ -3331,7 +3319,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -rc_name => '250Mb_job',
         },
 
         {   -logic_name => 'rib_fire_goc',

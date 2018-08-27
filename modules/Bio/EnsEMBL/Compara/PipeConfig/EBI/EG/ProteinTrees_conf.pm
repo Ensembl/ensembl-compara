@@ -263,12 +263,6 @@ sub tweak_analyses {
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
 
-    $analyses_by_name->{'polyploid_move_back_factory'}->{'-rc_name'} = '250Mb_job';
-    $analyses_by_name->{'component_genome_dbs_move_back_factory'}->{'-rc_name'} = '250Mb_job';
-    $analyses_by_name->{'group_genomes_under_taxa'}->{'-rc_name'} = '250Mb_job';
-    $analyses_by_name->{'mlss_factory'}->{'-rc_name'} = '250Mb_job';
-    $analyses_by_name->{'rib_fire_homology_stats'}->{'-rc_name'} = '250Mb_job';
-
     # Some parameters can be division-specific
     if ($self->o('division') eq 'plants') {
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
