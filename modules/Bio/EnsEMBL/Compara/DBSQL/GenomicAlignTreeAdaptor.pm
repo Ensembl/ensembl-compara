@@ -727,7 +727,7 @@ sub store_node {
     $parent_id = $node->parent->node_id ;
     $root_id = $node->root->node_id;
   }
-  #printf("inserting parent_id = %d, root_id = %d\n", $parent_id, $root_id);
+  #printf("inserting parent_id = %d, root_id = %d dist=%s\n", $parent_id, $root_id, $node->distance_to_parent);
 
   my $sth = $self->prepare("INSERT INTO genomic_align_tree 
                              (node_id,
