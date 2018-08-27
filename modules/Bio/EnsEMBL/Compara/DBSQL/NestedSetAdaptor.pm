@@ -370,6 +370,7 @@ sub update {
   my $sth = $self->prepare("UPDATE $table SET parent_id = ?, root_id = ?, left_index = ?, right_index = ?, distance_to_parent = ? WHERE $table.node_id = ?");
 
   $sth->execute($node->parent ? $node->parent->node_id : undef, $node->root->node_id, $node->left_index, $node->right_index, $node->distance_to_parent, $node->node_id);
+  $sth->finish;
 }
 
 
