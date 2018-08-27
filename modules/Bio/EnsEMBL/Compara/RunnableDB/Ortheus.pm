@@ -676,7 +676,7 @@ sub parse_results {
 		$this_genomic_align->dnafrag_start(1);
 		$this_genomic_align->dnafrag_end(0);
 		$this_genomic_align->dnafrag_strand(1);
-		bless($this_node, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+		$this_node->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
 		#$this_node->genomic_align($this_genomic_align);
 		$genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
 		$genomic_align_group->add_GenomicAlign($this_genomic_align);
@@ -738,7 +738,7 @@ sub parse_results {
 			$genomic_align_group->add_GenomicAlign($this_genomic_align);
 		    }
 
-		    bless($this_leaf, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+		    $this_leaf->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
 		    $this_leaf->genomic_align_group($genomic_align_group);
 		    print "size of array " . @$genomic_aligns_2x_array . "\n" if $self->debug;
 		    print "store gag1 $this_leaf\n" if $self->debug;
@@ -757,7 +757,7 @@ sub parse_results {
 										        -type => "epo");
 		    $genomic_align_group->add_GenomicAlign($this_genomic_align);
 
-		    bless($this_leaf, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+		    $this_leaf->cast('Bio::EnsEMBL::Compara::GenomicAlignTree');
 		    $this_leaf->genomic_align_group($genomic_align_group);
 		    print "store gag2 $this_leaf\n" if $self->debug;
 		}

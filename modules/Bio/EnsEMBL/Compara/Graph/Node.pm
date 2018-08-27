@@ -530,5 +530,39 @@ sub _walk_graph_until {
   return [ values %{$cache_nodes} ];
 }
 
+
+=head2 cast
+
+  Arg[1]      : String $class
+  Example     : $node->cast();
+  Description : Rebless this node to the given class, updating all the references
+                to the current class in the links. This is needed because Links
+                are hashed by the "ref" name of each node, which includes the
+                class name.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub cast {
+    my $self = shift;
+    my $class = shift;
+
+    # Grab the neighbors before blessing the object because $class may not
+    # have been loaded, and Perl wouldn't be able to resolve the call
+    my $neighbors = $self->neighbors;
+
+    my $old_name = "$self";
+    bless $self, $class;
+    my $new_name = "$self";
+
+    # Put in the new object ID
+    foreach my $n (@{$neighbors}) {
+        $n->{'_obj_id_to_link'}->{$new_name} = delete $n->{'_obj_id_to_link'}->{$old_name};
+    }
+}
+
 1;
 
