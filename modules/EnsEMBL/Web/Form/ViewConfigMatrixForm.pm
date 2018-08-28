@@ -52,7 +52,7 @@ sub build {
   
   my $html = qq(
     <div class="header_tutorial_wrapper">
-      <h1>$matrix_data->{'section'}</h1>
+      <h1>Regulation data</h1>
     </div>
     <div style="display: flex">
       <div class="track-panel">
