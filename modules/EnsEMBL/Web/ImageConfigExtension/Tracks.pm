@@ -1074,11 +1074,13 @@ sub add_regulation_builds {
   }
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
+  
   my $adaptor       = $db->get_FeatureTypeAdaptor;
-  my $evidence_info = $adaptor->get_regulatory_evidence_info;
+  my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
 
   my (@cell_lines, %cell_names, %epi_desc, %regbuild);
-
+  
+  #get all cell types
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
     push @cell_lines, $name;
@@ -1113,6 +1115,7 @@ sub add_regulation_builds {
   foreach my $set (qw(core non_core)) {
     $all_types{$set} = [];
     foreach (@{$evidence_info->{$set}{'classes'}}) {
+    #get all experiment based on experiment type (fetch all for histone, fetch all for polymerase)
       foreach (@{$adaptor->fetch_all_by_class($_)}) {
         push @{$all_types{$set}},$_;
       }
@@ -1135,9 +1138,9 @@ sub add_regulation_builds {
     my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
 
     foreach my $set (@sets) {
-      $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
+      $matrix_menus{$set} ||= [ "reg_feats_$set", "Regulation data", {
         menu   => 'matrix',
-        url    => $hub->url('Config', { 'matrix' => 1, 'menu' => "reg_feats_$set" }),
+        url    => $hub->url('Config', { 'matrix' => 'matrixform', 'menu' => "reg_feats_$set" }),
         matrix => {
           section     => $menu->data->{'caption'},
           header      => $evidence_info->{$set}{'long_name'},
@@ -1161,6 +1164,8 @@ sub add_regulation_builds {
   }
 
   $matrix_menus{$_} = $menu->after($self->create_menu_node(@{$matrix_menus{$_}})) for 'non_core', 'core';
+  $self->get_node('regulatory_features')->remove;
+  $self->get_node('reg_feats_core')->remove;
 
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
