@@ -128,6 +128,9 @@ sub default_options {
     # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
     'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_plants_hom_40_93',
 
+    # species tree reconciliation
+        # you can define your own species_tree for 'treebest'. It can contain multifurcations
+        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.branch_len.nw',
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
