@@ -109,7 +109,10 @@
           )Trifolieae,
           lupinus_angustifolius,
           (
-           vigna_angularis,
+           (
+            vigna_angularis,
+            vigna_radiata_var_radiata,
+           )Vigna,
            phaseolus_vulgaris,
            glycine_max,
            cajanus_cajan,
