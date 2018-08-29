@@ -272,7 +272,7 @@ sub make_table {
   my $is_lrg = $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
 
   my @exclude;
-  push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
+  push @exclude,'gmaf','gmaf_freq','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $self->param('hgvs') eq 'on';
   if($is_lrg) {
     push @exclude,'Transcript';
@@ -321,13 +321,17 @@ sub make_table {
   },{
     _key => 'gmaf_allele', _type => 'string no_filter unshowable',
   },{
-    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
-    helptip => $glossary->{'Global MAF'},
-    also_cols => 'gmaf_allele',
+    _key => 'gmaf_freq', _type => 'numeric unshowable',
+    sort_for => 'gmaf',
+    filter_label => 'Global MAF',
     filter_range => [0,0.5],
     filter_fixed => 1,
     filter_logarithmic => 1,
     primary => 1,
+  },{
+    _key => 'gmaf', _type => 'string no_filter', label => "Glo\fbal MAF",
+    helptip => $glossary->{'Global MAF'},
+    also_cols => 'gmaf_allele',
   },{
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
@@ -616,9 +620,11 @@ sub variation_table {
             }
             
             my $gmaf   = $vf->minor_allele_frequency; # global maf
+            my $gmaf_freq;
             my $gmaf_allele;
-            if(defined $gmaf) {
-              $gmaf = sprintf("%.3f",$gmaf);
+            if (defined $gmaf) {
+              $gmaf_freq = $gmaf;
+              $gmaf = ($gmaf < 0.001) ? '< 0.001' : sprintf("%.3f",$gmaf);
               $gmaf_allele = $vf->minor_allele;
             }
 
@@ -634,7 +640,8 @@ sub variation_table {
               vf_allele  => $vf_allele,
               Ambiguity  => $vf->ambig_code,
               gmaf       => $gmaf   || '-',
-              gmaf_allele => $gmaf_allele || '-',
+              gmaf_freq  => $gmaf_freq || '',
+              gmaf_allele => $gmaf_allele,
               status     => $status,
               clinsig    => $clin_sig,
               chr        => "$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
