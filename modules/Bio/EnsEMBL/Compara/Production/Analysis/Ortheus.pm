@@ -47,6 +47,7 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Ortheus;
 use strict;
 use warnings;
 
+use Cwd;
 use Capture::Tiny qw(tee_merged);
 use Data::Dumper;
 
@@ -100,7 +101,8 @@ sub run_ortheus {
   print "Running ortheus: " . Bio::EnsEMBL::Compara::Utils::RunCommand::join_command_args(@command) . "\n";
 
   #Capture output messages when running ortheus instead of throwing
-  my $prev_dir = chdir $self->worker_temp_directory;
+  my $prev_dir = Cwd::getcwd;
+  chdir $self->worker_temp_directory;
   my $output = tee_merged { system(@command) };
   chdir $prev_dir;
 

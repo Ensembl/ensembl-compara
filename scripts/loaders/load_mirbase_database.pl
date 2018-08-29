@@ -87,6 +87,7 @@ The script will refuse to write to a database that exists unless this flag is se
 
 =cut
 
+use Cwd;
 use File::Spec::Functions;
 use File::Temp qw{tempdir};
 use Getopt::Long;
@@ -115,7 +116,8 @@ if ($help or !$mysql_url) {
 }
 
 my $dir = tempdir CLEANUP => 1;
-my $orig_dir = chdir $dir;
+my $orig_dir = Cwd::getcwd;
+chdir $dir;
 
 print "Preparing empty database ... ";
 my $dbc = new Bio::EnsEMBL::Hive::DBSQL::DBConnection( -url => $mysql_url );

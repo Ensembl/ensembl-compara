@@ -45,6 +45,7 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Pecan;
 use strict;
 use warnings;
 
+use Cwd;
 use Capture::Tiny qw(tee_merged);
 
 use Bio::EnsEMBL::Utils::Exception;
@@ -57,7 +58,8 @@ use Bio::EnsEMBL::Compara::Utils::RunCommand;
 sub run_pecan {
   my $self = shift;
 
-  my $prev_dir = chdir $self->worker_temp_directory;
+  my $prev_dir = Cwd::getcwd;
+  chdir $self->worker_temp_directory;
 
   my @fasta_files = @{$self->param('fasta_files')};
   my $tree_string = $self->param('pecan_tree_string');
