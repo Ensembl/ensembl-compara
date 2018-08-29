@@ -70,12 +70,8 @@ sub fetch_input {
 
     # For polyploid genomes, the reusability is only assessed on the principal genome
     if ($genome_db->genome_component) {
-        if ( $self->param('include_components') ) {
-            $self->param('reuse_this', 0);
-        } else {
-            # -1 means that we haven't checked the species
-            $self->param('reuse_this', -1);
-        }
+        # -1 means that we haven't checked the species
+        $self->param('reuse_this', -1);
         return;
 
     # But in fact, we can't assess the reusability of a polyploid genomes
