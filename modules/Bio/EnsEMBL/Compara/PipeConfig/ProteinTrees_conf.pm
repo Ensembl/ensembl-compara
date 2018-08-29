@@ -884,8 +884,8 @@ sub core_pipeline_analyses {
                 'biotype_filter'        => 'biotype_group = "coding"',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => WHEN( '#is_polyploid#' => 'hc_members_per_genome',
-                                ELSE                'check_reusability' ),
+            -flow_into => WHEN( '#is_polyploid#' => 'check_reusability',
+                                ELSE                'hc_members_per_genome' ),
         },
 
         {   -logic_name         => 'hc_members_per_genome',
