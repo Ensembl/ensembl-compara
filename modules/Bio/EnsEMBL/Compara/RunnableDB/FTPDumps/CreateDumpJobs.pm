@@ -77,7 +77,13 @@ sub fetch_input {
 			push( @release_mlsses, $mlssa->fetch_by_dbID($mlss_id) );
 		}
 	} else {
-		@release_mlsses = @{ $mlssa->fetch_all_by_release($curr_release) };		
+		@release_mlsses = @{ $mlssa->fetch_all_by_release($curr_release) };	
+		my $updated_mlss_ids = $self->param('updated_mlss_ids'); #for the productions pipelines that we have decided to run again. hence the first release has not been updated but the data may have changed
+		if ( $updated_mlss_ids ) {
+			foreach my $updated_mlss_id ( @$updated_mlss_ids ) {
+				push( @release_mlsses, $mlssa->fetch_by_dbID($updated_mlss_id) ) 
+			}
+		}	
 	}
 
 	# first, split new mlsses into categories

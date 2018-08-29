@@ -28,6 +28,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
 The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
 given release. It will detect which pipelines have been run and dump anything new.
 
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX -pipeline_name dump_release_$CURR_ENSEMBL_RELEASE -updated_mlss_ids <optional>
 =cut
 
 
@@ -95,7 +96,7 @@ sub default_options {
         'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?       
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
-
+        'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated the date 
 		# define input options for DumpMultiAlign for each method_link_type
         'alignment_dump_options' => {
         	EPO              => {format => 'emf+maf'},
@@ -288,7 +289,7 @@ sub pipeline_analyses {
                     'curr_release'         => $self->o('ensembl_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
-
+                    'updated_mlss_ids'     => $self->o('updated_mlss_ids'),
                     'lastz_patch_dbs'      => $self->o('lastz_patch_dbs'),
                     'alignment_dump_options' => $self->o('alignment_dump_options'),
                     'default_dump_options' => $self->o('default_dump_options'),
