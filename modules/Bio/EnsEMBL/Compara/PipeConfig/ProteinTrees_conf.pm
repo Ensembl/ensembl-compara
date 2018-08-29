@@ -737,6 +737,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckBlastReusability',
             -parameters => {
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
+                'include_components' => 1,
             },
             -batch_size => 5,
             -hive_capacity => 30,

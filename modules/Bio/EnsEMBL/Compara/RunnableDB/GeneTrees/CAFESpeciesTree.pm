@@ -96,7 +96,7 @@ sub fetch_input {
 
         foreach my $n (@{$species_tree_root->get_all_nodes}) {
             $n->adaptor($self->compara_dba->get_SpeciesTreeNodeAdaptor);
-            die $n->name." is not binary" if $n->get_child_count > 2;
+            die $n->name." is not binary. Children : [" . join(', ', map {$_->name} @{$n->children}) . "]\n" if $n->get_child_count > 2;
         }
 
     } else {
