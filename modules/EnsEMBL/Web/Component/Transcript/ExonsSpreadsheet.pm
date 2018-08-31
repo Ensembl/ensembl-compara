@@ -391,7 +391,7 @@ sub add_variations {
     
     $consequence ||= lc $variation->display_consequence;
     
-    $config->{'key'}{'variants'}{$consequence} = 1;
+    $config->{'key'}{'variants'}{lc($consequence)} = 1;
     
     for ($start..$end) {
       $class{$_}  = $consequence;
