@@ -950,7 +950,7 @@ sub copy_conservation_scores {
     );
   } else {
       ## These are the only scores and need no fixing. Copy all as they are
-      copy_table($from_dbc, $to_dbc, "conservation_score");
+      copy_table($from_dbc, $to_dbc, "conservation_score", undef, undef, 'skip_disable_keys');
   }
 }
 
