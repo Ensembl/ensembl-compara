@@ -25,6 +25,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
+use Bio::EnsEMBL::Variation::Utils::Config;
 use EnsEMBL::Web::Constants;
 
 use parent qw(EnsEMBL::Web::ViewConfig);
@@ -38,6 +39,7 @@ sub init_cacheable {
     'population_filter'   => 'off',
     'min_frequency'       => 0.1,
     'consequence_filter'  => 'off',
+    'evidence_filter'     => 'off',
     'title_display'       => 'off',
     'hide_long_snps'      => 'on',
     'hide_rare_snps'      => 'off',
@@ -48,7 +50,7 @@ sub init_cacheable {
 sub variation_fields {
   ## Extra fields for form if variation db is present
   ## @return List of ordered field keys
-  return $_[0]->species_defs->databases->{'DATABASE_VARIATION'} ? qw(snp_display hide_long_snps hide_rare_snps consequence_filter hidden_sources) : ();
+  return $_[0]->species_defs->databases->{'DATABASE_VARIATION'} ? qw(snp_display hide_long_snps hide_rare_snps consequence_filter evidence_filter hidden_sources) : ();
 }
 
 sub source_list {
@@ -103,6 +105,9 @@ sub get_markup_options {
       my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
       push @{$markup->{'consequence_filter'}{'values'}}, map { 'value' => $consequence_types{$_}, 'caption' => $_ }, sort keys %consequence_types;
     }
+
+    my %attribs = %Bio::EnsEMBL::Variation::Utils::Config::ATTRIBS;
+    push @{$markup->{'evidence_filter'}{'values'}}, map { 'value' => $_, 'caption' => $_ }, sort @{$attribs{'evidence'}};
 
     my %sources = $self->source_list;
     push @{$markup->{'hidden_sources'}{'values'}}, map { value => $sources{$_}, caption => "Hide $_" }, sort keys %sources;
