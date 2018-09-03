@@ -46,9 +46,9 @@ sub param_defaults {
 #        'mlss_id' => 835, #mouse strain MSA mlss id
 #        'genome_db_id'  => 134,
 #        'temp_hal_species_name' => 'simHuman_chr6', #C57B6J',
-#        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_92',
+#        'compara_db' => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_93',
 #        'temp_hal_path'  => '/homes/waakanni/cactus_linuxbrew/cactus/example_SM_local/result.hal',
-#        'species_name_mapping' => {134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'},
+#        'species_name_mapping' => '{134 => \'C57B6J\', 155 => \'rn6\',160 => \'129S1_SvImJ\',161 => \'A_J\',162 => \'BALB_cJ\',163 => \'C3H_HeJ\',164 => \'C57BL_6NJ\',165 => \'CAST_EiJ\',166 => \'CBA_J\',167 => \'DBA_2J\',168 => \'FVB_NJ\',169 => \'LP_J\',170 => \'NOD_ShiLtJ\',171 => \'NZO_HlLtJ\',172 => \'PWK_PhJ\',173 => \'WSB_EiJ\',174 => \'SPRET_EiJ\', 178 => \'AKR_J\'}',
 #        'temp_result' => 'SPRET_EiJ, 2.62559e+09, 1.52198e+08, 5.94547e+07, 3.6716e+07, 2.54746e+07, 1.92152e+07, 1.48778e+07, 1.17484e+07, 9.18044e+06, 7.23219e+06, 5.58522e+06, 4.42185e+06, 3.53558e+06, 2.6432e+06, 1.98818e+06, 1.53266e+06, 1.16407e+06, 896452, 664648, 507556, 387216, 292926, 226926, 183318, 146694, 114219, 60113, 24716, 17940, 15388, 15358, 15358, 15358, 15358, 15358, 15358, 14782, 11970, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #PWK_PhJ, 2.19534e+09, 1.16353e+08, 4.64335e+07, 2.67608e+07, 1.76145e+07, 1.25068e+07, 9.17194e+06, 6.94272e+06, 5.33394e+06, 4.10546e+06, 3.1337e+06, 2.38886e+06, 1.81903e+06, 1.43116e+06, 1.10114e+06, 861595, 661274, 503823, 400408, 301218, 225621, 166353, 129202, 107700, 84265, 55362, 37482, 33757, 27417, 15633, 2595, 110, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 #CAST_EiJ, 2.17478e+09, 1.17693e+08, 4.56922e+07, 2.61382e+07, 1.74241e+07, 1.25128e+07, 9.39102e+06, 7.28251e+06, 5.77229e+06, 4.57332e+06, 3.71026e+06, 2.94423e+06, 2.34679e+06, 1.85937e+06, 1.46639e+06, 1.16366e+06, 947092, 725547, 546963, 446995, 317355, 239798, 167689, 124229, 79045, 53804, 37526, 25525, 17177, 11980, 3284, 443, 153, 153, 153, 153, 33, 33, 33, 33, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -61,9 +61,11 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
+    print Dumper($self->param('species_name_mapping'));
     my %species_map = %{ eval $self->param('species_name_mapping') };
+#    my %species_map = %{$self->param('species_name_mapping')};
     unless ( $self->param('halStats_exe')) {
-    	die "Please provide the hal stat command";
+    	die "Please provide the path to hal stat executable";
     }
     my $mlss_adap = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor;
     print $self->param('halStats_exe'), "\n\n" if ( $self->debug >3 );
@@ -77,19 +79,17 @@ sub fetch_input {
     my $species_tree = $mlss->species_tree();
     my $species_tree_root = $species_tree->root();
     my $node = $species_tree_root->find_leaves_by_field('genome_db_id', $self->param('genome_db_id') )->[0];
-    my $stn_adap = $self->compara_dba()->get_SpeciesTreeNodeAdaptor;
-    my $stn = $stn_adap->fetch_node_by_node_id($node->node_id);
-    print "this is the node id : ", $node->node_id, "\n This is the species tree node id : ", $stn->dbID , "\n" if ( $self->debug >3 );
-    $self->param('node', $stn);
+    print "this is the node id : ", $node->node_id, "\n\n" if ( $self->debug >3 );
+    $self->param('node', $node);
     $self->param('hal_path', $hal_path);
     $self->param('species_map', \%species_map);
 }
 
 sub run {
     my $self = shift;
-    my $cmd = $self->run_command([$self->require_executable('halStats_exe'), '--coverage', $self->param('species_map')->{$self->param('genome_db_id')}, $self->param('hal_path')], {die_on_failure => 1});
+#    my $cmd = $self->run_command([$self->require_executable('halStats_exe'), '--coverage', $self->param('species_map')->{$self->param('genome_db_id')}, $self->param('hal_path')], {die_on_failure => 1});
     #parse the result to extract the columns 'Genome' and  'sitesCovered1Times'
-    my @halCov = split /\n/, $cmd->out;
+    my @halCov = split /\n/, $cmd->out; #$self->param('temp_result');
     my %halCov_hash;
     foreach my $line (@halCov){
         my @split_line = split /,/, $line;
@@ -111,11 +111,16 @@ sub write_output {
     my %rSpecies_map = reverse %{$self->param_required('species_map')};
 #    print Dumper(%rSpecies_name_mapping);
     foreach my $genome (keys %{$self->param('halCov_hash')} ) {
-        my $tag = "genomes_coverage_$rSpecies_map{$genome}";
-
-        print "this is the genome : ", $genome ," this is the coverage : ", $self->param('halCov_hash')->{$genome}, " this is the tag : \n", $tag, "\n" if ( $self->debug >3 );
-        $self->param('node')->store_tag($tag, $self->param('halCov_hash')->{$genome} );
-
+        unless ($rSpecies_map{$genome} == $self->param('genome_db_id')) {  
+            my $tag = "genome_coverage_$rSpecies_map{$genome}";
+            print "this is the genome : ", $genome ," this is the coverage : ", $self->param('halCov_hash')->{$genome}, " this is the tag : \n", $tag, "\n" if ( $self->debug >3 );
+            $self->param('node')->store_tag($tag, $self->param('halCov_hash')->{$genome} );
+        }
+        else {
+            my $tag = "total_genome_length";
+            print "the genome is the same as the query genome : ", $genome ," this is total genome length  : ", $self->param('halCov_hash')->{$genome}, " this is the tag : \n", $tag, "\n" if ( $self->debug >3 );
+            $self->param('node')->store_tag($tag, $self->param('halCov_hash')->{$genome} );
+        }
     }
 }
 
