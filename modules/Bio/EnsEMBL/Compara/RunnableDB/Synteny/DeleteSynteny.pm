@@ -57,7 +57,7 @@ sub fetch_input {
     $self->param_required('mlss_id');
     $self->param('avg_genomic_coverage');
     $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
-    $self->param('curr_release_dba', $self->get_cached_compara_dba('curr_release_db');
+    $self->param('curr_release_dba', $self->get_cached_compara_dba('curr_release_db'));
     # Trick to elevate the privileges on this session only
     $self->elevate_privileges($self->param('master_dba')->dbc);
     $self->elevate_privileges($self->param('curr_release_dba')->dbc);
