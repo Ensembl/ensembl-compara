@@ -160,7 +160,8 @@ sub get_evidence_list {
 }
 
 sub get_motif_features {
-  my $self = shift;
+  my ($self, $cell_line) = @_;
+  return {} unless $cell_line;
   my @motif_features = @{$self->Obj->fetch_all_MotifFeatures};
   my %motifs;
 
