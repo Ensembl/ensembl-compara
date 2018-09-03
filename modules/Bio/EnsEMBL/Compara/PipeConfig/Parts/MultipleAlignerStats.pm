@@ -65,6 +65,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -flow_into  => {
                 '2->A' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats' ] ),
                 'A->1' => [ 'block_size_distribution' ],
+                    1  => ['Genomic_Align_Block_Job_Generator'],
             },
         },
 
@@ -94,6 +95,49 @@ sub pipeline_analyses_multiple_aligner_stats {
                 'subject'   => "EPO Pipeline( #expr(\$self->hive_pipeline->display_name)expr# ) has completed", 
             }
         },
+
+        {   -logic_name => 'Genomic_Align_Block_Job_Generator',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::GenomicAlignBlockGenerator',
+            -parameters => {
+                            'mlss_id'  => $self->o('mlss_id'),
+                        },
+            -flow_into  => {
+                '2->A' => ['alignment_depth_calculator','pw_aligned_base_calculator'],
+                'A->1' => ['backbone_summary_job_generator']
+                },
+        },
+
+        {   -logic_name =>  'alignment_depth_calculator',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::AlignmentDepthCalculator',
+            -flow_into  => {
+                2 => [ '?accu_name=aligned_positions_counter&accu_address={genome_db_id}[]&accu_input_variable=num_of_aligned_positions' ],
+                3 => [ '?accu_name=aligned_sequences_counter&accu_address={genome_db_id}[]&accu_input_variable=sum_aligned_seq'],
+            },
+        },
+
+        {   -logic_name =>  'pw_aligned_base_calculator',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculatePwAlignedBases',
+            -flow_into  => {
+                2 => [ '?accu_name=aligned_bases_counter&accu_address={frm_genome_db_id}{to_genome_db_id}[]&accu_input_variable=no_of_aligned_bases' ]
+            },
+        },
+
+        {   -logic_name => 'backbone_summary_job_generator',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MWGAStatsSummarizer',
+            -flow_into  =>  {
+                2 => 'compute_genome_alignment_depth',
+                3 => 'compute_genomes_pw_aligned_bases',
+                },
+        },
+
+        {   -logic_name => 'compute_genome_alignment_depth',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomeAlignmentDepth',
+        },
+
+        {   -logic_name => 'compute_genomes_pw_aligned_bases',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomePwAlignedBases',
+        },
+
     ];
 }
 
