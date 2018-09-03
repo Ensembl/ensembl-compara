@@ -74,7 +74,7 @@ sub default_options {
         'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
         # Dump location
-        'dump_dir'      => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',
+        'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'feature_dumps',
 
