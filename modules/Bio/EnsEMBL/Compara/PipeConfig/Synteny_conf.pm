@@ -111,6 +111,7 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'alignment_db'    =>  $self->o('alignment_db'),
         'ptree_db'    =>  $self->o('ptree_db'),
+        'curr_release_db' => $self->o('compara_curr'), #needed if being run as part of release
             # 'synteny_mlss_id' will be evaluated in the runnables, not here
         'synteny_dir'   => $self->o('work_dir').'/#synteny_mlss_id#/',
         'ortholog_method_link_types' => $self->o('ortholog_method_link_types'),

@@ -57,8 +57,10 @@ sub fetch_input {
     $self->param_required('mlss_id');
     $self->param('avg_genomic_coverage');
     $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
+    $self->param('curr_release_dba', $self->get_cached_compara_dba('curr_release_db');
     # Trick to elevate the privileges on this session only
     $self->elevate_privileges($self->param('master_dba')->dbc);
+    $self->elevate_privileges($self->param('curr_release_dba')->dbc);
 }
 
 
@@ -75,6 +77,9 @@ sub run {
     $self->param('master_dba')->dbc->db_handle->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     # But also register in the master database that this pair of species is a lost cause
     $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "low_synteny_coverage", ?)', undef, $self->param('mlss_id'), $mlss_tag_value);
+
+    # And the mlss entry in the release database because they would have been copied by copy data from master db earlier in the release
+    $self->param('curr_release_dba')->dbc->db_handle->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
 
 }
 
