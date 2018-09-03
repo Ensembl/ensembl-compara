@@ -54,10 +54,14 @@ sub get {
   my $f = $args->{'feature'};
   my $out = [$f->bound_start, $f->start];
   ## Add motif feature coordinates if any 
-  my $mfs = eval { $f->fetch_overlapping_MotifFeatures; };
+  my $mfs = eval { $f->fetch_all_MotifFeatures; };
   unless ($@) {
     foreach (@{$mfs||[]}) {
-      push @$out, $_->start, $_->end;
+      ## Only show motifs with peaks, as there are too many otherwise!
+      my $peak = $_->fetch_overlapping_Peak;
+      if ($peak) {
+        push @$out, $_->start, $_->end;
+      }
     }
   }
   push @$out, $f->end, $f->bound_end;
