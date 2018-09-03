@@ -1765,4 +1765,58 @@ sub get_snpedia_data {
   return { 'pageid'=>$pageid, %{ $rev }, 'desc'=>\@desc_arr, %{ $pageref } };
 }
 
+# Get the allele URI and genomic allele id (CAid) for a genomic HGVS
+# from the Allele Registry (http://reg.clinicalgenome.org) using API ver 1.01.xx
+#
+# Example:
+# GET: http://reg.test.genome.network/allele?hgvs=NC_000023.11:g.57448699T>C&fields=none+@id
+# {
+#   "@id": "http://reg.test.genome.network/allele/CA149611"
+# }
+sub get_allele_registry_data {
+  my ($self, $hgvsg) = @_;
+
+  my $hub = $self->hub;
+  my $allele_registry_url = $hub->get_ExtURL('ALLELE_REGISTRY');
+  return {} if (! $allele_registry_url);
+
+  my $endpoint = 'allele';
+
+  my $rest = EnsEMBL::Web::REST->new($hub, $allele_registry_url);
+  my $args= {
+    'url_params' => {
+      'hgvs' => $hgvsg,
+      'fields' => 'none+@id',
+      '_delimiter' => '&',
+    }
+  };
+
+  my ($ref, $error) = $rest->fetch($endpoint, $args);
+
+  if($error || ref $ref ne 'HASH') {
+    return {};
+  }
+  return {} if (! exists $ref->{'@id'});
+  my ($caid) = $ref->{'@id'} =~ m#/(CA\d+)$#;
+  return {} if (! $caid);
+  return {'caid' => $caid, 'caid_uri' => $ref->{'@id'}};
+}
+
+sub get_hgvsg {
+  my $self = shift;
+
+  # Pick out the correct variation feature
+  my $mappings      = $self->variation_feature_mapping;
+  my $mapping_count = scalar keys %$mappings;
+
+  # skip if no mapping or somatic mutation with mutation ref base different to ensembl ref base
+  return {} unless $mapping_count && !$self->is_somatic_with_different_ref_base;
+
+  my $vf = $self->get_selected_variation_feature;
+  return {} unless $vf;
+
+  my $hgvs = $vf->get_all_hgvs_notations();
+  return $hgvs;
+}
+
 1;

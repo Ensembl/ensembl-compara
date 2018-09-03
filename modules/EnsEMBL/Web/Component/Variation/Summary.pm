@@ -61,6 +61,7 @@ sub content {
     $self->hgvs,
     $self->object->vari_class eq 'SNP' ? () : $self->three_prime_co_located(),
     $self->synonyms,
+    ($hub->species eq 'Homo_sapiens' && $hub->alleleregistry_status) ? $var_id && $self->allele_registry() : (),
     $self->sets,
     $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
@@ -967,6 +968,71 @@ sub snpedia {
   $desc = $desc ? encode('utf8', $desc) : 'no_entry';
   $cache && $cache->set($key, $desc, 60*60*24*7);
   return $count ? [ 'Description from SNPedia', $desc ] : (); 
+}
+
+sub allele_registry {
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $object   = $self->object;
+
+  return () if  $hub->species ne 'Homo_sapiens';
+
+  # Get the HGVSg
+  my $hgvsg = $object->get_hgvsg();
+
+  return () if (!$hgvsg);
+
+  my $hgvs_ar;
+
+  # For each allele, for each HGVSg, lookup caid, caid_url
+  foreach my $allele (keys %$hgvsg) {
+    my $ar_results = $object->get_allele_registry_data($hgvsg->{$allele});
+    next if (! %$ar_results);
+    $hgvs_ar->{$allele} = [$hgvsg->{$allele},
+                           $ar_results->{'caid'},
+                           $ar_results->{'caid_uri'},
+                          ];
+  }
+  return () if (!$hgvs_ar);
+
+
+  # Display the hgvs_ar
+  my $html;
+
+  my $total = scalar keys %$hgvs_ar;
+
+  # Loop over and format the URLs
+  foreach my $allele (sort keys %$hgvs_ar) {
+    my $link_info  = $hgvs_ar->{$allele};
+    if ($total > 1) {
+      $html .= qq{<p style="font-weight:bold">Variant allele $allele</p>};
+    }
+    $html .=  encode_entities($link_info->[0]) .
+              " " .
+              $hub->get_ExtURL_link($link_info->[1], "ALLELE_REGISTRY_DISPLAY", $link_info->[1]) .
+              " " .
+             qq(<a href="$link_info->[2]" rel="external" class="constant">[JSON-LD]</a>);
+  }
+  if ($html) {
+    $html = "<p>$html</p>";
+  }
+
+  if ($total > 1) { # Collapsed div display
+    my $show = $self->hub->get_cookie_value('toggle_variation_ar') eq 'open';
+
+    return [
+      'Allele Registry',
+      sprintf(qq{<p>This variant has <strong>%s</strong> allele registry IDs - <a title="Click to show IDs" rel="variation_ar" href="#" class="toggle_link toggle %s _slide_toggle set_cookie ">%s</a></p><div class="variation_ar twocol-cell"><div class="toggleable" style="font-weight:normal;%s">$html</div></div>},
+        $total,
+        $show ? 'open' : 'closed',
+        $show ? 'Hide' : 'Show',
+        $show ? '' : 'display:none'
+      )
+    ];
+
+  } else {
+    return ['Allele Registry', $html];
+  }
 }
 
 1;
