@@ -33,8 +33,10 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # -------------------------CORE DATABASES--------------------------------------
 
-# The majority of core databases live on staging servers:
-Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/94');
+# Before the official EG handover, the core databases are usually on the a production server:
+#Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/94');
+# Then they are moved to the staging server:
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/94');
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/94');
 
 # clarify which version of yeast to use
