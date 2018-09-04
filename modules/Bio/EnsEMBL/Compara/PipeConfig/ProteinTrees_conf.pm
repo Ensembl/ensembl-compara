@@ -392,8 +392,6 @@ sub resource_classes {
          '32Gb_24c_mpi' => {'LSF' => '-q parallel -a openmpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
          '32Gb_32c_mpi' => {'LSF' => '-q parallel -a openmpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
-         '8Gb_long_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -q long' },
-
          '8Gb_64c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
          '32Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
     };

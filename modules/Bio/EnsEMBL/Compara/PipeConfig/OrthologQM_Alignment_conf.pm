@@ -283,21 +283,8 @@ sub pipeline_analyses {
             -flow_into  => {
                 '1'  => [ '?table_name=ortholog_quality' ],
                 '2'  => [ 'assign_wga_coverage_score' ],
-                '-2' => [ 'calculate_wga_coverage_long' ],
             },
             -rc_name => '2Gb_job',
-        },
-
-        {   -logic_name => 'calculate_wga_coverage_long',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CalculateWGACoverage',
-            -hive_capacity => 30,
-            -batch_size => 1,
-            -parameters => { pipeline_url => $self->pipeline_url },
-            -flow_into  => {
-                1 => [ '?table_name=ortholog_quality' ],
-                2 => [ 'assign_wga_coverage_score' ],
-            },
-            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'assign_wga_coverage_score',
