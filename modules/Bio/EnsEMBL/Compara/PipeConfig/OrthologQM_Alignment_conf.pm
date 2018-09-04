@@ -228,7 +228,6 @@ sub pipeline_analyses {
                 'pipeline_db'     => $self->pipeline_url(),
             },
             -flow_into  => {
-                '1' => [ 'write_threshold' ],
                 '3->C' => [ 'copy_genomic_align_blocks' ],
                 'C->2' => [ 'copy_funnel' ]
             },
@@ -297,12 +296,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::ReuseWGAScore',
             -hive_capacity     => 30,
             -batch_size        => 10,
-        },
-
-        {   -logic_name => 'write_threshold',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::WriteThreshold',
-            -parameters => { pipeline_url => $self->pipeline_url },
-            -wait_for   => [ 'copy_funnel' ],
         },
 
     ];
