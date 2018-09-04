@@ -161,7 +161,10 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
-    next if $division and $mc->get_division and $mc->get_division ne $division;
+    if ($division and $mc->get_division and ($mc->get_division ne $division)) {
+        $db_adaptor->dbc->disconnect_if_idle();
+        next;
+    }
     my $that_species = $mc->get_production_name();
     my $that_assembly = $db_adaptor->assembly_name();
     unless ($that_species) {
