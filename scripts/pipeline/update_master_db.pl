@@ -171,13 +171,17 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
         warn sprintf("Skipping %s (no species name found: a compara_ancestral database ?).\n", $db_adaptor->dbc->locator);
         next;
     }
-    my $master_genome_db = $genome_db_adaptor->fetch_by_name_assembly($that_species, $that_assembly);
+
+    # Genome components loop
+    foreach my $c (undef, @{$db_adaptor->get_GenomeContainer->get_genome_components}) {
+
+    my $master_genome_db = $genome_db_adaptor->fetch_by_name_assembly($that_species, $that_assembly, $c);
 
     # Time to test !
     if ($master_genome_db) {
         $found_genome_db_ids{$master_genome_db->dbID} = 1;
         # Make a new one with the core db information
-        my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $db_adaptor );
+        my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $db_adaptor, $c );
         my $diffs = $proper_genome_db->_check_equals($master_genome_db);
         if ($diffs) {
             $proper_genome_db->first_release($master_genome_db->first_release);
@@ -195,6 +199,9 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
         }
     } elsif ($check_species_missing_from_compara) {
         warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
+    }
+
+    # Genome components loop
     }
     
     # Don't keep all the connections open
