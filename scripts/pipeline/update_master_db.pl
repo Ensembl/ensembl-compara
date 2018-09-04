@@ -203,6 +203,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
 if ($check_species_with_no_core) {
     foreach my $master_genome_db (@{$genome_db_adaptor->fetch_all}) {
+        # the ancestral database is only ready towards the end of the release
         next if $master_genome_db->name eq 'ancestral_sequences';
         if ($master_genome_db->is_current and not $found_genome_db_ids{$master_genome_db->dbID}) {
             if ($master_genome_db->locator) {
