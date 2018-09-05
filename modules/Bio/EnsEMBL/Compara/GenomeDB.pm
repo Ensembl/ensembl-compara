@@ -631,7 +631,7 @@ sub display_name {
   Returntype  : String
   Exceptions  : none
   Caller      : general
-  Status      : Stable
+  Status      : Experimental
 
 =cut
 
