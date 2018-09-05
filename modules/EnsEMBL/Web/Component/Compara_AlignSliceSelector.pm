@@ -70,7 +70,7 @@ sub content {
 
   my $default_species = $species_defs->valid_species($hub->species) ? $hub->species : $hub->get_favourite_species->[0];
 
-  my $modal_uri       = $hub->url('MultiSelector', {qw(type Location action TaxonSelector), align => $align, referer_action => $hub->action, referer_function => $hub->function});
+  my $modal_uri       = $hub->url('MultiSelector', {type => $hub->type, action => 'TaxonSelector', align => $align, referer_action => $hub->action, referer_function => $hub->function});
 
   # Tackle action for alignments image and text
   my $action = $hub->function eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->action;

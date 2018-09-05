@@ -160,29 +160,17 @@ sub get_evidence_list {
 }
 
 sub get_motif_features {
-  my $self = shift;
-  my $cell_line = shift;
-  my @motif_features = @{$self->Obj->get_RegulatoryEvidence('motif', $cell_line)||[]};
+  my ($self, $cell_line) = @_;
+  return {} unless $cell_line;
+  my @motif_features = @{$self->Obj->fetch_all_MotifFeatures};
   my %motifs;
+
   foreach my $mf (@motif_features){
-
-    my %assoc_ftype_names;
-    map {$assoc_ftype_names{$_->feature_type->name} = undef} @{$mf->associated_annotated_features};
-    my $bm_ftname = $mf->binding_matrix->feature_type->name;
-    my @other_ftnames;
-    foreach my $af_ftname(keys(%assoc_ftype_names)){
-      push @other_ftnames, $af_ftname if $af_ftname ne $bm_ftname;
+    my $peak = $mf->fetch_overlapping_Peak;
+    if ($peak) {
+      $motifs{$mf->start .':'. $mf->end} = [$mf->display_id, $mf->binding_matrix->stable_id, $mf->score];
     }
-
-    my $other_names_txt = '';
-
-    if(@other_ftnames){
-      $other_names_txt = ' ('.join(' ', @other_ftnames).')';
-    }
-
-    $motifs{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score, $mf->binding_matrix->name];
   }
-
   return \%motifs;
 }
 

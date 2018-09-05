@@ -231,6 +231,12 @@ sub content {
     # sift
     my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
     my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+
+    my $cadd = $self->render_score_prediction($tva->cadd_prediction, $tva->cadd_score);
+    my $dbnsfp_revel             = $self->render_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
+    my $dbnsfp_meta_lr          = $self->render_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
+    my $dbnsfp_mutation_assessor = $self->render_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
+
     
     # Allele
     my $a = $transcript_data->{'vf_allele'};
@@ -292,6 +298,10 @@ sub content {
       codon     => $codon,
       sift      => $sift,
       polyphen  => $poly,
+      cadd      => $cadd,
+      dbnsfp_revel => $dbnsfp_revel,
+      dbnsfp_meta_lr => $dbnsfp_meta_lr,
+      dbnsfp_mutation_assessor => $dbnsfp_mutation_assessor,
       detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $vf, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${vf}_${a}"),
     };
     
@@ -441,7 +451,19 @@ sub table_columns {
 
   push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
       if $self->hub->species eq 'Homo_sapiens';
-  
+
+  push @columns, ({ key => 'cadd', title => 'CADD', sort => 'position_html', align => 'center', help => $glossary->{'CADD'} })
+      if $self->hub->species eq 'Homo_sapiens';
+
+  push @columns, ({ key => 'dbnsfp_revel', title => 'REVEL', sort => 'position_html', align => 'center', help => $glossary->{'REVEL'} })
+      if $self->hub->species eq 'Homo_sapiens';
+
+  push @columns, ({ key => 'dbnsfp_meta_lr', title => 'MetaLR', sort => 'position_html', align => 'center', help => $glossary->{'MetaLR'} })
+      if $self->hub->species eq 'Homo_sapiens';
+
+  push @columns, ({ key => 'dbnsfp_mutation_assessor', title => 'Mutation Assessor', sort => 'position_html', align => 'center', help => $glossary->{'MutationAssessor'} })
+      if $self->hub->species eq 'Homo_sapiens';
+ 
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
   
   return @columns;

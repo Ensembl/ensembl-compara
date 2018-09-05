@@ -393,7 +393,7 @@ sub add_variations {
     $start = 0 if $start < 0;
     $end   = $length if $end > $length;
     
-    $config->{'key'}{'variants'}{$consequence} = 1;
+    $config->{'key'}{'variants'}{lc($consequence)} = 1;
     
     for ($start..$end) {
       $class{$_}  = $consequence;
