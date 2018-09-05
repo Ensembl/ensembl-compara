@@ -62,7 +62,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
 
