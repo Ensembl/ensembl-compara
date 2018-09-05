@@ -30,6 +30,10 @@ use strict;
 sub create {
   ### Returns: none
   my $sd = shift;
+  if (!$sd) {
+    warn "!!! No SpeciesDefs object was passed to Tools::OpenSearch::create - please check that your species is configured correctly";
+    return;
+  }
   my $path = $sd->ENSEMBL_OPENSEARCH_PATH;
   return unless $path;
 
