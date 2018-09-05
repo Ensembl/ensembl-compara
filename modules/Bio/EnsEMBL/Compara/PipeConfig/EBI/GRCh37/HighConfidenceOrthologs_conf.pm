@@ -22,15 +22,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::GRCh37::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -gene_tree_db mysql://...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
-    A simple pipeline to populate all the gene-tree related JSONs
+A simple pipeline to populate the high- and low- confidence levels on the GRCh37 database
 
 =head1 CONTACT
 
@@ -42,7 +42,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::GRCh37::HighConfidenceOrthologs_conf;
 
 use strict;
 use warnings;
@@ -59,8 +59,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        # In this structure, the "thresholds" are for resp. the GOC score,
-        # the WGA coverage and %identity
+        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
                 'taxa'          => [ 'Apes', 'Murinae' ],
@@ -75,39 +74,16 @@ sub default_options {
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
-                'thresholds'    => [ 25, 25, 25 ],
-            },
-            {
-                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
-                'thresholds'    => [ undef, undef, 25 ],
-            },
-            {
                 'taxa'          => [ 'all' ],
                 'thresholds'    => [ undef, undef, 25 ],
             },
         ],
-
-        # ------- GRCh37
-        #'range_label',  => "protein",       # A name for the range
-        #'range_filter', => "homology_id < 100000000",       # An SQL boolean expression to filter homology_id
-
-        #'range_label',  => "ncrna",       # A name for the range
-        #'range_filter', => "homology_id > 100000000",       # An SQL boolean expression to filter homology_id
-        # ------- GRCh37
-
 
         'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
         'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };
 }
-
-
 
 
 sub pipeline_analyses {
@@ -118,13 +94,13 @@ sub pipeline_analyses {
             'compara_db'        => $self->o('compara_db'),
             'threshold_levels'  => $self->o('threshold_levels'),
             'range_label'       => 'protein',
-            'range_filter'      => '((homology_id < 100000000) OR (homology_id BETWEEN 400000000 AND 500000000))',
+            'range_filter'      => 'homology_id < 100000000',
         },
         {
             'compara_db'        => $self->o('compara_db'),
             'threshold_levels'  => $self->o('threshold_levels'),
             'range_label'       => 'ncrna',
-            'range_filter'      => '((homology_id BETWEEN 100000000 AND 200000000) OR (homology_id BETWEEN 300000000 AND 400000000))',
+            'range_filter'      => 'homology_id > 100000000',
         },
     ];
 
