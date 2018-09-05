@@ -623,6 +623,31 @@ sub display_name {
 }
 
 
+=head2 get_common_name
+
+  Example     : my $common_name = $genome_db->get_common_name();
+  Description : Returns the common (English) name of this GenomeDB. This is a wrapper around
+                display_name() that discards scientific (latin) names.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_common_name {
+    my $self = shift;
+    my $display_name = $self->display_name;
+    if ($self->taxon_id && ($self->{'_taxon'} || $self->adaptor)) {
+        my $scientific_name = $self->taxon->scientific_name;
+        if ($scientific_name && $display_name && ($scientific_name =~ /^$display_name/)) {
+            return;
+        }
+    }
+    return $display_name;
+}
+
+
 =head2 get_scientific_name
 
   Example     : my $get_scientific_name = $genome_db->get_scientific_name();
