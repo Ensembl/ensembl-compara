@@ -249,13 +249,18 @@ sub _process {
   return;
 }
 
+# FIXME: Now identical to _write_species_tree_node
+# Introduce an interface that would act as a parent class for
+# GenomeDB, NCBITaxon and SpeciesTreeNode ?
+
 sub _write_genome_db {
   my ($self, $gdb) = @_;
   my $w = $self->_writer();
   $w->startTag('taxonomy');
   $w->dataElement('id', $gdb->taxon_id);
   $w->dataElement('scientific_name', $gdb->get_scientific_name('unique'));
-  $w->dataElement('common_name', $gdb->display_name);
+  my $common_name = $gdb->get_common_name();
+  $w->dataElement('common_name', $common_name) if $common_name;
   $w->endTag();
 }
 
