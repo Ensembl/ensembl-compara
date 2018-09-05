@@ -638,7 +638,9 @@ sub get_scientific_name {
     my ($self, $make_unique) = @_;
 
     my $n = $self->taxon_id ? (($self->{'_taxon'} || $self->adaptor) ? $self->taxon->scientific_name : 'Taxon ' . $self->taxon_id) : $self->name;
-    $n .= " " . $self->strain_name if $self->strain_name;
+    if (my $strain_name = $self->strain_name) {
+        $n .= " strain $strain_name" if $n !~ /\b$strain_name$/;
+    }
     $n .= sprintf(' (component %s)', $self->genome_component) if $self->genome_component;
 
     if ($make_unique and not ($self->strain_name or $self->genome_component)) {
