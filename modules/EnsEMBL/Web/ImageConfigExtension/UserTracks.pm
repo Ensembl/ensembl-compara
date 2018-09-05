@@ -631,7 +631,6 @@ sub _add_trackhub_extras_options {
   $args{'options'}{'signal_range'} = $args{'source'}{'signal_range'} if exists $args{'source'}{'signal_range'};
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
-  $args{'options'}{'subset'}     = clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(trackhub matrix column_data colour description desc_url);
 
   return %args;
