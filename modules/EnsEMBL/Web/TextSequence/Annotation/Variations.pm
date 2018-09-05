@@ -54,6 +54,21 @@ sub annotate {
       $snps = \@snps_list;
     }
   };
+
+  # Evidence filter
+  my %ef = map { $_ ? ($_ => 1) : () } @{$config->{'evidence_filter'}};
+  delete $ef{'off'} if exists $ef{'off'};
+  if(%ef) {
+    my @filtered_snps;
+    foreach my $snp (@$snps) {
+      my $evidence = $snp->get_all_evidence_values;
+      if (grep $ef{$_}, @$evidence) {
+        push @filtered_snps, $snp;
+      }
+    }
+    $snps = \@filtered_snps;
+  }
+
   return unless scalar @$snps;
 
   $snps = [ grep { !$self->hidden_source($_,$config) } @$snps ];

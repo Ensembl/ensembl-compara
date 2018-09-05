@@ -1650,6 +1650,8 @@ sub variation_data {
   my @coding_sequence    = split '', substr $transcript->seq->seq, $cd_start - 1, $cd_end - $cd_start + 1;
   my %consequence_filter = map { $_ ? ($_ => 1) : () } $hub->param('consequence_filter');
      %consequence_filter = () if join('', keys %consequence_filter) eq 'off';
+  my %evidence_filter    = map { $_ ? ($_ => 1) : () } $hub->param('evidence_filter');
+     %evidence_filter    = () if join('', keys %evidence_filter) eq 'off';
   my @data;
   
   # Population filtered variations currently fail to return in a reasonable time
@@ -1675,9 +1677,11 @@ sub variation_data {
     next unless $tv->cdna_start && $tv->cdna_end;
     next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
-    my $vf    = $self->transcript_variation_to_variation_feature($tv) or next;
-    my $vdbid = $vf->dbID;
-    
+    my $vf       = $self->transcript_variation_to_variation_feature($tv) or next;
+    my $vdbid    = $vf->dbID;
+    my $evidence = $vf->get_all_evidence_values;
+    next if scalar keys %evidence_filter && !grep $evidence_filter{$_}, @{$evidence};
+ 
     #next if scalar keys %population_filter && !$population_filter{$vdbid};
     
     my $start = $vf->start;
@@ -1703,6 +1707,7 @@ sub variation_data {
         indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
         codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
         codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
+        evidence      => $evidence,
       });
     }
   }

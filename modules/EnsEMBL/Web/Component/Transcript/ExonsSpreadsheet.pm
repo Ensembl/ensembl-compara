@@ -60,6 +60,7 @@ sub initialize {
   
   if ($config->{'snp_display'} ne 'off') {
     my @consequence = $self->param('consequence_filter');
+    my @evidence    = $self->param('evidence_filter');
     my $filter      = $self->param('population_filter');
     
     if ($filter && $filter ne 'off') {
@@ -67,7 +68,8 @@ sub initialize {
       $config->{'min_frequency'} = $self->param('min_frequency');
     }
     
-    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} ne 'off' && join('', @consequence) ne 'off';
+    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if join('', @consequence) ne 'off';
+    $config->{'evidence_filter'}    = { map { $_ => 1 } @evidence }    if join('', @evidence) ne 'off';
     $config->{'hide_long_snps'}     = $self->param('hide_long_snps') eq 'yes';
     $config->{'hide_rare_snps'}     = $self->param('hide_rare_snps');
     delete $config->{'hide_rare_snps'} if $config->{'hide_rare_snps'} eq 'off';
@@ -357,7 +359,12 @@ sub add_variations {
   }
   my $length = scalar @$sequence - 1;
   my (%href, %class);
-  
+
+  my %cf = %{$config->{'consequence_filter'}||{}};
+  delete $cf{'off'} if exists $cf{'off'};
+  my %ef = %{$config->{'evidence_filter'}||{}};
+  delete $ef{'off'} if exists $ef{'off'};
+
   foreach my $variation (@variations) {
     my ($name, $start, $end, $consequence, $vf);
 
@@ -368,28 +375,23 @@ sub add_variations {
       $consequence  = $flank.'_gene_variant';
     }
     else {
+      $vf          = $variation->variation_feature;
+      $vf          = $vf->transfer($slice) if ($vf->slice + 0) ne ($slice + 0);
+      $name        = $vf->variation_name;
+      $start       = $vf->start - 1;
+      $end         = $vf->end   - 1;
       $consequence = $variation->consequence_type->[0];
-      my %cf = %{$config->{'consequence_filter'}||{}};
-      delete $cf{'off'} if exists $cf{'off'};
-      if(%cf) {
-        $consequence = lc [ grep $cf{$_}, @{$variation->consequence_type} ]->[0];
-        next if !$consequence;
-      }
-
-      $vf    = $variation->variation_feature;
-      $vf    = $vf->transfer($slice) if ($vf->slice + 0) ne ($slice + 0);
-      $name  = $vf->variation_name;
-      $start = $vf->start - 1;
-      $end   = $vf->end   - 1;
+      next if (%ef && !grep $ef{$_}, @{$vf->get_all_evidence_values});
     }
+
+    $consequence ||= lc $variation->display_consequence;
+    next if (%cf && !$cf{$consequence});
 
     # Variation is an insert if start > end
     ($start, $end) = ($end, $start) if $start > $end;
     
     $start = 0 if $start < 0;
     $end   = $length if $end > $length;
-    
-    $consequence ||= lc $variation->display_consequence;
     
     $config->{'key'}{'variants'}{lc($consequence)} = 1;
     

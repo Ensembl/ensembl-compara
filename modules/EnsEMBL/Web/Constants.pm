@@ -351,6 +351,15 @@ sub MARKUP_OPTIONS {
       'label'    => 'Filter variants by consequence type',
       'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
+    'evidence_filter' => {
+      'type'     => 'DropDown',
+      'multiple' => 1,
+      'size'     => 5,
+      'select'   => 'select',
+      'name'     => 'evidence_filter',
+      'label'    => 'Filter variants by evidence status',
+      'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
+    },
     'hidden_sources' => {
       'type'     => 'DropDown',
       'multiple' => 1,
