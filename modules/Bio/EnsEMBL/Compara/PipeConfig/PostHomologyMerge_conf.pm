@@ -21,16 +21,17 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblPostHomologyMerge_conf
+Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf
 
 =head1 DESCRIPTION
 
-The PipeConfig file for the pipeline that imports alternative alleles as homologies.
+The pipeline combines a few steps that are run after having merged the homology-side
+of things in the release database.
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblPostHomologyMerge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf;
 
 use strict;
 use warnings;
@@ -47,64 +48,13 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
-
         'pipeline_name'   => 'post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
-
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-
-        # The list of collections and clusterset_ids
-        'member_stats_config'   => [
-            INPUT_PLUS({
-                'collection'      => 'default',
-                'clusterset_id'   => 'default',
-                'db_conn'         => '#compara_db#',
-            }),
-            INPUT_PLUS({
-                'collection'      => 'murinae',
-                'clusterset_id'   => 'murinae',
-                'db_conn'         => '#compara_db#',
-            }),
-        ],
-
-        # ncRNAs don't have GOC, so we don't want to penalize them for that
-        'high_confidence_ranges'    => [
-            {
-                'range_label'       => 'protein',
-                'range_filter'      => '((homology_id < 100000000) OR (homology_id BETWEEN 300000000 AND 400000000) OR (homology_id BETWEEN 800000000 AND 900000000))',
-            },
-            {
-                'range_label'       => 'ncrna',
-                'range_filter'      => '((homology_id BETWEEN 100000000 AND 200000000) OR (homology_id BETWEEN 400000000 AND 500000000))',
-            },
-        ],
-
-        # In this structure, the "thresholds" are for resp. the GOC score,
-        # the WGA coverage and %identity
-        'threshold_levels' => [
-            {
-                'taxa'          => [ 'Apes', 'Murinae' ],
-                'thresholds'    => [ 75, 75, 80 ],
-            },
-            {
-                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
-                'thresholds'    => [ 75, 75, 50 ],
-            },
-            {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
-            },
-        ],
 
         #Pipeline capacities:
         'update_capacity'                           => 5,
@@ -112,9 +62,9 @@ sub default_options {
         'high_confidence_batch_size'                => 10,
         'high_confidence_capacity'                  => 5,
         'high_confidence_batch_size'                => 2,
-
     };
 }
+
 
 sub hive_meta_table {
     my ($self) = @_;
