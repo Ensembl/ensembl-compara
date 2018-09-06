@@ -106,6 +106,21 @@ sub pipeline_analyses_goc {
             },
             -rc_name => '1Gb_job',
             -hive_capacity  =>  $self->o('goc_capacity'),
+            -flow_into => {
+                -1 => 'compute_goc_himem',
+            },
+        },
+
+        {   -logic_name => 'compute_goc_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GOCAllInOne',
+            -flow_into => {
+                1 => WHEN(
+                    '#goc_threshold# and #calculate_goc_distribution#' => [ 'get_perc_above_threshold' ] ,
+                    '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
+                ),
+            },
+            -rc_name => '4Gb_job',
+            -hive_capacity  =>  $self->o('goc_capacity'),
         },
 
 1 ? () : (

@@ -1616,7 +1616,7 @@ sub core_pipeline_analyses {
                 ),
                 'A->1' => [ 'hc_global_tree_set' ],
             },
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'alignment_entry_point',
@@ -3041,7 +3041,21 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
             -rc_name   => '2Gb_job',
-            -flow_into => [ 'other_paralogs' ],
+            -flow_into => {
+                1 => 'other_paralogs',
+                -1 => 'quick_tree_break_himem',
+            },
+        },
+
+        {   -logic_name => 'quick_tree_break_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
+            -parameters => {
+                'quicktree_exe'     => $self->o('quicktree_exe'),
+                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
+            },
+            -hive_capacity        => $self->o('quick_tree_break_capacity'),
+            -rc_name   => '4Gb_job',
+            -flow_into => [ 'other_paralogs_himem' ],
         },
 
         {   -logic_name     => 'other_paralogs',
@@ -3051,6 +3065,19 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
             -rc_name        => '250Mb_job',
+            -flow_into      => {
+                -1 => [ 'other_paralogs_himem', ],
+                2 => [ 'tree_backup' ],
+            }
+        },
+
+        {   -logic_name     => 'other_paralogs_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+            -parameters     => {
+                'dataflow_subclusters' => 1,
+            },
+            -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '500Mb_job',
             -flow_into      => {
                 2 => [ 'tree_backup' ],
             }
