@@ -70,14 +70,13 @@ sub fetch_input {
     my $self = shift;
 
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param_required('gene_tree_id')) || die "Cound not fetch tree: " . $self->param_required('gene_tree_id');
-    $self->param('gene_tree', $gene_tree);
 
     my $tags = $self->param_required('tags');
 
     for my $tag (keys %{$tags}) {
-        if ( $self->param('gene_tree')->has_tag($tag) ) {
-            print "Loading tag:$tag, with value:".$self->param('gene_tree')->get_value_for_tag($tag)."\n" if ($self->debug);
-            $self->param( 'tree_'.$tag, $self->param('gene_tree')->get_value_for_tag($tag));
+        if ( $gene_tree->has_tag($tag) ) {
+            print "Loading tag:$tag, with value:".$gene_tree->get_value_for_tag($tag)."\n" if ($self->debug);
+            $self->param( 'tree_'.$tag, $gene_tree->get_value_for_tag($tag));
         }else{
             print "Loading default value for tag:$tag\n" if ($self->debug);
             $self->warning("tag: $tag not found. Using defaults");
