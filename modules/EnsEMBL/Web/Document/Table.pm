@@ -337,7 +337,7 @@ sub data_table_config {
     $config .= sprintf '<input type="hidden" name="aaSorting" value="%s" />', encode_entities($self->jsonify($sort));
   }
   
-  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', encode_entities($self->jsonify($hidden)) if scalar @$hidden;
+  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', encode_entities($self->jsonify($hidden_cols)) if scalar @$hidden_cols;
   $config .= sprintf '<input type="hidden" name="defaultHiddenColumns" value="%s" />', encode_entities($default_hidden) if $default_hidden;
 
   foreach (keys %{$self->{'options'}{'data_table_config'}}) {
