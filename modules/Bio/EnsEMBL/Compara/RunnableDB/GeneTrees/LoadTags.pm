@@ -56,13 +56,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =cut
 
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{ $self->SUPER::param_defaults() },
-    }
-}
-
 
 =head2 fetch_input
 
@@ -91,8 +84,6 @@ sub fetch_input {
             $self->param( 'tree_'.$tag, $tags->{$tag});
         }
     }
-
-    return $self->SUPER::fetch_input();
 }
 
 1;
