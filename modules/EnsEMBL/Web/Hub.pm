@@ -855,7 +855,7 @@ sub snpedia_status {
   return $out;
 }
 
-# check to see if Clinial Allele Registry site is up or down
+# check to see if ClinGen Allele Registry site is up or down
 # if $out then site is up
 sub alleleregistry_status {
 
