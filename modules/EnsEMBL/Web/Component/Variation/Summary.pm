@@ -983,6 +983,7 @@ sub allele_registry_synonyms_urls {
   my $object   = $self->object;
   my @urls;
 
+  my $max_allele_length = 20;
   return [] if $hub->species ne 'Homo_sapiens';
 
   # Get the HGVSg
@@ -1005,9 +1006,11 @@ sub allele_registry_synonyms_urls {
 
   foreach my $allele (sort keys %$hgvs_ar) {
     my $link_info  = $hgvs_ar->{$allele};
+    my $allele_display = (length($allele) > $max_allele_length) ?
+      substr($allele, 0, $max_allele_length).'...' : $allele;
     push @urls,
          $hub->get_ExtURL_link($link_info->[1], "ALLELE_REGISTRY_DISPLAY", $link_info->[1]) .
-         ' (' . encode_entities($allele) . ')';
+         ' (' . encode_entities($allele_display) . ')';
   }
   return \@urls;
 }
