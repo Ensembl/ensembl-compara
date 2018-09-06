@@ -61,7 +61,6 @@ sub content {
     $self->hgvs,
     $self->object->vari_class eq 'SNP' ? () : $self->three_prime_co_located(),
     $self->synonyms,
-    ($hub->species eq 'Homo_sapiens' && $hub->alleleregistry_status) ? $var_id && $self->allele_registry() : (),
     $self->sets,
     $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
@@ -380,7 +379,13 @@ sub synonyms {
     
     push @synonyms_list, "<strong>$db</strong> " . (join ', ', @urls);
   }
-  
+  # Add synonyms for ClinGen Allele Registry
+  if  ($hub->species eq 'Homo_sapiens' && $hub->alleleregistry_status) {
+    my $ar_urls = $self->allele_registry_synonyms_urls();
+    push @synonyms_list, "<strong>ClinGen Allele Registry</strong> " . (join ', ', @$ar_urls) if (@$ar_urls);
+    $count += @$ar_urls;
+  }
+
   $count_sources = scalar @synonyms_list;
 
   return () if ($count_sources == 0);  
@@ -968,6 +973,43 @@ sub snpedia {
   $desc = $desc ? encode('utf8', $desc) : 'no_entry';
   $cache && $cache->set($key, $desc, 60*60*24*7);
   return $count ? [ 'Description from SNPedia', $desc ] : (); 
+}
+
+# Get ClinGen Allele Registry ids for alleles and creates urls
+# Lookup to Allele Registry using hgvsg on reference only
+sub allele_registry_synonyms_urls {
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $object   = $self->object;
+  my @urls;
+
+  return [] if $hub->species ne 'Homo_sapiens';
+
+  # Get the HGVSg
+  my $hgvsg = $object->get_hgvsg();
+
+  return []  if (!$hgvsg);
+
+  my $hgvs_ar;
+
+  # For each allele, for each HGVSg, lookup caid
+  foreach my $allele (keys %$hgvsg) {
+    next if $hgvsg->{$allele} !~ /^NC_/;
+    my $ar_results = $object->get_allele_registry_data($hgvsg->{$allele});
+    next if (! %$ar_results);
+    $hgvs_ar->{$allele} = [$hgvsg->{$allele},
+                           $ar_results->{'caid'},
+                          ];
+  }
+  return [] if (!$hgvs_ar);
+
+  foreach my $allele (sort keys %$hgvs_ar) {
+    my $link_info  = $hgvs_ar->{$allele};
+    push @urls,
+         $hub->get_ExtURL_link($link_info->[1], "ALLELE_REGISTRY_DISPLAY", $link_info->[1]) .
+         ' (' . encode_entities($allele) . ')';
+  }
+  return \@urls;
 }
 
 sub allele_registry {
