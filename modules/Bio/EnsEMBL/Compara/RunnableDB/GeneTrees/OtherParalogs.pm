@@ -73,6 +73,15 @@ use Bio::EnsEMBL::Compara::Utils::Preloader;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults() },
+        'genome_db_id'  => undef,   # Only store the paralogs of this genome_db_id, if set
+    };
+}
+
+
 sub fetch_input {
     my $self = shift;
     $self->SUPER::fetch_input;
@@ -89,7 +98,14 @@ sub fetch_input {
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
-    $self->delete_old_homologies unless $self->param('_readonly');
+
+    unless ($self->param('_readonly')) {
+        if ($self->param('genome_db_id')) {
+            $self->delete_old_paralogies;
+        } else {
+            $self->delete_old_homologies;
+        }
+    }
 
     my %gdb_id2stn = ();
     foreach my $taxon (@{$self->param('gene_tree')->tree->species_tree->root->get_all_leaves}) {
@@ -101,6 +117,45 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
     $self->run_analysis;
+}
+
+
+sub delete_old_paralogies {
+    my $self = shift;
+
+    my $tree_node_id = $self->param('gene_tree_id');
+    my $genome_db_id = $self->param('genome_db_id');
+
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_PARALOGUES', [$genome_db_id]);
+    die "Cannot find ENSEMBL_PARALOGUES mlss for genome_db_id=$genome_db_id\n" unless $mlss;
+
+    # New method all in one go -- requires key on method_link_species_set_id
+    print "deleting old paralogies for genome_db_id=$genome_db_id\n" if ($self->debug);
+
+    # Delete first the members
+    my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = ? AND method_link_species_set_id = ?';
+    $self->compara_dba->dbc->do($sql1, undef, $tree_node_id, $mlss->dbID);
+
+    # And then the homologies
+    my $sql2 = 'DELETE FROM homology WHERE gene_tree_root_id = ? AND method_link_species_set_id = ?';
+    $self->compara_dba->dbc->do($sql2, undef, $tree_node_id, $mlss->dbID);
+
+#    my $homology_ids = $self->compara_dba->dbc->sql_helper->execute_simple(
+#        -SQL => 'SELECT homology_id FROM homology WHERE gene_tree_root_id = ? AND method_link_species_set_id = ?',
+#        -PARAMS => [$tree_node_id, $mlss->dbID],
+#    );
+#    my $sql1 = 'DELETE FROM homology_member WHERE homology_id = ?';
+#    my $sth1 = $self->compara_dba->dbc->prepare($sql1);
+#    my $sql2 = 'DELETE FROM homology WHERE homology_id = ?';
+#    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
+#    foreach my $h (@$homology_ids) {
+#        # Delete first the members
+#        $sth1->execute($h);
+#        # And then the homologies
+#        $sth2->execute($h);
+#    }
+#    $sth1->finish;
+#    $sth2->finish;
 }
 
 
@@ -162,7 +217,19 @@ sub rec_add_paralogs {
 
     # Each species
     my $ngenepairlinks = 0;
-    foreach my $genome_db_id (keys %{$ancestor->get_value_for_tag('gene_hash')}) {
+    my @genome_db_ids;
+    if (my $genome_db_id = $self->param('genome_db_id')) {
+        my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+        if ($genome_db->is_polyploid) {
+            @genome_db_ids = map {$_->dbID} @{$genome_db->component_genome_dbs};
+        } else {
+            @genome_db_ids = ($genome_db_id);
+        }
+        @genome_db_ids = grep {$ancestor->get_value_for_tag('gene_hash')->{$_}} @genome_db_ids;
+    } else {
+        @genome_db_ids = keys %{$ancestor->get_value_for_tag('gene_hash')};
+    }
+    foreach my $genome_db_id (@genome_db_ids) {
         # Each gene from the sub-tree 1
         foreach my $gene1 (@{$child1->get_value_for_tag('gene_hash')->{$genome_db_id}}) {
             # Each gene from the sub-tree 2
