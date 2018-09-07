@@ -47,6 +47,7 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
+use EnsEMBL::Web::Tools::FailOver::AlleleRegistry;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
@@ -851,6 +852,25 @@ sub snpedia_status {
     warn "SNPEDIA failure";
   };
 
+  return $out;
+}
+
+# check to see if ClinGen Allele Registry site is up or down
+# if $out then site is up
+sub alleleregistry_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::AlleleRegistry->new($self);
+  my $out;
+
+  return $out if $self->species ne 'Homo_sapiens';
+
+  try {
+    $out = $failover->get_cached
+  } catch {
+    warn "Allele Registry failure";
+  };
   return $out;
 }
 
