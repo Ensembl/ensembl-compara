@@ -198,10 +198,8 @@ sub rec_add_paralogs {
     # All the homologies will share this information
     my $this_taxon = $ancestor->get_value_for_tag('species_tree_node_id');
 
-    # The node_type of the root
+    # Set node_type
     unless ($self->param('_readonly')) {
-        my $original_node_type = $ancestor->get_value_for_tag('node_type');
-        print "original_node_type: $original_node_type\n" if ($self->debug);
         if ($ancestor->get_value_for_tag('is_dup', 0)) {
             $ancestor->store_tag('node_type', 'duplication');
             $self->duplication_confidence_score($ancestor);

@@ -328,7 +328,6 @@ sub rec_update_tags {
 
     } elsif (!$node->is_leaf) {
         $node->store_tag('tree_support', 'quicktree');
-        $node->store_tag('node_type', 'speciation');
         foreach my $child (@{$node->children}) {
             $self->rec_update_tags($child);
         }
