@@ -177,7 +177,7 @@ sub node_type {
 sub is_speciation {
     my $self = shift;
     my $node_type = $self->node_type;
-    return ((defined $node_type) && ($node_type eq 'speciation'));
+    return ((defined $node_type) && ($node_type =~ /speciation$/));
 }
 
 

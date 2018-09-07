@@ -355,8 +355,8 @@ our $config = {
                 query => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NOT NULL',
             },
             {
-                description => 'The "speciation" node_type is exclusive from having a duplication_confidence_score (which should only be for duplications, etc)',
-                query => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type = "speciation" XOR duplication_confidence_score IS NULL)',
+                description => 'The "speciation" node_types are exclusive from having a duplication_confidence_score (which should only be for duplications, etc)',
+                query => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type LIKE "%speciation" XOR duplication_confidence_score IS NULL)',
             },
             {
                 description => 'A duplication confidence score of 0 is equivalent to having a "dubious" type, whilst "gene_split" nodes can only have a score of 1',
