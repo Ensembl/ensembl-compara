@@ -383,7 +383,7 @@ sub _rec_update_tags {
         $cluster->adaptor->_store_all_tags($cluster);
 
     }
-    else {
+    elsif (!$node->is_leaf) {
         #print "CALLING ON SUPERTREE\n";
         $node->store_tag( 'tree_support', 'fasttree' );
         $node->store_tag( 'node_type',    'speciation' );

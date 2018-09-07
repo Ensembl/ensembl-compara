@@ -326,7 +326,7 @@ sub rec_update_tags {
 
         $cluster->adaptor->_store_all_tags($cluster);
 
-    } else {
+    } elsif (!$node->is_leaf) {
         $node->store_tag('tree_support', 'quicktree');
         $node->store_tag('node_type', 'speciation');
         foreach my $child (@{$node->children}) {
