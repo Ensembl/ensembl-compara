@@ -619,7 +619,7 @@ sub strain_name {
 sub display_name {
     my $self = shift;
     $self->{'_display_name'} = shift if @_;
-    return $self->{'_display_name'};
+    return $self->{'_display_name'} . ($self->genome_component ? sprintf(' (component %s)', $self->genome_component) : '');
 }
 
 
