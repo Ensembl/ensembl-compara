@@ -335,6 +335,34 @@ sub _split_name_into_parts {
 }
 
 
+=head2 _is_rank_within_species
+
+  Example     : $taxon->_is_rank_within_species();
+  Description : Tells whether this taxon is below the "species" rank (included)
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _is_rank_within_species {
+    my $self = shift;
+
+    my $node = $self;
+
+    # Go past the rankless nodes
+    while (($node->rank eq 'no rank') && $node->has_parent) {
+        $node = $node->parent;
+    }
+    # SELECT DISTINCT n2.rank FROM ncbi_taxa_node n1 JOIN ncbi_taxa_node n2 ON n2.parent_id=n1.taxon_id WHERE n1.rank = "species";
+    if (($node->rank eq 'species') or ($node->rank eq 'subspecies') or ($node->rank eq 'forma') or ($node->rank eq 'varietas')) {
+        return 1;
+    }
+    return 0;
+}
+
+
 =head2 get_common_name
 
   Example    : $taxon->get_common_name;
