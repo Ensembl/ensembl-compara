@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PostHomologyMerge_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::PostHomologyMerge_conf
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ The PipeConfig file for the pipeline that imports alternative alleles as homolog
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PostHomologyMerge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::PostHomologyMerge_conf;
 
 use strict;
 use warnings;
