@@ -600,7 +600,9 @@ sub dumpVariation {
   my $conf = shift;
   my $VariationDB = $conf->{'variation_dbname'};
   return unless $VariationDB;
+
   my $counter   = make_counter(0);
+  my $sql_batch = 250000000; #how much do we split the heavy sql query into
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
   my $start_time = time;
@@ -626,11 +628,11 @@ sub dumpVariation {
   my $sth;
   my ($hgvs_sth);
   my $all_hgvs_names = on_disk_set('all_hgvs_names');
-  my $sql_batch = 250000000; #split the HGVS query into batches of this size
   if ($dbspecies ne 'omo_sapiens') {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     my $i = 0;
-    my $continue = 1;
+    my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
+    #split query
     while($continue) {
       $sth = $conf->{'variation_dbh'}->prepare(qq(
         SELECT variation_id, hgvs_name
@@ -779,24 +781,12 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
 
   # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
   print LOG "    Preparing to get all SNPs ".&date_and_mem()."\n";
-    my $rowcache;
-    my $i = 0;
-    my $continue = 1;
-#split query
-    while($continue) {      
-      $sth = $conf->{'variation_dbh'}->prepare(qq(
-        SELECT v.variation_id, v.name, v.source_id, v.somatic
-          FROM variation v limit $sql_batch offset $i));
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+    SELECT v.variation_id, v.name, v.source_id, v.somatic
+      FROM variation v));
 
-      $sth->execute() or die "Error:", $DBI::errstr;
-      #$continue++;
-      if($sth->rows) {
-        $i += $sql_batch;
-        push(@$rowcache, @{$sth->fetchall_arrayref});
-      } else {
-        $continue = 0;
-      }
-    }
+  $sth->execute() or die "Error:", $DBI::errstr;
+
   print LOG "     ...executed SQL, now retrieving data and generating xml ".&date_and_mem()."\n";
 
   my $new_syn_c = 0;
