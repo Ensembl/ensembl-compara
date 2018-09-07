@@ -229,7 +229,7 @@ sub tweak_analyses {
         'CAFE_table'                => '24Gb_job',
         'hcluster_run'              => '1Gb_job',
         'hcluster_parse_output'     => '1Gb_job',
-        'split_genes'               => '250Mb_job',
+        'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {

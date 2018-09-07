@@ -83,7 +83,7 @@ subtest 'new_from_newick' => sub {
         '(((triticum_aestivum,(triticum_urartu,triticum_aestivum_A),triticum_aestivum_B,(aegilops_tauschii,triticum_aestivum_D)),hordeum_vulgare),brachypodium_distachyon)',
         '(((1983,2081),(1984,2083),2080,2082),2088)',
         '(((37682,4565)1648030,(4565,4572)4564,4565,4565)1648030,112509)147389',
-        '(((Aegilops tauschii,Triticum aestivum Chinese Spring (component D))Triticinae,(Triticum aestivum Chinese Spring (component A),Triticum urartu)Triticum,Triticum aestivum Chinese Spring,Triticum aestivum Chinese Spring (component B))Triticinae,Hordeum vulgare subsp. vulgare)Triticeae'
+        '(((Aegilops tauschii,Triticum aestivum strain Chinese Spring (component D))Triticinae,(Triticum aestivum strain Chinese Spring (component A),Triticum urartu)Triticum,Triticum aestivum strain Chinese Spring,Triticum aestivum strain Chinese Spring (component B))Triticinae,Hordeum vulgare subsp. vulgare)Triticeae'
     );
 
     test_new_from_newick(

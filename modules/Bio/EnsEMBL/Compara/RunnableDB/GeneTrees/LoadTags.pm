@@ -86,7 +86,7 @@ sub fetch_input {
             print "Loading tag:$tag, with value:".$self->param('gene_tree')->get_value_for_tag($tag)."\n" if ($self->debug);
             $self->param( 'tree_'.$tag, $self->param('gene_tree')->get_value_for_tag($tag));
         }else{
-            print "Loading default value for tag:$tag, with value:".$self->param('gene_tree')->get_value_for_tag($tag)."\n" if ($self->debug);
+            print "Loading default value for tag:$tag\n" if ($self->debug);
             $self->warning("tag: $tag not found. Using defaults");
             $self->param( 'tree_'.$tag, $tags->{$tag});
         }

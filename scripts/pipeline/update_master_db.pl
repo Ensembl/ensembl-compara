@@ -161,20 +161,27 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
-    next if $division and $mc->get_division and $mc->get_division ne $division;
+    if ($division and $mc->get_division and ($mc->get_division ne $division)) {
+        $db_adaptor->dbc->disconnect_if_idle();
+        next;
+    }
     my $that_species = $mc->get_production_name();
     my $that_assembly = $db_adaptor->assembly_name();
     unless ($that_species) {
         warn sprintf("Skipping %s (no species name found: a compara_ancestral database ?).\n", $db_adaptor->dbc->locator);
         next;
     }
-    my $master_genome_db = $genome_db_adaptor->fetch_by_name_assembly($that_species, $that_assembly);
+
+    # Genome components loop
+    foreach my $c (undef, @{$db_adaptor->get_GenomeContainer->get_genome_components}) {
+
+    my $master_genome_db = $genome_db_adaptor->fetch_by_name_assembly($that_species, $that_assembly, $c);
 
     # Time to test !
     if ($master_genome_db) {
         $found_genome_db_ids{$master_genome_db->dbID} = 1;
         # Make a new one with the core db information
-        my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $db_adaptor );
+        my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $db_adaptor, $c );
         my $diffs = $proper_genome_db->_check_equals($master_genome_db);
         if ($diffs) {
             $proper_genome_db->first_release($master_genome_db->first_release);
@@ -193,6 +200,9 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
     } elsif ($check_species_missing_from_compara) {
         warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
     }
+
+    # Genome components loop
+    }
     
     # Don't keep all the connections open
     $db_adaptor->dbc->disconnect_if_idle();
@@ -200,6 +210,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
 if ($check_species_with_no_core) {
     foreach my $master_genome_db (@{$genome_db_adaptor->fetch_all}) {
+        # the ancestral database is only ready towards the end of the release
         next if $master_genome_db->name eq 'ancestral_sequences';
         if ($master_genome_db->is_current and not $found_genome_db_ids{$master_genome_db->dbID}) {
             if ($master_genome_db->locator) {

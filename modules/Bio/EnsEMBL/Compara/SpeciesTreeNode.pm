@@ -167,11 +167,25 @@ sub node_name {
     return $self->{_node_name};
 }
 
+
+# NestedSet commonly uses name()
 sub name {
     my $self = shift;
     return $self->node_name(@_);
 }
 
+
+=head2 get_scientific_name
+
+  Example     : $stn->get_scientific_name();
+  Description : Return the scientific (Latin) name of this node. It simply dispatches
+                the call to GenomeDB or NCBITaxon, or defaults to the node name.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub get_scientific_name {
     my $self = shift;
@@ -183,6 +197,19 @@ sub get_scientific_name {
     return $self->node_name;
 }
 
+
+=head2 get_common_name
+
+  Example     : $stn->get_common_name();
+  Description : Return the common (English) name of this node. It simply dispatches
+                the call to GenomeDB or NCBITaxon, or defaults to an empty string.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub get_common_name {
     my $self = shift;
     if (my $gdb = $self->genome_db) {
@@ -193,6 +220,13 @@ sub get_common_name {
     return;
 }
 
+
+=head2 [get/has/set]_divergence_time
+
+Accessors for the divergence time of this node. The functions are provided to hide
+the actual implementation as tags
+
+=cut
 
 sub get_divergence_time {
     my ($self) = @_;

@@ -135,7 +135,25 @@ sub pipeline_analyses_cafe {
              -hive_capacity => $self->o('cafe_capacity'),
              -meadow_type => 'LSF',
              -flow_into => {
+                 -1 => 'CAFE_analysis_himem',
                  2 => 'CAFE_json',
+             },
+            },
+
+            {
+             -logic_name => 'CAFE_analysis_himem',
+             -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis',
+             -parameters => {
+#                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
+#                             'cafe_struct_taxons'  => $self->o('cafe_'),
+                             'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
+                             'cafe_shell'           => $self->o('cafe_shell'),
+                            },
+             -rc_name => '2Gb_job',
+             -hive_capacity => $self->o('cafe_capacity'),
+             -meadow_type => 'LSF',
+             -flow_into => {
+                 2 => 'CAFE_json_himem',
              },
             },
 

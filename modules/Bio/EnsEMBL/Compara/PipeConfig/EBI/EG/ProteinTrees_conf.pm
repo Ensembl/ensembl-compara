@@ -271,7 +271,9 @@ sub tweak_analyses {
         $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
     }
     if ($self->o('division') eq 'fungi') {
-        $analyses_by_name->{'num_sequences_per_blast_job'}->{'-parameters'} = 5000;
+        $analyses_by_name->{'unannotated_all_vs_all_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
+        $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
+        $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
     }
 
     # Leave this untouched: it is an extremely-hacky way of setting "taxlevels" to

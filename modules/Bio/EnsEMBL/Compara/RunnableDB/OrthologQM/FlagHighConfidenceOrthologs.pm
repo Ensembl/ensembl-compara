@@ -95,6 +95,8 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
+    $self->disconnect_from_hive_database;
+
     my $mlss                        = $self->param('mlss');
     my $mlss_id                     = $self->param('mlss_id');
     my $thresholds                  = $self->param('thresholds');

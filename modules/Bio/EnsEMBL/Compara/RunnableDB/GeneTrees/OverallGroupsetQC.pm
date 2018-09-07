@@ -58,6 +58,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'unmap_tolerance'       => 0.2,
+        'hmm_unmap_tolerance'   => 0.7,
     };
 }
 
@@ -463,8 +464,14 @@ sub quantify_mapping {
   $groupset_tree->store_tag('sid_map_average_contrib', $average_mapped_contribution);
   $groupset_tree->store_tag('sid_prop_novel_cls', $proportion_novel_clusters);
 
-  my $unmap_tolerance = $self->param('unmap_tolerance');
+  my $hmm_switch = ($self->_db_has_hmm_annots($self->compara_dba) xor $self->_db_has_hmm_annots($reuse_compara_dba));
+  if ($hmm_switch) {
+      $self->warning('Clusters created with different clustering methods (HMMs vs blast)');
+  }
+
+  my $unmap_tolerance = $self->param_required($hmm_switch ? 'hmm_unmap_tolerance' : 'unmap_tolerance');
   print STDERR "# Unmap tolerance parameter set to $unmap_tolerance\n";
+
   if ($proportion_novel_clusters > $unmap_tolerance) {
     $self->input_job->transient_error(0);
     die "Quality Check FAILED: Proportion of novel clusters $proportion_novel_clusters > $unmap_tolerance\n";
@@ -473,5 +480,13 @@ sub quantify_mapping {
   return;
 }
 
+sub _db_has_hmm_annots {
+    my ($self, $dba) = @_;
+    my $sql = 'SELECT 1 FROM pipeline_wide_parameters WHERE param_name = "clustering_mode" AND (param_value LIKE "%hmm%" OR param_value LIKE "%hybrid%") LIMIT 1';
+    my $sth = $dba->dbc->prepare($sql);
+    $sth->execute();
+    my ($found_hmm_annot) = $sth->fetchrow_array;
+    return $found_hmm_annot;
+}
 
 1;
