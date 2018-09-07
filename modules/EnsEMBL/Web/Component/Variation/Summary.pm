@@ -380,7 +380,7 @@ sub synonyms {
     push @synonyms_list, "<strong>$db</strong> " . (join ', ', @urls);
   }
   # Add synonyms for ClinGen Allele Registry
-  if  ($hub->species eq 'Homo_sapiens' && $hub->alleleregistry_status) {
+  if  ($hub->alleleregistry_status) {
     my $ar_urls = $self->allele_registry_synonyms_urls();
     push @synonyms_list, "<strong>ClinGen Allele Registry</strong> " . (join ', ', @$ar_urls) if (@$ar_urls);
     $count += @$ar_urls;

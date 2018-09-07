@@ -864,6 +864,8 @@ sub alleleregistry_status {
   my $failover = EnsEMBL::Web::Tools::FailOver::AlleleRegistry->new($self);
   my $out;
 
+  return $out if $self->species ne 'Homo_sapiens';
+
   try {
     $out = $failover->get_cached
   } catch {
