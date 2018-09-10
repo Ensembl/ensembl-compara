@@ -138,7 +138,6 @@ sub default_options {
     # tree building parameters:
         'use_quick_tree_break'      => 1,
 
-        'treebreak_gene_count'      => 400,
         'split_genes_gene_count'    => 5000,
 
         'mcoffee_short_gene_count'  => 20,
