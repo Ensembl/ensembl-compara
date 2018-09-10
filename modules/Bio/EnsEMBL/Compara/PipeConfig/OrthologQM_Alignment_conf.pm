@@ -228,7 +228,7 @@ sub pipeline_analyses {
                 'pipeline_db'     => $self->pipeline_url(),
             },
             -flow_into  => {
-                '3->C' => [ 'copy_genomic_align_blocks' ],
+                '3->C' => [ 'copy_genomic_align_blocks', 'copy_mlss_tags' ],
                 'C->2' => [ 'copy_funnel' ]
             },
             -analysis_capacity => 1,
@@ -253,6 +253,16 @@ sub pipeline_analyses {
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
                 'table'       => 'genomic_align',
                 'mode'        => 'topup',      
+             },
+            -analysis_capacity => 1,
+        },
+
+        {   -logic_name => 'copy_mlss_tags',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
+                'table'       => 'method_link_species_set_tag',
+                'mode'        => 'topup',
              },
             -analysis_capacity => 1,
         },
