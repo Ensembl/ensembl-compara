@@ -220,10 +220,9 @@ sub pipeline_analyses {
             },
 
             {   -logic_name => 'notify_pipeline_completed',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
                 -parameters => {
-                    'subject' => "ncRNA-Tree pipeline (".$self->o('pipeline_name').") has completed",
-                    'text' => "This is an automatic message.\n ncRNA-Tree Pipeline for release  #expr(\$self->hive_pipeline->display_name)expr#  has completed.",
+                    'text'  => 'The pipeline has completed.',
                     'email' => $self->o('email'),
                     },
                 -flow_into  => [ 'register_pipeline_url' ],

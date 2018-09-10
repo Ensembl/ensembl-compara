@@ -1221,7 +1221,6 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
-                'subject' => "CreateHmmProfiles Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Gene tree report",
             },
         },
 

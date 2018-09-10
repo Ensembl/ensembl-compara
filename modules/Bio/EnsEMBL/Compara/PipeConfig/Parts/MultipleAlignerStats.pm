@@ -92,7 +92,6 @@ sub pipeline_analyses_multiple_aligner_stats {
             -parameters => {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
                 'email'     => $self->o('epo_stats_report_email'),
-                'subject'   => "EPO Pipeline( #expr(\$self->hive_pipeline->display_name)expr# ) has completed", 
             }
         },
 

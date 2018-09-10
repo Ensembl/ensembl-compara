@@ -25,7 +25,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail');
 
 my $txt = <<EOF;
 <html>
@@ -40,12 +40,14 @@ sub param_defaults {
     return {
         is_html => 1,
         text => $txt,
-        subject => 'EPO pipeline report',
+        'subject'   => "#pipeline_name# has completed",
     }
 }
 
 sub fetch_input {
 	my $self = shift;
+
+        $self->SUPER::fetch_input();    # To initialize pipeline_name
 
         # In case it is still a Bio::EnsEMBL::DBSQL::DBConnection
         bless $self->compara_dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';

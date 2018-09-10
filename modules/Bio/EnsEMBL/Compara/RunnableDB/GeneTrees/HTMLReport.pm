@@ -45,7 +45,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail');
 
 my $txt = <<EOF;
 <html>
@@ -72,13 +72,15 @@ sub param_defaults {
     return {
         is_html => 1,
         text => $txt,
-        subject => 'Gene-tree pipeline report',
+        subject => '#pipeline_name# gene-tree report',
     }
 }
 
 
 sub fetch_input {
     my $self = shift @_;
+
+    $self->SUPER::fetch_input();    # To initialize pipeline_name
 
     my $mlss_id      = $self->param_required('mlss_id');
     my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');

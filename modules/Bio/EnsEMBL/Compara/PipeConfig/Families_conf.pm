@@ -701,10 +701,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'notify_pipeline_completed',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
             -parameters => {
-                'subject' => "Family Pipeline(".$self->o('pipeline_name').") has completed",
-                'text' => "This is an automatic message.\n Family Pipeline for release #expr(\$self->hive_pipeline->display_name)expr# has completed.",
+                'text'  => 'The pipeline has completed.',
             },
             -rc_name => 'urgent',
             -flow_into => [ 'register_pipeline_url' ],

@@ -624,10 +624,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'notify_pipeline_completed',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::NotifyByEmail',
             -parameters => {
-                'subject' => "Protein-Tree pipeline (".$self->o('pipeline_name').") has completed",
-                'text' => "This is an automatic message.\n Protein-Tree Pipeline for release  #expr(\$self->hive_pipeline->display_name)expr#  has completed.",
+                'text'  => 'The pipeline has completed.',
                 'email' => $self->o('email'),
             },
             -flow_into  => [ 'register_pipeline_url' ],
@@ -1682,7 +1681,6 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
-                'subject' => "Protein tree Pipeline: ( #expr(\$self->hive_pipeline->display_name)expr# ) Gene tree report: ",
             },
         },
 
