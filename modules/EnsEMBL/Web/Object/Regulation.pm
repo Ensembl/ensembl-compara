@@ -166,9 +166,29 @@ sub get_motif_features {
   my %motifs;
 
   foreach my $mf (@motif_features){
-    my $peak = $mf->fetch_overlapping_Peak;
+    my $peak = $mf->fetch_overlapping_Peak_by_Epigenome($cell_line);
     if ($peak) {
-      $motifs{$mf->start .':'. $mf->end} = [$mf->display_id, $mf->binding_matrix->stable_id, $mf->score];
+      my $matrix = $mf->binding_matrix;
+      if ($matrix) {
+        my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
+        my $name_string = '';
+        if (scalar @names) {
+          ## We don't want the string to be too long, but names can be very variable in length
+          $name_string = $names[0];
+          my $i = 1;
+          my $max_length;
+          for ($i = 1; $i < scalar @names; $i++) {
+            if (length($names[$i]) < $max_length - length($name_string)) {
+              $name_string .= $names[$i];
+            }
+            else {
+              last;
+            }
+          }
+          $name_string .= '...' if scalar @names > $i;
+        } 
+        $motifs{$mf->start .':'. $mf->end} = [$name_string, $mf->binding_matrix->stable_id, $mf->score];
+      }
     }
   }
   return \%motifs;
