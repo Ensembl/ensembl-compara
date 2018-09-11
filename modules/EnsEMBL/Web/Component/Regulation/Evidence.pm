@@ -107,10 +107,11 @@ sub get_motif_rows {
   my $hub = $self->hub;
   my @motif_rows; 
 
-  foreach my $mf (@{$f->get_associated_MotifFeatures}) {
+=pod
+  foreach my $mf (@{$f->fetch_all_MotifFeatures_with_matching_Peak}) {
     my @A = split /:/, $mf->display_label;
     my ($name, $binding_matrix_name) = ($A[0], $A[-1]);
-    my $link = $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', { ID => $binding_matrix_name });
+    my $link = '';
     $name .= " motif ($link)" if $link;
 
     push @motif_rows, {
@@ -120,6 +121,7 @@ sub get_motif_rows {
       cell     => $cell_line
     };
   }
+=cut
   
   return \@motif_rows;
 }
