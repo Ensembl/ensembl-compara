@@ -1370,7 +1370,7 @@ sub render_score_prediction {
     'high'    => 'bad',
     'medium'  => 'ok',
     'low'     => 'good',
-    'neutral' => 'neutral',
+    'neutral' => 'good',
   );
   
   my %ranks = (

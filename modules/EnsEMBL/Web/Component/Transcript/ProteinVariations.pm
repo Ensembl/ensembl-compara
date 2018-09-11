@@ -400,7 +400,7 @@ sub sift_poly_classes {
     'high'                   => 'bad',
     'medium'                 => 'ok',
     'low'                    => 'good',
-    'neutral'                => 'neutral',
+    'neutral'                => 'good',
   );
   foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
