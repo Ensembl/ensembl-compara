@@ -1662,11 +1662,14 @@ sub render_var_coverage {
     $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
     if ($left_width == $total_width)  {
       $left_width -= $right_width;
-      $left_width = 0 if ($left_width < 0);
+    }
+    elsif (($left_width + $right_width) > $total_width) {
+      $left_width = $total_width - $right_width;
     }
     elsif ($small_var && $left_width > 0) {
       $left_width--;
     }
+    $left_width = 0 if ($left_width < 0);
     $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
   }
   $render .= $var_render if ($var_render);
