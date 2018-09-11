@@ -171,23 +171,15 @@ sub features {
 
 sub get_structure {
   my ($self, $f, $type, $activity, $appearance) = @_;
-
   my $hub = $self->{'config'}{'hub'};
   my $epigenome = $self->{'my_config'}->get('epigenome') || '';
-  my $loci = [ map { $_->{'locus'} }
-     @{$hub->get_query('GlyphSet::RFUnderlying')->go($self,{
-      species => $self->{'config'}{'species'},
-      type => 'funcgen',
-      epigenome => $epigenome,
-      feature => $f,
-    })}
-  ];
-  return if $@ || !$loci || !scalar(@$loci);
 
-  my $bound_end = pop @$loci;
-  my $end       = pop @$loci;
-  my ($bound_start, $start, @mf_loci) = @$loci;
-  my $has_flanking = 0;;
+  my $start       = $f->start;
+  my $end         = $f->end;
+  my $bound_start = $f->bound_start;
+  my $bound_end   = $f->bound_end;
+
+  my $has_flanking = 0;
   my $flank_different = 0;
   if ($type eq 'promoter' && $activity eq 'active') {
     $appearance->{'colour'} = $self->my_colour('promoter_flanking');
@@ -210,16 +202,35 @@ sub get_structure {
     $has_flanking = 1;
   }
 
-  # Motif features
+  ## Add motif feature coordinates if any 
   my $has_motifs = 0;
-  if ($activity !~ /^[na|inactive]$/) {
-    while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
-      push @$extra_blocks, {
-                            start   => $mf_start, 
-                            end     => $mf_end,
-                            colour  => 'black',
+  if ($epigenome && $activity ne 'na' && $activity ne 'inactive') {
+
+    my $mfs;
+    ## Check the cache first
+    my $cache_key = $self->my_label;
+    if ($self->feature_cache($cache_key)) {
+      $mfs = $self->feature_cache($cache_key);
+    }
+
+    unless ($mfs) {
+      $mfs = eval { $f->fetch_all_MotifFeatures_with_matching_Peak; };
+      ## Cache motif features in case we need to draw another regfeats track
+      $self->feature_cache($cache_key, $mfs);
+    }
+
+    ## Get peaks that overlap this epigenome
+    foreach (@$mfs) {
+      my $peak = $_->fetch_overlapping_Peak_by_Epigenome($epigenome);
+      warn ">>> OVERLAPPING PEAK $peak";
+      if ($peak) {
+        push @$extra_blocks, {
+                              start   => $_->start, 
+                              end     => $_->end,
+                              colour  => 'black',
                             };
-      $has_motifs = 1;
+        $has_motifs = 1;
+      }
     }
   }
  
