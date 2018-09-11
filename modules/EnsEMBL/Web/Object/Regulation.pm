@@ -162,7 +162,7 @@ sub get_evidence_list {
 sub get_motif_features {
   my ($self, $cell_line) = @_;
   return {} unless $cell_line;
-  my @motif_features = @{$self->Obj->fetch_all_MotifFeatures};
+  my @motif_features = @{$self->Obj->fetch_all_MotifFeatures_with_matching_Peak};
   my %motifs;
 
   foreach my $mf (@motif_features){
@@ -176,9 +176,9 @@ sub get_motif_features {
           ## We don't want the string to be too long, but names can be very variable in length
           $name_string = $names[0];
           my $i = 1;
-          my $max_length;
+          my $max_length = 12;
           for ($i = 1; $i < scalar @names; $i++) {
-            if (length($names[$i]) < $max_length - length($name_string)) {
+            if (length($names[$i]) < ($max_length - length($name_string))) {
               $name_string .= $names[$i];
             }
             else {
