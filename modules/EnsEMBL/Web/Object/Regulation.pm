@@ -170,6 +170,7 @@ sub get_motif_features {
     if ($peak) {
       my $matrix = $mf->binding_matrix;
       if ($matrix) {
+        my $matrix_id = $mf->binding_matrix->stable_id;
         my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
         my $name_string = '';
         if (scalar @names) {
@@ -187,7 +188,7 @@ sub get_motif_features {
           }
           $name_string .= '...' if scalar @names > $i;
         } 
-        $motifs{$mf->start .':'. $mf->end} = [$name_string, $mf->binding_matrix->stable_id, $mf->score];
+        $motifs{$mf->start .':'. $mf->end} = [$name_string, $matrix_id, $mf->score];
       }
     }
   }
