@@ -171,8 +171,9 @@ sub features {
 
 sub get_structure {
   my ($self, $f, $type, $activity, $appearance) = @_;
-  my $hub = $self->{'config'}{'hub'};
+  my $hub       = $self->{'config'}{'hub'};
   my $epigenome = $self->{'my_config'}->get('epigenome') || '';
+  my $slice     = $self->{'container'};
 
   my $start       = $f->start;
   my $end         = $f->end;
@@ -208,7 +209,7 @@ sub get_structure {
 
     my $mfs;
     ## Check the cache first
-    my $cache_key = $self->my_label;
+    my $cache_key = $f->stable_id;
     if ($self->feature_cache($cache_key)) {
       $mfs = $self->feature_cache($cache_key);
     }
@@ -222,11 +223,10 @@ sub get_structure {
     ## Get peaks that overlap this epigenome
     foreach (@$mfs) {
       my $peak = $_->fetch_overlapping_Peak_by_Epigenome($epigenome);
-      warn ">>> OVERLAPPING PEAK $peak";
       if ($peak) {
         push @$extra_blocks, {
-                              start   => $_->start, 
-                              end     => $_->end,
+                              start   => $_->start - $slice->start, 
+                              end     => $_->end - $slice->start,
                               colour  => 'black',
                             };
         $has_motifs = 1;
