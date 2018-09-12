@@ -87,7 +87,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.el.on("click", 'a._motif', function(e) {
       var motifID = $(this).html();
       e.preventDefault();
-      var widgetWindow = window.open("/widgets/motifWidget.htm?id="+motifID, "Motif Feature Widget", "width=950,height=550");
+      var widgetWindow = window.open("/motifWidget.htm?id="+motifID, "Motif Feature Widget", "width=950,height=550");
     });
     
     this.el.on('mousedown', function () {
