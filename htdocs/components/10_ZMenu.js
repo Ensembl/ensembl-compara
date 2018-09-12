@@ -82,6 +82,13 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     this.elLk.container = $('.container', this.el);
     this.elLk.loading   = $('.loading',   this.el);
+
+    // To open motif feature widget on regulation track
+    this.el.on("click", 'a._motif', function(e) {
+      var motifID = $(this).html();
+      e.preventDefault();
+      var widgetWindow = window.open("/widgets/motifWidget.htm?id="+motifID, "Motif Feature Widget", "width=950,height=550");
+    });
     
     this.el.on('mousedown', function () {
       Ensembl.EventManager.trigger('panelToFront', panel.id);
