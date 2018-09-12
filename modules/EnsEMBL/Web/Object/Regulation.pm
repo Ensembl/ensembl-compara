@@ -88,8 +88,9 @@ sub activity {
   if (ref $epigenome ne 'Bio::EnsEMBL::Funcgen::Epigenome') {
     my $db      = $self->hub->database('funcgen');
     my $adaptor = $db->get_adaptor('Epigenome');
-    $epigenome  = $adaptor->fetch_by_name($epigenome);
+    $epigenome  = $adaptor->fetch_by_display_label($epigenome);
   }
+  return unless $epigenome;
 
   my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
   return $regact->activity if $regact;
@@ -374,10 +375,10 @@ sub regbuild_epigenomes {
   my ($self) = @_;
 
   if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
-    return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
+    return $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'};
   }
 
-  return [];
+  return {};
 }
 
 ################ Calls for Feature in Detail view ###########################
