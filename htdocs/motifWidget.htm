@@ -1,0 +1,25 @@
+<title>Motif Feature Widget</title>
+
+<link rel="stylesheet" type="text/css" media="all" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<link type="text/css" rel="stylesheet" href="http://ves-hx-78.ebi.ac.uk:11003/motif_view.css" />
+
+<script type="text/javascript" src="http://ves-hx-78.ebi.ac.uk:11003/Widgets/core.js"></script>
+<script type="text/javascript">
+Ensembl.newWidget(
+  function() {
+    return {
+      container  : '._motif_view',
+      widgetType : Ensembl.widgets.MotifFeature
+    }
+  },
+
+  function() {
+    return {
+      configuration : {
+        ID        : (window.location.search.match(/\Wid=(\w+)/) || []).pop() || 'ENSPFM0392',
+      }
+    };
+});
+</script>
+
+<div class="_motif_view" style="margin-top: 20px;"></div>
