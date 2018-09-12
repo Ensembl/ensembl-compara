@@ -171,7 +171,7 @@ sub get_motif_features {
     if ($peak) {
       my $matrix = $mf->binding_matrix;
       if ($matrix) {
-        my $matrix_id = $mf->binding_matrix->stable_id;
+        my $matrix_id = '<a href="#" class="_motif">'.$mf->binding_matrix->stable_id.'</a>';
         my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
         my $name_string = '';
         if (scalar @names) {
