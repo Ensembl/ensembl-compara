@@ -88,10 +88,10 @@ sub content {
         label => $object->activity($epigenome),
       });
 
-      $self->add_entry({
-        type  => 'Attributes',
-        label => $object->get_evidence_list($epigenome),
-      });
+      #$self->add_entry({
+      #  type  => 'Attributes',
+      #  label => $object->get_evidence_list($epigenome),
+      #});
     }
   }
   
