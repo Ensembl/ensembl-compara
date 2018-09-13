@@ -248,7 +248,7 @@ sub pipeline_analyses_dump_trees {
                 'dump_script'       => $self->o('dump_script'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
-                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
+                'cmd'               => '#dump_script# #production_registry# --reg_alias #division# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
             },
             -flow_into     => {
                 1 => {
