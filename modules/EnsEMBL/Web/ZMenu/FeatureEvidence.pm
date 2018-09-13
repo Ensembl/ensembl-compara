@@ -39,17 +39,6 @@ sub content {
   }
 
   my $summit   = $peak->summit || 'undetermined';
-  my @features = @{$peak->get_associated_MotifFeatures};
-  my %motif_features;
-  
-  foreach my $mf (@features) {
-    my %assoc_ftype_names = map { $_->feature_type->name => 1 } @{$mf->associated_annotated_features};
-    my $bm_ftname         = $mf->binding_matrix->feature_type->name;
-    my @other_ftnames     = grep $_ ne $bm_ftname, keys %assoc_ftype_names;
-    my $other_names_txt   = scalar @other_ftnames ? sprintf(' (%s)', join ' ', @other_ftnames) : '';
-
-    $motif_features{$mf->start . ':' . $mf->end} = [ "$bm_ftname$other_names_txt", $mf->score, $mf->binding_matrix->name ];
-  }
   
   $self->caption($peak_calling->fetch_FeatureType->evidence_type_label);
   
@@ -58,8 +47,6 @@ sub content {
     label => $peak_calling->display_label
   });
 
-
-  #my $source_label = $feature_set->source_label;
   my $source_label = $peak_calling->fetch_source_label;
 
   if(defined $source_label){
@@ -89,6 +76,18 @@ sub content {
 
   $self->_add_nav_entries($hub->param('evidence')||0);
 
+=pod
+  my @features = @{$peak->get_associated_MotifFeatures};
+  my %motif_features;
+  
+  foreach my $mf (@features) {
+    my %assoc_ftype_names = map { $_->feature_type->name => 1 } @{$mf->associated_annotated_features};
+    my $bm_ftname         = $mf->binding_matrix->feature_type->name;
+    my @other_ftnames     = grep $_ ne $bm_ftname, keys %assoc_ftype_names;
+    my $other_names_txt   = scalar @other_ftnames ? sprintf(' (%s)', join ' ', @other_ftnames) : '';
+
+    $motif_features{$mf->start . ':' . $mf->end} = [ "$bm_ftname$other_names_txt", $mf->score, $mf->binding_matrix->name ];
+  }
   if (scalar (keys %motif_features) > 0  ){
     # get region clicked on
     my $nearest_feature = 1;
@@ -151,6 +150,7 @@ sub content {
       label_html => $pwm_table
     });
   }
+=cut
 }
 
 1;
