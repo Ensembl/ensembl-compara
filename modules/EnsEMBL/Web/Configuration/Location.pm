@@ -232,7 +232,7 @@ sub add_external_browsers {
     delete $browsers{'UCSC_DB'};
   }
 
-  if ($browsers{'ACCESSION'}) {
+  if ($species_defs->NCBI_GOLDEN_PATH && $browsers{'ACCESSION'}) {
     if ($chr) { 
       $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
     } else {
