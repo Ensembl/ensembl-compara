@@ -90,7 +90,7 @@ sub content {
 
       $self->add_entry({
         type  => 'Attributes',
-        label => '', #$object->get_evidence_list($epigenome),
+        label => $object->get_evidence_list($epigenome),
       });
     }
   }
