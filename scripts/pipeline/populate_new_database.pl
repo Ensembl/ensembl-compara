@@ -328,6 +328,7 @@ store_objects($new_dba->get_GenomeDBAdaptor, $all_default_genome_dbs,
 ## Store all the MethodLinkSpeciesSet entries in the new DB
 store_objects($new_dba->get_MethodLinkSpeciesSetAdaptor, $all_default_method_link_species_sets,
     "all previous valid method_link_species_sets");
+copy_all_mlss_tags($master_dba, $new_dba, $all_default_method_link_species_sets) if !$old_dba; # otherwise, copy from old_dba below
 
 ## Store all the SpeciesSets with tags in the new DB
 store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,

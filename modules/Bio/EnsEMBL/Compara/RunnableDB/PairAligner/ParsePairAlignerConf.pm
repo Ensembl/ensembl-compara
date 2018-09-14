@@ -643,18 +643,18 @@ sub parse_defaults {
 	}
     }
     #Should be able to provide a list of mlss_ids
-    if ($self->param('mlss_id')) {
-	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-	$genome_dbs = $mlss->species_set->genome_dbs;
-    } 
-    if ($self->param('mlss_id_list')) {
-	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-        foreach my $mlss_id (@{destringify($self->param('mlss_id_list'))}) {
-            $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-	    push @$genome_dbs, @{$mlss->species_set->genome_dbs};
-        }
-    }
+ #    if ($self->param('mlss_id')) {
+	# my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	# $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+	# $genome_dbs = $mlss->species_set->genome_dbs;
+ #    } 
+ #    if ($self->param('mlss_id_list')) {
+	# my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+ #        foreach my $mlss_id (@{destringify($self->param('mlss_id_list'))}) {
+ #            $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+	#     push @$genome_dbs, @{$mlss->species_set->genome_dbs};
+ #        }
+ #    }
     #load genome_dbs from a collection
     if ($self->param('collection')) {
         my $collection = $self->param('collection');
@@ -663,11 +663,39 @@ sub parse_defaults {
         $genome_dbs = $ss->genome_dbs;
     }
 
-    die "No genomes were added. Please check if the following parameters are correctly set: (mlss_id || mlss_id_list || collection || core_dbs)" if (!$genome_dbs);
+    die "No genomes were added. Please check if the following parameters are correctly set: (collection || core_dbs)" unless ($genome_dbs || $self->param('mlss_id') || $self->param('mlss_id_list'));
 
     #Create a collection of pairs from the list of genome_dbs
     my $collection;
-    if (@$genome_dbs > 2) {
+    if ( $self->param('mlss_id_list') || $self->param('mlss_id') ) {
+    	my @mlss_id_list;
+    	@mlss_id_list = @{destringify($self->param('mlss_id_list'))} if $self->param('mlss_id_list');
+    	@mlss_id_list = ($self->param('mlss_id')) if $self->param('mlss_id');
+
+    	my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+    	print "\n !! PPA compara_dba : " . $self->compara_dba->url . "\n";
+    	foreach my $mlss_id ( @mlss_id_list ) {
+    		my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
+    		# read reference from method_link_species_set_tag table
+    		# this should be set prior to running the pipeline by the create_mlss script
+    		my $ref_name = $mlss->get_tagvalue('reference_species');
+    		die "Cannot find tag 'reference_species' for mlss_id $mlss_id" unless $ref_name;
+    		my $pair;
+    		my $mlss_gdbs = $mlss->species_set->genome_dbs;
+    		if ( $mlss_gdbs->[0]->name eq $ref_name ) {
+    			$pair = { 
+    				'ref_genome_db'     => $mlss_gdbs->[0],
+    				'non_ref_genome_db' => $mlss_gdbs->[1],
+    			};
+    		} else {
+    			$pair = { 
+    				'ref_genome_db'     => $mlss_gdbs->[1],
+    				'non_ref_genome_db' => $mlss_gdbs->[0],
+    			};
+    		}
+    		push @$collection, $pair;
+    	} 
+    } elsif (@$genome_dbs > 2) {
 
         if ($self->param('ref_species')) {
             #ref vs all
@@ -719,16 +747,16 @@ sub parse_defaults {
         }
     } elsif (@$genome_dbs == 2) {
         my ($ref_genome_db, @non_ref_gdbs) = $self->find_reference_species($genome_dbs);
-	#Normal case of a pair of species
+		#Normal case of a pair of species
         my $pair = { 'ref_genome_db' => $ref_genome_db, 'non_ref_genome_db' => $non_ref_gdbs[0] };
-	unless ($ref_genome_db) {
-	    if ($mlss) {
-		throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") 
-	    } else {
-		throw ("Unable to find " . $self->param('ref_species') . " in these genome_dbs (" . join ",", @$genome_dbs . ")")
-	    }
-	}
-	push @$collection, $pair;
+		unless ($ref_genome_db) {
+	    	if ($mlss) {
+				throw ("Unable to find " . $self->param('ref_species') . " in this mlss " . $mlss->name . " (" . $mlss->dbID . ")") 
+	    	} else {
+				throw ("Unable to find " . $self->param('ref_species') . " in these genome_dbs (" . join ",", @$genome_dbs . ")")
+	    	}
+		}
+		push @$collection, $pair;
     } else {
         # Self-alignment
         my %pair = (
