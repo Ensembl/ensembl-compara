@@ -174,6 +174,8 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+
 use Getopt::Long;
 
 my $help;
@@ -227,6 +229,11 @@ GetOptions(
 
 if ($pairwise && $singleton) {
   warn("You cannot store pairwise way and singleton way at the same time. Please choose one.\n");
+  exit 1;
+}
+
+if ( $method_link_type eq 'LASTZ_NET' && !defined $pairwise && !defined $ref_name ) {
+  warn("You must define a reference species (--ref_species) when creating LASTZ_NET MethodLinkSpeciesSet objects.\n");
   exit 1;
 }
 
@@ -374,14 +381,14 @@ if ($pairwise) {
     }
     die "Cannot find reference genome $ref_name in input genomes" unless ( $ref_gdb );
     foreach my $gdb ( @input_genome_dbs ) {
-      create_mlss( [$ref_gdb, $gdb] ) unless ( $gdb->dbID == $ref_gdb->dbID );
+      create_mlss( [$ref_gdb, $gdb], undef, undef, -REF_SPECIES => $ref_name ) unless ( $gdb->dbID == $ref_gdb->dbID );
     }
 
   }
   else {
     while (my $gdb1 = shift @input_genome_dbs) {
       foreach my $gdb2 (@input_genome_dbs) {
-        create_mlss( [$gdb1, $gdb2] );
+        create_mlss( [$gdb1, $gdb2], undef, undef, -REF_SPECIES => $gdb1->name );
       }
     }
   }
@@ -404,12 +411,20 @@ if ($pairwise) {
     @input_genome_dbs = ask_for_genome_dbs($compara_dba);
   }
 
-  create_mlss( \@input_genome_dbs, $name, $species_set_name || $collection );
+  if ( $method_link_type eq 'LASTZ_NET' ) {
+    create_mlss( \@input_genome_dbs, $name, $species_set_name || $collection, -REF_SPECIES => $ref_name );
+  } else {
+    create_mlss( \@input_genome_dbs, $name, $species_set_name || $collection );
+  }
 }
 
 
 sub create_mlss {
-  my ($all_genome_dbs, $desired_mlss_name, $desired_ss_name) = @_;
+  # my ($all_genome_dbs, $desired_mlss_name, $desired_ss_name) = @_;
+  my $all_genome_dbs    = shift;
+  my $desired_mlss_name = shift;
+  my $desired_ss_name   = shift;
+  my($ref_species) = rearrange([qw(REF_SPECIES)], @_);
 
   # Simple check to allow running create_mlss for homoeologues on the whole
   # collection
@@ -468,17 +483,7 @@ sub create_mlss {
   if (!$mlss_name) {
       $mlss_name = $species_set->name." $ml_type";
       $mlss_name =~ s/^collection-//;
-      if ($method_link_type eq "BLASTZ_NET" || $method_link_type eq "LASTZ_NET") {
-        if ($mlss_name =~ /H\.sap/) {
-          $mlss_name .= " (on H.sap)";
-        } elsif ($mlss_name =~ /M\.mus/) {
-          $mlss_name .= " (on M.mus)";
-        } elsif ($mlss_name =~ /G\.gal/) {
-          $mlss_name .= " (on G.gal)";
-        } elsif ($mlss_name =~ /D\.rer/) {
-          $mlss_name .= " (on D.rer)";
-        }
-      }
+      
       unless ($force) {
         $mlss_name = prompt("Set the name for this MethodLinkSpeciesSet", $mlss_name);
       }
@@ -490,6 +495,7 @@ sub create_mlss {
   print "  Source: $source\n";
   print "  URL: $url\n";
   print "  SpeciesSet name: ".($species_set->name)."\n";
+  print "  Reference: " . $ref_species . "\n" if $ref_species;
   unless ($force) {
     print "\nDo you want to continue? [y/N]? ";
     
@@ -510,6 +516,7 @@ sub create_mlss {
   $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
     $mlssa->store($new_mlss);
     $mlssa->make_object_current($new_mlss) if $release;
+    $new_mlss->store_tag('reference_species', $ref_species)if $ref_species;
     if (!$singleton && !$pairwise) {
         $new_mlss->store_tag('taxon_id', $_) for @taxon_ids;
         $new_mlss->store_tag('taxon_name', $_) for @taxon_names;

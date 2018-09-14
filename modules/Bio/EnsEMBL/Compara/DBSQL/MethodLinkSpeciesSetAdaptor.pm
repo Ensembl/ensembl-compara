@@ -189,6 +189,8 @@ sub store {
   my $method            = $mlss->method()           or die "No Method defined, cannot store\n";
   $self->db->get_MethodAdaptor->store( $method );   # will only store if the object needs storing (type is missing) and reload the dbID otherwise
 
+  # die "Cannot store LASTZ_NET MethodLinkSpeciesSet without a reference species" if ( $method->name eq 'LASTZ_NET' && !defined $mlss->{_reference_species} );
+
   my $species_set   = $mlss->species_set()  or die "No SpeciesSet defined, cannot store\n";
   $self->db->get_SpeciesSetAdaptor->store( $species_set, $store_components_first );
 
