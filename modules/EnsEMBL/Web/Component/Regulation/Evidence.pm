@@ -85,7 +85,6 @@ sub content {
                   $peak_calling->fetch_source_label),
           };
           
-          push @rows, @{$self->get_motif_rows($peak, $cell_line)} if $features == $core_features;
         }
       }
     }
@@ -102,28 +101,5 @@ sub content {
   }
 }
 
-sub get_motif_rows {
-  my ($self, $f, $cell_line) = (@_);
-  my $hub = $self->hub;
-  my @motif_rows; 
-
-=pod
-  foreach my $mf (@{$f->fetch_all_MotifFeatures_with_matching_Peak}) {
-    my @A = split /:/, $mf->display_label;
-    my ($name, $binding_matrix_name) = ($A[0], $A[-1]);
-    my $link = '';
-    $name .= " motif ($link)" if $link;
-
-    push @motif_rows, {
-      type     => $f->feature_type->evidence_type_label,
-      location => $mf->seq_region_name . ':' . $mf->seq_region_start . '-' . $mf->seq_region_end,
-      feature  => $name,
-      cell     => $cell_line
-    };
-  }
-=cut
-  
-  return \@motif_rows;
-}
 
 1;
