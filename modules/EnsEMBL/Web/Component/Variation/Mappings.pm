@@ -128,14 +128,13 @@ sub content {
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
-    { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
-    { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
-    { key => 'allele',   title => 'Allele',                    sort => 'string'                           },
-    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
-    { key => 'matrix',   title => 'Motif name',                sort => 'string'                           },
-    { key => 'pos',      title => 'Motif position',            sort => 'numeric'                          },
-    { key => 'high_inf', title => 'High information position', sort => 'string'                           },
-    { key => 'score',    title => 'Motif score change',        sort => 'position_html', align => 'center' },
+    { key => 'bm',       width => '20%',  title => 'Binding matrix',            sort => 'html'                             },
+    { key => 'allele',   width => '10%',  title => 'Allele',                    sort => 'string'                           },
+    { key => 'type',     width => '10%',  title => 'Consequence type',          sort => 'position_html'                    },
+    { key => 'names',    width => '40%',  title => 'Motif names',               sort => 'string'                           },
+    { key => 'pos',      width => '10%',  title => 'Motif position',            sort => 'numeric'                          },
+    { key => 'high_inf', width => '5%',  title => 'High information position',  sort => 'string'                           },
+    { key => 'score',    width => '5%',  title => 'Motif score change',         sort => 'position_html', align => 'center' },
   );
   my $motif_table = $self->new_table(\@motif_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
 
@@ -374,25 +373,14 @@ sub content {
       next unless $mf;       
       # check that the motif has a binding matrix, if not there's not 
       # much we can do so don't return anything
-      next unless defined $mf->binding_matrix;
-      my $matrix = $mf->display_label;
+      my $matrix = $mf->binding_matrix;
+      next unless $matrix;
       
-      my $matrix_url = $mf->binding_matrix->description =~ /Jaspar/ ? $hub->get_ExtURL_link($matrix, 'JASPAR', (split ':', $matrix)[-1]) : $matrix;
+      my $matrix_names = join(', ',  @{$matrix->get_TranscriptionFactorComplex_names||[]});
+
+      my $matrix_url  = '';
+      my $matrix_link = sprintf '<a href="%s">%s</a>', $matrix_url, $matrix->stable_id; 
       
-      # get the corresponding regfeat
-      my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
-
-      next unless $rf;
-
-      # create a URL
-      my $url = $hub->url({
-        type   => 'Regulation',
-        action => 'Summary',
-        rf     => $rf->stable_id,
-        fdb    => 'funcgen',
-      });
-      $url .= ';regulation_view=variation_feature_variation=normal';
-
       my $mfv_cons   = $mfv->most_severe_OverlapConsequence;
       my $mfv_colour = ($mfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $mfv_cons->SO_term}->{'default'}) : undef;
 
@@ -401,18 +389,17 @@ sub content {
       for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
         my $type = $self->render_consequence_type($mfva);
         
-        my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$rf->stable_id,25);
+        my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$mf->stable_id,25);
         
         my $motif_overlap = $self->_overlap_glyph(1, $motif_length, $mfva->motif_start, $mfva->motif_end, $mf, 'Motif feature', 1, $mfv_colour);
 
         my $motif_length_label = $self->_overlap_glyph_label($mfva->motif_start, $mfva->motif_end, $motif_length);
 
         my $row = {
-          rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
-          ftype    => $mfva->feature->feature_type->so_name,#'Motif feature',
+          bm       => $matrix_link,
           allele   => $m_allele,
           type     => $type,
-          matrix   => $matrix_url,
+          names    => $matrix_names,
           pos      => $motif_length_label.$motif_overlap,
           high_inf => $mfva->in_informative_position ? 'Yes' : 'No',
           score    => defined($mfva->motif_score_delta) ? $self->render_motif_score($mfva->motif_score_delta) : '-',
