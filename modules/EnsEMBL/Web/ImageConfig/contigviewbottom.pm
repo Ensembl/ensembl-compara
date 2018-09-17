@@ -378,6 +378,9 @@ sub init_cacheable {
     );
   }
 
+  ## Turn off motif feature track by default
+  $self->modify_configs(['motif_features'], {'display' => 'off'});
+
   ## Regulatory build track now needs to be turned on explicitly
   $self->modify_configs(['regbuild'], {display => 'compact'});
 }
