@@ -779,18 +779,25 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
     $failures->{$variation_id} = $desc;
   }
 
-  # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
-  print LOG "    Preparing to get all SNPs ".&date_and_mem()."\n";
-  $sth = $conf->{'variation_dbh'}->prepare(qq(
-    SELECT v.variation_id, v.name, v.source_id, v.somatic
-      FROM variation v));
+  # Process all variations in batches, both mapped, failed and the precious non-mapped, non-failed
 
-  $sth->execute() or die "Error:", $DBI::errstr;
+  my $batch_size = 50_000_000;
+  my $offset = 0;
 
-  print LOG "     ...executed SQL, now retrieving data and generating xml ".&date_and_mem()."\n";
+  print LOG "    Processing SNPs in batches of $batch_size ".&date_and_mem()."\n";
 
   my $new_syn_c = 0;
-  while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
+  while (1) {
+    print LOG "      Fetching from offset $offset.... " . &date_and_mem() . "\n";
+
+    my $rowcache = $conf->{'variation_dbh'}->selectall_arrayref(qq(
+      SELECT v.variation_id, v.name, v.source_id, v.somatic
+        FROM variation v LIMIT $batch_size OFFSET $offset));
+
+    last unless @$rowcache;
+
+    $offset += $batch_size;
+   
     while ( my $row = shift( @{$rowcache} ) ) {
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
@@ -881,6 +888,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       }
     }
   }
+
   print LOG "    All SNPs dumped to file ".&date_and_mem()."\n";
 
   my $c = footer( $counter->(), $fh, 'Variation');
