@@ -6,8 +6,11 @@
 
 <script type="text/javascript">
   var url   = "widgets.ensembl.org";
-  var test  = window.location.search.match(/\Wtest=(\w+)/); // for release when test site is up, use test.widgets.ensembl
-  url       = test ? "test."+url : url;
+  if(window.location.host.match(/^test\./)) {
+    url = "test.widgets.ensembl.org";
+  } else if(window.location.host.match(/^ves\-/)) {
+    url = window.location.host; //assuming widgets is running on the same sandbox, if it is different then change url here
+  }
 
   window.document.write('<link type="text/css" rel="stylesheet" href="//'+ url +'/motif_view.css" />');
   window.document.write('<script type="text/javascript" src="//'+url+'/Widgets/core.js">\x3C/script>');
