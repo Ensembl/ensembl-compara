@@ -918,7 +918,7 @@ sub check_for_missing_species {
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
   if (scalar @missing) {
-    $title .= ' species';
+    $title .= ' missing species';
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
     } elsif ($not_missing == $multi_check) {
