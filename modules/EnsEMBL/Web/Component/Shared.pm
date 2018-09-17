@@ -855,7 +855,7 @@ sub check_for_align_problems {
 
   my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
 
-  if (scalar @messages < 0) {
+  if (scalar @messages <= 0) {
     push @messages, $self->check_for_missing_species($args);
   }
 
