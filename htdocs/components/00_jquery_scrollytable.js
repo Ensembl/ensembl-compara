@@ -48,7 +48,7 @@
 
         el.addClass(id).wrap('<div style="overflow:auto">').parent().on('scroll.scrollyTable', function () {
           $(this.previousSibling).scrollLeft($(this).scrollLeft());
-        }).before('<div style="overflow:auto"><div style="height:1.02px;margin-top:-1px"></div></div>').prev().on('scroll.scrollyTable', function () {
+        }).before('<div style="overflow:auto"><div style="height:1px"></div></div>').prev().on('scroll.scrollyTable', function () {
           $(this.nextSibling).scrollLeft($(this).scrollLeft());
         }).children().width(el.outerWidth()).end().filter(function () {
           return $(this).outerHeight() >= 1;
