@@ -377,9 +377,7 @@ sub content {
       next unless $matrix;
       
       my $matrix_names = join(', ',  @{$matrix->get_TranscriptionFactorComplex_names||[]});
-
-      my $matrix_url  = '';
-      my $matrix_link = sprintf '<a href="%s">%s</a>', $matrix_url, $matrix->stable_id; 
+      my $matrix_link = sprintf '<a href="#" class="_motif">%s</a>', $matrix->stable_id; 
       
       my $mfv_cons   = $mfv->most_severe_OverlapConsequence;
       my $mfv_colour = ($mfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $mfv_cons->SO_term}->{'default'}) : undef;
