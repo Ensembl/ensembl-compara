@@ -232,16 +232,17 @@ sub add_external_browsers {
     delete $browsers{'UCSC_DB'};
   }
 
-  if ($species_defs->NCBI_GOLDEN_PATH && $browsers{'ACCESSION'}) {
-    if ($chr) { 
-      $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
-    } else {
-      my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
-      $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
-    }
-    
-    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
-    
+  if ($browsers{'ACCESSION'}) {
+    if($species_defs->NCBI_GOLDEN_PATH) {
+      if ($chr) { 
+          $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
+        } else {
+          my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
+          $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
+        }
+        
+        $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
+    }    
     delete $browsers{'ACCESSION'};
   }
 
