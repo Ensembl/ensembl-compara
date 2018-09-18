@@ -32,7 +32,6 @@ sub _init {
   
   $self->cacheable(0);
   $self->ajaxable(0);
-  warn Data::Dumper::Dumper $hub->get_alignment_id, "==";
   # these can be overridden in child
   $self->{panel_type}      = 'TaxonSelector'; 
   $self->{method}          = 'get'; # get|post
