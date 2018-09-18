@@ -99,7 +99,7 @@ sub pipeline_analyses_goc {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GOCAllInOne',
             -flow_into => {
                 1 => WHEN(
-                    '#goc_threshold# and #calculate_goc_distribution#' => [ 'get_perc_above_threshold' ] ,
+                    '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
                     '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
                 ),
             },
