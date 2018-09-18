@@ -30,7 +30,13 @@ use EnsEMBL::Web::TextSequence::View::ComparaAlignments;
 
 use base qw(EnsEMBL::Web::Component::TextSequence);
 
-sub _init { $_[0]->SUPER::_init(100); }
+sub _init {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
+  %{$self->{'viewconfig'}{$hub->type}->{_user_settings}} = (%{$self->{'viewconfig'}{$hub->type}->{_user_settings}}, %$alignments_session_data);
+  $self->SUPER::_init(100);
+}
 
 sub content {
   my $self      = shift;
@@ -50,7 +56,7 @@ sub content {
     );
   }
   
-  my $align_param = $hub->param('align') || '';
+  my $align_param = $hub->get_alignment_id;
 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
   my $target_slice = $object->get_target_slice;

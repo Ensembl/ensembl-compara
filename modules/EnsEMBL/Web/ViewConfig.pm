@@ -23,7 +23,7 @@ package EnsEMBL::Web::ViewConfig;
 use strict;
 use warnings;
 
-use JSON qw(from_json);
+use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
@@ -270,8 +270,16 @@ sub update_from_input {
     $self->altered($self->reset_user_settings($reset));
   }
 
-  my $settings = $params->{$self->config_type};
 
+  if ($params->{alignment_selector}) {
+    my $data = from_json $params->{alignment_selector};
+    $data->{type} = $self->config_type;
+    $data->{code} = 'alignments_selector';
+    $self->hub->session->set_record_data($data);
+    $self->altered(1);
+  }
+
+  my $settings = $params->{$self->config_type};
   foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
 
     my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
