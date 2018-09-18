@@ -251,7 +251,7 @@ sub _summarise_core_tables {
     );
     foreach my $T ( @$res_aref ) {
       my $a_ref = $analysis->{$T->[0]}
-        || ( warn("Missing analysis entry $table - $T->[0]\n") && next );
+        || ( warn("$db_name is missing analysis entry $table - $T->[0]\n") && next );
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
