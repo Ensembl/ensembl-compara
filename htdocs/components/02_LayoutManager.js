@@ -25,7 +25,7 @@ Ensembl.LayoutManager.extend({
    */
   initialize: function () {
     this.id = 'LayoutManager';
-
+    
     Ensembl.EventManager.register('reloadPage',         this, this.reloadPage);
     Ensembl.EventManager.register('validateForms',      this, this.validateForms);
     Ensembl.EventManager.register('makeZMenu',          this, this.makeZMenu);
