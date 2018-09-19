@@ -37,6 +37,8 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object;
 
+  my %column_flags;
+
   # first check we have uniquely determined variation
   return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   return $self->detail_panel if $hub->param('allele');
@@ -110,12 +112,10 @@ sub content {
     }
   }
   
-  my @columns = $self->table_columns;
-  
-  my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');
   my $max_length    = 20;
   my $flag;
+  my @rows;
   
   # create a regfeat table as well
   my @reg_columns = (
@@ -304,10 +304,18 @@ sub content {
       detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $vf, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${vf}_${a}"),
     };
     
-    $table->add_row($row);
+    push(@rows, $row);
+
+    # Column flags
+    foreach my $col ('sift', 'polyphen', 'cadd', 'dbnsfp_revel', 'dbnsfp_meta_lr', 'dbnsfp_mutation_assessor') {
+      $column_flags{$col} = 1 if ($row->{$col} && $row->{$col} ne '-');
+    }
+
     $flag = 1;
   }
   
+  my @columns = $self->table_columns(\%column_flags);
+  my $table   = $self->new_table(\@columns, \@rows, { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
   
   if($hub->database('regulation')) {
       
@@ -416,39 +424,43 @@ sub content {
 # Description: Return hash of columns, this can be overwritten in the mobile plugins to remove columns not required.
 sub table_columns {
   my $self = shift;
+  my $column_flags = shift;
 
+  my $hub      = $self->hub;
   my $glossary = $self->hub->glossary_lookup;
 
   my @columns = (
-    { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
-    { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
-    { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
-    { key => 'type',      title => 'Consequence Type',                 sort => 'position_html'               },
-    { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'left'   },
-    { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'left'   },
-    { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'left'   },
-    { key => 'aa',        title => 'Amino acid',                       sort => 'string'                      },
-    { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
-  );  
+    { key => 'gene',      title => 'Gene',                   sort => 'html'                      },
+    { key => 'trans',     title => 'Transcript (strand)',    sort => 'html'                      },
+    { key => 'allele',    title => 'Allele (Tr. allele)',    sort => 'string',   help => 'Allele (Transcript allele)' },
+    { key => 'type',      title => 'Consequence Type',       sort => 'position_html'             },
+    { key => 'trans_pos', title => 'Position in transcript', sort => 'position', align => 'left' },
+    { key => 'cds_pos',   title => 'Position in CDS',        sort => 'position', align => 'left' },
+    { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'left' },
+    { key => 'aa',        title => 'AA',                     sort => 'string',   help => 'Resulting amino acid(s)'    },
+    { key => 'codon',     title => 'Codons',                 sort => 'string'                    },
+  );
 
   push @columns, ({ key => 'sift',     title => 'SIFT',     sort => 'position_html', align => 'center', help => $glossary->{'SIFT'} })
-      if $self->hub->species_defs->databases->{'DATABASE_VARIATION'} && defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'};
+      if $hub->species_defs->databases->{'DATABASE_VARIATION'} && defined $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} && $column_flags->{'sift'};
 
-  push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
-      if $self->hub->species eq 'Homo_sapiens';
+  if ($self->hub->species eq 'Homo_sapiens') {
+    push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
+      if $column_flags->{'polyphen'};
 
-  push @columns, ({ key => 'cadd', title => 'CADD', sort => 'position_html', align => 'center', help => $glossary->{'CADD'} })
-      if $self->hub->species eq 'Homo_sapiens';
+    push @columns, ({ key => 'cadd', title => 'CADD', sort => 'position_html', align => 'center', help => $glossary->{'CADD'} })
+      if $column_flags->{'cadd'};
 
-  push @columns, ({ key => 'dbnsfp_revel', title => 'REVEL', sort => 'position_html', align => 'center', help => $glossary->{'REVEL'} })
-      if $self->hub->species eq 'Homo_sapiens';
+    push @columns, ({ key => 'dbnsfp_revel', title => 'REVEL', sort => 'position_html', align => 'center', help => $glossary->{'REVEL'} })
+      if $column_flags->{'dbnsfp_revel'};
 
-  push @columns, ({ key => 'dbnsfp_meta_lr', title => 'MetaLR', sort => 'position_html', align => 'center', help => $glossary->{'MetaLR'} })
-      if $self->hub->species eq 'Homo_sapiens';
+    push @columns, ({ key => 'dbnsfp_meta_lr', title => 'MetaLR', sort => 'position_html', align => 'center', help => $glossary->{'MetaLR'} })
+      if $column_flags->{'dbnsfp_meta_lr'};
 
-  push @columns, ({ key => 'dbnsfp_mutation_assessor', title => 'Mutation Assessor', sort => 'position_html', align => 'center', help => $glossary->{'MutationAssessor'} })
-      if $self->hub->species eq 'Homo_sapiens';
- 
+    push @columns, ({ key => 'dbnsfp_mutation_assessor', title => 'Mutation Assessor', sort => 'position_html', align => 'center', help => $glossary->{'MutationAssessor'} })
+      if $column_flags->{'dbnsfp_mutation_assessor'};
+  }
+
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
   
   return @columns;
