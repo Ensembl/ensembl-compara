@@ -118,8 +118,9 @@ SPECIES: foreach my $sp (sort @species) {
 
   # check if this species is in the database yet
   if (!$lookup{$sp}) {
-    $sql = sprintf ('INSERT INTO species SET code = "%s", name = "%s", common_name = "%s", vega = "%s", online = "%s";',
-            $sd->get_config($sp, 'SPECIES_CODE') || 'NULL', $sd->get_config($sp, 'SPECIES_URL'),
+    my $code = $sd->get_config($sp, 'SPECIES_CODE');
+    $sql = sprintf ('INSERT INTO species SET code = %s, name = "%s", common_name = "%s", vega = "%s", online = "%s";',
+            ($code ? qq("$code") : 'NULL'), $sd->get_config($sp, 'SPECIES_URL'),
             $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
     print "$sql\n\n" unless $DEBUG;
 
