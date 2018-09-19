@@ -6,7 +6,7 @@
 
 <script type="text/javascript">
   var url   = "widgets.ensembl.org";
-  if(window.location.host.match(/^test\./)) {
+  if(window.location.host.match(/^test\.|^staging\./)) {
     url = "test.widgets.ensembl.org";
   }
   window.document.write('<link type="text/css" rel="stylesheet" href="//'+ url +'/motif_view.css" />');
