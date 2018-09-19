@@ -123,10 +123,12 @@ sub content {
     
     foreach my $motif (sort keys %motif_features) {
       my ($name, $binding_matrix, $score) = @{$motif_features{$motif}};
+
+      my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
       #my $bm_widget = $self->hub->url(); 
       #<td><a href="$bm_widget">$binding_matrix</a></td>
       my $nice_score = sprintf('%.4f', $score);
-      $pwm_table .= qq(<tr>
+      $pwm_table .= qq(<tr $style>
                         <td>$name</td>
                         <td>$binding_matrix</td>
                         <td>$nice_score</td>
