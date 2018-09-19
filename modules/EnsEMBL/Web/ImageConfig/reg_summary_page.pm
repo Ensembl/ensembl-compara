@@ -36,6 +36,10 @@ sub init_cacheable {
       $self->modify_configs([$node->id],{ display => 'off' });
     }
   }
+
+  $self->load_configured_bigbed;
+  $self->modify_configs(['motif_features'], {'display' => 'off'});
+  $self->modify_configs(['age_of_base'], {'display' => 'off'});
 }
 
 1;
