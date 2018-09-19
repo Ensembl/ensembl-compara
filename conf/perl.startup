@@ -185,8 +185,6 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
     $conf->verbose_params;
   }
 
-  $conf->build_json_config; #this will add SiteDefs param to a json file (backend configurations to be available to frontend for widgets.ensembl.org)
-
   # Timestamp file for last start
   open(STARTED,'>',"${SiteDefs::ENSEMBL_LOGDIR}/httpd_started");
   close STARTED;
