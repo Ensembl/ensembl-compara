@@ -319,10 +319,10 @@ foreach my $index (@indexes) {
         if ($index =~ /Family|GeneTree|Gene/) {
           my $compara = $PD->{'MULTI'}{'databases'}{'DATABASE_COMPARA'};
           $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
-                                                $compara->{'USER'},
-                                                $compara->{'PASS'},
-              {PrintError => 1, RaiseError => 0}
-                                              );
+            $compara->{'USER'},
+            $compara->{'PASS'},
+            {PrintError => 1, RaiseError => 0}
+            );
         }
         my $function = "dump$index";
         no strict "refs";
@@ -1791,6 +1791,7 @@ sub dumpFamily {
            AND sm.source_name = 'ENSEMBLPEP'
            AND gdb.name = '$dbspecies'),'seq_member_id');
   #get all families
+  $conf->{'dbh_compara'}->do('SET SESSION group_concat_max_len = 200000');
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
            f.description,
@@ -1809,8 +1810,8 @@ sub dumpFamily {
     my (%genes,%proteins,%transcripts);
     foreach my $gene_id (split ',',$gene_member_ids) {
       if ($gene_members->{$gene_id}) {
-  my $stable_id = $gene_members->{$gene_id}{'stable_id'};
-  my $display_label = $gene_names->{$stable_id} || 'none';
+        my $stable_id = $gene_members->{$gene_id}{'stable_id'};
+        my $display_label = $gene_names->{$stable_id} || 'none';
         $genes{$stable_id}{display_label} = $display_label;
       }
     }
@@ -1818,8 +1819,8 @@ sub dumpFamily {
       if ($protein_members->{$tl_id}) {
         my $tl_sid = $protein_members->{$tl_id}{'stable_id'};
         $proteins{$tl_sid}++;
-  my $t_sid = $transl->{$tl_sid}{'trans'};
-  $transcripts{$t_sid}++;
+        my $t_sid = $transl->{$tl_sid}{'trans'};
+        $transcripts{$t_sid}++;
       }
     }
     if (%genes) {
