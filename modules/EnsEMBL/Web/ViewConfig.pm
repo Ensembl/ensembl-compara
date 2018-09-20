@@ -23,7 +23,7 @@ package EnsEMBL::Web::ViewConfig;
 use strict;
 use warnings;
 
-use JSON qw(from_json);
+use JSON qw(from_json to_json);
 
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
@@ -270,8 +270,13 @@ sub update_from_input {
     $self->altered($self->reset_user_settings($reset));
   }
 
-  my $settings = $params->{$self->config_type};
 
+  if ($params->{alignment_selector}) {
+    $self->receive_alignments_selector_settings(from_json $params->{alignment_selector});
+    $self->altered(1);
+  }
+
+  my $settings = $params->{$self->config_type};
   foreach my $key (grep exists $self->{'options'}{$_}, keys %$settings) {
 
     my @values = ref $settings->{$key} eq 'ARRAY' ? @{$settings->{$key}} : ($settings->{$key});
@@ -375,6 +380,28 @@ sub add_image_config :Deprecated('Use method image_config_type') {
 
 sub set :Deprecated('Use set_user_setting') {
   return shift->set_user_setting(@_);
+}
+
+sub get_alignments_selector_settings {
+  my $self   = shift;
+  my $code   = 'alignments_selector';
+  my $record = $self->hub->session->record({'type' => $self->config_type, 'code' => $code});
+  my $settings = {};
+
+  if ($record->count) {
+    $settings = $record->data->raw;
+    $settings->{'code'} = $code;
+  }
+
+  return $settings;
+}
+
+sub receive_alignments_selector_settings {
+  my $self   = shift;
+  my $params = shift;
+  $params->{code} ||= 'alignments_selector';
+  $params->{type} ||= $self->config_type;
+  $self->hub->session->set_record_data($params);
 }
 
 1;

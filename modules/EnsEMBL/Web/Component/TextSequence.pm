@@ -85,7 +85,7 @@ sub buttons {
   }
 
   
-  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->param('align'))) {
+  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->get_alignment_id)) {
     return {
       'url'       => undef, 
       'caption'   => $options->{'caption'} || 'Download sequence',
@@ -470,10 +470,11 @@ sub chunked_content {
   my $html;
   my $display_width = $self->param('display_width') || 0;
   my $id = $self->id;
+  my $align = $hub->get_alignment_id;
 
   my $follow = 0;
   if ($teaser) {
-    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;subslice_start=$i;subslice_end=$display_width;follow=$follow" /></div>};
+    $html .= qq{<div class="ajax" id="partial_alignment"><input type="hidden" class="ajax_load" value="$url;align=$align;subslice_start=$i;subslice_end=$display_width;follow=$follow" /></div>};
   }
   else {
     # The display is split into a managable number of sub slices, which will be processed in parallel by requests

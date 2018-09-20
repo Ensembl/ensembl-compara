@@ -567,12 +567,16 @@ sub multi_params {
   my $realign = shift;
 
   my $input = $self->input;
-
   my %params = defined $realign ?
     map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
+}
+
+sub get_alignment_id {
+  my $self = shift;
+  return $self->param('align') || $self->session->get_record_data({type => 'view_config', code => 'alignments_selector'})->{'align'} || '';
 }
 
 sub filename {

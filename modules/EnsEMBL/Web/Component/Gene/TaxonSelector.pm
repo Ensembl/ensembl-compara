@@ -21,7 +21,13 @@ package EnsEMBL::Web::Component::Gene::TaxonSelector;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::TaxonSelector);
+use base qw(EnsEMBL::Web::Component::Location::TaxonSelector);
+
+sub _init {
+  my $self = shift;
+  $self->{title} = 'Alignments Selector';
+  $self->SUPER::_init();
+}
 
 1;
 

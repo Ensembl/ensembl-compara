@@ -13,7 +13,6 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.multiHash      = {};
 
     if (params.defaultKeys)     this.defaultKeys     = params.defaultKeys;
-    if (params.entryNode)       this.entryNode       = params.entryNode;
     if (params.caller)          this.caller          = params.caller;
     if (params.allOptions)      this.allOptions      = params.allOptions;
     if (params.includedOptions) this.includedOptions = params.includedOptions;
@@ -127,7 +126,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       this.addBreadcrumbs();
       this.createMenu(this.taxonTreeData.children);
       // Populate default selected species on panel open
-      this.populateDefaultSpecies();
+      this.defaultKeys && this.populateDefaultSpecies();
       this.isCompara && this.createMultipleAlignmentsHash();
     }
 
@@ -468,6 +467,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     var multipleAlign = panel.isCompara && panel.alignLabel;
     var node;
     var species; // Species to locate and show by default
+
     if (panel.defaultKeys && panel.defaultKeys.length > 0) {
       // set selected nodes
       $.each(panel.defaultKeys.reverse(), function(index, _key) { 
@@ -758,6 +758,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     }
 
     var currSelArr = new Array();
+
     for (var i = 0; i < items.length; i++) {
       if (this.isCompara) {
         items[i] && currSelArr.push(items[i].data.key);
@@ -798,7 +799,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
 
   // Check if there was any change in the selection. If not, then do nothing.
   approveSelection: function(currSel) {
-    return currSel.length && currSel.join(',') !== this.defaultKeys.join(',');
+    return currSel.length && this.defaultKeys && currSel.join(',') !== this.defaultKeys.join(',');
   }
   
 });

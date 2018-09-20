@@ -39,10 +39,12 @@ Ensembl.Panel.ComparaAlignSliceSelector = Ensembl.Panel.extend({
       selection[child.data.key] = child.bSelected ? 'yes' : 'off';
     });
 
+    selection['align'] = node.data.value;
+
     $.ajax({
       url:  this.configUrl,
       type: 'POST',
-      data: { 'view_config': JSON.stringify(selection), 'submit': 1}, 
+      data: { 'alignment_selector': JSON.stringify(selection), 'submit': 1 },
       traditional: true,
       dataType: 'json',
       async: false,
