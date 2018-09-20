@@ -36,81 +36,40 @@ sub _init {
   $self->{panel_type}      = 'TaxonSelector'; 
   $self->{method}          = 'get'; # get|post
   $self->{extra_params}    = {}; # additional params to send     
-  $self->{redirect}        = $hub->url({ function => undef }, 0, 1); # url to redirect to
-  #$self->{form_action}     = $self->{'url'} || $self->{'url'} || $hub->url({ action => $hub->param('referer_action'), function => $hub->param('referer_function'), align => $hub->param('align') });
-  $self->{link_text}       = 'Species selector';
   $self->{finder_prompt}   = 'Start typing the name of a species...';
-
-  $self->{action}          = undef;
-  $self->{view_config}     = $hub->param('referer_function') eq 'Image' ? 'Compara_AlignSliceBottom' : $hub->param('referer_action');
   $self->{data_url}        = $hub->url('Json', {
                               %{$hub->multi_params},
                               type => $hub->type eq 'Tools' ? 'Tools' : 'SpeciesSelector',
                               function => 'fetch_species',
                               action => $hub->param('referer_action') || '',
-                              align => $hub->param('align') ? $hub->param('align') : ''
+                              align => $hub->param('align') || $hub->get_alignment_id
                             });
   $self->{caller}          = $hub->param('referer_action');
-
-  $self->{multiselect}     = $self->param('multiselect');
-  $self->{selection_limit} = $SiteDefs::ALIGNMENTS_SPECIES_SELECTION_LIMIT;
-  $self->{is_blast}        = 0,
-  $self->{entry_node}      = undef;
+  $self->{multiselect}     ||= $self->param('multiselect');
+  $self->{selection_limit} ||= $SiteDefs::ALIGNMENTS_SPECIES_SELECTION_LIMIT;
+  $self->{title}           ||= 'Species Selector';
 }
 
 sub content {
-  return ""
+  return "";
 }
 
 sub content_ajax {
   my $self = shift;
   my $hub = $self->hub;
-  my @default_species = $hub->param('s');
   my $urlParams = { map { ($_ => $hub->param($_)) } $hub->param };
 
   my %params = (
     dataUrl => $self->{data_url},
-    isBlast => $self->{is_blast},
+    isBlast => $self->{is_blast} || 0,
     caller  => $self->{caller},
+    defaultKeys => $self->{default_species},
+    selectionLimit => $self->{selection_limit},
+    multiselect => $self->{multiselect},
+    alignLabel => $self->{align_label},
     %$urlParams
   );
 
-
-  $params{defaultKeys}    = [@default_species]       if @default_species;
-  $params{entryNode}      = $self->{entry_node}      if $self->{entry_node};
-  $params{selectionLimit} = $self->{selection_limit} if $self->{selection_limit};
-  $params{defaultsEleId}  = $self->{defaults_ele_id} if $self->{defaults_ele_id};
-  $params{multiselect}    = $self->{multiselect}     if $self->{multiselect};
-
-  # Get default keys (default selected) for region comparison
-  my $shown = [ map { $urlParams->{$_} } grep m/^s(\d+)/, keys %$urlParams ]; # get species (and parameters) already shown on the page
-  push @{$params{defaultKeys}}, @$shown if scalar @$shown;
-
-  my $is_cmp = ($self->{caller} eq 'Compara_Alignments')? 1 : 0;
-
-
-  if ($is_cmp) {
-    my $alignment = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$hub->param('align')};
-    $params{alignLabel} = $alignment->{name} if ($alignment->{'class'} !~ /pairwise/);
-
-    my $sp;
-    my $vc_key;
-    my $vc_val = 0;
-    $params{defaultKeys} = [];
-
-    foreach (keys %{$alignment->{species}}) {
-      next if ($_ eq $hub->species);
-      if ($alignment->{'class'} !~ /pairwise/) { # Multiple alignments
-        $vc_key = join '_', ('species', $alignment->{id}, lc($_));
-        $vc_val = $hub->get_viewconfig($self->{view_config})->get($vc_key);
-        push @{$params{defaultKeys}}, $vc_key if $vc_val eq 'yes';
-      }
-      else {
-        push @{$params{defaultKeys}}, $_;
-
-      }
-    }
-  }
   return $self->jsonify({
     content   => $self->render_selector,
     panelType => $self->{panel_type},
@@ -128,7 +87,6 @@ sub render_selector {
 
   my $hidden_fields;
   
-  my $is_cmp = ($self->{caller} eq 'Compara_Alignments')? 1 : 0;
 
   my $taxon_tree = sprintf qq {
     <div class="taxon_selector_tree">
@@ -144,7 +102,7 @@ sub render_selector {
       </div>
     </div>
   }, 
-  ($is_cmp) ? 'Alignment Selector' : 'Species Selector';
+  $self->{title};
 
   my $taxon_list = qq {
     <div class="taxon_selector_list">

@@ -377,7 +377,7 @@ sub get_slices {
 sub get_target_slice {
   my $self = shift;
   my $hub = $self->hub;
-  my $align_param = $hub->param('align');
+  my $align_param = $hub->get_alignment_id;
   my $target_slice;
 
   #target_species and target_slice_name_range may not be defined so split separately
@@ -402,7 +402,8 @@ sub get_alignments {
 
   my $cdb = $args->{'cdb'} || 'compara';
 
-  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
+  my ($align, $target_species, $target_slice_name_range) = split '--', ($args->{'align'} || $hub->get_alignment_id);
+
   my $target_slice = $self->get_target_slice;
 
   my $func                    = $self->{'alignments_function'} || 'get_all_Slices';

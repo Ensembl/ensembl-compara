@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Variation::TaxonSelector;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::TaxonSelector);
+use base qw(EnsEMBL::Web::Component::Location::TaxonSelector);
 
 1;
 
