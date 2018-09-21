@@ -645,8 +645,8 @@ sub _summarise_variation_db {
   
 	# Mixed source(s)
 	my $mx_aref = $dbh->selectall_arrayref(
-	  'select distinct(s.name) from variation v, source s 
-		 where v.source_id=s.source_id and s.somatic_status = "mixed"'
+	  'select distinct(s.name) from source s straight_join variation v on v.source_id=s.source_id 
+	   and s.somatic_status = "mixed"'
 	);
 	foreach (@$mx_aref){ 
     $somatic_mutations{$_->[0]}->{'none'} = 'none' ;
