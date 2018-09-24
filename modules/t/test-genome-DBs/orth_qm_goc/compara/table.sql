@@ -283,6 +283,7 @@ CREATE TABLE `genome_db` (
   `assembly` varchar(100) NOT NULL DEFAULT '',
   `genebuild` varchar(100) NOT NULL DEFAULT '',
   `has_karyotype` tinyint(1) NOT NULL DEFAULT '0',
+  `is_good_for_dnds` tinyint(1) NOT NULL DEFAULT '0',
   `is_good_for_alignment` tinyint(1) NOT NULL DEFAULT '0',
   `genome_component` varchar(5) DEFAULT NULL,
   `strain_name` varchar(40) DEFAULT NULL,
