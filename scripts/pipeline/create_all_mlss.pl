@@ -231,6 +231,10 @@ sub make_species_set_from_XML_node {
             $some_genome_dbs = [grep {$_->has_karyotype} @$some_genome_dbs];
         }
 
+        if ($xml_taxon->hasAttribute('only_is_good_for_alignment') and $xml_taxon->getAttribute('only_is_good_for_alignment')) {
+            $some_genome_dbs = [grep {$_->is_good_for_alignment} @$some_genome_dbs];
+        }
+
         if ($xml_taxon->hasAttribute('only_high_coverage') and $xml_taxon->getAttribute('only_high_coverage')) {
             $some_genome_dbs = [grep {$_->is_high_coverage} @$some_genome_dbs];
         }

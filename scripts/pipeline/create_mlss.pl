@@ -60,7 +60,7 @@ perl create_mlss.pl
     [--species_set_name species_set_name] 
     [--taxon_id taxon_id]
     [--only_with_karyotype 0/1]
-    [--only_high_coverage 0/1]
+    [--only_good_for_alignment 0/1]
     [--ref_for_taxon mus_musculus]
 
 =head1 OPTIONS
@@ -148,7 +148,7 @@ This option can be repeated to form paraphyletic sets.
 
 The list of genomes will be restricted to those with a karyotype
 
-=item B<[--only_high_coverage 0/1]>
+=item B<[--only_good_for_alignment 0/1]>
 
 The list of genomes will be restricted to those that are marked as high-coverage
 
@@ -197,7 +197,7 @@ my $release;
 my @taxon_ids;
 my @taxon_names;
 my $only_with_karyotype;
-my $only_high_coverage;
+my $only_good_for_alignment;
 my $ref_name;
 my @ref_for_taxon;
 
@@ -221,7 +221,7 @@ GetOptions(
     'taxon_id=i@' => \@taxon_ids,
     'taxon_name=s@' => \@taxon_names,
     'only_with_karyotype' => \$only_with_karyotype,
-    'only_high_coverage' => \$only_high_coverage,
+    'only_good_for_alignment' => \$only_good_for_alignment,
     'ref_for_taxon=s@' => \@ref_for_taxon,
   );
 
@@ -338,8 +338,8 @@ if ($only_with_karyotype) {
     @input_genome_dbs = grep {$_->has_karyotype} @input_genome_dbs;
 }
 
-if ($only_high_coverage) {
-    @input_genome_dbs = grep {$_->is_high_coverage} @input_genome_dbs;
+if ($only_good_for_alignment) {
+    @input_genome_dbs = grep {$_->is_good_for_alignment} @input_genome_dbs;
 }
 
 if (@ref_for_taxon) {
@@ -514,7 +514,7 @@ sub create_mlss {
         $new_mlss->store_tag('taxon_id', $_) for @taxon_ids;
         $new_mlss->store_tag('taxon_name', $_) for @taxon_names;
         $new_mlss->store_tag('only_with_karyotype', $only_with_karyotype) if $only_with_karyotype;
-        $new_mlss->store_tag('only_high_coverage', $only_high_coverage) if $only_high_coverage;
+        $new_mlss->store_tag('only_good_for_alignment', $only_good_for_alignment) if $only_good_for_alignment;
     }
   } );
 
@@ -576,7 +576,7 @@ sub ask_for_genome_dbs {
 
   my $all_genome_dbs = $compara_dba->get_GenomeDBAdaptor->fetch_all();
      $all_genome_dbs = [grep {$_->has_karyotype}    @$all_genome_dbs] if $only_with_karyotype;
-     $all_genome_dbs = [grep {$_->is_high_coverage} @$all_genome_dbs] if $only_high_coverage;
+     $all_genome_dbs = [grep {$_->is_good_for_alignment} @$all_genome_dbs] if $only_good_for_alignment;
 
   my $answer;
   my $genome_dbs_in = {};
