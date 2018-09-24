@@ -99,8 +99,6 @@ sub default_options {
         'use_quick_tree_break'      => 1,
         'use_notung'                => 0,
 
-        'treebreak_gene_count'      => 1500,
-
     # sequence type used on the phylogenetic inferences
     # It has to be set to 1 for the strains
         'use_dna_for_phylogeny'     => 0,

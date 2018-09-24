@@ -157,7 +157,7 @@ sub default_options {
         'do_model_selection'        => 0,
         'use_quick_tree_break'      => 1,
 
-        'treebreak_gene_count'      => 400,
+        'treebreak_gene_count'      => 1500,
         'split_genes_gene_count'    => 5000,
 
         'mcoffee_short_gene_count'  => 20,

@@ -100,7 +100,6 @@ sub default_options {
 
     # tree building parameters:
         'use_quick_tree_break'      => 1,
-        'treebreak_gene_count'      => 1500,
 
     # alignment filtering options
 
