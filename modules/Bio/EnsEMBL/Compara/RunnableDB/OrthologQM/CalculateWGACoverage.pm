@@ -240,7 +240,7 @@ sub _combined_coverage {
 
 			# check alignment lies inside partition
 			next if ( $b_end   < $p_start );
-			last if ( $b_start > $p_end   );
+			next if ( $b_start > $p_end   );
 			$b_start = $p_start if ( $b_start <= $p_start && ( $b_end >= $p_start && $b_end <= $b_end ) );
 			$b_end = $p_end     if ( $b_end >= $p_end && ( $b_start >= $p_start && $b_start <= $b_end ) );
 
@@ -259,7 +259,7 @@ sub _combined_coverage {
 
 			# check exon lies inside partition
 			next if ( $e_end   < $p_start );
-			last if ( $e_start > $p_end   );
+			next if ( $e_start > $p_end   );
 			$e_start = $p_start if ( $e_start <= $p_start && ( $e_end >= $p_start && $e_end <= $e_end ) );
 			$e_end = $p_end     if ( $e_end >= $p_end && ( $e_start >= $p_start && $e_start <= $e_end ) );
 
