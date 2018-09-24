@@ -131,7 +131,7 @@ sub content {
     { key => 'bm',       width => '20%',  title => 'Binding matrix',            sort => 'html'                             },
     { key => 'allele',   width => '10%',  title => 'Allele',                    sort => 'string'                           },
     { key => 'type',     width => '10%',  title => 'Consequence type',          sort => 'position_html'                    },
-    { key => 'names',    width => '40%',  title => 'Motif names',               sort => 'string'                           },
+    { key => 'names',    width => '40%',  title => 'Transcription factors',     sort => 'string'                           },
     { key => 'pos',      width => '10%',  title => 'Motif position',            sort => 'numeric'                          },
     { key => 'high_inf', width => '5%',  title => 'High information position',  sort => 'string'                           },
     { key => 'score',    width => '5%',  title => 'Motif score change',         sort => 'position_html', align => 'center' },
