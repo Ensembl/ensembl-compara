@@ -93,9 +93,8 @@ sub write_output {
 		}
 
 	} else {
-		@copy_dataflow = $self->_split_into_chunks($self->param('uniq_mlss_list'), $chunk_size, $self->param('compara_db'));
+		@copy_dataflow = @{ $self->_split_into_chunks($self->param('uniq_mlss_list'), $chunk_size, $self->param('compara_db')) };
 	}
-
 	$self->dataflow_output_id( { mlss => $self->param('uniq_mlss_list') }, 1 ); # to write_threshold
 	$self->dataflow_output_id( \@copy_dataflow, 3 ); # to copy_alignment_tables
 	$self->dataflow_output_id( {}, 2 ); # to copy_funnel
