@@ -52,3 +52,4 @@
 63	\N	patch	patch_93_94_c.sql|method_link_display_name
 65	\N	patch	patch_94_95_a.sql|schema_version
 66	\N	patch	patch_94_95_b.sql|remove_unused_indices
+67	\N	patch	patch_94_95_c.sql|genome_db_is_good_for_alignment

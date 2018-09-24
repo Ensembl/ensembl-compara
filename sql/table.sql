@@ -2258,5 +2258,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_94_95_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_94_95_b.sql|remove_unused_indices');
-
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_94_95_c.sql|genome_db_is_good_for_alignment');
 
