@@ -150,7 +150,7 @@ CREATE TABLE ncbi_taxa_name (
 @column assembly          Assembly version of the genome
 @column genebuild         Version of the genebuild
 @column has_karyotype     Whether the genome has a karyotype
-@column is_high_coverage  Whether the assembly coverage depth is high enough
+@column is_good_for_alignment Whether the genome is good enough to be used in multiple alignments
 @column genome_component  Only used for polyploid genomes: the name of the genome component
 @column strain_name       Name of the particular strain this GenomeDB refers to
 @column display_name      Named used for display purposes. Imported from the core databases
@@ -167,7 +167,7 @@ CREATE TABLE genome_db (
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
-  is_high_coverage            tinyint(1) NOT NULL DEFAULT 0,
+  is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0 AFTER has_karyotype;
   genome_component            varchar(5) DEFAULT NULL,
   strain_name                 varchar(40) DEFAULT NULL,
   display_name                varchar(255) DEFAULT NULL,
