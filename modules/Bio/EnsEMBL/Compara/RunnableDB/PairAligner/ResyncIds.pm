@@ -139,7 +139,7 @@ sub _update_dnafrags {
 
     ## 1. Shift old DnaFrags
     # Make a fake genome_db_id
-    $dbc->do("INSERT INTO genome_db SELECT genome_db_id+$offset, taxon_id, name, assembly, genebuild, has_karyotype, is_high_coverage, genome_component, strain_name, display_name, locator, first_release, last_release FROM genome_db WHERE genome_db_id = ?", undef, $old_genome_db_id);
+    $dbc->do("INSERT INTO genome_db SELECT genome_db_id+$offset, taxon_id, name, assembly, genebuild, has_karyotype, is_good_for_alignment, genome_component, strain_name, display_name, locator, first_release, last_release FROM genome_db WHERE genome_db_id = ?", undef, $old_genome_db_id);
     # Duplicate DnaFrags
     $dbc->do("INSERT INTO dnafrag SELECT dnafrag_id+$offset, length, name, genome_db_id+$offset, coord_system_name, cellular_component, is_reference, codon_table_id FROM dnafrag WHERE genome_db_id = ?", undef, $old_genome_db_id);
     # Link to shifted DnaFrags

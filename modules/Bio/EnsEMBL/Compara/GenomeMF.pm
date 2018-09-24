@@ -60,7 +60,7 @@ sub all_from_file {
 
     # List of fields that must / can be present
     my @obligatory_fields = qw(production_name taxonomy_id prot_fasta cds_fasta source);
-    my $possible_fields = {map {$_ => 1} (@obligatory_fields, qw(gene_coord_gff is_high_coverage has_karyotype))};
+    my $possible_fields = {map {$_ => 1} (@obligatory_fields, qw(gene_coord_gff is_good_for_alignment has_karyotype))};
 
     # Checks the integrity of the file
     my $i = 0;
@@ -358,9 +358,9 @@ sub has_karyotype {
     return $self->{'has_karyotype'} || 0;
 }
 
-sub is_high_coverage {
+sub is_good_for_alignment {
     my $self = shift;
-    return $self->{'is_high_coverage'} || 0;
+    return $self->{'is_good_for_alignment'} || 0;
 }
 
 sub assembly_name {

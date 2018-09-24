@@ -101,9 +101,12 @@ sub update_dnafrags {
 
     my $new_dnafrags_ids = 0;
     my $existing_dnafrags_ids = 0;
+    my @species_overall_len;#rule_2
     foreach my $slice (@$gdb_slices) {
 
         my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
+
+        push( @species_overall_len, $new_dnafrag->length());#rule_2
 
         if (my $old_df = delete $old_dnafrags_by_name->{$slice->seq_region_name}) {
             $new_dnafrag->dbID($old_df->dbID);
@@ -115,6 +118,50 @@ sub update_dnafrags {
             $new_dnafrags_ids++;
         }
     }
+
+    #-------------------------------------------------------------------------------
+    my $top_limit;
+    if ( scalar(@species_overall_len) < 50 ) {
+        $top_limit = scalar(@species_overall_len) - 1;
+    }
+    else {
+        $top_limit = 49;
+    }
+
+    my @top_frags = ( sort { $b <=> $a } @species_overall_len )[ 0 .. $top_limit ];
+    my @low_limit_frags = ( sort { $b <=> $a } @species_overall_len )[ ( $top_limit + 1 ) .. scalar(@species_overall_len) - 1 ];
+    my $avg_top = _mean(@top_frags);
+
+    my $ratio_top_highest = _sum(@top_frags)/_sum(@species_overall_len);
+
+    #we set to 1 in case there are no values since we want to still compute the log
+    my $avg_low;
+    my $ratio_top_low;
+    if ( scalar(@low_limit_frags) == 0 ) {
+
+        #$ratio_top_low = 1;
+        $avg_low = 1;
+    }
+    else {
+        $avg_low = _mean(@low_limit_frags);
+    }
+
+    $ratio_top_low = $avg_top/$avg_low;
+
+    my $log_ratio_top_low = log($ratio_top_low)/log(10);#rule_4
+
+    undef @top_frags;
+    undef @low_limit_frags;
+    undef @species_overall_len;
+
+    my $is_good_for_alignment = ($ratio_top_highest > 0.85) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
+
+    my $sth = $compara_dba->dbc->prepare("UPDATE genome_db SET is_good_for_alignment = ? WHERE name = ? AND assembly = ?");
+    $sth->execute($is_good_for_alignment,$genome_db->name(),$genome_db->assembly);
+    $sth->finish;
+
+    #-------------------------------------------------------------------------------
+
     print "$existing_dnafrags_ids DnaFrags already in the database. Inserted $new_dnafrags_ids new DnaFrags.\n";
 
     if (keys %$old_dnafrags_by_name) {
@@ -647,5 +694,19 @@ sub create_homology_mlsss {
     return \@mlsss;
 }
 
+sub _sum {
+    my (@items) = @_;
+    my $res;
+    for my $next (@items) {
+        die unless ( defined $next );
+        $res += $next;
+    }
+    return $res;
+}
+
+sub _mean {
+    my (@items) = @_;
+    return _sum(@items)/( scalar @items );
+}
 
 1;

@@ -449,7 +449,7 @@ sub store {
                 'assembly'          => $gdb->assembly,
                 'genebuild'         => $gdb->genebuild,
                 'has_karyotype'     => $gdb->has_karyotype,
-                'is_high_coverage'  => $gdb->is_high_coverage,
+                'is_good_for_alignment'  => $gdb->is_good_for_alignment,
                 'taxon_id'          => $gdb->taxon_id,
                 'genome_component'  => $gdb->genome_component,
                 'strain_name'       => $gdb->strain_name,
@@ -495,7 +495,7 @@ sub update {
                 'assembly'          => $gdb->assembly,
                 'genebuild'         => $gdb->genebuild,
                 'has_karyotype'     => $gdb->has_karyotype,
-                'is_high_coverage'  => $gdb->is_high_coverage,
+                'is_good_for_alignment'  => $gdb->is_good_for_alignment,
                 'taxon_id'          => $gdb->taxon_id,
                 'genome_component'  => $gdb->genome_component,
                 'strain_name'       => $gdb->strain_name,
@@ -628,7 +628,7 @@ sub _columns {
         g.taxon_id
         g.genebuild
         g.has_karyotype
-        g.is_high_coverage
+        g.is_good_for_alignment
         g.genome_component
         g.strain_name
         g.display_name
@@ -658,7 +658,7 @@ sub _objs_from_sth {
             '_taxon_id',
             'genebuild',
             'has_karyotype',
-            'is_high_coverage',
+            'is_good_for_alignment',
             '_genome_component',
             '_strain_name',
             '_display_name',

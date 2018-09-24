@@ -40,7 +40,7 @@ The end-user is probably only interested in the following methods:
  - taxon_id() and taxon()
  - genebuild()
  - has_karyotype()
- - is_high_coverage()
+ - is_good_for_alignment()
  - genome_component()
  - db_adaptor() (returns a Bio::EnsEMBL::DBSQL::DBAdaptor for this species)
  - toString()
@@ -104,8 +104,8 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $genome_component, $strain_name, $display_name, $is_high_coverage) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE GENOME_COMPONENT STRAIN_NAME DISPLAY_NAME IS_HIGH_COVERAGE)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $genome_component, $strain_name, $display_name, $is_good_for_alignment) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE GENOME_COMPONENT STRAIN_NAME DISPLAY_NAME IS_GOOD_FOR_ALIGNMENT)], @_);
 
     $name         && $self->name($name);
     $assembly     && $self->assembly($assembly);
@@ -114,7 +114,7 @@ sub new {
     $db_adaptor   && $self->db_adaptor($db_adaptor);
     defined $has_karyotype      && $self->has_karyotype($has_karyotype);
     defined $genome_component   && $self->genome_component($genome_component);
-    defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
+    defined $is_good_for_alignment && $self->is_good_for_alignment($is_good_for_alignment);
     defined $strain_name        && $self->strain_name($strain_name);
     defined $display_name        && $self->display_name($display_name);
 
@@ -192,7 +192,7 @@ sub db_adaptor {
             $self->taxon_id( $meta_container->get_taxonomy_id );
             $self->genebuild( $meta_container->get_genebuild );
             $self->has_karyotype( $genome_container->has_karyotype );
-            $self->is_high_coverage( $genome_container->is_high_coverage );
+            $self->is_good_for_alignment( $genome_container->is_high_coverage );
             $self->strain_name( $meta_container->single_value_by_key('species.strain') );
             $self->display_name( $meta_container->single_value_by_key('species.display_name') );
             $dba->{_dbc}->disconnect_if_idle unless $was_connected;
@@ -229,7 +229,7 @@ sub _check_equals {
     my ($self, $ref_genome_db) = @_;
 
     my $diffs = '';
-    foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype is_high_coverage)) {
+    foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype is_good_for_alignment)) {
         if (($self->$field() xor $ref_genome_db->$field()) or ($self->$field() and $ref_genome_db->$field() and ($self->$field() ne $ref_genome_db->$field()))) {
             $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field() // '<NULL>', $ref_genome_db->$field() // '<NULL>');
         }
@@ -444,11 +444,11 @@ sub has_karyotype {
 }
 
 
-=head2 is_high_coverage
+=head2 is_good_for_alignment
 
   Arg [1]    : (optional) boolean
-  Example    : if ($gdb->is_high_coverage()) { ... }
-  Description: Whether the genomeDB has a high-coverage genome
+  Example    : if ($gdb->is_good_for_alignment()) { ... }
+  Description: Whether the genomeDB is suitable for being used in alignments analysis.
   Returntype : boolean
   Exceptions : none
   Caller     : general
@@ -456,12 +456,11 @@ sub has_karyotype {
 
 =cut
 
-sub is_high_coverage {
+sub is_good_for_alignment {
   my $self = shift;
-  $self->{'is_high_coverage'} = shift if (@_);
-  return $self->{'is_high_coverage'};
+  $self->{'is_good_for_alignment'} = shift if (@_);
+  return $self->{'is_good_for_alignment'};
 }
-
 
 #################################
 # Methods for polyploid genomes #
@@ -696,7 +695,7 @@ sub toString {
     my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), $self->name, $self->assembly);
     $txt .= ' scientific_name='.$self->get_scientific_name if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
-    $txt .= ', ' . ($self->is_high_coverage ? 'high' : 'low') . ' coverage';
+    $txt .= ', ' . ($self->is_good_for_alignment ? 'yes' : 'no');
     $txt .= ', ' . ($self->has_karyotype ? 'with' : 'without') . ' karyotype';
     $txt .= ' ' . $self->SUPER::toString();
     return $txt;
