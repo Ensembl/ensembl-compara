@@ -60,6 +60,7 @@ sub pipeline_wide_parameters {
 
         'registry'      => $self->o('registry'),
         'compara_db'    => $self->o('compara_url'),
+        'mlss_id'       => $self->o('mlss_id'),
 
         'work_dir'      => $self->o('work_dir'),
         'chromsize_file'=> '#work_dir#/gerp_conservation_scores.#name#.chromsize',

@@ -160,7 +160,7 @@ sub pipeline_analyses {
                 'cmd'           => '(test -e #output_file# && test #input_file# -ot #output_file#) || (become #shared_user# rm --force #tmp_file# && become #shared_user# #command# && become #shared_user# mv --force #tmp_file# #output_file#)',
             },
             -flow_into  => [ 'build_exonerate_esi_index' ],
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'build_exonerate_esi_index',
