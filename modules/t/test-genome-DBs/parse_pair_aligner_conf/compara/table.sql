@@ -40,9 +40,7 @@ CREATE TABLE `constrained_element` (
   `score` double NOT NULL DEFAULT '0',
   KEY `dnafrag_id` (`dnafrag_id`),
   KEY `constrained_element_id_idx` (`constrained_element_id`),
-  KEY `mlssid_idx` (`method_link_species_set_id`),
-  KEY `mlssid_dfId_dfStart_dfEnd_idx` (`method_link_species_set_id`,`dnafrag_id`,`dnafrag_start`,`dnafrag_end`),
-  KEY `mlssid_dfId_idx` (`method_link_species_set_id`,`dnafrag_id`)
+  KEY `mlssid_dfId_dfStart_dfEnd_idx` (`method_link_species_set_id`,`dnafrag_id`,`dnafrag_start`,`dnafrag_end`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `dnafrag` (
@@ -112,7 +110,6 @@ CREATE TABLE `family_member` (
   `seq_member_id` int(10) unsigned NOT NULL,
   `cigar_line` mediumtext,
   PRIMARY KEY (`family_id`,`seq_member_id`),
-  KEY `family_id` (`family_id`),
   KEY `seq_member_id` (`seq_member_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -195,7 +192,6 @@ CREATE TABLE `gene_tree_node` (
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
   KEY `seq_member_id` (`seq_member_id`),
-  KEY `root_id` (`root_id`),
   KEY `root_id_left_index` (`root_id`,`left_index`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -277,7 +273,6 @@ CREATE TABLE `gene_tree_root_tag` (
   `tag` varchar(255) DEFAULT NULL,
   `value` mediumtext NOT NULL,
   KEY `root_id_tag` (`root_id`,`tag`),
-  KEY `root_id` (`root_id`),
   KEY `tag` (`tag`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
@@ -341,7 +336,6 @@ CREATE TABLE `genomic_align_tree` (
   `distance_to_parent` double NOT NULL DEFAULT '1',
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
-  KEY `root_id` (`root_id`),
   KEY `left_index` (`root_id`,`left_index`)
 ) ENGINE=MyISAM AUTO_INCREMENT=5990003608527 DEFAULT CHARSET=latin1;
 
@@ -404,7 +398,6 @@ CREATE TABLE `homology_member` (
   `perc_id` float unsigned DEFAULT '0',
   `perc_pos` float unsigned DEFAULT '0',
   PRIMARY KEY (`homology_id`,`gene_member_id`),
-  KEY `homology_id` (`homology_id`),
   KEY `gene_member_id` (`gene_member_id`),
   KEY `seq_member_id` (`seq_member_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=300000000;
@@ -436,7 +429,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=26 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `method_link` (
   `method_link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
