@@ -138,7 +138,7 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 print "\nPipeline commands:\n------------------\n";
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -reg_conf \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_eg_conf.pl -master_db $master_db  -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
+	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -division $COMPARA_DIV -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
 }
 
 sub get_ref_chunk_count {
