@@ -200,7 +200,6 @@ sub chains_job_count {
 			$interval_counts->{ interval_type($g1_len->[0], $g2_len->[0]) }++;
 		}
 	}
-	print Dumper $interval_counts;
 
 	# assign probabilities and estimate job numbers
 	my $total_count;
