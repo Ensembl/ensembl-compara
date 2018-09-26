@@ -122,8 +122,8 @@ foreach my $k ( keys %mlss_job_count ) {
 
 print STDERR "Splitting method_link_species_sets into groups (max jobs per group: $max_jobs)..\n";
 my $mlss_groups = split_mlsses(\%mlss_job_count);
-print "\n\n\nMLSS GROUPS: \n";
-print Dumper $mlss_groups;
+# print "\n\n\nMLSS GROUPS: \n";
+# print Dumper $mlss_groups;
 
 print "\nPipeline commands:\n";
 foreach my $group ( @$mlss_groups ) {
