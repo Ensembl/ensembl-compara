@@ -90,33 +90,23 @@ sub fetch_input {
 		my $s1_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[0]->{id} );
 		my $s2_dnafrag = $dnafrag_adaptor->fetch_by_dbID( $orth_dnafrags[1]->{id} );
 
-		my ($dnafrag_start, $dnafrag_end) = ( $orth_dnafrags[0]->{start}, $orth_dnafrags[0]->{end} );
-
-		my @gblocks;
 		for my $aln_mlss_id ( @aln_mlss_ids ) {
-			my $mlss = $mlss_adap->fetch_by_dbID( $aln_mlss_id );
-			my $these_gblocks = $gblock_adap->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag( $mlss, $s1_dnafrag, $dnafrag_start, $dnafrag_end, $s2_dnafrag );
-			push( @gblocks, @{ $these_gblocks } );
-		}
+                    my $aln_coords = $gblock_adap->_alignment_coordinates_on_regions($aln_mlss_id,
+                        $orth_dnafrags[0]->{id}, $orth_dnafrags[0]->{start}, $orth_dnafrags[0]->{end},
+                        $orth_dnafrags[1]->{id}, $orth_dnafrags[1]->{start}, $orth_dnafrags[1]->{end},
+                    );
 
-		if ( scalar( @gblocks ) < 1 ) {
+                    if ( scalar( @$aln_coords ) < 1 ) {
 			$self->warning("No alignment found for homology_id " . $orth->{id});
                         $self->db->dbc->disconnect_if_idle if $do_disconnect;
 			next;
-			# my $exit_msg = "No alignment found for homology_id " . $orth->{id};
-			# $self->input_job->autoflow(0);
-			# $self->complete_early($exit_msg);
-		}
+                    }
 
-	    foreach my $gblock ( @gblocks ) {
-	    	my $gb_mlss = $gblock->method_link_species_set_id;
-	    	foreach my $ga ( @{ $gblock->get_all_GenomicAligns } ) {
-		        my $current_gdb = $ga->genome_db->dbID;
-		        # limit multiple alignment blocks to only the species of interest
-		        next unless ( $current_gdb == $self->param_required( 'species1_id' ) || $current_gdb == $self->param_required( 'species2_id' ) );
-		        push( @{ $aln_ranges{$orth->{'id'}}->{$gb_mlss}->{$current_gdb} }, [ $ga->dnafrag_start, $ga->dnafrag_end] );
-		    }
-	    }
+                    foreach my $coord_pair (@$aln_coords) {
+                        push @{ $aln_ranges{$orth->{'id'}}->{$aln_mlss_id}->{$s1_dnafrag->genome_db_id} }, [ $coord_pair->[0], $coord_pair->[1] ];
+                        push @{ $aln_ranges{$orth->{'id'}}->{$aln_mlss_id}->{$s2_dnafrag->genome_db_id} }, [ $coord_pair->[2], $coord_pair->[3] ];
+                    }
+                }
 	}
 	
 	# disconnect from compara_db
