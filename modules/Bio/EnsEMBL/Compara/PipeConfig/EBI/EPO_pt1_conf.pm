@@ -68,9 +68,15 @@ sub default_options {
     return {
       	%{$self->SUPER::default_options},
 
-        # set up for birds 
-        'species_set_name' => 'sauropsids',
-        'reference_genome_db_name' => 'gallus_gallus',
+        # When initializing the pipeline, give it the mlss_id of type EPO_GEN_ANCHORS that contains the species of interest.
+
+        # And then choose one of these
+        #'species_set_name' => 'sauropsids',
+        #'reference_genome_db_name' => 'gallus_gallus',
+        #'species_set_name' => 'mammals',
+        #'reference_genome_db_name' => 'homo_sapiens',
+        #'species_set_name' => 'fish',
+        #'reference_genome_db_name' => 'oryzias_latipes',
 
         #location of full species tree, will be pruned
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
