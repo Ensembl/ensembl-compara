@@ -207,6 +207,7 @@ return [
   'java_exe'            => $self->o('java_exe'),
   'ortheus_py'          => $self->o('ortheus_py'),
   'ortheus_lib_dir'     => $self->o('ortheus_lib_dir'),
+  'ortheus_bin_dir'     => $self->o('ortheus_bin_dir'),
   'semphy_exe'          => $self->o('semphy_exe'),
    },
  -flow_into      => {
@@ -229,6 +230,7 @@ return [
    'java_exe'            => $self->o('java_exe'),
    'ortheus_py'          => $self->o('ortheus_py'),
    'ortheus_lib_dir'     => $self->o('ortheus_lib_dir'),
+  'ortheus_bin_dir'     => $self->o('ortheus_bin_dir'),
    'semphy_exe'          => $self->o('semphy_exe'),
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
