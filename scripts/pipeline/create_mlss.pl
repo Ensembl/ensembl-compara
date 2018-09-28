@@ -275,6 +275,7 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 my @input_genome_dbs;
 foreach my $this_genome_db_id (@input_genome_db_ids) {
     my $this_genome_db = $gdba->fetch_by_dbID($this_genome_db_id)
+                        || $gdba->fetch_by_name_assembly($this_genome_db_id)
                         || throw("Cannot get any Bio::EnsEMBL::Compara::GenomeDB using dbID #$this_genome_db_id");
     push @input_genome_dbs, $this_genome_db;
 }
