@@ -314,7 +314,7 @@
          {
             "assignee" : "<RelCo>",
             "component" : "Release process",
-            "description" : "http://test.ensembl.org",
+            "description" : "http://grch37-test.ensembl.org/index.html",
             "summary" : "test the GRCh37 site"
          },
          {
@@ -326,7 +326,7 @@
          {
             "assignee" : "<RelCo>",
             "component" : "Release process",
-            "description" : "http://test.grch37.rest.ensembl.org/",
+            "description" : "https://grch37-test.rest.ensembl.org/",
             "summary" : "test the GRCh37 REST server"
          }
       ],
