@@ -96,7 +96,7 @@ sub default_options {
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
 
         'base_dir'    => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),     # where the final dumps will be stored
-        'work_dir'    => '#base_dir#/dump_hash/#basename#',                                                             # where directory hash is created and maintained
+        'hash_dir'    => '#base_dir#/dump_hash/#basename#',                                                             # where directory hash is created and maintained
         'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
         'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put
         'emf_dir'     => '#target_dir#/emf/ensembl-compara/homologies/',                                                # where the EMF dumps are put
@@ -125,7 +125,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'base_dir'      => $self->o('base_dir'),
         'target_dir'    => $self->o('target_dir'),
-        'work_dir'      => $self->o('work_dir'),
+        'hash_dir'      => $self->o('hash_dir'),
         'xml_dir'       => $self->o('xml_dir'),
         'emf_dir'       => $self->o('emf_dir'),
         'tsv_dir'       => $self->o('tsv_dir'),

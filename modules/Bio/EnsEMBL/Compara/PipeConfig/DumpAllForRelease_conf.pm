@@ -216,6 +216,7 @@ sub pipeline_wide_parameters {
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
         'name_root'           => 'Compara.#curr_release#.#basename#',
+        'hash_dir'            => '#work_dir#/#basename#',
         'target_dir'          => '#dump_dir#',
         'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
         'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',

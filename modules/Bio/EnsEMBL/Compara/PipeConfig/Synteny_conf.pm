@@ -192,7 +192,7 @@ sub pipeline_analyses {
                 {
                     'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                     'registry'          => $self->o('registry'),
-                    'from_first_release'    => $self->o('curr_release'),
+                    'from_first_release'    => $self->o('ensembl_release'),
                 },
             
             -wait_for   => [ 'copy_table', 'copy_table_factory' ],
