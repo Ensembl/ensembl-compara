@@ -207,6 +207,7 @@ sub rec_add_paralogs {
             $ancestor->store_tag('node_type', 'dubious');
             $ancestor->store_tag('duplication_confidence_score', 0);
         } else {
+            # Very unlikely to be the same species, no need to consider "sub-speciation"
             $ancestor->store_tag('node_type', 'speciation');
             $ancestor->delete_tag('duplication_confidence_score');
         }

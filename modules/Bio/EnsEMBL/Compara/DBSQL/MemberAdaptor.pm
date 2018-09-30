@@ -253,12 +253,12 @@ sub fetch_all_by_Slice {
     my $slice = shift;
     my $dnafrag = $self->db->get_DnaFragAdaptor->fetch_by_Slice($slice);
     throw "Could not find find a DnaFrag for ".$slice->name unless $dnafrag;
-    my $locus = Bio::EnsEMBL::Compara::Locus->new_fast( {
+    my $locus = bless {
             'dnafrag_id'        => $dnafrag->dbID,
             'dnafrag_start'     => $slice->start,
             'dnafrag_end'       => $slice->end,
             'dnafrag_strand'    => $slice->strand,
-        });
+        }, 'Bio::EnsEMBL::Compara::Locus';
     return $self->fetch_all_by_Locus($locus, @_);
 }
 

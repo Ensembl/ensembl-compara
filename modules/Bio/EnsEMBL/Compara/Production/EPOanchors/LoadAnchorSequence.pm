@@ -28,6 +28,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -59,12 +60,12 @@ sub fetch_input {
 		$anc_end += $mid_size - 2;
 		$anc_start = $anc_start < 1 ? 1 : $anc_start;   # The minimum position on a DnaFrag is 1
 		$anc_end = $anc_end > $dnafrag->length ? $dnafrag->length : $anc_end;    # The maximum position on a DnaFrag is its length
-                my $ext_anchor = Bio::EnsEMBL::Compara::Locus->new_fast( {
+                my $ext_anchor = bless {
                         'dnafrag'         => $dnafrag,
                         'dnafrag_start'   => $anc_start,
                         'dnafrag_end'     => $anc_end,
                         'dnafrag_strand'  => $df_strand,
-                    } );
+                    }, 'Bio::EnsEMBL::Compara::Locus';
                 my $anc_seq = $ext_anchor->get_sequence;
 		my @NS=$anc_seq=~/(N)/g;
 		my $ns=join("",@NS);

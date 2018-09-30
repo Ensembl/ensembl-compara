@@ -39,13 +39,14 @@ my @intervals_in_mbp = (
 );
 
 
-my ( $help, $reg_conf, $master_db, $release );
+my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids );
 GetOptions(
-    "help"          => \$help,
-    "reg_conf=s"    => \$reg_conf,
-    "master_db=s"   => \$master_db,
-    "release=i"     => \$release,
-    "max_jobs=i"    => \$max_jobs,
+    "help"               => \$help,
+    "reg_conf=s"         => \$reg_conf,
+    "master_db=s"        => \$master_db,
+    "release=i"          => \$release,
+    "max_jobs=i"         => \$max_jobs,
+    'exclude_mlss_ids=s' => \$exclude_mlss_ids,
 );
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
@@ -61,6 +62,7 @@ my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type("LASTZ_NET")
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
 	if (($this_mlss->first_release || 0) == $release) {
+		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
 		push @current_lastz_mlsses, $this_mlss;
 		foreach my $this_gdb ( @{ $this_mlss->species_set->genome_dbs } ) {
 			$genome_dbs{$this_gdb->dbID} = $this_gdb;
@@ -122,28 +124,13 @@ foreach my $k ( keys %mlss_job_count ) {
 
 print STDERR "Splitting method_link_species_sets into groups (max jobs per group: $max_jobs)..\n";
 my $mlss_groups = split_mlsses(\%mlss_job_count);
-print "\n\n\nMLSS GROUPS: \n";
-print Dumper $mlss_groups;
+# print "\n\n\nMLSS GROUPS: \n";
+# print Dumper $mlss_groups;
 
-print "\nPipeline commands:\n";
+print "\nPipeline commands:\n------------------\n";
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
 	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -reg_conf \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_eg_conf.pl -master_db $master_db  -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
-}
-
-sub helptext {
-	my $msg = <<HELPEND;
-
-Usage: batch_lastz.pl --master_db <master url or alias> --release <release number>
-
-Options:
-	master_db : url or registry alias of master db containing LASTZ MLSSes
-	release   : current release version
-	reg_conf  : registry config file (required if using alias for master)
-	max_jobs  : maximum number of jobs allowed per-database (default: 6,000,000)
-
-HELPEND
-	return $msg;
 }
 
 sub get_ref_chunk_count {
@@ -200,7 +187,6 @@ sub chains_job_count {
 			$interval_counts->{ interval_type($g1_len->[0], $g2_len->[0]) }++;
 		}
 	}
-	print Dumper $interval_counts;
 
 	# assign probabilities and estimate job numbers
 	my $total_count;
@@ -298,4 +284,21 @@ sub split_mlsses {
 	push( @mlss_groups, @large_mlss_groups );
 
 	return \@mlss_groups;
+}
+
+sub helptext {
+	my $msg = <<HELPEND;
+
+Usage: batch_lastz.pl --master_db <master url or alias> --release <release number>
+
+Options:
+	master_db        : url or registry alias of master db containing LASTZ MLSSes (required)
+	release          : current release version (required)
+	reg_conf         : registry config file (required if using alias for master)
+	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)
+	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
+	                   list should be comma separated values.
+
+HELPEND
+	return $msg;
 }

@@ -197,7 +197,7 @@ CREATE TABLE `gene_tree_node` (
 
 CREATE TABLE `gene_tree_node_attr` (
   `node_id` int(10) unsigned NOT NULL,
-  `node_type` enum('duplication','dubious','speciation','gene_split') DEFAULT NULL,
+  `node_type` enum('duplication','dubious','speciation','sub-speciation','gene_split') DEFAULT NULL,
   `species_tree_node_id` int(10) unsigned DEFAULT NULL,
   `bootstrap` tinyint(3) unsigned DEFAULT NULL,
   `duplication_confidence_score` double(5,4) DEFAULT NULL,
@@ -429,7 +429,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM AUTO_INCREMENT=122 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=123 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `method_link` (
   `method_link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
