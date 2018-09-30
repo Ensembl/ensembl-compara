@@ -28,6 +28,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Locus;
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
