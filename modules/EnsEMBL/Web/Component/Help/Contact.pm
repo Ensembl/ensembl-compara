@@ -53,19 +53,21 @@ sub content {
   }
   
   $fieldset->add_field([{
-    'type'    => 'String',
-    'name'    => 'name',
-    'label'   => 'Your name',
-    'value'   => uri_unescape($hub->param('name')) || '',
+    'type'      => 'String',
+    'name'      => 'name',
+    'label'     => 'Your name',
+    'value'     => uri_unescape($hub->param('name')) || '',
+    'required'  => 1,
   }, {
     'type'    => 'Honeypot',
     'name'    => 'email',
     'label'   => 'Address',
   }, {
-    'type'    => 'Email',
-    'name'    => 'address',
-    'label'   => 'Your Email',
-    'value'   => uri_unescape($hub->param('address')) || '',
+    'type'      => 'Email',
+    'name'      => 'address',
+    'label'     => 'Your Email',
+    'value'     => uri_unescape($hub->param('address')) || '',
+    'required'  => 1,
   }, {
     'type'    => 'String',
     'name'    => 'subject',
