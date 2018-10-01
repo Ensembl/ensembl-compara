@@ -34,12 +34,14 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamilies_conf
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
+    #2. Ensure that LoadMembers pipeline have been run
+
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
 
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf \
-        -password <your_password> -mlss_id <your_current_PT_mlss_id>
+        -password <your_password> -mlss_id <your_current_Family_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -73,12 +75,12 @@ sub default_options {
 
         #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-4',        # where the pipeline database will be created
-        'port'          => '4401',                      # server port
+        'host'          => 'mysql-ens-compara-prod-2',        # where the pipeline database will be created
+        'port'          => '4522',                      # server port
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
-        'test_mode' => 1, #set this to 0 if this is production run
+        'test_mode' => 1, #set this to 0 if this is production run. Prevents writing of the pipeline url into the master db unless it is A PRODUCTION run
 
         # HMM clustering
         #'hmm_clustering'      => 0,
@@ -122,11 +124,12 @@ sub default_options {
         'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #ensembl_release# - 1)expr#',
 
         # Protein Tree database. Once the members are loaded, it is fine to start the families pipeline
-        'protein_trees_db' => 'mysql://ensro@mysql-treefam-prod.ebi.ac.uk:4401/mateus_protein_trees_89',
-
+        'protein_trees_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_94',
+        'member_db'        => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_load_members_test',
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
 
+        'load_uniprot_members_from_member_db' => 1,
 } ## end sub default_options
 
 sub resource_classes {

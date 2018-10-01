@@ -95,6 +95,14 @@ sub default_options {
         # Store other genes
         'store_others'              => 1,
 
+    #load uniprot members for family pipeline
+        'load_uniprot_members'      => 1,
+        'family_mlss_id'            => undef, 
+        'work_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/LoadMembers_pipeline/' . $self->o('pipeline_name'),
+        'uniprot_dir'     => $self->o('work_dir').'/uniprot',
+        'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
+        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
+
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
         'hc_capacity'               => 150,
@@ -175,6 +183,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         # Database connection
         'master_db'             => $self->o('master_db'),
         'reuse_member_db'       => $self->o('reuse_member_db'),
+        'load_uniprot_members'  => $self->o('load_uniprot_members'),
+        'work_dir'              => $self->o('work_dir'),
+        'uniprot_dir'           => $self->o('uniprot_dir'),
+        'family_mlss_id'        => $self->o('family_mlss_id'),
     };
 }
 
@@ -197,15 +209,15 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::AssertMatchingVersions',
             -input_ids  => [ { } ],
             -flow_into  => WHEN(
-                '#reuse_member_db#' => 'check_reuse_db_is_patched',
-                ELSE 'copy_ncbi_tables_factory',
-            ),
+                    '#reuse_member_db#' => 'check_reuse_db_is_patched',
+                    ELSE 'copy_ncbi_tables_factory',
+                    ),
         },
 
         {   -logic_name => 'copy_ncbi_tables_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link', 'species_set_header', 'species_set', 'method_link_species_set' ],
                 'column_names' => [ 'table' ],
             },
             -flow_into => {
@@ -539,6 +551,65 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_analysis_params,
+            -flow_into          => WHEN(
+                            '#load_uniprot_members#' => 'save_uniprot_release_date',
+                            ),
+        },
+
+# ---------------------------------------------[load UNIPROT members for Family pipeline]------------------------------------------------------------
+
+        {   -logic_name => 'save_uniprot_release_date',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtReleaseVersion',
+            -parameters => {
+                'uniprot_rel_url'   => $self->o('uniprot_rel_url'),
+                'mlss_id'           => $self->o('family_mlss_id'),
+            },
+            -flow_into  => [ 'download_uniprot_factory' ],
+        },
+
+        {   -logic_name => 'download_uniprot_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'column_names'    => [ 'uniprot_source', 'tax_div' ],
+                'inputlist'       => [
+                    [ 'sprot', 'fungi' ],
+                    [ 'sprot', 'human' ],
+                    [ 'sprot', 'mammals' ],
+                    [ 'sprot', 'rodents' ],
+                    [ 'sprot', 'vertebrates' ],
+                    [ 'sprot', 'invertebrates' ],
+
+                    [ 'trembl',  'fungi' ],
+                    [ 'trembl',  'human' ],
+                    [ 'trembl',  'mammals' ],
+                    [ 'trembl',  'rodents' ],
+                    [ 'trembl',  'vertebrates' ],
+                    [ 'trembl',  'invertebrates' ],
+                ],
+            },
+            -flow_into => {
+                '2' => [ 'download_and_chunk_uniprot' ],
+            },
+        },
+
+        {   -logic_name    => 'download_and_chunk_uniprot',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::DownloadAndChunkUniProtFile',
+            -parameters => {
+                'uniprot_ftp_url'   => $self->o('uniprot_ftp_url'),
+            },
+            -flow_into => {
+                2 => { 'load_uniprot' => INPUT_PLUS() },
+            },
+        },
+        
+        {   -logic_name    => 'load_uniprot',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries',
+            -parameters => {
+                'seq_loader_name'   => 'file', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
+            },
+            -analysis_capacity => 5,
+            -batch_size    => 100,
+            -rc_name => '2Gb_job',
         },
 
     ];

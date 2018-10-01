@@ -86,6 +86,10 @@ sub default_options {
         # Store other genes
         'store_others'              => 1,
 
+    #load uniprot members for family pipeline
+        'load_uniprot_members'      => 1,
+        'family_mlss_id'            => 30055,    
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
@@ -100,8 +104,8 @@ sub default_options {
 
         # Ensembl-specific databases
         'staging_loc' => {
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
+            -host   => 'mysql-ensembl-mirror',
+            -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
             -db_version => 94,
