@@ -61,7 +61,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-    my $mlss_tag_value = ($self->param('avg_genomic_coverage') ) ? $self->param('avg_genomic_coverage') : 'not_recorded';
+    my $mlss_tag_value = $self->param('avg_genomic_coverage') // 'not_recorded';
     # Delete data from this database
     $self->compara_dba->dbc->db_handle->do('DELETE dnafrag_region FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->compara_dba->dbc->db_handle->do('DELETE FROM synteny_region WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
