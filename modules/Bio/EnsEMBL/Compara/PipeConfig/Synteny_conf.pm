@@ -347,9 +347,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'update_mlss_tag_table',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::UpdateMlssTag',
-            -parameters      => {
-                                   synteny_mlss_id  => '#synteny_mlss_id#',
-                                  },
         },
 
    ];
