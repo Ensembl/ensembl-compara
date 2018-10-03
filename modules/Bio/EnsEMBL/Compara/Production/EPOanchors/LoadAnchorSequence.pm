@@ -86,6 +86,7 @@ sub fetch_input {
 sub write_output {
     my ($self) = @_;
 
+    $self->compara_dba->dbc->do('DELETE FROM anchor_sequence WHERE anchor_id = ?', undef, $self->param('anchor_id'));
     bulk_insert($self->compara_dba->dbc, 'anchor_sequence', $self->param('anchor'), [qw(anchor_id dnafrag_id start end strand method_link_species_set_id sequence length)]);
 }
 
