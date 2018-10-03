@@ -44,11 +44,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-  return {
-    mlss_id                => undef,
-  }
-}
 
 sub fetch_input {
     my $self = shift;
