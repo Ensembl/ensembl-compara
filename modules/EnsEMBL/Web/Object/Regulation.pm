@@ -189,7 +189,7 @@ sub get_motif_features {
           }
           $name_string .= '...' if scalar @names > $i;
         } 
-        $motifs{$mf->start .':'. $mf->end} = [$name_string, $matrix_id, $mf->score];
+        $motifs{$mf->start .':'. $mf->end} = [$mf->stable_id, $name_string, $matrix_id, $mf->score];
       }
     }
   }

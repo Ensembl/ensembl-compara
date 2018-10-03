@@ -115,21 +115,23 @@ sub content {
     my $pwm_table = '
         <table cellpadding="0" cellspacing="0">
           <tr>
-            <th style="width:30%">Name</th>
-            <th style="width:50%">Binding matrix</th>
+            <th style="width:20%">Motif feature</th>
+            <th style="width:30%">Transcription factors</th>
+            <th style="width:30%">Binding matrix</th>
             <th style="width:20%">Score</th>
           </tr>
     ';
     
     foreach my $motif (sort keys %motif_features) {
-      my ($name, $binding_matrix, $score) = @{$motif_features{$motif}};
+      my ($stable_id, $tfactors, $binding_matrix, $score) = @{$motif_features{$motif}};
 
       my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
       #my $bm_widget = $self->hub->url(); 
       #<td><a href="$bm_widget">$binding_matrix</a></td>
       my $nice_score = sprintf('%.4f', $score);
       $pwm_table .= qq(<tr $style>
-                        <td>$name</td>
+                        <td>$stable_id</td>
+                        <td>$tfactors</td>
                         <td>$binding_matrix</td>
                         <td>$nice_score</td>
                       </tr>);
