@@ -49,6 +49,7 @@ sub fetch_input {
         Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
 	my @anchor;
 	foreach my $anchor_align (@$anchor_aligns) {
+            next unless $anchor_align->untrimmed_anchor_align_id;
 		my($df_id,$anc_start,$anc_end,$df_strand)=($anchor_align->dnafrag_id,
 							$anchor_align->dnafrag_start,
 							$anchor_align->dnafrag_end,
