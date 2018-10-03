@@ -413,7 +413,7 @@ sub dumpHelp {
   my $conf = shift;
   my $start_time = time;
   my $total_c;
-  my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View Glossary FAQ);
+  my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View FAQ);
   foreach my $type (@types) {
     my $counter   = make_counter(0);
     my $file = $conf->{'directory'}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
