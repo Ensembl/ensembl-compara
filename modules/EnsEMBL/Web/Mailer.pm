@@ -92,7 +92,7 @@ sub send {
   my @week_days   = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year, $wday) = gmtime;
   $year          += 1900;
-  my $time_string = sprintf '%s %s %s %s, %02d:%02d:%02d +0000', $week_days[$wday], $day, $months[$month], $year, $hour, $min, $sec;
+  my $time_string = sprintf '%s, %s %s %s %02d:%02d:%02d +0000', $week_days[$wday], $day, $months[$month], $year, $hour, $min, $sec;
 
   my $mailer;
   my $return    = 1;
