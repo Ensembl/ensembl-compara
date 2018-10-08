@@ -19,13 +19,13 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Synteny_conf
 
 =head1 DESCRIPTION
 
-This is an EBI specific version of the general Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
+This is the EG Plants specific version of the general Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
 
 =head1 CONTACT
 
@@ -37,7 +37,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Synteny_conf;
 
 use strict;
 use warnings;
@@ -51,11 +51,10 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'      => 4522,
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
-        'registry'  => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+        'division'  => 'plants',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5.ebi.ac.uk:4615/ensembl_compara_master_' . $self->o('division'),
+        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('division') . '_' . $self->o('rel_with_suffix'),
+        'registry'  => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_' . $self->o('division') . '_conf.pl',
     };
 }
 
