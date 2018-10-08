@@ -137,7 +137,7 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       vartable EnsEMBL::Web::Component::Location::VariationTable
     )],
-    { 'availability' => 'slice' }
+    { 'availability' => 'slice variation' }
   ));
 
   $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
