@@ -51,13 +51,14 @@ sub main {
     # ----------------------------
     # read command line parameters
     # ----------------------------
-    my ( $relco, $release, $password, $help, $tickets_json, $config );
+    my ( $relco, $release, $password, $help, $tickets_json, $ticket_mapping_file, $config );
 
     GetOptions(
         'relco=s'    => \$relco,
         'release=i'  => \$release,
         'password|p=s' => \$password,
         'tickets=s'  => \$tickets_json,
+        'mapping=s'  => \$ticket_mapping_file,
         'config|c=s' => \$config,
         'help|h'     => \$help,
     );
@@ -86,6 +87,7 @@ sub main {
     # integrate command line parameters to parameters object
     $parameters->{relco}    = $relco;
     $parameters->{password} = $password;
+    $release = "Ensembl $release" unless $release =~ /^EG/; # allow for EG41 to be passed, for example
     $parameters->{release}  = $release;
     # And substitute fresh values
     $parameters->{tickets}->{fixVersion} = replace_placeholders($parameters->{tickets}->{fixVersion}, $parameters);
@@ -93,7 +95,7 @@ sub main {
     # ------------------
     # parse tickets file
     # ------------------
-    my $tickets = decode_json slurp($tickets_json) or die "Could not open file '$tickets_json' $!";;
+    my $tickets = decode_json slurp($tickets_json) or die "Could not open file '$tickets_json' $!";
 
     # ----------------------
     # convert to JIRA format
@@ -124,15 +126,24 @@ sub main {
     # -----------------------
     # create new JIRA tickets
     # -----------------------
+    my $mapping_str = '';
     for my $ticket ( @{$tickets} ) {
         my $ticket_key = create_ticket( $ticket, $parameters, $logger );
+        $mapping_str .= $ticket->{ticket_map_name} . "\t" . $ticket_key . "\n" if $ticket->{ticket_map_name};
         if ($ticket->{'subtasks'}) {
             foreach my $subtask (@{$ticket->{'subtasks'}}) {
                 $subtask->{'jira'}->{'parent'} = { 'key'  => $ticket_key };
                 my $subtask_key = create_ticket( $subtask, $parameters, $logger );
+                $mapping_str .= $subtask->{ticket_map_name} . "\t" . $subtask_key . "\n" if $subtask->{ticket_map_name};
             }
         }
     }
+
+    # once we're sure all tickets have been created successfully, write the mapping file
+    $ticket_mapping_file = 'jira_ticket_mapping.tsv' unless $ticket_mapping_file;
+    open( my $map_fh, '>', $ticket_mapping_file );
+    print $map_fh $mapping_str;
+    close $map_fh;
 }
 
 =head2 set_parameters
