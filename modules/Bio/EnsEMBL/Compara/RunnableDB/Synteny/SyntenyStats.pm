@@ -86,6 +86,7 @@ sub syntenic_regions {
     }
   }
   
+  $self->param('num_blocks', scalar(@$synteny_regions));
   $self->param('syntenic_regions', \%syntenic_regions);
   $self->param('syntenic_lengths', \%syntenic_lengths);
 }
@@ -137,6 +138,7 @@ sub calculate_stats {
   
   my $mlss             = $self->param_required('mlss');
   my $mlss_id          = $self->param_required('mlss_id');
+  my $num_blocks       = $self->param_required('num_blocks');
   my %syntenic_regions = %{$self->param('syntenic_regions')};
   my %coding_regions   = %{$self->param('coding_regions')};
   my %total_lengths    = %{$self->param('total_lengths')};
@@ -153,7 +155,6 @@ sub calculate_stats {
     
     foreach my $sr_name (keys %{$syntenic_regions{$species}}) {
       foreach my $syntenic_coords (@{$syntenic_regions{$species}{$sr_name}}) {
-       $tags{'num_blocks'}++;
         foreach my $coding_coords (@{$coding_regions{$species}{$sr_name}}) {
           $coding_overlap += $self->coord_intersection($syntenic_coords, $coding_coords);
         }
@@ -168,6 +169,7 @@ sub calculate_stats {
     
     $prefix = 'non_';
   }
+  $tags{'num_blocks'} = $num_blocks;
   
   foreach my $tag (sort keys %tags) {
     $self->warning("store_tag($mlss_id, $tag, ".$tags{$tag}.")");

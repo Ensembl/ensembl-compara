@@ -49,6 +49,7 @@ sub fetch_input {
         Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $anchor_aligns);
 	my @anchor;
 	foreach my $anchor_align (@$anchor_aligns) {
+            next unless $anchor_align->untrimmed_anchor_align_id;
 		my($df_id,$anc_start,$anc_end,$df_strand)=($anchor_align->dnafrag_id,
 							$anchor_align->dnafrag_start,
 							$anchor_align->dnafrag_end,
@@ -85,6 +86,7 @@ sub fetch_input {
 sub write_output {
     my ($self) = @_;
 
+    $self->compara_dba->dbc->do('DELETE FROM anchor_sequence WHERE anchor_id = ?', undef, $self->param('anchor_id'));
     bulk_insert($self->compara_dba->dbc, 'anchor_sequence', $self->param('anchor'), [qw(anchor_id dnafrag_id start end strand method_link_species_set_id sequence length)]);
 }
 
