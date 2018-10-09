@@ -79,44 +79,36 @@ sub build {
         </div>      
       </div>
       <div class="result-box">
-        <span class="small right-margin clearall">Clear all</span>
-        
-        <h5 class="result-header">Analysis</h5>
-        <div class="result-content">
-          <ul class="result-list">
-            <li class="noremove">
-                <span class="fancy-checkbox selected"></span>
-                <text>Epigenomic activity</text>
-            </li>
-            <li class="noremove">
-              <span class="fancy-checkbox selected"></span>
-              <text>Segmentation features</text>
-            </li>
-          </ul>
-        </div>
-        
-        <h5 class="result-header">Cell type</h5>
-        <div class="result-content" id="cell">
-          <ul class="result-list">
-            <span class="hidden lhsection-id">cell-type-content</span>
-          </ul>
+        <h3>Selected tracks</h3>
+
+        <div class="filter-content">
+          <h5 class="result-header">Cell type <span class="error">Please select Cell types</span></h5>
+          <div class="result-content" id="cell">
+            <ul class="result-list">
+              <span class="hidden lhsection-id">cell-type-content</span>
+            </ul>
+          </div>
+
+          <h5 class="result-header">Experimental data <span class="error">Please select Experimental data</span></h5>
+          <div class="result-content" id="experiment">
+            <ul class="result-list">
+              <span class="hidden lhsection-id">experiment-type-content</span>
+            </ul>
+          </div>
+
+          <h5 class="result-header">Source</h5>
+          <div class="result-content" id="source">
+            <ul class="result-list">
+              <span class="hidden lhsection-id">source-content</span>
+            </ul>
+          </div>
         </div>
 
-        <h5 class="result-header">Experiment type</h5>
-        <div class="result-content" id="experiment">
-          <ul class="result-list"> 
-            <span class="hidden lhsection-id">experiment-type-content</span>
-          </ul>
-        </div> 
+        <div class="bottom-buttons">
+          <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
+          <button class="filter">Configure track display</button>
+        </div>
 
-        <h5 class="result-header">Source</h5>
-        <div class="result-content" id="source">
-          <ul class="result-list">  
-            <span class="hidden lhsection-id">source-content</span>
-          </ul>
-        </div>         
-        
-        <button class="filter">Apply filters</button>
       </div>
     </div>
   );
