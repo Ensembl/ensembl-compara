@@ -53,22 +53,26 @@ foreach my $k (keys %SiteDefs::) {
 
 my $packed_fn = "$SiteDefs::ENSEMBL_SYS_DIR/conf/$SiteDefs::ENSEMBL_CONFIG_FILENAME";
 
+warn "Loading packeds\n";
 $data->{'packed'} = retrieve($packed_fn);
 
 sub cleanup {
-  my ($x) = @_;
+  my ($x,$d,$y) = @_;
 
+  warn "$y\n" if $d>0 and $y;
+  return undef if (defined $y) and $y =~ /ENSEMBL_SPECIES_SITE|SPECIES_DISPLAY_NAME/;
   if(ref($x) eq 'HASH') {
-    $x->{$_} = cleanup($x->{$_}) for keys %$x;
+    $x->{$_} = cleanup($x->{$_},$d-1,$_) for sort keys %$x;
   } elsif(ref($x) eq 'ARRAY') {
-    $x = [ map { cleanup($_) } @$x ];
+    $x = [ map { cleanup($_,$d-1) } @$x ];
   } elsif(ref($x)) {
     return undef;
   }
   return $x;
 }
 
-$data = cleanup($data);
+warn "Cleaning data\n";
+$data = cleanup($data,3);
 
 sub human {
   my ($x,$fd,$p) = @_;
@@ -90,6 +94,7 @@ if($filename) {
   *FILE = *STDOUT;
 }
 
+warn "Writing data\n";
 if($format eq 'json') {
   print FILE to_json($data);
 } elsif($format eq 'storable') {
