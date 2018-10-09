@@ -154,7 +154,7 @@ sub update_dnafrags {
     undef @low_limit_frags;
     undef @species_overall_len;
 
-    my $is_good_for_alignment = ($ratio_top_highest > 0.85) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
+    my $is_good_for_alignment = ($ratio_top_highest > 0.68) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
 
     my $sth = $compara_dba->dbc->prepare("UPDATE genome_db SET is_good_for_alignment = ? WHERE name = ? AND assembly = ?");
     $sth->execute($is_good_for_alignment,$genome_db->name(),$genome_db->assembly);
