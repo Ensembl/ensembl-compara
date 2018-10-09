@@ -123,6 +123,7 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
         'dump_pafs_dir'         => $self->o('dump_dir') . '/pafs',
         'examl_dir'             => $self->o('work_dir') . '/examl',
+        'plots_dir'             => $self->o('work_dir') . '/plots', # Directory used to store plots and their input files
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
@@ -204,6 +205,10 @@ sub default_options {
         'do_treefam_xref'           => 0,
         # The TreeFam release to map to
         'tf_release'                => undef,
+
+    # plots
+        #compute Jaccard Index
+        'do_jaccard_index'          => 1,
 
     # HMM specific parameters (set to 0 or undef if not in use)
        'hmm_library_basedir'       => undef,
@@ -434,7 +439,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'fasta_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'cluster_dir', 'dump_dir', 'dump_pafs_dir', 'examl_dir', 'fasta_dir', 'plots_dir']),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
     ];
 }
@@ -455,6 +460,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'fasta_dir'     => $self->o('fasta_dir'),
         'examl_dir'     => $self->o('examl_dir'),
         'dump_dir'      => $self->o('dump_dir'),
+        'plots_dir'     => $self->o('plots_dir'),
         'dump_pafs_dir' => $self->o('dump_pafs_dir'),
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
         'hmm_library_version'   => $self->o('hmm_library_version'),
@@ -465,6 +471,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'goc_reuse_db'                  => $self->o('goc_reuse_db'),
         'calculate_goc_distribution'    => $self->o('calculate_goc_distribution'),
         'do_homology_id_mapping'        => $self->o('do_homology_id_mapping'),
+        'do_jaccard_index'              => $self->o('do_jaccard_index'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
         'all_blast_params'          => $self->o('all_blast_params'),
 
@@ -1666,6 +1673,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'compute_jaccard_index',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
+            -parameters => {
+                'output_jaccard_file'   => '#plot_dir#/jaccard_index.out',
+            },
             -rc_name       => '500Mb_job',
         },
 
@@ -3095,7 +3105,9 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'stable_id_mapping',
             },
-            -flow_into          => [ 'compute_jaccard_index' ],
+            -flow_into  => [
+                    WHEN('#do_jaccard_index#' => 'compute_jaccard_index'),
+                ],
             %hc_analysis_params,
         },
 
