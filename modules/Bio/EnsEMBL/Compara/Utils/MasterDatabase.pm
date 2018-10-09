@@ -106,7 +106,7 @@ sub update_dnafrags {
 
         my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
 
-        push( @species_overall_len, $new_dnafrag->length());#rule_2
+        push( @species_overall_len, $new_dnafrag->length()) if $new_dnafrag->is_reference;#rule_2
 
         if (my $old_df = delete $old_dnafrags_by_name->{$slice->seq_region_name}) {
             $new_dnafrag->dbID($old_df->dbID);
