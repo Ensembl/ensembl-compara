@@ -31,6 +31,10 @@ sub annotate {
   my $translation = $config->{'translation'};
   my $strand   = $object->Obj->strand;
   my %variants_list;
+
+  my %ct_filter = map { $_ ? ($_ => 1) : () } @{$config->{'consequence_filter'}};
+     %ct_filter = () if join('', keys %ct_filter) eq 'off';
+
   foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
     next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $config->{'snp_length_filter'};
     next if $self->too_rare_snp($snp->{'vf'},$config);
@@ -42,7 +46,7 @@ sub annotate {
     next if $variants_list{$dbID}; # Avoid duplication
     $variants_list{$dbID} = 1;
 
-    $markup->{'variants'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
+    $markup->{'variants'}->{$pos}->{'type'}    = lc((%ct_filter && keys %ct_filter) ? [ grep $ct_filter{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
     $markup->{'variants'}->{$pos}->{'alleles'} = $snp->{'allele'};
     $markup->{'variants'}->{$pos}->{'href'} ||= {
       type        => 'ZMenu',

@@ -855,7 +855,7 @@ sub check_for_align_problems {
 
   my @messages = $object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
 
-  if (scalar @messages < 0) {
+  if (scalar @messages <= 0) {
     push @messages, $self->check_for_missing_species($args);
   }
 
@@ -918,7 +918,7 @@ sub check_for_missing_species {
   my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
   my $multi_check = $ancestral ? 2 : 1;
   if (scalar @missing) {
-    $title .= ' species';
+    $title .= ' missing species';
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
     } elsif ($not_missing == $multi_check) {
@@ -1353,8 +1353,54 @@ sub structural_variation_table {
   
   return $self->toggleable_table($title, $table_id, $self->new_table($columns, $rows, { data_table => 1, sorting => [ 'location asc' ], data_table_config => {iDisplayLength => 25} }), $open);
 }
-
   
+sub render_score_prediction {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+  
+  return '-' unless defined($pred) || defined($score);
+  
+  my %classes = (
+    '-'                 => '',
+    'likely deleterious' => 'bad',
+    'likely benign' => 'good',
+    'likely disease causing' => 'bad',
+    'tolerated' => 'good',
+    'damaging'   => 'bad',
+    'high'    => 'bad',
+    'medium'  => 'ok',
+    'low'     => 'good',
+    'neutral' => 'good',
+  );
+  
+  my %ranks = (
+    '-'                 => 0,
+    'likely deleterious' => 4,
+    'likely benign' => 2,
+    'likely disease causing' => 4,
+    'tolerated' => 2,
+    'damaging'   => 4,
+    'high'    => 4,
+    'medium'  => 3,
+    'low'     => 2,
+    'neutral' => 2,
+  );
+  
+  my ($rank, $rank_str);
+  
+  if(defined($score)) {
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
+  
+  return qq(
+    <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
+  );
+}
+
 sub render_sift_polyphen {
   ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
   my ($self, $pred, $score) = @_;
@@ -1454,6 +1500,51 @@ sub classify_sift_polyphen {
   # 1 -- a value to use for exporting
   # 2 -- a class to use for styling
   # 3 -- a value for display
+  return [$rank,$pred,$rank_str];
+}
+
+sub classify_score_prediction {
+  ## render a sift or polyphen prediction with colours and a hidden span with a rank for sorting
+  my ($self, $pred, $score) = @_;
+  
+  return [undef,'-','','-'] unless defined($pred) || defined($score);
+  
+  my %classes = (
+    '-'                 => '',
+    'likely deleterious' => 'bad',
+    'likely benign' => 'good',
+    'likely disease causing' => 'bad',
+    'tolerated' => 'good',
+    'damaging'   => 'bad',
+    'high'    => 'bad',
+    'medium'  => 'ok',
+    'low'     => 'good',
+    'neutral' => 'neutral',
+  );
+  
+  my %ranks = (
+    '-'                 => 0,
+    'likely deleterious' => 4,
+    'likely benign' => 2,
+    'likely disease causing' => 4,
+    'tolerated' => 2,
+    'damaging'   => 4,
+    'high'    => 4,
+    'medium'  => 3,
+    'low'     => 2,
+    'neutral' => 2,
+  );
+  
+  my ($rank, $rank_str);
+  
+  if(defined($score)) {
+    $rank = int(1000 * $score) + 1;
+    $rank_str = "$score";
+  }
+  else {
+    $rank = $ranks{$pred};
+    $rank_str = $pred;
+  }
   return [$rank,$pred,$rank_str];
 }
 
@@ -1571,11 +1662,14 @@ sub render_var_coverage {
     $left_width = sprintf("%.0f", ($v_s - $f_s) * $scale);
     if ($left_width == $total_width)  {
       $left_width -= $right_width;
-      $left_width = 0 if ($left_width < 0);
+    }
+    elsif (($left_width + $right_width) > $total_width) {
+      $left_width = $total_width - $right_width;
     }
     elsif ($small_var && $left_width > 0) {
       $left_width--;
     }
+    $left_width = 0 if ($left_width < 0);
     $render .= '<div class="var_trans_pos_sub" style="width:'.$left_width.'px"></div>';
   }
   $render .= $var_render if ($var_render);

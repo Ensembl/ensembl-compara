@@ -37,6 +37,8 @@ sub content {
   my $hub    = $self->hub;
   my $object = $self->object;
 
+  my %column_flags;
+
   # first check we have uniquely determined variation
   return $self->_info('A unique location can not be determined for this variant', $object->not_unique_location) if $object->not_unique_location;
   return $self->detail_panel if $hub->param('allele');
@@ -110,12 +112,10 @@ sub content {
     }
   }
   
-  my @columns = $self->table_columns;
-  
-  my $table         = $self->new_table(\@columns, [], { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
   my $trans_adaptor = $hub->get_adaptor('get_TranscriptAdaptor');
   my $max_length    = 20;
   my $flag;
+  my @rows;
   
   # create a regfeat table as well
   my @reg_columns = (
@@ -128,14 +128,13 @@ sub content {
   );
   my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
-    { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
-    { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
-    { key => 'allele',   title => 'Allele',                    sort => 'string'                           },
-    { key => 'type',     title => 'Consequence type',          sort => 'position_html'                    },
-    { key => 'matrix',   title => 'Motif name',                sort => 'string'                           },
-    { key => 'pos',      title => 'Motif position',            sort => 'numeric'                          },
-    { key => 'high_inf', title => 'High information position', sort => 'string'                           },
-    { key => 'score',    title => 'Motif score change',        sort => 'position_html', align => 'center' },
+    { key => 'bm',       width => '20%',  title => 'Binding matrix',            sort => 'html'                             },
+    { key => 'allele',   width => '10%',  title => 'Allele',                    sort => 'string'                           },
+    { key => 'type',     width => '10%',  title => 'Consequence type',          sort => 'position_html'                    },
+    { key => 'names',    width => '40%',  title => 'Transcription factors',     sort => 'string'                           },
+    { key => 'pos',      width => '10%',  title => 'Motif position',            sort => 'numeric'                          },
+    { key => 'high_inf', width => '5%',  title => 'High information position',  sort => 'string'                           },
+    { key => 'score',    width => '5%',  title => 'Motif score change',         sort => 'position_html', align => 'center' },
   );
   my $motif_table = $self->new_table(\@motif_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
 
@@ -231,6 +230,12 @@ sub content {
     # sift
     my $sift = $self->render_sift_polyphen($tva->sift_prediction, $tva->sift_score);
     my $poly = $self->render_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
+
+    my $cadd = $self->render_score_prediction($tva->cadd_prediction, $tva->cadd_score);
+    my $dbnsfp_revel             = $self->render_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
+    my $dbnsfp_meta_lr          = $self->render_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
+    my $dbnsfp_mutation_assessor = $self->render_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
+
     
     # Allele
     my $a = $transcript_data->{'vf_allele'};
@@ -292,13 +297,25 @@ sub content {
       codon     => $codon,
       sift      => $sift,
       polyphen  => $poly,
+      cadd      => $cadd,
+      dbnsfp_revel => $dbnsfp_revel,
+      dbnsfp_meta_lr => $dbnsfp_meta_lr,
+      dbnsfp_mutation_assessor => $dbnsfp_mutation_assessor,
       detail    => $self->ajax_add($self->ajax_url(undef, { t => $trans_name, vf => $vf, allele => $a, update_panel => 1 }).";single_transcript=variation_feature_variation=normal", "${trans_name}_${vf}_${a}"),
     };
     
-    $table->add_row($row);
+    push(@rows, $row);
+
+    # Column flags
+    foreach my $col ('sift', 'polyphen', 'cadd', 'dbnsfp_revel', 'dbnsfp_meta_lr', 'dbnsfp_mutation_assessor') {
+      $column_flags{$col} = 1 if ($row->{$col} && $row->{$col} ne '-');
+    }
+
     $flag = 1;
   }
   
+  my @columns = $self->table_columns(\%column_flags);
+  my $table   = $self->new_table(\@columns, \@rows, { data_table => 1, sorting => [ 'type asc', 'trans asc', 'allele asc'], class => 'cellwrap_inside' });
   
   if($hub->database('regulation')) {
       
@@ -364,25 +381,12 @@ sub content {
       next unless $mf;       
       # check that the motif has a binding matrix, if not there's not 
       # much we can do so don't return anything
-      next unless defined $mf->binding_matrix;
-      my $matrix = $mf->display_label;
+      my $matrix = $mf->binding_matrix;
+      next unless $matrix;
       
-      my $matrix_url = $mf->binding_matrix->description =~ /Jaspar/ ? $hub->get_ExtURL_link($matrix, 'JASPAR', (split ':', $matrix)[-1]) : $matrix;
+      my $matrix_names = join(', ',  @{$matrix->get_TranscriptionFactorComplex_names||[]});
+      my $matrix_link = sprintf '<a href="#" class="_motif">%s</a>', $matrix->stable_id; 
       
-      # get the corresponding regfeat
-      my $rf = $rfa->fetch_all_by_attribute_feature($mf)->[0];
-
-      next unless $rf;
-
-      # create a URL
-      my $url = $hub->url({
-        type   => 'Regulation',
-        action => 'Summary',
-        rf     => $rf->stable_id,
-        fdb    => 'funcgen',
-      });
-      $url .= ';regulation_view=variation_feature_variation=normal';
-
       my $mfv_cons   = $mfv->most_severe_OverlapConsequence;
       my $mfv_colour = ($mfv_cons) ? $colourmap->hex_by_name($var_styles->{lc $mfv_cons->SO_term}->{'default'}) : undef;
 
@@ -391,18 +395,17 @@ sub content {
       for my $mfva (@{ $mfv->get_all_alternate_MotifFeatureVariationAlleles }) {
         my $type = $self->render_consequence_type($mfva);
         
-        my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$rf->stable_id,25);
+        my $m_allele = $self->trim_large_string($mfva->variation_feature_seq,'mfva_'.$mf->stable_id,25);
         
         my $motif_overlap = $self->_overlap_glyph(1, $motif_length, $mfva->motif_start, $mfva->motif_end, $mf, 'Motif feature', 1, $mfv_colour);
 
         my $motif_length_label = $self->_overlap_glyph_label($mfva->motif_start, $mfva->motif_end, $motif_length);
 
         my $row = {
-          rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
-          ftype    => $mfva->feature->feature_type->so_name,#'Motif feature',
+          bm       => $matrix_link,
           allele   => $m_allele,
           type     => $type,
-          matrix   => $matrix_url,
+          names    => $matrix_names,
           pos      => $motif_length_label.$motif_overlap,
           high_inf => $mfva->in_informative_position ? 'Yes' : 'No',
           score    => defined($mfva->motif_score_delta) ? $self->render_motif_score($mfva->motif_score_delta) : '-',
@@ -421,27 +424,43 @@ sub content {
 # Description: Return hash of columns, this can be overwritten in the mobile plugins to remove columns not required.
 sub table_columns {
   my $self = shift;
+  my $column_flags = shift;
 
+  my $hub      = $self->hub;
   my $glossary = $self->hub->glossary_lookup;
 
   my @columns = (
-    { key => 'gene',      title => 'Gene',                             sort => 'html'                        },
-    { key => 'trans',     title => 'Transcript (strand)',              sort => 'html'                        },
-    { key => 'allele',    title => 'Allele (transcript allele)',       sort => 'string',   width => '7%'     },
-    { key => 'type',      title => 'Consequence Type',                 sort => 'position_html'               },
-    { key => 'trans_pos', title => 'Position in transcript',           sort => 'position', align => 'left'   },
-    { key => 'cds_pos',   title => 'Position in CDS',                  sort => 'position', align => 'left'   },
-    { key => 'prot_pos',  title => 'Position in protein',              sort => 'position', align => 'left'   },
-    { key => 'aa',        title => 'Amino acid',                       sort => 'string'                      },
-    { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
-  );  
+    { key => 'gene',      title => 'Gene',                   sort => 'html'                      },
+    { key => 'trans',     title => 'Transcript (strand)',    sort => 'html'                      },
+    { key => 'allele',    title => 'Allele (Tr. allele)',    sort => 'string',   help => 'Allele (Transcript allele)' },
+    { key => 'type',      title => 'Consequence Type',       sort => 'position_html'             },
+    { key => 'trans_pos', title => 'Position in transcript', sort => 'position', align => 'left' },
+    { key => 'cds_pos',   title => 'Position in CDS',        sort => 'position', align => 'left' },
+    { key => 'prot_pos',  title => 'Position in protein',    sort => 'position', align => 'left' },
+    { key => 'aa',        title => 'AA',                     sort => 'string',   help => 'Resulting amino acid(s)'    },
+    { key => 'codon',     title => 'Codons',                 sort => 'string'                    },
+  );
 
   push @columns, ({ key => 'sift',     title => 'SIFT',     sort => 'position_html', align => 'center', help => $glossary->{'SIFT'} })
-      if $self->hub->species_defs->databases->{'DATABASE_VARIATION'} && defined $self->hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'};
+      if $hub->species_defs->databases->{'DATABASE_VARIATION'} && defined $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} && $column_flags->{'sift'};
 
-  push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
-      if $self->hub->species eq 'Homo_sapiens';
-  
+  if ($self->hub->species eq 'Homo_sapiens') {
+    push @columns, ({ key => 'polyphen', title => 'PolyPhen', sort => 'position_html', align => 'center', help => $glossary->{'PolyPhen'} })
+      if $column_flags->{'polyphen'};
+
+    push @columns, ({ key => 'cadd', title => 'CADD', sort => 'position_html', align => 'center', help => $glossary->{'CADD'} })
+      if $column_flags->{'cadd'};
+
+    push @columns, ({ key => 'dbnsfp_revel', title => 'REVEL', sort => 'position_html', align => 'center', help => $glossary->{'REVEL'} })
+      if $column_flags->{'dbnsfp_revel'};
+
+    push @columns, ({ key => 'dbnsfp_meta_lr', title => 'MetaLR', sort => 'position_html', align => 'center', help => $glossary->{'MetaLR'} })
+      if $column_flags->{'dbnsfp_meta_lr'};
+
+    push @columns, ({ key => 'dbnsfp_mutation_assessor', title => 'Mutation Assessor', sort => 'position_html', align => 'center', help => $glossary->{'MutationAssessor'} })
+      if $column_flags->{'dbnsfp_mutation_assessor'};
+  }
+
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
   
   return @columns;

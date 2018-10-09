@@ -17,25 +17,22 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::ViewConfig::Variation::Compara_Alignments;
+package EnsEMBL::Draw::GlyphSet::bigint;
+
+### Module for drawing data in BigInteract format (either user-attached, or
+### internally configured via an ini file or database record
+### Extends bigbed glyphset, as it is basically a sub-format of bigBed
 
 use strict;
 use warnings;
 
-use parent qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
+use EnsEMBL::Web::IOWrapper::BigInt;
 
-sub init_cacheable {
-  ## @override
-  my $self = shift;
+use parent qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
-  $self->SUPER::init_cacheable(@_);
-
-  $self->set_default_options({ 'title_display' => 'yes' });
-}
-
-sub field_order {
-  ## @override
-  return qw(hide_long_snps line_numbering title_display);
+sub get_iow {
+  my ($self, $url, $args) = @_;
+  return EnsEMBL::Web::IOWrapper::BigInt::open($url, 'BigInt', $args);
 }
 
 1;

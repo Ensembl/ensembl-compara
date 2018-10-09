@@ -137,7 +137,7 @@ sub populate_tree {
       botnav   EnsEMBL::Web::Component::Location::ViewBottomNav
       vartable EnsEMBL::Web::Component::Location::VariationTable
     )],
-    { 'availability' => 'slice' }
+    { 'availability' => 'slice variation' }
   ));
 
   $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
@@ -233,15 +233,16 @@ sub add_external_browsers {
   }
 
   if ($browsers{'ACCESSION'}) {
-    if ($chr) { 
-      $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
-    } else {
-      my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
-      $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
-    }
-    
-    $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
-    
+    if($species_defs->NCBI_GOLDEN_PATH) {
+      if ($chr) { 
+          $url = $hub->get_ExtURL('EGB_NCBI', { ACCESSION => $browsers{'ACCESSION'}, CHR => $chr, START => $start, END => $end });
+        } else {
+          my $taxid = $species_defs->get_config($hub->species, 'TAXONOMY_ID'); 
+          $url = "http://www.ncbi.nlm.nih.gov/mapview/map_search.cgi?taxid=$taxid";
+        }
+        
+        $self->get_other_browsers_menu->append($self->create_node('NCBI_DB', 'NCBI', [], { url => $url, raw => 1, external => 1 }));
+    }    
     delete $browsers{'ACCESSION'};
   }
 

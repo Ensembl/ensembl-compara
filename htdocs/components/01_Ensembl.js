@@ -406,6 +406,9 @@ Ensembl.extend({
     
     return x1 + x2;
   },
+  openMotifWidget: function(motifID) {
+    var widgetWindow = window.open("/motifWidget.htm?id="+motifID, "Motif Feature Widget", "width=950,height=550");
+  },
 
   populateTemplate : function(template, data) {
     var regexp  = /\{\{[\.\w]+\}\}/g;

@@ -47,6 +47,7 @@ use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::Tools::Misc qw(style_by_filesize);
 use EnsEMBL::Web::Tools::FailOver::SNPedia;
+use EnsEMBL::Web::Tools::FailOver::AlleleRegistry;
 
 use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::QueryStore::Cache::BookOfEnsembl;
@@ -566,12 +567,16 @@ sub multi_params {
   my $realign = shift;
 
   my $input = $self->input;
-
   my %params = defined $realign ?
     map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;
 
   return \%params;
+}
+
+sub get_alignment_id {
+  my $self = shift;
+  return $self->param('align') || $self->session->get_record_data({type => 'view_config', code => 'alignments_selector'})->{'align'} || '';
 }
 
 sub filename {
@@ -851,6 +856,25 @@ sub snpedia_status {
     warn "SNPEDIA failure";
   };
 
+  return $out;
+}
+
+# check to see if ClinGen Allele Registry site is up or down
+# if $out then site is up
+sub alleleregistry_status {
+
+  my $self = shift;
+
+  my $failover = EnsEMBL::Web::Tools::FailOver::AlleleRegistry->new($self);
+  my $out;
+
+  return $out if $self->species ne 'Homo_sapiens';
+
+  try {
+    $out = $failover->get_cached
+  } catch {
+    warn "Allele Registry failure";
+  };
   return $out;
 }
 

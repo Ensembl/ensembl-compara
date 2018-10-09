@@ -72,6 +72,7 @@ sub availability {
     
     $availability->{'chromosome'}      = exists $chrs{$seq_region_name};
     $availability->{'has_chromosomes'} = scalar @chromosomes;
+    $availability->{'variation'}       = $variation_db;
     $availability->{'has_strains'}     = $variation_db && $variation_db->{'#STRAINS'};
     $availability->{'slice'}           = $seq_region_name && $seq_region_name ne $self->hub->core_param('r');
     $availability->{'has_synteny'}     = scalar keys %{$synteny_hash{$species_defs->get_config($self->species, 'SPECIES_PRODUCTION_NAME')} || {}};

@@ -1,0 +1,41 @@
+<html>
+
+<head>
+<title>Matrix Profile</title>
+<link rel="stylesheet" type="text/css" media="all" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<script type="text/javascript">
+  var url   = "widgets.ensembl.org";
+  if(window.location.host.match(/^test\.|^staging\./)) {
+    url = "test.widgets.ensembl.org";
+  }
+  window.document.write('<link type="text/css" rel="stylesheet" href="//'+ url +'/motif_view.css" />');
+  window.document.write('<script type="text/javascript" src="//'+url+'/Widgets/core.js">\x3C/script>');
+</script>
+
+
+</head>
+
+<body>
+  <script type="text/javascript">
+  Ensembl.newWidget(
+    function() {
+      return {
+        container  : '._motif_view',
+        widgetType : Ensembl.widgets.MotifFeature
+      }
+    },
+
+    function() {
+      return {
+        configuration : {
+          ID        : (window.location.search.match(/\Wid=(\w+)/) || []).pop() || 'ENSPFM0392',
+        }
+      };
+  });
+  </script>
+
+  <div class="_motif_view" style="margin-top: 20px;"></div>
+</body>
+
+</html>

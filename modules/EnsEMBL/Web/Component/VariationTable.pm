@@ -130,8 +130,16 @@ sub sift_poly_classes {
     'deleterious - low confidence' => 'neutral',
     'tolerated low confidence'     => 'neutral',
     'deleterious low confidence'   => 'neutral',
+    'likely deleterious'     => 'bad',
+    'likely benign'          => 'good',
+    'likely disease causing' => 'bad',
+    'damaging'               => 'bad',
+    'high'                   => 'bad',
+    'medium'                 => 'ok',
+    'low'                    => 'good',
+    'neutral'                => 'good',
   );
-  foreach my $column_name (qw(sift polyphen)) {
+  foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
     next unless $value_column and $class_column;
@@ -144,12 +152,12 @@ sub sift_poly_classes {
     # TODO: make decorators accessible to filters. Complexity is that
     # many decorators (including these) are multi-column.
     my $lozenge = qq(<div class="score score_%s score_example">%s</div>);
-    my $left = { sift => 'bad', polyphen => 'good'}->{$column_name};
-    my $right = { sift => 'good', polyphen => 'bad'}->{$column_name};
+    my $left = { sift => 'bad', polyphen => 'good', cadd => 'good', revel => 'good', meta_lr => 'good', mutation_assessor => 'good'}->{$column_name};
+    my $right = { sift => 'good', polyphen => 'bad', cadd => 'bad', revel => 'bad', meta_lr => 'bad', 'mutation_assessor' => 'bad'}->{$column_name};
     $value_column->filter_endpoint_markup(0,sprintf($lozenge,$left,"0"));
     $value_column->filter_endpoint_markup(1,sprintf($lozenge,$right,"1"));
     my $slider_class =
-      { sift => 'redgreen', polyphen => 'greenred' }->{$column_name};
+      { sift => 'redgreen', polyphen => 'greenred', cadd => 'greenred', revel => 'greenred', meta_lr => 'greenred', mutation_assessor => 'greenred'}->{$column_name};
     $value_column->filter_slider_class("newtable_slider_$slider_class");
   }
 }
@@ -272,7 +280,7 @@ sub make_table {
   my $is_lrg = $self->isa('EnsEMBL::Web::Component::LRG::VariationTable');
 
   my @exclude;
-  push @exclude,'gmaf','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
+  push @exclude,'gmaf','gmaf_freq','gmaf_allele' unless $hub->species eq 'Homo_sapiens';
   push @exclude,'HGVS' unless $self->param('hgvs') eq 'on';
   if($is_lrg) {
     push @exclude,'Transcript';
@@ -281,7 +289,7 @@ sub make_table {
   }
   push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
   unless($hub->species eq 'Homo_sapiens') {
-    push @exclude,'polyphen_sort','polyphen_class','polyphen_value';
+    push @exclude,'polyphen_sort','polyphen_class','polyphen_value', 'cadd_sort', 'cadd_class', 'cadd_value', 'revel_sort', 'revel_class', 'revel_value', 'meta_lr_sort', 'meta_lr_class', 'meta_lr_value';
   }
   push @exclude,'Transcript' if $hub->type eq 'Transcript';
 
@@ -321,13 +329,17 @@ sub make_table {
   },{
     _key => 'gmaf_allele', _type => 'string no_filter unshowable',
   },{
-    _key => 'gmaf', _type => 'numeric', label => "Glo\fbal MAF",
-    helptip => $glossary->{'Global MAF'},
-    also_cols => 'gmaf_allele',
+    _key => 'gmaf_freq', _type => 'numeric unshowable',
+    sort_for => 'gmaf',
+    filter_label => 'Global MAF',
     filter_range => [0,0.5],
     filter_fixed => 1,
     filter_logarithmic => 1,
     primary => 1,
+  },{
+    _key => 'gmaf', _type => 'string no_filter', label => "Glo\fbal MAF",
+    helptip => $glossary->{'Global MAF'},
+    also_cols => 'gmaf_allele',
   },{
     _key => 'HGVS', _type => 'string no_filter', label => 'HGVS name(s)',
     width => 1.75
@@ -405,6 +417,54 @@ sub make_table {
     filter_fixed => 1,
     filter_blank_button => 1,
     primary => 3,
+  },{
+    _key => 'cadd_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'cadd_value',
+  },{
+    _key => 'cadd_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'cadd_value', _type => 'numeric',
+    label => "CADD",
+    helptip => $glossary->{'CADD'},
+    filter_range => [0,100],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  },{
+    _key => 'revel_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'revel_value',
+  },{
+    _key => 'revel_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'revel_value', _type => 'numeric',
+    label => "REVEL",
+    helptip => $glossary->{'REVEL'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  },{
+    _key => 'meta_lr_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'meta_lr_value',
+  },{
+    _key => 'meta_lr_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'meta_lr_value', _type => 'numeric',
+    label => "MetaLR",
+    helptip => $glossary->{'MetaLR'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
+  },{
+    _key => 'mutation_assessor_sort', _type => 'numeric no_filter unshowable',
+    sort_for => 'mutation_assessor_value',
+  },{
+    _key => 'mutation_assessor_class', _type => 'iconic no_filter unshowable',
+  },{
+    _key => 'mutation_assessor_value', _type => 'numeric',
+    label => "Mutation Assessor",
+    helptip => $glossary->{'MutationAssessor'},
+    filter_range => [0,1],
+    filter_fixed => 1,
+    filter_blank_button => 1,
   },{
     _key => 'LRG', _type => 'string unshowable',
     label => "LRG",
@@ -601,7 +661,11 @@ sub variation_table {
             
             my $sifts = $self->classify_sift_polyphen($tva->sift_prediction, $tva->sift_score);
             my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
-            
+            my $cadds = $self->classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
+            my $revels = $self->classify_score_prediction($tva->dbnsfp_revel_prediction, $tva->dbnsfp_revel_score);
+            my $meta_lrs = $self->classify_score_prediction($tva->dbnsfp_meta_lr_prediction, $tva->dbnsfp_meta_lr_score);
+            my $mutation_assessors = $self->classify_score_prediction($tva->dbnsfp_mutation_assessor_prediction, $tva->dbnsfp_mutation_assessor_score);
+ 
             # Adds LSDB/LRG sources
             if ($self->isa('EnsEMBL::Web::Component::LRG::VariationTable')) {
               my $var         = $vf->variation;
@@ -616,9 +680,11 @@ sub variation_table {
             }
             
             my $gmaf   = $vf->minor_allele_frequency; # global maf
+            my $gmaf_freq;
             my $gmaf_allele;
-            if(defined $gmaf) {
-              $gmaf = sprintf("%.3f",$gmaf);
+            if (defined $gmaf) {
+              $gmaf_freq = $gmaf;
+              $gmaf = ($gmaf < 0.001) ? '< 0.001' : sprintf("%.3f",$gmaf);
               $gmaf_allele = $vf->minor_allele;
             }
 
@@ -634,7 +700,8 @@ sub variation_table {
               vf_allele  => $vf_allele,
               Ambiguity  => $vf->ambig_code,
               gmaf       => $gmaf   || '-',
-              gmaf_allele => $gmaf_allele || '-',
+              gmaf_freq  => $gmaf_freq || '',
+              gmaf_allele => $gmaf_allele,
               status     => $status,
               clinsig    => $clin_sig,
               chr        => "$chr:" . ($start > $end ? " between $end & $start" : "$start".($start == $end ? '' : "-$end")),
@@ -652,6 +719,18 @@ sub variation_table {
               polyphen_sort  => $polys->[0],
               polyphen_class => $polys->[1],
               polyphen_value => $polys->[2],
+              cadd_sort  => $cadds->[0],
+              cadd_class => $cadds->[1],
+              cadd_value => $cadds->[2],
+              revel_sort  => $revels->[0],
+              revel_class => $revels->[1],
+              revel_value => $revels->[2],
+              meta_lr_sort  => $meta_lrs->[0],
+              meta_lr_class => $meta_lrs->[1],
+              meta_lr_value => $meta_lrs->[2],
+              mutation_assessor_sort  => $mutation_assessors->[0],
+              mutation_assessor_class => $mutation_assessors->[1],
+              mutation_assessor_value => $mutation_assessors->[2],
               HGVS       => $self->param('hgvs') eq 'on' ? ($self->get_hgvs($tva) || '-') : undef,
             };
             $row = { %$row, %$more_row };

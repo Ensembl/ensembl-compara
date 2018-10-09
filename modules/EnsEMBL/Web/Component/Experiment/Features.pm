@@ -154,7 +154,7 @@ sub evidence_link {
 
 sub motif_links {
   my ($self, $motifs) = @_;
-  return join ' ', map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @$motifs;
+  return join ' ', map qq(<a href="http://jaspar.genereg.net/cgi-bin/jaspar_db.pl?ID=$_&amp;rm=present&amp;collection=CORE" title="View motif">$_</a>), @{$motifs||[]};
 }
 
 sub gene_links {

@@ -88,8 +88,9 @@ sub activity {
   if (ref $epigenome ne 'Bio::EnsEMBL::Funcgen::Epigenome') {
     my $db      = $self->hub->database('funcgen');
     my $adaptor = $db->get_adaptor('Epigenome');
-    $epigenome  = $adaptor->fetch_by_name($epigenome);
+    $epigenome  = $adaptor->fetch_by_display_label($epigenome);
   }
+  return unless $epigenome;
 
   my $regact = $self->Obj->regulatory_activity_for_epigenome($epigenome);
   return $regact->activity if $regact;
@@ -160,29 +161,38 @@ sub get_evidence_list {
 }
 
 sub get_motif_features {
-  my $self = shift;
-  my $cell_line = shift;
-  my @motif_features = @{$self->Obj->get_RegulatoryEvidence('motif', $cell_line)||[]};
+  my ($self, $cell_line) = @_;
+  return {} unless $cell_line;
+  my @motif_features = @{$self->Obj->fetch_all_MotifFeatures_with_matching_Peak};
   my %motifs;
+
   foreach my $mf (@motif_features){
-
-    my %assoc_ftype_names;
-    map {$assoc_ftype_names{$_->feature_type->name} = undef} @{$mf->associated_annotated_features};
-    my $bm_ftname = $mf->binding_matrix->feature_type->name;
-    my @other_ftnames;
-    foreach my $af_ftname(keys(%assoc_ftype_names)){
-      push @other_ftnames, $af_ftname if $af_ftname ne $bm_ftname;
+    my $peak = $mf->fetch_overlapping_Peak_by_Epigenome($cell_line);
+    if ($peak) {
+      my $matrix = $mf->binding_matrix;
+      if ($matrix) {
+        my $matrix_id = '<a href="#" class="_motif">'.$mf->binding_matrix->stable_id.'</a>';
+        my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
+        my $name_string = '';
+        if (scalar @names) {
+          ## We don't want the string to be too long, but names can be very variable in length
+          $name_string = $names[0];
+          my $i = 1;
+          my $max_length = 12;
+          for ($i = 1; $i < scalar @names; $i++) {
+            if (length($names[$i]) < ($max_length - length($name_string))) {
+              $name_string .= $names[$i];
+            }
+            else {
+              last;
+            }
+          }
+          $name_string .= '...' if scalar @names > $i;
+        } 
+        $motifs{$mf->start .':'. $mf->end} = [$mf->stable_id, $name_string, $matrix_id, $mf->score];
+      }
     }
-
-    my $other_names_txt = '';
-
-    if(@other_ftnames){
-      $other_names_txt = ' ('.join(' ', @other_ftnames).')';
-    }
-
-    $motifs{$mf->start .':'. $mf->end} = [ $bm_ftname.$other_names_txt,  $mf->score, $mf->binding_matrix->name];
   }
-
   return \%motifs;
 }
 
@@ -365,10 +375,10 @@ sub regbuild_epigenomes {
   my ($self) = @_;
 
   if ( $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
-    return [sort keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'}}];
+    return $self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'regbuild_names'};
   }
 
-  return [];
+  return {};
 }
 
 ################ Calls for Feature in Detail view ###########################

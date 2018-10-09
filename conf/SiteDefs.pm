@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 93;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Jul2018';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'July 2018'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 94;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Oct2018';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'October 2018'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -226,6 +226,7 @@ our $ENSEMBL_JAVA         = "java"; # For js/css minification
 
 our $OLS_REST_API          = 'https://www.ebi.ac.uk/ols/api/';
 our $ENSEMBL_GLOSSARY_REST = $OLS_REST_API.'ontologies/ensemblglossary';
+our $ENSEMBL_GLOSSARY_URL  = 'https://www.ebi.ac.uk/ols/ontologies/ensemblglossary';
 
 ###############################################################################
 ## See Memoize.pm for meaning of these

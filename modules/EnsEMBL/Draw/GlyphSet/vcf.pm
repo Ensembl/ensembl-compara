@@ -153,11 +153,7 @@ sub consensus_features {
   my $species       = $self->{'config'}->hub->species;
   my $features      = [];
 
-  # If we have a variation db attached we can try and find a known SNP mapped at the same position
-  # But at the moment we do not display this info so we might as well just use the faster method 
-  #     my $vfa = $slice->_get_VariationFeatureAdaptor()->{list}->[0];
-   
-  my $vfa = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($species);
+  my $vfa = $config->hub->database('variation')->get_VariationFeatureAdaptor;
   my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
   my $colours = $self->species_defs->colour('variation');
    
@@ -247,7 +243,7 @@ sub consensus_features {
     if (defined($f->{'INFO'}->{'VE'})) {
       $consequence = (split /\|/, $f->{'INFO'}->{'VE'})[0];
     }
-    else {
+    elsif ($vfa) {
       ## Not defined in file, so look up in database
       my $snp = {
         start            => $vs, 

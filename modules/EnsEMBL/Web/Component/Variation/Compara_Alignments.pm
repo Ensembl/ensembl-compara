@@ -105,7 +105,7 @@ sub content {
   my $html;
  
   my $slice = $self->_get_slice($object);   
-  my $align = $hub->param('align');
+  my $align = $hub->get_alignment_id;
   my $alert = $self->check_for_align_problems({
                                                 'align'   => $align,
                                                 'species' => $species,
@@ -157,7 +157,17 @@ sub content {
   # Don't show the aligment if there is only 1 sequence (reference)
   my $align_threshold = ($ancestral_seq) ? 2 : 1;
   if (scalar(@aligned_slices) <= $align_threshold) {
-    return $self->_info('No alignment', "No phylogenetic context available at this location.");
+    if ($align) {
+      ## Get the name of this alignment
+      my $cdb          = shift || $hub->param('cdb') || 'compara';
+      my $alignments   = $species_defs->multi_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {};
+      my $alignment    = $alignments->{$align}{'name'} || 'this alignment';
+      return $self->_info('No alignments', "No phylogenetic context available for $alignment at this location.");
+    }
+    else {
+      ## Do nothing - we don't want to clutter the interface with a meaningless message
+      return '';
+    }
   }
  
   my $align_species = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'species'};

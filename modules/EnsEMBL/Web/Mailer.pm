@@ -58,11 +58,18 @@ sub email_footer {
   ## @return Text String
   my $self = shift;
  
-  my $footer = sprintf "\n\nMany thanks,\n\nThe %s web team\n\n", $self->site_name;
+  my $footer = sprintf "\n\n\nMany thanks,\n\nThe %s web team\n\n\n", $self->site_name;
 
   if ($self->hub->species_defs->GDPR_POLICY_URL) {
     $footer .= sprintf "%s Privacy Statement: %s\n\n", $self->site_name, $self->hub->species_defs->GDPR_POLICY_URL;
   }
+
+  $footer .= "\n\n\nhttp://".$self->hub->species_defs->ENSEMBL_SERVERNAME;
+
+  my $address = $self->hub->species_defs->SITE_OWNER_ADDRESS;
+  $footer .= "\n\n$address" if $address;
+
+  $footer .= "\n\n";
 
   return $footer;
 }
@@ -85,7 +92,7 @@ sub send {
   my @week_days   = qw(Sun Mon Tue Wed Thu Fri Sat Sun);
   my ($sec, $min, $hour, $day, $month, $year, $wday) = gmtime;
   $year          += 1900;
-  my $time_string = sprintf '%s %s %s %s, %02d:%02d:%02d +0000', $week_days[$wday], $day, $months[$month], $year, $hour, $min, $sec;
+  my $time_string = sprintf '%s, %s %s %s %02d:%02d:%02d +0000', $week_days[$wday], $day, $months[$month], $year, $hour, $min, $sec;
 
   my $mailer;
   my $return    = 1;

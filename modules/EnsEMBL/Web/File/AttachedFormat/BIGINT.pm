@@ -17,25 +17,17 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::ViewConfig::Variation::Compara_Alignments;
+package EnsEMBL::Web::File::AttachedFormat::BIGINT;
 
 use strict;
 use warnings;
+no warnings 'uninitialized';
 
-use parent qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
+use base qw(EnsEMBL::Web::File::AttachedFormat::BIGBED);
 
-sub init_cacheable {
-  ## @override
-  my $self = shift;
-
-  $self->SUPER::init_cacheable(@_);
-
-  $self->set_default_options({ 'title_display' => 'yes' });
-}
-
-sub field_order {
-  ## @override
-  return qw(hide_long_snps line_numbering title_display);
+sub _bigint_adaptor {
+  my ($self,$bba) = @_;
+  return $self->_bigbed_adaptor($bba);
 }
 
 1;

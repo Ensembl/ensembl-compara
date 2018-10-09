@@ -17,25 +17,17 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::ViewConfig::Variation::Compara_Alignments;
+package EnsEMBL::Web::Component::Gene::TaxonSelector;
 
 use strict;
-use warnings;
 
-use parent qw(EnsEMBL::Web::ViewConfig::Compara_Alignments);
+use base qw(EnsEMBL::Web::Component::Location::TaxonSelector);
 
-sub init_cacheable {
-  ## @override
+sub _init {
   my $self = shift;
-
-  $self->SUPER::init_cacheable(@_);
-
-  $self->set_default_options({ 'title_display' => 'yes' });
-}
-
-sub field_order {
-  ## @override
-  return qw(hide_long_snps line_numbering title_display);
+  $self->{title} = 'Alignments Selector';
+  $self->SUPER::_init();
 }
 
 1;
+

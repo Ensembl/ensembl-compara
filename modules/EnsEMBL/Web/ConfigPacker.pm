@@ -251,7 +251,7 @@ sub _summarise_core_tables {
     );
     foreach my $T ( @$res_aref ) {
       my $a_ref = $analysis->{$T->[0]}
-        || ( warn("Missing analysis entry $table - $T->[0]\n") && next );
+        || ( warn("$db_name is missing analysis entry $table - $T->[0]\n") && next );
       my $value = {
         'name'  => $a_ref->{'name'},
         'desc'  => $a_ref->{'description'},
@@ -645,8 +645,8 @@ sub _summarise_variation_db {
   
 	# Mixed source(s)
 	my $mx_aref = $dbh->selectall_arrayref(
-	  'select distinct(s.name) from variation v, source s 
-		 where v.source_id=s.source_id and s.somatic_status = "mixed"'
+	  'select distinct(s.name) from source s straight_join variation v on v.source_id=s.source_id 
+	   and s.somatic_status = "mixed"'
 	);
 	foreach (@$mx_aref){ 
     $somatic_mutations{$_->[0]}->{'none'} = 'none' ;
@@ -1758,6 +1758,7 @@ sub _munge_file_formats {
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
     'bigpsl'    => {'ext' => 'bb',  'label' => 'BigPsl',    'display' => 'graph', 'remote' => 1},
+    'bigint'    => {'ext' => 'bb',  'label' => 'BigInteract',    'display' => 'graph', 'remote' => 1},
     'cram'      => {'ext' => 'cram','label' => 'CRAM',      'display' => 'graph', 'remote' => 1},
     'trackhub'  => {'ext' => 'txt', 'label' => 'Track Hub', 'display' => 'graph', 'remote' => 1},
     ## Export only

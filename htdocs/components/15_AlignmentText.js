@@ -41,11 +41,7 @@ Ensembl.Panel.AlignmentText = Ensembl.Panel.Content.extend({
         message_text_full = 'Currently showing full alignment. Please click the button below to show the alignment for first ' + $(this).data('displayWidth') + ' columns.';
       }
 
-      // Get TextSequence Panel
-      if (!partial_alignment_panel) {
-        var panels_arr = Ensembl.PanelManager.getPanels('TextSequence');
-        partial_alignment_panel = panels_arr[0];
-      }
+      partial_alignment_panel = Ensembl.PanelManager.getPanels('TextSequence')[0];
 
       if ($(this).html() === 'Display full alignment') {
         $(this).html('Hide full alignment');

@@ -218,7 +218,7 @@ sub md_delete_trackhub {
   foreach my $manager (grep $_, $hub->user, $hub->session) {
     $current_record = $manager->get_record_data({'type' => 'url', 'code' => $hub->param('code')});
     $record_manager = $manager;
-    last if $current_record;
+    last if ($current_record && keys %$current_record);
   }
   return unless $current_record;
   my $trackhub_url = $current_record->{'url'};

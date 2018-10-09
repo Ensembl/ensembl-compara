@@ -23,5 +23,45 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TaxonSelector);
 
+sub _init {
+  my $self = shift;
+  my $hub  = $self->hub;
+  $self->{multiselect} = 0;
+
+  # For region comparison
+  if ($hub->param('referer_action') eq 'Multi') {
+    my $urlParams = { map { ($_ => $hub->param($_)) } $hub->param };
+    my @default_species = [];
+    # Get default keys (default selected) for region comparison
+    my $shown = [ map { $urlParams->{$_} } grep m/^s(\d+)/, keys %$urlParams ]; # get species (and parameters) already shown on the page
+    push @{$self->{default_species}}, @$shown if scalar @$shown;
+    $self->{multiselect} = 1;
+  }
+  else {
+    my $alignment = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$hub->param('align')};
+    $self->{align_label} = $alignment->{name} if ($alignment->{'class'} !~ /pairwise/);
+
+    my $sp;
+    my $vc_key;
+    my $vc_val = 0;
+    my $alignment_selector_vc = $hub->session->get_record_data({type => 'view_config', code => 'alignments_selector'});
+    $self->{default_species} = [];
+    $self->{title} = 'Alignments Selector';
+
+    foreach (keys %{$alignment->{species}}) {
+      next if ($_ eq $hub->species);
+      if ($alignment->{'class'} !~ /pairwise/) { # Multiple alignments
+        $vc_key = join '_', ('species', $alignment->{id}, lc($_));
+        $vc_val = $alignment_selector_vc->{$vc_key};
+        push @{$self->{default_species}}, $vc_key if $vc_val eq 'yes';
+      }
+      else {
+        push @{$self->{default_species}}, $_;
+      }
+    }
+  }
+  $self->SUPER::_init();
+}
+
 1;
 

@@ -319,10 +319,10 @@ foreach my $index (@indexes) {
         if ($index =~ /Family|GeneTree|Gene/) {
           my $compara = $PD->{'MULTI'}{'databases'}{'DATABASE_COMPARA'};
           $conf->{'dbh_compara'} = DBI->connect("dbi:mysql:$compara->{'NAME'};host=$compara->{'HOST'};port=$compara->{'PORT'}",
-                                                $compara->{'USER'},
-                                                $compara->{'PASS'},
-              {PrintError => 1, RaiseError => 0}
-                                              );
+            $compara->{'USER'},
+            $compara->{'PASS'},
+            {PrintError => 1, RaiseError => 0}
+            );
         }
         my $function = "dump$index";
         no strict "refs";
@@ -413,7 +413,7 @@ sub dumpHelp {
   my $conf = shift;
   my $start_time = time;
   my $total_c;
-  my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View Glossary FAQ);
+  my @types = $sitetype eq 'Vega' ? qw(Glossary) : qw(View FAQ);
   foreach my $type (@types) {
     my $counter   = make_counter(0);
     my $file = $conf->{'directory'}.'/'.$conf->{'website'}{'name'}.'_'.$type.'.xml';
@@ -600,7 +600,9 @@ sub dumpVariation {
   my $conf = shift;
   my $VariationDB = $conf->{'variation_dbname'};
   return unless $VariationDB;
+
   my $counter   = make_counter(0);
+  my $sql_batch = 250000000; #how much do we split the heavy sql query into
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${VariationDB}_Variation.xml";
   my $start_time = time;
@@ -626,11 +628,11 @@ sub dumpVariation {
   my $sth;
   my ($hgvs_sth);
   my $all_hgvs_names = on_disk_set('all_hgvs_names');
-  my $sql_batch = 250000000; #split the HGVS query into batches of this size
   if ($dbspecies ne 'omo_sapiens') {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     my $i = 0;
-    my $continue = 1;
+    my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
+    #split query
     while($continue) {
       $sth = $conf->{'variation_dbh'}->prepare(qq(
         SELECT variation_id, hgvs_name
@@ -777,30 +779,25 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
     $failures->{$variation_id} = $desc;
   }
 
-  # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
-  print LOG "    Preparing to get all SNPs ".&date_and_mem()."\n";
-    my $rowcache;
-    my $i = 0;
-    my $continue = 1;
-#split query
-    while($continue) {      
-      $sth = $conf->{'variation_dbh'}->prepare(qq(
-        SELECT v.variation_id, v.name, v.source_id, v.somatic
-          FROM variation v limit $sql_batch offset $i));
+  # Process all variations in batches, both mapped, failed and the precious non-mapped, non-failed
 
-      $sth->execute() or die "Error:", $DBI::errstr;
-      #$continue++;
-      if($sth->rows) {
-        $i += $sql_batch;
-        push(@$rowcache, @{$sth->fetchall_arrayref});
-      } else {
-        $continue = 0;
-      }
-    }
-  print LOG "     ...executed SQL, now retrieving data and generating xml ".&date_and_mem()."\n";
+  my $batch_size = 50_000_000;
+  my $offset = 0;
+
+  print LOG "    Processing SNPs in batches of $batch_size ".&date_and_mem()."\n";
 
   my $new_syn_c = 0;
-  while ( my $rowcache = $sth->fetchall_arrayref( undef, 10_000 ) ) {
+  while (1) {
+    print LOG "      Fetching from offset $offset.... " . &date_and_mem() . "\n";
+
+    my $rowcache = $conf->{'variation_dbh'}->selectall_arrayref(qq(
+      SELECT v.variation_id, v.name, v.source_id, v.somatic
+        FROM variation v LIMIT $batch_size OFFSET $offset));
+
+    last unless @$rowcache;
+
+    $offset += $batch_size;
+   
     while ( my $row = shift( @{$rowcache} ) ) {
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
@@ -891,6 +888,7 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       }
     }
   }
+
   print LOG "    All SNPs dumped to file ".&date_and_mem()."\n";
 
   my $c = footer( $counter->(), $fh, 'Variation');
@@ -1793,6 +1791,7 @@ sub dumpFamily {
            AND sm.source_name = 'ENSEMBLPEP'
            AND gdb.name = '$dbspecies'),'seq_member_id');
   #get all families
+  $conf->{'dbh_compara'}->do('SET SESSION group_concat_max_len = 200000');
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
            f.description,
@@ -1811,8 +1810,8 @@ sub dumpFamily {
     my (%genes,%proteins,%transcripts);
     foreach my $gene_id (split ',',$gene_member_ids) {
       if ($gene_members->{$gene_id}) {
-  my $stable_id = $gene_members->{$gene_id}{'stable_id'};
-  my $display_label = $gene_names->{$stable_id} || 'none';
+        my $stable_id = $gene_members->{$gene_id}{'stable_id'};
+        my $display_label = $gene_names->{$stable_id} || 'none';
         $genes{$stable_id}{display_label} = $display_label;
       }
     }
@@ -1820,8 +1819,8 @@ sub dumpFamily {
       if ($protein_members->{$tl_id}) {
         my $tl_sid = $protein_members->{$tl_id}{'stable_id'};
         $proteins{$tl_sid}++;
-  my $t_sid = $transl->{$tl_sid}{'trans'};
-  $transcripts{$t_sid}++;
+        my $t_sid = $transl->{$tl_sid}{'trans'};
+        $transcripts{$t_sid}++;
       }
     }
     if (%genes) {

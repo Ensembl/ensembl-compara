@@ -88,6 +88,7 @@ sub USERDATA_FORMATS {
     'bedgraph'    => {'ext' => 'bed',     'label' => 'bedGraph',  'display' => 'graph'},
     'bigbed'      => {'ext' => 'bb',      'label' => 'BigBed',    'display' => 'graph',   'limit' => 'remote'},
     'bigpsl'      => {'ext' => 'bb',      'label' => 'BigPsl',    'display' => 'graph',   'limit' => 'remote'},
+    'bigint'      => {'ext' => 'bb',      'label' => 'BigInteract',    'display' => 'graph',   'limit' => 'remote'},
     'bigwig'      => {'ext' => 'bw',      'label' => 'BigWig',    'display' => 'graph',   'limit' => 'remote'},
     'cram'        => {'ext' => 'cram',    'label' => 'CRAM',      'display' => 'graph',   'limit' => 'remote'},
     'gff3'        => {'ext' => 'gff3',    'label' => 'GFF3',      'display' => 'feature'},
@@ -348,6 +349,15 @@ sub MARKUP_OPTIONS {
       'select'   => 'select',
       'name'     => 'consequence_filter',
       'label'    => 'Filter variants by consequence type',
+      'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
+    },
+    'evidence_filter' => {
+      'type'     => 'DropDown',
+      'multiple' => 1,
+      'size'     => 5,
+      'select'   => 'select',
+      'name'     => 'evidence_filter',
+      'label'    => 'Filter variants by evidence status',
       'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
     'hidden_sources' => {
