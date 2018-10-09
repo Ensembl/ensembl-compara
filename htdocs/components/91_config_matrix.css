@@ -173,9 +173,11 @@ body.ie8   div.config div.config_matrix .tutorial.col   { margin: -20px 0 0 50px
 
 /* New matrix wizard styling */
 div.track-panel                       { float: left; width:85%; border: #ccc 1px solid; }
-div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 25%; }
-div.result-box span.clearall             { display:inline-block; float: right; color: #697ec9;text-decoration: underline; cursor: pointer}
-h5.result-header                      { display: block; margin-top: 10px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; }
+div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 430px; }
+div.filter-content                    { min-height: 150px; }
+span.error                            { float: right; color: #FF0000; margin-right: 5px; font-weight: bold; }
+div.result-box span.clearall          { display:inline-block; float: right; color: #697ec9;text-decoration: underline; cursor: pointer}
+h5.result-header                      { display: block; margin-top: 10px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; }
 div.config_wrapper div.config ul.result-list li   { margin: 10px; cursor: default; }
 
 /* customised checkbox */
@@ -223,5 +225,8 @@ div.config_wrapper div.config ul.letter-content li  { margin: 10px; cursor: defa
 div.config_wrapper div.config ul.list-content       { margin-left: 55px; margin-top: 40px; }
 
 /* apply filter button */
-button.filter         { display:block; margin-top: 50px; width: 100px; color: #fff; background-color: #ccc; border-radius: 3px; height: 30px; outline: none; border: 1px solid white; }
-button.filter.active  { background-color: #6bbd6b; cursor: pointer; }
+div.bottom-buttons            { display: block; margin-top: 50px; }
+button.filter                 { display: inline-block; float: right; width: 155px; margin-top: -8px; background-color: #fff; color: #b7b7b7; border-radius: 3px; height: 30px; outline: none; border: 1px solid #b7b7b7; }
+button.filter.active          { background-color: #6bbd6b; cursor: pointer; color: #fff; }
+text.save-config              { color: #b7b7b7; }
+span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b7 }
