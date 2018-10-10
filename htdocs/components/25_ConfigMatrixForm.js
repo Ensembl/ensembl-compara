@@ -31,12 +31,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
 
-    this.elLk.browseTrack  = this.el.find("div#browse-track");
-    this.elLk.buttonTab    = this.el.find("div.track-tab");
-    this.elLk.contentTab   = this.el.find("div.tab-content");
-    this.elLk.filterList   = this.el.find("ul.result-list");
-    this.elLk.filterButton = this.el.find("button.filter");
-    this.elLk.clearAll     = this.el.find("span.clearall");
+    this.elLk.cellPanel       = this.el.find("div#cell-panel");
+    this.elLk.experimentPanel = this.el.find("div#experiment-panel");
+    this.elLk.buttonTab       = this.el.find("div.track-tab");
+    this.elLk.contentTab      = this.el.find("div.tab-content");
+    this.elLk.filterList      = this.el.find("ul.result-list");
+    this.elLk.filterButton    = this.el.find("button.filter");
+    this.elLk.clearAll        = this.el.find("span.clearall");
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
@@ -59,16 +60,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       
       panel.toggleTab(this, panel.el.find("div.track-menu"));
       
-      // if button is Edit and then browse track tab or search track tab is clicked then change it to Apply Filters
-      // if button is Apply filters and it is active and then track configuration tab is shown then change it to Edit
-      if(selectTab === 'search-tab' || selectTab === 'browse-tab')
-      {
-        if(panel.elLk.filterButton.hasClass("_edit")) {
-          panel.elLk.filterButton.removeClass("_edit").outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML);
-        }
-      } else if (selectTab === 'config-tab' && !panel.elLk.filterButton.hasClass("_edit") && panel.elLk.filterButton.hasClass("active")) {
-        panel.elLk.filterButton.addClass("_edit").outerWidth("70px").html("Edit");
-      }
+      //if button is Edit and then browse track tab or search track tab is clicked then change it to Apply Filters
+      //if button is Apply filters and it is active and then track configuration tab is shown then change it to Edit
+      // if(selectTab === 'search-tab' || selectTab === 'browse-tab')
+      // {
+        // if(panel.elLk.filterButton.hasClass("_edit")) {
+          // panel.elLk.filterButton.removeClass("_edit").outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML);
+        // }
+      // } else if (selectTab === 'config-tab' && !panel.elLk.filterButton.hasClass("_edit") && panel.elLk.filterButton.hasClass("active")) {
+        // panel.elLk.filterButton.addClass("_edit").outerWidth("70px").html("Edit");
+      // }
     });
     
     panel.clickCheckbox(this.elLk.filterList, 1);
@@ -80,11 +81,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   clearAll: function (clearLink) {
     var panel = this;
     
-  clearLink.on("click",function(e){
-    $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
-      panel.selectBox(ele, 1, 0);
+    clearLink.on("click",function(e){
+      $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
+        panel.selectBox(ele, 1, 0);
+      });
     });
-  });
     
   },
   
@@ -164,7 +165,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       $(el).find("span.fancy-checkbox").addClass("selected");
     }
-    panel.enableFilterButton('div#cell, div#experiment, div#source');    
+    panel.enableFilterButton('div#cell, div#experiment');    
   },
   
   // Function to show a panel when button is clicked
@@ -211,14 +212,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   
   trackTab: function() {
     var panel = this;
-    
-    this.elLk.browseTrack.append('<div class="tabs cells"><div class="cell-label">Track filters</div><div class="track-tab active">Cell type<span class="hidden content-id">cell-type-content</span></div><div class="track-tab">Experiment type<span class="hidden content-id">experiment-type-content</span></div><div class="track-tab">Source<span class="hidden content-id">source-content</span></div></div><div id="cell-type-content" class="tab-content active"><span class="hidden rhsection-id">cell</span></div><div id="experiment-type-content" class="tab-content"><span class="hidden rhsection-id">experiment</span></div><div id="source-content" class="tab-content"><ul class="list-content"><li><span class="fancy-checkbox"></span>Blueprint</li><li><span class="fancy-checkbox"></span>Another source</li></ul><span class="hidden rhsection-id">source</span></div>');
-
-    //selecting the tab in track filters
-    this.elLk.cellTab = this.el.find("div.cells div.track-tab");
-    this.elLk.cellTab.on("click", function () { 
-      panel.toggleTab(this, panel.el.find("div.cells"));
-    });
     
     //showing and applying cell types
     this.displayFilter(Object.keys(panel.json_data.cell_lines).sort(), "div#cell-type-content", "alphabetRibbon");

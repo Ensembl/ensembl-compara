@@ -172,11 +172,10 @@ body.ie8   div.config div.config_matrix .tutorial.col   { margin: -20px 0 0 50px
 
 
 /* New matrix wizard styling */
-div.track-panel                       { float: left; width:85%; border: #ccc 1px solid; }
-div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 430px; }
+div.track-panel                       { float: left; border: #ccc 1px solid; padding-left: 16px; padding-right: 16px; background-color: [[LIGHT_GREY]]; margin-bottom: 50px; min-width: 600px; }
+div.result-box                        { float: right; margin: 0 0 0 0.5em; border: #ccc 1px solid; padding: 15px; height: 100%; width: 300px; min-width: 300px; }
 div.filter-content                    { min-height: 150px; }
-span.error                            { float: right; color: #FF0000; margin-right: 5px; font-weight: bold; }
-div.result-box span.clearall          { display:inline-block; float: right; color: #697ec9;text-decoration: underline; cursor: pointer}
+span.error                            { float: right; color: [[SEVERE_DARK]]; margin-right: 5px; font-weight: bold; }
 h5.result-header                      { display: block; margin-top: 10px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; }
 div.config_wrapper div.config ul.result-list li   { margin: 10px; cursor: default; }
 
@@ -190,34 +189,36 @@ div.all-box                                     { display: inline-block; float: 
 div.all-box text                                { padding: 5px; }
 div.all-box span.fancy-checkbox.selected        { background-position: -32px -32px; }
 div.all-box span.fancy-checkbox.selected:hover  { background-position: -48px -32px; }
-div.cell-listing div.all-box                    { margin-top: -17px; margin-right: 20px; }
+div.cell-listing div.all-box                    { margin-top: -17px; }
 div.list-all-box                                { margin-right: 75px; margin-top: 40px; }
 
 
-div.tabs                   { display: flex; flex-direction: row; width: 100%; }
-div.track-tab              { background-color: #fff; color: #666666; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px; width: 25%; text-align: center; padding: 5px 5px 10px 5px;}
-div.track-tab.active       { background-color: #eeeeee; border-bottom: 1px solid #eee; color: #000; cursor:  auto; }
-div.track-tab:hover        { background-color: #eeeeee; opacity: 0.5; color: #000; }
-div.track-tab.active:hover { background-color: #eeeeee; opacity: 1; }
-div.tab-content            { display: none; min-height: 300px; width: 100%; }
-div.tab-content.active     { display: inline-block; background-color: #eeeeee; }
+div.tabs                      { display: flex; flex-direction: row; width: 100%; }
+div.track-menu                { background-color: [[WHITE]]; }
+div.track-menu div.track-tab  { border-right: none; border-left: #ccc 1px solid; }
+div.track-tab                 { background-color: [[WHITE]]; color: [[DARK_GREY]]; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px; width: 50%; text-align: center; padding: 5px 5px 10px 5px; margin: 0 0 0 -1px; }
+div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  auto; }
+div.track-tab:hover           { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
+div.track-tab.active:hover    { background-color: [[LIGHT_GREY]]; opacity: 1; }
+div.tab-content               { display: none; min-height: 300px; width: 100%; }
+div.tab-content.active        { display: inline-block; background-color: [[LIGHT_GREY]]; }
 
 div.tabs.cells                                                       { margin: 3em 1em 1em 1em; }
 div.cell-label                                                       { width: 75px; float: left; margin-top: 5px;}
-div.cells div.track-tab, div.experiments div.track-tab               { background-color: #eeeeee;  border: #ccc 1px solid; width: 100px; }
-div.cells div.track-tab:hover, div.experiments div.track-tab:hover   { background-color: #fff; }
-div.cells div.track-tab.active,div.experiments div.track-tab.active  { background-color: #fff;  border: #ccc 1px solid; }
-div.tabs.experiments                                                 { margin: 5px 5px 5px 85px; }
+div.cells div.track-tab, div.experiments div.track-tab               { background-color: [[LIGHT_GREY]];  border: #ccc 1px solid; width: 100px; }
+div.cells div.track-tab:hover, div.experiments div.track-tab:hover   { background-color: [[WHITE]]; }
+div.cells div.track-tab.active,div.experiments div.track-tab.active  { background-color: [[WHITE]];  border: #ccc 1px solid; }
+div.tabs.experiments                                                 { margin: 20px 5px 5px 85px; }
 
-div.cell-listing  { padding-top: 3em; padding-left: 1em; }
+div.cell-listing  { padding-top: 3em; }
 
 /* alphabet ribbon */
-div.larrow, div.rarrow                              { display: inline-block; float: left; color: #000; cursor: pointer; }
-div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: #bebebe; }
-div.letters-ribbon                                  { display: inline-block; float: left; color: #000; font-size: 0.8em; margin-right: 5px; }
+div.larrow, div.rarrow                              { display: inline-block; float: left; color: [[BLACK]]; cursor: pointer; }
+div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: [[MEDIUM_GREY]]; }
+div.letters-ribbon                                  { display: inline-block; float: left; color: [[BLACK]]; font-size: 0.8em; margin-right: 5px; }
 div.alphabet-div                                    { margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
-div.alphabet-div.active                             { cursor: default; background-color: #474747; color: #fff; opacity: 0.9; }
-div.alphabet-div.inactive                           { color: #ababab; }
+div.alphabet-div.active                             { cursor: default; background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; opacity: 0.9; }
+div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; }
 div.ribbon-content                                  { display: flex; float: left; clear: left; padding: 1em; margin-left: 5px;}
 div.alphabet-content                                { display: none;  }
 div.alphabet-content.active                         { display: block; }
@@ -226,7 +227,7 @@ div.config_wrapper div.config ul.list-content       { margin-left: 55px; margin-
 
 /* apply filter button */
 div.bottom-buttons            { display: block; margin-top: 50px; }
-button.filter                 { display: inline-block; float: right; width: 155px; margin-top: -8px; background-color: #fff; color: #b7b7b7; border-radius: 3px; height: 30px; outline: none; border: 1px solid #b7b7b7; }
-button.filter.active          { background-color: #6bbd6b; cursor: pointer; color: #fff; }
-text.save-config              { color: #b7b7b7; }
+button.filter                 { display: inline-block; float: right; width: 155px; margin-top: -8px; background-color: [[WHITE]]; color: [[PALE_GREY]]; border-radius: 3px; height: 30px; outline: none; border: 1px solid #b7b7b7; }
+button.filter.active          { background-color: [[OK_DARK]]; cursor: pointer; color: [[WHITE]]; }
+text.save-config              { color: [[PALE_GREY]]; }
 span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b7 }

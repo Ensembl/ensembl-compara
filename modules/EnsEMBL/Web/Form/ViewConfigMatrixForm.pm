@@ -54,62 +54,51 @@ sub build {
     <div class="header_tutorial_wrapper">
       <h1>Regulation data</h1>
     </div>
-    <div style="display: flex">
-      <div class="track-panel">
-        <div class="tabs track-menu">
-          <div class="track-tab active" id="browse-tab">Browse tracks<span class="hidden content-id">browse-track</span></div>
-          <div class="track-tab" id="search-tab">Search tracks<span class="hidden content-id">search-track</span></div>
-          <div class="track-tab" id="config-tab">Track configuration<span class="hidden content-id">track-config</span></div>
-          <div class="track-tab" id="help-tab" style="border-right: none;">Help<span class="hidden content-id">help-track</span></div>
-        </div>
-        
-        <div id="browse-track" class="tab-content active">
-        </div>
-
-        <div id="search-track" class="tab-content">
-          <p>Search tracks....</p>
-        </div>
-        
-        <div id="track-config" class="tab-content">
-          <p>Tracks configuration....</p>
-        </div>      
-        
-        <div id="help-track" class="tab-content">
-          <p>Please help.....</p>
-        </div>      
+    <div class="track-panel">
+      <div class="tabs track-menu">
+        <div class="track-tab active" id="cell-tab">Cell type<span class="hidden content-id">cell-type-content</span></div>
+        <div class="track-tab" id="experiment-tab">Experimental data<span class="hidden content-id">experiment-type-content</span></div>
       </div>
-      <div class="result-box">
-        <h3>Selected tracks</h3>
-
-        <div class="filter-content">
-          <h5 class="result-header">Cell type <span class="error">Please select Cell types</span></h5>
-          <div class="result-content" id="cell">
-            <ul class="result-list">
-              <span class="hidden lhsection-id">cell-type-content</span>
-            </ul>
-          </div>
-
-          <h5 class="result-header">Experimental data <span class="error">Please select Experimental data</span></h5>
-          <div class="result-content" id="experiment">
-            <ul class="result-list">
-              <span class="hidden lhsection-id">experiment-type-content</span>
-            </ul>
-          </div>
-
-          <h5 class="result-header">Source</h5>
-          <div class="result-content" id="source">
-            <ul class="result-list">
-              <span class="hidden lhsection-id">source-content</span>
-            </ul>
-          </div>
-        </div>
-
-        <div class="bottom-buttons">
-          <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
-          <button class="filter">Configure track display</button>
-        </div>
-
+      
+      <div id="cell-type-content" class="tab-content active">
+        <span class="hidden rhsection-id">cell</span>
       </div>
+
+      <div id="experiment-type-content" class="tab-content">
+        <span class="hidden rhsection-id">experiment</span>
+      </div>
+    </div>
+    <div class="result-box">
+      <h3>Selected tracks</h3>
+
+      <div class="filter-content">
+        <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
+        <div class="result-content" id="cell">
+          <ul class="result-list">
+            <span class="hidden lhsection-id">cell-type-content</span>
+          </ul>
+        </div>
+
+        <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
+        <div class="result-content" id="experiment">
+          <ul class="result-list">
+            <span class="hidden lhsection-id">experiment-type-content</span>
+          </ul>
+        </div>
+
+        <h5 class="result-header">Source</h5>
+        <div class="result-content" id="source">
+          <ul class="result-list">
+            <span class="hidden lhsection-id">source-content</span>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bottom-buttons">
+        <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
+        <button class="filter">Configure track display</button>
+      </div>
+
     </div>
   );
 
