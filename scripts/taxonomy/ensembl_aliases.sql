@@ -239,3 +239,15 @@ Sending a mail to the Ensembl or Ensembl Compara teams may also be a good idea.
 SELECT "ncbi_taxa_name entries that does not correspond with ncbi_taxa_nodes:" AS "";
 SELECT "If something is listed below, remove the entry in ncbi_taxa_name, remove the corresponding entries in ensembl_aliases.sql and make sure your code does not rely on the deprecated node" AS "";
 SELECT * FROM ncbi_taxa_name WHERE NOT EXISTS (SELECT NULL FROM ncbi_taxa_node WHERE ncbi_taxa_node.taxon_id = ncbi_taxa_name.taxon_id);
+
+
+/*
+The following query will show the taxa that have a display name defined in both this file and the database.
+This can happen if the display name has been added to the NCBI taxonomy database. If the names match or if the
+name defined in the NCBI taxonomy database is better, remove the "ensembl alias name" entry from both this file
+and the database.
+*/
+SELECT "taxon_ids with multiple display names:" AS "";
+SELECT "If something is listed below, compare the names and remove the ensembl one if the NCBI one is better" AS "";
+SELECT * FROM ncbi_taxa_name n1 JOIN ncbi_taxa_name n2 USING (taxon_id) WHERE n1.name_class = "ensembl alias name" AND n2.name_class IN ("genbank common name", "blast name", "common name");
+
