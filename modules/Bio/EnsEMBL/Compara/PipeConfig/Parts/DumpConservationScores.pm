@@ -43,7 +43,7 @@ sub pipeline_analyses_dump_conservation_scores {
         {   -logic_name     => 'genomedb_factory_cs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters     => {
-                'extra_parameters'      => [ 'name' ],
+                'extra_parameters'      => [ 'name', 'assembly' ],
             },
             -flow_into      => {
                 '2->A' => { 'region_factory' => INPUT_PLUS() },

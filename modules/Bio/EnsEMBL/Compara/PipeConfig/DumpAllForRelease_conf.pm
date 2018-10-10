@@ -242,7 +242,7 @@ sub pipeline_wide_parameters {
 
         'bedgraph_file'  => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.bedgraph',
         'chromsize_file' => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.chromsize',
-        'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.bw',
+        'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.#assembly#.bw',
         'bed_file'       => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
 
         # species trees
