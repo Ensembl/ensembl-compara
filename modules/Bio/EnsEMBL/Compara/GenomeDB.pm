@@ -229,7 +229,7 @@ sub _check_equals {
     my ($self, $ref_genome_db) = @_;
 
     my $diffs = '';
-    foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype is_good_for_alignment)) {
+    foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype)) {
         if (($self->$field() xor $ref_genome_db->$field()) or ($self->$field() and $ref_genome_db->$field() and ($self->$field() ne $ref_genome_db->$field()))) {
             $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field() // '<NULL>', $ref_genome_db->$field() // '<NULL>');
         }
@@ -695,7 +695,7 @@ sub toString {
     my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), $self->name, $self->assembly);
     $txt .= ' scientific_name='.$self->get_scientific_name if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
-    $txt .= ', ' . ($self->is_good_for_alignment ? 'yes' : 'no');
+    $txt .= ', ' . ($self->is_good_for_alignment ? 'is' : 'not') . ' good for aln';
     $txt .= ', ' . ($self->has_karyotype ? 'with' : 'without') . ' karyotype';
     $txt .= ' ' . $self->SUPER::toString();
     return $txt;
