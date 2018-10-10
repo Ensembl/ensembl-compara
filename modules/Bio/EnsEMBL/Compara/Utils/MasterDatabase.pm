@@ -154,7 +154,16 @@ sub update_dnafrags {
     undef @low_limit_frags;
     undef @species_overall_len;
 
-    my $is_good_for_alignment = ($ratio_top_highest > 0.68) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
+    #After initially considering taking all the genomes that match cov >= 65% || log >= 3
+    #We then decided to combine both variables and take all the genomes for
+    #which log >= 10 - 3 * cov/25%. In other words, the classifier is a line that
+    #passes by the (50%,4) and (75%,1) points. It excludes genomes that have a log
+    #value >= 3 but a poor coverage, or a decent coverage but a low log value.
+    #my $is_good_for_alignment = ($ratio_top_highest > 0.68) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
+
+    my $diagonal_cutoff = 10-3*($ratio_top_highest/0.25);
+
+    my $is_good_for_alignment = ($log_ratio_top_low > $diagonal_cutoff) ? 1 : 0;
 
     my $sth = $compara_dba->dbc->prepare("UPDATE genome_db SET is_good_for_alignment = ? WHERE name = ? AND assembly = ?");
     $sth->execute($is_good_for_alignment,$genome_db->name(),$genome_db->assembly);
