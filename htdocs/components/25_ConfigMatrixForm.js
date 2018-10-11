@@ -270,11 +270,19 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       //add active class to clicked element
       var spanID = $(selectElement).find("span.content-id").html();      
       $(selectElement).addClass("active");
+
+      var activeLetterDiv = container.find('div.alphabet-div.active');
+
       if(selByClass) {
-        container.find("div."+spanID).addClass("active");
+        activeAlphabetContentDiv = container.find("div."+spanID);
       } else {      
-        panel.el.find("#"+spanID).addClass("active");
+        activeAlphabetContentDiv = panel.el.find("#"+spanID);
       }
+
+      activeAlphabetContentDiv.addClass("active");
+
+      // change offset position of active content same as the ribbon letter
+      activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
     } 
   },
   
@@ -350,7 +358,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       html += '<div class="ribbon_'+letter+' alphabet-div '+active_class+'">'+letter.toUpperCase()+'<span class="hidden content-id">'+letter+'_content</span></div>';
       content_html += '<div class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
-    panel.el.find(container).append('<div class="cell-listing"><div class="larrow inactive">&#x25C0;</div><div class="letters-ribbon"></div><div class="rarrow">&#x25B6;</div><div class="ribbon-content"></div><div class="all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+total_num+')</text></div></div>');    
+    panel.el.find(container).append('<div class="all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+total_num+')</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
     panel.el.find(container+' div.letters-ribbon').append(html);
     panel.el.find(container+' div.ribbon-content').append(content_html);
 
@@ -388,7 +396,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //clicking the left and right arrow
     panel.elLk.arrows   = panel.el.find(container+' div.rarrow, div.larrow');
     
-    panel.elLk.arrows.on("click", function(){
+    panel.elLk.arrows.on("click", function(e){
       if(!this.className.match(/inactive/gi)) {
         panel.elLk.activeAlphabet = panel.el.find(container+' div.alphabet-div.active');
         if(this.className.match(/larrow/gi)) {
@@ -399,6 +407,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           ).then(
             selectArrow()
           );           
+
+          if(panel.elLk.activeAlphabet.offset().left <= $(e.target).offset().left + 22) {
+            var ribbon = panel.el.find(container+' div.letters-ribbon');
+            ribbon.offset({left: ribbon.offset().left + 22});
+            panel.el.find(container+" div."+prevLetter+"_content.alphabet-content").offset({left: panel.el.find(container+" div."+prevLetter+"_content.alphabet-content").offset().left + 22});
+          }
+
         } 
         if (this.className.match(/rarrow/gi)) {
           //get currently selected letter, convert it to utf-16 number add 1 to get next letter number and then convert it to char
@@ -407,10 +422,17 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.toggleTab(container+" div.ribbon_"+nextLetter, panel.el.find(container), 1)
           ).then(
             selectArrow()
-          );            
+          );
+
+          var _nextletter = $("div.ribbon_"+nextLetter, panel.el.find(container));
+          if(panel.elLk.activeAlphabet.offset().left  >= $(e.target).offset().left - 44) {
+            ribbon = panel.el.find(container+' div.letters-ribbon');
+            ribbon.offset({left: ribbon.offset().left - 22});
+            panel.el.find(container+" div."+nextLetter+"_content.alphabet-content").offset({left: panel.el.find(container+" div."+nextLetter+"_content.alphabet-content").offset().left - 22});
+          }
         }
       }
       
-    });    
+    });
   }
 });

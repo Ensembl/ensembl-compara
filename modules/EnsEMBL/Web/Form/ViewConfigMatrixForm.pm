@@ -54,51 +54,53 @@ sub build {
     <div class="header_tutorial_wrapper">
       <h1>Regulation data</h1>
     </div>
-    <div class="track-panel">
-      <div class="tabs track-menu">
-        <div class="track-tab active" id="cell-tab">Cell type<span class="hidden content-id">cell-type-content</span></div>
-        <div class="track-tab" id="experiment-tab">Experimental data<span class="hidden content-id">experiment-type-content</span></div>
-      </div>
-      
-      <div id="cell-type-content" class="tab-content active">
-        <span class="hidden rhsection-id">cell</span>
-      </div>
-
-      <div id="experiment-type-content" class="tab-content">
-        <span class="hidden rhsection-id">experiment</span>
-      </div>
-    </div>
-    <div class="result-box">
-      <h3>Selected tracks</h3>
-
-      <div class="filter-content">
-        <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
-        <div class="result-content" id="cell">
-          <ul class="result-list">
-            <span class="hidden lhsection-id">cell-type-content</span>
-          </ul>
+    <div class="container">
+      <div class="track-panel">
+        <div class="tabs track-menu">
+          <div class="track-tab active" id="cell-tab">Cell type<span class="hidden content-id">cell-type-content</span></div>
+          <div class="track-tab" id="experiment-tab">Experimental data<span class="hidden content-id">experiment-type-content</span></div>
         </div>
 
-        <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
-        <div class="result-content" id="experiment">
-          <ul class="result-list">
-            <span class="hidden lhsection-id">experiment-type-content</span>
-          </ul>
+        <div id="cell-type-content" class="tab-content active">
+          <span class="hidden rhsection-id">cell</span>
         </div>
 
-        <h5 class="result-header">Source</h5>
-        <div class="result-content" id="source">
-          <ul class="result-list">
-            <span class="hidden lhsection-id">source-content</span>
-          </ul>
+        <div id="experiment-type-content" class="tab-content">
+          <span class="hidden rhsection-id">experiment</span>
         </div>
       </div>
 
-      <div class="bottom-buttons">
-        <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
-        <button class="filter">Configure track display</button>
-      </div>
+      <div class="result-box">
+        <h3>Selected tracks</h3>
 
+        <div class="filter-content">
+          <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
+          <div class="result-content" id="cell">
+            <ul class="result-list">
+              <span class="hidden lhsection-id">cell-type-content</span>
+            </ul>
+          </div>
+
+          <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
+          <div class="result-content" id="experiment">
+            <ul class="result-list">
+              <span class="hidden lhsection-id">experiment-type-content</span>
+            </ul>
+          </div>
+
+          <h5 class="result-header">Source</h5>
+          <div class="result-content" id="source">
+            <ul class="result-list">
+              <span class="hidden lhsection-id">source-content</span>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bottom-buttons">
+          <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
+          <button class="filter">Configure track display</button>
+        </div>
+      </div>
     </div>
   );
 
