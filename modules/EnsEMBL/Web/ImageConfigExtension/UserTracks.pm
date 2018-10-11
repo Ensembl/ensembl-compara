@@ -332,6 +332,7 @@ sub _add_trackhub {
   ## by the attachment interface - otherwise we run into issues with synonyms
   my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
   my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
+  $self->{'th_default_count'} = 0;
 
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub
@@ -367,6 +368,19 @@ sub _add_trackhub {
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
     }
   }
+
+  ## Set the default threshold to be high, so that we only warn very 'heavy' hubs
+  my $threshold = $self->hub->species_defs->TRACKHUB_DEFAULT_LIMIT || 100;
+  my $visible = $self->{'th_default_count'};
+  if ($visible > $threshold) {
+    $self->hub->session->set_record_data({
+      'type'      => 'message',
+      'function'  => '_warning',
+      'code'      => 'th_threshold_warning',
+      'message'   => "This trackhub has $visible tracks turned on by default. If the browser fails to load, you should click on 'Configure this page' in the sidebar and turn some of them off.",
+    });
+  }
+
   return ($menu_name, $hub_info);
 }
 
@@ -529,9 +543,6 @@ sub _add_trackhub_tracks {
     } elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
       $on_off = 'on';
     }
-    #} elsif ($self->check_threshold($on_off) eq 'off') {
-    #  $on_off = 'off';
-    #}
 
     my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
 
@@ -548,6 +559,7 @@ sub _add_trackhub_tracks {
     ## Set track style if appropriate
     if ($on_off && $on_off eq 'on') {
       $options{'display'} = $default_display;
+      $count_visible++;
     }
     else {
       $options{'display'} = 'off';
@@ -603,6 +615,7 @@ sub _add_trackhub_tracks {
 
     $tracks{$type}{$source->{'name'}} = $source;
   }
+  $self->{'th_default_count'} += $count_visible;
 
   $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
