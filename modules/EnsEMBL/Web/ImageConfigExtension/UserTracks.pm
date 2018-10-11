@@ -450,6 +450,12 @@ sub _add_trackhub_tracks {
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
   my %tracks;
+  use Data::Dumper;
+  $Data::Dumper::Sortkeys = 1;
+  $Data::Dumper::Maxdepth = 1;
+  warn '>>> PARENT '.Dumper($parent->{'data'});
+  $Data::Dumper::Maxdepth = 2;
+  warn '... CHIDREN '.Dumper($children);
 
   my %options = (
     menu_key      => $name,
@@ -532,92 +538,135 @@ sub _add_trackhub_tracks {
                                       },
                       };
 
-  foreach (@{$children||[]}) {
-    my $track        = $_->data;
-    my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
 
-    my $on_off = $config->{'on_off'} || $track->{'on_off'};
-    ## Turn track on if there's no higher setting turning it off
-    if ($track->{'visibility'}  eq 'hide') {
-      $on_off = 'off';
-    } elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
-      $on_off = 'on';
-    }
-
-    my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
-
-    ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
-    my $squish       = $ucsc_display eq 'squish';
-    (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
-
-    ## Translate between UCSC terms and Ensembl ones
-    my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
-                              || $style_mappings->{lc($type)}{'default'}
-                              || 'normal';
-    $options{'default_display'} = $default_display;
-
-    ## Set track style if appropriate
-    if ($on_off && $on_off eq 'on') {
-      $options{'display'} = $default_display;
-      $count_visible++;
-    }
-    else {
-      $options{'display'} = 'off';
-    }
-
-    ## Note that we use a duplicate value in description and longLabel, because non-hub files
-    ## often have much longer descriptions so we need to distinguish the two
-    my $source       = {
-      name            => $track->{'track'},
-      source_name     => $source_name,
-      desc_url        => $track->{'description_url'},
-      description     => $name.': '.$track->{'longLabel'},,
-      longLabel       => $track->{'longLabel'},
-      source_url      => $track->{'bigDataUrl'},
-      colour          => exists $track->{'color'} ? $track->{'color'} : undef,
-      colorByStrand   => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
-      spectrum        => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
-      no_titles       => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
-      squish          => $squish,
-      signal_range    => $track->{'signal_range'},
-      viewLimits      => $track->{'viewLimits'} || $config->{'viewLimits'},
-      maxHeightPixels => $track->{'maxHeightPixels'} || $config->{'maxHeightPixels'},
-      %options
-    };
+  if ($parent->{'container'} && $parent->{'container'} eq 'multiWig') {
+    ## Set up multiwig track
+    my $multiwig = {
+        name            => $parent->{'track'},
+        longLabel       => $parent->{'longLabel'},
+        desc_url        => $parent->{'description_url'},
+        display         => 'signal',
+        default_display => 'signal',
+        signal_range    => $parent->{'signal_range'},
+        no_titles       => 1,
+        sub_tracks      => [],
+      };
 
     # Graph range - Track Hub default is 0-127
-
-    if (exists $track->{'viewLimits'}) {
-      $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif ($track->{'autoScale'} eq 'off') {
-      $source->{'viewLimits'} = '0:127';
+    if (exists $parent->{'viewLimits'}) {
+      $multiwig->{'viewLimits'} = $parent->{'viewLimits'};
+    } elsif ($parent->{'autoScale'} eq 'off') {
+      $multiwig->{'viewLimits'} = '0:127';
+    }
+    else {
+      $multiwig->{'viewLimits'} = $config->{'viewLimits'};
     }
 
     if (exists $track->{'maxHeightPixels'}) {
-      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED' || $type eq 'BIGGENEPRED') {
-      $source->{'maxHeightPixels'} = '64:32:16';
+      $multiwig->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+    } else
+      $multiwig->{'maxHeightPixels'} = '64:32:16';
     }
 
-    if ($matrix) {
-      my $caption = strip_HTML($track->{'shortLabel'});
-      $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
-      ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
-      $source->{'labelcaption'} = $caption;
+    ## Add data for each subtrack
+    foreach (@{$children||[]}) {
+      my $track        = $_->data;
+      my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+      next unless ($type && $type =~ /^bigWig$/i;
+      push @{$multiwig->{'sub_tracks'}}, {
+                                        source_url  => $track->{'bigDataUrl'},
+                                        colour      => exists $track->{'color'} ? $track->{'color'} : undef,
+                                      };
+    } 
+    $self->load_file_format('multiWig', {$multiwig->{'name'} => $multiwig});
+  }
+  else {
+    foreach (@{$children||[]}) {
+      my $track        = $_->data;
+      my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
 
-      $source->{'matrix'} = {
-        menu   => $options{'submenu_key'},
-        column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
-        row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
+      my $on_off = $config->{'on_off'} || $track->{'on_off'};
+      ## Turn track on if there's no higher setting turning it off
+      if ($track->{'visibility'}  eq 'hide') {
+        $on_off = 'off';
+      } elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
+        $on_off = 'on';
+      }
+
+      my $ucsc_display  = $config->{'visibility'} || $track->{'visibility'};
+
+      ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
+      my $squish       = $ucsc_display eq 'squish';
+      (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
+
+      ## Translate between UCSC terms and Ensembl ones
+      my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
+                              || $style_mappings->{lc($type)}{'default'}
+                              || 'normal';
+      $options{'default_display'} = $default_display;
+
+      ## Set track style if appropriate
+      if ($on_off && $on_off eq 'on') {
+        $options{'display'} = $default_display;
+        $count_visible++;
+      }
+      else {
+        $options{'display'} = 'off';
+      }
+
+      ## Note that we use a duplicate value in description and longLabel, because non-hub files
+      ## often have much longer descriptions so we need to distinguish the two
+      my $source       = {
+        name            => $track->{'track'},
+        source_name     => $source_name,
+        desc_url        => $track->{'description_url'},
+        description     => $name.': '.$track->{'longLabel'},,
+        longLabel       => $track->{'longLabel'},
+        source_url      => $track->{'bigDataUrl'},
+        colour          => exists $track->{'color'} ? $track->{'color'} : undef,
+        colorByStrand   => exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef,
+        spectrum        => exists $track->{'spectrum'} ? $track->{'spectrum'} : undef,
+        no_titles       => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
+        squish          => $squish,
+        signal_range    => $track->{'signal_range'},
+        viewLimits      => $track->{'viewLimits'} || $config->{'viewLimits'},
+        maxHeightPixels => $track->{'maxHeightPixels'} || $config->{'maxHeightPixels'},
+        %options
       };
-      $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
-    }
 
-    $tracks{$type}{$source->{'name'}} = $source;
+      # Graph range - Track Hub default is 0-127
+
+      if (exists $track->{'viewLimits'}) {
+        $source->{'viewLimits'} = $track->{'viewLimits'};
+      } elsif ($track->{'autoScale'} eq 'off') {
+        $source->{'viewLimits'} = '0:127';
+      }
+
+      if (exists $track->{'maxHeightPixels'}) {
+        $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+      } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED' || $type eq 'BIGGENEPRED') {
+        $source->{'maxHeightPixels'} = '64:32:16';
+      }
+
+      if ($matrix) {
+        my $caption = strip_HTML($track->{'shortLabel'});
+        $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
+        ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
+        $source->{'labelcaption'} = $caption;
+
+        $source->{'matrix'} = {
+          menu   => $options{'submenu_key'},
+          column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
+          row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
+        };
+        $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
+      }
+
+      $tracks{$type}{$source->{'name'}} = $source;
+    }
+    $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
   }
   $self->{'th_default_count'} += $count_visible;
-
-  $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
 }
 
 sub _add_trackhub_extras_options {
@@ -914,6 +963,36 @@ sub _add_bigwig_track {
 
   $self->_add_file_format_track(
     format    => 'BigWig',
+    renderers =>  $renderers,
+    options   => $options,
+    %args
+  );
+}
+
+sub _add_multiwig_track {
+  my ($self, %args) = @_;
+
+  my $renderers = $args{'source'}{'renderers'} || [
+    'off',     'Off',
+    'signal',  'Wiggle plot',
+  ];
+
+  my $options = {
+    external        => 'external',
+    sub_type        => 'bigwig',
+    style           => 'wiggle',
+    longLabel       => $args{'source'}{'longLabel'},
+    y_min           => $args{'source'}{'y_min'},
+    y_max           => $args{'source'}{'y_max'},
+    addhiddenbgd    => 1,
+    max_label_rows  => 2,
+  };
+
+  ## Override default renderer (mainly used by trackhubs)
+  $options->{'display'} = $args{'source'}{'display'} if $args{'source'}{'display'};
+
+  $self->_add_file_format_track(
+    format    => 'multiWig',
     renderers =>  $renderers,
     options   => $options,
     %args
