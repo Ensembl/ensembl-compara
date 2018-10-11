@@ -51,8 +51,15 @@ sub build {
   my $matrix_data   = $menu_node->get_data('matrix');
   
   my $html = qq(
-    <div class="header_tutorial_wrapper">
+    <div class="header_tutorial_wrapper flex-row">
       <h1>Regulation data</h1>
+      <div class="large-breadcrumbs">
+        <ul>
+          <li class="active"><a href="">Select tracks</a></li>
+          <li class=""><a href="">Configure display</a></li>
+        </ul>
+      </div>
+      <button class="fade-button view-track">View tracks</button>
     </div>
     <div class="container">
       <div class="track-panel">
@@ -98,7 +105,7 @@ sub build {
 
         <div class="bottom-buttons">
           <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
-          <button class="filter">Configure track display</button>
+          <button class="filter fade-button">Configure track display</button>
         </div>
       </div>
     </div>
