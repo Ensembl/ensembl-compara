@@ -81,7 +81,7 @@ sub default_options {
   # These tables have a unique source. Content from other databases is ignored
   'exclusive_tables'  => {
     'mapping_session'         => 'master_db',
-    'peptide_align_feature_%' => 'protein_db',
+    'peptide_align_feature%'  => 'protein_db',
   },
 
   # In these databases, ignore these tables
