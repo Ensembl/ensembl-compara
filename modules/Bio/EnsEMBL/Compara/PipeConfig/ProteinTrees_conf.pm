@@ -609,7 +609,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
+                'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
@@ -622,7 +622,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_pipeline_finished',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
+                'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
@@ -1253,8 +1253,15 @@ sub core_pipeline_analyses {
             -flow_into  => [ 'hcluster_run' ],
         },
 
-
-
+        {   -logic_name => 'backup_single_paf',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature',
+                'output_file'   => '#dump_pafs_dir#/peptide_align_feature.sql.gz',
+                'exclude_ehive' => 1,
+            },
+            -analysis_capacity => $self->o('reuse_capacity'),
+        },
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
