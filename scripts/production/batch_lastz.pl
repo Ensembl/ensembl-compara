@@ -72,7 +72,7 @@ foreach my $this_mlss ( @$all_lastz_mlsses ) {
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
-my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count);
+my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count, %dnafrag_interval_counts);
 foreach my $mlss ( @current_lastz_mlsses ) {
 	my $ref_name = $mlss->get_tagvalue('reference_species');
 	my $mlss_gdbs = $mlss->species_set->genome_dbs;
@@ -165,6 +165,29 @@ sub get_non_ref_chunk_count {
 	return $expanded_count;
 }
 
+sub n_dnafrags_by_interval {
+	my $gdb = shift;
+
+	return $dnafrag_interval_counts{$gdb->dbID} if $dnafrag_interval_counts{$gdb->dbID};
+
+	# fetch list of dnafrag lengths for this genome
+	my $sql = "select length from dnafrag where genome_db_id = ? and is_reference = 1 order by length asc";
+	my $sth = $dba->dbc->prepare($sql);
+	$sth->execute( $gdb->dbID );
+	my $gdb_dnaf_lens = $sth->fetchall_arrayref();
+	$sth->finish;
+
+	# partition and count dnafrags
+	my $interval_counts;
+	foreach my $g_len ( @$gdb_dnaf_lens ) {
+		$interval_counts->{ interval_type($g_len->[0]) }++;
+	}
+
+	$dnafrag_interval_counts{$gdb->dbID} = $interval_counts;
+	return $interval_counts;
+}
+
+
 sub chains_job_count {
 	my $mlss = shift;
 
@@ -172,43 +195,37 @@ sub chains_job_count {
 
 	my ( $gdb1, $gdb2 ) = @{$mlss->species_set->genome_dbs};
 
-	# fetch list of dnafrag lengths for each genome
-	my $sql = "select length from dnafrag where genome_db_id = ? and is_reference = 1 order by length asc";
-	my $sth = $dba->dbc->prepare($sql);
-	$sth->execute( $gdb1->dbID );
-	my $gdb1_dnaf_lens = $sth->fetchall_arrayref();
-	$sth->execute( $gdb2->dbID );
-	my $gdb2_dnaf_lens = $sth->fetchall_arrayref();
-
 	# partition and count dnafrags
-	my $interval_counts;
-	foreach my $g1_len ( @$gdb1_dnaf_lens ) {
-		foreach my $g2_len ( @$gdb2_dnaf_lens ) {
-			$interval_counts->{ interval_type($g1_len->[0], $g2_len->[0]) }++;
+	my $paired_interval_counts;
+	my $interval_counts1 = n_dnafrags_by_interval( $gdb1 );
+	my $interval_counts2 = n_dnafrags_by_interval( $gdb2 );
+	foreach my $int1 ( keys %$interval_counts1 ) {
+		foreach my $int2 ( keys %$interval_counts2 ) {
+			#print "$int1:$int2 -> ", $interval_counts1->{$int1} * $interval_counts2->{$int2}, "\n";
+			$paired_interval_counts->{ "$int1;$int2" } += $interval_counts1->{$int1} * $interval_counts2->{$int2};
 		}
 	}
 
 	# assign probabilities and estimate job numbers
 	my $total_count;
-	foreach my $type ( keys %$interval_counts ) {
-		$total_count += ceil($interval_counts->{$type} * combined_interval_probability( $type ));
+	foreach my $type ( keys %$paired_interval_counts ) {
+		$total_count += ceil($paired_interval_counts->{$type} * combined_interval_probability( $type ));
 	}
 
 	return $total_count;
 }
 
 sub interval_type {
-	my ( $len1, $len2 ) = @_;
+	my ( $len ) = @_;
 
-	# print Dumper [$len1, $len2];
+	# print Dumper [$len];
 
-	my ($type1, $type2);
+	my $type;
 	foreach my $interval ( @intervals_in_mbp ) {
 		my ( $this_min, $this_max ) = ( $interval->[0], $interval->[1] );
-		$type1 = "$this_min mb - $this_max mb" if $len1 > $this_min*1000 and $len1 <= $this_max*1000;
-		$type2 = "$this_min mb - $this_max mb" if $len2 > $this_min*1000 and $len2 <= $this_max*1000;
+		$type = "$this_min mb - $this_max mb" if $len > $this_min*1000 and $len <= $this_max*1000;
 	}
-	return "$type1;$type2";
+	return $type;
 }
 
 sub combined_interval_probability {
