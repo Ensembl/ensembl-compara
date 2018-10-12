@@ -61,7 +61,7 @@ sub build {
       </div>
       <button class="fade-button view-track">View tracks</button>
     </div>
-    <div class="container">
+    <div class="flex-row">
       <div class="track-panel">
         <div class="tabs track-menu">
           <div class="track-tab active" id="cell-tab">Cell type<span class="hidden content-id">cell-type-content</span></div>
