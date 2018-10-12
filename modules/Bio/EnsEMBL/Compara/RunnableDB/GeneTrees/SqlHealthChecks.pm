@@ -125,20 +125,20 @@ our $config = {
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless a few exceptions like some immunoglobulin genes)',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$"',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$"',
                 expected_size => '< 10',
             },
             {
                 description => 'The ncRNA sequences have to be only ACGTN. Ambiguity codes have to be explicitly switched on',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
             },
             {
                 description => 'ncRNA sequences cannot be entirely made of N',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^N*$")',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^N*$")',
             },
             {
                 description => 'protein sequences cannot be entirely made of X',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^X*$")',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^X*$")',
             },
             {
                 description => 'CDS sequences cannot be entirely made of N',
