@@ -120,8 +120,16 @@ our $config = {
                 query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             {
-                description => 'Peptides should have CDS sequences (which are made of only ACGTN). Ambiguity codes have to be explicitely switched on.',
-                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]")) AND NOT #allow_missing_cds_seqs# AND stable_id NOT LIKE "LRG%"',
+                description => 'Peptides (except LRGs) must have CDS sequences',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0) AND NOT #allow_missing_cds_seqs# AND stable_id NOT LIKE "LRG%"',
+            },
+            {
+                description => 'CDS sequences must be made of only ACGTN unless ambiguity codes are explicitly allowed',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+            },
+            {
+                description => 'Ambiguity codes never cover more than 20% of the CDS sequence',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 > length*20',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless a few exceptions like some immunoglobulin genes)',
@@ -131,6 +139,10 @@ our $config = {
             {
                 description => 'The ncRNA sequences have to be only ACGTN. Ambiguity codes have to be explicitly switched on',
                 query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+            },
+            {
+                description => 'Ambiguity codes never cover more than 20% of the sequence',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 > length*20',
             },
             {
                 description => 'ncRNA sequences cannot be entirely made of N',
