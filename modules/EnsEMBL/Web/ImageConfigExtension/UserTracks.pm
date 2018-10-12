@@ -532,17 +532,20 @@ sub _add_trackhub_tracks {
                                       },
                       };
 
-  if ($parent->{'data'}{'container'} && $parent->{'data'}{'container'} eq 'multiWig') {
+  if ($data->{'container'} && $data->{'container'} eq 'multiWig') {
     ## Set up multiwig track
+    (my $source_name = strip_HTML($data->{'shortLabel'})) =~ s/_/ /g;
     my $multiwig = {
-        name            => $parent->{'track'},
-        longLabel       => $parent->{'longLabel'},
-        desc_url        => $parent->{'description_url'},
+        name            => $data->{'track'},
+        source_name     => $source_name,
+        longLabel       => $data->{'longLabel'},
+        desc_url        => $data->{'description_url'},
         display         => 'signal',
         default_display => 'signal',
-        signal_range    => $parent->{'signal_range'},
+        signal_range    => $data->{'signal_range'},
         no_titles       => 1,
         subtracks       => [],
+        %options
       };
 
     # Graph range - Track Hub default is 0-127
