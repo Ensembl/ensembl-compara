@@ -450,12 +450,6 @@ sub _add_trackhub_tracks {
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
   my %tracks;
-  use Data::Dumper;
-  $Data::Dumper::Sortkeys = 1;
-  $Data::Dumper::Maxdepth = 1;
-  warn '>>> PARENT '.Dumper($parent->{'data'});
-  $Data::Dumper::Maxdepth = 2;
-  warn '... CHIDREN '.Dumper($children);
 
   my %options = (
     menu_key      => $name,
@@ -538,8 +532,7 @@ sub _add_trackhub_tracks {
                                       },
                       };
 
-
-  if ($parent->{'container'} && $parent->{'container'} eq 'multiWig') {
+  if ($parent->{'data'}{'container'} && $parent->{'data'}{'container'} eq 'multiWig') {
     ## Set up multiwig track
     my $multiwig = {
         name            => $parent->{'track'},
@@ -549,22 +542,24 @@ sub _add_trackhub_tracks {
         default_display => 'signal',
         signal_range    => $parent->{'signal_range'},
         no_titles       => 1,
-        sub_tracks      => [],
+        subtracks       => [],
       };
 
     # Graph range - Track Hub default is 0-127
     if (exists $parent->{'viewLimits'}) {
       $multiwig->{'viewLimits'} = $parent->{'viewLimits'};
-    } elsif ($parent->{'autoScale'} eq 'off') {
+    } 
+    elsif ($parent->{'autoScale'} eq 'off') {
       $multiwig->{'viewLimits'} = '0:127';
     }
     else {
       $multiwig->{'viewLimits'} = $config->{'viewLimits'};
     }
 
-    if (exists $track->{'maxHeightPixels'}) {
-      $multiwig->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } else
+    if (exists $parent->{'maxHeightPixels'}) {
+      $multiwig->{'maxHeightPixels'} = $parent->{'maxHeightPixels'};
+    } 
+    else {
       $multiwig->{'maxHeightPixels'} = '64:32:16';
     }
 
@@ -572,13 +567,13 @@ sub _add_trackhub_tracks {
     foreach (@{$children||[]}) {
       my $track        = $_->data;
       my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
-      next unless ($type && $type =~ /^bigWig$/i;
-      push @{$multiwig->{'sub_tracks'}}, {
+      next unless ($type && $type =~ /^bigWig$/i);
+      push @{$multiwig->{'subtracks'}}, {
                                         source_url  => $track->{'bigDataUrl'},
                                         colour      => exists $track->{'color'} ? $track->{'color'} : undef,
                                       };
     } 
-    $self->load_file_format('multiWig', {$multiwig->{'name'} => $multiwig});
+    $self->load_file_format('multiwig', {$multiwig->{'name'} => $multiwig});
   }
   else {
     foreach (@{$children||[]}) {
@@ -719,7 +714,7 @@ sub load_file_format {
   return unless ($format eq 'trackhub' || $self->can($function));
 
   my $internal = !defined $sources;
-  $sources  = $self->species_defs->get_config($self->species, sprintf('ENSEMBL_INTERNAL_%s_SOURCES', uc $format)) || {} unless defined $sources; # get the internal sources from config
+  $sources  = $self->species_defs->get_config($self->species, sprintf('ENSEMBL_INTERNAL_%s_SOURCES', uc $format)) || {} if $internal; # get the internal sources from config
 
   foreach my $source_name (sort keys %$sources) {
     # get the target menu
@@ -1097,6 +1092,10 @@ sub _add_file_format_track {
     } else {
       $desc = $args{'description'};
     }
+  }
+
+  if ($args{'source'}{'subtracks'}) {
+    $args{'options'}{'subtracks'} = $args{'source'}{'subtracks'}; 
   }
 
   #$args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
