@@ -24,11 +24,6 @@ package EnsEMBL::Draw::GlyphSet::multiwig;
 
 use strict;
 
-use Role::Tiny::With;
-with 'EnsEMBL::Draw::Role::BigWig';
-with 'EnsEMBL::Draw::Role::Wiggle';
-with 'EnsEMBL::Draw::Role::Default';
-
 use parent qw(EnsEMBL::Draw::GlyphSet::bigwig);
 
 sub can_json { return 1; }
@@ -36,18 +31,23 @@ sub can_json { return 1; }
 sub init {
   my $self = shift;
   $self->{'my_config'}->set('scaleable', 1);
-  $self->{'data'} = $self->get_data;
+  my $data = [];
+  foreach my $track (@{$self->my_config('subtracks')||{}}) {
+    my $aref = $self->get_data(undef, $track->{'source_url'});
+    ## Override default colour with value from parsed trackhub
+    $aref->[0]{'metadata'}{'colour'} = $track->{'colour'};
+    push @$data, $aref->[0];
+  }
+  $self->{'data'} = $data;
 }
 
-sub render_normal {
+sub render_signal {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Graph']);
   $self->{'my_config'}->set('height', 60);
+  $self->{'my_config'}->set('multi', 1);
   $self->_render_aggregate;
 }
 
-sub get_data {
-
-}
 
 1;
