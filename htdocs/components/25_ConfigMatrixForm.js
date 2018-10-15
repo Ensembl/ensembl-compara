@@ -94,13 +94,39 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   enableFilterButton: function (content) {
     var panel = this;
     
-    if(panel.el.find(content).find('li').length) {
+    var total_div = $(content).length;
+    var counter   = 0;
+
+    $(content).each(function(i, el){
+      if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) { 
+        counter++;
+      }
+    });
+
+    if(counter === total_div) {
       panel.el.find('button.filter').addClass('active');
+      panel.el.find('li._configure').removeClass('disable');
     } else {
       panel.el.find('button.filter').removeClass('active');
+      panel.el.find('li._configure').addClass('disable');
     }
   },
   
+  //function to show/hide error message for empty track filters
+  // Argument: containers where to listen for empty elements (Note: span error id should match container id with an underscore)
+  trackError: function(containers) {
+    var panel = this;
+
+    $(containers).each(function(i, el){
+      var error_class = "_"+$(el).attr('id');
+      if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) {
+        $("span."+error_class).hide();
+      } else {
+        $("span."+error_class).show();
+      }
+    });
+  },
+
   // Function to select/unselect checkbox and removing them from the right hand panel (optional) and adding them to the right hand panel (optional)
   //Argument: container is an object where the checkbox element is
   //        : removeElement either 1 or 0 whether to remove element 
@@ -165,7 +191,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       $(el).find("span.fancy-checkbox").addClass("selected");
     }
-    panel.enableFilterButton('div#cell, div#experiment');    
+    panel.trackError('div#cell, div#experiment, div#source');
+    panel.enableFilterButton('div#cell, div#experiment, div#source');
   },
   
   // Function to show a panel when button is clicked
@@ -282,7 +309,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       activeAlphabetContentDiv.addClass("active");
 
       // change offset position of active content same as the ribbon letter
-      activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
+      if(activeAlphabetContentDiv.hasClass('alphabet-content')) {
+        activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
+      }
     } 
   },
   
@@ -406,7 +435,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.toggleTab(container+" div.ribbon_"+prevLetter, panel.el.find(container), 1)
           ).then(
             selectArrow()
-          );           
+          );
 
           if(panel.elLk.activeAlphabet.offset().left <= $(e.target).offset().left + 22) {
             var ribbon = panel.el.find(container+' div.letters-ribbon');

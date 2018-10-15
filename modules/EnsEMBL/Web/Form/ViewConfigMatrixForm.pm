@@ -56,7 +56,7 @@ sub build {
       <div class="large-breadcrumbs">
         <ul>
           <li class="active"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a></li>
-          <li class="disable"><a href="#"><span class="circle crumb-number">2</span>Configure display</a></li>
+          <li class="disable _configure"><a href="#"><span class="circle crumb-number">2</span>Configure display</a></li>
         </ul>
       </div>
       <button class="fade-button view-track">View tracks</button>
@@ -95,10 +95,16 @@ sub build {
             </ul>
           </div>
 
-          <h5 class="result-header">Source</h5>
+          <h5 class="result-header">Source <span class="error _source hidden">Please select Source</span></h5>
           <div class="result-content" id="source">
             <ul class="result-list">
               <span class="hidden lhsection-id">source-content</span>
+              <li class="noremove">
+                <span class="fancy-checkbox selected"></span><text>Blueprint</text>
+              </li>
+              <li class="noremove">
+                <span class="fancy-checkbox selected"></span><text>Another source</text>
+              </li>
             </ul>
           </div>
         </div>
