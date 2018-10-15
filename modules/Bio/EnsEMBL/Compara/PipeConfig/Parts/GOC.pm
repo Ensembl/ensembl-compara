@@ -73,7 +73,6 @@ sub pipeline_analyses_goc {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
             -parameters => {
                 'taxlevels'             => $self->o('goc_taxlevels'),
-                'filter_high_coverage'  => 0,
             },
             -flow_into => {
                 '2' => [ 'goc_mlss_factory' ],

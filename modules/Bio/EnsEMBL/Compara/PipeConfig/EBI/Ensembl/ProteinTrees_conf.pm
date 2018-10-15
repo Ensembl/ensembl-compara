@@ -112,8 +112,6 @@ sub default_options {
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
-        # affects 'group_genomes_under_taxa'
-        'filter_high_coverage'      => 1,
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,

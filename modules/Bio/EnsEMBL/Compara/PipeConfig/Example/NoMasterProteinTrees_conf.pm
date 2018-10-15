@@ -85,8 +85,6 @@ sub default_options {
             -species        => "homo_sapiens"
         },
 
-        'filter_high_coverage'      => 0,
-	    	    
 	    #if collection is set both 'curr_core_dbs_locs' and 'curr_core_sources_locs' parameters are set to undef otherwise the are to use the default pairwise values
         'curr_core_sources_locs' => [
                                       $self->o('homo_sapiens'),
