@@ -336,7 +336,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var total_num = 0;
     
     //generate alphabetical order ribbon (A B C D ....)
-    $.each([...Array(26).keys()], function(i) {
+    $.each(new Array(26), function(i) {
       var letter = String.fromCharCode(i + 97);
       var active_class = "";
       var letterHTML   = "";
