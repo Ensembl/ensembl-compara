@@ -99,7 +99,7 @@ sub draw_aggregate {
                 label           => 'Legend',
                 title           => $self->{'my_config'}->get('name') || 'Individual tracks',
                 colour_legend   => $colour_legend,
-                y_offset        => 6,
+                y_offset        => 20,
                };
   $header->draw_sublegend($params);
   $self->push(@{$header->glyphs||[]});
