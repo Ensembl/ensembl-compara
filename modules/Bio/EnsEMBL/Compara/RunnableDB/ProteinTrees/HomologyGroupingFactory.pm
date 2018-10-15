@@ -84,7 +84,7 @@ sub fetch_input {
 
     my $mlss_id = $self->param_required('homo_mlss_id');
 
-    my $sql = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description != "gene_split" ORDER BY homology_id';
+    my $sql =  'SELECT homology_id FROM homology JOIN homology_member USING (homology_id) LEFT JOIN gene_member_qc USING (seq_member_id) WHERE method_link_species_set_id = ? GROUP BY homology_id HAVING COUNT(status) = 0;';
     my $sth = $self->compara_dba->dbc->prepare($sql);
 
     my @homology_ids = ();
