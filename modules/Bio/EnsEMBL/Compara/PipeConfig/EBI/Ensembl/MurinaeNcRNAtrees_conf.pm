@@ -74,7 +74,7 @@ sub default_options {
             'rel_suffix'       => '',
 
             'division'          => 'murinae',
-            'dbID_range_index'  => 4,
+            'dbID_range_index'  => 19,
             'label_prefix'      => 'mur_',
 
             'skip_epo'          => 1,

@@ -91,7 +91,7 @@ sub default_options {
         'division'              => 'murinae',
 
     # Parameters to allow merging different runs of the pipeline
-        'dbID_range_index'      => 3,
+        'dbID_range_index'      => 18,
         'label_prefix'          => 'mur_',
 
 
