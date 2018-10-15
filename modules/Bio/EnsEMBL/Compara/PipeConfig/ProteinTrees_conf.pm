@@ -3149,7 +3149,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'component_genome_dbs_move_back_factory' ],
-                'A->1' => [ 'group_genomes_under_taxa' ],
+                'A->1' => [ 'rib_fire_gene_qc' ],
                 
             },
         },
@@ -3172,7 +3172,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN('#do_gene_qc#' => 'get_species_set'),
-                'A->1' => 'rib_fire_cafe',
+                'A->1' => 'group_genomes_under_taxa',
             },
         },
 
@@ -3234,7 +3234,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'mlss_factory' ],
-                'A->1' => [ 'rib_fire_gene_qc' ],
+                'A->1' => [ 'rib_fire_cafe' ],
             },
         },
 
