@@ -102,7 +102,7 @@ sub run {
 
     foreach my $homology (@$homologies) {
 
-        next if ($homology->s or $homology->n);
+        next if ( ( $homology->s or $homology->n ) && !$self->param('force_rerunning') );
 
         # Compute ds
         $self->calc_genetic_distance($homology, $codeml_parameters);

@@ -3315,6 +3315,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'codeml_parameters_file'    => $self->o('codeml_parameters_file'),
                 'codeml_exe'                => $self->o('codeml_exe'),
+                'force_rerunning'           => 0,
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
             -rc_name => '500Mb_job',
