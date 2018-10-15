@@ -111,7 +111,7 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
+        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes', 'Percomorphaceae'],
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
