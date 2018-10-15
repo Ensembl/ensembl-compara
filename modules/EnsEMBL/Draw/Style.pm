@@ -181,7 +181,6 @@ sub draw_graph_base {
 ### Axes, guidelines, etc used by Graph and Plot styles
   my ($self, $metadata) = @_;
   return if ref $self =~ /Feature/;
-  use Data::Dumper; warn Dumper($metadata);
 
   ## Set some track-wide variables
   my $track_config    = $self->track_config;
