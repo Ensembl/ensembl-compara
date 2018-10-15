@@ -72,6 +72,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       // }
     });
     
+    panel.clickSubResultLink();
     panel.clickCheckbox(this.elLk.filterList, 1);
     panel.clearAll(this.elLk.clearAll);
     panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));    
@@ -127,6 +128,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
   },
 
+  // Function to update the current count in the right hand panel (can be adding/removing 1 or select all)
+  // Argument: element/container object where current count is to be updated
+  //           how much to add to the current value
+  updateCurrentCount: function(currentElObj, number) {
+    var panel = this;
+
+    number = number ? number : 1;
+
+    if(currentElObj.length) {
+      var add_num = parseInt(currentElObj.html()) + number;
+      currentElObj.html(add_num);
+    }
+  },
+
   // Function to select/unselect checkbox and removing them from the right hand panel (optional) and adding them to the right hand panel (optional)
   //Argument: container is an object where the checkbox element is
   //        : removeElement either 1 or 0 whether to remove element 
@@ -157,18 +172,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
   
   //Function to select filters and adding/removing them in the relevant panel
-  selectBox: function(el, removeElement, addElement) {
+  selectBox: function(ele, removeElement, addElement) {
     var panel = this;
-    if($(el).find("span.fancy-checkbox.selected").length){
-      $(el).find("span.fancy-checkbox").removeClass("selected");
+    if($(ele).find("span.fancy-checkbox.selected").length){
+      $(ele).find("span.fancy-checkbox").removeClass("selected");
 
       //removing element from right hand panel (selection panel) - optional
-      if(removeElement && !el.className.match("noremove")){
+      if(removeElement && !ele.className.match("noremove")){
         //unselecting from left hand panel when unselecting/removing in right hand panel
-        var lhsectionId = $(el).closest("ul.result-list").find("span.lhsection-id").html();
-        var allBoxId    = $(el).find('span.allBox-id').html();
-        panel.el.find('div#'+lhsectionId+' li.'+$(el).attr('class')+' span.fancy-checkbox').removeClass("selected");
-        el.remove();
+        var lhsectionId = $(ele).closest("ul.result-list").find("span.lhsection-id").html();
+        var allBoxId    = $(ele).find('span.allBox-id').html();
+
+        panel.updateCurrentCount($(ele).parent().parent().find("div.count-container").find('span.current-count'), -1);
+        panel.el.find('div#'+lhsectionId+' li.'+$(ele).attr('class')+' span.fancy-checkbox').removeClass("selected");
+        ele.remove();
   
         //if select all box is selected, it needs to be unselected if one track is removed
         if(panel.el.find('div#'+allBoxId+' span.fancy-checkbox.selected').length) {
@@ -177,19 +194,22 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       //removing from right hand panel when unselecting in left hand panel
       if(addElement) {          
-        var rhsectionId = $(el).closest("div.tab-content.active").find('span.rhsection-id').html();
-        var elementClass = $(el).find('text').html().replace(/[^\w\-]/g,'_');
+        var rhsectionId = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
+        var elementClass = $(ele).find('text').html().replace(/[^\w\-]/g,'_');
         panel.el.find('div#'+rhsectionId+' ul li.'+elementClass).remove();
+        panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
       }
     } else {
       if(addElement) {
-        var rhsectionId  = $(el).closest("div.tab-content.active").find('span.rhsection-id').html();
-        var elementClass = $(el).find('text').html().replace(/[^\w\-]/g,'_');
-        var allBoxid     = $(el).closest("div.tab-content.active").find('div.all-box').attr("id");
+        var rhsectionId  = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
+        var elementClass = $(ele).find('text').html().replace(/[^\w\-]/g,'_');
+        var allBoxid     = $(ele).closest("div.tab-content.active").find('div.all-box').attr("id");
+
+        panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'));
         
-        $(el).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
+        $(ele).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
       }
-      $(el).find("span.fancy-checkbox").addClass("selected");
+      $(ele).find("span.fancy-checkbox").addClass("selected");
     }
     panel.trackError('div#cell, div#experiment, div#source');
     panel.enableFilterButton('div#cell, div#experiment, div#source');
@@ -214,6 +234,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
   },
   
+  //function to toggle sub link content in right panel
+  clickSubResultLink: function() {
+    var panel = this;
+
+    panel.el.find('div.sub-result-link').on("click", function(e) {
+      panel.el.find(this).parent().find('ul.result-list').toggle();
+    });
+  },
+
   //Function to select all filters in a specific panel
   // Arguments: container where all the filters to be selected are
   //          : select all box object
@@ -259,7 +288,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
       experiment_html += '<div class="track-tab '+active_class+'">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';     
-      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'"><span class="hidden rhsection-id">experiment</span></div>';
+      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'"><span class="hidden rhsection-id">'+key+'</span></div>';
       count++;
     });
     experiment_html += '</div>';
@@ -321,7 +350,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var ribbonObj   = {};
     var countFilter  = 0;
 
-    if(listType && listType === "alphabetRibbon") {      
+    if(listType && listType === "alphabetRibbon") {
       //creating obj with alphabet key (a->[], b->[],...)
       $.each(data, function(j, item) {
         var firstChar = item.charAt(0).toLowerCase();
@@ -345,6 +374,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+countFilter+')</text></div>' + html; 
       panel.el.find(container).append(html);
       
+      //updating available count in right hand panel
+      var rhsection = panel.el.find(container).find('span.rhsection-id').html();
+      panel.el.find('div#'+rhsection+' span.total').html(countFilter);
+
       //clicking select all checkbox
       panel.clickCheckbox(this.el.find(container+" div.all-box"));
       //selecting all filters
@@ -387,9 +420,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       html += '<div class="ribbon_'+letter+' alphabet-div '+active_class+'">'+letter.toUpperCase()+'<span class="hidden content-id">'+letter+'_content</span></div>';
       content_html += '<div class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
-    panel.el.find(container).append('<div class="all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+total_num+')</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    panel.el.find(container).append('<div class="all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
     panel.el.find(container+' div.letters-ribbon').append(html);
     panel.el.find(container+' div.ribbon-content').append(content_html);
+
+    //updating available count in right hand panel
+    var rhsection = panel.el.find(container).find('span.rhsection-id').html();
+    panel.el.find('div#'+rhsection+' span.total').html(total_num);
 
     //clicking checkbox for each filter
     panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));

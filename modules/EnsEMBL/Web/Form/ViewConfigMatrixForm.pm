@@ -83,21 +83,48 @@ sub build {
         <div class="filter-content">
           <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
           <div class="result-content" id="cell">
-            <ul class="result-list">
+            <div class="sub-result-link">Cell type</div>
+            <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+            <ul class="result-list hidden">
               <span class="hidden lhsection-id">cell-type-content</span>
             </ul>
           </div>
 
           <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
-          <div class="result-content" id="experiment">
-            <ul class="result-list">
-              <span class="hidden lhsection-id">experiment-type-content</span>
-            </ul>
+          <div id="experiment">
+            <div class="result-content" id="Histone">
+              <div class="sub-result-link">Histone</div>
+              <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <ul class="result-list hidden">
+                <span class="hidden lhsection-id">Histone-content</span>
+              </ul>
+            </div>
+            <div class="result-content" id="Open_Chromatin">
+              <div class="sub-result-link">Open chromatin</div>
+              <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <ul class="result-list hidden">
+                <span class="hidden lhsection-id">Open_Chromatin-content</span>
+              </ul>
+            </div>
+            <div class="result-content" id="Polymerase">
+              <div class="sub-result-link">Polymerase</div>
+              <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <ul class="result-list hidden">
+                <span class="hidden lhsection-id">Polymerase-content</span>
+              </ul>
+            </div>          
+            <div class="result-content" id="TFBS">
+              <div class="sub-result-link">TFBS</div>
+              <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <ul class="result-list hidden">
+                <span class="hidden lhsection-id">TFBS-content</span>
+              </ul>
+            </div>
           </div>
 
           <h5 class="result-header">Source <span class="error _source hidden">Please select Source</span></h5>
           <div class="result-content" id="source">
-            <ul class="result-list">
+            <ul class="result-list no-left-margin">
               <span class="hidden lhsection-id">source-content</span>
               <li class="noremove">
                 <span class="fancy-checkbox selected"></span><text>Blueprint</text>
