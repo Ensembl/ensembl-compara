@@ -55,8 +55,8 @@ sub build {
       <h1>Regulation data</h1>
       <div class="large-breadcrumbs">
         <ul>
-          <li class="active"><a href="">Select tracks</a></li>
-          <li class=""><a href="">Configure display</a></li>
+          <li class="active"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a></li>
+          <li class="disable"><a href="#"><span class="circle crumb-number">2</span>Configure display</a></li>
         </ul>
       </div>
       <button class="fade-button view-track">View tracks</button>
