@@ -572,6 +572,7 @@ sub _add_trackhub_tracks {
       my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
       next unless ($type && $type =~ /^bigWig$/i);
       push @{$multiwig->{'subtracks'}}, {
+                                        source_name => $track->{'shortLabel'},
                                         source_url  => $track->{'bigDataUrl'},
                                         colour      => exists $track->{'color'} ? $track->{'color'} : undef,
                                       };
