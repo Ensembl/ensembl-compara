@@ -63,7 +63,7 @@ sub pipeline_analyses_GeneSetQC {
             -logic_name     => 'get_split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::GetSplitGenes',
             -flow_into      =>  {
-                1   =>  ['get_short_orth_genes','get_long_orth_genes','get_orphaned_genes'], 
+                1   =>  ['get_short_orth_genes','get_long_orth_genes','get_orphaned_genes','get_ambiguous'],
                 2   =>  ['?table_name=gene_member_qc'],
             },
             -hive_capacity  => 50,
@@ -113,6 +113,20 @@ sub pipeline_analyses_GeneSetQC {
             },
             -analysis_capacity  => 2,
             -hive_capacity      => 10,
+        },
+
+        {
+            -logic_name     =>  'get_ambiguous',
+            -module         =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
+            -rc_name        =>  '1Gb_job',
+            -parameters     =>  {
+                'gene_status'                   => 'ambiguous_sequence',
+                'missing_sequence_threshold'    => $self->o('missing_sequence_threshold'),
+                },
+            -flow_into      =>  {
+                2   => ['?table_name=gene_member_qc'],
+            },
+            -analysis_capacity  => 50,
         },
 
         {

@@ -60,6 +60,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments;
 use strict;
 use warnings;
 use Data::Dumper;
+use List::Util qw( min max );
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 param_defaults
@@ -105,7 +106,27 @@ sub run {
     # Note: we could filter "avg_cov" and "n_species" in SQL
     my $sql;
 
-    if ($self->param_required('gene_status') eq 'orphaned') {
+    if ($self->param_required('gene_status') eq 'ambiguous_sequence') {
+        my $missing_sequence_threshold = $self->param_required('missing_sequence_threshold');
+
+        $sql = 'SELECT gene_member.stable_id as stable_id, seq_member_id, sequence FROM other_member_sequence JOIN seq_member USING (seq_member_id) JOIN gene_member USING (gene_member_id) WHERE seq_member.genome_db_id = ? AND seq_type = "cds" AND sequence LIKE "%N%";';
+        my $sth = $self->compara_dba->dbc->prepare($sql);
+        $sth->execute($genome_db_id);
+
+        my $regex = 'N{1,}';
+        my $seq_length;
+        while (my $row = $sth->fetchrow_hashref()) {
+            my $stable_id = $row->{stable_id};
+            my $sequence = $row->{sequence};
+            my $seq_member_id = $row->{seq_member_id};
+            my @gaps = _match_all_positions( $regex, \$sequence);
+            $seq_length = length($sequence);
+            if (_is_very_ambiguous( \@gaps, $seq_length, $missing_sequence_threshold)){
+                $self->dataflow_output_id( { 'gene_member_stable_id' => $row->{stable_id}, 'genome_db_id' => $genome_db_id, 'seq_member_id' => $seq_member_id, 'status' => "ambiguous-sequence" }, 2);
+            }
+        }
+    }
+    elsif ($self->param_required('gene_status') eq 'orphaned') {
       $sql = 'SELECT mg.stable_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
       my $sth = $self->compara_dba->dbc->prepare($sql);
       $sth->execute($genome_db_id);
@@ -156,5 +177,74 @@ sub run {
     #disconnect compara database
   $self->compara_dba->dbc->disconnect_if_idle;
 }
+
+sub num { $a <=> $b }
+
+sub _match_all_positions {
+    my ($regex, $string) = @_;
+    my @ret;
+    while ($$string =~ /$regex/g) {
+        push @ret, [ $-[0], $+[0]-1 ];
+    }
+    return @ret
+}
+
+sub _is_very_ambiguous {
+    my $gaps                = $_[0];
+    my $seq_length          = $_[1];
+    my $ambiguity_threshold = $_[2];
+
+    my $gap_count = 0;
+    my %intervals;
+    my %control;
+
+    foreach my $gap ( @{ $gaps } ) {
+        my ( $from, $to ) = ( $gap->[0], $gap->[1] );
+        my ( $new_from, $new_to ) = ( 3*int( $from/3 ), 3*int( $to/3 ) + 2 );
+        for ( my $i = $new_from; $i < $new_to; $i++ ) {
+            $intervals{$i} = 1;
+        }
+        $gap_count++;
+    }
+
+    my @postitions_to_remove = sort num keys(%intervals);
+    my $ratio;
+
+    if (scalar(@postitions_to_remove) > 0){
+        my $gap_counter = 0;
+        for ( my $i = 0; $i < scalar(@postitions_to_remove); $i++ ) {
+            if ( ( $postitions_to_remove[$i] + 1 ) == $postitions_to_remove[ $i + 1 ] ) {
+                $control{$gap_counter}{ $postitions_to_remove[$i] } = 1;
+            }
+            else {
+                $control{$gap_counter}{ $postitions_to_remove[$i] } = 1;
+                $gap_counter++;
+            }
+        }
+
+        my $removed_columns_count = 0;
+        foreach my $gap (sort keys %control){
+            my @positions = sort num keys %{$control{$gap}};
+            my $min = min(@positions);
+            my $max = max(@positions)+1; #we need to be max + 1 here because of how remove_columns works.
+            $removed_columns_count += ($max-$min)+1;
+        }
+
+        $ratio = $removed_columns_count/$seq_length;
+    }
+    else{
+        $ratio = 0;
+    }
+
+    if ( $ratio > $ambiguity_threshold ) {
+        warn("More than 50% of the pairwise alignment is composed of ambiguous sequences (N's)");
+        return 1;
+    }
+    else{
+        return 0;
+    }
+
+} ## end sub _is_very_ambiguous
+
 
 1;

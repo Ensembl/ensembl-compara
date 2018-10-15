@@ -113,6 +113,7 @@ sub default_options {
 
     #default parameters for the geneset qc
         'coverage_threshold' => 50, #percent
+        'missing_sequence_threshold' => 0.05,
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
     # dependent parameters: updating 'base_dir' should be enough
