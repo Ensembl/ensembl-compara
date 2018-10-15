@@ -47,7 +47,6 @@ sub init {
 sub render_signal {
   my $self = shift;
   $self->{'my_config'}->set('drawing_style', ['Graph']);
-  $self->{'my_config'}->set('height', 60);
   $self->{'my_config'}->set('on_error',555);
   $self->_render_aggregate;
 }
@@ -59,6 +58,7 @@ sub draw_aggregate {
   my $feature_count = 0;
   my $colour_legend = {};
 
+  $self->{'my_config'}->set('height', 60);
   $self->{'my_config'}->set('multi', 1);
   $self->{'my_config'}->set('hide_subtitle',1);
 
