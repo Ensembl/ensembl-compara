@@ -373,12 +373,16 @@ sub _add_trackhub {
   my $threshold = $self->hub->species_defs->TRACKHUB_DEFAULT_LIMIT || 100;
   my $visible = $self->{'th_default_count'};
   if ($visible > $threshold) {
-    $self->hub->session->set_record_data({
-      'type'      => 'message',
-      'function'  => '_warning',
-      'code'      => 'th_threshold_warning',
-      'message'   => "This trackhub has $visible tracks turned on by default. If the browser fails to load, you should click on 'Configure this page' in the sidebar and turn some of them off.",
-    });
+    ## Check if this warning has already been set
+    my $warned = $self->hub->session->get_record_data({'type' => 'message', 'code' => 'th_threshold_warning'});
+    if (!$warned) {
+      $self->hub->session->set_record_data({
+        'type'      => 'message',
+        'function'  => '_warning',
+        'code'      => 'th_threshold_warning',
+        'message'   => "This trackhub has $visible tracks turned on by default. If the browser fails to load, you should click on 'Configure this page' in the sidebar and turn some of them off.",
+      });
+    }
   }
 
   return ($menu_name, $hub_info);
@@ -446,9 +450,10 @@ sub _add_trackhub_node {
 
 sub _add_trackhub_tracks {
   my ($self, $parent, $children, $config, $menu, $name) = @_;
-  my $hub    = $self->hub;
-  my $data   = $parent->data;
-  my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
+  my $hub       = $self->hub;
+  my $data      = $parent->data;
+  my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
+
   my %tracks;
 
   my %options = (
@@ -460,7 +465,7 @@ sub _add_trackhub_tracks {
     trackhub      => 1,
   );
 
-  if ($matrix) {
+  if ($do_matrix) {
     $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 1, 'menu' => $options{'submenu_key'} });
 
     foreach my $subgroup (keys %$config) {
@@ -482,7 +487,7 @@ sub _add_trackhub_tracks {
   my $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
     external    => 1,
     description => $options{'submenu_desc'},
-    ($matrix ? (
+    ($do_matrix ? (
       menu   => 'matrix',
       url    => $options{'matrix_url'},
       matrix => {
@@ -647,7 +652,7 @@ sub _add_trackhub_tracks {
         $source->{'maxHeightPixels'} = '64:32:16';
       }
 
-      if ($matrix) {
+      if ($do_matrix) {
         my $caption = strip_HTML($track->{'shortLabel'});
         $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
         ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
