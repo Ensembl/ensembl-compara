@@ -395,7 +395,13 @@ sub _add_trackhub_node {
   if ($node->has_child_nodes) {
     foreach my $child (@{$node->child_nodes}) {
       if ($child->has_child_nodes) {
-        push @next_level, $child;
+        ## Conflate composite tracks within supertracks
+        if ($node->data->{'superTrack'} && $child->data->{'compositeTrack'}) {
+          push @childless, @{$child->child_nodes};
+        }
+        else {
+          push @next_level, $child;
+        }
       }
       else {
         push @childless, $child;
