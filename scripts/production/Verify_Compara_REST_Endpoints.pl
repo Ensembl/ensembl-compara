@@ -365,13 +365,13 @@ try{
     $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
     ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $phyloXml = process_phyloXml_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=text/x-phyloxml;species_set_group=sauropsids;aligned=1');
-    ok(verify_xml_leaf($phyloXml->{phylogeny}, 'Zebra Finch'), "Check get alignment region and align the sequences");
+    $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0');
+    ok(verify_xml_leaf($phyloXml->{phylogeny}, 'Zebra Finch'), "Check get alignment region and unaligned sequences");
 
     $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106041430-106041480:1?content-type=application/json;method=LASTZ_NET;species_set=taeniopygia_guttata;species_set=gallus_gallus');
     ok( index($jsontxt->[0]->{tree},'taeniopygia_guttata') !=-1 && index($jsontxt->[0]->{tree},'gallus_gallus') !=-1, "Check get alignment region method option");
 
-    $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=application/json;species_set_group=sauropsids;display_species_set=chicken');
+    $jsontxt = process_json_get($server.$ext.';content-type=application/json;display_species_set=chicken');
     ok($jsontxt->[0]->{alignments}[0]->{species} eq 'gallus_gallus', "Check alignment region display_species_set option Validity");
 
 
