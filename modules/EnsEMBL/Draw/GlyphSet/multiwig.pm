@@ -25,6 +25,7 @@ package EnsEMBL::Draw::GlyphSet::multiwig;
 use strict;
 
 use EnsEMBL::Draw::Utils::ColourMap;
+use EnsEMBL::Draw::Style::Extra::Header;
 
 use parent qw(EnsEMBL::Draw::GlyphSet::bigwig);
 
