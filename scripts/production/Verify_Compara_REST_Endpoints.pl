@@ -375,6 +375,18 @@ try{
     ok($jsontxt->[0]->{alignments}[0]->{species} eq 'gallus_gallus', "Check alignment region display_species_set option Validity");
 
 
+    print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
+
+    $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae';
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+    ok($responseIDGet->{success}, "Check json Validity");
+
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+    ok($responseIDGet->{success}, "Check phyloXml Validity");
+
+    $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+    ok($responseIDGet->{success}, "Check phyloXml Validity with unaligned sequences");
+
 
     print "\nTesting GET homology \/id\/\:id \n\n";
 
