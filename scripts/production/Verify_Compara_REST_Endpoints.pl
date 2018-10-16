@@ -164,7 +164,7 @@ sub verify_xml_leaf {
         $node = $node->{clade};
     } 
     for my $key (keys %$node) {
-        if ( $node->{$key}->{taxonomy}->{common_name} eq $species_name ){
+        if ( ($node->{$key}->{taxonomy}->{common_name} // '') eq $species_name ){
 #            print Dumper($node->{$key}->{taxonomy}->{common_name}), "\nyayayayay\n";
             return 1;
         }
