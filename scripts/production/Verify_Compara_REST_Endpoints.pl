@@ -227,7 +227,7 @@ try{
 #    diag $nh;
 
     $orthoXml = process_orthoXml_get($server.'/genetree/id/ENSGT00390000003602?content-type=text/x-orthoxml+xml;prune_taxon=9598;prune_taxon=9544;prune_taxon=9606');
-    my @pruned_species = keys $orthoXml->{species} ;
+    my @pruned_species = keys %{ $orthoXml->{species} };
     my %pruned_species = map {$_ => 1} @pruned_species;
     ok( (exists($pruned_species{'pan_troglodytes'})) && (exists($pruned_species{'macaca_mulatta'})) && (exists($pruned_species{'homo_sapiens'} )), "check prune taxon Validity");
 
@@ -269,7 +269,7 @@ try{
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $orthoXml = process_orthoXml_get($server.'/genetree/member/symbol/homo_sapiens/BRCA2?prune_species=cow;prune_species=gorilla_gorilla;content-type=text/x-orthoxml%2Bxml;prune_taxon=9598');
-    @pruned_species = keys $orthoXml->{species} ;
+    @pruned_species = keys %{ $orthoXml->{species} };
     %pruned_species = map {$_ => 1} @pruned_species;
     ok((exists($pruned_species{'gorilla_gorilla'})) && (exists($pruned_species{'bos_taurus'})) && (exists($pruned_species{'pan_troglodytes'} )), "Check gene tree by symbol Validity");
 
@@ -389,7 +389,7 @@ try{
     ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == 10090 , "Check homology endpoint target_taxon option Validity");
 
     $orthoXml = process_orthoXml_get($server.'/homology/id/ENSG00000157764?content-type=text/x-orthoxml+xml;target_species=human;target_species=cow;target_species=chicken;');
-    @pruned_species = keys $orthoXml->{species} ;
+    @pruned_species = keys %{ $orthoXml->{species} };
     %pruned_species = map {$_ => 1} @pruned_species;
     ok((exists($pruned_species{'gallus_gallus'})) && (exists($pruned_species{'bos_taurus'})) && (exists($pruned_species{'homo_sapiens'} )), "Check homology endpoint target species option Validity");
 
@@ -424,7 +424,7 @@ try{
     ok((exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology species symbol endpoint format Validity");
     
     $orthoXml = process_orthoXml_get($server.'/homology/symbol/human/BRCA2?target_taxon=10090;content-type=text/x-orthoxml+xml;format=condensed;target_species=cow;type=orthologues');
-    @pruned_species = keys $orthoXml->{species} ;
+    @pruned_species = keys %{ $orthoXml->{species} };
     %pruned_species = map {$_ => 1} @pruned_species;
     ok((exists($pruned_species{'mus_musculus'})) && (exists($pruned_species{'bos_taurus'})) && (exists($pruned_species{'homo_sapiens'} )), "Check homology species symbol endpoint target species option Validity");
 
