@@ -3,7 +3,7 @@
 <head>
 <?php
 	# read basic diagraph from file
-	$eg_dot_file = 'compara_eg.dot';
+	$eg_dot_file = 'compara_plants.dot';
 	$myfile = fopen($eg_dot_file, "r") or die("Unable to open $eg_dot_file");
 	$eg_digraph = fread($myfile,filesize($eg_dot_file));
 	fclose($myfile);
