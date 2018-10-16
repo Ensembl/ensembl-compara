@@ -113,7 +113,7 @@ sub run {
         my $sth = $self->compara_dba->dbc->prepare($sql);
         $sth->execute($genome_db_id);
 
-        my $regex = 'N{1,}';
+        my $regex = '[^ACGT]'; #https://droog.gs.washington.edu/parc/images/iupac.html
         my $seq_length;
         while (my $row = $sth->fetchrow_hashref()) {
             my $stable_id = $row->{stable_id};
