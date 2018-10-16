@@ -62,7 +62,7 @@ sub render_interaction {
 
 sub render_half_height {
   my $self = shift;
-  my $height = $self->my_config('height') / 2 || 4;
+  my $height = $self->my_config('height') ? $self->my_config('height') / 2 : 4;
   $self->{'my_config'}->set('height', $height);
   $self->{'my_config'}->set('depth', 20);
 
