@@ -85,6 +85,7 @@ sub build {
           <div class="result-content" id="cell">
             <div class="sub-result-link">Cell type</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+            <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
             <ul class="result-list hidden">
               <span class="hidden lhsection-id">cell-type-content</span>
             </ul>
@@ -95,6 +96,7 @@ sub build {
             <div class="result-content" id="Histone">
               <div class="sub-result-link">Histone</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Histone-content</span>
               </ul>
@@ -102,6 +104,7 @@ sub build {
             <div class="result-content" id="Open_Chromatin">
               <div class="sub-result-link">Open chromatin</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Open_Chromatin-content</span>
               </ul>
@@ -109,6 +112,7 @@ sub build {
             <div class="result-content" id="Polymerase">
               <div class="sub-result-link">Polymerase</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Polymerase-content</span>
               </ul>
@@ -116,6 +120,7 @@ sub build {
             <div class="result-content" id="TFBS">
               <div class="sub-result-link">TFBS</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
+              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">TFBS-content</span>
               </ul>
