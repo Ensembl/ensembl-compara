@@ -1455,6 +1455,9 @@ sub get_GenomicAlignTree {
     $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);
     $genomic_align_tree->root->reference_genomic_align_node($ref_genomic_align_node);
 
+    # Copy the adaptor if there is one
+    $genomic_align_tree->adaptor( $self->adaptor->db->get_GenomicAlignTreeAdaptor ) if $self->adaptor;
+
     return $genomic_align_tree;
 }
 
