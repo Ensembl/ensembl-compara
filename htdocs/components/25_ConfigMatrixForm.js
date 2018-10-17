@@ -73,6 +73,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
     
     panel.clickSubResultLink();
+    panel.showHideFilters();
     panel.clickCheckbox(this.elLk.filterList, 1);
     panel.clearAll(this.elLk.clearAll);
     panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));    
@@ -118,14 +119,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   trackError: function(containers) {
     var panel = this;
 
-    $(containers).each(function(i, el){
-      var error_class = "_"+$(el).attr('id');
-      if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) {
-        $("span."+error_class).hide();
-      } else {
-        $("span."+error_class).show();
-      }
+    $(containers).each(function(i, ele) {
+        var error_class = "_" + $(ele).attr('id');
+        if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
+            $("span." + error_class).hide();
+        } else {
+            $("span." + error_class).show();
+        }
     });
+
   },
 
   // Function to update the current count in the right hand panel (can be adding/removing 1 or select all)
@@ -184,6 +186,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var allBoxId    = $(ele).find('span.allBox-id').html();
 
         panel.updateCurrentCount($(ele).parent().parent().find("div.count-container").find('span.current-count'), -1);
+        panel.showHideLink($(ele).parent().parent()); //need to be after updateCurrentCount
         panel.el.find('div#'+lhsectionId+' li.'+$(ele).attr('class')+' span.fancy-checkbox').removeClass("selected");
         ele.remove();
   
@@ -198,6 +201,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var elementClass = $(ele).find('text').html().replace(/[^\w\-]/g,'_');
         panel.el.find('div#'+rhsectionId+' ul li.'+elementClass).remove();
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
+        panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
       }
     } else {
       if(addElement) {
@@ -206,6 +210,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var allBoxid     = $(ele).closest("div.tab-content.active").find('div.all-box').attr("id");
 
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'));
+        panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
         
         $(ele).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
       }
@@ -234,14 +239,33 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
   },
   
-  //function to toggle sub link content in right panel
+  //function to jump to tab based on the link
   clickSubResultLink: function() {
-    var panel = this;
+      var panel = this;
 
-    panel.el.find('div.sub-result-link').on("click", function(e) {
-      panel.el.find(this).parent().find('ul.result-list').toggle();
-    });
   },
+
+  //function to show "show selected" or "Hide selected" link in right hand panel
+  showHideLink: function(containerObj) {
+      var panel = this;
+
+      if (!containerObj.find("div.show-hide:visible").length && containerObj.find("ul.result-list li").length === 0) {
+          containerObj.find("div._show").show();
+      } else if (containerObj.find("div.show-hide:visible").length && parseInt(containerObj.find('span.current-count').html()) === 0) {
+          containerObj.find("div._show, div._hide").hide();
+          containerObj.find("ul.result-list").hide();
+      }
+  },
+
+  //function to toggle filters in right hand panel when show/hide selected is clicked
+  showHideFilters: function() {
+      var panel = this;
+
+      panel.el.find('div.show-hide').on("click", function(e) {
+          panel.el.find(this).parent().find('div.show-hide, ul.result-list').toggle();
+      });
+  },
+
 
   //Function to select all filters in a specific panel
   // Arguments: container where all the filters to be selected are

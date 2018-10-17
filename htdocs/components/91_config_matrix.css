@@ -189,9 +189,10 @@ h5.result-header                                  { display: block; margin-top: 
 div.result-content                                { clear: both; }
 div.config_wrapper div.config ul.result-list      { margin-left: 16px; clear: left; }
 div.config_wrapper div.config ul.result-list li   { margin: 10px; cursor: default; }
-div.result-box div.sub-result-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 16px 8px 16px; cursor: pointer; font-weight: bold; }
+div.result-box div.sub-result-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 10px 8px 16px; cursor: pointer; font-weight: bold; }
 div.result-box div.count-container                { color: [[DARK_GREY]]; }
-div.result-box span.current-count                 { color: [[BLACK]]; }
+div.result-box span.current-count                 { color: [[BLACK]]; font-weight: bold; }
+div.result-box div.show-hide                      { float: right; color:[[LINK]]; text-decoration: underline; font-size: 11px; margin-top: -16px; cursor: pointer; }
 
 /* customised checkbox */
 .fancy-checkbox                 { width: 15px; height: 15px; display: inline-block; vertical-align: top; background-repeat: no-repeat; background-image: url(/img/dynatree/icons.gif); background-position: 0 0; margin-left: 3px; margin-right: 10px; background-position: 0 -32px;}
