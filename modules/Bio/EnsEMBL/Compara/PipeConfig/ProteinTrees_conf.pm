@@ -199,6 +199,16 @@ sub default_options {
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',
         'taxlevels'                 => [],
 
+    # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
+    # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
+        'orphan_gene_ratio_per_taxon' => {
+            '2759'    => 0.5,     #eukaryotes
+            '33208'   => 0.65,    #metazoans
+            '7742'    => 0.85,    #vertebrates
+            '117571'  => 0.9,     #bony vertebrates
+            '9443'    => 0.95,    #primates
+          },
+
     # mapping parameters:
         'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
@@ -485,6 +495,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_hmm_export'     => $self->o('do_hmm_export'),
         'do_gene_qc'        => $self->o('do_gene_qc'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
+
+        'orphan_gene_ratio_per_taxon'         => $self->o('orphan_gene_ratio_per_taxon'),
     };
 }
 
@@ -1575,6 +1587,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -parameters => {
                 'reuse_db'  => '#mapping_db#',
+                'orphan_gene_ratio_per_taxon' => '#orphan_gene_ratio_per_taxon#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name    => '4Gb_job',
