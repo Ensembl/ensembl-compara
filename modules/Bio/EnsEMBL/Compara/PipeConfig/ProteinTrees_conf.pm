@@ -250,7 +250,7 @@ sub default_options {
         'hc_post_tree_capacity'     => 100,
         'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
-        'HMMer_classifyPantherScore_capacity'   => 1000,
+        'HMMer_classifyPantherScore_capacity'   => 1500,
         'HMMer_search_capacity'     => 8000,
         'copy_trees_capacity'       => 50,
         'copy_alignments_capacity'  => 50,
