@@ -1680,7 +1680,7 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'compute_jaccard_index',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
             -parameters => {
-                'output_jaccard_file'   => '#plot_dir#/jaccard_index.out',
+                'output_jaccard_file'   => '#plots_dir#/jaccard_index.out',
             },
             -rc_name       => '500Mb_job',
         },
