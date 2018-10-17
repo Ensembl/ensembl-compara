@@ -165,6 +165,7 @@ use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
+use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
@@ -1392,6 +1393,27 @@ sub get_GenomicAlignTree {
           $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);
       };
       return ($genomic_align_tree) if ($genomic_align_tree);
+    }
+
+    # self-alignment
+    if (scalar(@{$self->method_link_species_set->species_set->genome_dbs}) == 1) {
+        # Root node
+        $genomic_align_tree = new Bio::EnsEMBL::Compara::GenomicAlignTree();
+        my $ref_genomic_align = $self->reference_genomic_align;
+        my $ref_genomic_align_node;
+        # One leaf per GenomicAlign (but we expect only 2 of them)
+        foreach my $ga (@{$self->genomic_align_array}) {
+            my $this_leaf = new Bio::EnsEMBL::Compara::GenomicAlignTree();
+            my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
+            $genomic_align_group->add_GenomicAlign($ga);
+            $this_leaf->genomic_align_group($genomic_align_group);
+            $genomic_align_tree->add_child($this_leaf);
+            $ref_genomic_align_node = $this_leaf if $ga eq $ref_genomic_align;
+        }
+        $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);
+        $genomic_align_tree->root->reference_genomic_align_node($ref_genomic_align_node);
+        $genomic_align_tree->adaptor( $self->adaptor->db->get_GenomicAlignTreeAdaptor ) if $self->adaptor;
+        return $genomic_align_tree;
     }
 
     #Create lookup of names to GenomicAlign objects
