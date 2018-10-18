@@ -1580,7 +1580,7 @@ sub core_pipeline_analyses {
                 'reuse_db'  => '#mapping_db#',
             },
             -hive_capacity  => $self->o('reuse_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name => 'per_genome_qc',
