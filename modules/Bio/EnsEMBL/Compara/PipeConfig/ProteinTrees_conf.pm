@@ -1800,6 +1800,20 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mafft_himem_capacity'),
             -rc_name    => '8Gb_job',
             -priority   => $self->o('mafft_himem_priority'),
+            -flow_into     => {
+                -1 => [ 'mafft_huge' ],
+            },
+
+        },
+
+        {   -logic_name => 'mafft_huge',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters => {
+                'mafft_home'                 => $self->o('mafft_home'),
+            },
+            -hive_capacity        => $self->o('mafft_himem_capacity'),
+            -rc_name    => '16Gb_job',
+            -priority   => $self->o('mafft_himem_priority'),
         },
 
         {   -logic_name     => 'exon_boundaries_prep',
