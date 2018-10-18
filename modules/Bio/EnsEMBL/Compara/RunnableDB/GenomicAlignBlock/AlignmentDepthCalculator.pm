@@ -56,7 +56,7 @@ sub fetch_input {
     #this is to remove the genomic aligns that belong to the ancestral genome
     my @tmp_ga_array;
     foreach my $ga (@{$GAB->genomic_align_array()} ) {
-        if ($ga->genome_db->dbID == 63) {
+        if ($ga->genome_db->name eq 'ancestral_sequences') {
             print "\n -------- and it is out of hereeeee-------- \n" if ( $self->debug >3 );
             next;
         }else {
