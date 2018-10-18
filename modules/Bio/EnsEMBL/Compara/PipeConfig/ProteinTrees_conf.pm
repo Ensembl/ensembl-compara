@@ -625,7 +625,7 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
             -flow_into  => {
-                '1->A'  => [ 'polyploid_move_back_factory' ],
+                '1->A'  => [ 'rib_fire_gene_qc' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -3214,7 +3214,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'component_genome_dbs_move_back_factory' ],
-                'A->1' => [ 'rib_fire_gene_qc' ],
+                'A->1' => [ 'floating_rib' ],
                 
             },
         },
@@ -3408,7 +3408,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A' => WHEN( 'scalar(@{#taxlevels#})' => 'goc_entry_point' ),
-                'A->1' => ['floating_rib'],
+                'A->1' => ['polyploid_move_back_factory'],
             },
         },
 
