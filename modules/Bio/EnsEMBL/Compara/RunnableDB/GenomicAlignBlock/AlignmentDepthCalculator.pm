@@ -53,19 +53,7 @@ sub fetch_input {
     $self->param('genomic_align_block', $gab_adaptor->fetch_by_dbID($self->param('genomic_align_block_id')));
     my $GAB = $self->param_required('genomic_align_block');
 
-    #this is to remove the genomic aligns that belong to the ancestral genome
-    my @tmp_ga_array;
-    foreach my $ga (@{$GAB->genomic_align_array()} ) {
-        if ($ga->genome_db->name eq 'ancestral_sequences') {
-            print "\n -------- and it is out of hereeeee-------- \n" if ( $self->debug >3 );
-            next;
-        }else {
-            print "\n -------- get innnn yoouuu beautttyyyy-------- \n" if ( $self->debug >3 );
-            push(@tmp_ga_array, $ga);
-        }
-    }
-
-    $self->param('genomic_aligns', \@tmp_ga_array);
+    $self->param('genomic_aligns', $GAB->genomic_align_array());
   
     print "$_->dbID \n" foreach $self->param('genomic_aligns');
 }
