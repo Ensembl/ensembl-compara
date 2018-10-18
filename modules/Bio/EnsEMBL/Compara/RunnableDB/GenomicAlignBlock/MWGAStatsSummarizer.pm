@@ -38,9 +38,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-    	'aligned_bases_counter'     => {'148' => {'37' =>[3034,4003,1236,798,50]}},
-    	'aligned_sequences_counter' => {'148' => [15726,1345, 7983,73649,63638]},
-    	'aligned_positions_counter'	=> {'148' => [37464,8163,9173,52733,6382]},
+        #'aligned_bases_counter'     => {'148' => {'37' =>[3034,4003,1236,798,50]}},
+        #'aligned_sequences_counter' => {'148' => [15726,1345, 7983,73649,63638]},
+        #'aligned_positions_counter'	=> {'148' => [37464,8163,9173,52733,6382]},
     }
 }
 
