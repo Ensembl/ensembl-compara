@@ -84,6 +84,7 @@ sub pipeline_analyses_goc {
             -parameters => {
                 'methods'   => {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
+                    'ENSEMBL_HOMOEOLOGUES'  => 2,
                 },
             },
             -rc_name => '500Mb_job',
