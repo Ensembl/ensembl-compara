@@ -96,9 +96,11 @@ sub pipeline_analyses_multiple_aligner_stats {
         },
 
         {   -logic_name => 'Genomic_Align_Block_Job_Generator',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::GenomicAlignBlockGenerator',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'mlss_id'  => $self->o('mlss_id'),
+                            'contiguous'  => 0,
+                            'inputquery'  => 'SELECT DISTINCT genomic_align_block_id FROM genomic_align WHERE method_link_species_set_id = #mlss_id# AND dnafrag_id < 10000000000',
                         },
             -flow_into  => {
                 '2->A' => ['alignment_depth_calculator','pw_aligned_base_calculator'],
