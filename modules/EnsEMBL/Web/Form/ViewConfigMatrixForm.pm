@@ -78,7 +78,7 @@ sub build {
       </div>
 
       <div class="result-box">
-        <h3>Selected tracks</h3>
+        <h4>Selected tracks</h4>
 
         <div class="filter-content">
           <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
@@ -142,7 +142,10 @@ sub build {
         </div>
 
         <div class="bottom-buttons">
-          <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
+          <div class="save-config-wrapper">
+            <span class="fancy-checkbox inactive"></span>
+            <text class="save-config">Save configuration</text>
+          </div>
           <button class="filter fade-button">Configure track display</button>
         </div>
       </div>
