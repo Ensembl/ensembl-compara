@@ -172,19 +172,6 @@
             "summary": "Run HCs"
          },
          {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
-            "summary": "Final Handover of DBs"
-         }
-      ],
-      "summary": "Release <version> End of production window"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Release process",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Testwebserver",
-      "subtasks": [{
             "component": "Release process",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "test the DNA data"
@@ -207,7 +194,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
             "summary": "Final Handover of DBs"
          }
       ],
