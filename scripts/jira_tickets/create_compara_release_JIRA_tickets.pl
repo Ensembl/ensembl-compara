@@ -306,6 +306,8 @@ sub json_to_jira {
 sub replace_placeholders {
     my ( $line, $parameters ) = @_;
 
+    return '' unless $line;
+
     $line =~ s/<RelCo>/$parameters->{relco}/g;
     $line =~ s/<version>/$parameters->{release}/g;
 
