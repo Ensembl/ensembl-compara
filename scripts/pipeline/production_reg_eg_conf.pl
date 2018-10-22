@@ -34,10 +34,10 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 # -------------------------CORE DATABASES--------------------------------------
 
 # Before the official EG handover, the core databases are usually on the a production server:
-#Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/94');
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/95');
 # Then they are moved to the staging server:
-Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/94');
-Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/94');
+#Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/95');
+#Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/95');
 
 # clarify which version of yeast to use
 Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # deregister old version
@@ -47,7 +47,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
      -port => 4573,
      -species => 'saccharomyces_cerevisiae',
      -group => 'core',
-     -dbname => 'saccharomyces_cerevisiae_core_94_4',
+     -dbname => 'saccharomyces_cerevisiae_core_95_4',
  );
 
 #-------------------------HOMOLOGY DATABASES-----------------------------------
@@ -74,123 +74,69 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-3',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4523,
-    -species => 'plants_lastz_mtru',
-    -dbname => 'carlac_eg_lastz_plants_mtru_ref',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -species => 'plants_lastz_atha_a',
-    -dbname => 'muffato_eg_lastz_plants_atha_ref_a',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-4',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4401,
-    -species => 'plants_lastz_atha_b',
-    -dbname => 'mateus_eg_lastz_plants_atha_ref_b',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -species => 'plants_lastz_vvin_a',
-    -dbname => 'muffato_eg_lastz_plants_vvin_ref_a',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-4',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4401,
-    -species => 'plants_lastz_vvin_b',
-    -dbname => 'mateus_eg_lastz_plants_vvin_ref_b',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -species => 'plants_lastz_osat',
-    -dbname => 'muffato_eg_lastz_plants_osat_ref',
-);
-
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-2',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4522,
-    -species => 'plants_lastz_rice_wheat',
-    -dbname => 'waakanni_eg_lastz_plants_osat_tdic',
-);
+#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#    -host => 'mysql-ens-compara-prod-3',
+#    -user => 'ensadmin',
+#    -pass => $ENV{'ENSADMIN_PSW'},
+#    -port => 4523,
+#    -species => 'plants_lastz_mtru',
+#    -dbname => 'carlac_eg_lastz_plants_mtru_ref',
+#);
 
 # SYNTENIES
 # mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_plants_synteny_94
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-2',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4522,
-    -species => 'plants_synteny',
-    -dbname => 'waakanni_plants_synteny_94',
-);
+#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#    -host => 'mysql-ens-compara-prod-2',
+#    -user => 'ensadmin',
+#    -pass => $ENV{'ENSADMIN_PSW'},
+#    -port => 4522,
+#    -species => 'plants_synteny',
+#    -dbname => 'waakanni_plants_synteny_94',
+#);
 
 # ----------------------HOMOLOGY DATABASES---------------------------
 
-# Compara Master database:
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-4',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4401,
-    -species => 'plants_ptrees',
-    -dbname => 'carlac_plants_prottrees_41_94_B ',
-);
+# Protein tree production database
+#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#    -host => 'mysql-ens-compara-prod-4',
+#    -user => 'ensadmin',
+#    -pass => $ENV{'ENSADMIN_PSW'},
+#    -port => 4401,
+#    -species => 'plants_ptrees',
+#    -dbname => 'carlac_plants_prottrees_41_94_B ',
+#);
 
 # ----------------------COMPARA DATABASES---------------------------
 
 # Compara Master database:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-2',
+    -host => 'mysql-ens-compara-prod-5',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4522,
+    -port => 4615,
     -species => 'compara_master',
-    -dbname => 'plants_compara_master_41_94',
+    -dbname => 'ensembl_compara_master_plants',
 );
 
 # previous release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-eg-staging-1',
-    -user => 'ensrw',
-    -pass => 'scr1b3s1',
-    -port => 4160,
+    -host => 'mysql-ens-compara-prod-5',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4615,
     -species => 'compara_prev',
     -dbname => 'ensembl_compara_plants_41_94',
 );
 
 # current release database on one of Compara servers:
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-2',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4522,
-    -species => 'compara_curr',
-    -dbname => 'ensembl_compara_plants_41_94',
-);
+#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+#    -host => 'mysql-ens-compara-prod-2',
+#    -user => 'ensadmin',
+#    -pass => $ENV{'ENSADMIN_PSW'},
+#    -port => 4522,
+#    -species => 'compara_curr',
+#    -dbname => 'ensembl_compara_plants_41_94',
+#);
 
 # ensembl production (maintained by production team):
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -198,7 +144,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -user => 'ensro',
     -port => 4519,
     -species => 'ensembl_production',
-    -dbname => 'ensembl_production_94',
+    -dbname => 'ensembl_production_95',
     -group => 'production',
 );
 
