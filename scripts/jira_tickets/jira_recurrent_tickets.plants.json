@@ -99,7 +99,7 @@
          {
             "component": "Release tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Species-tree",
-            "summary": "Run the Create Species Tree pipeline",
+            "summary": "Build the species-tree",
             "ticket_map_name": "Species-tree"
          }
       ],
