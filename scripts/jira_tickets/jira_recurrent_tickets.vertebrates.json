@@ -110,7 +110,6 @@
       "component": "Release process",
       "description": "relco_doc#Releasecoordinationdocumentation-Production",
       "subtasks": [{
-         {
             "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run the Family pipeline",
@@ -119,7 +118,7 @@
          {
             "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run the Protein tree pipeline",
+            "summary": "Run the Protein-tree pipeline",
             "ticket_map_name": "Protein-trees - default"
          },
          {
@@ -130,7 +129,7 @@
          {
             "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run ncRNA pipeline",
+            "summary": "Run ncRNA-tree pipeline",
             "ticket_map_name": "ncRNA-trees - default"
          },
          {
