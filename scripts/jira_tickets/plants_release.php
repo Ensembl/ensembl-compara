@@ -11,7 +11,7 @@
 	$eg_digraph = preg_replace('/\}\s?$/', '', $eg_digraph);
 
 	# load ticket mapping
-	$eg_tickets = 'eg_jira_tickets.tsv';
+	$eg_tickets = 'plants_jira_tickets.tsv';
 	$ticketfh   = fopen($eg_tickets, "r") or die("Unable to open $eg_tickets");
 	// $ticket_str = fread($ticketfh, filesize($eg_tickets));
 	$ticket_map = array();
