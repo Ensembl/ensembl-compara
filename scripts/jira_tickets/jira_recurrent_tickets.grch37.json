@@ -1,27 +1,75 @@
 [{
       "assignee": "<RelCo>",
       "component": "Release process",
-      "description": "relco_doc#Releasecoordinationdocumentation-Preparation",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-DeclarationofIntentions",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-DeclarationofIntentions",
             "summary": "Declaration of Intentions"
          },
          {
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Comparaservers",
-            "summary": "check Compara servers space"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-Registryconfigurationfile",
+            "summary": "Registry Configuration file"
          },
          {
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Configurationfile",
-            "summary": "update Configuration file"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-Patchthereuseddatabasestothelatestschema",
+            "summary": "Patch the reused databases"
          }
       ],
-      "summary": "Release <version> Preparation"
+      "summary": "<Division> Release <version> Setup"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Release process",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Release process",
+            "summary": "Backup the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Release process",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database#PreparationoftheMasterdatabase-2.Patchthedatabase",
+            "summary": "Patch the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Release process",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database#PreparationoftheMasterdatabase-6.Healthcheckthemasterdatabase",
+            "summary": "Healthcheck the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Release process",
+            "summary": "Final backup of the master database"
+         }
+      ],
+      "summary": "<Division> Release <version> Master database"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Release process",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
+      "subtasks": [{
+            "component": "Release tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Members",
+            "summary": "Run the member loading pipeline",
+            "ticket_map_name": "Member loading"
+         },
+         {
+            "component": "Release tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Genomedumps",
+            "summary": "Run the genome dumping pipeline",
+            "ticket_map_name": "Genome dumps"
+         }
+      ],
+      "summary": "<Division> Release <version> Production preprocessing"
    },
    {
       "assignee": "<RelCo>",
@@ -29,33 +77,15 @@
       "description": "relco_doc#Releasecoordinationdocumentation-Production",
       "subtasks": [{
             "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Production",
-            "summary": "Run the member loading pipeline",
-            "ticket_map_name": "Member loading"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Production",
-            "summary": "Run the genome dumping pipeline",
-            "ticket_map_name": "Genome dumps"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Production",
-            "summary": "Run the Create Species Tree pipeline",
-            "ticket_map_name": "Species-tree"
-         },
-         {
-            "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run the Family pipeline",
-            "ticket_map_name": "Families - default"
+            "ticket_map_name": "Families"
          },
          {
             "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run the Protein tree pipeline",
-            "ticket_map_name": "Protein-trees - default"
+            "summary": "Run the Protein-tree pipeline",
+            "ticket_map_name": "Protein-trees"
          },
          {
             "component": "Release tasks",
@@ -65,64 +95,16 @@
          {
             "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run ncRNA pipeline",
-            "ticket_map_name": "ncRNA-trees - default"
+            "summary": "Run ncRNA-tree pipeline",
+            "ticket_map_name": "ncRNA-trees"
          },
          {
             "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Mammal EPO",
-            "ticket_map_name": "EPO Mammals"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Mammal EPO_low",
-            "ticket_map_name": "EPO-2X Mammals"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Primate EPO",
-            "ticket_map_name": "EPO Primates"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Fish EPO",
-            "ticket_map_name": "EPO Fish"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Fish EPO_low",
-            "ticket_map_name": "EPO-2X Fish"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Sauropsids EPO",
-            "ticket_map_name": "EPO Sauropsids"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Sauropsids EPO_low",
-            "ticket_map_name": "EPO-2X Sauropsids"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Amniotes pecan",
-            "ticket_map_name": "Mercator Pecan"
-         },
-         {
-            "component": "Release tasks",
-            "summary": "All LASTZ",
-            "ticket_map_name": "All LastZ"
+            "summary": "ncRNA-trees WGA Orthology QC",
+            "ticket_map_name": "ncRNA-trees WGA Orthology QC"
          }
       ],
-      "summary": "Release <version> Production pipelines main site"
+      "summary": "<Division> Release <version> Production pipelines"
    },
    {
       "assignee": "<RelCo>",
@@ -133,19 +115,6 @@
             "component": "Release process",
             "description": "relco_doc#Releasecoordinationdocumentation-CreateReleaseDatabase",
             "summary": "Create Release Database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
-            "summary": "Merge DNA data",
-            "ticket_map_name": "All alignments for WGA Orthology QC"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
-            "summary": "Run syntenies pipeline on release db"
          },
          {
             "assignee": "<RelCo>",
@@ -184,26 +153,6 @@
             "summary": "Run HCs"
          },
          {
-            "assignee": "<RelCo>",
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
-            "summary": "Age of Base",
-            "ticket_map_name": "Age of Base"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
-            "summary": "Final Handover of DBs"
-         }
-      ],
-      "summary": "Release <version> End of production window"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Release process",
-      "description": "relco_doc#Releasecoordinationdocumentation-Testwebserver",
-      "subtasks": [{
             "component": "Release process",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "test the DNA data"
@@ -224,7 +173,7 @@
             "summary": "test the documentation and statistics"
          }
       ],
-      "summary": "Release <version> Test the data on the staging server"
+      "summary": "<Division> Release <version> Database merge and handover"
    },
    {
       "assignee": "<RelCo>",
@@ -240,10 +189,10 @@
             "assignee": "<RelCo>",
             "component": "Release tasks",
             "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
-            "summary": "Update the jira_recurrent_tickets.json"
+            "summary": "Update the jira_recurrent_tickets.<division>.json"
          }
       ],
-      "summary": "Release <version> Post-handover"
+      "summary": "<Division> Release <version> Post-handover"
    },
    {
       "assignee": "<RelCo>",
@@ -262,6 +211,6 @@
             "summary": "test the REST server"
          }
       ],
-      "summary": "Release <version> Test the sites"
+      "summary": "<Division> Release <version> Final checks before public release"
    }
 ]
