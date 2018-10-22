@@ -51,12 +51,13 @@ sub main {
     # ----------------------------
     # read command line parameters
     # ----------------------------
-    my ( $user, $relco, $release, $password, $help, $tickets_json, $ticket_mapping_file, $config );
+    my ( $user, $relco, $release, $password, $help, $tickets_json, $ticket_mapping_file, $config, $division );
 
     GetOptions(
         'relco=s'    => \$relco,
         'release=i'  => \$release,
         'password|p=s' => \$password,
+        'division|d=s' => \$division,
         'tickets=s'  => \$tickets_json,
         'mapping=s'  => \$ticket_mapping_file,
         'config|c=s' => \$config,
@@ -73,8 +74,8 @@ sub main {
     # ---------------------------------
     # deal with command line parameters
     # ---------------------------------
-    ( $user, $relco, $release, $password, $tickets_json, $config )
-        = set_parameters( $relco, $release, $password, $tickets_json, $config,
+    ( $user, $relco, $release, $password, $tickets_json, $config, $division )
+        = set_parameters( $relco, $release, $password, $tickets_json, $config, $division,
         $logger );
 
     # ---------------------------
@@ -88,10 +89,9 @@ sub main {
     $parameters->{user}     = $user;
     $parameters->{relco}    = $relco;
     $parameters->{password} = $password;
-    $release = "Ensembl $release" unless $release =~ /^EG/; # allow for EG41 to be passed, for example
     $parameters->{release}  = $release;
-    # And substitute fresh values
-    $parameters->{tickets}->{fixVersion} = replace_placeholders($parameters->{tickets}->{fixVersion}, $parameters);
+    $parameters->{tickets}->{fixVersion} = "Release $release";
+    $parameters->{division} = $division if ($division ne 'relco');
 
     # ------------------
     # parse tickets file
@@ -115,13 +115,15 @@ sub main {
     # --------------------------------
     my $fixVersion = $parameters->{tickets}->{fixVersion};
     $fixVersion =~ s/ /\\u0020/g;
+    my $jql = sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $fixVersion);
+    $jql .= sprintf(' and cf[11130]="%s"', $parameters->{division}) if $parameters->{division};
     my $existing_tickets_response
         = post_request( 'rest/api/latest/search',
-        { "maxResults" => 300, "jql" => sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $fixVersion) },
+        { "maxResults" => 300, "jql" => $jql, },
         $parameters, $logger );
     my $existing_tickets
         = decode_json( $existing_tickets_response->content() );
-    $parameters->{existing_tickets} = {map {$_->{fields}->{summary} => $_->{key}} @{$existing_tickets->{issues}}};
+    $parameters->{existing_tickets} = {map {(($parameters->{division} // '') . '--' . $_->{fields}->{summary}) => $_->{key}} @{$existing_tickets->{issues}}};
     $logger->info('Existing tickets: ' . Dumper($parameters->{existing_tickets}));
 
     # -----------------------
@@ -154,7 +156,8 @@ sub main {
   Arg[3]      : String $password - user's JIRA password
   Arg[4]      : String $tickets_json - path to the json file that holds the input
   Arg[5]      : String $config - path to the config file holding handover dates
-  Arg[6]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
+  Arg[6]      : String $division
+  Arg[7]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
   Description : Makes sure that the parameters provided through the command line
                 are valid and assigns default values to the ones which where not 
                 supplied
@@ -164,7 +167,7 @@ sub main {
 =cut
 
 sub set_parameters {
-    my ( $relco, $release, $password, $tickets_json, $config, $logger ) = @_;
+    my ( $relco, $release, $password, $tickets_json, $config, $division, $logger ) = @_;
 
     $relco = $ENV{'USER'} if !$relco;
     $relco = validate_user_name( $relco, $logger );
@@ -173,7 +176,22 @@ sub set_parameters {
 
     $release = Bio::EnsEMBL::ApiVersion->software_version() if !$release;
 
-    $tickets_json = $FindBin::Bin . '/jira_recurrent_tickets.json'
+    my %capitalized_divisions = (
+        'grch37'        => 'GRCh37',
+        'ensembl'       => 'Ensembl',
+        'vertebrates'   => 'Vertebrates',
+        'plants'        => 'Plants',
+    );
+    $division ||= '';
+    if (!$division) {
+        warn "No division given, will load the division-agnostic 'relco' JSON file";
+
+    } elsif (!$capitalized_divisions{lc $division}) {
+        $logger->error("Division '$division' not recognized", 0, 0);
+    }
+    $division = $division ? $capitalized_divisions{lc $division} : 'relco';
+
+    $tickets_json = $FindBin::Bin . '/jira_recurrent_tickets.' . lc $division . '.json'
         if !$tickets_json;
 
     if ( !-e $tickets_json ) {
@@ -196,8 +214,8 @@ sub set_parameters {
         );
     }
 
-    printf( "\trelco: %s\n\trelease: %i\n\ttickets: %s\n\tconfig: %s\n\tJIRA user: %s\n",
-        $relco, $release, $tickets_json, $config, $user );
+    printf( "\trelco: %s\n\trelease: %i\n\tdivision: %s\n\ttickets: %s\n\tconfig: %s\n\tJIRA user: %s\n",
+        $relco, $release, $division, $tickets_json, $config, $user );
     print "Are the above parameters correct? (y,N) : ";
     my $response = readline();
     chomp $response;
@@ -217,7 +235,7 @@ sub set_parameters {
         print "\n";
     }
 
-    return ( $user, $relco, $release, $password, $tickets_json, $config );
+    return ( $user, $relco, $release, $password, $tickets_json, $config, $division );
 }
 
 =head2 validate_user_name
@@ -282,6 +300,9 @@ sub json_to_jira {
         'components'  => \@components,
         'description' => replace_placeholders( $json_hash->{'description'}, $parameters ),
     );
+    if ($parameters->{'division'}) {
+        $ticket{'customfield_11130'} = { 'value' => $parameters->{'division'} };
+    }
 
     if ($json_hash->{'assignee'}) {
         $ticket{'assignee'} = { 'name' => validate_user_name( replace_placeholders( $json_hash->{'assignee'}, $parameters), $logger ) };
@@ -310,6 +331,11 @@ sub replace_placeholders {
 
     $line =~ s/<RelCo>/$parameters->{relco}/g;
     $line =~ s/<version>/$parameters->{release}/g;
+    if ($parameters->{division}) {
+        $line =~ s/<Division>/$parameters->{division}/g;
+        my $lcdiv = lc $parameters->{division};
+        $line =~ s/<division>/$lcdiv/g;
+    }
 
     return $line;
 }
@@ -334,7 +360,7 @@ sub create_ticket {
     $logger->info( 'Creating' . ' "' . $ticket->{summary} . '" ... ' );
 
     # First check if the ticket already exists
-    if (my $existing_ticket_key = $parameters->{existing_tickets}->{ $ticket->{summary} }) {
+    if (my $existing_ticket_key = $parameters->{existing_tickets}->{ ($parameters->{division} // '') . '--' . $ticket->{jira}->{summary} }) {
         $logger->info(
             'Skipped: This seems to be a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
                 . $existing_ticket_key

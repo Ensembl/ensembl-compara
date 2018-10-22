@@ -11,12 +11,6 @@
          {
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Updateyourcheckouts",
-            "summary": "Update your checkouts"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
             "description": "relco_doc#Releasecoordinationdocumentation-Comparaservers",
             "summary": "check Compara servers space"
          },
@@ -28,74 +22,6 @@
          }
       ],
       "summary": "Release <version> Preparation"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Release process",
-      "description": "relco_doc#Releasecoordinationdocumentation-Schemapreparation",
-      "subtasks": [{
-            "assignee": "<RelCo>",
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Patchthetestdatabases",
-            "summary": "Patch the test DBs"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Branchthecode",
-            "summary": "Branch code"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Specializethebranch",
-            "summary": "Specialize the branch"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Updatetable.sqlandcreatepatchfiles",
-            "summary": "update master tables and create patch files"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Checkthepatchfiles",
-            "summary": "check patch files"
-         }
-      ],
-      "summary": "Release <version> Schema preparation"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Release process",
-      "description": "relco_doc#Releasecoordinationdocumentation-Masterdatabase",
-      "subtasks": [{
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-NCBItaxonomydata",
-            "summary": "NCBI taxonomy"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Addnewentriestocomparamasterdatabase",
-            "summary": "Add new entries to compara master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Addmethod_link_species_setentriestocomparamasterdatabase",
-            "summary": "Add method_link_species_set entries to compara master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finaleditstocomparamasterdatabase",
-            "summary": "Final edits to compara master database"
-         }
-      ],
-      "summary": "Update master DB"
    },
    {
       "assignee": "<RelCo>",
@@ -133,7 +59,6 @@
          },
          {
             "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Protein-trees WGA Orthology QC",
             "ticket_map_name": "Protein-trees WGA Orthology QC"
          },
@@ -142,24 +67,6 @@
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run ncRNA pipeline",
             "ticket_map_name": "ncRNA-trees - default"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run mouse strains ncRNA pipeline",
-            "ticket_map_name": "ncRNA-trees - murinae"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run mouse strain protein tree pipeline",
-            "ticket_map_name": "Protein-trees - murinae"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Reindex murinae gene trees",
-            "ticket_map_name": "Gene-tree reindexing - murinae"
          },
          {
             "component": "Release tasks",
@@ -178,12 +85,6 @@
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Primate EPO",
             "ticket_map_name": "EPO Primates"
-         },
-         {
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run Primates EPO_low",
-            "ticket_map_name": "EPO-2X Primates"
          },
          {
             "component": "Release tasks",
@@ -217,24 +118,11 @@
          },
          {
             "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "All LASTZ",
             "ticket_map_name": "All LastZ"
          }
       ],
       "summary": "Release <version> Production pipelines main site"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Release process",
-      "description": "relco_doc#Releasecoordinationdocumentation-GRCh37site[edit]",
-      "subtasks": [{
-         "assignee": "<RelCo>",
-         "component": "Release tasks",
-         "description": "relco_doc#Releasecoordinationdocumentation-GRCh37site[edit]",
-         "summary": "GRCh37 tasks"
-      }],
-      "summary": "Release <version> Production pipelines GRCh37"
    },
    {
       "assignee": "<RelCo>",
@@ -344,12 +232,6 @@
       "description": "relco_doc#Releasecoordinationdocumentation-Post-handover",
       "subtasks": [{
             "assignee": "<RelCo>",
-            "component": "Release tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Updatedocumentationanddiagrams[edit]",
-            "summary": "Generate and commit diagrams"
-         },
-         {
-            "assignee": "<RelCo>",
             "component": "Release process",
             "description": "relco_doc#Releasecoordinationdocumentation-Datadumps",
             "summary": "Data dump"
@@ -370,26 +252,14 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "http://test.ensembl.org/",
-            "summary": "test the main ensembl site"
+            "description": "http://grch37-test.ensembl.org/",
+            "summary": "test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Release process",
-            "description": "http://grch37-test.ensembl.org/index.html",
-            "summary": "test the GRCh37 site"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "http://test.rest.ensembl.org/",
-            "summary": "test the main REST server"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Release process",
-            "description": "https://grch37-test.rest.ensembl.org/",
-            "summary": "test the GRCh37 REST server"
+            "description": "http://grch37-test.rest.ensembl.org/",
+            "summary": "test the REST server"
          }
       ],
       "summary": "Release <version> Test the sites"
