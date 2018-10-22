@@ -42,6 +42,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
 
+    panel.el.find("div#experiment-tab div.search-box").hide();
+
     $.ajax({
       url: '/Json/RegulationData/data?species='+Ensembl.species,
       dataType: 'json',
@@ -345,7 +347,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     })
     
     //selecting the tab in experiment type
-    this.el.find("div.experiments div.track-tab").on("click", function () { 
+    this.el.find("div.experiments div.track-tab").on("click", function () {
       panel.toggleTab(this, panel.el.find("div.experiments"));
     });    
     
@@ -356,37 +358,43 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //            container is the current active tab (javascript object)
 		//            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
 		toggleTab: function(selectElement, container, selByClass) {
-    var panel = this; 
+      var panel = this; 
 
-    if(!$(selectElement).hasClass("active") ) {
-      //remove current active tab and content
-      var activeContent = container.find("div.active span.content-id").html();
-      container.find("div.active").removeClass("active");
-      if(selByClass) {
-        container.find("div."+activeContent).removeClass("active");
-      } else {
-        panel.el.find("#"+activeContent).removeClass("active");
+      if(!$(selectElement).hasClass("active") ) {
+        //showing/hiding searchbox in the main tab              
+        if($(selectElement).find("div.search-box").length) {
+          panel.el.find(".search-box").hide();
+          $(selectElement).find("div.search-box").show();
+        }
+        
+        //remove current active tab and content
+        var activeContent = container.find("div.active span.content-id").html();
+        container.find("div.active").removeClass("active");
+        if(selByClass) {
+          container.find("div."+activeContent).removeClass("active");
+        } else {
+          panel.el.find("#"+activeContent).removeClass("active");
+        }
+
+        //add active class to clicked element
+        var spanID = $(selectElement).find("span.content-id").html();      
+        $(selectElement).addClass("active");
+
+        var activeLetterDiv = container.find('div.alphabet-div.active');
+
+        if(selByClass) {
+          activeAlphabetContentDiv = container.find("div."+spanID);
+        } else {      
+          activeAlphabetContentDiv = panel.el.find("#"+spanID);
+        }
+
+        activeAlphabetContentDiv.addClass("active");
+
+        // change offset position of active content same as the ribbon letter
+        if(activeAlphabetContentDiv.hasClass('alphabet-content')) {
+          activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
+        }
       }
-
-      //add active class to clicked element
-      var spanID = $(selectElement).find("span.content-id").html();      
-      $(selectElement).addClass("active");
-
-      var activeLetterDiv = container.find('div.alphabet-div.active');
-
-      if(selByClass) {
-        activeAlphabetContentDiv = container.find("div."+spanID);
-      } else {      
-        activeAlphabetContentDiv = panel.el.find("#"+spanID);
-      }
-
-      activeAlphabetContentDiv.addClass("active");
-
-      // change offset position of active content same as the ribbon letter
-      if(activeAlphabetContentDiv.hasClass('alphabet-content')) {
-        activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
-      }
-    } 
 		},
 
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list

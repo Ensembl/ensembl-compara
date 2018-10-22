@@ -64,8 +64,22 @@ sub build {
     <div class="flex-row">
       <div class="track-panel">
         <div class="tabs track-menu">
-          <div class="track-tab active" id="cell-tab">Cell type<span class="hidden content-id">cell-type-content</span></div>
-          <div class="track-tab" id="experiment-tab">Experimental data<span class="hidden content-id">experiment-type-content</span></div>
+          <div class="track-tab active" id="cell-tab">
+          Cell type
+          <span class="hidden content-id">cell-type-content</span>
+          <div class="search-box">
+            <input class="configuration_search_text" placeholder="Search" name="cell_search">
+            <img src="/i/16/search.png" class="search-icon" />
+          </div>
+          </div>
+          <div class="track-tab" id="experiment-tab">
+            Experimental data
+            <span class="hidden content-id">experiment-type-content</span>
+            <div class="search-box">
+              <input class="configuration_search_text" placeholder="Search" name="experiment_search">
+              <img src="/i/16/search.png"  class="search-icon"/>
+            </div>
+          </div>
         </div>
 
         <div id="cell-type-content" class="tab-content active">
@@ -78,7 +92,7 @@ sub build {
       </div>
 
       <div class="result-box">
-        <h4>Selected tracks</h4>
+        <h3>Selected tracks</h3>
 
         <div class="filter-content">
           <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
@@ -146,10 +160,7 @@ sub build {
         </div>
 
         <div class="bottom-buttons">
-          <div class="save-config-wrapper">
-            <span class="fancy-checkbox inactive"></span>
-            <text class="save-config">Save configuration</text>
-          </div>
+          <span class="fancy-checkbox inactive"></span><text class="save-config">Save configuration</text>
           <button class="filter fade-button">Configure track display</button>
         </div>
       </div>
