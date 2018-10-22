@@ -261,6 +261,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.el.find(parentContentId+" .tab-content.active").removeClass("active");
         panel.el.find(parentTab).addClass("active");
         panel.el.find(parentContentId).addClass("active");
+
+        //showing/hiding searchbox in the main tab
+        if($(parentTab).find("div.search-box").length) {
+          panel.el.find(".search-box").hide();
+          $(parentTab).find("div.search-box").show();
+        }
+      }
+
+      //showing/hiding searchbox in the main tab
+      if($(tabId).find("div.search-box").length) {
+        panel.el.find(".search-box").hide();
+        $(tabId).find("div.search-box").show();
       }
 
       panel.el.find(tabId).addClass("active");
