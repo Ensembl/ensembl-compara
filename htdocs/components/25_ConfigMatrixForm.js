@@ -223,7 +223,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   // Function to show a panel when button is clicked
   // Arguments javascript object of the button element and the panel to show
   clickFilter: function(clickButton, showPanel) {
-    var panel = this;
+		var panel = this;
 
     clickButton.on("click", function(e) {
       if(clickButton.hasClass("_edit") ) {
@@ -241,8 +241,29 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   
   //function to jump to tab based on the link
   clickSubResultLink: function() {
-      var panel = this;
+    var panel = this;
+    panel.el.find('div.sub-result-link').on("click", function(e) {
+      var tabId 		  = "div#" + panel.el.find(this).parent().attr("id") + "-tab";
+      var contentId   = "div#" + panel.el.find(tabId).find("span.content-id").html();
+      var parentTabId = panel.el.find(this).parent().find("span._parent-tab-id").html();
 
+      panel.el.find(".track-tab.active").first().removeClass("active");
+      panel.el.find(".tab-content.active").first().removeClass("active");
+
+      //for now assuming there is only one parent tab, if there is more than one then we need to create for loop
+      if(parentTabId){
+        var parentTab       = "div#" + parentTabId;
+        var parentContentId = "div#" + panel.el.find(parentTab).find("span.content-id").html();
+
+        panel.el.find(parentContentId+" .track-tab.active").removeClass("active");
+        panel.el.find(parentContentId+" .tab-content.active").removeClass("active");
+        panel.el.find(parentTab).addClass("active");
+        panel.el.find(parentContentId).addClass("active");
+      }
+
+      panel.el.find(tabId).addClass("active");
+      panel.el.find(contentId).addClass("active");
+    });
   },
 
   //function to show "show selected" or "Hide selected" link in right hand panel
@@ -311,7 +332,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $.each(panel.json_data.evidence, function(key, item){
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
-      experiment_html += '<div class="track-tab '+active_class+'">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';     
+      experiment_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
       content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'"><span class="hidden rhsection-id">'+key+'</span></div>';
       count++;
     });
@@ -333,8 +354,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   // Function to toggle tabs and show the corresponding content which can be accessed by #id or .class
   // Arguments: selectElement is the tab that's clicked to be active or the tab that you want to be active (javascript object)
   //            container is the current active tab (javascript object)
-  //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
-  toggleTab: function(selectElement, container, selByClass) {
+		//            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
+		toggleTab: function(selectElement, container, selByClass) {
     var panel = this; 
 
     if(!$(selectElement).hasClass("active") ) {
@@ -366,8 +387,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
       }
     } 
-  },
-  
+		},
+
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayFilter: function(data, container, listType) {
     var panel       = this;

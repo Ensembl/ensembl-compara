@@ -94,6 +94,7 @@ sub build {
           <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
           <div id="experiment">
             <div class="result-content" id="Histone">
+              <span class="_parent-tab-id hidden">experiment-tab</span>
               <div class="sub-result-link">Histone</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
@@ -102,6 +103,7 @@ sub build {
               </ul>
             </div>
             <div class="result-content" id="Open_Chromatin">
+							<span class="_parent-tab-id hidden">experiment-tab</span>
               <div class="sub-result-link">Open chromatin</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
@@ -110,6 +112,7 @@ sub build {
               </ul>
             </div>
             <div class="result-content" id="Polymerase">
+							<span class="_parent-tab-id hidden">experiment-tab</span>
               <div class="sub-result-link">Polymerase</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
@@ -118,7 +121,8 @@ sub build {
               </ul>
             </div>          
             <div class="result-content" id="TFBS">
-              <div class="sub-result-link">TFBS</div>
+              <span class="_parent-tab-id hidden">experiment-tab</span>
+							<div class="sub-result-link">TFBS</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
