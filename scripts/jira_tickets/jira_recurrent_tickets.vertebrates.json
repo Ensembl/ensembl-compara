@@ -134,6 +134,11 @@
          },
          {
             "component": "Release tasks",
+            "summary": "ncRNA-trees WGA Orthology QC",
+            "ticket_map_name": "ncRNA-trees WGA Orthology QC"
+         },
+         {
+            "component": "Release tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run mouse strains ncRNA pipeline",
             "ticket_map_name": "ncRNA-trees - murinae"
