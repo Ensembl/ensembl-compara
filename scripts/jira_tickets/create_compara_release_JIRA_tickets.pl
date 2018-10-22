@@ -51,7 +51,7 @@ sub main {
     # ----------------------------
     # read command line parameters
     # ----------------------------
-    my ( $relco, $release, $password, $help, $tickets_json, $ticket_mapping_file, $config );
+    my ( $user, $relco, $release, $password, $help, $tickets_json, $ticket_mapping_file, $config );
 
     GetOptions(
         'relco=s'    => \$relco,
@@ -73,7 +73,7 @@ sub main {
     # ---------------------------------
     # deal with command line parameters
     # ---------------------------------
-    ( $relco, $release, $password, $tickets_json, $config )
+    ( $user, $relco, $release, $password, $tickets_json, $config )
         = set_parameters( $relco, $release, $password, $tickets_json, $config,
         $logger );
 
@@ -85,6 +85,7 @@ sub main {
     # check_dates($parameters);
     
     # integrate command line parameters to parameters object
+    $parameters->{user}     = $user;
     $parameters->{relco}    = $relco;
     $parameters->{password} = $password;
     $release = "Ensembl $release" unless $release =~ /^EG/; # allow for EG41 to be passed, for example
@@ -168,6 +169,8 @@ sub set_parameters {
     $relco = $ENV{'USER'} if !$relco;
     $relco = validate_user_name( $relco, $logger );
 
+    my $user = validate_user_name( $ENV{'USER'}, $logger );
+
     $release = Bio::EnsEMBL::ApiVersion->software_version() if !$release;
 
     $tickets_json = $FindBin::Bin . '/jira_recurrent_tickets.json'
@@ -193,8 +196,8 @@ sub set_parameters {
         );
     }
 
-    printf( "\trelco: %s\n\trelease: %i\n\ttickets: %s\n\tconfig: %s\n",
-        $relco, $release, $tickets_json, $config );
+    printf( "\trelco: %s\n\trelease: %i\n\ttickets: %s\n\tconfig: %s\n\tJIRA user: %s\n",
+        $relco, $release, $tickets_json, $config, $user );
     print "Are the above parameters correct? (y,N) : ";
     my $response = readline();
     chomp $response;
@@ -214,7 +217,7 @@ sub set_parameters {
         print "\n";
     }
 
-    return ( $relco, $release, $password, $tickets_json, $config );
+    return ( $user, $relco, $release, $password, $tickets_json, $config );
 }
 
 =head2 validate_user_name
@@ -374,7 +377,7 @@ sub post_request {
 
     my $request = HTTP::Request->new( 'POST', $url );
 
-    $request->authorization_basic( $parameters->{relco},
+    $request->authorization_basic( $parameters->{user},
         $parameters->{password} );
     $request->header( 'Content-Type' => 'application/json' );
     $request->content($json_content);
