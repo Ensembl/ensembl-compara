@@ -1728,8 +1728,8 @@ sub _parse_maf {
           $this_seq{end}    = $spl[2] + $spl[3];
       } else { # reverse strand
           $this_seq{strand} = -1;
-          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3];
-          $this_seq{end}    = $spl[5] - $spl[2] - 1;
+          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3] + 1;
+          $this_seq{end}    = $spl[5] - $spl[2];
       }
 
       push( @{ $blocks[-1] }, \%this_seq );
