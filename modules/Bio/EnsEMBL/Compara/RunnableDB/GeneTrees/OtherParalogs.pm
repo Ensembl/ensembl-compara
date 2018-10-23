@@ -181,8 +181,6 @@ sub run_analysis {
     #display summary stats of analysis 
     my $runtime = time()*1000-$starttime;  
     $gene_tree->tree->store_tag('OtherParalogs_runtime_msec', $runtime) unless ($self->param('_readonly'));
-    $self->param('orthotree_homology_counts', {'other_paralog' => $ngenepairlinks});
-
 }
 
 sub rec_add_paralogs {
@@ -245,6 +243,7 @@ sub rec_add_paralogs {
             }
         }
     }
+    $self->param('orthotree_homology_counts')->{'other_paralog'} += $ngenepairlinks;
     print "$ngenepairlinks links on node_id=", $ancestor->node_id, "\n";
     $ngenepairlinks += $self->rec_add_paralogs($child1);
     $ngenepairlinks += $self->rec_add_paralogs($child2);
