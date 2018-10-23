@@ -199,12 +199,10 @@ sub rec_add_paralogs {
     my $self = shift;
     my $ancestor = shift;
 
-    $ancestor->print_node if ($self->debug);
     # Skip the terminal nodes
     return 0 unless $ancestor->get_child_count;
+
     my ($child1, $child2) = @{$ancestor->children};
-    $child1->print_node if ($self->debug);
-    $child2->print_node if ($self->debug);
 
     # All the homologies will share this information
     my $this_taxon = $ancestor->get_value_for_tag('species_tree_node_id');
@@ -225,6 +223,22 @@ sub rec_add_paralogs {
         }
         print "setting node_type to ", $ancestor->get_value_for_tag('node_type'), "\n" if ($self->debug);
     }
+    my $ngenepairlinks = $self->add_other_paralogs_for_pair($ancestor, $child1, $child2);
+    $ngenepairlinks += $self->rec_add_paralogs($child1);
+    $ngenepairlinks += $self->rec_add_paralogs($child2);
+    return $ngenepairlinks;
+}
+
+
+sub add_other_paralogs_for_pair {
+    my $self = shift;
+    my $ancestor = shift;
+    my $child1   = shift;
+    my $child2   = shift;
+
+    $ancestor->print_node if ($self->debug);
+    $child1->print_node if ($self->debug);
+    $child2->print_node if ($self->debug);
 
     # Each species
     my $ngenepairlinks = 0;
@@ -256,9 +270,7 @@ sub rec_add_paralogs {
         }
     }
     $self->param('orthotree_homology_counts')->{'other_paralog'} += $ngenepairlinks;
-    print "$ngenepairlinks links on node_id=", $ancestor->node_id, "\n";
-    $ngenepairlinks += $self->rec_add_paralogs($child1);
-    $ngenepairlinks += $self->rec_add_paralogs($child2);
+    print "$ngenepairlinks links on node_id=", $ancestor->node_id, " between node_id=", $child1->node_id, " and node_id=", $child2->node_id, "\n";
     return $ngenepairlinks;
 }
 
