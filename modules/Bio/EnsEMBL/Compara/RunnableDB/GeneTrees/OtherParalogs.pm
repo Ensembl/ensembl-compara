@@ -117,6 +117,7 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
     $self->run_analysis;
+    $self->print_summary;
 }
 
 
