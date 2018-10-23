@@ -625,6 +625,7 @@ sub pipeline_analyses {
                 -priority           => 40,
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
+                                   3 => { 'other_paralogs' => INPUT_PLUS },
                                   },
             },
 

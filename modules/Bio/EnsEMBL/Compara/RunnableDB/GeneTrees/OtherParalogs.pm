@@ -95,6 +95,18 @@ sub fetch_input {
         bless $member, 'Bio::EnsEMBL::Compara::GeneTreeMember';
         $super_align{$member->seq_member_id} = $member;
     }
+
+    if (!$self->param('genome_db_id') && (scalar(keys %super_align) >= 5000) && $self->input_job->analysis->dataflow_rules_by_branch->{3}) {
+        my %genome_db_ids;
+        foreach my $member (values %super_align) {
+            $genome_db_ids{$member->genome_db_id} = 1;
+        }
+        foreach my $gdb_id (keys %genome_db_ids) {
+            $self->dataflow_output_id({'genome_db_id' => $gdb_id}, 3);
+        }
+        $self->complete_early('Too many genes, breaking up the task to 1 job per genome_db_id');
+    }
+
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
