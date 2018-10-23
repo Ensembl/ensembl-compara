@@ -202,7 +202,8 @@ sub rec_add_paralogs {
     unless ($self->param('_readonly')) {
         if ($ancestor->get_value_for_tag('is_dup', 0)) {
             $ancestor->store_tag('node_type', 'duplication');
-            $self->duplication_confidence_score($ancestor);
+            my $duplication_confidence_score = $self->duplication_confidence_score($ancestor);
+            $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score);
         } elsif (($child1->get_value_for_tag('species_tree_node_id') == $this_taxon) or ($child2->get_value_for_tag('species_tree_node_id') == $this_taxon)) {
             $ancestor->store_tag('node_type', 'dubious');
             $ancestor->store_tag('duplication_confidence_score', 0);
@@ -278,7 +279,7 @@ sub duplication_confidence_score {
   my $scalar_union = scalar(@union);
   $duplication_confidence_score = (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
 
-  $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score) unless ($self->param('_readonly'));
+  return $duplication_confidence_score;
 }
 
 
