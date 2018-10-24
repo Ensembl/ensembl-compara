@@ -288,7 +288,7 @@ my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
 my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
 $collections{$division_name} = $division_species_set;
-my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
+my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {!$_->genome_component} @{$division_species_set->genome_dbs}];
 
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
@@ -382,8 +382,9 @@ foreach my $fam_node (@{$division_node->findnodes('families/family')}) {
 
 foreach my $gt (qw(protein nc)) {
     my $gt_method = $compara_dba->get_MethodAdaptor->fetch_by_type((uc $gt).'_TREES');
+    my @genome_db_with_comp = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_expand_components($division_genome_dbs);
     foreach my $gt_node (@{$division_node->findnodes("gene_trees/${gt}_trees")}) {
-        my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($gt_node, $gt_method, $division_genome_dbs) };
+        my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($gt_node, $gt_method, \@genome_db_with_comp) };
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_homology_mlsss($compara_dba, $gt_method, $species_set, $display_name) }
     }
 }
