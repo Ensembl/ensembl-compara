@@ -489,23 +489,36 @@ my $current_version = software_version();
 my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET TRANSLATED_BLAT_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE GERP_CONSTRAINED_ELEMENT PROTEIN_TREES NC_TREES SPECIES_TREE);
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $n = 0;
 foreach my $mlss (@mlsss_created) {
     if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
+    } else {
+        $n++
     }
 }
+print "(and $n others)\n" if $n;
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+$n = 0;
 foreach my $mlss (@mlsss_retired) {
     if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
+    } else {
+        $n++
     }
 }
+print "(and $n others)\n" if $n;
 
 print "\nWhat else is new in e$current_version ?\n-------------------------\n";
+$n = 0;
 foreach my $mlss (@mlsss_existing) {
-    if ($methods_worth_reporting{$mlss->method->type} and ($mlss->first_release == $current_version)) {
+    next if $mlss->first_release != $current_version;
+    if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
+    } else {
+        $n++
     }
 }
+print "(and $n others)\n" if $n;
 
