@@ -38,6 +38,7 @@ my @intervals_in_mbp = (
 	[500, 1000000, 0.95],
 );
 
+my $method_link = 'LASTZ_NET';
 
 my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids );
 GetOptions(
@@ -47,6 +48,7 @@ GetOptions(
     "release=i"          => \$release,
     "max_jobs=i"         => \$max_jobs,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
+    'method_link=s'      => \$method_link,
 );
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
@@ -58,7 +60,7 @@ my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $maste
 
 # fetch the newest LASTZs and the full list of genome dbs
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
-my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type("LASTZ_NET");
+my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
 	if (($this_mlss->first_release || 0) == $release) {
@@ -315,6 +317,7 @@ Options:
 	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)
 	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
 	                   list should be comma separated values.
+	method_link      : method used to select MLSSes (default: LASTZ_NET)
 
 HELPEND
 	return $msg;
