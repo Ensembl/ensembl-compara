@@ -456,7 +456,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if (!$exist_mlss and ($mlss->method->type eq 'SYNTENY')) {
                 my $lastz_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('LASTZ_NET', $mlss->species_set->genome_dbs);
                 if ($lastz_mlss and $lastz_mlss->has_tag('low_synteny_coverage')) {
-                    print "DISCARDED (low_synteny_coverage)\n";
+                    print "DISCARDED (low_synteny_coverage)\n" if $verbose;
                     next;
                 }
             }
