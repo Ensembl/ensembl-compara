@@ -1261,7 +1261,7 @@ sub core_pipeline_analyses {
             },
             -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into  => [ 'hcluster_run' ],
+            -flow_into  => [ 'hcluster_run', 'backup_single_paf' ],
         },
 
         {   -logic_name => 'backup_single_paf',
