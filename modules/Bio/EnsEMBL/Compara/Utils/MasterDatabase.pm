@@ -693,10 +693,11 @@ sub create_homology_mlsss {
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, undef, $ss_display_name);
     if (($method->type eq 'PROTEIN_TREES') or ($method->type eq 'NC_TREES')) {
+        my @non_components = grep {!$_->genome_component} @{$species_set->genome_dbs};
         my $orth_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES');
-        push @mlsss, @{ create_mlsss_on_pairs($orth_method, $species_set->genome_dbs) };
+        push @mlsss, @{ create_mlsss_on_pairs($orth_method, \@non_components) };
         my $para_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_PARALOGUES');
-        push @mlsss, @{ create_mlsss_on_singletons($para_method, $species_set->genome_dbs) };
+        push @mlsss, @{ create_mlsss_on_singletons($para_method, \@non_components) };
         my $homoeo_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES');
         foreach my $gdb (@{$species_set->genome_dbs}) {
             push @mlsss, create_mlss($homoeo_method, [$gdb]) if $gdb->is_polyploid;
