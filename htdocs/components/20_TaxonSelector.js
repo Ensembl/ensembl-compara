@@ -575,7 +575,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           getAllLeaves(node.childList[child]);
         }
       } else {
-        results[results.length] = node;
+        if (node.data.unselectable !== 1) {
+          results[results.length] = node;
+        }
       }
       return results;
     }
