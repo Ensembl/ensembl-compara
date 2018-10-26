@@ -1275,17 +1275,6 @@ sub _summarise_compara_db {
   }             
   
   ###################################################################
-  ## Section for colouring and colapsing/hidding genes per species in the GeneTree View
-  
-  # The config for taxon-groups is in DEFAULTS.ini
-  # Here, we only need to add the "special" set of low-coverage species
-  $res_aref = $dbh->selectall_arrayref(q{SELECT genome_db_id FROM genome_db WHERE is_high_coverage = 0});
-  $self->db_tree->{$db_name}{'SPECIES_SET'}{'LOWCOVERAGE'} = [map {$_->[0]} @$res_aref];
-
-  ## End section about colouring and colapsing/hidding gene in the GeneTree View
-  ###################################################################
-
-  ###################################################################
   ## Cache MLSS for quick lookup in ImageConfig
 
   $self->_build_compara_default_aligns($dbh,$self->db_tree->{$db_name});

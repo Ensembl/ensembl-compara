@@ -235,7 +235,6 @@ sub content {
       push @{$genome_db_ids_by_clade{$clade}}, $genome_db_adaptor->fetch_by_name_assembly($hub->species_defs->get_config($species_name, 'SPECIES_PRODUCTION_NAME'))->dbID;
     }
   }
-  $genome_db_ids_by_clade{LOWCOVERAGE} = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'}{'LOWCOVERAGE'};
 
   if (@hidden_clades) {
     %hidden_genome_db_ids = ();
