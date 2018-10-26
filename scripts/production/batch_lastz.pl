@@ -41,6 +41,7 @@ my @intervals_in_mbp = (
 my $method_link = 'LASTZ_NET';
 
 my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids );
+my ( $verbose, $very_verbose );
 GetOptions(
     "help"               => \$help,
     "reg_conf=s"         => \$reg_conf,
@@ -49,6 +50,8 @@ GetOptions(
     "max_jobs=i"         => \$max_jobs,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
+    'v|verbose!'         => \$verbose,
+    'vv|very_verbose!'   => \$very_verbose,
 );
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
@@ -59,6 +62,7 @@ $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
 
 # fetch the newest LASTZs and the full list of genome dbs
+print STDERR "Fetching current LASTZ_NET MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
 my (@current_lastz_mlsses, %genome_dbs);
@@ -71,6 +75,7 @@ foreach my $this_mlss ( @$all_lastz_mlsses ) {
 		}
 	}
 }
+print STDERR "Found " . scalar(@current) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
@@ -111,7 +116,8 @@ foreach my $mlss ( @current_lastz_mlsses ) {
 	$mlss_job_count{$mlss->dbID}->{aln_nets} = ceil($chains_job_count/2);
 	$total_job_count{aln_nets} += ceil($chains_job_count/2); # alignment_nets = ~ half chain jobs
 	
-
+	print_verbose_summary(\%mlss_job_count, $mlss) if ($verbose);
+	print_very_verbose_summary(\%mlss_job_count, $mlss) if ($very_verbose);
 }
 
 foreach my $k ( keys %mlss_job_count ) {
@@ -305,6 +311,26 @@ sub split_mlsses {
 	return \@mlss_groups;
 }
 
+sub print_verbose_summary {
+	my ($mlss_job_count, $mlss) = @_;
+
+	my $this_mlss_total = sum( values %{ $mlss_job_count->{$mlss->dbID} } );
+	print $mlss->name . " (dbID: " . $mlss->dbID . "):\t$this_mlss_total\n";
+}
+
+sub print_very_verbose_summary {
+	my ($mlss_job_count, $mlss) = @_;
+
+	print $mlss->name . " (dbID: " . $mlss->dbID . "):\n";
+	my $this_mlss_total = 0;
+	foreach my $logic_name ( keys %{ $mlss_job_count->{$mlss->dbID} } ) {
+		my $this_count = $mlss_job_count->{$mlss->dbID}->{$logic_name};
+		print "\t$logic_name:\t$this_count\n";
+		$this_mlss_total += $this_count;
+	}
+	print "Total:\t$this_mlss_total\n\n";
+}
+
 sub helptext {
 	my $msg = <<HELPEND;
 
@@ -318,6 +344,8 @@ Options:
 	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
 	                   list should be comma separated values.
 	method_link      : method used to select MLSSes (default: LASTZ_NET)
+	v|verbose        : print out per-mlss job count estimates
+	vv|very_verbose  : print out per-analysis, per-mlss job count estimates
 
 HELPEND
 	return $msg;
