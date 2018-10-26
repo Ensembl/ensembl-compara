@@ -67,7 +67,7 @@ sub run {
 
     my $all_trees = $self->param('current_tree_adaptor')->fetch_all( -TREE_TYPE => 'tree', -MEMBER_TYPE => 'protein', -CLUSTERSET_ID => 'default' );
 
-    open( my $plot_file, ">", $self->param('output_jaccard_file') ) || die "Could not open plot_file";
+    open( my $plot_file, ">", $self->param('output_jaccard_file') ) || die "Could not open '".$self->param('output_jaccard_file')."': $!";
 
     foreach my $tree ( @{$all_trees} ) {
 
