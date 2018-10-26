@@ -104,7 +104,7 @@ sub default_options {
         #'port'  => 4522,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
 
         # Ensembl-specific databases
         #'staging_loc' => {
