@@ -61,6 +61,13 @@
         </species_set>
     </all_vs_all>
 
+    <!-- Vigna all v all -->
+    <all_vs_all method="LASTZ_NET">
+        <species_set>
+          <taxonomic_group taxon_name="Vigna"/>
+        </species_set>
+    </all_vs_all>
+
   </pairwise_alignments>
 
   <!-- <self_alignments>
