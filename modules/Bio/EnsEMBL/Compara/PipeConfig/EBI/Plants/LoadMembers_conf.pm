@@ -91,6 +91,9 @@ sub default_options {
         # Store other genes
         'store_others'              => 0,
 
+    #load uniprot members for family pipeline
+        'load_uniprot_members'      => 0,
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
