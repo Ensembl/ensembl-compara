@@ -1633,6 +1633,7 @@ sub core_pipeline_analyses {
                     '#clustering_mode# eq "topup"' => 'copy_trees_from_previous_release',
                     ELSE 'alignment_entry_point',
                 ),
+                '1->A' => [ 'join_panther_subfam' ],
                 'A->1' => [ 'hc_global_tree_set' ],
             },
             -rc_name    => '2Gb_job',
@@ -1824,7 +1825,8 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 -1 => 'exon_boundaries_prep_himem',
                 1 => WHEN(
-                    '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                    '#is_already_supertree#' => 'panther_paralogs',
+                    '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                     ELSE 'aln_filtering_tagging',
                 ),
             },
@@ -1839,7 +1841,8 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
             },
             -flow_into      => WHEN(
-                '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
+                '#is_already_supertree#' => 'panther_paralogs',
+                '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'aln_filtering_tagging',
             ),
             -rc_name    => '1Gb_job',
@@ -3120,6 +3123,40 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'alignment_entry_point' ],
         },
 
+        {   -logic_name     => 'join_panther_subfam',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MakePantherSuperTrees',
+            -flow_into      => {
+                2 => 'panther_backup',
+            },
+        },
+
+        {   -logic_name     => 'panther_backup',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT gtn3.seq_member_id, gtn1.root_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id JOIN gene_tree_node gtn3 ON gtn2.root_id = gtn3.root_id WHERE gtn3.seq_member_id IS NOT NULL AND gtn1.root_id = #gene_tree_id#',
+            },
+            -flow_into      => {
+                1 => { 'alignment_entry_point' => INPUT_PLUS({ 'is_already_supertree' => 1 }) },
+            },
+        },
+
+        {   -logic_name     => 'panther_paralogs',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
+            -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -flow_into      => {
+                -1 => [ 'panther_paralogs_himem', ],
+                3 => { 'panther_paralogs' => INPUT_PLUS },
+            }
+        },
+
+        {   -logic_name     => 'panther_paralogs_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
+            -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '2Gb_job',
+            -flow_into      => {
+                3 => { 'panther_paralogs_himem' => INPUT_PLUS },
+            }
+        },
 
 
 # -------------------------------------------[name mapping step]---------------------------------------------------------------------
