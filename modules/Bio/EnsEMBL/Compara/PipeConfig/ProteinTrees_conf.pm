@@ -340,6 +340,7 @@ sub default_options {
         'use_timetree_times'        => 0,
 
     # GOC parameters
+        'goc_reuse_db'                  => undef,
         'goc_taxlevels'                 => [],
         'goc_threshold'                 => undef,
         'calculate_goc_distribution'    => 1,
