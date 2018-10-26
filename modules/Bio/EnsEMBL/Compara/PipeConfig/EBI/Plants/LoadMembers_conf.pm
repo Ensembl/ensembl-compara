@@ -120,28 +120,28 @@ sub default_options {
             -port   => 4157,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 93,
+            -db_version => 94,
         },
         'e_mirror_loc' => {
             -host   => 'mysql-ensembl-mirror',
             -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 93,
+            -db_version => 94,
         },
         'eg_prod_loc' => {
             -host => 'mysql-eg-prod-2',
             -port => 4239,
             -user => 'ensro',
             -pass => '',
-            -db_version => 94
+            -db_version => 95
         },
         'staging_loc' => {
             -host => 'mysql-ens-vertannot-staging',
             -port => 4573,
             -user => 'ensro',
             -pass => '',
-            -db_version => 94
+            -db_version => 95
         },
 
 
@@ -155,7 +155,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
+        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-5.ebi.ac.uk:4615/ensembl_compara_plants_41_94',
     };
 }
 
