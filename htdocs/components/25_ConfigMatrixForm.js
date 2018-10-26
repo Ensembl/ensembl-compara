@@ -531,8 +531,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if(!this.className.match(/inactive/gi)) {
         panel.elLk.activeAlphabet = panel.el.find(container+' div.alphabet-div.active');
         if(this.className.match(/larrow/gi)) {
-          //get currently selected letter, convert it to utf-16 number add 1 to get next letter number and then convert it to char
-          var prevLetter = String.fromCharCode(panel.elLk.activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0)-1);
+          //get currently selected letter, convert it to utf-16 number, ssubstract 1 to get previous letter number and then convert it to char; skipping letter with no content
+          var prevLetter = ""; 
+          for (var i = 1; i < 26; i++) {
+            prevLetter =  String.fromCharCode(panel.elLk.activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0)- i);
+            
+            if(panel.el.find(container+" div."+prevLetter+"_content li").length) {
+              break;
+            }
+          }
+
           $.when(
             panel.toggleTab(container+" div.ribbon_"+prevLetter, panel.el.find(container), 1)
           ).then(
@@ -548,7 +556,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         } 
         if (this.className.match(/rarrow/gi)) {
           //get currently selected letter, convert it to utf-16 number add 1 to get next letter number and then convert it to char
-          var nextLetter = String.fromCharCode(panel.elLk.activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0)+1);
+          var nextLetter = "";
+          for (var i = 1; i < 26; i++) {
+            nextLetter =  String.fromCharCode(panel.elLk.activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0) + i);
+
+            if(panel.el.find(container+" div."+nextLetter+"_content li").length) {
+              break;
+            }
+          }
+
           $.when(
             panel.toggleTab(container+" div.ribbon_"+nextLetter, panel.el.find(container), 1)
           ).then(
