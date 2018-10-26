@@ -172,8 +172,7 @@ sub init_form_non_cacheable {
 
 sub _groups {
   ## @private
-  ## LOWCOVERAGE is a special group, populated in the ConfigPacker, and whose name is also defined in TAXON_LABEL
-  return ('LOWCOVERAGE', @{ $_[0]->species_defs->TAXON_ORDER });
+  return (@{ $_[0]->species_defs->TAXON_ORDER });
 }
 
 1;
