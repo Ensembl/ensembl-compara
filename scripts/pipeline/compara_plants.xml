@@ -48,14 +48,18 @@
       </species_set>
     </one_vs_all>
 
+    <!-- More reference species, but within smaller clades -->
+    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="fabids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon" against="Triticeae"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao" against="malvids"/>
+
     <!-- Rice all v all -->
     <all_vs_all method="LASTZ_NET">
         <species_set>
           <taxonomic_group taxon_name="Oryza"/>
         </species_set>
     </all_vs_all>
-
-    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="rosids"/>
 
   </pairwise_alignments>
 
