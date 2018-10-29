@@ -1164,6 +1164,10 @@ sub add_regulation_builds {
 
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
+
+  # remove the rows property as it is not a hash and throws exception
+  delete $segs->{rows};
+
   foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
