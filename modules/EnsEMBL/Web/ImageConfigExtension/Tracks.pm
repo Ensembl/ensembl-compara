@@ -1165,10 +1165,10 @@ sub add_regulation_builds {
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
 
-  # remove the rows property as it is not a hash and throws exception
-  delete $segs->{rows};
+  # Skip the rows property as it throws an exception
+  my @seg_keys = grep { $_ ne 'rows' } keys %$segs;
 
-  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
+  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys @seg_keys) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
     my $epi_desc = $segs->{$key}{'epi_desc'} ? " ($segs->{$key}{'epi_desc'})" : "";
