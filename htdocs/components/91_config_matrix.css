@@ -210,7 +210,7 @@ div.list-all-box                                {  }
 
 div.tabs                      { display: flex; }
 div.track-menu                { background-color: [[WHITE]]; }
-div.track-menu div.track-tab  { border-right: none; border-left: #ccc 1px solid; white-space: nowrap; }
+div.track-menu div.track-tab  { border-right: none; border-left: #ccc 1px solid; white-space: nowrap; display: flex; justify-content: center; }
 div.track-tab                 { background-color: [[WHITE]]; color: [[DARK_GREY]]; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px; width: 50%; text-align: center; padding: 5px 5px 10px 5px; margin: 0 0 0 -1px; }
 div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  auto; }
 div.track-tab:hover           { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
