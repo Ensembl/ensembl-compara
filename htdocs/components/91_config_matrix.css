@@ -283,5 +283,6 @@ text.save-config              { color: [[PALE_GREY]]; }
 span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b7 }
 
 /* search box */
-div.search-box                    { position: relative; margin-top: -2px; margin-left: 16px; }
-div.search-box img.search-icon    { margin-left: -28px; }
+div.search-box                                  { position: relative; margin-top: -2px; margin-left: 16px; margin-right: 8px; }
+div.search-box input.configuration_search_text  { width: 100%; }
+div.search-box img.search-icon                  { margin-left: -28px; }
