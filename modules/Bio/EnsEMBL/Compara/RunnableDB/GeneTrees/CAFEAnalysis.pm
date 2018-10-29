@@ -275,12 +275,23 @@ sub parse_cafe_output {
                 $n_nonzero_internal_nodes++ if $n_members;
 
         }
+        $self->cleanup_previous_runs($gene_tree_root_id);
         if ($n_nonzero_internal_nodes > 1) {
             $cafeTree_Adaptor->store($cafeGeneFamily);
             $self->dataflow_output_id( { 'gene_tree_id' => $gene_tree_root_id }, 2);
         }
     }
     return
+}
+
+sub cleanup_previous_runs {
+    my $self = shift;
+    my $gene_tree_root_id = shift;
+
+    my $cafe_adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
+    while (my $cafe_tree = $cafe_adaptor->fetch_by_GeneTree($gene_tree_root_id)) {
+        $cafe_adaptor->delete($cafe_tree);
+    }
 }
 
 1;
