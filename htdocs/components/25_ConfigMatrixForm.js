@@ -358,56 +358,66 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.displayFilter(ev.evidence_type, "div#"+key+"-content",ev.listType);
     })
     
+    //adding experiment and cells relationship as data-attribute
+    panel.addRelationData();
+    
+    //hack to remove all experiments with no cells associated (this needs to be filtered from the backend/API)
+    panel.el.find("div#experiment-type-content").find("li").each(function(i,d){
+      if(!panel.el.find(d).attr("data-cells")) {
+        panel.el.find(d).remove();
+      }
+    });
+
     //selecting the tab in experiment type
     this.el.find("div.experiments div.track-tab").on("click", function () {
       panel.toggleTab(this, panel.el.find("div.experiments"));
-    });    
+    });
     
   },
   
   // Function to toggle tabs and show the corresponding content which can be accessed by #id or .class
   // Arguments: selectElement is the tab that's clicked to be active or the tab that you want to be active (javascript object)
   //            container is the current active tab (javascript object)
-		//            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
-		toggleTab: function(selectElement, container, selByClass) {
-      var panel = this; 
+	//            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
+  toggleTab: function(selectElement, container, selByClass) {
+    var panel = this;
 
-      if(!$(selectElement).hasClass("active") ) {
-        //showing/hiding searchbox in the main tab              
-        if($(selectElement).find("div.search-box").length) {
-          panel.el.find(".search-box").hide();
-          $(selectElement).find("div.search-box").show();
-        }
-        
-        //remove current active tab and content
-        var activeContent = container.find("div.active span.content-id").html();
-        container.find("div.active").removeClass("active");
-        if(selByClass) {
-          container.find("div."+activeContent).removeClass("active");
-        } else {
-          panel.el.find("#"+activeContent).removeClass("active");
-        }
-
-        //add active class to clicked element
-        var spanID = $(selectElement).find("span.content-id").html();      
-        $(selectElement).addClass("active");
-
-        var activeLetterDiv = container.find('div.alphabet-div.active');
-
-        if(selByClass) {
-          activeAlphabetContentDiv = container.find("div."+spanID);
-        } else {      
-          activeAlphabetContentDiv = panel.el.find("#"+spanID);
-        }
-
-        activeAlphabetContentDiv.addClass("active");
-
-        // change offset position of active content same as the ribbon letter
-        if(activeAlphabetContentDiv.hasClass('alphabet-content')) {
-          activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
-        }
+    if(!$(selectElement).hasClass("active") ) {
+      //showing/hiding searchbox in the main tab
+      if($(selectElement).find("div.search-box").length) {
+        panel.el.find(".search-box").hide();
+        $(selectElement).find("div.search-box").show();
       }
-		},
+
+      //remove current active tab and content
+      var activeContent = container.find("div.active span.content-id").html();
+      container.find("div.active").removeClass("active");
+      if(selByClass) {
+        container.find("div."+activeContent).removeClass("active");
+      } else {
+        panel.el.find("#"+activeContent).removeClass("active");
+      }
+
+      //add active class to clicked element
+      var spanID = $(selectElement).find("span.content-id").html();
+      $(selectElement).addClass("active");
+
+      var activeLetterDiv = container.find('div.alphabet-div.active');
+
+      if(selByClass) {
+        activeAlphabetContentDiv = container.find("div."+spanID);
+      } else {
+        activeAlphabetContentDiv = panel.el.find("#"+spanID);
+      }
+
+      activeAlphabetContentDiv.addClass("active");
+
+      // change offset position of active content same as the ribbon letter
+      if(activeAlphabetContentDiv.hasClass('alphabet-content')) {
+        activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left - 2});
+      }
+    }
+  },
 
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayFilter: function(data, container, listType) {
@@ -421,6 +431,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var firstChar = item.charAt(0).toLowerCase();
         if(!ribbonObj[firstChar]) {
           ribbonObj[firstChar] = [];
+          ribbonObj[firstChar].push(item);
         } else {
           ribbonObj[firstChar].push(item);
         }
@@ -430,7 +441,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var html = '<ul class="letter-content list-content">';
       $.each(data.sort(), function(i, item) {
         if(item) {
-          var elementClass = item.replace(/[^\w\-]/g,'_');          
+          var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
           html += '<li class="noremove '+elementClass+'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
         }
         countFilter++;
@@ -453,6 +464,28 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
   
+  //function to add cells and experiments data attribute which link the cells checkbox to the experiments checkbox and vice versa, use for filtering
+  addRelationData: function () {
+    var panel = this;
+
+    $.each(panel.json_data.cell_lines, function(key, data) {
+      var cellClassName = key.replace(/[^\w\-]/g,'_');
+
+      //add experiments attribute to cell lines
+      var experimentsVal="";
+      $.each(data, function(index, ele) {
+        var experimentClassName = ele.evidence_type.replace(/[^\w\-]/g,'_');
+        experimentsVal += ele.evidence_type+" ";
+        
+        //adding cells atribute to experiments
+        var existingCells = panel.el.find("li."+experimentClassName).attr('data-cells');
+        existingCells ?  panel.el.find("li."+experimentClassName).attr('data-cells', existingCells+" "+cellClassName) :  panel.el.find("li."+experimentClassName).attr('data-cells',cellClassName);
+        
+      });
+      panel.el.find("li."+cellClassName).attr('data-experiments',experimentsVal);
+    });
+  },
+
   // Function to create letters ribbon with left and right arrow (< A B C ... >) and add elements alphabetically
   // Arguments: data: obj of the data to be added with obj key being the first letter pointing to array of elements ( a -> [], b->[], c->[])
   //            Container is where to insert the ribbon
@@ -461,7 +494,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var html  = "";
     var content_html = "";
     var total_num = 0;
-    
+
     //generate alphabetical order ribbon (A B C D ....)
     $.each(new Array(26), function(i) {
       var letter = String.fromCharCode(i + 97);
@@ -474,7 +507,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         letterHTML = '<ul class="letter-content">';
         $.each(data[letter], function(i, el) {
           total_num++;
-          var elementClass = el.replace(/[^\w\-]/g,'_');          
+          var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
           letterHTML += '<li class="noremove '+elementClass+'"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
         });
         letterHTML += '</ul>';
