@@ -3096,7 +3096,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'stable_id_mapping',
             },
-            -flow_into          => [ 'compute_jaccard_index' ],
+            -flow_into          => WHEN( '#reuse_db#' => 'compute_jaccard_index' ),
             %hc_analysis_params,
         },
 
