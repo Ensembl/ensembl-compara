@@ -54,6 +54,8 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+# NOTE: The first column ("description") is actually not used ("c1" and
+# "c2" are) but I didn't want to change all the offsets in $line
 our $sql_orthologies = '
 SELECT description, c1, c2, COUNT(*), SUM(n1), SUM(n2), SUM(nh)/2, SUM(perc_id), SUM(p1), SUM(p2)
 FROM (
@@ -72,7 +74,7 @@ FROM (
         WHERE method_link_species_set_id = ? AND biotype_group = "coding"
         GROUP BY homology.description, gene_tree_node_id, gene_member_id, genome_db_id
     ) t1 GROUP BY description, gene_tree_node_id
-) te GROUP BY description, c1, c2;
+) te GROUP BY c1, c2;
 ';
 
 
