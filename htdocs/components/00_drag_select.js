@@ -11,7 +11,7 @@ function Selectables(opts) {
     var defaults = {
         zone: "#wrapper", // ID of the element whith selectables.        
         elements: "a", //  items to be selectable .list-group, #id > .class,'htmlelement' - valid querySelectorAll        
-        selectedClass: 'active', // class name to apply to seleted items      
+        selectedClass: 'ds-active', // class name to apply to seleted items      
         key: false, //'altKey,ctrlKey,metaKey,false  // activate using optional key     
         moreUsing: 'shiftKey', //altKey,ctrlKey,metaKey   // add more to selection
         enabled: true, //false to .enable() at later time       

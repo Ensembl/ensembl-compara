@@ -238,9 +238,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var lhsectionId = $(ele).closest("ul.result-list").find("span.lhsection-id").html();
         var allBoxId    = $(ele).find('span.allBox-id').html();
 
+        var ele_class = $(ele).attr('class').split(' ').filter(function(cls){ return cls !== 'ds-active'; }).join('.');
         panel.updateCurrentCount($(ele).parent().parent().find("div.count-container").find('span.current-count'), -1);
         panel.showHideLink($(ele).parent().parent()); //need to be after updateCurrentCount
-        panel.el.find('div#'+lhsectionId+' li.'+$(ele).attr('class')+' span.fancy-checkbox').removeClass("selected");
+        panel.el.find('div#'+lhsectionId+' li.'+ ele_class +' span.fancy-checkbox').removeClass("selected");
         ele.remove();
   
         //if select all box is selected, it needs to be unselected if one track is removed
