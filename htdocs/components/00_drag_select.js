@@ -73,7 +73,7 @@ function Selectables(opts) {
     }
     this.rectOpen = function (e) {
         self.options.start && self.options.start(e);
-        if (self.options.key && !e[self.options.key]) {
+        if ((self.options.key && !e[self.options.key]) || e.which !== 1) {
             return;
         }
         document.body.classList.add('s-noselect');
