@@ -76,6 +76,7 @@ sub run {
         print "\n ----- all the genomic aligns are ancestral so we bow out here \n" if ( $self->debug >3 );
         return;
     }
+    $self->disconnect_from_databases;
     $self->_get_alignment_depth();
 }
 
