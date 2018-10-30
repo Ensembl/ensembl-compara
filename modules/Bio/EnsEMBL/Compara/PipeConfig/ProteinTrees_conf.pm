@@ -246,7 +246,7 @@ sub default_options {
         'examl_capacity'            => 400,
         'copy_tree_capacity'        => 100,
         'notung_capacity'           => 400,
-        'ortho_tree_capacity'       => 200,
+        'ortho_tree_capacity'       => 50,
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
