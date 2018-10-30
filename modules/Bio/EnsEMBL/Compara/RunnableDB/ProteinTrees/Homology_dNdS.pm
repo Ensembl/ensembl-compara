@@ -76,12 +76,8 @@ sub fetch_input {
     my $codeml_parameters = $self->param('codeml_parameters')
         or die "Either 'codeml_parameters' or 'codeml_parameters_file' has to be correctly defined";  # let it break immediately if no codeml_parameters
 
-    my $min_homology_id = $self->param('min_homology_id');
-    my $max_homology_id = $self->param('max_homology_id');
-
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
-    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d AND description != "gene_split"', $mlss_id, $min_homology_id, $max_homology_id);
-    my $homologies = $homology_adaptor->generic_fetch($constraint);
+    my $homologies = $homology_adaptor->fetch_all_by_dbID_list( $self->param('homology_ids') );
 
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $homologies);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $sms);

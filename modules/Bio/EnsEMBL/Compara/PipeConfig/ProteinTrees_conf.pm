@@ -255,6 +255,8 @@ sub default_options {
         'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 100,
         'homology_dNdS_capacity'    => 1500,
+        'copy_homology_dNdS_capacity'    => 100,
+        'homology_dNdS_factory_capacity' =>  10,
         'hc_capacity'               =>   4,
         'decision_capacity'         =>   4,
         'hc_post_tree_capacity'     => 100,
@@ -3348,11 +3350,12 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory',
-            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -hive_capacity => $self->o('homology_dNdS_factory_capacity'),
             -rc_name       => '500Mb_job',
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
+                '3->A' => [ 'copy_homology_dNdS' ],
             },
         },
 
@@ -3385,8 +3388,22 @@ sub core_pipeline_analyses {
                 'force_rerunning'           => 0,
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
+            -priority=> 20,
             -rc_name => '500Mb_job',
         },
+
+        {   -logic_name => 'copy_homology_dNdS',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CopyHomology_dNdS',
+            -parameters => {
+            },
+            -hive_capacity        => $self->o('copy_homology_dNdS_capacity'),
+            -rc_name => '500Mb_job',
+            -batch_size => 5,
+            -flow_into  => {
+                2 => [ 'homology_dNdS' ],
+            },
+        },
+
 
         {   -logic_name         => 'hc_dnds',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
