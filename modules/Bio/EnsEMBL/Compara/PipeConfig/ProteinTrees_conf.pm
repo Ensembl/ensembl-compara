@@ -3240,7 +3240,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN('#do_gene_qc#' => 'get_species_set'),
-                'A->1' => 'group_genomes_under_taxa',
+                'A->1' => 'rib_fire_homology_id_mapping',
             },
         },
 
@@ -3264,7 +3264,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
-                'A->1' => 'rib_fire_homology_id_mapping',
+                'A->1' => 'rib_fire_rename_labels',
             },
         },
 
@@ -3275,7 +3275,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A' => WHEN('(scalar(@{#goc_taxlevels#}) && #goc_reuse_db#) || #do_homology_id_mapping#' => 'id_map_mlss_factory'),
-                'A->1' => 'rib_fire_rename_labels',
+                'A->1' => 'group_genomes_under_taxa',
             },
         },
 
