@@ -64,11 +64,13 @@ sub fetch_input {
 
     $self->param('genomic_aligns_hash', \%genomic_aligns_hash);
 #    print $_->dbID," \n" foreach (@{$self->param('genomic_aligns')}) if ( $self->debug >3 );
+    $self->param('dataflow_output_ids', []);
 }
 
 
 sub run {
     my $self = shift @_;
+    $self->disconnect_from_databases;
     my @gdbs = keys %{$self->param('genomic_aligns_hash')};
     print "\n we are now in RUN of AlignmentDepthCalculator \n" ;
     for (my $pos = 0; $pos<scalar @gdbs; $pos++) {
@@ -90,6 +92,10 @@ sub run {
     }
 }
 
+sub write_output {
+    my $self = shift @_;
+    $self->dataflow_output_id( $self->param('dataflow_output_ids'), 2);
+}
 
 
 sub _calculate_standard_coverage {
@@ -124,7 +130,7 @@ sub _calculate_standard_coverage {
         $self->param('mapped_coords', \@mapped_coords);
         my $no_of_aligned_bases = $self->_sum_aligned_bases();
         print "\n no_of_aligned_bases for $gid1 : ", $ga1->dbID, " : $no_of_aligned_bases \n" if ( $self->debug >3 );
-        $self->dataflow_output_id({ 'frm_genome_db_id' => $gid1, 'to_genome_db_id' => $gid2, 'no_of_aligned_bases' => $no_of_aligned_bases} ,2); 
+        push @{$self->param('dataflow_output_ids')}, { 'frm_genome_db_id' => $gid1, 'to_genome_db_id' => $gid2, 'no_of_aligned_bases' => $no_of_aligned_bases};
     }
 }
 
@@ -176,7 +182,7 @@ sub _calculate_duplicate_coverage {
             }
         }
         print "\nthis is currently aligned_base_positions : $aligned_base_positions  \n  this is the lenght of the expanded cigar line : $temp_counter \n\n" if ( $self->debug >3 );
-        $self->dataflow_output_id({ 'frm_genome_db_id' => $gid1, 'to_genome_db_id' => $gid2, 'no_of_aligned_bases' => $aligned_base_positions} ,2);    
+        push @{$self->param('dataflow_output_ids')}, { 'frm_genome_db_id' => $gid1, 'to_genome_db_id' => $gid2, 'no_of_aligned_bases' => $aligned_base_positions};
     }   
 }
 
