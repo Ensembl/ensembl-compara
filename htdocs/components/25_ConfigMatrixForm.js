@@ -24,11 +24,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //Ensembl.EventManager.register('updateConfiguration',  this, this.updateConfiguration);
     //Ensembl.EventManager.register('changeColumnRenderer', this, this.changeColumnRenderer);
     Ensembl.EventManager.register('modalPanelResize',     this, this.setScrollerSize);
+    // Ensembl.EventManager.register('panelInitialised',     this, this.setDragSelectEvent);
+
   },
   
   init: function () {
     var panel = this;
-    
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
 
     this.elLk.cellPanel       = this.el.find("div#cell-panel");
@@ -38,6 +39,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.filterButton    = this.el.find("button.filter");
     this.elLk.clearAll        = this.el.find("span.clearall");
+    this.dragCell = [];
+    this.startCell = [];
+    // this.elLk.activeAlphabet  = this.el.find(container+' div.alphabet-div.active');
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
@@ -51,6 +55,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       success: function(json) {
          panel.json_data = json;
          panel.trackTab();
+         panel.setDragSelectEvent();
       },
       error: function() {
         this.showError();
@@ -59,9 +64,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     this.elLk.buttonTab.on("click", function (e) { 
       var selectTab = panel.el.find(this).attr("id");
-      
       panel.toggleTab(this, panel.el.find("div.track-menu"));
-      
+      panel.setDragSelectEvent();
+
+
       //if button is Edit and then browse track tab or search track tab is clicked then change it to Apply Filters
       //if button is Apply filters and it is active and then track configuration tab is shown then change it to Edit
       // if(selectTab === 'search-tab' || selectTab === 'browse-tab')
@@ -78,9 +84,54 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.showHideFilters();
     panel.clickCheckbox(this.elLk.filterList, 1);
     panel.clearAll(this.elLk.clearAll);
-    panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));    
+    panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));
   },
-  
+
+  setDragSelectEvent: function() {
+    var panel = this;
+    var zone;
+    if (!$('.tab-content.active .tab-content .ribbon-content', panel.el).length) {
+      zone = '.tab-content.active .ribbon-content';
+      this.dragSelect = new Selectables({
+        elements: 'ul.letter-content li',
+        zone: zone,
+        onSelect: function(el) {
+          panel.selectBox(el, 1, 1);
+        },
+      });
+    }
+    else {
+      if ($('.tab-content.active .tab-content.active .ribbon-content', panel.el).length) {
+        zone = '.tab-content.active .tab-content.active .ribbon-content';
+      }
+      else {
+        zone = '.tab-content.active .tab-content.active';
+      }
+      this.dragSelect = new Selectables({
+        elements: 'li, div.all-box',
+        zone: zone,
+        onSelect: function(el) {
+          if($(el).hasClass('all-box')) {
+            // Because select-all box is also included in the drag select zone
+            // If selected, then trigger its click at the end of the dragSelect event
+            // This is because onSelect event is fired on each (LI,DIV) elements
+            this.selectAllClick = true;
+            this.allBox = el;
+          }
+          else {
+            panel.selectBox(el, 1, 1);
+          }
+        },
+        stop: function(e) {
+          if(this.selectAllClick) {
+            $(this.allBox).click();
+            this.selectAllClick = false;
+          }
+        }
+      });      
+    }
+  },
+
   //function when click clear all link which should reset all the filters
   clearAll: function (clearLink) {
     var panel = this;
@@ -327,7 +378,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   
   trackTab: function() {
     var panel = this;
-    
     //showing and applying cell types
     this.displayFilter(Object.keys(panel.json_data.cell_lines).sort(), "div#cell-type-content", "alphabetRibbon");
 
@@ -371,7 +421,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //selecting the tab in experiment type
     this.el.find("div.experiments div.track-tab").on("click", function () {
       panel.toggleTab(this, panel.el.find("div.experiments"));
-    });
+      panel.setDragSelectEvent();
+    });    
     
   },
   

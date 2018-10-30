@@ -65,7 +65,7 @@ sub build {
       <div class="track-panel">
         <div class="tabs track-menu">
           <div class="track-tab active" id="cell-tab">
-          Cell type
+          <span> Cell type </span>
           <span class="hidden content-id">cell-type-content</span>
           <div class="search-box">
             <input class="configuration_search_text" placeholder="Search" name="cell_search">
@@ -73,7 +73,7 @@ sub build {
           </div>
           </div>
           <div class="track-tab" id="experiment-tab">
-            Experimental data
+            <span> Experimental data </span>
             <span class="hidden content-id">experiment-type-content</span>
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Search" name="experiment_search">

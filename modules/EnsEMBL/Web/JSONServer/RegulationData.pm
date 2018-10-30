@@ -103,7 +103,7 @@ sub json_data {
         }
       }
     }
-    $cell_types->{$name} = $cell_evidence if(@cell_evidence);
+    $cell_types->{$name} = $cell_evidence if(@$cell_evidence);
   }  
 
   #use Data::Dumper;warn Dumper($cell_types);
