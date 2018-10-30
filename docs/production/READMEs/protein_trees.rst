@@ -374,7 +374,6 @@ More general parameters (pipeline-related)
    The parameter is a list of taxa (given by their names in the NCBI taxonomy). The list can be empty to skip this step of the pipeline.
    In Ensembl, we only use mammals, some birds and some fish, in the config file this is shown as ``['Theria', 'Sauria', 'Tetraodontiformes']``
 
-:filter_high_coverage: Only compute dN/dS values on "high coverage" species, i.e. the species that have the "is_high_coverage" flag set to 1 in
    the genome_db table. The parameter is used by the "group_genomes_under_taxa" analysis, so as long as it hasn't yet run, you can sill modify
    the parameter in the analysis.
 
