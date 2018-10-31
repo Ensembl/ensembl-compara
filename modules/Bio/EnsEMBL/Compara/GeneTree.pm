@@ -592,9 +592,11 @@ sub expand_subtrees {
 
     unless (defined $self->adaptor) {
         warn '$self->adaptor() must be defined in expand_subtrees()';
+        return;
     }
     unless ($self->tree_type eq 'supertree') {
         warn 'expand_subtrees() is only valid on super-trees';
+        return;
     }
 
     # The tree is not loaded yet, we can do a fast-loading procedure
