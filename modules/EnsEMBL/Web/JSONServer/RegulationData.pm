@@ -60,8 +60,8 @@ sub json_data {
         "listType"      => $_ eq 'Transcription Factor' ?  'alphabetRibbon' : '', #for the js side to list the track either its bullet point or alphabet ribbon 
         "evidence_type" => []
       };
-      
-      foreach (@{$adaptor->fetch_all_by_class($_)}) {
+      #use Data::Dumper;warn Dumper($adaptor->fetch_all_having_PeakCalling_by_class($_));  
+      foreach (@{$adaptor->fetch_all_having_PeakCalling_by_class($_)}) {
         next if $_->class eq 'Transcription Factor Complex'; #ignoring this group as its not used
         my $group = $_->class eq 'Transcription Factor' ? 'TFBS' : $_->class;
         $group =~ s/[^\w\-]/_/g;
