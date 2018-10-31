@@ -60,7 +60,7 @@
              (
               oryza_meridionalis,
               oryza_longistaminata,
-              oryza_glumaepatula,
+              oryza_glumipatula,
               (
                (
                 oryza_barthii,
@@ -111,7 +111,7 @@
           (
            (
             vigna_angularis,
-            vigna_radiata_var_radiata,
+            vigna_radiata,
            )Vigna,
            phaseolus_vulgaris,
            glycine_max,
