@@ -229,6 +229,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //Function to select filters and adding/removing them in the relevant panel
   selectBox: function(ele, removeElement, addElement) {
     var panel = this;
+    
+    //unselecting checkbox
     if($(ele).find("span.fancy-checkbox.selected").length){
       $(ele).find("span.fancy-checkbox").removeClass("selected");
 
@@ -257,7 +259,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
         panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
       }
-    } else {
+    } else { //selecting checkbox
       if(addElement) {
         var rhsectionId  = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
         var elementClass = $(ele).find('text').html().replace(/[^\w\-]/g,'_');
@@ -270,6 +272,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       $(ele).find("span.fancy-checkbox").addClass("selected");
     }
+    panel.filterData(panel.el.find(ele),'div#experiment-type-content.active, div#cell-type-content.active');
     panel.trackError('div#cell, div#experiment, div#source');
     panel.enableFilterButton('div#cell, div#experiment, div#source');
   },
@@ -411,13 +414,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     //adding experiment and cells relationship as data-attribute
     panel.addRelationData();
-    
-    //hack to remove all experiments with no cells associated (this needs to be filtered from the backend/API)
-    panel.el.find("div#experiment-type-content").find("li").each(function(i,d){
-      if(!panel.el.find(d).attr("data-cells")) {
-        panel.el.find(d).remove();
-      }
-    });
 
     //selecting the tab in experiment type
     this.el.find("div.experiments div.track-tab").on("click", function () {
@@ -516,7 +512,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
   
-  //function to add cells and experiments data attribute which link the cells checkbox to the experiments checkbox and vice versa, use for filtering
+  //function to add cells and experiments in data-filter attribute which link the cells checkbox to the experiments checkbox and vice versa, use for filtering to show/hide cells/experiments
   addRelationData: function () {
     var panel = this;
 
@@ -530,11 +526,69 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         experimentsVal += ele.evidence_type+" ";
         
         //adding cells atribute to experiments
-        var existingCells = panel.el.find("li."+experimentClassName).attr('data-cells');
-        existingCells ?  panel.el.find("li."+experimentClassName).attr('data-cells', existingCells+" "+cellClassName) :  panel.el.find("li."+experimentClassName).attr('data-cells',cellClassName);
-        
+        var existingCells = panel.el.find("li."+experimentClassName).attr('data-filter');
+        existingCells ?  panel.el.find("li."+experimentClassName).attr('data-filter', existingCells+" "+cellClassName) :  panel.el.find("li."+experimentClassName).attr('data-filter',cellClassName);
+        if(!panel.el.find("li."+experimentClassName).attr('data-filtercontainer')){
+          panel.el.find("li."+experimentClassName).attr('data-filtercontainer','cell-type-content');
+        } 
       });
-      panel.el.find("li."+cellClassName).attr('data-experiments',experimentsVal);
+      //data-filter contains the classname that needs to be shown and data-filtercontainer is the id where elements to be shown are located
+      panel.el.find("li."+cellClassName).attr('data-filter',experimentsVal).attr('data-filtercontainer','experiment-type-content');
+
+    });
+  },
+
+  // Function to show/hide cells/experiments
+  // Arguments: selected element object and container of the clicked element
+  // Todo:
+  // Update count in select all box
+  // update count in RH panel
+  // update tabs status (deactivate if no element)
+  filterData: function(eleObj, container) {
+    var panel = this;
+    var contentContainerId = "#"+eleObj.attr("data-filtercontainer"); //get container where the contents to be filtered are located
+
+    //show/hide elements, first hide all of them and then only show the one that needs to be shown
+    if(eleObj.find(".fancy-checkbox").hasClass("selected")) { //if selecting checkbox
+      
+      //first element selected
+      if(panel.el.find(container).find('li span.fancy-checkbox.selected').length === 1) {
+        panel.el.find(contentContainerId+" li").hide();
+        $.each(eleObj.attr("data-filter").split(" "), function(index, ele) {
+          if(ele){
+            panel.el.find(contentContainerId+" li."+ele).addClass('_filtered').show();
+          }
+        });
+      } else {
+        
+      }
+    } else { //unselecting checkbox, need to check if no element is selected, then show everything or else only show elements from selection 
+      if(!panel.el.find(container).find('li span.fancy-checkbox.selected').length) {
+        panel.el.find(contentContainerId).find('li').removeClass('_filtered').show();
+      }
+    }
+    
+    //update count in Right hand panel
+    //first set everything to zero for the filtered content
+    var mainRHSection = panel.el.find(contentContainerId).find("span.rhsection-id").html();
+    panel.el.find("div#"+mainRHSection+" div.count-container span.total").html(0);
+    
+    // loop for each li to find out where the parent content is and update count
+    var newCount = 1;
+    var parentEle = "";
+    
+    $.each(panel.el.find(contentContainerId+' li._filtered'), function(index, elem) {
+      if(parentEle === panel.el.find(elem).closest("div.tab-content").find('span.rhsection-id').html()) {
+        newCount++;
+      } else {
+        //update count first and then reset counter
+        if(parentEle) {
+          console.log(newCount);
+          panel.el.find("div#"+parentEle+" div.count-container span.total").html(newCount);
+          newCount = 1;
+        }
+      }
+      parentEle = panel.el.find(elem).closest("div.tab-content").find('span.rhsection-id').html();            
     });
   },
 
