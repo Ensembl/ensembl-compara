@@ -170,7 +170,7 @@ our $config = {
             },
             {
                 description => 'only canonical SeqMembers are in the database#expr(#only_canonical# ? "" : " [SKIPPED]")expr#',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE #only_canonical# AND gene_member.gene_member_id IS NULL',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE seq_member.genome_db_id = #genome_db_id# AND #only_canonical# AND gene_member.gene_member_id IS NULL',
             }
         ],
     },
