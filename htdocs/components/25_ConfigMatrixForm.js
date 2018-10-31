@@ -547,24 +547,42 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   filterData: function(eleObj, container) {
     var panel = this;
     var contentContainerId = "#"+eleObj.attr("data-filtercontainer"); //get container where the contents to be filtered are located
+    var resetCount = 0;
 
     //show/hide elements, first hide all of them and then only show the one that needs to be shown
     if(eleObj.find(".fancy-checkbox").hasClass("selected")) { //if selecting checkbox
-      
+      panel.el.find(contentContainerId+" li").hide();
       //first element selected
-      if(panel.el.find(container).find('li span.fancy-checkbox.selected').length === 1) {
-        panel.el.find(contentContainerId+" li").hide();
+      if(panel.el.find(container).find('li span.fancy-checkbox.selected').length === 1) {        
         $.each(eleObj.attr("data-filter").split(" "), function(index, ele) {
           if(ele){
             panel.el.find(contentContainerId+" li."+ele).addClass('_filtered').show();
           }
         });
-      } else {
-        
+      } else { //multiple checkbox selection
+        $.each(panel.el.find(container).find('li span.fancy-checkbox.selected'), function(i, box) {
+          $.each(panel.el.find(box).closest("li").attr("data-filter").split(" "), function(l, ele2) {
+            if(ele2){
+              panel.el.find(contentContainerId+" li."+ele2).addClass('_filtered').show();
+            }
+          });          
+        });
       }
     } else { //unselecting checkbox, need to check if no element is selected, then show everything or else only show elements from selection 
-      if(!panel.el.find(container).find('li span.fancy-checkbox.selected').length) {
+      if(!panel.el.find(container).find('li span.fancy-checkbox.selected').length) { //last checkbox unselected, show everything
         panel.el.find(contentContainerId).find('li').removeClass('_filtered').show();
+        resetCount = 1;
+      } else { //more than 1 checkbox unselected
+        panel.el.find(contentContainerId).find('li').removeClass('_filtered');
+        panel.el.find(contentContainerId).find('li').hide();
+        
+        $.each(panel.el.find(container).find('li span.fancy-checkbox.selected'), function(i, box) {
+          $.each(panel.el.find(box).closest("li").attr("data-filter").split(" "), function(l, ele2) {
+            if(ele2){
+              panel.el.find(contentContainerId+" li."+ele2).addClass('_filtered').show();
+            }
+          });          
+        });        
       }
     }
     
@@ -574,21 +592,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find("div#"+mainRHSection+" div.count-container span.total").html(0);
     
     // loop for each li to find out where the parent content is and update count
-    var newCount = 1;
-    var parentEle = "";
-    
-    $.each(panel.el.find(contentContainerId+' li._filtered'), function(index, elem) {
-      if(parentEle === panel.el.find(elem).closest("div.tab-content").find('span.rhsection-id').html()) {
-        newCount++;
-      } else {
-        //update count first and then reset counter
-        if(parentEle) {
-          console.log(newCount);
-          panel.el.find("div#"+parentEle+" div.count-container span.total").html(newCount);
-          newCount = 1;
-        }
+    $.each(panel.el.find(contentContainerId).find('span.rhsection-id'), function(d, ele3) {
+      var rhsectionId = panel.el.find(ele3).html();
+      var newCount = 0;
+      
+      if(panel.el.find("div#"+rhsectionId+".result-content").length) {
+        var li_class = resetCount ? "" : "._filtered";  //if resetcount we need to get all li
+        $.each(panel.el.find(contentContainerId+' li'+li_class), function(index, elem) {
+          if(rhsectionId === panel.el.find(elem).closest("div.tab-content").find('span.rhsection-id').html()) {
+            newCount++;
+          } 
+        });
+        panel.el.find("div#"+rhsectionId+" div.count-container span.total").html(newCount);
+console.log(ele3);
+        if(!newCount) { panel.el.find(contentContainerId).addClass("inactive"); }
       }
-      parentEle = panel.el.find(elem).closest("div.tab-content").find('span.rhsection-id').html();            
     });
   },
 
