@@ -1,34 +1,34 @@
 [{
       "assignee": "<RelCo>",
-      "component": "Release process",
+      "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/New+Release+Coordination+Document#NewReleaseCoordinationDocument-Division-agnosticwork",
       "subtasks": [{
             "assignee": "<RelCo>",
-            "component": "Release process",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-ChecktheLinuxbrewinstallation",
             "summary": "Check the Linuxbrew installation"
          },
          {
             "assignee": "<RelCo>",
-            "component": "Release process",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-CheckthespaceontheMySQLservers",
             "summary": "Check the space on the Compara MySQL servers"
          },
          {
             "assignee": "<RelCo>",
-            "component": "Release process",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Schema+finalization\n- Update table.sql and create patch files\n- Check the patch files\n- Commit the schema",
             "summary": "Schema patch files"
          },
          {
             "assignee": "<RelCo>",
-            "component": "Release tasks",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Schema+finalization#Schemafinalization-Patchthetestdatabases",
             "summary": "Patch the test databases"
          },
          {
             "assignee": "<RelCo>",
-            "component": "Release process",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Code+branching",
             "summary": "Branch the code"
          }
@@ -37,11 +37,11 @@
    },
    {
       "assignee": "<RelCo>",
-      "component": "Release process",
+      "component": "Relco tasks",
       "description": "relco_doc#Releasecoordinationdocumentation-Post-handover",
       "subtasks": [{
             "assignee": "<RelCo>",
-            "component": "Release tasks",
+            "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Updatedocumentationanddiagrams[edit]",
             "summary": "Generate and commit diagrams"
          }
