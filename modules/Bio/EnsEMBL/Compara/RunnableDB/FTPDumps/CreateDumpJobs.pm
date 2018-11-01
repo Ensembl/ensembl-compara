@@ -113,7 +113,9 @@ sub fetch_input {
 			}
 			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
 			# don't flow trees for copying - they are always dumped fresh
-			next if $mlss->method->class =~ /tree_node$/;
+			if ( $method_class =~ /tree_node$/ ) { # gene trees
+				push( @{$dumps{DumpTrees}}, $mlss );
+			}
 			# old analysis! can be copied from prev release FTP location
 			push( @copy_jobs, $mlss->dbID ) if defined $self->param('dumpable_method_types')->{$mlss->method->type};
 		}
