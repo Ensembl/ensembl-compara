@@ -42,7 +42,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.filterButton    = this.el.find("button.filter");
     this.elLk.clearAll        = this.el.find("span.clearall");
-    this.activeTab            = 'cell';
     this.localStoreObj        = new Object();
     // this.elLk.activeAlphabet  = this.el.find(container+' div.alphabet-div.active');
     
@@ -77,6 +76,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.clickCheckbox(this.elLk.filterList, 1);
     panel.clearAll(this.elLk.clearAll);
     panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));
+  },
+
+  getActiveTab: function() {
+    return $('div#cell-type-content.active span.rhsection-id, div#experiment-type-content.active span.rhsection-id', this.el).html();
   },
 
   populateElLk: function() {
@@ -302,10 +305,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   addToStore: function(item) {
     if (!item) { return; }
-    this.localStoreObj[this.activeTab] = this.localStoreObj[this.activeTab] || {}
-    this.localStoreObj[this.activeTab][item] = 1;
+    this.localStoreObj[this.getActiveTab()] = this.localStoreObj[this.getActiveTab()] || {}
+    this.localStoreObj[this.getActiveTab()][item] = 1;
   },
   removeFromStore: function(item, lhs_section_id) {
+    // Removal could happen from RHS or LHS. So section id need to passed as param
     lhs_section_id = lhs_section_id !== 'cell' ? 'experiment' : lhs_section_id;
     item && lhs_section_id && delete this.localStoreObj[lhs_section_id][item];
   },
