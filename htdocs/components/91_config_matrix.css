@@ -217,7 +217,9 @@ div.track-tab                 { background-color: [[WHITE]]; color: [[DARK_GREY]
 div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  auto; }
 div.track-tab:hover           { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
 div.track-tab.active:hover    { background-color: [[LIGHT_GREY]]; opacity: 1; }
-div.track-tab.inactive        { color: #cccccc; cursor: default; }
+div.track-tab.inactive        { color: #cccccc; cursor: auto; }
+div.track-tab.inactive:hover  { opacity: 1; }
+
 div.tab-content               { display: none; width: 100%; }
 div.tab-content.active        { display: inline-block; background-color: [[LIGHT_GREY]]; }
 

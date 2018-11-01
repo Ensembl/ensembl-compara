@@ -247,6 +247,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if($(ele).find("span.fancy-checkbox.selected").length){
       $(ele).find("span.fancy-checkbox").removeClass("selected");
       this.removeFromStore($(ele).data('item'), $(ele).data('parentTab'));
+      var ele_class = $(ele).data('item');
 
       //removing element from right hand panel (selection panel) - optional
       if(removeElement && !ele.className.match("noremove")){
@@ -254,7 +255,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var lhsectionId = $(ele).closest("ul.result-list").find("span.lhsection-id").html();
         var allBoxId    = $(ele).find('span.allBox-id').html();
 
-        var ele_class = $(ele).data('item');
         panel.updateCurrentCount($(ele).parent().parent().find("div.count-container").find('span.current-count'), -1);
         panel.showHideLink($(ele).parent().parent()); //need to be after updateCurrentCount
         panel.el.find('div#'+lhsectionId+' li.'+ ele_class +' span.fancy-checkbox').removeClass("selected");
@@ -273,6 +273,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
         panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
       }
+      panel.filterData(panel.el.find("li."+ele_class), 'div#experiment-type-content.active, div#cell-type-content.active');
     } else { //selecting checkbox
       if(addElement) {
         var rhsectionId  = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
@@ -285,11 +286,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $(ele).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
       }
       $(ele).find("span.fancy-checkbox").addClass("selected");
+      panel.filterData(panel.el.find(ele), 'div#experiment-type-content.active, div#cell-type-content.active');
 
       var tabkey = $(ele).data('filtercontainer').match(/experiment/) ? 'celltype' : 'experiment';
       this.addToStore(elementClass);
     }
-    panel.filterData(panel.el.find(ele), 'div#experiment-type-content.active, div#cell-type-content.active');
     panel.trackError('div#cell, div#experiment, div#source');
     panel.enableFilterButton('div#cell, div#experiment, div#source');
     panel.setLocalStorage();
@@ -538,7 +539,7 @@ console.log(container);
         countFilter++;
       });
       html += '</ul>';
-      html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>('+countFilter+')</text></div>' + html; 
+      html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html; 
       panel.el.find(container).append(html);
       
       //updating available count in right hand panel
@@ -646,8 +647,15 @@ console.log(container);
           } 
         });
         panel.el.find("div#"+rhsectionId+" div.count-container span.total").html(newCount);
-console.log(ele3);
-        if(!newCount) { panel.el.find(contentContainerId).addClass("inactive"); }
+        if(panel.el.find(ele3).closest(".tab-content").find("div.all-box text._num").length) {
+          panel.el.find(ele3).closest(".tab-content").find("div.all-box text._num").html("("+newCount+")");
+        }
+        if(!newCount) {
+          var parentTab = panel.el.find(ele3).closest(".tab-content").find("li").data("parent-tab")+"-tab";
+          panel.el.find("div#"+parentTab).addClass("inactive");          
+        } else {
+          //making sure rhsection is shown
+        }
       }
     });
   },
