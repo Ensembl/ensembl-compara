@@ -32,15 +32,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
 
-    this.elLk.cellPanel       = this.el.find("div#cell-panel");
-    this.elLk.experimentPanel = this.el.find("div#experiment-panel");
+    this.elLk.cellType        = {};
+    this.elLk.cellType.container = $('div#cell-type-content', this.el);
+
+    this.elLk.expType        = {};
+    this.elLk.expType.container = $('div#experiment-type-content', this.el);
+
     this.elLk.buttonTab       = this.el.find("div.track-tab");
-    this.elLk.contentTab      = this.el.find("div.tab-content");
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.filterButton    = this.el.find("button.filter");
     this.elLk.clearAll        = this.el.find("span.clearall");
-    this.dragCell = [];
-    this.startCell = [];
+    this.activeTab            = 'cell';
+    this.localStoreObj        = new Object();
     // this.elLk.activeAlphabet  = this.el.find(container+' div.alphabet-div.active');
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
@@ -55,6 +58,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       success: function(json) {
          panel.json_data = json;
          panel.trackTab();
+         panel.populateElLk();
          panel.setDragSelectEvent();
       },
       error: function() {
@@ -66,18 +70,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var selectTab = panel.el.find(this).attr("id");
       panel.toggleTab(this, panel.el.find("div.track-menu"));
       panel.setDragSelectEvent();
-
-
-      //if button is Edit and then browse track tab or search track tab is clicked then change it to Apply Filters
-      //if button is Apply filters and it is active and then track configuration tab is shown then change it to Edit
-      // if(selectTab === 'search-tab' || selectTab === 'browse-tab')
-      // {
-        // if(panel.elLk.filterButton.hasClass("_edit")) {
-          // panel.elLk.filterButton.removeClass("_edit").outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML);
-        // }
-      // } else if (selectTab === 'config-tab' && !panel.elLk.filterButton.hasClass("_edit") && panel.elLk.filterButton.hasClass("active")) {
-        // panel.elLk.filterButton.addClass("_edit").outerWidth("70px").html("Edit");
-      // }
     });
     
     panel.clickSubResultLink();
@@ -85,6 +77,24 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.clickCheckbox(this.elLk.filterList, 1);
     panel.clearAll(this.elLk.clearAll);
     panel.clickFilter(panel.elLk.filterButton, panel.el.find("div#track-config"));
+  },
+
+  populateElLk: function() {
+    var panel = this;
+    // CellType elements
+    this.elLk.cellType.ribbonBanner = $('.ribbon-banner .letters-ribbon .alphabet-div', this.elLk.cellType.container);
+    this.elLk.cellType.ribbonContent = $('.ribbon-content li', this.elLk.cellType.container);
+
+    // ExpType elements
+    this.elLk.expType.tabs = {}
+    this.elLk.expType.tabContents = {};
+    var expTabs = $('.tabs.experiments div.track-tab', this.elLk.expType.container);
+    $.each(expTabs, function(i, el) {
+      var k = $(el).attr('id').split('-')[0] || $(el).attr('id');
+      panel.elLk.expType.tabs[k] = el;
+      var tabContentId = $('span.content-id', el).html();
+      panel.elLk.expType.tabContents[k] = $('div#' + tabContentId + ' li', panel.elLk.expType.container);
+    });
   },
 
   setDragSelectEvent: function() {
@@ -97,7 +107,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         zone: zone,
         onSelect: function(el) {
           panel.selectBox(el, 1, 1);
-        },
+        }
       });
     }
     else {
@@ -233,6 +243,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //unselecting checkbox
     if($(ele).find("span.fancy-checkbox.selected").length){
       $(ele).find("span.fancy-checkbox").removeClass("selected");
+      this.removeFromStore($(ele).data('item'), $(ele).data('parentTab'));
 
       //removing element from right hand panel (selection panel) - optional
       if(removeElement && !ele.className.match("noremove")){
@@ -240,7 +251,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var lhsectionId = $(ele).closest("ul.result-list").find("span.lhsection-id").html();
         var allBoxId    = $(ele).find('span.allBox-id').html();
 
-        var ele_class = $(ele).attr('class').split(' ').filter(function(cls){ return cls !== 'ds-active'; }).join('.');
+        var ele_class = $(ele).data('item');
         panel.updateCurrentCount($(ele).parent().parent().find("div.count-container").find('span.current-count'), -1);
         panel.showHideLink($(ele).parent().parent()); //need to be after updateCurrentCount
         panel.el.find('div#'+lhsectionId+' li.'+ ele_class +' span.fancy-checkbox').removeClass("selected");
@@ -254,7 +265,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       //removing from right hand panel when unselecting in left hand panel
       if(addElement) {          
         var rhsectionId = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
-        var elementClass = $(ele).find('text').html().replace(/[^\w\-]/g,'_');
+        var elementClass = $(ele).data('item');
         panel.el.find('div#'+rhsectionId+' ul li.'+elementClass).remove();
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
         panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
@@ -262,7 +273,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     } else { //selecting checkbox
       if(addElement) {
         var rhsectionId  = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
-        var elementClass = $(ele).find('text').html().replace(/[^\w\-]/g,'_');
+        var elementClass = $(ele).data('item');
         var allBoxid     = $(ele).closest("div.tab-content.active").find('div.all-box').attr("id");
 
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'));
@@ -271,10 +282,32 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $(ele).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
       }
       $(ele).find("span.fancy-checkbox").addClass("selected");
+
+      var tabkey = $(ele).data('filtercontainer').match(/experiment/) ? 'celltype' : 'experiment';
+      this.addToStore(elementClass);
     }
-    panel.filterData(panel.el.find(ele),'div#experiment-type-content.active, div#cell-type-content.active');
+    panel.filterData(panel.el.find(ele), 'div#experiment-type-content.active, div#cell-type-content.active');
     panel.trackError('div#cell, div#experiment, div#source');
     panel.enableFilterButton('div#cell, div#experiment, div#source');
+    panel.setLocalStorage();
+    console.log(this.getLocalStorage());
+  },
+
+  setLocalStorage: function() {
+    localStorage.setItem('RegMatrix', JSON.stringify(this.localStoreObj));
+  },
+  getLocalStorage: function() {
+    return JSON.parse(localStorage.getItem('RegMatrix'));
+  },
+
+  addToStore: function(item) {
+    if (!item) { return; }
+    this.localStoreObj[this.activeTab] = this.localStoreObj[this.activeTab] || {}
+    this.localStoreObj[this.activeTab][item] = 1;
+  },
+  removeFromStore: function(item, lhs_section_id) {
+    lhs_section_id = lhs_section_id !== 'cell' ? 'experiment' : lhs_section_id;
+    item && lhs_section_id && delete this.localStoreObj[lhs_section_id][item];
   },
   
   // Function to show a panel when button is clicked
@@ -429,6 +462,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 	//            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
   toggleTab: function(selectElement, container, selByClass) {
     var panel = this;
+console.log(container);
+    // if ($(selectElement).attr('id') && $(selectElement).attr('id').match(/cell|experiment/)) {
+      // this.activeTab = $(selectElement).attr('id').split('-')[0];
+    // }
 
     if(!$(selectElement).hasClass("active") ) {
       //showing/hiding searchbox in the main tab
@@ -487,10 +524,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.alphabetRibbon(ribbonObj, container);
     } else  {
       var html = '<ul class="letter-content list-content">';
+      var rhsection = panel.el.find(container).find('span.rhsection-id').html();
+
       $.each(data.sort(), function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+elementClass+'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
         }
         countFilter++;
       });
@@ -499,7 +538,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.el.find(container).append(html);
       
       //updating available count in right hand panel
-      var rhsection = panel.el.find(container).find('span.rhsection-id').html();
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
 
       //clicking select all checkbox
@@ -618,6 +656,7 @@ console.log(ele3);
     var html  = "";
     var content_html = "";
     var total_num = 0;
+    var rhsection = panel.el.find(container).find('span.rhsection-id').html();
 
     //generate alphabetical order ribbon (A B C D ....)
     $.each(new Array(26), function(i) {
@@ -632,7 +671,7 @@ console.log(ele3);
         $.each(data[letter], function(i, el) {
           total_num++;
           var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          letterHTML += '<li class="noremove '+elementClass+'"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
+          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
         });
         letterHTML += '</ul>';
       } else {
@@ -647,7 +686,6 @@ console.log(ele3);
     panel.el.find(container+' div.ribbon-content').append(content_html);
 
     //updating available count in right hand panel
-    var rhsection = panel.el.find(container).find('span.rhsection-id').html();
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
 
     //clicking checkbox for each filter
