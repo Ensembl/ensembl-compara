@@ -1590,7 +1590,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -parameters => {
                 'reuse_db'  => '#mapping_db#',
-                'orphan_gene_ratio_per_taxon' => '#orphan_gene_ratio_per_taxon#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name    => '4Gb_job',
