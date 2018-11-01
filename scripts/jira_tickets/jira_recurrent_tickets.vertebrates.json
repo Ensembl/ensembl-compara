@@ -211,6 +211,11 @@
          },
          {
             "component": "Production tasks",
+            "description" : "Only if we have rerun the EPO Primates alignment",
+            "summary": "Dump the ancestral alleles for the Variation team"
+         },
+         {
+            "component": "Production tasks",
             "summary": "All LASTZ",
             "ticket_map_name": "All LastZ"
          }
