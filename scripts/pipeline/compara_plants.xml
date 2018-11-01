@@ -42,6 +42,14 @@
         </species_set>
     </all_vs_all>
 
+      <!-- Emmer wheat v most Triticeae -->
+      <one_vs_all method="LASTZ_NET" ref_genome="triticum_dicoccoides">
+        <species_set>
+          <taxonomic_group taxon_name="Triticeae"/>
+          <genome name="triticum_urartu" exclude="1" />
+        </species_set>
+      </one_vs_all>
+
   </pairwise_alignments>
 
   <!-- <self_alignments>
