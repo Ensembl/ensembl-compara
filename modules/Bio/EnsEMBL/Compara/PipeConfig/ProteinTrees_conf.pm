@@ -233,7 +233,7 @@ sub default_options {
         'reuse_capacity'            =>   3,
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 900,
-        'blastpu_capacity'          => 150,
+        'blastpu_capacity'          => 1000,
         'mcoffee_short_capacity'    => 600,
         'mafft_capacity'            => 2500,
         'mafft_himem_capacity'      => 1200,
@@ -3127,6 +3127,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'join_panther_subfam',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MakePantherSuperTrees',
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 2 => 'panther_backup',
             },
