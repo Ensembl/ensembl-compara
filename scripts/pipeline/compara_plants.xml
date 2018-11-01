@@ -17,27 +17,9 @@
 
   <pairwise_alignments>
 
-    <!-- First, our top 3 species, which are references for all plants, but with different aligners -->
+    <!-- First, our top 3 species, which are references for all land plants -->
     <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Embryophyta" />
-    <one_vs_all method="TRANSLATED_BLAT_NET" ref_genome="arabidopsis_thaliana">
-      <species_set>
-        <!-- Everything except Embryophyta -->
-        <taxonomic_group taxon_name="Rhodophyta"/>
-        <taxonomic_group taxon_name="Viridiplantae"/>
-        <taxonomic_group taxon_name="Embryophyta" exclude="1"/>
-      </species_set>
-    </one_vs_all>
-
     <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Embryophyta" />
-    <one_vs_all method="TRANSLATED_BLAT_NET" ref_genome="vitis_vinifera">
-      <species_set>
-        <!-- Everything except Embryophyta -->
-        <taxonomic_group taxon_name="Rhodophyta"/>
-        <taxonomic_group taxon_name="Viridiplantae"/>
-        <taxonomic_group taxon_name="Embryophyta" exclude="1"/>
-      </species_set>
-    </one_vs_all>
-
     <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Embryophyta" />
     <one_vs_all method="TRANSLATED_BLAT_NET" ref_genome="oryza_sativa">
       <species_set>
