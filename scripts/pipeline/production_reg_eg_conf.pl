@@ -35,23 +35,12 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # Before the official EG handover, the core databases are usually on the a production server:
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/95');
+
 # Then they are moved to the staging server:
 #Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/95');
-#Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/95');
-
-# clarify which version of yeast to use
-Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # deregister old version
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-vertannot-staging',
-     -user => 'ensro',
-     -port => 4573,
-     -species => 'saccharomyces_cerevisiae',
-     -group => 'core',
-     -dbname => 'saccharomyces_cerevisiae_core_95_4',
- );
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/95');
 
 #-------------------------HOMOLOGY DATABASES-----------------------------------
-
 # Members
 # Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 #     -host => 'mysql-ens-compara-prod-2',

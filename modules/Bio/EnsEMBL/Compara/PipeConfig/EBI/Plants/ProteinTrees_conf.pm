@@ -85,9 +85,9 @@ sub default_options {
     # connection parameters to various databases:
 
     # the master database for synchronization of various ids (use undef if you don't have a master database)
-    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
+    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
 
-    'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/carlac_load_members_plants_41_94',
+    'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/muffato_load_members_95_plants',
 
     eg_prod_loc => {
       -host   => 'mysql-eg-prod-2',
@@ -122,10 +122,10 @@ sub default_options {
     'prev_core_sources_locs'   => [ $self->o('eg_mirror_loc'), $self->o('e_mirror_loc') ],
 
     # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-    'prev_rel_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
+    'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
 
     # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
-    'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_plants_hom_40_93',
+    'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations

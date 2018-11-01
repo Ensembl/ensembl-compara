@@ -100,8 +100,8 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        #'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        #'port'  => 4522,
+        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'port'  => 4615,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
@@ -120,14 +120,14 @@ sub default_options {
             -port   => 4157,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 94,
+            -db_version => 95,
         },
         'e_mirror_loc' => {
             -host   => 'mysql-ensembl-mirror',
             -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 94,
+            -db_version => 95,
         },
         'eg_prod_loc' => {
             -host => 'mysql-eg-prod-2',
