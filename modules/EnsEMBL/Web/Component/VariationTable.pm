@@ -35,8 +35,7 @@ use Scalar::Util qw(looks_like_number);
 
 use base qw(EnsEMBL::Web::Component::Variation);
 
-our $VF_MAX = 200000;
-our $TV_MAX = 200000;
+our $TV_MAX = 100000;
 
 sub _init {
   my $self = shift;
@@ -47,12 +46,16 @@ sub _init {
 sub new_consequence_type {
   my $self        = shift;
   my $tva         = shift;
-  my $most_severe = shift;
+  my $only_coding = shift;
 
-  my $overlap_consequences = ($most_severe) ? [$tva->most_severe_OverlapConsequence] || [] : $tva->get_all_OverlapConsequences || [];
+  my $overlap_consequences = $tva->get_all_OverlapConsequences || [];
 
   # Sort by rank, with only one copy per consequence type
   my @consequences = sort {$a->rank <=> $b->rank} (values %{{map {$_->label => $_} @{$overlap_consequences}}});
+
+  if ($only_coding) {
+    @consequences = grep { $_->rank < 18 } @consequences;
+  }
 
   my @type;
   foreach my $c (@consequences) {
@@ -86,20 +89,18 @@ sub table_content {
     $Bio::EnsEMBL::Variation::Utils::VariationEffect::UPSTREAM_DISTANCE,
     $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
   );
- 
-  my $vf_count = $self->_count_variation_features($slice);
 
   my $exonic_types = $self->get_exonic_type_classes;
 
-  my $vfs = $self->_get_variation_features($slice, $vf_count, $exonic_types);
-
-  my $tva = $hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  # Get the number of TranscriptVariations
   my $tv_count = 0;
   foreach my $transcript (@transcripts) {
-    $tv_count += $tva->count_all_by_Transcript($transcript->Obj);
+    $tv_count += $self->_count_transcript_variations($transcript->Obj);
   }
 
-  return $self->variation_table($callback,'ALL',\@transcripts, $vf_count, $tv_count, $vfs);
+  my $vfs = $self->_get_variation_features($slice, $tv_count, $exonic_types);
+
+  return $self->variation_table($callback,'ALL',\@transcripts, $tv_count, $vfs);
 }
 
 sub content {
@@ -119,22 +120,20 @@ sub content {
 
   my $thing = 'gene';
      $thing = 'transcript' if $object_type eq 'Transcript';
-
   
   my $slice = $self->object->Obj->feature_Slice->expand(
     $Bio::EnsEMBL::Variation::Utils::VariationEffect::UPSTREAM_DISTANCE,
     $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
   );
- 
-  my $vf_count = $self->_count_variation_features($slice);
 
-  my $tva = $hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  # Get the number of TranscriptVariations
   my $tv_count = 0;
-  foreach my $tr (@transcripts) {
-    $tv_count += $tva->count_all_by_Transcript($tr->Obj);
+  foreach my $transcript (@transcripts) {
+    $tv_count += $self->_count_transcript_variations($transcript->Obj);
   }
 
-  if ($vf_count > $VF_MAX || $tv_count > $TV_MAX ) {
+  my $only_exonic = 0;
+  if ($tv_count > $TV_MAX ) {
 
     my $bm_prefix  = 'hsapiens_snp.default.snp';
     my $bm_prefix2 = 'hsapiens_snp.default.filters';
@@ -148,15 +147,18 @@ sub content {
                        "&FILTERS=$bm_prefix2.chromosomal_region.&quot;".$slice->seq_region_name.":".$slice->start.":".$slice->end."&quot;".
                        '&VISIBLEPANEL=resultspanel' : '';
 
-    my $warning_content  = "There are too many variants to display here for this $object_type so <b>only exonic variants</b> are displayed.";
+    my $vf_count = $self->_count_variation_features($slice);
+    my $warning_content  = "There are ".$self->thousandify($vf_count)." variants for this $object_type, which is too many to display in this page, so <b>only exonic variants</b> are displayed.";
        $warning_content .= " Please use <a href=\"$biomart_link\">BioMart</a> to extract all data." if ($biomart_link ne '');
     $html .= $self->_warning( "Too many data to display", $warning_content);
+
+    $only_exonic = 1;
   }
   else {
     $html .= $self->_hint('snp_table', 'Variant table', "This table shows known variants for this $thing. Use the 'Consequence Type' filter to view a subset of these.");
   }
 
-  my $table = $self->make_table(\@transcripts);
+  my $table = $self->make_table(\@transcripts, $only_exonic);
 
   $html .= $table->render($self->hub,$self);  
 
@@ -282,7 +284,7 @@ sub clinsig_classes {
 }
 
 sub snptype_classes {
-  my ($self,$table,$hub) = @_;
+  my ($self,$table,$hub,$only_exonic) = @_;
 
   my $species_defs = $hub->species_defs;
   my $var_styles   = $species_defs->colour('variation');
@@ -290,12 +292,13 @@ sub snptype_classes {
   my $column = $table->column('snptype');
   $column->filter_add_baked('lof','PTV','Select all protein truncating variant types');
   $column->filter_add_baked('lof_missense','PTV & Missense','Select all protein truncating and missense variant types');
-  $column->filter_add_baked('exon','Only Exonic','Select exon and splice region variant types');
+  $column->filter_add_baked('exon','Only Exonic','Select exon and splice region variant types') if (!$only_exonic);
   $column->filter_add_bakefoot('PTV = Protein Truncating Variant');
   my @lof = qw(stop_gained frameshift_variant splice_donor_variant
                splice_acceptor_variant);
   foreach my $con (@all_cons) {
     next if $con->SO_accession =~ /x/i;
+    next if ($only_exonic and $con->rank >= 18);
     my $so_term = lc $con->SO_term;
     my $colour = $var_styles->{$so_term||'default'}->{'default'};
     $column->icon_export($con->label,$con->label);
@@ -309,7 +312,7 @@ sub snptype_classes {
     if($so_term eq 'missense_variant') {
       $column->filter_bake_into($con->label,'lof_missense');
     }
-    if($con->rank < 18) { # TODO: specify this properly
+    if(!$only_exonic and $con->rank < 18) { # TODO: specify this properly
       $column->filter_bake_into($con->label,'exon');
     }
   }
@@ -327,7 +330,7 @@ sub get_exonic_type_classes {
 
 
 sub make_table {
-  my ($self,$transcripts) = @_;
+  my ($self,$transcripts,$only_exonic) = @_;
 
   my $hub      = $self->hub;
   my $glossary = $hub->glossary_lookup;
@@ -555,7 +558,7 @@ sub make_table {
   $self->evidence_classes($table);
   $self->clinsig_classes($table);
   $self->class_classes($table);
-  $self->snptype_classes($table,$self->hub);
+  $self->snptype_classes($table,$self->hub,$only_exonic);
   $self->sift_poly_classes($table);
 
   my (@lens,@starts,@ends,@seq);
@@ -596,7 +599,7 @@ sub make_table {
 }
 
 sub variation_table {
-  my ($self,$callback,$consequence_type, $transcripts, $vf_count, $tv_count, $vfs) = @_;
+  my ($self,$callback,$consequence_type, $transcripts, $tv_count, $vfs) = @_;
   my $hub         = $self->hub;
   my $show_scores = $hub->param('show_scores');
   my ($base_trans_url, $url_transcript_prefix, %handles);
@@ -631,7 +634,7 @@ sub variation_table {
     my @var_ids;
     foreach my $transcript (@$transcripts) {
       # get TVs
-      my $tvs = $self->_get_transcript_variations($transcript->Obj, $vf_count, $tv_count, $exonic_types);
+      my $tvs = $self->_get_transcript_variations($transcript->Obj, $tv_count, $exonic_types);      
       foreach my $tv (@$tvs) {
         my $raw_id = $tv->{_variation_feature_id};
 
@@ -651,7 +654,7 @@ sub variation_table {
     my $cache = $self->{_transcript_variations} ||= {};
     next if(exists($cache->{$tr_id}));
 
-    my $tvs = $self->_get_transcript_variations($transcript->Obj, $vf_count, $tv_count, $exonic_types);
+    my $tvs = $self->_get_transcript_variations($transcript->Obj, $tv_count, $exonic_types);
 
     my $transcript_stable_id = $transcript->stable_id;
     my $gene                 = $transcript->gene;
@@ -671,7 +674,7 @@ sub variation_table {
     my $chr = $transcript->seq_region_name;
     my @tv_sorted;
     foreach my $tv (@$tvs) {
-      my $vf = $self->_get_vf_from_tv($tv, $vfs, $slice, $vf_count, $exonic_types);
+      my $vf = $self->_get_vf_from_tv($tv, $vfs, $slice, $tv_count, $exonic_types);
       next unless $vf;
 
       push @tv_sorted,[$tv,$vf->seq_region_start];
@@ -679,7 +682,7 @@ sub variation_table {
     @tv_sorted = map { $_->[0] } sort { $a->[1] <=> $b->[1] } @tv_sorted;
 
     foreach my $tv (@tv_sorted) {
-      my $vf = $self->_get_vf_from_tv($tv, $vfs, $slice, $vf_count, $exonic_types);
+      my $vf = $self->_get_vf_from_tv($tv, $vfs, $slice, $tv_count, $exonic_types);
       next unless $vf;
 
       my ($start, $end) = ($vf->seq_region_start,$vf->seq_region_end);
@@ -725,7 +728,8 @@ sub variation_table {
             }
  
             # Sort out consequence type string
-            my $type = $self->new_consequence_type($tva);
+            my $only_coding = $tv_count > $TV_MAX ? 1 : 0;
+            my $type = $self->new_consequence_type($tva, $only_coding);
             
             my $sifts = $self->classify_sift_polyphen($tva->sift_prediction, $tva->sift_score);
             my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
@@ -747,7 +751,7 @@ sub variation_table {
               }
             }
             
-            my $gmaf   = $vf->minor_allele_frequency; # global maf
+            my $gmaf = $vf->minor_allele_frequency; # global maf
             my $gmaf_freq;
             my $gmaf_allele;
             if (defined $gmaf) {
@@ -815,7 +819,6 @@ sub variation_table {
 sub _get_transcript_variations {
   my $self         = shift;
   my $tr           = shift;
-  my $vf_count     = shift;
   my $tv_count     = shift;
   my $exonic_types = shift;
 
@@ -825,13 +828,14 @@ sub _get_transcript_variations {
   if(!exists($cache->{$tr_id})) {
 
     my $slice = $tr->feature_Slice; 
-    if ($vf_count <= $VF_MAX || $tv_count <= $TV_MAX ) {
+    if ($tv_count <= $TV_MAX ) {
       $slice = $slice->expand(
         $Bio::EnsEMBL::Variation::Utils::VariationEffect::UPSTREAM_DISTANCE,
         $Bio::EnsEMBL::Variation::Utils::VariationEffect::DOWNSTREAM_DISTANCE
       );
     }
-    my $vfs = $self->_get_variation_features($slice, $vf_count, $exonic_types);
+    my $vfs = $self->_get_variation_features($slice, $tv_count, $exonic_types);
+
     my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
     my @tvs = ();
 
@@ -847,7 +851,7 @@ sub _get_transcript_variations {
     }
     
     if($have_vfs_with_id) {
-      if ($vf_count > $VF_MAX || $tv_count > $TV_MAX ) {
+      if ($tv_count > $TV_MAX ) {
         push @tvs, @{$tva->fetch_all_by_Transcripts_SO_terms([$tr],$exonic_types)};
         push @tvs, @{$tva->fetch_all_somatic_by_Transcripts_SO_terms([$tr],$exonic_types)};
       }
@@ -866,12 +870,12 @@ sub _get_transcript_variations {
 sub _get_variation_features {
   my $self         = shift;
   my $slice        = shift;
-  my $vf_count     = shift;
+  my $tv_count     = shift;
   my $exonic_types = shift;
 
   if(!exists($self->{_variation_features})) {
     my $vfa = $self->hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-    if ($vf_count > $VF_MAX) {
+    if ($tv_count > $TV_MAX) {
       # No need to have the slice expanded to upstream/downstream
       $slice = $self->object->Obj->feature_Slice;
       $self->{_variation_features} = { map {$_->dbID => $_} (@{ $vfa->fetch_all_by_Slice_SO_terms($slice,$exonic_types) }, @{ $vfa->fetch_all_somatic_by_Slice_SO_terms($slice,$exonic_types) })}; 
@@ -893,13 +897,21 @@ sub _count_variation_features {
   return $vfa->count_by_Slice_constraint($slice);
 }
 
+sub _count_transcript_variations {
+  my $self = shift;
+  my $tr   = shift;
+
+  my $tva = $self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation');
+  return $tva->count_all_by_Transcript($tr);
+}
+
 sub _get_vf_from_tv {
-  my ($self, $tv, $vfs, $slice, $vf_count, $exonic_types) = @_;
+  my ($self, $tv, $vfs, $slice, $tv_count, $exonic_types) = @_;
 
   my $vf; 
 
   if(my $raw_id = $tv->{_variation_feature_id}) {
-    $vfs ||= $self->_get_variation_features($slice, $vf_count, $exonic_types);
+    $vfs ||= $self->_get_variation_features($slice, $tv_count, $exonic_types);
     $vf = $vfs->{$raw_id};
   }
   else {
