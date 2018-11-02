@@ -223,12 +223,13 @@ div.track-tab.inactive:hover  { opacity: 1; }
 div.tab-content               { display: none; width: 100%; }
 div.tab-content.active        { display: inline-block; background-color: [[LIGHT_GREY]]; }
 
-div.tabs.cells                                                       { margin: 3em 1em 1em 1em; }
-div.cell-label                                                       { width: 75px; float: left; margin-top: 5px;}
-div.cells div.track-tab, div.experiments div.track-tab               { background-color: [[LIGHT_GREY]];  border: #ccc 1px solid; width: 100px; }
-div.cells div.track-tab:hover, div.experiments div.track-tab:hover   { background-color: [[WHITE]]; }
-div.cells div.track-tab.active,div.experiments div.track-tab.active  { background-color: [[WHITE]];  border: #ccc 1px solid; }
-div.tabs.experiments                                                 { margin-top: 24px; justify-content: center; white-space: nowrap; }
+div.tabs.cells                                                              { margin: 3em 1em 1em 1em; }
+div.cell-label                                                              { width: 75px; float: left; margin-top: 5px;}
+div.cells div.track-tab, div.experiments div.track-tab                      { background-color: [[LIGHT_GREY]];  border: #ccc 1px solid; width: 100px; }
+div.cells div.track-tab:hover, div.experiments div.track-tab:hover          { background-color: [[WHITE]]; }
+div.cells div.track-tab.active,div.experiments div.track-tab.active         { background-color: [[WHITE]];  border: #ccc 1px solid; }
+div.cells div.track-tab.active,div.experiments div.track-tab.inactive:hover { background-color: [[LIGHT_GREY]]; opacity: 1; }
+div.tabs.experiments                                                        { margin-top: 24px; justify-content: center; white-space: nowrap; }
 
 
 /* large breadcrumbs */
@@ -265,7 +266,7 @@ div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: [[
 div.letters-ribbon                                  { position:relative; color: [[BLACK]]; font-size: 0.8em; white-space: nowrap; margin: 16px 0 16px 0px; }
 div.alphabet-div                                    { position: relative; margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
 div.alphabet-div.active                             { cursor: default; background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; opacity: 0.9; }
-div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; }
+div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: auto; }
 div.ribbon-content                                  { display: flex; padding-left: 16px; height: 302px; overflow: auto; }
 div.alphabet-content                                { display: none; position: relative; }
 div.alphabet-content.active                         { display: block; }

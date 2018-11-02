@@ -467,12 +467,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 	//            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
   toggleTab: function(selectElement, container, selByClass) {
     var panel = this;
-console.log(container);
     // if ($(selectElement).attr('id') && $(selectElement).attr('id').match(/cell|experiment/)) {
       // this.activeTab = $(selectElement).attr('id').split('-')[0];
     // }
 
-    if(!$(selectElement).hasClass("active") ) {
+    if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
         panel.el.find(".search-box").hide();
@@ -637,7 +636,8 @@ console.log(container);
     // loop for each li to find out where the parent content is and update count
     $.each(panel.el.find(contentContainerId).find('span.rhsection-id'), function(d, ele3) {
       var rhsectionId = panel.el.find(ele3).html();
-      var newCount = 0;
+      var newCount    = 0;
+      var parentTab   = panel.el.find(ele3).closest(".tab-content").find("li").data("parent-tab")+"-tab";
       
       if(panel.el.find("div#"+rhsectionId+".result-content").length) {
         var li_class = resetCount ? "" : "._filtered";  //if resetcount we need to get all li
@@ -651,10 +651,52 @@ console.log(container);
           panel.el.find(ele3).closest(".tab-content").find("div.all-box text._num").html("("+newCount+")");
         }
         if(!newCount) {
-          var parentTab = panel.el.find(ele3).closest(".tab-content").find("li").data("parent-tab")+"-tab";
-          panel.el.find("div#"+parentTab).addClass("inactive");          
+          panel.el.find("div#"+parentTab).addClass("inactive");
+//hide experiment link in RH 
         } else {
-          //making sure rhsection is shown
+          //making sure rhsection is shown and remove inactive class
+          panel.el.find("div#"+parentTab).removeClass("inactive");          
+        }
+
+        //if there is alphabet ribbon, going through alphabet ribbon, activating and deactivating the one with/without elements
+        if(panel.el.find(ele3).closest(".tab-content").find("div.ribbon-content div.alphabet-content").length) {
+          var setActive = 0; //used to set active ribbon
+          var activeCount = 0;
+          panel.el.find(ele3).closest(".tab-content").find("div.letters-ribbon div.active").removeClass("active"); //removing existing active first
+          panel.el.find(ele3).closest(".tab-content").find("div.alphabet-content.active").removeClass("active");
+
+          $.each(panel.el.find(ele3).closest(".tab-content").find("div.ribbon-content div.alphabet-content"), function(i2, ele4) {
+            var parentRibbon = panel.el.find(ele4).data("parent-ribbon");
+
+            if(panel.el.find(ele4).find("li._filtered").length) {
+              activeCount++;
+              //toggling tab for first active class adding active class to first alphabet with content in ribbon
+              if(!panel.el.find(ele3).closest(".tab-content").find("div.letters-ribbon div.active").length){
+                 panel.toggleTab(panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon), panel.el.find(ele3).closest(".tab-content"), 1);
+              }
+              panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); //remove inactive class in case its present
+            } else { //empty
+
+              if(panel.el.find(ele4).find("li").length && resetCount) { //resetting everything
+                panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); // remove inactive from alphabet ribbon with content 
+                panel.el.find(ele3).closest(".tab-content").find("div.rarrow").removeClass("inactive").addClass("active");
+                panel.el.find("div#"+mainRHSection+" div.result-content").show(); //make sure all rhSection link/count are shown
+
+                if(!panel.el.find(ele3).closest(".tab-content").find("div.letters-ribbon div.active").length){
+                   panel.toggleTab(panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon), panel.el.find(ele3).closest(".tab-content"), 1);
+                }                
+              } else { //empty with no li at all
+                panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon).addClass("inactive");
+              }
+            }
+          });
+
+          //disable rarrow and larrow if there is only one ribbon available
+          if(activeCount === 1) {
+            panel.el.find(ele3).closest(".tab-content").find("div.larrow, div.rarrow").addClass("inactive");
+          } else {
+            panel.el.find(ele3).closest(".tab-content").find("div.rarrow").addClass("active"); 
+          }
         }
       }
     });
@@ -691,7 +733,7 @@ console.log(container);
       }
       
       html += '<div class="ribbon_'+letter+' alphabet-div '+active_class+'">'+letter.toUpperCase()+'<span class="hidden content-id">'+letter+'_content</span></div>';
-      content_html += '<div class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
+      content_html += '<div data-parent-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     panel.el.find(container).append('<div class="all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
     panel.el.find(container+' div.letters-ribbon').append(html);
