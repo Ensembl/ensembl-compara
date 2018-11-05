@@ -339,7 +339,7 @@ sub get_ancestor_species_hash
         my $child = $node->children->[0];
         my $leaves = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
         eval {
-            $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2) if ($self->param('dataflow_subclusters'));
+            $self->dataflow_output_id({'gene_tree_id' => $child->node_id, 'tree_num_genes' => scalar(@$leaves)}, 2) if ($self->param('dataflow_subclusters'));
         };
         $child->disavow_parent;
 
