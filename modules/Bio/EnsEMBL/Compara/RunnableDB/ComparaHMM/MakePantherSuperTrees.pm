@@ -68,7 +68,6 @@ sub fetch_input {
     my $gta = $self->compara_dba->get_GeneTreeAdaptor;
 
     my $all_trees = $gta->fetch_all(
-        -TREE_TYPE                  => 'tree',
         -MEMBER_TYPE                => $self->param('member_type'),
         -CLUSTERSET_ID              => 'default',
         -METHOD_LINK_SPECIES_SET_ID => $mlss_id,
