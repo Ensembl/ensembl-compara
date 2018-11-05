@@ -266,7 +266,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //Function to select filters and adding/removing them in the relevant panel
   selectBox: function(ele, removeElement, addElement) {
     var panel = this;
-    
+
     //unselecting checkbox
     if($(ele).find("span.fancy-checkbox.selected").length){
       $(ele).find("span.fancy-checkbox").removeClass("selected");
@@ -297,7 +297,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
         panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
       }
-      panel.filterData(panel.el.find("li."+ele_class), 'div#experiment-type-content.active, div#cell-type-content.active');
+      panel.filterData(panel.el.find("li."+ele_class));
     } else { //selecting checkbox
       if(addElement) {
         var rhsectionId  = $(ele).closest("div.tab-content.active").find('span.rhsection-id').html();
@@ -310,10 +310,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $(ele).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(elementClass).find("span.fancy-checkbox").addClass("selected");
       }
       $(ele).find("span.fancy-checkbox").addClass("selected");
-      panel.filterData(panel.el.find(ele), 'div#experiment-type-content.active, div#cell-type-content.active');
+      panel.filterData(panel.el.find(ele));
 
       if ($(ele).data('filtercontainer')) {
-        var tabkey = $(ele).data('filtercontainer').match(/experiment/) ? 'celltype' : 'experiment';
         !this.loadingState && this.addToStore(elementClass); // Dont add to store while loading state from store
       }
     }
@@ -621,17 +620,19 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
   // Function to show/hide cells/experiments
-  // Arguments: selected element object and container of the clicked element
-  filterData: function(eleObj, container) {
+  // Arguments: selected element object
+  filterData: function(eleObj) {
     var panel = this;
     var contentContainerId = "#"+eleObj.attr("data-filtercontainer"); //get container where the contents to be filtered are located
     var resetCount = 0;
+    container = "div#"+eleObj.closest("div.tab-content").attr("id");
 
     //show/hide elements, first hide all of them and then only show the one that needs to be shown
     if(eleObj.find(".fancy-checkbox").hasClass("selected")) { //if selecting checkbox
       panel.el.find(contentContainerId+" li").hide();
+
       //first element selected
-      if(panel.el.find(container).find('li span.fancy-checkbox.selected').length === 1) {        
+      if(panel.el.find(container).find('li span.fancy-checkbox.selected').length === 1) {
         $.each(eleObj.attr("data-filter").split(" "), function(index, ele) {
           if(ele){
             panel.el.find(contentContainerId+" li."+ele).addClass('_filtered').show();
