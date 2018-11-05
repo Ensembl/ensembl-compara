@@ -166,6 +166,8 @@ sub default_options {
         9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # primates
         #7742    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # vertebrates
         #33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # carnivora
+        3913 => '--hspthresh=5000 --gappedthresh=2200 --inner=2200 --ambiguous=iupac',
+        4070 => '--hspthresh=5000 --gappedthresh=2200 --inner=2200 --ambiguous=iupac',
     },
 
         #
