@@ -1615,7 +1615,7 @@ sub hgvs_url {
       $p->{'lrgt'} = "${id}t$tr_pr_id";
     }
   } else {
-    if ($type eq 'g') { # genomic position
+    if (($type eq 'g') || ($type eq 'm')) { # genomic position
       $p->{'type'}             = 'Location';
       $p->{'action'}           = 'View';
       $p->{'contigviewbottom'} = $config_param;
