@@ -99,7 +99,9 @@ sub fetch_input {
     if (!$self->param('genome_db_id') && (scalar(keys %super_align) >= 5000) && $self->input_job->analysis->dataflow_rules_by_branch->{3}) {
         my %genome_db_ids;
         foreach my $member (values %super_align) {
-            $genome_db_ids{$member->genome_db_id} = 1;
+            my $gdb = $member->genome_db;
+            $gdb = $gdb->principal_genome_db if $gdb->genome_component;
+            $genome_db_ids{ $gdb->dbID} = 1;
         }
         foreach my $gdb_id (keys %genome_db_ids) {
             $self->dataflow_output_id({'genome_db_id' => $gdb_id}, 3);
