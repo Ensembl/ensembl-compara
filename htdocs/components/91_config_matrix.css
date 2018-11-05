@@ -217,7 +217,7 @@ div.track-tab                 { background-color: [[WHITE]]; color: [[DARK_GREY]
 div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  auto; }
 div.track-tab:hover           { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
 div.track-tab.active:hover    { background-color: [[LIGHT_GREY]]; opacity: 1; }
-div.track-tab.inactive        { color: #cccccc; cursor: auto; }
+div.track-tab.inactive        { color: #cccccc; cursor: not-allowed; }
 div.track-tab.inactive:hover  { opacity: 1; }
 
 div.tab-content               { display: none; width: 100%; }
@@ -244,7 +244,7 @@ div.tabs.experiments                                                        { ma
 .large-breadcrumbs ul li.disable a              { cursor: default; }
 .large-breadcrumbs ul li.disable a:hover        { background: [[MAIN_DARK]]; color: [[WHITE]]}
 .large-breadcrumbs ul li.disable a:hover:after  { border-left-color: [[MAIN_DARK]] !important; }
-.large-breadcrumbs ul li a                      { color: white; text-decoration: none; padding: 4px 10px 4px 45px; position: relative; display: block; float: left; width: 150px; font-weight: bold; }
+.large-breadcrumbs ul li a                      { color: white; text-decoration: none; padding: 4px 10px 4px 45px; position: relative; display: block; float: left; width: 150px; }
 .large-breadcrumbs ul li a:after                { content: " "; display: block; width: 0; height: 0; border-top: 50px solid transparent; border-bottom: 50px solid transparent; border-left: 30px solid [[MAIN_DARK]]; position: absolute; top: 50%; margin-top: -50px; left: 100%; z-index: 2; }
 .large-breadcrumbs ul li a:before               { content: " "; display: block; width: 0; height: 0; border-top: 50px solid transparent; border-bottom: 50px solid transparent; border-left: 30px solid white; position: absolute; top: 50%; margin-top: -50px; margin-left: 1px; left: 100%; z-index: 1; }
 .large-breadcrumbs ul li:first-child a          { padding-left: 15px; }
@@ -266,7 +266,7 @@ div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: [[
 div.letters-ribbon                                  { position:relative; color: [[BLACK]]; font-size: 0.8em; white-space: nowrap; margin: 16px 0 16px 0px; }
 div.alphabet-div                                    { position: relative; margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
 div.alphabet-div.active                             { cursor: default; background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; opacity: 0.9; }
-div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: auto; }
+div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: not-allowed; }
 div.ribbon-content                                  { display: flex; padding-left: 16px; height: 302px; overflow: auto; }
 div.alphabet-content                                { display: none; position: relative; }
 div.alphabet-content.active                         { display: block; }
