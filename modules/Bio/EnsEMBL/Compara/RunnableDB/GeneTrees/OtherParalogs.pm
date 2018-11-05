@@ -338,6 +338,17 @@ sub get_ancestor_species_hash
         print "super-tree leaf=", $node->node_id, " children=", $node->get_child_count, "\n";
         my $child = $node->children->[0];
         my $leaves = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
+        unless (@$leaves) {
+            # $child is actually a supertree. Need to fetch its own sub-trees
+            $leaves = [];
+            print "going deeper\n";
+            my $subsupertree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($child->node_id);
+            my $subsubtrees = $self->compara_dba->get_GeneTreeAdaptor->fetch_subtrees($subsupertree);
+            foreach my $subsubtree (@$subsubtrees) {
+                push @$leaves, @{ $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($subsubtree->root_id) };
+            }
+            print "super-tree leaf=", $node->node_id, " subtrees=", scalar(@$subsubtrees), " children=", scalar(@$leaves), "\n";
+        }
         eval {
             $self->dataflow_output_id({'gene_tree_id' => $child->node_id, 'tree_num_genes' => scalar(@$leaves)}, 2) if ($self->param('dataflow_subclusters'));
         };
