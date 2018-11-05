@@ -582,10 +582,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   // Function to show/hide cells/experiments
   // Arguments: selected element object and container of the clicked element
-  // Todo:
-  // Update count in select all box
-  // update count in RH panel
-  // update tabs status (deactivate if no element)
   filterData: function(eleObj, container) {
     var panel = this;
     var contentContainerId = "#"+eleObj.attr("data-filtercontainer"); //get container where the contents to be filtered are located
@@ -638,7 +634,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var rhsectionId = panel.el.find(ele3).html();
       var newCount    = 0;
       var parentTab   = panel.el.find(ele3).closest(".tab-content").find("li").data("parent-tab")+"-tab";
-      
+
       if(panel.el.find("div#"+rhsectionId+".result-content").length) {
         var li_class = resetCount ? "" : "._filtered";  //if resetcount we need to get all li
         $.each(panel.el.find(contentContainerId+' li'+li_class), function(index, elem) {
@@ -652,9 +648,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
         if(!newCount) {
           panel.el.find("div#"+parentTab).addClass("inactive");
-//hide experiment link in RH 
+          panel.el.find("div#"+rhsectionId+".result-content").hide();
         } else {
           //making sure rhsection is shown and remove inactive class
+           panel.el.find("div#"+rhsectionId+".result-content").show();
           panel.el.find("div#"+parentTab).removeClass("inactive");          
         }
 
