@@ -1623,10 +1623,16 @@ sub hgvs_url {
       $p->{'type'}   = 'Transcript';
       $p->{'action'} = 'ProtVariations';
       $p->{'t'}      = $refseq.$version;
-    } else { # $type eq c: cDNA position, no $type: special cases where the variation falls in e.g. a pseudogene. Default to transcript
+    } elsif (($type eq 'n') || ($type eq 'c')) {
+      # transcript links only set for type 'n' or 'c'
+      # $type eq c: cDNA position 
+      # $type eq n: non-coding e.g. special cases where the variation falls in e.g. a pseudogene
       $p->{'type'}   = 'Transcript';
       $p->{'action'} = ($hub->species_defs->databases->{'DATABASE_VARIATION'} && $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'#STRAINS'} > 0 ? 'Population' : 'Summary');
       $p->{'t'}      = $refseq.$version;
+    } else {
+      # Do not assign an url
+      return undef;
     }
   }
   
