@@ -115,6 +115,7 @@ sub fetch_input {
 			# don't flow trees for copying - they are always dumped fresh
 			if ( $method_class =~ /tree_node$/ ) { # gene trees
 				push( @{$dumps{DumpTrees}}, $mlss );
+				next;
 			}
 			# old analysis! can be copied from prev release FTP location
 			push( @copy_jobs, $mlss->dbID ) if defined $self->param('dumpable_method_types')->{$mlss->method->type};
