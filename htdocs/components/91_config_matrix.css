@@ -214,10 +214,10 @@ div.tabs                      { display: flex; }
 div.track-menu                { background-color: [[WHITE]]; }
 div.track-menu div.track-tab  { border-right: none; border-left: #ccc 1px solid; white-space: nowrap; display: flex; justify-content: center; }
 div.track-tab                 { background-color: [[WHITE]]; color: [[DARK_GREY]]; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px; width: 50%; text-align: center; padding: 5px 5px 10px 5px; margin: 0 0 0 -1px; }
-div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  auto; }
+div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  default; }
 div.track-tab:hover           { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
 div.track-tab.active:hover    { background-color: [[LIGHT_GREY]]; opacity: 1; }
-div.track-tab.inactive        { color: #cccccc; cursor: not-allowed; }
+div.track-tab.inactive        { color: #cccccc; cursor: default; }
 div.track-tab.inactive:hover  { opacity: 1; }
 
 div.tab-content               { display: none; width: 100%; }
@@ -266,7 +266,7 @@ div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: [[
 div.letters-ribbon                                  { position:relative; color: [[BLACK]]; font-size: 0.8em; white-space: nowrap; margin: 16px 0 16px 0px; }
 div.alphabet-div                                    { position: relative; margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
 div.alphabet-div.active                             { cursor: default; background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; opacity: 0.9; }
-div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: not-allowed; }
+div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: default; }
 div.ribbon-content                                  { display: flex; padding-left: 16px; height: 302px; overflow: auto; }
 div.alphabet-content                                { display: none; position: relative; }
 div.alphabet-content.active                         { display: block; }
