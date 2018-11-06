@@ -44,6 +44,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'RegMatrix';
+    this.elLk.lookup          = new Object();
     // this.elLk.activeAlphabet  = this.el.find(container+' div.alphabet-div.active');
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
@@ -58,7 +59,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       success: function(json) {
         this.json_data = json;
         this.trackTab();
-        this.populateElLk();
+        this.populateLookUp();
         this.loadState();
         this.setDragSelectEvent();
       },
@@ -83,8 +84,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   getActiveTab: function() {
     return $('div#cell-type-content.active span.rhsection-id, div#experiment-type-content.active span.rhsection-id', this.el).html();
   },
+  getActiveSubTab: function() {
+    return $('div#cell-type-content.active .tab-content.active span.rhsection-id, div#experiment-type-content.active .tab-content.active span.rhsection-id', this.el).html();
+  },
 
-  populateElLk: function() {
+  populateLookUp: function() {
     var panel = this;
     // CellType elements
     this.elLk.cellType.ribbonBanner = $('.ribbon-banner .letters-ribbon .alphabet-div', this.elLk.cellType.container);
@@ -127,13 +131,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   setDragSelectEvent: function() {
     var panel = this;
     var zone;
+
     if (!$('.tab-content.active .tab-content .ribbon-content', panel.el).length) {
+      if (this.dragSelectCell) return;
       zone = '.tab-content.active .ribbon-content';
-      this.dragSelect = new Selectables({
-        elements: 'ul.letter-content li',
+      this.dragSelectCell = new Selectables({
+        elements: 'ul.letter-content li span',
         zone: zone,
         onSelect: function(el) {
-          panel.selectBox(el, 0, 1);
+          panel.selectBox(el.parentElement, 0, 1);
         }
       });
     }
@@ -144,8 +150,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         zone = '.tab-content.active .tab-content.active';
       }
-      this.dragSelect = new Selectables({
-        elements: 'li, div.all-box',
+
+      if (this.dragSelectExp && this.dragSelectExp[this.getActiveSubTab()]) return;
+      this.dragSelectExp = this.dragSelectExp || {};
+      this.dragSelectExp[this.getActiveSubTab()] = new Selectables({
+        elements: 'li span, div.all-box',
         zone: zone,
         onSelect: function(el) {
           if($(el).hasClass('all-box')) {
@@ -156,7 +165,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             this.allBox = el;
           }
           else {
-            panel.selectBox(el, 1, 1);
+            panel.selectBox(el.parentElement, 1, 1);
           }
         },
         stop: function(e) {
@@ -319,7 +328,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.trackError('div#cell, div#experiment, div#source');
     panel.enableFilterButton('div#cell, div#experiment, div#source');
     panel.setLocalStorage();
-    // console.log(this.getLocalStorage());
   },
 
   setLocalStorage: function() {
@@ -575,6 +583,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
         }
         countFilter++;
+        panel.elLk.lookup[elementClass] = {
+          parentTab: '',
+          subTab: rhsection
+        };
+
       });
       html += '</ul>';
       html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html; 
@@ -589,7 +602,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.selectAll(this.el.find(container+" ul.letter-content"), this.el.find(container+" div.all-box"));
       
       //clicking checkbox for the filters
-      panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
+      // panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
     }
   },
   
@@ -774,6 +787,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           total_num++;
           var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
           letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
+
+          panel.elLk.lookup[elementClass] = {
+            parentTab: $(container + ' span.rhsection-id', panel.el).html(),
+            subTab: rhsection
+          };
         });
         letterHTML += '</ul>';
       } else {
@@ -791,7 +809,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
 
     //clicking checkbox for each filter
-    panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
+    // panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
     
     //clicking select all checkbox
     panel.clickCheckbox(this.el.find(container+" div.all-box"));
