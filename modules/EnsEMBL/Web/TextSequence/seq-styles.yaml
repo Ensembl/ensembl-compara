@@ -41,7 +41,7 @@
 
 - key: SEQ_EXON2
   class: e2
-  text: Residue overlap splice site
+  text: Residue overlaps splice site
   source: sequence_markup
   section: exons
   name: exon2
