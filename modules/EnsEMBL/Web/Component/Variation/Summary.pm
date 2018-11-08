@@ -354,6 +354,15 @@ sub synonyms {
         next unless @urls;
       }
     }
+    elsif ($db =~ /omim/i) {
+      my %url_ids;
+      foreach my $id (@ids) {
+        my $url_id = $id;
+           $url_id =~ s/\./#/;
+        $url_ids{$id} = $url_id;
+      }
+      @urls = map { s/%23/#/; $_ } map $hub->get_ExtURL_link($_, 'OMIM', $url_ids{$_}), @ids;
+    }
     elsif ($db =~ /clinvar/i) {
       @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;
     }
