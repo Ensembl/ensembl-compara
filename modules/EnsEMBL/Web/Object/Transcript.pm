@@ -920,7 +920,7 @@ sub gene_type {
   my $db = $self->get_db;
   my $type = '';
   $type = $self->Obj->biotype;
-  $type =~ s/_/ /;
+  $type =~ s/_/ /g;
   $type ||= $self->display_label;
   $type ||= $self->db_type;
   $type ||= $db;

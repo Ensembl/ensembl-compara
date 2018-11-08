@@ -42,8 +42,8 @@ sub content {
   my $species     = $hub->species;
   my $other       = $hub->otherspecies;
   my $data        = $self->object->get_synteny_matches($other);
-  (my $sp_tidy    = $species) =~ s/_/ /; 
-  (my $other_tidy = $other)   =~ s/_/ /; 
+  (my $sp_tidy    = $species) =~ s/_/ /g; 
+  (my $other_tidy = $other)   =~ s/_/ /g; 
   my $html;
 
   if (scalar @$data) {

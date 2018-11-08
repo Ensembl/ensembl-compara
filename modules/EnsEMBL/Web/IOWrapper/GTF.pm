@@ -234,7 +234,7 @@ sub _build_extras {
     }
   }
   foreach (sort keys %$attributes) {
-    (my $name = $_) =~ s/_/ /;
+    (my $name = $_) =~ s/_/ /g;
     push @$extra, {'name' => ucfirst($name), 'value' => $attributes->{$_}};
   }
 

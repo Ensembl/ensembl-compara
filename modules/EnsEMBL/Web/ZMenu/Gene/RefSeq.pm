@@ -42,7 +42,7 @@ sub content {
   });
   
   my $biotype = ucfirst lc $gene->biotype;
-    $biotype  =~ s/_/ /;
+    $biotype  =~ s/_/ /g;
     $biotype  =~ s/rna/RNA/;
   
   $self->modify_entry_by('type', {

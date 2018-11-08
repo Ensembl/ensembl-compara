@@ -726,7 +726,7 @@ sub species_stats {
     my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
     my @providers;
     foreach my $pv (@prov_names) {
-      $prov_name =~ s/_/ /;
+      $prov_name =~ s/_/ /g;
       my $prov_url  = $sd->PROVIDER_URL;
       $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
       my $provider = $prov_url && $pv ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $pv) : $pv;
