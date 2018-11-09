@@ -181,6 +181,7 @@ sub set_parameters {
         'ensembl'       => 'Ensembl',
         'vertebrates'   => 'Vertebrates',
         'plants'        => 'Plants',
+        'metazoa'       => 'Metazoa',
     );
     $division ||= '';
     if (!$division) {
