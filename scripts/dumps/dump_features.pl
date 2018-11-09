@@ -544,7 +544,7 @@ foreach my $slice (@$all_slices) {
     my $it = $slice->sub_Slice_Iterator(1_000_000);
     while ($it->has_next()) {
         my $sub_slice = $it->next();
-        print STDERR $sub_slice->name() . "\n";
+        #print STDERR $sub_slice->name() . "\n";
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
         next unless @$scores;
         # Sort by position and decreasing score, so that we get the best score first
