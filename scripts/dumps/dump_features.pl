@@ -528,6 +528,7 @@ foreach my $slice (@$all_slices) {
     my $sql = "SELECT constrained_element_id, dnafrag_start, dnafrag_end, score, p_value FROM constrained_element WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID.
         " AND dnafrag_start >= $seq_region_start AND dnafrag_end <= $seq_region_end".
+        " GROUP BY dnafrag_start, dnafrag_end".
         " ORDER BY dnafrag_start";
     my $sth = $dnafrag_adaptor->db->dbc->prepare($sql);
     $sth->execute();
