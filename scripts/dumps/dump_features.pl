@@ -644,11 +644,12 @@ sub get_Slices_from_BED_file {
     next if (/^#/ or /^track/);
     chomp;
     my ($chr, $start0, $end) = split("\t", $_);
-    my $slice = $slice_adaptor->fetch_by_region(undef, $chr, $start0+1, $end);
+    $start0 += 1 if defined $start0;
+    my $slice = $slice_adaptor->fetch_by_region(undef, $chr, $start0, $end);
     if (!$slice and ($chr =~ m/^chr(.*)/)) {
-        $slice = $slice_adaptor->fetch_by_region(undef, $1, $start0+1, $end);
+        $slice = $slice_adaptor->fetch_by_region(undef, $1, $start0, $end);
     }
-    die "Cannot get Slice for $chr - $start0 - $end\n" if (!$slice);
+    die "Cannot get Slice for $chr - ".($start0//'NA')." - ".($end//'NA')."\n" if (!$slice);
     push(@$slices, $slice);
   }
   close(REGIONS);
