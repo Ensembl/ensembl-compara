@@ -523,8 +523,11 @@ foreach my $slice (@$all_slices) {
   } elsif ($feature =~ /^ce_?(\d+)/) {
     my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     my $dnafrag_id = $dnafrag->dbID;
+    my $seq_region_start = $slice->seq_region_start;
+    my $seq_region_end = $slice->seq_region_end;
     my $sql = "SELECT constrained_element_id, dnafrag_start, dnafrag_end, score, p_value FROM constrained_element WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID.
+        " AND dnafrag_start >= $seq_region_start AND dnafrag_end <= $seq_region_end".
         " ORDER BY dnafrag_start";
     my $sth = $dnafrag_adaptor->db->dbc->prepare($sql);
     $sth->execute();
