@@ -51,8 +51,9 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+        'division'  => 'ensembl',
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('rel_with_suffix'),
+        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/release_' . $self->o('division') . '_' . $self->o('rel_with_suffix'),
         'registry'  => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
     };
 }
