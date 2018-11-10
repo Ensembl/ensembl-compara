@@ -126,7 +126,7 @@ foreach my $ortho_type (@A_ortholog_types) {
       print STDERR "=== TEST NEW HOMOLOGY! ===\n" ;
       foreach my $member (@{$homol->get_all_Members}) {
         if (! $include_non_karyotype) { #check if we don't want to include members that are not on chromosomes
-          if ($check_dnafrags{$member->dnafrag_id}) { #check if this member is not on a chromosome
+          if (!$check_dnafrags{$member->dnafrag_id}) { #check if this member is not on a chromosome
             next; #this means some of the variable will be empty hence we won't dump the this homology in the gff file
           }
         }
