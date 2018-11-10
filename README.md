@@ -26,7 +26,7 @@ You will need both the [Core API
 dependencies](https://github.com/Ensembl/ensembl/blob/HEAD/cpanfile) and
 [ours](cpanfile).
 
-### HAL alignments and progressive-Cactus
+### API to access HAL alignments (progressive-Cactus)
 
 If working with HAL files, additional setup is required. There are several ways
 of installing the dependencies.
@@ -75,21 +75,32 @@ instead:
 If you have the `LINUXBREW_HOME` environment variable defined, you can skip
 `path/to/linuxbrew_home` on the Makefile command-line.
 
-### Separate installation of all dependencies
+#### Separate installation of all dependencies
 
-For a light-weight setup, install the following three libraries:
+On many OSes you may be able to install hdf5 system-wide via your software
+manager. This usually brings in regular security updates etc. Then, you
+need to install these two libraries:
 
-* [hdf5](https://support.hdfgroup.org/HDF5/)
 * [sonLib](https://github.com/benedictpaten/sonLib)
 * [hal](https://github.com/ComparativeGenomicsToolkit/hal)
 
-Then run this makefile
+And run this makefile
+
+	cd ensembl-compara/xs/HALXS
+	perl Makefile-hdf5@OS.PL path/to/sonLib path/to/hal
+	make
+
+If you can't have hdf5 installed system-wide, install it manually from:
+
+* [hdf5](https://support.hdfgroup.org/HDF5/)
+
+And run this makefile
 
 	cd ensembl-compara/xs/HALXS
 	perl Makefile.PL path/to/hdf5 path/to/sonLib path/to/hal
 	make
 
-#### HAL files
+### Additional data files (e.g. HAL alignments)
 
 Alignments using the _method_ `CACTUS_HAL` or `CACTUS_HAL_PW` require extra
 files to be downloaded from
