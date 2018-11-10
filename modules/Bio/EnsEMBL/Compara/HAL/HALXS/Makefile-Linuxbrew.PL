@@ -18,6 +18,7 @@
 use 5.014002;
 use ExtUtils::MakeMaker;
 
+# Version of Makefile.pl that assumes that all the dependencies can be found via linuxbrew
 my $linuxbrew_home = $ARGV[0] || $ENV{LINUXBREW_HOME};
 die "The path to the linuxbrew installation must be provided, either on the command-line or via the environment LINUXBREW_HOME" unless $linuxbrew_home;
 
