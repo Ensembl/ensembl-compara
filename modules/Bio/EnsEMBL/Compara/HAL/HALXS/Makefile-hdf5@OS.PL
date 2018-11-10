@@ -18,15 +18,11 @@
 use 5.014002;
 use ExtUtils::MakeMaker;
 
-# Version of Makefile.pl that assumes that all the dependencies can be found via linuxbrew
-my $linuxbrew_home = $ARGV[0] || $ENV{LINUXBREW_HOME};
-die "The path to the linuxbrew installation must be provided, either on the command-line or via the environment LINUXBREW_HOME" unless $linuxbrew_home;
+# Version of Makefile.pl that assumes that hdf5 has been installed system-wide
+die "Need to run this makefile with 2 paths: sonLib and HAL" if scalar(@ARGV) != 2;
 
-my $lib_location = $linuxbrew_home.'/lib';
-# We need hdf5 1.8. That is not the default one. Use opt to path to the latest version
-my $hdf5_location = $linuxbrew_home.'/opt/hdf5@1.10';
+my ($sonLib_location, $hal_location) = @ARGV;
 
-print "! Using linuxbrew installation at $ENV{LINUXBREW_HOME}\n";
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
@@ -39,15 +35,9 @@ WriteMakefile(
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
     PL_FILES          => {},
 
-    # Since we don't use the default hdf5, we need to give the full paths
-    # here for 1) the header files and 2) the library.
-    # The headers from the version 1.10 seem to work, but I want to make
-    # sure the correct ones are in the path
-    INC => "-I$hdf5_location/include",
-    # Somehow, it needs both -L and -rpath !
-    LIBS => [ "-L$hdf5_location/lib -Wl,-rpath,$hdf5_location/lib -lhdf5 -lhdf5_cpp" ],
-    # HAL and sonLib .a files all are in linuxbrew's lib/
-    MYEXTLIB => "$lib_location/halChain.a $lib_location/halLod.a $lib_location/halLiftover.a $lib_location/halLib.a $lib_location/halMaf.a $lib_location/sonLib.a",
+    INC => "-I$hal_location/lib -I$sonLib_location/lib",
+    LIBS => [ "-L$hal_location/lib -L$sonLib_location/lib -lstdc++ -lhdf5 -lhdf5_cpp" ],
+    MYEXTLIB => "$hal_location/lib/halChain.a $hal_location/lib/halLod.a $hal_location/lib/halLiftover.a $hal_location/lib/halLib.a $hal_location/lib/halMaf.a $sonLib_location/lib/sonLib.a",
     # Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
 );
