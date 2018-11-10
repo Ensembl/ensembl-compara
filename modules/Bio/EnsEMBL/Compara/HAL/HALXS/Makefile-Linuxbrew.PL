@@ -23,7 +23,7 @@ die "The path to the linuxbrew installation must be provided, either on the comm
 
 my $lib_location = $linuxbrew_home.'/lib';
 # We need hdf5 1.8. That is not the default one. Use opt to path to the latest version
-my $hdf5_location = $linuxbrew_home.'/opt/hdf5@1.8';
+my $hdf5_location = $linuxbrew_home.'/opt/hdf5@1.10';
 
 print "! Using linuxbrew installation at $ENV{LINUXBREW_HOME}\n";
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
