@@ -19,6 +19,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Getopt::Long;
 
 my $usage = "
@@ -111,6 +112,8 @@ foreach my $ortho_type (@A_ortholog_types) {
   #Get all homologies
   #my $homols = $ha->fetch_all_by_MethodLinkSpeciesSet($mlss, -orthology_type => 'ortholog_one2one');
   my $homols = $ha->fetch_all_by_MethodLinkSpeciesSet($mlss, -orthology_type => $ortho_type);
+  my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($compara_dba->get_AlignedMemberAdaptor, $homols);
+  Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($compara_dba->get_DnaFragAdaptor, $sms);
 
   #For each members
   my %gff;
