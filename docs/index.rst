@@ -30,7 +30,7 @@ User documentation
    :caption: Perl API
    :maxdepth: 1
 
-   api/README
+   api
 
 .. toctree::
    :caption: Database schema
