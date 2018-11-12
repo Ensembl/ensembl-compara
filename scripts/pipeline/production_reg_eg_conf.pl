@@ -118,14 +118,14 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 );
 
 # current release database on one of Compara servers:
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#    -host => 'mysql-ens-compara-prod-2',
-#    -user => 'ensadmin',
-#    -pass => $ENV{'ENSADMIN_PSW'},
-#    -port => 4522,
-#    -species => 'compara_curr',
-#    -dbname => 'ensembl_compara_plants_41_94',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-5',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4615,
+    -species => 'compara_curr',
+    -dbname => 'ensembl_compara_plants_42_95',
+);
 
 # ensembl production (maintained by production team):
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
