@@ -166,6 +166,7 @@ sub tweak_analyses {
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'mafft_huge'}->{'-rc_name'} = '128Gb_4c_job';
 
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
