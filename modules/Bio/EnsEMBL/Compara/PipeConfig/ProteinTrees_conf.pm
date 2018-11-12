@@ -1813,9 +1813,10 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
                 'mafft_home'                 => $self->o('mafft_home'),
+                'mafft_threads'              => 4,
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '16Gb_job',
+            -rc_name    => '32Gb_4c_job',
             -priority   => $self->o('mafft_himem_priority'),
         },
 
