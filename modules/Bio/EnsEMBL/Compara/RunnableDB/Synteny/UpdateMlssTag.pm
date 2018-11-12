@@ -57,7 +57,8 @@ sub run {
     my $self = shift;
 
     my ($source_mlss_id, $source_mlss_id_name);
-    foreach my $s (qw(alignment_mlss_id orthologue_mlss_id)) {
+    # foreach my $s (qw(alignment_mlss_id orthologue_mlss_id)) {
+    foreach my $s (qw(pairwise_mlss_id orthologue_mlss_id)) {
         if ($source_mlss_id = $self->param($s)) {
             $source_mlss_id_name = $s;
             last;

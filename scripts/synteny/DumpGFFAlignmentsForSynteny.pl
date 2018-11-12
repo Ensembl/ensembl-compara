@@ -52,6 +52,7 @@ my $force = 0; #use slice even if it has no karyotype
 my $output_dir = "";
 my $ref_coord_system_name = undef;
 my $non_ref_coord_system_name = undef;
+my $genome_dumps_dir = '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/';
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -91,6 +92,7 @@ if ($dbname =~ /mysql:\/\//) {
 die "Cannot connect to compara database: $dbname\n" if (!$compara_dba);
 
 my $gdba = $compara_dba->get_GenomeDBAdaptor;
+$gdba->dump_dir_location($genome_dumps_dir);
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my $dfa = $compara_dba->get_DnaFragAdaptor;
 my $gaba = $compara_dba->get_GenomicAlignBlockAdaptor;
@@ -150,41 +152,41 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
       my $end = $start + $chunk -1;
       $end = $qy_dnafrag->length if ($end > $qy_dnafrag->length);
 
-      my $gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag($mlss,$qy_dnafrag,$start,$end,$tg_dnafrag);
-      while (my $gab = shift @{$gabs}) {
-        my $qy_ga = $gab->reference_genomic_align;
+      my $aln_coords = $gaba->_alignment_coordinates_on_regions($mlss->dbID,
+          $qy_dnafrag->dbID, $start, $end,
+          $tg_dnafrag->dbID, 1, $tg_dnafrag->length,
+          "ga1.genomic_align_block_id, ga1.dnafrag_start, ga1.dnafrag_end, ga1.dnafrag_strand, ga2.dnafrag_start, ga2.dnafrag_end, ga2.dnafrag_strand"
+      );
+
+      foreach my $aln ( @$aln_coords ) {
+          my ( $gab_id, $qy_start, $qy_end, $qy_strand, $tg_start, $tg_end, $tg_strand ) = @$aln;
+          my $gab = $gaba->fetch_by_dbID($gab_id);
+
+          # keep on the basis of level_id
+          next if ($level and ($gab->level_id > $level));
+
+          my ($strand,$hstrand) = qw(+ +);
         
-        # keep on the basis of level_id
-        next if ($level and ($gab->level_id > $level));
-        
-        my ($tg_ga) = @{$gab->get_all_non_reference_genomic_aligns};
-        
-        my ($strand,$hstrand) = qw(+ +);
-        
-        if ($qy_ga->dnafrag_strand > 0 && $tg_ga->dnafrag_strand < 0) {
-          $hstrand = "-";
-        }
-        if ($qy_ga->dnafrag_strand < 0 && $tg_ga->dnafrag_strand > 0) {
-          $hstrand = "-";
-        }
-        
-        # print out a in gff format
-        print $synt_file join("\t",
-            $qy_dnafrag->name,
-            'synteny',
-            'similarity',
-            $qy_ga->dnafrag_start,
-            $qy_ga->dnafrag_end,
-            $gab->score,
-            $strand,
-            '.',
-            $tg_dnafrag->name,
-            $tg_ga->dnafrag_start,
-            $tg_ga->dnafrag_end,
-            $hstrand,
-            '.',
-        ), "\n";
+          $hstrand = "-" if ( ($qy_strand > 0 && $tg_strand < 0) || ($qy_strand < 0 && $tg_strand > 0) );
+          
+          # print out a in gff format
+          print $synt_file join("\t",
+              $qy_dnafrag->name,
+              'synteny',
+              'similarity',
+              $qy_start,
+              $qy_end,
+              $gab->score,
+              $strand,
+              '.',
+              $tg_dnafrag->name,
+              $tg_start,
+              $tg_end,
+              $hstrand,
+              '.',
+          ), "\n";
       }
+
       $start += $chunk;
     }
   }
