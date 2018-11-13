@@ -79,27 +79,7 @@ sub transcript_table {
     if ($description) {
       $bs_data->{'description'} = $description;
     }
-    ## Species info
-    $bs_data->{'isPartOf'} = {
-                              '@type'         => 'BioChemEntity',
-                              'name'          => $hub->species_defs->SPECIES_SCIENTIFIC_NAME,
-                              'alternateName' => $hub->species_defs->SPECIES_COMMON_NAME,
-                              };
-    my $taxon_id = $hub->species_defs->TAXONOMY_ID;
-    if ($taxon_id) {
-      my $ncbi_url = sprintf '%s/%s', 'http://purl.bioontology.org/ontology/NCBITAXON', $taxon_id; 
-      my $uniprot_url = sprintf '%s/%s', 'http://purl.uniprot.org/taxonomy', $taxon_id;
-      $bs_data->{'isPartOf'}{'codeCategory'} = {
-                                                '@type'     => 'CategoryCode',
-                                                'codeValue' => $taxon_id,
-                                                'url'       => $ncbi_url,
-                                                'sameAs'    => $uniprot_url,
-                                                'inCodeSet' => {
-                                                                '@type' => 'CategoryCodeSet',
-                                                                'name'  => 'NCBI taxon',
-                                                                } 
-                                                };
-    }
+    $self->add_species_bioschema($bs_data);
   }
 
   if ($description) {

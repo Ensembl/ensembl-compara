@@ -815,6 +815,7 @@ sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
 sub add_bioschema {
   my ($self, $data) = @_;
   #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
   #warn Dumper($data);
   $data->{'@context'} = 'http://schema.org';
   if ($data->{'type'}) {
@@ -829,6 +830,32 @@ sub add_bioschema {
 
   $markup .= "\n</script>";
   return $markup;
+}
+
+sub add_species_bioschema {
+## Build bioschema data structure for a species
+  my ($self, $data) = @_;
+  my $hub = $self->hub;
+  $data->{'isPartOf'} = {
+                          '@type'         => 'BioChemEntity',
+                          'name'          => $hub->species_defs->SPECIES_SCIENTIFIC_NAME,
+                          'alternateName' => $hub->species_defs->SPECIES_COMMON_NAME,
+                          };
+  my $taxon_id = $hub->species_defs->TAXONOMY_ID;
+  if ($taxon_id) {
+    my $ncbi_url = sprintf '%s/%s', 'http://purl.bioontology.org/ontology/NCBITAXON', $taxon_id;
+    my $uniprot_url = sprintf '%s/%s', 'http://purl.uniprot.org/taxonomy', $taxon_id;
+    $data->{'isPartOf'}{'codeCategory'} = {
+                                            '@type'     => 'CategoryCode',
+                                            'codeValue' => $taxon_id,
+                                            'url'       => $ncbi_url,
+                                            'sameAs'    => $uniprot_url,
+                                            'inCodeSet' => {
+                                                            '@type' => 'CategoryCodeSet',
+                                                            'name'  => 'NCBI taxon',
+                                                            }
+                                            };
+    }
 }
 
 1;
