@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Gene;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use parent qw(EnsEMBL::Web::Component::Shared);
 
 1;
 
