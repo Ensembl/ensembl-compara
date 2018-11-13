@@ -35,6 +35,7 @@ use Digest::MD5 qw(md5_hex);
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq);
+use JSON qw(to_json);
 
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
@@ -810,5 +811,24 @@ sub trim_large_string {
 }
 
 sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
+
+sub add_bioschema {
+  my ($self, $data) = @_;
+  #use Data::Dumper;
+  #warn Dumper($data);
+  $data->{'@context'} = 'http://schema.org';
+  if ($data->{'type'}) {
+    $data->{'@type'} = $data->{'type'};
+    delete $data->{'type'};
+  }
+  my $markup = qq(
+<script type="application/ld+json">
+);
+
+  $markup .= to_json($data);
+
+  $markup .= "\n</script>";
+  return $markup;
+}
 
 1;
