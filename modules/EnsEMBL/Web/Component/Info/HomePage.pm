@@ -54,7 +54,7 @@ sub content {
   ## DataCatalog (see bioschemas.org)
   my $sitename = $species_defs->ENSEMBL_SITETYPE;
   my $server = $species_defs->ENSEMBL_SERVERNAME;
-  my $catalog_id = sprintf '%s/%s', $sitename, $hub->species;
+  my $catalog_id = sprintf 'http://%s/%s', $server, $hub->species;
   my $bs_data = {
     '@type' => 'DataCatalog',
     '@id'   => $catalog_id, 
@@ -72,6 +72,7 @@ sub content {
   my $annotation_url = sprintf 'http://%s/%s/Info/Annotation', $server, $hub->species;
 
   ## Assembly
+  my $ftp_url = sprintf '%s/fasta/%s/dna/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
   my $assembly = {
     '@type'                 => 'Dataset',
     'name'                  => sprintf('%s Assembly', $common_name),
@@ -79,6 +80,12 @@ sub content {
     'version'               => $species_defs->ASSEMBLY_NAME,
     'identifier'            => $species_defs->ASSEMBLY_ACCESSION,
     'url'                   => $annotation_url,
+    'distribution'          => [{
+                                '@type'       => 'DataDownload',
+                                'name'        => sprintf ('%s %s FASTA files', $sci_name, $species_defs->ASSEMBLY_NAME), 
+                                'fileFormat'  => 'fasta',
+                                'contentURL'  => $ftp_url,
+    }],
   };
   push @{$bs_data->{'dataset'}}, $assembly; 
 
