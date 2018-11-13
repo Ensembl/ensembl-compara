@@ -50,21 +50,70 @@ sub content {
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-  
+ 
+  ## DataCatalog (see bioschemas.org)
+  my $sitename = $species_defs->ENSEMBL_SITETYPE;
+  my $server = $species_defs->ENSEMBL_SERVERNAME;
+  my $catalog_id = sprintf '%s/%s', $sitename, $hub->species;
+  my $bs_data = {
+    '@type' => 'DataCatalog',
+    '@id'   => $catalog_id, 
+    'name'  => sprintf('%s %s', $sitename, $common_name),
+    'url'   => sprintf('http://%s/%s/Info/Index', $server, $hub->species),
+    'provider' => {
+      '@type' => 'Organization',
+      'name'  => 'Ensembl' 
+    }
+  };
+  $self->add_species_bioschema($bs_data);
+
+  ## Individual datasets
+  $bs_data->{'dataset'} = [];
+  my $annotation_url = sprintf 'http://%s/%s/Info/Annotation', $server, $hub->species;
+
+  ## Assembly
+  my $assembly = {
+    '@type'                 => 'Dataset',
+    'name'                  => sprintf('%s Assembly', $common_name),
+    'includedInDataCatalog' => $catalog_id, 
+    'version'               => $species_defs->ASSEMBLY_NAME,
+    'identifier'            => $species_defs->ASSEMBLY_ACCESSION,
+    'url'                   => $annotation_url,
+  };
+  push @{$bs_data->{'dataset'}}, $assembly; 
+
+  ## Genebuild
+  my $genebuild = {
+    '@type'                 => 'Dataset',
+    'name'                  => sprintf('%s %s Gene Set', $sitename, $common_name),
+    'includedInDataCatalog' => $catalog_id, 
+    'version'               => $species_defs->GENEBUILD_LATEST || $species_defs->GENEBUILD_RELEASE || '',
+    'url'                   => $annotation_url,
+  };
+    
+  if ($species_defs->PROVIDER_NAME) {
+    $genebuild->{'creator'} = {
+      '@type' => 'Organization',
+      'name'  => $species_defs->PROVIDER_NAME,
+    };
+  }
+  push @{$bs_data->{'dataset'}}, $genebuild; 
+
   return sprintf('
     <div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
-    %s',
+    %s%s',
     $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $self->assembly_text,
     $self->genebuild_text,
     $self->compara_text,
     $self->variation_text,
-    $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : ''
+    $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : '',
+    $self->add_bioschema($bs_data)
   );
 }
 
