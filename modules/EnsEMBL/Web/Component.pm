@@ -814,9 +814,6 @@ sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
 
 sub add_bioschema {
   my ($self, $data) = @_;
-  #use Data::Dumper;
-  #$Data::Dumper::Sortkeys = 1;
-  #warn Dumper($data);
   if ($data->{'type'}) {
     $data->{'@type'} = $data->{'type'};
     delete $data->{'type'};
@@ -828,6 +825,9 @@ sub add_bioschema {
   else {
     $data->{'@context'} = 'http://bioschemas.org';
   }
+  use Data::Dumper;
+  $Data::Dumper::Sortkeys = 1;
+  warn Dumper($data);
   my $markup = qq(
 <script type="application/ld+json">
 );
