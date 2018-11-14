@@ -356,8 +356,6 @@ sub init_cacheable {
   ## Switch on multiple alignments defined in MULTI.ini
   my $compara_db      = $self->hub->database('compara');
   if ($compara_db) {
-    my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-    my %alignments      = $self->species_defs->multiX('COMPARA_DEFAULT_ALIGNMENTS');
     my $defaults = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'COMPARA_DEFAULT_ALIGNMENT_IDS'};
 
     foreach my $default (@$defaults) {
