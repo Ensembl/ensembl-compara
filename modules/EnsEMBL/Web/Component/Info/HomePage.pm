@@ -156,6 +156,10 @@ sub content {
                                   'fileFormat'  => 'gff',
                                   'contentURL'  => $reg_url,
       }],
+      'creator'               => {
+                                  '@type' => 'Organization',
+                                  'name'  => 'Ensembl', 
+      },
     };
     push @{$bs_data->{'dataset'}}, $regulation; 
   }
