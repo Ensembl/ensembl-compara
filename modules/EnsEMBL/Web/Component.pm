@@ -817,10 +817,16 @@ sub add_bioschema {
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
   #warn Dumper($data);
-  $data->{'@context'} = 'http://schema.org';
   if ($data->{'type'}) {
     $data->{'@type'} = $data->{'type'};
     delete $data->{'type'};
+  }
+  ## Use schema.org for DataCatalog/Dataset bc they are generic 
+  if ($data->{'@type'} =~ /^Data/) {
+    $data->{'@context'} = 'http://schema.org';
+  }
+  else {
+    $data->{'@context'} = 'http://bioschemas.org';
   }
   my $markup = qq(
 <script type="application/ld+json">
