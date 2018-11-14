@@ -448,10 +448,13 @@ sub make_table {
     _key => 'aachange', _type => 'string no_filter no_sort', label => "AA",
     helptip => "Resulting amino acid(s)"
   },{
-    _key => 'aacoord', _type => 'integer', label => "AA co\ford",
-    helptip => 'Amino Acid Co-ordinate',
+    _key => 'aacoord_sort', _type => 'integer unshowable',
+    label => 'AA coord', sort_for => 'aacoord',
     filter_blank_button => 1,
     state_filter_ephemeral => 1,
+  },{
+    _key => 'aacoord', _type => 'string no_filter', label => "AA co\ford",
+    helptip => 'Amino Acid Coordinates',
   },{
     _key => 'sift_sort', _type => 'numeric no_filter unshowable',
     sort_for => 'sift_value',
@@ -570,7 +573,7 @@ sub make_table {
     push @seq,$t->seq_region_name;
   }
   if(@lens) {
-    my $aa_col = $table->column('aacoord');
+    my $aa_col = $table->column('aacoord_sort');
     $aa_col->filter_range([1,max(@lens)]);
     $aa_col->filter_fixed(1);
   }
@@ -712,7 +715,10 @@ sub variation_table {
             my $clin_sigs            = $vf->get_all_clinical_significance_states || [];
             my $var_class            = $vf->var_class;
             my $translation_start    = $tv->translation_start;
-            my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('', '');
+            my $translation_end      = $tv->translation_end;
+            my $aachange             = $translation_start ? $tva->pep_allele_string : '';
+            my $aacoord              = $translation_start ? ($translation_start eq $translation_end ? $translation_start : "$translation_start-$translation_end") : '';
+            my $aacoord_sort         = $translation_start ? $translation_start : '';
             my $trans_url            = ";$url_transcript_prefix=$transcript_stable_id";
             my $vf_allele            = $tva->variation_feature_seq;
             my $allele_string        = $vf->allele_string;
@@ -785,6 +791,7 @@ sub variation_table {
               LRG        => $gene->stable_id,
               aachange   => $aachange,
               aacoord    => $aacoord,
+              aacoord_sort => $aacoord_sort,
               sift_sort  => $sifts->[0],
               sift_class => $sifts->[1],
               sift_value => $sifts->[2],
