@@ -45,7 +45,8 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+# use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf');
 
 sub default_options {
     my ($self) = @_;

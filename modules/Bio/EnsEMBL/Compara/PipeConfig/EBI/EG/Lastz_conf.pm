@@ -71,7 +71,7 @@ sub default_options {
 
             'host' => 'mysql-eg-prod-2.ebi.ac.uk',
             'port' => 4239,
-            'user' => 'ensrw',
+            'user' => 'ensadmin',
             'password' => $self->o('password'),
 
 	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes

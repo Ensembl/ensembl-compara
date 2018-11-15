@@ -70,7 +70,7 @@ sub default_options {
 	# },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_94',
+	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_95',
 
 	'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
