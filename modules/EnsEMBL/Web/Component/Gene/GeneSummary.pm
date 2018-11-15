@@ -56,22 +56,22 @@ sub content {
   }
 
   ## Start assembling bioschema information
-  my $bs_data;
+  my $bs_gene;
   if ($species_defs->BIOSCHEMAS_DATACATALOG) {
-    $bs_data = {'@type' => 'Gene', 'identifier' => $object->gene->stable_id};
-    $bs_data->{'name'} = $display_xref ? $display_xref->display_id : $gene->stable_id;
+    $bs_gene = {'@type' => 'Gene', 'identifier' => $object->gene->stable_id};
+    $bs_gene->{'name'} = $display_xref ? $display_xref->display_id : $gene->stable_id;
     my $description = $object->gene_description;
     $description = '' if $description eq 'No description';
     if ($description) {
-      $bs_data->{'description'} = $description;
+      $bs_gene->{'description'} = $description;
     }
     my $chr = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]}) ? 'Chromosome ' : '';
     $chr .= $object->seq_region_name;
-    $bs_data->{'isPartOfBioChemEntity'} = {
+    $bs_gene->{'isPartOfBioChemEntity'} = {
                                             '@type' => 'BioChemEntity',
                                             'name'  => $chr,
                                           };
-    add_species_bioschema($species_defs, $bs_data);
+    add_species_bioschema($species_defs, $bs_gene);
   }
 
   # add CCDS info
@@ -269,7 +269,17 @@ sub content {
     }
   }
 
-  my $bioschema = keys %$bs_data ? create_bioschema($bs_data) : '';
+  my $bioschema = '';
+  if (keys %$bs_gene) {
+    my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
+    my $bs_record = {
+                      '@type'       => 'DataRecord', 
+                      'identifier'  => $object->stable_id, 
+                      'mainEntity'  => $bs_gene,
+                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_COMMON_NAME),
+                    };
+    $bioschema = create_bioschema($bs_record);
+  }
   return $table->render.$bioschema;
 }
 
