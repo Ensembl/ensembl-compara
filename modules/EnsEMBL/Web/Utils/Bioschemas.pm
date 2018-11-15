@@ -23,9 +23,9 @@ use strict;
 use JSON qw(to_json);
 use Exporter qw(import);
 
-our @EXPORT = qw(add_bioschema add_species_bioschema);
+our @EXPORT = qw(create_bioschema add_species_bioschema);
 
-sub add_bioschema {
+sub create_bioschema {
   my $data = shift;
 
   if (ref($data) eq 'ARRAY') {

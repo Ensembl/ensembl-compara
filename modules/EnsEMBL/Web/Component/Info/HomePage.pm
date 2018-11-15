@@ -22,7 +22,7 @@ package EnsEMBL::Web::Component::Info::HomePage;
 use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
-use EnsEMBL::Web::Utils::Bioschemas qw(add_bioschema add_species_bioschema);
+use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
 use parent qw(EnsEMBL::Web::Component::Info);
 
@@ -175,7 +175,7 @@ sub content {
     $self->compara_text,
     $self->variation_text,
     $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : '',
-    scalar(@$datasets) ? add_bioschema($datasets) : ''
+    scalar(@$datasets) ? create_bioschema($datasets) : ''
   );
 }
 
