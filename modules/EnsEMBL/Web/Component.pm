@@ -814,17 +814,19 @@ sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
 
 sub add_bioschema {
   my ($self, $data) = @_;
-  if ($data->{'type'}) {
-    $data->{'@type'} = $data->{'type'};
-    delete $data->{'type'};
+
+  if (ref($data) eq 'ARRAY') {
+    foreach (@$data) {
+      $self->_munge_bioschema($_);
+    }
   }
-  ## Use schema.org for DataCatalog/Dataset bc they are generic 
-  if ($data->{'@type'} =~ /^Data/) {
-    $data->{'@context'} = 'http://schema.org';
+  elsif (ref($data) eq 'HASH') {
+    $self->_munge_bioschema($data);
   }
   else {
-    $data->{'@context'} = 'http://bioschemas.org';
+    warn "!!! Bioschema data must be a hashref or arrayref of hashrefs";
   }
+ 
   use Data::Dumper;
   $Data::Dumper::Sortkeys = 1;
   warn Dumper($data);
@@ -836,6 +838,25 @@ sub add_bioschema {
 
   $markup .= "\n</script>";
   return $markup;
+}
+
+sub _munge_bioschema {
+## Tidy up a bioschema hash
+  my ($self, $hash) = @_;
+  return unless ref($hash) eq 'HASH';
+
+  if ($hash->{'type'}) {
+    $hash->{'@type'} = $hash->{'type'};
+    delete $hash->{'type'};
+  }
+
+  ## Use schema.org for DataCatalog/Dataset bc they are generic 
+  if ($hash->{'@type'} =~ /^Data/) {
+    $hash->{'@context'} = 'http://schema.org';
+  }
+  else {
+    $hash->{'@context'} = 'http://bioschemas.org';
+  }
 }
 
 sub add_species_bioschema {
