@@ -58,7 +58,7 @@ sub content {
   ## Don't mark up archives, etc - it will only confuse search engine users
   ## if there are e.g. multiple human gene sets in the results!
   my $catalog_id = $species_defs->BIOSCHEMAS_DATACATALOG; 
-  unless ($catalog_id) { 
+  if ($catalog_id) { 
     my $sitename = $species_defs->ENSEMBL_SITETYPE;
     my $server = $species_defs->ENSEMBL_SERVERNAME;
     $server = 'http://'.$server unless ($server =~ /^http/);
