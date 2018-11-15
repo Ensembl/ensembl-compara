@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Info::HomePage;
 use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
+use EnsEMBL::Web::Utils::Bioschemas qw(add_bioschema add_species_bioschema);
 
 use parent qw(EnsEMBL::Web::Component::Info);
 
@@ -54,10 +55,10 @@ sub content {
   ## BIOSCHEMAS MARKUP
   my $datasets = [];
 
-  ## Don't mark up archives - it will only confuse search engine users
+  ## Don't mark up archives, etc - it will only confuse search engine users
   ## if there are e.g. multiple human gene sets in the results!
-  unless ($species_defs->ENSEMBL_SUBTYPE eq 'Archive') { 
-    my $catalog_id = 'Ensembl_Genomic_Data'; 
+  my $catalog_id = $species_defs->BIOSCHEMAS_DATACATALOG; 
+  unless ($catalog_id) { 
     my $sitename = $species_defs->ENSEMBL_SITETYPE;
     my $server = $species_defs->ENSEMBL_SERVERNAME;
     $server = 'http://'.$server unless ($server =~ /^http/);
@@ -79,7 +80,7 @@ sub content {
                                   'contentURL'  => $ftp_url,
       }],
     };
-    $self->add_species_bioschema($assembly);
+    add_species_bioschema($species_defs, $assembly);
     push @$datasets, $assembly; 
 
     ## Genebuild
@@ -113,7 +114,7 @@ sub content {
         'name'  => $species_defs->PROVIDER_NAME,
       };
     }
-    $self->add_species_bioschema($genebuild);
+    add_species_bioschema($species_defs, $genebuild);
     push @$datasets, $genebuild; 
 
     ## Variation bioschema
@@ -131,7 +132,7 @@ sub content {
                                     'contentURL'  => $gvf_url,
         }],
       };
-      $self->add_species_bioschema($variation);
+      add_species_bioschema($species_defs, $variation);
       push @$datasets, $variation; 
     }
 
@@ -155,7 +156,7 @@ sub content {
                                     'name'  => 'Ensembl', 
         },
       };
-      $self->add_species_bioschema($regulation);
+      add_species_bioschema($species_defs, $regulation);
       push @$datasets, $regulation; 
     }
   }
@@ -174,7 +175,7 @@ sub content {
     $self->compara_text,
     $self->variation_text,
     $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : '',
-    scalar(@$datasets) ? $self->add_bioschema($datasets) : ''
+    scalar(@$datasets) ? add_bioschema($datasets) : ''
   );
 }
 

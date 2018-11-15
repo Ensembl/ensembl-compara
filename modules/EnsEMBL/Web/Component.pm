@@ -35,7 +35,6 @@ use Digest::MD5 qw(md5_hex);
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq);
-use JSON qw(to_json);
 
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
@@ -811,78 +810,5 @@ sub trim_large_string {
 }
 
 sub view_config :Deprecated('Use viewconfig') { shift->viewconfig(@_) }
-
-sub add_bioschema {
-  my ($self, $data) = @_;
-
-  if (ref($data) eq 'ARRAY') {
-    foreach (@$data) {
-      $self->_munge_bioschema($_);
-    }
-  }
-  elsif (ref($data) eq 'HASH') {
-    $self->_munge_bioschema($data);
-  }
-  else {
-    warn "!!! Bioschema data must be a hashref or arrayref of hashrefs";
-  }
- 
-  use Data::Dumper;
-  $Data::Dumper::Sortkeys = 1;
-  warn Dumper($data);
-  my $markup = qq(
-<script type="application/ld+json">
-);
-
-  $markup .= to_json($data);
-
-  $markup .= "\n</script>";
-  return $markup;
-}
-
-sub _munge_bioschema {
-## Tidy up a bioschema hash
-  my ($self, $hash) = @_;
-  return unless ref($hash) eq 'HASH';
-
-  if ($hash->{'type'}) {
-    $hash->{'@type'} = $hash->{'type'};
-    delete $hash->{'type'};
-  }
-
-  ## Use schema.org for DataCatalog/Dataset bc they are generic 
-  if ($hash->{'@type'} =~ /^Data/) {
-    $hash->{'@context'} = 'http://schema.org';
-  }
-  else {
-    $hash->{'@context'} = 'http://bioschemas.org';
-  }
-}
-
-sub add_species_bioschema {
-## Build bioschema data structure for a species
-  my ($self, $data) = @_;
-  my $hub = $self->hub;
-  $data->{'isPartOf'} = {
-                          '@type'         => 'BioChemEntity',
-                          'name'          => $hub->species_defs->SPECIES_SCIENTIFIC_NAME,
-                          'alternateName' => $hub->species_defs->SPECIES_COMMON_NAME,
-                          };
-  my $taxon_id = $hub->species_defs->TAXONOMY_ID;
-  if ($taxon_id) {
-    my $ncbi_url = sprintf '%s/%s', 'http://purl.bioontology.org/ontology/NCBITAXON', $taxon_id;
-    my $uniprot_url = sprintf '%s/%s', 'http://purl.uniprot.org/taxonomy', $taxon_id;
-    $data->{'isPartOf'}{'codeCategory'} = {
-                                            '@type'     => 'CategoryCode',
-                                            'codeValue' => $taxon_id,
-                                            'url'       => $ncbi_url,
-                                            'sameAs'    => $uniprot_url,
-                                            'inCodeSet' => {
-                                                            '@type' => 'CategoryCodeSet',
-                                                            'name'  => 'NCBI taxon',
-                                                            }
-                                            };
-    }
-}
 
 1;
