@@ -69,19 +69,6 @@ sub transcript_table {
     $show ? 'open' : 'closed'
   );
 
-  ## Start assembling bioschema information
-  my ($has_bioschema, $bs_data);
-  if ($page_type eq 'gene') {
-    $has_bioschema = 1;
-    $bs_data = {'@type' => 'Gene', 'identifier' => $object->gene->stable_id};
-    my $name = $object->gene->display_xref->display_id;
-    $bs_data->{'name'} = $name ? $name : $object->gene->stable_id;
-    if ($description) {
-      $bs_data->{'description'} = $description;
-    }
-    $self->add_species_bioschema($bs_data);
-  }
-
   if ($description) {
 
     my ($url, $xref) = $self->get_gene_display_link($object->gene, $description);
@@ -95,14 +82,6 @@ sub transcript_table {
   }
 
   my $location    = sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
-  if ($has_bioschema) {
-    my $chr = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]}) ? 'Chromosome ' : '';
-    $chr .= $object->seq_region_name;
-    $bs_data->{'isPartOfBioChemEntity'} = {
-                                            '@type' => 'BioChemEntity',
-                                            'name'  => $chr, 
-                                          };
-  }
 
   my (@syn_matches, $syns_html, $about_count, @proj_attrib);
   push @syn_matches,@{$object->get_database_matches()};
@@ -428,13 +407,7 @@ sub transcript_table {
   $table->add_row( $page_type eq 'gene' ? 'About this gene' : 'About this transcript',$about_count) if $about_count;
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
-  ## Bioschemas.org markup
-  my $bioschema = '';
-  if (keys %$bs_data) {
-    $bioschema = $self->add_bioschema($bs_data);
-  }
-
-  return sprintf '<div class="summary_panel">%s%s%s</div>', $table->render, $bioschema, $transc_table ? $transc_table->render : '';
+  return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
 }
 
 sub get_CDS_text {
