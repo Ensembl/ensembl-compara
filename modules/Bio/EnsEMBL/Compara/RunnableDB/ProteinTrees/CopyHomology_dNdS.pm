@@ -85,8 +85,8 @@ sub fetch_input {
     }
 
     #print Dumper @prev_homology_ids;
-    my $sorted_prev_homologies;
-    my $sorted_curr_homologies;
+    my $sorted_prev_homologies;    #array of hashes
+    my $sorted_curr_homologies;    #array of hashes
     my $prev_homologies = $prev_homology_adaptor->fetch_all_by_dbID_list( \@prev_homology_ids );
     my $curr_homologies = $self->param('curr_homology_adaptor')->fetch_all_by_dbID_list( \@curr_homology_ids );
 
@@ -107,13 +107,6 @@ sub fetch_input {
     }
 
     #Create previous and current object map, to be used by direct memory access.
-
-    #MATEUS
-    print "$prev_homology_ids[0]|$curr_homology_ids[0]\n";
-    print $sorted_prev_homologies->[0]->dbID . "|" . $sorted_curr_homologies->[0]->dbID . "\n";
-    print scalar(@prev_homology_ids) . "|" . scalar(@curr_homology_ids) . " => $mlss_id\n";
-    print scalar(@$prev_homologies) . "|" . scalar(@$curr_homologies) . "\n";
-    print scalar(@$sorted_prev_homologies) . "|" . scalar(@$sorted_curr_homologies) . "\n";
 
     #Preloading previous homologies
     my $sms_prev = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $prev_dba->get_AlignedMemberAdaptor, $prev_homologies );
@@ -148,6 +141,7 @@ sub run {
 
     for ( my $i = 0; $i < scalar(@$curr_homologies); $i++ ) {
 
+        if ($prev_homologies->[$i]){
         $prev_homology_object_map{ $curr_homologies->[$i]->dbID } = $prev_homologies->[$i];
         $curr_homology_object_map{ $curr_homologies->[$i]->dbID } = $curr_homologies->[$i];
 
@@ -174,7 +168,7 @@ sub run {
             #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tDIFF seq: dataflow to Homology_dNdS" );
             push( @recompute_dataflow, $curr_homologies->[$i]->dbID );
         }
-
+        }
     } ## end for ( my $i = 0; $i < scalar...)
 
     $self->param( 'recompute_dataflow',       \@recompute_dataflow );
