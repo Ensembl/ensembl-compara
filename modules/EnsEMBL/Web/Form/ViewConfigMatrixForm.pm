@@ -66,7 +66,7 @@ sub build {
         <div class="tabs track-menu">
           <div class="track-tab active" id="cell-tab">
           <span> Cell type </span>
-          <span class="hidden content-id">cell-type-content</span>
+          <span class="hidden content-id">cell-content</span>
           <div class="search-box">
             <input class="configuration_search_text" placeholder="Search" name="cell_search">
             <img src="/i/16/search.png" class="search-icon" />
@@ -74,7 +74,7 @@ sub build {
           </div>
           <div class="track-tab" id="experiment-tab">
             <span> Experimental data </span>
-            <span class="hidden content-id">experiment-type-content</span>
+            <span class="hidden content-id">experiment-content</span>
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Search" name="experiment_search">
               <img src="/i/16/search.png"  class="search-icon"/>
@@ -82,11 +82,11 @@ sub build {
           </div>
         </div>
 
-        <div id="cell-type-content" class="tab-content active">
+        <div id="cell-content" class="tab-content active" data-rhsection-id="cell">
           <span class="hidden rhsection-id">cell</span>
         </div>
 
-        <div id="experiment-type-content" class="tab-content">
+        <div id="experiment-content" class="tab-content" data-rhsection-id="experiment">
           <span class="hidden rhsection-id">experiment</span>
         </div>
       </div>
@@ -101,7 +101,7 @@ sub build {
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
             <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
             <ul class="result-list hidden">
-              <span class="hidden lhsection-id">cell-type-content</span>
+              <span class="hidden lhsection-id">cell-content</span>
             </ul>
           </div>
 
