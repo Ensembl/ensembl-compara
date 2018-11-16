@@ -167,6 +167,10 @@ sub tweak_analyses {
     $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'mafft_huge'}->{'-rc_name'} = '128Gb_4c_job';
+    $analyses_by_name->{'homology_factory'}->{'-rc_name'}         = '1Gb_job';
+    $analyses_by_name->{'copy_homology_dNdS'}->{'-rc_name'}       = '1Gb_job';
+    $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
+    $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
 
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
