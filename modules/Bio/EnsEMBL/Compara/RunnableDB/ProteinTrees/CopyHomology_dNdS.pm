@@ -141,34 +141,35 @@ sub run {
 
     for ( my $i = 0; $i < scalar(@$curr_homologies); $i++ ) {
 
-        if ($prev_homologies->[$i]){
-        $prev_homology_object_map{ $curr_homologies->[$i]->dbID } = $prev_homologies->[$i];
-        $curr_homology_object_map{ $curr_homologies->[$i]->dbID } = $curr_homologies->[$i];
+        if ( $prev_homologies->[$i] ) {
+            $prev_homology_object_map{ $curr_homologies->[$i]->dbID } = $prev_homologies->[$i];
+            $curr_homology_object_map{ $curr_homologies->[$i]->dbID } = $curr_homologies->[$i];
 
-        #Get previous and current alignments
-        my $prev_aln = $prev_homologies->[$i]->get_SimpleAlign( -seq_type => 'cds', -ID_TYPE => 'member' );
-        my $curr_aln = $curr_homologies->[$i]->get_SimpleAlign( -seq_type => 'cds', -ID_TYPE => 'member' );
+            #Get previous and current alignments
+            my $prev_aln = $prev_homologies->[$i]->get_SimpleAlign( -seq_type => 'cds', -ID_TYPE => 'member' );
+            my $curr_aln = $curr_homologies->[$i]->get_SimpleAlign( -seq_type => 'cds', -ID_TYPE => 'member' );
 
-        #Get previous and current sequences
-        my ( $prev_seq_1, $prev_seq_2 ) = $prev_aln->each_seq;
-        my ( $curr_seq_1, $curr_seq_2 ) = $curr_aln->each_seq;
+            #Get previous and current sequences
+            my ( $prev_seq_1, $prev_seq_2 ) = $prev_aln->each_seq;
+            my ( $curr_seq_1, $curr_seq_2 ) = $curr_aln->each_seq;
 
-        #Get previous and current sequences MD5 hashes
-        my $prev_seq_1_md5 = lc md5_hex( $prev_seq_1->seq() );
-        my $prev_seq_2_md5 = lc md5_hex( $prev_seq_2->seq() );
+            #Get previous and current sequences MD5 hashes
+            my $prev_seq_1_md5 = lc md5_hex( $prev_seq_1->seq() );
+            my $prev_seq_2_md5 = lc md5_hex( $prev_seq_2->seq() );
 
-        my $curr_seq_1_md5 = lc md5_hex( $curr_seq_1->seq() );
-        my $curr_seq_2_md5 = lc md5_hex( $curr_seq_2->seq() );
+            my $curr_seq_1_md5 = lc md5_hex( $curr_seq_1->seq() );
+            my $curr_seq_2_md5 = lc md5_hex( $curr_seq_2->seq() );
 
-        if ( ( $prev_seq_1_md5 eq $curr_seq_1_md5 ) && ( $prev_seq_2_md5 eq $curr_seq_2_md5 ) ) {
-            #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tSAME seq: do the copy" );
-            push( @copy_dataflow, $curr_homologies->[$i]->dbID );
-        }
-        else {
-            #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tDIFF seq: dataflow to Homology_dNdS" );
-            push( @recompute_dataflow, $curr_homologies->[$i]->dbID );
-        }
-        }
+            if ( ( $prev_seq_1_md5 eq $curr_seq_1_md5 ) && ( $prev_seq_2_md5 eq $curr_seq_2_md5 ) ) {
+
+                #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tSAME seq: do the copy" );
+                push( @copy_dataflow, $curr_homologies->[$i]->dbID );
+            }
+            else {
+                #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tDIFF seq: dataflow to Homology_dNdS" );
+                push( @recompute_dataflow, $curr_homologies->[$i]->dbID );
+            }
+        } ## end if ( $prev_homologies->...)
     } ## end for ( my $i = 0; $i < scalar...)
 
     $self->param( 'recompute_dataflow',       \@recompute_dataflow );
