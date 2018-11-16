@@ -182,6 +182,7 @@ sub _dump_multialign_jobs {
 			my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
 			my $this_type = $mlss->method->type;
 			$this_job{mlss_id} = $mlss->dbID;
+			$this_job{add_conservation_scores} = 0 unless ( $this_type eq 'PECAN' || $this_type eq 'EPO_LOW_COVERAGE' );
 			foreach my $opt ( keys %{$alignment_dump_options{$this_type}} ) {
 				$this_job{$opt} = $alignment_dump_options{$this_type}->{$opt};
 			}
@@ -200,6 +201,7 @@ sub _dump_multialign_jobs {
 	foreach my $type ( keys %aln_types ) {
 		my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
 		$this_job{method_link_types} = $type;
+		$this_job{add_conservation_scores} = 0 unless ( $type eq 'PECAN' || $type eq 'EPO_LOW_COVERAGE' );
 		foreach my $opt ( keys %{$alignment_dump_options{$type}} ) {
 			$this_job{$opt} = $alignment_dump_options{$type}->{$opt};
 		}

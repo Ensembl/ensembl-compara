@@ -62,7 +62,7 @@ sub default_options {
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
         #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
-        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => 'ancestral_curr',
 
