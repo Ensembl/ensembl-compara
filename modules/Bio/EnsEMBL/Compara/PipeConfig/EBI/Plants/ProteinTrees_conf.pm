@@ -130,6 +130,7 @@ sub default_options {
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
         'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.branch_len.nw',
+        'binary_species_tree_input_file'    => undef,
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
