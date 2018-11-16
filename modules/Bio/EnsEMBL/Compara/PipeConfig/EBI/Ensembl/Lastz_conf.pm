@@ -27,12 +27,6 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --p
 
 package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf;
 
-#
-#Test with a master and method_link_species_set_id.
-#human chr 22 and mouse chr 16
-#Use 'curr_core_sources_locs' to define the location of the core databases.
-#Set the master to the ensembl release for this test only.
-
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Lastz_conf');  # Inherit from LastZ@EBI config file
@@ -42,33 +36,13 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    #'pipeline_name'         => 'lastz_ebi_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+	    'pipeline_name'         => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
         'port'      =>  4522,
-	    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-
-
-	    'staging_loc' => {
-            -host   => 'mysql-ens-vertannot-staging',
-            -port   => 4573,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-	    'livemirror_loc' => {
-			-host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-			-port   => 4240,
-			-user   => 'anonymous',
-			-pass   => '',
-			-db_version => $self->o('rel_with_suffix'),
-		},
-
-            # 'curr_core_sources_locs' is a list of servers from where the Registry will load the databases
-            # 'curr_core_dbs_locs' is a list of database hash locators (incl. database name)
-            # NOTE: you can add example configurations but leave these two lines below as the default
-             'curr_core_sources_locs' => [ $self->o('staging_loc') ],
-             'curr_core_dbs_locs' => undef,
+	    'master_db' => 'compara_master',
+        'division'  => 'ensembl',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
 	   };
 }

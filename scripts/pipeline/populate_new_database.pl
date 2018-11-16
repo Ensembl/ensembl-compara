@@ -214,6 +214,7 @@ GetOptions(
     "help" => \$help,
     "skip-data" => \$skip_data,
     "reg-conf=s" => \$reg_conf,
+    "reg_conf=s" => \$reg_conf,
     "master=s" => \$master,
     "old=s" => \$old,
     "new=s" => \$new,
@@ -239,32 +240,18 @@ my %methods_to_skip = map {$_=>1} qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSE
 ## Get the DBAdaptors from the Registry
 Bio::EnsEMBL::Registry->load_all($reg_conf, "verbose", 0, 0, "throw_if_missing") if $reg_conf;
 
-my $master_dba;
-if ($master =~ /mysql:\/\//) {
-  $master_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$master);
-} else {
-  $master_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($master, "compara");
-}
+my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master );
 die "Cannot connect to master compara database: $master\n" if (!$master_dba);
 $master_dba->get_MetaContainer; # tests that the DB exists
 
 my $old_dba;
 if ($old) {
-  if ($old =~ /mysql:\/\//) {
-    $old_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$old);
-  } else {
-    $old_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($old, "compara");
-  }
+  $old_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $old );
   die "Cannot connect to old compara database: $old\n" if (!$old_dba);
   $old_dba->get_MetaContainer; # tests that the DB exists
 }
 
-my $new_dba;
-if ($new =~ /mysql:\/\//) {
-  $new_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$new);
-} else {
-  $new_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($new, "compara");
-}
+my $new_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $new );
 die "Cannot connect to new compara database: $new\n" if (!$new_dba);
 $new_dba->get_MetaContainer; # tests that the DB exists
 #

@@ -29,17 +29,29 @@ use Data::Dumper;
 $Data::Dumper::Maxdepth=4;
 
 my $max_jobs = 6000000; # max 6 million rows allowed in job table
-my $dnafrag_len_threshold = 50000; # dnafrags shorter than 50kb are assumed to have no alignment for chaining
-my ( $help, $reg_conf, $master_db, $release );
+
+my @intervals_in_mbp = (
+	[0, 5, 0.01],
+	[5, 10, 0.05],
+	[10, 25, 0.1],
+	[25, 500, 0.25],
+	[500, 1000000, 0.95],
+);
+
+my $method_link = 'LASTZ_NET';
+
+my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids );
+my ( $verbose, $very_verbose );
 GetOptions(
-    "help"          => \$help,
-    "reg_conf=s"    => \$reg_conf,
-    "master_db=s"   => \$master_db,
-    "release=i"     => \$release,
-    "max_jobs=i"    => \$max_jobs,
-    "t|threshold=i" => \$dnafrag_len_threshold,
-    # "group_set_size=i" => \$group_set_size,
-    # "chunk_size=i"     => \$chunk_size,
+    "help"               => \$help,
+    "reg_conf=s"         => \$reg_conf,
+    "master_db=s"        => \$master_db,
+    "release=i"          => \$release,
+    "max_jobs=i"         => \$max_jobs,
+    'exclude_mlss_ids=s' => \$exclude_mlss_ids,
+    'method_link=s'      => \$method_link,
+    'v|verbose!'         => \$verbose,
+    'vv|very_verbose!'   => \$very_verbose,
 );
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
@@ -50,21 +62,24 @@ $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
 
 # fetch the newest LASTZs and the full list of genome dbs
+print STDERR "Fetching current LASTZ_NET MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
-my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type("LASTZ_NET");
+my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
 	if (($this_mlss->first_release || 0) == $release) {
+		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
 		push @current_lastz_mlsses, $this_mlss;
 		foreach my $this_gdb ( @{ $this_mlss->species_set->genome_dbs } ) {
 			$genome_dbs{$this_gdb->dbID} = $this_gdb;
 		}
 	}
 }
+print STDERR "Found " . scalar(@current) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
-my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count);
+my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count, %dnafrag_interval_counts);
 foreach my $mlss ( @current_lastz_mlsses ) {
 	my $ref_name = $mlss->get_tagvalue('reference_species');
 	my $mlss_gdbs = $mlss->species_set->genome_dbs;
@@ -94,49 +109,36 @@ foreach my $mlss ( @current_lastz_mlsses ) {
 	# my ( $gdb_name_1, $gdb_name_2 ) = ( $mlss_gdbs->[0]->name, $mlss_gdbs->[1]->name );
 	# print "dnaf_count $gdb_name_1: $dnaf_count_1; dnaf_count $gdb_name_2: $dnaf_count_2\n";
 	# my $chains_job_count = $dnaf_count_1 * $dnaf_count_2;
-	# my $chains_job_count = chains_job_count( $mlss );
-	my $chains_job_count = ceil($lastz_job_count/3); # generally, this is ~0.3333 of LastZ jobs
+	my $chains_job_count = chains_job_count( $mlss );
+	# my $chains_job_count = ceil($lastz_job_count/3); # generally, this is ~0.3333 of LastZ jobs
 	$mlss_job_count{$mlss->dbID}->{aln_chains} = $chains_job_count;
 	$total_job_count{aln_chains} += $chains_job_count;
 	$mlss_job_count{$mlss->dbID}->{aln_nets} = ceil($chains_job_count/2);
 	$total_job_count{aln_nets} += ceil($chains_job_count/2); # alignment_nets = ~ half chain jobs
 	
-
+	print_verbose_summary(\%mlss_job_count, $mlss) if ($verbose);
+	print_very_verbose_summary(\%mlss_job_count, $mlss) if ($very_verbose);
 }
 
 foreach my $k ( keys %mlss_job_count ) {
 	$mlss_job_count{$k}->{all} = sum(values %{ $mlss_job_count{$k} });
 }
 
-# print "\n\n\nCHUNK COUNTS:\n";
-# print Dumper \%chunk_counts;
-print "\n\n\nMLSS JOB COUNT: \n";
-print Dumper \%mlss_job_count;
-print "\nTOTAL JOB COUNT: \n";
-print Dumper \%total_job_count;
-print "total total : " . format_number(sum(values %total_job_count)) . "\n";
+# print "\n\n\nMLSS JOB COUNT: \n";
+# print Dumper \%mlss_job_count;
+# print "\nTOTAL JOB COUNT: \n";
+# print Dumper \%total_job_count;
+# print "total total : " . format_number(sum(values %total_job_count)) . "\n";
 
 print STDERR "Splitting method_link_species_sets into groups (max jobs per group: $max_jobs)..\n";
 my $mlss_groups = split_mlsses(\%mlss_job_count);
-print "\n\n\nMLSS GROUPS: \n";
-print Dumper $mlss_groups;
+# print "\n\n\nMLSS GROUPS: \n";
+# print Dumper $mlss_groups;
 
-# print "\nPipeline commands:\n";
-# foreach my $group ( @$mlss_groups ) {
-# 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-# 	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -reg_conf \$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_eg_conf.pl -master_db $master_db  -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
-# }
-
-
-
-
-sub helptext {
-	my $msg = <<HELPEND;
-
-Usage: 
-
-HELPEND
-	return $msg;
+print "\nPipeline commands:\n------------------\n";
+foreach my $group ( @$mlss_groups ) {
+	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
+	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -division $COMPARA_DIV -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
 }
 
 sub get_ref_chunk_count {
@@ -171,83 +173,86 @@ sub get_non_ref_chunk_count {
 	return $expanded_count;
 }
 
-# sub chains_dnafrag_count_old {
-# 	my $genome_db = shift;
+sub n_dnafrags_by_interval {
+	my $gdb = shift;
 
-# 	return $chain_dnafrag_counts{$genome_db->dbID} if $chain_dnafrag_counts{$genome_db->dbID};
+	return $dnafrag_interval_counts{$gdb->dbID} if $dnafrag_interval_counts{$gdb->dbID};
 
-# 	my $sql = "select count(*) from dnafrag where genome_db_id = ? and length > $dnafrag_len_threshold and is_reference = 1";
-# 	my $sth = $dba->dbc->prepare($sql);
-# 	$sth->execute($genome_db->dbID);
-# 	my ($count) = $sth->fetchrow_array();
-
-# 	# partition dnafrags on length - shorter frags would have a much
-# 	# lower probability of having a hit. 
-# 	my $aln_probability = 0.8;
-# 	my $filtered_count = ceil($count * $aln_probability); # 80% chance of having an alignment
-# 	$chain_dnafrag_counts{$genome_db->dbID} = $filtered_count;
-# 	return $filtered_count;
-# }
-
-sub chains_dnafrag_count {
-	my $genome_db = shift;
-
-	return $chain_dnafrag_counts{$genome_db->dbID} if $chain_dnafrag_counts{$genome_db->dbID};
-
-	# my @intervals_in_mbp = (
-	# 	[0,    1,     0.01], # min len mpb, max len mbp, probability
-	# 	[1,    5,     0.08],
-	# 	[5,    10,    0.1 ],
-	# 	[10,   50,    0.25],
-	# 	[50,   100,   0.5 ],
-	# 	[100,  500,   0.6 ],
-	# 	[500,  1000,  0.8 ],
-	# 	[1000, 5000,  1.0 ],
-	# 	[5000, 10000, 1.0 ],
-	# );
-
-	# assuming max dnafrag length is 1 terabase
-	my @intervals_in_mbp = (
-		[0, 5, 0.05],
-		# [1, 5, 0.25],
-		[5, 10, 0.1],
-		[10, 25, 0.15],
-		[25, 500, 0.25],
-		[500, 1000000, 0.8],
-	);
-
-
-	# my %partitioned_data;
-	my $total_count_prob;
-	my $sql = "select count(*) from dnafrag where genome_db_id = ? and length between ? and ? and is_reference = 1";
+	# fetch list of dnafrag lengths for this genome
+	my $sql = "select length from dnafrag where genome_db_id = ? and is_reference = 1 order by length asc";
 	my $sth = $dba->dbc->prepare($sql);
-	foreach my $this_interval ( @intervals_in_mbp ) {
-		# times by 1k as intervals are in megabases and dnafrag.length is in bases
-		my ($min_len, $max_len, $aln_prob) = ( ($this_interval->[0]*1000), ($this_interval->[1]*1000), $this_interval->[2] );
-		$sth->execute($genome_db->dbID, $min_len, $max_len);
-		my ($count) = $sth->fetchrow_array();
-		$total_count_prob += ceil($count * $aln_prob);
-	}
-	$chain_dnafrag_counts{$genome_db->dbID} = $total_count_prob;
-	return $total_count_prob;
+	$sth->execute( $gdb->dbID );
+	my $gdb_dnaf_lens = $sth->fetchall_arrayref();
+	$sth->finish;
 
-	# # partition dnafrags on length - shorter frags would have a much
-	# # lower probability of having a hit. 
-	# my $aln_probability = 0.8;
-	# my $filtered_count = ceil($count * $aln_probability); # 80% chance of having an alignment
-	# $chain_dnafrag_counts{$genome_db->dbID} = $filtered_count;
-	# return $filtered_count;
+	# partition and count dnafrags
+	my $interval_counts;
+	foreach my $g_len ( @$gdb_dnaf_lens ) {
+		$interval_counts->{ interval_type($g_len->[0]) }++;
+	}
+
+	$dnafrag_interval_counts{$gdb->dbID} = $interval_counts;
+	return $interval_counts;
 }
 
-# sub chains_job_count {
-# 	my $mlss = shift;
 
-# 	return $chain_job_count{$mlss->dbID} if $chain_job_count{$mlss->dbID};
+sub chains_job_count {
+	my $mlss = shift;
 
-# 	my ( $gdb1, $gdb2 ) = @{$mlss->genome_dbs};
+	return $chain_job_count{$mlss->dbID} if $chain_job_count{$mlss->dbID};
 
+	my ( $gdb1, $gdb2 ) = @{$mlss->species_set->genome_dbs};
 
-# }
+	# partition and count dnafrags
+	my $paired_interval_counts;
+	my $interval_counts1 = n_dnafrags_by_interval( $gdb1 );
+	my $interval_counts2 = n_dnafrags_by_interval( $gdb2 );
+	foreach my $int1 ( keys %$interval_counts1 ) {
+		foreach my $int2 ( keys %$interval_counts2 ) {
+			#print "$int1:$int2 -> ", $interval_counts1->{$int1} * $interval_counts2->{$int2}, "\n";
+			$paired_interval_counts->{ "$int1;$int2" } += $interval_counts1->{$int1} * $interval_counts2->{$int2};
+		}
+	}
+
+	# assign probabilities and estimate job numbers
+	my $total_count;
+	foreach my $type ( keys %$paired_interval_counts ) {
+		$total_count += ceil($paired_interval_counts->{$type} * combined_interval_probability( $type ));
+	}
+
+	return $total_count;
+}
+
+sub interval_type {
+	my ( $len ) = @_;
+
+	# print Dumper [$len];
+
+	my $type;
+	foreach my $interval ( @intervals_in_mbp ) {
+		my ( $this_min, $this_max ) = ( $interval->[0], $interval->[1] );
+		$type = "$this_min mb - $this_max mb" if $len > $this_min*1000 and $len <= $this_max*1000;
+	}
+	return $type;
+}
+
+sub combined_interval_probability {
+	my $type = shift;
+
+	my ( $t1, $t2 ) = split(';', $type);
+	my ( $t1_min, $t1_max ) = split(/[\s\-mb]+/, $t1);
+	my ( $t2_min, $t2_max ) = split(/[\s\-mb]+/, $t2);
+
+	my ( $t1_prob, $t2_prob ) = (0, 0);
+	foreach my $interval ( @intervals_in_mbp ) {
+		$t1_prob = $interval->[2] if $interval->[0] == $t1_min;
+		$t2_prob = $interval->[2] if $interval->[0] == $t2_min;		
+	}
+
+	# print "t1_prob = $t1_prob ; t2_prob = $t2_prob\n";
+
+	return $t1_prob*$t2_prob;
+}
 
 
 sub split_mlsses {
@@ -304,4 +309,44 @@ sub split_mlsses {
 	push( @mlss_groups, @large_mlss_groups );
 
 	return \@mlss_groups;
+}
+
+sub print_verbose_summary {
+	my ($mlss_job_count, $mlss) = @_;
+
+	my $this_mlss_total = sum( values %{ $mlss_job_count->{$mlss->dbID} } );
+	print $mlss->name . " (dbID: " . $mlss->dbID . "):\t$this_mlss_total\n";
+}
+
+sub print_very_verbose_summary {
+	my ($mlss_job_count, $mlss) = @_;
+
+	print $mlss->name . " (dbID: " . $mlss->dbID . "):\n";
+	my $this_mlss_total = 0;
+	foreach my $logic_name ( keys %{ $mlss_job_count->{$mlss->dbID} } ) {
+		my $this_count = $mlss_job_count->{$mlss->dbID}->{$logic_name};
+		print "\t$logic_name:\t$this_count\n";
+		$this_mlss_total += $this_count;
+	}
+	print "Total:\t$this_mlss_total\n\n";
+}
+
+sub helptext {
+	my $msg = <<HELPEND;
+
+Usage: batch_lastz.pl --master_db <master url or alias> --release <release number>
+
+Options:
+	master_db        : url or registry alias of master db containing LASTZ MLSSes (required)
+	release          : current release version (required)
+	reg_conf         : registry config file (required if using alias for master)
+	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)
+	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
+	                   list should be comma separated values.
+	method_link      : method used to select MLSSes (default: LASTZ_NET)
+	v|verbose        : print out per-mlss job count estimates
+	vv|very_verbose  : print out per-analysis, per-mlss job count estimates
+
+HELPEND
+	return $msg;
 }

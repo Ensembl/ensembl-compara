@@ -68,71 +68,19 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
+        'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-            # 'host' => 'mysql-eg-prod-2.ebi.ac.uk',
-            # 'port' => 4239,
-
-            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/plants_compara_master_41_94',
-
-            # 'staging_loc1' => {
-            #     -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-            #     -port   => 4160,
-            #     -user   => 'ensro',
-            #     -pass   => '',
-            # },
-            # 'staging_loc2' => {
-            #     -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-            #     -port   => 4275,
-            #     -user   => 'ensro',
-            #     -pass   => '',
-            # },
-             'prod_loc' => {
-                -host   => 'mysql-eg-prod-2.ebi.ac.uk',
-                -port   => 4239,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => $self->o('rel_with_suffix'),
-            },
-            'livemirror_loc' => {
-                -host   => 'mysql-eg-mirror.ebi.ac.uk',
-                -port   => 4205,
-                -user   => 'ensro',
-                -pass   => '',
-                -db_version => 93,
-            },
-
-            #'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-            'curr_core_sources_locs'    => [ $self->o('prod_loc') ],
-            'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
+        'host'      => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'port'      =>  4615,
+        'master_db' => 'compara_master',
+        'division'  => 'plants',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
 
-	    #Alternatively, define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
-	    #'reference' => {
-	    #	-host           => "host_name",
-	    #	-port           => port,
-	    #	-user           => "user_name",
-	    #	-dbname         => "my_human_database",
-	    #	-species        => "homo_sapiens"
-	    #   },
-            #'non_reference' => {
-	    #	    -host           => "host_name",
-	    #	    -port           => port,
-	    #	    -user           => "user_name",
-	    #	    -dbname         => "my_bushbaby_database",
-	    #	    -species        => "otolemur_garnettii"
-	    #	  },
-	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
-	    #'curr_core_sources_locs'=> '',
-
-	    #Reference species
-#	    'ref_species' => 'homo_sapiens',
-	    'ref_species' => '',
-        # 'non_ref_species' => undef,
-
-            # healthcheck
-            'do_compare_to_previous_db' => 0,
-            # Net
-            'bidirectional' => 1,
+        # healthcheck
+        'do_compare_to_previous_db' => 0,
+        # Net
+        'bidirectional' => 1,
 
 	   };
 }
