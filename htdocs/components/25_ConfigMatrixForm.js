@@ -110,7 +110,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     this.loadingState = true;
     this.localStoreObj = this.getLocalStorage();
-    if (!Object.keys(this.localStoreObj).length) return;
+    if (!Object.keys(this.localStoreObj).length) {
+      this.loadingState = false;
+      return;
+    }
 
     // Apply cell first so that filter happens and then select all experiment types
     if (this.localStoreObj.cell) {
@@ -392,6 +395,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           this.totalSelected  += selectedLIs.length;
 
           panel.updateCurrentCount(subTab, selectedLIs.length, allLIs.length);
+          console.log(selectedLIs);
           selectedLIs.length && selectedElements.push(selectedLIs);
         })
 
@@ -417,9 +421,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     // update selected items (cloned checkboxes)
     var clones = {};
-    $(selectedElements).each(function(i, el){
-      var item = $(el).data('item');
-      clones[item] = $(el).clone().removeClass('noremove');
+    $(selectedElements).each(function(i, arr){
+      $(arr).each(function(k, el){
+        var k = $(el).data('item');
+        clones[k] = $(el).clone().removeClass('noremove');
+      });
     });
     panel.updateSelectedTracks(clones);
 
