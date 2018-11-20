@@ -128,38 +128,6 @@ sub fetch_all_objs_by_slice {
   return \@all_objects;
 }
 
-sub get_evidence_list {
-  my $self = shift;
-  my $epigenome = shift;
-  my @attrib_feats = @{$self->Obj->get_RegulatoryEvidence('annotated', $epigenome)||[]};
-  return '-' unless @attrib_feats;
-
-  my @temp = map $_->feature_type->name, @attrib_feats;
-  my $c    = 1;
-  my %att_label;
-
-  foreach my $k (@temp) {
-    if (exists  $att_label{$k}) {
-      my $old = $att_label{$k};
-      $old++;
-      $att_label{$k} = $old;
-    } else {
-      $att_label{$k} = $c;
-    }
-  }
-
-  my $attrib_list;
-
-  foreach my $k (keys %att_label) {
-    my $v = $att_label{$k};
-    $attrib_list .= "$k($v), ";
-  }
-
-  $attrib_list =~ s/\,\s$//;
-
-  return $attrib_list;
-}
-
 sub get_motif_features {
   my ($self, $cell_line) = @_;
   return {} unless $cell_line;
