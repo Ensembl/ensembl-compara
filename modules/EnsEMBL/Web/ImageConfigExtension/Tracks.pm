@@ -949,6 +949,7 @@ sub add_regulation_features {
   return unless $menu;
 
   my $reg_regions       = $menu->append_child($self->create_menu_node('functional_other_regulatory_regions', 'Other regulatory regions'));
+
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'alignment'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -1032,6 +1033,20 @@ sub add_regulation_features {
   }
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
+
+  ## Add motif features
+  my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+      db          => $key,
+      glyphset    => 'fg_motif_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 1,
+      colourset   => 'motif_features',
+      display     => 'off',
+      description => 'Transcription Factor Binding Motif sites', 
+      renderers   => ['off', 'Off', 'compact', 'Compact'],
+  });
 }
 
 sub add_regulation_builds {
