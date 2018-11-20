@@ -42,24 +42,24 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertanno
 
 #-------------------------HOMOLOGY DATABASES-----------------------------------
 # Members
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-2',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4522,
-#     -species => 'compara_members',
-#     -dbname => 'waakanni_load_members_94',
-# );
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-2',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4522,
+     -species => 'compara_members',
+     -dbname => 'muffato_load_members_95_plants',
+ );
 
 # Individual pipeline database for ProteinTrees:
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#      -host => 'mysql-ens-compara-prod-1',
-#      -user => 'ensadmin',
-#      -pass => $ENV{'ENSADMIN_PSW'},
-#      -port => 4485,
-#      -species => 'compara_ptrees',
-#      -dbname => 'waakanni_protein_trees_93',
-# );
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+      -host => 'mysql-ens-compara-prod-5',
+      -user => 'ensadmin',
+      -pass => $ENV{'ENSADMIN_PSW'},
+      -port => 4615/,
+      -species => 'compara_ptrees',
+      -dbname => 'mateus_plants_prottrees_42_95',
+ );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
