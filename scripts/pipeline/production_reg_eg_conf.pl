@@ -56,7 +56,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertanno
       -host => 'mysql-ens-compara-prod-5',
       -user => 'ensadmin',
       -pass => $ENV{'ENSADMIN_PSW'},
-      -port => 4615/,
+      -port => 4615,
       -species => 'compara_ptrees',
       -dbname => 'mateus_plants_prottrees_42_95',
  );
