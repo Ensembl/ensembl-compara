@@ -64,12 +64,10 @@ sub email_footer {
     $footer .= sprintf "%s Privacy Statement: %s\n\n", $self->site_name, $self->hub->species_defs->GDPR_POLICY_URL;
   }
 
-  $footer .= "\n\n\nhttp://".$self->hub->species_defs->ENSEMBL_SERVERNAME;
+  $footer .= "http://".$self->hub->species_defs->ENSEMBL_SERVERNAME."\n\n";;
 
   my $address = $self->hub->species_defs->SITE_OWNER_ADDRESS;
-  $footer .= "\n\n$address" if $address;
-
-  $footer .= "\n\n";
+  $footer .= "$address\n\n" if $address;
 
   return $footer;
 }
