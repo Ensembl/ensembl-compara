@@ -33,7 +33,7 @@ sub _init {
   $self->has_image(1);
   # Getting alignments_selector data from sessions;
   my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
-  %{$self->{'viewconfig'}{$hub->type}->{_user_settings}} = (%{$self->{'viewconfig'}{$hub->type}->{_user_settings}}, %$alignments_session_data);
+  %{$self->{'viewconfig'}{'Location'}{_user_settings}} = (%{$self->{'viewconfig'}{'Location'}{_user_settings}||{}}, %{$alignments_session_data||{}});
 }
 
 sub content {
