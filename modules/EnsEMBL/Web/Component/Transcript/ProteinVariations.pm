@@ -158,7 +158,7 @@ sub make_table {
   my @exclude;
   push @exclude,'sift_sort','sift_class','sift_value' unless $sd->{'SIFT'};
   unless($hub->species eq 'Homo_sapiens') {
-    push @exclude,'polyphen_sort','polyphen_class','polyphen_value', 'cadd_sort', 'cadd_class', 'cadd_value', 'revel_sort', 'revel_class', 'revel_value', 'meta_lr_sort', 'meta_lr_class', 'meta_lr_value';
+    push @exclude,'polyphen_sort','polyphen_class','polyphen_value', 'cadd_sort', 'cadd_class', 'cadd_value', 'revel_sort', 'revel_class', 'revel_value', 'meta_lr_sort', 'meta_lr_class', 'meta_lr_value', 'mutation_assessor_sort', 'mutation_assessor_class', 'mutation_assessor_value';
   }
 
   my @columns = ({
