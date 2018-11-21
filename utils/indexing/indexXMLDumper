@@ -756,14 +756,20 @@ sub dumpVariation {
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
   my $synonyms;
   $sth = $conf->{'variation_dbh'}->prepare(qq(
-      SELECT v.variation_id,
-GROUP_CONCAT(vs.source_id,' ',vs.name)
+      SELECT v.variation_id, vs.name, vs.source_id
        FROM variation v, variation_synonym vs
-      WHERE v.variation_id = vs.variation_id
-   GROUP BY v.variation_id));
+      WHERE v.variation_id = vs.variation_id));
   $sth->execute;
-  while ( my ($variation_id,$syns) = $sth->fetchrow_array ) {
-    $synonyms->{$variation_id} = $syns;
+  while ( my ($variation_id,$syn, $source_id) = $sth->fetchrow_array ) {
+    $synonyms->{$variation_id}{$syn}{$source_id}++;
+  }
+  ## get CLINVAR allele_synonyms
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+      SELECT variation_id, name
+       FROM allele_synonym));
+  $sth->execute;
+  while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
+    $synonyms->{$variation_id}{$syn_name}++;
   }
 
   ## get failed mappings
@@ -802,19 +808,15 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
       my $source_id          = $row->[2];
-      my $synonym_list       = $synonyms->{$variation_id};
+      my $synonym_hash       = $synonyms->{$variation_id};
       my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
       my %synonyms;
       my $syn_c = 0;
-      foreach my $syn (split /,/, $synonym_list) {
-        my ($source_id,$sname) = split / /,$syn;
-        $synonyms{$sname} = $sources->{$source_id};
-        $syn_c++;
-      }
       my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
-      foreach my $syn (keys %synonyms) {
+      foreach my $syn (keys %$synonym_hash) {
         push @syns, $syn;
+         $syn_c++;
       }
       my $somatic_mutation = $somatic_var;
       my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variant';
