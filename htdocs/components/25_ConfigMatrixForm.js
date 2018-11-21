@@ -171,6 +171,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         zone = '.tab-content.active .tab-content.active';
       }
 
+      if (!$('.tab-content.active .tab-content.active', panel.elLk.trackPanel).length) return;
+
       if (this.dragSelectExp && this.dragSelectExp[this.getActiveSubTab()]) return;
       this.dragSelectExp = this.dragSelectExp || {};
       this.dragSelectExp[this.getActiveSubTab()] = new Selectables({
@@ -504,14 +506,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     $.each(panel.selectedTracksCount, function(key, count) {
       var tab_ele = $('.tabs #' + key + '-tab', panel.el.trackPanel);
+      var tab_content_ele = $('#' + key + '-content', panel.el.trackPanel);
       var rhs_ele = $('#'+key, panel.elLk.resultBox);
-
       if (count.available) {
         tab_ele.removeClass('inactive');
         rhs_ele.show();
       }
       else {
-        tab_ele.addClass('inactive');
+        tab_ele.removeClass('active').addClass('inactive');
+        tab_content_ele.removeClass('active');
         rhs_ele.hide();
       }
     });
@@ -746,6 +749,19 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       activeAlphabetContentDiv.addClass("active");
 
+
+      // Move to the first available tab if current selected tab has gone inactive after filtering
+      var contentId = $('.content-id', selectElement).html();
+      var tabs = $('#'+contentId + ' .tabs div.track-tab', panel.elLk.trackPanel);
+      if (tabs.length && !tabs.hasClass('active')) {
+        if (tabs.not('.inactive').length) {
+          var firstActiveTab = tabs.not('.inactive')[0];
+          var contentId = $('.content-id', firstActiveTab).html();
+          var firstActiveTabContent = $('#'+ contentId, panel.elLk.trackPanel);
+          $(firstActiveTab).addClass('active');
+          $(firstActiveTabContent).addClass('active');
+        }
+      }
 
       // change offset positions of all letter content divs same as their respecitve ribbon letter div
       activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
