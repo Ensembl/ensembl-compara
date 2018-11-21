@@ -718,7 +718,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
   toggleTab: function(selectElement, container, selByClass) {
     var panel = this;
-
     if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
@@ -739,8 +738,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var spanID = $(selectElement).find("span.content-id").html();
       $(selectElement).addClass("active");
 
-      var activeLetterDiv = container.find('div.alphabet-div.active');
-
       if(selByClass) {
         activeAlphabetContentDiv = container.find("div."+spanID);
       } else {
@@ -749,10 +746,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       activeAlphabetContentDiv.addClass("active");
 
-      // change offset position of active content same as the ribbon letter
-      if(activeAlphabetContentDiv.hasClass('alphabet-content')) {
-        activeAlphabetContentDiv.offset({left: activeLetterDiv.offset().left});
-      }
+
+      // change offset positions of all letter content divs same as their respecitve ribbon letter div
+      activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
+      $.each(activeAlphabetContentDiv, function(i, el) {
+        var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
+        $(el).offset({left: activeLetterDiv.offset().left - 2});
+      })
     }
   },
 
