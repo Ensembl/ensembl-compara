@@ -58,19 +58,6 @@ sub get_data {
 
   my $out = $self->SUPER::get_data($file_path) || [];
 
-=pod
-  ## Create legend
-  my $legend_entries = $self->{'legend'}{'fg_motif_features_legend'}{'entries'};
-  foreach (@$out) {
-    foreach my $f (@{$_->{'features'}||[]}) {
-      $f->{'label'} =~ /_(\w+)_/;
-      my $colour_key = $1;
-      push @$legend_entries, [$colour_key, $f->{'colour'}];
-    }
-  }
-  $self->{'legend'}{'fg_motif_features_legend'} = { priority => 1020, legend => [], entries => $legend_entries };
-=cut
-
   return $out;
 }
 

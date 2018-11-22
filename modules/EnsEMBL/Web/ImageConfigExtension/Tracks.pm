@@ -1042,11 +1042,12 @@ sub add_regulation_features {
       strand      => 'r',
       labels      => 'on',
       depth       => 1,
-      colourset   => 'motif_features',
+      colourset   => 'fg_motif_features',
       display     => 'off',
       description => 'Transcription Factor Binding Motif sites', 
       renderers   => ['off', 'Off', 'compact', 'Compact'],
   });
+  $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
 }
 
 sub add_regulation_builds {
