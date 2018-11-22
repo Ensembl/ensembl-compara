@@ -1076,12 +1076,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         if(this.className.match(/larrow/gi)) {
           //get currently selected letter, convert it to utf-16 number, ssubstract 1 to get previous letter number and then convert it to char; skipping letter with no content
           var prevLetter = ""; 
+          // var prevLetter = $($(activeAlphabet).prevAll(':not(".inactive")')[0]).html().charAt(0).toLowerCase();
           for (var i = 1; i < 26; i++) {
             prevLetter =  String.fromCharCode(activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0)- i);
             if(ribbonContent.find("div."+prevLetter+"_content li").length) {
               break;
             }
           }
+          var totalLettersSkipped = i;
 
           $.when(
             panel.toggleTab(ribbonBanner.find("div.ribbon_"+prevLetter), container, 1)
@@ -1090,21 +1092,23 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           );
 
           if(activeAlphabet.offset().left <= $(e.target).offset().left + 22) {
-            ribbonBanner.offset({left: ribbonBanner.offset().left + 22});
-            ribbonContent.find("div."+prevLetter+"_content.alphabet-content").offset({left: ribbonContent.find("div."+prevLetter+"_content.alphabet-content").offset().left + 22});
+            ribbonBanner.offset({left: ribbonBanner.offset().left + (22 * totalLettersSkipped)});
+            ribbonContent.find("div."+prevLetter+"_content.alphabet-content").offset({left: ribbonContent.find("div."+prevLetter+"_content.alphabet-content").offset().left + (22 * totalLettersSkipped)});
           }
         }
 
         if (this.className.match(/rarrow/gi)) {
           //get currently selected letter, convert it to utf-16 number add 1 to get next letter number and then convert it to char
           var nextLetter = "";
-          for (var i = 1; i < 26; i++) {
+          // var nextLetter = $($(activeAlphabet).nextAll(':not(".inactive")')[0]).html().charAt(0).toLowerCase();
+          for (var i = 1; i < 26; i++) {            
             nextLetter =  String.fromCharCode(activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0) + i);
 
             if(ribbonContent.find("div."+nextLetter+"_content li").length) {
               break;
             }
           }
+          var totalLettersSkipped = i;
 
           $.when(
             panel.toggleTab(ribbonBanner.find("div.ribbon_"+nextLetter), container, 1)
@@ -1113,9 +1117,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           );
 
           var _nextletter = $("div.ribbon_"+nextLetter, ribbonBanner);
-          if(activeAlphabet.offset().left  >= $(e.target).offset().left - 44) {
-            ribbonBanner.offset({left: ribbonBanner.offset().left - 22});
-            ribbonContent.find("div."+nextLetter+"_content.alphabet-content").offset({left: ribbonContent.find("div."+nextLetter+"_content.alphabet-content").offset().left - 22});
+          if(activeAlphabet.offset().left  >= $(e.target).offset().left - 22) {
+            ribbonBanner.offset({left: ribbonBanner.offset().left - (22 * totalLettersSkipped)});
+            ribbonContent.find("div."+nextLetter+"_content.alphabet-content").offset({left: ribbonContent.find("div."+nextLetter+"_content.alphabet-content").offset().left - (22 * totalLettersSkipped)});
           }
         }
       }
