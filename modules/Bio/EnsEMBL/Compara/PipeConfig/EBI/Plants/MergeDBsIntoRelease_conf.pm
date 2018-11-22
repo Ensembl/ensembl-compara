@@ -45,16 +45,15 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-
-        # Also used to differentiate submitted processes
-        'pipeline_name' => 'plants_dbmerge_'.$self->o('rel_with_suffix'),
-
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_plants_conf.pl',
+        'division' => 'plants',
+        
+        # moved reg_conf to base class
+        # 'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_plants_conf.pl',
 
         # All the source databases
         'src_db_aliases' => {
             'master_db'     => 'compara_master',
-            'protein_db'    => 'plants_ptrees',
+            'protein_db'    => 'compara_ptrees',
         },
 
         # The target database

@@ -57,6 +57,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
+        'division' => 'ensembl',
 
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
         'copying_capacity'  => 10,
@@ -70,23 +71,24 @@ sub default_options {
         # Do we want to be very picky and die if a table hasn't been listed above / isn't in the target database ?
         'die_if_unknown_table'      => 1,
 
-        # A registry file to avoid having to use only URLs
-        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        # A registry file to avoid having to use only URLs - moved to base class
+        # 'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # All the source databases
+        # edit the reg_conf file rather than adding URLs
         'src_db_aliases'    => {
-            'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_94',
-            'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_compara_nctrees_94',
-            'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_families_94',
-            'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_murinae_protein_trees_94',
-            'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_murinae_ncrna_trees_94',
-            'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_alt_allele_import_94',
-            'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_load_members_94',
+            'master_db'      => 'compara_master',
+            'protein_db'     => 'compara_ptrees',
+            'ncrna_db'       => 'compara_nctrees',
+            'family_db'      => 'compara_families',
+            'mouse_prot_db'  => 'murinae_ptrees',
+            'mouse_ncrna_db' => 'murinae_nctrees',
+            'projection_db'  => 'alt_allele_projection',
+            'members_db'     => 'compara_members',
         },
 
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_94',
+        'curr_rel_db'   => 'compara_curr',
 
         # From these databases, only copy these tables
         'only_tables'       => {

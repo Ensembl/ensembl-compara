@@ -51,6 +51,8 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
+        'pipeline_name' => $self->o('division') . '_dbmerge_' . $self->o('rel_with_suffix'),
+        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
         'copying_capacity'  => 10,
@@ -76,7 +78,7 @@ sub default_options {
         },
 
         # The target database
-        #'curr_rel_db'   => "...",  # Again this is a URL or a registry name
+        'curr_rel_db'   => "compara_curr",  # Again this is a URL or a registry name
 
         # From these databases, only copy these tables. Other tables are ignored
         'only_tables'       => {
