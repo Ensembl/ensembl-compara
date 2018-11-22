@@ -46,6 +46,8 @@ sub get_data {
 
   ## Set zmenu options before we parse the file
   $self->{'my_config'}->set('zmenu_action', 'MotifFeature');
+  ## FIXME - there is a typo in one of the bigBed AutoSQL column names!
+  $self->{'my_config'}->set('custom_fields', [qw(binding_matrix_stable_id transcriprion_factors epigenomes)]);
 
   my $bigbed_file = $mfa->fetch_file;
   my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,

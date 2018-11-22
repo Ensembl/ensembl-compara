@@ -45,31 +45,24 @@ sub content {
                   });
   
 
-  my $mf = $hub->database('funcgen')->get_MotifFeatureAdaptor->fetch_by_stable_id($id);
-
-  if ($mf) {
-
-    my $matrix = $mf->binding_matrix;
-    if ($matrix) {
-      $self->add_entry({
-                        type       => 'Binding matrix',
-                        label_html => $mf->binding_matrix->stable_id, 
-                        link       => '#',
-                        class      => '_motif',
-                      });
-
-      my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
-      $self->add_entry({
-                        type        => 'Transcription factors',
-                        label       => join(', ', @names),    
-                      });
-      $self->add_entry({
-                        type        => 'Score',
-                        label       => $mf->score,    
-                      });
-    }
-  }
-
+  $self->add_entry({
+                    type       => 'Binding matrix',
+                    label_html => $hub->param('binding_matrix_stable_id'), 
+                    link       => '#',
+                    class      => '_motif',
+                  });
+  ## Split these fields with spaces so they wrap
+  my @transcription_factors = split(',', $hub->param('transcriprion_factors'));
+  $self->add_entry({
+                    type        => 'Transcription factors',
+                    label       => join (', ', @transcription_factors), 
+                  });
+  my @epigenomes = split(',', $hub->param('epigenomes'));
+  @epigenomes = ('none') unless scalar @epigenomes;
+  $self->add_entry({
+                    type        => 'Verified in cell lines',
+                    label       => join(', ', @epigenomes), 
+                  });
 }
 
 sub _types_by_colour {
