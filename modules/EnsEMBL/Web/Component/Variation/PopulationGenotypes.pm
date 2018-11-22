@@ -227,8 +227,7 @@ sub format_table {
     ## Get URL
     my $url = $self->pop_url($name, $freq_data->{$pop_id}{'pop_info'}{'PopLink'});
     if ($url) {
-      $pop_urls{$pop_id}  = $url;
-      $pop_urls{$pop_id} .= $name if ($url eq $hub->get_ExtURL('EVA_STUDY'));
+      $pop_urls{$pop_id} = $url;
       $urls_seen{$url}++;
     }
 
