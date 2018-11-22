@@ -71,7 +71,7 @@ sub default_options {
         'high_confidence_ranges'    => [
             {
                 'range_label'       => 'protein',
-                'range_filter'      => '(homology_id < 100000000)',
+                'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
             },
         ],
 
