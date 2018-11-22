@@ -320,23 +320,29 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //Function to select filters and adding/removing them in the relevant panel
   selectBox: function(ele) {
     var panel = this;
-    var selected = $('span.fancy-checkbox', ele).hasClass('selected');
+    var chkbox = $('span.fancy-checkbox', ele);
+    var selected = chkbox.hasClass('selected');
 
     if($(ele).hasClass('all-box')) {
-      var all_lis = $(ele).closest('.tab-content').find('li span.fancy-checkbox');
+      var _class = '';
+      if ($(ele).closest('.tab-content').find('li._filtered').length) {
+        _class = "._filtered";
+      }
+
+      var available_LIs = $(ele).closest('.tab-content').find('li' + _class + ' span.fancy-checkbox');
 
       if (!selected) {
-        $(ele).find('span.fancy-checkbox').addClass('selected');
+        chkbox.addClass('selected');
         // var $(ele).closest('.tab-content').find('li span.fancy-checkbox');
-        all_lis.addClass("selected");
+        available_LIs.addClass("selected");
       }
       else {
-        $(ele).find('span.fancy-checkbox').removeClass('selected')
-        all_lis.removeClass('selected');
+        chkbox.removeClass('selected')
+        available_LIs.removeClass('selected');
       }
 
       // add 'selected: true/flase' to lookup
-      all_lis.parent().map(function() {
+      available_LIs.parent().map(function() {
         panel.elLk.lookup[$(this).data('item')].selected = !selected;
       })
 
@@ -721,6 +727,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
   toggleTab: function(selectElement, container, selByClass) {
     var panel = this;
+
     if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
@@ -818,7 +825,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       //clicking select all checkbox
       panel.clickCheckbox(this.el.find(container+" div.all-box"));
       //selecting all filters
-      panel.selectAll(this.el.find(container+" ul.letter-content"), this.el.find(container+" div.all-box"));
+      // panel.selectAll(this.el.find(container+" ul.letter-content"), this.el.find(container+" div.all-box"));
       
       //clicking checkbox for the filters
       // panel.clickCheckbox(this.el.find(container+" ul.letter-content"), 0, 1, this.el.find(container+" div.all-box"));
@@ -1028,7 +1035,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.clickCheckbox(this.el.find(container+" div.all-box"));
    
     //selecting all filters
-    panel.selectAll(this.el.find(container+" div.ribbon-content"), this.el.find(container+" div.all-box"));
+    // panel.selectAll(this.el.find(container+" div.ribbon-content"), this.el.find(container+" div.all-box"));
     
     //clicking the alphabet
     panel.elLk.alphabet = panel.el.find(container+' div.alphabet-div');      
