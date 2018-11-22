@@ -23,8 +23,6 @@ package EnsEMBL::Draw::GlyphSet::fg_motif_features;
 
 use strict;
 
-use EnsEMBL::Web::File::Utils::IO qw(file_exists);
-
 use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub get_data {
@@ -42,12 +40,6 @@ sub get_data {
 
   ## Force features onto reverse strand
   $self->{'my_config'}->set('strand', 'r');
-  my $f = $self->fetch_features_from_file($fg_db) || [];
-  return $f; 
-}
-
-sub fetch_features_from_file {
-  my ($self,$fgh) = @_;
 
   my $db_type = $self->my_config('db_type') || 'funcgen';
   my $mfa = $self->{'config'}->hub->get_adaptor('get_MotifFeatureFileAdaptor', $db_type);
@@ -62,7 +54,7 @@ sub fetch_features_from_file {
                            $bigbed_file->path);
   $file_path =~ s/\s//g;
 
-  my $out = $self->SUPER::get_data($file_path);
+  my $out = $self->SUPER::get_data($file_path) || [];
 
 =pod
   ## Create legend
