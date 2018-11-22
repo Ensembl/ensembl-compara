@@ -52,7 +52,7 @@ sub content {
                     class      => '_motif',
                   });
   ## Split these fields with spaces so they wrap
-  my @transcription_factors = split(',', $hub->param('transcriprion_factors'));
+  my @transcription_factors = split(',', $hub->param('transcription_factors'));
   $self->add_entry({
                     type        => 'Transcription factors',
                     label       => join (', ', @transcription_factors), 
