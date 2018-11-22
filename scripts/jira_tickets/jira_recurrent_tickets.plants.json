@@ -151,6 +151,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "summary": "Run syntenies pipeline"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-MergeGeneTrees",
             "summary": "PostHomologyMerge_conf pipeline"
          },
