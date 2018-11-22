@@ -45,7 +45,7 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::PostHomologyMerge_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -54,8 +54,10 @@ sub default_options {
 
         'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
         'port'            => 4485,
+        'division' => 'ensembl',
 
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        # 'compara_db' => 'compara_curr',
+        # 'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # The list of collections and clusterset_ids
         'member_stats_config'   => [
