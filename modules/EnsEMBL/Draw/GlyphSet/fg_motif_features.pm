@@ -59,10 +59,8 @@ sub fetch_features_from_file {
   my $file_path = join('/',$self->species_defs->DATAFILE_BASE_PATH,
                            lc $self->species,
                            $self->species_defs->ASSEMBLY_VERSION,
-                          'motif_feature/Homo_sapiens.GRCh38.motif_features.bb');
-                           #$bigbed_file->path);
+                           $bigbed_file->path);
   $file_path =~ s/\s//g;
-  #warn ">>> GETTING FILE $file_path";
 
   my $out = $self->SUPER::get_data($file_path);
 
