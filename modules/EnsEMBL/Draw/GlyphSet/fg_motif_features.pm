@@ -38,6 +38,9 @@ sub get_data {
     return [];
   }
 
+  ## Raise limit so we can show this track on Regulation Summary
+  $self->{'my_config'}->set('bigbed_limit', 1000);
+
   ## Force features onto reverse strand
   $self->{'my_config'}->set('strand', 'r');
 
