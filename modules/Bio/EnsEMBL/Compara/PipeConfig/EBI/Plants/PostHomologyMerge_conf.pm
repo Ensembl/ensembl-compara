@@ -52,8 +52,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
+        'host'            => 'mysql-ens-compara-prod-5',    # where the pipeline database will be created
+        'port'            => 4615,
 
         'division'        => 'plants',
         'pipeline_name'   => $self->o('division') . '_post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
