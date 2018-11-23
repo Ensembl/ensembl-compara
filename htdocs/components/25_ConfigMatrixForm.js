@@ -773,6 +773,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       // change offset positions of all letter content divs same as their respecitve ribbon letter div
       activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
+
       $.each(activeAlphabetContentDiv, function(i, el) {
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
         $(el).offset({left: activeLetterDiv.offset().left - 2});
@@ -966,12 +967,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
   },
 
-  getStartEndActiveAlphabet: function(container) {
+  getActiveAlphabets: function(container) {
     var panel = this;
-    var activeAlphabetElements = $('.ribbon-banner div.alphabet-div', container).not('.inactive');
-    var activeLetterStart = $(activeAlphabetElements[0]).html().charAt(0);
-    var activeLetterEnd   = $(activeAlphabetElements[activeAlphabetElements.length - 1]).html().charAt(0);
-    return [activeLetterStart, activeLetterEnd];
+    container = container || this.getActiveTabContainer();
+    return $(container).find('.ribbon-banner div.alphabet-div').not('.inactive');
   },
 
   // Function to create letters ribbon with left and right arrow (< A B C ... >) and add elements alphabetically
@@ -1042,11 +1041,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   selectArrow: function(container) {
     var panel = this;
-    var activeLetters = panel.getStartEndActiveAlphabet(container);
-    if($('div.alphabet-div.active', container).html().match(activeLetters[0])) { 
+    var activeAlphabets = panel.getActiveAlphabets(container);
+    var startLetter = $(activeAlphabets.get(0)).html().charAt(0);
+    var endLetter   = $(activeAlphabets.get(-1)).html().charAt(0);
+    if (!activeAlphabets.length) return;
+
+    if($('div.alphabet-div.active', container).html().match(startLetter)) { 
       $('div.larrow', container).removeClass("active").addClass("inactive");
       $('div.rarrow', container).removeClass("inactive").addClass("active"); //just in case jumping from Z to A
-    } else if($('div.alphabet-div.active', container).html().match(activeLetters[1])) { 
+    } else if($('div.alphabet-div.active', container).html().match(endLetter)) { 
       $('div.rarrow', container).removeClass("active").addClass("inactive");
       $('div.larrow', container).removeClass("inactive").addClass("active"); //just in case jumping from A to Z
     }else {
@@ -1060,30 +1063,24 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.elLk.arrows   = $('div.rarrow, div.larrow', panel.elLk.trackPanel);
     panel.elLk.arrows.off().on("click", function(e){
       container = $(e.target).closest('.tab-content');
-      ribbonBanner = container.find('.letters-ribbon');
-      ribbonContent = container.find('.ribbon-content');
-
+      var ribbonBanner = container.find('.letters-ribbon');
+      var ribbonContent = container.find('.ribbon-content');
+      var availableAlphabets = panel.getActiveAlphabets(container);
+      var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
+      var activeAlphabetIndex = availableAlphabets.index(activeAlphabetDiv);
+      var activeAlphabet = activeAlphabetDiv.html().charAt(0).toLowerCase();
       var activeTabId = panel.getActiveTab() + '-tab';
+
       if (!$(container).hasClass('active') && !$('#' + activeTabId, panel.elLk.trackPanel).hasClass('active')) {
         return; // run only for the active tab
       }
 
-      // var availableRibbons = $(container, panel.elLk.trackPanel).find('.ribbon-banner .alphabet-div').not('.inactive');
-
       if(!this.className.match(/inactive/gi)) {
-
-        var activeAlphabet = ribbonBanner.find('div.alphabet-div.active');
         if(this.className.match(/larrow/gi)) {
           //get currently selected letter, convert it to utf-16 number, ssubstract 1 to get previous letter number and then convert it to char; skipping letter with no content
-          var prevLetter = ""; 
-          // var prevLetter = $($(activeAlphabet).prevAll(':not(".inactive")')[0]).html().charAt(0).toLowerCase();
-          for (var i = 1; i < 26; i++) {
-            prevLetter =  String.fromCharCode(activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0)- i);
-            if(ribbonContent.find("div."+prevLetter+"_content li").length) {
-              break;
-            }
-          }
-          var totalLettersSkipped = i;
+          var prevLetter = $(availableAlphabets[activeAlphabetIndex-1]).html().charAt(0).toLowerCase();
+          // Get total letters skipped to adjust offset (charcode(currentletter - prevLetter))
+          var lettersSkipped = activeAlphabet.charCodeAt(0) - prevLetter.charCodeAt(0);
 
           $.when(
             panel.toggleTab(ribbonBanner.find("div.ribbon_"+prevLetter), container, 1)
@@ -1091,24 +1088,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.selectArrow(container)
           );
 
-          if(activeAlphabet.offset().left <= $(e.target).offset().left + 22) {
-            ribbonBanner.offset({left: ribbonBanner.offset().left + (22 * totalLettersSkipped)});
-            ribbonContent.find("div."+prevLetter+"_content.alphabet-content").offset({left: ribbonContent.find("div."+prevLetter+"_content.alphabet-content").offset().left + (22 * totalLettersSkipped)});
+          if(activeAlphabetDiv.offset().left <= $(e.target).offset().left + 22) {
+            ribbonBanner.offset({left: ribbonBanner.offset().left + (22 * lettersSkipped)});
+            var prevletterContentDiv = ribbonContent.find("div."+prevLetter+"_content.alphabet-content");
+            prevletterContentDiv.offset({left: prevletterContentDiv.offset().left + (22 * lettersSkipped)});
           }
         }
 
         if (this.className.match(/rarrow/gi)) {
           //get currently selected letter, convert it to utf-16 number add 1 to get next letter number and then convert it to char
           var nextLetter = "";
-          // var nextLetter = $($(activeAlphabet).nextAll(':not(".inactive")')[0]).html().charAt(0).toLowerCase();
-          for (var i = 1; i < 26; i++) {            
-            nextLetter =  String.fromCharCode(activeAlphabet.html().charAt(0).toLowerCase().charCodeAt(0) + i);
+          var nextLetter = $(availableAlphabets[activeAlphabetIndex+1]).html().charAt(0).toLowerCase();
 
-            if(ribbonContent.find("div."+nextLetter+"_content li").length) {
-              break;
-            }
-          }
-          var totalLettersSkipped = i;
+          // Get total letters skipped to adjust offset (charcode(nextletter-currentletter))
+          var lettersSkipped = nextLetter.charCodeAt(0) - activeAlphabet.charCodeAt(0);
 
           $.when(
             panel.toggleTab(ribbonBanner.find("div.ribbon_"+nextLetter), container, 1)
@@ -1116,10 +1109,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.selectArrow(container)
           );
 
-          var _nextletter = $("div.ribbon_"+nextLetter, ribbonBanner);
-          if(activeAlphabet.offset().left  >= $(e.target).offset().left - 22) {
-            ribbonBanner.offset({left: ribbonBanner.offset().left - (22 * totalLettersSkipped)});
-            ribbonContent.find("div."+nextLetter+"_content.alphabet-content").offset({left: ribbonContent.find("div."+nextLetter+"_content.alphabet-content").offset().left - (22 * totalLettersSkipped)});
+          if(activeAlphabetDiv.offset().left  >= $(e.target).offset().left - 44) {
+            ribbonBanner.offset({left: ribbonBanner.offset().left - (22 * lettersSkipped)});
+            var nextletterContentDiv = ribbonContent.find("div."+nextLetter+"_content.alphabet-content");
+            nextletterContentDiv.offset({left: nextletterContentDiv.offset().left - (22 * lettersSkipped)});
           }
         }
       }
