@@ -117,8 +117,6 @@ sub run {
                 if ($self->param_exists('genome_dumps_dir')) {
                     $dump_path = $gdb->_get_genome_dump_path($self->param('genome_dumps_dir'));
                     die "$dump_path could not be found. Please rerun DumpGenomes_conf" unless -e $dump_path;
-                } elsif ($self->param('multifasta_dir')) {
-                    $dump_path = $self->find_file_for_gdb($self->param('multifasta_dir'), $gdb, ['fa', 'fa\.gz']);
                 }
 
 		if ( -e $mash_path ) {
@@ -179,7 +177,8 @@ sub _check_for_distance_files {
 	my $self = shift;
 
 	my $dir = $self->param_required('sketch_dir');
-	my @dist_files = glob "$dir/*.dists";
+	my $collection = $self->param_required('collection');
+	my @dist_files = glob "$dir/*$collection*.dists";
 	my @needed_gdb_ids = map {$_->dbID} @{ $self->param('genome_dbs') };
 
 	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
