@@ -35,7 +35,10 @@ sub content {
   my $peak;
   
   foreach (@peaks) { 
-    $peak = $_ if $_->peak_calling_id eq $peak_calling->dbID && $_->start == 1 && $_->end == $length;
+    if ($_->peak_calling_id eq $peak_calling->dbID && $_->start == 1 && $_->end == $length) {
+      $peak = $_;
+      last;
+    }
   }
 
   my $summit   = $peak->summit || 'undetermined';
