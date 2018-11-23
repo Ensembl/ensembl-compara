@@ -128,50 +128,6 @@ sub fetch_all_objs_by_slice {
   return \@all_objects;
 }
 
-sub get_motif_features_by_epigenome {
-  my ($self, $cell_line) = @_;
-  return {} unless $cell_line;
-  my @motif_features = @{$self->Obj->fetch_all_MotifFeatures_with_matching_Peak};
-  my %motifs;
-
-  foreach my $mf (@motif_features) {
-    my $peak = $mf->fetch_overlapping_Peak_by_Epigenome($cell_line);
-    if ($peak) {
-      my $mf_info = $self->_format_mf_info($mf); 
-      $motifs{$mf->start .':'. $mf->end} = $mf_info if $mf_info; 
-    }
-  }
-  return \%motifs;
-}
-
-sub _format_mf_info {
-  my ($self, $mf) = @_;
-
-  my $matrix = $mf->binding_matrix;
-  return undef unless $matrix;
-
-  my $matrix_id = '<a href="#" class="_motif">'.$mf->binding_matrix->stable_id.'</a>';
-  my @names = @{$matrix->get_TranscriptionFactorComplex_names||[]};
-  my $name_string = '';
-  if (scalar @names) {
-    ## We don't want the string to be too long, but names can be very variable in length
-    $name_string = $names[0];
-    my $i = 1;
-    my $max_length = 12;
-    for ($i = 1; $i < scalar @names; $i++) {
-      if (length($names[$i]) < ($max_length - length($name_string))) {
-        $name_string .= $names[$i];
-      }
-      else {
-        last;
-      }
-    }
-    $name_string .= '...' if scalar @names > $i;
-  } 
-  return [$mf->stable_id, $name_string, $matrix_id, $mf->score];
-}
-
-
 sub get_fg_db {
   my $self = shift;
   return $self->hub->database('funcgen');

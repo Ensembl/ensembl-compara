@@ -92,7 +92,7 @@ sub content {
   
   $self->_add_nav_entries;
   
-  $self->_add_motif_feature_table($object->get_motif_features_by_epigenome($epigenome));
+  $self->_add_motif_feature_table($self->get_motif_features_by_epigenome($reg_feature, $epigenome));
 
 }
 
