@@ -33,6 +33,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.experiment.container = $('div#experiment-content', this.el);
 
     this.elLk.buttonTab       = this.el.find("div.track-tab");
+    this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
     this.elLk.trackPanel      = this.el.find(".track-panel");
     this.elLk.resultBox       = this.el.find(".result-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
@@ -66,16 +67,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
     
     this.elLk.buttonTab.on("click", function (e) { 
-      var selectTab = panel.el.find(this).attr("id");
       panel.toggleTab(this, panel.el.find("div.track-menu"));
       panel.setDragSelectEvent();
+    });
+
+    this.elLk.breadcrumb.on("click", function (e) {
+      panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
+      panel.toggleButton();
+      e.preventDefault();
     });
     
     this.clickSubResultLink();
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
-    this.clickFilter(this.elLk.filterButton, this.el.find("div#track-config"));
+    this.clickFilter(this.elLk.filterButton, this.el.find("li._configure"));
   },
 
   getActiveTabContainer: function() {
@@ -235,10 +241,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     if(counter === total_div) {
       panel.el.find('button.filter').addClass('active');
-      panel.el.find('li._configure').removeClass('disable');
+      panel.el.find('li._configure').removeClass('inactive');
     } else {
       panel.el.find('button.filter').removeClass('active');
-      panel.el.find('li._configure').addClass('disable');
+      panel.el.find('li._configure').addClass('inactive');
     }
   },
   
@@ -560,18 +566,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   
   // Function to show a panel when button is clicked
   // Arguments javascript object of the button element and the panel to show
-  clickFilter: function(clickButton, showPanel) {
+  clickFilter: function(clickButton, tabClick) {
     var panel = this;
 
     clickButton.on("click", function(e) {
       if(clickButton.hasClass("_edit") ) {
-        clickButton.outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
-        panel.toggleTab(panel.el.find("div#browse-tab"), panel.el.find("div.tabs.track-menu"));
+        panel.toggleTab(panel.el.find("li._configure"), panel.el.find("div.large-breadcrumbs"));
+        panel.toggleButton();
       } else if(clickButton.hasClass("active") ) {      
-        panelId = showPanel.attr('id');
-        var panelTab = panel.el.find("span:contains('"+panelId+"')").closest('div');
-        panel.toggleTab(panelTab, panel.el.find("div.tabs.track-menu"));
-        clickButton.addClass("_edit").outerWidth("70px").html("Edit");
+        panel.toggleTab(tabClick, panel.el.find("div.large-breadcrumbs"));
+        panel.toggleButton();        
       }
     });
     
@@ -587,6 +591,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       panel.el.find(".track-tab.active").first().removeClass("active");
       panel.el.find(".tab-content.active").first().removeClass("active");
+      
+      //in case the track-content is not active, hide configuration panel first
+      if(panel.el.find("div#configuration-content:visible").length){ 
+        panel.toggleTab(panel.el.find("li._track-select"), panel.el.find("div.large-breadcrumbs"));
+        panel.toggleButton();         
+      }
 
       //for now assuming there is only one parent tab, if there is more than one then we need to create for loop
       if(parentTabId){
@@ -737,8 +747,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
 
       //remove current active tab and content
-      var activeContent = container.find("div.active span.content-id").html();
-      container.find("div.active").removeClass("active");
+      var activeContent = container.find(".active span.content-id").html();
+      container.find(".active").removeClass("active");
       if(selByClass) {
         container.find("div."+activeContent).removeClass("active");
       } else {
@@ -778,6 +788,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
         $(el).offset({left: activeLetterDiv.offset().left - 2});
       })
+    }
+  },
+  
+  toggleButton: function() {
+    var panel = this;
+    
+    if(panel.el.find('div.track-configuration:visible').length){
+      panel.el.find('button.view-track').addClass('active');
+      panel.el.find('button.filter').addClass("_edit").outerWidth("100px").html("View tracks");
+    } else {
+      panel.el.find('button.view-track').removeClass('active');
+      panel.el.find('button.filter').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
     }
   },
 

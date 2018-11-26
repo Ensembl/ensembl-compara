@@ -55,22 +55,22 @@ sub build {
       <h1>Regulation data</h1>
       <div class="large-breadcrumbs">
         <ul>
-          <li class="active"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a></li>
-          <li class="disable _configure"><a href="#"><span class="circle crumb-number">2</span>Configure display</a></li>
+          <li class="active _track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
+          <li class="inactive _configure"><a href="#"><span class="circle crumb-number">2</span>Configure display</a><span class="hidden content-id">configuration-content</span></li>
         </ul>
       </div>
       <button class="fade-button view-track">View tracks</button>
     </div>
     <div class="flex-row">
-      <div class="track-panel">
+      <div class="track-panel active" id="track-content">
         <div class="tabs track-menu">
           <div class="track-tab active" id="cell-tab">
-          <span> Cell type </span>
-          <span class="hidden content-id">cell-content</span>
-          <div class="search-box">
-            <input class="configuration_search_text" placeholder="Search" name="cell_search">
-            <img src="/i/16/search.png" class="search-icon" />
-          </div>
+            <span> Cell type </span>
+            <span class="hidden content-id">cell-content</span>
+            <div class="search-box">
+              <input class="configuration_search_text" placeholder="Search" name="cell_search">
+              <img src="/i/16/search.png" class="search-icon" />
+            </div>
           </div>
           <div class="track-tab" id="experiment-tab">
             <span> Experimental data </span>
@@ -89,6 +89,10 @@ sub build {
         <div id="experiment-content" class="tab-content" data-rhsection-id="experiment">
           <span class="hidden rhsection-id">experiment</span>
         </div>
+      </div>
+        
+      <div class="track-panel track-configuration" id="configuration-content">
+        Track configuration/matrix display.....
       </div>
 
       <div class="result-box">
