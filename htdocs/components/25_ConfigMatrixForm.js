@@ -375,62 +375,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       lis_unselected.length ? allBox.removeClass('selected') : allBox.addClass('selected');
 
     }
-
-    return;
-
-
-
-    var item = $(ele).data('item');
-    var rhsectionId = panel.elLk.lookup[item].subTab;
-
-    //unselecting checkbox
-    if($(ele).find("span.fancy-checkbox.selected").length){
-      $(ele).find("span.fancy-checkbox").removeClass("selected");
-      this.removeFromStore($(ele).data('item'), $(ele).data('parentTab'));
-      var ele_class = $(ele).data('item');
-
-      //removing element from right hand panel (selection panel) - optional
-      if(removeElement && !ele.className.match("noremove")){
-        //unselecting from left hand panel when unselecting/removing in right hand panel
-        var lhsectionId = $(ele).closest("ul.result-list").find("span.lhsection-id").html();
-        var allBoxId    = $(ele).find('span.allBox-id').html();
-
-        panel.updateCurrentCount($(ele).parent().parent().find("div.count-container").find('span.current-count'), -1);
-        panel.showHideLink($(ele).parent().parent()); //need to be after updateCurrentCount
-        panel.el.find('div#'+lhsectionId+' li.'+ ele_class +' span.fancy-checkbox').removeClass("selected");
-        ele.remove();
-  
-        //if select all box is selected, it needs to be unselected if one track is removed
-        if(panel.el.find('div#'+allBoxId+' span.fancy-checkbox.selected').length) {
-          panel.el.find('div#'+allBoxId+' span.fancy-checkbox').removeClass("selected");        
-        }
-      }
-      //removing from right hand panel when unselecting in left hand panel
-      if(addElement) {          
-        panel.el.find('div#'+rhsectionId+' ul li.'+item).remove();
-        panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'), -1);
-        panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
-      }
-      panel.filterData(ele_class);
-    } else { //selecting checkbox
-      if(addElement) {
-        var allBoxid     = panel.elLk.lookup[item].parentTab.find('div.all-box').attr("id");
-
-        panel.updateCurrentCount(panel.el.find('div#'+rhsectionId+' span.current-count'));
-        panel.showHideLink(panel.el.find('div#' + rhsectionId)); //need to be after updateCurrentCount
-        
-        $(ele).clone().append('<span class="hidden allBox-id">'+allBoxid+'</span>').prependTo(panel.el.find('div#'+rhsectionId+' ul')).removeClass("noremove").addClass(item).find("span.fancy-checkbox").addClass("selected");
-      }
-      $(ele).find("span.fancy-checkbox").addClass("selected");
-      panel.filterData(item);
-
-      if ($(ele).data('filtercontainer')) {        
-        !this.loadingState && this.addToStore(item); // Dont add to store while loading state from store
-      }
-    }
-    panel.trackError('div#cell, div#experiment, div#source');
-    panel.enableConfigureButton('div#cell, div#experiment, div#source');
-    panel.setLocalStorage();
   },
 
 
@@ -462,10 +406,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.updateCurrentCount(subTab, selectedLIs.length, allLIs.length);
           selectedLIs.length && selectedElements.push(selectedLIs);
         })
-
-        // panel.selectedTracksCount[key] = panel.selectedTracksCount[key] || {};
-        // panel.selectedTracksCount[key].selected = this.totalSelected;
-        // panel.selectedTracksCount[key].selected = this.total_available;
       }
       else {
         selectedLIs = panel.elLk[key].tabContents.has('.selected') || [];
@@ -788,6 +728,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
         $(el).offset({left: activeLetterDiv.offset().left - 2});
       })
+
     }
   },
   
@@ -918,71 +859,72 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var resetCount = filters_class === '' ? 1 : 0;
 
     // Code to activate/deactivate ribbons based on availability
-    var mainRHSection = panel.el.find(tabB_containerId).find("span.rhsection-id").html();
+    var mainRHSection = panel.elLk.trackPanel.find(tabB_containerId).find("span.rhsection-id").html();
     // loop for each li to find out where the parent content is and update count
-    $.each(panel.el.find(tabB_containerId).find('span.rhsection-id'), function(d, ele3) {
-      var rhsectionId = panel.el.find(ele3).html();
+    $.each(panel.elLk.trackPanel.find(tabB_containerId).find('span.rhsection-id'), function(d, tab) {
+      var rhsectionId = $(tab).html();
       var newCount    = 0;
-      var parentTab   = panel.el.find(ele3).closest(".tab-content").find("li").data("parent-tab")+"-tab";
+      var parentTab   = panel.elLk.trackPanel.find(tab).closest(".tab-content").find("li").data("parent-tab")+"-tab";
 
       if(panel.el.find("div#"+rhsectionId+".result-content").length) {
         var li_class = resetCount ? "" : "._filtered";  //if resetcount we need to get all li
-        $.each(panel.el.find(tabB_containerId+' li'+li_class), function(index, elem) {
-          if(rhsectionId === panel.el.find(elem).closest("div.tab-content").find('span.rhsection-id').html()) {
+        $.each(panel.elLk.trackPanel.find(tabB_containerId+' li'+li_class), function(index, elem) {
+          if(rhsectionId === $(elem).closest("div.tab-content").find('span.rhsection-id').html()) {
             newCount++;
           } 
         });
 
-        if(panel.el.find(ele3).closest(".tab-content").find("div.all-box text._num").length) {
-          panel.el.find(ele3).closest(".tab-content").find("div.all-box text._num").html("("+newCount+")");
+        if($(tab).closest(".tab-content").find("div.all-box text._num").length) {
+          $(tab).closest(".tab-content").find("div.all-box text._num").html("("+newCount+")");
         }
         if(!newCount) {
-          panel.el.find("div#"+parentTab).addClass("inactive");
-          panel.el.find("div#"+rhsectionId+".result-content").hide();
+          panel.elLk.trackPanel.find("div#"+parentTab).addClass("inactive");
+          panel.elLk.trackPanel.find("div#"+rhsectionId+".result-content").hide();
         } else {
           //making sure rhsection is shown and remove inactive class
-           panel.el.find("div#"+rhsectionId+".result-content").show();
-          panel.el.find("div#"+parentTab).removeClass("inactive");          
+           panel.elLk.trackPanel.find("div#"+rhsectionId+".result-content").show();
+          panel.elLk.trackPanel.find("div#"+parentTab).removeClass("inactive");
         }
 
+        var alphabetContent = $(tab).closest(".tab-content").find("div.ribbon-content div.alphabet-content");
         //if there is alphabet ribbon, going through alphabet ribbon, activating and deactivating the one with/without elements
-        if(panel.el.find(ele3).closest(".tab-content").find("div.ribbon-content div.alphabet-content").length) {
+        if(alphabetContent.length) {
           var setActive = 0; //used to set active ribbon
           var activeCount = 0;
-          panel.el.find(ele3).closest(".tab-content").find("div.letters-ribbon div.active").removeClass("active"); //removing existing active first
-          panel.el.find(ele3).closest(".tab-content").find("div.alphabet-content.active").removeClass("active");
+          $(tab).closest(".tab-content").find("div.letters-ribbon div.active").removeClass("active"); //removing existing active first
+          $(tab).closest(".tab-content").find("div.alphabet-content.active").removeClass("active");
 
-          $.each(panel.el.find(ele3).closest(".tab-content").find("div.ribbon-content div.alphabet-content"), function(i2, ele4) {
-            var parentRibbon = panel.el.find(ele4).data("ribbon");
+          $.each(alphabetContent, function(i2, ac_ele) {
+            var parentRibbon = $(ac_ele).data("ribbon");
 
-            if(panel.el.find(ele4).find("li._filtered").length) {
+            if($(ac_ele).find("li._filtered").length) {
               activeCount++;
               //toggling tab for first active class adding active class to first alphabet with content in ribbon
-              if(!panel.el.find(ele3).closest(".tab-content").find("div.letters-ribbon div.active").length){
-                 panel.toggleTab(panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon), panel.el.find(ele3).closest(".tab-content"), 1);
+              if(!$(tab).closest(".tab-content").find("div.letters-ribbon div.active").length){
+                 panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1);
               }
-              panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); //remove inactive class in case its present
+              $(tab).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); //remove inactive class in case its present
             } else { //empty
 
-              if(panel.el.find(ele4).find("li").length && resetCount) { //resetting everything
-                panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); // remove inactive from alphabet ribbon with content 
-                panel.el.find(ele3).closest(".tab-content").find("div.rarrow").removeClass("inactive").addClass("active");
-                panel.el.find("div#"+mainRHSection+" div.result-content").show(); //make sure all rhSection link/count are shown
+              if($(ac_ele).find("li").length && resetCount) { //resetting everything
+                $(tab).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); // remove inactive from alphabet ribbon with content 
+                $(tab).closest(".tab-content").find("div.rarrow").removeClass("inactive").addClass("active");
+                $("div#"+mainRHSection+" div.result-content").show(); //make sure all rhSection link/count are shown
 
-                if(!panel.el.find(ele3).closest(".tab-content").find("div.letters-ribbon div.active").length){
-                   panel.toggleTab(panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon), panel.el.find(ele3).closest(".tab-content"), 1);
+                if(!$(tab).closest(".tab-content").find("div.letters-ribbon div.active").length){
+                   panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1);
                 }                
               } else { //empty with no li at all
-                panel.el.find(ele3).closest(".tab-content").find("div."+parentRibbon).addClass("inactive");
+                $(tab).closest(".tab-content").find("div."+parentRibbon).addClass("inactive");
               }
             }
           });
 
           //disable rarrow and larrow if there is only one ribbon available
           if(activeCount === 1) {
-            panel.el.find(ele3).closest(".tab-content").find("div.larrow, div.rarrow").addClass("inactive");
+            $(tab).closest(".tab-content").find("div.larrow, div.rarrow").addClass("inactive");
           } else {
-            panel.el.find(ele3).closest(".tab-content").find("div.rarrow").addClass("active"); 
+            $(tab).closest(".tab-content").find("div.rarrow").addClass("active"); 
           }
         }
       }
@@ -1099,7 +1041,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       if(!this.className.match(/inactive/gi)) {
         if(this.className.match(/larrow/gi)) {
-          //get currently selected letter, convert it to utf-16 number, ssubstract 1 to get previous letter number and then convert it to char; skipping letter with no content
+          if (!availableAlphabets[activeAlphabetIndex-1]) return;
+
+          //get previous letter 
           var prevLetter = $(availableAlphabets[activeAlphabetIndex-1]).html().charAt(0).toLowerCase();
           // Get total letters skipped to adjust offset (charcode(currentletter - prevLetter))
           var lettersSkipped = activeAlphabet.charCodeAt(0) - prevLetter.charCodeAt(0);
@@ -1118,10 +1062,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
 
         if (this.className.match(/rarrow/gi)) {
-          //get currently selected letter, convert it to utf-16 number add 1 to get next letter number and then convert it to char
-          var nextLetter = "";
-          var nextLetter = $(availableAlphabets[activeAlphabetIndex+1]).html().charAt(0).toLowerCase();
+          if (!availableAlphabets[activeAlphabetIndex+1]) return;
 
+          var nextLetter = $(availableAlphabets[activeAlphabetIndex+1]).html().charAt(0).toLowerCase();
           // Get total letters skipped to adjust offset (charcode(nextletter-currentletter))
           var lettersSkipped = nextLetter.charCodeAt(0) - activeAlphabet.charCodeAt(0);
 
