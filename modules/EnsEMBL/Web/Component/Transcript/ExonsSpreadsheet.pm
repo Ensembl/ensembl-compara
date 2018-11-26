@@ -369,9 +369,10 @@ sub add_variations {
     my ($name, $start, $end, $consequence, $vf);
 
     if ($flank) {
+      my $flanking  = $config->{'flanking'};
       $name         = $variation->name;
-      $start        = $variation->start;
-      $end          = $variation->end;
+      $start        = ($slice->strand == 1) ? $variation->start : $flanking - $variation->start;
+      $end          = ($slice->strand == 1) ? $variation->end   : $flanking - $variation->end;
       $consequence  = $flank.'_gene_variant';
     }
     else {
