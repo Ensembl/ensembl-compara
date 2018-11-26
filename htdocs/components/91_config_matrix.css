@@ -295,6 +295,20 @@ div.search-box                                  { position: relative; margin-top
 div.search-box input.configuration_search_text  { width: 100%; }
 div.search-box img.search-icon                  { margin-left: -28px; }
 
+/* track configuration/matrix display */
+button.reset              { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; box-shadow: 1px 10px 5px -10px rgba(0,0,0,0.3);}
+div.configuration-legend  { display: inline-block; float: left; };
+div.matrix-container      { display: inline-block; }
+div.config-key            { padding-bottom: 5px; }
+span.track-key            { width: 15px; height: 15px;  display: inline-block; border: #ccc 1px solid; margin-bottom:-2px; margin-right: 10px;}
+span.track-key.on         { background-color: [[MAIN_V_DARK]]; }
+span.track-key.off        { background-color: [[WHITE]]; }
+span.track-key.no-data    { background-color: [[LIGHT_GREY]]; }
+span.track-key.peak       { border: none; margin-top: 2px; }
+span.track-key.signal     { border: none; margin-top: 2px; }
+
+div.config_wrapper div.config span.track-key img        { width: 30px; height: 30px; display: inline-block; margin-left: -8px; margin-top: -10px;}
+
 .s-noselect {
   -webkit-touch-callout: none;
   -webkit-user-select: none;

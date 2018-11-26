@@ -92,7 +92,15 @@ sub build {
       </div>
         
       <div class="track-panel track-configuration" id="configuration-content">
-        Track configuration/matrix display.....
+        <div class="configuration-legend">
+          <div class="config-key"><span class="track-key on"></span>Data track on</div>
+          <div class="config-key"><span class="track-key off"></span>Data track off</div>
+          <div class="config-key"><span class="track-key no-data"></span>No data</div>
+          <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
+          <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
+        </div>
+        <div class="matrix-container"></div>
+        <button class="fade-button reset">Reset</button>
       </div>
 
       <div class="result-box">
