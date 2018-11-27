@@ -59,7 +59,7 @@ sub content {
   my @epigenomes = split(',', $hub->param('epigenomes'));
   @epigenomes = ('none') unless scalar @epigenomes;
   $self->add_entry({
-                    type        => 'Verified in cell lines',
+                    type        => 'Experimentally verified in',
                     label       => join(', ', @epigenomes), 
                   });
 }
