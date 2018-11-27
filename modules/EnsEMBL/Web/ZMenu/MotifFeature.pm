@@ -30,12 +30,16 @@ sub content {
   my $click_data = $self->click_data;
   return unless $click_data;
 
+  $self->caption('Motif Feature');
   my $id = $hub->param('feature_id');
-  $self->caption("Motif Feature: $id");
+  $self->add_entry({
+                    type        => 'Stable ID',
+                    label       => $id, 
+                  });
+
   my $r = sprintf '%s:%s-%s', $hub->param('fake_click_chr'), 
                               $hub->param('fake_click_start'), 
                               $hub->param('fake_click_end');
-
   $self->add_entry({
                     type       => 'Location',
                     label_html => $r, 
