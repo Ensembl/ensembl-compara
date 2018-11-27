@@ -32,7 +32,9 @@ sub content {
 
   my $id = $hub->param('feature_id');
   $self->caption("Motif Feature: $id");
-  my $r       = $hub->param('r');
+  my $r = sprintf '%s:%s-%s', $hub->param('fake_click_chr'), 
+                              $hub->param('fake_click_start'), 
+                              $hub->param('fake_click_end');
 
   $self->add_entry({
                     type       => 'Location',
