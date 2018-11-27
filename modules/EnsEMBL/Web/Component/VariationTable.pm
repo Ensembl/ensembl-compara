@@ -168,27 +168,8 @@ sub content {
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
-  my %sp_classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-    'likely deleterious'     => 'bad',
-    'likely benign'          => 'good',
-    'likely disease causing' => 'bad',
-    'damaging'               => 'bad',
-    'high'                   => 'bad',
-    'medium'                 => 'ok',
-    'low'                    => 'good',
-    'neutral'                => 'good',
-  );
+  my %sp_classes = %{$self->predictions_classes};
+
   foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
