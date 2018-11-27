@@ -41,15 +41,14 @@ sub content {
                                     action  => 'View',
                                     r       => $r,
                                   }),
-                    class      => '_motif',
                   });
   
 
   $self->add_entry({
-                    type       => 'Binding matrix',
-                    label_html => $hub->param('binding_matrix_stable_id'), 
-                    link       => '#',
-                    class      => '_motif',
+                    type        => 'Binding matrix',
+                    label_html  => $hub->param('binding_matrix_stable_id'), 
+                    link        => '#',
+                    link_class  => '_motif',
                   });
   ## Split these fields with spaces so they wrap
   my @transcription_factors = split(',', $hub->param('transcription_factors'));
