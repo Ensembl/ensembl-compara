@@ -97,7 +97,7 @@ sub _format_mf_info {
     my $max_length = 12;
     for ($i = 1; $i < scalar @names; $i++) {
       if (length($names[$i]) < ($max_length - length($name_string))) {
-        $name_string .= $names[$i];
+        $name_string .= ', '.$names[$i];
       }
       else {
         last;
