@@ -832,11 +832,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     var filters = {};
     tabA_container.find('li span.fancy-checkbox.selected').parent().map(function(){
-      $(this).data('filter').split(' ').map(function(f) {
-        if (f!== '') {
-          filters[f] = 1;
-        }
-      })
+      if ($(this).data('filter')) {
+        $(this).data('filter').split(' ').map(function(f) {
+          if (f!== '') {
+            filters[f] = 1;
+          }
+        });
+      }
     })
 
     // Hide all first and then show based on filters
