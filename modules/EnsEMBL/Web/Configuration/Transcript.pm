@@ -92,12 +92,10 @@ sub populate_tree {
     { 'availability' => 'either database:variation has_variations translation', 'concise' => 'Variants' }
   ));
 
-  if ($self->hub->species eq 'Homo_sapiens') {
-    $prot_menu->append($self->create_node('PDB', '3D Protein model',
-      [qw( alignment EnsEMBL::Web::Component::Transcript::PDB  )],
-      { 'availability' => 'transcript translation','concise' => '3D Protein model (PDBe)'  }
-    ));
-  }
+  $prot_menu->append($self->create_node('PDB', '3D Protein model',
+    [qw( alignment EnsEMBL::Web::Component::Transcript::PDB )],
+    { 'availability' => 'transcript translation','concise' => '3D Protein model (PDBe)' }
+  ));
  
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
