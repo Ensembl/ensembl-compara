@@ -56,6 +56,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        # Tag attached to every single tree. Also used to select params - e.g. reg_conf, species_tree 
+        'division' => 'ensembl',
+
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
@@ -72,9 +75,6 @@ sub default_options {
         'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
-
-        # Tag attached to every single tree
-        'division'              => 'ensembl',
 
     #default parameters for the geneset qc
 
@@ -105,9 +105,6 @@ sub default_options {
 
     # alignment filtering options
 
-    # species tree reconciliation
-        # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
-        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -160,22 +157,6 @@ sub default_options {
         'goc_stats_capacity'        => 70,
         'genesetQC_capacity'        => 100,
         'cafe_capacity'             => 50,
-
-    # connection parameters to various databases:
-
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-
-        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
-
-        # Where the members come from (as loaded by the LoadMembers pipeline)
-        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
-
-        # Points to the previous production database. Will be used for various GOC operations.
-        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/waakanni_protein_trees_93',
-        #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
-
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
