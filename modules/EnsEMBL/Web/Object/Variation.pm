@@ -61,12 +61,33 @@ sub availability {
       }
       $availability->{'is_somatic'}  = $obj->has_somatic_source;
       $availability->{'not_somatic'} = !$obj->has_somatic_source;
+      $availability->{'is_coding'}   = $self->is_coding_variant;
     }
     
     $self->{'_availability'} = $availability;
   }
   
   return $self->{'_availability'};
+}
+
+sub is_coding_variant {
+  my $self = shift;
+  my $rank;
+  if(my $vf_object = $self->get_selected_variation_feature) {
+    my $cons = $vf_object->most_severe_OverlapConsequence;
+    $rank = $cons->rank;
+  }
+  else {
+    my @vari_mappings = @{ $self->get_variation_features };
+    foreach my $f (@vari_mappings){
+      my $cons = $vf_object->most_severe_OverlapConsequence;
+      my $cons_rank = $cons->rank;
+      if (!$rank || $rank > $cons_rank) {
+        $rank = $cons_rank;
+      }
+    }
+  }
+  return ($rank < 18) ? 1 : 0;
 }
 
 sub counts {
