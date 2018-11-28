@@ -681,13 +681,9 @@ sub export_options {
   
   return unless $align;  
 
-  foreach (grep { /species_$align/ } $hub->param) {
-    push @species_options, $_;  
-  }
-  
   return {
           'action'  => 'TextAlignments', 
-          'params'  => ['align', @species_options], 
+          'params'  => ['align'], 
           'caption' => 'Download alignment',
         }; 
 }

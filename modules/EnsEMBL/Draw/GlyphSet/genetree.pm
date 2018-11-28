@@ -715,8 +715,8 @@ sub features {
   
   # Recurse for each child node
   if ($tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-    if (!$f->{'_collapsed'} && @{$tree->sort_children}) {
-      foreach my $child_node (@{$tree->sort_children}) {
+    if (!$f->{'_collapsed'} && @{$tree->sorted_children}) {
+      foreach my $child_node (@{$tree->sorted_children}) {
         $f->{'_child_count'}++;
         push @features, @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons, $slice_cigar_lines, $low_coverage_species)};
       }
