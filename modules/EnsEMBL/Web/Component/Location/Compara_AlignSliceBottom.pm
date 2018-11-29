@@ -111,9 +111,6 @@ sub content {
   
   my $image = $self->new_image(\@images);
   $image->{'export_params'} = ['align', $align];
-  foreach ($self->param) {
-    push @{$image->{'export_params'}}, [$_, $self->param($_)] if $_ =~ /^species_$align/;
-  }
 
   return if $self->_export_image($image);
   

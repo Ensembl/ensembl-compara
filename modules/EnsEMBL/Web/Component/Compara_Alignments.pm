@@ -33,6 +33,10 @@ use base qw(EnsEMBL::Web::Component::TextSequence);
 sub _init {
   my $self = shift;
   my $hub = $self->hub;
+
+  ## Don't cache these pages, as it breaks the species selector
+  $self->mcacheable(0);
+
   my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
   %{$self->{'viewconfig'}{$hub->type}->{_user_settings}} = (%{$self->{'viewconfig'}{$hub->type}->{_user_settings}}, %$alignments_session_data);
   $self->SUPER::_init(100);
@@ -677,17 +681,14 @@ sub export_options {
   my $self = shift;
   my $hub = $self->hub;
   my @species_options;
-  my $align = $hub->param('align');
+  my $settings = $self->{'viewconfig'}{$hub->type}->{_user_settings};
+  my $align = $hub->param('align') || $settings->{'align'};
   
   return unless $align;  
 
-  foreach (grep { /species_$align/ } $hub->param) {
-    push @species_options, $_;  
-  }
-  
   return {
           'action'  => 'TextAlignments', 
-          'params'  => ['align', @species_options], 
+          'params'  => ['align'], 
           'caption' => 'Download alignment',
         }; 
 }

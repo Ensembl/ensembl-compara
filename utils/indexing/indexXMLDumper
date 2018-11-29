@@ -754,23 +754,29 @@ sub dumpVariation {
 
   ## get synonym info
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
-  my $synonyms;
+  my $synonyms = on_disk_set('synonyms');
   $sth = $conf->{'variation_dbh'}->prepare(qq(
-      SELECT v.variation_id, vs.name, vs.source_id
+      SELECT v.variation_id, vs.name
        FROM variation v, variation_synonym vs
       WHERE v.variation_id = vs.variation_id));
   $sth->execute;
-  while ( my ($variation_id,$syn, $source_id) = $sth->fetchrow_array ) {
-    $synonyms->{$variation_id}{$syn}{$source_id}++;
+  while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
+    set_add($synonyms,$variation_id,$syn_name);
   }
+  print LOG "      Got all general synonyms ".&date_and_mem()."\n";
+
+  ## get CLINGEN alleles
+  print LOG "    Preparing to get CLINGEN alleles ".&date_and_mem()."\n";
+  my $clinvar_alleles = on_disk_set('clinvar_alleles');
   ## get CLINVAR allele_synonyms
   $sth = $conf->{'variation_dbh'}->prepare(qq(
       SELECT variation_id, name
        FROM allele_synonym));
   $sth->execute;
   while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
-    $synonyms->{$variation_id}{$syn_name}++;
+    set_add($clinvar_alleles,$variation_id,$syn_name);
   }
+  print LOG "      Got all CLINGEN alleles ".&date_and_mem()."\n";
 
   ## get failed mappings
   print LOG "    Preparing to get details of failed mappings ".&date_and_mem()."\n";
@@ -786,7 +792,6 @@ sub dumpVariation {
   }
 
   # Process all variations in batches, both mapped, failed and the precious non-mapped, non-failed
-
   my $batch_size = 50_000_000;
   my $offset = 0;
 
@@ -808,16 +813,27 @@ sub dumpVariation {
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
       my $source_id          = $row->[2];
-      my $synonym_hash       = $synonyms->{$variation_id};
       my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
-      my %synonyms;
       my $syn_c = 0;
       my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
-      foreach my $syn (keys %$synonym_hash) {
-        push @syns, $syn;
-         $syn_c++;
+      if ($synonyms) {
+        if ($synonyms->{$variation_id}) {
+          foreach my $synonym_name (set_get($synonyms,$variation_id)) {
+            push @syns, $synonym_name;
+            $syn_c++; 
+          }
+        }
       }
+      if ($clinvar_alleles) {
+        if ($clinvar_alleles->{$variation_id}) {
+          foreach my $clinvar_name (set_get($clinvar_alleles,$variation_id)) {
+            push @syns, $clinvar_name;
+            $syn_c++; 
+          }
+        } 
+      }
+
       my $somatic_mutation = $somatic_var;
       my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variant';
       my $snp_source       = $sources->{ $source_id };
