@@ -148,6 +148,7 @@ sub new_from_DBAdaptor {
     if ($genome_component) {
         if (grep {$_ eq $genome_component} @{$db_adaptor->get_GenomeContainer->get_genome_components}) {
             $self->genome_component($genome_component);
+            $self->display_name = $self->display_name . sprintf(' (component %s)', $genome_component);
         } else {
             die "The required genome component '$genome_component' cannot be found in the database, please investigate\n";
         }
@@ -522,6 +523,7 @@ sub make_component_copy {
     $copy_genome_db->genome_component($component_name);
     $copy_genome_db->dbID(undef);
     $copy_genome_db->adaptor(undef);
+    $copy_genome_db->display_name($self->display_name . sprintf(' (component %s)', $component_name));
     $self->component_genome_dbs($component_name, $copy_genome_db);
     return $copy_genome_db;
 }
@@ -618,7 +620,7 @@ sub strain_name {
 sub display_name {
     my $self = shift;
     $self->{'_display_name'} = shift if @_;
-    return $self->{'_display_name'} . ($self->genome_component ? sprintf(' (component %s)', $self->genome_component) : '');
+    return $self->{'_display_name'};
 }
 
 
