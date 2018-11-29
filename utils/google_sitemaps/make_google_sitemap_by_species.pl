@@ -20,7 +20,7 @@
 # can also specify which species you want to create maps for. e.g.
 #
 #   $ make_google_sitemap_by_species.pl
-#   $ make_google_sitemap_by_species.pl Aspergillus_clavatus Aspergillus_flavus
+#   $ make_google_sitemap_by_species.pl aspergillus_clavatus aspergillus_flavus
 #
 # The sitemap files will be created in the 'sitemaps' folder. For each species, the 
 # maps are split into numbered files, each containing 20,000 urls. e.g.
