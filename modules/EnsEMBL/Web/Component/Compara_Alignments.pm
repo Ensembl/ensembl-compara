@@ -677,7 +677,8 @@ sub export_options {
   my $self = shift;
   my $hub = $self->hub;
   my @species_options;
-  my $align = $hub->param('align');
+  my $settings = $self->{'viewconfig'}{$hub->type}->{_user_settings};
+  my $align = $hub->param('align') || $settings->{'align'};
   
   return unless $align;  
 
