@@ -38,9 +38,14 @@ sub content {
 
   ## Pass species selection to output
   my @species_options;
-  my $align = $hub->param('align');
 
-  $settings->{'Hidden'} = ['align'];
+  my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
+  %{$self->{'viewconfig'}{$hub->param('data_type')}->{_user_settings}} = (%{$self->{'viewconfig'}{$hub->param('data_type')}->{_user_settings}||{}}, %{$alignments_session_data||{}});
+  my $user_settings = $self->{'viewconfig'}{$hub->param('data_type')}->{_user_settings};
+  my $align = $hub->param('align') || $user_settings->{'align'};
+  my $align_type = $hub->param('align_type') || $user_settings->{'align_type'};
+
+  $settings->{'Hidden'} = ['align', 'align_type'];
 
   ## Options per format
   my @field_order = $view_config->field_order;
