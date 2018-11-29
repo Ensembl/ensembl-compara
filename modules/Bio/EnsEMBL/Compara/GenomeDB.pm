@@ -638,6 +638,7 @@ sub display_name {
 
 sub get_common_name {
     my $self = shift;
+    warning('GenomeDB::get_common_name is experimental and may be removed soon. Do not use');
     my $display_name = $self->display_name;
     if ($self->taxon_id && ($self->{'_taxon'} || $self->adaptor)) {
         my $scientific_name = $self->taxon->scientific_name;
