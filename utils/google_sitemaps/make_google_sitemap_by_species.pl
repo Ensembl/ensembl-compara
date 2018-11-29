@@ -152,7 +152,8 @@ sub get_dataset_urls {
     print "Cannot fetch genes and transcripts - no analysis_ids\n";
     return @urls;
   }
-  foreach my $type (qw/gene transcript/) {  
+  #foreach my $type (qw/gene transcript/) {  
+  foreach my $type (qw/gene/) {  
     my $query = 
       "SELECT g.stable_id, g.${type}_id, cs.species_id 
        FROM ${type} g, seq_region sr, coord_system cs
