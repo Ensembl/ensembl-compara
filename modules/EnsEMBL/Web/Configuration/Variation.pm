@@ -124,12 +124,10 @@ sub populate_tree {
     { 'availability' => 'variation has_ldpops has_samples not_somatic', 'no_menu_entry' => 1 }
   );
 
-  if ($self->hub->species eq 'Homo_sapiens') {
-    $self->create_node('PDB', '3D Protein model',
-      [qw( alignment EnsEMBL::Web::Component::Variation::PDB  )],
-      { 'availability' => 'variation is_coding','concise' => '3D Protein model (PDBe)'  }
-    );
-  }
+  $self->create_node('PDB', '3D Protein model',
+    [qw( alignment EnsEMBL::Web::Component::Variation::PDB )],
+    { 'availability' => 'variation is_coding','concise' => '3D Protein model (PDBe)'` }
+  );
 
   $self->create_subnode(
     'Output', 'Export Variation Data',

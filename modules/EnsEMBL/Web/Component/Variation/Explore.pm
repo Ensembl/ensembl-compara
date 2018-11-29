@@ -99,11 +99,8 @@ sub content {
     {'title' => 'LD plots and tables',                                'img' => '96/var_linkage_disequilibrium.png', 'url' => $ld_url                                },
     {'title' => 'Sequence conservation via cross-species alignments', 'img' => '96/var_phylogenetic_context.png',   'url' => $phylo_url                             },
     {'title' => 'Citations',                                          'img' => '96/var_citations.png',              'url' => $cit_url,      'count' => $cit_count   },
+    {'title' => '3D Protein model',                                   'img' => '96/var_3d_protein.png',             'url' => $prot_url                              }
   );
-
-  if ($self->hub->species eq 'Homo_sapiens') {
-    push @buttons, {'title' => '3D Protein model', 'img' => '96/var_3d_protein.png', 'url' => $prot_url, 'count' => '<span style="color:#0F0">BETA</span>' };
-  }
 
   my $html = $self->button_portal(\@buttons);
 
