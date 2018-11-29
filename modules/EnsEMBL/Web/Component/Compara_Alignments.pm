@@ -33,6 +33,10 @@ use base qw(EnsEMBL::Web::Component::TextSequence);
 sub _init {
   my $self = shift;
   my $hub = $self->hub;
+
+  ## Don't cache these pages, as it breaks the species selector
+  $self->mcacheable(0);
+
   my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
   %{$self->{'viewconfig'}{$hub->type}->{_user_settings}} = (%{$self->{'viewconfig'}{$hub->type}->{_user_settings}}, %$alignments_session_data);
   $self->SUPER::_init(100);
