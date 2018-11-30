@@ -47,7 +47,8 @@ sub create {
     push @lines, _lines("Disallow", qw(
   				 /Multi/  /biomart/  /Account/ */DataExport/ */ImageExport/ 
   				 */Ajax/  */Config/  */Export/  */Experiment/ */Experiment*
-  				 */Location/  */LRG/  */Phenotype/  */Regulation/  */Search/ */Share
+  				 */Family/ */ImageExport */Location/  */LRG/  */Marker/ 
+           */Phenotype/ */Regulation/  */Search/ */Share */StructuralVariation/
   				 */UserConfig/  */UserData/  */Variation/
   			      ));
   
@@ -63,7 +64,7 @@ sub create {
     }
   
     # a bunch of others that are being bypassed
-    foreach my $row (qw(SpeciesTree Similarity SupportingEvidence Sequence_Protein Sequence_cDNA Sequence StructuralVariation_Gene Splice)) {
+    foreach my $row (qw(Species Secondary Similarity Supporting Sequence Structural Splice)) {
       push @lines, _lines("Disallow", "*/Gene/$row*", "*/Transcript/$row*");
     }
   
@@ -74,6 +75,14 @@ sub create {
     # Doxygen
     push @lines, _lines("Disallow", "/info/docs/Doxygen");
   
+    if (-e "$map_dir/index.xml") {
+      # If we have a sitemap let google know about it.
+      warn _box("Creating robots.txt for google sitemap");
+      push @lines, _lines("Sitemap", sprintf '//%s/sitemaps/index.xml', $sd->ENSEMBL_SERVERNAME);
+    }
+
+    ## SPECIFIC CRAWLERS
+
     push @lines, _lines("User-agent", "W3C-checklink");
     push @lines, _lines("Allow", "/info");
   
@@ -85,11 +94,6 @@ sub create {
     push @lines, _lines("User-agent", "AhrefsBot");
     push @lines, _lines("Disallow", "/");
   
-    if (-e "$map_dir/sitemap-index.xml") {
-      # If we have a sitemap let google know about it.
-      warn _box("Creating robots.txt for google sitemap");
-      push @lines, _lines("Sitemap", sprintf '//%s/sitemaps/sitemap-index.xml', $sd->ENSEMBL_SERVERNAME);
-    }
   } else {
     push @lines, _lines("User-agent", "*");
     push @lines, _lines("Disallow", "/");
