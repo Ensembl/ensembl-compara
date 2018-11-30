@@ -60,7 +60,7 @@ my $v = software_version();
 #####################################################################
 ##             Test genome_db and dnafrag updating                 ##
 
-print STDERR "------------------------ genome_db testing ---------------------------------\n";
+note("------------------------ genome_db testing ---------------------------------");
 
 my ($update, $new_gdb, $component_gdbs, $new_dnafrags);
 
@@ -156,7 +156,7 @@ is_deeply( \@old_comp_release, [$v-1, $v-1, $v-1], 'old components retired' );
 #####################################################################
 ##                  Test collection editing                        ##
 
-print STDERR "\n------------------------ collection testing ---------------------------------\n";
+note("------------------------ collection testing ---------------------------------");
 
 ## Test 1: create a new collection
 my $new_collection;
