@@ -16,17 +16,26 @@
 
 
 # Use this script to generate google sitemaps for your Ensembl site.
-# By default sitemaps will be generated for all species in the site, but you 
-# can also specify which species you want to create maps for. e.g.
-#
-#   $ make_google_sitemap_by_species.pl
-#   $ make_google_sitemap_by_species.pl Aspergillus_clavatus Aspergillus_flavus
-#
+
+# Because we now have so many species, we have changed to only indexing
+# the following:
+
+# * Home pages for all species
+# * Gene Summary pages for selected species
+
+# If no species are specified in the command line, only the home pages will be indexed
+
+#   $ make_basic_sitemap_by_species.pl
+#   $ make_basic_sitemap_by_species.pl homo_sapiens mus_musculus 
+
+# Note that the species name is the production name (all lowercase), not the URL!
+
+
 # The sitemap files will be created in the 'sitemaps' folder. For each species, the 
-# maps are split into numbered files, each containing 20,000 urls. e.g.
+# maps are split into numbered files, each containing up to 10,000 urls. e.g.
 #
 #   index.xml
-#   main.xml
+#   common.xml
 #   <species_name>_1.xml
 #   <species_name>_2.xml
 #   <species_name>_<n>.xml
@@ -61,9 +70,6 @@ BEGIN {
   require EnsEMBL::Web::DBHub;
 }
 
-my $skip_list;
-GetOptions("skip=s", \$skip_list);
-
 my $hub = EnsEMBL::Web::DBHub->new;
 my $sd = $hub->species_defs;
 my $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT || 'www';
@@ -87,6 +93,8 @@ if ($sitemap_url) {
 warn "Writing files to $sitemap_path";
 warn "Actual URL will be $sitemap_url\n\n";
 
+my $name_lookup = $hub->species_defs->production_name_lookup;
+
 # create the 'common' sitemap for non-species urls
 my $map = Search::Sitemap->new();
 warn "\n\n"; ## Add some space because of deprecation warnings
@@ -96,15 +104,22 @@ $map->add(Search::Sitemap::URL->new(
   priority => 1.0,
   lastmod => 'now'
 ));
-$map->write("${sitemap_path}/sitemap-common.xml");
-push @sitemaps, "sitemap-common.xml";
 
-my @skip = split /,/, $skip_list;
-my $name_lookup = $hub->species_defs->production_name_lookup;
+foreach my $dataset (@$SiteDefs::PRODUCTION_NAMES) {
+  my $species = $name_lookup->{$dataset};
+  $map->add(
+      loc        => $domain . '/' . $species . '/Info/Index',
+      priority   => 1.0,
+      lastmod    => 'now',
+      changefreq => 'monthly'
+  );
+}
 
-# create the sitemaps for each dataset
-foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
-  next if grep { $_ eq $dataset } @skip;
+$map->write("${sitemap_path}/common.xml");
+push @sitemaps, "common.xml";
+
+# create the sitemaps for each chosen dataset
+foreach my $dataset (@ARGV) {
   my $species = $name_lookup->{$dataset};
   
   print "DATASET $dataset -> SPECIES $species\n";
@@ -125,7 +140,7 @@ foreach (@sitemaps) {
     lastmod => 'now'
   ));
 }
-$index->write("${sitemap_path}/sitemap-index.xml");
+$index->write("${sitemap_path}/index.xml");
 
 exit;
 
@@ -133,13 +148,8 @@ exit;
 
 sub get_dataset_urls {
   my ($sd, $adaptor, $species) = @_;
+  my @urls;
   
-  my %url_template = (
-    'species'    => "/Info/Index",
-    'gene'       => "/Gene/Summary?g=",
-  );
-   
-  my @urls = ($domain . $species . $url_template{'species'});
   my @analysis_ids = get_analysis_ids($adaptor);
   if(! @analysis_ids){
     print "Cannot fetch genes and transcripts - no analysis_ids\n";
@@ -156,11 +166,10 @@ sub get_dataset_urls {
   $sth->execute;
     
   my @rows = @{$sth->fetchall_arrayref};
-  warn ">>> FOUND ROWS ".scalar(@rows);
   foreach my $row (@rows) {
     my ($stable_id, $id, $chromosome, $start, $end, $species_id) = @{$row};     
       
-    my $url = $domain . $species . $url_template{'gene'} . $stable_id;
+    my $url = $domain . $species . '/Gene/Summary?g=' . $stable_id;
     $url .= ";r=$chromosome:$start-$end";
     push @urls, $url;       
   }    
@@ -222,7 +231,7 @@ sub create_dataset_sitemaps {
     if ($batch_count == $batch_size or $total_count == scalar @urls) {
 # jh15: fixed a bug here, "$total_count == $#urls" was wrong. The loop ended 1 early and last url was never written
 # and no file was written if total_count < batch_count
-      my $filename = "sitemap_${dataset}_${suffix}.xml";
+      my $filename = "${dataset}_${suffix}.xml";
       $map->write("${sitemap_path}/$filename");
       print "  Wrote ${sitemap_path}/$filename\n";
       push @files, $filename;
