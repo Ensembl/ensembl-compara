@@ -126,7 +126,7 @@ sub populate_tree {
 
   $self->create_node('PDB', '3D Protein model',
     [qw( alignment EnsEMBL::Web::Component::Variation::PDB )],
-    { 'availability' => 'variation is_coding','concise' => '3D Protein model (PDBe)'` }
+    { 'availability' => 'variation is_coding','concise' => '3D Protein model (PDBe)'}
   );
 
   $self->create_subnode(
