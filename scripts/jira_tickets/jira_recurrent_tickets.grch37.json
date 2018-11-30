@@ -1,0 +1,216 @@
+[{
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-DeclarationofIntentions",
+            "summary": "Declaration of Intentions"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-Registryconfigurationfile",
+            "summary": "Registry Configuration file"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-Patchthereuseddatabasestothelatestschema",
+            "summary": "Patch the reused databases"
+         }
+      ],
+      "summary": "<Division> Release <version> Setup"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "summary": "Backup the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database#PreparationoftheMasterdatabase-2.Patchthedatabase",
+            "summary": "Patch the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database#PreparationoftheMasterdatabase-6.Healthcheckthemasterdatabase",
+            "summary": "Healthcheck the master database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "summary": "Final backup of the master database"
+         }
+      ],
+      "summary": "<Division> Release <version> Master database"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
+      "subtasks": [{
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Members",
+            "summary": "Run the member loading pipeline",
+            "ticket_map_name": "Member loading"
+         },
+         {
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Genomedumps",
+            "summary": "Run the genome dumping pipeline",
+            "ticket_map_name": "Genome dumps"
+         }
+      ],
+      "summary": "<Division> Release <version> Production preprocessing"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "relco_doc#Releasecoordinationdocumentation-Production",
+      "subtasks": [{
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run the Family pipeline",
+            "ticket_map_name": "Families"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run the Protein-tree pipeline",
+            "ticket_map_name": "Protein-trees"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "Protein-trees WGA Orthology QC",
+            "ticket_map_name": "Protein-trees WGA Orthology QC"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run ncRNA-tree pipeline",
+            "ticket_map_name": "ncRNA-trees"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "ncRNA-trees WGA Orthology QC",
+            "ticket_map_name": "ncRNA-trees WGA Orthology QC"
+         }
+      ],
+      "summary": "<Division> Release <version> Production pipelines"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "relco_doc#Releasecoordinationdocumentation-Endofproductionwindow",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-CreateReleaseDatabase",
+            "summary": "Create Release Database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "summary": "Build a new ancestral sequence core database"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "ImportAltAlleGroupsAsHomologies_conf",
+            "summary": "Run Projection pipeline"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-MergeGeneTrees+Families+NCTrees+PatchProjectionsAsHomologies",
+            "summary": "Merge GeneTrees+Families+NCTrees+PatchProjectionsAsHomologies"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblPostHomologyMerge_conf",
+            "summary": "PostHomologyMerge_conf pipeline"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Finaldatabasechecks",
+            "summary": "Final database checks"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Runthehealthchecks",
+            "summary": "Run HCs"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
+            "summary": "test the DNA data"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
+            "summary": "test the homologies data"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
+            "summary": "test the downloads"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
+            "summary": "test the documentation and statistics"
+         }
+      ],
+      "summary": "<Division> Release <version> Database merge and handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "relco_doc#Releasecoordinationdocumentation-Post-handover",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Datadumps",
+            "summary": "Data dump"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
+            "summary": "Update the jira_recurrent_tickets.<division>.json"
+         }
+      ],
+      "summary": "<Division> Release <version> Post-handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "relco_doc#Releasecoordinationdocumentation-Testthesites",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "http://grch37-test.ensembl.org/",
+            "summary": "test the web site"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "http://grch37-test.rest.ensembl.org/",
+            "summary": "test the REST server"
+         }
+      ],
+      "summary": "<Division> Release <version> Final checks before public release"
+   }
+]

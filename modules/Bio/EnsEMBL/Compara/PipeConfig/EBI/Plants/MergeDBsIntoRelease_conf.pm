@@ -24,6 +24,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf
 
+=head1 SYNOPSIS
+
+    #1. initialize the pipeline:
+        e95: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-5 -port 4615
+
 =head1 DESCRIPTION
 
 A pipeline to merge some production databases onto the release one.
@@ -53,8 +58,8 @@ sub default_options {
 
         # All the source databases
         'src_db_aliases' => {
-            'master_db'     => 'compara_master',
-            'protein_db'    => 'plants_ptrees',
+            'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
+            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-5:4615/mateus_plants_prottrees_42_95',
         },
 
         # The target database

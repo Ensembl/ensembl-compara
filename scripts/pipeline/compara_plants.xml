@@ -17,13 +17,16 @@
 
   <pairwise_alignments>
 
-    <!-- First, our top 3 species, which are references for all plants -->
-    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Viridiplantae" />
-    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Rhodophyta" />
-    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Viridiplantae" />
-    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Rhodophyta" />
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Viridiplantae"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Rhodophyta"/>
+    <!-- First, our top 3 species, which are references for all land plants -->
+    <one_vs_all method="LASTZ_NET" ref_genome="arabidopsis_thaliana" against="Embryophyta" />
+    <one_vs_all method="LASTZ_NET" ref_genome="vitis_vinifera" against="Embryophyta" />
+    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa" against="Embryophyta" />
+
+    <!-- More reference species, but within smaller clades -->
+    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="fabids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="brachypodium_distachyon" against="Triticeae"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="solanum_lycopersicum" against="asterids"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="theobroma_cacao" against="malvids"/>
 
     <!-- Rice all v all -->
     <all_vs_all method="LASTZ_NET">
@@ -32,7 +35,20 @@
         </species_set>
     </all_vs_all>
 
-    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="rosids"/>
+    <!-- Vigna all v all -->
+    <all_vs_all method="LASTZ_NET">
+        <species_set>
+          <taxonomic_group taxon_name="Vigna"/>
+        </species_set>
+    </all_vs_all>
+
+      <!-- Emmer wheat v most Triticeae -->
+      <one_vs_all method="LASTZ_NET" ref_genome="triticum_dicoccoides">
+        <species_set>
+          <taxonomic_group taxon_name="Triticeae"/>
+          <genome name="triticum_urartu" exclude="1" />
+        </species_set>
+      </one_vs_all>
 
   </pairwise_alignments>
 

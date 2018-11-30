@@ -76,17 +76,17 @@ sub default_options {
         # All the source databases
         'src_db_aliases'    => {
             'master_db'      => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_94',
-            'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_compara_nctrees_94',
-            'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_families_94',
-            'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_murinae_protein_trees_94',
-            'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_murinae_ncrna_trees_94',
-            'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-1:4485/waakanni_alt_allele_import_94',
-            'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_load_members_94',
+            'protein_db'     => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_95',
+            'ncrna_db'       => 'mysql://ensro@mysql-ens-compara-prod-2:4522/waakanni_compara_nctrees_95',
+            'family_db'      => 'mysql://ensro@mysql-ens-compara-prod-8:4618/carlac_families_95',
+            'mouse_prot_db'  => 'mysql://ensro@mysql-ens-compara-prod-8:4618/carlac_murinae_protein_trees_95',
+            'mouse_ncrna_db' => 'mysql://ensro@mysql-ens-compara-prod-8:4618/carlac_murinae_ncrna_trees_95',
+            'projection_db'  => 'mysql://ensro@mysql-ens-compara-prod-6:4616/carlac_alt_allele_import_95',
+            'members_db'     => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_load_members_95',
         },
 
         # The target database
-        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_94',
+        'curr_rel_db'   => "mysql://ensadmin:" . $ENV{ENSADMIN_PSW} . '@mysql-ens-compara-prod-1:4485/ensembl_compara_95',
 
         # From these databases, only copy these tables
         'only_tables'       => {
@@ -104,8 +104,8 @@ sub default_options {
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
-            #'seq_member_projection' => 'protein_db',
-            'peptide_align_feature_%' => 'protein_db',
+            'seq_member_projection' => 'protein_db',
+            'peptide_align_feature%' => 'protein_db',
         },
 
         # In these databases, ignore these tables

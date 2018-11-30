@@ -462,6 +462,7 @@ sub get_all_GeneMembers {
     my %seen_gene_members = ();
     foreach my $member (@{$self->get_all_Members}) {
         next unless $member->stable_id;
+        next unless $member->source_name =~ /^ENSEMBL/; # Uniprot members don't have gene_members!
         die "Cannot find the GeneMember of ".$member->stable_id unless $member->gene_member;
 
         # The genome_db_id is not the one requested

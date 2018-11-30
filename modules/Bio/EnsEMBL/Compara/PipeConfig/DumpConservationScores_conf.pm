@@ -69,8 +69,7 @@ sub pipeline_wide_parameters {
         'export_dir'    => $self->o('export_dir'),
 
         'cs_output_dir' => '#export_dir#/compara/conservation_scores/#dirname#',
-        'bedgraph_file' => '#cs_output_dir#/gerp_conservation_scores.#name#.bedgraph',
-        'bigwig_file'   => '#cs_output_dir#/gerp_conservation_scores.#name#.bw',
+        'bigwig_file'   => '#cs_output_dir#/gerp_conservation_scores.#name#.#assembly#.bw',
     };
 }
 

@@ -42,7 +42,7 @@ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
     This configuaration file gives defaults specific for the translated blat net pipeline. It inherits from PairAligner_conf.pm and parameters here will over-ride the parameters in PairAligner_conf.pm. 
     Please see PairAligner_conf.pm for general details of the pipeline.
@@ -61,7 +61,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf');     # We are running TBlat
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::TBlat_conf');     # We are running TBlat at the EBI
 
 
 sub default_options {
@@ -129,13 +129,6 @@ sub default_options {
             'bed_dir' => '/nfs/panda/ensemblgenomes/production/compara/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
             'output_dir' => '/nfs/panda/ensemblgenomes/production/compara' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
-	    #Location of executables
-	    'pair_aligner_exe' => '/nfs/panda/ensemblgenomes/production/compara/binaries/blat',
-            'faToNib_exe'       => $self->check_exe_in_cellar('kent/v335_1/bin/faToNib'),
-            'lavToAxt_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/lavToAxt'),
-            'axtChain_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/axtChain'),
-            'chainNet_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/chainNet'),
-
             # healthcheck
             'do_compare_to_previous_db' => 0,
             # Net
@@ -154,22 +147,6 @@ sub default_options {
 	   };
 }
 
-
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-            #%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            'default' => {'LSF' => '-q production-rh7'},
-            '100Gb_job' => { 'LSF' => '-q production-rh7 -M100 -R"rusage[mem=100]"' },
-            '500Gb_job' => { 'LSF' => '-q production-rh7 -M500 -R"rusage[mem=500]"' },
-            '1Gb_job'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
-            '1.8Gb_job' => { 'LSF' => '-q production-rh7 -M1800 -R"rusage[mem=1800]"' },
-            '3.6Gb_job' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
-            '4.2Gb_job' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
-            '8.4Gb_job' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
-    };
-}
 
 
 sub pipeline_analyses {

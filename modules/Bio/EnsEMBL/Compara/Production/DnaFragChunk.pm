@@ -362,9 +362,8 @@ sub dump_chunks_to_fasta_file
   my $chunk_size = 99999960;
   my $start = 1;
   my $end = $chunk_size;
-  my $total_length = $self->length;
-  $end = $total_length if $end > $total_length;
-
+  my $total_length = $self->dnafrag()->length; #because self->length does not account for when there are gaps in the coordinate eg Human Chr Y
+  $end = $total_length if $end >= $total_length;
   #check to see if the fastafile already exists and delete it if it does.
   if (-e $fastafile) {
      unlink $fastafile;
@@ -373,7 +372,7 @@ sub dump_chunks_to_fasta_file
   open(OUTSEQ, ">>$fastafile")
       or $self->throw("Error opening $fastafile for write");
   print OUTSEQ ">" . $self->display_id . "\n";
-
+      
   while ($start <= $total_length) {
 
       $self->{'_slice'} = undef;

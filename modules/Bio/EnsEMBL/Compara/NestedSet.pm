@@ -891,7 +891,7 @@ sub _internal_string_tree {
     for(my $i=0; $i<$self->distance_to_parent()*$scale; $i++) { $$buffer .= '-'; }
   }
 
-  $$buffer .= $self->string_node;
+  $$buffer .= $self->string_node . "\n";
 
   if(defined($indent)) {
     if($lastone) {

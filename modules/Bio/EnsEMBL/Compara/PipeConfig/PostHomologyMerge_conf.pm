@@ -84,7 +84,7 @@ sub pipeline_wide_parameters {
 
         'do_member_update'      => 0,
         'do_member_stats'       => 1,
-        'do_high_confidence'    => 1,
+        'do_high_confidence'    => 0,
     }
 }
 

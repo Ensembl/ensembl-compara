@@ -324,7 +324,7 @@ sub display_link_analysis
   printf(" %s %d %s\n",
          $genepairlink->get_value_for_tag('orthotree_type'),
          $genepairlink->get_value_for_tag('is_tree_compliant'),
-         $ancestor->taxonomy_level(),
+         $ancestor->taxonomy_level() // 'N/A',
         );
 }
 

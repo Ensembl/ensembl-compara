@@ -592,9 +592,11 @@ sub expand_subtrees {
 
     unless (defined $self->adaptor) {
         warn '$self->adaptor() must be defined in expand_subtrees()';
+        return;
     }
     unless ($self->tree_type eq 'supertree') {
         warn 'expand_subtrees() is only valid on super-trees';
+        return;
     }
 
     # The tree is not loaded yet, we can do a fast-loading procedure
@@ -617,7 +619,7 @@ sub expand_subtrees {
     # To update it at the next get_all_Members call
     delete $self->{'_member_array'};
     # Gets the global alignment
-    $self->alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id));
+    $self->alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id)) if $self->gene_align_id;
 }
 
 

@@ -972,6 +972,7 @@ sub _has_alignment_for_region {
   Arg[5]      : int $dnafrag_id2     Coordinates on the second species
   Arg[6]      : int $dnafrag_start2  --
   Arg[7]      : int $dnafrag_end2    --
+  Arg[8]      : Str $custom_select   Use custom SQL SELECT statement
   Example     : $gab_adaptor->_alignment_coordinates_on_regions();
   Description : Quick method to retrieve the coordinates of the blocks overlapping the coordinates of both species
   Returntype  : Arrayref of the block coordinates [$start1, $end1, $start2, $end2]
@@ -981,7 +982,7 @@ sub _has_alignment_for_region {
 =cut
 
 sub _alignment_coordinates_on_regions {
-    my ($self, $method_link_species_set_id, $dnafrag_id1, $dnafrag_start1, $dnafrag_end1, $dnafrag_id2, $dnafrag_start2, $dnafrag_end2) = @_;
+    my ($self, $method_link_species_set_id, $dnafrag_id1, $dnafrag_start1, $dnafrag_end1, $dnafrag_id2, $dnafrag_start2, $dnafrag_end2, $custom_select) = @_;
 
     my $method_link_species_set = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($method_link_species_set_id);
     if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
@@ -1004,8 +1005,9 @@ sub _alignment_coordinates_on_regions {
     }
 
     my $max_align = $method_link_species_set->max_alignment_length;
+    my $select = $custom_select ? $custom_select : 'ga1.dnafrag_start, ga1.dnafrag_end, ga2.dnafrag_start, ga2.dnafrag_end';
 
-    my $sql = 'SELECT ga1.dnafrag_start, ga1.dnafrag_end, ga2.dnafrag_start, ga2.dnafrag_end '
+    my $sql = "SELECT $select "
             . 'FROM genomic_align ga1 JOIN genomic_align ga2 USING (genomic_align_block_id) '
             . 'WHERE ga1.method_link_species_set_id = ? AND ga1.dnafrag_id = ? AND ga2.dnafrag_id = ? '
             . 'AND ga1.genomic_align_id != ga2.genomic_align_id '
@@ -1788,8 +1790,8 @@ sub _parse_maf {
           $this_seq{end}    = $spl[2] + $spl[3];
       } else { # reverse strand
           $this_seq{strand} = -1;
-          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3];
-          $this_seq{end}    = $spl[5] - $spl[2] - 1;
+          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3] + 1;
+          $this_seq{end}    = $spl[5] - $spl[2];
       }
 
       push( @{ $blocks[-1] }, \%this_seq );

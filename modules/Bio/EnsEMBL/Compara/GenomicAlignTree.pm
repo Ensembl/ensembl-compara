@@ -1195,15 +1195,21 @@ sub prune {
         push @display_species_set_scientific_names, $genome_db->name;
     }
     
+    my $new_root = $self;
     foreach my $this_leaf (@{$self->get_all_leaves}) {
         my $genomic_aligns = $this_leaf->genomic_align_group->get_all_GenomicAligns;
         my $species_name = $genomic_aligns->[0]->genome_db->name;
         unless (grep {$species_name eq $_}  @display_species_set_scientific_names) {
+            unless ($this_leaf->parent) {
+                # All the species have been removed
+                return undef;
+            }
             $this_leaf->disavow_parent;
         }
+        # get a new tree because the root may have changed
+        $new_root = $new_root->minimize_tree;
     }
-    #returns a new tree because the root may have changed
-    return $self->minimize_tree;    
+    return $new_root;
 }
 
 =head2 summary_as_hash

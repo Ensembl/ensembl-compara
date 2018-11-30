@@ -224,6 +224,83 @@ sub add_cluster {
 }
 
 
+=head2 add_supertree
+
+  Description: Create a new supertree (a special cluster whose leaves
+               are trees) and store it in the database.
+  Parameters : member_type, immediate_dataflow
+  Arg [1]    : clusterset to attach the new cluster to
+  Arg [2]    : cluster definition (hash reference with a 'trees' key and other tags)
+  Returntype : GeneTree: the created cluster
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub add_supertree {
+    my $self = shift;
+    my $clusterset = shift;
+    my $cluster_def = shift;
+    my $tree_list = $cluster_def->{trees};
+
+    return if (2 > scalar(@$tree_list));
+
+    # Assumes that the *same* cluster may have been stored in a previous attempt
+    my $model_id = $cluster_def->{model_id} || die 'A model_id is necessary when storing new supertrees';
+    my $existing_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_stable_id($model_id);
+    if ($existing_tree) {
+        $self->warning(sprintf("There is already a tree with model_id=%s: root_id=%s. not writing a new tree", $model_id, $existing_tree->root_id));
+        return $existing_tree;
+    }
+
+    # The new cluster object
+    my $cluster = new Bio::EnsEMBL::Compara::GeneTree(
+        -member_type => $self->param('member_type'),
+        -tree_type => 'supertree',
+        -method_link_species_set_id => $clusterset->method_link_species_set_id,
+        -clusterset_id => $clusterset->clusterset_id,
+        -stable_id => $cluster_def->{'model_id'},
+    );
+
+    # Stores the cluster (which only has 1 node)
+    $self->store_tree_into_clusterset($cluster, $clusterset);
+
+    # Link the sub-trees: attach their clusterset leaves to the new supertree instead
+    my $sql = 'UPDATE gene_tree_node SET parent_id = ?, root_id = ? WHERE node_id = ?';
+    my $gtn_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
+    my $total_gene_count = 0;
+    my $root_id = $cluster->root_id;
+    $self->call_within_transaction(sub {
+        my $sth = $self->compara_dba->dbc->prepare($sql);
+        foreach my $tree (@$tree_list) {
+            my $root_node = $gtn_adaptor->fetch_node_by_node_id($tree->root_id);    # Faster than calling $tree->root, which preloads the whole tree
+            $sth->execute($root_id, $root_id, $root_node->_parent_id);
+            $total_gene_count += $tree->get_value_for_tag('gene_count');
+        }
+        $sth->finish;
+    });
+    print STDERR "cluster root_id=", $root_id, " in clusterset '", $clusterset->clusterset_id, "' with ", scalar(@$tree_list), " leaves\n" if $self->debug;
+
+    # Stores the tags
+    $cluster_def->{'gene_count'} = $total_gene_count;
+    for my $tag (keys %$cluster_def) {
+        next if $tag eq 'trees';
+        print STDERR "Storing tag $tag => ", $cluster_def->{$tag} , "\n" if ($self->debug);
+        $cluster->store_tag($tag, $cluster_def->{$tag});
+    }
+
+    # Dataflows immediately or keep it for later
+    if ($self->param('immediate_dataflow')) {
+        $self->dataflow_output_id({ 'gene_tree_id' => $root_id, }, 2);
+    }
+
+    # Frees memory
+    $cluster->root->disavow_parent();
+
+    return $cluster;
+}
+
+
 =head2 build_clusterset_indexes
 
   Description: Updates the left/right_index of the clusterset.

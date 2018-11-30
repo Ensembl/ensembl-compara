@@ -91,17 +91,20 @@ sub default_options {
         # Store other genes
         'store_others'              => 0,
 
+    #load uniprot members for family pipeline
+        'load_uniprot_members'      => 0,
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        #'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        #'port'  => 4522,
+        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'port'  => 4615,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
 
         # Ensembl-specific databases
         #'staging_loc' => {
@@ -117,28 +120,28 @@ sub default_options {
             -port   => 4157,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 93,
+            -db_version => 95,
         },
         'e_mirror_loc' => {
             -host   => 'mysql-ensembl-mirror',
             -port   => 4240,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => 93,
+            -db_version => 95,
         },
         'eg_prod_loc' => {
             -host => 'mysql-eg-prod-2',
             -port => 4239,
             -user => 'ensro',
             -pass => '',
-            -db_version => 94
+            -db_version => 95
         },
         'staging_loc' => {
             -host => 'mysql-ens-vertannot-staging',
             -port => 4573,
             -user => 'ensro',
             -pass => '',
-            -db_version => 94
+            -db_version => 95
         },
 
 
@@ -152,7 +155,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
+        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-5.ebi.ac.uk:4615/ensembl_compara_plants_41_94',
     };
 }
 

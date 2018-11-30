@@ -259,7 +259,7 @@ sub _write_genome_db {
   $w->startTag('taxonomy');
   $w->dataElement('id', $gdb->taxon_id);
   $w->dataElement('scientific_name', $gdb->get_scientific_name('unique'));
-  my $common_name = $gdb->get_common_name();
+  my $common_name = $gdb->display_name();
   $w->dataElement('common_name', $common_name) if $common_name;
   $w->endTag();
 }

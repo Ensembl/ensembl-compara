@@ -231,7 +231,7 @@ sub make_species_set_from_XML_node {
             $some_genome_dbs = [grep {$_->has_karyotype} @$some_genome_dbs];
         }
 
-        if ($xml_taxon->hasAttribute('only_is_good_for_alignment') and $xml_taxon->getAttribute('only_is_good_for_alignment')) {
+        if ($xml_taxon->hasAttribute('only_good_for_alignment') and $xml_taxon->getAttribute('only_good_for_alignment')) {
             $some_genome_dbs = [grep {$_->is_good_for_alignment} @$some_genome_dbs];
         }
 
@@ -288,7 +288,7 @@ my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
 my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name);
 $collections{$division_name} = $division_species_set;
-my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
+my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {!$_->genome_component} @{$division_species_set->genome_dbs}];
 
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
@@ -382,8 +382,9 @@ foreach my $fam_node (@{$division_node->findnodes('families/family')}) {
 
 foreach my $gt (qw(protein nc)) {
     my $gt_method = $compara_dba->get_MethodAdaptor->fetch_by_type((uc $gt).'_TREES');
+    my @genome_db_with_comp = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_expand_components($division_genome_dbs);
     foreach my $gt_node (@{$division_node->findnodes("gene_trees/${gt}_trees")}) {
-        my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($gt_node, $gt_method, $division_genome_dbs) };
+        my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($gt_node, $gt_method, \@genome_db_with_comp) };
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_homology_mlsss($compara_dba, $gt_method, $species_set, $display_name) }
     }
 }
@@ -456,7 +457,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if (!$exist_mlss and ($mlss->method->type eq 'SYNTENY')) {
                 my $lastz_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('LASTZ_NET', $mlss->species_set->genome_dbs);
                 if ($lastz_mlss and $lastz_mlss->has_tag('low_synteny_coverage')) {
-                    print "DISCARDED (low_synteny_coverage)\n";
+                    print "DISCARDED (low_synteny_coverage)\n" if $verbose;
                     next;
                 }
             }
@@ -486,26 +487,39 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
 
 my $current_version = software_version();
-my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE GERP_CONSTRAINED_ELEMENT PROTEIN_TREES NC_TREES SPECIES_TREE);
+my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET TRANSLATED_BLAT_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE GERP_CONSTRAINED_ELEMENT PROTEIN_TREES NC_TREES SPECIES_TREE);
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $n = 0;
 foreach my $mlss (@mlsss_created) {
     if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
+    } else {
+        $n++
     }
 }
+print "(and $n others)\n" if $n;
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+$n = 0;
 foreach my $mlss (@mlsss_retired) {
     if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
+    } else {
+        $n++
     }
 }
+print "(and $n others)\n" if $n;
 
 print "\nWhat else is new in e$current_version ?\n-------------------------\n";
+$n = 0;
 foreach my $mlss (@mlsss_existing) {
-    if ($methods_worth_reporting{$mlss->method->type} and ($mlss->first_release == $current_version)) {
+    next if $mlss->first_release != $current_version;
+    if ($methods_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
+    } else {
+        $n++
     }
 }
+print "(and $n others)\n" if $n;
 

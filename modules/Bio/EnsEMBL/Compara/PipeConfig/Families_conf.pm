@@ -89,6 +89,7 @@ sub default_options {
         # data directories:
         #'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
         #'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
+        'load_uniprot_members_from_member_db' => 1,
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
@@ -142,6 +143,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
         'warehouse_dir'     => $self->o('warehouse_dir'),
         'blastdb_dir'       => $self->o('blastdb_dir'),
+        'load_uniprot_members_from_member_db' => $self->o('load_uniprot_members_from_member_db'),
         'uniprot_dir'       => $self->o('uniprot_dir'),
         'file_basename'     => $self->o('file_basename'),
         'blastdb_name'      => $self->o('blastdb_name'),
@@ -153,7 +155,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'master_db'         => $self->o('master_db'),               # databases
         'member_db'         => $self->o('member_db'),
-
         'hmm_clustering'    => $self->o('hmm_clustering'),
     };
 }
@@ -188,7 +189,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_table' ],
-                'A->1' => [ 'offset_tables' ],  # backbone
+                'A->1' => ['genomedb_factory'],
             },
         },
 
@@ -199,18 +200,6 @@ sub pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
             -analysis_capacity => 10,
-        },
-
-        {   -logic_name => 'offset_tables',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql'   => [
-                    'ALTER TABLE sequence                   AUTO_INCREMENT=900000001',
-                    'ALTER TABLE seq_member                 AUTO_INCREMENT=900000001',
-                    'ALTER TABLE gene_member                AUTO_INCREMENT=900000001',
-                ],
-            },
-            -flow_into => [ 'genomedb_factory' ],
         },
 
         {   -logic_name => 'genomedb_factory',
@@ -249,6 +238,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_lrg_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadLRGs',
+            -rc_name    =>  '500MegMem',
         },
 
         {   -logic_name         => 'hc_nonref_members',
@@ -256,7 +246,21 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'nonref_members',
             },
-            -flow_into  => [ 'save_uniprot_release_date' ],
+            -flow_into  => WHEN(
+                                '#load_uniprot_members_from_member_db#' => ['copy_uniprot_data'],
+                                '!(#load_uniprot_members_from_member_db#)' => [ 'save_uniprot_release_date' ],
+                                )
+        },
+
+        {   -logic_name => 'copy_uniprot_data',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::CopyUniprotData',
+            -parameters        => {
+                'reuse_db'              => '#member_db#',
+                },
+            -flow_into => WHEN(
+                        '#hmm_clustering#' => 'reuse_hmm_annot',
+                        ELSE { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                    )            
         },
 
         {   -logic_name => 'save_uniprot_release_date',

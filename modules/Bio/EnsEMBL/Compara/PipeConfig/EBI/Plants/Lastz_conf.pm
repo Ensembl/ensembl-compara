@@ -72,7 +72,7 @@ sub default_options {
             # 'host' => 'mysql-eg-prod-2.ebi.ac.uk',
             # 'port' => 4239,
 
-            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/plants_compara_master_41_94',
+            'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
 
             # 'staging_loc1' => {
             #     -host   => 'mysql-eg-staging-1.ebi.ac.uk',

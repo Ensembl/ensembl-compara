@@ -120,7 +120,7 @@ sub default_options {
             -port   => 4240,
             -user   => 'anonymous',
             -pass   => '',
-            -db_version => 93,
+            -db_version => 94,
         },
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],

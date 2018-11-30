@@ -35,26 +35,21 @@ use warnings;
 no warnings 'qw';
 
 use Bio::EnsEMBL::Hive::Version 2.4;
+
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'host' => 'mysql-ens-compara-prod-1',
-        'port' => 4485,
-
-        # Where dumps are created
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
 
         # Paths to compara files
         'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
-
-        # How many species can be dumped in parallel
-        'dump_ce_capacity'    => 50,
+        'bigbed_autosql'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/constrainedelements_autosql.as",
     };
 }
 
@@ -84,6 +79,7 @@ sub pipeline_wide_parameters {
         'export_dir'    => $self->o('export_dir'),
         'ce_output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
         'bed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
+        'bigbed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',
     };
 }
 

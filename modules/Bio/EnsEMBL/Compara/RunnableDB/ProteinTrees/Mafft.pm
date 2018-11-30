@@ -59,6 +59,7 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'mafft_exe'         => '/bin/mafft',            # where to find the mafft executable from $mafft_home
         'check_seq'         => 1,
+        'mafft_threads'     => 1,
     };
 }
 
@@ -73,9 +74,10 @@ sub get_msa_command_line {
 
     my $mafft_home = $self->param_required('mafft_home');
     my $mafft_exe = $self->param_required('mafft_exe');
+    my $mafft_threads = $self->param('mafft_threads');
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless(-x $mafft_home.'/'.$mafft_exe);
 
-    return sprintf('%s/%s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $self->param('input_fasta'), $self->param('msa_output'));
+    return sprintf('%s/%s --anysymbol --thread %s --auto %s > %s', $mafft_home, $mafft_exe, $mafft_threads, $self->param('input_fasta'), $self->param('msa_output'));
 }
 
 1;

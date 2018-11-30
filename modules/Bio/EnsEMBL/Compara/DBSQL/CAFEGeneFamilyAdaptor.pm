@@ -144,6 +144,13 @@ sub store {
     return $cafe_gene_family_id;
 }
 
+sub delete {
+    my ($self, $cafe_gene_family) = @_;
+    my $cafe_gene_family_id = ref($cafe_gene_family) ? $cafe_gene_family->cafe_gene_family_id : $cafe_gene_family;
+    $self->dbc->do('DELETE FROM CAFE_species_gene WHERE cafe_gene_family_id = ?', undef, $cafe_gene_family_id);
+    $self->dbc->do('DELETE FROM CAFE_gene_family WHERE cafe_gene_family_id = ?', undef, $cafe_gene_family_id);
+}
+
 
 ############################################################
 # Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor implementation #

@@ -85,9 +85,9 @@ sub default_options {
     # connection parameters to various databases:
 
     # the master database for synchronization of various ids (use undef if you don't have a master database)
-    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/plants_compara_master_41_94',
+    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
 
-    'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/carlac_load_members_plants_41_94',
+    'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/muffato_load_members_95_plants',
 
     eg_prod_loc => {
       -host   => 'mysql-eg-prod-2',
@@ -122,14 +122,24 @@ sub default_options {
     'prev_core_sources_locs'   => [ $self->o('eg_mirror_loc'), $self->o('e_mirror_loc') ],
 
     # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-    'prev_rel_db' => 'mysql://ensro@mysql-eg-prod-1:4238/ensembl_compara_plants_40_93',
+    'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
 
     # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
-    'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_plants_hom_40_93',
+    'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
+
+    # How will the pipeline create clusters (families) ?
+    # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+    #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+    #   'hmm' means that the pipeline will run an HMM classification
+    #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+    #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
+    #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
+    'clustering_mode'           => 'hybrid',
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
         'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.branch_len.nw',
+        'binary_species_tree_input_file'    => undef,
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -166,6 +176,11 @@ sub tweak_analyses {
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'mafft_huge'}->{'-rc_name'} = '128Gb_4c_job';
+    $analyses_by_name->{'homology_factory'}->{'-rc_name'}         = '1Gb_job';
+    $analyses_by_name->{'copy_homology_dNdS'}->{'-rc_name'}       = '1Gb_job';
+    $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
+    $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
 
         $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';

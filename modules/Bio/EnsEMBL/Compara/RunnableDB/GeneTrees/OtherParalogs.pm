@@ -95,6 +95,20 @@ sub fetch_input {
         bless $member, 'Bio::EnsEMBL::Compara::GeneTreeMember';
         $super_align{$member->seq_member_id} = $member;
     }
+
+    if (!$self->param('genome_db_id') && (scalar(keys %super_align) >= 5000) && $self->input_job->analysis->dataflow_rules_by_branch->{3}) {
+        my %genome_db_ids;
+        foreach my $member (values %super_align) {
+            my $gdb = $member->genome_db;
+            $gdb = $gdb->principal_genome_db if $gdb->genome_component;
+            $genome_db_ids{ $gdb->dbID} = 1;
+        }
+        foreach my $gdb_id (keys %genome_db_ids) {
+            $self->dataflow_output_id({'genome_db_id' => $gdb_id}, 3);
+        }
+        $self->complete_early('Too many genes, breaking up the task to 1 job per genome_db_id');
+    }
+
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
@@ -117,6 +131,7 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
     $self->run_analysis;
+    $self->print_summary;
 }
 
 
@@ -180,20 +195,16 @@ sub run_analysis {
     #display summary stats of analysis 
     my $runtime = time()*1000-$starttime;  
     $gene_tree->tree->store_tag('OtherParalogs_runtime_msec', $runtime) unless ($self->param('_readonly'));
-    $self->param('orthotree_homology_counts', {'other_paralog' => $ngenepairlinks});
-
 }
 
 sub rec_add_paralogs {
     my $self = shift;
     my $ancestor = shift;
 
-    $ancestor->print_node if ($self->debug);
     # Skip the terminal nodes
     return 0 unless $ancestor->get_child_count;
+
     my ($child1, $child2) = @{$ancestor->children};
-    $child1->print_node if ($self->debug);
-    $child2->print_node if ($self->debug);
 
     # All the homologies will share this information
     my $this_taxon = $ancestor->get_value_for_tag('species_tree_node_id');
@@ -202,7 +213,8 @@ sub rec_add_paralogs {
     unless ($self->param('_readonly')) {
         if ($ancestor->get_value_for_tag('is_dup', 0)) {
             $ancestor->store_tag('node_type', 'duplication');
-            $self->duplication_confidence_score($ancestor);
+            my $duplication_confidence_score = $self->duplication_confidence_score($ancestor);
+            $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score);
         } elsif (($child1->get_value_for_tag('species_tree_node_id') == $this_taxon) or ($child2->get_value_for_tag('species_tree_node_id') == $this_taxon)) {
             $ancestor->store_tag('node_type', 'dubious');
             $ancestor->store_tag('duplication_confidence_score', 0);
@@ -213,6 +225,22 @@ sub rec_add_paralogs {
         }
         print "setting node_type to ", $ancestor->get_value_for_tag('node_type'), "\n" if ($self->debug);
     }
+    my $ngenepairlinks = $self->add_other_paralogs_for_pair($ancestor, $child1, $child2);
+    $ngenepairlinks += $self->rec_add_paralogs($child1);
+    $ngenepairlinks += $self->rec_add_paralogs($child2);
+    return $ngenepairlinks;
+}
+
+
+sub add_other_paralogs_for_pair {
+    my $self = shift;
+    my $ancestor = shift;
+    my $child1   = shift;
+    my $child2   = shift;
+
+    $ancestor->print_node if ($self->debug);
+    $child1->print_node if ($self->debug);
+    $child2->print_node if ($self->debug);
 
     # Each species
     my $ngenepairlinks = 0;
@@ -243,9 +271,8 @@ sub rec_add_paralogs {
             }
         }
     }
-    print "$ngenepairlinks links on node_id=", $ancestor->node_id, "\n";
-    $ngenepairlinks += $self->rec_add_paralogs($child1);
-    $ngenepairlinks += $self->rec_add_paralogs($child2);
+    $self->param('orthotree_homology_counts')->{'other_paralog'} += $ngenepairlinks;
+    print "$ngenepairlinks links on node_id=", $ancestor->node_id, " between node_id=", $child1->node_id, " and node_id=", $child2->node_id, "\n";
     return $ngenepairlinks;
 }
 
@@ -278,7 +305,7 @@ sub duplication_confidence_score {
   my $scalar_union = scalar(@union);
   $duplication_confidence_score = (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
 
-  $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score) unless ($self->param('_readonly'));
+  return $duplication_confidence_score;
 }
 
 
@@ -311,8 +338,19 @@ sub get_ancestor_species_hash
         print "super-tree leaf=", $node->node_id, " children=", $node->get_child_count, "\n";
         my $child = $node->children->[0];
         my $leaves = $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($child->node_id);
+        unless (@$leaves) {
+            # $child is actually a supertree. Need to fetch its own sub-trees
+            $leaves = [];
+            print "going deeper\n";
+            my $subsupertree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($child->node_id);
+            my $subsubtrees = $self->compara_dba->get_GeneTreeAdaptor->fetch_subtrees($subsupertree);
+            foreach my $subsubtree (@$subsubtrees) {
+                push @$leaves, @{ $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($subsubtree->root_id) };
+            }
+            print "super-tree leaf=", $node->node_id, " subtrees=", scalar(@$subsubtrees), " children=", scalar(@$leaves), "\n";
+        }
         eval {
-            $self->dataflow_output_id({'gene_tree_id' => $child->node_id}, 2) if ($self->param('dataflow_subclusters'));
+            $self->dataflow_output_id({'gene_tree_id' => $child->node_id, 'tree_num_genes' => scalar(@$leaves)}, 2) if ($self->param('dataflow_subclusters'));
         };
         $child->disavow_parent;
 

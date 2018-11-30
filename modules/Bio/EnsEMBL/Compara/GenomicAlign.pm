@@ -1116,7 +1116,7 @@ sub toString {
     my $self = shift;
     my $str = 'GenomicAlign';
     if ($self->original_dbID) {
-        $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID);
+        $str .= sprintf(' restricted from dbID=%s (block_id=%s)', $self->original_dbID, $self->genomic_align_block->original_dbID//'?');
     } else {
         $str .= sprintf(' dbID=%s (block_id=%d)', $self->dbID, $self->genomic_align_block_id);
     }

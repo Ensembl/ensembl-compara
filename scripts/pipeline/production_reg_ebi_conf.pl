@@ -35,9 +35,9 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # The majority of core databases live on staging servers:
 #   Bio::EnsEMBL::Registry->load_registry_from_url(
-#    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/94');
+#    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/95');
   Bio::EnsEMBL::Registry->load_registry_from_url(
-    'mysql://ensro@mysql-ens-vertannot-staging:4573/94');
+    'mysql://ensro@mysql-ens-vertannot-staging:4573/95');
 
 
 # Add in extra cores from genebuild server
@@ -61,7 +61,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4401,
      -species => 'compara_ptrees',
-     -dbname => 'mateus_protein_trees_94',
+     -dbname => 'mateus_protein_trees_95',
 );
 
 # Individual pipeline database for Families:
@@ -71,92 +71,196 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -pass => $ENV{'ENSADMIN_PSW'},
      -port => 4523,
      -species => 'compara_families',
-     -dbname => 'carlac_families_94',
+     -dbname => 'carlac_families_fix_95',
 );
 
 # Individual pipeline database for ncRNAtrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
+     -host => 'mysql-ens-compara-prod-2',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
+     -port => 4522,
      -species => 'compara_nctrees',
-     -dbname => 'muffato_compara_nctrees_94',
+     -dbname => 'waakanni_compara_nctrees_95',
 );
 
 # Reindexed mouse strains protein trees
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
+     -host => 'mysql-ens-compara-prod-8',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
+     -port => 4618,
      -species => 'murinae_ptrees',
-     -dbname => 'muffato_murinae_protein_trees_94',
+     -dbname => 'carlac_murinae_protein_trees_95',
 );
 
 # Reindexed mouse strains ncRNA trees
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-     -host => 'mysql-ens-compara-prod-1',
+     -host => 'mysql-ens-compara-prod-8',
      -user => 'ensadmin',
      -pass => $ENV{'ENSADMIN_PSW'},
-     -port => 4485,
+     -port => 4618,
      -species => 'murinae_nctrees',
-     -dbname => 'muffato_murinae_ncrna_trees_94',
+     -dbname => 'carlac_murinae_ncrna_trees_95',
 );
 
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
-# {human, cow, sheep} v goat
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-vertannot-staging',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4573,
-#     -species => 'goat_lastz',
-#     -dbname => 'ensembl_compara_mammals',
-#);
+# human v mammals lastz
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-2',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4522,
+    -species => 'human_v_mammal_lastz',
+    -dbname => 'waakanni_koala_pbear_wormbat_etc_vs_human_lastz',
+);
 
+# batch 1
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-8',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4618,
+    -species => 'lastz_1',
+    -dbname => 'carlac_lastz_95',
+);
 
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-3',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4523,
-#     -species => 'human_patches',
-#     -dbname => 'carlac_lastz_human_patches_92',
-#);
+# batch 2
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-2',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4522,
+    -species => 'lastz_2',
+    -dbname => 'waakanni_lastz_95',
+);
+
+# (tick) mysql-ens-compara-prod-1 muffato_lastz_95a
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -species => 'lastz_a',
+    -dbname => 'muffato_lastz_95a',
+);
+
+# (tick) mysql-ens-compara-prod-5 muffato_lastz_95b
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-5',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4615,
+    -species => 'lastz_b',
+    -dbname => 'muffato_lastz_95b',
+);
+
+# (tick) mysql-ens-compara-prod-7 muffato_lastz_95c
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-7',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4617,
+    -species => 'lastz_c',
+    -dbname => 'muffato_lastz_95c',
+);
+
+# (tick) mysql-ens-compara-prod-7 muffato_lastz_95d
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-7',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4617,
+    -species => 'lastz_d',
+    -dbname => 'muffato_lastz_95d',
+);
+
+# (tick) mysql-ens-compara-prod-5 muffato_lastz_95e
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-5',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4615,
+    -species => 'lastz_e',
+    -dbname => 'muffato_lastz_95e',
+);
 
 # ------------------------- EPO DATABASES: -----------------------------------
 
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-3',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4523,
-#     -species => 'primates_epo',
-#     -dbname => 'carlac_primates_epo_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -species => 'mammals_epo',
+    -dbname => 'muffato_mammals_epo_95',
+);
+
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4523,
+    -species => 'mammals_epo_low',
+    -dbname => 'carlac_mammals_epo_low_coverage_95',
+);
+
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -species => 'sauropsids_epo',
+    -dbname => 'muffato_sauropsids_epo_95',
+);
+
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-6',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4616,
+    -species => 'sauropsids_epo_low',
+    -dbname => 'carlac_sauropsids_epo_low_coverage_95',
+);
+
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -species => 'fish_epo',
+    -dbname => 'muffato_fish_epo_95',
+);
+
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -species => 'fish_epo_low',
+    -dbname => 'muffato_fish_epo_low_coverage_95',
+);
 
 # -----------------------OTHER ALIGNMENTS-------------------------------
 
-# mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_amniotes_mercator_pecan_92
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-2',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4522,
-#     -species => 'amniotes_pecan',
-#     -dbname => 'muffato_amniotes_mercator_pecan_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-6',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4616,
+    -species => 'amniotes_pecan',
+    -dbname => 'carlac_amniotes_mercator_pecan_95',
+);
 
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-3',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4523,
-#     -species => 'compara_syntenies',
-#     -dbname => 'carlac_syntenies_92',
-#);
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-5',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4615,
+    -species => 'compara_syntenies',
+    -dbname => 'carlac_synteny_95',
+);
 
 # ----------------------COMPARA DATABASES---------------------------
 
@@ -177,7 +281,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_prev',
-    -dbname => 'ensembl_compara_93',
+    -dbname => 'ensembl_compara_94',
 );
 
 # current release database on one of Compara servers:
@@ -187,7 +291,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -species => 'compara_curr',
-    -dbname => 'ensembl_compara_94',
+    -dbname => 'ensembl_compara_95',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -198,7 +302,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4523,
     -group => 'core',
     -species => 'ancestral_prev',
-    -dbname => 'ensembl_ancestral_93',
+    -dbname => 'ensembl_ancestral_94',
 );
 
 # current ancestral database on one of Compara servers. This alias is need for the epo data dumps to work:
@@ -209,7 +313,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4485,
     -group => 'core',
     -species => 'ancestral_sequences',
-    -dbname => 'ensembl_ancestral_94',
+    -dbname => 'ensembl_ancestral_95',
 );
 
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
@@ -219,7 +323,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -port => 4485,
     -group => 'core',
     -species => 'ancestral_curr',
-    -dbname => 'ensembl_ancestral_94',
+    -dbname => 'ensembl_ancestral_95',
 );
 
 # ensembl production (maintained by production team):
@@ -228,7 +332,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -user => 'ensro',
     -port => 4519,
     -species => 'ensembl_production',
-    -dbname => 'ensembl_production_94',
+    -dbname => 'ensembl_production_95',
     -group => 'production',
 );
 
@@ -246,12 +350,12 @@ Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
 
 # Members
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-2',
+    -host => 'mysql-ens-compara-prod-3',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4522,
+    -port => 4523,
     -species => 'compara_members',
-    -dbname => 'waakanni_load_members_94',
+    -dbname => 'carlac_load_members_95',
 );
 
 # # Merge alignments

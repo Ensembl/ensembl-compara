@@ -38,8 +38,10 @@ my @intervals_in_mbp = (
 	[500, 1000000, 0.95],
 );
 
+my $method_link = 'LASTZ_NET';
 
 my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids );
+my ( $verbose, $very_verbose );
 GetOptions(
     "help"               => \$help,
     "reg_conf=s"         => \$reg_conf,
@@ -47,6 +49,9 @@ GetOptions(
     "release=i"          => \$release,
     "max_jobs=i"         => \$max_jobs,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
+    'method_link=s'      => \$method_link,
+    'v|verbose!'         => \$verbose,
+    'vv|very_verbose!'   => \$very_verbose,
 );
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
@@ -57,8 +62,9 @@ $registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $master_db );
 
 # fetch the newest LASTZs and the full list of genome dbs
+print STDERR "Fetching current LASTZ_NET MethodLinkSpeciesSets from the database..\n";
 my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
-my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type("LASTZ_NET");
+my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
 	if (($this_mlss->first_release || 0) == $release) {
@@ -69,10 +75,11 @@ foreach my $this_mlss ( @$all_lastz_mlsses ) {
 		}
 	}
 }
+print STDERR "Found " . scalar(@current) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
-my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count);
+my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count, %dnafrag_interval_counts);
 foreach my $mlss ( @current_lastz_mlsses ) {
 	my $ref_name = $mlss->get_tagvalue('reference_species');
 	my $mlss_gdbs = $mlss->species_set->genome_dbs;
@@ -109,7 +116,8 @@ foreach my $mlss ( @current_lastz_mlsses ) {
 	$mlss_job_count{$mlss->dbID}->{aln_nets} = ceil($chains_job_count/2);
 	$total_job_count{aln_nets} += ceil($chains_job_count/2); # alignment_nets = ~ half chain jobs
 	
-
+	print_verbose_summary(\%mlss_job_count, $mlss) if ($verbose);
+	print_very_verbose_summary(\%mlss_job_count, $mlss) if ($very_verbose);
 }
 
 foreach my $k ( keys %mlss_job_count ) {
@@ -165,6 +173,29 @@ sub get_non_ref_chunk_count {
 	return $expanded_count;
 }
 
+sub n_dnafrags_by_interval {
+	my $gdb = shift;
+
+	return $dnafrag_interval_counts{$gdb->dbID} if $dnafrag_interval_counts{$gdb->dbID};
+
+	# fetch list of dnafrag lengths for this genome
+	my $sql = "select length from dnafrag where genome_db_id = ? and is_reference = 1 order by length asc";
+	my $sth = $dba->dbc->prepare($sql);
+	$sth->execute( $gdb->dbID );
+	my $gdb_dnaf_lens = $sth->fetchall_arrayref();
+	$sth->finish;
+
+	# partition and count dnafrags
+	my $interval_counts;
+	foreach my $g_len ( @$gdb_dnaf_lens ) {
+		$interval_counts->{ interval_type($g_len->[0]) }++;
+	}
+
+	$dnafrag_interval_counts{$gdb->dbID} = $interval_counts;
+	return $interval_counts;
+}
+
+
 sub chains_job_count {
 	my $mlss = shift;
 
@@ -172,43 +203,37 @@ sub chains_job_count {
 
 	my ( $gdb1, $gdb2 ) = @{$mlss->species_set->genome_dbs};
 
-	# fetch list of dnafrag lengths for each genome
-	my $sql = "select length from dnafrag where genome_db_id = ? and is_reference = 1 order by length asc";
-	my $sth = $dba->dbc->prepare($sql);
-	$sth->execute( $gdb1->dbID );
-	my $gdb1_dnaf_lens = $sth->fetchall_arrayref();
-	$sth->execute( $gdb2->dbID );
-	my $gdb2_dnaf_lens = $sth->fetchall_arrayref();
-
 	# partition and count dnafrags
-	my $interval_counts;
-	foreach my $g1_len ( @$gdb1_dnaf_lens ) {
-		foreach my $g2_len ( @$gdb2_dnaf_lens ) {
-			$interval_counts->{ interval_type($g1_len->[0], $g2_len->[0]) }++;
+	my $paired_interval_counts;
+	my $interval_counts1 = n_dnafrags_by_interval( $gdb1 );
+	my $interval_counts2 = n_dnafrags_by_interval( $gdb2 );
+	foreach my $int1 ( keys %$interval_counts1 ) {
+		foreach my $int2 ( keys %$interval_counts2 ) {
+			#print "$int1:$int2 -> ", $interval_counts1->{$int1} * $interval_counts2->{$int2}, "\n";
+			$paired_interval_counts->{ "$int1;$int2" } += $interval_counts1->{$int1} * $interval_counts2->{$int2};
 		}
 	}
 
 	# assign probabilities and estimate job numbers
 	my $total_count;
-	foreach my $type ( keys %$interval_counts ) {
-		$total_count += ceil($interval_counts->{$type} * combined_interval_probability( $type ));
+	foreach my $type ( keys %$paired_interval_counts ) {
+		$total_count += ceil($paired_interval_counts->{$type} * combined_interval_probability( $type ));
 	}
 
 	return $total_count;
 }
 
 sub interval_type {
-	my ( $len1, $len2 ) = @_;
+	my ( $len ) = @_;
 
-	# print Dumper [$len1, $len2];
+	# print Dumper [$len];
 
-	my ($type1, $type2);
+	my $type;
 	foreach my $interval ( @intervals_in_mbp ) {
 		my ( $this_min, $this_max ) = ( $interval->[0], $interval->[1] );
-		$type1 = "$this_min mb - $this_max mb" if $len1 > $this_min*1000 and $len1 <= $this_max*1000;
-		$type2 = "$this_min mb - $this_max mb" if $len2 > $this_min*1000 and $len2 <= $this_max*1000;
+		$type = "$this_min mb - $this_max mb" if $len > $this_min*1000 and $len <= $this_max*1000;
 	}
-	return "$type1;$type2";
+	return $type;
 }
 
 sub combined_interval_probability {
@@ -286,6 +311,26 @@ sub split_mlsses {
 	return \@mlss_groups;
 }
 
+sub print_verbose_summary {
+	my ($mlss_job_count, $mlss) = @_;
+
+	my $this_mlss_total = sum( values %{ $mlss_job_count->{$mlss->dbID} } );
+	print $mlss->name . " (dbID: " . $mlss->dbID . "):\t$this_mlss_total\n";
+}
+
+sub print_very_verbose_summary {
+	my ($mlss_job_count, $mlss) = @_;
+
+	print $mlss->name . " (dbID: " . $mlss->dbID . "):\n";
+	my $this_mlss_total = 0;
+	foreach my $logic_name ( keys %{ $mlss_job_count->{$mlss->dbID} } ) {
+		my $this_count = $mlss_job_count->{$mlss->dbID}->{$logic_name};
+		print "\t$logic_name:\t$this_count\n";
+		$this_mlss_total += $this_count;
+	}
+	print "Total:\t$this_mlss_total\n\n";
+}
+
 sub helptext {
 	my $msg = <<HELPEND;
 
@@ -298,6 +343,9 @@ Options:
 	max_jobs         : maximum number of jobs allowed per-database (default: 6,000,000)
 	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
 	                   list should be comma separated values.
+	method_link      : method used to select MLSSes (default: LASTZ_NET)
+	v|verbose        : print out per-mlss job count estimates
+	vv|very_verbose  : print out per-analysis, per-mlss job count estimates
 
 HELPEND
 	return $msg;

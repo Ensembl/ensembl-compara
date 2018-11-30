@@ -32,6 +32,14 @@
               </choice>
             </attribute>
           </optional>
+          <optional>
+            <attribute name="only_good_for_alignment" blockly:blockName="Only genomes which are good for alignment">
+              <choice>
+                <value blockly:blockName="Yes">1</value>
+                <value blockly:blockName="No">0</value>
+              </choice>
+            </attribute>
+          </optional>
           <zeroOrMore>
             <element name="ref_for_taxon" blockly:blockName="Reference genome (replaces other genomes)">
               <attribute name="name" blockly:blockName="Reference name"/>

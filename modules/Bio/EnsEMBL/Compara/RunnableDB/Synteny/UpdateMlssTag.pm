@@ -43,12 +43,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {
-    mlss_id                => undef,
-    is_pw_mlss=> 1,
-    }
-}
 
 sub fetch_input {
     my $self = shift;
@@ -62,18 +56,18 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    if ($self->param_required('is_pw_mlss')) {
-	$self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $self->param('mlss_id'), $self->param_required('synteny_mlss_id') );
-	$self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "alignment_mlss_id", ?)', undef, $self->param_required('synteny_mlss_id'), $self->param('mlss_id') );
-	$self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $self->param('mlss_id'), $self->param_required('synteny_mlss_id') );
-	$self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "alignment_mlss_id", ?)', undef, $self->param_required('synteny_mlss_id'), $self->param('mlss_id') );
+    my ($source_mlss_id, $source_mlss_id_name);
+    # foreach my $s (qw(alignment_mlss_id orthologue_mlss_id)) {
+    foreach my $s (qw(pairwise_mlss_id orthologue_mlss_id)) {
+        if ($source_mlss_id = $self->param($s)) {
+            $source_mlss_id_name = $s;
+            last;
+        }
     }
-    else{
-	$self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $self->param('mlss_id'), $self->param_required('synteny_mlss_id') );
-	$self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "orthologue_mlss_id", ?)', undef, $self->param_required('synteny_mlss_id'), $self->param('mlss_id') );
-	$self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $self->param('mlss_id'), $self->param_required('synteny_mlss_id') );
-	$self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "orthologue_mlss_id", ?)', undef, $self->param_required('synteny_mlss_id'), $self->param('mlss_id') );
-    }
+    $self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $source_mlss_id, $self->param('synteny_mlss_id') );
+    $self->compara_dba->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, ?, ?)', undef, $self->param('synteny_mlss_id'), $source_mlss_id_name, $source_mlss_id );
+    $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "synteny_mlss_id", ?)', undef, $source_mlss_id, $self->param('synteny_mlss_id') );
+    $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, ?, ?)', undef, $self->param('synteny_mlss_id'), $source_mlss_id_name, $source_mlss_id );
 }
 
 1;

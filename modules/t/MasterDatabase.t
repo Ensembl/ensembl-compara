@@ -60,7 +60,7 @@ my $v = software_version();
 #####################################################################
 ##             Test genome_db and dnafrag updating                 ##
 
-print STDERR "------------------------ genome_db testing ---------------------------------\n";
+note("------------------------ genome_db testing ---------------------------------");
 
 my ($update, $new_gdb, $component_gdbs, $new_dnafrags);
 
@@ -156,7 +156,7 @@ is_deeply( \@old_comp_release, [$v-1, $v-1, $v-1], 'old components retired' );
 #####################################################################
 ##                  Test collection editing                        ##
 
-print STDERR "\n------------------------ collection testing ---------------------------------\n";
+note("------------------------ collection testing ---------------------------------");
 
 ## Test 1: create a new collection
 my $new_collection;
@@ -169,7 +169,7 @@ is( $new_collection->first_release, undef, 'collection is unreleased' );
 ## Test 2: create a new collection WITH components
 ok( $new_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, 'test_comp_col', ['homo_sapiens', 'triticum_aestivum'] ) );
 is( $new_collection->name, 'collection-test_comp_col', 'new collection created with correct name' );
-my @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
+@gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
 is_deeply( \@gdb_ids, [141, 1003], 'correct genome dbs included' );
 is( $new_collection->first_release, undef, 'collection is unreleased' );
 

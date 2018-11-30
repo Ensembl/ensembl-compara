@@ -98,7 +98,7 @@ sub default_options {
 
         #HMMER 2
         'hmm_library_version'           => '2',
-        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
+        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2018-08-20',
 
         #HMMER 3
         #'hmm_library_version'       => '3',
@@ -134,6 +134,8 @@ sub resource_classes {
          '2Gb_6_hour_job'   => {'LSF' => '-C0 -W 6:00 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
 
          '8Gb_4c_job'   => {'LSF' => '-n 4 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"' },
+         '32Gb_4c_job'  => {'LSF' => '-n 4 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000 span[hosts=1]]"' },
+         '128Gb_4c_job' => {'LSF' => '-n 4 -C0 -M128000 -R"select[mem>128000] rusage[mem=128000 span[hosts=1]]"' },
 
          '4Gb_8c_job'   => {'LSF' => '-n 8 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"' },
          '8Gb_8c_job'   => {'LSF' => '-n 8 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"' },

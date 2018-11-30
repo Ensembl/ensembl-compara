@@ -182,7 +182,16 @@ our $config = {
             },
             {
                 description => 'only canonical SeqMembers are in the database#expr(#only_canonical# ? "" : " [SKIPPED]")expr#',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE #only_canonical# AND gene_member.gene_member_id IS NULL',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE seq_member.genome_db_id = #genome_db_id# AND #only_canonical# AND gene_member.gene_member_id IS NULL',
+            },
+            {
+                description => 'Each genome should have some exon_boundaries',
+                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id#',
+                expected_size => '> 0',
+            },
+            {
+                description => 'The gene_member_id<->seq_member_id links of the exon_boundaries table must be the same as in the seq_member table',
+                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member.gene_member_id != exon_boundaries.gene_member_id',
             }
         ],
     },

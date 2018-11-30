@@ -59,8 +59,8 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'  => 4485,
+        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'port'  => 4615,
 
     # User details
 
@@ -111,9 +111,7 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
-        # affects 'group_genomes_under_taxa'
-        'filter_high_coverage'      => 1,
+        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes', 'Percomorphaceae'],
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -139,11 +137,11 @@ sub default_options {
         'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'copy_tree_capacity'        => 100,
-        'ortho_tree_capacity'       => 250,
+        'ortho_tree_capacity'       => 50,
         'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'other_paralogs_capacity'   => 150,
+        'other_paralogs_capacity'   => 50,
         'homology_dNdS_capacity'    => 1300,
         'hc_capacity'               => 150,
         'decision_capacity'         => 150,
@@ -167,13 +165,13 @@ sub default_options {
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
         # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_94',
 
         # Where the members come from (as loaded by the LoadMembers pipeline)
-        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
+        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_load_members_95',
 
         # Points to the previous production database. Will be used for various GOC operations.
-        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/waakanni_protein_trees_93',
+        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_94',
         #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
 
 

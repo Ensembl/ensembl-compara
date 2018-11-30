@@ -51,24 +51,19 @@
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes" against="Actinopterygii"/>
 
     <!-- Mammals -->
-    <!--
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria" ref_amongst="Amniota"/>
     <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia" ref_amongst="Carnivora"/>
     <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" against="Cetartiodactyla" ref_amongst="Eutheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae" ref_amongst="Cetartiodactyla"/>
-    -->
 
     <!-- Early vertebrates and other chordates -->
     <!-- FIXME create a collection for those -->
-    <!--
     <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
     <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
-    -->
 
     <!-- These genomes are currently the only ones in their clades, so no alignment within the "against"/"species_set" -->
     <!-- However they will be aligned against the other reference genomes in "ref_amongst" -->
-    <!--
     <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla" ref_amongst="Laurasiatheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Suina" ref_amongst="Laurasiatheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Lepidosauria" ref_amongst="Sauropsida"/>
@@ -77,22 +72,18 @@
     <one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" against="Prototheria" ref_amongst="Euteleostomi"/>
     <one_vs_all method="LASTZ_NET" ref_genome="latimeria_chalumnae" ref_amongst="Euteleostomi">
       <species_set>
-    -->
         <!--Coelacanths and lungfishes -->
-        <!--
         <taxonomic_group taxon_name="Sarcopterygii"/>
         <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
     </one_vs_all>
-    -->
   </pairwise_alignments>
 
   <multiple_alignments>
     <!-- Primates -->
     <multiple_alignment method="EPO">
       <species_set name="primates">
-        <taxonomic_group taxon_name="Primates" only_is_good_for_alignment="1"/>
-        <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
+        <taxonomic_group taxon_name="Primates" only_good_for_alignment="1"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE">
@@ -104,8 +95,7 @@
     <!-- Mammals, excl. the mouse strains -->
     <multiple_alignment method="EPO">
       <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
-        <taxonomic_group taxon_name="Eutheria" only_is_good_for_alignment="1"/>
-        <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
+        <taxonomic_group taxon_name="Eutheria" only_good_for_alignment="1"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
@@ -117,7 +107,7 @@
     <!-- Sauropsids -->
     <multiple_alignment method="EPO">
       <species_set name="sauropsids">
-        <taxonomic_group taxon_name="Sauropsida" only_is_good_for_alignment="1"/>
+        <taxonomic_group taxon_name="Sauropsida" only_good_for_alignment="1"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
@@ -129,7 +119,7 @@
     <!-- Fishes -->
     <multiple_alignment method="EPO">
       <species_set name="fish">
-        <taxonomic_group taxon_name="Actinopterygii" only_is_good_for_alignment="1"/>
+        <taxonomic_group taxon_name="Actinopterygii" only_good_for_alignment="1"/>
         <!-- The coverage is so low at the moment let's not bother about them -->
         <genome name="esox_lucius" exclude="1"/>
         <genome name="ictalurus_punctatus" exclude="1"/>
@@ -144,8 +134,7 @@
     <!-- Amniotes, excl. mouse strains -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates" in_collection="default">
-        <taxonomic_group taxon_name="Amniota" only_is_good_for_alignment="1"/>
-        <genome name="callithrix_jacchus"/><!--no karyotype stored in the core db, but the assembly has chromosomes-->
+        <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
       </species_set>
     </multiple_alignment>
 

@@ -74,7 +74,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'group_size'         => 1000,
+            'group_size'         => 500,
     };
 }
 
@@ -84,16 +84,35 @@ sub fetch_input {
 
     my $mlss_id = $self->param_required('homo_mlss_id');
 
-    my $sql = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description != "gene_split" ORDER BY homology_id';
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    my $sql_1;
+    if ( $self->param('do_gene_qc') ) {
+        $sql_1 = 'SELECT homology_id FROM homology JOIN homology_member USING (homology_id) LEFT JOIN gene_member_qc USING (seq_member_id) WHERE method_link_species_set_id = ? GROUP BY homology_id HAVING COUNT(status) = 0;';
+    }
+    else {
+        $sql_1 = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description != "gene_split" ORDER BY homology_id';
+    }
+    my $sth_1 = $self->compara_dba->dbc->prepare($sql_1);
 
     my @homology_ids = ();
-    $sth->execute($mlss_id);
-    while( my ($homology_id) = $sth->fetchrow() ) {
+    $sth_1->execute($mlss_id);
+    while( my ($homology_id) = $sth_1->fetchrow() ) {
         push @homology_ids, $homology_id;
     }
 
+    #Get homology id mapping
+    my $sql_2 = 'SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ?';
+    my %homology_map;
+    my $sth_2 = $self->compara_dba->dbc->prepare($sql_2);
+    $sth_2->execute($mlss_id);
+
+    while( my ($curr_release_homology_id, $prev_release_homology_id) = $sth_2->fetchrow() ) {
+        if($prev_release_homology_id){
+            $homology_map{$curr_release_homology_id} = $prev_release_homology_id;
+        }
+    }
+
     $self->param('inputlist', \@homology_ids);
+    $self->param('homology_map', \%homology_map);
 }
 
 
@@ -101,14 +120,49 @@ sub write_output {
     my $self = shift @_;
 
     my $inputlist  = $self->param('inputlist');
+    my $homology_map = $self->param('homology_map');
     my $group_size = $self->param('group_size');
 
     $self->input_job->autoflow(0) if scalar(@$inputlist) == 0;
 
-    while (@$inputlist) {
-        my @job_array = splice(@$inputlist, 0, $group_size);
-        $self->dataflow_output_id( { 'mlss_id' => $self->param('homo_mlss_id'), 'min_homology_id' => $job_array[0], 'max_homology_id' => $job_array[-1] }, 2);
-        $self->dataflow_output_id( { 'mlss_id' => $self->param('homo_mlss_id'), 'homology_ids' => \@job_array }, 3 ); # to homology_id_mapping
+    my %job_hash_copy;
+    my @job_array_compute = ();
+
+    foreach my $homology_id (@$inputlist) {
+        if ( exists( $homology_map->{$homology_id} ) ) {
+            $job_hash_copy{$homology_id} = $homology_map->{$homology_id};
+        }
+        else {
+            push( @job_array_compute, $homology_id );
+        }
+    }
+
+    my @job_array_copy = keys(%job_hash_copy);
+    if ( scalar(@job_array_copy) > 0 ) {
+        while (@job_array_copy) {
+            my @job_array = splice( @job_array_copy, 0, $group_size );
+
+            my %job_hash;
+            foreach my $homology_id (@job_array){
+                $job_hash{$homology_id} = $job_hash_copy{$homology_id};
+            }
+
+            my $output_id;
+            $output_id->{'mlss_id'}      = $self->param('homo_mlss_id');
+            $output_id->{'homology_ids'} = \%job_hash;
+            $self->dataflow_output_id( $output_id, 3 );
+        }
+    }
+
+    if ( scalar(@job_array_compute) > 0 ){
+        while (@job_array_compute){
+            my @job_array = splice(@job_array_compute, 0, $group_size);
+
+            my $output_id;
+            $output_id->{'mlss_id'}      = $self->param('homo_mlss_id');
+            $output_id->{'homology_ids'} = \@job_array;
+            $self->dataflow_output_id( $output_id, 2 );
+        }
     }
 }
 

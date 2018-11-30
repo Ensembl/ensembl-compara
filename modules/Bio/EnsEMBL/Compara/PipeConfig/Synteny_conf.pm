@@ -310,7 +310,7 @@ sub pipeline_analyses {
                              },
              -flow_into => { 
                               '1' => [ 'load_dnafrag_regions' ],
-                              '2' => { 'delete_synteny' => {'mlss_id' => '#expr( #ortholog_mlss_id# || #pairwise_mlss_id# )expr#'} },
+                              '2' => [ 'delete_synteny' ],
                            },
               
             },
@@ -330,10 +330,8 @@ sub pipeline_analyses {
                                    mlss_id  => '#synteny_mlss_id#',
                                   },
               -flow_into => {
-                              2 => WHEN( '(#avg_genomic_coverage# < #min_genome_coverage#) and (defined(#ptree_db#) )' => {'delete_synteny' =>{'mlss_id' => '#ortholog_mlss_id#'} },
-                                         '(#avg_genomic_coverage# < #min_genome_coverage#) and (!defined(#ptree_db#) )' => {'delete_synteny' =>{'mlss_id' => '#pairwise_mlss_id#'} },
-                                         '(#avg_genomic_coverage# > #min_genome_coverage#) and (defined(#ptree_db#) )' => {'update_mlss_tag_table' =>{'mlss_id' => '#ortholog_mlss_id#', 'is_pw_mlss' => 0} },
-                                         '(#avg_genomic_coverage# > #min_genome_coverage#) and (!defined(#ptree_db#) )' => {'update_mlss_tag_table' =>{'mlss_id' => '#pairwise_mlss_id#', 'is_pw_mlss' => 1} },
+                              2 => WHEN( '(#avg_genomic_coverage# < #min_genome_coverage#)' => 'delete_synteny',
+                                         ELSE 'update_mlss_tag_table',
                                         ),
                             },
               -max_retry_count => 0,
@@ -343,13 +341,13 @@ sub pipeline_analyses {
 
         {   -logic_name => 'delete_synteny',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::DeleteSynteny',
+            -parameters => {
+                'mlss_id' => '#expr( #ortholog_mlss_id# || #pairwise_mlss_id# )expr#',
+            },
         },
 
         {   -logic_name => 'update_mlss_tag_table',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::UpdateMlssTag',
-            -parameters      => {
-                                   synteny_mlss_id  => '#synteny_mlss_id#',
-                                  },
         },
 
    ];
