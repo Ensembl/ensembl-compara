@@ -127,6 +127,15 @@ sub default_options {
     # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
     'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
 
+    # How will the pipeline create clusters (families) ?
+    # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+    #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+    #   'hmm' means that the pipeline will run an HMM classification
+    #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+    #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
+    #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
+    'clustering_mode'           => 'hybrid',
+
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
         'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.branch_len.nw',
