@@ -169,7 +169,7 @@ is( $new_collection->first_release, undef, 'collection is unreleased' );
 ## Test 2: create a new collection WITH components
 ok( $new_collection = Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $compara_dba, 'test_comp_col', ['homo_sapiens', 'triticum_aestivum'] ) );
 is( $new_collection->name, 'collection-test_comp_col', 'new collection created with correct name' );
-my @gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
+@gdb_ids = sort {$a <=> $b} map {$_->dbID} @{ $new_collection->genome_dbs };
 is_deeply( \@gdb_ids, [141, 1003], 'correct genome dbs included' );
 is( $new_collection->first_release, undef, 'collection is unreleased' );
 
