@@ -156,7 +156,7 @@ sub fetch_by_name_assembly {
 =head2 fetch_all_by_name
 
   Arg [1]    : string $name
-  Example    : $gdb = $gdba->fetch_all_by_name_assembly('homo_sapiens');
+  Example    : $gdbs = $gdba->fetch_all_by_name('homo_sapiens');
   Description: Retrieves all the genome db using the name of the species
   Returntype : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : thrown if $name is not defined
