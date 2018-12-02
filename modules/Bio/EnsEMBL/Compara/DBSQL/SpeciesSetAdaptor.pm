@@ -416,7 +416,6 @@ sub fetch_collection_by_name {
   Arg[3]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
   Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, $old_collection_object, $new_genome_db]);
   Description : Creates a new collection species-set that contains the new list of GenomeDBs
-                The method assumes that all the species names in $new_genome_dbs are different
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : none
   Caller      : general
