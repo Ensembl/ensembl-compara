@@ -499,13 +499,8 @@ sub update_collection {
 
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        $new_collection_ss = $ss_adaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
+        $new_collection_ss = $ss_adaptor->update_collection($collection_name, \@new_collection_gdbs, $release);
 
-        if ( $release ) {
-            $ss_adaptor->retire_object($collection_ss);
-            $ss_adaptor->make_object_current($new_collection_ss);
-        }
-        
         print_method_link_species_sets_to_update_by_collection($compara_dba, $collection_ss);
         die "\n\n*** Dry-run mode requested. No changes were made to the database ***\n\nThe following collection WOULD have been created:\n" . $new_collection_ss->toString . "\n\n" if $dry_run;
         print "\nStored: " . $new_collection_ss->toString . "\n\n";
