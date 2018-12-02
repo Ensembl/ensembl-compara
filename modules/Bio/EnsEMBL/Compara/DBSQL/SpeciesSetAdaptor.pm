@@ -189,6 +189,7 @@ sub update_header {
         }, {
             'species_set_id'=> $species_set->dbID,
         } );
+    $self->_id_cache->put($species_set->dbID, $species_set);
 }
 
 
