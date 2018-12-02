@@ -21,7 +21,6 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Test::MultiTestDB;
 
 BEGIN {
