@@ -438,11 +438,7 @@ sub new_collection {
 
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        $new_collection_ss = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => \@new_collection_gdbs, -name => "collection-$collection_name" );
-        $ss_adaptor->store($new_collection_ss) || die "Could not store species set collection-$collection_name";
-        
-        # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-        $ss_adaptor->make_object_current($new_collection_ss) if $release;
+        $new_collection_ss = $ss_adaptor->update_collection($collection_name, \@new_collection_gdbs, $release);
         die "\n\n*** Dry-run mode requested. No changes were made to the database ***\n\nThe following collection WOULD have been created:\n" . $new_collection_ss->toString . "\n\n" if $dry_run;
         print "\nStored: " . $new_collection_ss->toString . "\n\n";
     } );
