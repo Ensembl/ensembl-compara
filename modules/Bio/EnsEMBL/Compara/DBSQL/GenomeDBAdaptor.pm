@@ -174,6 +174,28 @@ sub fetch_all_by_name {
 }
 
 
+=head2 _find_most_recent_by_name
+
+  Arg[1]      : String $species_name
+  Example     : $gdb = $gdba->_find_most_recent_by_name('homo_sapiens');
+  Description : This method returns the most up-to-date GenomeDB object for
+                the given species name
+  Returntype  : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : thrown if $name is not defined or if no GenomeDB could be found
+  Caller      : internal
+
+=cut
+
+sub _find_most_recent_by_name {
+    my ($self, $name) = @_;
+
+    my $objs = $self->fetch_all_by_name($name);
+    die "Cannot find any objects named '$name'" unless $objs->[0];
+
+    return $self->_find_most_recent($objs);
+}
+
+
 =head2 fetch_all_by_taxon_id
 
   Arg [1]    : number (taxon_id)

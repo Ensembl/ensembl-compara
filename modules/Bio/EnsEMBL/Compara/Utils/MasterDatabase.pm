@@ -433,7 +433,7 @@ sub new_collection {
     my $collection_ss;
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my @new_collection_gdbs = map {_find_most_recent_by_name($genome_db_adaptor, $_)} @$species_names;
+    my @new_collection_gdbs = map {$genome_db_adaptor->_find_most_recent_by_name($_)} @$species_names;
     @new_collection_gdbs = _expand_components(\@new_collection_gdbs) if $incl_components;
 
     my $new_collection_ss;
@@ -470,7 +470,7 @@ sub update_collection {
     my $collection_ss;
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my @requested_species_gdbs = map {_find_most_recent_by_name($genome_db_adaptor, $_)} @$species_names;
+    my @requested_species_gdbs = map {$genome_db_adaptor->_find_most_recent_by_name($_)} @$species_names;
 
     my @new_collection_gdbs = @requested_species_gdbs;
     $collection_ss = $ss_adaptor->fetch_collection_by_name($collection_name);
@@ -505,31 +505,6 @@ sub update_collection {
     return $new_collection_ss;
 }
 
-=head2 _find_most_recent_by_name
-
-  Arg[1]      : Compara adaptor for objects using BaseReleaseHistoryAdaptor
-  Arg[2]      : String $species_name
-  Description : This method returns the most up-to-date genome_db object for
-                the given species name
-  Returns     : Varies based on adaptor type
-  Exceptions  :
-
-=cut
-
-sub _find_most_recent_by_name {
-    my ($this_adaptor, $name) = @_;
-
-    my $objs = $this_adaptor->fetch_all_by_name($name);
-    # return undef unless $objs->[0];
-    die "Cannot find any objects named '$name'" unless $objs->[0];
-
-    my $most_recent;
-    foreach my $obj ( @$objs ) {
-        return $obj if ( $obj->is_current );
-        $most_recent = $obj if ( !defined $most_recent || $obj->first_release > $most_recent->first_release );
-    }
-    return $most_recent;
-}
 
 =head2 _expand_components
 
