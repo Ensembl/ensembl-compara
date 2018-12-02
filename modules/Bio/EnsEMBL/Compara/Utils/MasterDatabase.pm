@@ -473,7 +473,7 @@ sub update_collection {
     my @requested_species_gdbs = map {_find_most_recent_by_name($genome_db_adaptor, $_)} @$species_names;
 
     my @new_collection_gdbs = @requested_species_gdbs;
-    $collection_ss = _find_most_recent_by_name($ss_adaptor, "collection-$collection_name");
+    $collection_ss = $ss_adaptor->fetch_collection_by_name($collection_name);
     warn "Adding species to collection '$collection_name' (dbID: " . $collection_ss->dbID . ")\n";
 
     my @gdbs_in_current_collection = @{$collection_ss->genome_dbs};
