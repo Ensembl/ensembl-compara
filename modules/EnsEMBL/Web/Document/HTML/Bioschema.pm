@@ -40,28 +40,32 @@ sub render {
   my $data = {
               '@type' => 'DataCatalog',
               '@id'   => $catalog, 
-              'name'  => 'Ensembl Release',
+              'name'  => 'Ensembl',
               'url'   => $server, 
+              'keywords' => 'genomics, bioinformatics, vertebrate, EBI, genetic, research, gene, regulation, variation, tool, download',
               'dataset' => {
                             '@type' => 'Dataset',
                             'name'  =>  sprintf('%s Comparative Genomics Data', $sitename),
                             'includedInDataCatalog' => $catalog,
                             'url'   => 'http://www.ensembl.org/info/genome/compara/accessing_compara.html',
+                            'description' => 'Gene trees, protein families and alignments across the vertebrate taxonomic space',
+                            'keywords' => 'phylogenetics, evolution, homology, synteny',
                             'distribution'  => [{
                                                   '@type' => 'DataDownload',
                                                   'name'  => sprintf('%s Comparative Genomics - EMF files', $sitename),
+                                                  'description' => 'Alignments of resequencing data for Ensembl vertebrate species',
                                                   'fileFormat' => 'emf',
                                                   'contentURL'  => sprintf('%s/emf/ensembl-compara/', $sd->ENSEMBL_FTP_URL), 
                               }],
-              'creator' => {
-                            '@type' => 'Organization',
-                            'name'  => 'Ensembl',
-                        }
-              },
               'provider' => {
                               '@type' => 'Organization',
                               'name'  => 'Ensembl',
                               'email' => 'helpdesk@ensembl.org',
+              },
+              'sourceOrganization' => {
+                              '@type' => 'Organization',
+                              'name'  => 'European Bioinformatics Institute',
+                              'urll' => 'https://www.ebi.ac.uk',
               },
   };
 
