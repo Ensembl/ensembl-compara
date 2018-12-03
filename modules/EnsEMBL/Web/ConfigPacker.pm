@@ -1669,23 +1669,36 @@ sub _munge_meta {
 
     $self->tree->{'HAVANA_DATAFREEZE_DATE'} = $meta_hash->{'genebuild.havana_datafreeze_date'}[0];
 
-    # check if there are sample search entries defined in meta table ( the case with Ensembl Genomes)
-    # they can be overwritten at a later stage  via INI files
-    my @ks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
+    # check if there are sample search entries defined in meta table
+    my @mks = grep { /^sample\./ } keys %{$meta_hash || {}}; 
     my $shash;
 
-    foreach my $k (@ks) {
+    # Create hash of db values
+    foreach my $k (@mks) {
       (my $k1 = $k) =~ s/^sample\.//;
       $shash->{uc $k1} = $meta_hash->{$k}->[0];
     }
+
+    my @iks = keys %{$self->tree->{'SAMPLE_DATA'}||{}};
+    my @all_keys = (@mks, @iks);
+    my %seen;
+
     ## add in any missing values where text omitted because same as param
-    my @original_keys = keys %$shash;
-    foreach my $key (@original_keys) {
-      next unless $key =~ /PARAM/;
-      (my $type = $key) =~ s/_PARAM//;
-      unless ($shash->{$type.'_TEXT'}) {
-        $shash->{$type.'_TEXT'} = $shash->{$key};
+    # but don't override any that have been set in ini file
+    foreach my $key (@all_keys) {
+      next if $seen{$key};
+      my $ini_version = $self->tree->{'SAMPLE_DATA'}{$key};
+      if (!$shash->{$key} && defined($ini_version)) {
+        $shash->{$key} = $ini_version;
+      }
+      else {
+        next unless $key =~ /PARAM/;
+        (my $type = $key) =~ s/_PARAM//;
+        unless ($shash->{$type.'_TEXT'}) {
+          $shash->{$type.'_TEXT'} = $shash->{$key};
+        }
       } 
+      $seen{$key} = 1;
     }
 
     $self->tree->{'SAMPLE_DATA'} = $shash if scalar keys %$shash;
