@@ -1184,7 +1184,7 @@ sub add_regulation_builds {
   # Skip the rows property as it throws an exception
   my @seg_keys = grep { $_ ne 'rows' } keys %$segs;
 
-  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys @seg_keys) {
+  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } @seg_keys) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
     my $epi_desc = $segs->{$key}{'epi_desc'} ? " ($segs->{$key}{'epi_desc'})" : "";
