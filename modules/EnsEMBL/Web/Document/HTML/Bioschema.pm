@@ -57,16 +57,17 @@ sub render {
                                                   'fileFormat' => 'emf',
                                                   'contentURL'  => sprintf('%s/emf/ensembl-compara/', $sd->ENSEMBL_FTP_URL), 
                               }],
+                          },
               'provider' => {
                               '@type' => 'Organization',
                               'name'  => 'Ensembl',
                               'email' => 'helpdesk@ensembl.org',
-              },
+                            },
               'sourceOrganization' => {
-                              '@type' => 'Organization',
-                              'name'  => 'European Bioinformatics Institute',
-                              'urll' => 'https://www.ebi.ac.uk',
-              },
+                                        '@type' => 'Organization',
+                                        'name'  => 'European Bioinformatics Institute',
+                                        'urll' => 'https://www.ebi.ac.uk',
+                                      },
   };
 
 
