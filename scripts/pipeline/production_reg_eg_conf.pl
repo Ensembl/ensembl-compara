@@ -31,14 +31,39 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-# -------------------------CORE DATABASES--------------------------------------
+my $current_release = 95;
 
-# Before the official EG handover, the core databases are usually on the a production server:
-Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-prod-2:4239/95');
+# ---------------------- CURRENT CORE DATABASES----------------------------------
 
-# Then they are moved to the staging server:
-#Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/95');
-Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/95');
+# most cores are on EG servers, but some are on ensembl's vertannot-staging
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro@mysql-eg-prod-2:4239/$current_release");
+Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # never use EG's version of yeast
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro@mysql-ens-vertannot-staging:4573/$current_release");
+
+# ---------------------- PREVIOUS CORE DATABASES---------------------------------
+
+# previous release core databases will be required by LoadMembers only
+# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
+
+my $suffix_separator = '__cut_here__';
+my $prev_release = $current_release - 1;
+Bio::EnsEMBL::Registry->load_registry_from_db(
+    -host   => 'mysql-eg-mirror',
+    -port   => 4157,
+    -user   => 'ensro',
+    -pass   => '',
+    -db_version     => $prev_release,
+    -species_suffix => $suffix_separator.$prev_release,
+);
+Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
+Bio::EnsEMBL::Registry->load_registry_from_db(
+    -host   => 'mysql-ensembl-mirror',
+    -port   => 4240,
+    -user   => 'ensro',
+    -pass   => '',
+    -db_version     => $prev_release,
+    -species_suffix => $suffix_separator.$prev_release,
+);
 
 #-------------------------HOMOLOGY DATABASES-----------------------------------
 # Members
@@ -61,6 +86,16 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertanno
       -dbname => 'mateus_plants_prottrees_42_95',
  );
 
+# protein trees from previous release - for GOC reuse
+ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-4',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4401,
+    -species => 'prev_ptrees',
+    -dbname => 'carlac_plants_prottrees_41_94_B ',
+);
+
 # ------------------------- LASTZ DATABASES: -----------------------------------
 
 #Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -81,18 +116,6 @@ Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertanno
 #    -port => 4522,
 #    -species => 'plants_synteny',
 #    -dbname => 'waakanni_plants_synteny_94',
-#);
-
-# ----------------------HOMOLOGY DATABASES---------------------------
-
-# Protein tree production database
-#Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#    -host => 'mysql-ens-compara-prod-4',
-#    -user => 'ensadmin',
-#    -pass => $ENV{'ENSADMIN_PSW'},
-#    -port => 4401,
-#    -species => 'plants_ptrees',
-#    -dbname => 'carlac_plants_prottrees_41_94_B ',
 #);
 
 # ----------------------COMPARA DATABASES---------------------------

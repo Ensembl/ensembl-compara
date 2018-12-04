@@ -31,17 +31,18 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-# -------------------------CORE DATABASES--------------------------------------
+my $current_release = 95;
+
+# ---------------------- CURRENT CORE DATABASES---------------------------------
 
 # The majority of core databases live on staging servers:
-#   Bio::EnsEMBL::Registry->load_registry_from_url(
-#    'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/95');
+  # Bio::EnsEMBL::Registry->load_registry_from_url(
+  #  "mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/$current_release");
   Bio::EnsEMBL::Registry->load_registry_from_url(
-    'mysql://ensro@mysql-ens-vertannot-staging:4573/95');
+    "mysql://ensro\@mysql-ens-vertannot-staging:4573/$current_release");
 
 
 # Add in extra cores from genebuild server
-# danio_rerio_core_92_11@mysql-ens-vertannot-staging:4573
 # Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 #      -host => 'mysql-ens-vertannot-staging',
 #      -user => 'ensro',
@@ -51,8 +52,33 @@ use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 #      -dbname => 'danio_rerio_core_92_11',
 #  );
 
+# ---------------------- PREVIOUS CORE DATABASES---------------------------------
+
+# previous release core databases will be required by LoadMembers only
+# !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
+
+my $suffix_separator = '__cut_here__';
+my $prev_release = $current_release - 1;
+Bio::EnsEMBL::Registry->load_registry_from_db(
+    -host           => 'mysql-ensembl-mirror',
+    -port           => 4240,
+    -user           => 'ensro',
+    -pass           => '',
+    -db_version     => $prev_release,
+    -species_suffix => $suffix_separator.$prev_release,
+);
 
 #-------------------------HOMOLOGY DATABASES-----------------------------------
+
+# Members
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4523,
+    -species => 'compara_members',
+    -dbname => 'carlac_load_members_95',
+);
 
 # Individual pipeline database for ProteinTrees:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
@@ -62,6 +88,16 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -port => 4401,
      -species => 'compara_ptrees',
      -dbname => 'mateus_protein_trees_95',
+);
+
+# protein trees from previous release - for GOC reuse
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+     -host => 'mysql-ens-compara-prod-4',
+     -user => 'ensadmin',
+     -pass => $ENV{'ENSADMIN_PSW'},
+     -port => 4401,
+     -species => 'prev_ptrees',
+     -dbname => 'mateus_protein_trees_94',
 );
 
 # Individual pipeline database for Families:
@@ -274,6 +310,15 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -dbname => 'ensembl_compara_master',
 );
 
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-8',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4618,
+    -species => 'compara_master_test',
+    -dbname => 'carlac_test_master',
+);
+
 # previous release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'mysql-ens-compara-prod-1',
@@ -346,36 +391,16 @@ Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
     -dbname => 'ncbi_taxonomy',
 );
 
-# # ---------------------OTHER DATABASES-----------------------------
+# ---------------------OTHER DATABASES-----------------------------
 
-# Members
+# Alt allele projection
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-3',
+    -host => 'mysql-ens-compara-prod-6',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4523,
-    -species => 'compara_members',
-    -dbname => 'carlac_load_members_95',
+    -port => 4616,
+    -species => 'alt_allele_projection',
+    -dbname => 'carlac_alt_allele_import_95',
 );
-
-# # Merge alignments
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-1',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4485,
-#     -species => 'alignments_merged',
-#     -dbname => 'ensembl_alignments_merged_90',
-# );
-
-# # Alt allele projection
-# Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-#     -host => 'mysql-ens-compara-prod-1',
-#     -user => 'ensadmin',
-#     -pass => $ENV{'ENSADMIN_PSW'},
-#     -port => 4485,
-#     -species => 'alt_allele_projection',
-#     -dbname => 'carlac_alt_allele_import_90',
-# );
 
 1;
