@@ -68,7 +68,8 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-        #'collection'            => 'ensembl',
+        'division'   => 'ensembl',
+        'collection' => $self->o('division'),
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
@@ -92,44 +93,21 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
+        'host'  => 'mysql-ens-compara-prod-2',
         'port'  => 4522,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-
-        # Ensembl-specific databases
-        'staging_loc' => {
-            -host   => 'mysql-ens-sta-1',
-            -port   => 4519,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 94,
-        },
-
-        'livemirror_loc' => {
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 93,
-        },
+        'master_db' => 'compara_master',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        #'curr_core_registry'        => "registry.conf",
+        # 'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
+        'curr_core_registry'        => $self->o('reg_conf'),
         #'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
-        # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        #'prev_core_sources_locs'   => [ ],
-
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        #'reuse_member_db' => '',
-        'reuse_member_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_93',
+        'reuse_member_db' => 'compara_prev',
     };
 }
 

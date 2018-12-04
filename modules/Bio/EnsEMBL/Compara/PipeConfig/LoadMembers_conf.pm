@@ -62,19 +62,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters inherited from EnsemblGeneric_conf and very unlikely to be redefined:
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version()
-        # 'ensembl_release'       => 68,
-
-    # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        # Change this one to allow multiple runs
-        #'rel_suffix'            => 'b',
-        #'collection'            => 'ensembl',
-
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        #'pipeline_name'        => 'load_members'.$self->o('rel_with_suffix'),
+        'pipeline_name'        => $self->o('division') . '_load_members'.$self->o('rel_with_suffix'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
@@ -136,15 +126,17 @@ sub default_options {
 
 sub resource_classes {
     my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         '250Mb_job'    => {'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         'default'      => { 'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"',  $reg_requirement] },
+         '250Mb_job'    => { 'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement] },
+         '500Mb_job'    => { 'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement] },
+         '1Gb_job'      => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
+         '2Gb_job'      => { 'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
+         '4Gb_job'      => { 'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
+         '8Gb_job'      => { 'LSF' => ['-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"', $reg_requirement] },
 
     };
 }
@@ -262,7 +254,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_conf_file'  => $self->o('curr_core_registry'),
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
+                # 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
@@ -277,7 +269,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry',
             -parameters => {
                 'registry_conf_file'  => $self->o('curr_core_registry'),
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
+                # 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
@@ -289,9 +281,10 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-                'registry_dbs'      => $self->o('prev_core_sources_locs'),
+                # 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
                 'reuse_db'          => '#reuse_member_db#',
+                'current_release'   => $self->o('ensembl_release'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '1Gb_job',
