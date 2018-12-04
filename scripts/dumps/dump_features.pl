@@ -523,15 +523,19 @@ foreach my $slice (@$all_slices) {
   } elsif ($feature =~ /^ce_?(\d+)/) {
     my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     my $dnafrag_id = $dnafrag->dbID;
-    my $sql = "SELECT dnafrag_start, dnafrag_end FROM constrained_element WHERE".
+    my $seq_region_start = $slice->seq_region_start;
+    my $seq_region_end = $slice->seq_region_end;
+    my $sql = "SELECT constrained_element_id, dnafrag_start, dnafrag_end, score, p_value FROM constrained_element WHERE".
         " dnafrag_id = $dnafrag_id and method_link_species_set_id = ".$mlss->dbID.
+        " AND dnafrag_start >= $seq_region_start AND dnafrag_end <= $seq_region_end".
+        " GROUP BY dnafrag_start, dnafrag_end".
         " ORDER BY dnafrag_start";
     my $sth = $dnafrag_adaptor->db->dbc->prepare($sql);
     $sth->execute();
-    my ($start, $end);
-    $sth->bind_columns(\$start, \$end);
+    my ($constrained_element_id, $start, $end, $score, $pvalue);
+    $sth->bind_columns(\$constrained_element_id, \$start, \$end, \$score, \$pvalue);
     while ($sth->fetch) {
-      print join("\t", $name, ($start - 1), $end), "\n";
+      print join("\t", $name, ($start - 1), $end, $constrained_element_id, $score, $pvalue), "\n";
     }
     $sth->finish();
     next;
@@ -540,7 +544,7 @@ foreach my $slice (@$all_slices) {
     my $it = $slice->sub_Slice_Iterator(1_000_000);
     while ($it->has_next()) {
         my $sub_slice = $it->next();
-        print STDERR $sub_slice->name() . "\n";
+        #print STDERR $sub_slice->name() . "\n";
         my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
         next unless @$scores;
         # Sort by position and decreasing score, so that we get the best score first
@@ -638,12 +642,14 @@ sub get_Slices_from_BED_file {
   open(REGIONS, $regions_file) or die "Cannot open regions file <$regions_file>\n";
   while (<REGIONS>) {
     next if (/^#/ or /^track/);
+    chomp;
     my ($chr, $start0, $end) = split("\t", $_);
-    my $slice = $slice_adaptor->fetch_by_region(undef, $chr, $start0+1, $end);
-    if (!$slice and ($slice =~ m/^chr(.*)/)) {
-        $slice = $slice_adaptor->fetch_by_region(undef, $1, $start0+1, $end);
+    $start0 += 1 if defined $start0;
+    my $slice = $slice_adaptor->fetch_by_region(undef, $chr, $start0, $end);
+    if (!$slice and ($chr =~ m/^chr(.*)/)) {
+        $slice = $slice_adaptor->fetch_by_region(undef, $1, $start0, $end);
     }
-    die "Cannot get Slice for $chr - $start0 - $end\n" if (!$slice);
+    die "Cannot get Slice for $chr - ".($start0//'NA')." - ".($end//'NA')."\n" if (!$slice);
     push(@$slices, $slice);
   }
   close(REGIONS);

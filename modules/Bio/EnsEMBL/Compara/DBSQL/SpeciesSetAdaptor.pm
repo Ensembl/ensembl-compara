@@ -189,6 +189,7 @@ sub update_header {
         }, {
             'species_set_id'=> $species_set->dbID,
         } );
+    $self->_id_cache->put($species_set->dbID, $species_set);
 }
 
 
@@ -411,11 +412,11 @@ sub fetch_collection_by_name {
 =head2 update_collection
 
   Arg[1]      : string $collection_name
-  Arg[2]      : Bio::EnsEMBL::Compara::SpeciesSet $old_ss: The old "collection" species-set
-  Arg[3]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
-  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, $old_collection_object, $new_genome_db]);
+  Arg[2]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
+  Arg[3]      : boolean $release
+  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, $new_genome_db]);
   Description : Creates a new collection species-set that contains the new list of GenomeDBs
-                The method assumes that all the species names in $new_genome_dbs are different
+                If requested ($release) the new object will be released and the previous versions retired.
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : none
   Caller      : general
@@ -424,7 +425,7 @@ sub fetch_collection_by_name {
 =cut
 
 sub update_collection {
-    my ($self, $collection_name, $old_ss, $new_genome_dbs) = @_;
+    my ($self, $collection_name, $new_genome_dbs, $release) = @_;
 
     my $gdb_a = $self->db->get_GenomeDBAdaptor;
     my $mlss_a = $self->db->get_MethodLinkSpeciesSetAdaptor;
@@ -447,7 +448,10 @@ sub update_collection {
         $self->store($species_set);
     }
 
-    if ($old_ss and ($old_ss->dbID != $species_set->dbID)) {
+    return $species_set unless $release;
+
+    foreach my $old_ss (@{ $self->fetch_all_by_name($species_set->name) }) {
+        next if $old_ss->dbID == $species_set->dbID;
         if (not $old_ss->has_been_released) {
             # $old_ss is not used, so we could delete it
             # Let's change its name instead
@@ -456,9 +460,11 @@ sub update_collection {
         }
         $self->retire_object($old_ss);
     }
+    $self->make_object_current($species_set);
 
     return $species_set;
 }
+
 
 ######################################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #

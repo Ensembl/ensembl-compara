@@ -120,6 +120,8 @@ sub run_pecan {
   my $alignment_file = $self->worker_temp_directory . "/pecan.mfa";
   my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
+  sleep 30 unless -e $alignment_file; # give LSF time to die properly if MEMLIMIT is hit
+
   open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
   my $seq = "";
   my $this_genomic_align;

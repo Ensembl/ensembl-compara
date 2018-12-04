@@ -457,7 +457,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_clustering',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => 'peptide_align_feature_%',
+                'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_1_before_clustering.sql.gz',
             },

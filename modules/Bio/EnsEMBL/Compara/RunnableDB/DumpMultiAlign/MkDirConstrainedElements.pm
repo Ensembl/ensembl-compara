@@ -53,6 +53,9 @@ sub write_output {
 
     my $dirname = $mlss->filename;
 
+    my $work_dir = $self->param_required('work_dir').'/'.$dirname;
+    make_path($work_dir) unless -d $work_dir;
+
     my $output_dir = $self->param_required('export_dir').'/bed/ensembl-compara/'.$dirname;
     # remove_tree($output_dir);
     make_path($output_dir) unless -d $output_dir;

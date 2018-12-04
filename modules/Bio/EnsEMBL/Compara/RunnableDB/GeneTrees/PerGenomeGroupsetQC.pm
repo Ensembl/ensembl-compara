@@ -74,6 +74,7 @@ sub fetch_input {
     my $genome_db_id            = $self->param_required('genome_db_id');
     my $this_genome_db          = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     my $this_species_tree       = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
+    my $ncbi_taxon_adaptor      = $self->compara_dba->get_NCBITaxonAdaptor;
     my $this_species_tree_node  = $this_species_tree->root->find_leaves_by_field('genome_db_id', $genome_db_id)->[0];
 
     $self->param('species_tree_node', $this_species_tree_node);
@@ -84,6 +85,11 @@ sub fetch_input {
 
     $self->param('total_orphans_num', $total_orphans_num);
     $self->param('total_num_genes',   $total_num_genes);
+    $self->param( 'orphan_ratio',     1-($total_orphans_num/$total_num_genes) );
+
+    if ( !$self->_is_above_orphan_ratio( $genome_db_id, $ncbi_taxon_adaptor ) ) {
+        die "genome_db_id $genome_db_id has too many orphan genes please investigate further.";
+    }
 
     my $reuse_this = 0;
     if ($self->param('reuse_ss_id')) {
@@ -148,6 +154,22 @@ sub fetch_gdb_orphan_genes {
     }
 
     return \%orphan_stable_id_hash;
+}
+
+sub _is_above_orphan_ratio {
+    my ( $self, $genome_db_id, $ncbi_taxon_adaptor ) = @_;
+
+    my $taxon     = $ncbi_taxon_adaptor->fetch_node_by_genome_db_id($genome_db_id);
+    my $ancestors = $taxon->get_all_ancestors();
+
+    my $above_threshold = 0;
+    foreach my $ancestor (@$ancestors) {
+        if ( exists( $self->param('orphan_gene_ratio_per_taxon')->{ $ancestor->taxon_id } ) && ( $self->param('orphan_ratio') >= $self->param('orphan_gene_ratio_per_taxon')->{ $ancestor->taxon_id } ) ) {
+            $above_threshold = 1;
+        }
+    }
+
+    return $above_threshold;
 }
 
 1;

@@ -106,8 +106,17 @@ sub fetch_input {
 				push( @{$dumps{DumpConservationScores}}, $mlss );
 			}
 		} else {
+			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
+			if ( $method_class =~ /^ConstrainedElement/ ) {
+				push( @{$dumps{DumpConstrainedElements}}, $mlss );
+				next;
+			}
+			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
 			# don't flow trees for copying - they are always dumped fresh
-			next if $mlss->method->class =~ /tree_node$/;
+			if ( $method_class =~ /tree_node$/ ) { # gene trees
+				push( @{$dumps{DumpTrees}}, $mlss );
+				next;
+			}
 			# old analysis! can be copied from prev release FTP location
 			push( @copy_jobs, $mlss->dbID ) if defined $self->param('dumpable_method_types')->{$mlss->method->type};
 		}
@@ -173,6 +182,7 @@ sub _dump_multialign_jobs {
 			my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
 			my $this_type = $mlss->method->type;
 			$this_job{mlss_id} = $mlss->dbID;
+			$this_job{add_conservation_scores} = 0 unless ( $this_type eq 'PECAN' || $this_type eq 'EPO_LOW_COVERAGE' );
 			foreach my $opt ( keys %{$alignment_dump_options{$this_type}} ) {
 				$this_job{$opt} = $alignment_dump_options{$this_type}->{$opt};
 			}
@@ -191,6 +201,7 @@ sub _dump_multialign_jobs {
 	foreach my $type ( keys %aln_types ) {
 		my %this_job = %{ $self->param('default_dump_options')->{DumpMultiAlign} };
 		$this_job{method_link_types} = $type;
+		$this_job{add_conservation_scores} = 0 unless ( $type eq 'PECAN' || $type eq 'EPO_LOW_COVERAGE' );
 		foreach my $opt ( keys %{$alignment_dump_options{$type}} ) {
 			$this_job{$opt} = $alignment_dump_options{$type}->{$opt};
 		}

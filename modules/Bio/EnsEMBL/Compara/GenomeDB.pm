@@ -148,6 +148,7 @@ sub new_from_DBAdaptor {
     if ($genome_component) {
         if (grep {$_ eq $genome_component} @{$db_adaptor->get_GenomeContainer->get_genome_components}) {
             $self->genome_component($genome_component);
+            $self->display_name = $self->display_name . sprintf(' (component %s)', $genome_component);
         } else {
             die "The required genome component '$genome_component' cannot be found in the database, please investigate\n";
         }
@@ -229,7 +230,7 @@ sub _check_equals {
     my ($self, $ref_genome_db) = @_;
 
     my $diffs = '';
-    foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype is_good_for_alignment)) {
+    foreach my $field (qw(assembly taxon_id genebuild name strain_name display_name has_karyotype)) {
         if (($self->$field() xor $ref_genome_db->$field()) or ($self->$field() and $ref_genome_db->$field() and ($self->$field() ne $ref_genome_db->$field()))) {
             $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field() // '<NULL>', $ref_genome_db->$field() // '<NULL>');
         }
@@ -522,6 +523,7 @@ sub make_component_copy {
     $copy_genome_db->genome_component($component_name);
     $copy_genome_db->dbID(undef);
     $copy_genome_db->adaptor(undef);
+    $copy_genome_db->display_name($self->display_name . sprintf(' (component %s)', $component_name));
     $self->component_genome_dbs($component_name, $copy_genome_db);
     return $copy_genome_db;
 }
@@ -618,7 +620,7 @@ sub strain_name {
 sub display_name {
     my $self = shift;
     $self->{'_display_name'} = shift if @_;
-    return $self->{'_display_name'} . ($self->genome_component ? sprintf(' (component %s)', $self->genome_component) : '');
+    return $self->{'_display_name'};
 }
 
 
@@ -636,6 +638,7 @@ sub display_name {
 
 sub get_common_name {
     my $self = shift;
+    warning('GenomeDB::get_common_name is experimental and may be removed soon. Do not use');
     my $display_name = $self->display_name;
     if ($self->taxon_id && ($self->{'_taxon'} || $self->adaptor)) {
         my $scientific_name = $self->taxon->scientific_name;
@@ -695,7 +698,7 @@ sub toString {
     my $txt = sprintf('GenomeDB dbID=%s %s (%s)', ($self->dbID || '?'), $self->name, $self->assembly);
     $txt .= ' scientific_name='.$self->get_scientific_name if $self->taxon_id;
     $txt .= sprintf(' genebuild="%s"', $self->genebuild);
-    $txt .= ', ' . ($self->is_good_for_alignment ? 'yes' : 'no');
+    $txt .= ', ' . ($self->is_good_for_alignment ? 'is' : 'not') . ' good for aln';
     $txt .= ', ' . ($self->has_karyotype ? 'with' : 'without') . ' karyotype';
     $txt .= ' ' . $self->SUPER::toString();
     return $txt;

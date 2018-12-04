@@ -80,6 +80,14 @@ sub default_options {
     # custom pipeline name, in case you don't like the default one
     pipeline_name => $self->o('division').'_prottrees_'.$self->o('eg_release').'_'.$self->o('rel_with_suffix'),
 
+    # How will the pipeline create clusters (families) ?
+    # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+    #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+    #   'hmm' means that the pipeline will run an HMM classification
+    #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+    #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
+    #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
+    'clustering_mode'           => 'hybrid',
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -116,6 +124,11 @@ sub tweak_analyses {
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'mafft_huge'}->{'-rc_name'} = '128Gb_4c_job';
+    $analyses_by_name->{'homology_factory'}->{'-rc_name'}         = '1Gb_job';
+    $analyses_by_name->{'copy_homology_dNdS'}->{'-rc_name'}       = '1Gb_job';
+    $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
+    $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
 
     $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';

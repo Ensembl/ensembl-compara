@@ -164,7 +164,7 @@ sub verify_xml_leaf {
         $node = $node->{clade};
     } 
     for my $key (keys %$node) {
-        if ( $node->{$key}->{taxonomy}->{common_name} eq $species_name ){
+        if ( ($node->{$key}->{taxonomy}->{common_name} // '') eq $species_name ){
 #            print Dumper($node->{$key}->{taxonomy}->{common_name}), "\nyayayayay\n";
             return 1;
         }
@@ -227,7 +227,7 @@ try{
 #    diag $nh;
 
     $orthoXml = process_orthoXml_get($server.'/genetree/id/ENSGT00390000003602?content-type=text/x-orthoxml+xml;prune_taxon=9598;prune_taxon=9544;prune_taxon=9606');
-    my @pruned_species = keys $orthoXml->{species} ;
+    my @pruned_species = keys %{ $orthoXml->{species} };
     my %pruned_species = map {$_ => 1} @pruned_species;
     ok( (exists($pruned_species{'pan_troglodytes'})) && (exists($pruned_species{'macaca_mulatta'})) && (exists($pruned_species{'homo_sapiens'} )), "check prune taxon Validity");
 
@@ -269,7 +269,7 @@ try{
     ok($responseIDGet->{success}, "Check New Hampshire NH Validity");
 
     $orthoXml = process_orthoXml_get($server.'/genetree/member/symbol/homo_sapiens/BRCA2?prune_species=cow;prune_species=gorilla_gorilla;content-type=text/x-orthoxml%2Bxml;prune_taxon=9598');
-    @pruned_species = keys $orthoXml->{species} ;
+    @pruned_species = keys %{ $orthoXml->{species} };
     %pruned_species = map {$_ => 1} @pruned_species;
     ok((exists($pruned_species{'gorilla_gorilla'})) && (exists($pruned_species{'bos_taurus'})) && (exists($pruned_species{'pan_troglodytes'} )), "Check gene tree by symbol Validity");
 
@@ -315,23 +315,23 @@ try{
 
     print "\nTesting GET family\/id\/\:id \n\n";
 
-    $ext = '/family/id/PTHR15573';
+    $ext = '/family/id/TF660629';
     $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/PTHR15573?content-type=application/json');
-    ok($jsontxt->{family_stable_id} eq 'PTHR15573', "Check get family Validity");
+    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json');
+    ok($jsontxt->{family_stable_id} eq 'TF660629', "Check get family Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=uniprot');
+    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=uniprot');
     ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl');
+    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl');
     ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter Validity");
     
-    $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl;aligned=1');
+    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=1');
     ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF625635?content-type=application/json;member_source=ensembl;aligned=0');
+    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=0');
     ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 Validity");
 
 
@@ -348,11 +348,11 @@ try{
 
     print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
 
-    $ext = '/family/member/symbol/homo_sapiens/BRCA2';
+    $ext = '/family/member/symbol/homo_sapiens/CEP128';
     $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
     ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $jsontxt = process_json_get($server.'/family/member/symbol/homo_sapiens/BRCA2?content-type=application/json;aligned=0;sequence=none;member_source=ensembl');
+    $jsontxt = process_json_get($server.'/family/member/symbol/homo_sapiens/CEP128?content-type=application/json;aligned=0;sequence=none;member_source=ensembl');
     ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol Validity");
 
 
@@ -365,15 +365,27 @@ try{
     $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
     ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $phyloXml = process_phyloXml_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=text/x-phyloxml;species_set_group=sauropsids;aligned=1');
-    ok(verify_xml_leaf($phyloXml->{phylogeny}, 'Zebra Finch'), "Check get alignment region and align the sequences");
+    $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0');
+    ok(verify_xml_leaf($phyloXml->{phylogeny}, 'Zebra Finch'), "Check get alignment region and unaligned sequences");
 
     $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106041430-106041480:1?content-type=application/json;method=LASTZ_NET;species_set=taeniopygia_guttata;species_set=gallus_gallus');
     ok( index($jsontxt->[0]->{tree},'taeniopygia_guttata') !=-1 && index($jsontxt->[0]->{tree},'gallus_gallus') !=-1, "Check get alignment region method option");
 
-    $jsontxt = process_json_get($server.'/alignment/region/taeniopygia_guttata/2:106040000-106040050:1?content-type=application/json;species_set_group=sauropsids;display_species_set=chicken');
+    $jsontxt = process_json_get($server.$ext.';content-type=application/json;display_species_set=chicken');
     ok($jsontxt->[0]->{alignments}[0]->{species} eq 'gallus_gallus', "Check alignment region display_species_set option Validity");
 
+
+    print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
+
+    $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae';
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+    ok($responseIDGet->{success}, "Check json Validity");
+
+    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+    ok($responseIDGet->{success}, "Check phyloXml Validity");
+
+    $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+    ok($responseIDGet->{success}, "Check phyloXml Validity with unaligned sequences");
 
 
     print "\nTesting GET homology \/id\/\:id \n\n";
@@ -389,7 +401,7 @@ try{
     ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == 10090 , "Check homology endpoint target_taxon option Validity");
 
     $orthoXml = process_orthoXml_get($server.'/homology/id/ENSG00000157764?content-type=text/x-orthoxml+xml;target_species=human;target_species=cow;target_species=chicken;');
-    @pruned_species = keys $orthoXml->{species} ;
+    @pruned_species = keys %{ $orthoXml->{species} };
     %pruned_species = map {$_ => 1} @pruned_species;
     ok((exists($pruned_species{'gallus_gallus'})) && (exists($pruned_species{'bos_taurus'})) && (exists($pruned_species{'homo_sapiens'} )), "Check homology endpoint target species option Validity");
 
@@ -424,7 +436,7 @@ try{
     ok((exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology species symbol endpoint format Validity");
     
     $orthoXml = process_orthoXml_get($server.'/homology/symbol/human/BRCA2?target_taxon=10090;content-type=text/x-orthoxml+xml;format=condensed;target_species=cow;type=orthologues');
-    @pruned_species = keys $orthoXml->{species} ;
+    @pruned_species = keys %{ $orthoXml->{species} };
     %pruned_species = map {$_ => 1} @pruned_species;
     ok((exists($pruned_species{'mus_musculus'})) && (exists($pruned_species{'bos_taurus'})) && (exists($pruned_species{'homo_sapiens'} )), "Check homology species symbol endpoint target species option Validity");
 

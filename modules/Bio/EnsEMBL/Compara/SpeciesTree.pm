@@ -91,7 +91,7 @@ sub multifurcate_tree {
 
     my $NCBItaxon_Adaptor = $self->adaptor->db->get_NCBITaxon();
     for my $node (@{$self->root->get_all_nodes}) {
-        next unless (defined $node->parent);
+        next unless $node->{'_parent_link'};
         my $mya = $node->get_divergence_time() || 0;
         for my $child (@{$node->children()}) {
             $child->distance_to_parent(int($mya));

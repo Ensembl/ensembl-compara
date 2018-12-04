@@ -261,6 +261,7 @@ sub dumpProteinTreeToWorkdir {
   return $fastafile if (-e $fastafile);
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
+  $tree->expand_subtrees;   # In case we are given a supertree
   my $num_pep = $tree->print_sequences_to_file($fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
   if ($num_pep <= 1) {

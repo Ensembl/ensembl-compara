@@ -120,25 +120,37 @@ our $config = {
                 query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             {
-                description => 'Peptides should have CDS sequences (which are made of only ACGTN). Ambiguity codes have to be explicitely switched on.',
-                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]")) AND NOT #allow_missing_cds_seqs# AND stable_id NOT LIKE "LRG%"',
+                description => 'Peptides (except LRGs) must have CDS sequences',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0) AND NOT #allow_missing_cds_seqs# AND stable_id NOT LIKE "LRG%"',
+            },
+            {
+                description => 'CDS sequences must be made of only ACGTN unless ambiguity codes are explicitly allowed',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+            },
+            {
+                description => 'Ambiguity codes never cover more than 20% of the CDS sequence',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 > length*20',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless a few exceptions like some immunoglobulin genes)',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$"',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$"',
                 expected_size => '< 10',
             },
             {
                 description => 'The ncRNA sequences have to be only ACGTN. Ambiguity codes have to be explicitly switched on',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
+            },
+            {
+                description => 'Ambiguity codes never cover more than 20% of the sequence',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 > length*20',
             },
             {
                 description => 'ncRNA sequences cannot be entirely made of N',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^N*$")',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND (sequence REGEXP "^N*$")',
             },
             {
                 description => 'protein sequences cannot be entirely made of X',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^X*$")',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence REGEXP "^X*$")',
             },
             {
                 description => 'CDS sequences cannot be entirely made of N',
@@ -170,7 +182,16 @@ our $config = {
             },
             {
                 description => 'only canonical SeqMembers are in the database#expr(#only_canonical# ? "" : " [SKIPPED]")expr#',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE #only_canonical# AND gene_member.gene_member_id IS NULL',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN gene_member ON seq_member_id = canonical_member_id WHERE seq_member.genome_db_id = #genome_db_id# AND #only_canonical# AND gene_member.gene_member_id IS NULL',
+            },
+            {
+                description => 'Each genome should have some exon_boundaries',
+                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id#',
+                expected_size => '> 0',
+            },
+            {
+                description => 'The gene_member_id<->seq_member_id links of the exon_boundaries table must be the same as in the seq_member table',
+                query => 'SELECT seq_member_id FROM seq_member JOIN exon_boundaries USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member.gene_member_id != exon_boundaries.gene_member_id',
             }
         ],
     },
@@ -355,8 +376,8 @@ our $config = {
                 query => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NOT NULL',
             },
             {
-                description => 'The "speciation" node_type is exclusive from having a duplication_confidence_score (which should only be for duplications, etc)',
-                query => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type = "speciation" XOR duplication_confidence_score IS NULL)',
+                description => 'The "speciation" node_types are exclusive from having a duplication_confidence_score (which should only be for duplications, etc)',
+                query => 'SELECT gtn.node_id FROM gene_tree_node gtn JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type LIKE "%speciation" XOR duplication_confidence_score IS NULL)',
             },
             {
                 description => 'A duplication confidence score of 0 is equivalent to having a "dubious" type, whilst "gene_split" nodes can only have a score of 1',

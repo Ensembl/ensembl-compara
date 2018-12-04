@@ -167,7 +167,7 @@ CREATE TABLE genome_db (
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
-  is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0 AFTER has_karyotype;
+  is_good_for_alignment       TINYINT(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
   strain_name                 varchar(40) DEFAULT NULL,
   display_name                varchar(255) DEFAULT NULL,
@@ -1729,7 +1729,7 @@ CREATE TABLE `gene_tree_root_attr` (
 
 CREATE TABLE gene_tree_node_attr (
   node_id                         INT(10) UNSIGNED NOT NULL,
-  node_type                       ENUM("duplication", "dubious", "speciation", "gene_split"),
+  node_type                       ENUM("duplication", "dubious", "speciation", "sub-speciation", "gene_split"),
   species_tree_node_id            INT(10) UNSIGNED,
   bootstrap                       TINYINT UNSIGNED,
   duplication_confidence_score    DOUBLE(5,4),
@@ -2260,4 +2260,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_94_95_b.sql|remove_unused_indices');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_94_95_c.sql|genome_db_is_good_for_alignment');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_94_95_d.sql|node_type_within_species_speciation');
 

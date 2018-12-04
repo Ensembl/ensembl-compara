@@ -35,8 +35,9 @@ Questions may also be sent to the Ensembl help desk at
 This script will check that all the species found in the Registry are
 in the compara database, and with up-to-date meta-information (such as
 the genebuild, etc).
-By default, the script only does the comparison. You need to add --nodry-run
-to allow it to update the master database to make it match the core databases.
+You probably want to run this script first with the --dry-run option to
+see the differences, and then remove --dry-run to actually perform the
+update.
 
 =head1 SYNOPSIS
 
@@ -47,7 +48,7 @@ to allow it to update the master database to make it match the core databases.
     --compara compara_db_name_or_alias
     [--division ensembl_genomes_division]
     [--[no]check_species_with_no_core] [--[no]check_species_missing_from_compara]
-    [--[no]dry-run]
+    [--dry-run]
 
 =head1 OPTIONS
 
@@ -96,9 +97,9 @@ Reports all the species that have a core database but not a GenomeDB entry
 Boolean (default: true).
 Reports all the (current) GenomeDB entries that don't have a core database.
 
-=item B<[--[no]dry-run]>
+=item B<[--dry-run]>
 
-In dry-run mode (the default), the script does not write into the master
+In dry-run mode, the script does not write into the master
 database (and would be happy with a read-only connection).
 
 =back
@@ -114,7 +115,7 @@ my $help;
 my $reg_conf;
 my $compara;
 my $force = 0;
-my $dry_run = 1;
+my $dry_run;
 my $check_species_missing_from_compara = 1;
 my $check_species_with_no_core = 1;
 my $division = undef;

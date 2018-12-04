@@ -18,6 +18,7 @@
 use 5.014002;
 use ExtUtils::MakeMaker;
 
+# Version of Makefile.pl that assumes that all the dependencies can be found via an installation of progressiveCactus
 my $cactus = $ARGV[0] || $ENV{PROGRESSIVE_CACTUS_DIR};
 die "The path to the progressiveCactus installation must be provided, either on the command-line or via the environment PROGRESSIVE_CACTUS_DIR" unless $cactus;
 

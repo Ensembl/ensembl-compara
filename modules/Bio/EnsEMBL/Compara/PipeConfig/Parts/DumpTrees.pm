@@ -84,7 +84,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'mk_work_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'mkdir -p #work_dir#',
+                'cmd'         => 'mkdir -p #hash_dir#',
             },
             -flow_into  => [
                     WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
@@ -238,7 +238,7 @@ sub pipeline_analyses_dump_trees {
             -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
                 'A->1' => 'generate_collations',
-                '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
+                '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hashed_id' => '#expr(dir_revhash(#tree_id#))expr#' } },
             },
         },
 
@@ -247,8 +247,8 @@ sub pipeline_analyses_dump_trees {
             -parameters    => {
                 'dump_script'       => $self->o('dump_script'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
-                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
+                'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
+                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
             },
             -flow_into     => {
                 1 => {
@@ -270,8 +270,8 @@ sub pipeline_analyses_dump_trees {
             -parameters    => {
                 'dump_script'       => $self->o('dump_script'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'base_filename'     => '#work_dir#/#hash_dir#/#tree_id#',
-                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
+                'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
+                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
             },
             -flow_into     => {
                 1 => {
@@ -283,7 +283,6 @@ sub pipeline_analyses_dump_trees {
                 },
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
-            -batch_size    => $self->o('batch_size'),
             -rc_name       => '10Gb_job',
         },
 
@@ -313,7 +312,7 @@ sub pipeline_analyses_dump_trees {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'collated_file' => '#emf_dir#/#dump_file_name#',
-                'cmd'           => 'find #work_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #collated_file#',
+                'cmd'           => 'find #hash_dir# -name "tree.*.#extension#" | sort -t . -k2 -n | xargs cat > #collated_file#',
             },
             -flow_into => {
                 1 => WHEN(
@@ -339,7 +338,7 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'step'          => $self->o('max_files_per_tar'),
                 'contiguous'    => 0,
-                'inputcmd'      => 'find #work_dir# -name "tree.*.#extension#" | sed "s:#work_dir#/*::" | sort -t . -k2 -n',
+                'inputcmd'      => 'find #hash_dir# -name "tree.*.#extension#" | sed "s:#hash_dir#/*::" | sort -t . -k2 -n',
             },
             -flow_into => {
                 2 => [ 'tar_dumps' ],
@@ -353,7 +352,7 @@ sub pipeline_analyses_dump_trees {
                 'min_tree_id'   => '#expr( ($_ = #_range_start#) and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
                 'max_tree_id'   => '#expr( ($_ = #_range_end#)   and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
                 'tar_archive'   => '#xml_dir#/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
-                'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #work_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
+                'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #hash_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },

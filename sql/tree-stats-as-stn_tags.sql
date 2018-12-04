@@ -97,7 +97,7 @@ SELECT
   COUNT(*) AS nb_nodes,
   SUM(node_type="duplication") AS nb_dup_nodes,
   SUM(node_type="gene_split") AS nb_gene_splits,
-  SUM(node_type="speciation") AS nb_spec_nodes,
+  SUM(node_type LIKE "%speciation") AS nb_spec_nodes,
   SUM(node_type="dubious") AS nb_dubious_nodes,
   AVG(duplication_confidence_score) AS avg_dupscore,
   AVG(IF(node_type="duplication",duplication_confidence_score,NULL)) AS avg_dupscore_nondub

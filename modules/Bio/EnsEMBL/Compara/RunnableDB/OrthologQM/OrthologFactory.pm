@@ -70,8 +70,13 @@ sub fetch_input {
 	my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('goc_mlss_id'));
 	my $speciesSet_obj= $mlss->species_set();
 	my $speciesSet = $speciesSet_obj->genome_dbs();
-	
-	if ($speciesSet) {
+
+    # Homoeologues only have 1 species in the species set
+    if (scalar(@$speciesSet) == 1){
+		$species1_dbid = $speciesSet->[0]->dbID();
+		$species2_dbid = $speciesSet->[0]->dbID();
+    }
+    elsif ($speciesSet) {
 		$species1_dbid = $speciesSet->[0]->dbID();
 		$species2_dbid = $speciesSet->[1]->dbID();
 	}

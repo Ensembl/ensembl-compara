@@ -47,12 +47,16 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
         'pipeline_name'   => $self->o('division') . '_species_tree_' . $self->o('rel_with_suffix'),
         'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_' . $self->o('division') . '_conf.pl',
+
         'collection'      => $self->o('division'), # build tree with everything by default
         'species_set_id'  => undef,
+
+        'division'        => 'ensembl',
         'outgroup'        => 'saccharomyces_cerevisiae',
         
-        'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). '/' . $self->o('pipeline_name'),
-        'sketch_dir'        => '/hps/nobackup2/production/ensembl/compara_ensembl/species_tree/ensembl_sketches',
+
+        'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). "/species_tree_" . $self->o('division') . '_' . $self->o('rel_with_suffix'),
+        'sketch_dir'        => '/hps/nobackup2/production/ensembl/compara_ensembl/species_tree/' . $self->o('division') . '_sketches',
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
         

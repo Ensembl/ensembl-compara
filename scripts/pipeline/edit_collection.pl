@@ -39,7 +39,11 @@ It has two modes, --new and --update:
   --new    : create a new collection containing only the species listed in the input file
   --update : add the species to an existing collection
 
-first_release and last_release will be updated accordingly
+The new collection's first_release and the previous collections'
+last_release will be updated accordingly and pre if --release is given.
+
+--new can be used even there is already a collection with that name. --new will create a
+new collection and set its content to the list is that is given.
 
 =head1 SYNOPSIS
 
@@ -81,7 +85,9 @@ The compara database to update. You can use either a Registry name or a URL
 
 =item B<--new>
 
-Create a new collection containing ONLY the species in the file
+Create a new collection containing ONLY the species in the file. If a
+collection with the same name already exists, it will be retired (if
+B<--release> is given).
 
 =item B<--update>
 

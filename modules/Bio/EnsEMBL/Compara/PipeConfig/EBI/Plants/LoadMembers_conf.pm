@@ -93,14 +93,17 @@ sub default_options {
         # Store other genes
         'store_others'              => 0,
 
+    #load uniprot members for family pipeline
+        'load_uniprot_members'      => 0,
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        #'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        #'port'  => 4522,
+        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'port'  => 4615,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'compara_master',

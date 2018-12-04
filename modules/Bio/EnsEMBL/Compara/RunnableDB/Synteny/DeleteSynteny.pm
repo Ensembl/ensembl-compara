@@ -44,11 +44,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-  return {
-    mlss_id                => undef,
-  }
-}
 
 sub fetch_input {
     my $self = shift;
@@ -66,7 +61,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-    my $mlss_tag_value = ($self->param('avg_genomic_coverage') ) ? $self->param('avg_genomic_coverage') : 'not_recorded';
+    my $mlss_tag_value = $self->param('avg_genomic_coverage') // '0';
     # Delete data from this database
     $self->compara_dba->dbc->db_handle->do('DELETE dnafrag_region FROM dnafrag_region JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     $self->compara_dba->dbc->db_handle->do('DELETE FROM synteny_region WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
@@ -76,7 +71,7 @@ sub run {
     # And the mlss entry in the master database
     $self->param('master_dba')->dbc->db_handle->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));
     # But also register in the master database that this pair of species is a lost cause
-    $self->param('master_dba')->dbc->db_handle->do('INSERT INTO method_link_species_set_tag VALUES (?, "low_synteny_coverage", ?)', undef, $self->param('mlss_id'), $mlss_tag_value);
+    $self->param('master_dba')->dbc->db_handle->do('REPLACE INTO method_link_species_set_tag VALUES (?, "low_synteny_coverage", ?)', undef, $self->param('mlss_id'), $mlss_tag_value);
 
     # And the mlss entry in the release database because they would have been copied by copy data from master db earlier in the release
     $self->param('curr_release_dba')->dbc->db_handle->do('DELETE FROM method_link_species_set WHERE method_link_species_set_id = ?', undef, $self->param('synteny_mlss_id'));

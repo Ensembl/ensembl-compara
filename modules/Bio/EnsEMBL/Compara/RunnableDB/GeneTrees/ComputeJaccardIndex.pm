@@ -67,6 +67,8 @@ sub run {
 
     my $all_trees = $self->param('current_tree_adaptor')->fetch_all( -TREE_TYPE => 'tree', -MEMBER_TYPE => 'protein', -CLUSTERSET_ID => 'default' );
 
+    open( my $plot_file, ">", $self->param('output_jaccard_file') ) || die "Could not open '".$self->param('output_jaccard_file')."': $!";
+
     foreach my $tree ( @{$all_trees} ) {
 
         my $stable_id = $tree->stable_id();
@@ -90,7 +92,7 @@ sub run {
             }
             my $tree_jaccard_index = $inter/$union;
 
-            print "$stable_id\t$tree_jaccard_index\n";
+            print $plot_file "$stable_id\t$tree_jaccard_index\n";
 
             #Cleaning up memory
             $reused_tree->release_tree;
@@ -99,6 +101,8 @@ sub run {
             undef @leaves_current;
         }
     } ## end foreach my $tree ( @{$all_trees...})
+
+    close ($plot_file);
 
 } ## end sub run
 

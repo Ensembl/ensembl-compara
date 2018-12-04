@@ -963,6 +963,68 @@ sub _has_alignment_for_region {
 }
 
 
+=head2 _alignment_coordinates_on_regions
+
+  Arg[1]      : int $method_link_species_set_id  dbID of the alignment
+  Arg[2]      : int $dnafrag_id1     Coordinates on the first species
+  Arg[3]      : int $dnafrag_start1  --
+  Arg[4]      : int $dnafrag_end1    --
+  Arg[5]      : int $dnafrag_id2     Coordinates on the second species
+  Arg[6]      : int $dnafrag_start2  --
+  Arg[7]      : int $dnafrag_end2    --
+  Arg[8]      : Str $custom_select   Use custom SQL SELECT statement
+  Example     : $gab_adaptor->_alignment_coordinates_on_regions();
+  Description : Quick method to retrieve the coordinates of the blocks overlapping the coordinates of both species
+  Returntype  : Arrayref of the block coordinates [$start1, $end1, $start2, $end2]
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _alignment_coordinates_on_regions {
+    my ($self, $method_link_species_set_id, $dnafrag_id1, $dnafrag_start1, $dnafrag_end1, $dnafrag_id2, $dnafrag_start2, $dnafrag_end2, $custom_select) = @_;
+
+    my $method_link_species_set = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($method_link_species_set_id);
+    if ( $method_link_species_set->method->type eq 'CACTUS_HAL' ) {
+
+        # Fetch all the blocks (no filtering on dnafrag2 because the API would return very fragmented blocks)
+        my $dnafrag1 = $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id1);
+        my $dnafrag2 = $self->db->get_DnaFragAdaptor->fetch_by_dbID($dnafrag_id2);
+        my $blocks = $self->_get_GenomicAlignBlocks_from_HAL( $method_link_species_set, $dnafrag1->genome_db, [ $dnafrag2->genome_db ], $dnafrag1, $dnafrag_start1, $dnafrag_end1 );
+
+        # Extract the coordinates and filter on the second species
+        my @coords;
+        foreach my $gab (@$blocks) {
+            my $ga2 = $gab->get_all_non_reference_genomic_aligns->[0];
+            if ($ga2->dnafrag_id == $dnafrag_id2 && $ga2->dnafrag_end >= $dnafrag_start2 && $ga2->dnafrag_start <= $dnafrag_end2) {
+                my $ga1 = $gab->reference_genomic_align;
+                push @coords, [$ga1->dnafrag_start, $ga1->dnafrag_end, $ga2->dnafrag_start, $ga2->dnafrag_end];
+            }
+        }
+        return \@coords;
+    }
+
+    my $max_align = $method_link_species_set->max_alignment_length;
+    my $select = $custom_select ? $custom_select : 'ga1.dnafrag_start, ga1.dnafrag_end, ga2.dnafrag_start, ga2.dnafrag_end';
+
+    my $sql = "SELECT $select "
+            . 'FROM genomic_align ga1 JOIN genomic_align ga2 USING (genomic_align_block_id) '
+            . 'WHERE ga1.method_link_species_set_id = ? AND ga1.dnafrag_id = ? AND ga2.dnafrag_id = ? '
+            . 'AND ga1.genomic_align_id != ga2.genomic_align_id '
+            . 'AND ga1.dnafrag_start <= ? AND ga1.dnafrag_start >= ? AND ga1.dnafrag_end >= ? '
+            . 'AND ga2.dnafrag_start <= ? AND ga2.dnafrag_start >= ? AND ga2.dnafrag_end >= ? '
+            ;
+    my $sth = $self->dbc->prepare($sql);
+    $sth->execute($method_link_species_set_id, $dnafrag_id1, $dnafrag_id2,
+        $dnafrag_end1, $dnafrag_start1-$max_align, $dnafrag_start1,
+        $dnafrag_end2, $dnafrag_start2-$max_align, $dnafrag_start2,
+    );
+    my $rows = $sth->fetchall_arrayref;
+    $sth->finish;
+    return $rows;
+}
+
+
 =head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
@@ -1728,8 +1790,8 @@ sub _parse_maf {
           $this_seq{end}    = $spl[2] + $spl[3];
       } else { # reverse strand
           $this_seq{strand} = -1;
-          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3];
-          $this_seq{end}    = $spl[5] - $spl[2] - 1;
+          $this_seq{start}  = $spl[5] - $spl[2] - $spl[3] + 1;
+          $this_seq{end}    = $spl[5] - $spl[2];
       }
 
       push( @{ $blocks[-1] }, \%this_seq );

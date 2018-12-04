@@ -82,7 +82,7 @@ sub default_options {
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
         'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
-        'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
+        'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/report/create_pair_aligner_page.pl",
 
             #Set for single pairwise mode
         'mlss_id' => '',
@@ -165,8 +165,9 @@ sub default_options {
         default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
         7742    => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # vertebrates - i.e. ensembl-specific
         9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # primates
-        #7742    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # vertebrates
-        #33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # carnivora
+        33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac', # carnivora
+        3913    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
+        4070    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
     },
 
         #

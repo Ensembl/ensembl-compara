@@ -24,6 +24,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf
 
+=head1 SYNOPSIS
+
+    #1. initialize the pipeline:
+        e95: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-5 -port 4615
+
 =head1 DESCRIPTION
 
 A pipeline to merge some production databases onto the release one.

@@ -38,8 +38,6 @@ supported keys:
 
     'taxlevels'             => <list-of-names>
 
-    'filter_high_coverage'  => 0|1
-
 =cut
 
 
@@ -58,19 +56,11 @@ sub fetch_input {
     my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
     my $genome_dbs  = $mlss->species_set->genome_dbs();
 
-    my $filter_high_coverage = $self->param('filter_high_coverage');
-
     my %selected_gdb_ids = ();
 
     foreach my $genome_db (@$genome_dbs) {
         next if $genome_db->genome_component;
-        if($filter_high_coverage) {
-            if ($genome_db->is_high_coverage) {
-                $selected_gdb_ids{$genome_db->dbID} = 1;
-            }
-        } else {    # take all of them
-            $selected_gdb_ids{$genome_db->dbID} = 1;
-        }
+        $selected_gdb_ids{$genome_db->dbID} = 1;
     }
 
     ###

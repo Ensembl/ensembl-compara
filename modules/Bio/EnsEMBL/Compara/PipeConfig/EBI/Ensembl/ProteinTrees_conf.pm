@@ -62,8 +62,8 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'  => 4485,
+        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'port'  => 4615,
 
     # User details
 
@@ -108,9 +108,7 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
-        # affects 'group_genomes_under_taxa'
-        'filter_high_coverage'      => 1,
+        'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes', 'Percomorphaceae'],
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
@@ -136,11 +134,11 @@ sub default_options {
         'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'copy_tree_capacity'        => 100,
-        'ortho_tree_capacity'       => 250,
+        'ortho_tree_capacity'       => 50,
         'quick_tree_break_capacity' => 1500,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'other_paralogs_capacity'   => 150,
+        'other_paralogs_capacity'   => 50,
         'homology_dNdS_capacity'    => 1300,
         'hc_capacity'               => 150,
         'decision_capacity'         => 150,

@@ -1,0 +1,7 @@
+digraph "EG_release" {
+    "Member loading" -> "Protein-trees";
+    "Protein-trees" -> "WGA Orthology QC";
+    "All LastZ" -> {"All alignments for WGA Orthology QC", "Synteny"};
+    "All alignments for WGA Orthology QC" -> "WGA Orthology QC";
+    {rank = same; "All LastZ"; "Member loading"; }
+}

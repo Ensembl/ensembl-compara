@@ -92,10 +92,6 @@ sub default_options {
         
         # tree building parameters:
         'species_tree_input_file'   =>  $self->o('ensembl_cvs_root_dir') . "/compara-conf/compara_guide_tree.wormbase.nh",
-        
-        # homology_dnds parameters:
-        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
-
         'use_quick_tree_break'      => 0,
 
 

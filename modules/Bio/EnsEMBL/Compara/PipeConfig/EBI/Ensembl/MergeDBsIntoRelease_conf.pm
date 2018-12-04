@@ -71,8 +71,8 @@ sub default_options {
         # Do we want to be very picky and die if a table hasn't been listed above / isn't in the target database ?
         'die_if_unknown_table'      => 1,
 
-        # A registry file to avoid having to use only URLs - moved to base class
-        # 'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
+        # A registry file to avoid having to use only URLs
+        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # All the source databases
         # edit the reg_conf file rather than adding URLs
@@ -106,8 +106,8 @@ sub default_options {
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
-            #'seq_member_projection' => 'protein_db',
-            'peptide_align_feature_%' => 'protein_db',
+            'seq_member_projection' => 'protein_db',
+            'peptide_align_feature%' => 'protein_db',
         },
 
         # In these databases, ignore these tables

@@ -42,6 +42,7 @@ sub default_options {
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
 	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
+	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
 
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 

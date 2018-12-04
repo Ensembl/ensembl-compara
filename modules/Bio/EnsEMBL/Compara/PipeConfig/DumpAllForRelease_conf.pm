@@ -57,12 +57,12 @@ sub default_options {
         ######################################################
         
         # Where to put the new dumps and the symlinks
-        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_'.$self->o('rel_with_suffix'),
+        'dump_root'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/release_dumps_'.$self->o('division').'_'.$self->o('rel_with_suffix'),
         # Location of the previous dumps
         'ftp_root'     => '/nfs/production/panda/ensembl/production/ensemblftp/',
         #'ftp_root'     => '/gpfs/nobackup/ensembl/carlac/fake_ftp', # Fake e92 FTP used for testing in e93
 
-        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => 'ancestral_curr',
 
@@ -161,9 +161,11 @@ sub default_options {
         
         # constrained elems & conservation scores
         'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
+        'big_bed_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
         'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
     	'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
+        'bigbed_autosql'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/constrainedelements_autosql.as",
 
     	# species tree options
     	'dump_species_tree_exe'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/examples/species_getSpeciesTree.pl',
@@ -216,6 +218,7 @@ sub pipeline_wide_parameters {
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
         'name_root'           => 'Compara.#curr_release#.#basename#',
+        'hash_dir'            => '#work_dir#/#basename#',
         'target_dir'          => '#dump_dir#',
         'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
         'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',
@@ -241,8 +244,9 @@ sub pipeline_wide_parameters {
 
         'bedgraph_file'  => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.bedgraph',
         'chromsize_file' => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.chromsize',
-        'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.bw',
-        'bed_file'       => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
+        'bigwig_file'    => '#cs_output_dir#/gerp_conservation_scores.#name#.#assembly#.bw',
+        'bed_file'       => '#work_dir#/#dirname#/gerp_constrained_elements.#name#.bed',
+        'bigbed_file'    => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',
 
         # species trees
         'dump_species_tree_exe'  => $self->o('dump_species_tree_exe'),

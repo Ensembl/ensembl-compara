@@ -288,6 +288,13 @@ sub interpret_treebest_tags
             $node_type = 'duplication';
         } else {
             $node_type = 'speciation';
+            if ($treebest_tag->has_tag('S')) {
+                my $stn_id = $treebest_tag->get_value_for_tag('S');
+                my $stn = $self->compara_dba->get_SpeciesTreeNodeAdaptor->fetch_by_dbID($stn_id);
+                if ($stn->taxon && $stn->taxon->_is_rank_within_species) {
+                    $node_type = 'sub-speciation';
+                }
+            }
         }
         print "node_type: $node_type\n" if ($self->debug);
         $node->add_tag('node_type', $node_type);

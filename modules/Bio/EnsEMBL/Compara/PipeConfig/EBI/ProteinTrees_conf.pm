@@ -117,7 +117,7 @@ sub default_options {
 
         #HMMER 2
         'hmm_library_version'           => '2',
-        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
+        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2018-08-20',
 
         #HMMER 3
         #'hmm_library_version'       => '3',
@@ -185,7 +185,6 @@ sub resource_classes {
 
          'msa'          => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
          'msa_himem'    => {'LSF' => ['-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"', $reg_requirement] },
-
     };
 }
 

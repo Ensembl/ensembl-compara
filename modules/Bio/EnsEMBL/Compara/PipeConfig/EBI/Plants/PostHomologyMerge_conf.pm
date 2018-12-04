@@ -52,8 +52,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
+        'host'            => 'mysql-ens-compara-prod-5',    # where the pipeline database will be created
+        'port'            => 4615,
 
         'division'        => 'plants',
         # 'compara_db'      => 'compara_curr',
@@ -71,7 +71,7 @@ sub default_options {
         'high_confidence_ranges'    => [
             {
                 'range_label'       => 'protein',
-                'range_filter'      => '(homology_id < 100000000)',
+                'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
             },
         ],
 

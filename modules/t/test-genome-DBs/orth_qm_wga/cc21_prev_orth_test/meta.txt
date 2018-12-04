@@ -53,3 +53,4 @@
 117	\N	patch	patch_94_95_a.sql|schema_version
 118	\N	patch	patch_94_95_b.sql|remove_unused_indices
 119	\N	patch	patch_94_95_c.sql|genome_db_is_good_for_alignment
+120	\N	patch	patch_94_95_d.sql|node_type_within_species_speciation

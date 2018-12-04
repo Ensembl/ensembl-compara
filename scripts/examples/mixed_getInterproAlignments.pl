@@ -77,18 +77,7 @@ sub get_interpro_alignment {
 
   ## Trim the tree and leave only proteins of interest (human, mouse, rat, dog, fruitfly)
   my $tree = $gene_tree_adaptor->fetch_default_for_Member($peptide_member);
-  foreach my $this_leaf (@{$tree->get_all_leaves}) {
-    if ($this_leaf->genome_db->name ne "homo_sapiens" and
-        $this_leaf->genome_db->name ne "mus_musculus" and
-        $this_leaf->genome_db->name ne "rattus_norvegicus" and
-        $this_leaf->genome_db->name ne "canis_familiaris" and
-        $this_leaf->genome_db->name ne "drosophila_melanogaster") {
-      ## This unlinks the leave
-      $this_leaf->disavow_parent();
-      ## This simplifies the tree (removes resulting nodes with 1 child only)
-      $tree->minimize_tree();
-    }
-  }
+  $tree->preload( -PRUNE_SPECIES => ['homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'canis_familiaris', 'drosophila_melanogaster'] );
   $tree->print_tree(50);
 
   # Find out the start and end coordinates of the domain on the alignment.

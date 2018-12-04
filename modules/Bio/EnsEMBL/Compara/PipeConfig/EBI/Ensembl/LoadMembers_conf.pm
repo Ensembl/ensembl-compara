@@ -87,6 +87,10 @@ sub default_options {
         # Store other genes
         'store_others'              => 1,
 
+    #load uniprot members for family pipeline
+        'load_uniprot_members'      => 1,
+        'family_mlss_id'            => 30055,    
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations

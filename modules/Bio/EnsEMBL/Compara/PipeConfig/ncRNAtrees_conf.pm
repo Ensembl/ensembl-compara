@@ -83,7 +83,7 @@ sub default_options {
             'division'              => undef,
 
     # Parameters to allow merging different runs of the pipeline
-        'dbID_range_index'      => 1,
+        'dbID_range_index'      => 14,
         'label_prefix'          => undef,
 
         # How much the pipeline will try to reuse from "prev_rel_db"
@@ -625,6 +625,7 @@ sub pipeline_analyses {
                 -priority           => 40,
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
+                                   3 => { 'other_paralogs' => INPUT_PLUS },
                                   },
             },
 

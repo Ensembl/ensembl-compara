@@ -209,6 +209,7 @@ my $cellular_component = 0;
 my $collection = undef;
 my $filter_by_mlss = 0;
 my $alignments_only = 0;
+my $skip_mlsses = [];
 
 GetOptions(
     "help" => \$help,
@@ -226,6 +227,7 @@ GetOptions(
     'collection=s' => \$collection,
     'filter_by_mlss' => \$filter_by_mlss,
     'alignments_only' => \$alignments_only,
+    'skip_mlss=s@' => \$skip_mlsses,
   );
 
 
@@ -263,6 +265,7 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 
 #Allow method_link_species_sets to be specified as either --mlss mlss1 --mlss mlss2 --mlss mlss3 or --mlss mlss1,mlss2,mlss3
 @$mlsss = split(/,/, join(',', @$mlsss));
+@$skip_mlsses = split(/,/, join(',', @$skip_mlsses)); # and for --skip_mlss
 
 # If neither --collection nor --mlss is given, only take current species
 my $filter_current = ($collection or scalar(@$mlsss)) ? 0 : 1;
@@ -285,7 +288,9 @@ if($only_show_intentions) {
     my %counts;
     foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
         $counts{$mlss->method->type}++;
-        print "\t".$mlss->dbID.": ".$mlss->name."\n";
+        print "\t".$mlss->dbID.": ".$mlss->name;
+        print " (mlss entry only)" if defined $skip_mlsses && grep {$mlss->dbID == $_} @$skip_mlsses;
+        print "\n";
     }
     print "Additional SpeciesSet entries to be copied:\n";
     foreach my $ss (@$all_default_species_sets) {
@@ -326,6 +331,13 @@ store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
 copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $cellular_component);
 $master_dba->dbc->disconnect_if_idle;
 
+if ( $skip_mlsses ) {
+    my @filtered_mlsses;
+    foreach my $mlss_id ( @$all_default_method_link_species_sets ) {
+        push(@filtered_mlsses, $mlss_id) unless grep {$mlss_id == $_} @$skip_mlsses;
+    }
+    $all_default_method_link_species_sets = \@filtered_mlsses;
+}
 
 if ($old_dba and !$skip_data) {
 ## Copy all the stable ID mapping entries

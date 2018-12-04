@@ -106,7 +106,7 @@ sub update_dnafrags {
 
         my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
 
-        push( @species_overall_len, $new_dnafrag->length());#rule_2
+        push( @species_overall_len, $new_dnafrag->length()) if $new_dnafrag->is_reference;#rule_2
 
         if (my $old_df = delete $old_dnafrags_by_name->{$slice->seq_region_name}) {
             $new_dnafrag->dbID($old_df->dbID);
@@ -154,7 +154,16 @@ sub update_dnafrags {
     undef @low_limit_frags;
     undef @species_overall_len;
 
-    my $is_good_for_alignment = ($ratio_top_highest > 0.85) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
+    #After initially considering taking all the genomes that match cov >= 65% || log >= 3
+    #We then decided to combine both variables and take all the genomes for
+    #which log >= 10 - 3 * cov/25%. In other words, the classifier is a line that
+    #passes by the (50%,4) and (75%,1) points. It excludes genomes that have a log
+    #value >= 3 but a poor coverage, or a decent coverage but a low log value.
+    #my $is_good_for_alignment = ($ratio_top_highest > 0.68) || ( $log_ratio_top_low > 3 ) ? 1 : 0;
+
+    my $diagonal_cutoff = 10-3*($ratio_top_highest/0.25);
+
+    my $is_good_for_alignment = ($log_ratio_top_low > $diagonal_cutoff) ? 1 : 0;
 
     my $sth = $compara_dba->dbc->prepare("UPDATE genome_db SET is_good_for_alignment = ? WHERE name = ? AND assembly = ?");
     $sth->execute($is_good_for_alignment,$genome_db->name(),$genome_db->assembly);
@@ -424,16 +433,12 @@ sub new_collection {
     my $collection_ss;
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my @new_collection_gdbs = map {_find_most_recent_by_name($genome_db_adaptor, $_)} @$species_names;
+    my @new_collection_gdbs = map {$genome_db_adaptor->_find_most_recent_by_name($_)} @$species_names;
     @new_collection_gdbs = _expand_components(\@new_collection_gdbs) if $incl_components;
 
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        $new_collection_ss = Bio::EnsEMBL::Compara::SpeciesSet->new( -GENOME_DBS => \@new_collection_gdbs, -name => "collection-$collection_name" );
-        $ss_adaptor->store($new_collection_ss) || die "Could not store species set collection-$collection_name";
-        
-        # Enable the collection and all its GenomeDB. Also retire the superseded GenomeDBs and their SpeciesSets, including $old_ss. All magically :)
-        $ss_adaptor->make_object_current($new_collection_ss) if $release;
+        $new_collection_ss = $ss_adaptor->update_collection($collection_name, \@new_collection_gdbs, $release);
         die "\n\n*** Dry-run mode requested. No changes were made to the database ***\n\nThe following collection WOULD have been created:\n" . $new_collection_ss->toString . "\n\n" if $dry_run;
         print "\nStored: " . $new_collection_ss->toString . "\n\n";
     } );
@@ -465,10 +470,10 @@ sub update_collection {
     my $collection_ss;
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my @requested_species_gdbs = map {_find_most_recent_by_name($genome_db_adaptor, $_)} @$species_names;
+    my @requested_species_gdbs = map {$genome_db_adaptor->_find_most_recent_by_name($_)} @$species_names;
 
     my @new_collection_gdbs = @requested_species_gdbs;
-    $collection_ss = _find_most_recent_by_name($ss_adaptor, "collection-$collection_name");
+    $collection_ss = $ss_adaptor->fetch_collection_by_name($collection_name);
     warn "Adding species to collection '$collection_name' (dbID: " . $collection_ss->dbID . ")\n";
 
     my @gdbs_in_current_collection = @{$collection_ss->genome_dbs};
@@ -490,13 +495,8 @@ sub update_collection {
 
     my $new_collection_ss;
     $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
-        $new_collection_ss = $ss_adaptor->update_collection($collection_name, $collection_ss, \@new_collection_gdbs);
+        $new_collection_ss = $ss_adaptor->update_collection($collection_name, \@new_collection_gdbs, $release);
 
-        if ( $release ) {
-            $ss_adaptor->retire_object($collection_ss);
-            $ss_adaptor->make_object_current($new_collection_ss);
-        }
-        
         print_method_link_species_sets_to_update_by_collection($compara_dba, $collection_ss);
         die "\n\n*** Dry-run mode requested. No changes were made to the database ***\n\nThe following collection WOULD have been created:\n" . $new_collection_ss->toString . "\n\n" if $dry_run;
         print "\nStored: " . $new_collection_ss->toString . "\n\n";
@@ -505,31 +505,6 @@ sub update_collection {
     return $new_collection_ss;
 }
 
-=head2 _find_most_recent_by_name
-
-  Arg[1]      : Compara adaptor for objects using BaseReleaseHistoryAdaptor
-  Arg[2]      : String $species_name
-  Description : This method returns the most up-to-date genome_db object for
-                the given species name
-  Returns     : Varies based on adaptor type
-  Exceptions  :
-
-=cut
-
-sub _find_most_recent_by_name {
-    my ($this_adaptor, $name) = @_;
-
-    my $objs = $this_adaptor->fetch_all_by_name($name);
-    # return undef unless $objs->[0];
-    die "Cannot find any objects named '$name'" unless $objs->[0];
-
-    my $most_recent;
-    foreach my $obj ( @$objs ) {
-        return $obj if ( $obj->is_current );
-        $most_recent = $obj if ( !defined $most_recent || $obj->first_release > $most_recent->first_release );
-    }
-    return $most_recent;
-}
 
 =head2 _expand_components
 
@@ -684,10 +659,11 @@ sub create_homology_mlsss {
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, undef, $ss_display_name);
     if (($method->type eq 'PROTEIN_TREES') or ($method->type eq 'NC_TREES')) {
+        my @non_components = grep {!$_->genome_component} @{$species_set->genome_dbs};
         my $orth_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES');
-        push @mlsss, @{ create_mlsss_on_pairs($orth_method, $species_set->genome_dbs) };
+        push @mlsss, @{ create_mlsss_on_pairs($orth_method, \@non_components) };
         my $para_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_PARALOGUES');
-        push @mlsss, @{ create_mlsss_on_singletons($para_method, $species_set->genome_dbs) };
+        push @mlsss, @{ create_mlsss_on_singletons($para_method, \@non_components) };
         my $homoeo_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES');
         foreach my $gdb (@{$species_set->genome_dbs}) {
             push @mlsss, create_mlss($homoeo_method, [$gdb]) if $gdb->is_polyploid;

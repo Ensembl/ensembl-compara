@@ -70,7 +70,7 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
         'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-        'host'      => 'mysql-ens-compara-prod-5.ebi.ac.uk',
+        'host'      => 'mysql-ens-compara-prod-5',
         'port'      =>  4615,
         'master_db' => 'compara_master',
         'division'  => 'plants',
@@ -81,7 +81,6 @@ sub default_options {
         'do_compare_to_previous_db' => 0,
         # Net
         'bidirectional' => 1,
-
 	   };
 }
 

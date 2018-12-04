@@ -1,4 +1,4 @@
-The BED files in this directory represent highly conserved genomic regions which have undergone purifying selection over evolutionary time.
+The bigBed files in this directory represent highly conserved genomic regions which have undergone purifying selection over evolutionary time.
 They were generated from Multiple Sequence Alignments (MSA) using the GERP software:
 http://mendel.stanford.edu/SidowLab/downloads/gerp/
 
