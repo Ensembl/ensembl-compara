@@ -117,6 +117,9 @@ sub get_markup_options {
   push @{$markup->{'exon_display'}{'values'}}, { 'value' => 'vega',           'caption' => 'Vega exons'     } if $options->{'vega_exon'} && $dbs->{'DATABASE_VEGA'};
   push @{$markup->{'exon_display'}{'values'}}, { 'value' => 'otherfeatures',  'caption' => 'EST gene exons' } if $options->{'otherfeatures_exon'} && $dbs->{'DATABASE_OTHERFEATURES'};
 
+  # Delete hide_rare_snp markup if MAF unavailable
+  delete $markup->{'hide_rare_snps'} if (!$self->species_defs->get_config($self->species, 'MAF_AVAILABLE'));
+
   return $markup;
 }
 
@@ -137,7 +140,7 @@ sub variation_options {
 
   $self->add_form_element($markup{'snp_display'});
   $self->add_form_element($markup{'hide_long_snps'});
-  $self->add_form_element($markup{'hide_rare_snps'});
+  $self->add_form_element($markup{'hide_rare_snps'}) if ($self->species_defs->get_config($self->species, 'MAF_AVAILABLE'));
 
   if ($options->{'consequence'} ne 'no') {
     my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
