@@ -78,7 +78,7 @@ sub create {
     if (-e "$map_dir/index.xml") {
       # If we have a sitemap let google know about it.
       warn _box("Creating robots.txt for google sitemap");
-      push @lines, _lines("Sitemap", sprintf '//%s/sitemaps/index.xml', $sd->ENSEMBL_SERVERNAME);
+      push @lines, _lines("Sitemap", sprintf 'http://%s/sitemaps/index.xml', $sd->ENSEMBL_SERVERNAME);
     }
 
     ## SPECIFIC CRAWLERS
