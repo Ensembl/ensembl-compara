@@ -326,16 +326,6 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -dbname => 'ensembl_ancestral_95',
 );
 
-# ensembl production (maintained by production team):
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-sta-1',
-    -user => 'ensro',
-    -port => 4519,
-    -species => 'ensembl_production',
-    -dbname => 'ensembl_production_95',
-    -group => 'production',
-);
-
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
     -host => 'mysql-ens-sta-1.ebi.ac.uk',
