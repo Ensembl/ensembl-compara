@@ -36,14 +36,11 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
         'port'      =>  4522,
-	    'master_db' => 'compara_master',
+	    
         'division'  => 'ensembl',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
 	   };
 }
 

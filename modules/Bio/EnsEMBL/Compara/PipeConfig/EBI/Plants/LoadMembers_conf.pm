@@ -96,24 +96,6 @@ sub default_options {
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
 
-    # connection parameters to various databases:
-
-        # Uncomment and update the database locations
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
-        'port'  => 4615,
-
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'compara_master',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
-        'curr_core_registry' => $self->o('reg_conf'), # this will also be used to point to the previous release core dbs
-
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        #'reuse_member_db' => '',
-        'reuse_member_db' => 'compara_prev',
     };
 }
 

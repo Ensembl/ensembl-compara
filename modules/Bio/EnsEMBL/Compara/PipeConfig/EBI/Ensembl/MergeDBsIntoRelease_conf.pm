@@ -71,9 +71,6 @@ sub default_options {
         # Do we want to be very picky and die if a table hasn't been listed above / isn't in the target database ?
         'die_if_unknown_table'      => 1,
 
-        # A registry file to avoid having to use only URLs
-        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
-
         # All the source databases
         # edit the reg_conf file rather than adding URLs
         'src_db_aliases'    => {
@@ -86,9 +83,6 @@ sub default_options {
             'projection_db'  => 'alt_allele_projection',
             'members_db'     => 'compara_members',
         },
-
-        # The target database
-        'curr_rel_db'   => 'compara_curr',
 
         # From these databases, only copy these tables
         'only_tables'       => {

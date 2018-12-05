@@ -30,8 +30,12 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        'master_db'     => 'compara_master',
+        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+
         # Work directory
-        'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/lastz_'.$self->o('pipeline_name') . '/' . $self->o('host') . '/',
+        'dump_dir' => '/hps/nobackup2/production/ensembl/'.$ENV{USER}.'/pair_aligner/release_'.$self->o('rel_with_suffix').'/'.$self->o('pipeline_name').'/'.$self->o('host').'/',
 
         # Capacities
         'pair_aligner_analysis_capacity' => 700,
