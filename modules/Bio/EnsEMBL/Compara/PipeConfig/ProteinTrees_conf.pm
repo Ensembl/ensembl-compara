@@ -103,7 +103,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
+        'pipeline_name'        => $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         #'division'              => undef,
 
