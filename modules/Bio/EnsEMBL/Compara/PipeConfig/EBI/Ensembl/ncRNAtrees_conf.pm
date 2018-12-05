@@ -82,9 +82,8 @@ sub default_options {
             #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'rel_suffix'       => '',
-
-            'pipeline_name'    => 'compara_nctrees_'.$self->o('rel_with_suffix'),
+            'rel_suffix' => '',
+            'division'   => 'ensembl',
 
             'test_mode' => 1, #set this to 0 if this is production run
 
@@ -134,52 +133,11 @@ sub default_options {
             'initialise_cafe_pipeline'  => 1,
             # Use production names here
             'cafe_species'          => ['danio_rerio', 'taeniopygia_guttata', 'callithrix_jacchus', 'pan_troglodytes', 'homo_sapiens', 'mus_musculus'],
-            'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
             # Other parameters
             'infernal_mxsize'       => 10000,
-
-            # connection parameters
-
-            'reg1' => {
-                       -host   => 'mysql-ens-sta-1',
-                       -port   => '4519',
-                       -user   => 'ensro',
-                      },
-
-            'master_db' => {
-                            -host   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-                            -port   => 4485,
-                            -user   => 'ensro',
-                            -pass   => '',
-                            -dbname => 'ensembl_compara_master',
-                           },
     };
-}   
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::resource_classes() },
-            '250Mb_job'               => { 'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-            '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '2Gb_job'                 => { 'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-            '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-            '16Gb_job'                 => { 'LSF' => '-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"' },
-
-            '500Mb_2c_job'          => { 'LSF' => '-C0 -n 2 -M500 -R"span[hosts=1] select[mem>500] rusage[mem=500]"' },
-            '1Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"' },
-            '2Gb_4c_job'          => { 'LSF' => '-C0 -n 4 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
-            '2Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
-            '8Gb_8c_job'          => { 'LSF' => '-C0 -n 8 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"' },
-            '32Gb_8c_job'         => { 'LSF' => '-C0 -n 8 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"' },
-
-            # this is for fast_trees
-            '8Gb_mpi_4c_job'     => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
-            '16Gb_mpi_4c_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M16000 -R"span[hosts=1] select[mem>16000] rusage[mem=16000]"', '-lifespan 360' ] },
-            '32Gb_mpi_4c_job'    => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
-           };
-}
+} 
 
 1;
 

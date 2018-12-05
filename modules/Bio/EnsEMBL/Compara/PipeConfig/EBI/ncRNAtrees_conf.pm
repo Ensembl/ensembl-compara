@@ -64,12 +64,17 @@ sub default_options {
             # User details
             'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
-            'work_dir'         => '/hps/nobackup2/production/ensembl/' .
-                               $self->o('ENV', 'USER') .
-                               '/nc_trees_' .
-                               $self->o('rel_with_suffix'),
+            'pipeline_name' => $self->o('division').'_compara_nctrees_'.$self->o('rel_with_suffix'),
+            'work_dir'      => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
 
-            'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+            'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division'),
+            'binary_species_tree_input_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
+            'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+            
+            'master_db'   => 'compara_master',
+            'member_db'   => 'compara_members',
+            'prev_rel_db' => 'compara_prev',
+            'epo_db'      => 'compara_prev',
 
             # executable locations:
             'cmalign_exe'           => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmalign'),
@@ -94,6 +99,32 @@ sub default_options {
             'cafe_shell'            => $self->check_exe_in_cellar('cafe/2.2/bin/cafeshell'),
 
            };
+}
+
+sub resource_classes {
+    my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
+    return {
+        %{ $self->SUPER::resource_classes() },
+            'default'   => { 'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
+            '250Mb_job' => { 'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"', $reg_requirement] },
+            '1Gb_job'   => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
+            '2Gb_job'   => { 'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
+            '4Gb_job'   => { 'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
+            '16Gb_job'  => { 'LSF' => ['-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"', $reg_requirement] },
+
+            '500Mb_2c_job' => { 'LSF' => ['-C0 -n 2 -M500 -R"span[hosts=1] select[mem>500] rusage[mem=500]"', $reg_requirement] },
+            '1Gb_4c_job'   => { 'LSF' => ['-C0 -n 4 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
+            '2Gb_4c_job'   => { 'LSF' => ['-C0 -n 4 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"', $reg_requirement] },
+            '2Gb_8c_job'   => { 'LSF' => ['-C0 -n 8 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"', $reg_requirement] },
+            '8Gb_8c_job'   => { 'LSF' => ['-C0 -n 8 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
+            '32Gb_8c_job'  => { 'LSF' => ['-C0 -n 8 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', $reg_requirement] },
+
+            # this is for fast_trees
+            '8Gb_mpi_4c_job'  => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', '-lifespan 360' ] },
+            '16Gb_mpi_4c_job' => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M16000 -R"span[hosts=1] select[mem>16000] rusage[mem=16000]"', '-lifespan 360' ] },
+            '32Gb_mpi_4c_job' => { 'LSF' => ['-q mpi-rh7 -C0 -n 4 -M32000 -R"span[hosts=1] select[mem>32000] rusage[mem=32000]"', '-lifespan 360' ] },
+        };
 }
 
 1;
