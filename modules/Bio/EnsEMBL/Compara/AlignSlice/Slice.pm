@@ -1727,10 +1727,10 @@ sub get_all_underlying_Slices {
           );
       $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
       $this_underlying_slice->{karyotype} = 0; #$this_slice->has_karyotype;
-      $this_underlying_slice->{_tree} = $this_slice->{_tree} if (defined($this_slice->{_tree}));
-      $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
-      weaken($this_underlying_slice->{_node_in_tree});
     }
+    $this_underlying_slice->{_tree} = $this_slice->{_tree} if (defined($this_slice->{_tree}));
+    $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
+    weaken($this_underlying_slice->{_node_in_tree});
 #     if ($strand == 1) {
       push(@$underlying_slices, $this_underlying_slice);
 #     } else {
