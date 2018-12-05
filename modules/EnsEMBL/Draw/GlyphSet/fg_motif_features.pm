@@ -27,6 +27,7 @@ use base qw(EnsEMBL::Draw::GlyphSet::bigbed);
 
 sub get_data {
   my $self    = shift;
+  return if $self->strand == 1;
   my $slice   = $self->{'container'};
   return [] if $slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice');
 
