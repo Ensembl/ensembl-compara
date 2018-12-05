@@ -97,7 +97,7 @@ sub table_content {
       # consequence type
       my $type = $self->new_consequence_type($tva);    
 
-      # SIFT and PolyPhen
+      # SIFT, PolyPhen-2 and other prediction tools
       my $sifts = $self->classify_sift_polyphen($tva->sift_prediction,$tva->sift_score);
       my $polys = $self->classify_sift_polyphen($tva->polyphen_prediction, $tva->polyphen_score);
       my $cadds = $self->classify_score_prediction($tva->cadd_prediction, $tva->cadd_score);
@@ -381,27 +381,8 @@ sub snptype_classes {
 sub sift_poly_classes {
   my ($self,$table) = @_;
 
-  my %sp_classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-    'likely deleterious'     => 'bad',
-    'likely benign'          => 'good',
-    'likely disease causing' => 'bad',
-    'damaging'               => 'bad',
-    'high'                   => 'bad',
-    'medium'                 => 'ok',
-    'low'                    => 'good',
-    'neutral'                => 'good',
-  );
+  my %sp_classes = %{$self->predictions_classes};
+
   foreach my $column_name (qw(sift polyphen cadd revel meta_lr mutation_assessor)) {
     my $value_column = $table->column("${column_name}_value");
     my $class_column = $table->column("${column_name}_class");
