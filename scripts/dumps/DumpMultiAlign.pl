@@ -495,8 +495,8 @@ if ($species and !$skip_species and ($coord_system or $seq_region)) {
   if ($coord_system and !$seq_region) {
     @query_slices = grep {$_->coord_system_name eq $coord_system} @{$slice_adaptor->fetch_all('toplevel')};
     if ($no_karyo) {
-        my %karyo_slices = map {$_->get_seq_region_id => 1} @{ $slice_adaptor->fetch_all_karyotype };
-        @query_slices = grep {!$karyo_slices{$_->get_seq_region_id}} @query_slices;
+        my %karyo_slices = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype };
+        @query_slices = grep {!$karyo_slices{$_->seq_region_name}} @query_slices;
     }
     if (@query_slices == 0) {    
 	warn "No slices found with coord_system $coord_system\n";
