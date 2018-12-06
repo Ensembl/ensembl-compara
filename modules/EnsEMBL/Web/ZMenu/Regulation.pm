@@ -80,7 +80,7 @@ sub content {
 
   my $epigenome;
   if ($cell_line) {
-    $epigenome = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_name($cell_line);
+    $epigenome = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_display_label($cell_line);
     
     if ($epigenome) {
       $self->add_entry({
