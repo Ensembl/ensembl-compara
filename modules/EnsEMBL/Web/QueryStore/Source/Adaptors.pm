@@ -124,7 +124,7 @@ sub regulatoryfeature_by_stableid {
 sub epigenome_by_stableid {
   my ($self,$species,$type,$id) = @_;
 
-  return $self->epigenome_adaptor($species,$type)->fetch_by_name($id);
+  return $self->epigenome_adaptor($species,$type)->fetch_by_display_label($id);
 }
 
 sub compara_member {
