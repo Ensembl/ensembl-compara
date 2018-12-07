@@ -219,7 +219,7 @@ standaloneJob(
 
 my $results = $dbc->db_handle->selectall_arrayref('SELECT homology_id, goc_score from homology', {});
 #print Dumper($results);
-my %expected_results_hash = ('14469' => 50, '14646' => 25, '14803' => 25, '46043' => 50, '46120' => 25);
+my %expected_results_hash = ('14469' => 25, '14646' => 25, '14803' => 0, '46043' => 25, '46120' => 25);
 
 foreach my $result (@{$results}) {
   is($result->[1], $expected_results_hash{$result->[0]}, "$result->[0] goc score verified ");
