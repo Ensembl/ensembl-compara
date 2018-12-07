@@ -61,9 +61,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 #	$self->debug(4);
-	print " Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Orthologs ----------------------------- START\n\n\n" if ( $self->debug );
-	print "mlss_id is ------------------  ", $self->param_required('goc_mlss_id'), " ------------- \n\n" if ( $self->debug );
-	print Dumper($self->compara_dba) if ( $self->debug );
+	print " Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologFactory fetch_input sub-------------- START\n\n\n" if ( $self->debug );
+	print "mlss_id is ----->>>>  ", $self->param_required('goc_mlss_id'), " <<<<<<<-------- \n\n" if ( $self->debug );
+	print Dumper($self->compara_dba) if ( $self->debug>1 );
 
 	my $species1_dbid;
 	my $species2_dbid;
@@ -83,7 +83,7 @@ sub fetch_input {
 
         $self->disconnect_from_hive_database;
 	my $homologs = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
-	print "This is the returned homologs \n " if ( $self->debug >4);
+	print "This is the returned homologs ---->>> \n " if ( $self->debug >4);
 	print Dumper($homologs) if ( $self->debug >4); 
 	my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($self->compara_dba->get_AlignedMemberAdaptor, $homologs);
 	Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $sms);
@@ -112,10 +112,10 @@ sub run {
 	foreach my $ortholog ( @{ $self->param('ortholog_objects') } ) {
 		my $ortholog_dbID = $ortholog->dbID();
 		my $ref_gene_member = $ortholog->get_all_GeneMembers($ref_species_dbid)->[0];
-		print $ref_gene_member->dbID() , "\n\n" if ( $self->debug >3 );
+		print $ref_gene_member->dbID() , "  <<-- ref_gene_member id\n" if ( $self->debug >3 );
 		die "this homolog  : $ortholog_dbID , appears to not have a gene member for this genome_db_id : $ref_species_dbid \n" unless defined $ref_gene_member;
 		my $non_ref_gene_member = $ortholog->get_all_GeneMembers($non_ref_species_dbid)->[0];
-		print $non_ref_gene_member->dbID() , "\n\n" if ( $self->debug >3 );
+		print $non_ref_gene_member->dbID() , " <<--- non_ref_gene_member id\n" if ( $self->debug >3 );
 		die "this homolog  : $ortholog_dbID , appears to not have a gene member for this genome_db_id : $non_ref_species_dbid \n" unless defined $non_ref_gene_member;
 
 		if ($ref_gene_member->biotype_group eq 'coding') {
@@ -130,12 +130,12 @@ sub run {
 #		last if $c >= 10;
 	}
 
-	print " \n remove chromosome or scaffolds with only 1 gene--------------------------START\n\n" if ( $self->debug );
+	print " \n removing chromosome or scaffolds with only 1 gene----------\n\n" if ( $self->debug >1);
 	for my $dnaf_id (keys %$ref_ortholog_info_hashref) {
 		if (scalar keys %{$ref_ortholog_info_hashref->{$dnaf_id}} == 1) {
 
-			print Dumper($ref_ortholog_info_hashref->{$dnaf_id}) if ( $self->debug >3 );
-			print "\n", $dnaf_id, "\n\n" if ( $self->debug >3 );
+			print Dumper($ref_ortholog_info_hashref->{$dnaf_id}), "  <<---- ref ortholog info  \n" if ( $self->debug >3 );
+			print "\n", $dnaf_id, "  <<---ref dnafrag id\n\n" if ( $self->debug >3 );
 			delete $ref_ortholog_info_hashref->{$dnaf_id};
 		} 
 	}
@@ -143,21 +143,21 @@ sub run {
 	for my $nr_dnaf_id (keys %$non_ref_ortholog_info_hashref) {
 		if (scalar keys %{$non_ref_ortholog_info_hashref->{$nr_dnaf_id}} == 1) {
 
-			print Dumper($non_ref_ortholog_info_hashref->{$nr_dnaf_id}) if ( $self->debug >3 );
-			print "\n", $nr_dnaf_id, "\n\n" if ( $self->debug >3 );
+			print Dumper($non_ref_ortholog_info_hashref->{$nr_dnaf_id}), " <<--- non ref ortholog info" if ( $self->debug >3 );
+			print "\n", $nr_dnaf_id, " <<--- non ref dnafrag id\n\n" if ( $self->debug >3 );
 			delete $non_ref_ortholog_info_hashref->{$nr_dnaf_id};
 		} 
 	}
 
-	print " \n remove chromosome or scaffolds with only 1 gene--------------------------DONE\n\n" if ( $self->debug );
-	print $self->param('ref_species_dbid'), "  -------------------------------------------------------------ref_ortholog_info_hashref\n" if ( $self->debug );
-	print Dumper($ref_ortholog_info_hashref) if ( $self->debug );
+	print " \n remove chromosome or scaffolds with only 1 gene--------------------------DONE\n\n" if ( $self->debug >1);
+	print $self->param('ref_species_dbid'), "  -----------------------------------------ref_ortholog_info_hashref  --->>>\n" if ( $self->debug >3 );
+	print Dumper($ref_ortholog_info_hashref) if ( $self->debug >3);
 
-	print $self->param('non_ref_species_dbid'), "  -------------------------------------------------------------non_ref_ortholog_info_hashref\n" if ( $self->debug );
+	print $self->param('non_ref_species_dbid'), "  -------------------------------------non_ref_ortholog_info_hashref ---->>\n" if ( $self->debug >3);
 	print Dumper($non_ref_ortholog_info_hashref) if ( $self->debug >3 );
 
-        $self->param('ref_ortholog_info_hashref', $ref_ortholog_info_hashref);
-        $self->param('non_ref_ortholog_info_hashref', $non_ref_ortholog_info_hashref);
+    $self->param('ref_ortholog_info_hashref', $ref_ortholog_info_hashref);
+    $self->param('non_ref_ortholog_info_hashref', $non_ref_ortholog_info_hashref);
 }
 
 

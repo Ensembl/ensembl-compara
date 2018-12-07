@@ -81,7 +81,7 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-
+    print Dumper("We are in fetch_input") if ( $self->debug);
     # IN: goc_mlss_id
     # OUT: ref_species_dbid
     # OUT: non_ref_species_dbid
@@ -97,7 +97,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-
+    print Dumper("We are in run *****") if ( $self->debug);
     $self->disconnect_from_databases;
 
     # Build a Set::IntervalTree for each dnafrag with its gene-members
@@ -142,7 +142,7 @@ sub run {
 
 sub run_one_direction {
     my $self = shift;
-
+    print Dumper("We are in run_one_direction") if ( $self->debug);
     $self->say_with_header(sprintf('Doing %s vs %s', $self->param('ref_species_dbid'), $self->param('non_ref_species_dbid')));
 
     if ($self->param('prev_goc_hashref')) {

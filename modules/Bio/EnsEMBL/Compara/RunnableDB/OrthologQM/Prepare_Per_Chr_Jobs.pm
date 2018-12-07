@@ -89,7 +89,7 @@ sub param_defaults {
 sub fetch_input {
   my $self = shift;
   $self->debug(4);
-  print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs --------------------------------START  \n  " if ( $self->debug );
+  print "Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Prepare_Per_Chr_Jobs -------------------------START  \n  " if ( $self->debug );
 
   my $mlss_id = $self->param_required('goc_mlss_id');
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
@@ -134,7 +134,7 @@ sub fetch_reuse {
             my $part_hashref = $self->compara_dba->dbc->db_handle->selectall_hashref($sql, ['homology_id', 'stable_id']);
             $prev_goc_hashref->{$_} = $part_hashref->{$_} for keys %$part_hashref;
         });
-      print Dumper($prev_goc_hashref) if ( $self->debug >5 );
+      print Dumper($prev_goc_hashref) if ( $self->debug >3 );
       # Will be used to check whether we have some reuse data
       $self->param('prev_goc_hashref', $prev_goc_hashref);
 }
@@ -142,7 +142,7 @@ sub fetch_reuse {
 
 sub run {
   my $self = shift;
-  print "the runnable Prepare_Per_Chr_Jobs ----------start \n mlss_id ---->   ", $self->param('goc_mlss_id')   if ( $self->debug >3);
+  print "the runnable Prepare_Per_Chr_Jobs ----------start \n mlss_id ---->   ", $self->param('goc_mlss_id')   if ( $self->debug >1);
   if ($self->param('prev_goc_hashref')) {
     $self->_reusable_species();
   }
@@ -150,7 +150,7 @@ sub run {
     $self->_non_reusable_species();
   }
 
-  print "the runnable Prepare_Per_Chr_Jobs ----------END \n mlss_id \n", $self->param('goc_mlss_id') , if ( $self->debug >3);
+  print "the runnable Prepare_Per_Chr_Jobs ----------END \n mlss_id \n", $self->param('goc_mlss_id') , if ( $self->debug >1);
 }
 
 sub write_output {
@@ -236,7 +236,7 @@ sub _reusable_species {
     }
   }
 
-  print "\n\n This is how many homology ids were in the input : $count_homologs  \n this is how many were recalculated  : $count_recal_homologs  \n this is the actual count of new homologs :  $count_new_homologs \n" if ( $self->debug );
+  print "\n\n This is how many homology ids were in the input : $count_homologs  \n this is how many were recalculated  : $count_recal_homologs  \n this is the actual count of new homologs :  $count_new_homologs \n" if ( $self->debug);
 
 }
 
@@ -354,7 +354,7 @@ sub _non_reusable_species {
 #this method sorts an hash of homology id and dnafrag_starts into an ordered array of homology_ids based on the dnafrag starts
 sub _order_chr_homologs {
   my $self = shift;
-  print "\n Starting ------  _order_chr_homologs \n" if ( $self->debug );
+  print "\n Starting ------  _order_chr_homologs \n" if ( $self->debug > 3);
   my ($unsorted_chr_orth_hashref) = @_;
   my @sorted_orth;
 

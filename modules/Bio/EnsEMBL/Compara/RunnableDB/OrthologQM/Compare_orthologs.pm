@@ -50,7 +50,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use List::MoreUtils qw(firstidx);
+use List::MoreUtils qw(firstidx uniq);
 
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 
@@ -62,10 +62,10 @@ sub param_defaults {
   return {
     %{ $self->SUPER::param_defaults() },
 #    "chr_job" => {13200473 => [70578,153474,171749,153125,225827,40769]},
-#    "non_ref_species_dbid" => 144,
-#    "ref_species_dbid" => 122,
-#    'compara_db'  => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara5/cc21_protein_trees_no_reuse_86',
-#    'goc_mlss_id'  => '50062',
+#    "non_ref_species_dbid" => 2099,
+#    "ref_species_dbid" => 2062,
+#    'compara_db'  => 'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@mysql-ens-compara-prod-8:4618/muffato_plants_prottrees_41_94',
+#    'goc_mlss_id'  => '200898' #50062',
     }
 }
 
@@ -105,12 +105,13 @@ sub run {
     my $self = shift;
     my $chr_orth_hashref = $self->param('chr_job');
 #    $self->dbc and $self->dbc->disconnect_if_idle();
-    print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Comparison_job_arrays \n\n" if ( $self->debug );
-    print Dumper($chr_orth_hashref)if ( $self->debug >3 );
+    print " --------------------------------------Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs run starting \n\n" if ( $self->debug );
+#    print Dumper($chr_orth_hashref)if ( $self->debug >3 );
     my $count_homologs = 0;
     while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
         my @ordered_orth_array = @$ordered_orth_arrayref;
-        print $#ordered_orth_array , "\n\n" if ( $self->debug >3 );
+        my $ordered_orth_array_size = @ordered_orth_array; 
+        print $ordered_orth_array_size, " <<<-- size of ordered_orth_array \n\n" if ( $self->debug >1 );
         foreach my $index (0 .. $#ordered_orth_array ) {
             $count_homologs ++;
             my $comparion_arrayref = {};
@@ -132,13 +133,13 @@ sub run {
                 $right2 = $ordered_orth_array[$index + 2];
 
             }
-            $query = $ordered_orth_array[$index];
-            print $left1//'NA', " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2 ", $ref_chr_dnafragID, " ref_chr_dnafragID\n\n" if ( $self->debug );
+            $query = $ordered_orth_array[$index];  
             my $goc_score_hashref = $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2);
             push @{$self->param('all_goc_score_arrayref')}, $goc_score_hashref ;
+        
         }
     }
-    print "\n\n This is how many homology ids were in the input : $count_homologs  \n\n" if ( $self->debug );
+    print "\n\n This is how many homology ids were in the input : $count_homologs  \n Compare_orthologs run sub finished!!! \n\n" if ( $self->debug );
 }
 
 sub write_output {
@@ -152,7 +153,7 @@ sub _insert_goc_scores {
   print "\n Starting ------  _insert_goc_scores\n" if ( $self->debug );
 
   my $size_goc_score_arrayref = scalar @$goc_arrayref;
-  print "\n\n This is the how many homology ids we have goc scores for and inserting into the ortholog goc table :  \n  $size_goc_score_arrayref \n\n " if ( $self->debug );
+  print "\n\n This is how many homology ids we have goc scores for and inserting into the ortholog goc table :  \n  $size_goc_score_arrayref \n\n " if ( $self->debug>1);
   my @goc_data;
   foreach ( @$goc_arrayref ) {
     defined $_->{'goc_score'} or die " the goc score should atleast be 0. mlss id :  $_->{'method_link_species_set_id'} , homology_id : $_->{'homology_id'} ";
@@ -168,17 +169,17 @@ sub _compute_ortholog_score {
     my $self = shift;
     my ($left1, $left2, $query, $right1, $right2) = @_;
     print " ------------------------------------_compute_ortholog_score  \n\n" if ( $self->debug );
-#    print " \n ", $left1//'NA',  " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2\n\n" if ( $self->debug >1);
+    print " \n ", $left1//'NA',  " left1 ", $left2//'NA', " left2 ", $query, " query ", $right1//'NA', " right1 ", $right2//'NA', " right2\n\n" if ( $self->debug >1);
     my %input_hash = ('left1' => $left1, 'left2' => $left2, 'query' => $query, 'right1' => $right1 , 'right2' => $right2);
 
     #create an array of only the present neighbours
     # will be useful in collapsing tandem duplications
-    print " getting homolog gene tree node id-------------------------START \n" if ( $self->debug );
+    print " getting homolog gene tree node id-------------------------START \n" if ( $self->debug >1);
     my $homology_gtn_id_href = {};
     for my $pos (($left1, $left2, $query, $right1, $right2)) {
         if (defined $pos) {
             my $gtn_id = $self->param('preloaded_homologs')->{$pos}->_gene_tree_node_id();
-#            print $pos , "-------------------------", $gtn_id , "-----\n\n" if ( $self->debug >3 );
+            print $pos , "  ---<<--position -----------------", $gtn_id , "  --<<- gtn_id --\n" if ( $self->debug >3 );
             if ( not defined($homology_gtn_id_href->{$gtn_id})) {
                 $homology_gtn_id_href->{$gtn_id} = [$pos];
             }
@@ -188,8 +189,8 @@ sub _compute_ortholog_score {
         }
     }
     $self->param('homology_gtn_id_href', $homology_gtn_id_href);
-#    print Dumper($self->param('homology_gtn_id_href')) if ( $self->debug );
-#    print " getting homolog gene tree node id-------------------------END \n" if ( $self->debug );
+    print Dumper($self->param('homology_gtn_id_href')) if ( $self->debug >1);
+    print " getting homolog gene tree node id-------------------------END \n" if ( $self->debug >1);
 
     my @defined_positions;
     if (defined($left1)) {
@@ -206,11 +207,14 @@ sub _compute_ortholog_score {
     }
     my $homology = $self->param('preloaded_homologs')->{$query};
 
+    print Dumper($homology), "---<<<<------ homology \n\n" if ( $self->debug >3 );
+
     my $result;
     my $non_ref_gmembers_list={};
 
     my $query_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
     my $query_non_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('non_ref_species_dbid'))->[0];
+    
     $non_ref_gmembers_list->{'query'} = $query_non_ref_gmem_obj->dbID;
     my $start = $query_non_ref_gmem_obj->dnafrag_start;
     my $end = $query_non_ref_gmem_obj->dnafrag_end;
@@ -232,35 +236,41 @@ sub _compute_ortholog_score {
             }
         }
     }
-
+    print Dumper($non_ref_gmembers_list), "  ---<<<---- non_ref_gmembers_list for the defined positions \n\n" if ( $self->debug >1 );
     #to account for inversions in the genome, we checks if both members of the query ortholog are in the same direction/ strand
     my $strand = 0;
     if ($query_ref_gmem_obj->dnafrag_strand() == $query_non_ref_gmem_obj->dnafrag_strand()) {
         $strand = 1;
     }
 
-    # get the all protein-coding gene members (ordered by their dnafrag start position)  spanning the specified start and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
+    # get the all protein-coding gene members (ordered by their dnafrag start position)  spanning the specified start
+    # and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
     $self->param('non_ref_gmembers_ordered', $self->_get_non_ref_gmembers($query_non_ref_dnafragID, $start, $end));
 
+    if (scalar @{$self->param('non_ref_gmembers_ordered')} == 1) { 
+        $result = {'left1' => 0, 'right1' => 0, 'left2' => 0, 'right2' => 0};
+        print $result, " result --<<<<---  the non_ref_gmembers_ordered is 1 \n" if ( $self->debug >1 );
+    }
+    else { 
     #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
-    if ($strand == 1) {
-        $result = $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered'));
+        if ($strand == 1) {
+            $result = $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered'));
+        }
+        else {
+            my $temp_query = $non_ref_gmembers_list->{'query'};
+            my $temp_left1 = $non_ref_gmembers_list->{'right1'};
+            my $temp_left2 = $non_ref_gmembers_list->{'right2'};
+            my $temp_right1 = $non_ref_gmembers_list->{'left1'};
+            my $temp_right2 = $non_ref_gmembers_list->{'left2'};
+            my $result_temp = $self->_compare( {'query' => $temp_query, 'left1' => $temp_left1, 'left2' => $temp_left2, 'right1' => $temp_right1, 'right2' => $temp_right2}, , $self->param('non_ref_gmembers_ordered'));
+            $result = {
+                'left1' => $result_temp->{right1},
+                'left2' => $result_temp->{right2},
+                'right1' => $result_temp->{left1},
+                'right2' => $result_temp->{left2},
+            };
+        }
     }
-    else {
-        my $temp_query = $non_ref_gmembers_list->{'query'};
-        my $temp_left1 = $non_ref_gmembers_list->{'right1'};
-        my $temp_left2 = $non_ref_gmembers_list->{'right2'};
-        my $temp_right1 = $non_ref_gmembers_list->{'left1'};
-        my $temp_right2 = $non_ref_gmembers_list->{'left2'};
-        my $result_temp = $self->_compare( {'query' => $temp_query, 'left1' => $temp_left1, 'left2' => $temp_left2, 'right1' => $temp_right1, 'right2' => $temp_right2}, , $self->param('non_ref_gmembers_ordered'));
-        $result = {
-            'left1' => $result_temp->{right1},
-            'left2' => $result_temp->{right2},
-            'right1' => $result_temp->{left1},
-            'right2' => $result_temp->{left2},
-        };
-    }
-
     #calculate the percentage of the goc score
     my $percent = ($result->{'left1'} // 0) + ($result->{'left2'} // 0) + ($result->{'right1'} // 0) + ($result->{'right2'} // 0);
     my $percentage = $percent * 25;
@@ -270,10 +280,9 @@ sub _compute_ortholog_score {
     $result->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
     $result->{'homology_id'}    = $query;
     $result->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
-
-#    print "RESULTS hash--------------->>>>>   \n" if ( $self->debug );
-#    print Dumper($result) if ( $self->debug );
-#    print  " mlss_id  ----->>>>  \n", $self->param('goc_mlss_id'), "\n" if ( $self->debug );
+    print "RESULTS hash--------------->>>>>   \n" if ( $self->debug >1);
+    print Dumper($result) if ( $self->debug >1);
+#    print  " mlss_id  ----->>>>  \n", $self->param('goc_mlss_id'), "\n" if ( $self->debug >2 );
     return $result;
 
 }
@@ -300,24 +309,26 @@ sub _fetch_members_with_homology_by_range {
 #get all the gene members of in a chromosome coordinate range, filter only the ones that are protein-coding and order them based on their dnafrag start positions
 sub _get_non_ref_gmembers {
     my $self = shift;
-    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug );
+    print "This is the _get_non_ref_members subroutine -------------------------------START\n\n\n" if ( $self->debug >1 );
     my ($dnafragID, $st, $ed)= @_;
-        print $dnafragID,"\n", $st ,"\n", $ed ,"\n\n" if ( $self->debug >3 );
+        print $dnafragID," <<---dnafragID\n", $st ," <<--- start\n", $ed ," <<--- end\n\n" if ( $self->debug >1 );
 
     my $unsorted_mem = $self->_fetch_members_with_homology_by_range($dnafragID, $st, $ed);
 
     # And now we simply sort the genes by their coordinates and return the sorted list
     my @sorted_all_mem = sort {($a->{dnafrag_start} <=> $b->{dnafrag_start}) || ($a->{gene_member_id} <=> $b->{gene_member_id}) || ($a->{homology_id} <=> $b->{homology_id})} @$unsorted_mem;
-
+    print Dumper(\@sorted_all_mem), "---<<<-  sorted non ref gmembers ****** \n\n" if ( $self->debug > 1);
         #collapse tandem duplications
     my @sorted_mem=grep {$self->_collapse_tandem_repeats($_)} @sorted_all_mem;
-
     my @nr_gmem_sorted;
     foreach my $mem (@sorted_mem) {
         push (@nr_gmem_sorted, $mem->{gene_member_id});
     }
-#    print "This is the _get_non_ref_members subroutine ------------------------------END\n\n" if ( $self->debug );
-    return \@nr_gmem_sorted;
+    print Dumper(\@nr_gmem_sorted), " ----<<<--- non ref gmem sorted array after removing tandem repeats\n" if ( $self->debug >1 );
+    my @nr_gmem_sorted_uniq = uniq @nr_gmem_sorted;
+    print Dumper(\@nr_gmem_sorted_uniq), " ----<<<--- unique non ref gmem sorted array \n" if ( $self->debug >1 );
+    print "This is the _get_non_ref_members subroutine ------------------------------END\n\n" if ( $self->debug >1 );
+    return \@nr_gmem_sorted_uniq;
 }
 
 
@@ -326,8 +337,9 @@ sub _collapse_tandem_repeats {
     my $self = shift;
     print " THis is the _collapse_tandem_repeats------------------------------START\n\n" if ( $self->debug > 3);
     my ($local_unsorted_mem) = @_;
-
-    #check if the gene member is a tandem duplication by looking for it comparing gene tree node its of it homology_id
+#    print $local_unsorted_mem->{gene_member_id}, "  ---<<<  _collapse_tandem_repeats non_ref_gmembers \n" if ( $self->debug > 3);
+    #check if the gene member is a tandem duplication by first checking if it's gene tree node id matches any of the gene tree node ids
+    # of the query homolog and its chosen neighbours, then we check if it's homology id matches any of the query's or it 's chosen neighbours homology id
     if ( (defined $self->param('homology_gtn_id_href')->{$local_unsorted_mem->{gene_tree_node_id}}) &&
                 not (grep {$local_unsorted_mem->{homology_id} == $_} @{$self->param('homology_gtn_id_href')->{$local_unsorted_mem->{gene_tree_node_id} } } ) ) {
 
@@ -343,7 +355,9 @@ sub _compare {
     my ($orth_non_ref_gmembers_hashref, $ordered_non_ref_gmembers_arrayref,$strand1)= @_;
     my $non_ref_query_gmember = $orth_non_ref_gmembers_hashref->{'query'};
     my $query_index = firstidx { $_ eq $non_ref_query_gmember } @$ordered_non_ref_gmembers_arrayref;
-
+    print Dumper($orth_non_ref_gmembers_hashref), "  ---<<< orth_non_ref_gmembers_hashref \n" if ( $self->debug > 2);
+    print Dumper($ordered_non_ref_gmembers_arrayref), " ----<<< ordered_non_ref_gmembers_arrayref \n " if ( $self->debug > 2);
+    print $query_index, " ---<<< query_index \n" if ( $self->debug > 2);
         #create an array of available $ordered_non_ref_gmembers_arrayref index so that we dont check uninitialised values in our comparisons
     my @indexes;
     for my $val (0 .. scalar(@{$ordered_non_ref_gmembers_arrayref})-1) {
@@ -355,6 +369,9 @@ sub _compare {
     my $right1_result = undef ;
     my $right2_result = undef;
 
+    #we are checking left2 and right2 against '$query_index -2' even though Left1 0r Right1 may have matched '$query_index -2' 
+    #because the list is distinct so if l1 matches '$query_index -2' then l2 won't match. We could have decided to 
+    #find another way to recognise this special case but the consequnces of doing this extra match sometimes did not justify changing the code.
     if (defined($orth_non_ref_gmembers_hashref->{'left1'} )) {
         $left1_result =    (grep {$_ == $query_index-1} @indexes)
                                     && (    ($orth_non_ref_gmembers_hashref->{'left1'} eq $ordered_non_ref_gmembers_arrayref->[$query_index -1])
@@ -416,7 +433,7 @@ sub _compare {
                      ) ? 1 : 0;
         }
     }
-#    print " THis is the _compare subroutine -------------------------------END\n\n" if ( $self->debug );
+    print " THis is the _compare subroutine -------------------------------END\n\n" if ( $self->debug );
     return {'left1' => $left1_result, 'right1' => $right1_result, 'left2' => $left2_result, 'right2' => $right2_result};
 }
 
