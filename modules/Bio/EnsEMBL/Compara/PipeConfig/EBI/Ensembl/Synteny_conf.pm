@@ -52,7 +52,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
         'division'     => 'ensembl',
-        'alignment_db' => 'compara_curr',
+
+        'alignment_db'    => 'compara_curr',
+        'curr_release_db' => 'compara_curr',
     };
 }
 

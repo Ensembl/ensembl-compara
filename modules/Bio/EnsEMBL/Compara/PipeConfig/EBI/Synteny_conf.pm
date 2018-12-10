@@ -71,7 +71,7 @@ sub resource_classes {
     my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] }
+            'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
             '100Mb' => { 'LSF' => ['-C0 -M100 -R"select[mem>100] rusage[mem=100]"', $reg_requirement] },
             '1Gb'   => { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
             '1.8Gb' => { 'LSF' => ['-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"', $reg_requirement] },

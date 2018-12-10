@@ -60,7 +60,8 @@ sub default_options {
     my ($self) = @_;
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
-            
+            'pipeline_name' => $self->o('division').'_synteny_'.$self->o('rel_with_suffix'),
+
             # Connection to the alignment database must be given
             #'alignment_db' => undef,    # alignment database to calculate the syntenies from
             'ptree_db'     => undef,     # protein database to calculate the syntenies from
@@ -103,7 +104,7 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'alignment_db'    =>  $self->o('alignment_db'),
         'ptree_db'    =>  $self->o('ptree_db'),
-        'curr_release_db' => $self->o('compara_curr'), #needed if being run as part of release
+        'curr_release_db' => $self->o('curr_release_db'), #needed if being run as part of release
             # 'synteny_mlss_id' will be evaluated in the runnables, not here
         'synteny_dir'   => $self->o('work_dir').'/#synteny_mlss_id#/',
         'ortholog_method_link_types' => $self->o('ortholog_method_link_types'),
