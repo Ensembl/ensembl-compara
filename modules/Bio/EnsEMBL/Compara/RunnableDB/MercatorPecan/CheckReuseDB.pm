@@ -55,7 +55,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
      my $self = shift @_;
 
-     my $reuse_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('reuse_url'));
+     my $reuse_dba = $self->get_cached_compara_dba('reuse_db');
      my $gdb = $reuse_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
      my $reuse_dnafrags = $reuse_dba->get_DnafragAdaptor->fetch_all_by_GenomeDB($gdb);
      

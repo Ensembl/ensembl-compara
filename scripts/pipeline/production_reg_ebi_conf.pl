@@ -54,7 +54,9 @@ my $current_release = 95;
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
-# previous release core databases will be required by LoadMembers only
+# previous release core databases will ONLY be required by:
+#   * LoadMembers_conf
+#   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
 my $suffix_separator = '__cut_here__';
@@ -93,8 +95,8 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 # protein trees from previous release - for GOC reuse
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
      -host => 'mysql-ens-compara-prod-4',
-     -user => 'ensadmin',
-     -pass => $ENV{'ENSADMIN_PSW'},
+     -user => 'ensro',
+     -pass => '',
      -port => 4401,
      -species => 'prev_ptrees',
      -dbname => 'mateus_protein_trees_94',
@@ -287,6 +289,16 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -port => 4616,
     -species => 'amniotes_pecan',
     -dbname => 'carlac_amniotes_mercator_pecan_95',
+);
+
+# previous MercatorPecan run - for reusing peptide_align_feature% tables
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-2',
+    -user => 'ensro',
+    -pass => '',
+    -port => 4522,
+    -species => 'pecan_prev',
+    -dbname => 'mateus_amniotes_mercator_pecan_93',
 );
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
