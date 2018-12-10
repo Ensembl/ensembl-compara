@@ -85,14 +85,6 @@ sub default_options {
 
             #Final filtering on the genome coverage (to remove too sparse syntenies)
             'min_genome_coverage' => 0.05,  # minimum coverage. This parameter must be between 0 and 1
-
-            #executable locations
-            'DumpGFFAlignmentsForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl",
-            'DumpGFFHomologuesForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl",
-            'BuildSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/BuildSynteny.jar",
-
-            'java_exe'      => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-
            };
 }
 
@@ -134,19 +126,6 @@ sub hive_meta_table {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     }
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    
-    return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
-    };
 }
 
 sub pipeline_analyses {
