@@ -609,10 +609,12 @@ sub frequency_bar {
 
   my @alleles = @{$data->{'Alleles'}};
   my $added_width = 0;
+  my %alleles_seen;
 
   for my $i(sort { ($alleles[$a] !~ /$ref_allele/ cmp $alleles[$b] !~ /$ref_allele/) || $alleles[$a] cmp $alleles[$b] } 0..$#alleles) {
     my $allele = $alleles[$i];
-
+    next if ($alleles_seen{$allele});
+    $alleles_seen{$allele} = 1;
     my $width = sprintf('%.0f', $data->{'AlleleFrequency'}->[$i] * $bar_width);
     $added_width += $width;
 
