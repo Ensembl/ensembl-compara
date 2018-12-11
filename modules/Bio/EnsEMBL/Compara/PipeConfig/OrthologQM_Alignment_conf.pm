@@ -54,7 +54,7 @@ limitations under the License.
 
     Additional options:
     -compara_db         database containing relevant data (this is where final scores will be written)
-    -alt_aln_dbs        take alignment objects from different sources (arrayref of urls)
+    -alt_aln_dbs        take alignment objects from different sources (arrayref of urls or aliases)
     -alt_homology_db    take homology objects from a different source
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
@@ -66,12 +66,12 @@ limitations under the License.
     Examples:
     ---------
     # scores go to homology db, alignments come from afar
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/homologies
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db compara_alias
         -alt_aln_dbs [mysql://ro_user@hosty_mchostface/alignments]
 
     # scores go to alignment db
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -compara_db mysql://user:pass@host/alignments
-        -alt_homology_db mysql://ro_user@hostess_with_the_mostest/homologies
+        -alt_homology_db homology_alias
 
 =head1 CONTACT
 
@@ -108,22 +108,21 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name'    => 'wga_' . $self->o('rel_with_suffix'),
+        'pipeline_name' => $self->o('division').'_wga_' . $self->o('rel_with_suffix'),
 
         'species1'         => undef,
         'species2'         => undef,
         'species_set_name' => undef,
         'species_set_id'   => undef,
         'ref_species'      => undef,
-        'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+        'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
-
         'alt_homology_db'  => undef,
-        'previous_rel_db'  => undef,
+
         'user'             => 'ensadmin',
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
-        'master_db'        => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
 
         'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
@@ -161,18 +160,6 @@ sub pipeline_wide_parameters {
 
         'ensembl_release' => $self->o('ensembl_release'),
         'orth_batch_size' => 10,
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default'                => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-        '200M_job'               => {'LSF' => '-C0 -M200   -R"select[mem>200]   rusage[mem=200]"' },
-        '1Gb_job'                => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-        '2Gb_job'                => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-        '4Gb_job_with_reg_conf'  => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', '--reg_conf '.$self->o('reg_conf')] },
     };
 }
 
