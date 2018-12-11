@@ -59,6 +59,10 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
+        'division'   => 'grch37',
+        'reg_conf'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'compara_db' => 'compara_curr',
+
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
@@ -85,6 +89,14 @@ sub default_options {
     };
 }
 
+sub resource_classes {
+    my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+         'default'      => {'LSF' => [ '', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ]  },
+    };
+}
 
 sub pipeline_analyses {
     my ($self) = @_;
