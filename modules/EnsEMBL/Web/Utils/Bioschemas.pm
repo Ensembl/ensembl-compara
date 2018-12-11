@@ -40,9 +40,9 @@ sub create_bioschema {
     warn "!!! Bioschema data must be a hashref or arrayref of hashrefs";
   }
 
-  use Data::Dumper;
-  $Data::Dumper::Sortkeys = 1;
-  warn Dumper($data);
+  #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
+  #warn Dumper($data);
   my $markup = qq(
 <script type="application/ld+json">
 );
