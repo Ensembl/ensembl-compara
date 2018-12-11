@@ -47,15 +47,14 @@ sub default_options {
         'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
         'port'            => 4485,
 
-        'pipeline_name'   => 'alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
+        'pipeline_name'   => $self->o('division').'_alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         # Only needed if the member_db doesn't have genome_db.locator
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'division' => 'ensembl',
+        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
-        # Source of MLSSs
-        'master_db'       => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-        # Source of GenomeDBs and members
-        'member_db'       => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_load_members_94',
+        'master_db'       => 'compara_master',  # Source of MLSSs
+        'member_db'       => 'compara_members', # Source of GenomeDBs and members
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
@@ -94,6 +93,7 @@ sub resource_classes {
         'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
         'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
         'default_w_reg' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
+        'default'       => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
     };
 }
 
