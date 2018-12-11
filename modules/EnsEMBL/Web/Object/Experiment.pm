@@ -65,7 +65,7 @@ sub new {
     FILTER: while (my ($filter, $value) = each(%$filters)) {
       if ($filter eq 'cell_type') {
         my $cell_type_adaptor = $funcgen_db_adaptor->get_EpigenomeAdaptor;
-        push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_name($_) || (), @$value;
+        push @{$constraints->{'epigenomes'}}, $_ for map $cell_type_adaptor->fetch_by_display_label($_) || (), @$value;
         next FILTER;
       }
       if ($filter eq 'feature_type') {
