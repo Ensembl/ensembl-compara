@@ -83,9 +83,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
             'pairwise_exception_location' => $self->o('pairwise_exception_location'),
-				'mlss_id' => $self->o('low_epo_mlss_id'),
-                               'run_gerp' => $self->o('run_gerp'),
-                       'genome_dumps_dir' => $self->o('genome_dumps_dir'),
+			'mlss_id' => $self->o('low_epo_mlss_id'),
+            'run_gerp' => $self->o('run_gerp'),
+            'genome_dumps_dir' => $self->o('genome_dumps_dir'),
+            'reg_conf' => $self->o('reg_conf'),
     };
 }
 
@@ -120,8 +121,8 @@ sub pipeline_analyses {
 	    {  -logic_name => 'populate_new_database',
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
-				  'program'        => $self->o('populate_new_database_program'),
-				  'cmd'            => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#'],
+				  'program' => $self->o('populate_new_database_program'),
+				  'cmd'     => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--reg-conf', '#reg_conf#'],
 				 },
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
@@ -131,8 +132,8 @@ sub pipeline_analyses {
 	    {  -logic_name => 'populate_new_database_with_gerp',
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
-				  'program'        => $self->o('populate_new_database_program'),
-                                  'cmd'            => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#'],
+				  'program' => $self->o('populate_new_database_program'),
+                  'cmd'     => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--mlss', '#mlss_id#', '--mlss', '#ce_mlss_id#', '--mlss', '#cs_mlss_id#', '--reg-conf', '#reg_conf#'],
 				 },
 	       -flow_into => {
 			      1 => [ 'set_gerp_mlss_tag' ],
@@ -201,7 +202,8 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 			'master_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-			'registry_dbs'  => [ $self->o('staging_loc1')], #, $self->o('livemirror_loc')],
+			'registry_conf_file'  => $self->o('reg_conf'),
+            'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 		-rc_name => '1Gb',
@@ -238,8 +240,8 @@ sub pipeline_analyses {
 	    {   -logic_name => 'import_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment',
 		-parameters => {
-				'method_link_species_set_id'       => $self->o('high_epo_mlss_id'),
-				'from_db_url'                      => $self->o('epo_db'),
+				'method_link_species_set_id' => $self->o('high_epo_mlss_id'),
+				'from_db'                    => $self->o('epo_db'),
 			       },
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],

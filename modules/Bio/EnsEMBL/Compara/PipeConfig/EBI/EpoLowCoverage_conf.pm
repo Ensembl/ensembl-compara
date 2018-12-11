@@ -42,7 +42,7 @@ sub default_options {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
         #'species_set_name'  => 'primates',
-
+    'division' => 'ensembl',
 	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
     #'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
@@ -51,70 +51,33 @@ sub default_options {
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
     # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
-
-	#Location of compara db containing most pairwise mlss ie previous compara
-	'live_compara_db' => {
-        -host   => 'mysql-ens-compara-prod-1',
-        -port   => 4485,
-        -user   => 'ensro',
-        -pass   => '',
-		-dbname => 'ensembl_compara_' . $self->o('ensembl_release'),
-		-driver => 'mysql',
-    },
-
+    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division'),
+    'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+    'master_db' => 'compara_master',
+	
+    #default location for pairwise alignments
+    # 'pairwise_default_location' => 'compara_prev',
+    'pairwise_default_location' => 'compara_curr',
     #location of new pairwise mlss if not in the pairwise_default_location eg:
     'pairwise_exception_location' => { },
 	# 'pairwise_exception_location' => {
     #      1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
+    #      1370 => 'fish_epo', # can be a registry alias
 	# },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_95',
-
-	'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-
-	'staging_loc1' => {
-        -host   => 'mysql-ens-vertannot-staging',
-        -port   => 4573,
-        -user   => 'ensro',
-        -pass   => '',
-        -db_version => $self->o('ensembl_release'),
-    },
-
-	'livemirror_loc' => {
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
-            -user   => 'anonymous',
-            -pass   => '',
-	    -db_version => $self->o('prev_release'),
-        },
-
-		'additional_core_db_urls' => { },
-
-		#If we declare things like this, it will FAIL!
-		#We should include the locator on the master_db
-		#'additional_core_db_urls' => {
-			#-host => 'compara1',
-			#-user => 'ensro',
-			#-port => 3306,
-            #-pass   => '',
-			#-species => 'rattus_norvegicus',
-			#-group => 'core',
-			#-dbname => 'mm14_db8_rat6_ref',
-	    	#-db_version => 76,
-		#},
+	'epo_db' => 'compara_curr',
+    # 'epo_db' => $self->o('species_set_name').'_epo', # registry name usually follows this convention for new EPO runs
+	
 
     #ref species for pairwise alignments
  	# 'ref_species' => 'gallus_gallus',    # sauropsids 
 	#'ref_species' => 'oryzias_latipes',  # fish
 	# 'ref_species' => 'homo_sapiens',       # mammals
 
-	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
-
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',     # location of full species tree, will be pruned
+    'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
     'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
@@ -129,14 +92,15 @@ sub default_options {
 
 sub resource_classes {
     my ($self) = @_;
-
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-	 	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-         '8Gb'   => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
+         'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
+         '100Mb' => { 'LSF' => ['-C0 -M100  -R"select[mem>100]  rusage[mem=100]"', $reg_requirement] },
+         '1Gb'   => { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
+	 	 '1.8Gb' => { 'LSF' => ['-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"', $reg_requirement] },
+         '3.5Gb' => { 'LSF' => ['-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"', $reg_requirement] },
+         '8Gb'   => { 'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
     };
 }
 

@@ -1266,9 +1266,9 @@ sub _construct_pairwise_locations {
 	    my $found = 0;
 	    foreach my $mlss_id (keys %$pairwise_location) {
 		
-		my $compara_db_url = $pairwise_location->{$mlss_id};
+		my $this_compara_db = $pairwise_location->{$mlss_id};
 		
-        my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $compara_db_url );
+        my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($this_compara_db);
 		
 		my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 		my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
