@@ -119,9 +119,6 @@
     <multiple_alignment method="EPO">
       <species_set name="fish">
         <taxonomic_group taxon_name="Actinopterygii" only_good_for_alignment="1"/>
-        <!-- The coverage is so low at the moment let's not bother about them -->
-        <genome name="esox_lucius" exclude="1"/>
-        <genome name="ictalurus_punctatus" exclude="1"/>
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
