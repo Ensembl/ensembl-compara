@@ -604,11 +604,27 @@ sub create_mlsss_on_pairs {
     return \@mlsss;
 }
 
-sub create_self_wga_mlss {
-    my ($method, $gdb) = @_;
+sub create_self_wga_mlsss {
+    my ($compara_dba, $gdb) = @_;
     my $species_set = create_species_set([$gdb]);
-    my $mlss_name = sprintf('%s %s (self-alignment)', $gdb->get_short_name, $method->display_name);
-    return create_mlss($method, $species_set, $mlss_name);
+
+    # Alignment with LASTZ_NET (for now ... we may turn this into a parameter in the future)
+    my $aln_method = $compara_dba->get_MethodAdaptor->fetch_by_type('LASTZ_NET');
+    my $mlss_name = sprintf('%s %s (self-alignment)', $gdb->get_short_name, $aln_method->display_name);
+    my $self_lastz_mlss = create_mlss($aln_method, $species_set, $mlss_name);
+    $self_lastz_mlss->add_tag( 'species_set_size', 1 );
+
+    if ($gdb->is_polyploid) {
+        # POLYPLOID is the restriction of the alignment on the homoeologues
+        my $pp_method = $compara_dba->get_MethodAdaptor->fetch_by_type('POLYPLOID');
+        my $pp_mlss = create_mlss($pp_method, $species_set);
+        # Pairwise MLSSs between the components
+        my $sub_aln_mlsss = create_mlsss_on_pairs($aln_method, $gdb->component_genome_dbs);
+        # Those MLSSs should remain internal
+        $_->{_no_release} = 1 for @$sub_aln_mlsss;
+        return [$self_lastz_mlss, $pp_mlss, @$sub_aln_mlsss];
+    }
+    return [$self_lastz_mlss];
 }
 
 sub create_pairwise_wga_mlss {

@@ -53,9 +53,10 @@
 
   </pairwise_alignments>
 
-  <!-- <self_alignments>
-    <genome name=" triticum_aestivum"/>
-  </self_alignments> -->
+  <self_alignments>
+    <genome name="triticum_aestivum"/>
+    <genome name="triticum_dicoccoides"/>
+  </self_alignments>
 
   <gene_trees>
     <protein_trees collection="plants"/>

@@ -374,10 +374,9 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlss($compara_dba, $method, $species_set, $display_name, ($xml_msa->getAttribute('gerp') // 0)) };
 }
 
-my $self_aln_method = $compara_dba->get_MethodAdaptor->fetch_by_type('LASTZ_NET');
 foreach my $xml_self_aln (@{$division_node->findnodes('self_alignments/genome')}) {
     my $gdb = find_genome_from_xml_node_attribute($xml_self_aln, 'name');
-    push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_self_wga_mlss($self_aln_method, $gdb);
+    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_self_wga_mlsss($compara_dba, $gdb) };
 }
 
 foreach my $xml_asm_patch (@{$division_node->findnodes('assembly_patches/genome')}) {
@@ -475,7 +474,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             push @mlsss_created, $mlss;
             unless ($dry_run) {
                 $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-                $compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss) if $release;
+                $compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss) if $release && !$mlss->{_no_release};
             }
             if ($verbose) {
                 print "NEW MLSS:", $mlss->toString, "\n";
@@ -498,7 +497,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
 
 my $current_version = software_version();
-my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET TRANSLATED_BLAT_NET EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE GERP_CONSTRAINED_ELEMENT PROTEIN_TREES NC_TREES SPECIES_TREE);
+my %methods_worth_reporting = map {$_ => 1} qw(LASTZ_NET TRANSLATED_BLAT_NET POLYPLOID EPO EPO_LOW_COVERAGE PECAN CACTUS_HAL GERP_CONSERVATION_SCORE GERP_CONSTRAINED_ELEMENT PROTEIN_TREES NC_TREES SPECIES_TREE);
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 my $n = 0;
