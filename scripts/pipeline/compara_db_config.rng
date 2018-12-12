@@ -172,6 +172,7 @@
                   <value>PECAN</value>
                   <value>EPO</value>
                   <value>EPO_LOW_COVERAGE</value>
+                  <value>EPO+EPO_LOW_COVERAGE</value>
                   <value>CACTUS_HAL</value>
                 </choice>
               </attribute>

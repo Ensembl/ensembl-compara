@@ -358,6 +358,17 @@ while (my $aref1 = shift @refs) {
 }
 
 foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_alignment')}) {
+    if ($xml_msa->getAttribute('method') =~ /(.*)\+(.*)/) {
+        # Assume we combine two pipelines (presumably EPO and EPO_LOW_COVERAGE)
+        my $method1 = $compara_dba->get_MethodAdaptor->fetch_by_type($1);
+        my $method2 = $compara_dba->get_MethodAdaptor->fetch_by_type($2);
+        my ($species_set2, $display_name) = @{ make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs) };
+        my @good_gdbs = grep {$_->is_good_for_alignment} @{$species_set2->genome_dbs};
+        my $species_set1 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set(\@good_gdbs, $species_set2->name);
+        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method1, $species_set1, $display_name) };
+        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method2, $species_set2, $display_name, ($xml_msa->getAttribute('gerp') // 0)) };
+        next;
+    }
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
     my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs) };
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlss($compara_dba, $method, $species_set, $display_name, ($xml_msa->getAttribute('gerp') // 0)) };

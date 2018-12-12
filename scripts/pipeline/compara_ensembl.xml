@@ -80,48 +80,28 @@
 
   <multiple_alignments>
     <!-- Primates -->
-    <multiple_alignment method="EPO">
-      <species_set name="primates">
-        <taxonomic_group taxon_name="Primates" only_good_for_alignment="1"/>
-      </species_set>
-    </multiple_alignment>
-    <multiple_alignment method="EPO_LOW_COVERAGE">
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE">
       <species_set name="primates">
         <taxonomic_group taxon_name="Primates"/>
       </species_set>
     </multiple_alignment>
 
     <!-- Mammals, excl. the mouse strains -->
-    <multiple_alignment method="EPO">
-      <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
-        <taxonomic_group taxon_name="Eutheria" only_good_for_alignment="1"/>
-      </species_set>
-    </multiple_alignment>
-    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
       <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
         <taxonomic_group taxon_name="Eutheria"/>
       </species_set>
     </multiple_alignment>
 
     <!-- Sauropsids -->
-    <multiple_alignment method="EPO">
-      <species_set name="sauropsids">
-        <taxonomic_group taxon_name="Sauropsida" only_good_for_alignment="1"/>
-      </species_set>
-    </multiple_alignment>
-    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
       <species_set name="sauropsids">
         <taxonomic_group taxon_name="Sauropsida"/>
       </species_set>
     </multiple_alignment>
 
     <!-- Fishes -->
-    <multiple_alignment method="EPO">
-      <species_set name="fish">
-        <taxonomic_group taxon_name="Actinopterygii" only_good_for_alignment="1"/>
-      </species_set>
-    </multiple_alignment>
-    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
       <species_set name="fish">
         <taxonomic_group taxon_name="Actinopterygii"/>
       </species_set>
