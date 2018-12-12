@@ -97,7 +97,7 @@ Default: not set
 When given, the script will not store / update anything in the database.
 Default: not set (i.e. the database *will* be updated)
 
-=item B<[--verbose]>
+=item B<[--verbose|--debug]>
 
 Print more details about the MLSSs that are being defined.
 
@@ -132,7 +132,7 @@ GetOptions(
     'xml=s'         => \$xml_config,
     'schema=s'      => \$xml_schema,
     'release'       => \$release,
-    'verbose'       => \$verbose,
+    'verbose|debug' => \$verbose,
     'retire_unmatched'          => \$retire_unmatched,
     'dryrun|dry_run|dry-run'    => \$dry_run,
 );
