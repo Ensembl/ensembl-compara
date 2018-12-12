@@ -58,7 +58,6 @@
     <one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae" ref_amongst="Cetartiodactyla"/>
 
     <!-- Early vertebrates and other chordates -->
-    <!-- FIXME create a collection for those -->
     <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
     <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
 
