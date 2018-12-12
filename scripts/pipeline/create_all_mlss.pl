@@ -498,7 +498,7 @@ foreach my $mlss (@mlsss_created) {
         $n++
     }
 }
-print "(and $n others)\n" if $n;
+print "(and $n derived MLSSs)\n" if $n;
 
 print "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
 $n = 0;
@@ -509,7 +509,7 @@ foreach my $mlss (@mlsss_retired) {
         $n++
     }
 }
-print "(and $n others)\n" if $n;
+print "(and $n derived MLSSs)\n" if $n;
 
 print "\nWhat else is new in e$current_version ?\n-------------------------\n";
 $n = 0;
@@ -521,5 +521,5 @@ foreach my $mlss (@mlsss_existing) {
         $n++
     }
 }
-print "(and $n others)\n" if $n;
+print "(and $n derived MLSSs)\n" if $n;
 
