@@ -139,11 +139,11 @@
 
     <!-- Mouse strains -->
     <multiple_alignment method="CACTUS_HAL">
-      <species_set name="murinae" in_collection="murinae">
-        <!-- We can't take the whole collection because mus_caroli and mus_pahari are not in the alignment -->
-        <taxonomic_group taxon_name="Mus musculus"/>
-        <genome name="mus_spretus"/>
-        <genome name="rattus_norvegicus"/>
+      <species_set name="murinae">
+        <taxonomic_group taxon_name="Murinae"/>
+        <!--These two species are not in the HAL file-->
+        <genome name="mus_caroli" exclude="1"/>
+        <genome name="mus_pahari" exclude="1"/>
       </species_set>
     </multiple_alignment>
 
