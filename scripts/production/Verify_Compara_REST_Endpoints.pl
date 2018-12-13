@@ -368,77 +368,76 @@ try{
 
 
     if ($division eq "vertebrates"){
+        print "\nTesting GET family\/id\/\:id \n\n";
 
-    print "\nTesting GET family\/id\/\:id \n\n";
+        $ext = '/family/id/TF660629';
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $ext = '/family/id/TF660629';
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-    ok($responseIDGet->{success}, "Check JSON Validity");
+        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json');
+        ok($jsontxt->{family_stable_id} eq 'TF660629', "Check get family Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json');
-    ok($jsontxt->{family_stable_id} eq 'TF660629', "Check get family Validity");
+        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=uniprot');
+        ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=uniprot');
-    ok( (index($jsontxt->{members}[0]->{source_name}, 'Uniprot') != -1 ), "Check get family UNIPROT memeber filter Validity");
+        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl');
+        ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl');
-    ok( ($jsontxt->{members}[0]->{source_name} eq 'ENSEMBLPEP' ) , "Check get family ensembl member filter Validity");
-    
-    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=1');
-    ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
+        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=1');
+        ok( exists($jsontxt->{members}[0]->{protein_alignment}), "Check get family aligned == 1 Validity");
 
-    $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=0');
-    ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 Validity");
-
-
-    print "\nTesting GET family member\/id\/\:id \n\n";
-
-    $ext = "/family/member/id/$gene_member_id";
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-    ok($responseIDGet->{success}, "Check JSON Validity");
+        $jsontxt = process_json_get($server.'/family/id/TF660629?content-type=application/json;member_source=ensembl;aligned=0');
+        ok( exists ($jsontxt->{members}[0]->{protein_seq}), "Check get family aligned == 0 Validity");
 
 
-    $jsontxt = process_json_get($server."/family/member/id/$gene_member_id?content-type=application/json;aligned=0;sequence=none");
-    ok($jsontxt->{1}->{family_stable_id}, "Check get family by member Validity");
+        print "\nTesting GET family member\/id\/\:id \n\n";
+
+        $ext = "/family/member/id/$gene_member_id";
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check JSON Validity");
 
 
-    print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
+        $jsontxt = process_json_get($server."/family/member/id/$gene_member_id?content-type=application/json;aligned=0;sequence=none");
+        ok($jsontxt->{1}->{family_stable_id}, "Check get family by member Validity");
 
-    $ext = "/family/member/symbol/$species_1/$gene_symbol";
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-    ok($responseIDGet->{success}, "Check JSON Validity");
 
-    $jsontxt = process_json_get($server."/family/member/symbol/$species_1/$gene_symbol?content-type=application/json;aligned=0;sequence=none;member_source=ensembl");
-    ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol Validity");
+        print "\nTesting GET family member by species symbol\/:species\/\:symbol \n\n";
+
+        $ext = "/family/member/symbol/$species_1/$gene_symbol";
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check JSON Validity");
+
+        $jsontxt = process_json_get($server."/family/member/symbol/$species_1/$gene_symbol?content-type=application/json;aligned=0;sequence=none;member_source=ensembl");
+        ok($jsontxt->{1}->{family_stable_id}, "Check family member by species symbol Validity");
     }
 
     if ($division eq "vertebrates"){
-    print "\nTesting GET EPO alignment region\/\:species\/\:region \n\n";
+        print "\nTesting GET EPO alignment region\/\:species\/\:region \n\n";
 
-    $ext = "/alignment/region/$species_1/$alignment_region?species_set_group=$species_set_group";
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-    ok($responseIDGet->{success}, "Check json Validity");
+        $ext = "/alignment/region/$species_1/$alignment_region?species_set_group=$species_set_group";
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check json Validity");
 
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-    ok($responseIDGet->{success}, "Check phyloXml Validity");
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0');
-    ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
+        $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0');
+        ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
 
-    $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1");
-    ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option Validity");
+        $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1");
+        ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option Validity");
 
-    print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
+        print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
 
-    $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae';
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-    ok($responseIDGet->{success}, "Check json Validity");
+        $ext = '/alignment/region/rattus_norvegicus/2:56040000-56040100:1?method=CACTUS_HAL;species_set_group=murinae';
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check json Validity");
 
-    $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-    ok($responseIDGet->{success}, "Check phyloXml Validity");
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml Validity");
 
-    $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-    ok($responseIDGet->{success}, "Check phyloXml Validity with unaligned sequences");
+        $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml Validity with unaligned sequences");
 
     }
 
