@@ -95,7 +95,8 @@ sub default_options {
 	'conf_file' => '',
 
 	#Set to use registry configuration file
-	'reg_conf' => '',
+	'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+    'master_db' => 'compara_master',
 
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,
@@ -197,7 +198,8 @@ sub default_options {
 	#
 	#Default healthcheck
 	#
-	'previous_db' => $self->o('livemirror_loc'),
+	# 'previous_db' => $self->o('livemirror_loc'),
+    'previous_db' => 'compara_prev',
 	'prev_release' => 0,   # 0 is the default and it means "take current release number and subtract 1"    
 	'max_percent_diff' => 20,
     'max_percent_diff_patches' => 99.99,
@@ -268,7 +270,7 @@ sub pipeline_analyses {
 				   'master_db' => $self->o('master_db'),
 				  'reg_conf'  => $self->o('reg_conf'),
 				  'conf_file' => $self->o('conf_file'),
-				  'core_dbs' => $self->o('curr_core_dbs_locs'),
+				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
 				  }, 
                 -input_ids => [{}],
@@ -318,8 +320,8 @@ sub pipeline_analyses {
 				  'mlss_id' => $self->o('mlss_id'),
 				  'mlss_id_list' => $self->o('mlss_id_list'),
                                   'collection' => $self->o('collection'),
-				  'registry_dbs' => $self->o('curr_core_sources_locs'),
-				  'core_dbs' => $self->o('curr_core_dbs_locs'),
+				  # 'registry_dbs' => $self->o('curr_core_sources_locs'),
+				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'master_db' => $self->o('master_db'),
 				  'do_pairwise_gabs' => $self->o('do_pairwise_gabs'), #healthcheck options
 				  'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'), #healthcheck options
@@ -408,7 +410,7 @@ sub pipeline_analyses {
            -wait_for   => [ 'create_pair_aligner_jobs'  ],
  	       -batch_size => $self->o('pair_aligner_batch_size'),
 	       -can_be_empty  => 1,
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '8Gb_job',
 	    },
             {   -logic_name => 'check_no_partial_gabs',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SqlHealthChecks',

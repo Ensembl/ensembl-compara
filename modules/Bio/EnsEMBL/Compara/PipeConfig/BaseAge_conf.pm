@@ -88,19 +88,6 @@ sub pipeline_create_commands {
 	   ];
 }
 
-
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-	 '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-	 '1.8Gb' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' =>  { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
-    };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
 
@@ -108,7 +95,7 @@ sub pipeline_analyses {
             { -logic_name => 'chrom_sizes',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
               -parameters => {
-                              'db_conn' => $self->o('compara_url'),
+                              'db_conn' => $self->o('compara_db'),
                               'bed_dir' => $self->o('bed_dir'),
                               'append'  => [qw(-N -q)],
                               'input_query' => "SELECT dnafrag.name, length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1",
@@ -125,7 +112,7 @@ sub pipeline_analyses {
             {  -logic_name => 'base_age_factory',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DnaFragFactory',
                -parameters => {
-                               'compara_db'     => $self->o('compara_url'),
+                               'compara_db'     => $self->o('compara_db'),
                                'genome_db_name' => $self->o('ref_species'),
                                'only_karyotype' => 1,
                                'extra_parameters'  => [ 'name' ],
@@ -140,7 +127,7 @@ sub pipeline_analyses {
             { -logic_name => 'base_age',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BaseAge',
               -parameters => {
-                              'compara_db' => $self->o('compara_url'),
+                              'compara_db' => $self->o('compara_db'),
                               'variation_url' => $self->o('variation_url'),
                               'species_set_name' => $self->o('species_set_name'),
                               'species' => $self->o('ref_species'),

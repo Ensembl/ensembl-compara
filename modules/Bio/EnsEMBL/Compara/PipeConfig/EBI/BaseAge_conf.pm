@@ -63,9 +63,11 @@ sub default_options {
             'ref_species' => 'homo_sapiens',
             #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
-            #Location url of database to get EPO GenomicAlignTree objects from
-#            'compara_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/ensembl_compara_' . $self->o('ensembl_release'),
-            'compara_url' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_mammals_epo_94',
+            'division' => 'ensembl',
+            'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+            
+            #Location url/alias of database to get EPO GenomicAlignTree objects from
+            'compara_db' => 'compara_curr',
 
             # The name of the alignment
             'species_set_name'  => 'mammals',
@@ -91,14 +93,16 @@ sub default_options {
 
 sub resource_classes {
     my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
 
     my $rc = $self->SUPER::resource_classes();
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-	 '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-         '2Gb_job' => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '4Gb_job' => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         'default' => { 'LSF' => ['', $reg_requirement] },
+         '100Mb' => { 'LSF' => ['-C0 -M100 -R"select[mem>100] rusage[mem=100]"', $reg_requirement] },
+	 '1Gb' =>    { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
+         '2Gb_job' => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
+         '4Gb_job' => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
     };
 }
 

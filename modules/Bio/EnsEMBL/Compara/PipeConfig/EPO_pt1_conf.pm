@@ -77,8 +77,6 @@ sub default_options {
 
         'populate_new_database_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 
-      	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
-
       	# parameters that are likely to change from execution to another:
       	'core_db_version' => 88, # version of the dbs from which to get the pairwise alignments
       	
@@ -96,18 +94,6 @@ sub default_options {
     };
 }
 
-
-sub resource_classes {
-    my ($self) = @_; 
-    return {
-	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' },	# farm3 lsf syntax$
-         'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },	# farm3 lsf syntax$
-         'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },  	# farm3 lsf syntax$
-         'mem14000' => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },  	# farm3 lsf syntax$
-    };  
-}
-
 sub pipeline_wide_parameters {
 	my $self = shift @_;
 	return {
@@ -115,8 +101,8 @@ sub pipeline_wide_parameters {
 
 		'compara_pairwise_db' => $self->o('compara_pairwise_db'),
                 'mlss_id'        => $self->o('mlss_id'),
-		'main_core_dbs' => $self->o('main_core_dbs'),
-                'additional_core_db_urls' => $self->o('additional_core_db_urls'),
+		# 'main_core_dbs' => $self->o('main_core_dbs'),
+                # 'additional_core_db_urls' => $self->o('additional_core_db_urls'),
 		'min_anchor_size' => $self->o('min_anchor_size'),
 		'min_number_of_seqs_per_anchor' => $self->o('min_number_of_seqs_per_anchor'),
 		'max_number_of_seqs_per_anchor' => $self->o('max_number_of_seqs_per_anchor'),
@@ -140,7 +126,7 @@ return [
         -parameters => {
             'program'        => $self->o('populate_new_database_exe'),
             'pipeline_db'    => $self->pipeline_url(),
-            #'reg_conf'       => $self->o('reg_conf'),
+            'reg_conf'       => $self->o('reg_conf'),
             'master_db'      => $self->o('master_db'),
         },
         -input_ids => [{}],

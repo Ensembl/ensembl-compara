@@ -72,60 +72,13 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # release 94/EG41 plants settings
     division => 'plants',
-    mlss_id  => 40138,
-    eg_release => 41,
+    # mlss_id  => 40138,
+    # eg_release => 41,
 
 
     # custom pipeline name, in case you don't like the default one
     pipeline_name => $self->o('division').'_prottrees_'.$self->o('eg_release').'_'.$self->o('rel_with_suffix'),
-
-
-    # connection parameters to various databases:
-
-    # the master database for synchronization of various ids (use undef if you don't have a master database)
-    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants',
-
-    'member_db' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/muffato_load_members_95_plants',
-
-    eg_prod_loc => {
-      -host   => 'mysql-eg-prod-2',
-      -port   => 4239,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
-
-    e_prod_loc => {
-      -host   => 'mysql-ens-vertannot-staging',
-      -port   => 4573,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
-
-    eg_mirror_loc => {
-        -host   => 'mysql-eg-mirror',
-        -port   => 4157,
-        -user   => 'ensro',
-        -db_version => 93,
-    },
-    e_mirror_loc => {
-        -host   => 'mysql-ensembl-mirror',
-        -port   => 4240,
-        -user   => 'ensro',
-        -db_version => 93,
-    },
-
-    # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-    # Add the database entries for the current and previous core databases
-    'curr_core_sources_locs' => [ $self->o('eg_prod_loc'), $self->o('e_prod_loc') ],
-    'prev_core_sources_locs'   => [ $self->o('eg_mirror_loc'), $self->o('e_mirror_loc') ],
-
-    # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-    'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
-
-    # Points to the previous production database. Will be used for various GOC operations. Use "undef" if running the pipeline without reuse.
-    'goc_reuse_db'=> 'mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_41_94',
 
     # How will the pipeline create clusters (families) ?
     # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -136,17 +89,12 @@ sub default_options {
     #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
     'clustering_mode'           => 'hybrid',
 
-    # species tree reconciliation
-        # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.branch_len.nw',
-        'binary_species_tree_input_file'    => undef,
-
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels'                 => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
+        'taxlevels' => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
 
     # GOC parameters
-        'goc_taxlevels'                 => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
+        'goc_taxlevels' => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
 
     };
 }
@@ -182,8 +130,8 @@ sub tweak_analyses {
     $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
     $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
 
-        $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';
 }
 
 

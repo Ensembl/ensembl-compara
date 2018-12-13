@@ -75,21 +75,22 @@ sub fetch_input {
  $self->param('genome_db', $genome_db);
  my $species_name = $genome_db->name;
 
-# load the species db into the registry
- if($species_name eq "ancestral_sequences" && not $self->param('no_ancestral_sequences')){
-  my $species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( %{ $self->param('ancestral_db') } );
-  throw('no ancestral_db found') unless $species_dba;
-  Bio::EnsEMBL::Registry->add_DBAdaptor( "$species_name", "core", $species_dba);
- } elsif($self->param('additional_core_db_urls') && exists($self->param('additional_core_db_urls')->{"$species_name"})){
-   my $species_url = $self->param('additional_core_db_urls')->{"$species_name"};
-   $species_url .= "?group=core&species=$species_name";
-   if(Bio::EnsEMBL::Registry->get_alias("$species_name")){ # need to remove if species already added from main_core_dbs 
-    Bio::EnsEMBL::Registry->remove_DBAdaptor("$species_name", "core");
-   }
-   Bio::EnsEMBL::Registry->load_registry_from_url( "$species_url" );
-  } else {
-  Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(@{ $self->param('main_core_dbs') });
- }
+# load the species db into the registry - !! this should now be done with a registry config file !!
+# if($species_name eq "ancestral_sequences" && not $self->param('no_ancestral_sequences')){
+#       my $species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( %{ $self->param('ancestral_db') } );
+#       throw('no ancestral_db found') unless $species_dba;
+#       Bio::EnsEMBL::Registry->add_DBAdaptor( "$species_name", "core", $species_dba);
+#  } elsif($self->param('additional_core_db_urls') && exists($self->param('additional_core_db_urls')->{"$species_name"})){
+#      my $species_url = $self->param('additional_core_db_urls')->{"$species_name"};
+#      $species_url .= "?group=core&species=$species_name";
+#      if(Bio::EnsEMBL::Registry->get_alias("$species_name")){ # need to remove if species already added from main_core_dbs 
+#         Bio::EnsEMBL::Registry->remove_DBAdaptor("$species_name", "core");
+#      }
+#      Bio::EnsEMBL::Registry->load_registry_from_url( "$species_url" );
+# } else {
+#     Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(@{ $self->param('main_core_dbs') });
+# }
+
 # get the species dba from the registry
  my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor("$species_name", "core");
  $genome_db->locator( $dba->locator );

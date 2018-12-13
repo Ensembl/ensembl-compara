@@ -74,11 +74,11 @@ sub create_default_mlss {
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('new_method_link_species_set_id'));
 
-    my $pairwise_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $self->param('pairwise_default_location') );
+    my $pairwise_dba = $self->get_cached_compara_dba('pairwise_default_location');
     my $pairwise_genome_db_adaptor = $pairwise_dba->get_GenomeDBAdaptor;
     my $pairwise_mlss_adaptor = $pairwise_dba->get_MethodLinkSpeciesSetAdaptor;
 
-    my $base_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -url => $self->param('base_location') );
+    my $base_dba = $self->get_cached_compara_dba('base_location');
     my $base_mlss_adaptor = $base_dba->get_MethodLinkSpeciesSetAdaptor;
     my $base_mlss = $base_mlss_adaptor->fetch_by_dbID($self->param('base_method_link_species_set_id'));
 

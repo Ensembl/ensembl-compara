@@ -30,8 +30,12 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        'master_db'     => 'compara_master',
+        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+
         # Work directory
-        'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/lastz_'.$self->o('pipeline_name') . '/' . $self->o('host') . '/',
+        'dump_dir' => '/hps/nobackup2/production/ensembl/'.$ENV{USER}.'/pair_aligner/release_'.$self->o('rel_with_suffix').'/'.$self->o('pipeline_name').'/'.$self->o('host').'/',
 
         # Capacities
         'pair_aligner_analysis_capacity' => 700,
@@ -56,13 +60,14 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
 
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb_job'       => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-            '1Gb_job'         => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb_job'       => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-            '8Gb_job'         => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
-            '10Gb_job'        => { 'LSF' => '-C0 -M10000 -R"select[mem>10000] rusage[mem=10000]"' },
+            '100Mb_job'       => { 'LSF' => ['-C0 -M100 -R"select[mem>100] rusage[mem=100]"]', $reg_requirement] },
+            '1Gb_job'         => { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
+            '1.8Gb_job'       => { 'LSF' => ['-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"', $reg_requirement] },
+            '8Gb_job'         => { 'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
+            '10Gb_job'        => { 'LSF' => ['-C0 -M10000 -R"select[mem>10000] rusage[mem=10000]"', $reg_requirement] },
     };
 }
 

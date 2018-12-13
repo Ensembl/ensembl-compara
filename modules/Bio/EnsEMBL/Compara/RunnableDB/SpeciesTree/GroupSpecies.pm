@@ -79,7 +79,7 @@ sub fetch_input {
 		$species_set = $ss_adaptor->fetch_by_dbID($species_set_id);
 		$self->param('collection', $species_set->name); # set this for file naming later
 	}
-	my @genome_dbs = @{ $species_set->genome_dbs };
+	my @genome_dbs = grep {$_->name ne 'ancestral_sequences'} @{ $species_set->genome_dbs };
 
 	my @gdb_id_list = map { $_->dbID } @genome_dbs;
 	push( @gdb_id_list, @{ $self->param('outgroup_gdbs') } ) if $self->param('outgroup_gdbs');

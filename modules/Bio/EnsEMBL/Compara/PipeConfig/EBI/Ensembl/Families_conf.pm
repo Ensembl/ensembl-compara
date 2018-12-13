@@ -80,6 +80,17 @@ sub default_options {
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
+        'division' => 'ensembl',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+
+        # used by the StableIdMapper as the reference:
+        'prev_rel_db' => 'compara_prev',
+
+        # Once the members are loaded, it is fine to start the families pipeline
+        'member_db' => 'compara_members',
+        # used by the StableIdMapper as the location of the master 'mapping_session' table:
+        'master_db' => 'compara_master', 
+
         'test_mode' => 1, #set this to 0 if this is production run. Prevents writing of the pipeline url into the master db unless it is A PRODUCTION run
 
         # HMM clustering
@@ -120,39 +131,33 @@ sub default_options {
         'cons_capacity'           => 100,
         'HMMer_classify_capacity' => 1500,
 
-        # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_#expr( #ensembl_release# - 1)expr#',
-
-        # Protein Tree database. Once the members are loaded, it is fine to start the families pipeline
-        'protein_trees_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_protein_trees_94',
-        'member_db'        => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_load_members_test',
-        # used by the StableIdMapper as the location of the master 'mapping_session' table:
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master', };
-
         'load_uniprot_members_from_member_db' => 1,
+    };
 } ## end sub default_options
 
 sub resource_classes {
     my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
         %{ $self->SUPER::resource_classes },    # inherit 'default' from the parent class
 
-        'default'   => { 'LSF' => '-M100   -R"select[mem>100]   rusage[mem=100]"' },
-        'urgent'    => { 'LSF' => '-M100   -R"select[mem>100]   rusage[mem=100]"' },
-        'RegBlast' => { 'LSF' => [ '-C0 -M' . $self->o('blast_gigs') . '000 -R"select[mem>'. $self->o('blast_gigs') . '000] rusage[mem=' . $self->o('blast_gigs') . '000]"', '-lifespan 360' ] },
-        'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', '-lifespan 1440' ] },
-        'BigMcxload' => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"' },
-        'BigMcl'     => { 'LSF' => '-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .  $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"' },
-        'BigMafft'   => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').'000' },
+        'default'     => { 'LSF' => ['-M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
+        'urgent'      => { 'LSF' => ['-M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
+        'RegBlast'    => { 'LSF' => [ '-C0 -M' . $self->o('blast_gigs') . '000 -R"select[mem>'. $self->o('blast_gigs') . '000] rusage[mem=' . $self->o('blast_gigs') . '000]"', "-lifespan 360 $reg_requirement" ] },
+        'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', "-lifespan 1440 $reg_requirement" ] },
+        'BigMcxload'  => { 'LSF' => ['-C0 -M' . $self->o('mcl_gigs') . '000 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"', $reg_requirement] },
+        'BigMcl'      => { 'LSF' => ['-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .  $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"', $reg_requirement] },
+        'BigMafft'    => { 'LSF' => ['-C0 -M'.$self->o('himafft_gigs').'000', $reg_requirement] },
+        'LoMafft'     => { 'LSF' => ['-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[mem>' . $self->o('lomafft_gigs') . '000] rusage[mem=' . $self->o('lomafft_gigs') . '000]"', $reg_requirement] },
+        '250Mb_job'   => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement] },
+        '500MegMem'   => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement] },
+        '2GigMem'     => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_requirement] }, 
+        '4GigMem'     => { 'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', $reg_requirement] },
+        '8GigMem'     => { 'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement] }, 
+        '16GigMem'    => { 'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement] },
+
         'HugeMafft_multi_core' => { 'LSF' => '-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -R"span[hosts=1]"' },
-        'LoMafft' => { 'LSF' => '-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[mem>' . $self->o('lomafft_gigs') . '000] rusage[mem=' . $self->o('lomafft_gigs') . '000]"' },
-        '250Mb_job' => { 'LSF' => '-C0 -M250 -R"select[mem>250] rusage[mem=250]"' },
-        '500MegMem' => { 'LSF' => '-C0 -M500 -R"select[mem>500] rusage[mem=500]"' },
-        '2GigMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' }, 
-        '4GigMem' => { 'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"' },
-        '8GigMem' => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' }, 
-        '16GigMem' => { 'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-    
+
     };
 }
 

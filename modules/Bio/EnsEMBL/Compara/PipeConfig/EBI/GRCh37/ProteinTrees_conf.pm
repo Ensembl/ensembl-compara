@@ -74,26 +74,16 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
         # Tag attached to every single tree
-        'division'              => 'ensembl',
+        'division' => 'ensembl',
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
 
     # connection parameters to various databases:
+        # reg_conf usually relies on the division, but grch37 is an edge case where this can't be the case
+        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_grch37_conf.pl',
 
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master_grch37',
-
-        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-grch37-mirror.ebi.ac.uk:4603/ensembl_compara_93',
-
-        # Where the members come from (as loaded by the LoadMembers pipeline)
-        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_94_grch37',
-
-        # Points to the previous production database. Will be used for various GOC operations.
-        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/grch37_ens_compara_87_reuse_goc',
-        #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
     };
 }
 

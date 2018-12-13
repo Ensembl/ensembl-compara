@@ -113,21 +113,33 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # update the release number if needed
-        # 'ensembl_release' => 89,
+        'division'      => 'ensembl',
 
-        'host'       => "mysql-ens-compara-prod-3.ebi.ac.uk",
+        'host'       => 'mysql-ens-compara-prod-3',
         'port'       => 4523,
-        'master_db'  => "mysql://ensro\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master",
+
+        'master_db'  => 'compara_master',
 
         # location of homology data. note: wga_score will be written here
-        'compara_db' => "mysql://ensadmin:$ENV{ENSADMIN_PSW}\@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_" . $self->o('ensembl_release'),
+        'compara_db' => 'compara_curr',
         # if alignments are not all present in compara_db, define alternative db locations
         #'alt_aln_dbs' => [
             # list of databases with EPO or LASTZ data
         #],
-        'previous_rel_db'  => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_#expr( #ensembl_release# - 1 )expr#',
+        'previous_rel_db'  => 'compara_prev',
         'species_set_name' => 'collection-default',
+    };
+}
+
+sub resource_classes {
+    my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+        'default'  => {'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"',  $reg_requirement] },
+        '200M_job' => {'LSF' => ['-C0 -M200   -R"select[mem>200]   rusage[mem=200]"',  $reg_requirement] },
+        '1Gb_job'  => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
+        '2Gb_job'  => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
     };
 }
 

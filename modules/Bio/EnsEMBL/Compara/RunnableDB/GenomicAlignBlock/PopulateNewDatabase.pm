@@ -66,7 +66,7 @@ sub fetch_input {
     push @cmd, '--new', $self->dbc->url() if (!$self->param('pipeline_db') && $self->dbc);
     push @cmd, '--cellular_component', $self->param('cellular_component') if $self->param('cellular_component');
     push @cmd, '--species', $self->param('speciesList') if $self->param('speciesList');
-    push @cmd, '--reg-conf', $self->param('reg_conf') if $self->param('reg_conf');
+    push @cmd, '--reg_conf', $self->param('reg_conf') if $self->param('reg_conf');
     push @cmd, '--collection', $self->param('collection') if ( $self->param('collection') && !$self->param('ignore_collection') );
     push @cmd, '--old', $self->param('old_compara_db') if $self->param('old_compara_db');
     push @cmd, '--alignments_only' if $self->param('alignments_only');

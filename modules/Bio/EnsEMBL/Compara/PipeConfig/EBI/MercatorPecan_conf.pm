@@ -73,16 +73,21 @@ sub default_options {
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'work_dir'              => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name'),
         'species_set_name'      => 'amniotes',
+        'division'              => 'ensembl',
         'do_not_reuse_list'     => [ ],
 
     #location of full species tree, will be pruned
-        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
     # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
+    'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
-    #master database
-    'master_db'     => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+    # master database
+    'master_db' => 'compara_master',
+    # previous release data location for reuse
+    'reuse_db'  => 'compara_prev',
+    'paf_reuse_db' => 'amniotes_pecan_prev', # peptide_align_feature% tables only available here
 
     #Pecan default parameters
     'java_options'      => '-server -Xmx1000M',
@@ -106,51 +111,6 @@ sub default_options {
     'ortheus_lib_dir'           => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
     'pecan_exe_dir'             => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
 
-    # connection parameters to various databases:
-
-        'staging_loc' => {                     # general location of half of the current release core databases
-            -host   => 'mysql-ens-vertannot-staging',
-            -port   => 4573,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-
-        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
-            -user   => 'anonymous',
-            -pass   => '',
-            -db_version => 94,
-        },
-        # "production mode"
-       'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-       'curr_core_sources_locs'    => [ $self->o('staging_loc')],
-
-       'reuse_db' => {   # usually previous pecan production database
-           -host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-           -port   => 4522,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'mateus_amniotes_mercator_pecan_93',
-	   -driver => 'mysql',
-        },
-
-	#Testing mode
-        'reuse_loc' => {                   # general location of the previous release core databases (for checking their reusability)
-            -host   => 'ensembldb.ensembl.org',
-            -port   => 3306,
-            -user   => 'anonymous',
-            -pass   => '',
-        },
-
-        'curr_loc' => {                   # general location of the current release core databases (for checking their reusability)
-            -host   => 'mysql-ensembl-mirror.ebi.ac.uk',
-            -port   => 4240,
-            -user   => 'anonymous',
-            -pass   => '',
-            #-db_version => '90'
-        },
-
 
      # stats report email
      'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
@@ -160,20 +120,19 @@ sub default_options {
 
 sub resource_classes {
     my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');    
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '100Mb' =>  { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb' =>    { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-         '1.8Gb' =>  { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.5Gb' =>  { 'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-	 '7Gb' =>  { 'LSF' => '-C0 -M7000 -R"select[mem>7000] rusage[mem=7000]"' },
-         '14Gb' => { 'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-         '30Gb' =>   { 'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
-         'gerp' =>   { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-         'higerp' =>   { 'LSF' => '-C0 -M3800 -R"select[mem>3800] rusage[mem=3800]"' },
-         
-
-
+         'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
+         '100Mb'   => { 'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"',   $reg_requirement] },
+         '1Gb'     => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"',  $reg_requirement] },
+         '1.8Gb'   => { 'LSF' => ['-C0 -M1800  -R"select[mem>1800]  rusage[mem=1800]"',  $reg_requirement] },
+         '3.5Gb'   => { 'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },
+	     '7Gb'     => { 'LSF' => ['-C0 -M7000  -R"select[mem>7000]  rusage[mem=7000]"',  $reg_requirement] },
+         '14Gb'    => { 'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] },
+         '30Gb'    => { 'LSF' => ['-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"', $reg_requirement] },
+         'gerp'    => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"',  $reg_requirement] },
+         'higerp'  => { 'LSF' => ['-C0 -M3800  -R"select[mem>3800]  rusage[mem=3800]"',  $reg_requirement] },
     };
 }
 

@@ -84,7 +84,8 @@ sub default_options {
       #'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
       #'port' => 4523,
 
-      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+      'division' => 'ensembl',
+      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
       'bl2seq_exe' => undef,
 
@@ -92,7 +93,7 @@ sub default_options {
       'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
 
       # place to get the genome dumps
-      'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+      'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
       
       'blastn'          => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
       'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
@@ -119,11 +120,7 @@ sub default_options {
       },
 
       # master db
-      'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-
-      # anchor mappings
-      #'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/muffato_mammals_epo_anchor_mapping_91',
-      #'compara_mapped_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/carlac_fish_epo_anchor_mapping_92',
+      'master_db' => 'compara_master',
 
     }; 
 

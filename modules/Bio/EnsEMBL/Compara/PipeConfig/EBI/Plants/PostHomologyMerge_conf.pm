@@ -56,8 +56,8 @@ sub default_options {
         'port'            => 4615,
 
         'division'        => 'plants',
-        'pipeline_name'   => $self->o('division') . '_post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
+        # 'compara_db'      => 'compara_curr',
+        # 'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # The list of collections and clusterset_ids
         'member_stats_config'   => [

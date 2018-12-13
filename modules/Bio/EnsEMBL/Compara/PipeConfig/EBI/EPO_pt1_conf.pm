@@ -71,60 +71,29 @@ sub default_options {
         # When initializing the pipeline, give it the mlss_id of type EPO_GEN_ANCHORS that contains the species of interest.
 
         # And then choose one of these
-        #'species_set_name' => 'sauropsids',
-        #'reference_genome_db_name' => 'gallus_gallus',
+        # 'species_set_name' => 'sauropsids',
+        # 'reference_genome_db_name' => 'gallus_gallus',
         #'species_set_name' => 'mammals',
         #'reference_genome_db_name' => 'homo_sapiens',
         #'species_set_name' => 'fish',
         #'reference_genome_db_name' => 'oryzias_latipes',
 
+        'division' => 'ensembl',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+
         #location of full species tree, will be pruned
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
         # Where we get the genomes from
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
 
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
-
-        # connection parameters to various databases:
-      	'pipeline_db' => { # the production database itself (will be created)
-        		-host   => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-            -driver => 'mysql',
-        		-port   => 4522,
-            -user   => 'ensadmin',
-        		-pass   => $self->o('password'),
-        		-dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
-        },
+        'master_db' => 'compara_master',
       	  
         # database containing the pairwise alignments needed to get the overlaps
-      	'compara_pairwise_db' => {
-        		-user => 'ensro',
-        		-port => 4485,
-        		-host => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        		-driver => 'mysql',
-        		-pass => '',
-        		-dbname => 'ensembl_compara_' . $self->o('core_db_version'),
-      	},
-      	# location of most of the core dbs - to get the sequence from
-        'main_core_dbs' => [
-            {
-                -user => 'ensro',
-                -port => 4240,
-                -host => 'mysql-ensembl-mirror.ebi.ac.uk',
-                -driver => 'mysql',
-                -dbname => '',
-                -db_version => $self->o('core_db_version'),
-            },
-        ],
-          
-        # any additional core dbs
-        'additional_core_db_urls' => { 
-            # 'felis_catus' => 'mysql://ensro@mysql-ens-vertannot-staging:4573/felis_catus_core_93_9',
-        },  
-
+      	'compara_pairwise_db' => 'compara_curr',
       	
-      	# location of species core dbs which were used in the pairwise alignments
-      	'core_db_urls' => [ 'mysql://ensro@mysql-ensembl-mirror.ebi.ac.uk:4240/'.$self->o('core_db_version') ],
+
+        
       	'gerp_program_version' => "2.1",
         'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
         'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
@@ -139,6 +108,16 @@ sub default_options {
     };
 }
 
-
+sub resource_classes {
+    my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
+    return {
+    %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+         'default'  => {'LSF' => ['-C0 -M2500  -R"select[mem>2500]  rusage[mem=2500]"',  $reg_requirement] },   
+         'mem3500'  => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },   
+         'mem7500'  => {'LSF' => ['-C0 -M7500  -R"select[mem>7500]  rusage[mem=7500]"',  $reg_requirement] },   
+         'mem14000' => {'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] }, 
+    };  
+}
 
 1;

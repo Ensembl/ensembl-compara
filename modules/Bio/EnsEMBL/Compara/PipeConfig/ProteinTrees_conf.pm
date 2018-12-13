@@ -103,7 +103,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
+        'pipeline_name'        => $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         #'division'              => undef,
 
@@ -467,6 +467,9 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'member_db'     => $self->o('member_db'),
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
+
+        'reg_conf' => $self->o('reg_conf'),
+        'registry' => $self->o('reg_conf'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),

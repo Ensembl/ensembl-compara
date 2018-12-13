@@ -157,17 +157,8 @@ sub fetch_input {
         if (comes_from_core_database($genome_db)) {
             
             # now use the registry to find the previous release core database candidate:
-
             Bio::EnsEMBL::Registry->no_version_check(1);
-
-            my $prev_release = $reuse_compara_dba->get_MetaContainer->get_schema_version;
-
-            # load the prev.release registry:
-            foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
-                my %reg_params = %{ $prev_reg_conn };
-                $reg_params{'-db_version'} = $prev_release unless $reg_params{'-db_version'};
-                Bio::EnsEMBL::Registry->load_registry_from_db( %reg_params, -species_suffix => $suffix_separator.$prev_release, -verbose => $self->debug );
-            }
+            my $prev_release = $self->param_required('current_release') - 1;
             $prev_core_dba = $self->param('prev_core_dba', Bio::EnsEMBL::Registry->get_DBAdaptor($species_name.$suffix_separator.$prev_release, 'core'));
 
         } else {

@@ -182,8 +182,9 @@ sub pipeline_analyses {
 	    {  -logic_name => 'populate_new_database',
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 	       -parameters    => {
-				  'program'        => $self->o('populate_new_database_exe'),
-				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# ",
+				  'program'  => $self->o('populate_new_database_exe'),
+                  'reg_conf' => $self->o('reg_conf'),
+				  'cmd'      => "#program# --master " . $self->o('master_db') . " --new " . $self->pipeline_url() . " --mlss #mlss_id# --mlss #ce_mlss_id# --mlss #cs_mlss_id# --reg-conf #reg_conf#",
 				 },
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
@@ -243,8 +244,9 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'master_db' => $self->o('master_db'),
+                'registry_conf_file' => $self->o('reg_conf'),
+                'db_version' => $self->o('ensembl_release'),
+                'master_db'  => $self->o('master_db'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -258,9 +260,9 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-		'reuse_db'      => $self->o('reuse_db'),
-                'registry_dbs'  => $self->o('reuse_core_sources_locs'),
-		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
+		        'reuse_db'          => $self->o('reuse_db'),
+		        'do_not_reuse_list' => $self->o('do_not_reuse_list'),
+                'current_release'   => $self->o('ensembl_release'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -273,7 +275,7 @@ sub pipeline_analyses {
 	{   -logic_name => 'check_reuse_db',
 	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::CheckReuseDB',
 	    -parameters => {
-		'reuse_url'   => $self->dbconn_2_url('reuse_db'),
+		      'reuse_db' => $self->o('reuse_db'),
 	    },
 	    -rc_name => '1.8Gb',
         },
@@ -355,7 +357,7 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('reuse_db'),
+                'src_db_conn'   => $self->o('paf_reuse_db'),
                 'table'         => 'peptide_align_feature_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',

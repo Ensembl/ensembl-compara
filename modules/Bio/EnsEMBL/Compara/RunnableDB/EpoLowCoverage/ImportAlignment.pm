@@ -66,14 +66,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-    #if the database name is defined in the url, then open that
-    if ($self->param('from_db_url') =~ /mysql:\/\/.*@.*\/.+/) {
-	$self->param('from_comparaDBA', new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('from_db_url')));
-    } else {
-	#open the most recent compara database
-	$self->param('from_comparaDBA', Bio::EnsEMBL::Registry->get_DBAdaptor("Multi", "compara"));
-    }
-
+	$self->param('from_comparaDBA', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('from_db')));
     $self->param('from_dbc', $self->param('from_comparaDBA')->dbc);
 }
 
