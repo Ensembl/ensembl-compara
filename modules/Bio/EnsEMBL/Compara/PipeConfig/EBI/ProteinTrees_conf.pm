@@ -72,7 +72,7 @@ sub default_options {
 
     # Points to the previous protein trees production database. Will be used for various GOC operations. 
     # Use "undef" if running the pipeline without reuse.
-    'goc_reuse_db' => 'prev_ptrees',
+    'goc_reuse_db' => 'ptrees_prev',
 
     # species tree reconciliation
     # you can define your own species_tree for 'treebest'. It can contain multifurcations

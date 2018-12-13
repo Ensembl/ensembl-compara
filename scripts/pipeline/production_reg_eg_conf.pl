@@ -92,7 +92,7 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4401,
-    -species => 'prev_ptrees',
+    -species => 'ptrees_prev',
     -dbname => 'carlac_plants_prottrees_41_94_B ',
 );
 
