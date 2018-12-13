@@ -71,7 +71,7 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
 );
 
 
-#------------------------DATABASE LOCATIONS----------------------------------
+#------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
@@ -122,9 +122,9 @@ my $compara_dbs = {
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
-    'amniotes_pecan'    => [ 'mysql-ens-compara-prod-6', 'carlac_amniotes_mercator_pecan_95' ],
-    'pecan_prev'        => [ 'mysql-ens-compara-prod-2', 'mateus_amniotes_mercator_pecan_93' ],
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'carlac_synteny_95' ],
+    'amniotes_pecan'      => [ 'mysql-ens-compara-prod-6', 'carlac_amniotes_mercator_pecan_95' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-2', 'mateus_amniotes_mercator_pecan_93' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-5', 'carlac_synteny_95' ],
 
     # miscellaneous
     'alt_allele_projection' => [ 'mysql-ens-compara-prod-6', 'carlac_alt_allele_import_95' ],
@@ -165,16 +165,6 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -dbname => "ensembl_ancestral_$curr_release",
 );
 
-# ensembl production (maintained by production team):
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-sta-1',
-    -user => 'ensro',
-    -port => 4519,
-    -species => 'ensembl_production',
-    -dbname => "ensembl_production_$curr_release",
-    -group => 'production',
-);
-
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
     -host => 'mysql-ens-sta-1.ebi.ac.uk',
@@ -189,16 +179,6 @@ Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
 
 sub add_compara_dbs {
     my $compara_dbs = shift;
-    my %ports = (
-        'mysql-ens-compara-prod-1' => 4485,
-        'mysql-ens-compara-prod-2' => 4522,
-        'mysql-ens-compara-prod-3' => 4523,
-        'mysql-ens-compara-prod-4' => 4401,
-        'mysql-ens-compara-prod-5' => 4615,
-        'mysql-ens-compara-prod-6' => 4616,
-        'mysql-ens-compara-prod-7' => 4617,
-        'mysql-ens-compara-prod-8' => 4618,
-    );
 
     foreach my $alias_name ( keys %$compara_dbs ) {
         my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
@@ -210,11 +190,18 @@ sub add_compara_dbs {
             -host => $host,
             -user => $user,
             -pass => $pass,
-            -port => $ports{$host},
+            -port => get_port($host),
             -species => $alias_name,
             -dbname  => $db_name,
         );
     }
+}
+
+sub get_port {
+    my $host = shift;
+    my $port = `echo \$($host port)`;
+    chomp $port;
+    return $port;
 }
 
 1;
