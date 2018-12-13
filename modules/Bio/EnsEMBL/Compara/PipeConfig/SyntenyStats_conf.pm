@@ -38,12 +38,23 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
+sub default_options {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::default_options},   # inherit the generic ones
+        'division'     => 'ensembl',
+
+        'compara_db'    => 'compara_curr',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+    };
+}
+
 sub pipeline_wide_parameters {
   my ($self) = @_;
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
-    compara_db => $self->o('division'),
-    registry => $self->o('registry'),
+    'compara_db' => $self->o('compara_db'),
+    'reg_conf'   => $self->o('reg_conf'),
   };
 }
 
