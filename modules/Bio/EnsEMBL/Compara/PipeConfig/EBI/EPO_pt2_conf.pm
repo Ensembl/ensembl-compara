@@ -74,12 +74,13 @@ sub default_options {
     'host' => 'mysql-ens-compara-prod-1.ebi.ac.uk',
     'port' => 4485,
 
-    'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+    'division' => 'ensembl',
+    'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
 
 	# database containing the anchors for mapping
-	'compara_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/carlac_generate_anchors_sauropsids',
-    'reuse_db' => undef,
+	'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',
+    'reuse_db' => $self->o('species_set_name').'_epo_prev',
 
     'exonerate_exe'  => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
     'server_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
@@ -96,8 +97,8 @@ sub default_options {
         'trim_anchor_align_capacity'    => 500,
 
 	 # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
-    'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
+    'master_db' => 'compara_master',
      };
 }
 

@@ -67,15 +67,18 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'species_set_name' => 'fish',
+        # 'species_set_name' => 'fish',
         #'rel_suffix' => 'b',
 
         # Where the pipeline lives
         'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
         'port' => 4522,
 
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
-
+        'division' => 'ensembl',
+        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
+        # Where we get the genomes from
+        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
 
         # Capacities
         'low_capacity'                  => 10,
@@ -85,8 +88,6 @@ sub default_options {
         'trim_anchor_align_capacity'    => 500,
 
         'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
-
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
 
         'bl2seq_exe'        => undef,   # We use blastn instead
         'blastn'            => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
@@ -108,15 +109,13 @@ sub default_options {
 
         'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
-        # Where we get the genomes from
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
-
         # Databases
-        'compara_master' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        'compara_master' => 'compara_master',
         # database containing the anchors for mapping
-        'compara_anchor_db' => 'mysql://ensro@mysql-ens-compara-prod-3.ebi.ac.uk:4523/sf5_TEST_gen_anchors_mammals_cat_100',
+        'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',
         # the previous database to reuse the anchor mappings
-        'reuse_db' => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_mammals_epo_anchor_mapping_93',
+        'reuse_db' => $self->o('species_set_name').'_epo_prev',
+
         # The ancestral_db is created on the same server as the pipeline_db
         'ancestral_db' => { # core ancestral db
             -driver   => $self->o('pipeline_db', '-driver'),
@@ -132,14 +131,15 @@ sub default_options {
 
 sub resource_classes {
     my ($self) = @_;
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default'   => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
-        'mem3500'   => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-        '3.5Gb'     => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-        'mem7500'   => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-        'mem14000'  => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-        '30Gb_job'  => {'LSF' => '-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
+        'default'   => {'LSF' => ['-C0 -M2500  -R"select[mem>2500]  rusage[mem=2500]"',  $reg_requirement] },
+        'mem3500'   => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },
+        '3.5Gb'     => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },
+        'mem7500'   => {'LSF' => ['-C0 -M7500  -R"select[mem>7500]  rusage[mem=7500]"',  $reg_requirement] },
+        'mem14000'  => {'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] },
+        '30Gb_job'  => {'LSF' => ['-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"', $reg_requirement] },
 
     };
 }
