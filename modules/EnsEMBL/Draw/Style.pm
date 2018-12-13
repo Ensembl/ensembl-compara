@@ -243,9 +243,7 @@ sub draw_graph_base {
   ## bottom: bottom of graph in pixel units (usu. approx. pixel height)
   my $top = $track_config->get('initial_offset') || 0;
   ## Reset offset for subsequent tracks
-  unless ($track_config->get('multiwiggle')) {
-    $track_config->set('initial_offset', $top + $row_height + 20);
-  }
+  $track_config->set('initial_offset', $top + $row_height + 20);
   my $line_score = max(0, $min_score);
   my $bottom = $top + $pix_per_score * $range;
   my $line_px = $bottom - ($line_score - $min_score) * $pix_per_score;

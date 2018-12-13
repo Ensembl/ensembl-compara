@@ -96,7 +96,7 @@ if ($release) {
 } else {
   my $archive = $sd->ARCHIVE_VERSION;
   my $date = $hub->pretty_date($archive);
-  $sql = 'INSERT INTO ens_release (release_id, number, date, archive, online, mart) values($release_id, $release_id, $date, $archive, "Y", "Y")';
+  $sql = "INSERT INTO ens_release (release_id, number, date, archive, online, mart) values($release_id, $release_id, \"$date\", \"$archive\", \"Y\", \"Y\")";
   print "# For inserting release $release_id, scheduled for $date.\n\n";
   print "$sql\n\n" unless $DEBUG;
 }

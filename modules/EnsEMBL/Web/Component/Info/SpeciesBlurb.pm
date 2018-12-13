@@ -62,6 +62,8 @@ sub content {
 <div class="column-wrapper">  
   <div class="column-two">
     <div class="column-padding no-left-margin">';
+  ### SPECIES DESCRIPTION
+  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_description.html");
 ### ASSEMBLY
   $html .= '<h2 id="assembly">Assembly</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html");

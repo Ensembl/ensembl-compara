@@ -206,7 +206,7 @@ DynaTreeNode.prototype = {
       res += cache.tagConnector;
     }
     // Checkbox mode
-    if( opts.checkbox && data.hideCheckbox !== true && !data.isStatusNode ) {
+    if( opts.checkbox && data.hideCheckbox !== 1 && !data.isStatusNode ) {
       res += cache.tagCheckbox;
     }
     // folder or doctype icon

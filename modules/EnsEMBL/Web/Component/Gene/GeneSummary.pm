@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Gene::GeneSummary;
 use strict;
 
 use EnsEMBL::Web::Document::Image::R2R;
+use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -52,6 +53,25 @@ sub content {
       ? sprintf('<p><a href="%s" class="constant">%s</a> (%s)</p>', $link_url, $display_xref->display_id, $display_xref->db_display_name)
       : sprintf('<p>%s (%s)</p>', $display_xref->display_id, $display_xref->db_display_name)
     );
+  }
+
+  ## Start assembling bioschema information
+  my $bs_gene;
+  if ($species_defs->BIOSCHEMAS_DATACATALOG) {
+    $bs_gene = {'@type' => 'Gene', 'identifier' => $object->gene->stable_id};
+    $bs_gene->{'name'} = $display_xref ? $display_xref->display_id : $gene->stable_id;
+    my $description = $object->gene_description;
+    $description = '' if $description eq 'No description';
+    if ($description) {
+      $bs_gene->{'description'} = $description;
+    }
+    my $chr = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]}) ? 'Chromosome ' : '';
+    $chr .= $object->seq_region_name;
+    $bs_gene->{'isPartOfBioChemEntity'} = {
+                                            '@type' => 'BioChemEntity',
+                                            'name'  => $chr,
+                                          };
+    add_species_bioschema($species_defs, $bs_gene);
   }
 
   # add CCDS info
@@ -249,7 +269,18 @@ sub content {
     }
   }
 
-  return $table->render;
+  my $bioschema = '';
+  if (keys %$bs_gene) {
+    my $sitename = $hub->species_defs->ENSEMBL_SITETYPE;
+    my $bs_record = {
+                      '@type'       => 'DataRecord', 
+                      'identifier'  => $object->stable_id, 
+                      'mainEntity'  => $bs_gene,
+                      'isPartOf'    => sprintf('%s %s Gene Set', $sitename, $hub->species_defs->SPECIES_COMMON_NAME),
+                    };
+    $bioschema = create_bioschema($bs_record);
+  }
+  return $table->render.$bioschema;
 }
 
 sub get_synonyms {

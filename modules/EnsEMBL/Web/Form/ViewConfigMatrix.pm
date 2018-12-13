@@ -276,7 +276,7 @@ sub build {
     (my $x_class    = lc $x) =~ s/[^\w-]/_/g;
     my $display     = $_->{'display'};
     my $name        = $_->{'name'};
-    my $label       = $_->{'label'};
+    my $label       = $_->{'label'} || $x;
     my $i           = 0;
     my $classes     = join ' ', grep { ++$i % 2 } @{$_->{'renderers'}};
     my $popup_menu  = $renderer_template[0];

@@ -74,6 +74,7 @@ sub get_data {
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
                     'zmenu_extras'    => $self->{'my_config'}->get('zmenu_extras'), 
+                    'custom_fields'   => $self->{'my_config'}->get('custom_fields'), 
                     };
 
     ## Also set a default gradient in case we need it
@@ -117,7 +118,8 @@ sub get_data {
       $total += scalar @{$_->{'features'}||[]};
     }
 
-    if ($total > 500) {
+    my $limit = $self->{'my_config'}->get('bigbed_limit') || 500;
+    if ($total > $limit) {
       $self->{'data'} = [];
       $self->{'no_empty_track_message'}  = 1;
       return $self->errorTrack('This track has too many features to show at this scale. Please zoom in.');

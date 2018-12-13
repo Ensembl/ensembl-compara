@@ -949,6 +949,7 @@ sub add_regulation_features {
   return unless $menu;
 
   my $reg_regions       = $menu->append_child($self->create_menu_node('functional_other_regulatory_regions', 'Other regulatory regions'));
+
   my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
   my ($keys_2, $data_2) = $self->_merge($hashref->{'alignment'});
   my %fg_data           = (%$data_1, %$data_2);
@@ -1032,6 +1033,21 @@ sub add_regulation_features {
   }
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
+
+  ## Add motif features
+  my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+      db          => $key,
+      glyphset    => 'fg_motif_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 1,
+      colourset   => 'fg_motif_features',
+      display     => 'off',
+      description => 'Transcription Factor Binding Motif sites', 
+      renderers   => ['off', 'Off', 'compact', 'Compact'],
+  });
+  $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
 }
 
 sub add_regulation_builds {
@@ -1169,7 +1185,11 @@ sub add_regulation_builds {
 
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
-  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } keys %$segs) {
+
+  # Skip the rows property as it throws an exception
+  my @seg_keys = grep { $_ ne 'rows' } keys %$segs;
+
+  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } @seg_keys) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
     my $epi_desc = $segs->{$key}{'epi_desc'} ? " ($segs->{$key}{'epi_desc'})" : "";

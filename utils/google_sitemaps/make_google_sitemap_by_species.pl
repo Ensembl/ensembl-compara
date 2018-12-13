@@ -20,7 +20,7 @@
 # can also specify which species you want to create maps for. e.g.
 #
 #   $ make_google_sitemap_by_species.pl
-#   $ make_google_sitemap_by_species.pl Aspergillus_clavatus Aspergillus_flavus
+#   $ make_google_sitemap_by_species.pl aspergillus_clavatus aspergillus_flavus
 #
 # The sitemap files will be created in the 'sitemaps' folder. For each species, the 
 # maps are split into numbered files, each containing 20,000 urls. e.g.
@@ -152,7 +152,8 @@ sub get_dataset_urls {
     print "Cannot fetch genes and transcripts - no analysis_ids\n";
     return @urls;
   }
-  foreach my $type (qw/gene transcript/) {  
+  #foreach my $type (qw/gene transcript/) {  
+  foreach my $type (qw/gene/) {  
     my $query = 
       "SELECT g.stable_id, g.${type}_id, cs.species_id 
        FROM ${type} g, seq_region sr, coord_system cs

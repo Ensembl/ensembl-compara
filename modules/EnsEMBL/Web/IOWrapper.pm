@@ -450,7 +450,8 @@ sub href {
                                     'fake_click_end'    => $params->{'end'},
                                     'fake_click_strand' => $params->{'strand'},
                                     'feature_id'        => $params->{'id'},              
-                                    %{$params->{'zmenu_extras'}||{}}
+                                    %{$params->{'zmenu_extras'}||{}},
+                                    %{$params->{'custom_fields'}||{}},
                                   });
 }
 

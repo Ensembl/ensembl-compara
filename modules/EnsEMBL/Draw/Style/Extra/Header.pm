@@ -136,7 +136,7 @@ sub _sublegend_zmenu_text {
   my ($self,$args) = @_;
 
   my @out;
-  foreach my $label (keys %{$args->{'colour_legend'}||{}}) {
+  foreach my $label (sort keys %{$args->{'colour_legend'}||{}}) {
     push @out, sprintf '<span style="width:24px;height:12px;background-color:#%s;margin-right:8px;display:inline-block"></span>%s', $args->{'colour_legend'}{$label}, $label;;
   }
   if ($args->{'show_peaks'}) {

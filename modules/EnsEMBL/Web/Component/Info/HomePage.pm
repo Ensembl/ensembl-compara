@@ -22,6 +22,7 @@ package EnsEMBL::Web::Component::Info::HomePage;
 use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
+use EnsEMBL::Web::Utils::Bioschemas qw(create_bioschema add_species_bioschema);
 
 use parent qw(EnsEMBL::Web::Component::Info);
 
@@ -50,21 +51,148 @@ sub content {
   $self->{'icon'}  = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
 
   $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
-  
+
+  ## BIOSCHEMAS MARKUP
+  my $datasets = [];
+
+  ## Don't mark up archives, etc - it will only confuse search engine users
+  ## if there are e.g. multiple human gene sets in the results!
+  my $catalog_id = $species_defs->BIOSCHEMAS_DATACATALOG; 
+  if ($catalog_id) { 
+    my $sitename = $species_defs->ENSEMBL_SITETYPE;
+    my $server = $species_defs->ENSEMBL_SERVERNAME;
+    $server = 'http://'.$server unless ($server =~ /^http/);
+
+    ## Assembly
+    my $annotation_url = sprintf '%s/%s/Info/Annotation', $server, $hub->species;
+    my $ftp_url = sprintf '%s/fasta/%s/dna/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME;
+    my $assembly = {
+      '@type'                 => 'Dataset',
+      'name'                  => sprintf('%s Assembly', $common_name),
+      'includedInDataCatalog' => $catalog_id, 
+      'version'               => $species_defs->ASSEMBLY_NAME,
+      'identifier'            => $species_defs->ASSEMBLY_ACCESSION,
+      'description'           => "Current Ensembl genome assembly for ".$species_defs->DISPLAY_NAME,
+      'keywords'              => 'dna, sequence',
+      'url'                   => $annotation_url,
+      'distribution'          => [{
+                                  '@type'       => 'DataDownload',
+                                  'name'        => sprintf('%s %s FASTA files', $sci_name, $species_defs->ASSEMBLY_VERSION), 
+                                  'description' => sprintf('Downloads of %s sequence in FASTA format', $species_defs->SPECIES_COMMON_NAME),
+                                  'fileFormat'  => 'fasta',
+                                  'contentURL'  => $ftp_url,
+      }],
+      'license'               => 'Apache 2.0',
+    };
+    add_species_bioschema($species_defs, $assembly);
+    push @$datasets, $assembly; 
+
+    ## Genebuild
+    my $gtf_url   = sprintf '%s/gtf/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME; 
+    my $gff3_url  = sprintf '%s/gff3/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME; 
+    my $genebuild = {
+      '@type'                 => 'Dataset',
+      'name'                  => sprintf('%s %s Gene Set', $sitename, $common_name),
+      'includedInDataCatalog' => $catalog_id, 
+      'version'               => $species_defs->GENEBUILD_LATEST || $species_defs->GENEBUILD_RELEASE || '',
+      'description'           => sprintf('Automated and manual annotation of genes on the %s %s assembly', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_VERSION),
+      'keywords'              => 'genebuild, transcripts, transcription, alignment, loci',
+      'url'                   => $annotation_url,
+      'distribution'          => [
+                                  {
+                                  '@type'       => 'DataDownload',
+                                  'name'        => sprintf ('%s %s Gene Set - GTF files', $sci_name, $species_defs->ASSEMBLY_VERSION), 
+                                  'description' => sprintf('Downloads of %s gene annotation in GTF format', $species_defs->SPECIES_COMMON_NAME),
+                                  'fileFormat'  => 'gtf',
+                                  'contentURL'  => $gtf_url,
+                                  },
+                                  {
+                                  '@type'       => 'DataDownload',
+                                  'name'        => sprintf ('%s %s Gene Set - GFF3 files', $sci_name, $species_defs->ASSEMBLY_VERSION), 
+                                  'description' => sprintf('Downloads of %s gene annotation in GFF3 format', $species_defs->SPECIES_COMMON_NAME),
+                                  'fileFormat'  => 'gff3',
+                                  'contentURL'  => $gff3_url,
+                                  },
+      ],
+      'license'               => 'Apache 2.0',
+    };
+    
+    if ($species_defs->PROVIDER_NAME) {
+      $genebuild->{'creator'} = {
+        '@type' => 'Organization',
+        'name'  => $species_defs->PROVIDER_NAME,
+      };
+    }
+    add_species_bioschema($species_defs, $genebuild);
+    push @$datasets, $genebuild; 
+
+    ## Variation bioschema
+    if ($hub->database('variation')) {
+      my $gvf_url   = sprintf '%s/variation/gvf/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME; 
+      my $variation = {
+        '@type'                 => 'Dataset',
+        'name'                  => sprintf('%s %s Variation Data', $sitename, $common_name),
+        'includedInDataCatalog' => $catalog_id, 
+        'url'                   => sprintf('%s/info/genome/variation/species/species_data_types.html#sources', $server),
+        'description'           => sprintf('Annotation of %s sequence variants from a variety of sources', $common_name),
+        'keywords'              => 'SNP, polymorphism, insertion, deletion, CNV, copy number variant',
+        'distribution'          => [{
+                                    '@type'       => 'DataDownload',
+                                    'name'        => sprintf ('%s %s Variants - GVF files', $sci_name, $species_defs->ASSEMBLY_VERSION), 
+                                    'description' => sprintf('Downloads of %s variation annotation in GVF format', $species_defs->SPECIES_COMMON_NAME),
+                                    'fileFormat'  => 'gvf',
+                                    'contentURL'  => $gvf_url,
+        }],
+        'license'               => 'Apache 2.0',
+      };
+      add_species_bioschema($species_defs, $variation);
+      push @$datasets, $variation; 
+    }
+
+    ## Regulation bioschema
+    my $sample_data  = $species_defs->SAMPLE_DATA;
+    if ($sample_data->{'REGULATION_PARAM'}) {
+      my $reg_url   = sprintf '%s/regulation/%s/', $self->ftp_url, $species_defs->SPECIES_PRODUCTION_NAME; 
+      my $regulation = {
+        '@type'                 => 'Dataset',
+        'name'                  => sprintf('%s %s Regulatory Build', $sitename, $common_name),
+        'includedInDataCatalog' => $catalog_id, 
+        'url'                   => sprintf('%s/info/genome/funcgen/accessing_regulation.html', $server),
+        'description'           => sprintf('Annotation of regulatory regions on the %s genome', $common_name),
+        'keywords'              => 'expression, epigenomics, enhancer, promoter',
+        'distribution'          => [{
+                                    '@type'       => 'DataDownload',
+                                    'name'        => sprintf ('%s %s Regulatory Features', $sci_name, $species_defs->ASSEMBLY_VERSION), 
+                                    'description' => sprintf('Downloads of %s regulation annotation in GFF format', $species_defs->SPECIES_COMMON_NAME),
+                                    'fileFormat'  => 'gff',
+                                    'contentURL'  => $reg_url,
+        }],
+        'license'               => 'Apache 2.0',
+        'creator'               => {
+                                    '@type' => 'Organization',
+                                    'name'  => 'Ensembl', 
+        },
+      };
+      add_species_bioschema($species_defs, $regulation);
+      push @$datasets, $regulation; 
+    }
+  }
+
   return sprintf('
     <div class="round-box tinted-box unbordered"><h2>Search %s</h2>%s</div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-left"><div class="round-box tinted-box unbordered">%s</div></div>
     <div class="box-right"><div class="round-box tinted-box unbordered">%s</div></div>
-    %s',
+    %s%s',
     $common_name eq $sci_name ? "<i>$sci_name</i>" : sprintf('%s (<i>%s</i>)', $common_name, $sci_name),
     EnsEMBL::Web::Document::HTML::HomeSearch->new($hub)->render,
     $self->assembly_text,
     $self->genebuild_text,
     $self->compara_text,
     $self->variation_text,
-    $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : ''
+    $hub->database('funcgen') ? '<div class="box-left"><div class="round-box tinted-box unbordered">' . $self->funcgen_text . '</div></div>' : '',
+    scalar(@$datasets) ? create_bioschema($datasets) : ''
   );
 }
 

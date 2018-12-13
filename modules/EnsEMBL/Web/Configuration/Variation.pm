@@ -58,7 +58,7 @@ sub populate_tree {
   
   $context_menu->append($self->create_node('Mappings', 'Genes and regulation',
     [qw( mappings EnsEMBL::Web::Component::Variation::Mappings )],
-    { 'availability' => 'variation', 'concise' => 'Genes and regulation' }
+    { 'availability' => 'variation has_features', 'concise' => 'Genes and regulation' }
   ));
   $context_menu->append($self->create_node('Sequence', 'Flanking sequence',
     [qw( flanking EnsEMBL::Web::Component::Variation::FlankingSequence )],
@@ -122,6 +122,11 @@ sub populate_tree {
       ldplot  EnsEMBL::Web::Component::Variation::LDPlot
     )],
     { 'availability' => 'variation has_ldpops has_samples not_somatic', 'no_menu_entry' => 1 }
+  );
+
+  $self->create_node('PDB', '3D Protein model',
+    [qw( alignment EnsEMBL::Web::Component::Variation::PDB )],
+    { 'availability' => 'variation is_coding','concise' => '3D Protein model (PDBe)'}
   );
 
   $self->create_subnode(

@@ -24,7 +24,6 @@ package EnsEMBL::Draw::GlyphSet::flat_file;
 
 use strict;
 
-use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
 
@@ -71,7 +70,7 @@ sub get_data {
     $self->{'my_config'}->set('height', 12);
     $self->{'my_config'}->set('show_overlay', 1);
     ## Also create adaptor, so we can look up consequence in db
-    $adaptor = Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor->new_fake($hub->species);
+    $adaptor = $self->{'config'}->hub->database('variation') ? $self->{'config'}->hub->database('variation')->get_VariationFeatureAdaptor : undef; 
   }
 
   ## Get settings from user interface

@@ -31,7 +31,7 @@ use List::MoreUtils qw(uniq first_index);
 
 use EnsEMBL::Web::Utils::FormatText qw(helptip glossary_helptip get_glossary_entry);
 
-use base qw(EnsEMBL::Web::Component);
+use parent qw(EnsEMBL::Web::Component);
 
 sub coltab {
   my ($self, $text, $colour, $title) = @_;
@@ -726,7 +726,7 @@ sub species_stats {
     my @prov_names = ref $prov_name eq 'ARRAY' ? @$prov_name : ($prov_name);
     my @providers;
     foreach my $pv (@prov_names) {
-      $prov_name =~ s/_/ /;
+      $prov_name =~ s/_/ /g;
       my $prov_url  = $sd->PROVIDER_URL;
       $prov_url = 'http://'.$prov_url unless $prov_url =~ /^http/;
       my $provider = $prov_url && $pv ne 'Ensembl' ? sprintf('<a href="%s">%s</a>', $prov_url, $pv) : $pv;
@@ -904,7 +904,7 @@ sub check_for_missing_species {
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown. Use "<strong>Configure this page -&gt; 12-way EPO alignment</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+                             '<p>The following %d species in the alignment are not shown. Use "<strong>Select alignment</strong>" button above to turn alignments on/off.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
                              join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
                             );
@@ -1457,23 +1457,7 @@ sub classify_sift_polyphen {
 
   return [undef,'-','','-'] unless defined($pred) || defined($score);
 
-  my %classes = (
-    '-'                 => '',
-    'probably damaging' => 'bad',
-    'possibly damaging' => 'ok',
-    'benign'            => 'good',
-    'unknown'           => 'neutral',
-    'tolerated'         => 'good',
-    'deleterious'       => 'bad',
-
-    # slightly different format for SIFT low confidence states
-    # depending on whether they come direct from the API
-    # or via the VEP's no-whitespace processing
-    'tolerated - low confidence'   => 'neutral',
-    'deleterious - low confidence' => 'neutral',
-    'tolerated low confidence'     => 'neutral',
-    'deleterious low confidence'   => 'neutral',
-  );
+  my %classes = %{$self->predictions_classes};
 
   my %ranks = (
     '-'                 => 0,
@@ -1509,18 +1493,7 @@ sub classify_score_prediction {
   
   return [undef,'-','','-'] unless defined($pred) || defined($score);
   
-  my %classes = (
-    '-'                 => '',
-    'likely deleterious' => 'bad',
-    'likely benign' => 'good',
-    'likely disease causing' => 'bad',
-    'tolerated' => 'good',
-    'damaging'   => 'bad',
-    'high'    => 'bad',
-    'medium'  => 'ok',
-    'low'     => 'good',
-    'neutral' => 'neutral',
-  );
+  my %classes = %{$self->predictions_classes};
   
   my %ranks = (
     '-'                 => 0,
@@ -1547,6 +1520,41 @@ sub classify_score_prediction {
   }
   return [$rank,$pred,$rank_str];
 }
+
+# Common list of variant protein prediction results with their corresponding CSS classes
+sub predictions_classes {
+  my $self = shift;
+
+  my %classes = (
+    '-'                 => '',
+    'probably damaging' => 'bad',
+    'possibly damaging' => 'ok',
+    'benign'            => 'good',
+    'unknown'           => 'neutral',
+    'tolerated'         => 'good',
+    'deleterious'       => 'bad',
+
+    'likely deleterious'     => 'bad',
+    'likely benign'          => 'good',
+    'likely disease causing' => 'bad',
+    'damaging'               => 'bad',
+    'high'                   => 'bad',
+    'medium'                 => 'ok',
+    'low'                    => 'good',
+    'neutral'                => 'neutral',
+
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
+  );
+
+  return \%classes;
+}
+
 
 sub render_consequence_type {
   my $self        = shift;

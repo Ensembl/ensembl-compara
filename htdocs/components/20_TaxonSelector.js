@@ -8,7 +8,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
     this.imagePath      = Ensembl.speciesImagePath;
     this.lastSelected   = null;
     this.activeTreeKey  = '';
-    this.selectionLimit = params.selectionLimit || 25;
+    this.selectionLimit = params.selectionLimit;
     this.defaultKeys    = new Array();
     this.multiHash      = {};
 
@@ -93,7 +93,7 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
       panel.disableButton(true);
       return false;
     }
-    if (curr_count > panel.selectionLimit) {
+    if (panel.selectionLimit && curr_count > panel.selectionLimit) {
       panel.elLk.msg.html('Selection limit of ' + panel.selectionLimit + ' species exeeded!')
                     .show();
       panel.elLk.count.addClass('warn');
@@ -575,7 +575,9 @@ Ensembl.Panel.TaxonSelector = Ensembl.Panel.extend({
           getAllLeaves(node.childList[child]);
         }
       } else {
-        results[results.length] = node;
+        if (node.data.unselectable !== 1) {
+          results[results.length] = node;
+        }
       }
       return results;
     }

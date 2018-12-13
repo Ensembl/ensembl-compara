@@ -754,17 +754,29 @@ sub dumpVariation {
 
   ## get synonym info
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
-  my $synonyms;
+  my $synonyms = on_disk_set('synonyms');
   $sth = $conf->{'variation_dbh'}->prepare(qq(
-      SELECT v.variation_id,
-GROUP_CONCAT(vs.source_id,' ',vs.name)
+      SELECT v.variation_id, vs.name
        FROM variation v, variation_synonym vs
-      WHERE v.variation_id = vs.variation_id
-   GROUP BY v.variation_id));
+      WHERE v.variation_id = vs.variation_id));
   $sth->execute;
-  while ( my ($variation_id,$syns) = $sth->fetchrow_array ) {
-    $synonyms->{$variation_id} = $syns;
+  while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
+    set_add($synonyms,$variation_id,$syn_name);
   }
+  print LOG "      Got all general synonyms ".&date_and_mem()."\n";
+
+  ## get CLINGEN alleles
+  print LOG "    Preparing to get CLINGEN alleles ".&date_and_mem()."\n";
+  my $clinvar_alleles = on_disk_set('clinvar_alleles');
+  ## get CLINVAR allele_synonyms
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+      SELECT variation_id, name
+       FROM allele_synonym));
+  $sth->execute;
+  while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
+    set_add($clinvar_alleles,$variation_id,$syn_name);
+  }
+  print LOG "      Got all CLINGEN alleles ".&date_and_mem()."\n";
 
   ## get failed mappings
   print LOG "    Preparing to get details of failed mappings ".&date_and_mem()."\n";
@@ -780,7 +792,6 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
   }
 
   # Process all variations in batches, both mapped, failed and the precious non-mapped, non-failed
-
   my $batch_size = 50_000_000;
   my $offset = 0;
 
@@ -802,20 +813,27 @@ GROUP_CONCAT(vs.source_id,' ',vs.name)
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
       my $source_id          = $row->[2];
-      my $synonym_list       = $synonyms->{$variation_id};
       my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
-      my %synonyms;
       my $syn_c = 0;
-      foreach my $syn (split /,/, $synonym_list) {
-        my ($source_id,$sname) = split / /,$syn;
-        $synonyms{$sname} = $sources->{$source_id};
-        $syn_c++;
-      }
       my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
-      foreach my $syn (keys %synonyms) {
-        push @syns, $syn;
+      if ($synonyms) {
+        if ($synonyms->{$variation_id}) {
+          foreach my $synonym_name (set_get($synonyms,$variation_id)) {
+            push @syns, $synonym_name;
+            $syn_c++; 
+          }
+        }
       }
+      if ($clinvar_alleles) {
+        if ($clinvar_alleles->{$variation_id}) {
+          foreach my $clinvar_name (set_get($clinvar_alleles,$variation_id)) {
+            push @syns, $clinvar_name;
+            $syn_c++; 
+          }
+        } 
+      }
+
       my $somatic_mutation = $somatic_var;
       my $type             = $somatic_mutation ? 'Somatic Mutation' : 'Variant';
       my $snp_source       = $sources->{ $source_id };
@@ -2186,7 +2204,6 @@ sub dumpGene {
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   my $RNASEQDB = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
-  $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the gene pages are usefull!
   my $total_c;
 
@@ -2360,8 +2377,6 @@ sub dumpGene {
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
-      next if ($ln =~ /ccds_import/); #exclude CCDS transcripts
-      next if ($ln =~ /refseq_.*import/); #exclude RefSeq transcripts
       if( $old->{'gid'} != $gid ) {
         if( $old->{'gid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};
@@ -2538,7 +2553,6 @@ sub dumpTranscript {
   my $ESTGENEDB = $conf->{'dbs'}->{'DATABASE_OTHERFEATURES'};
   my $RNASEQDB  = $conf->{'dbs'}->{'DATABASE_RNASEQ'};
   my %dbs = ( 'core' => $COREDB );
-  $dbs{'otherfeatures'} = $ESTGENEDB if $ESTGENEDB;
 #  $dbs{'rnaseq'} = $RNASEQDB if $RNASEQDB; #don't add these until the IDs mean something and the transcript pages are usefull
   my $total_c;
 
@@ -2736,8 +2750,6 @@ sub dumpTranscript {
       my $wd = eval($webdata);
       next if $wd->{'gene'}{'do_not_display'};
       next if ($ln =~ /rnaseq/);
-      next if ($ln =~ /ccds_import/); #exclude CCDS transcripts
-      next if ($ln =~ /refseq_.*import/); #exclude RefSeq transcripts
       if( $old->{'tid'} != $tid ) {
         if( $old->{'tid'} ) {
           my $type = $old->{'biotype'}.' '.$old->{'ad_dl'};

@@ -75,7 +75,7 @@ sub create_hash {
     $feature->{'start'} = $feature_start;
     $feature->{'end'}   = $feature_end;
     my @uploaded  = split(/_/, $self->parser->get_uploaded_variation);
-    (my $cons_text = $cons) =~ s/_/ /; 
+    (my $cons_text = $cons) =~ s/_/ /g; 
     $feature->{'extra'} = [
                             {'name' => 'Alleles',         'value' => $uploaded[-1]},
                             {'name' => 'Variant allele',  'value' => $allele},
@@ -84,7 +84,7 @@ sub create_hash {
     ## Additional arbitrary fields (depend on plugins)
     my %extras = %{$self->parser->get_extra};
     foreach my $key (sort keys %extras) {
-      (my $name = $key) =~ s/_/ /;
+      (my $name = $key) =~ s/_/ /g;
       push @{$feature->{'extra'}}, {'name' => $name, 'value' => $extras{$key}};
     }
   } 

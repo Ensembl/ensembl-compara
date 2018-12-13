@@ -117,16 +117,28 @@ sub create_hash {
   ## Constrain click coords by viewport, so we don't fetch unnecessary data in zmenu
   my $click_start = $start_coord < $slice_start ? $slice_start : $start_coord;
   my $click_end   = $end_coord > $slice->end ? $slice->end : $end_coord;
-  my $href = $self->href({
-      'action'        => $metadata->{'action'},
-      'id'            => $id,
-      'url'           => $metadata->{'url'},
-      'seq_region'    => $seqname,
-      'start'         => $click_start,
-      'end'           => $click_end,
-      'strand'        => $drawn_strand,
-      'zmenu_extras'  => $metadata->{'zmenu_extras'},
-    }) unless $metadata->{'omit_feature_links'};
+  my $href;
+  unless ($metadata->{'omit_feature_links'}) {
+    my $custom_fields = {};
+    if ($metadata->{'custom_fields'}) {
+      foreach (@{$metadata->{'custom_fields'}}) {
+        my $method  = 'get_'.$_;
+        my $value   = $self->parser->$method;
+        $custom_fields->{$_} = $value if defined($value);
+      }
+    }
+    $href = $self->href({
+                          'action'        => $metadata->{'action'},
+                          'id'            => $id,
+                          'url'           => $metadata->{'url'},
+                          'seq_region'    => $seqname,
+                          'start'         => $click_start,
+                          'end'           => $click_end,
+                          'strand'        => $drawn_strand,
+                          'zmenu_extras'  => $metadata->{'zmenu_extras'},
+                          'custom_fields' => $custom_fields,
+                          });
+  }
 
   ## Don't set start and end yet, as drawing code and zmenu want
   ## different values

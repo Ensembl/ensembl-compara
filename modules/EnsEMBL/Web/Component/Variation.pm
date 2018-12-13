@@ -72,7 +72,7 @@ sub pop_url {
     $pop_url = $hub->get_ExtURL('EXAC_POP');
   }
   elsif ($pop_name =~ /PRJEB/i) {
-    $pop_url = $hub->get_ExtURL('EVA_STUDY');
+    $pop_url = $hub->get_ExtURL('EVA_STUDY').$pop_name;
   }
   else {
     $pop_url = ($pop_dbSNP && $pop_dbSNP->[0] ne '' && $hub->species eq 'Homo_sapiens') ? $hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef;

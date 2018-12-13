@@ -227,8 +227,7 @@ sub format_table {
     ## Get URL
     my $url = $self->pop_url($name, $freq_data->{$pop_id}{'pop_info'}{'PopLink'});
     if ($url) {
-      $pop_urls{$pop_id}  = $url;
-      $pop_urls{$pop_id} .= $name if ($url eq $hub->get_ExtURL('EVA_STUDY'));
+      $pop_urls{$pop_id} = $url;
       $urls_seen{$url}++;
     }
 
@@ -610,10 +609,12 @@ sub frequency_bar {
 
   my @alleles = @{$data->{'Alleles'}};
   my $added_width = 0;
+  my %alleles_seen;
 
   for my $i(sort { ($alleles[$a] !~ /$ref_allele/ cmp $alleles[$b] !~ /$ref_allele/) || $alleles[$a] cmp $alleles[$b] } 0..$#alleles) {
     my $allele = $alleles[$i];
-
+    next if ($alleles_seen{$allele});
+    $alleles_seen{$allele} = 1;
     my $width = sprintf('%.0f', $data->{'AlleleFrequency'}->[$i] * $bar_width);
     $added_width += $width;
 

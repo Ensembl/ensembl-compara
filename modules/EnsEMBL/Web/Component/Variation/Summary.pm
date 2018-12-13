@@ -64,7 +64,7 @@ sub content {
     $self->sets,
     $self->variation_source,
     @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : (),
-    ($hub->species eq 'Homo_sapiens' && $hub->snpedia_status) ? $var_id && $self->snpedia($var_id) : ()
+    $hub->snpedia_status ? $var_id && $self->snpedia($var_id) : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
@@ -353,6 +353,15 @@ sub synonyms {
         }
         next unless @urls;
       }
+    }
+    elsif ($db =~ /omim/i) {
+      my %url_ids;
+      foreach my $id (@ids) {
+        my $url_id = $id;
+           $url_id =~ s/\./#/;
+        $url_ids{$id} = $url_id;
+      }
+      @urls = map { s/%23/#/; $_ } map $hub->get_ExtURL_link($_, 'OMIM', $url_ids{$_}), @ids;
     }
     elsif ($db =~ /clinvar/i) {
       @urls = map $hub->get_ExtURL_link($_, 'CLINVAR', $_), @ids;

@@ -416,12 +416,12 @@ sub get_alignments {
   my $species = $args->{species};
   my @selected_species;
 
-  foreach (grep { /species_$align/ } $hub->param) {
-    if ($hub->param($_) eq 'yes') {
-      /species_${align}_(.+)/;
-      push @selected_species, $1 unless $1 =~ /^$species$/i;
-    }
+  my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
+  while (my($k,$v) = each (%$alignments_session_data)) {
+    next unless ($k =~ /species_${align}_(.+)/ && $v eq 'yes');
+    push @selected_species, $1 unless $1 =~ /^$species$/i;
   }
+
   unshift @selected_species, lc $species unless $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} =~ /pairwise/;
 
   $align_slice = $align_slice->sub_AlignSlice($args->{start}, $args->{end}) if $args->{start} && $args->{end};

@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 94;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Oct2018';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'October 2018'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 95;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Jan2019';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'January 2019'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -263,7 +263,7 @@ our $ENSEMBL_MEMCACHED  = {}; # Keys 'server' [list of server:port], 'debug' [0|
 our $FLANK5_PERC                        = 0.02; # % 5' flanking region for images (used for region comparison and location view)
 our $FLANK3_PERC                        = 0.02; # % 3' flanking region for images (used for region comparison and location view)
 our $ENSEMBL_ALIGNMENTS_HIERARCHY       = ['LASTZ', 'CACTUS_HAL_PW', 'TBLAT', 'LPATCH'];  # Hierarchy of alignment methods
-our $ALIGNMENTS_SPECIES_SELECTION_LIMIT = 70;
+# our $ALIGNMENTS_SPECIES_SELECTION_LIMIT = 70;  Remove limit and see if we get lot of Ajax errors in region comparison page
 ###############################################################################
 
 

@@ -36,7 +36,6 @@ sub content {
   my $self = shift;
   my $hub  = $self->hub;
   my $this_species = $hub->species;
-  (my $sp = $this_species) =~ s/_/ /;
   my $alleles = $self->object->get_alt_alleles;
 
   my $html;
@@ -62,9 +61,9 @@ sub content {
       $all_alleles->{'g'.$c} = $allele_id;
       $all_alleles->{'s'.$c} = $this_species.'--'.$seq_region_name;
       my $loc_link = $hub->url({
-	'type'   => 'Location',
-	'action' => 'View',
-	'r'      => $allele->seq_region_name.':'.$allele->seq_region_start.'-'.$allele->seq_region_end
+	                              'type'   => 'Location',
+	                              'action' => 'View',
+	                              'r'      => $allele->seq_region_name.':'.$allele->seq_region_start.'-'.$allele->seq_region_end
       });
       my $loc_html = sprintf( qq(<a href="%s">%s: %s-%s</a>),
 				   $loc_link,
@@ -93,18 +92,14 @@ sub content {
           config => 'opt_join_genes_bottom=on',
 	}),
       );
-      my $vega_id_col = sprintf( qq(%s<br /><span class="small">%s</span>),
-				 $gene_summary_link,
-				 $mcv_link,
-			       );
 
       $table->add_row({
         chromosome => $allele->seq_region_name,
         id         => $gene_summary_link,
         compare    => $mcv_link,
-	location   => $loc_html,
+	      location   => $loc_html,
         exref      => $display_label . "<br><span class=\"small\">".$description."</span>",
-	strand     => $strand
+	      strand     => $strand
       });
 
     }

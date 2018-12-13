@@ -80,67 +80,20 @@ sub content {
 
   my $epigenome;
   if ($cell_line) {
-    $epigenome = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_name($cell_line);
+    $epigenome = $hub->database('funcgen')->get_EpigenomeAdaptor->fetch_by_display_label($cell_line);
     
     if ($epigenome) {
       $self->add_entry({
         type => 'Status',
         label => $object->activity($epigenome),
       });
-
-      #$self->add_entry({
-      #  type  => 'Attributes',
-      #  label => $object->get_evidence_list($epigenome),
-      #});
     }
   }
   
   $self->_add_nav_entries;
   
-  my %motif_features = %{$object->get_motif_features($epigenome)};
+  $self->_add_motif_feature_table($self->get_motif_features_by_epigenome($reg_feature, $epigenome));
 
-  if (scalar keys %motif_features > 0) {
-    $self->add_subheader('Motif Information');
-
-    # get region clicked on
-    my $click_start = $hub->param('click_start');
-    my $click_end   = $hub->param('click_end');
-    my ($start, $end, @feat);
-    
-    foreach my $motif (keys %motif_features) {
-      ($start, $end) = split /:/, $motif;
-      push @feat, $motif unless $start > $click_end || $end < $click_start;
-    }
-    
-    my $pwm_table = '
-        <table cellpadding="0" cellspacing="0">
-          <tr>
-            <th style="width:20%">Motif feature</th>
-            <th style="width:30%">Transcription factors</th>
-            <th style="width:30%">Binding matrix</th>
-            <th style="width:20%">Score</th>
-          </tr>
-    ';
-    
-    foreach my $motif (sort keys %motif_features) {
-      my ($stable_id, $tfactors, $binding_matrix, $score) = @{$motif_features{$motif}};
-
-      my $style   = (first { $_ eq $motif } @feat) ? ' style="background:#BBCCFF"' : '';
-      #my $bm_widget = $self->hub->url(); 
-      #<td><a href="$bm_widget">$binding_matrix</a></td>
-      my $nice_score = sprintf('%.4f', $score);
-      $pwm_table .= qq(<tr $style>
-                        <td>$stable_id</td>
-                        <td>$tfactors</td>
-                        <td>$binding_matrix</td>
-                        <td>$nice_score</td>
-                      </tr>);
-    }
-    
-    $pwm_table .= '</table>';
-    
-    $self->add_entry({ label_html => $pwm_table });
-  }
 }
 
 1;
