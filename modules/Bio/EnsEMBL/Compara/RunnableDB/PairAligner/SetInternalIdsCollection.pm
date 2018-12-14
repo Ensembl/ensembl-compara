@@ -57,7 +57,9 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
 
-    $self->param_required('method_link_species_set_id');
+    my $mlss_id = $self->param_required('method_link_species_set_id');
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    $self->param('is_pairwise_aln', $mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment' ? 1 : 0);
 }
 
 
@@ -72,16 +74,10 @@ sub run {
 
 
 
-#Makes the internal ids unique
 sub _setInternalIds {
     my $self = shift;
 
     my $mlss_id = $self->param('method_link_species_set_id');
-#    my $gdbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
-#    if (scalar(@$gdbs) <= 2) {
-#        $self->warning('AUTO_INCREMENT should have been set earlier by "set_internal_ids". Nothing to do now');
-#    }
-
     my $magic_number = '1'.('0' x $self->param('mlss_padding_n_zeros'));
 
     # Write new blocks in the correct range
@@ -100,7 +96,7 @@ sub _setInternalIds {
                 $self->warning("Entries for mlss_id=$mlss_id are already in the correct range. Nothing to do");
                 return;
             };
-            if (($tot_count != $safe_ga_count) or ($tot_count != 2*$safe_gab_count)) {
+            if (($tot_count != $safe_ga_count) or ($self->param('is_pairwise_aln') && ($tot_count != 2*$safe_gab_count))) {
                 my $msg = "genomic_align_id or genomic_align_block_id remainders are not unique. Need a more advanced mapping method";
                 $self->complete_early_if_branch_connected($msg, 2);
                 die "$msg but none connected on branch #2";
