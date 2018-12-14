@@ -342,6 +342,18 @@ sub pipeline_analyses {
 					 ],
 			       },
 		-flow_into => {
+			       1 => [ 'set_internal_ids_again' ],
+			      },
+		-rc_name => '1.8Gb',
+	    },
+
+# ----------------------------------------[In case the mlss_ids are not in the right order]----------------------------------------------
+	    {   -logic_name => 'set_internal_ids_again',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
+		-parameters => {
+                    'method_link_species_set_id'    => $self->o('low_epo_mlss_id'),
+                },
+		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
 		-rc_name => '1.8Gb',
