@@ -101,10 +101,9 @@ sub _setInternalIds {
                 return;
             };
             if (($tot_count != $safe_ga_count) or ($tot_count != 2*$safe_gab_count)) {
-                die "genomic_align_id or genomic_align_block_id remainders are not unique. Need a more advanced mapping method";
-                $self->complete_early("genomic_align_id or genomic_align_block_id remainders are not unique. Need a more advanced mapping method");
-                $self->dataflow_output_id(undef, 2);
-                $self->input_job->autoflow(0);
+                my $msg = "genomic_align_id or genomic_align_block_id remainders are not unique. Need a more advanced mapping method";
+                $self->complete_early_if_branch_connected($msg, 2);
+                die "$msg but none connected on branch #2";
             }
             my $offset_ga = $mlss_id * $magic_number + 1 - $min_ga;
             my $offset_gab = $mlss_id * $magic_number + 1 - $min_gab;
