@@ -75,6 +75,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
       panel.toggleButton();
       e.preventDefault();
+      if($(this).hasClass('_configure')) { panel.resetMatrix(); panel.displayMatrix(); }
     });
     
     this.clickSubResultLink();
@@ -504,7 +505,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
   
-  // Function to show a panel when button is clicked
+  // Function to show track configuration panel (matrix) when button is clicked
   // Arguments javascript object of the button element and the panel to show
   clickFilter: function(clickButton, tabClick) {
     var panel = this;
@@ -517,8 +518,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.toggleTab(tabClick, panel.el.find("div.large-breadcrumbs"));
         panel.toggleButton();        
       }
+      panel.resetMatrix();
+      panel.displayMatrix();
     });
-    
   },
   
   //function to jump to tab based on the link
@@ -773,6 +775,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
+          label: item,
           parentTab: parentTabContainer,
           parentTabId: parentRhSectionId,
           subTab: rhsection,
@@ -966,6 +969,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
 
           panel.elLk.lookup[elementClass] = {
+            label: el,
             parentTab: parentTabContainer,
             parentTabId: parentRhSectionId,
             subTab: rhsection,
@@ -1085,5 +1089,56 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       
     });
+  },
+  
+  // Function to show/update/delete matrix
+  displayMatrix: function() {
+    var panel = this;
+
+    var yContainer = '<div  class="yContainer">';
+    
+    //creating array of experiment from lookup Obj. ; this will make sure the order is the same
+    var expArray = Object.keys(panel.localStoreObj.experiment);
+
+    // creating experiment label on top of matrix
+    $.each(expArray, function(i, exp){
+      var experimentName = panel.elLk.lookup[exp].label;
+      yContainer += '<div class="yLabel">'+experimentName+'</div>';
+    });
+
+    yContainer += "</div>";
+    panel.el.find('div.matrix-container').append(yContainer);
+
+    //creating cell label with the boxes (number of boxes per row = number of experiments)
+    $.each(panel.localStoreObj.cell, function(cellName, value){
+        var cellName    = panel.elLk.lookup[cellName].label;
+        var xContainer  = '<div class="xContainer"><div class="xLabel">'+cellName+'</div>';
+        
+        //drawing boxes
+        $.each(expArray, function(i, exp) {
+          var render_img  = '';
+          var trackState  = "";
+
+          //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+          $.each(panel.json_data.cell_lines[cellName], function(cellKey, data){
+            if(data.evidence_type === exp) {
+              //TODO add state management here if track has been switch off
+              render_img = '<img src="/i/render/peak_signal_blue.svg" />';
+              trackState = "track-on";
+              return;
+            }
+          })
+          xContainer += '<div class="xBoxes '+trackState+'" data-trackCell="'+cellName+'" data-trackExperiment="'+exp+'">'+render_img+'</div>';
+        });
+
+        xContainer += "</div>";
+        panel.el.find('div.matrix-container').append(xContainer);
+    });    
+  },
+
+  resetMatrix: function() {
+    var panel = this;
+
+    panel.el.find('div.matrix-container').html('');
   }
 });

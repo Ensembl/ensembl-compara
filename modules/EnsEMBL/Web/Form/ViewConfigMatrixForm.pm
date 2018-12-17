@@ -92,6 +92,7 @@ sub build {
       </div>
         
       <div class="track-panel track-configuration" id="configuration-content">
+        <div class="vertical-sub-header">Cell type</div>
         <div class="configuration-legend">
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
           <div class="config-key"><span class="track-key off"></span>Data track off</div>
@@ -99,8 +100,38 @@ sub build {
           <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
           <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
         </div>
-        <div class="matrix-container"></div>
+        <div class="horizontal-sub-header">Experimental data</div>
         <button class="fade-button reset">Reset</button>
+        <div class="matrix-container">  
+        <!--      
+          <div class="yContainer">    
+            <div class="yLabel">Testing</div>
+            <div class="yLabel">Testing2</div>
+            <div class="yLabel">Testing3</div>
+            <div class="yLabel">Testing3</div>
+            <div class="yLabel">Testing3</div>
+            <div class="yLabel">Testing3</div>
+          </div>
+          <div class="xContainer">
+            <div class="xLabel">testcell</div> 
+            <div class="xBoxes"></div>
+            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
+            <div class="xBoxes track-off"><img src="/i/render/peak_signal_blue50.svg" /></div>
+            <div class="xBoxes track-off"><img src="/i/render/peak_signal_blue50.svg" /></div>
+            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
+            <div class="xBoxes"></div>
+          </div>
+          <div class="xContainer">
+            <div class="xLabel">testcell2</div> 
+            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
+            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
+            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
+            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
+            <div class="xBoxes"></div>
+            <div class="xBoxes"></div>
+          </div>  
+          -->        
+        </div>        
       </div>
 
       <div class="result-box">
