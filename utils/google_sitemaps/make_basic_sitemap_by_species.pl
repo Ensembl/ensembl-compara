@@ -168,9 +168,20 @@ sub get_dataset_urls {
   my @rows = @{$sth->fetchall_arrayref};
   foreach my $row (@rows) {
     my ($stable_id, $id, $chromosome, $start, $end, $species_id) = @{$row};     
-      
-    my $url = $domain . $species . '/Gene/Summary?g=' . $stable_id;
+
+    my $url = $domain . '/' . $species . '/Gene/Summary?g=' . $stable_id;
     $url .= ";r=$chromosome:$start-$end";
+
+    ## Check the number of transcripts, bc our site redirects if there's only one,
+    ## and Googlebot ignores URLs that have redirects
+    $query = "SELECT t.stable_id FROM transcript as t WHERE t.gene_id = $id";
+    $sth = $adaptor->prepare($query);
+    $sth->execute;
+    my $transcripts = $sth->fetchall_arrayref;
+    if (scalar @{$transcripts||[]} == 1) {
+      $url .= ';t='.$transcripts->[0][0];      
+    }
+
     push @urls, $url;       
   }    
   print "  Urls " . scalar @urls . "\n"; 
