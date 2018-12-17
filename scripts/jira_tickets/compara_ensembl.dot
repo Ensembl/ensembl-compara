@@ -15,4 +15,3 @@ digraph "Ensembl Vertebrates dependencies" {
     {"ncRNA-trees - murinae", "Protein-trees - murinae"} -> "Gene-tree reindexing - murinae" [label="XOR",style="dashed",dir=none];
     {rank = same; "Genome dumps"; "Member loading"; }
 }
-
