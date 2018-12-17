@@ -77,7 +77,7 @@ sub default_options {
         # mlss_id of a specific pair of species
         'goc_mlss_id'   => undef, #'100021',
 
-        'goc_taxlevels' => ["Euteleostomi","Ciona"],
+        'goc_taxlevels' => [],
         'goc_threshold' => undef,
         'goc_reuse_db'  => undef,
 	'calculate_goc_distribution' => undef,
@@ -108,10 +108,10 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
         'default'      => {'LSF' => '-q production-rh7'},
-#        'urgent'       => {'LSF' => '-q production-rh7'},
+        'urgent'       => {'LSF' => '-q production-rh7'},
         '1Gb_job'      => {'LSF' => '-C0 -M1000 -q production-rh7 -R"select[mem>1000]  rusage[mem=1000]"' },
-        '500Mb_job'      => {'LSF' => '-C0 -M500 -q production-rh7 -R"select[mem>500]  rusage[mem=500]"' },
-        '4Gb_job'      => {'LSF' => '-C0 -M4000 -q production-rh7 -R"select[mem>4000]  rusage[mem=4000]"' },
+        '2Gb_job'      => {'LSF' => '-C0 -M2000 -q production-rh7 -R"select[mem>2000]  rusage[mem=2000]"' },
+        '16Gb_job'      => {'LSF' => '-C0 -M16000 -q production-rh7 -R"select[mem>16000]  rusage[mem=16000]"' },
     };
 }
 

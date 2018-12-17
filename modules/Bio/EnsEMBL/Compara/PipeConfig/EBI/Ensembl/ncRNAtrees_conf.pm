@@ -75,8 +75,8 @@ sub default_options {
 
             # the production database itself (will be created)
             # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-ens-compara-prod-2',
-            'port' => 4522,
+            'host' => 'mysql-ens-compara-prod-4',
+            'port' => 4401,
 
             # Must be given on the command line
             #'mlss_id'          => 40100,
@@ -85,7 +85,7 @@ sub default_options {
             'rel_suffix' => '',
             'division'   => 'ensembl',
 
-            'test_mode' => 0, #set this to 0 if this is production run
+            'test_mode' => 1, #set this to 0 if this is production run
 
             # tree break
             'treebreak_gene_count'     => 400,

@@ -73,7 +73,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'        => 'load_members_'.$self->o('rel_with_suffix').'_grch37',
+        #'pipeline_name'        => 'load_members'.$self->o('rel_with_suffix'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
@@ -87,52 +87,6 @@ sub default_options {
         # Store other genes
         'store_others'              => 1,
 
-    #load uniprot members for family pipeline
-        'load_uniprot_members'      => 0,
-#        'family_mlss_id'            => 30055, 
-    # connection parameters to various databases:
-
-        # Uncomment and update the database locations
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'  => 4485,
-
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master_grch37',
-
-        # Ensembl-specific databases
-        'staging_loc' => {
-            -host   => 'mysql-ens-sta-2',
-            -port   => 4520,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 95,
-        },
-
-        'livemirror_loc' => {
-            -host   => 'mysql-ens-grch37-mirror.ebi.ac.uk',
-            -port   => 4603,
-            -user   => 'ensro',
-            -pass   => '',
-            -db_version => 94,
-        },
-
-        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-        #'curr_core_registry'        => "registry.conf",
-        #'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
-
-        # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
-        #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
-        #'prev_core_sources_locs'   => [ ],
-
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'reuse_member_db' => '', #'mysql://ensro@mysql-ens-grch37-mirror.ebi.ac.uk:4603/ensembl_compara_93',
     };
 }
 

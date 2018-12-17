@@ -116,6 +116,7 @@ sub default_options {
         'species_set_id'   => undef,
         'ref_species'      => undef,
         'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,

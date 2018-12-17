@@ -93,7 +93,7 @@ sub default_options {
         # These tables have a unique source. Content from other databases is ignored
         'exclusive_tables'  => {
             'mapping_session'       => 'master_db',
-            #'hmm_annot'             => 'family_db',
+            'hmm_annot'             => 'family_db',
             'gene_member'           => 'members_db',
             'seq_member'            => 'members_db',
             'other_member_sequence' => 'members_db',
@@ -110,8 +110,8 @@ sub default_options {
             # 'protein_db'        => [qw(gene_tree_node)],
             # 'protein_db'        => [qw(all_cov_ortho poor_cov_ortho poor_cov_2 dubious_seqs)],
             #'family_db' => [qw(gene_member seq_member sequence tmp_job job_summary test_length)],
-             #'mouse_prot_db'  => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
-             #'mouse_ncrna_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
+             'mouse_prot_db'  => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
+             'mouse_ncrna_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries  prev_rel_gene_member seq_member_projection_stable_id hmm_annot)],
             # 'projection_db' => [qw(gene_member seq_member sequence other_member_sequence exon_boundaries seq_member_projection)],
         },
 
