@@ -729,20 +729,23 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
       $.each(activeAlphabetContentDiv, function(i, el) {
-        var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');        
+        var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
+
+        // Reset is applied on filterData() if an offset reset is needed for the ribbon
         if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && $(selectElement).hasClass('track-tab')) {
-          $(activeLetterDiv).closest('.letters-ribbon').removeData('reset');
           var availableAlphabets = panel.getActiveAlphabets();
           var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
           var activeAlphabetIndex = $(activeLetterDiv).parent().children().index(activeAlphabetDiv);
-
           var bannerOffset = $(activeLetterDiv).closest('.ribbon-banner').offset();
 
-// console.log(activeAlphabetDiv, activeAlphabetIndex, bannerOffset);
-
-          var lettersSkipped = activeAlphabetIndex * 22;
-          newOffset =  (bannerOffset.left - lettersSkipped + 10);
-          $(activeLetterDiv).closest('.letters-ribbon').offset({left: newOffset});
+          // tab containing ribbon need to be visible to get the offset value.
+          if ($(activeLetterDiv).closest('.ribbon-banner').closest('.tab-content').css('display') !== 'none') {
+            var lettersSkipped = activeAlphabetIndex * 22;
+            newOffset =  (bannerOffset.left - lettersSkipped + 10);
+            $(activeLetterDiv).closest('.letters-ribbon').offset({left: newOffset});
+            // Remove reset once the offset is applied.
+            $(activeLetterDiv).closest('.letters-ribbon').removeData('reset');
+          }
         }
         // change offset positions of all letter content divs same as their respecitve ribbon letter div
         $(el).offset({left: activeLetterDiv.offset().left - 2});
