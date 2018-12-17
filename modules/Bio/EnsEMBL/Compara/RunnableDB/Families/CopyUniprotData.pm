@@ -66,7 +66,6 @@ sub run {
 
   $self->_sql_copy('sequence', 'SELECT sequence.* FROM seq_member JOIN sequence USING (sequence_id) where seq_member.source_name = "Uniprot/SWISSPROT" OR seq_member.source_name = "Uniprot/SPTREMBL"');
   $self->_sql_copy('seq_member', 'SELECT * FROM seq_member where source_name = "Uniprot/SWISSPROT" OR source_name = "Uniprot/SPTREMBL"');
-
 }
 
 sub _sql_copy{

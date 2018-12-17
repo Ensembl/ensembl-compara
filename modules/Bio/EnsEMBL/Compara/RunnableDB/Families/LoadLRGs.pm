@@ -70,9 +70,7 @@ sub run {
 
     # It may take some time to load the genes, so let's free the connection
     $compara_dba->dbc->disconnect_if_idle();
-
     $core_dba->dbc->prevent_disconnect( sub {
-
         my $all_lrgs = $core_dba->get_GeneAdaptor->fetch_all_by_biotype('LRG_gene');
         # preload all the transcripts etc
         $_->load() for @$all_lrgs;
@@ -84,7 +82,6 @@ sub run {
                             or die "Could not find a DnaFrag named '".$lrg_gene->seq_region_name."'";
 
             my $gene_member = $self->store_protein_coding_gene_and_all_transcripts($lrg_gene, $dnafrag);
-
             if ($gene_member) {
                 $n_genes_loaded ++;
             } else {

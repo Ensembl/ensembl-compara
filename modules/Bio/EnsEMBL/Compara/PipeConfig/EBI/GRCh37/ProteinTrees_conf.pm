@@ -67,7 +67,7 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
 
-        'test_mode' => 1, #set this to 0 if this is production run
+        'test_mode' => 0, #set this to 0 if this is production run
         
         'rel_suffix'            => '',
         # names of species we don't want to reuse this time
@@ -84,6 +84,18 @@ sub default_options {
         # reg_conf usually relies on the division, but grch37 is an edge case where this can't be the case
         'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_grch37_conf.pl',
 
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
+        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master_grch37',
+
+        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
+        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_94_grch37',
+
+        # Where the members come from (as loaded by the LoadMembers pipeline)
+        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_94_grch37',
+
+        # Points to the previous production database. Will be used for various GOC operations.
+        'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/grch37_ens_compara_87_reuse_goc',
+        #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
     };
 }
 

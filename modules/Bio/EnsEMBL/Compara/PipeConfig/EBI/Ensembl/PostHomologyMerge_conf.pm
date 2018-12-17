@@ -62,7 +62,7 @@ sub default_options {
         # The list of collections and clusterset_ids
         'member_stats_config'   => [
             INPUT_PLUS({
-                'collection'      => 'default',
+                'collection'      => 'ensembl',
                 'clusterset_id'   => 'default',
                 'db_conn'         => '#compara_db#',
             }),

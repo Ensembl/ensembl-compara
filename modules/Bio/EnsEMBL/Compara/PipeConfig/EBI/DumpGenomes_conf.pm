@@ -81,7 +81,7 @@ sub default_options {
         'force_redump'      => [],
 
         # the registry file to indicate how to get the core databases
-        'reg_conf'          => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'reg_conf'          => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_GRCH37_conf.pl',
 
         # Executables
         'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),

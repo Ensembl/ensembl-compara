@@ -34,6 +34,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf
 
     Specialized version of the LoadMembers pipeline for Ensembl
 
+    Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf --collection ensembl
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -88,7 +90,7 @@ sub default_options {
         'store_others'              => 1,
 
     #load uniprot members for family pipeline
-        'load_uniprot_members'      => 1,
+        'load_uniprot_members'      => 0,
         'family_mlss_id'            => 30055,    
 
     };

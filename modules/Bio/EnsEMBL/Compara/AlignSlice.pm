@@ -1412,6 +1412,7 @@ sub _choose_underlying_Slice {
 
 sub _sort_and_restrict_GenomicAlignBlocks {
   my ($genomic_align_blocks) = @_;
+  print "\n\n WE ARE HERE : _sort_and_restrict_GenomicAlignBlocks \n\n";
   my $sorted_genomic_align_blocks = [];
   return $sorted_genomic_align_blocks if (!$genomic_align_blocks);
 
