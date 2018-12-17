@@ -272,7 +272,7 @@ div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cu
 div.ribbon-content                                  { display: flex; padding-left: 16px; height: 302px; overflow: auto; }
 div.alphabet-content                                { display: none; position: relative; }
 div.alphabet-content.active                         { display: block; }
-div.config_wrapper div.config ul.letter-content li  { margin: 5px 0; cursor: default; margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 140px;}
+div.config_wrapper div.config ul.letter-content li  { margin: 5px 0; cursor: default; margin-top: 0;}
 div.config_wrapper div.config ul.list-content       { height: 297px; padding-left: 48px; columns: 4 100px; overflow-y: auto; clear: right;}
 
 .text-ellipsis {

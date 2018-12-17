@@ -678,7 +678,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   // Arguments: selectElement is the tab that's clicked to be active or the tab that you want to be active (javascript object)
   //            container is the current active tab (javascript object)
   //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
-  toggleTab: function(selectElement, container, selByClass) {
+  toggleTab: function(selectElement, container, selByClass, resetRibbonOffset) {
     var panel = this;
 
     if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
@@ -723,17 +723,33 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
       }
 
-      // change offset positions of all letter content divs same as their respecitve ribbon letter div
-      activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
+      if (resetRibbonOffset) {
+        $(selectElement).closest('.letters-ribbon').data({'reset': true});
+      }
 
+      activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
       $.each(activeAlphabetContentDiv, function(i, el) {
-        var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
+        var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');        
+        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && $(selectElement).hasClass('track-tab')) {
+          $(activeLetterDiv).closest('.letters-ribbon').removeData('reset');
+          var availableAlphabets = panel.getActiveAlphabets();
+          var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
+          var activeAlphabetIndex = $(activeLetterDiv).parent().children().index(activeAlphabetDiv);
+
+          var bannerOffset = $(activeLetterDiv).closest('.ribbon-banner').offset();
+
+// console.log(activeAlphabetDiv, activeAlphabetIndex, bannerOffset);
+
+          var lettersSkipped = activeAlphabetIndex * 22;
+          newOffset =  (bannerOffset.left - lettersSkipped + 10);
+          $(activeLetterDiv).closest('.letters-ribbon').offset({left: newOffset});
+        }
+        // change offset positions of all letter content divs same as their respecitve ribbon letter div
         $(el).offset({left: activeLetterDiv.offset().left - 2});
       })
-
     }
   },
-  
+
   toggleButton: function() {
     var panel = this;
     
@@ -806,7 +822,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var experimentsVal="";
       $.each(data, function(index, ele) {
         var experimentClassName = ele.evidence_type.replace(/[^\w\-]/g,'_');
-        experimentsVal += ele.evidence_type+" ";
+        experimentsVal += experimentClassName + " ";
         
         //adding cells atribute to experiments
         var existingCells = panel.el.find("li."+experimentClassName).attr('data-filter');
@@ -906,7 +922,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               activeCount++;
               //toggling tab for first active class adding active class to first alphabet with content in ribbon
               if(!$(tab).closest(".tab-content").find("div.letters-ribbon div.active").length){
-                 panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1);
+                 panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1, 1);
               }
               $(tab).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); //remove inactive class in case its present
             } else { //empty
@@ -917,7 +933,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
                 $("div#"+mainRHSection+" div.result-content").show(); //make sure all rhSection link/count are shown
 
                 if(!$(tab).closest(".tab-content").find("div.letters-ribbon div.active").length){
-                   panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1);
+                   panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1, 1);
                 }                
               } else { //empty with no li at all
                 $(tab).closest(".tab-content").find("div."+parentRibbon).addClass("inactive");
