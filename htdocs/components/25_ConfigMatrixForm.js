@@ -472,8 +472,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         rhs_ele.hide();
       }
     });
-
-
   },
 
   setLocalStorage: function() {
@@ -573,24 +571,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       $.each(panel.elLk.filterList, function(i, ul) {
         if (!$(ul).siblings("div.show-hide:visible").length && $('li', ul).length) {
-          $(ul).siblings('._show').show();
+          var _class =  $(ul).css('display') === 'none' ? '._show' : '._hide';
+          $(ul).siblings(_class).show();
         }
         else if ($(ul).siblings("div.show-hide:visible").length && $('li', ul).length === 0) {
           $(ul).siblings('._hide, ._show').hide();
         }
       })
-  },
-
-  // Function to show "show selected" or "Hide selected" link in right hand panel
-  showHideLink: function(containerObj) {
-      var panel = this;
-
-      if (!containerObj.find("div.show-hide:visible").length && containerObj.find("ul.result-list li").length === 0) {
-          containerObj.find("div._show").show();
-      } else if (containerObj.find("div.show-hide:visible").length && parseInt(containerObj.find('span.current-count').html()) === 0) {
-          containerObj.find("div._show, div._hide").hide();
-          containerObj.find("ul.result-list").hide();
-      }
   },
 
   //function to toggle filters in right hand panel when show/hide selected is clicked
@@ -603,29 +590,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
 
-  //Function to select all filters in a specific panel
-  // Arguments: container where all the filters to be selected are
-  //          : select all box object
-  selectAll: function (container, allBox) {
-    var panel = this;
-    
-    allBox.on("click", function(){
-      $.each(container.find('li'), function(i, ele) {
-        //selecting all of them
-        if(allBox.find("span.fancy-checkbox.selected").length){
-          if(!$(ele).find("span.fancy-checkbox.selected").length){          
-            panel.selectBox(ele);
-          }          
-        }
-        else { //unselecting all of them
-          if($(ele).find("span.fancy-checkbox.selected").length){          
-            panel.selectBox(ele);
-          } 
-        }        
-      });
-    });
-  },
-  
   trackTab: function() {
     var panel = this;
     //showing and applying cell types
