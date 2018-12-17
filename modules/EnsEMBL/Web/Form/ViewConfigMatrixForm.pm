@@ -65,7 +65,7 @@ sub build {
       <div class="track-panel active" id="track-content">
         <div class="tabs track-menu">
           <div class="track-tab active" id="cell-tab">
-            <span> Cell type </span>
+            <span> Epigenome </span>
             <span class="hidden content-id">cell-content</span>
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Search" name="cell_search">
@@ -92,7 +92,7 @@ sub build {
       </div>
         
       <div class="track-panel track-configuration" id="configuration-content">
-        <div class="vertical-sub-header">Cell type</div>
+        <div class="vertical-sub-header">Epigenome</div>
         <div class="configuration-legend">
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
           <div class="config-key"><span class="track-key off"></span>Data track off</div>
@@ -110,9 +110,9 @@ sub build {
         <h4>Selected tracks</h4>
 
         <div class="filter-content">
-          <h5 class="result-header">Cell type <span class="error _cell">Please select Cell types</span></h5>
+          <h5 class="result-header">Epigenome <span class="error _cell">Please select Epigenome</span></h5>
           <div class="result-content" id="cell">
-            <div class="sub-result-link">Cell type</div>
+            <div class="sub-result-link">Epigenome</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
             <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
             <ul class="result-list hidden">
