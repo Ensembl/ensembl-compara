@@ -58,6 +58,10 @@ sub content {
 </div>
           );
 
+  ## Don't mark up archives, etc - it will only confuse search engine users
+  ## if there are e.g. multiple human gene sets in the results!
+  $html .= $self->include_bioschema_datasets if $species_defs->BIOSCHEMAS_DATACATALOG;
+
   $html .= '
 <div class="column-wrapper">  
   <div class="column-two">
