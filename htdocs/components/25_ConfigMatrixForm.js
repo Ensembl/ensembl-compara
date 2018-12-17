@@ -1132,29 +1132,42 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         
         //drawing boxes
         $.each(expArray, function(i, exp) {
-          var render_img  = '';
           var trackState  = "";
+          var trackRender = "";
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
           $.each(panel.json_data.cell_lines[cellName], function(cellKey, data){
-            if(data.evidence_type === exp) {
+            if(data.evidence_type.replace(/[^\w\-]/g,'_') === exp) {
               //TODO add state management here if track has been switch off
-              render_img = '<img src="/i/render/peak_signal_blue.svg" />';
-              trackState = "track-on";
+              trackState = "track-on"; //on means blue bg, off means white bg
+              trackRender = "peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
               return;
             }
           })
-          xContainer += '<div class="xBoxes '+trackState+'" data-trackCell="'+cellName+'" data-trackExperiment="'+exp+'">'+render_img+'</div>';
+          xContainer += '<div class="xBoxes '+trackState+' '+trackRender+'" data-trackCell="'+cellName+'" data-trackExperiment="'+exp+'"></div>';
         });
 
         xContainer += "</div>";
         panel.el.find('div.matrix-container').append(xContainer);
-    });    
+    });
+    panel.cellClick();
   },
 
   resetMatrix: function() {
     var panel = this;
 
     panel.el.find('div.matrix-container').html('');
+  },
+
+  cellClick: function() {
+    var panel = this;
+
+    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){
+      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+
+      if($(this).hasClass("track-on")){
+        $(this).addClass("mClick");
+      }
+    });
   }
 });

@@ -103,34 +103,6 @@ sub build {
         <div class="horizontal-sub-header">Experimental data</div>
         <button class="fade-button reset">Reset</button>
         <div class="matrix-container">  
-        <!--      
-          <div class="yContainer">    
-            <div class="yLabel">Testing</div>
-            <div class="yLabel">Testing2</div>
-            <div class="yLabel">Testing3</div>
-            <div class="yLabel">Testing3</div>
-            <div class="yLabel">Testing3</div>
-            <div class="yLabel">Testing3</div>
-          </div>
-          <div class="xContainer">
-            <div class="xLabel">testcell</div> 
-            <div class="xBoxes"></div>
-            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
-            <div class="xBoxes track-off"><img src="/i/render/peak_signal_blue50.svg" /></div>
-            <div class="xBoxes track-off"><img src="/i/render/peak_signal_blue50.svg" /></div>
-            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
-            <div class="xBoxes"></div>
-          </div>
-          <div class="xContainer">
-            <div class="xLabel">testcell2</div> 
-            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
-            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
-            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
-            <div class="xBoxes track-on"><img src="/i/render/peak_signal_blue.svg" /></div>
-            <div class="xBoxes"></div>
-            <div class="xBoxes"></div>
-          </div>  
-          -->        
         </div>        
       </div>
 
