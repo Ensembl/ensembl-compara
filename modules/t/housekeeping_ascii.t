@@ -99,10 +99,12 @@ sub is_ascii {
 my @source_files = find_all_files($root);
 
 foreach my $f (@source_files) {
+    # The build dir of Sphinx
+    next if $f =~ /\/_build\//;
     # The conservation_score table has scores compressed in binary form
     next if $f =~ /modules\/t\/test-genome-DBs\/.*\/conservation_score.txt$/;
     # These files are binary by nature
-    next if $f =~ /\.(pdf|png|dia|hal|jar|so|o)$/;
+    next if $f =~ /\.(pdf|png|dia|hal|jar|so|o|pyc)$/;
     # This file is for Travis only
     next if $f =~ /\/travis_wait_\d+\.log$/;
     is_ascii($f);
