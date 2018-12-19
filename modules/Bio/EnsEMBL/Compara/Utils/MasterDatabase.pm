@@ -627,7 +627,7 @@ sub create_self_wga_mlsss {
     return [$self_lastz_mlss];
 }
 
-sub create_pairwise_wga_mlss {
+sub create_pairwise_wga_mlsss {
     my ($compara_dba, $method, $ref_gdb, $nonref_gdb) = @_;
     my @mlsss;
     my $species_set = create_species_set([$ref_gdb, $nonref_gdb]);
@@ -642,7 +642,7 @@ sub create_pairwise_wga_mlss {
     return \@mlsss;
 }
 
-sub create_multiple_wga_mlss {
+sub create_multiple_wga_mlsss {
     my ($compara_dba, $method, $species_set, $ss_display_name, $with_gerp, $source, $url) = @_;
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, undef, $ss_display_name, $source, $url);
