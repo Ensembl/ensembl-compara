@@ -72,7 +72,20 @@ BEGIN {
 
 my $hub = EnsEMBL::Web::DBHub->new;
 my $sd = $hub->species_defs;
-my $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT || 'www';
+
+## Set appropriate domain for links
+my $server = $sd->ENSEMBL_SERVERNAME;
+my $domain;
+if ($sd->GENOMIC_UNIT) {
+  $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT;
+}
+elsif ($server =~ m#/m\.ensembl|mtest#) {
+  $domain = 'http://m.ensembl.org';
+}
+else {
+  $domain = 'http://www.ensembl.org';
+}
+
 my @sitemaps;
 
 my $this_release = $sd->ENSEMBL_VERSION;
