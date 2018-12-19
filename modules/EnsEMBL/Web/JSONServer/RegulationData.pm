@@ -58,21 +58,23 @@ sub json_data {
       $evidence->{$evidence_group} = {
         "name"          => $_ eq 'Transcription Factor' ? 'TFBS' :  $_,
         "listType"      => $_ eq 'Transcription Factor' ?  'alphabetRibbon' : '', #for the js side to list the track either its bullet point or alphabet ribbon 
-        "evidence_type" => []
       };
       #use Data::Dumper;warn Dumper($adaptor->fetch_all_having_PeakCalling_by_class($_));  
       foreach (@{$adaptor->fetch_all_having_PeakCalling_by_class($_)}) {
         next if $_->class eq 'Transcription Factor Complex'; #ignoring this group as its not used
         my $group = $_->class eq 'Transcription Factor' ? 'TFBS' : $_->class;
         $group =~ s/[^\w\-]/_/g;
-        push @{$evidence->{$group}->{"evidence_type"}}, $_->name;
+        push @{$evidence->{$group}->{"data"}}, $_->name;
         push @{$all_types{$set}},$_;
       }      
     }
   }
   
-  $final->{evidence}      = $evidence;
-  
+  $final->{data}->{evidence}->{'name'}   = 'evidence';
+  $final->{data}->{evidence}->{'label'}  = 'Evidence';
+  $final->{data}->{evidence}->{'data'} = $evidence;
+  $final->{data}->{evidence}->{'subtabs'} = 1;
+
   #by default these track are on
   my %default_evidence_types = (
     CTCF     => 1,
@@ -96,7 +98,8 @@ sub json_data {
       foreach (@{$all_types{$set}||[]}) {
         if ($set_info->{$set}{$_->dbID}) {
           my $hash = {
-            evidence_type => $_->name,
+            rel => 'evidence',
+            val => $_->name,
             defaultOn     => $default_evidence_types{$_->name} ? 1 : 0
           };
           push @$cell_evidence, $hash;
@@ -107,7 +110,12 @@ sub json_data {
   }  
 
   #use Data::Dumper;warn Dumper($cell_types);
-  $final->{cell_lines} = $cell_types;
+  $final->{data}->{epigenome}->{'name'}   = 'epigenome';
+  $final->{data}->{epigenome}->{'label'}  = 'Epigenome';
+  $final->{data}->{epigenome}->{'data'} = $cell_types;
+  $final->{data}->{epigenome}->{'listType'} = 'alphabetRibbon';
+
+  $final->{dimensions} = ['epigenome', 'evidence'];
   return $final;
 }
 

@@ -53,7 +53,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       dataType: 'json',
       context: this,
       success: function(json) {
-        this.json_data = json;
+        this.json = json;
         this.trackTab();
         this.populateLookUp();
         this.loadState();
@@ -596,21 +596,26 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var cellTypeContainer = panel.el.find("div#cell-content");
     var rhSectionId = cellTypeContainer.data('rhsection-id');
     var noFilter = true;
-    this.displayFilter(Object.keys(panel.json_data.cell_lines).sort(), "div#cell-content", "alphabetRibbon", cellTypeContainer, rhSectionId, noFilter);
+    panel.dimX = panel.json.dimensions[0];
+    panel.dimY = panel.json.dimensions[1];
+    var dimX = panel.json.data[panel.dimX];
+    var dimY = panel.json.data[panel.dimY];
+
+    this.displayCheckbox(Object.keys(dimX.data).sort(), "div#cell-content", dimX.listType, cellTypeContainer, rhSectionId, noFilter);
 
     //showing experiment type tabs
     var experiment_html = '<div class="tabs experiments">';
     var content_html    = "";
 
-    //sort evidence object
-    Object.keys(panel.json_data.evidence).sort().forEach(function(key) {
-        var value = panel.json_data.evidence[key];
-        delete panel.json_data.evidence[key];
-        panel.json_data.evidence[key] = value;
+    //sort dimY object
+    Object.keys(dimY.data).sort().forEach(function(key) {
+        var value = dimY.data[key];
+        delete dimY.data[key];
+        dimY.data[key] = value;
     });
 
     var count = 0;
-    $.each(panel.json_data.evidence, function(key, item){
+    $.each(dimY.data, function(key, item){
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
       experiment_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
@@ -623,10 +628,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     rhSectionId = expTabContainer.data('rhsection-id');
     
     //displaying the experiment types
-    $.each(panel.json_data.evidence, function(key, ev){
-      panel.displayFilter(ev.evidence_type, "div#"+key+"-content",ev.listType, expTabContainer, rhSectionId);
-    })
-    
+    if (dimY.subtabs) {
+      $.each(dimY.data, function(key, subTab){
+        panel.displayCheckbox(subTab.data, "div#"+key+"-content", subTab.listType, expTabContainer, rhSectionId);
+      })
+    }
+
     //adding experiment and cells relationship as data-attribute
     panel.addRelationData();
 
@@ -730,7 +737,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
-  displayFilter: function(data, container, listType, parentTabContainer, parentRhSectionId, noFilter_allBox) {
+  displayCheckbox: function(data, container, listType, parentTabContainer, parentRhSectionId, noFilter_allBox) {
     var panel       = this;
     var ribbonObj   = {};
     var countFilter  = 0;
@@ -778,33 +785,34 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
   
-  //function to add cells and experiments in data-filter attribute which link the cells checkbox to the experiments checkbox and vice versa, use for filtering to show/hide cells/experiments
+  //function to add dimX and dimY in data-filter attribute which link the dimX checkbox to the dimY checkbox and vice versa, used for filtering to show/hide checkboxes
   addRelationData: function () {
     var panel = this;
 
-    $.each(panel.json_data.cell_lines, function(key, data) {
-      var cellClassName = key.replace(/[^\w\-]/g,'_');
+    $.each(panel.json.data[panel.dimX].data, function(key, dimX_data) {
+      var dimX_className = key.replace(/[^\w\-]/g,'_');
 
-      //add experiments attribute to cell lines
-      var experimentsVal="";
-      $.each(data, function(index, ele) {
-        var experimentClassName = ele.evidence_type.replace(/[^\w\-]/g,'_');
-        experimentsVal += experimentClassName + " ";
+      //add dimY attribute to dimX
+      var relClassNameString="";
+      $.each(dimX_data, function(index, el) {
+        var relClassName = el.val.replace(/[^\w\-]/g,'_');
+        relClassNameString += relClassName + " ";
         
         //adding cells atribute to experiments
-        var existingCells = panel.el.find("li."+experimentClassName).attr('data-filter');
-        existingCells ?  panel.el.find("li."+experimentClassName).attr('data-filter', existingCells+" "+cellClassName) :  panel.el.find("li."+experimentClassName).attr('data-filter',cellClassName);
-        if(!panel.el.find("li."+experimentClassName).attr('data-filtercontainer')){
-          panel.el.find("li."+experimentClassName).attr('data-filtercontainer','cell-content');
+        var relDataFilter = panel.el.find("li."+relClassName).attr('data-filter');
+        relDataFilter ?  panel.el.find("li."+relClassName).attr('data-filter', relDataFilter+" "+dimX_className) :  panel.el.find("li."+relClassName).attr('data-filter', dimX_className);
+
+        if(!panel.el.find("li."+relClassName).attr('data-filtercontainer')){
+          panel.el.find("li."+relClassName).attr('data-filtercontainer', 'cell-content');
         } 
       });
       //data-filter contains the classname that needs to be shown and data-filtercontainer is the id where elements to be shown are located
-      panel.el.find("li."+cellClassName).attr('data-filter',experimentsVal).attr('data-filtercontainer','experiment-content');
+      panel.el.find("li."+dimX_className).attr('data-filter', relClassNameString).attr('data-filtercontainer', 'experiment-content');
 
     });
   },
 
-  // Function that does internal filtering to show/hide cells/experiments based on a checkbox selection.
+  // Function that does internal filtering to show/hide other dimension's checkboxes based on a checkbox selection.
   // This will also do the activation/inactivation of tabs based on availability
   // Arguments: selected element item name
   filterData: function(item) {
@@ -1114,8 +1122,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var popupType = "peak-signal"; //class of type of popup to use
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-          $.each(panel.json_data.cell_lines[cellLabel], function(cellKey, data){
-            if(data.evidence_type.replace(/[^\w\-]/g,'_') === exp) {
+          $.each(panel.json.data[panel.dimX].data[cellName], function(cellKey, rel){
+            if(rel.val.replace(/[^\w\-]/g,'_') === exp) {
               //TODO add state management here if track has been switch off
               boxState = "track-on"; //on means blue bg, off means white bg
               boxRender = "peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
