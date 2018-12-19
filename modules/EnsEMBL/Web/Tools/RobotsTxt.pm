@@ -78,7 +78,19 @@ sub create {
     if (-e "$map_dir/index.xml") {
       # If we have a sitemap let google know about it.
       warn _box("Creating robots.txt for google sitemap");
-      push @lines, _lines("Sitemap", sprintf 'http://%s/sitemaps/index.xml', $sd->ENSEMBL_SERVERNAME);
+      ## Set appropriate domain for links
+      my $server = $sd->ENSEMBL_SERVERNAME;
+      my $domain;
+      if ($sd->GENOMIC_UNIT) {
+        $domain = sprintf 'http://%s.ensembl.org', $sd->GENOMIC_UNIT;
+      }
+      elsif ($server =~ m#/m\.ensembl|mtest#) {
+        $domain = 'http://m.ensembl.org';
+      }
+      else {
+        $domain = 'http://www.ensembl.org';
+      }
+      push @lines, _lines("Sitemap", sprintf '%s/sitemaps/index.xml', $domain);
     }
 
     ## SPECIFIC CRAWLERS
