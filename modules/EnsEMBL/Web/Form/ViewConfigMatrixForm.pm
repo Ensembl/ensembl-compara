@@ -102,7 +102,9 @@ sub build {
         </div>
         <div class="horizontal-sub-header">Experimental data</div>
         <button class="fade-button reset">Reset</button>
-        <div class="matrix-container">  
+        <div class="track-popup column-cell"><ul><li><label class="switch"><input type="checkbox" checked="checked"><span class="slider round"></span><span class="switch-label">Column</span></label></li></ul><ul><li><label class="switch"><input type="checkbox" checked="checked"><span class="slider round"></span><span class="switch-label">Cell</span></label></li></ul></div>
+        <div class="track-popup peak-signal"><ul><li><label class="switch"><input type="checkbox" checked="checked"><span class="slider round"></span><span class="switch-label">Column</span></label><input type='radio' name="column-radio" checked="checked" class="_peak_signal" /><text>Peaks & signal</text></li><li><input type='radio' name="column-radio" class="_peak"/><text>Peaks</text></li><li><input type='radio' name="column-radio" class="_signal"/><text>Signal</text></li></ul><ul><li><label class="switch"><input type="checkbox" checked="checked"><span class="slider round"></span><span class="switch-label">Row</span></label><input type='radio' name="row-radio" checked="checked" class="_peak_signal"/><text>Peaks & signal</text></li><li><input type='radio' name="row-radio" class="_peak"/><text>Peaks</text></li><li><input type='radio' name="row-radio" class="_signal"/><text>Signal</text></li></ul><ul><li><label class="switch"><input type="checkbox" checked="checked"><span class="slider round"></span><span class="switch-label">Cell</span></label><input type='radio' name="cell-radio" checked="checked" class="_peak_signal"/><text>Peaks & signal</text></li><li><input type='radio' name="cell-radio" class="_peak"/><text>Peaks</text></li><li><input type='radio' name="cell-radio" class="_signal"/><text>Signal</text></li></ul></div>
+        <div class="matrix-container">
         </div>        
       </div>
 

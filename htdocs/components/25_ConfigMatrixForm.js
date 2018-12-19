@@ -1078,6 +1078,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   displayMatrix: function() {
     var panel = this;
 
+    panel.trackPopup      = panel.el.find('div.track-popup');
+
     var yContainer = '<div  class="yContainer">';
     
     //creating array of experiment from lookup Obj. ; this will make sure the order is the same
@@ -1086,7 +1088,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     // creating experiment label on top of matrix
     $.each(expArray, function(i, exp){
       var experimentName = panel.elLk.lookup[exp].label;
-      yContainer += '<div class="yLabel">'+experimentName+'</div>';
+      yContainer += '<div class="yLabel '+exp+'">'+experimentName+'</div>';
     });
 
     yContainer += "</div>";
@@ -1094,8 +1096,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     $.each(panel.localStoreObj.cell, function(cellName, value){
-        var cellName    = panel.elLk.lookup[cellName].label;
-        var xContainer  = '<div class="xContainer"><div class="xLabel">'+cellName+'</div>';
+        var cellLabel    = panel.elLk.lookup[cellName].label;
+        var xContainer  = '<div class="xContainer"><div class="xLabel '+cellName+'">'+cellLabel+'</div>';
         
         //drawing boxes
         $.each(expArray, function(i, exp) {
@@ -1103,7 +1105,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var trackRender = "";
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-          $.each(panel.json_data.cell_lines[cellName], function(cellKey, data){
+          $.each(panel.json_data.cell_lines[cellLabel], function(cellKey, data){
             if(data.evidence_type.replace(/[^\w\-]/g,'_') === exp) {
               //TODO add state management here if track has been switch off
               trackState = "track-on"; //on means blue bg, off means white bg
@@ -1111,13 +1113,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               return;
             }
           })
-          xContainer += '<div class="xBoxes '+trackState+' '+trackRender+'" data-trackCell="'+cellName+'" data-trackExperiment="'+exp+'"></div>';
+          xContainer += '<div class="xBoxes '+trackState+' '+trackRender+' '+cellName+' '+exp+'" data-track-x="'+cellName+'" data-track-y="'+exp+'" data-track-state="'+trackState+'" data-track-render="'+trackRender+'"></div>';
         });
 
         xContainer += "</div>";
         panel.el.find('div.matrix-container').append(xContainer);
     });
-    panel.cellClick();
+    panel.cellClick(); //opens popup
+    panel.popupFunctionality(); //interaction inside popup
   },
 
   resetMatrix: function() {
@@ -1134,7 +1137,24 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       if($(this).hasClass("track-on")){
         $(this).addClass("mClick");
+
+        var trackState  = $(this).data("track-state"); //is the track on or off
+        var trackRender = $(this).data("track-render"); //is the track peak or signal or peakandsignal
+
+        //TODO fix offset of popup when scrolling, it should position based on the mouse click and below
+        //to center the popup on the box, get the x and y position of the box and then add half the length
+        panel.el.find('div.peak-signal').attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top':$(this).position().top + 15,'left':$(this).position().left + 15}).show();
       }
     });
+  },
+
+  //function to handle functionalities inside popup
+  popupFunctionality: function() {
+    var panel = this;
+
+    //choosing radio button - track renderer
+
+    //choosing toggle button - column/row/cell
+    // if column is off, add to label, same for row, if cell is off add to cell
   }
 });
