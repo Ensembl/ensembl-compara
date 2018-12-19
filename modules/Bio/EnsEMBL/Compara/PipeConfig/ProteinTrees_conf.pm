@@ -219,6 +219,9 @@ sub default_options {
         #compute Jaccard Index
         'do_jaccard_index'          => 1,
 
+        #Compute Gini coefficient (Lorenz curve)
+        'do_gini_coefficient'       => 1,
+
     # HMM specific parameters (set to 0 or undef if not in use)
        'hmm_library_basedir'       => undef,
 
@@ -1700,6 +1703,10 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
             -parameters => {
                 'output_jaccard_file'   => '#plots_dir#/jaccard_index.out',
+                'output_jaccard_pdf'    => '#plots_dir#/jaccard_index.pdf',
+
+                'output_gini_file'   => '#plots_dir#/gini_coefficient.out',
+                'output_gini_pdf'    => '#plots_dir#/gini_coefficient.pdf',
             },
             -rc_name       => '500Mb_job',
         },

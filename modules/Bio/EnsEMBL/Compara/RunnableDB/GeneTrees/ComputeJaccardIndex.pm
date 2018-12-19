@@ -67,7 +67,8 @@ sub run {
 
     my $all_trees = $self->param('current_tree_adaptor')->fetch_all( -TREE_TYPE => 'tree', -MEMBER_TYPE => 'protein', -CLUSTERSET_ID => 'default' );
 
-    open( my $plot_file, ">", $self->param('output_jaccard_file') ) || die "Could not open '".$self->param('output_jaccard_file')."': $!";
+    open( my $plot_jaccard_file, ">", $self->param('output_jaccard_file') ) || die "Could not open '".$self->param('output_jaccard_file')."': $!";
+    open( my $plot_gini_file, ">", $self->param('output_gini_file') ) || die "Could not open '".$self->param('output_gini_file')."': $!";
 
     foreach my $tree ( @{$all_trees} ) {
 
@@ -92,7 +93,8 @@ sub run {
             }
             my $tree_jaccard_index = $inter/$union;
 
-            print $plot_file "$stable_id\t$tree_jaccard_index\n";
+            print $plot_jaccard_file "$stable_id\t$tree_jaccard_index\n";
+            print $plot_gini_file scalar(@leaves_previous)."\t".scalar(@leaves_current)."\n";
 
             #Cleaning up memory
             $reused_tree->release_tree;
@@ -102,7 +104,18 @@ sub run {
         }
     } ## end foreach my $tree ( @{$all_trees...})
 
-    close ($plot_file);
+    close ($plot_jaccard_file);
+    close ($plot_gini_file);
+
+
+    #Plot Jaccard:
+    my $cmd = "Rscript ". $ENV{'ENSEMBL_CVS_ROOT_DIR'} . "/ensembl-compara/scripts/homology/plotJaccardIndex.r ". $self->param('output_jaccard_file') . " " . $self->param('output_jaccard_pdf');
+    my $cmd_out = $self->run_command($cmd);
+
+    #Plot the Lorentz curve for the Gini coefficient:
+    $cmd = "Rscript ". $ENV{'ENSEMBL_CVS_ROOT_DIR'} . "/ensembl-compara/scripts/homology/plotLorentzCurve.r ". $self->param('output_gini_file') . " " . $self->param('output_gini_pdf');
+    $cmd_out = $self->run_command($cmd);
+
 
 } ## end sub run
 
