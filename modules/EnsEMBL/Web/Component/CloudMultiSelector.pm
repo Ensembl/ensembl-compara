@@ -48,7 +48,7 @@ sub _sort_values {
   my ($self,$values) = @_;
 
   my $sort_func = $self->{'sort_func'};
-  $sort_func = sub { [ sort {$a cmp $b} @{$_[0]} ]; } unless $sort_func;
+  $sort_func = sub { [ sort {lc $a cmp lc $b} @{$_[0]} ]; } unless $sort_func;
   return $sort_func->($values);
 }
 
