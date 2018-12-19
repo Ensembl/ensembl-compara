@@ -1078,17 +1078,25 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   displayMatrix: function() {
     var panel = this;
 
-    panel.trackPopup      = panel.el.find('div.track-popup');
+    panel.trackPopup = panel.el.find('div.track-popup');
 
     var yContainer = '<div  class="yContainer">';
     
     //creating array of experiment from lookup Obj. ; this will make sure the order is the same
     var expArray = Object.keys(panel.localStoreObj.experiment);
 
+    // State of the column(evidence) or row (cell) which is attached to the labels
+    // whether the whole row is on/off, whole column is on/off, render is peak-signal, peak or signal
+    // default is on and peak-signal
+    var rowState      = "track-on";
+    var columnState   = "track-on";
+    var rowRender     = "peak-signal";
+    var columnRender  = "peak-signal"
+
     // creating experiment label on top of matrix
     $.each(expArray, function(i, exp){
       var experimentName = panel.elLk.lookup[exp].label;
-      yContainer += '<div class="yLabel '+exp+'">'+experimentName+'</div>';
+      yContainer += '<div class="yLabel '+exp+'" data-track-state="'+columnState+'" data-track-render="'+columnRender+'">'+experimentName+'</div>';
     });
 
     yContainer += "</div>";
@@ -1097,30 +1105,30 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     $.each(panel.localStoreObj.cell, function(cellName, value){
         var cellLabel    = panel.elLk.lookup[cellName].label;
-        var xContainer  = '<div class="xContainer"><div class="xLabel '+cellName+'">'+cellLabel+'</div>';
+        var xContainer  = '<div class="xContainer"><div class="xLabel '+cellName+'" data-track-state="'+columnState+'" data-track-render="'+columnRender+'">'+cellLabel+'</div>';
         
         //drawing boxes
         $.each(expArray, function(i, exp) {
-          var trackState  = "";
-          var trackRender = "";
+          var boxState  = "";
+          var boxRender = "";
+          var popupType = "peak-signal"; //class of type of popup to use
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
           $.each(panel.json_data.cell_lines[cellLabel], function(cellKey, data){
             if(data.evidence_type.replace(/[^\w\-]/g,'_') === exp) {
               //TODO add state management here if track has been switch off
-              trackState = "track-on"; //on means blue bg, off means white bg
-              trackRender = "peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
+              boxState = "track-on"; //on means blue bg, off means white bg
+              boxRender = "peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
               return;
             }
           })
-          xContainer += '<div class="xBoxes '+trackState+' '+trackRender+' '+cellName+' '+exp+'" data-track-x="'+cellName+'" data-track-y="'+exp+'" data-track-state="'+trackState+'" data-track-render="'+trackRender+'"></div>';
+          xContainer += '<div class="xBoxes '+boxState+' '+boxRender+' '+cellName+' '+exp+'" data-track-x="'+cellName+'" data-track-y="'+exp+'" data-box-state="'+boxState+'" data-box-render="'+boxRender+'" data-popup-type="'+popupType+'"></div>';
         });
 
         xContainer += "</div>";
         panel.el.find('div.matrix-container').append(xContainer);
     });
-    panel.cellClick(); //opens popup
-    panel.popupFunctionality(); //interaction inside popup
+    panel.cellClick(); //opens popup    
   },
 
   resetMatrix: function() {
@@ -1138,23 +1146,65 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if($(this).hasClass("track-on")){
         $(this).addClass("mClick");
 
-        var trackState  = $(this).data("track-state"); //is the track on or off
-        var trackRender = $(this).data("track-render"); //is the track peak or signal or peakandsignal
+        var popupType = $(this).data("popup-type"); //type of popup to use which is associated with the class name
+        var boxState  = $(this).data("box-state"); //is the track on or off
+        var boxRender = $(this).data("box-render"); //is the track peak or signal or peak-signal
+        var rowState = $(panel.el.find('div.xLabel.'+$(this).data("track-x"))).data("track-state"); // get the equivalent xlabel first and then its state to determine whether row is on/off
+        var rowRender = $(panel.el.find('div.xLabel.'+$(this).data("track-x"))).data("track-render"); // renderer of row
+        var colState = $(panel.el.find('div.yLabel.'+$(this).data("track-y"))).data("track-state"); // get the equivalent ylabel first and then its state to determine whether column is on/off
+        var colRender = $(panel.el.find('div.yLabel.'+$(this).data("track-y"))).data("track-render"); // renderer of column
+
+        var trackPopup = panel.el.find('div.track-popup.'+popupType);
+
+        //setting column switch for whether it is on/off
+        if(colState === "track-on") {
+          trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked",true);
+        } else {
+          trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked",false);
+        }
+
+        //setting column radio button for render
+        trackPopup.find('ul li input[name=column-radio]._'+colRender).prop("checked",true);
+
+        //setting row switch for whether it is on/off
+        if(rowState === "track-on") {
+          trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked",true);
+        } else {
+          trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked",false);
+        }        
+
+        //setting row radio button for render
+        trackPopup.find('ul li input[name=row-radio]._'+rowRender).prop("checked",true);
+
+        //setting box/cell switch on/off
+        if(boxState === "track-on") {
+          trackPopup.find('ul li label.switch input[name="cell-switch"]').prop("checked",true);
+        } else {
+          trackPopup.find('ul li label.switch input[name="cell-switch"]').prop("checked",false);
+        }
+
+        //setting box/cell radio button for render
+        trackPopup.find('ul li input[name=cell-radio]._'+boxRender).prop("checked",true);
 
         //TODO fix offset of popup when scrolling, it should position based on the mouse click and below
-        //to center the popup on the box, get the x and y position of the box and then add half the length
-        panel.el.find('div.peak-signal').attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top':$(this).position().top + 15,'left':$(this).position().left + 15}).show();
+        //center the popup on the box, get the x and y position of the box and then add half the length
+        //populating the popup settings (on/off, peak, signals...) based on the data attribute value
+        trackPopup.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top':$(this).position().top + 15,'left':$(this).position().left + 15}).show();
       }
+      panel.popupFunctionality($(this)); //interaction inside popup
     });
   },
 
-  //function to handle functionalities inside popup
-  popupFunctionality: function() {
+  //function to handle functionalities inside popup (switching off track or changing renderer)
+  //Argument: Object of the cell/box clicked
+  popupFunctionality: function(boxObj) {
     var panel = this;
+
+    //choosing toggle button - column/row/cell
+    //panel.trackPopup.find('ul li input[name=column-radio]')
+    //if column is off, add to label, same for row, if cell is off add to cell
 
     //choosing radio button - track renderer
 
-    //choosing toggle button - column/row/cell
-    // if column is off, add to label, same for row, if cell is off add to cell
   }
 });
