@@ -1035,7 +1035,7 @@ sub add_regulation_features {
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
 
   ## Add motif features
-  my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+  my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features', {
       db          => $key,
       glyphset    => 'fg_motif_features',
       sources     => 'undef',
@@ -1044,9 +1044,9 @@ sub add_regulation_features {
       depth       => 1,
       colourset   => 'fg_motif_features',
       display     => 'off',
-      description => 'Transcription Factor Binding Motif sites',
+      description => 'Transcription Factor Binding Motif sites. Black denotes motif features that have a matching peak (experimentally verified); they are also displayed on the epigenome activity tracks. Grey ones do not have a matching peak, and are displayed in this track only.',
       renderers   => ['off', 'Off', 'compact', 'Compact'],
-  });
+  }));
   $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
 }
 
