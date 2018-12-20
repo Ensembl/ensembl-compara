@@ -32,7 +32,11 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-    Specialized version of the LoadMembers pipeline for Ensembl
+Specialized version of the LoadMembers pipeline for Ensembl
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf
 
 =head1 AUTHORSHIP
 
