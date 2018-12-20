@@ -567,10 +567,11 @@ sub create_species_set {
 }
 
 sub create_mlss {
-    my ($method, $species_set, $ss_display_name, $source, $url) = @_;
+    my ($method, $species_set, $source, $url) = @_;
     if (ref($species_set) eq 'ARRAY') {
         $species_set = create_species_set($species_set);
     }
+    my $ss_display_name = $species_set->get_value_for_tag('display_name');
     {
         $ss_display_name ||= $species_set->name;
         $ss_display_name =~ s/collection-//;
@@ -643,14 +644,14 @@ sub create_pairwise_wga_mlsss {
 }
 
 sub create_multiple_wga_mlsss {
-    my ($compara_dba, $method, $species_set, $ss_display_name, $with_gerp, $source, $url) = @_;
+    my ($compara_dba, $method, $species_set, $with_gerp, $source, $url) = @_;
     my @mlsss;
-    push @mlsss, create_mlss($method, $species_set, $ss_display_name, $source, $url);
+    push @mlsss, create_mlss($method, $species_set, $source, $url);
     if ($with_gerp) {
         my $ce_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSTRAINED_ELEMENT');
-        push @mlsss, create_mlss($ce_method, $species_set, $ss_display_name, $source, $url);
+        push @mlsss, create_mlss($ce_method, $species_set, $source, $url);
         my $cs_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSERVATION_SCORE');
-        push @mlsss, create_mlss($cs_method, $species_set, $ss_display_name, $source, $url);
+        push @mlsss, create_mlss($cs_method, $species_set, $source, $url);
     }
     if ($method->type eq 'CACTUS_HAL') {
         my $pw_method = $compara_dba->get_MethodAdaptor->fetch_by_type('CACTUS_HAL_PW');
@@ -671,9 +672,9 @@ sub create_assembly_patch_mlsss {
 }
 
 sub create_homology_mlsss {
-    my ($compara_dba, $method, $species_set, $ss_display_name) = @_;
+    my ($compara_dba, $method, $species_set) = @_;
     my @mlsss;
-    push @mlsss, create_mlss($method, $species_set, $ss_display_name);
+    push @mlsss, create_mlss($method, $species_set);
     if (($method->type eq 'PROTEIN_TREES') or ($method->type eq 'NC_TREES')) {
         my @non_components = grep {!$_->genome_component} @{$species_set->genome_dbs};
         my $orth_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES');
