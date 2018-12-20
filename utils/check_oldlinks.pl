@@ -44,13 +44,17 @@ BEGIN {
 
 use EnsEMBL::Root;
 use EnsEMBL::Web::Tree;
-use EnsEMBL::Web::Hub;
+use EnsEMBL::Web::Controller;
+use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::Document::Page::Dynamic;
 use EnsEMBL::Web::OldLinks;
 
-my $hub     = new EnsEMBL::Web::Hub;
-my $builder = new EnsEMBL::Web::Builder({ hub => $hub });
+my $sd      = EnsEMBL::Web::SpeciesDefs->new;
+my $ctrl    = EnsEMBL::Web::Controller->new('', $sd);
+
+my $hub     = $ctrl->hub;
+my $builder = new EnsEMBL::Web::Builder($hub);
 my (@object_types, %old_links);
 
 while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_CONTROLLER_MAP})) {
@@ -70,6 +74,8 @@ my $errors;
 
 foreach my $type (@object_types) {
   my $conf_module = "EnsEMBL::Web::Configuration::$type";
+  $hub->{'type'} = $type;
+  $hub->{'action'} = 'Summary';
   
   if (EnsEMBL::Root::dynamic_use(undef, $conf_module)) {
     ## We need to fake a web page so that we can get the LH menu

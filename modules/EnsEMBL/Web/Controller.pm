@@ -71,8 +71,8 @@ sub new {
 
   # Temporary
   if (!UNIVERSAL::isa($r // '', 'Apache2::RequestRec') || !UNIVERSAL::isa($species_defs // '', 'EnsEMBL::Web::SpeciesDefs')) {
-    use Carp qw(cluck);
-    cluck('Invalid parameters');
+    #use Carp qw(cluck);
+    #cluck('Invalid parameters');
   }
 
   my $self = bless {
