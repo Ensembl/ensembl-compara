@@ -28,6 +28,7 @@ sub init {
   my $hub  = $self->hub;
 
   $self->SUPER::init;
+  return unless $hub->session;
 
   my $cell_url = $hub->param('cell');
   my $cell_session = $hub->session->get_data(type => 'cell', code => 'cell');
