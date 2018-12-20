@@ -524,7 +524,7 @@ print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 print "\nWhat else is new in e$current_version ?\n-------------------------\n";
 $n = 0;
 foreach my $mlss (@mlsss_existing) {
-    next if $mlss->first_release != $current_version;
+    next if !$mlss->first_release || $mlss->first_release != $current_version;
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
         print $mlss->toString, "\n";
     } else {
