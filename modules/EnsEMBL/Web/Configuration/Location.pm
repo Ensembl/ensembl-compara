@@ -38,7 +38,7 @@ sub init {
   
   $self->SUPER::init;
   
-  if (!scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
+  if ($hub->session && !scalar grep /^s\d+$/, keys %{$hub->multi_params}) {
     my $multi_species = $hub->session->get_record_data({type => 'multi_species', code => 'multi_species'});
     $self->tree->get_node('Multi')->set('url', $hub->url({ action => 'Multi', function => undef, %{$multi_species->{$hub->species}} })) if $multi_species && $multi_species->{$hub->species};
   }
