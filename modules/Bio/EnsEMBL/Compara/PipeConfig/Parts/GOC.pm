@@ -103,12 +103,13 @@ sub pipeline_analyses_goc {
                     '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
                     '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
                 ),
+                -1 => 'compute_goc_himem',
             },
             -rc_name => '1Gb_job',
             -hive_capacity  =>  $self->o('goc_capacity'),
-            -flow_into => {
-                -1 => 'compute_goc_himem',
-            },
+            # -flow_into => {
+                
+            # },
         },
 
         {   -logic_name => 'compute_goc_himem',

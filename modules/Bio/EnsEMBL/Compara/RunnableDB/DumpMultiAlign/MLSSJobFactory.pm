@@ -93,9 +93,12 @@ sub _test_mlss {
     #Note this is using the database set in $self->param('compara_db') rather than the underlying eHive database.
     my $compara_dba       = $self->compara_dba;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+    my $genome_component  = $mlss->has_tag('reference_component') ? $mlss->get_value_for_tag('reference_component') : undef;
     my $species_name      = $mlss->get_value_for_tag('reference_species');
-    my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($species_name)
-                             || $genome_db_adaptor->fetch_by_registry_name($species_name);
+
+    my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($species_name) || $genome_db_adaptor->fetch_by_registry_name($species_name);
+    $genome_db            = $genome_db->component_genome_dbs($mlss->get_value_for_tag('reference_component')) if $mlss->has_tag('reference_component');
+
     $genome_db->db_adaptor || die "I don't know where the '$species_name' core database is. Have you defined the Registry ?\n";
     
     my $filename = $mlss->filename;

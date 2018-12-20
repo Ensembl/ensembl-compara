@@ -86,7 +86,7 @@ sub default_options {
         'store_others'              => 1,
 
     #load uniprot members for family pipeline
-        'load_uniprot_members'      => 1,
+        'load_uniprot_members'      => 0,
         'family_mlss_id'            => undef, 
         'work_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/LoadMembers_pipeline/' . $self->o('pipeline_name'),
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',

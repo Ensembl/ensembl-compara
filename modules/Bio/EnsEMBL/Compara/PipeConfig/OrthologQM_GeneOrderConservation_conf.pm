@@ -78,9 +78,9 @@ sub default_options {
         'goc_mlss_id'   => undef, #'100021',
 
         'goc_taxlevels' => ["Euteleostomi","Ciona"],
-        'goc_threshold' => undef,
         'goc_reuse_db'  => undef,
-	'calculate_goc_distribution' => undef,
+        'calculate_goc_distribution'    => 1,
+        'goc_threshold' => 50,
 
         # Capacities and batch-sizes
         'goc_capacity'          => 30,
@@ -114,7 +114,6 @@ sub resource_classes {
         '4Gb_job'      => {'LSF' => '-C0 -M4000 -q production-rh7 -R"select[mem>4000]  rusage[mem=4000]"' },
     };
 }
-
 
 sub pipeline_analyses {
     my ($self) = @_;
