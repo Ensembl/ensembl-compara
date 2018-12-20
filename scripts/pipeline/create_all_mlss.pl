@@ -387,7 +387,7 @@ foreach my $xml_asm_patch (@{$division_node->findnodes('assembly_patches/genome'
 my $fam_method = $compara_dba->get_MethodAdaptor->fetch_by_type('FAMILY');
 foreach my $fam_node (@{$division_node->findnodes('families/family')}) {
     my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($fam_node, $fam_method, $division_genome_dbs) };
-    push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($fam_method, $species_set, undef, $display_name);
+    push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($fam_method, $species_set, $display_name);
 }
 
 foreach my $gt (qw(protein nc)) {
@@ -402,7 +402,7 @@ foreach my $gt (qw(protein nc)) {
 my $st_method = $compara_dba->get_MethodAdaptor->fetch_by_type('SPECIES_TREE');
 foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')}) {
     my ($species_set, $display_name) = @{ make_named_species_set_from_XML_node($st_node, $st_method, $division_genome_dbs) };
-    push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set, undef, $display_name);
+    push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set, $display_name);
 }
 
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_current};

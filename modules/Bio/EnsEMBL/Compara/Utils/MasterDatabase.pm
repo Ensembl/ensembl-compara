@@ -567,7 +567,7 @@ sub create_species_set {
 }
 
 sub create_mlss {
-    my ($method, $species_set, $mlss_name, $ss_display_name, $source, $url) = @_;
+    my ($method, $species_set, $ss_display_name, $source, $url) = @_;
     if (ref($species_set) eq 'ARRAY') {
         $species_set = create_species_set($species_set);
     }
@@ -577,7 +577,7 @@ sub create_mlss {
         my $ss_size = scalar(@{$species_set->genome_dbs});
         $ss_display_name = "$ss_size $ss_display_name" if $ss_display_name ne 'default' && $ss_size > 2;
     }
-    $mlss_name ||= sprintf('%s %s', $ss_display_name, $method->display_name || die "No description for ".$method->type);
+    my $mlss_name = sprintf('%s %s', $ss_display_name, $method->display_name || die "No description for ".$method->type);
     return Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -SPECIES_SET => $species_set,
         -METHOD => $method,
@@ -598,7 +598,7 @@ sub create_mlsss_on_pairs {
     my @input_genome_dbs = @$genome_dbs;
     while (my $gdb1 = shift @input_genome_dbs) {
         foreach my $gdb2 (@input_genome_dbs) {
-            push @mlsss, create_mlss($method, [$gdb1, $gdb2], undef, undef, $source, $url);
+            push @mlsss, create_mlss($method, [$gdb1, $gdb2], undef, $source, $url);
         }
     }
     return \@mlsss;
@@ -610,9 +610,9 @@ sub create_self_wga_mlsss {
 
     # Alignment with LASTZ_NET (for now ... we may turn this into a parameter in the future)
     my $aln_method = $compara_dba->get_MethodAdaptor->fetch_by_type('LASTZ_NET');
-    my $mlss_name = sprintf('%s %s (self-alignment)', $gdb->get_short_name, $aln_method->display_name);
-    my $self_lastz_mlss = create_mlss($aln_method, $species_set, $mlss_name);
+    my $self_lastz_mlss = create_mlss($aln_method, $species_set);
     $self_lastz_mlss->add_tag( 'species_set_size', 1 );
+    $self_lastz_mlss->name( $self_lastz_mlss->name . ' (self-alignment)' );
 
     if ($gdb->is_polyploid) {
         # POLYPLOID is the restriction of the alignment on the homoeologues
@@ -631,9 +631,9 @@ sub create_pairwise_wga_mlsss {
     my ($compara_dba, $method, $ref_gdb, $nonref_gdb) = @_;
     my @mlsss;
     my $species_set = create_species_set([$ref_gdb, $nonref_gdb]);
-    my $mlss_name = sprintf('%s %s (on %s)', $species_set->name, $method->display_name, $ref_gdb->get_short_name);
-    my $pw_mlss = create_mlss($method, $species_set, $mlss_name);
+    my $pw_mlss = create_mlss($method, $species_set);
     $pw_mlss->add_tag( 'reference_species', $ref_gdb->name );
+    $pw_mlss->name( $pw_mlss->name . sprintf('  (on %s)', $ref_gdb->get_short_name) );
     push @mlsss, $pw_mlss;
     if ($ref_gdb->has_karyotype and $nonref_gdb->has_karyotype) {
         my $synt_method = $compara_dba->get_MethodAdaptor->fetch_by_type('SYNTENY');
@@ -645,12 +645,12 @@ sub create_pairwise_wga_mlsss {
 sub create_multiple_wga_mlsss {
     my ($compara_dba, $method, $species_set, $ss_display_name, $with_gerp, $source, $url) = @_;
     my @mlsss;
-    push @mlsss, create_mlss($method, $species_set, undef, $ss_display_name, $source, $url);
+    push @mlsss, create_mlss($method, $species_set, $ss_display_name, $source, $url);
     if ($with_gerp) {
         my $ce_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSTRAINED_ELEMENT');
-        push @mlsss, create_mlss($ce_method, $species_set, undef, $ss_display_name, $source, $url);
+        push @mlsss, create_mlss($ce_method, $species_set, $ss_display_name, $source, $url);
         my $cs_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSERVATION_SCORE');
-        push @mlsss, create_mlss($cs_method, $species_set, undef, $ss_display_name, $source, $url);
+        push @mlsss, create_mlss($cs_method, $species_set, $ss_display_name, $source, $url);
     }
     if ($method->type eq 'CACTUS_HAL') {
         my $pw_method = $compara_dba->get_MethodAdaptor->fetch_by_type('CACTUS_HAL_PW');
@@ -673,7 +673,7 @@ sub create_assembly_patch_mlsss {
 sub create_homology_mlsss {
     my ($compara_dba, $method, $species_set, $ss_display_name) = @_;
     my @mlsss;
-    push @mlsss, create_mlss($method, $species_set, undef, $ss_display_name);
+    push @mlsss, create_mlss($method, $species_set, $ss_display_name);
     if (($method->type eq 'PROTEIN_TREES') or ($method->type eq 'NC_TREES')) {
         my @non_components = grep {!$_->genome_component} @{$species_set->genome_dbs};
         my $orth_method = $compara_dba->get_MethodAdaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES');
