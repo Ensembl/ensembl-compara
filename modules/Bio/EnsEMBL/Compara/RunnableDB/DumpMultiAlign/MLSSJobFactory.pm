@@ -96,15 +96,8 @@ sub _test_mlss {
     my $genome_component  = $mlss->has_tag('reference_component') ? $mlss->get_value_for_tag('reference_component') : undef;
     my $species_name      = $mlss->get_value_for_tag('reference_species');
 
-    my $genome_db;
-    if ($genome_component) {
-        my $principal_genome_db = $genome_db_adaptor->fetch_by_name_assembly($species_name);
-        my $assembly = $principal_genome_db->assembly;
-        $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species_name, $assembly, $genome_component) || $genome_db_adaptor->fetch_by_registry_name($species_name);
-    }
-    else {
-        $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species_name) || $genome_db_adaptor->fetch_by_registry_name($species_name);
-    }
+    my $genome_db         = $genome_db_adaptor->fetch_by_name_assembly($species_name) || $genome_db_adaptor->fetch_by_registry_name($species_name);
+    $genome_db            = $genome_db->component_genome_dbs($mlss->get_value_for_tag('reference_component')) if $mlss->has_tag('reference_component');
 
     $genome_db->db_adaptor || die "I don't know where the '$species_name' core database is. Have you defined the Registry ?\n";
     
