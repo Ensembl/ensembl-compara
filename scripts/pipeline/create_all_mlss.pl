@@ -452,7 +452,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 # allow for cases where BLASTZ_NET is not in the method_link table - this is the case for EG
                 $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs) if ($compara_dba->get_MethodAdaptor->fetch_by_type('BLASTZ_NET'));
             }
-            if ($exist_mlss and $exist_mlss->is_current) {
+            if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;
                 delete $mlss_ids_to_find{$exist_mlss->dbID};
                 next;
