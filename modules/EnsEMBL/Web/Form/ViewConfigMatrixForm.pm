@@ -64,30 +64,30 @@ sub build {
     <div class="flex-row">
       <div class="track-panel active" id="track-content">
         <div class="tabs track-menu">
-          <div class="track-tab active" id="cell-tab">
+          <div class="track-tab active" id="dx-tab">
             <span> Epigenome </span>
-            <span class="hidden content-id">cell-content</span>
+            <span class="hidden content-id">dx-content</span>
             <div class="search-box">
-              <input class="configuration_search_text" placeholder="Search" name="cell_search">
+              <input class="configuration_search_text" placeholder="Search" name="dx_search">
               <img src="/i/16/search.png" class="search-icon" />
             </div>
           </div>
-          <div class="track-tab" id="experiment-tab">
+          <div class="track-tab" id="dy-tab">
             <span> Experimental data </span>
-            <span class="hidden content-id">experiment-content</span>
+            <span class="hidden content-id">dy-content</span>
             <div class="search-box">
-              <input class="configuration_search_text" placeholder="Search" name="experiment_search">
+              <input class="configuration_search_text" placeholder="Search" name="dy_search">
               <img src="/i/16/search.png"  class="search-icon"/>
             </div>
           </div>
         </div>
 
-        <div id="cell-content" class="tab-content active" data-rhsection-id="cell">
-          <span class="hidden rhsection-id">cell</span>
+        <div id="dx-content" class="tab-content active" data-rhsection-id="dx">
+          <span class="hidden rhsection-id">dx</span>
         </div>
 
-        <div id="experiment-content" class="tab-content" data-rhsection-id="experiment">
-          <span class="hidden rhsection-id">experiment</span>
+        <div id="dy-content" class="tab-content" data-rhsection-id="dy">
+          <span class="hidden rhsection-id">dy</span>
         </div>
       </div>
         
@@ -113,19 +113,19 @@ sub build {
 
         <div class="filter-content">
           <h5 class="result-header">Epigenome <span class="error _cell">Please select Epigenome</span></h5>
-          <div class="result-content" id="cell">
+          <div class="result-content" id="dx">
             <div class="sub-result-link">Epigenome</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
             <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
             <ul class="result-list hidden">
-              <span class="hidden lhsection-id">cell-content</span>
+              <span class="hidden lhsection-id">dx-content</span>
             </ul>
           </div>
 
           <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
-          <div id="experiment">
+          <div id="dy">
             <div class="result-content" id="Histone">
-              <span class="_parent-tab-id hidden">experiment-tab</span>
+              <span class="_parent-tab-id hidden">dy-tab</span>
               <div class="sub-result-link">Histone</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
@@ -134,7 +134,7 @@ sub build {
               </ul>
             </div>
             <div class="result-content" id="Open_Chromatin">
-							<span class="_parent-tab-id hidden">experiment-tab</span>
+							<span class="_parent-tab-id hidden">dy-tab</span>
               <div class="sub-result-link">Open chromatin</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
@@ -143,7 +143,7 @@ sub build {
               </ul>
             </div>
             <div class="result-content" id="Polymerase">
-							<span class="_parent-tab-id hidden">experiment-tab</span>
+							<span class="_parent-tab-id hidden">dy-tab</span>
               <div class="sub-result-link">Polymerase</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
@@ -152,7 +152,7 @@ sub build {
               </ul>
             </div>          
             <div class="result-content" id="TFBS">
-              <span class="_parent-tab-id hidden">experiment-tab</span>
+              <span class="_parent-tab-id hidden">dy-tab</span>
 							<div class="sub-result-link">TFBS</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>

@@ -26,11 +26,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
 
-    this.elLk.cell        = {};
-    this.elLk.cell.container = $('div#cell-content', this.el);
+    this.elLk.dx        = {};
+    this.elLk.dx.container = $('div#dx-content', this.el);
 
-    this.elLk.experiment        = {};
-    this.elLk.experiment.container = $('div#experiment-content', this.el);
+    this.elLk.dy        = {};
+    this.elLk.dy.container = $('div#dy-content', this.el);
 
     this.elLk.buttonTab       = this.el.find("div.track-tab");
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
@@ -46,7 +46,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
 
-    panel.el.find("div#experiment-tab div.search-box").hide();
+    panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
       url: '/Json/RegulationData/data?species='+Ensembl.species,
@@ -86,32 +86,32 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
   getActiveTabContainer: function() {
-    return $('div#cell-content.active, div#experiment-content.active', this.el);
+    return $('div#dx-content.active, div#dy-content.active', this.el);
   },
   getActiveTab: function() {
-    return $('div#cell-content.active span.rhsection-id, div#experiment-content.active span.rhsection-id', this.el).html();
+    return $('div#dx-content.active span.rhsection-id, div#dy-content.active span.rhsection-id', this.el).html();
   },
   getActiveSubTab: function() {
-    return $('div#cell-content.active .tab-content.active span.rhsection-id, div#experiment-content.active .tab-content.active span.rhsection-id', this.el).html();
+    return $('div#dx-content.active .tab-content.active span.rhsection-id, div#dy-content.active .tab-content.active span.rhsection-id', this.el).html();
   },
 
   populateLookUp: function() {
     var panel = this;
     // cell elements
-    this.elLk.cell.ribbonBanner = $('.ribbon-banner .letters-ribbon .alphabet-div', this.elLk.cell.container);
-    this.elLk.cell.tabContents = $('.ribbon-content li', this.elLk.cell.container);
-    this.elLk.cell.haveSubTabs = false;
+    this.elLk.dx.ribbonBanner = $('.ribbon-banner .letters-ribbon .alphabet-div', this.elLk.dx.container);
+    this.elLk.dx.tabContents = $('.ribbon-content li', this.elLk.dx.container);
+    this.elLk.dx.haveSubTabs = false;
 
     // ExpType elements
-    this.elLk.experiment.haveSubTabs = true;
-    this.elLk.experiment.tabs = {}
-    this.elLk.experiment.tabContents = {};
-    var expTabs = $('.tabs.experiments div.track-tab', this.elLk.experiment.container);
-    $.each(expTabs, function(i, el) {
+    this.elLk.dy.haveSubTabs = true;
+    this.elLk.dy.tabs = {}
+    this.elLk.dy.tabContents = {};
+    var dyTabs = $('.tabs.dy div.track-tab', this.elLk.dy.container);
+    $.each(dyTabs, function(i, el) {
       var k = $(el).attr('id').split('-')[0] || $(el).attr('id');
-      panel.elLk.experiment.tabs[k] = el;
+      panel.elLk.dy.tabs[k] = el;
       var tabContentId = $('span.content-id', el).html();
-      panel.elLk.experiment.tabContents[k] = $('div#' + tabContentId + ' li', panel.elLk.experiment.container);
+      panel.elLk.dy.tabContents[k] = $('div#' + tabContentId + ' li', panel.elLk.dy.container);
     });
   },
 
@@ -125,24 +125,24 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
 
     // Apply cell first so that filter happens and then select all experiment types
-    if (this.localStoreObj.cell) {
+    if (this.localStoreObj.dx) {
       var el;
-      $.each(this.localStoreObj.cell, function(k) {
-        el = panel.elLk.cell.tabContents.not(':not(.'+ k +')');
+      $.each(this.localStoreObj.dx, function(k) {
+        el = panel.elLk.dx.tabContents.not(':not(.'+ k +')');
         panel.selectBox(el);
       });
       panel.filterData($(el).data('item'));
     }
-    if (this.localStoreObj.experiment) {
+    if (this.localStoreObj.dy) {
       var el, subTab;
-      $.each(this.localStoreObj.experiment, function(k) {
+      $.each(this.localStoreObj.dy, function(k) {
         subTab = panel.elLk.lookup[k].subTab;
-        el = panel.elLk.experiment.tabContents[subTab].filter(function() {return $(this).hasClass(k)});
+        el = panel.elLk.dy.tabContents[subTab].filter(function() {return $(this).hasClass(k)});
         panel.selectBox(el);
       });
 
       // If there were no celltypes selected then filter based on exp type
-      !this.localStoreObj.cell && this.localStoreObj.experiment && panel.filterData($(el).data('item'));
+      !this.localStoreObj.dx && this.localStoreObj.dy && panel.filterData($(el).data('item'));
     }
 
     panel.updateRHS();
@@ -155,9 +155,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var zone;
 
     if (!$('.tab-content.active .tab-content .ribbon-content', panel.el).length) {
-      if (this.dragSelectCell) return;
+      if (this.dragSelect_dx) return;
       zone = '.tab-content.active .ribbon-content';
-      this.dragSelectCell = new Selectables({
+      this.dragSelect_dx = new Selectables({
         elements: 'ul.letter-content li span',
         // selectedClass: 'selected',
         zone: zone,
@@ -181,9 +181,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       if (!$('.tab-content.active .tab-content.active', panel.elLk.trackPanel).length) return;
 
-      if (this.dragSelectExp && this.dragSelectExp[this.getActiveSubTab()]) return;
-      this.dragSelectExp = this.dragSelectExp || {};
-      this.dragSelectExp[this.getActiveSubTab()] = new Selectables({
+      if (this.dragSelect_dy && this.dragSelect_dy[this.getActiveSubTab()]) return;
+      this.dragSelect_dy = this.dragSelect_dy || {};
+      this.dragSelect_dy[this.getActiveSubTab()] = new Selectables({
         elements: 'li span, div.all-box',
         zone: zone,
         // selectedClass: 'selected',
@@ -320,8 +320,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.activateTabs();
     panel.updateShowHideLinks(item);
     panel.setLocalStorage();
-    panel.trackError('div#cell, div#experiment, div#source');
-    panel.enableConfigureButton('div#cell, div#experiment, div#source');
+    panel.trackError('div#dx, div#dy, div#source');
+    panel.enableConfigureButton('div#dx, div#dy, div#source');
   },
 
 
@@ -384,7 +384,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var selectedElements = [];
     this.selectedTracksCount = {};
     this.totalSelected = 0;
-    ['cell', 'experiment'].forEach(function(key) {
+    ['dx', 'dy'].forEach(function(key) {
       var selectedLIs, allLIs;
       if (panel.elLk[key].haveSubTabs) {
         // If tab have subtabs
@@ -501,8 +501,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   removeFromStore: function(item, lhs_section_id) {
     // Removal could happen from RHS or LHS. So section id need to passed as param
-    if(lhs_section_id !== 'cell') {
-      var tab = 'experiment'
+    if(lhs_section_id !== 'dx') {
+      var tab = 'dy'
       item && lhs_section_id && delete this.localStoreObj[tab][lhs_section_id][item];
     }
     else {
@@ -597,22 +597,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
   },
 
-
   trackTab: function() {
     var panel = this;
     //showing and applying cell types
-    var cellTypeContainer = panel.el.find("div#cell-content");
-    var rhSectionId = cellTypeContainer.data('rhsection-id');
+    var dxContainer = panel.el.find("div#dx-content");
+    var rhSectionId = dxContainer.data('rhsection-id');
     var noFilter = true;
     panel.dimX = panel.json.dimensions[0];
     panel.dimY = panel.json.dimensions[1];
     var dimX = panel.json.data[panel.dimX];
     var dimY = panel.json.data[panel.dimY];
 
-    this.displayCheckbox(Object.keys(dimX.data).sort(), "div#cell-content", dimX.listType, cellTypeContainer, rhSectionId, noFilter);
+    this.displayCheckbox(Object.keys(dimX.data).sort(), "div#dx-content", dimX.listType, dxContainer, rhSectionId, noFilter);
 
     //showing experiment type tabs
-    var experiment_html = '<div class="tabs experiments">';
+    var dy_html = '<div class="tabs dy">';
     var content_html    = "";
 
     //sort dimY object
@@ -626,28 +625,28 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $.each(dimY.data, function(key, item){
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
-      experiment_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
+      dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
       content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
       count++;
     });
-    experiment_html += '</div>';
-    var expTabContainer = panel.el.find("div#experiment-content");
-    expTabContainer.append(experiment_html).append(content_html);
-    rhSectionId = expTabContainer.data('rhsection-id');
+    dy_html += '</div>';
+    var dyContainer = panel.el.find("div#dy-content");
+    dyContainer.append(dy_html).append(content_html);
+    rhSectionId = dyContainer.data('rhsection-id');
     
     //displaying the experiment types
     if (dimY.subtabs) {
       $.each(dimY.data, function(key, subTab){
-        panel.displayCheckbox(subTab.data, "div#"+key+"-content", subTab.listType, expTabContainer, rhSectionId);
+        panel.displayCheckbox(subTab.data, "div#"+key+"-content", subTab.listType, dyContainer, rhSectionId);
       })
     }
 
-    //adding experiment and cells relationship as data-attribute
+    //adding dimension Y and X relationship as data-attribute
     panel.addRelationData();
 
     //selecting the tab in experiment type
-    this.el.find("div.experiments div.track-tab").on("click", function () {
-      panel.toggleTab(this, panel.el.find("div.experiments"));
+    this.el.find("div.dy div.track-tab").on("click", function () {
+      panel.toggleTab(this, panel.el.find("div.dy"));
       panel.setDragSelectEvent();
     });    
     
@@ -811,11 +810,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         relDataFilter ?  panel.el.find("li."+relClassName).attr('data-filter', relDataFilter+" "+dimX_className) :  panel.el.find("li."+relClassName).attr('data-filter', dimX_className);
 
         if(!panel.el.find("li."+relClassName).attr('data-filtercontainer')){
-          panel.el.find("li."+relClassName).attr('data-filtercontainer', 'cell-content');
+          panel.el.find("li."+relClassName).attr('data-filtercontainer', 'dx-content');
         } 
       });
       //data-filter contains the classname that needs to be shown and data-filtercontainer is the id where elements to be shown are located
-      panel.el.find("li."+dimX_className).attr('data-filter', relClassNameString).attr('data-filtercontainer', 'experiment-content');
+      panel.el.find("li."+dimX_className).attr('data-filter', relClassNameString).attr('data-filtercontainer', 'dy-content');
 
     });
   },
@@ -1098,8 +1097,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     var xContainer = '<div  class="xContainer">';
     
-    //creating array of experiment from lookup Obj. ; this will make sure the order is the same
-    var expArray = Object.keys(panel.localStoreObj.experiment);
+    //creating array of dy from lookup Obj. ; this will make sure the order is the same
+    var dyArray = Object.keys(panel.localStoreObj.dy);
 
     // State of the column(evidence) or row (cell) which is attached to the labels
     // whether the whole row is on/off, whole column is on/off, render is peak-signal, peak or signal
@@ -1107,25 +1106,25 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     // TODO: check if localstore obj matrix exists, if exists get values from localstore Obj else create store
     var rowState, columnState, rowRender, columnRender;
 
-    // creating experiment label on top of matrix
-    $.each(expArray, function(i, exp){
-      var experimentName = panel.elLk.lookup[exp].label;
-      if(panel.localStoreObj.matrix[exp]) {
-        columnState   = panel.localStoreObj.matrix[exp].state;
-        columnRender  = panel.localStoreObj.matrix[exp].render;
+    // creating dy label on top of matrix
+    $.each(dyArray, function(i, dyItem){
+      var dyLabel = panel.elLk.lookup[dyItem].label;
+      if(panel.localStoreObj.matrix[dyItem]) {
+        columnState   = panel.localStoreObj.matrix[dyItem].state;
+        columnRender  = panel.localStoreObj.matrix[dyItem].render;
       } else {
         columnState   = "track-on";
         columnRender  = "peak-signal";
-        panel.localStoreObj.matrix[exp] = {"state": columnState, "render": columnRender};
+        panel.localStoreObj.matrix[dyItem] = {"state": columnState, "render": columnRender};
       }
-      xContainer += '<div class="xLabel '+exp+'" data-track-state="'+columnState+'" data-track-render="'+columnRender+'">'+experimentName+'</div>';
+      xContainer += '<div class="xLabel '+dyItem+'" data-track-state="'+columnState+'" data-track-render="'+columnRender+'">'+dyLabel+'</div>';
     });
 
     xContainer += "</div>";
     panel.el.find('div.matrix-container').append(xContainer);
 
     //creating cell label with the boxes (number of boxes per row = number of experiments)
-    $.each(panel.localStoreObj.cell, function(cellName, value){
+    $.each(panel.localStoreObj.dx, function(cellName, value){
         var cellLabel    = panel.elLk.lookup[cellName].label;
 
         if(panel.localStoreObj.matrix[cellName]) {
@@ -1139,14 +1138,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var yContainer  = '<div class="yContainer"><div class="yLabel '+cellName+'" data-track-state="'+rowState+'" data-track-render="'+rowRender+'">'+cellLabel+'</div>';
         
         //drawing boxes
-        $.each(expArray, function(i, exp) {
+        $.each(dyArray, function(i, dyItem) {
           var boxState  = "", boxRender = "";
           var popupType = "peak-signal"; //class of type of popup to use
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
           $.each(panel.json.data[panel.dimX].data[cellLabel], function(cellKey, rel){
-            if(rel.val.replace(/[^\w\-]/g,'_') === exp) {
-              var storeKey = exp + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
+            if(rel.val.replace(/[^\w\-]/g,'_') === dyItem) {
+              var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
               if(panel.localStoreObj.matrix[storeKey]) {
                 boxState   = panel.localStoreObj.matrix[storeKey].state;
                 boxRender  = panel.localStoreObj.matrix[storeKey].render;
@@ -1158,7 +1157,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               return;
             }
           })
-          yContainer += '<div class="xBoxes '+boxState+' '+boxRender+' '+cellName+' '+exp+'" data-track-x="'+exp+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxRender+'" data-popup-type="'+popupType+'"></div>';
+          yContainer += '<div class="xBoxes '+boxState+' '+boxRender+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxRender+'" data-popup-type="'+popupType+'"></div>';
         });
 
         yContainer += "</div>";
