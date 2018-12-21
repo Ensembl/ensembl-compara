@@ -496,7 +496,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.localStoreObj[parentTab][item] = 1;
     });
 
-    panel.localStoreObj.matrix = {};
+    panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
   },
 
   removeFromStore: function(item, lhs_section_id) {
