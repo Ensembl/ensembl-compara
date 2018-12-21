@@ -603,26 +603,26 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var dxContainer = panel.el.find("div#dx-content");
     var rhSectionId = dxContainer.data('rhsection-id');
     var noFilter = true;
-    panel.dimX = panel.json.dimensions[0];
-    panel.dimY = panel.json.dimensions[1];
-    var dimX = panel.json.data[panel.dimX];
-    var dimY = panel.json.data[panel.dimY];
+    panel.dx = panel.json.dimensions[0];
+    panel.dy = panel.json.dimensions[1];
+    var dx = panel.json.data[panel.dx];
+    var dy = panel.json.data[panel.dy];
 
-    this.displayCheckbox(Object.keys(dimX.data).sort(), "div#dx-content", dimX.listType, dxContainer, rhSectionId, noFilter);
+    this.displayCheckbox(Object.keys(dx.data).sort(), "div#dx-content", dx.listType, dxContainer, rhSectionId, noFilter);
 
     //showing experiment type tabs
     var dy_html = '<div class="tabs dy">';
     var content_html    = "";
 
-    //sort dimY object
-    Object.keys(dimY.data).sort().forEach(function(key) {
-        var value = dimY.data[key];
-        delete dimY.data[key];
-        dimY.data[key] = value;
+    //sort dy object
+    Object.keys(dy.data).sort().forEach(function(key) {
+        var value = dy.data[key];
+        delete dy.data[key];
+        dy.data[key] = value;
     });
 
     var count = 0;
-    $.each(dimY.data, function(key, item){
+    $.each(dy.data, function(key, item){
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
       dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
@@ -635,8 +635,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     rhSectionId = dyContainer.data('rhsection-id');
     
     //displaying the experiment types
-    if (dimY.subtabs) {
-      $.each(dimY.data, function(key, subTab){
+    if (dy.subtabs) {
+      $.each(dy.data, function(key, subTab){
         panel.displayCheckbox(subTab.data, "div#"+key+"-content", subTab.listType, dyContainer, rhSectionId);
       })
     }
@@ -792,29 +792,29 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
   
-  //function to add dimX and dimY in data-filter attribute which link the dimX checkbox to the dimY checkbox and vice versa, used for filtering to show/hide checkboxes
+  //function to add dx and dy in data-filter attribute which link the dx checkbox to the dy checkbox and vice versa, used for filtering to show/hide checkboxes
   addRelationData: function () {
     var panel = this;
 
-    $.each(panel.json.data[panel.dimX].data, function(key, dimX_data) {
-      var dimX_className = key.replace(/[^\w\-]/g,'_');
+    $.each(panel.json.data[panel.dx].data, function(key, dx_data) {
+      var dx_className = key.replace(/[^\w\-]/g,'_');
 
-      //add dimY attribute to dimX
+      //add dy attribute to dx
       var relClassNameString="";
-      $.each(dimX_data, function(index, el) {
+      $.each(dx_data, function(index, el) {
         var relClassName = el.val.replace(/[^\w\-]/g,'_');
         relClassNameString += relClassName + " ";
         
         //adding cells atribute to experiments
         var relDataFilter = panel.el.find("li."+relClassName).attr('data-filter');
-        relDataFilter ?  panel.el.find("li."+relClassName).attr('data-filter', relDataFilter+" "+dimX_className) :  panel.el.find("li."+relClassName).attr('data-filter', dimX_className);
+        relDataFilter ?  panel.el.find("li."+relClassName).attr('data-filter', relDataFilter+" "+dx_className) :  panel.el.find("li."+relClassName).attr('data-filter', dx_className);
 
         if(!panel.el.find("li."+relClassName).attr('data-filtercontainer')){
           panel.el.find("li."+relClassName).attr('data-filtercontainer', 'dx-content');
         } 
       });
       //data-filter contains the classname that needs to be shown and data-filtercontainer is the id where elements to be shown are located
-      panel.el.find("li."+dimX_className).attr('data-filter', relClassNameString).attr('data-filtercontainer', 'dy-content');
+      panel.el.find("li."+dx_className).attr('data-filter', relClassNameString).attr('data-filtercontainer', 'dy-content');
 
     });
   },
@@ -1143,7 +1143,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var popupType = "peak-signal"; //class of type of popup to use
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-          $.each(panel.json.data[panel.dimX].data[cellLabel], function(cellKey, rel){
+          $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, rel){
             if(rel.val.replace(/[^\w\-]/g,'_') === dyItem) {
               var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
               if(panel.localStoreObj.matrix[storeKey]) {
