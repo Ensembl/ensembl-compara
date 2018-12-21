@@ -308,10 +308,10 @@ span.track-key.off        { background-color: [[WHITE]]; }
 span.track-key.no-data    { background-color: [[LIGHT_GREY]]; }
 span.track-key.peak       { border: none; margin-top: 2px; }
 span.track-key.signal     { border: none; margin-top: 2px; }
-div.yContainer            { display: block; margin-left: 185px }
-div.yLabel                { position: relative; display: inline-block; float: left; transform: rotate(-60deg); width: 32px; margin-bottom: 12px; }
-div.xContainer            {   }
-div.xLabel                { display: inline-block; float: left; width: 175px; text-align: right; margin-right: 10px; margin-top: 8px; }
+div.xContainer            { display: block; margin-left: 185px }
+div.xLabel                { position: relative; display: inline-block; float: left; transform: rotate(-60deg); width: 32px; margin-bottom: 12px; }
+div.yContainer            {   }
+div.yLabel                { display: inline-block; float: left; width: 175px; text-align: right; margin-right: 10px; margin-top: 8px; }
 div.xBoxes                { display: inline-block; float: left; width: 30px; height: 30px; border: #ccc 1px solid; margin: 0 0 -1px -1px; }
 
 /* track status for on */
@@ -337,7 +337,7 @@ div.track-popup                         { display: none; font-size: 11px; width:
 div.track-popup ul:last-child           { border-bottom: none; }
 
 div.config_wrapper div.config div.track-popup ul li:not(:first-child) { margin-left: 76px; }
-div.config_wrapper div.config div.track-popup ul li                   { padding: 8px; margin-bottom: -10px; }
+div.config_wrapper div.config div.track-popup ul li                   { padding: 8px; margin-bottom: -15px; }
 div.config_wrapper div.config div.track-popup ul li text              { position: relative; top: 1px; left: 10px; }
 div.config_wrapper div.config div.track-popup ul                      { border-bottom: 1px solid #b7b7b7 ; padding-bottom: 20px;}
 
@@ -388,8 +388,8 @@ span.switch-label { position: absolute; margin-left: 20px; }
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
+  -webkit-transition: .2s;
+  transition: .2s;
 }
 
 .slider:before {
@@ -400,8 +400,8 @@ span.switch-label { position: absolute; margin-left: 20px; }
   left: 4px;
   bottom: 4px;
   background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
+  -webkit-transition: .2s;
+  transition: .2s;
 }
 
 input:checked + .slider {
@@ -437,7 +437,7 @@ div.track-popup input[type='radio']:after {
   content: '';
   display: inline-block;
   visibility: visible;
-  border: 1px solid #000;
+  border: 1px solid #4c4c4c;
   padding: 2px;
   top: 3px;
   left: -3px;
@@ -452,7 +452,7 @@ div.track-popup input[type='radio']:checked:after {
   content: '';
   display: inline-block;
   visibility: visible;
-  border: 1px solid #000;
+  border: 1px solid #4c4c4c;
   background-clip: content-box;
   padding: 2px;
   top: 3px;
