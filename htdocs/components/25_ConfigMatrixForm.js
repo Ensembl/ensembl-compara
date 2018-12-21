@@ -1144,7 +1144,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var popupType = "peak-signal"; //class of type of popup to use
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-          $.each(panel.json.data[panel.dimX].data[cellName], function(cellKey, rel){
+          $.each(panel.json.data[panel.dimX].data[cellLabel], function(cellKey, rel){
             if(rel.val.replace(/[^\w\-]/g,'_') === exp) {
               var storeKey = exp + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
               if(panel.localStoreObj.matrix[storeKey]) {
