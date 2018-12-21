@@ -55,7 +55,7 @@ my ($num_human_lastz) = $compara_db->dbc->db_handle->selectrow_array("
 my $all_rows = $compara_db->dbc->db_handle->selectall_arrayref("
     SELECT mlss.method_link_species_set_id, ml.method_link_id, ml.type, ml.class,
         GROUP_CONCAT(gdb.name ORDER BY gdb.name),
-        GROUP_CONCAT(gdb.genome_db_id ORDER BY gdb.genome_db_id)
+        GROUP_CONCAT(gdb.genome_db_id ORDER BY gdb.genome_db_id), ml.display_name
     FROM method_link ml, method_link_species_set mlss, species_set ss, genome_db gdb
     WHERE mlss.method_link_id = ml.method_link_id
       AND mlss.species_set_id = ss.species_set_id
@@ -68,7 +68,8 @@ foreach my $row (@$all_rows) {
           type => $row->[2],
           class => $row->[3],
           species_set => $row->[4],
-          gdbid_set => $row->[5]
+          gdbid_set => $row->[5],
+          display_name => $row->[6]
       }
 }
 

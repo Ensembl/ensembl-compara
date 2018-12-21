@@ -125,6 +125,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor::store", sub {
     my $method = new Bio::EnsEMBL::Compara::Method(
                                                    -dbID => $method_id,
                                                    -type => $type,
+                                                   -display_name => $new_dislay_name,
                                                    -class => $class);
 
     $method_adaptor->store($method);
