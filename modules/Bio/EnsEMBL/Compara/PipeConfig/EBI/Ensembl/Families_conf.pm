@@ -101,7 +101,7 @@ sub default_options {
         # code directories:
         'blast_bin_dir'     => $self->check_dir_in_cellar('blast/2.2.30/bin'),
         'mcl_bin_dir'       => $self->check_dir_in_cellar('mcl/14-137/bin'),
-        'mafft_root_dir'    => $self->check_dir_in_cellar('mafft/7.305'),
+        'mafft_home'        => $self->check_dir_in_cellar('mafft/7.305'),
         'pantherScore_path' => $self->check_dir_in_cellar('pantherscore/1.03'),
         'hmmer2_home'       => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
 

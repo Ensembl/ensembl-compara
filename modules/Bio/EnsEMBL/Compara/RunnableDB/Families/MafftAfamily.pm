@@ -31,7 +31,7 @@ sub param_defaults {
             # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
             # --thread 1 is supposed to prevent forking
         'mafft_cmdline_args'    => '--anysymbol --thread #mafft_threads#',
-        'mafft_exec'            => '#mafft_root_dir#/bin/mafft',
+        'mafft_exec'            => '#mafft_home#/bin/mafft',
         'mafft_threads'         => 1,
     };
 }
@@ -93,7 +93,6 @@ sub run {
     my $self = shift @_;
 
     my $family_id               = $self->param('family_id');
-    my $mafft_root_dir          = $self->param_required('mafft_root_dir');
     my $mafft_executable        = $self->param_required('mafft_exec');
     my $mafft_cmdline_args      = $self->param('mafft_cmdline_args') || '';
     my $pep_file                = $self->param('pep_file') or return;   # if we have no more work to do just exit gracefully

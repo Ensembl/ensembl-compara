@@ -86,7 +86,7 @@ sub default_options {
         # code directories:
         #'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
         #'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
-        #'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.221',
+        #'mafft_home'      => '/software/ensembl/compara/mafft-7.221',
 
         # data directories:
         #'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
@@ -152,7 +152,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
-        'mafft_root_dir'    => $self->o('mafft_root_dir'),
+        'mafft_home'        => $self->o('mafft_home'),
         'mafft_threads'    => $self->o('mafft_threads'),
 
         'master_db'         => $self->o('master_db'),               # databases
