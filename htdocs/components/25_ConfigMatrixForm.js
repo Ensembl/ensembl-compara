@@ -34,7 +34,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     this.elLk.buttonTab       = this.el.find("div.track-tab");
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
-    this.elLk.trackPanel      = this.el.find(".track-panel");
+    this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
+    this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
     this.elLk.resultBox       = this.el.find(".result-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.filterButton    = this.el.find("button.filter");
@@ -72,10 +73,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     this.elLk.breadcrumb.on("click", function (e) {
+
       panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
       panel.toggleButton();
       e.preventDefault();
-      if($(this).hasClass('_configure')) { panel.resetMatrix(); panel.displayMatrix(); }
+      if($(this).hasClass('_configure') && !$(this).hasClass('inactive')) { panel.resetMatrix(); panel.displayMatrix(); }
     });
     
     this.clickSubResultLink();
@@ -291,6 +293,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $(container).off().on("click", itemListen, function(e) {
       panel.selectBox(this);
 
+      // If all LIs are removed then disable configuration tab and toggle to select tracks tab
+      if ($(this).closest('ul.result-list').children('li').length > 1){
+        // checking > 1 because the last li is still not removed at this point
+        panel.removeFromMatrix($(this).data('item'));
+      }
+      else {
+        panel.toggleButton();
+        $(this).closest('.result-content').find('.sub-result-link').click();
+      }
+
       if($(this).hasClass('all-box')) {
         if(!$(this).hasClass('no-filter')) {
           var ele = $(this).closest('.tab-content').find('li')[0];
@@ -314,6 +326,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });  
   },
   
+  removeFromMatrix: function(item) {
+    var panel = this;
+    if (!item) return;
+    panel.elLk.trackConfiguration.find('.matrix-container .' + item).remove();
+  },
+
   updateRHS: function(item) {
     var panel = this;
     panel.updateSelectedTracksPanel(item);
@@ -543,7 +561,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       //in case the track-content is not active, hide configuration panel first
       if(panel.el.find("div#configuration-content:visible").length){ 
         panel.toggleTab(panel.el.find("li._track-select"), panel.el.find("div.large-breadcrumbs"));
-        panel.toggleButton();         
+        panel.toggleButton();
       }
 
       //for now assuming there is only one parent tab, if there is more than one then we need to create for loop
