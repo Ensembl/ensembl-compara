@@ -337,6 +337,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         delete panel.localStoreObj.matrix[key];
       }
     })
+    delete panel.localStoreObj.matrix[item];
 
     panel.setLocalStorage();
   },
