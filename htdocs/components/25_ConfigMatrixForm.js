@@ -1306,21 +1306,33 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.trackPopup.find('ul li label.switch input[type=checkbox]').on("click", function(e) {
       var switchName    = $(this).attr("name");
       var trackState    = $(this).is(":checked") ? "track-on" : "track-off";
-      var currentState  = trackState === "track-on"  ? "track-off" : "track-on";    
+      var currentState  = trackState === "track-on"  ? "track-off" : "track-on"; 
+      var colStoreUpdate, rowStoreUpdate = 0;
 
       if(switchName === "column-switch") {
         panel.xLabel.data("track-state", trackState);
-        //panel.xLabel.attr("data-track-state", trackState); //updating the value in the dom
-        panel.el.find('div.xBoxes.'+panel.xName+'.'+currentState).data("box-state", trackState).removeClass(currentState).addClass(trackState);//update bg for all cells in the column and also switch cell off
+
+        //update bg for all cells in the column and also switch cell off
+        panel.el.find('div.xBoxes.'+panel.xName+'.'+currentState).data("box-state", trackState).removeClass(currentState).addClass(trackState);
         panel.trackPopup.find('ul li label.switch input[name="cell-switch"]').prop("checked", trackState === "track-on" ? true : false);
 
         //update localstore
+        Object.keys(panel.localStoreObj.matrix).filter(function(key){
+          var regex = new RegExp("^"+panel.xName,"g");
+          if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
+        });
+
       } else if(switchName === "row-switch") {
         panel.yLabel.data("track-state", trackState);
         //panel.yLabel.attr("data-track-state", trackState); //updating the value in the dom
         panel.el.find('div.xBoxes.'+panel.yName+'.'+currentState).data("box-state", trackState).removeClass(currentState).addClass(trackState);//update bg for all cells in the row and also switch cell off
         panel.trackPopup.find('ul li label.switch input[name="cell-switch"]').prop("checked", trackState === "track-on" ? true : false);
-        //TODO: update localstore        
+
+        //update localstore
+        Object.keys(panel.localStoreObj.matrix).filter(function(key){
+          var regex = new RegExp("^"+panel.yName+"|"+panel.yName+"$","g");
+          if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
+        });
       } else { //cell-switch
         panel.boxObj.data("box-state", trackState);
         //panel.boxObj.attr("data-box-state", trackState); //updating the value in the dom
@@ -1331,24 +1343,44 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           if(!panel.el.find('div.xBoxes.'+panel.xName+'.track-off').length) { //there are no other cells in the column that are off
             panel.xLabel.data("track-state", trackState);
             panel.trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked", true);
+            colStoreUpdate = 1;
           }
           if(!panel.el.find('div.xBoxes.'+panel.yName+'.track-off').length) { //there are no other cells in the row that are off
             panel.yLabel.data("track-state", trackState);
             panel.trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked", true);
+            rowStoreUpdate = 1;
           }
         } else { //if by switching this one cell off, row/column are off, update switch
           if(!panel.el.find('div.xBoxes.'+panel.xName+'.track-on').length) {
             panel.xLabel.data("track-state", trackState);
             panel.trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked", false);
+            colStoreUpdate = 1;
           }
           if(!panel.el.find('div.xBoxes.'+panel.yName+'.track-on').length) {
             panel.yLabel.data("track-state", trackState);
             panel.trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked", false);
+            rowStoreUpdate = 1;
           }
         }
         //save in localstorage for state management
         var storeKey = panel.xName+"_sep_"+panel.yName;
         panel.localStoreObj.matrix[storeKey].state = trackState;
+
+        //store update for column
+        if(colStoreUpdate) {
+          Object.keys(panel.localStoreObj.matrix).filter(function(key){
+            var regex = new RegExp("^"+panel.xName,"g");
+            if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
+          });
+        }
+
+        //store update for row
+        if(rowStoreUpdate) {
+          Object.keys(panel.localStoreObj.matrix).filter(function(key){
+            var regex = new RegExp("^"+panel.yName+"|"+panel.yName+"$","g");
+            if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
+          });
+        }
       }
       panel.setLocalStorage();
     });
@@ -1357,6 +1389,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.trackPopup.find('ul li input[type=radio]').on("click", function(e) {
       var radioName    = $(this).attr("name");
       var renderClass  = $(this).attr("class").replace(/^_/,"");
+      var colRenderStore, rowRenderStore = "";
 
       if(radioName === "column-radio") {
         panel.xLabel.data("track-render", renderClass);
@@ -1366,7 +1399,31 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
         //update the radio button for column and cell as well
         panel.trackPopup.find('ul li input[name=column-radio]._'+renderClass+', ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
-        //TODO: update localstore
+
+        //Update row renderer for each affected cell
+        panel.el.find('div.xBoxes._hasData.'+panel.xName).each(function(index){
+          var yRow = $(this).data("track-y");
+          var renderRow = "";
+
+          //check each row renderer are the same or not
+          if(panel.el.find("div.xBoxes._hasData."+yRow+".render-"+renderClass).length === panel.el.find("div.xBoxes."+yRow+"._hasData").length) {
+            panel.el.find('div.yLabel.'+yRow).data("track-render", renderClass);
+            renderRow = renderClass;
+          } else {
+            panel.el.find('div.yLabel.'+yRow).data("track-render", "");
+          }
+          //update localstore for the other cells row only
+          Object.keys(panel.localStoreObj.matrix).filter(function(key){
+            var regex = new RegExp("^"+yRow,"g");
+            if(key.match(regex)) { panel.localStoreObj.matrix[key].render = renderRow; }
+          });
+        });
+
+        //update localstore for clicked column
+        Object.keys(panel.localStoreObj.matrix).filter(function(key){
+          var regex = new RegExp("^"+panel.xName,"g");
+          if(key.match(regex)) { panel.localStoreObj.matrix[key].render = renderClass; }
+        });
       } else if(radioName === "row-radio") {
         panel.yLabel.data("track-render", renderClass);
 
@@ -1376,7 +1433,30 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         //update the radio button for column and cell as well
         panel.trackPopup.find('ul li input[name=row-radio]._'+renderClass+', ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
 
-        //TODO: update localstore
+        //Update col renderer for each affected cell
+        panel.el.find('div.xBoxes._hasData.'+panel.yName).each(function(index){
+          var xCol = $(this).data("track-x");
+          var renderCol = "";
+
+          //check each row renderer are the same or not
+          if(panel.el.find("div.xBoxes._hasData."+xCol+".render-"+renderClass).length === panel.el.find("div.xBoxes."+xCol+"._hasData").length) {
+            panel.el.find('div.xLabel.'+xCol).data("track-render", renderClass);
+            renderCol = renderClass;
+          } else {
+            panel.el.find('div.xLabel.'+xCol).data("track-render", "");
+          }
+          //update localstore for the other cells row only
+          Object.keys(panel.localStoreObj.matrix).filter(function(key){
+            var regex = new RegExp("^"+xCol+"$","g");
+            if(key.match(regex)) { panel.localStoreObj.matrix[key].render = renderCol; }
+          });
+        });
+
+        //update localstore for clicked row
+        Object.keys(panel.localStoreObj.matrix).filter(function(key){
+          var regex = new RegExp("^"+panel.yName+"|"+panel.yName+"$","g");
+          if(key.match(regex)) { panel.localStoreObj.matrix[key].render = renderClass; }
+        }); 
       } else { //cell-radio
         var currentRender = panel.boxObj.data("box-render");
 
@@ -1389,14 +1469,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         //update the radio button for cell renderer
         panel.trackPopup.find('ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
 
-        //TODO: update localstore
+        //save in localstorage for state management
+        var storeKey = panel.xName+"_sep_"+panel.yName;
+        panel.localStoreObj.matrix[storeKey].render = renderClass;
       }
 
       //radio button for column renderer should be blank (nothing selected) unless they are the same renderer everywhere
-      console.log(panel.el.find("div.xBoxes._hasData."+panel.xName+".render-"+renderClass).length+"===="+panel.el.find("div.xBoxes."+panel.xName+"._hasData").length)
       if(panel.el.find("div.xBoxes._hasData."+panel.xName+".render-"+renderClass).length === panel.el.find("div.xBoxes."+panel.xName+"._hasData").length) {
         panel.xLabel.data("track-render", renderClass);
         panel.trackPopup.find('ul li input[name=column-radio]._'+renderClass).prop("checked", true);
+        colRenderStore = renderClass;
       } else {
         panel.xLabel.data("track-render", "");
         panel.trackPopup.find('ul li input[name=column-radio]').prop("checked", false);
@@ -1406,11 +1488,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if(panel.el.find("div.xBoxes._hasData."+panel.yName+".render-"+renderClass).length === panel.el.find("div.xBoxes."+panel.yName+"._hasData").length) {
         panel.yLabel.data("track-render", renderClass);
         panel.trackPopup.find('ul li input[name=row-radio]._'+renderClass).prop("checked", true);
+        rowRenderStore = renderClass;
       } else {
         panel.yLabel.data("track-render", "");
         panel.trackPopup.find('ul li input[name=row-radio]').prop("checked", false);
-      }      
-      //panel.setLocalStorage();
+      }
+
+      Object.keys(panel.localStoreObj.matrix).filter(function(key){
+        var colRegex = new RegExp("^"+panel.xName+"$","g");
+        if(key.match(colRegex)) { panel.localStoreObj.matrix[key].render = colRenderStore; }
+
+        var rowRegex = new RegExp("^"+panel.yName+"$","g");
+        if(key.match(rowRegex)) { panel.localStoreObj.matrix[key].render = rowRenderStore; }
+      });
+
+      panel.setLocalStorage();
     });
 
   }
