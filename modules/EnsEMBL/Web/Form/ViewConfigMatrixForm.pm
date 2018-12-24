@@ -112,7 +112,7 @@ sub build {
         <h4>Selected tracks</h4>
 
         <div class="filter-content">
-          <h5 class="result-header">Epigenome <span class="error _cell">Please select Epigenome</span></h5>
+          <h5 class="result-header">Epigenome <span class="error _dx">Please select Epigenome</span></h5>
           <div class="result-content" id="dx">
             <div class="sub-result-link">Epigenome</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
@@ -122,7 +122,7 @@ sub build {
             </ul>
           </div>
 
-          <h5 class="result-header">Experimental data <span class="error _experiment">Please select Experimental data</span></h5>
+          <h5 class="result-header">Experimental data <span class="error _dy">Please select Experimental data</span></h5>
           <div id="dy">
             <div class="result-content" id="Histone">
               <span class="_parent-tab-id hidden">dy-tab</span>
