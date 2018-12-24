@@ -330,6 +330,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     if (!item) return;
     panel.elLk.trackConfiguration.find('.matrix-container .' + item).remove();
+
+    // Update localStoreObj and local storage
+    Object.keys(panel.localStoreObj.matrix).map(function(key) {
+      if (key.match(item+'_') || key.match('_' + item)) {
+        delete panel.localStoreObj.matrix[key];
+      }
+    })
+
+    panel.setLocalStorage();
   },
 
   updateRHS: function(item) {
