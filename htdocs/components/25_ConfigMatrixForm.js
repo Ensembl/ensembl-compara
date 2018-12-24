@@ -1139,9 +1139,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         
         //drawing boxes
         $.each(dyArray, function(i, dyItem) {
-          var boxState  = "", boxRender = "";
+          var boxState  = "", boxDataRender = "";
           var popupType = "peak-signal"; //class of type of popup to use
           var dataClass = ""; //to know which cell has data
+          var boxRenderClass = "";
 
           //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
           $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, rel){
@@ -1150,16 +1151,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               dataClass = "_hasData";
               if(panel.localStoreObj.matrix[storeKey]) {
                 boxState   = panel.localStoreObj.matrix[storeKey].state;
-                boxRender  = panel.localStoreObj.matrix[storeKey].render;
+                boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
+                boxRenderClass = "render-"+boxDataRender;
               } else {
                 boxState = "track-on"; //on means blue bg, off means white bg
-                boxRender = "peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
+                boxDataRender = "peak-signal";
+                boxRenderClass = "render-peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
                 panel.localStoreObj.matrix[storeKey] = {"state": columnState, "render": columnRender};
               }              
               return;
             }
           })
-          yContainer += '<div class="xBoxes '+boxState+' '+boxRender+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxRender+'" data-popup-type="'+popupType+'"></div>';
+          yContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxDataRender+'" data-popup-type="'+popupType+'"></div>';
         });
 
         yContainer += "</div>";
@@ -1209,10 +1212,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var rowState  = panel.yLabel.data("track-state"); // get the equivalent ylabel first and then its state to determine whether row is on/off
       var rowRender = panel.yLabel.data("track-render"); // renderer of row
       var colState  = panel.xLabel.data("track-state"); // get the equivalent xlabel first and then its state to determine whether column is on/off
-      var colRender = panel.xLabel.data("track-render"); // renderer of column       
+      var colRender = panel.xLabel.data("track-render"); // renderer of column 
 
       $(this).addClass("mClick");
-    
+
       //setting column switch for whether it is on/off
       if(colState === "track-on") {
         panel.trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked",true);
@@ -1220,18 +1223,26 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked",false);
       }
 
-      //setting column radio button for render
-      panel.trackPopup.find('ul li input[name=column-radio]._'+colRender).prop("checked",true);
+      //setting radio button for column render
+      if(colRender) {
+        panel.trackPopup.find('ul li input[name=column-radio]._'+colRender).prop("checked",true);
+      } else {
+        panel.trackPopup.find('ul li input[name=column-radio]').prop("checked",false);
+      }      
 
-      //setting row switch for whether it is on/off
+     //setting row switch for whether it is on/off
       if(rowState === "track-on") {
         panel.trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked",true);
       } else {
         panel.trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked",false);
-      }        
+      }
 
-      //setting row radio button for render
-      panel.trackPopup.find('ul li input[name=row-radio]._'+rowRender).prop("checked",true);
+      //setting radio button for cell render
+      if(rowRender) {
+        panel.trackPopup.find('ul li input[name=row-radio]._'+rowRender).prop("checked",true);
+      } else {
+        panel.trackPopup.find('ul li input[name=row-radio]').prop("checked",false);
+      }
 
       //setting box/cell switch on/off
       if(boxState === "track-on") {
@@ -1240,8 +1251,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.trackPopup.find('ul li label.switch input[name="cell-switch"]').prop("checked",false);
       }
 
-      //setting box/cell radio button for render
-      panel.trackPopup.find('ul li input[name=cell-radio]._'+boxRender).prop("checked",true);
+      //setting radio button for cell render
+      if(boxRender) {
+        panel.trackPopup.find('ul li input[name=cell-radio]._'+boxRender).prop("checked",true);
+      } else {
+        panel.trackPopup.find('ul li input[name=cell-radio]').prop("checked",false);
+      }
 
       //TODO fix offset of popup when scrolling, it should position based on the mouse click and below
       //center the popup on the box, get the x and y position of the box and then add half the length
@@ -1285,11 +1300,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
         //check if by switching this one cell on, all cells in the row/column are on, then update column/row switch accordingly
         if(trackState === "track-on") {
-          if(!panel.el.find('div.xBoxes.'+panel.xName+'.track-off').length) {
+          if(!panel.el.find('div.xBoxes.'+panel.xName+'.track-off').length) { //there are no other cells in the column that are off
             panel.xLabel.data("track-state", trackState);
             panel.trackPopup.find('ul li label.switch input[name="column-switch"]').prop("checked", true);
           }
-          if(!panel.el.find('div.xBoxes.'+panel.yName+'.track-off').length) {
+          if(!panel.el.find('div.xBoxes.'+panel.yName+'.track-off').length) { //there are no other cells in the row that are off
             panel.yLabel.data("track-state", trackState);
             panel.trackPopup.find('ul li label.switch input[name="row-switch"]').prop("checked", true);
           }
@@ -1319,12 +1334,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.xLabel.data("track-render", renderClass);
 
         //update the render class for all cells in the columns
-        //panel.el.find('div.xBoxes.'+panel.xName+'.renderClass_*').data("box-render", renderClass).removeClass("renderClass_*").addClass("renderClass_"+renderClass);//update bg for all cells in the column and also switch cell off
+        panel.el.find('div.xBoxes._hasData.'+panel.xName).data("box-render", renderClass).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);//update bg for all cells in the column and also switch cell off
 
         //update the radio button for column and cell as well
         panel.trackPopup.find('ul li input[name=column-radio]._'+renderClass+', ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
-        //update localstore
+        //TODO: update localstore
       } else if(radioName === "row-radio") {
+        panel.yLabel.data("track-render", renderClass);
+
+        //update the render class for all cells in the columns
+        panel.el.find('div.xBoxes._hasData.'+panel.yName).data("box-render", renderClass).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);//update bg for all cells in the column and also switch cell off
+
+        //update the radio button for column and cell as well
+        panel.trackPopup.find('ul li input[name=row-radio]._'+renderClass+', ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
+
         //TODO: update localstore
       } else { //cell-radio
         var currentRender = panel.boxObj.data("box-render");
@@ -1333,15 +1356,32 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.boxObj.data("box-render", renderClass);
 
         //updating the render class for the cell
-        panel.boxObj.removeClass(currentRender).addClass(renderClass);
+        panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
 
         //update the radio button for cell renderer
         panel.trackPopup.find('ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
 
-        //radio button for column and row renderer should all be blank unless they are the same renderer everywhere
-
         //TODO: update localstore
       }
+
+      //radio button for column renderer should be blank (nothing selected) unless they are the same renderer everywhere
+      console.log(panel.el.find("div.xBoxes._hasData."+panel.xName+".render-"+renderClass).length+"===="+panel.el.find("div.xBoxes."+panel.xName+"._hasData").length)
+      if(panel.el.find("div.xBoxes._hasData."+panel.xName+".render-"+renderClass).length === panel.el.find("div.xBoxes."+panel.xName+"._hasData").length) {
+        panel.xLabel.data("track-render", renderClass);
+        panel.trackPopup.find('ul li input[name=column-radio]._'+renderClass).prop("checked", true);
+      } else {
+        panel.xLabel.data("track-render", "");
+        panel.trackPopup.find('ul li input[name=column-radio]').prop("checked", false);
+      }
+
+      //now for row render
+      if(panel.el.find("div.xBoxes._hasData."+panel.yName+".render-"+renderClass).length === panel.el.find("div.xBoxes."+panel.yName+"._hasData").length) {
+        panel.yLabel.data("track-render", renderClass);
+        panel.trackPopup.find('ul li input[name=row-radio]._'+renderClass).prop("checked", true);
+      } else {
+        panel.yLabel.data("track-render", "");
+        panel.trackPopup.find('ul li input[name=row-radio]').prop("checked", false);
+      }      
       //panel.setLocalStorage();
     });
 

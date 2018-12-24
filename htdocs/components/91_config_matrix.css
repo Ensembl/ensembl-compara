@@ -315,22 +315,22 @@ div.yLabel                { display: inline-block; float: left; width: 175px; te
 div.xBoxes                { display: inline-block; float: left; width: 30px; height: 30px; border: #ccc 1px solid; margin: 0 0 -1px -1px; }
 
 /* track status for on */
-div.xBoxes.track-on                       { background-color: #0d0d72; }
-div.xBoxes.track-on.peak-signal           { background-image: url("/i/render/peak_signal_blue.svg"); }
-div.xBoxes.track-on.peak                  { background-image: url("/i/render/peak_blue.svg"); }
-div.xBoxes.track-on.signal                { background-image: url("/i/render/signal_blue.svg"); }
-div.xBoxes.track-on.peak-signal.mClick    { background-image: url("/i/render/peak_signal_white.svg"); }
-div.xBoxes.track-on.peak.mClick           { background-image: url("/i/render/peak_white.svg"); }
-div.xBoxes.track-on.signal.mClick         { background-image: url("/i/render/signal_white.svg"); }
+div.xBoxes.track-on                              { background-color: #0d0d72; }
+div.xBoxes.track-on.render-peak-signal           { background-image: url("/i/render/peak_signal_blue.svg"); }
+div.xBoxes.track-on.render-peak                  { background-image: url("/i/render/peak_blue.svg"); }
+div.xBoxes.track-on.render-signal                { background-image: url("/i/render/signal_blue.svg"); }
+div.xBoxes.track-on.render-peak-signal.mClick    { background-image: url("/i/render/peak_signal_white.svg"); }
+div.xBoxes.track-on.render-peak.mClick           { background-image: url("/i/render/peak_white.svg"); }
+div.xBoxes.track-on.render-signal.mClick         { background-image: url("/i/render/signal_white.svg"); }
 
 /* track status for off */
-div.xBoxes.track-off                       { background-color: [[WHITE]] }
-div.xBoxes.track-off.peak-signal           { background-image: url("/i/render/peak_signal_blue50.svg"); }
-div.xBoxes.track-off.peak                  { background-image: url("/i/render/peak_blue50.svg"); }
-div.xBoxes.track-off.signal                { background-image: url("/i/render/signal_blue50.svg"); }
-div.xBoxes.track-off.peak-signal.mClick    { background-image: url("/i/render/peak_signal_blue.svg"); }
-div.xBoxes.track-off.peak.mClick           { background-image: url("/i/render/peak_blue.svg"); }
-div.xBoxes.track-off.signal.mClick         { background-image: url("/i/render/signal_blue.svg"); }
+div.xBoxes.track-off                              { background-color: [[WHITE]] }
+div.xBoxes.track-off.render-peak-signal           { background-image: url("/i/render/peak_signal_blue50.svg"); }
+div.xBoxes.track-off.render-peak                  { background-image: url("/i/render/peak_blue50.svg"); }
+div.xBoxes.track-off.render-signal                { background-image: url("/i/render/signal_blue50.svg"); }
+div.xBoxes.track-off.render-peak-signal.mClick    { background-image: url("/i/render/peak_signal_blue.svg"); }
+div.xBoxes.track-off.render-peak.mClick           { background-image: url("/i/render/peak_blue.svg"); }
+div.xBoxes.track-off.render-signal.mClick         { background-image: url("/i/render/signal_blue.svg"); }
 
 /* track popup/zmenu */
 div.track-popup                         { display: none; font-size: 11px; width: 180px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; }
