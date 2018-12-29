@@ -75,29 +75,6 @@ sub default_options {
             'member_db'   => 'compara_members',
             'prev_rel_db' => 'compara_prev',
             'epo_db'      => 'compara_prev',
-
-            # executable locations:
-            'cmalign_exe'           => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmalign'),
-            'cmbuild_exe'           => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmbuild'),
-            'cmsearch_exe'          => $self->check_exe_in_cellar('infernal/1.1.2/bin/cmsearch'),
-            'mafft_exe'             => $self->check_exe_in_cellar('mafft/7.305/bin/mafft'),
-            'mpirun_exe'            => $self->check_exe_in_cellar('open-mpi/2.1.1/bin/mpirun'),
-            'raxml_pthread_exe_sse3'     => $self->check_exe_in_cellar('raxml/8.2.8/bin/raxmlHPC-PTHREADS-SSE3'),
-            'raxml_pthread_exe_avx'      => $self->check_exe_in_cellar('raxml/8.2.8/bin/raxmlHPC-PTHREADS-AVX'),
-            'raxml_exe_sse3'             => $self->check_exe_in_cellar('raxml/8.2.8/bin/raxmlHPC-SSE3'),
-            'raxml_exe_avx'              => $self->check_exe_in_cellar('raxml/8.2.8/bin/raxmlHPC-AVX'),
-            'prank_exe'             => $self->check_exe_in_cellar('prank/140603/bin/prank'),
-            'examl_exe_sse3'        => $self->check_exe_in_cellar('examl/3.0.17/bin/examl'),
-            'examl_exe_avx'         => $self->check_exe_in_cellar('examl/3.0.17/bin/examl-AVX'),
-            'parse_examl_exe'       => $self->check_exe_in_cellar('examl/3.0.17/bin/parse-examl'),
-            'parsimonator_exe'      => $self->check_exe_in_cellar('parsimonator/1.0.2/bin/parsimonator-SSE3'),
-            'ktreedist_exe'         => $self->check_exe_in_cellar('ktreedist/1.0.0/bin/Ktreedist.pl'),
-            'fasttree_exe'          => $self->check_exe_in_cellar('fasttree/2.1.8/bin/FastTree'),
-            'treebest_exe'          => $self->check_exe_in_cellar('treebest/88/bin/treebest'),
-            'quicktree_exe'         => $self->check_exe_in_cellar('quicktree/2.1/bin/quicktree'),
-            'r2r_exe'               => $self->check_exe_in_cellar('r2r/1.0.5/bin/r2r'),
-            'cafe_shell'            => $self->check_exe_in_cellar('cafe/2.2/bin/cafeshell'),
-
            };
 }
 

@@ -50,13 +50,8 @@ sub default_options {
         # Work directory
         'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/tblat_'.$self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
-        #Location of executables
-        'pair_aligner_exe'  => $self->check_exe_in_cellar('kent/v335_1/bin/blat'),
-        'faToNib_exe'       => $self->check_exe_in_cellar('kent/v335_1/bin/faToNib'),
-        'lavToAxt_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/lavToAxt'),
-        'axtChain_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/axtChain'),
-        'chainNet_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/chainNet'),
-
+        # TBlat is used to align the genomes
+        'pair_aligner_exe'  => $self->o('blat_exe'),
     };
 }
 

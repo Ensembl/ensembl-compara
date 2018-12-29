@@ -91,17 +91,6 @@ sub default_options {
       	  
         # database containing the pairwise alignments needed to get the overlaps
       	'compara_pairwise_db' => 'compara_curr',
-
-        'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
-        'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
-        'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-        'exonerate_exe'   => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
-        'ortheus_c_exe'   => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
-        'ortheus_py'      => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/Ortheus.py'),
-        'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-        'ortheus_bin_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-        'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
-        'estimate_tree_exe' => $self->check_file_in_cellar('pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py'),
     };
 }
 

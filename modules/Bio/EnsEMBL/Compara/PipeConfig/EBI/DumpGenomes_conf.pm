@@ -83,11 +83,6 @@ sub default_options {
         # the registry file to indicate how to get the core databases
         'reg_conf'          => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
-        # Executables
-        'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),
-        'esd2esi_exe'       => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/esd2esi'),
-        'samtools_exe'      => $self->check_exe_in_cellar('samtools/1.6/bin/samtools'),
-
         # Capacities
         'dump_capacity'     => 10,
     };

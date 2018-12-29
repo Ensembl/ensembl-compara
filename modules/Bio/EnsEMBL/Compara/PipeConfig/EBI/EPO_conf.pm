@@ -89,22 +89,6 @@ sub default_options {
 
         'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
 
-        'bl2seq_exe'        => undef,   # We use blastn instead
-        'blastn_exe'        => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
-        'enredo_exe'        => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
-        'exonerate_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
-        'server_exe'        => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
-        'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),
-        'esd2esi_exe'       => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/esd2esi'),
-        'samtools_exe'      => $self->check_exe_in_cellar('samtools/1.6/bin/samtools'),
-        'gerp_exe_dir'      => $self->check_dir_in_cellar('gerp/20080211_1/bin'),
-        'java_exe'          => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-        'ortheus_bin_dir'   => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-        'ortheus_c_exe'     => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
-        'ortheus_lib_dir'   => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-        'pecan_exe_dir'     => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
-        'semphy_exe'        => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
-
         'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
         # Databases

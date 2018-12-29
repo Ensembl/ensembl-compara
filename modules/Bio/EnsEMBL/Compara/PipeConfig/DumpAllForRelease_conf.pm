@@ -154,15 +154,12 @@ sub default_options {
         # tree dump options
         'clusterset_id' => undef,
         'member_type'   => undef,
-        'xmllint_exe'   => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
         'dump_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
         'max_files_per_tar'     => 500,
         'batch_size'            => 25,    # how may trees' dumping jobs can be batched together
         
         # constrained elems & conservation scores
-        'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
-        'big_bed_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
     	'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",

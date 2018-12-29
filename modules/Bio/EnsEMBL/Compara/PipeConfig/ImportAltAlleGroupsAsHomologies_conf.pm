@@ -58,10 +58,6 @@ sub default_options {
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
-
-        #Software dependencies
-        'mafft_home'            => $self->check_dir_in_cellar('mafft/7.305'),
-
     };
 }
 

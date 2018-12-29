@@ -65,7 +65,6 @@ sub default_options {
             #Location url of database to get snps from
             #'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
             
-            #'big_bed_exe' => '/software/ensembl/funcgen/bedToBigBed',
             'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
 
             #Locations to write output files

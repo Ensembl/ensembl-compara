@@ -90,8 +90,6 @@ sub default_options {
         'dump_per_species_tsv'  => 0,
         'max_files_per_tar'     => 500,
 
-        'xmllint_exe' => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
-
         'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
 

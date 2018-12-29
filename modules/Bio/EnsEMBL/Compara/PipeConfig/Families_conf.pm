@@ -79,14 +79,7 @@ sub default_options {
         # HMM clustering
         #'hmm_clustering'  => 0,
         #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         'discard_uniprot_only_clusters' => 1,
-
-        # code directories:
-        #'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
-        #'mcl_bin_dir'     => '/software/ensembl/compara/mcl-14-137/bin',
-        #'mafft_home'      => '/software/ensembl/compara/mafft-7.221',
 
         # data directories:
         #'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),

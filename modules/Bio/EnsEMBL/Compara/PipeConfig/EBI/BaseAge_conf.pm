@@ -79,9 +79,6 @@ sub default_options {
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
             'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
 
-            # executable locations:
-            'big_bed_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
-
             #Locations to write output files
             'bed_dir'        => sprintf('/hps/nobackup2/production/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
 

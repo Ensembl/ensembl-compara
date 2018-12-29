@@ -60,13 +60,10 @@ sub default_options {
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
         
-        'mash_exe'          => $self->check_exe_in_cellar('mash/2.0/bin/mash'),
         'mash_kmer_size'    => 24, 
         'mash_sketch_size'  => 1000000, 
 
         'master_db'          => 'compara_master',
-        'rapidnj_exe'        => $self->check_exe_in_cellar('rapidnj/2.3.2/bin/rapidnj'),
-        'erable_exe'         => $self->check_exe_in_cellar('erable/1.0/bin/erable'),
 
         # pass location of pre-dumped genomes, if it exists (generated with DumpGenomes_conf)
         'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.($self->o('division')).'/',

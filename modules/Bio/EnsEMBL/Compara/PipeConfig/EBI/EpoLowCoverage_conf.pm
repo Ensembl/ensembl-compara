@@ -72,11 +72,6 @@ sub default_options {
 	 #gerp parameters
     'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
 
-	#Location of executables (or paths to executables)
-    'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'),   #gerp program
-    'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
-    'treebest_exe'    => $self->check_exe_in_cellar('treebest/88/bin/treebest'), #treebest program
-
     # stats report email
   	'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
     };

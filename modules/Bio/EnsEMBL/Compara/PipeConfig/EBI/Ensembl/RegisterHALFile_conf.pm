@@ -51,8 +51,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'halStats_exe'          => $self->check_exe_in_cellar('hal/1a89bd2/bin/halStats'),
-
         'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
         'registry_conf_file'    => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",

@@ -98,13 +98,6 @@ sub default_options {
         'hmm_clustering'      => 1,
         'hmm_library_basedir' => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2019-01-02',
 
-        # code directories:
-        'blast_bin_dir'     => $self->check_dir_in_cellar('blast/2.2.30/bin'),
-        'mcl_bin_dir'       => $self->check_dir_in_cellar('mcl/14-137/bin'),
-        'mafft_home'        => $self->check_dir_in_cellar('mafft/7.305'),
-        'pantherScore_path' => $self->check_dir_in_cellar('pantherscore/1.03'),
-        'hmmer2_home'       => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
-
         # data directories:
         'work_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
         'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('rel_with_suffix').'/',

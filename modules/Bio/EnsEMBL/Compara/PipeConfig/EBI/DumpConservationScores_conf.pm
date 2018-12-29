@@ -46,9 +46,6 @@ sub default_options {
 
         # How many species can be dumped in parallel
         'capacity'    => 50,
-
-        # executable locations:
-        'big_wig_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
     };
 }
 
