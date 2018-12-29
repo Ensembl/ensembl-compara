@@ -93,8 +93,6 @@ sub default_options {
       # place to get the genome dumps
       'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
       
-      'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
-
       # The ancestral_db is created on the same server as the pipeline_db
       'ancestral_db' => { # core ancestral db
           -driver   => $self->o('pipeline_db', '-driver'),

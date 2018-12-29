@@ -46,6 +46,22 @@ use strict;
 use warnings;
 
 
+=head2 shared_options
+
+  Description : Options available within "default_options", i.e. $self->o(),
+                on all Compara pipelines
+
+=cut
+
+sub shared_default_options {
+    my ($self) = @_;
+    return {
+        # User details
+        'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
+    }
+}
+
+
 =head2 executable_locations
 
   Description : Locations to all the executables and other external dependencies.

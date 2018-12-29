@@ -71,9 +71,6 @@ sub default_options {
 
 	 #gerp parameters
     'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
-
-    # stats report email
-  	'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
     };
 }
 

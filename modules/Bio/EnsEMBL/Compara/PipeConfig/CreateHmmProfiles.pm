@@ -78,9 +78,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # User details
-        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
- 
     # names of species we don't want to reuse this time
     'do_not_reuse_list'     => [ ],
 

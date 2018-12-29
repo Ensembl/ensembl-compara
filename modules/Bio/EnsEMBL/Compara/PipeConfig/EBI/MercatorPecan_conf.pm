@@ -93,9 +93,6 @@ sub default_options {
     'java_options_mem1' => '-server -Xmx3500M -Xms3000m',
     'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
     'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
-
-     # stats report email
-     'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
     };
 }
 

@@ -35,6 +35,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
+        %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::shared_default_options($self) },
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::executable_locations($self) },
 
         'compara_innodb_schema' => 1,

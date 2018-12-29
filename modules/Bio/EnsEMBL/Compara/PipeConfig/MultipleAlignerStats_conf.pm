@@ -66,14 +66,12 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-
-        'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
         # Dump location
         'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',

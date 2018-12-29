@@ -57,7 +57,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # User details
-    'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
     'base_dir'              => '/hps/nobackup2/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
 
     # connection parameters to various databases:

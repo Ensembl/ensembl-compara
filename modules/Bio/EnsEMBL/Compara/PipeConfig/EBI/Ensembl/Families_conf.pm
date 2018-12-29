@@ -78,8 +78,6 @@ sub default_options {
         'host'          => 'mysql-ens-compara-prod-2',        # where the pipeline database will be created
         'port'          => '4522',                      # server port
 
-        'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
-
         'division' => 'ensembl',
         'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 

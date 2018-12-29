@@ -89,8 +89,6 @@ sub default_options {
 
         'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
 
-        'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
-
         # Databases
         'compara_master' => 'compara_master',
         # database containing the anchors for mapping

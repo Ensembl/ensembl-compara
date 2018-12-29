@@ -91,7 +91,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::EmailStatsReport',
             -parameters => {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
-                'email'     => $self->o('epo_stats_report_email'),
+                'email'     => $self->o('email'),
             }
         },
 
