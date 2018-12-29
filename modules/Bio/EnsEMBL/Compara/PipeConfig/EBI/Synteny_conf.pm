@@ -55,12 +55,6 @@ sub default_options {
         'master_db' => 'compara_master',
         'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/'. $self->o('division') .'_release_' . $self->o('rel_with_suffix'),
         'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
-        #executable locations
-        'DumpGFFAlignmentsForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl",
-        'DumpGFFHomologuesForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl",
-        'BuildSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/BuildSynteny.jar",
-	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
 }
 

@@ -110,11 +110,6 @@ sub default_options {
         'anc_seq_count_cut_off' => 15,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
-
-        # Scripts
-        'dump_features_exe'     => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe'      => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'epo_stats_report_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 

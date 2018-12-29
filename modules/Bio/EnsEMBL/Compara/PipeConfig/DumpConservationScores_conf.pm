@@ -39,7 +39,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Paths to compara files
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
     };
 }

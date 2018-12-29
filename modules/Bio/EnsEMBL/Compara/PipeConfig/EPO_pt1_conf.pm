@@ -75,8 +75,6 @@ sub default_options {
       	%{$self->SUPER::default_options},
         'pipeline_name' => 'generate_anchors_' . $self->o('species_set_name').'_'.$self->o('rel_with_suffix'),
 
-        'populate_new_database_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-
       	# parameters that are likely to change from execution to another:
       	'core_db_version' => 88, # version of the dbs from which to get the pairwise alignments
       	

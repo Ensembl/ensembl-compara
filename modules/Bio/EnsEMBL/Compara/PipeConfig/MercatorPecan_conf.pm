@@ -106,11 +106,6 @@ sub default_options {
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
 	    
-    #Location of compara scripts
-    'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
-    'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-    'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-
     #
     #Default statistics
     #
@@ -127,9 +122,6 @@ sub default_options {
     'gerp_capacity'         => 500,
     'blast_capacity'        => 100,
     'reuse_capacity'        => 5,
-
-     # stats report email
-     'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 

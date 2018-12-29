@@ -123,8 +123,6 @@ sub default_options {
 
         'user'             => 'ensadmin',
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
-
-        'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
 }
 

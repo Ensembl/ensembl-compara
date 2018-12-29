@@ -44,11 +44,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -66,11 +64,10 @@ sub default_options {
 
         #Locations to write output files
         'dump_dir'          => '/hps/nobackup2/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
-
-        # Script to dump a tree
-        'dump_species_tree_exe'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/examples/species_getSpeciesTree.pl',
     };
 }
+
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_wide_parameters {
     my ($self) = @_;

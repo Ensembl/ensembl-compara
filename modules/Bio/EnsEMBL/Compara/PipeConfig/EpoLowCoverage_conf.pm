@@ -38,8 +38,6 @@ sub default_options {
 
         'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
 
-	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
 	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
 	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
@@ -50,19 +48,12 @@ sub default_options {
         'run_gerp' => 1,
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
 
-	#Location of executables (or paths to executables)
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-
         #
         #Default statistics
         #
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
         'bed_dir' => $self->o('work_dir') . '/bed_dir/',
         'output_dir' => $self->o('work_dir') . '/feature_dumps/',
-
-       # stats report email
-       'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 

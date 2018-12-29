@@ -75,9 +75,6 @@ sub default_options {
 
         # Production Registry
         'reg_conf'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-
-        # Other scripts needed by the pipeline
-        'populate_new_database_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
 }
 

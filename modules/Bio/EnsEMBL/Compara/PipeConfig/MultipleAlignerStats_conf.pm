@@ -77,11 +77,6 @@ sub default_options {
         'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'feature_dumps',
-
-        # Executable locations
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 
