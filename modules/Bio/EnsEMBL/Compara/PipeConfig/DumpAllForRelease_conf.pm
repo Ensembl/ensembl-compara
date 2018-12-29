@@ -145,8 +145,6 @@ sub default_options {
         # DumpMultiAlign options
         'split_size'          => 200,
         'masked_seq'          => 1,
-        'dump_aln_program'    => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
-        'emf2maf_program'     => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
         'method_link_types'   => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
         'split_by_chromosome' => 1,
         'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
@@ -163,11 +161,6 @@ sub default_options {
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
     	'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
         'bigbed_autosql'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/constrainedelements_autosql.as",
-
-    	# ancestral alleles
-    	'ancestral_dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl",
-		'ancestral_stats_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_stats.pl",
-
     };
     return $do;
 }

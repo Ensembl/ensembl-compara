@@ -50,11 +50,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -103,9 +101,6 @@ sub default_options {
         # alignment blocks into chunks
         'split_by_chromosome'   => 1,
 
-        'dump_aln_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
-        'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
-
         # Method link types of mlss_id to retrieve
         'method_link_types' => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
 
@@ -117,6 +112,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 # Ensures species output parameter gets propagated implicitly
 sub hive_meta_table {

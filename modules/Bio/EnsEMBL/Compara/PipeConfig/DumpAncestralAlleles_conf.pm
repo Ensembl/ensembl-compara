@@ -30,11 +30,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -45,8 +43,6 @@ sub default_options {
         'ancestral_db' => 'ancestral_curr', # assume reg_conf is up-to-date
 
         'reg_conf'   => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-    	'ancestral_dump_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl",
-    	'ancestral_stats_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/ancestral_sequences/get_stats.pl",
 
         'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
 
@@ -54,6 +50,8 @@ sub default_options {
     	'dump_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
     };
 }
+
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_wide_parameters {
     my ($self) = @_;
