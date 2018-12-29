@@ -44,8 +44,6 @@ sub default_options {
 
         'division'  => 'vertebrates',
 
-        'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
-
         # 'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
     	'dump_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
     };

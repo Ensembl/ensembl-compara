@@ -64,8 +64,6 @@ sub default_options {
 
         'master_db'          => 'compara_master',
 
-        # pass location of pre-dumped genomes, if it exists (generated with DumpGenomes_conf)
-        'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.($self->o('division')).'/',
         'representative_species' => undef,
         'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
         'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],

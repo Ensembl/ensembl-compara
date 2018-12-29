@@ -50,8 +50,6 @@ sub default_options {
 
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
-    # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division'),
     'master_db' => 'compara_master',
 	
     #default location for pairwise alignments (can be a string or an array-ref)

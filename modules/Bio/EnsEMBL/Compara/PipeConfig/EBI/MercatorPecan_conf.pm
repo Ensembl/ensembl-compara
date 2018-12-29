@@ -79,9 +79,6 @@ sub default_options {
     #location of full species tree, will be pruned
         'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
-    # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
-
     # master database
     'master_db' => 'compara_master',
     # previous release data location for reuse

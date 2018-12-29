@@ -64,7 +64,6 @@ sub default_options {
             'pipeline_name' => $self->o('division').'_compara_nctrees_'.$self->o('rel_with_suffix'),
             'work_dir'      => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
 
-            'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division'),
             'binary_species_tree_input_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
             
             'master_db'   => 'compara_master',

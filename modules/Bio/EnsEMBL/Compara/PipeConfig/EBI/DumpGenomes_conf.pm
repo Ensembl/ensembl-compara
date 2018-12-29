@@ -70,8 +70,6 @@ sub default_options {
         'host'              => 'mysql-ens-compara-prod-2.ebi.ac.uk',
         'port'              => 4522,
 
-        # Where to put the genome dumps
-        'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.($self->o('division')).'/',
         # Which user has access to this directory
         'shared_user'       => 'compara_ensembl',
 

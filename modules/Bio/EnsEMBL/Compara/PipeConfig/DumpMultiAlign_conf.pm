@@ -64,11 +64,8 @@ sub default_options {
         # parameter, which by default comes from the Core API
         # 'ensembl_release' => 92
 
-        # By default, the pipeline will follow the "locator" of each
-        # genome_db. You only have to set reg_conf if the locators
-        # are missing.
-        # 'registry' => '',
-        'reg_conf' => undef,
+        # The division name
+        'division'  => 'vertebrates',
 
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
@@ -76,7 +73,6 @@ sub default_options {
         #'compara_db' => 'Multi',
 
         'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
 
         # Maximum number of blocks per file
         'split_size' => 200,

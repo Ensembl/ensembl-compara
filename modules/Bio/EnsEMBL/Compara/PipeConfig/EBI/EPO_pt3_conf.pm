@@ -90,9 +90,6 @@ sub default_options {
       # Dump directory
       'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
 
-      # place to get the genome dumps
-      'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
-      
       # The ancestral_db is created on the same server as the pipeline_db
       'ancestral_db' => { # core ancestral db
           -driver   => $self->o('pipeline_db', '-driver'),

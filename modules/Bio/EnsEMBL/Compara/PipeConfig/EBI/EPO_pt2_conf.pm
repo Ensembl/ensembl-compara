@@ -87,8 +87,6 @@ sub default_options {
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,
 
-	 # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
     'master_db' => 'compara_master',
      };
 }

@@ -58,9 +58,7 @@ sub default_options {
         'dump_dir'         => '#dump_root#/release-42',
         'ancestral_db'     => undef,
 
-        # Where we can find the genome dumps to speed up fetching sequences
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/plants/',
-
+        'division'          => 'plants',
     };
 }
 

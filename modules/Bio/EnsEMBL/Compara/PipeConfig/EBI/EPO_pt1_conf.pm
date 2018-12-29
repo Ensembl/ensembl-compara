@@ -83,9 +83,6 @@ sub default_options {
         #location of full species tree, will be pruned
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
-        # Where we get the genomes from
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
-
         'master_db' => 'compara_master',
       	  
         # database containing the pairwise alignments needed to get the overlaps
