@@ -75,8 +75,6 @@ sub default_options {
     'port' => 4485,
 
     'division' => 'ensembl',
-    'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
 
 	# database containing the anchors for mapping
 	'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',

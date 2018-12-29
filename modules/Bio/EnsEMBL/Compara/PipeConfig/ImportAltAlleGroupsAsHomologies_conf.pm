@@ -51,7 +51,6 @@ sub default_options {
 
         # Only needed if the member_db doesn't have genome_db.locator
         'division' => 'ensembl',
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         'master_db'       => 'compara_master',  # Source of MLSSs
         'member_db'       => 'compara_members', # Source of GenomeDBs and members

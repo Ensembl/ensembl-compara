@@ -80,9 +80,6 @@ sub default_options {
         # the pipeline won't redump genomes unless their size is different, or listed here
         'force_redump'      => [],
 
-        # the registry file to indicate how to get the core databases
-        'reg_conf'          => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
         # Capacities
         'dump_capacity'     => 10,
     };

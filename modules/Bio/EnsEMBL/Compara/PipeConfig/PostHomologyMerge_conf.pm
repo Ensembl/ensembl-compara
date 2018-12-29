@@ -56,7 +56,6 @@ sub default_options {
 
         'pipeline_name'   => $self->o('division') . '_post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
         'compara_db'      => 'compara_curr',
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
 

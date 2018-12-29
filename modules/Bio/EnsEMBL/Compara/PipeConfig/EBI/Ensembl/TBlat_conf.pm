@@ -55,7 +55,6 @@ sub default_options {
         'pipeline_name'             => $self->default_pipeline_name().'_'.$self->o('division').'_'.$self->o('rel_with_suffix'),
 
         # We connect to the databases via the Registry configuration file of the division
-        'reg_conf'                  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         'master_db'                 => 'compara_master',
         'curr_core_sources_locs'    => undef,
         'curr_core_dbs_locs'        => undef,

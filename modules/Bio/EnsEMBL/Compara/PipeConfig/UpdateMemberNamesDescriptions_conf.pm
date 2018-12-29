@@ -37,7 +37,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -49,13 +49,15 @@ sub default_options {
 
         'pipeline_name'   => 'member_description_update_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'division'        => 'vertebrates',
 
         #Pipeline capacities:
         'update_capacity'                           => '5',
 
     };
 }
+
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub hive_meta_table {
     my ($self) = @_;

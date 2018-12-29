@@ -74,8 +74,6 @@ sub default_options {
         'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/pairalignerstats_'.$self->o('rel_with_suffix').'/',
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'output_dir',
-	# A registry file to avoid having to use only URLs
-#        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
     };
 }
 

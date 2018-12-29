@@ -58,6 +58,9 @@ sub shared_default_options {
     return {
         # User details
         'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
+
+        # NOTE: Requires a division parameter
+        'reg_conf'              => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl'),
     }
 }
 

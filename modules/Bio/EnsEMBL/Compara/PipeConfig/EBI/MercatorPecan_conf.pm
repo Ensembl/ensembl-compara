@@ -81,7 +81,6 @@ sub default_options {
 
     # place to get the genome dumps
     'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
-    'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
     # master database
     'master_db' => 'compara_master',

@@ -56,7 +56,6 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'division'   => 'grch37',
-        'reg_conf'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
     };
 }
 

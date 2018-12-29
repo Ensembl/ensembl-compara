@@ -52,8 +52,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');      # we want to treat it as a 'pure' Hive pipeline
-
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -79,11 +78,11 @@ sub default_options {
 
         'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.vertebrates.branch_len.nw',
 
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-
+        'division'  => 'vertebrates',
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 # Ensures species output parameter gets propagated implicitly
 sub hive_meta_table {

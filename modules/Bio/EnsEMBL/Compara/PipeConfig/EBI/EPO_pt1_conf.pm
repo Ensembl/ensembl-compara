@@ -79,7 +79,6 @@ sub default_options {
         #'reference_genome_db_name' => 'oryzias_latipes',
 
         'division' => 'ensembl',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         #location of full species tree, will be pruned
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',

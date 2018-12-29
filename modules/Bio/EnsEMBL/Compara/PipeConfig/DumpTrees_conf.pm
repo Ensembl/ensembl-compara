@@ -79,7 +79,7 @@ sub default_options {
 
         # Standard registry file
         'pipeline_name'       => 'dump_trees_'.$self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix'),
-        'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        'production_registry' => "--reg_conf ".$self->o('reg_conf'),
         'rel_db'        => 'compara_curr',
 
         'dump_trees_capacity' => 100,   # how many trees can be dumped in parallel

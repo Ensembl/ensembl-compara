@@ -51,7 +51,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -65,6 +65,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_analyses {
     my ($self) = @_;

@@ -46,7 +46,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
         'pipeline_name'   => $self->o('division') . '_species_tree_' . $self->o('rel_with_suffix'),
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_' . $self->o('division') . '_conf.pl',
 
         'collection'      => $self->o('division'), # build tree with everything by default
         'species_set_id'  => undef,

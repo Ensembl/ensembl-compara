@@ -53,7 +53,7 @@ sub default_options {
 
         'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
 
-        'registry_conf_file'    => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'division'              => 'vertebrates',
     };
 }
 

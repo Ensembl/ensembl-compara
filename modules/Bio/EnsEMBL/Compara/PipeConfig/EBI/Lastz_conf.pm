@@ -31,7 +31,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'master_db'     => 'compara_master',
-        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         # Work directory

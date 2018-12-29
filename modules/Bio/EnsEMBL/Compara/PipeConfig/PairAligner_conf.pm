@@ -87,9 +87,8 @@ sub default_options {
 	#Set to use pairwise configuration file
 	'conf_file' => '',
 
-	#Set to use registry configuration file
-	'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-    'master_db' => 'compara_master',
+        #The registry file "reg_conf" is automatically set up in the parent class
+        'master_db' => 'compara_master',
 
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,

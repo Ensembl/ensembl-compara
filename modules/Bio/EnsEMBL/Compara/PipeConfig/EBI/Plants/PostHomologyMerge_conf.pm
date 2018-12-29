@@ -52,8 +52,6 @@ sub default_options {
         'port'            => 4615,
 
         'division'        => 'plants',
-        # 'compara_db'      => 'compara_curr',
-        # 'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         'high_confidence_ranges'    => [
             {

@@ -79,7 +79,6 @@ sub default_options {
         'port'          => '4522',                      # server port
 
         'division' => 'ensembl',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'compara_prev',

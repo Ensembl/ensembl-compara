@@ -73,8 +73,7 @@ sub default_options {
         # The method_link_type for this kind of alignments
         'lastz_patch_method'    => 'LASTZ_PATCH',
 
-        # Production Registry
-        'reg_conf'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        'division'              => 'vertebrates',
     };
 }
 

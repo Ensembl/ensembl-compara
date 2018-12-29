@@ -42,7 +42,7 @@ sub default_options {
         'compara_db' => 'compara_curr',
         'ancestral_db' => 'ancestral_curr', # assume reg_conf is up-to-date
 
-        'reg_conf'   => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        'division'  => 'vertebrates',
 
         'genome_dumps_dir'    => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/', # Where we can find the genome dumps to speed up fetching sequences
 

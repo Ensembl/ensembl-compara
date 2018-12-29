@@ -74,11 +74,9 @@ sub default_options {
         'work_dir'    => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/'.$self->o('pipeline_name'),
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
-        'reg_conf'            => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) .'/ensembl-compara/scripts/pipeline/production_reg_' . $self->o('division') . '_conf.pl',
         'master_db'           => 'compara_master',
         'taxonomy_db'         => 'ncbi_taxonomy',
         'release'             => $self->o( 'ENV', 'CURR_ENSEMBL_RELEASE' ),
-        'division'            => $self->o( 'ENV', 'COMPARA_DIV' ),
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
         'create_all_mlss_exe' => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/create_all_mlss.pl',
         'xml_file'            => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml',

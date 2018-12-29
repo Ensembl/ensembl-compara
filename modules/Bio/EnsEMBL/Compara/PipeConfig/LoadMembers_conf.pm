@@ -107,8 +107,6 @@ sub default_options {
         'host'  => 'mysql-ens-compara-prod-2',
         'port'  => 4522,
 
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'compara_master',
         'master_db_is_missing_dnafrags' => 0,

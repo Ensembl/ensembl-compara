@@ -36,7 +36,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -45,9 +45,10 @@ sub default_options {
         'division'     => 'ensembl',
 
         'compara_db'    => 'compara_curr',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
     };
 }
+
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_wide_parameters {
   my ($self) = @_;
