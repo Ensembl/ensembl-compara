@@ -202,7 +202,7 @@ return
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
 		bl2seq_exe => $self->o('bl2seq_exe'),
-        blastn_exe  => $self->o('blastn'),
+        blastn_exe  => $self->o('blastn_exe'),
 		bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
 	-hive_capacity => 10,
@@ -217,7 +217,7 @@ return
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
 		bl2seq_exe => $self->o('bl2seq_exe'),
-        blastn_exe  => $self->o('blastn'),
+        blastn_exe  => $self->o('blastn_exe'),
         bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
 	-rc_name => 'mem3500',

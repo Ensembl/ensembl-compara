@@ -95,7 +95,7 @@ sub default_options {
       # place to get the genome dumps
       'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
       
-      'blastn'          => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
+      'blastn_exe'      => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
       'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
       'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
       'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),

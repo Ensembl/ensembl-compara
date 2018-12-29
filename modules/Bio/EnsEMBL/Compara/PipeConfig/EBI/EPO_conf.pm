@@ -90,7 +90,7 @@ sub default_options {
         'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
 
         'bl2seq_exe'        => undef,   # We use blastn instead
-        'blastn'            => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
+        'blastn_exe'        => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
         'enredo_exe'        => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
         'exonerate_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
         'server_exe'        => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
