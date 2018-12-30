@@ -39,7 +39,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease>
+        -division <eg_division>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -74,10 +74,8 @@ sub default_options {
 
     division => 'plants',
     # mlss_id  => 40138,
-    # eg_release => 41,
 
-
-    # custom pipeline name, in case you don't like the default one
+    # custom pipeline name
     pipeline_name => $self->o('division').'_prottrees_'.$self->o('eg_release').'_'.$self->o('rel_with_suffix'),
 
     # How will the pipeline create clusters (families) ?

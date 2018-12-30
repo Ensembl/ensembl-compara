@@ -53,9 +53,9 @@ sub default_options {
         #'updated_mlss_ids' => [ 9802, 9803, 9804, 9805, 9806, 9807, 9788, 9789, 9810, 9794, 9809, 9748, 9749, 9750, 9751, 9763, 9764, 9765,
         #                        9766, 9778, 9779, 9780, 9781, 9797, 9798, 9799, 9800, 9801, 9808, 9787, 9813, 9814, 9812 ],
 
-        'dump_root'        => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/release_dumps_' . $self->o('division') . '_42',
+        'dump_root'        => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/release_dumps_' . $self->o('division') . '_' . $self->o('eg_release'),
         'pipeline_name'    => 'dump_all_for_release_42',
-        'dump_dir'         => '#dump_root#/release-42',
+        'dump_dir'         => '#dump_root#/release-'.$self->o('eg_release'),
         'ancestral_db'     => undef,
 
         'division'          => 'plants',

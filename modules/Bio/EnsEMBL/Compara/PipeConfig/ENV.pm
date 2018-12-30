@@ -45,6 +45,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ENV;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::ApiVersion ();
 
 =head2 shared_options
 
@@ -58,6 +59,9 @@ sub shared_default_options {
     return {
         # User details
         'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
+
+        # EG release number
+        'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
         # All the fixed parameters that depend on a "division" parameter
         'reg_conf'              => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl'),
