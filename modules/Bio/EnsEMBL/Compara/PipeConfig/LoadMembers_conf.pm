@@ -87,7 +87,6 @@ sub default_options {
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
-        'family_mlss_id'            => undef, 
         'work_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/LoadMembers_pipeline/' . $self->o('pipeline_name'),
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
@@ -173,7 +172,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'load_uniprot_members'  => $self->o('load_uniprot_members'),
         'work_dir'              => $self->o('work_dir'),
         'uniprot_dir'           => $self->o('uniprot_dir'),
-        'family_mlss_id'        => $self->o('family_mlss_id'),
     };
 }
 
@@ -550,7 +548,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtReleaseVersion',
             -parameters => {
                 'uniprot_rel_url'   => $self->o('uniprot_rel_url'),
-                'mlss_id'           => $self->o('family_mlss_id'),
             },
             -flow_into  => [ 'download_uniprot_factory' ],
         },

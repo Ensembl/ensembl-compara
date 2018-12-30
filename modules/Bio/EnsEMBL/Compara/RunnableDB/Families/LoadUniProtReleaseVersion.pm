@@ -56,9 +56,8 @@ sub write_output {
 
     my $uniprot_version_data = $self->_slurp($self->param('output_file'));
 
-    my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlssa->fetch_by_dbID($self->param_required('mlss_id'));
-    $mlss->store_tag('uniprot_version', $uniprot_version_data);
+    my $meta_container = $self->compara_dba->get_MetaContainer;
+    $meta_container->store_store_key_value('uniprot_version', $uniprot_version_data);
 }
 
 1;
