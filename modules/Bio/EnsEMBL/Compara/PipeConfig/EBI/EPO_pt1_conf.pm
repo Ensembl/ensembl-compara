@@ -80,9 +80,6 @@ sub default_options {
 
         'division' => 'ensembl',
 
-        #location of full species tree, will be pruned
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
-
         'master_db' => 'compara_master',
       	  
         # database containing the pairwise alignments needed to get the overlaps

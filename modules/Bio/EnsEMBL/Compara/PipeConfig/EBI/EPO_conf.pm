@@ -75,7 +75,6 @@ sub default_options {
         'port' => 4522,
 
         'division' => 'ensembl',
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
         # Capacities
         'low_capacity'                  => 10,

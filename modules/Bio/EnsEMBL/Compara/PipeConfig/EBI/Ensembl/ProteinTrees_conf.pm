@@ -110,7 +110,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
-        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+        'binary_species_tree_input_file'   => $self->o('binary_species_tree'),
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'

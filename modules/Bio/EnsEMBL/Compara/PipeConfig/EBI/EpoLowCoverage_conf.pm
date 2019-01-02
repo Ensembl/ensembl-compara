@@ -65,9 +65,6 @@ sub default_options {
  	# 'ref_species' => 'gallus_gallus',    # sauropsids 
 	#'ref_species' => 'oryzias_latipes',  # fish
 	# 'ref_species' => 'homo_sapiens',       # mammals
-
-	 #gerp parameters
-    'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
     };
 }
 

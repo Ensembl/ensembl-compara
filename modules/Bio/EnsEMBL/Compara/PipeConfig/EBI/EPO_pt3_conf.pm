@@ -85,7 +85,6 @@ sub default_options {
       #'port' => 4523,
 
       'division' => 'ensembl',
-      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
 
       # Dump directory
       'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',

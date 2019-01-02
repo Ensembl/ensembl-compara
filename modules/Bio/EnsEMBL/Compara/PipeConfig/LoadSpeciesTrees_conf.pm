@@ -76,8 +76,6 @@ sub default_options {
             [ 'ref_genome:10090', 'mus_musculus' ],
         ],
 
-        'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.vertebrates.branch_len.nw',
-
         'division'  => 'vertebrates',
     };
 }
@@ -136,7 +134,7 @@ sub pipeline_analyses {
                 # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'Ensembl',
                 'mlss_id'   => '#method_link_species_set_id#',
-                'species_tree_input_file'   => $self->o('ensembl_species_tree'),
+                'species_tree_input_file'   => $self->o('binary_species_tree'),
             },
             -flow_into  => {
                 2 => [ 'hc_binary_species_tree' ],

@@ -76,9 +76,6 @@ sub default_options {
         'division'              => 'ensembl',
         'do_not_reuse_list'     => [ ],
 
-    #location of full species tree, will be pruned
-        'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
-
     # master database
     'master_db' => 'compara_master',
     # previous release data location for reuse
