@@ -82,9 +82,8 @@ sub default_options {
         'dbowner' => 'worm',       # Used to prefix the database name (in HiveGeneric_conf)
         'pipeline_name' => 'compara_homology_WS' . $self->o('ws_release'),
 
-        # dependent parameters: updating 'work_dir' should be enough
-        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/wormbase/'.$self->o('ENV', 'USER').'/compara',
-        'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
+        # data directories:
+        'work_dir'              => '/nfs/nobackup/ensemblgenomes/wormbase/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_'.$self->o('pipeline_name'),
 
         # blast parameters:
         

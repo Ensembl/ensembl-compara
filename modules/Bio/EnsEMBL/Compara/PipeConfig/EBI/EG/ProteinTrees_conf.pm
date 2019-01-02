@@ -86,8 +86,8 @@ sub default_options {
         # Define rel_suffix for re-runs of the pipeline
         pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 
-    # dependent parameters: updating 'base_dir' should be enough
-        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_',
+    # data directories:
+        'work_dir'              => '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_'. $self->o('pipeline_name'),
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,

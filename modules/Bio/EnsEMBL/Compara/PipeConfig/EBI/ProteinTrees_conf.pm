@@ -56,9 +56,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # User details
-    'base_dir'              => '/hps/nobackup2/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
-
     # the master database for synchronization of various ids (use undef if you don't have a master database)
     'master_db' => 'compara_master',
     'member_db' => 'compara_members',

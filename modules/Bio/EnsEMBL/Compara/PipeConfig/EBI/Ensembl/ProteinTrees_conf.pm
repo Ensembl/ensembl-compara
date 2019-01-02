@@ -81,8 +81,7 @@ sub default_options {
 
     #default parameters for the geneset qc
 
-    # dependent parameters: updating 'base_dir' should be enough
-        'base_dir'              => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/',
+    # data directories:
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,

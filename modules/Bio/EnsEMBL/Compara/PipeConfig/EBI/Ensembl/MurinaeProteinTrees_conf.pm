@@ -96,7 +96,7 @@ sub default_options {
 
     #default parameters for the geneset qc
 
-    # dependent parameters: updating 'base_dir' should be enough
+    # data directories:
 
     # "Member" parameters:
 

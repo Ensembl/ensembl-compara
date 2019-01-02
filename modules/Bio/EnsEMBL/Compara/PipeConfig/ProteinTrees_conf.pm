@@ -110,9 +110,8 @@ sub default_options {
         'missing_sequence_threshold' => 0.05,
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
-    # dependent parameters: updating 'base_dir' should be enough
-        # Note that you can omit the trailing / in base_dir if you want 'pipeline_name' to be added as a suffix
-        'work_dir'              => $self->o('base_dir') . $self->o('pipeline_name'),
+    # data directories:
+        'work_dir'              => $self->o('pipeline_dir'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
