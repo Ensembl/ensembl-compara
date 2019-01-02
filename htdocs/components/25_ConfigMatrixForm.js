@@ -35,6 +35,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.buttonTab       = this.el.find("div.track-tab");
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
+    this.elLk.matrixContainer = this.el.find('div.matrix-container');
     this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
     this.elLk.resultBox       = this.el.find(".result-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
@@ -340,6 +341,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     delete panel.localStoreObj.matrix[item];
 
     panel.setLocalStorage();
+    panel.checkRowColumn();
   },
 
   updateRHS: function(item) {
@@ -1151,6 +1153,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     xContainer += "</div>";
     panel.el.find('div.matrix-container').append(xContainer);
 
+    var yContainer = '<div class="yContainer">';
+    var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     $.each(panel.localStoreObj.dx, function(cellName, value){
         var cellLabel    = panel.elLk.lookup[cellName].label;
@@ -1162,8 +1166,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           rowState   = "track-on";
           rowRender  = "peak-signal";
           panel.localStoreObj.matrix[cellName] = {"state": rowState, "render": rowRender};
-        }        
-        var yContainer  = '<div class="yContainer"><div class="yLabel '+cellName+'" data-track-state="'+rowState+'" data-track-render="'+rowRender+'">'+cellLabel+'</div>';
+        }
+
+        yContainer += '<div class="yLabel '+cellName+'" data-track-state="'+rowState+'" data-track-render="'+rowRender+'">'+cellLabel+'</div>';
+        var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
         
         //drawing boxes
         $.each(dyArray, function(i, dyItem) {
@@ -1190,14 +1196,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               return;
             }
           })
-          yContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxDataRender+'" data-popup-type="'+popupType+'"></div>';
+          rowContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxDataRender+'" data-popup-type="'+popupType+'"></div>';
         });
 
-        yContainer += "</div>";
-        panel.el.find('div.matrix-container').append(yContainer);
+        rowContainer += "</div>";
+        boxContainer += rowContainer;
     });
+    yContainer += "</div>";
+    panel.el.find('div.matrix-container').append(yContainer);
+
+    boxContainer += "</div>";
+    panel.el.find('div.matrix-container').append(boxContainer);
+
     panel.cellClick(); //opens popup
     panel.setLocalStorage();
+    panel.checkRowColumn(); //update renderer/state for existing element
     
     //Hack to close popup
     panel.el.find('button.reset').on("click", function(){
@@ -1505,5 +1518,42 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.setLocalStorage();
     });
 
+  },
+
+  //function to check row and column renderer/state everytime an element is added
+  checkRowColumn: function() {
+    var panel = this;
+    var once  = 0;
+
+    panel.el.find("div.rowContainer").each(function(){
+      once++;
+      var renderer = $(this).find("div.xBoxes._hasData").data("box-render"); //get a renderer just to check if others are same
+      var yName    = $(this).find("div.xBoxes._hasData").data("track-y");
+
+      if($(this).find("div.xBoxes._hasData.render-"+renderer).length === $(this).find("div.xBoxes._hasData").length) {
+        panel.elLk.matrixContainer.find('yLabel.'+yName).data("track-render",renderer);
+        panel.localStoreObj.matrix[yName].render = renderer;
+      } else {
+        panel.elLk.matrixContainer.find('div.yLabel.'+yName).data("track-render","");
+        panel.localStoreObj.matrix[yName].render = "";
+      }
+      //need to do this only once
+      if(once === 1) {
+        $(this).find("div.xBoxes").each(function(){
+          var xName = $(this).data("track-x");
+
+          if(panel.elLk.matrixContainer.find("div.xBoxes."+xName+"._hasData.render-"+renderer).length === panel.elLk.matrixContainer.find("div.xBoxes."+xName+"._hasData").length) {
+            panel.elLk.matrixContainer.find('xLabel.'+xName).data("track-render",renderer);
+            panel.localStoreObj.matrix[xName].render = renderer;
+          } else {
+            panel.elLk.matrixContainer.find('div.xLabel.'+xName).data("track-render","");
+            panel.localStoreObj.matrix[xName].render = "";
+          }
+        });
+      }
+    });
+
+    panel.setLocalStorage();
   }
+
 });
