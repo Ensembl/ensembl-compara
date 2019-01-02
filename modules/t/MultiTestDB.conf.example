@@ -1,0 +1,7 @@
+{ 
+ 'driver' => 'mysql',
+ 'host'   => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+ 'port'   => 4485,
+ 'user'   => 'ensadmin',
+ 'pass'   => $ENV{'ENSADMIN_PSW'},
+}

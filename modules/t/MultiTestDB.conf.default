@@ -4,12 +4,6 @@
 # You should provide a MultiTestDB.conf which defines the databases
 
 { 
-  'port'   => '4485',
-  'driver' => 'mysql',
-  'user'   => 'use_a_rw_user',
-  'pass'   => 'xxxx',
-  'host'   => 'mysql-ens-compara-prod-1',
-
  'databases' => { 
     'multi' => { 
     	'compara'                => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
