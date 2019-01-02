@@ -98,6 +98,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('member_type') . '_reindexed_trees_' . $self->o('rel_with_suffix'),
+
         # Must be "protein" or "ncrna"
         #'member_type'   => undef,
 

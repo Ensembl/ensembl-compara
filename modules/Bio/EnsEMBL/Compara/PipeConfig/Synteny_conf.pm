@@ -60,7 +60,6 @@ sub default_options {
     my ($self) = @_;
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
-            'pipeline_name' => $self->o('division').'_synteny_'.$self->o('rel_with_suffix'),
 
             # Connection to the alignment database must be given
             #'alignment_db' => undef,    # alignment database to calculate the syntenies from

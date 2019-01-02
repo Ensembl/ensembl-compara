@@ -35,7 +35,6 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'LASTZ_TEST_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
 	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_73', #Use a release database for the test only.

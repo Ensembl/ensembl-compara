@@ -61,7 +61,6 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'pipeline_name' => $self->o('division').'_compara_nctrees_'.$self->o('rel_with_suffix'),
             'work_dir'      => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
 
             'binary_species_tree_input_file' => $self->o('binary_species_tree'),

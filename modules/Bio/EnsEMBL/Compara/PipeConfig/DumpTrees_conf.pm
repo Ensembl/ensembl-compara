@@ -78,7 +78,7 @@ sub default_options {
         'division'    => 'ensembl',
 
         # Standard registry file
-        'pipeline_name'       => 'dump_trees_'.$self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix'),
+        'pipeline_name'       => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
         'production_registry' => "--reg_conf ".$self->o('reg_conf'),
         'rel_db'        => 'compara_curr',
 

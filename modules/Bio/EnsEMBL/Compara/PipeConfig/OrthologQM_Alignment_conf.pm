@@ -104,11 +104,14 @@ sub hive_meta_table {
     };
 }
 
+sub default_pipeline_name {         # Instead of ortholog_qm_alignment
+    return 'orth_qm_wga';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name' => $self->o('division').'_wga_' . $self->o('rel_with_suffix'),
 
         'species1'         => undef,
         'species2'         => undef,

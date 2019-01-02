@@ -71,9 +71,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        #'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'host'            => 'compara2',    # where the pipeline database will be created
-        'pipeline_name' => $self->o('division').'_families_'.$self->o('rel_with_suffix'),
         'file_basename' => $self->o('pipeline_name'),
 
         # HMM clustering

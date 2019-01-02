@@ -58,9 +58,6 @@ sub default_options {
   # Where the pipeline database will be created
   'host' => undef,
 
-  # Also used to differentiate submitted processes
-  'pipeline_name' => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),
-
   # Don't shout about unknown tables
   'die_if_unknown_table'    => 0,
 

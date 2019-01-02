@@ -100,12 +100,6 @@ sub default_options {
         # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
-    # custom pipeline name, in case you don't like the default one
-        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'        => $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
-        # Tag attached to every single tree
-        #'division'              => undef,
-
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
         'collection'            => undef,

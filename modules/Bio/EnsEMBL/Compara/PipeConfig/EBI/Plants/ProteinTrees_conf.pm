@@ -75,9 +75,6 @@ sub default_options {
     division => 'plants',
     # mlss_id  => 40138,
 
-    # custom pipeline name
-    pipeline_name => $self->o('division').'_prottrees_'.$self->o('eg_release').'_'.$self->o('rel_with_suffix'),
-
     # How will the pipeline create clusters (families) ?
     # Possible values: 'blastp' (default), 'hmm', 'hybrid'
     #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute

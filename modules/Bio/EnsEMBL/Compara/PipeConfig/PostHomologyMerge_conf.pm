@@ -54,7 +54,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name'   => $self->o('division') . '_post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
         'compara_db'      => 'compara_curr',
 
         'collection'      => 'default',  # The name of the clusterset_id in which to find the trees

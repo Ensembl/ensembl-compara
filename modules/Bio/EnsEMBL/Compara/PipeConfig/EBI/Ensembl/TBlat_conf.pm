@@ -51,9 +51,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # Add the division name to the pipeline name
-        'pipeline_name'             => $self->default_pipeline_name().'_'.$self->o('division').'_'.$self->o('rel_with_suffix'),
-
         # We connect to the databases via the Registry configuration file of the division
         'master_db'                 => 'compara_master',
         'curr_core_sources_locs'    => undef,

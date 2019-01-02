@@ -54,7 +54,6 @@ sub default_options {
         #                        9766, 9778, 9779, 9780, 9781, 9797, 9798, 9799, 9800, 9801, 9808, 9787, 9813, 9814, 9812 ],
 
         'dump_root'        => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/release_dumps_' . $self->o('division') . '_' . $self->o('eg_release'),
-        'pipeline_name'    => 'dump_all_for_release_42',
         'dump_dir'         => '#dump_root#/release-'.$self->o('eg_release'),
         'ancestral_db'     => undef,
 

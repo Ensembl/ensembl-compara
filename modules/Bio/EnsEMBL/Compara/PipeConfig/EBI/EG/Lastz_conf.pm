@@ -74,8 +74,6 @@ sub default_options {
             'user' => 'ensadmin',
             'password' => $self->o('password'),
 
-	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-
             'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
             'staging_loc1' => {

@@ -34,7 +34,7 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'LASTZ_NOMASTER_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+
           'master_db' => '', #Set master as an empty string
 
 	    #Must define location of core dbs if no master

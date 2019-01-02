@@ -77,11 +77,6 @@ sub default_options {
         'rel_suffix'        => '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('treefam_release').$self->o('rel_suffix'),
 
-    # custom pipeline name, in case you don't like the default one
-		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
-		#'pipeline_name'         => 'treefam_10_mammals_baboon',
-		#'pipeline_name'         => 'ckong_protein_trees_compara_homology_protists_topup24',
-		'pipeline_name'         => 'TreeFam10',
         # Tag attached to every single tree
         'division'              => 'treefam',
 

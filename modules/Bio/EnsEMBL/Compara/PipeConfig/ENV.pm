@@ -57,6 +57,10 @@ use Bio::EnsEMBL::ApiVersion ();
 sub shared_default_options {
     my ($self) = @_;
     return {
+
+        # Since we run the same pipeline for multiple divisions, include the division name in the pipeline name
+        'pipeline_name'         => $self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
+
         # User details
         'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
 

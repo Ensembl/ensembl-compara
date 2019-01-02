@@ -89,7 +89,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'murinae_' . $self->o('member_type') . '_trees_' . $self->o('rel_with_suffix'),
+        'collection'    => 'murinae',
 
         # Main capacity for the pipeline
         'copy_capacity'                 => 4,

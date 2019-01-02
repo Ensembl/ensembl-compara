@@ -41,11 +41,14 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
+sub default_pipeline_name {         # Instead of create_species_tree
+    return 'species_tree';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name'   => $self->o('division') . '_species_tree_' . $self->o('rel_with_suffix'),
 
         'collection'      => $self->o('division'), # build tree with everything by default
         'species_set_id'  => undef,

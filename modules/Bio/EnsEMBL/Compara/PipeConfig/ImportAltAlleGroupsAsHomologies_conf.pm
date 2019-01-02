@@ -39,6 +39,11 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
+
+sub default_pipeline_name {         # Instead of import_alt_allele_groups_as_homologies
+    return 'alt_allele_import';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
@@ -46,8 +51,6 @@ sub default_options {
 
         'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
         'port'            => 4485,
-
-        'pipeline_name'   => $self->o('division').'_alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         # Only needed if the member_db doesn't have genome_db.locator
         'division' => 'ensembl',

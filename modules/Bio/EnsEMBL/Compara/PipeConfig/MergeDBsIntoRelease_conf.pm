@@ -47,11 +47,14 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLU
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
+sub default_pipeline_name {         # Instead of merge_dbs_into_release
+    return 'dbmerge';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-        'pipeline_name' => $self->o('division') . '_dbmerge_' . $self->o('rel_with_suffix'),
 
         # The target database
         'curr_rel_db'   => 'compara_curr',  # Again this is a URL or a registry name

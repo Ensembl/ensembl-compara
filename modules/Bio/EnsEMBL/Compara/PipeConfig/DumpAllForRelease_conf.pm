@@ -28,7 +28,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf
 The PipeConfig file for the pipeline that performs FTP dumps of everything required for a
 given release. It will detect which pipelines have been run and dump anything new.
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX -pipeline_name dump_release_$CURR_ENSEMBL_RELEASE
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX -updated_mlss_ids <optional>
 
 =cut
 
@@ -91,7 +91,6 @@ sub default_options {
 
 
     	# general settings
-        'pipeline_name'   => 'dump_all_for_release_'.$self->o('rel_with_suffix'),
         'division'        => 'ensembl',
         'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?       

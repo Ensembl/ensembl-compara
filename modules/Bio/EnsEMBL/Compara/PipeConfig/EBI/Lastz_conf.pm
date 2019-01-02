@@ -31,7 +31,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'master_db'     => 'compara_master',
-        'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         # Work directory
         'dump_dir' => '/hps/nobackup2/production/ensembl/'.$ENV{USER}.'/pair_aligner/release_'.$self->o('rel_with_suffix').'/'.$self->o('pipeline_name').'/'.$self->o('host').'/',
