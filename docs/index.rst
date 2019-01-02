@@ -64,6 +64,7 @@ Data-production documentation
    production/READMEs/multiple_aligner.rst
    production/READMEs/base_age.rst
    production/READMEs/protein_trees.rst
+   production/READMEs/goc.rst
 
 .. toctree::
    :caption: Other documents
