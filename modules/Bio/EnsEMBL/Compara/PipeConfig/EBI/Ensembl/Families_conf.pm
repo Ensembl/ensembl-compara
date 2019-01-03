@@ -96,7 +96,7 @@ sub default_options {
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
-        'hmm_library_basedir' => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2018-08-20',
+        'hmm_library_basedir' => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2019-01-02',
 
         # code directories:
         'blast_bin_dir'     => $self->check_dir_in_cellar('blast/2.2.30/bin'),
