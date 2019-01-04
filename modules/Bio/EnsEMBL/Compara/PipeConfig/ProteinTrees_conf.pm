@@ -3321,6 +3321,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'methods'   => {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
+                    'ENSEMBL_PARALOGUES'    => 2,
                 },
             },
             -rc_name   => '500Mb_job',
