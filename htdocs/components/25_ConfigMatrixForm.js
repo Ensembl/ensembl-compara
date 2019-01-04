@@ -1203,10 +1203,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         boxContainer += rowContainer;
     });
     yContainer += "</div>";
-    panel.el.find('div.matrix-container').append(yContainer);
-
     boxContainer += "</div>";
-    panel.el.find('div.matrix-container').append(boxContainer);
+
+    var yBoxWrapper = '<div class="yBoxWrapper">' + yContainer + boxContainer + '</div>';
+
+    panel.el.find('div.matrix-container').append(yBoxWrapper);
 
     panel.cellClick(); //opens popup
     panel.setLocalStorage();
