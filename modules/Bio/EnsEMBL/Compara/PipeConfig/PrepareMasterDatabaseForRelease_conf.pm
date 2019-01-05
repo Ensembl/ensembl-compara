@@ -82,10 +82,10 @@ sub default_options {
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
 
-        'patch_dir'   => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/sql/',
+        'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
         'alias_file'  => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
-        'java_hc_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensj-healthcheck/',
+        'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
 
         # The first two somehow miss the executable permission.  Pull-request submitted
         'list_genomes_script'    => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),

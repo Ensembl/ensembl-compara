@@ -84,6 +84,11 @@ sub check_file_in_ensembl {
     return $self->o('ensembl_cvs_root_dir').'/'.$file_path;
 }
 
+sub check_dir_in_ensembl {
+    my ($self, $dir_path) = @_;
+    push @{$self->{'_ensembl_dir_paths'}}, $dir_path;
+    return $self->o('ensembl_cvs_root_dir').'/'.$dir_path;
+}
 
 sub check_all_executables_exist {
     my $self = shift;
@@ -107,6 +112,11 @@ sub check_all_executables_exist {
    }
    if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
        my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
+       foreach my $p (@{$self->{'_aensembl_dir_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$p;
+           die "'$p' cannot be found.\n" unless -e $p;
+           die "'$p' is not a directory.\n" unless -d $p;
+       }
        foreach my $p (@{$self->{'_ensembl_file_paths'}}) {
            $p = $ensembl_cvs_root_dir.'/'.$p;
            die "'$p' cannot be found.\n" unless -e $p;

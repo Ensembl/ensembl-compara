@@ -90,7 +90,7 @@ sub default_options {
         'dump_per_species_tsv'  => 0,
         'max_files_per_tar'     => 500,
 
-        'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
+        'readme_dir'  => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),                                      # where the template README files are
 
         'base_dir'    => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),     # where the final dumps will be stored
         'hash_dir'    => '#base_dir#/dump_hash/#division#_#basename#',                                                  # where directory hash is created and maintained

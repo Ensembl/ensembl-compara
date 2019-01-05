@@ -149,7 +149,7 @@ sub default_options {
         # tree dump options
         'clusterset_id' => undef,
         'member_type'   => undef,
-        'readme_dir'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
+        'readme_dir'    => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),    # where the template README files are
         'max_files_per_tar'     => 500,
         'batch_size'            => 25,    # how may trees' dumping jobs can be batched together
         
