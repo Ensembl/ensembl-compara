@@ -51,7 +51,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -64,7 +64,7 @@ sub default_options {
         'host'          => 'mysql-ens-compara-prod-1',
         'port'          => 4485,
 
-        'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
+        'merge_script'  => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
         'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_95',
 
@@ -88,6 +88,8 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
+
 
 sub pipeline_wide_parameters {
     my ($self) = @_;
@@ -105,7 +107,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},                                                              # inherit database and Hive tables' creation
 
-        $self->db_cmd().' <'.$self->o('ensembl_cvs_root_dir').'/ensembl/sql/table.sql',     # add Core tables
+        $self->db_cmd().' <'.$self->o('core_schema_sql'),      # add Core tables
     ];
 }
 

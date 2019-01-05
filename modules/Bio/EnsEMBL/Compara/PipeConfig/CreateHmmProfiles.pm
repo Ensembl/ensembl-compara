@@ -1194,7 +1194,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'write_stn_tags',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
+                'input_file'    => $self->o('tree_stats_sql'),
             },
             -flow_into      => [ 'email_tree_stats_report' ],
         },

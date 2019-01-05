@@ -245,7 +245,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'dump_script'       => $self->o('dump_script'),
+                'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
                 'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
@@ -268,7 +268,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'dump_a_tree_himem',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'dump_script'       => $self->o('dump_script'),
+                'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
                 'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',

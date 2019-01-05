@@ -78,8 +78,8 @@ sub default_options {
         'taxonomy_db'         => 'ncbi_taxonomy',
         'release'             => $self->o( 'ENV', 'CURR_ENSEMBL_RELEASE' ),
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
-        'create_all_mlss_exe' => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/create_all_mlss.pl',
-        'xml_file'            => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml',
+        'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
+        'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
 
         'patch_dir'   => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/sql/',

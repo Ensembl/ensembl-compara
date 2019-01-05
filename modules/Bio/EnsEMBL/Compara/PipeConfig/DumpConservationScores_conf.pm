@@ -39,7 +39,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Paths to compara files
-        'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
+        'cs_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/conservation_scores.txt'),
     };
 }
 

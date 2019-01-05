@@ -91,7 +91,7 @@ return
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
   'db_conn' => '#ancestral_db#',
-  'input_file' => $self->o('ensembl_cvs_root_dir')."/ensembl/sql/table.sql",
+  'input_file' => $self->o('core_schema_sql'),
   },
   -flow_into => { 1 => 'store_ancestral_species_name' },
 },
