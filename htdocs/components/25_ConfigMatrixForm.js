@@ -1209,6 +1209,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.el.find('div.matrix-container').append(yBoxWrapper);
 
+    // Setting width of xContainer and yBoxWrapper (32px width box times number of xlabels)
+    var hwidth = (dyArray.length * 32);
+    panel.el.find('div.matrix-container .xContainer, div.matrix-container .yBoxWrapper').width(hwidth);
+
     panel.cellClick(); //opens popup
     panel.setLocalStorage();
     panel.checkRowColumn(); //update renderer/state for existing element

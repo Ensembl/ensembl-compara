@@ -308,8 +308,8 @@ span.track-key.off        { background-color: [[WHITE]]; }
 span.track-key.no-data    { background-color: [[LIGHT_GREY]]; }
 span.track-key.peak       { border: none; margin-top: 2px; }
 span.track-key.signal     { border: none; margin-top: 2px; }
-div.xContainer            { display: flex; flex-grow: 0; flex-shrink: 0; padding: 50px 0 16px 115px; position: sticky; top: 0px; border-bottom: 1px solid #ccc; background: #eee; }
-div.xLabel                { transform: rotate(-60deg); min-width: 32px; margin: 0 0 0 -1px; }
+div.xContainer            { display: flex; flex-grow: 0; flex-shrink: 0; padding: 50px 0 16px 112px; position: sticky; top: 0px; background: #eee; }
+div.xLabel                { transform: rotate(-90deg); min-width: 32px; width: 32px; margin: 0 0 0 -1px; }
 div.yContainer            { padding-top: 10px; position: sticky; left: 0px; border-right: 1px solid #ccc; background: #eee; }
 div.yBoxWrapper           { display: flex; flex-grow: 0; flex-shrink: 0; }
 div.yLabel                { width: 100px; min-height: 32px; text-align: right; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin: 0 10px -1px 0; }
