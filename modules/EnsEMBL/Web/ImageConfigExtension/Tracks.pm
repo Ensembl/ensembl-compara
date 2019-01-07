@@ -779,7 +779,8 @@ sub add_synteny {
 
   return unless $menu;
 
-  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species} || {}};
+  my $prod_name = $self->hub->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$prod_name} || {}};
 
   return unless @synteny_species;
 
