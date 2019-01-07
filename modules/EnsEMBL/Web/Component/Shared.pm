@@ -386,19 +386,23 @@ sub transcript_table {
     
     if($ref_gene) {
       #copied from apache/handler, just need this one line to get the matching species for the stable_id (use ensembl_stable_id database)
-      my ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($ref_gene, undef, undef, undef, undef, 1); 
-      my $ga = Bio::EnsEMBL::Registry->get_adaptor($species,$db_type,'gene');
-      my $gene = $ga->fetch_by_stable_id($ref_gene);
-      my $ref_gene_name = $gene->display_xref->display_id;
+      my ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($ref_gene, undef, undef, undef, undef, 1);
+      if ($species) { #needed because some attributes are not valid e! stable IDs
+        my $ga = Bio::EnsEMBL::Registry->get_adaptor($species,$db_type,'gene');
+        my $gene = $ga->fetch_by_stable_id($ref_gene);
+        my $ref_gene_name = $gene->display_xref->display_id;
 
-      my $ref_url  = $hub->url({
-        species => $species,
-        type    => 'Gene',
-        action  => 'Summary',
-        g       => $ref_gene
-      });
-    
-      $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+        my $ref_url  = $hub->url({
+          species => $species,
+          type    => 'Gene',
+          action  => 'Summary',
+          g       => $ref_gene
+        });
+        $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+      }
+      else {
+        $table->add_row('Reference strain equivalent',"None");
+      }  
     } else {
       $table->add_row('Reference strain equivalent',"None");
     }
