@@ -1304,10 +1304,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.trackPopup.find('ul li input[name=cell-radio]').prop("checked",false);
       }
 
-      //TODO fix offset of popup when scrolling, it should position based on the mouse click and below
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
-      panel.trackPopup.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top':$(this).position().top + 15,'left':$(this).position().left + 15}).show();
+      panel.trackPopup.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top': $('div.matrix-container')[0].scrollTop ? $(this).position().top + 15 : $(this)[0].offsetTop + 15,'left':$('div.matrix-container')[0].scrollLeft ? $(this).position().left + 15 : $(this)[0].offsetLeft + 15}).show();
 
       panel.popupFunctionality(); //interaction inside popup
     });
