@@ -1068,7 +1068,7 @@ sub add_regulation_builds {
 
   return unless $db;
 
-  $menu = $menu->append_child($self->create_menu_node('regulatory_features', 'Regulatory features'));
+  $menu = $menu->append_child($self->create_menu_node('regulatory_features', 'Regulation data'));
 
   ## Main regulation track - replaces 'MultiCell'
   $menu->append_child($self->create_track_node("regbuild", "Regulatory Build", {
@@ -1161,7 +1161,7 @@ sub add_regulation_builds {
           section     => $menu->data->{'caption'},
           header      => $evidence_info->{$set}{'long_name'},
           description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
-          axes        => { x => 'Cell type', y => 'Evidence type' },
+          axes        => { x => 'Epigenome', y => 'Experimental data' },
         }
       }];
 

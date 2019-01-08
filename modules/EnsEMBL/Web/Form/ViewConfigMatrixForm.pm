@@ -50,9 +50,17 @@ sub build {
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->get_data('matrix');
   
+  #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
+  #$Data::Dumper::Maxdepth = 2;
+  #warn Dumper($matrix_data);
+  my $title = $matrix_data->{'section'};
+  my $dimX  = $matrix_data->{'axes'}{'x'};
+  my $dimY  = $matrix_data->{'axes'}{'y'};
+
   my $html = qq(
     <div class="header_tutorial_wrapper flex-row">
-      <h1>Regulation data</h1>
+      <h1>$title</h1>
       <div class="large-breadcrumbs">
         <ul>
           <li class="active _track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
@@ -65,7 +73,7 @@ sub build {
       <div class="track-panel active" id="track-content">
         <div class="tabs track-menu">
           <div class="track-tab active" id="dx-tab">
-            <span> Epigenome </span>
+            <span> $dimX </span>
             <span class="hidden content-id">dx-content</span>
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Search" name="dx_search">
@@ -73,7 +81,7 @@ sub build {
             </div>
           </div>
           <div class="track-tab" id="dy-tab">
-            <span> Experimental data </span>
+            <span> $dimY </span>
             <span class="hidden content-id">dy-content</span>
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Search" name="dy_search">
@@ -92,7 +100,7 @@ sub build {
       </div>
         
       <div class="track-panel track-configuration" id="configuration-content">
-        <div class="vertical-sub-header">Epigenome</div>
+        <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
           <div class="config-key"><span class="track-key off"></span>Data track off</div>
@@ -100,7 +108,7 @@ sub build {
           <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
           <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
         </div>
-        <div class="horizontal-sub-header">Experimental data</div>
+        <div class="horizontal-sub-header">$dimY</div>
         <button class="fade-button reset">Reset</button>
         <div class="track-popup column-cell"><ul><li><label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label></li></ul><ul><li><label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label></li></ul></div>
         <div class="track-popup peak-signal"><ul><li><label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label><input type='radio' name="column-radio" class="_peak-signal" /><text>Peaks & signal</text></li><li><input type='radio' name="column-radio" class="_peak"/><text>Peaks</text></li><li><input type='radio' name="column-radio" class="_signal"/><text>Signal</text></li></ul><ul><li><label class="switch"><input type="checkbox" name="row-switch"><span class="slider round"></span><span class="switch-label">Row</span></label><input type='radio' name="row-radio" class="_peak-signal"/><text>Peaks & signal</text></li><li><input type='radio' name="row-radio" class="_peak"/><text>Peaks</text></li><li><input type='radio' name="row-radio" class="_signal"/><text>Signal</text></li></ul><ul><li><label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label><input type='radio' name="cell-radio" class="_peak-signal"/><text>Peaks & signal</text></li><li><input type='radio' name="cell-radio" class="_peak"/><text>Peaks</text></li><li><input type='radio' name="cell-radio" class="_signal"/><text>Signal</text></li></ul></div>
@@ -113,9 +121,9 @@ sub build {
         <h4>Selected tracks</h4>
 
         <div class="filter-content">
-          <h5 class="result-header">Epigenome <span class="error _dx">Please select Epigenome</span></h5>
+          <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>
           <div class="result-content" id="dx">
-            <div class="sub-result-link">Epigenome</div>
+            <div class="sub-result-link">$dimX</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
             <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
             <ul class="result-list hidden">
@@ -123,7 +131,7 @@ sub build {
             </ul>
           </div>
 
-          <h5 class="result-header">Experimental data <span class="error _dy">Please select Experimental data</span></h5>
+          <h5 class="result-header">$dimY <span class="error _dy">Please select $dimY</span></h5>
           <div id="dy">
             <div class="result-content" id="Histone">
               <span class="_parent-tab-id hidden">dy-tab</span>
