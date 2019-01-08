@@ -11,6 +11,7 @@
 # Deprecated methods scheduled for deletion
 
 * `DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region()` in Ensembl 98
+* `DBSQL::'*MemberAdaptor::get_source_taxon_count()` in Ensembl 99
 
 # Deprecated methods not yet scheduled for deletion
 

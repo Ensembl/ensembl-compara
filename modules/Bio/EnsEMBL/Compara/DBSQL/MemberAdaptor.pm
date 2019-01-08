@@ -60,7 +60,7 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
@@ -333,18 +333,18 @@ sub fetch_all_by_DnaFrag {
 }
 
 
-=head2 get_source_taxon_count
+=head2 count_all_by_source_taxon
 
   Arg [1]    : string $source_name
   Arg [2]    : int $taxon_id
-  Example    : my $sp_gene_count = $memberDBA->get_source_taxon_count('ENSEMBLGENE',$taxon_id);
+  Example    : my $sp_gene_count = $memberDBA->count_all_by_source_taxon('ENSEMBLGENE',$taxon_id);
   Description: Returns the number of members for this source_name and taxon_id
   Returntype : int
   Exceptions : undefined arguments
 
 =cut
 
-sub get_source_taxon_count {
+sub count_all_by_source_taxon {
   my ($self,$source_name,$taxon_id) = @_;
 
   throw("source_name and taxon_id args are required") 
@@ -355,6 +355,11 @@ sub get_source_taxon_count {
     return $self->generic_count('source_name=? AND taxon_id=?');
 }
 
+sub get_source_taxon_count {
+    my $self = shift;
+    deprecate('*MemberAdaptor::get_source_taxon_count is deprecated and will be removed in e99. Use count_all_by_source_taxon instead');
+    return $self->count_all_by_source_taxon(@_);
+}
 
 
 =head2 fetch_all_by_MemberSet
