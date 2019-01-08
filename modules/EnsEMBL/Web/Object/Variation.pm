@@ -79,6 +79,7 @@ sub is_coding_variant {
   }
   else {
     my @vari_mappings = @{ $self->get_variation_features };
+    return 0 if (!@vari_mappings);
     foreach my $f (@vari_mappings){
       my $cons = $f->most_severe_OverlapConsequence;
       my $cons_rank = $cons->rank;
