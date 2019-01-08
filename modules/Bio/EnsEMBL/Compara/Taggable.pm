@@ -447,44 +447,5 @@ sub _load_tags {
 }
 
 
-=head2 AUTOLOAD
-
-  Description: matches the get_value_for_XXX calls to get_value_for_tag('XXX') and other calls
-  Returntype : none
-  Exceptions : none
-  Caller     : system
-
-=cut
-
-our $AUTOLOAD;
-
-sub AUTOLOAD {
-    my $self = shift;
-    # $AUTOLOAD is a string like 'Bio::EnsEMBL::Compara::GeneTreeNode::get_value_for_bootstrap'
-    #print "AUTOLOAD $AUTOLOAD\n";
-
-        # Example: $node->get_value_for_bootstrap()
-    if ( $AUTOLOAD =~ m/::get_value_for_(\w+)$/ ) {
-        deprecate("get_value_for_$1() constructs are deprecated and will be removed in e94. Use get_value_for_tag('$1') instead");
-        #print "MATCHED $1\n";
-        return $self->get_value_for_tag($1);
-
-        # Example: $node->get_all_values_for_lost_species_tree_node_id()
-    } elsif ( $AUTOLOAD =~ m/::get_all_values_for_(\w+)$/ ) {
-        deprecate("get_all_values_for_$1() constructs are deprecated and will be removed in e94. Use get_all_values_for_tag('$1') instead");
-        return $self->get_all_values_for_tag($1);
-
-        # Example: $node->get_bootstrap_value()
-    } elsif ( $AUTOLOAD =~ m/::get_(\w+)_value$/ ) {
-        deprecate("get_$1_value() constructs are deprecated and will be removed in e94. Use get_tagvalue('$1') instead");
-        return $self->get_tagvalue($1);
-
-    } elsif( $AUTOLOAD !~ /::DESTROY$/) {
-        use Carp;
-        croak "$self does not understand method $AUTOLOAD\n";
-    }
-}
-
-
 1;
 
