@@ -362,6 +362,31 @@ sub get_source_taxon_count {
 }
 
 
+=head2 get_source_breakdown_by_member_ids
+
+  Example     : $member_adaptor->get_source_breakdown_by_member_ids([12385, 435643]);
+  Description : Returns the source_names of the members, with their counts
+  Returntype  : Hashref of source_names mapped to counts (integers)
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub get_source_breakdown_by_member_ids {
+    my ($self, $id_list) = @_;
+
+    my $table = ($self->_tables)[0]->[0];
+
+    my %counts;
+    $self->split_and_callback($id_list, $table.'_id', SQL_INTEGER, sub {
+        my $sql = "SELECT source_name, COUNT(*) AS n_members FROM $table WHERE " . (shift) . " GROUP BY source_name";
+        my $partial_counts = $self->db->dbc->db_handle->selectall_hashref($sql, 'source_name');
+        $counts{$_} = ($counts{$_} // 0) + $partial_counts->{$_}->{'n_members'} for keys %$partial_counts;
+    } );
+    return \%counts;
+}
+
+
 =head2 fetch_all_by_MemberSet
 
   Arg[1]     : MemberSet $set
