@@ -81,6 +81,7 @@ sub default_options {
         #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'discard_uniprot_only_clusters' => 1,
 
         # code directories:
         #'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.30+/bin',
@@ -486,6 +487,9 @@ sub pipeline_analyses {
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
+             -parameters => {
+                 'discard_uniprot_only_clusters'    => $self->o('discard_uniprot_only_clusters'),
+             }
              -rc_name => 'LoMafft',
              -flow_into  => 'fire_family_building',
             },

@@ -66,6 +66,15 @@ use Bio::EnsEMBL::Compara::Family;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize');
 
 
+sub param_defaults {
+    my $self = shift @_;
+    return {
+        %{ $self->SUPER::param_defaults },
+
+        'discard_uniprot_only_clusters' => 0,
+    }
+}
+
 
 sub write_output {
     my $self = shift @_;
@@ -87,6 +96,7 @@ sub store_families {
 
     my $compara_dba     = $self->compara_dba();
     my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+    my $discard_uniprot_only_clusters   = $self->param('discard_uniprot_only_clusters');
 
     # make sure we have the correct $mlss:
     my $mlss = $method_link_species_set_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
@@ -102,6 +112,14 @@ sub store_families {
         if (scalar(@$cluster_members) == 0) {
             print STDERR "Skipping an empty cluster $model_name\n" if($self->debug);
             next;
+        }
+
+        if ($discard_uniprot_only_clusters) {
+            my $breakdown = $ma->get_source_breakdown_by_member_ids($cluster_members);
+            unless ($breakdown->{'ENSEMBLPEP'}) {
+                print STDERR "Skipping a cluster made entirely of UniProt members $model_name\n" if($self->debug);
+                next;
+            }
         }
 
         print STDERR "Loading cluster $model_name..." if($self->debug);
