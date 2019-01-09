@@ -58,9 +58,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize;
 
 use strict;
 use warnings;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
+
 use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::Family;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize');
 
@@ -113,17 +114,11 @@ sub store_families {
             '_description_score'            => 0,
         });
 
-        my $members = $ma->fetch_all_by_dbID_list($cluster_members);
-        foreach my $member (@{$members}) {
-
-            # A funny way to add members to a family.
-            # You cannot do it without introducing a fake AlignedMember, it seems?
-            #
-            bless $member, 'Bio::EnsEMBL::Compara::AlignedMember';
-            $family->add_Member($member);
-        }
-
+        # store() requires Member objects, which would be slow to fetch
+        # Instead we store an empty family
         my $family_dbID = $fa->store($family);
+        # And then add the seq_member_ids
+        $fa->add_member_ids_to_family($cluster_members, $family);
 
         print STDERR "Done\n" if($self->debug);
     }
