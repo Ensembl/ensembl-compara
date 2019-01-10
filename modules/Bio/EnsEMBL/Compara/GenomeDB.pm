@@ -195,7 +195,7 @@ sub db_adaptor {
             $self->has_karyotype( $genome_container->has_karyotype );
             $self->is_good_for_alignment( 0 );  # Cannot be inferred without the dnafrags
             $self->strain_name( $meta_container->single_value_by_key('species.strain') );
-            $self->display_name( $meta_container->single_value_by_key('species.display_name') );
+            $self->display_name( $meta_container->get_display_name );
             $dba->{_dbc}->disconnect_if_idle unless $was_connected;
         }
     }
