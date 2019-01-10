@@ -97,7 +97,7 @@ sub fetch_input {
 	my (@prev_group_ids, %all_groups, @matrices_dataflow, $this_outgroup);
 	foreach my $group_taxon_id ( @tax_groups_ids ) {
 		my $current_group_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($group_taxon_id);
-		print " -- Grouping " . $current_group_taxon->name . "...\n" if $self->debug if $self->debug;
+		print " -- Grouping " . $current_group_taxon->name . "...\n" if $self->debug;
 
 		# extract initial submatrix for the group
 		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
