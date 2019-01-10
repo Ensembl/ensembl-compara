@@ -333,6 +333,35 @@ sub fetch_all_by_ancestral_taxon_id {
   return $self->_id_cache->get_by_sql($sql, [$taxon_id]);
 }
 
+=head2 fetch_all_current_by_ancestral_taxon_id
+
+  Arg [1]    : int $ancestral_taxon_id
+  Example    : $gdb = $gdba->fetch_all_current_by_ancestral_taxon_id(1234);
+  Description: Retrieves all the CURRENT genome dbs derived from that NCBI taxon_id.
+  Note       : This method uses the ncbi_taxa_node table
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
+  Exceptions : 
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub fetch_all_current_by_ancestral_taxon_id {
+  my ($self, $taxon_id) = @_;
+
+  unless($taxon_id) {
+    throw('taxon_id argument is required');
+  }
+
+  my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
+    WHERE ntn1.taxon_id = ? AND ntn1.left_index <= ntn2.left_index AND ntn1.right_index >= ntn2.left_index
+    AND ntn2.taxon_id = gdb.taxon_id AND gdb.first_release IS NOT NULL AND gdb.last_release IS NULL";
+
+  return $self->_id_cache->get_by_sql($sql, [$taxon_id]);
+}
+
+
+
 
 =head2 fetch_by_core_DBAdaptor
 

@@ -59,7 +59,8 @@ sub run {
 
 	my %trees = %{ $self->param('trees')}; # assuming { group_id => { tree => newick_string, outgroup => outgroup_id } }
 
-	my $root_tree = $trees{root}->{tree};
+	# my $root_tree = $trees{root}->{tree};
+	my $root_tree = $trees{1}->{tree};
 	my $final_tree = $root_tree;
 
 	print "original tree: $final_tree\n" if $self->debug;
@@ -69,6 +70,7 @@ sub run {
 		last unless $merged_group_key;
 
 		my $tree_to_merge = $trees{$merged_group_key}->{tree};
+		chomp $tree_to_merge;
 
 		# reroot the tree and then remove the outgroup
 		my $outgroup_name = $trees{$merged_group_key}->{outgroup};

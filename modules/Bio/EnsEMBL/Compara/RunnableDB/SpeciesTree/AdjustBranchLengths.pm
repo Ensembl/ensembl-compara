@@ -74,8 +74,8 @@ sub run {
 
 	# write topology tree to file
 	my $tree_file = "$working_dir/topology.nwk";
-	$self->_spurt($tree_file, $self->param_required('tree'));
-	print "topology tree written to $tree_file\n";
+	my $unrooted_tree = $self->_write_unrooted_tree($tree_file); # erable requires unrooted input
+	print "unrooted topology tree written to $tree_file\n" if $self->debug;
 
 	# run erable
 	my $erable_exe = $self->param_required('erable_exe');
@@ -84,7 +84,20 @@ sub run {
 
 	# correct negative branch lengths
 	my $tree = $self->_slurp("$erable_phylip.lengths.nwk");
+	print "\n -- TREE AFTER ERABLE RUN: $tree\n" if $self->debug;
 	$tree = $self->_correct_negative_brlens( $tree );
+	print "\n -- TREE AFTER NEGATIVE LEN CORRECTION: $tree\n" if $self->debug;
+
+	# reroot the tree if outgroup is given
+	my $outgroup_id = $self->param('outgroup_id');
+	if ( $outgroup_id ) { 
+		my $unrooted_erable_treefile = "$working_dir/unroot.erable.nwk";
+		$self->_spurt($unrooted_erable_treefile, $tree);
+		my $reroot_cmd = $self->param_required('reroot_script') . " --tree $unrooted_erable_treefile --outgroup gdb$outgroup_id";
+		my $reroot_run = $self->run_command($reroot_cmd);
+		$tree = $reroot_run->out;
+		chomp $tree;
+	}
 
 	# replace genome_db_ids with species names
 	my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
@@ -112,6 +125,19 @@ sub write_output {
 	} else {
 		$self->dataflow_output_id( { tree => $erable_tree }, 2 ); # for testing mostly
 	}
+}
+
+sub _write_unrooted_tree {
+	my ($self, $outfile) = @_;
+
+	my $tmp_dir = $self->worker_temp_directory;
+	my $rooted_tree = $self->param_required('tree');
+	my $rooted_tree_file = "$tmp_dir/rooted.topology.nwk";
+	$self->_spurt($rooted_tree_file, $rooted_tree);
+
+	my $unroot_script = $self->param_required('unroot_script');
+	my $unroot_run = $self->run_command("$unroot_script $rooted_tree_file > $outfile");
+	die $unroot_run->err if $unroot_run->err;
 }
 
 sub _correct_negative_brlens {
