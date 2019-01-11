@@ -1321,6 +1321,7 @@ sub dumpOligoProbe {
   print LOG "  Dumping $FUNCDB to $file ... ".&date_and_mem()."\n";
   header($fh);
 
+  print LOG "    Retrieving gene details...".&date_and_mem()."\n";
   #gene details
   my $gene_dets;
   my $sql = qq(
@@ -1337,6 +1338,7 @@ sub dumpOligoProbe {
     };
   }
 
+  print LOG "    Retrieving probe_set transcript mappings...".&date_and_mem()."\n";
   my $probe_set_trans_dets;
   $sql = qq(
       SELECT probe_set_id, stable_id, stable_id
@@ -1352,6 +1354,7 @@ sub dumpOligoProbe {
     };
   };
 
+  print LOG "    Retrieving probe_sets...".&date_and_mem()."\n";
   $sth    = $conf->{'dbh'}->prepare(qq(
     SELECT
       probe_set.name,
@@ -1367,7 +1370,7 @@ sub dumpOligoProbe {
     GROUP BY
       probe_set.name,
       array.name
-));
+  ));
   $sth->execute();
   print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
   while( my( $probe_name, $pset_id, $count, $type ) = $sth->fetchrow_array ) {
@@ -1390,6 +1393,7 @@ sub dumpOligoProbe {
     &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
   }
 
+  print LOG "    Retrieving probe transcript mappings...".&date_and_mem()."\n";
   my $probe_trans_dets;
   $sql = qq(
         SELECT probe_id, stable_id, stable_id
@@ -1406,85 +1410,50 @@ sub dumpOligoProbe {
     };
   };
 
+  print LOG "    Retrieving probe details...".&date_and_mem()."\n";
   $sth    = $conf->{'dbh'}->prepare(qq(
-    select
-      probe.probe_id,
-      probe.name,
-      array.vendor,
-      array.name,
-      count(distinct probe_feature.probe_feature_id) as hits
-    from
-      $FUNCDB.probe_feature
-      join $FUNCDB.probe using (probe_id)
-      join $FUNCDB.array_chip using (array_chip_id)
-      join $FUNCDB.array using (array_id)
-    where
-      probe.probe_set_id is null
-    group by
-      probe.name
+    SELECT
+      p.probe_id,
+      p.name,
+      a.vendor,
+      count(distinct a.name) as array_hits,
+      count(distinct pf.probe_feature_id) as genome_hits
+    FROM
+      $FUNCDB.probe_feature pf,
+      $FUNCDB.probe p,
+      $FUNCDB.array_chip ac,
+      $FUNCDB.array a
+    WHERE
+      pf.probe_id = p.probe_id
+    AND
+      p.array_chip_id = ac.array_chip_id
+    AND ac.array_id = a.array_id
+    AND p.probe_set_id is null
+    GROUP BY p.name
   ));
+
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
-  my $old;
-  while( my( $pid, $pname, $vendor, $aname, $count ) = $sth->fetchrow_array ) {
-    if( $old->{'pid'} != $pid ) {
-      if( $old->{'pid'}) {
-        my ($p_probe_name,$desc) = &get_oligo_terms($old);
-        if (my @gname = keys %{$probe_trans_dets->{$pid} || {}}) {
-          my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
-          $desc .= " It hits transcripts in the following $gene_c:";
-          foreach my $gene (@gname) {
-            $desc .= " $gene (";
-            foreach my $trans (@{$probe_trans_dets->{$pid}{$gene}}) {
-              $desc .= $trans->{'stable_id'}. ', ';
-            }
-            $desc =~ s/, $//;
-            $desc .= '),';
-          }
-          $desc =~ s/,$/\./;
+  while( my( $pid, $pname, $type, $array_count, $count ) = $sth->fetchrow_array ) {
+    my $array_c  = $array_count > 1 ? 'arrays' : 'array';
+    my $locations_c = $count > 1 ? 'locations' : 'location';
+    my $desc = "$type probe $pname is associated with $array_count $array_c and hits the genome in $count $locations_c.";
+    if (my @gname = keys %{$probe_trans_dets->{$pid} || {}}) {
+      my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
+      $desc .= " It hits transcripts in the following $gene_c:";
+      foreach my $gene (@gname) {
+        $desc .= " $gene (";
+        foreach my $trans (@{$probe_trans_dets->{$pid}{$gene}}) {
+          $desc .= $trans->{'stable_id'}. ', ';
         }
-        &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
+        $desc =~ s/, $//;
+        $desc .= '),';
       }
-      $old = {
-        'pid'        => $pid,
-        'array_dets' => [ [ $aname, $pname] ],
-        'vendor'     => $vendor,
-        'count'      => $count,
-      };
+      $desc =~ s/,$/\./;
     }
-    else {
-      push @{$old->{'array_dets'}}, [ $aname, $pname ];
-    }
-  }
-  if( $old->{'pid'} ) {
-    my ($p_probe_name,$desc) = &get_oligo_terms($old);
-    &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
+    &p( OligoProbeLine($dbspecies,$pname,$desc,'','probe',$db,$counter ), $fh);
   }
   return footer( $counter->(), $fh);
-}
-
-sub get_oligo_terms {
-  my $old = shift;
-  my $primary_probe  = shift @{$old->{'array_dets'}};
-  my ($p_array_name,$p_probe_name) = @$primary_probe;
-  my $type  = $old->{'vendor'};
-  my $count = $old->{'count'};
-  my $locations_c = $count > 1 ? 'locations' : 'location';
-  my $desc = "$type probe $p_probe_name ($p_array_name array) hits the genome in $count $locations_c.";
-  if ($old->{'array_dets'}) {
-    my $c = scalar(@{$old->{'array_dets'}});
-    if ($c) {
-      my $synonyms_c = $c > 1 ? 'synonyms' : 'synonym';
-      $desc .= " It has $c $synonyms_c:";
-      foreach (@{$old->{'array_dets'}}) {
-        my ($array_name,$probe_name) = @$_;
-        $desc .= " $probe_name ($array_name array),";
-      }
-      $desc =~ s/,$//;
-      $desc .= '.';
-    }
-  }
-  return $p_probe_name,$desc;
 }
 
 sub OligoProbeLine {
