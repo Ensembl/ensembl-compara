@@ -27,7 +27,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Utils::TrackHub;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
@@ -328,8 +328,8 @@ sub _add_trackhub {
 
   ## Note: no need to validate assembly at this point, as this will have been done
   ## by the attachment interface - otherwise we run into issues with synonyms
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1, 'make_tree' => 1}); ## Do we have data for this species?
   $self->{'th_default_count'} = 0;
 
   if ($hub_info->{'error'}) {
