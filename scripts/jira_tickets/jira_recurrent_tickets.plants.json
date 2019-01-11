@@ -119,8 +119,8 @@
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
-            "summary": "All EG Orthology QC WGA",
-            "ticket_map_name": "Protein-trees WGA Orthology QC"
+            "summary": "Protein-trees WGA Orthology QC",
+            "ticket_map_name": "WGA Orthology QC"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
