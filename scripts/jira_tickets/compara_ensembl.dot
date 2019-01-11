@@ -11,6 +11,7 @@ digraph "Ensembl Vertebrates dependencies" {
     "ncRNA-trees - default" -> "ncRNA-trees WGA Orthology QC";
     "Protein-trees - default" -> "Protein-trees - murinae";
     "ncRNA-trees - default" -> "ncRNA-trees - murinae";
+    "All LastZ" -> "Synteny";
     {"All LastZ", "EPO Fish", "EPO Mammals", "EPO Primates", "EPO Sauropsids"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
     {"ncRNA-trees - murinae", "Protein-trees - murinae"} -> "Gene-tree reindexing - murinae" [label="XOR",style="dashed",dir=none];
     {rank = same; "Genome dumps"; "Member loading"; }

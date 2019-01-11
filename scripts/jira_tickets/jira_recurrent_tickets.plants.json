@@ -152,6 +152,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "ticket_map_name": "Synteny",
             "summary": "Run syntenies pipeline"
          },
          {
