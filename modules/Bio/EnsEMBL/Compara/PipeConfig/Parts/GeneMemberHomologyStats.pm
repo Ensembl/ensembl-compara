@@ -114,6 +114,7 @@ sub pipeline_analyses_hom_stats {
                      FROM family JOIN family_member USING (family_id) JOIN seq_member USING (seq_member_id)
                      WHERE method_link_species_set_id = #method_link_species_set_id#
                      GROUP BY gene_member_id',
+                    'ALTER TABLE temp_member_family_counts ADD INDEX (gene_member_id)',
                     'UPDATE gene_member_hom_stats gm JOIN temp_member_family_counts t USING (gene_member_id)
                      SET gm.families = t.families
                      WHERE collection = "#clusterset_id#"',
@@ -145,6 +146,7 @@ sub pipeline_analyses_hom_stats {
                      SELECT gene_member_id, gene_tree_root.root_id
                      FROM seq_member JOIN gene_tree_node USING (seq_member_id) JOIN gene_tree_root USING(root_id)
                      WHERE clusterset_id = "#clusterset_id#" AND tree_type = "tree" AND method_link_species_set_id = #method_link_species_set_id#',
+                    'ALTER TABLE temp_member_tree_counts ADD INDEX (gene_member_id)',
                     'UPDATE gene_member_hom_stats JOIN temp_member_tree_counts USING (gene_member_id)
                      SET gene_trees = 1
                      WHERE collection = "#clusterset_id#"',
@@ -171,6 +173,7 @@ sub pipeline_analyses_hom_stats {
                      SELECT gene_member_id, SUM(method_link_id=201) AS orthologues, SUM(method_link_id=202) AS paralogues, SUM(method_link_id=206) AS homoeologues
                      FROM homology_member JOIN homology USING (homology_id) JOIN good_hom_mlss USING (method_link_species_set_id)
                      GROUP BY gene_member_id',
+                    'ALTER TABLE temp_member_hom_counts ADD INDEX (gene_member_id)',
                     'UPDATE gene_member_hom_stats g JOIN temp_member_hom_counts t USING (gene_member_id)
                      SET g.orthologues=t.orthologues, g.paralogues=t.paralogues, g.homoeologues=t.homoeologues
                      WHERE collection = "#clusterset_id#"',
