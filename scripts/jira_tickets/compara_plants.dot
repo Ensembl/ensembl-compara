@@ -1,5 +1,6 @@
 digraph "EG_release" {
     "Member loading" -> "Protein-trees";
+    "Species-tree" -> "Protein-trees";
     "Protein-trees" -> "WGA Orthology QC";
     "All LastZ" -> {"All alignments for WGA Orthology QC", "Synteny"};
     "All alignments for WGA Orthology QC" -> "WGA Orthology QC";
