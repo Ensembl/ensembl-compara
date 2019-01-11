@@ -1088,12 +1088,13 @@ sub add_regulation_builds {
 
   #######  NOW DO BIG MATRIX NODE!
 
-  my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', 'Regulation data',
+  my $menu_title = 'Features by Cell Line';
+  my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
       {
         menu   => 'matrix',
-        url    => $hub->url('Config', { 'matrix' => 'matrixform', 'menu' => "regulatory_features" }),
+        url    => $hub->url('Config', { 'matrix' => 'RegMatrix', 'menu' => "regulatory_features" }),
         matrix => {
-          section     => 'Regulation data',
+          section     => $menu_title,
           description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'core'},
           axes        => { x => 'Epigenome', y => 'Experimental data' },
         }
@@ -1254,8 +1255,6 @@ sub add_regulation_builds {
     next if $params->{'reg_minimal'};
     
     foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
-      warn ">>> ADDING $_";
-      warn "... ".$evidence_info->{$_}{'name'}.' '.$label;
       $self->_add_to_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section     => $cell_line,
