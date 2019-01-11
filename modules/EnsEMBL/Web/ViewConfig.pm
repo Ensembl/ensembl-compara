@@ -28,7 +28,8 @@ use JSON qw(from_json to_json);
 use EnsEMBL::Web::Attributes;
 use EnsEMBL::Web::Form::ViewConfigForm;
 use EnsEMBL::Web::Form::ViewConfigMatrix;
-use EnsEMBL::Web::Form::ViewConfigMatrixForm;
+use EnsEMBL::Web::Form::ViewConfigRegMatrix;
+use EnsEMBL::Web::Form::ViewConfigTrackHubMatrix;
 use EnsEMBL::Web::Utils::EqualityComparator qw(is_same);
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
@@ -333,8 +334,16 @@ sub form {
   my $self = shift;
 
   if (!$self->{'form'}) {
-    my $view = $self->hub->param('matrix') ? 'EnsEMBL::Web::Form::ViewConfigMatrix' : 'EnsEMBL::Web::Form::ViewConfigForm';
-    $view    = 'EnsEMBL::Web::Form::ViewConfigMatrixForm' if($self->hub->param('matrix') eq 'matrixform');
+    my $view = 'EnsEMBL::Web::Form::ViewConfigForm';
+    my $matrix = $self->hub->param('matrix');
+    if ($matrix) {
+      if ($matrix =~ /[\w+]/) { ## new matrix interface
+        $view = 'EnsEMBL::Web::Form::ViewConfig'.$matrix;
+      }
+      else { ## old-style matrix
+        $view = 'EnsEMBL::Web::Form::ViewConfigMatrix';
+      }
+    }
     $self->{'form'} = $view->new($self, sprintf('%s_%s_configuration', lc $self->type, lc $self->component), $self->hub->url('Config', undef, 1)->[0]);
   }
 

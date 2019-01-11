@@ -481,7 +481,7 @@ sub _add_trackhub_tracks {
     );
 
     if ($do_matrix) {
-      $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 1, 'menu' => $options{'submenu_key'} });
+      $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 'TrackHubMatrix', 'menu' => $options{'submenu_key'} });
 
       foreach my $subgroup (keys %$config) {
         next unless $subgroup =~ /subGroup\d/;
