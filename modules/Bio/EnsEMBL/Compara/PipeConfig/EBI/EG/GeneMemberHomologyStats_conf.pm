@@ -51,6 +51,17 @@ sub pipeline_analyses {
           'collection'      => $self->o('collection'),
           'clusterset_id'   => 'default',
       } ],
+
+  ## EG Hack ##
+  # For fungi and protists the families are on a different species-set but
+  # we still want those stats to be recorded in the "default" clusterset_id
+  # Since there is a single family MLSS and a single flow of jobs, we
+  # simply remove the filter
+  $pipeline_analyses->[2]->{'-parameters'}->{'inputquery'} =~ s/ AND species_set_id = #species_set_id#//;
+  # We still need to populate the table with the correct members. Since the
+  # families are computed across the entire set of members, we can simply
+  # remove the JOIN
+  $pipeline_analyses->[1]->{'-parameters'}->{'sql'}->[0] =~ s/JOIN species_set USING \(genome_db_id\).*WHERE species_set_id = #species_set_id#//s;
   
   return $pipeline_analyses;
 }
