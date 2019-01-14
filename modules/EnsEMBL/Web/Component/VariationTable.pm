@@ -635,8 +635,6 @@ sub variation_table {
   ROWS: foreach my $transcript (@$transcripts) {
 
     my $tr_id = $transcript ? $transcript->Obj->dbID : 0;
-    my $cache = $self->{_transcript_variations} ||= {};
-    next if(exists($cache->{$tr_id}));
 
     my $tvs = $self->_get_transcript_variations($transcript->Obj, $tv_count, $exonic_types);
 
