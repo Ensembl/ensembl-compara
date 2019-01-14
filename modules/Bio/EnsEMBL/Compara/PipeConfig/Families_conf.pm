@@ -79,11 +79,9 @@ sub default_options {
         'discard_uniprot_only_clusters' => 1,
 
         # data directories:
-        #'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
-        #'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
         'load_uniprot_members_from_member_db' => 1,
-        'uniprot_dir'     => $self->o('work_dir').'/uniprot',
-        'blastdb_dir'     => $self->o('work_dir').'/blast_db',
+        'uniprot_dir'     => $self->o('pipeline_dir').'/uniprot',
+        'blastdb_dir'     => $self->o('pipeline_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
         'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
@@ -113,7 +111,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        'mkdir -p '.$self->o('work_dir'),
+        'mkdir -p '.$self->o('pipeline_dir'),
         'mkdir -p '.$self->o('blastdb_dir'),
         'mkdir -p '.$self->o('uniprot_dir'),
 
@@ -132,7 +130,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'ensembl_release'   => $self->o('ensembl_release'),
         'blast_params'      => $self->o('blast_params'),
 
-        'work_dir'          => $self->o('work_dir'),                # data directories and filenames
+        'work_dir'          => $self->o('pipeline_dir'),                # data directories and filenames
         'warehouse_dir'     => $self->o('warehouse_dir'),
         'blastdb_dir'       => $self->o('blastdb_dir'),
         'load_uniprot_members_from_member_db' => $self->o('load_uniprot_members_from_member_db'),
