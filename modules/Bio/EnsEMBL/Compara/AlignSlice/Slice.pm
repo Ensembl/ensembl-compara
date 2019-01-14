@@ -1972,52 +1972,6 @@ sub get_all_VariationFeatures {
 }
 
 
-=head2 get_all_VariationFeatures_by_VariationSet
-
-    Arg [1]    : Bio::EnsEMBL:Variation::VariationSet $set
-    Description: returns all variation features on this slice associated with a given set.
-                 This function will only work correctly if the variation database has been
-                 attached to the core database. This method go through all of them,
-                 retrieves the data and maps them on this
-                 Bio::EnsEMBL::Compara::AlignSlice::Slice object by changing start, end,
-                 strand and slice attributes.
-    ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
-    Exceptions : none
-    Caller     : contigview, snpview
-    Status     : Stable
-
-=cut
-
-sub get_all_VariationFeatures_by_VariationSet {
-  my $self = shift;
-  deprecate('get_all_VariationFeatures_by_VariationSet is deprecated and will be removed in e95.');
-  return $self->_method_returning_simple_features("get_all_VariationFeatures_by_VariationSet", @_)
-}
-
-
-=head2 get_all_genotyped_VariationFeatures
-
-  Args       : none
-  Function   : returns all variation features on this slice that have been genotyped. This
-               function will only work correctly if the variation database has been
-               attached to the core database.
-               This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
-               method go through all of them, retrieves the data and maps them on this
-               Bio::EnsEMBL::Compara::AlignSlice::Slice object by changing start, end,
-               strand and slice attributes.
-  ReturnType : listref of Bio::EnsEMBL::Variation::VariationFeature
-  Exceptions : none
-  Caller     : contigview, snpview
-
-=cut
-
-sub get_all_genotyped_VariationFeatures {
-  my $self = shift;
-  deprecate('get_all_genotyped_VariationFeatures is deprecated and will be removed in e95.');
-  return $self->_method_returning_simple_features("get_all_genotyped_VariationFeatures", @_)
-}
-
-
 =head2 get_all_RepeatFeatures
 
   Arg [1]    : (optional) string $logic_name

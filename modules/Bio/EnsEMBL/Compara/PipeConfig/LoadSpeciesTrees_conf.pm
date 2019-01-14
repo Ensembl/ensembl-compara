@@ -77,7 +77,7 @@ sub default_options {
             [ 'ref_genome:10090', 'mus_musculus' ],
         ],
 
-        'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+        'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.vertebrates.branch_len.nw',
 
         'reg_conf'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
 

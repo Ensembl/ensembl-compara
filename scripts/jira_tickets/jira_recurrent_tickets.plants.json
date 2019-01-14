@@ -5,19 +5,19 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-DeclarationofIntentions",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Declaration of Intentions"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-Registryconfigurationfile",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Registry Configuration file"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+setup#Divisionsetup-Patchthereuseddatabasestothelatestschema",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Patch the reused databases"
          }
       ],
@@ -113,13 +113,13 @@
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
-            "summary": "All EG LASTZ",
-            "ticket_map_name": "All LASTZ"
+            "summary": "All LastZ",
+            "ticket_map_name": "All LastZ"
          },
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
-            "summary": "All EG Orthology QC WGA",
+            "summary": "Protein-trees WGA Orthology QC",
             "ticket_map_name": "Protein-trees WGA Orthology QC"
          }
       ],
@@ -152,6 +152,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "ticket_map_name": "Synteny",
             "summary": "Run syntenies pipeline"
          },
          {

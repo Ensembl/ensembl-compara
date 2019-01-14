@@ -194,7 +194,8 @@ sub _get_species_info_from_filename {
 =cut
 
 sub add_taxonomic_distance {
-	my ( $matrix, $genome_db_adaptor ) = @_;
+	my ( $matrix, $genome_db_adaptor, $weight ) = @_;
+	$weight ||= 1;
 
 	my $tax_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new();
 	foreach my $m1 ( $matrix->members ) {
@@ -203,7 +204,7 @@ sub add_taxonomic_distance {
 			my $this_matrix_dist = $matrix->distance($m1, $m2);
 			my $taxon2 = $genome_db_adaptor->fetch_by_dbID($m2)->taxon;
 			my $tax_dist = $taxon1->distance_to_node($taxon2);
-			my $new_dist = $tax_dist >= 0.01 ? ($this_matrix_dist + $tax_dist)/2 : $this_matrix_dist;
+			my $new_dist = $tax_dist >= 0.01 ? ($this_matrix_dist + ($tax_dist*$weight))/$weight+1 : $this_matrix_dist;
 			$tax_matrix->distance($m1, $m2, $new_dist);
 		}
 	}

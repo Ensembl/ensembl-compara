@@ -61,6 +61,8 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'min_group_size'  => 4,
         'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
+        # 'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
+        # 'outgroup_id' => '127', # outgroup for everything
 
         # blacklisting certain unreliable genome_dbs will result in:
         # 1. exemption from being outgroups as they are not high quality enough
@@ -76,69 +78,58 @@ sub fetch_input {
 	my $ncbi_adaptor = $self->compara_dba->get_NCBITaxonAdaptor;
 	
 	# parse matrix and replace filenames with genome_db_ids
+	my $mash_dist_file = $self->param_required('mash_dist_file');
+	print "\n -- Generating matrix from $mash_dist_file\n" if $self->debug; 
 	my $distance_matrix = Bio::EnsEMBL::Compara::Utils::DistanceMatrix->new(
-		-file => $self->param_required('mash_dist_file')
+		-file => $mash_dist_file
 	);
 	$distance_matrix = $distance_matrix->convert_to_genome_db_ids($gdb_adaptor);
 	$distance_matrix = $distance_matrix->add_taxonomic_distance($gdb_adaptor);
 	
 	my @gdb_ids = $distance_matrix->members;
+	# print " -- matrix genomes: " . join(", ", @gdb_ids) . "\n";
 	my @gdbs = map { $gdb_adaptor->fetch_by_dbID($_) } @gdb_ids;
 
 	# generate submatrices
-	my @taxonomic_ranks = @{ $self->param_required('taxonomic_ranks') };
-	my ($prev_groups, %all_groups, @matrices_dataflow);
-	my %rank_groups;
-	for ( my $i = 0; $i < scalar @taxonomic_ranks; $i++ ) {
-		my $tax_rank = $taxonomic_ranks[$i];
-		# first, get groups that form large enough clades
-		my %large_groups = %{$self->group_on_taxonomy(\@gdbs, $tax_rank)};
+	print " -- Detecting optimal taxonomic groupings\n" if $self->debug;
+	my @tax_groups_ids = $self->_taxonomic_groups(\@gdbs);
 
-		my @group_ids = keys %large_groups;
-		$rank_groups{$tax_rank} = \@group_ids;
+	my (@prev_group_ids, %all_groups, @matrices_dataflow, $this_outgroup);
+	foreach my $group_taxon_id ( @tax_groups_ids ) {
+		my $current_group_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($group_taxon_id);
+		print " -- Grouping " . $current_group_taxon->name . "...\n" if $self->debug;
 
-		my $this_outgroup;
-		foreach my $group_key ( keys %large_groups ) {
-			# extract initial submatrix for the group
-			my $submatrix = $distance_matrix->prune_gdbs_from_matrix( $large_groups{$group_key} );
+		# extract initial submatrix for the group
+		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
+		print "\t -- fetching submatrix for " . scalar @group_gdbs . " genomes\n" if $self->debug;
+		my $submatrix = $distance_matrix->prune_gdbs_from_matrix( \@group_gdbs );
 
-			# add an outgroup
-			($submatrix, $this_outgroup) = $self->_add_outgroup($submatrix, $distance_matrix, $group_key);
-
-			# collapse any previous groups
-			foreach my $all_key ( @{ $rank_groups{ $taxonomic_ranks[$i-1] } } ) { # only merge those from previous rank
-				$submatrix = $submatrix->collapse_group_in_matrix( $all_groups{$all_key}, "mrg_$all_key" );
-			}
-
-			# add to dataflow
-			my $mdf = { 
-				group_key => $group_key, 
-				distance_matrix => $submatrix, 
-				outgroup => $this_outgroup 
-			};
-			push( @matrices_dataflow, $mdf );
-		}	
-
-		# update all groups that have been seen already
-		%all_groups = ( %all_groups, %large_groups );
-
-		# check if all species have been covered in one group - if so, stop
-		if ( scalar keys %large_groups == 1 ) {
-			my @one_key_list  = keys %large_groups;
-			my $end_taxon_id  = pop @one_key_list;
-			my $num_gdbs      = scalar @gdbs;
-			my $num_group_mem = scalar @{ $large_groups{$end_taxon_id} };
-			if ($num_group_mem == $num_gdbs) {
-				my $this_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($end_taxon_id);
-				print "Looks like these are all in " . $this_taxon->rank . " " . $this_taxon->name . ". Stopping here.\n";
-				$self->warning("Looks like these are all in " . $this_taxon->rank . " " . $this_taxon->name . ". Stopping here.\n");
-				last;
-			}
+		# add an outgroup
+		if ( $group_taxon_id == $ncbi_adaptor->fetch_node_by_name('root')->dbID ) {
+			$this_outgroup = $self->param_required('outgroup_id');
+		} else {
+			($submatrix, $this_outgroup) = $self->_add_outgroup( $submatrix, $distance_matrix );
 		}
-		
-	}
+		print "\t -- " . $gdb_adaptor->fetch_by_dbID($this_outgroup)->name . " selected as outgroup\n" if $self->debug;
 
-	$matrices_dataflow[-1]->{group_key} = 'root';
+		# collapse any previous groups
+		foreach my $prev_group ( @prev_group_ids ) {
+			my $prev_group_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($prev_group);
+			next unless $prev_group_taxon->has_ancestor($current_group_taxon);
+			print "\t -- " . $prev_group_taxon->name . " is a member of this group - collapsing it\n" if $self->debug;
+			my $prev_group_gdbs = $gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($prev_group);
+			$submatrix = $submatrix->collapse_group_in_matrix( $prev_group_gdbs, "mrg_$prev_group" );
+		}
+
+		# add to dataflow
+		my $mdf = { 
+			group_key => $group_taxon_id, 
+			distance_matrix => $submatrix, 
+			outgroup => $this_outgroup 
+		};
+		push( @matrices_dataflow, $mdf );
+		unshift( @prev_group_ids, $group_taxon_id );
+	}	
 
 	$self->param('matrices_dataflow', \@matrices_dataflow );
 	$self->param('distance_matrix',    $distance_matrix );
@@ -153,31 +144,6 @@ sub write_output {
 	#     { group_key => $key2, distance_matrix => $matrix2 }, # no outgroup
 	# ]
 	$self->dataflow_output_id( $self->param('matrices_dataflow'), 2 );
-}
-
-sub group_on_taxonomy {
-	my ($self, $gdbs, $tax_rank) = @_;
-
-	my $dba = $self->compara_dba;
-	my $ncbi_adaptor = $dba->get_NCBITaxonAdaptor;
-
-	my %taxonomic_groups;
-	foreach my $gdb ( @$gdbs ) {
-		my $taxon = $ncbi_adaptor->fetch_node_by_taxon_id($gdb->taxon_id);
-		my $this_rank = $self->_taxonomic_rank($taxon, $tax_rank);
-		push( @{ $taxonomic_groups{$this_rank} }, $gdb ) if $this_rank;
-	}
-
-	my %large_groups;
-	foreach my $group_key ( keys %taxonomic_groups ) {
-		my $group = $taxonomic_groups{$group_key};
-		my $group_size = scalar @$group;
-		if (scalar @$group >= $self->param_required('min_group_size')) {
-			$large_groups{$group_key} = $group;
-		}
-	}
-
-	return \%large_groups;
 }
 
 sub _add_outgroup {
@@ -231,9 +197,48 @@ sub _taxonomic_rank {
 		}
 	}
 
-	
 	$self->warning("Cannot find $rank (or super/sub-$rank) for " . $original_taxon->name . "\n");
 	return 0;
+}
+
+sub _taxonomic_groups {
+	my ($self, $gdbs) = @_;
+
+	my $gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
+	my $ncbi_adaptor = $self->compara_dba->get_NCBITaxonAdaptor;
+	my %group_taxon_ids;
+
+	# first, grab all the ranks for each genome_db
+	my @ranks = @{ $self->param_required('taxonomic_ranks') };
+	foreach my $gdb ( @$gdbs ) {
+		my $this_gdb_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($gdb->taxon_id);
+		foreach my $rank ( @ranks ) {
+			my $this_rank_taxon = $self->_taxonomic_rank($this_gdb_taxon, $rank);
+			$group_taxon_ids{$this_rank_taxon} = 1 if $this_rank_taxon;
+		}
+	}
+
+	# now, add in the additional groupings, if any
+	if ( $self->param('custom_groups') ) {
+		my @custom_groups = @{ $self->param('custom_groups') };
+		foreach my $custom_group ( @custom_groups ) {
+			my $custom_taxon = $ncbi_adaptor->fetch_node_by_name($custom_group);
+			die "Cannot find taxon_id for group '$custom_group'\n" unless $custom_taxon;
+			$group_taxon_ids{$custom_taxon->dbID} = 1;
+		}
+	}
+
+	# order them from smallest to largest
+	my @group_taxa  = map  { $ncbi_adaptor->fetch_node_by_taxon_id($_) } keys %group_taxon_ids;
+	my %group_counts = map { $_->dbID => scalar(@{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($_->dbID)}) } @group_taxa;
+	my @sorted_taxa = sort { $group_counts{$a->dbID} <=> $group_counts{$b->dbID} } grep { $group_counts{$_->dbID} > $self->param_required('min_group_size') } @group_taxa;
+	my @sorted_taxon_ids = map {$_->dbID} @sorted_taxa;
+
+	# finally, add the root
+	my $root_taxon = $ncbi_adaptor->fetch_node_by_name('root');
+	push(@sorted_taxon_ids, $root_taxon->dbID); # usually 1, but fetch from db just incase
+
+	return @sorted_taxon_ids;
 }
 
 1;

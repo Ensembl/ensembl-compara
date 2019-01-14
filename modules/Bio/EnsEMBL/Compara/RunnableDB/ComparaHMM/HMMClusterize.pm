@@ -102,9 +102,9 @@ sub load_hmmer_classifications {
             delete $allclusters{$model_name};
         } else {
             # If it is not a singleton, we add the name of the model to store in the db
-            print STDERR Dumper $allclusters{$model_name};
             $allclusters{$model_name}{model_id} = $model_name;
             $allclusters{$model_name}{division} = $division if $division;
+            print STDERR Dumper $allclusters{$model_name} if $self->debug;
         }
     }
 }

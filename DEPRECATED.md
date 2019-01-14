@@ -11,17 +11,7 @@
 # Deprecated methods scheduled for deletion
 
 * `DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region()` in Ensembl 98
-
-## get VariationFeatures for AlignSlice, to be removed in Ensembl 95 
-
-* `AlignSlice::Slice::get_all_VariationFeatures_by_VariationSet`
-* `AlignSlice::Slice::get_all_genotyped_VariationFeatures`
-
-## Taggable AUTOLOAD-ed methods, to be removed in Ensembl 94
-
-* `Taggable::get_value_for_XXX()`
-* `Taggable::get_all_values_for_XXX()`
-* `Taggable::get_XXX_value()`
+* `DBSQL::'*MemberAdaptor::get_source_taxon_count()` in Ensembl 99
 
 # Deprecated methods not yet scheduled for deletion
 
@@ -29,6 +19,14 @@
 * `GenomicAlignTree::get_all_GenomicAligns()`
 
 # Methods removed in previous versions of Ensembl
+
+## Ensembl 96
+
+* `AlignSlice::Slice::get_all_VariationFeatures_by_VariationSet`
+* `AlignSlice::Slice::get_all_genotyped_VariationFeatures`
+* `Taggable::get_value_for_XXX()`
+* `Taggable::get_all_values_for_XXX()`
+* `Taggable::get_XXX_value()`
 
 ## Ensembl 93
 

@@ -83,7 +83,7 @@ sub default_options {
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
         # 'mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
-        #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+        #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.vertebrates.branch_len.nw',
 
         'run_gerp' => 0,
 

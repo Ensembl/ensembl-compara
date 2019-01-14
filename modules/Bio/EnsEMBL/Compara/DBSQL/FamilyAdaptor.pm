@@ -65,6 +65,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use Bio::EnsEMBL::Compara::Utils::CopyData qw(:insert);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -311,6 +312,24 @@ sub store {
   }
 
   return $fam->dbID;
+}
+
+
+=head2 add_member_ids_to_family
+
+  Example     : $family_adaptor->add_member_ids_to_family();
+  Description : Add new entries to the family_member table for this family
+  Returntype  : Integer: number of rows inserted
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub add_member_ids_to_family {
+    my ($self, $member_ids, $fam) = @_;
+
+    return bulk_insert($self->dbc, 'family_member', [map {[$fam->dbID, $_]} @$member_ids], [qw(family_id seq_member_id)]);
 }
 
 

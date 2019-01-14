@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="ensembl">
+
+  <!-- Collections are species-sets that are needed to define several mlsss -->
+  <collections>
+
+    <!-- All chordates except the mouse strains, and the three outgroups -->
+    <!-- NB: we have several genomes of the same species, e.g. CHO, NMR -->
+    <collection name="default">
+      <taxonomic_group taxon_name="Chordata">
+        <!-- But exclude everything below mus_musculus -->
+        <ref_for_taxon name="mus_musculus"/>
+      </taxonomic_group>
+      <genome name="drosophila_melanogaster"/>
+      <genome name="caenorhabditis_elegans"/>
+      <genome name="saccharomyces_cerevisiae"/>
+    </collection>
+
+    <!-- Mouse-strains analyses, i.e. incl. the closely relative -->
+    <collection name="murinae">
+      <taxonomic_group taxon_name="Murinae"/>
+    </collection>
+
+  </collections>
+
+  <pairwise_alignments>
+
+    <!-- First, our top four species, which are references for all chordates -->
+    <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
+      <!-- "default" collection means that the mouse strains are excluded (because only the reference mouse deserves to be aligned to human) -->
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Chordata"/>
+      </species_set>
+    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus" ref_amongst="Chordata">
+      <!-- "default" collection means that the mouse strains are excluded (because we have the Cactus alignment for those) -->
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Rodentia"/>
+      </species_set>
+    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus" against="Sauropsida" ref_amongst="Chordata"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio" ref_amongst="Chordata">
+      <species_set>
+        <!-- Include urochordates, cephalochordates, cyclostomes, cartilaginous fishes, ray-finned fishes, coelacanths and lungfishes -->
+        <taxonomic_group taxon_name="Chordata"/>
+        <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
+      </species_set>
+    </one_vs_all>
+
+    <!-- Fish -->
+    <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes" against="Actinopterygii"/>
+
+    <!-- Mammals -->
+    <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria" ref_amongst="Amniota"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia" ref_amongst="Carnivora"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" against="Cetartiodactyla" ref_amongst="Eutheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae" ref_amongst="Cetartiodactyla"/>
+
+    <!-- Early vertebrates and other chordates -->
+    <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
+
+    <!-- These genomes are currently the only ones in their clades, so no alignment within the "against"/"species_set" -->
+    <!-- However they will be aligned against the other reference genomes in "ref_amongst" -->
+    <one_vs_all method="LASTZ_NET" ref_genome="equus_caballus" against="Perissodactyla" ref_amongst="Laurasiatheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Suina" ref_amongst="Laurasiatheria"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Lepidosauria" ref_amongst="Sauropsida"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="pelodiscus_sinensis" against="Testudines" ref_amongst="Sauropsida"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="xenopus_tropicalis" against="Amphibia" ref_amongst="Euteleostomi"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" against="Prototheria" ref_amongst="Euteleostomi"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="latimeria_chalumnae" ref_amongst="Euteleostomi">
+      <species_set>
+        <!--Coelacanths and lungfishes -->
+        <taxonomic_group taxon_name="Sarcopterygii"/>
+        <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
+      </species_set>
+    </one_vs_all>
+  </pairwise_alignments>
+
+  <multiple_alignments>
+    <!-- Primates -->
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE">
+      <species_set name="primates">
+        <taxonomic_group taxon_name="Primates"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Mammals, excl. the mouse strains -->
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="mammals" display_name="eutherian mammals" in_collection="default">
+        <taxonomic_group taxon_name="Eutheria"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Sauropsids -->
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="sauropsids">
+        <taxonomic_group taxon_name="Sauropsida"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Fishes -->
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="fish">
+        <taxonomic_group taxon_name="Actinopterygii"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Amniotes, excl. mouse strains -->
+    <multiple_alignment method="PECAN" gerp="1">
+      <species_set name="amniotes" display_name="amniota vertebrates" in_collection="default">
+        <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Mouse strains -->
+    <multiple_alignment method="CACTUS_HAL">
+      <species_set name="murinae">
+        <taxonomic_group taxon_name="Murinae"/>
+        <!--These two species are not in the HAL file-->
+        <genome name="mus_caroli" exclude="1"/>
+        <genome name="mus_pahari" exclude="1"/>
+      </species_set>
+    </multiple_alignment>
+
+  </multiple_alignments>
+
+  <self_alignments>
+    <genome name="homo_sapiens"/>
+  </self_alignments>
+
+  <assembly_patches>
+    <genome name="homo_sapiens"/>
+    <genome name="mus_musculus"/>
+  </assembly_patches>
+
+  <families>
+    <family collection="default"/>
+  </families>
+
+  <gene_trees>
+    <protein_trees collection="default"/>
+    <protein_trees collection="murinae"/>
+    <nc_trees collection="default"/>
+    <nc_trees collection="murinae"/>
+  </gene_trees>
+
+  <species_trees>
+    <species_tree collection="ensembl"/>
+  </species_trees>
+
+</compara_db>

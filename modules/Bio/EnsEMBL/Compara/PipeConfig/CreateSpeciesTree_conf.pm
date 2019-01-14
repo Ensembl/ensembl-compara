@@ -53,7 +53,7 @@ sub default_options {
 
         # 'division'        => 'ensembl',
         'outgroup'        => 'saccharomyces_cerevisiae',
-        
+        'outgroup_id'     => 127,
 
         'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). "/species_tree_" . $self->o('division') . '_' . $self->o('rel_with_suffix'),
         'sketch_dir'        => '/hps/nobackup2/production/ensembl/compara_ensembl/species_tree/' . $self->o('division') . '_sketches',
@@ -70,9 +70,13 @@ sub default_options {
 
         # pass location of pre-dumped genomes, if it exists (generated with DumpGenomes_conf)
         'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.($self->o('division')).'/',
-
-        'group_on_taxonomy' => 0,
         'representative_species' => undef,
+        'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
+        'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
+
+
+        'unroot_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/species_tree/unroot_newick.py',
+        'reroot_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/species_tree/reroot_newick.py',
     };
 }
 
@@ -236,10 +240,16 @@ sub pipeline_analyses {
 
         { -logic_name => 'permute_matrix',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::PermuteMatrix',
+          -parameters => {
+              'taxonomic_ranks' => $self->o('taxonomic_ranks'),
+              'custom_groups'   => $self->o('custom_groups'  ),
+              'outgroup_id'     => $self->o('outgroup_id'),
+          },
           -flow_into => {
               '2->A' => [ 'neighbour_joining_tree' ],
               'A->1' => [ 'graft_subtrees' ],
-          }
+          },
+          -rc_name => '1Gb_job',
         },
 
         {  -logic_name => 'neighbour_joining_tree',
@@ -266,8 +276,11 @@ sub pipeline_analyses {
         { -logic_name => 'adjust_branch_lengths',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::AdjustBranchLengths',
           -parameters => {
-              'output_file' => $self->o('output_file'),
-              'erable_exe'  => $self->o('erable_exe'),
+              'output_file'   => $self->o('output_file'),
+              'erable_exe'    => $self->o('erable_exe'),
+              'unroot_script' => $self->o('unroot_script'),
+              'reroot_script' => $self->o('reroot_script'),
+              'outgroup_id'   => $self->o('outgroup_id'),
           },
           -flow_into => {
               1 => ['copy_files_to_sketch_dir'],
