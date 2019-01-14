@@ -482,7 +482,7 @@ sub quantify_mapping {
 
 sub _db_has_hmm_annots {
     my ($self, $dba) = @_;
-    my $sql = 'SELECT 1 FROM pipeline_wide_parameters WHERE param_name = "clustering_mode" AND (param_value LIKE "%hmm%" OR param_value LIKE "%hybrid%") LIMIT 1';
+    my $sql = 'SELECT 1 FROM gene_tree_root_tag WHERE tag = "model_id" LIMIT 1';
     my $sth = $dba->dbc->prepare($sql);
     $sth->execute();
     my ($found_hmm_annot) = $sth->fetchrow_array;
