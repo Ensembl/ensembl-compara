@@ -42,7 +42,7 @@ necessary MethodLinkSpeciesSet objects.
 
     perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_all_mlss.pl \
          --compara $(mysql-ens-compara-prod-1 details url ensembl_compara_master) \
-         --xml $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_ensembl.xml --release
+         --xml $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/compara_vertebrates.xml --release
 
 =head1 OPTIONS
 
@@ -74,7 +74,7 @@ aliases given in the registry_configuration_file. DEFAULT VALUE: compara_master
 =item B<--xml xml_configuration_file>
 
 The XML configuration file of the analyses to define in the Compara database.
-See scripts/pipeline/compara_ensembl.xml for an example
+See scripts/pipeline/compara_vertebrates.xml for an example
 
 =item B<[--schema rng_schema_file]>
 
