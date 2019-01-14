@@ -285,6 +285,8 @@ sub start_server_on_port {
     if ($pid = fork) {
       last;
     } elsif (defined $pid) {
+      mkdir $self->worker_temp_directory.'/'.$port;
+      chdir $self->worker_temp_directory.'/'.$port;
       exec("exec $command") == 0 or $self->throw("Failed to run $command: $!");
     }
   }
