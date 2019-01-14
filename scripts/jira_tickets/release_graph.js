@@ -28,7 +28,8 @@ function set_node_color_by_status(node_name, ticket_status) {
     update_progress_bar();
     if (n_tasks_done == n_tasks_total) {
         digraph += '}';
-        console.log("digraph final", digraph);
+        //console.log("digraph final");
+        //console.log(digraph);
         d3.select("#graph").graphviz()
             .fade(false)
             .renderDot(digraph);

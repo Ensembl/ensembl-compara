@@ -1,0 +1,16 @@
+digraph "Ensembl Vertebrates dependencies" {
+    "Genome dumps" -> "Species-tree";
+    "Species-tree" -> { "EPO: Fish", "EPO: Mammals", "EPO: Sauropsids", "Mercator Pecan: Amniotes" };
+    "EPO: Mammals" -> "EPO: Primates";
+    "EPO: Mammals" -> "EPO-2X: Mammals";
+    "EPO: Fish" -> "EPO-2X: Fish";
+    "EPO: Sauropsids" -> "EPO-2X: Sauropsids";
+    "EPO: Primates" -> {"EPO-2X: Primates", "Age of Base"};
+    "Member loading" -> { "Protein-trees: default vertebrates", "ncRNA-trees: default vertebrates", "Families", "Gene-tree reindexing: murinae" };
+    "Protein-trees: default vertebrates" -> { "Protein-trees WGA Orthology QC", "Protein-trees: murinae"};
+    "ncRNA-trees: default vertebrates" -> { "ncRNA-trees WGA Orthology QC", "ncRNA-trees: murinae"};
+    "All LastZ" -> "Synteny";
+    {"All LastZ", "EPO: Fish", "EPO: Mammals", "EPO: Primates", "EPO: Sauropsids"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
+    {"ncRNA-trees: murinae", "Protein-trees: murinae"} -> "Gene-tree reindexing: murinae" [label="XOR",style="dashed",dir=none];
+    {rank = same; "Genome dumps"; "All LastZ"; "Member loading"; }
+}

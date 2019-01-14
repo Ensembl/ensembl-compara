@@ -1,8 +1,9 @@
 digraph "EG_release" {
+    "Genome dumps";
     "Member loading" -> "Protein-trees";
     "Species-tree" -> "Protein-trees";
-    "Protein-trees" -> "WGA Orthology QC";
+    "Protein-trees" -> "Protein-trees WGA Orthology QC";
     "All LastZ" -> {"All alignments for WGA Orthology QC", "Synteny"};
-    "All alignments for WGA Orthology QC" -> "WGA Orthology QC";
+    "All alignments for WGA Orthology QC" -> "Protein-trees WGA Orthology QC";
     {rank = same; "All LastZ"; "Member loading"; }
 }
