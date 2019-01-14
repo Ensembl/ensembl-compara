@@ -66,7 +66,7 @@ sub render {
               'sourceOrganization' => {
                                         '@type' => 'Organization',
                                         'name'  => 'European Bioinformatics Institute',
-                                        'urll' => 'https://www.ebi.ac.uk',
+                                        'url' => 'https://www.ebi.ac.uk',
                                       },
   };
 
