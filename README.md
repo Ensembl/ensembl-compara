@@ -39,8 +39,16 @@ about setting up the API. Otherwise, do this:
 
 	git clone https://github.com/glennhickey/progressiveCactus.git
 	cd progressiveCactus
+	# Make sure we use the latest version
 	git pull
+	# Download the dependencies
 	git submodule update --init
+	# We specifically need a more recent version of "hal"
+	cd submodules/hal/
+	git checkout master
+	git pull
+	cd ../..
+	# Compile
 	make
 	pwd  # Prints the installation path
 
