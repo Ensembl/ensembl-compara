@@ -100,7 +100,8 @@ need to install these two libraries:
 * [sonLib](https://github.com/benedictpaten/sonLib)
 * [hal](https://github.com/ComparativeGenomicsToolkit/hal)
 
-And run this makefile
+You will have to patch `sonLib/include.mk` like in the progressiveCactus
+instructions above. Then run this makefile
 
 	cd ensembl-compara/xs/HALXS
 	perl Makefile-hdf5@OS.PL path/to/sonLib path/to/hal
