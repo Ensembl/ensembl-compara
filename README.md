@@ -43,24 +43,27 @@ about setting up the API. Otherwise, do this:
 	git pull
 	# Download the dependencies
 	git submodule update --init
+	
 	# We specifically need a more recent version of "hal"
 	cd submodules/hal/
 	git checkout master
 	git pull
 	cd ../..
+	
+	cd submodules/sonLib
+	# edit include.mk and add " -fPIC" at the end of the cflags_opt line (line 44)
+	cd ../..
+	
 	# Compile
 	make
+	# Check it passes the test-suite. You should see "Result: PASS"
+	make test
 	pwd  # Prints the installation path
 
-Note that depending on your build environment, you may have to do this as
-well
+Note that on some Ubuntu installations, you may have to do this as well:
 
-        # Seems to be required on Ubuntu installations
         sudo apt-get install python-dev
         sudo ln -s /usr/lib/python2.7/plat-*/_sysconfigdata_nd.py /usr/lib/python2.7/
-        # Seems to be required under linuxbrew installations
-        cd progressiveCactus/submodules/sonLib
-        # edit include.mk and add " -fPIC" at the end of the cflags_opt line (line 27) and make
 
 Now, we need to set up the Compara API:
 
@@ -69,7 +72,12 @@ Now, we need to set up the Compara API:
 	make
 
 If you have the `PROGRESSIVE_CACTUS_DIR` environment variable defined, you
-can skip `path/to/cactus` on the Makefile command-line.
+can skip `path/to/cactus` on the Makefile command-line, e.g.:
+
+	cd ensembl-compara/xs/HALXS
+	perl Makefile-progressiveCactus.PL
+	make
+
 
 #### Installation via Linuxbrew
 
