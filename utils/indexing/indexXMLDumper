@@ -1359,7 +1359,7 @@ sub dumpOligoProbe {
     SELECT
       probe_set.name,
       probe_set.probe_set_id,
-      count(distinct probe_feature.probe_feature_id) as hits,
+      count(distinct(concat(probe_feature.seq_region_id,':', probe_feature.seq_region_start,'-', probe_feature.seq_region_end))) as hits,
       array.name
     FROM
       $FUNCDB.probe_set
@@ -1417,7 +1417,7 @@ sub dumpOligoProbe {
       p.name,
       a.vendor,
       count(distinct a.name) as array_hits,
-      count(distinct pf.probe_feature_id) as genome_hits
+      count(distinct(concat(pf.seq_region_id,':', pf.seq_region_start,'-', pf.seq_region_end))) as genome_hits
     FROM
       $FUNCDB.probe_feature pf,
       $FUNCDB.probe p,
@@ -1425,8 +1425,7 @@ sub dumpOligoProbe {
       $FUNCDB.array a
     WHERE
       pf.probe_id = p.probe_id
-    AND
-      p.array_chip_id = ac.array_chip_id
+    AND p.array_chip_id = ac.array_chip_id
     AND ac.array_id = a.array_id
     AND p.probe_set_id is null
     GROUP BY p.name
