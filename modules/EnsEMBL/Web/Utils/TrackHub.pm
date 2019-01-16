@@ -266,7 +266,7 @@ sub make_tree {
   my ($self, $tree, $tracks) = @_;
   my $redo = [];
 
-  foreach (sort { !$b->{'parent'} <=> !$a->{'parent'} } @$tracks) {
+  foreach (@$tracks) {
     if ($_->{'parent'}) {
       my $parent = $tree->get_node($_->{'parent'});
       
@@ -331,14 +331,14 @@ sub fix_tree {
 }
 
 sub sort_tree {
-### Sort tracks on priority when it exists, followed by shortLabel
+### Sort tracks on priority when it exists
 ### @param node EnsEMBL::Web::TreeNode
 ### @return Void
   my ($self, $node) = @_;
   my @children = @{$node->child_nodes};
   
-  if (scalar @children > 1) {
-    @children = map $_->[2], sort { !$a->[0] <=> !$b->[0] || $a->[0] <=> $b->[0] || $a->[1] cmp $b->[1] } map [ $_->data->{'priority'}, $_->data->{'shortLabel'}, $_ ], @children;
+  if (scalar @children > 1 && $children[0]->data->{'priority'}) {
+    @children = sort {$a->data->{'priority'} <=> $b->data->{'priority'} } @children;
     
     $node->remove_children;
     $node->append_children(@children);

@@ -518,7 +518,7 @@ sub _add_trackhub_tracks {
         ) : ())
       });
 
-      $menu->insert_alphabetically($submenu, $options{'submenu_key'});
+      $menu->append_child($submenu, $options{'submenu_key'});
     }
 
     ## Set up sections within supertracks (applies mainly to composite tracks)
@@ -529,7 +529,7 @@ sub _add_trackhub_tracks {
       $subsection = $self->get_node($key);
       unless ($subsection) {
         $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
-        $submenu->insert_alphabetically($subsection, $key);
+        $submenu->append_child($subsection, $key);
       }
       $options{'submenu_key'}   = $key;
       $options{'submenu_name'}  = $name;
