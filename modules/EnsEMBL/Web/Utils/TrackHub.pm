@@ -214,7 +214,6 @@ sub get_track_info {
   my $url       = $self->url;
   my $cache_key = 'trackhub_'.md5_hex($url);
 
-=pod
   if ($cache && $args->{'genome'}) {
     $trackhub = $cache->get($cache_key);
     if ($trackhub) {
@@ -223,7 +222,6 @@ sub get_track_info {
       return $info;
     }
   }
-=cut
 
   ## No cache, so check we have content to parse
   return undef unless $args->{'content'};
