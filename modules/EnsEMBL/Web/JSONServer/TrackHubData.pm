@@ -50,7 +50,7 @@ sub json_data {
   my $url = $record->{'url'};
   warn ">>> URL $url";
 
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
   my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
   $self->{'th_default_count'} = 0;
 
