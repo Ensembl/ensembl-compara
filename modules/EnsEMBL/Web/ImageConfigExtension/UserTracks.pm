@@ -521,21 +521,23 @@ sub _add_trackhub_tracks {
       $menu->append_child($submenu, $options{'submenu_key'});
     }
 
-    ## Set up sections within supertracks (applies mainly to composite tracks)
-    my $subsection;
-    if ($set->{'submenu_key'}) {
-      my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
-      my $name  = strip_HTML($set->{'submenu_name'});
-      $subsection = $self->get_node($key);
-      unless ($subsection) {
-        $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
-        $submenu->append_child($subsection, $key);
+    ## Don't attach individual tracks - the new matrix code takes care of that
+    unless ($do_matrix) {
+      ## Set up sections within supertracks (applies mainly to composite tracks)
+      my $subsection;
+      if ($set->{'submenu_key'}) {
+        my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
+        my $name  = strip_HTML($set->{'submenu_name'});
+        $subsection = $self->get_node($key);
+        unless ($subsection) {
+          $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
+          $submenu->append_child($subsection, $key);
+        }
+        $options{'submenu_key'}   = $key;
+        $options{'submenu_name'}  = $name;
       }
-      $options{'submenu_key'}   = $key;
-      $options{'submenu_name'}  = $name;
-    }
 
-    my $style_mappings = {
+      my $style_mappings = {
                           'bam'     => {
                                         'default' => 'coverage_with_reads',
                                         },
@@ -568,132 +570,131 @@ sub _add_trackhub_tracks {
                                         },
                         };
 
-    my $children = $set->{'tracks'};
+      my $children = $set->{'tracks'};
 
-    foreach (@{$children||[]}) {
-      my $track = $_->data;
-      (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
-      ## Note that we use a duplicate value in description and longLabel, because non-hub files
-      ## often have much longer descriptions so we need to distinguish the two
-      my $source = {
-                    name            => $track->{'track'},
-                    source_name     => $source_name,
-                    longLabel       => $track->{'longLabel'},
-                    description     => $name.': '.$track->{'longLabel'},
-                    desc_url        => $track->{'description_url'},
-                    signal_range    => $track->{'signal_range'},
-                    };
+      foreach (@{$children||[]}) {
+        my $track = $_->data;
+        (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
+        ## Note that we use a duplicate value in description and longLabel, because non-hub files
+        ## often have much longer descriptions so we need to distinguish the two
+        my $source = {
+                      name            => $track->{'track'},
+                      source_name     => $source_name,
+                      longLabel       => $track->{'longLabel'},
+                      description     => $name.': '.$track->{'longLabel'},
+                      desc_url        => $track->{'description_url'},
+                      signal_range    => $track->{'signal_range'},
+                      };
 
-      # Graph range - Track Hub default is 0-127
-      if (exists $track->{'viewLimits'}) {
-        $source->{'viewLimits'} = $track->{'viewLimits'};
-      } 
-      elsif ($track->{'autoScale'} eq 'off') {
-        $source->{'viewLimits'} = '0:127';
-      }
-      else {
-        $source->{'viewLimits'} = $config->{'viewLimits'};
-      }
+        # Graph range - Track Hub default is 0-127
+        if (exists $track->{'viewLimits'}) {
+          $source->{'viewLimits'} = $track->{'viewLimits'};
+        } 
+        elsif ($track->{'autoScale'} eq 'off') {
+          $source->{'viewLimits'} = '0:127';
+        }
+        else {
+          $source->{'viewLimits'} = $config->{'viewLimits'};
+        }
 
-      if (exists $track->{'maxHeightPixels'}) {
-        $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-      } 
-      else {
-        $source->{'maxHeightPixels'} = '64:32:16';
-      }
+        if (exists $track->{'maxHeightPixels'}) {
+          $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
+        } 
+        else {
+          $source->{'maxHeightPixels'} = '64:32:16';
+        }
 
-      ## Is the track on or off?
-      my $on_off = $config->{'on_off'} || $track->{'on_off'};
-      ## Turn track on if there's no higher setting turning it off
-      if ($track->{'visibility'}  eq 'hide') {
-        $on_off = 'off';
-      } 
-      elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
-        $on_off = 'on';
-      }
+        ## Is the track on or off?
+        my $on_off = $config->{'on_off'} || $track->{'on_off'};
+        ## Turn track on if there's no higher setting turning it off
+        if ($track->{'visibility'}  eq 'hide') {
+          $on_off = 'off';
+        } 
+        elsif (!$config->{'on_off'} && !$track->{'on_off'}) {
+          $on_off = 'on';
+        }
 
-      ## Special settings for multiWig tracks
-      if ($track->{'container'} && $track->{'container'} eq 'multiWig') {
-        $source->{'no_titles'}        = 1;
-        $source->{'subtracks'}        = [];
+        ## Special settings for multiWig tracks
+        if ($track->{'container'} && $track->{'container'} eq 'multiWig') {
+          $source->{'no_titles'}        = 1;
+          $source->{'subtracks'}        = [];
 
-        ## Add data for each subtrack
-        foreach (@{$_->child_nodes||[]}) {
-          my $subtrack    = $_->data;
-          my $type        = ref $subtrack->{'type'} eq 'HASH' ? uc $subtrack->{'type'}{'format'} : uc $subtrack->{'type'};
-          next unless ($type && $type =~ /^bigWig$/i);
-          push @{$source->{'subtracks'}}, {
+          ## Add data for each subtrack
+          foreach (@{$_->child_nodes||[]}) {
+            my $subtrack    = $_->data;
+            my $type        = ref $subtrack->{'type'} eq 'HASH' ? uc $subtrack->{'type'}{'format'} : uc $subtrack->{'type'};
+            next unless ($type && $type =~ /^bigWig$/i);
+            push @{$source->{'subtracks'}}, {
                                             source_name => $subtrack->{'shortLabel'},
                                             source_url  => $subtrack->{'bigDataUrl'},
                                             colour      => exists $subtrack->{'color'} ? $subtrack->{'color'} : undef,
                                           };
-        }
+          }
  
-        ## Set track style if appropriate
-        my $default_display = 'signal';
-        if ($on_off && $on_off eq 'on') {
-          $options{'display'} = $default_display;
-          $count_visible++;
+          ## Set track style if appropriate
+          my $default_display = 'signal';
+          if ($on_off && $on_off eq 'on') {
+            $options{'display'} = $default_display;
+            $count_visible++;
+          }
+          else {
+            $options{'display'} = 'off';
+          }
+
+          $source = {%$source, %options};
+          $tracks{'multiwig'}{$source->{'name'}} = $source;
         }
         else {
-          $options{'display'} = 'off';
-        }
+          ## Everything except multiWigs
+          my $type = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
 
-        $source = {%$source, %options};
-        $tracks{'multiwig'}{$source->{'name'}} = $source;
-      }
-      else {
-        ## Everything except multiWigs
-        my $type = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
+          ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
+          my $ucsc_display = $config->{'visibility'} || $track->{'visibility'};
+          my $squish       = $ucsc_display eq 'squish';
 
-        ## FIXME - According to UCSC's documentation, 'squish' is more like half_height than compact
-        my $ucsc_display = $config->{'visibility'} || $track->{'visibility'};
-        my $squish       = $ucsc_display eq 'squish';
+          ## Translate between UCSC terms and Ensembl ones
+          my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
+                                || $style_mappings->{lc($type)}{'default'}
+                                || 'normal';
+          $options{'default_display'} = $default_display;
 
-        ## Translate between UCSC terms and Ensembl ones
-        my $default_display = $style_mappings->{lc($type)}{$ucsc_display}
-                              || $style_mappings->{lc($type)}{'default'}
-                              || 'normal';
-        $options{'default_display'} = $default_display;
+          ## Set track style if appropriate
+          if ($on_off && $on_off eq 'on') {
+            $options{'display'} = $default_display;
+            $count_visible++;
+          }
+          else {
+            $options{'display'} = 'off';
+          }
 
-        ## Set track style if appropriate
-        if ($on_off && $on_off eq 'on') {
-          $options{'display'} = $default_display;
-          $count_visible++;
-        }
-        else {
-          $options{'display'} = 'off';
-        }
+          $source->{'source_url'}     = $track->{'bigDataUrl'};
+          $source->{'colour'}         = exists $track->{'color'} ? $track->{'color'} : undef;
+          $source->{'colorByStrand'}  = exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef;
+          $source->{'spectrum'}       = exists $track->{'spectrum'} ? $track->{'spectrum'} : undef;
+          $source->{'no_titles'}      = $type eq 'BIGWIG'; # To improve browser speed don't display a zmenu for bigwigs
+          $source->{'squish'}         = $squish;
 
-        $source->{'source_url'}     = $track->{'bigDataUrl'};
-        $source->{'colour'}         = exists $track->{'color'} ? $track->{'color'} : undef;
-        $source->{'colorByStrand'}  = exists $track->{'colorByStrand'} ? $track->{'colorByStrand'} : undef;
-        $source->{'spectrum'}       = exists $track->{'spectrum'} ? $track->{'spectrum'} : undef;
-        $source->{'no_titles'}      = $type eq 'BIGWIG'; # To improve browser speed don't display a zmenu for bigwigs
-        $source->{'squish'}         = $squish;
+          if ($do_matrix) {
+            my $caption = strip_HTML($track->{'shortLabel'});
+            $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
+            ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
+            $source->{'labelcaption'} = $caption;
 
-        if ($do_matrix) {
-          my $caption = strip_HTML($track->{'shortLabel'});
-          $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
-          ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
-          $source->{'labelcaption'} = $caption;
+            $source->{'matrix'} = {
+              menu   => $options{'submenu_key'},
+              column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
+              row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
+            };
+            $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
+          }
 
-          $source->{'matrix'} = {
-            menu   => $options{'submenu_key'},
-            column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
-            row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
-          };
-          $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
-        }
+          $source = {%$source, %options};
 
-        $source = {%$source, %options};
-
-        $tracks{$type}{$source->{'name'}} = $source;
-      } ## End non-multiWig block
-
-    } ## End loop through tracks
-    $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
-
+          $tracks{$type}{$source->{'name'}} = $source;
+        } ## End non-multiWig block
+      } ## End loop through tracks
+      $self->load_file_format(lc, $tracks{$_}) for keys %tracks;
+    }
   } ## End loop through tracksets
   $self->{'th_default_count'} += $count_visible;
 }
