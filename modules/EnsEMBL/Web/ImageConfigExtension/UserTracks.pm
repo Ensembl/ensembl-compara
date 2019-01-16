@@ -27,7 +27,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Utils::TrackHub;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
@@ -328,8 +328,8 @@ sub _add_trackhub {
 
   ## Note: no need to validate assembly at this point, as this will have been done
   ## by the attachment interface - otherwise we run into issues with synonyms
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1, 'make_tree' => 1}); ## Do we have data for this species?
   $self->{'th_default_count'} = 0;
 
   if ($hub_info->{'error'}) {
@@ -518,7 +518,7 @@ sub _add_trackhub_tracks {
         ) : ())
       });
 
-      $menu->insert_alphabetically($submenu, $options{'submenu_key'});
+      $menu->append_child($submenu, $options{'submenu_key'});
     }
 
     ## Set up sections within supertracks (applies mainly to composite tracks)
@@ -529,7 +529,7 @@ sub _add_trackhub_tracks {
       $subsection = $self->get_node($key);
       unless ($subsection) {
         $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
-        $submenu->insert_alphabetically($subsection, $key);
+        $submenu->append_child($subsection, $key);
       }
       $options{'submenu_key'}   = $key;
       $options{'submenu_name'}  = $name;
