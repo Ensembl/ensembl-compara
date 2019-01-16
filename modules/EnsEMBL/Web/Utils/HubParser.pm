@@ -269,7 +269,7 @@ sub get_tracks {
 }
 
 sub save_track {
-  my ($self, $track, $tracks, $url);
+  my ($self, $track, $tracks, $url) = @_;
 
   # any track which doesn't have any of these is definitely invalid
   return unless ($track->{'type'} || $track->{'shortLabel'} || $track->{'longLabel'});
