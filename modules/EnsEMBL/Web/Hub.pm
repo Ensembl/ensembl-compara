@@ -130,7 +130,7 @@ sub new {
 sub init_cookies {
   ## Initialises cookies from request header
   my $self = shift;
-  $self->{'cookies'} = EnsEMBL::Web::Cookie->new_from_header($self->r);
+  $self->{'cookies'} = $self->r ? EnsEMBL::Web::Cookie->new_from_header($self->r) : {};
 }
 
 sub init_cache {
@@ -208,6 +208,7 @@ sub get_cookie {
   ## @param Flag kept on if cookie is encrypted
   ## @return Cookie object (possible newly created)
   my ($self, $name, $is_encrypted) = @_;
+  return unless $self->r;
   my $cookie = $self->cookies->{$name} ||= EnsEMBL::Web::Cookie->new($self->r, {'name' => $name});
 
   $cookie->encrypted($is_encrypted || 0);
@@ -567,6 +568,8 @@ sub multi_params {
   my $realign = shift;
 
   my $input = $self->input;
+  return {} unless $input;
+
   my %params = defined $realign ?
     map { $_ => $input->param($_) } grep { $realign ? /^([srg]\d*|pop\d+|align)$/ && !/^[rg]$realign$/ : /^(s\d+|r|pop\d+|align)$/ && $input->param($_) } $input->param :
     map { $_ => $input->param($_) } grep { /^([srg]\d*|pop\d+|align)$/ && $input->param($_) } $input->param;

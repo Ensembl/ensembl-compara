@@ -779,7 +779,8 @@ sub add_synteny {
 
   return unless $menu;
 
-  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species} || {}};
+  my $prod_name = $self->hub->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$prod_name} || {}};
 
   return unless @synteny_species;
 
@@ -1017,7 +1018,7 @@ sub add_regulation_features {
 
   while (my ($key, $settings) = each (%file_tracks)) {
     my $dataset = $db_tables->{$key};
-    foreach my $k (sort { $dataset->{$a}{'description'} cmp $dataset->{$b}{'description'} } keys %$dataset) {
+    foreach my $k (sort { lc $dataset->{$a}{'name'} cmp lc $dataset->{$b}{'name'} } keys %$dataset) {
       (my $name = $dataset->{$k}{'name'}) =~ s/_/ /g;
       $settings->{'menu'}->append_child($self->create_track_node($key.'_'.$k, $name, {
         data_id      => $k,
@@ -1120,7 +1121,7 @@ sub add_regulation_builds {
     ## Add to lookup for regulatory build cell lines
     $regbuild{$name} = 1 if $db_tables->{'cell_type'}{'regbuild_ids'}{$_};
   }
-  @cell_lines = sort { $a cmp $b } @cell_lines;
+  @cell_lines = sort { lc $a cmp lc $b } @cell_lines;
 
   my (@renderers, %matrix_rows);
 
@@ -1181,7 +1182,7 @@ sub add_regulation_builds {
   # Skip the rows property as it throws an exception
   my @seg_keys = grep { $_ ne 'rows' } keys %$segs;
 
-  foreach my $key (sort { $segs->{$a}{'desc'} cmp $segs->{$b}{'desc'} } @seg_keys) {
+  foreach my $key (sort { lc $segs->{$a}{'name'} cmp lc $segs->{$b}{'name'} } @seg_keys) {
     my $name = $segs->{$key}{'name'};
     my $cell_line = $key;
     my $epi_desc = $segs->{$key}{'epi_desc'} ? " ($segs->{$key}{'epi_desc'})" : "";

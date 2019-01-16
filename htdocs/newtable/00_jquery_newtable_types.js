@@ -153,7 +153,7 @@
     });
     $.each(((b||{}).keys)||{},function(i,v) {
       if(!cc.hasOwnProperty(v)) { kk.push(v); cc[v] = 0; }
-      cc[v] += b.counts[v];
+      cc[v] = b.counts[v];
     });
     return { keys: kk, counts: cc };
   }

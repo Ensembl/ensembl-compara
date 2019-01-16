@@ -23,7 +23,7 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Utils::TrackHub;
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 use base qw(EnsEMBL::Web::File::AttachedFormat);
@@ -31,7 +31,7 @@ use base qw(EnsEMBL::Web::File::AttachedFormat);
 sub new {
   my $self = shift->SUPER::new(@_);
   
-  $self->{'trackhub'} = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->{'hub'},
+  $self->{'trackhub'} = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->{'hub'},
                                                                  'url' => $self->{'url'});
   return $self;
 }

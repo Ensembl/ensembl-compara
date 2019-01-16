@@ -47,15 +47,9 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $current      = $species_defs->ENSEMBL_VERSION;
   my $url          = $hub->referer->{'uri'};
-  my $r            = $hub->param('r');
   my $match        = $url =~ m/^\//;
   my $count        = 0;
   my ($html, $archives, $assemblies, $initial_sets, $latest_sets, @links);
-  
-  if ($r) {
-    $url  =~ s/([\?;&]r=)[^;]+(;?)/$1$r$2/;
-    $url .= ($url =~ /\?/ ? ';r=' : '?r=') . $r unless $url =~ /[\?;&]r=[^;&]+/;
-  }
   
   my ($path, $params) = split '\?', $url;
   
@@ -81,6 +75,11 @@ sub content {
     $type     = $part1;
     $action   = $part2;
     $function = $part3;
+  }
+  
+  ## Remove location param from non-location links, as it will change between assemblies 
+  if ($type ne 'Location') {
+    $params  =~ s/([;?])r=[^;]+//;
   }
   
   ## NB: we create an array of links in ascending date order so we can build the
