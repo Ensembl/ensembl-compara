@@ -1359,8 +1359,7 @@ sub dumpOligoProbe {
     SELECT
       probe_set.name,
       probe_set.probe_set_id,
-      count(distinct(concat(probe_feature.seq_region_id,':', probe_feature.seq_region_start,'-', probe_feature.seq_region_end))) as hits,
-      array.name
+      count(distinct(concat(probe_feature.seq_region_id,':', probe_feature.seq_region_start,'-', probe_feature.seq_region_end))) as hits
     FROM
       $FUNCDB.probe_set
       join $FUNCDB.probe using (probe_set_id)
@@ -1368,15 +1367,14 @@ sub dumpOligoProbe {
       join $FUNCDB.array_chip on (probe.array_chip_id=array_chip.array_chip_id)
       join $FUNCDB.array using (array_id)
     GROUP BY
-      probe_set.name,
-      array.name
+      probe_set.name
   ));
   $sth->execute();
   print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
-  while( my( $probe_name, $pset_id, $count, $type ) = $sth->fetchrow_array ) {
+  while( my( $probe_name, $pset_id, $count ) = $sth->fetchrow_array ) {
     next unless $probe_name;
     my $locations_c = $count > 1 ? 'locations' : 'location';
-    my $desc =  qq($type probeset $probe_name has probes which hit the genome in $count $locations_c.);
+    my $desc =  qq(Probeset $probe_name has probes which hit the genome in $count $locations_c.);
     if (my @gname = keys %{$probe_set_trans_dets->{$pset_id} || {}}) {
       my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
       $desc .= " They hit transcripts in the following $gene_c:";
