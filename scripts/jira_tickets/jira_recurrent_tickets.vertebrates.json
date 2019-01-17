@@ -47,14 +47,14 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database",
-            "summary": "Add new genomes to the master database"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database+and+create+the+collections+and+mlss_ids",
+            "summary": "Add new genomes to the master and create the collection and MethodLinkSpeciesSets"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Create+the+collections+and+MethodLinkSpeciesSets",
-            "summary": "Create the collection and MethodLinkSpeciesSets to the master database"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Load+the+divergence+times+from+TimeTree",
+            "summary": "Load the divergence times from TimeTree"
          },
          {
             "assignee": "<RelCo>",
@@ -76,7 +76,7 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
       "subtasks": [{
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror\n{warn}Only for Vertebrates{warn}",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror",
             "summary": "Copy the core databases"
          },
          {

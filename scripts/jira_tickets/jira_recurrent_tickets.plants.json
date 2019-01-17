@@ -47,14 +47,8 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database",
-            "summary": "Add new genomes to the master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Create+the+collections+and+MethodLinkSpeciesSets",
-            "summary": "Create the collection and MethodLinkSpeciesSets to the master database"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database+and+create+the+collections+and+mlss_ids",
+            "summary": "Add new genomes to the master and create the collection and MethodLinkSpeciesSets"
          },
          {
             "assignee": "<RelCo>",
