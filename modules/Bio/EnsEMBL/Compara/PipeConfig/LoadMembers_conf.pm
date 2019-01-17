@@ -118,7 +118,7 @@ sub default_options {
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         # 'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
         'curr_core_registry'        => $self->o('reg_conf'),
-        #'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         'reuse_member_db' => 'compara_prev',
