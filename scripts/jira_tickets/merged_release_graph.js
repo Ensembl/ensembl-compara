@@ -102,6 +102,8 @@ function process_file(division) {
             }
             if (!(pipeline_name in pipelines)) {
                 alert("Cannot find " + pipeline_name + " in the graph");
+                n_tasks_done++;
+                update_progress_bar();
                 continue;
             }
 
