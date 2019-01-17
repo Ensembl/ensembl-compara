@@ -1321,41 +1321,8 @@ sub dumpOligoProbe {
   print LOG "  Dumping $FUNCDB to $file ... ".&date_and_mem()."\n";
   header($fh);
 
-  print LOG "    Retrieving gene details...".&date_and_mem()."\n";
-  #gene details
-  my $gene_dets;
-  my $sql = qq(
-    SELECT t.stable_id, g.stable_id, x.display_label
-      FROM transcript t, gene g, xref x
-     WHERE t.gene_id = g.gene_id
-       AND g.display_xref_id = x.xref_id);
-  my $sth = $conf->{'dbh'}->prepare($sql);
-  $sth->execute;
-  while( my( $tsi, $gsi, $gname) = $sth->fetchrow_array ) {
-    $gene_dets->{$tsi} = {
-      'gene_id'   => $gsi,
-      'gene_name' => $gname
-    };
-  }
-
-  print LOG "    Retrieving probe_set transcript mappings...".&date_and_mem()."\n";
-  my $probe_set_trans_dets;
-  $sql = qq(
-      SELECT probe_set_id, stable_id, stable_id
-        FROM $FUNCDB.probe_set_transcript
-    ORDER BY probe_set_id);
-  $sth = $conf->{'dbh'}->prepare($sql);
-  $sth->execute;
-  while( my( $probe_set_id, $tsi, $display_label) = $sth->fetchrow_array ) {
-    my $gene_label = $gene_dets->{$tsi}{'gene_name'};
-    push @{$probe_set_trans_dets->{$probe_set_id}{$gene_label}}, {
-      'stable_id'     => $tsi,
-      'display_label' => $display_label,
-    };
-  };
-
   print LOG "    Retrieving probe_sets...".&date_and_mem()."\n";
-  $sth    = $conf->{'dbh'}->prepare(qq(
+  my $sth    = $conf->{'dbh'}->prepare(qq(
     SELECT
       probe_set.name,
       probe_set.probe_set_id,
@@ -1375,38 +1342,8 @@ sub dumpOligoProbe {
     next unless $probe_name;
     my $locations_c = $count > 1 ? 'locations' : 'location';
     my $desc =  qq(Probeset $probe_name has probes which hit the genome in $count $locations_c.);
-    if (my @gname = keys %{$probe_set_trans_dets->{$pset_id} || {}}) {
-      my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
-      $desc .= " They hit transcripts in the following $gene_c:";
-      foreach my $gene (@gname) {
-        $desc .= " $gene (";
-        foreach my $trans (@{$probe_set_trans_dets->{$pset_id}{$gene}}) {
-          $desc .= $trans->{'stable_id'}.', ';
-        }
-        $desc =~ s/, $//;
-        $desc .= '),';
-      }
-      $desc =~ s/,$/\./;
-    }
     &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
   }
-
-  print LOG "    Retrieving probe transcript mappings...".&date_and_mem()."\n";
-  my $probe_trans_dets;
-  $sql = qq(
-        SELECT probe_id, stable_id, stable_id
-          FROM $FUNCDB.probe_transcript
-      ORDER BY probe_id
-  );
-  $sth = $conf->{'dbh'}->prepare($sql);
-  $sth->execute;
-  while( my( $probe_id, $tsi, $display_label) = $sth->fetchrow_array ) {
-    my $gene_label = $gene_dets->{$tsi}{'gene_name'};
-    push @{$probe_trans_dets->{$probe_id}{$gene_label}}, {
-      'stable_id' => $tsi,
-      'display_label' => $display_label,
-    };
-  };
 
   print LOG "    Retrieving probe details...".&date_and_mem()."\n";
   $sth    = $conf->{'dbh'}->prepare(qq(
@@ -1435,19 +1372,6 @@ sub dumpOligoProbe {
     my $array_c  = $array_count > 1 ? 'arrays' : 'array';
     my $locations_c = $count > 1 ? 'locations' : 'location';
     my $desc = "$type probe $pname is associated with $array_count $array_c and hits the genome in $count $locations_c.";
-    if (my @gname = keys %{$probe_trans_dets->{$pid} || {}}) {
-      my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
-      $desc .= " It hits transcripts in the following $gene_c:";
-      foreach my $gene (@gname) {
-        $desc .= " $gene (";
-        foreach my $trans (@{$probe_trans_dets->{$pid}{$gene}}) {
-          $desc .= $trans->{'stable_id'}. ', ';
-        }
-        $desc =~ s/, $//;
-        $desc .= '),';
-      }
-      $desc =~ s/,$/\./;
-    }
     &p( OligoProbeLine($dbspecies,$pname,$desc,'','probe',$db,$counter ), $fh);
   }
   return footer( $counter->(), $fh);
