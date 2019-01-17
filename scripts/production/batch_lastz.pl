@@ -75,7 +75,7 @@ foreach my $this_mlss ( @$all_lastz_mlsses ) {
 		}
 	}
 }
-print STDERR "Found " . scalar(@current) . "!\n\n";
+print STDERR "Found " . scalar(@current_lastz_mlsses) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
@@ -138,7 +138,7 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 print "\nPipeline commands:\n------------------\n";
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -division $COMPARA_DIV -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
+	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -division " . $ENV{'COMPARA_DIV'} . " -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
 }
 
 sub get_ref_chunk_count {
