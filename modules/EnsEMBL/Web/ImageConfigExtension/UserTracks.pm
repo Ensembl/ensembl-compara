@@ -572,6 +572,12 @@ sub _add_trackhub_tracks {
 
     foreach (@{$children||[]}) {
       my $track = $_->data;
+
+      ## Hack for one-file trackhubs where the track name is same as the hub
+      if (scalar @$children == 1) {
+        $track->{'track'} = 'track_'.$track->{'track'};
+      }
+
       (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
       ## Note that we use a duplicate value in description and longLabel, because non-hub files
       ## often have much longer descriptions so we need to distinguish the two
