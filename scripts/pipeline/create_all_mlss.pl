@@ -504,37 +504,41 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 my $current_version = software_version();
 my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS);
 
-print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $mlss_ids_file = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-compara/' . 'mlss_ids_' . $ENV{COMPARA_DIV} . '.list';
+
+open(my $mlss_ids_fh, '>', $mlss_ids_file) or die "Cannot open file '$mlss_ids_file'\n";
+
+print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 my $n = 0;
 foreach my $mlss (@mlsss_created) {
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss->toString, "\n";
+        print $mlss_ids_fh $mlss->toString, "\n";
     } else {
         $n++
     }
 }
 print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
 $n = 0;
 foreach my $mlss (@mlsss_retired) {
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss->toString, "\n";
+        print $mlss_ids_fh $mlss->toString, "\n";
     } else {
         $n++
     }
 }
 print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print "\nWhat else is new in e$current_version ?\n-------------------------\n";
+print $mlss_ids_fh "\nWhat else is new in e$current_version ?\n-------------------------\n";
 $n = 0;
 foreach my $mlss (@mlsss_existing) {
     next if !$mlss->first_release || $mlss->first_release != $current_version;
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss->toString, "\n";
+        print $mlss_ids_fh $mlss->toString, "\n";
     } else {
         $n++
     }
 }
-print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
