@@ -521,8 +521,14 @@ sub _add_trackhub_tracks {
       $menu->append_child($submenu, $options{'submenu_key'});
     }
 
-    ## Don't attach individual tracks - the new matrix code takes care of that
-    unless ($do_matrix) {
+    if ($do_matrix) {
+      ## Don't attach individual tracks - the new matrix code takes care of that - but
+      ## the submenu link will not appear unless there is at least one child, so add a dummy track
+      $self->_add_track($submenu, undef, $options{'submenu_name'}.'_dummy_track', {}, {
+        glyphset      => 'dummy',
+      });
+    }
+    else {
       ## Set up sections within supertracks (applies mainly to composite tracks)
       my $subsection;
       if ($set->{'submenu_key'}) {
