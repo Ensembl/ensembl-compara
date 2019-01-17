@@ -24,7 +24,6 @@ function process_tickets(json) {
     //console.log(n_tickets);
     if (n_tickets == 0) {
         $('#progress').text("No tickets found !");
-        return;
     }
     for(var i =0; i<n_tickets; i++) {
         var ticket = json.issues[i];
@@ -87,9 +86,11 @@ function process_tickets(json) {
     d3.select("#graph").graphviz()
         .fade(false)
         .renderDot(digraph);
-    $('#progressbar').fadeOut("normal", function() {
-        $(this).remove();
-    });
+    if (n_tickets) {
+        $('#progressbar').fadeOut("normal", function() {
+            $(this).remove();
+        });
+    }
 }
 
 
@@ -118,9 +119,12 @@ $.ajax({
             url: endpoint_ticket_list.replace('__RELEASE__', release),
             success: process_tickets,
             error: function(jqXHR, status, error) {
-                $('#progress').text("Error: " + error);
+                $('#progress').text("Error fetching the " + release + "tickets: " + error);
             },
         });
+    },
+    error: function(jqXHR, status, error) {
+        $('#progress').text("Error fetching the " + release + ".dot file: " + error);
     }
 });
 
