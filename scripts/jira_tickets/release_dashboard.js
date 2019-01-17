@@ -28,8 +28,10 @@ function process_division(division) { return function(json) {
     var n_tickets = json.issues.length;
     console.log(n_tickets);
     if (n_tickets == 0) {
-        $('#' + division).prev('h2').remove();
         return;
+    }
+    if (division.toLowerCase() != "empty") {
+        $('#' + division).prepend('<h2>' + division + '</h2>');
     }
     var table = $('<table class="division_dashboard"></table>').appendTo('#' + division);
     for(var i =0; i<n_tickets; i++) {
@@ -88,9 +90,6 @@ for(var j = 0; j < all_divisions.length; j++){
     var division = all_divisions[j];
     var endpoint = endpoint_ticket_list.replace('__RELEASE__', release).replace('__DIVISION__', division);
     console.log(endpoint);
-    if (division.toLowerCase() != "empty") {
-        $('body').append('<h2>' + division + '</h2>');
-    }
     $('body').append('<div id="' + division + '"></div>');
     $.ajax(endpoint, {
         success: process_division(division),
