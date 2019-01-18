@@ -267,6 +267,9 @@ sub get_tracks {
       }
     }
   }
+  
+  ## Save the final track!      
+  $self->save_track($track, $tracks, $url);
     
   return ($tracks, $count);
 }
