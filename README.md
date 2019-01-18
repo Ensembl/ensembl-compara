@@ -78,6 +78,10 @@ can skip `path/to/cactus` on the Makefile command-line, e.g.:
 	perl Makefile-progressiveCactus.PL
 	make
 
+On the EBI main cluster, *do not* load
+`/nfs/software/ensembl/latest/envs/basic.sh` in your `.bashrc`, and replace
+`perl` with `/nfs/software/ensembl/latest/linuxbrew/bin/perl` when invoking
+`Makefile-progressiveCactus.PL`.
 
 #### Installation via Linuxbrew
 
