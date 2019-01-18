@@ -64,7 +64,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'        => $self->o('division') . '_load_members'.$self->o('rel_with_suffix'),
+        'pipeline_name'        => $self->o('division') . '_load_members_'.$self->o('rel_with_suffix'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
