@@ -25,6 +25,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   init: function () {
     var panel = this;
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
+    Ensembl.EventManager.register('modalPanelResize', this, this.resize);
 
     this.elLk.dx        = {};
     this.elLk.dx.container = $('div#dx-content', this.el);
@@ -50,8 +51,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
+    this.matrixLoadState     = true;
 
     panel.el.find("div#dy-tab div.search-box").hide();
+    this.resize();
 
     $.ajax({
       url: '/Json/'+this.jsonUrl+'/data?species='+Ensembl.species,
@@ -89,6 +92,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
     this.clickFilter(this.elLk.filterButton, this.el.find("li._configure"));
+  },
+
+  getNewPanelHeight: function() {
+    return $(this.el).closest('.modal_content.js_panel').height() - 160;
+  },
+
+  resize: function() {
+    var panel = this;
+    panel.elLk.resultBox.height(this.getNewPanelHeight());
+    panel.elLk.matrixContainer.height(this.getNewPanelHeight() - 60);
   },
 
   getActiveTabContainer: function() {
@@ -1133,6 +1146,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
     var dyArray = Object.keys(panel.localStoreObj.dy);
 
+    // Adding 2 extra regulatory features tracks to show by default
+    dyArray.unshift('Epigenomic_activity', 'Segmentation_features', '');
+    var extra_columns = {
+      'Epigenomic_activity': {
+        boxState: "track-on",
+        boxDataRender: "peak-signal",
+      },
+      'Segmentation_features' : {
+        boxState: "track-off",
+        boxDataRender: "peak",
+      }
+    };
     // State of the column(evidence) or row (cell) which is attached to the labels
     // whether the whole row is on/off, whole column is on/off, render is peak-signal, peak or signal
     // default is on and peak-signal
@@ -1141,16 +1166,22 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){
-      var dyLabel = panel.elLk.lookup[dyItem].label;
-      if(panel.localStoreObj.matrix[dyItem]) {
-        columnState   = panel.localStoreObj.matrix[dyItem].state;
-        columnRender  = panel.localStoreObj.matrix[dyItem].render;
-      } else {
-        columnState   = "track-on";
-        columnRender  = "peak-signal";
-        panel.localStoreObj.matrix[dyItem] = {"state": columnState, "render": columnRender};
+      var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
+      if (dyItem !== '') {
+        if(panel.localStoreObj.matrix[dyItem]) {
+          columnState   = panel.localStoreObj.matrix[dyItem].state;
+          columnRender  = panel.localStoreObj.matrix[dyItem].render;
+        } else {
+          columnState   = "track-on";
+          columnRender  = "peak-signal";
+          panel.localStoreObj.matrix[dyItem] = {"state": columnState, "render": columnRender};
+        }
+        xContainer += '<div class="xLabel '+dyItem+'" data-track-state="'+columnState+'" data-track-render="'+columnRender+'">'+dyLabel+'</div>';
       }
-      xContainer += '<div class="xLabel '+dyItem+'" data-track-state="'+columnState+'" data-track-render="'+columnRender+'">'+dyLabel+'</div>';
+      else {
+        xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
+      }
+      
     });
 
     xContainer += "</div>";
@@ -1160,7 +1191,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     $.each(panel.localStoreObj.dx, function(cellName, value){
-        var cellLabel    = panel.elLk.lookup[cellName].label;
+        var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
 
         if(panel.localStoreObj.matrix[cellName]) {
           rowState   = panel.localStoreObj.matrix[cellName].state;
@@ -1180,25 +1211,35 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var popupType = "peak-signal"; //class of type of popup to use
           var dataClass = ""; //to know which cell has data
           var boxRenderClass = "";
+          var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
 
-          //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-          $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, rel){
-            if(rel.val.replace(/[^\w\-]/g,'_') === dyItem) {
-              var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
-              dataClass = "_hasData";
-              if(panel.localStoreObj.matrix[storeKey]) {
-                boxState   = panel.localStoreObj.matrix[storeKey].state;
-                boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
-                boxRenderClass = "render-"+boxDataRender;
-              } else {
-                boxState = "track-on"; //on means blue bg, off means white bg
-                boxDataRender = "peak-signal";
-                boxRenderClass = "render-peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                panel.localStoreObj.matrix[storeKey] = {"state": columnState, "render": columnRender};
-              }              
-              return;
-            }
-          })
+          if (dyItem.match(/Epigenomic_activity|Segmentation_features/)) {
+            // These are extra columns. So explicitly defining renderers.
+            dataClass = "_hasData";
+            boxState = panel.localStoreObj.matrix[storeKey] ? panel.localStoreObj.matrix[storeKey].state : extra_columns[dyItem].boxState;
+            boxDataRender = panel.localStoreObj.matrix[storeKey] ? panel.localStoreObj.matrix[storeKey].render : extra_columns[dyItem].boxDataRender;
+            boxRenderClass = "render-" + boxDataRender;
+            panel.localStoreObj.matrix[storeKey] = {"state": boxState, "render": boxDataRender};
+          }
+          else {
+            //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+            $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, rel){
+              if(rel.val.replace(/[^\w\-]/g,'_') === dyItem) {
+                dataClass = "_hasData";
+                if(panel.localStoreObj.matrix[storeKey]) {
+                  boxState   = panel.localStoreObj.matrix[storeKey].state;
+                  boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
+                  boxRenderClass = "render-"+boxDataRender;
+                } else {
+                  boxState = "track-on"; //on means blue bg, off means white bg
+                  boxDataRender = "peak-signal";
+                  boxRenderClass = "render-peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
+                  panel.localStoreObj.matrix[storeKey] = {"state": boxState, "render": boxDataRender};
+                }              
+                return;
+              }
+            });
+          }
           rowContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-box-state="'+boxState+'" data-box-render="'+boxDataRender+'" data-popup-type="'+popupType+'"></div>';
         });
 
@@ -1525,7 +1566,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if(once === 1) {
         $(this).find("div.xBoxes").each(function(){
           var xName = $(this).data("track-x");
-
+          if (!xName) return;
           if(panel.elLk.matrixContainer.find("div.xBoxes."+xName+"._hasData.render-"+renderer).length === panel.elLk.matrixContainer.find("div.xBoxes."+xName+"._hasData").length) {
             panel.localStoreObj.matrix[xName].render = renderer;
           } else {
