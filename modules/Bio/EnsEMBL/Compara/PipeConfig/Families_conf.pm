@@ -489,7 +489,7 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
              -parameters => {
                  'discard_uniprot_only_clusters'    => $self->o('discard_uniprot_only_clusters'),
-             }
+             },
              -rc_name => 'LoMafft',
              -flow_into  => 'fire_family_building',
             },
