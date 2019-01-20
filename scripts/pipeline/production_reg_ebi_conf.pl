@@ -102,28 +102,28 @@ my $compara_dbs = {
     # EPO dbs
     ## mammals
     #'mammals_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],
-    #'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'mateus_mammals_epo_94'  ],
+    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],
     #'mammals_epo_low'     => [ 'mysql-ens-compara-prod-3', 'carlac_mammals_epo_low_coverage_95' ],
-    #'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
     ## sauropsids
     #'sauropsids_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_epo_95' ],
-    #'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'muffato_sauropsids_epo_94_500_50'  ],
+    'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_epo_95' ],
     #'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_low_coverage_95' ],
-    #'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
+    'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
     ## fish
     #'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_fish_epo_95' ],
-    #'fish_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_fish_epo_94' ],
+    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_fish_epo_95' ],
     #'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'muffato_fish_epo_low_coverage_95' ],
-    #'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_94b' ],
+    'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_94b' ],
     ## primates
     #'primates_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_primates_epo_94' ],
-    #'primates_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_primates_epo_92b' ],
+    'primates_epo_prev'   => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],      # Primates are reused from mammals (same anchors)
     #'primates_epo_low'     => [ 'mysql-ens-compara-prod-1', 'muffato_primates_epo_low_coverage_94' ],
-    #'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
     #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-6', 'carlac_amniotes_mercator_pecan_95' ],
-    #'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-2', 'mateus_amniotes_mercator_pecan_93' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-6', 'carlac_amniotes_mercator_pecan_95' ],
     #'compara_syntenies'   => [ 'mysql-ens-compara-prod-5', 'carlac_synteny_95' ],
 
     # miscellaneous
