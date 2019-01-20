@@ -7,7 +7,7 @@ digraph {
     "Protein-trees" -> "Protein-trees WGA Orthology QC";
     "ncRNA-trees" -> "ncRNA-trees WGA Orthology QC";
     {"All LastZ", "EPO"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
-    "All LastZ" -> "Synteny";
+    "LastZ" -> "All LastZ" -> "Synteny";
 
     "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, label="XOR", headport="murinae:w", tailport="murinae:s"];
     "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, label="XOR", headport="murinae:e", tailport="murinae:s"];
@@ -16,5 +16,5 @@ digraph {
     "Species-tree" -> "Protein-trees" [style="dashed", headport="Plants:w", tailport="Plants"];
 
     // Helps laying out the graph
-    {rank = same; "Genome dumps"; "All LastZ"; "Member loading"; }
+    {rank = same; "Genome dumps"; "LastZ"; "Member loading"; }
 }
