@@ -202,7 +202,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 			'master_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-			'registry_conf_file'  => $self->o('reg_conf'),
             'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel

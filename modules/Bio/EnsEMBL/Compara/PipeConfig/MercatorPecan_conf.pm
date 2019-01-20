@@ -244,7 +244,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_conf_file' => $self->o('reg_conf'),
                 'db_version' => $self->o('ensembl_release'),
                 'master_db'  => $self->o('master_db'),
             },

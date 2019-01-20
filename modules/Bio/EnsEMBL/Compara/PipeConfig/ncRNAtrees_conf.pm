@@ -297,7 +297,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -analysis_capacity => 10,
-            -parameters => { registry_conf_file => '#reg_conf#' },
         },
 
         {   -logic_name => 'create_mlss_ss',
