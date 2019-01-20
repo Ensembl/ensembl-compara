@@ -14,6 +14,8 @@ digraph {
     "EPO" -> "EPO" [style="dashed", headport="Primates:e", tailport="Mammals:e"];
     "EPO" -> "Age of Base" [style="dashed", headport="Vertebrates:w", tailport="Mammals:w"];
     "Species-tree" -> "Protein-trees" [style="dashed", headport="Plants:w", tailport="Plants"];
+    "Protein-trees" -> "Protein-trees" [style="dashed", headport="Murinae:w", tailport="Default vertebrates:w"];
+    "ncRNA-trees" -> "ncRNA-trees" [style="dashed", headport="Murinae:e", tailport="Default vertebrates:e"];
 
     // Helps laying out the graph
     {rank = same; "Genome dumps"; "LastZ"; "Member loading"; }
