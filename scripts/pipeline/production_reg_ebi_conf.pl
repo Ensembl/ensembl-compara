@@ -151,7 +151,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 4485,
     -group => 'core',
-    -species => 'ancestral_sequences',
+    -species => 'ancestral_sequences_for_dump',     # FIXME: this needs to be renamed to ancestral_sequences when we run the dumps
     -dbname => "ensembl_ancestral_$curr_release",
 );
 
