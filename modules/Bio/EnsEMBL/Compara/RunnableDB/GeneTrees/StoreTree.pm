@@ -412,7 +412,7 @@ sub parse_newick_into_tree {
       #Then we "next" the loop
       $leaf->print_node if $self->debug;
       $leaf->node_id(0);
-      $leaf->seq_member_id($seq_member_id);
+      $leaf->dbID($seq_member_id);
       $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
     } else {
       $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
