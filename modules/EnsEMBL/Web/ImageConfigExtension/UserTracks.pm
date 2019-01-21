@@ -391,6 +391,7 @@ sub _add_trackhub_node {
 
   my (@next_level, @tracks);
   if ($node->has_child_nodes) {
+    my $count = 0;
     foreach my $child (@{$node->child_nodes}) {
       if ($child->has_child_nodes) {
         ## Probably a Supertrack with either a Composite or MultiWig track
@@ -411,6 +412,11 @@ sub _add_trackhub_node {
         }
       }
       else {
+        if ($child->data->{'track'} eq $menu->id) {
+          ## Probably a one-file hub, but use count just in case
+          $child->data->{'track'} = $node->data->{'track'}.'_track_'.$count;
+          $count++;
+        } 
         push @tracks, {'tracks' => [$child]};
       }
     }
@@ -464,43 +470,48 @@ sub _add_trackhub_node {
 sub _add_trackhub_tracks {
   my ($self, $parent, $tracksets, $config, $menu, $name) = @_;
   my $hub       = $self->hub;
-  my $data      = $parent->data;
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
   my $count_visible = 0;
 
   foreach my $set (@{$tracksets||[]}) {
     my %tracks;
+    my $submenu;
 
     my %options = (
       menu_key      => $name,
       menu_name     => $name,
-      submenu_key   => clean_id("${name}_$data->{'track'}", '\W'), 
-      submenu_name  => strip_HTML($data->{'shortLabel'}),
-      submenu_desc  => $data->{'longLabel'},
       trackhub      => 1,
     );
 
-    if ($do_matrix) {
-      $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 'TrackHubMatrix', 'menu' => $options{'submenu_key'} });
+    ## Skip this section for one-file track hubs, as they don't have parents or submenus 
+    if (scalar keys %{$parent||{}}) {
+      my $data      = $parent->data;
 
-      foreach my $subgroup (keys %$config) {
-        next unless $subgroup =~ /subGroup\d/;
+      $options{'submenu_key'}   = clean_id("${name}_$data->{'track'}", '\W'); 
+      $options{'submenu_name'}  = strip_HTML($data->{'shortLabel'});
+      $options{'submenu_desc'}  = $data->{'longLabel'};
 
-        foreach (qw(x y)) {
-          if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
-            $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
-            s/_/ /g for values %{$options{'axis_labels'}{$_}};
+      if ($do_matrix) {
+        $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 'TrackHubMatrix', 'menu' => $options{'submenu_key'} });
+
+        foreach my $subgroup (keys %$config) {
+          next unless $subgroup =~ /subGroup\d/;
+
+          foreach (qw(x y)) {
+            if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
+              $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
+              s/_/ /g for values %{$options{'axis_labels'}{$_}};
+            }
           }
+
+          last if scalar keys %{$options{'axis_labels'}} == 2;
         }
 
-        last if scalar keys %{$options{'axis_labels'}} == 2;
+        $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
       }
-
-      $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
     }
-
     ## Check if this submenu already exists (quite possible for trackhubs)
-    my $submenu = $self->get_node($options{'submenu_key'});
+    $submenu = $self->get_node($options{'submenu_key'});
     unless ($submenu) { 
       $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
         external    => 1,

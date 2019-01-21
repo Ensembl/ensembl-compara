@@ -175,11 +175,13 @@ sub get_hub {
         }
 
         if ($options->{'genome'} || $options->{'content'}) {
+          my ($track_info, $total) = $self->get_track_info($options);
+          $genome_info->{$genome}{'track_count'} = $total;
           if ($args->{'make_tree'}) {
-            $genome_info->{$genome}{'tree'} = $self->get_track_info($options);
+            $genome_info->{$genome}{'tree'} = $track_info;
           }
           else {
-            $genome_info->{$genome}{'data'} = $self->get_track_info($options);
+            $genome_info->{$genome}{'data'} = $track_info;
           }
         }
       }
@@ -228,7 +230,7 @@ sub get_track_info {
 
   ## OK, parse the file content
   my $parser  = $self->parser;
-  my $tracks = $parser->get_tracks($args->{'content'}, $args->{'file'});
+  my ($tracks, $total) = $parser->get_tracks($args->{'content'}, $args->{'file'});
   
   # Make sure the track hierarchy is ok before trying to make the tree
   my $tree = $args->{'tree'}; 
@@ -256,7 +258,7 @@ sub get_track_info {
     }
   }
   
-  return $info;
+  return ($info, $total);
 }
 
 sub make_tree {

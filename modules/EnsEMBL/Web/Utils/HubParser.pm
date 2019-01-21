@@ -142,130 +142,136 @@ sub get_tracks {
   my $url      = $file =~ s|^(.+)/.+|$1|r; # URL relative to the file (up until the last slash before the file name)
   my @all_lines = split(/\n/, $content);
   my (@lines, $multi_line, $track, $id);
+  my $count = 0;
     
-    ## Create an array of all meaningful lines
-    foreach (@all_lines) {
-      next unless /\w/;
+  ## Create an array of all meaningful lines
+  foreach (@all_lines) {
+    next unless /\w/;
       
-      s/(^\s*|\s*$)//g; # Trim leading and trailing whitespace
+    s/(^\s*|\s*$)//g; # Trim leading and trailing whitespace
       
-      if (s/\\$//g) { # Lines ending in a \ are wrapped onto the next line
-        $multi_line .= $_;
-        next;
-      }
-      
-      push @lines, $multi_line ? "$multi_line$_" : $_;
-      
-      $multi_line = '';
+    if (s/\\$//g) { # Lines ending in a \ are wrapped onto the next line
+      $multi_line .= $_;
+      next;
     }
-    
-    foreach (@lines) {
-      next if $_ =~ /^#/; # Ignore commented-out attributes
-
-      my ($key, $value) = split /\s+/, $_, 2;
       
-      if ($key eq 'track') {
-        ## Save any existing track
-        if (scalar keys %{$track||{}}) {
-          $self->save_track($track, $tracks, $url);
-        }
-        ## Start a new track
-        $id = $value || 'Unnamed';
-        $track = {'track' => $value};
+    push @lines, $multi_line ? "$multi_line$_" : $_;
+      
+    $multi_line = '';
+  }
+    
+  foreach (@lines) {
+    next if $_ =~ /^#/; # Ignore commented-out attributes
+
+    my ($key, $value) = split /\s+/, $_, 2;
+      
+    if ($key eq 'track') {
+      ## Save any existing track
+      if (scalar keys %{$track||{}}) {
+        $self->save_track($track, $tracks, $url);
       }
-      elsif ($key eq 'type') {
+      ## Start a new track
+      $id = $value || 'Unnamed';
+      $track = {'track' => $value};
+    }
+    elsif ($key eq 'type') {
+      my @values = split /\s+/, $value;
+      my $type   = lc shift @values;
+         $type   = 'vcf' if $type eq 'vcftabix';
+        
+      $track->{$key} = $type;
+        
+      if ($type =~ /bed/i) {
+        $track->{'standard_fields'}   = shift @values;
+        if (scalar @values) {
+          $track->{'additional_fields'} = $values[0] eq '+' ? 1 : 0;
+          $track->{'configurable'}      = $values[0] eq '.' ? 1 : 0; # Don't really care for now
+        }
+      } elsif ($type =~ /wig/i) {
+        $track->{'signal_range'} = \@values;
+      }
+    } elsif ($key eq 'bigDataUrl') {
+      ## Only tracks with an actual data file count as tracks in Ensembl
+      $count++;
+      if ($value =~ /^\//) { ## path is relative to server, not to hub.txt
+        $url =~ /^(\w+:\/\/(\w|-|\.)+)/;
+        my $root = $1;
+        $track->{$key} = $root.$value;
+      }
+      else {
+        $track->{$key} = $value =~ /^(ftp|https?):\/\// ? $value : "$url/$value";
+      }
+    } else {
+      if ($key eq 'parent' || $key eq 'superTrack' || $key =~ /^subGroup[0-9]/) {
+
         my @values = split /\s+/, $value;
-        my $type   = lc shift @values;
-           $type   = 'vcf' if $type eq 'vcftabix';
-        
-        $track->{$key} = $type;
-        
-        if ($type =~ /bed/i) {
-          $track->{'standard_fields'}   = shift @values;
-          if (scalar @values) {
-            $track->{'additional_fields'} = $values[0] eq '+' ? 1 : 0;
-            $track->{'configurable'}      = $values[0] eq '.' ? 1 : 0; # Don't really care for now
+          
+        if ($key eq 'parent' || $key eq 'superTrack') {
+          if ($key eq 'superTrack' && $values[0] eq 'on') {
+            $track->{'superTrack'}  = shift @values;
+            my $on_off                  = shift @values if scalar @values;
+            if ($on_off) {
+              $track->{'on_off'}    = $on_off eq 'show' ? 'on' : 'off';
+            }
           }
-        } elsif ($type =~ /wig/i) {
-          $track->{'signal_range'} = \@values;
+          else {
+            ## Hack for incorrect hubs that use 'superTrack' in children instead of 'parent'
+            $track->{'parent'}    = shift @values;
+            my $on_off                = shift @values if scalar @values;
+            if ($on_off) {
+              $track->{'on_off'}  = ($on_off eq 'show' || $on_off eq 'on') ? 'on' : 'off';
+            }
+          }
+          next;
+        } else {
+          $track->{$key}{'name'}  = shift @values;
+          $track->{$key}{'label'} = shift @values;
+           
+          $value = join ' ', @values;
         }
-      } elsif ($key eq 'bigDataUrl') {
-        if ($value =~ /^\//) { ## path is relative to server, not to hub.txt
-          $url =~ /^(\w+:\/\/(\w|-|\.)+)/;
-          my $root = $1;
-          $track->{$key} = $root.$value;
-        }
-        else {
-          $track->{$key} = $value =~ /^(ftp|https?):\/\// ? $value : "$url/$value";
+      }
+        
+      # Deal with key=value attributes.
+      # These are in the form key1=value1 key2=value2, but values can be quotes strings with spaces in them.
+      # Short and long labels may contain =, but in these cases the value is just a single string
+      if ($value =~ /=/ && $key !~ /^(short|long)Label$/) {
+        my ($k, $v);
+        my @pairs = split /\s([^=]+)=/, " $value";
+        shift @pairs;
+         
+        for (my $i = 0; $i < $#pairs; $i += 2) {
+          $k = $pairs[$i];
+          $v = $pairs[$i + 1];
+           
+          # If the value starts with a quote, but doesn't end with it, this value contains the pattern \s(\w+)=, so has been split multiple times.
+          # In that case, append all subsequent elements in the array onto the value string, until one is found which closes with a matching quote.
+          if ($v =~ /^("|')/ && $v !~ /$1$/) {
+            my $quote = $1;
+             
+            for (my $j = $i + 2; $j < $#pairs; $j++) {
+              $v .= "=$pairs[$j]";
+               
+              if ($pairs[$j] =~ /$quote$/) {
+                $i += $j - $i - 1;
+                last;
+              }
+            }
+          }
+           
+          $v =~ s/(^["']|['"]$)//g; # strip the quotes from the start and end of the value string
+            
+          $track->{$key}{$k} = $v;
         }
       } else {
-        if ($key eq 'parent' || $key eq 'superTrack' || $key =~ /^subGroup[0-9]/) {
-
-          my @values = split /\s+/, $value;
-          
-          if ($key eq 'parent' || $key eq 'superTrack') {
-            if ($key eq 'superTrack' && $values[0] eq 'on') {
-              $track->{'superTrack'}  = shift @values;
-              my $on_off                  = shift @values if scalar @values;
-              if ($on_off) {
-                $track->{'on_off'}    = $on_off eq 'show' ? 'on' : 'off';
-              }
-            }
-            else {
-              ## Hack for incorrect hubs that use 'superTrack' in children instead of 'parent'
-              $track->{'parent'}    = shift @values;
-              my $on_off                = shift @values if scalar @values;
-              if ($on_off) {
-                $track->{'on_off'}  = ($on_off eq 'show' || $on_off eq 'on') ? 'on' : 'off';
-              }
-            }
-            next;
-          } else {
-            $track->{$key}{'name'}  = shift @values;
-            $track->{$key}{'label'} = shift @values;
-            
-            $value = join ' ', @values;
-          }
-        }
-        
-        # Deal with key=value attributes.
-        # These are in the form key1=value1 key2=value2, but values can be quotes strings with spaces in them.
-        # Short and long labels may contain =, but in these cases the value is just a single string
-        if ($value =~ /=/ && $key !~ /^(short|long)Label$/) {
-          my ($k, $v);
-          my @pairs = split /\s([^=]+)=/, " $value";
-          shift @pairs;
-          
-          for (my $i = 0; $i < $#pairs; $i += 2) {
-            $k = $pairs[$i];
-            $v = $pairs[$i + 1];
-            
-            # If the value starts with a quote, but doesn't end with it, this value contains the pattern \s(\w+)=, so has been split multiple times.
-            # In that case, append all subsequent elements in the array onto the value string, until one is found which closes with a matching quote.
-            if ($v =~ /^("|')/ && $v !~ /$1$/) {
-              my $quote = $1;
-              
-              for (my $j = $i + 2; $j < $#pairs; $j++) {
-                $v .= "=$pairs[$j]";
-                
-                if ($pairs[$j] =~ /$quote$/) {
-                  $i += $j - $i - 1;
-                  last;
-                }
-              }
-            }
-            
-            $v =~ s/(^["']|['"]$)//g; # strip the quotes from the start and end of the value string
-            
-            $track->{$key}{$k} = $v;
-          }
-        } else {
-          $track->{$key} = $value;
-        }
+        $track->{$key} = $value;
       }
     }
+  }
+  
+  ## Save the final track!      
+  $self->save_track($track, $tracks, $url);
     
-  return $tracks;
+  return ($tracks, $count);
 }
 
 sub save_track {
