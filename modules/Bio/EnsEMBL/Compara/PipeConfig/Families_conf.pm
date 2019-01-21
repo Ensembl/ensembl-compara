@@ -259,6 +259,7 @@ sub pipeline_analyses {
             -parameters        => {
                 'reuse_db'              => '#member_db#',
                 },
+            -rc_name => '2GigMem',
             -flow_into => WHEN(
                         '#hmm_clustering#' => 'reuse_hmm_annot',
                         ELSE { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
