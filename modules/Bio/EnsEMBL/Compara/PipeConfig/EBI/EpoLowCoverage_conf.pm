@@ -66,8 +66,8 @@ sub default_options {
 	# },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'compara_curr',
-    # 'epo_db' => $self->o('species_set_name').'_epo', # registry name usually follows this convention for new EPO runs
+        #'epo_db' => 'compara_curr',
+        'epo_db' => $self->o('species_set_name').'_epo', # registry name usually follows this convention for new EPO runs
 	
 
     #ref species for pairwise alignments
