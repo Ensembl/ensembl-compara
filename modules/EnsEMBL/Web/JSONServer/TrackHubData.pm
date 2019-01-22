@@ -37,14 +37,12 @@ sub json_data {
   my $hub  = $self->hub;
 
   # TODO - replace with dynamic parameter
-  my $record_id = 'url_093244c7b96971052ab900101f8636ff_94481512';
-
-  my ($type, $code, $id) = split('_', $record_id);
-  $code .= '_'.$id;
+  my $record_id = 'url_fad26ccbf77adebbbcba909979c1fd90_94481512';
+  (my $code = $record_id) =~ s/^url_//; 
 
   my $record;
   foreach my $m (grep $_, $hub->user, $hub->session) {
-    $record = $m->get_record_data({'type' => $type, 'code' => $code});
+    $record = $m->get_record_data({'type' => 'url', 'code' => $code});
     last if ($record && keys %$record);
   }
   my $url = $record->{'url'};
@@ -54,7 +52,7 @@ sub json_data {
   my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
   $self->{'th_default_count'} = 0;
 
-  my $node;
+  my $data;
   my $assemblies = $hub->species_defs->get_config($hub->param('species'), 'TRACKHUB_ASSEMBLY_ALIASES');
   $assemblies ||= [];
   $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
@@ -64,18 +62,14 @@ sub json_data {
     push @$assemblies,$assembly;
   }
   foreach my $assembly (@$assemblies) {
-    $node = $hub_info->{'genomes'}{$assembly}{'tree'};
-    $node = $node->root if $node;
-    last if $node;
+    $data = $hub_info->{'genomes'}{$assembly}{'data'};
+    last if $data;
   }
 
-
-  #$self->_add_trackhub_node($node) if $node;
-
-  use Data::Dumper;
+  use Data::Dumper; 
   $Data::Dumper::Sortkeys = 1;
   $Data::Dumper::Maxdepth = 2;
-  warn Dumper($node);
+  warn Dumper($data);
 
   $final->{data}->{evidence}->{'name'}    = 'evidence';
   $final->{data}->{evidence}->{'label'}   = 'Evidence';
