@@ -115,6 +115,10 @@ sub json_data {
   $final->{data}->{epigenome}->{'listType'} = 'alphabetRibbon';
 
   $final->{dimensions} = ['epigenome', 'evidence'];
+  use Data::Dumper;
+  $Data::Dumper::Sortkeys = 1;
+  $Data::Dumper::Maxdepth = 4;
+  warn Dumper($final->{'data'}{'epigenome'});
   return $final;
 }
 
