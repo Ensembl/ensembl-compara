@@ -112,19 +112,20 @@ sub run {
 	foreach my $gdb ( @{ $self->param_required('genome_dbs') } ) {
 		my $mash_path = $self->find_file_for_gdb($self->param_required('sketch_dir'), $gdb, ['msh']);
 
-                my $dump_path;
-
-                if ($self->param_exists('genome_dumps_dir')) {
-                    $dump_path = $gdb->_get_genome_dump_path($self->param('genome_dumps_dir'));
-                    die "$dump_path could not be found. Please rerun DumpGenomes_conf" unless -e $dump_path;
-                }
+	        my $dump_path;
+	        if ($self->param_exists('genome_dumps_dir')) {
+	            $dump_path = $gdb->_get_genome_dump_path($self->param('genome_dumps_dir'));
+	            die "$dump_path could not be found. Please rerun DumpGenomes_conf" unless -e $dump_path;
+	        }
 
 		if ( -e $mash_path ) {
 			push( @path_list, $mash_path );
 		} 
 		elsif ( -e $dump_path ) {
 			my $basename = basename($dump_path);
-			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, genome_dump_file => => $dump_path, out_prefix => $basename } );
+			push( @gdb_ids_no_sketch, { genome_db_id => $gdb->dbID, input_file => => $dump_path, out_prefix => $basename } );
+			my $this_mash_file = $self->param_required('output_dir') . "/$basename.msh";
+			push( @path_list, $this_mash_file );
 		}
 		else {
 			push( @gdb_ids_no_dump, { genome_db_id => $gdb->dbID, genome_dump_file => "$mash_path.fa"} );
@@ -132,6 +133,7 @@ sub run {
 		}
 		
 	}
+
 	$self->param('gdb_ids_no_sketch', \@gdb_ids_no_sketch);
 	$self->param('gdb_ids_no_dump', \@gdb_ids_no_dump);
 	$self->param('mash_file_list', \@path_list);

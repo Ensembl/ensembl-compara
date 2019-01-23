@@ -42,6 +42,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::Mash;
 
 use strict;
 use warnings;
+use File::Basename;
 # use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
@@ -95,8 +96,14 @@ sub mash_dist_options {
 	$mash_cmd .= $input_file;
 
 	my $mash_output_file;
-	if ( $out_prefix ) {
-		$mash_output_file = $out_dir ? "$out_dir/$out_prefix.dists" : "$out_prefix.dists";
+	if ( $out_prefix || $out_dir ) {
+		my $this_outdir = $out_dir ? $out_dir : '';
+		my $this_prefix = $out_prefix;
+		if ( ! defined $this_prefix ) {
+			$this_prefix = fileparse($input_file, '.fa');
+		}
+		
+		$mash_output_file = "$this_outdir/$this_prefix";
 		$mash_cmd .= " > $mash_output_file";
 	}
 
@@ -108,6 +115,11 @@ sub mash_paste_options {
 	my $self = shift;
 
 	my $input_file = $self->param_required('input_file');
+	if ( $input_file =~ /\*/ ) { # if input contains wildcard
+		my @globbed_inputs = glob $input_file;
+		$input_file = join(' ', @globbed_inputs);
+	}
+
 	my $out_dir = $self->param('output_dir');
 	my $out_prefix = $self->param_required('out_prefix');
 
@@ -132,8 +144,14 @@ sub mash_sketch_options {
 	$mash_cmd .= '-k ' . $self->param('kmer_size')   . ' ' if $self->param('kmer_size');
 	
 	my $outfile;
-	if ( $out_prefix ) {
-		$outfile = $out_dir ? "$out_dir/$out_prefix" : $out_prefix;
+	if ( $out_prefix || $out_dir ) {
+		my $this_outdir = $out_dir ? $out_dir : '';
+		my $this_prefix = $out_prefix;
+		if ( ! defined $this_prefix ) {
+			$this_prefix = fileparse($input_file, '.fa');
+		}
+		
+		$outfile = "$this_outdir/$this_prefix";
 		$mash_cmd .= "-o $outfile ";
 	} else {
 		$outfile = $input_file;
