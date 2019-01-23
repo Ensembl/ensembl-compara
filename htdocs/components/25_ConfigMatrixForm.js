@@ -43,10 +43,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.filterButton    = this.el.find("button.filter");
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.localStoreObj        = new Object();
-    this.isRegMatrix          = this.elLk.trackConfiguration.hasClass('reg-matrix');
-    // TODO - make trackhub storage key unique
-    this.localStorageKey      = this.isRegMatrix ? 'RegMatrix' : 'TrackHubMatrix';
-    this.jsonUrl              = this.isRegMatrix ? 'RegulationData' : 'TrackHubData';
+    this.localStorageKey      = 'RegMatrix';
     this.elLk.lookup          = new Object();
     
     this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
@@ -57,7 +54,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.resize();
 
     $.ajax({
-      url: '/Json/'+this.jsonUrl+'/data?species='+Ensembl.species,
+      url: '/Json/RegulationData/data?species='+Ensembl.species,
       dataType: 'json',
       context: this,
       success: function(json) {
