@@ -27,7 +27,7 @@ sub configuration_content {
   my ($self, $dimX, $dimY) = @_;
 
   return qq(      
-      <div class="track-panel track-configuration reg-matrix" id="configuration-content">
+      <div class="track-panel track-configuration" id="configuration-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
