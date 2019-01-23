@@ -90,7 +90,6 @@ my $compara_dbs = {
     #'murinae_nctrees'  => [ 'mysql-ens-compara-prod-8', 'carlac_murinae_ncrna_trees_95' ],
 
     # LASTZ dbs
-    #'human_v_mammal_lastz' => [ 'mysql-ens-compara-prod-2', 'waakanni_koala_pbear_wormbat_etc_vs_human_lastz' ],
     #'lastz_1' => [ 'mysql-ens-compara-prod-8', 'carlac_lastz_95'   ],
     #'lastz_2' => [ 'mysql-ens-compara-prod-2', 'waakanni_lastz_95' ],
     #'lastz_a' => [ 'mysql-ens-compara-prod-1', 'muffato_lastz_95a' ],
@@ -98,6 +97,8 @@ my $compara_dbs = {
     #'lastz_c' => [ 'mysql-ens-compara-prod-7', 'muffato_lastz_95c' ],
     #'lastz_d' => [ 'mysql-ens-compara-prod-7', 'muffato_lastz_95d' ],
     #'lastz_e' => [ 'mysql-ens-compara-prod-5', 'muffato_lastz_95e' ],
+    'lastz_batch7' => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_batch7_lastz_96' ],
+    'lastz_batch8' => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8' ],
 
     # EPO dbs
     ## mammals
