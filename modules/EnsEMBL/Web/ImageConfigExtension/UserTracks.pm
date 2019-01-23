@@ -207,7 +207,7 @@ sub _load_remote_url_tracks {
     my $track_data = $tracks_data{$code};
 
     if (lc $track_data->{'format'} eq 'trackhub') {
-      my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}) : ();
+      my ($trackhub_menu, $hub_info) = $self->get_parameter('can_trackhubs') ? $self->_add_trackhub(strip_HTML($track_data->{'source_name'}), $track_data->{'source_url'}, {'code' => $code}) : ();
 
       if ($hub_info->{'error'}) {
         $self->hub->session->set_record_data({
@@ -319,7 +319,10 @@ sub _load_uploaded_tracks {
 }
 
 sub _add_trackhub {
-  my ($self, $menu_name, $url, $existing_menu, $force_hide) = @_;
+  my ($self, $menu_name, $url, $args) = @_;
+  my $existing_menu = $args->{'menu'};
+  my $force_hide    = $args->{'hide'};
+  my $code          = $args->{'code'};
 
   ## Check if this trackhub is already attached - now that we can attach hubs via
   ## URL, they may not be saved in the imageconfig
@@ -358,7 +361,7 @@ sub _add_trackhub {
       last if $node;
     }
     if ($node) {
-      $self->_add_trackhub_node($node, $menu, $menu_name, $force_hide);
+      $self->_add_trackhub_node($node, $menu, {'name' => $menu_name, 'hide' => $force_hide, 'code' => $code});
 
       $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
@@ -387,7 +390,10 @@ sub _add_trackhub {
 }
 
 sub _add_trackhub_node {
-  my ($self, $node, $menu, $name, $force_hide) = @_;
+  my ($self, $node, $menu, $args) = @_;
+  my $name = $args->{'name'};
+  my $hide = $args->{'hide'};
+  my $code = $args->{'code'};
 
   my (@next_level, @tracks);
   if ($node->has_child_nodes) {
@@ -423,7 +429,7 @@ sub _add_trackhub_node {
   }
 
   if (scalar(@next_level)) {
-    $self->_add_trackhub_node($_, $menu, $name, $force_hide) for @next_level;
+    $self->_add_trackhub_node($_, $menu, {'name' => $name, 'hide' => $hide, 'code' => $code}) for @next_level;
   }
 
   if (scalar(@tracks)) {
@@ -461,15 +467,20 @@ sub _add_trackhub_node {
         }
       }
     }
-    $config->{'on_off'} = 'off' if $force_hide;
+    $config->{'on_off'} = 'off' if $hide;
 
-    $self->_add_trackhub_tracks($node, \@tracks, $config, $menu, $name);
+    $self->_add_trackhub_tracks($node, \@tracks, $config, {'menu' => $menu, 'name' => $name, 'code' => $code});
   }
 }
 
 sub _add_trackhub_tracks {
-  my ($self, $parent, $tracksets, $config, $menu, $name) = @_;
+  my ($self, $parent, $tracksets, $config, $args) = @_;
   my $hub       = $self->hub;
+  my $menu  = $args->{'menu'};
+  my $name  = $args->{'name'};
+  my $code  = $args->{'code'};
+
+
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
   my $count_visible = 0;
 
@@ -492,7 +503,11 @@ sub _add_trackhub_tracks {
       $options{'submenu_desc'}  = $data->{'longLabel'};
 
       if ($do_matrix) {
-        $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 'TrackHubMatrix', 'menu' => $options{'submenu_key'} });
+        $options{'matrix_url'} = $hub->url('Config', { 
+                                                      'matrix'  => 'TrackHubMatrix', 
+                                                      'menu'    => $options{'submenu_key'},
+                                                      'record'  => $code,
+                                  });
 
         foreach my $subgroup (keys %$config) {
           next unless $subgroup =~ /subGroup\d/;
@@ -798,7 +813,7 @@ sub load_file_format {
         ## Force hiding of internally configured trackhubs, because they should be
         ## off by default regardless of the settings in the hub
         my $force_hide = $internal ? 1 : 0;
-        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, $menu, $force_hide);
+        $self->_add_trackhub(strip_HTML($source->{'source_name'}), $source->{'url'}, {'menu' => $menu, 'hide' => $force_hide});
       }
       else {
         my $is_internal = $source->{'source_url'} ? 0 : $internal;
