@@ -635,7 +635,7 @@ sub create_pairwise_wga_mlsss {
     my $species_set = create_species_set([$ref_gdb, $nonref_gdb]);
     my $pw_mlss = create_mlss($method, $species_set);
     $pw_mlss->add_tag( 'reference_species', $ref_gdb->name );
-    $pw_mlss->name( $pw_mlss->name . sprintf('  (on %s)', $ref_gdb->get_short_name) );
+    $pw_mlss->name( $pw_mlss->name . sprintf(' (on %s)', $ref_gdb->get_short_name) );
     push @mlsss, $pw_mlss;
     if ($ref_gdb->has_karyotype and $nonref_gdb->has_karyotype) {
         my $synt_method = $compara_dba->get_MethodAdaptor->fetch_by_type('SYNTENY');
