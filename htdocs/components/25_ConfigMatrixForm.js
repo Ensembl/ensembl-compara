@@ -52,6 +52,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.matrixLoadState     = true;
 
     this.rendererConfig = {
+      'normal': 'normal',
       'peak': 'compact',
       'signal': 'signal',
       'peak-signal': 'signal_feaure'
@@ -72,7 +73,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.setDragSelectEvent();
         this.registerRibbonArrowEvents();
         this.updateRHS();
-        this.addExtraColumns();
+        this.addExtraDimensions();
       },
       error: function() {
         this.showError();
@@ -100,25 +101,25 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
-      if(!$(e.target).hasClass('slider')) {
+      if(!$(e.target).hasClass('slider') && panel.trackPopup) {
         panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
         panel.trackPopup.hide();
       }      
     });
 
     this.el.find('.view-track').on('click', function() {
-      panel.addExtraColumns();
+      panel.addExtraDimensions();
       Ensembl.EventManager.trigger('modalClose');
 
     });
   },
 
-  addExtraColumns: function() {
+  addExtraDimensions: function() {
     var panel = this;
     // Add extra columns data to lookup (for reg feats)
-    if (panel.json.extra_columns) {
-      $.each(panel.json.extra_columns, function(k, v) {
-        panel.elLk.lookup[k] = v;
+    if (panel.json.extra_dimensions) {
+      panel.json.extra_dimensions.forEach(function(dim) {
+        panel.elLk.lookup[dim] = panel.json.data[dim];
       });
     }
   },
@@ -940,7 +941,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     $.each(panel.json.data[panel.dx].data, function(key, dx_data) {
       var dx_className = key.replace(/[^\w\-]/g,'_');
-
+      panel.elLk.lookup[dx_className].data = dx_data;
       //add dy attribute to dx
       var relClassNameString="";
       $.each(dx_data, function(index, el) {
@@ -1246,7 +1247,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     dyArray.unshift('');
 
     // Adding 2 extra regulatory features tracks to show by default
-    Object.keys(panel.json.extra_columns).reverse().forEach(function(k) {
+    panel.json.extra_dimensions.reverse().forEach(function(k) {
       dyArray.unshift(k);
     })
 
@@ -1301,25 +1302,30 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             var dataClass = ""; //to know which cell has data
             var boxRenderClass = "";
             var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
+            var renderer, rel_dimension;
 
-            //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-            $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, rel){
-              if(rel.val.replace(/[^\w\-]/g,'_') === dyItem) {
-                
-                dataClass = "_hasData";
-                if(panel.localStoreObj.matrix[storeKey]) {
-                  boxState   = panel.localStoreObj.matrix[storeKey].state;
-                  boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
-                  boxRenderClass = "render-"+boxDataRender;
-                } else {
-                  boxState = panel.elLk.lookup[dyItem].boxState || "track-on"; //on means blue bg, off means white bg
-                  boxDataRender = panel.elLk.lookup[dyItem].boxDataRender || "peak-signal";
+            if(panel.localStoreObj.matrix[storeKey]) {
+              boxState   = panel.localStoreObj.matrix[storeKey].state;
+              boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
+              boxRenderClass = "render-"+boxDataRender;
+            }
+            else{
+              //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+              $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
+                if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
+                  dataClass = "_hasData";
+                  rel_dimension = relation.dimension;
+                  renderer = panel.json.data[rel_dimension].renderer;
+                  popupType = panel.json.data[rel_dimension].popupType || popupType;
+                  boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
+                  boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                   boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
                   panel.localStoreObj.matrix[storeKey] = {"state": boxState, "render": boxDataRender};
-                }              
-                return;
-              }
-            })
+                  return;
+                }
+              })
+            }
+
             rowContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';            
           }
         });
