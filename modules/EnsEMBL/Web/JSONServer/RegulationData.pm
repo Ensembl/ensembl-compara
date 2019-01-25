@@ -57,15 +57,16 @@ sub json_data {
       $evidence->{$evidence_group} = {
         "name"          => $_ eq 'Transcription Factor' ? 'TFBS' :  $_,
         "listType"      => $_ eq 'Transcription Factor' ?  'alphabetRibbon' : '', #for the js side to list the track either its bullet point or alphabet ribbon 
+        'set'           => "reg_feats_$set"
       };
-      #use Data::Dumper;warn Dumper($adaptor->fetch_all_having_PeakCalling_by_class($_));  
+
       foreach (@{$adaptor->fetch_all_having_PeakCalling_by_class($_)}) {
         next if $_->class eq 'Transcription Factor Complex'; #ignoring this group as its not used
         my $group = $_->class eq 'Transcription Factor' ? 'TFBS' : $_->class;
         $group =~ s/[^\w\-]/_/g;
         push @{$evidence->{$group}->{"data"}}, $_->name;
         push @{$all_types{$set}},$_;
-      }      
+      }
     }
   }
   
@@ -85,6 +86,7 @@ sub json_data {
     PolII    => 1,
     PolIII   => 1,
   );
+
   #get all cell types and the evidence type related to each of them (e.g: A549 -> [{evidence_type = 'HH3K27ac', on = 1},{evidence_type='H3K36me3', on = 0},....]) 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
@@ -92,27 +94,43 @@ sub json_data {
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$name}     || {};
     $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$name} || {};
     my $cell_evidence = [];
-    
+
     foreach my $set (qw(core non_core)) {
       foreach (@{$all_types{$set}||[]}) {
         if ($set_info->{$set}{$_->dbID}) {
           my $hash = {
             rel => 'evidence',
             val => $_->name,
-            defaultOn     => $default_evidence_types{$_->name} ? 1 : 0
+            set => "reg_feats_$set",
+            defaultOn => $default_evidence_types{$_->name} ? 1 : 0
           };
           push @$cell_evidence, $hash;
         }
       }
     }
     $cell_types->{$name} = $cell_evidence if(@$cell_evidence);
-  }  
+  }
 
   #use Data::Dumper;warn Dumper($cell_types);
   $final->{data}->{epigenome}->{'name'}   = 'epigenome';
   $final->{data}->{epigenome}->{'label'}  = 'Epigenome';
   $final->{data}->{epigenome}->{'data'} = $cell_types;
   $final->{data}->{epigenome}->{'listType'} = 'alphabetRibbon';
+
+  $final->{extra_columns}->{epigenomic_activity} = {
+    label => 'Epigenomic activity',
+    set => 'reg_feats',
+    boxState => "track-on",
+    boxDataRender => "peak-signal"
+  };
+
+  $final->{extra_columns}->{segmentation_features} = {
+    label => 'Segmentation features',
+    set => 'seg_Segmentation',
+    boxState => "track-off",
+    boxDataRender => "peak-signal"
+  };
+
 
   $final->{dimensions} = ['epigenome', 'evidence'];
   return $final;

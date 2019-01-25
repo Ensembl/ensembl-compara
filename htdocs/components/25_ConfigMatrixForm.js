@@ -26,6 +26,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
+    Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
 
     this.elLk.dx        = {};
     this.elLk.dx.container = $('div#dx-content', this.el);
@@ -50,6 +51,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.buttonOriginalHTML  = this.elLk.filterButton.html();
     this.matrixLoadState     = true;
 
+    this.rendererConfig = {
+      'peak': 'compact',
+      'signal': 'signal',
+      'peak-signal': 'signal_feaure'
+    }
+
     panel.el.find("div#dy-tab div.search-box").hide();
     this.resize();
 
@@ -65,6 +72,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.setDragSelectEvent();
         this.registerRibbonArrowEvents();
         this.updateRHS();
+        this.addExtraColumns();
       },
       error: function() {
         this.showError();
@@ -97,6 +105,51 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.trackPopup.hide();
       }      
     });
+
+    this.el.find('.view-track').on('click', function() {
+      panel.addExtraColumns();
+      Ensembl.EventManager.trigger('modalClose');
+
+    });
+  },
+
+  addExtraColumns: function() {
+    var panel = this;
+    // Add extra columns data to lookup (for reg feats)
+    if (panel.json.extra_columns) {
+      $.each(panel.json.extra_columns, function(k, v) {
+        panel.elLk.lookup[k] = v;
+      });
+    }
+  },
+
+  // Called by triggerSpecific from the parent Configurator panel.
+  // Does not cause an AJAX request, just returns the diff data.
+  updateConfiguration: function () {
+
+    var panel  = this;
+    var config = {};
+    var key, prefix;
+    var arr = [];
+    $.each(this.localStoreObj.matrix, function (k, v) {
+
+      if (v.state) {
+        set = key = '';
+        if (k.match(/_sep_/)) {
+          arr = k.split('_sep_');
+          key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
+          config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.render] : 'off' };
+
+          if (panel.localStoreObj.dy[arr[0]]) {
+            key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
+            config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off'};
+          }
+        }
+      }
+    });
+
+    $.extend(true, this.imageConfig, config);
+    return { imageConfig: config, noRendererUpdate: true };
   },
 
   getNewPanelHeight: function() {
@@ -535,7 +588,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   addToStore: function(items) {
     //Potential fix
     //if(!this.localStoreObj) { this.localStoreObj.matrix = {}; }
-
     this.localStoreObj = {};
     if (!items.length) return;
     var panel = this;
@@ -653,13 +705,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //showing and applying cell types
     var dxContainer = panel.el.find("div#dx-content");
     var rhSectionId = dxContainer.data('rhsection-id');
-    var noFilter = true;
     panel.dx = panel.json.dimensions[0];
     panel.dy = panel.json.dimensions[1];
     var dx = panel.json.data[panel.dx];
     var dy = panel.json.data[panel.dy];
 
-    this.displayCheckbox(Object.keys(dx.data).sort(), "div#dx-content", dx.listType, dxContainer, rhSectionId, noFilter);
+    this.displayCheckbox(
+      {
+        data: dx.data,
+        container: "div#dx-content",
+        listType: dx.listType,
+        parentTabContainer: dxContainer,
+        rhSectionId: rhSectionId,
+        noFilter: true
+      }
+    );
 
     //showing experiment type tabs
     var dy_html = '<div class="tabs dy">';
@@ -688,8 +748,30 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //displaying the experiment types
     if (dy.subtabs) {
       $.each(dy.data, function(key, subTab){
-        panel.displayCheckbox(subTab.data, "div#"+key+"-content", subTab.listType, dyContainer, rhSectionId);
-      })
+        panel.displayCheckbox(
+          {
+            data: subTab.data,
+            container: "div#"+key+"-content",
+            listType: subTab.listType,
+            parentTabContainer: dyContainer,
+            rhSectionId: rhSectionId,
+            noFilter: true,
+            set: subTab.set
+          }
+        );
+      });
+    }
+    else {
+      this.displayCheckbox(
+        {
+          data: dy.data,
+          container: "div#dy-content", 
+          listType: dy.listType,
+          parentTabContainer: dyContainer,
+          rhSectionId: rhSectionId,
+          noFilter: true
+        }
+      );
     }
 
     //adding dimension Y and X relationship as data-attribute
@@ -795,14 +877,22 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
-  displayCheckbox: function(data, container, listType, parentTabContainer, parentRhSectionId, noFilter_allBox) {
+  displayCheckbox: function(obj) {
+
+    var data = obj.data
+    var container = obj.container;
+    var listType = obj.listType;
+    var parentTabContainer = obj.parentTabContainer;
+    var parentRhSectionId = obj.rhSectionId;
+    var noFilter_allBox = obj.noFilter;
+
     var panel       = this;
     var ribbonObj   = {};
     var countFilter  = 0;
 
     if(listType && listType === "alphabetRibbon") {
       //creating obj with alphabet key (a->[], b->[],...)
-      $.each(data, function(j, item) {
+      $.each(Object.keys(data).sort(), function(j, item) {
         var firstChar = item.charAt(0).toLowerCase();
         if(!ribbonObj[firstChar]) {
           ribbonObj[firstChar] = [];
@@ -827,7 +917,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           parentTab: parentTabContainer,
           parentTabId: parentRhSectionId,
           subTab: rhsection,
-          selected: false
+          selected: false,
+          set: obj.set || ''
         };
 
       });
@@ -1151,18 +1242,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
     var dyArray = Object.keys(panel.localStoreObj.dy);
 
+    // Add empty column
+    dyArray.unshift('');
+
     // Adding 2 extra regulatory features tracks to show by default
-    dyArray.unshift('Epigenomic_activity', 'Segmentation_features', '');
-    var extra_columns = {
-      'Epigenomic_activity': {
-        boxState: "track-on",
-        boxDataRender: "peak-signal",
-      },
-      'Segmentation_features' : {
-        boxState: "track-off",
-        boxDataRender: "peak",
-      }
-    };
+    Object.keys(panel.json.extra_columns).reverse().forEach(function(k) {
+      dyArray.unshift(k);
+    })
+
     // State of the column(evidence) or row (cell) which is attached to the labels
     // whether the whole row is on/off, whole column is on/off, render is peak-signal, peak or signal
     // default is on and peak-signal
@@ -1172,16 +1259,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      if (dyItem !== '') {
+      if (dyItem === '') {
+        xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
+      }
+      else {
         if(!panel.localStoreObj.matrix[dyItem]) {
           columnState   = "track-on";
           columnRender  = "peak-signal";
           panel.localStoreObj.matrix[dyItem] = {"state": columnState, "render": columnRender, "total":"", "on":"", "off":"", "peak":"", "signal":"", "peak-signal":""};
         }
         xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
-      }
-      else {
-        xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
       }
     });
 
@@ -1205,21 +1292,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         
         //drawing boxes
         $.each(dyArray, function(i, dyItem) {
-          var boxState  = "", boxDataRender = "";
-          var popupType = "peak-signal"; //class of type of popup to use
-          var dataClass = ""; //to know which cell has data
-          var boxRenderClass = "";
-          var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
-
-          if (dyItem.match(/Epigenomic_activity|Segmentation_features/)) {
-            // These are extra columns. So explicitly defining renderers.
-            dataClass = "_hasData";
-            boxState = panel.localStoreObj.matrix[storeKey] ? panel.localStoreObj.matrix[storeKey].state : extra_columns[dyItem].boxState;
-            boxDataRender = panel.localStoreObj.matrix[storeKey] ? panel.localStoreObj.matrix[storeKey].render : extra_columns[dyItem].boxDataRender;
-            boxRenderClass = "render-" + boxDataRender;
-            panel.localStoreObj.matrix[storeKey] = {"state": boxState, "render": boxDataRender};
+          if (dyItem === '') {
+            rowContainer += '<div class="xBoxes"></div>';
           }
           else {
+            var boxState  = "", boxDataRender = "";
+            var popupType = "peak-signal"; //class of type of popup to use
+            var dataClass = ""; //to know which cell has data
+            var boxRenderClass = "";
+            var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
+
             //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
             $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, rel){
               if(rel.val.replace(/[^\w\-]/g,'_') === dyItem) {
@@ -1230,16 +1312,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
                   boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
                   boxRenderClass = "render-"+boxDataRender;
                 } else {
-                  boxState = "track-on"; //on means blue bg, off means white bg
-                  boxDataRender = "peak-signal";
-                  boxRenderClass = "render-peak-signal"; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                  panel.localStoreObj.matrix[storeKey] = {"state": columnState, "render": columnRender};
+                  boxState = panel.elLk.lookup[dyItem].boxState || "track-on"; //on means blue bg, off means white bg
+                  boxDataRender = panel.elLk.lookup[dyItem].boxDataRender || "peak-signal";
+                  boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
+                  panel.localStoreObj.matrix[storeKey] = {"state": boxState, "render": boxDataRender};
                 }              
                 return;
               }
             })
+            rowContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';            
           }
-          rowContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
         });
 
         rowContainer += "</div>";
