@@ -420,7 +420,7 @@ sub _add_trackhub_node {
       else {
         if ($child->data->{'track'} eq $menu->id) {
           ## Probably a one-file hub, but use count just in case
-          $child->data->{'track'} = $node->data->{'track'}.'_track_'.$count;
+          $child->data->{'track'} = $menu->id.'_track_'.$count;
           $count++;
         } 
         push @tracks, {'tracks' => [$child]};
@@ -495,7 +495,7 @@ sub _add_trackhub_tracks {
     );
 
     ## Skip this section for one-file track hubs, as they don't have parents or submenus 
-    if (scalar keys %{$parent||{}}) {
+    if (scalar keys %{$parent->data||{}}) {
       my $data      = $parent->data;
 
       $options{'submenu_key'}   = clean_id("${name}_$data->{'track'}", '\W'); 
@@ -526,7 +526,7 @@ sub _add_trackhub_tracks {
       }
     }
     ## Check if this submenu already exists (quite possible for trackhubs)
-    $submenu = $self->get_node($options{'submenu_key'});
+    $submenu = $options{'submenu_key'} ? $self->get_node($options{'submenu_key'}) : undef;
     unless ($submenu) { 
       $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
         external    => 1,
@@ -800,7 +800,7 @@ sub load_file_format {
       my $submenu_key  = $source->{'submenu_key'};
       my $submenu_name = $source->{'submenu_name'};
       my $main_menu    = $self->get_node($menu_key) || $self->tree->root->append_child($self->create_menu_node($menu_key, $menu_name, { external => 1, trackhub_menu => !!$source->{'trackhub'} }));
-         $menu         = $self->get_node($submenu_key);
+      $menu            = $submenu_key ? $self->get_node($submenu_key) : undef;
 
       if (!$menu) {
         $menu = $self->create_menu_node($submenu_key, $submenu_name, { external => 1, ($source->{'matrix_url'} ? (menu => 'matrix', url => $source->{'matrix_url'}) : ()) });
