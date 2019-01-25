@@ -605,6 +605,7 @@ sub expand_subtrees {
         # Gets the subtrees
         my %subtrees;
         foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
+            $subtree->expand_subtrees if ($subtree->tree_type eq 'supertree');
             $subtrees{$subtree->root->_parent_id} = $subtree->root;
         }
 
@@ -619,7 +620,7 @@ sub expand_subtrees {
     # To update it at the next get_all_Members call
     delete $self->{'_member_array'};
     # Gets the global alignment
-    $self->alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id)) if $self->gene_align_id;
+    $self->alignment($self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id), 1) if $self->gene_align_id;
 }
 
 
