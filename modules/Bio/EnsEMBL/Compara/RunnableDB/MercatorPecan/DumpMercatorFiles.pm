@@ -204,14 +204,14 @@ sub get_sql_for_peptide_hits {
     ## Use all best hits
     $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
       FROM $table_name1 paf1, $table_name2 paf2
-      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+      WHERE paf2.hgenome_db_id = ? AND paf1.hgenome_db_id = ?
         AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
         AND (paf1.hit_rank = 1 OR paf2.hit_rank = 1)";
   } else {
     ## Use best reciprocal hits only
     $sql = "SELECT paf1.qmember_id, paf1.hmember_id, paf1.score, paf1.evalue, paf2.score, paf2.evalue
       FROM $table_name1 paf1, $table_name2 paf2
-      WHERE paf1.qgenome_db_id = ? AND paf1.hgenome_db_id = ?
+      WHERE paf2.hgenome_db_id = ? AND paf1.hgenome_db_id = ?
         AND paf1.qmember_id = paf2.hmember_id AND paf1.hmember_id = paf2.qmember_id
         AND paf1.hit_rank = 1 AND paf2.hit_rank = 1";
   }

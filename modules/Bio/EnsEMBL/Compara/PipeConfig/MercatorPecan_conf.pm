@@ -383,8 +383,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#genome_db_id# like peptide_align_feature',
-                            'ALTER TABLE peptide_align_feature_#genome_db_id# ADD KEY hmember_hit (hmember_id, hit_rank)',
-                            'ALTER TABLE peptide_align_feature_#genome_db_id# DISABLE KEYS',
+                            'ALTER TABLE peptide_align_feature_#genome_db_id# ADD KEY hgenome_rank_hmember (hgenome_db_id, hit_rank, hmember_id)',
                ],
             },
             -flow_into => {
