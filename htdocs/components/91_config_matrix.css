@@ -320,9 +320,9 @@ div.hidebox               { width: 112px; height: 128px; background: #eee; z-ind
 
 /* track status for on */
 div.xBoxes.track-on                              { background-color: #0d0d72; }
-div.xBoxes.track-on.render-peak-signal           { background-image: url("/i/render/peak_signal_blue.svg"); }
-div.xBoxes.track-on.render-peak                  { background-image: url("/i/render/peak_blue.svg"); }
-div.xBoxes.track-on.render-signal                { background-image: url("/i/render/signal_blue.svg"); }
+div.xBoxes.track-on.render-peak-signal           { background-image: url("/i/render/peak_signal_white50.svg"); }
+div.xBoxes.track-on.render-peak                  { background-image: url("/i/render/peak_white50.svg"); }
+div.xBoxes.track-on.render-signal                { background-image: url("/i/render/signal_white50.svg"); }
 div.xBoxes.track-on.render-peak-signal.mClick    { background-image: url("/i/render/peak_signal_white.svg"); }
 div.xBoxes.track-on.render-peak.mClick           { background-image: url("/i/render/peak_white.svg"); }
 div.xBoxes.track-on.render-signal.mClick         { background-image: url("/i/render/signal_white.svg"); }
