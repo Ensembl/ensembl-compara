@@ -129,6 +129,7 @@ my $xml_config;
 my $xml_schema;
 my $verbose;
 my $dry_run;
+my $output_file;
 
 GetOptions(
     'help'          => \$help,
@@ -138,6 +139,7 @@ GetOptions(
     'schema=s'      => \$xml_schema,
     'release'       => \$release,
     'verbose|debug' => \$verbose,
+    'output_file=s' => \$output_file,
     'retire_unmatched'          => \$retire_unmatched,
     'dryrun|dry_run|dry-run'    => \$dry_run,
 );
@@ -509,9 +511,12 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 my $current_version = software_version();
 my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS);
 
-my $mlss_ids_file = $ENV{ENSEMBL_CVS_ROOT_DIR} . '/ensembl-compara/' . 'mlss_ids_' . $ENV{COMPARA_DIV} . '.list';
-
-open(my $mlss_ids_fh, '>', $mlss_ids_file) or die "Cannot open file '$mlss_ids_file'\n";
+my $mlss_ids_fh;
+if ($output_file) {
+    open($mlss_ids_fh, '>', $output_file) or die "Cannot open file '$output_file'\n";
+} else {
+    $mlss_ids_fh = \*STDOUT;
+}
 
 print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 my $n = 0;

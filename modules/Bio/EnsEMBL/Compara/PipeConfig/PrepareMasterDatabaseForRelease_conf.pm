@@ -79,6 +79,7 @@ sub default_options {
         'incl_components'           => 0, # set to 1 if there are 
         'create_all_mlss_exe'       => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/create_all_mlss.pl',
         'xml_file'                  => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml',
+        'report_file'               => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/mlss_ids_' . $self->o('division') . '.list',
     };
 }
 
@@ -161,7 +162,8 @@ sub pipeline_analyses {
                 'reg_conf'              => $self->o('reg_conf'),
                 'master_db'             => $self->o('master_db'),
                 'xml_file'              => $self->o('xml_file'),
-                'cmd'                   => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --verbose',
+                'report_file'           => $self->o('report_file'),
+                'cmd'                   => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
             -rc_name        => '2Gb_job',
             -flow_into  => [ 'backbone_pipeline_finished' ],
