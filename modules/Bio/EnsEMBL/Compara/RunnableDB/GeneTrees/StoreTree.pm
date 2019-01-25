@@ -411,9 +411,7 @@ sub parse_newick_into_tree {
       #We set the children_loaded=1 to tell the API not to load the leaf
       #Then we "next" the loop
       $leaf->print_node if $self->debug;
-      $leaf->node_id(0);
-      $leaf->dbID($seq_member_id);
-      $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
+      $leaf->{'dbID'} = $seq_member_id; # This is where GeneTreeMember keeps seq_member_id()
     } else {
       $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
       $leaf->node_id($old_leaf->node_id);
