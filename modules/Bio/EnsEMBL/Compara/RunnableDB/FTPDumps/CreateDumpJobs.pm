@@ -82,8 +82,8 @@ sub fetch_input {
 		my $updated_mlss_ids = $self->param('updated_mlss_ids'); #for the productions pipelines that we have decided to run again. hence the first release has not been updated but the data may have changed
 		if ( $updated_mlss_ids ) {
 			foreach my $updated_mlss_id ( @$updated_mlss_ids ) {
-				push( @release_mlsses, $mlssa->fetch_by_dbID($updated_mlss_id) ) 
-				$mlss_id_force{$mlss_id} = 1;
+				push( @release_mlsses, $mlssa->fetch_by_dbID($updated_mlss_id) );
+				$mlss_id_force{$updated_mlss_id} = 1;
 			}
 		}	
 	}
