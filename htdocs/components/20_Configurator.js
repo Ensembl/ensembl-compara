@@ -790,8 +790,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         this.addTracks(active);
         
         configDiv = this.elLk.configDivs.filter('.' + active).each(show);
-        
-        if (subset) {
+       
+        if (configDiv.hasClass('trackhub') && !subset) {
+          // Hide subsections on trackhub parent page
+          configDiv.children('.multiple').hide();
+        } 
+        else if (subset) {
           configDiv.children('.' + subset).addClass('active').each(show).siblings(':not(.config_header)').map(function () {
             if (this.style.display !== 'none') {
               this.style.display = 'none';

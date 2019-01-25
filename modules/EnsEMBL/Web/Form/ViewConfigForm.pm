@@ -253,10 +253,11 @@ sub _add_imageconfig_menu {
     # If all children are menus
     if (scalar @child_nodes && !grep $_->get_data('node_type') ne 'menu', @child_nodes) {
       my $first = 'first ';
+      my $multi = scalar(@child_nodes) > 1 ? 'multiple ' : '';
 
       foreach my $child (@child_nodes) {
         my $id      = $child->id;
-        my $parent  = $div->append_child('div', { 'class' => "subset $first$id" });
+        my $parent  = $div->append_child('div', { 'class' => "subset $multi$first$id" });
 
         $self->_build_imageconfig_menus($child, $parent, $section, $id);
         $first = '';
