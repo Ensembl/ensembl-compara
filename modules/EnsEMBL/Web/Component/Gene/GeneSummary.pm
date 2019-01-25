@@ -44,7 +44,7 @@ sub content {
   my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db            = $object->get_db;
   my $alt_genes     = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
-  my @RefSeqMatches = @{$gene->get_all_Attributes('refseq_compare')};
+  my $ensembl_select = $gene->get_all_Attributes('Ensembl_select')->[0] ? $gene->get_all_Attributes('Ensembl_select')->[0]->value : '';
   my $display_xref  = $gene->display_xref;
   my ($link_url)    = $display_xref ? $self->get_gene_display_link($gene, $display_xref) : ();
 
@@ -97,17 +97,21 @@ sub content {
   }
 
   ## add RefSeq match info where appropriate
-  if (scalar @RefSeqMatches) {
-    my $string;
-    foreach my $match (@RefSeqMatches) {
-      my $v = $match->value;
-      $v =~ /RefSeq Gene ID ([\d]+)/;
-      my $id = $1;
-      my $url = $hub->get_ExtURL('REFSEQ_GENEIMP', $id);
-      (my $link = $v) =~ s/RefSeq Gene ID ([\d]+)/RefSeq Gene ID <a href="$url" rel="external">$1<\/a>/;
-      $string .= sprintf('<p>%s</p>', $link);
-    }
-    $table->add_row('RefSeq', $string);
+  if ($ensembl_select && ($hub->species eq 'Homo_sapiens')) {
+    my $has_mane_select = 0;
+    foreach my $t (@{$gene->get_all_Transcripts}){
+      next if $has_mane_select;
+      next unless $t->stable_id eq $ensembl_select;
+      $has_mane_select = 1 if (@{$t->get_all_Attributes('MANE_select')});
+    } 
+    if ($has_mane_select) {
+      my $url  = $hub->url({
+        type   => 'Gene',
+        action => 'Matches',
+        g      => $gene->stable_id, 
+      });
+      $table->add_row('RefSeq', sprintf(qq{This Gencode gene contains transcript(s) that are identical to RefSeq transcript(s). Links to other RefSeq transcripts, identified by sequence comparison, may be available in the <a href="%s">External references</a> table}, $url));
+    } 
   }
 
   ## LRG info
