@@ -68,6 +68,14 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults },
+        'cutoff_score'  => undef,
+        'cutoff_evalue' => undef,
+    }
+}
 
 sub run
 {
@@ -165,6 +173,8 @@ sub dumpMercatorFiles {
 
   my $gdb_id1 = $self->param('genome_db_id');
 
+  my $cutoff_score  = $self->param('cutoff_score');
+  my $cutoff_evalue = $self->param('cutoff_evalue');
   foreach my $gdb_id2 (@$genome_db_ids) {
       my $file = $self->param('input_dir') . "/$gdb_id1" . "-$gdb_id2.hits";
       open($fh, '>', $file);
@@ -178,8 +188,8 @@ sub dumpMercatorFiles {
         next if ($pair_seen{$qmember_id . "_" . $hmember_id});
         my $score = ($score1>$score2)?$score2:$score1; ## Use smallest score
         my $evalue = ($evalue1>$evalue2)?$evalue1:$evalue2; ## Use largest e-value
-        next if (defined $self->param('cutoff_score') && $score < $self->param('cutoff_score'));
-        next if (defined $self->param('cutoff_evalue') && $evalue > $self->param('cutoff_evalue'));
+        next if (defined $cutoff_score && $score < $cutoff_score);
+        next if (defined $cutoff_evalue && $evalue > $cutoff_evalue);
         print $fh "$qmember_id\t$hmember_id\t" . int($score). "\t$evalue\n";
         $pair_seen{$qmember_id . "_" . $hmember_id} = 1;
     }
