@@ -92,6 +92,11 @@ Mark all the objects that are created / used (GenomeDB, SpeciesSet, MethodLinkSp
 as "current", i.e. with a first_release and an undefined last_release.
 Default: not set
 
+=item B<[--retire_unmatched]>
+
+Retire the MethodLinkSpeciesSets that are not defined by the XML file.
+Default: not set
+
 =item B<[--dry-run]>
 
 When given, the script will not store / update anything in the database.
