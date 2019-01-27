@@ -1060,7 +1060,7 @@ sub _load_2XGenomes {
   #2X genome.
 
   #create all the adaptors now so that we can detect shared connections
-  my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-URL => $pairwise_locations->{$_})} keys %$pairwise_locations);
+  my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($pairwise_locations->{$_})} keys %$pairwise_locations);
   $_->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir')) for values %pairwise_compara_dba;
 
   $self->iterate_by_dbc([keys %$pairwise_locations],
