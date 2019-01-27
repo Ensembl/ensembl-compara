@@ -783,7 +783,8 @@ sub _run_ortheus {
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     $self->param('options', ['-y']);
-    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
+    my $ortheus_output = Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
+    print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
 
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {
@@ -803,7 +804,7 @@ sub _run_ortheus {
 
 	print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
     } else {
-	throw("Ortheus was unable to create a tree");
+	throw("Ortheus was unable to create a tree: $ortheus_output");
     }
 }
 
