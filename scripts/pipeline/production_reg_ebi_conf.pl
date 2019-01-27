@@ -112,10 +112,10 @@ my $compara_dbs = {
     #'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_low_coverage_95' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
     ## fish
-    #'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_fish_epo_95' ],
+    'fish_epo'         => [ 'mysql-ens-compara-prod-3', 'muffato_fish_epo_96' ],
     'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_fish_epo_95' ],
-    #'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'muffato_fish_epo_low_coverage_95' ],
-    'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_94b' ],
+    'fish_epo_low'     => [ 'mysql-ens-compara-prod-3', 'muffato_fish_epo_low_coverage_96' ],
+    'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_96' ],
     ## primates
     #'primates_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_primates_epo_94' ],
     'primates_epo_prev'   => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],      # Primates are reused from mammals (same anchors)
