@@ -74,6 +74,7 @@ sub default_options {
             'rel_suffix'       => '',
 
             'division'          => 'murinae',
+            'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
             'dbID_range_index'  => 19,
             'label_prefix'      => 'mur_',
 
