@@ -104,19 +104,14 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     }
 }
 
-sub pipeline_analyses {
+sub tweak_analyses {
     my $self = shift;
+    my $analyses_by_name = shift;
 
-    ## The analysis defined in this file
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
-
-    $analyses_by_name{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
-    $analyses_by_name{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
-    $analyses_by_name{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
-
-    return $all_analyses;
+    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [ 'mus_musculus' ];
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
+    $analyses_by_name->{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
 }
 
 

@@ -149,7 +149,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my %hc_params = (
