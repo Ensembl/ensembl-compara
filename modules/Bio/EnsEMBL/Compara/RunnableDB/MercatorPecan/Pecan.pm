@@ -170,6 +170,11 @@ sub run
 	 $@ =~ /OutOfMemoryError/ ) {
 	  print "Failed due to insufficient heap space or memory\n";
 	  $self->param('more_heap', 1);
+      } elsif ($@ =~ /Exception in thread "main" java.lang.IllegalArgumentException/m) {
+              # Not sure why this happens
+              # Let's discard this job.
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Pecan failed to align the sequences. Skipping." );
       } else {
 	  throw("Pecan execution failed $@\n");
       }
