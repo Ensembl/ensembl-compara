@@ -85,6 +85,8 @@ sub _setInternalIds {
     my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     # Update the dbIDs in genomic_align
     my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number), genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
+    # Update the dbIDs in conservation_score
+    my $sql2cs = "UPDATE conservation_score SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number)";
     # Remove the old blocks
     my $sql3 = "DELETE FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
 
@@ -106,6 +108,7 @@ sub _setInternalIds {
             print STDERR "Offsets: genomic_align_block_id=$offset_gab genomic_align_id=$offset_ga\n";
             print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $mlss_id)), " rows duplicated in genomic_align_block\n";
             print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block \n";
+            print STDERR $dbc->do($sql2cs, undef, $offset_gab), " rows of conservation_score redirected to the new entries in genomic_align_block \n";
             print STDERR (my $nr = $dbc->do($sql3, undef, $mlss_id)), " rows removed from genomic_align_block\n";
             die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if $nd != $nr;
         }
