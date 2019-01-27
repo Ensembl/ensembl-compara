@@ -183,7 +183,7 @@ sub write_output {
     if ($self->param('more_heap')) {
 	#Flow to next memory. 
         $self->complete_early_if_branch_connected("Need more memory.\n", 2);
-
+        die "Pecan needs more memory but no other analysis is connected on branch #2";
     } else {
 	#Job succeeded, write output
         $self->call_within_transaction( sub {
