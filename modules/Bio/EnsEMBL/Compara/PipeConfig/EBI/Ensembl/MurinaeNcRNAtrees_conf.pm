@@ -80,7 +80,7 @@ sub default_options {
             'skip_epo'          => 1,
 
             # Where to draw the orthologues from
-            'ref_ortholog_db'   => 'mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90',
+            'ref_ortholog_db'   => 'compara_nctrees',
 
             'pipeline_name'    => 'murinae_nctrees_'.$self->o('rel_with_suffix'),
 
@@ -90,7 +90,7 @@ sub default_options {
             'initialise_cafe_pipeline'  => 0,
 
             # For the homology_id_mapping
-            'prev_rel_db'  => 'mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+            'prev_rel_db'  => 'compara_prev',
     };
 }   
 
