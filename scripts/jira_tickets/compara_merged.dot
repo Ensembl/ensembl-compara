@@ -3,6 +3,7 @@ digraph {
     "Species-tree" -> { "EPO", "Mercator Pecan", "Protein-trees", "ncRNA-trees" };
     "EPO" -> "EPO-2X";
     "EPO" -> "Age of Base";
+    "EPO" -> "Ancestral Alleles";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing" };
     "Protein-trees" -> "Protein-trees WGA Orthology QC";
     "ncRNA-trees" -> "ncRNA-trees WGA Orthology QC";

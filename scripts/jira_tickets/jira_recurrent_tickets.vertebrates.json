@@ -212,7 +212,8 @@
          {
             "component": "Production tasks",
             "description" : "Only if we have rerun the EPO Primates alignment",
-            "summary": "Dump the ancestral alleles for the Variation team"
+            "summary": "Dump the ancestral alleles for the Variation team",
+            "name_on_graph": "Ancestral Alleles"
          },
          {
             "component": "Production tasks",
