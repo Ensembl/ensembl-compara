@@ -1,6 +1,6 @@
 digraph {
     "Genome dumps" -> "Species-tree";
-    "Species-tree" -> { "EPO", "Mercator Pecan", "Protein-trees", "ncRNA-trees" };
+    "Species-tree" -> { "EPO", "Mercator Pecan", "Protein-trees" };
     "EPO" -> "EPO-2X";
     "EPO" -> "Age of Base";
     "EPO" -> "Ancestral Alleles";
