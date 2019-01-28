@@ -601,6 +601,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
+
+    //TODO: Create a hash for each dimensions (loop through dimensions, extra_dimensions), this will contain the total number of tracks, total for each renderers and total for each state
   },
 
   removeFromStore: function(item, lhs_section_id) {
