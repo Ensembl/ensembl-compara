@@ -1,7 +1,7 @@
 digraph {
     "Genome dumps" -> "Species-tree";
     "Species-tree" -> { "EPO", "Mercator Pecan", "Protein-trees" };
-    "EPO" -> "EPO-2X";
+    {"EPO", "All LastZ"} -> "EPO-2X";
     "EPO" -> "Age of Base";
     "EPO" -> "Ancestral Alleles";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing" };
