@@ -282,7 +282,7 @@ div.config_wrapper div.config ul.list-content       { height: 297px; padding-lef
   white-space: nowrap;
 }
 
-/* apply filter button */
+/* configure track display button */
 div.bottom-buttons            { display: flex; justify-content: space-between; padding-top: 16px; }
 div.bottom-buttons .save-config-wrapper { display: inline-flex; align-items: center; }
 button.fade-button            { min-width: 100px; width: 155px; background-color: [[WHITE]]; color: [[PALE_GREY]]; border-radius: 3px; height: 25px; outline: none; border: 1px solid #b7b7b7; padding-bottom: 2px; }

@@ -41,14 +41,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
     this.elLk.resultBox       = this.el.find(".result-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
-    this.elLk.filterButton    = this.el.find("button.filter");
+    this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'RegMatrix';
     this.elLk.lookup          = new Object();
     
-    this.buttonOriginalWidth = this.elLk.filterButton.outerWidth();
-    this.buttonOriginalHTML  = this.elLk.filterButton.html();
+    this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
+    this.buttonOriginalHTML  = this.elLk.displayButton.html();
     this.matrixLoadState     = true;
 
     this.rendererConfig = {
@@ -97,7 +97,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
-    this.clickFilter(this.elLk.filterButton, this.el.find("li._configure"));
+    this.clickDisplayButton(this.elLk.displayButton, this.el.find("li._configure"));
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
@@ -619,7 +619,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   
   // Function to show track configuration panel (matrix) when button is clicked
   // Arguments javascript object of the button element and the panel to show
-  clickFilter: function(clickButton, tabClick) {
+  clickDisplayButton: function(clickButton, tabClick) {
     var panel = this;
 
     clickButton.on("click", function(e) {
@@ -1317,8 +1317,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
                 if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
                   dataClass = "_hasData";
                   rel_dimension = relation.dimension;
-                  renderer = panel.json.data[rel_dimension].renderer;
                   popupType = panel.json.data[rel_dimension].popupType || popupType;
+                  renderer = panel.json.data[rel_dimension].renderer;
                   boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
                   boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                   boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
@@ -1371,7 +1371,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.boxObj     = "";
 
     panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){
-      panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
+      panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick').removeClass("mClick");
       
       panel.boxObj      = $(this);
       panel.popupType   = $(this).data("popup-type"); //type of popup to use which is associated with the class name
