@@ -257,6 +257,8 @@ sub _add_imageconfig_menu {
 
       foreach my $child (@child_nodes) {
         my $id      = $child->id;
+        ## Matrices by definition have multiple tracks under a subheader
+        $multi = 'multiple ' if $child->get_data('menu') eq 'matrix';
         my $parent  = $div->append_child('div', { 'class' => "subset $multi$first$id" });
 
         $self->_build_imageconfig_menus($child, $parent, $section, $id);
