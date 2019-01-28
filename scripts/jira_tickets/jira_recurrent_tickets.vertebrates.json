@@ -288,7 +288,7 @@
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
             "summary": "Age of Base",
-            "name_on_graph": "Age of Base"
+            "name_on_graph": "Age of Base:Human"
          },
          {
             "component": "Relco tasks",
