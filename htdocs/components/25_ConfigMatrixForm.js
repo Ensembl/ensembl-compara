@@ -44,9 +44,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.localStoreObj        = new Object();
-    this.localStorageKey      = 'RegMatrix';
-    this.elLk.lookup          = new Object();
-    
+    this.isRegMatrix          = this.elLk.trackConfiguration.hasClass('reg-matrix');
+    console.log(this.isRegMatrix);
+    // TODO - make trackhub storage key unique
+    this.localStorageKey      = this.isRegMatrix ? 'RegMatrix' : 'TrackHubMatrix';
+    this.jsonUrl              = this.isRegMatrix ? 'RegulationData' : 'TrackHubData';
+    this.elLk.lookup          = new Object(); 
+
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
     this.matrixLoadState     = true;
@@ -62,7 +66,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.resize();
 
     $.ajax({
-      url: '/Json/RegulationData/data?species='+Ensembl.species,
+      url: '/Json/'+this.jsonUrl+'/data?species='+Ensembl.species,
       dataType: 'json',
       context: this,
       success: function(json) {
@@ -882,7 +886,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayCheckbox: function(obj) {
 
-    var data = obj.data
+    var data = obj.data;
     var container = obj.container;
     var listType = obj.listType;
     var parentTabContainer = obj.parentTabContainer;
