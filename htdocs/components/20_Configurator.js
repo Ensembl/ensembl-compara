@@ -119,7 +119,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     }
-    
+
     this.elLk.tracks.each(function () {
       var track = panel.tracks[this.id];
       track.el = $(this).data('track', track).removeAttr('id');
@@ -836,17 +836,20 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     if ($('input.invalid', this.elLk.form).length) {
       return;
     }
-    
+
     var panel       = this;
     var diff        = false;
     var imageConfig = {};
     var viewConfig  = {};
-    
+    var noRendererUpdate = false;
+
     $.each(this.subPanels, function (i, id) {
       var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id, true);
+
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
         $.extend(imageConfig, conf.imageConfig);
+        noRendererUpdate = conf.noRendererUpdate;
         diff = true;
       }
     });
@@ -859,7 +862,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
                          panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
                          false;
         
-        if (panel.imageConfig[track.id].renderer !== track.renderer) {
+        if ((panel.imageConfig[track.id].renderer !== track.renderer) && !noRendererUpdate) {
           imageConfig[track.id] = { renderer: track.renderer };
           diff = true;
         }
@@ -871,7 +874,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     });
-    
+
     this.elLk.viewConfigInputs.each(function () {
       if (viewConfig[this.name] && viewConfig[this.name] !== 'off') {
         return;
@@ -891,6 +894,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     });
+
     if (diff === true || typeof saveAs !== 'undefined') {
 
       if (saveAs === true) {
@@ -899,7 +903,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
 
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
-      
+
       this.updatePage($.extend(saveAs, { image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }), delayReload);
       
       return diff;

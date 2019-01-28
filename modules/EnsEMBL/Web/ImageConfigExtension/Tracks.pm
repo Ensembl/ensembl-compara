@@ -1103,10 +1103,10 @@ sub add_regulation_builds {
   }));
 
 
-=pod
+# =pod
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
-=cut
+# =cut
 
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
@@ -1176,7 +1176,7 @@ sub add_regulation_builds {
     }
   }
 
-=pod
+# =pod
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
 
@@ -1206,7 +1206,7 @@ sub add_regulation_builds {
       height        => 4,
     }));
   }
-=cut
+# =cut
 
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
@@ -1214,7 +1214,7 @@ sub add_regulation_builds {
     my $label     = ": $cell_line";
     my %evidence_tracks;
 
-=pod
+# =pod
     ## Only add regulatory features if they're in the main build
     if ($regbuild{$cell_line}) {
 
@@ -1235,7 +1235,7 @@ sub add_regulation_builds {
         caption       => "Epigenome Activity",
       }));
     }
-=cut
+# =cut
 
     my %column_data = (
       db        => $key,
@@ -1257,11 +1257,12 @@ sub add_regulation_builds {
     next if $params->{'reg_minimal'};
     
     foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
+      # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
       $self->_add_to_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section     => $cell_line,
         matrix      => {
-                        menu          => $menu,
+                        menu          => "reg_feats_". $_,
                         column        => $cell_line,
                         column_label  => $cell_names{$cell_line},
                         section       => $cell_line,

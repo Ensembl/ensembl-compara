@@ -282,7 +282,7 @@ div.config_wrapper div.config ul.list-content       { height: 297px; padding-lef
   white-space: nowrap;
 }
 
-/* apply filter button */
+/* configure track display button */
 div.bottom-buttons            { display: flex; justify-content: space-between; padding-top: 16px; }
 div.bottom-buttons .save-config-wrapper { display: inline-flex; align-items: center; }
 button.fade-button            { min-width: 100px; width: 155px; background-color: [[WHITE]]; color: [[PALE_GREY]]; border-radius: 3px; height: 25px; outline: none; border: 1px solid #b7b7b7; padding-bottom: 2px; }
@@ -320,21 +320,25 @@ div.hidebox               { width: 112px; height: 128px; background: #eee; z-ind
 
 /* track status for on */
 div.xBoxes.track-on                              { background-color: #0d0d72; }
-div.xBoxes.track-on.render-peak-signal           { background-image: url("/i/render/peak_signal_blue.svg"); }
-div.xBoxes.track-on.render-peak                  { background-image: url("/i/render/peak_blue.svg"); }
-div.xBoxes.track-on.render-signal                { background-image: url("/i/render/signal_blue.svg"); }
+div.xBoxes.track-on.render-peak-signal           { background-image: url("/i/render/peak_signal_white50.svg"); }
+div.xBoxes.track-on.render-peak                  { background-image: url("/i/render/peak_white50.svg"); }
+div.xBoxes.track-on.render-signal                { background-image: url("/i/render/signal_white50.svg"); }
+div.xBoxes.track-on.render-normal                { background-image: url("/i/render/normal_white50.svg"); }
 div.xBoxes.track-on.render-peak-signal.mClick    { background-image: url("/i/render/peak_signal_white.svg"); }
 div.xBoxes.track-on.render-peak.mClick           { background-image: url("/i/render/peak_white.svg"); }
 div.xBoxes.track-on.render-signal.mClick         { background-image: url("/i/render/signal_white.svg"); }
+div.xBoxes.track-on.render-normal.mClick         { background-image: url("/i/render/normal_white.svg"); }
 
 /* track status for off */
 div.xBoxes.track-off                              { background-color: [[WHITE]] }
 div.xBoxes.track-off.render-peak-signal           { background-image: url("/i/render/peak_signal_blue50.svg"); }
 div.xBoxes.track-off.render-peak                  { background-image: url("/i/render/peak_blue50.svg"); }
 div.xBoxes.track-off.render-signal                { background-image: url("/i/render/signal_blue50.svg"); }
+div.xBoxes.track-off.render-normal                { background-image: url("/i/render/normal_blue50.svg"); }
 div.xBoxes.track-off.render-peak-signal.mClick    { background-image: url("/i/render/peak_signal_blue.svg"); }
 div.xBoxes.track-off.render-peak.mClick           { background-image: url("/i/render/peak_blue.svg"); }
 div.xBoxes.track-off.render-signal.mClick         { background-image: url("/i/render/signal_blue.svg"); }
+div.xBoxes.track-off.render-normal.mClick         { background-image: url("/i/render/normal_blue.svg"); }
 
 /* track popup/zmenu */
 div.track-popup                         { display: none; font-size: 11px; width: 180px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; }

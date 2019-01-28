@@ -108,7 +108,7 @@ sub build {
             <span class="fancy-checkbox inactive"></span>
             <text class="save-config">Save configuration</text>
           </div>
-          <button class="filter fade-button">Configure track display</button>
+          <button class="showMatrix fade-button">Configure track display</button>
         </div>
       </div>
     </div>
