@@ -94,18 +94,6 @@ sub json_data {
   $final->{data}->{evidence}->{'popupType'} = 'peak-signal';
   $final->{data}->{evidence}->{'renderer'} = 'peak-signal';
 
-  #by default these track are on
-  my %default_evidence_types = (
-    CTCF     => 1,
-    DNase1   => 1,
-    H3K4me3  => 1,
-    H3K36me3 => 1,
-    H3K27me3 => 1,
-    H3K9me3  => 1,
-    PolII    => 1,
-    PolIII   => 1,
-  );
-
   #get all cell types and the evidence type related to each of them (e.g: A549 -> [{evidence_type = 'HH3K27ac', on = 1},{evidence_type='H3K36me3', on = 0},....]) 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
@@ -121,7 +109,7 @@ sub json_data {
             dimension => 'evidence',
             val => $_->name,
             set => "reg_feats_$set",
-            defaultState => $default_evidence_types{$_->name} ? "track-on" : "track-off",
+            defaultState => "track-on"
           };
           push @$cell_evidence, $hash;
 
