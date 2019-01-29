@@ -85,9 +85,9 @@ my $compara_dbs = {
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
     'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
     #'compara_families' => [ 'mysql-ens-compara-prod-3', 'carlac_families_fix_95'  ],
-    #'compara_nctrees'  => [ 'mysql-ens-compara-prod-2', 'waakanni_compara_nctrees_95' ],
+    'compara_nctrees'  => [ 'mysql-ens-compara-prod-3', 'muffato_ensembl_compara_nctrees_96' ],
     #'murinae_ptrees'   => [ 'mysql-ens-compara-prod-8', 'carlac_murinae_protein_trees_95' ],
-    #'murinae_nctrees'  => [ 'mysql-ens-compara-prod-8', 'carlac_murinae_ncrna_trees_95' ],
+    'murinae_nctrees'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
 
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_1' ],
@@ -103,9 +103,9 @@ my $compara_dbs = {
 
     # EPO dbs
     ## mammals
-    #'mammals_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],
+    'mammals_epo'         => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_96' ],
     'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],
-    #'mammals_epo_low'     => [ 'mysql-ens-compara-prod-3', 'carlac_mammals_epo_low_coverage_95' ],
+    'mammals_epo_low'     => [ 'mysql-ens-compara-prod-3', 'muffato_mammals_epo_low_coverage_96' ],
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
     ## sauropsids
     #'sauropsids_epo'         => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_epo_95' ],
