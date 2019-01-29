@@ -112,6 +112,103 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       Ensembl.EventManager.trigger('modalClose');
 
     });
+
+    // Filtering functionality
+    this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
+      var inputText = $(this).val().trim();
+      panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
+      var _filtered = panel.getActiveTabContainer().find('li._filtered');
+      if (_filtered.length) {
+        _filtered.show();
+      }
+      else {
+        panel.getActiveTabContainer().find('li').show();
+      }
+
+      var activeTabId = panel.getActiveTab();
+      if (inputText.length < 3) {
+        panel.updateAvailableTabsOrRibbons(activeTabId);
+        return;
+      }
+      var re = new RegExp(inputText, "gi");
+      var match = Object.keys(panel.elLk.lookup).filter(function(name) {
+        return name.match(re) && panel.elLk.lookup[name].parentTabId === activeTabId;
+      });
+
+      if (match.length) {
+        var classString = '.' + match.join(',.');
+        panel.elLk.lookup[match[0]].parentTab.find('li').not(classString).addClass('_search_hide').hide();
+      }
+      else {
+        panel.elLk[activeTabId].container.find('li').addClass('_search_hide').hide();
+      }
+      panel.updateAvailableTabsOrRibbons(activeTabId);
+    });
+  },
+
+  // Udpate available tabs or ribbons after filtering
+  updateAvailableTabsOrRibbons(tabId) {
+    var panel = this;
+    var tabLookup = panel.elLk[tabId];
+    var dimension_name = panel[tabId];
+    if (!tabLookup.haveSubTabs) {
+      panel.activateAlphabetRibbon(tabLookup.container);
+    }
+    else {
+      // For subtabs
+      
+      // $.each(tabLookup.tabs, function(tabname, ele) {
+      //   // $(ele).removeClass('active');
+      //   // tabLookup.container.find('#' + tabname + '-content').removeClass('active'); 
+      // });
+      var fl = 1;
+      $.each(panel.selectedTracksCount, function(key, count) {
+        if (tabLookup.tabs[key] && count.available !== 0) {
+          var tab_ele = tabLookup.tabs[key];
+          $(tab_ele).removeClass('active')
+          var tab_content_ele = $('#' + key + '-content', panel.el.trackPanel);
+          var lis = tabLookup.tabContents[key];
+          if (!lis.not("._search_hide").length) {
+            $(tabLookup.tabs[key]).addClass('inactive');
+          }
+          else {
+            $(tabLookup.tabs[key]).removeClass('inactive');
+            if (fl == 1) {
+              // Move to first active tab
+              panel.toggleTab($(tabLookup.tabs[key]), tabLookup.container);
+              fl = 0;
+            }
+          }
+          // Activate available letters if list type is alphabetRibbon
+          if (panel.json.data[panel[tabId]].data[key].listType === 'alphabetRibbon') {
+            panel.activateAlphabetRibbon(tab_content_ele);
+          }
+        }
+      });
+    }
+  },
+
+  activateAlphabetRibbon: function(alphabetContainer) {
+    var panel = this;
+    var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+    var fl = 1;
+    alphabet.forEach(function(letter) {
+      var ribbon = alphabetContainer.find('.ribbon_' + letter);
+      ribbon.removeClass('active');
+      var ribbonContent = alphabetContainer.find('.' + letter + '_content')
+      if (alphabetContainer.find('.' + letter + '_content li').not('._search_hide').length) {
+        ribbon.removeClass('inactive');
+        if (fl === 1) {
+          // Move to first active tab
+          panel.toggleTab(ribbon, alphabetContainer, 1, 1);
+          fl = 0;
+        }
+      }
+      else {
+        ribbon.addClass('inactive');
+      }
+    });
+
   },
 
   addExtraDimensions: function() {
@@ -715,7 +812,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     this.displayCheckbox(
       {
-        data: dx.data,
+        data: Object.keys(dx.data),
         container: "div#dx-content",
         listType: dx.listType,
         parentTabContainer: dxContainer,
@@ -894,8 +991,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var countFilter  = 0;
 
     if(listType && listType === "alphabetRibbon") {
+
       //creating obj with alphabet key (a->[], b->[],...)
-      $.each(Object.keys(data).sort(), function(j, item) {
+      $.each(data.sort(), function(j, item) {
         var firstChar = item.charAt(0).toLowerCase();
         if(!ribbonObj[firstChar]) {
           ribbonObj[firstChar] = [];
@@ -906,10 +1004,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox);
     } else  {
+      var container = panel.el.find(container);
       var html = '<ul class="letter-content list-content">';
-      var rhsection = panel.el.find(container).find('span.rhsection-id').html();
-
-      $.each(data.sort(), function(i, item) {
+      var rhsection = container.find('span.rhsection-id').html();
+      data = data.sort();
+      $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
           html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
@@ -927,13 +1026,21 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
       html += '</ul>';
       html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html; 
-      panel.el.find(container).append(html);
+      container.append(html);
+
+      // Adding the element itself to the lookup
+      $.each(data, function(i, item) {
+        if(item) {
+          var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
+          panel.elLk.lookup[elementClass].el = container.find("." + elementClass);
+        }
+      });
       
       //updating available count in right hand panel
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
 
       //clicking select all checkbox
-      panel.clickCheckbox(this.el.find(container+" div.all-box"));
+      panel.clickCheckbox(container.find("div.all-box"));
     }
   },
   
@@ -1094,7 +1201,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var html  = "";
     var content_html = "";
     var total_num = 0;
-    var rhsection = panel.el.find(container).find('span.rhsection-id').html();
+    var container = panel.el.find(container);
+    var rhsection = container.find('span.rhsection-id').html();
 
     //generate alphabetical order ribbon (A B C D ....)
     $.each(new Array(26), function(i) {
@@ -1123,29 +1231,41 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       } else {
         active_class = "inactive";
       }
-      
+
       html += '<div class="ribbon_'+letter+' alphabet-div '+active_class+'">'+letter.toUpperCase()+'<span class="hidden content-id">'+letter+'_content</span></div>';
       content_html += '<div data-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     var noFilterClass = noFilter_allBox ? 'no-filter' : '';
-    panel.el.find(container).append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
-    panel.el.find(container+' div.letters-ribbon').append(html);
-    panel.el.find(container+' div.ribbon-content').append(content_html);
+    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    container.find('div.letters-ribbon').append(html);
+    container.find('div.ribbon-content').append(content_html);
+
+    // Adding element itself to the lookup
+    $.each(new Array(26), function(i) {
+      var letter = String.fromCharCode(i + 97);
+      if(data[letter] && data[letter].length) {
+        $.each(data[letter], function(i, el) {
+          total_num++;
+          var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
+          panel.elLk.lookup[elementClass].el = container.find('.' + elementClass);
+        });
+      }
+    });
 
     //updating available count in right hand panel
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
     
     //clicking select all checkbox
-    panel.clickCheckbox(this.el.find(container+" div.all-box"));
+    panel.clickCheckbox(container.find("div.all-box"));
    
     //clicking the alphabet
-    var alphabet = panel.el.find(container+' div.alphabet-div');      
+    var alphabet = container.find('div.alphabet-div');      
     alphabet.on("click", function(){
       if (!$(container, panel.el).hasClass('active')) {
         return;
       }
       $.when(
-        panel.toggleTab(this, panel.el.find(container), 1)
+        panel.toggleTab(this, container, 1)
       ).then(
         panel.selectArrow(container)
       );

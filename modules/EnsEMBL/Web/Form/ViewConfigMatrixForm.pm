@@ -76,7 +76,7 @@ sub build {
             <span> $dimX </span>
             <span class="hidden content-id">dx-content</span>
             <div class="search-box">
-              <input class="configuration_search_text" placeholder="Search" name="dx_search">
+              <input class="configuration_search_text" placeholder="Search" id="dx_search" name="matrix_search">
               <img src="/i/16/search.png" class="search-icon" />
             </div>
           </div>
@@ -84,7 +84,7 @@ sub build {
             <span> $dimY </span>
             <span class="hidden content-id">dy-content</span>
             <div class="search-box">
-              <input class="configuration_search_text" placeholder="Search" name="dy_search">
+              <input class="configuration_search_text" placeholder="Search" id="dy_search" name="matrix_search">
               <img src="/i/16/search.png"  class="search-icon"/>
             </div>
           </div>
