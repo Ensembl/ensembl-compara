@@ -55,15 +55,9 @@ sub default_options {
     'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
     'master_db' => 'compara_master',
 	
-    #default location for pairwise alignments
-    # 'pairwise_default_location' => 'compara_prev',
-    'pairwise_default_location' => 'compara_curr',
-    #location of new pairwise mlss if not in the pairwise_default_location eg:
-    'pairwise_exception_location' => { },
-	# 'pairwise_exception_location' => {
-    #      1024 => 'mysql://ensro@mysql-ens-compara-prod-3:4523/ensembl_compara_rodents_89',
-    #      1370 => 'fish_epo', # can be a registry alias
-	# },
+    #default location for pairwise alignments (can be a string or an array-ref)
+    'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3 lastz_batch_4 lastz_batch5 lastz_batch6 lastz_batch7 lastz_batch8 lastz_batch_9 lastz_batch_10) ],
+    #'pairwise_location' => 'compara_curr',
 
 	#Location of compara db containing the high coverage alignments
         #'epo_db' => 'compara_curr',
