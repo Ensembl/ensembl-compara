@@ -37,9 +37,9 @@ my $prev_release = $curr_release - 1;
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
 # The majority of core databases live on staging servers:
-  # Bio::EnsEMBL::Registry->load_registry_from_url(
-  #  "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
-  Bio::EnsEMBL::Registry->load_registry_from_url(
+#Bio::EnsEMBL::Registry->load_registry_from_url(
+#   "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url(
     "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 
@@ -77,23 +77,29 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_master' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_96' ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_96' ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_95' ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-3', 'carlac_load_members_95'  ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'mateus_ensembl_load_members_96'  ],
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
-    #'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_94' ], 
+    'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
     #'compara_families' => [ 'mysql-ens-compara-prod-3', 'carlac_families_fix_95'  ],
     #'compara_nctrees'  => [ 'mysql-ens-compara-prod-2', 'waakanni_compara_nctrees_95' ],
     #'murinae_ptrees'   => [ 'mysql-ens-compara-prod-8', 'carlac_murinae_protein_trees_95' ],
     #'murinae_nctrees'  => [ 'mysql-ens-compara-prod-8', 'carlac_murinae_ncrna_trees_95' ],
 
     # LASTZ dbs
-    'lastz_batch5' => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_5' ],
-    'lastz_batch6' => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_6' ],
-    'lastz_batch7' => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_batch7_lastz_96' ],
-    'lastz_batch8' => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_1' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_2' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_3' ],
+    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_4' ],
+    'lastz_batch5'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_5' ],
+    'lastz_batch6'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_6' ],
+    'lastz_batch7'   => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_batch7_lastz_96' ],
+    'lastz_batch8'   => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8' ],
+    'lastz_batch_9'  => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_9' ],
+    'lastz_batch_10' => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_10' ],
 
     # EPO dbs
     ## mammals
