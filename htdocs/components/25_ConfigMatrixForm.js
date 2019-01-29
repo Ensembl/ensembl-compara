@@ -716,7 +716,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.dy = panel.json.dimensions[1];
     var dx = panel.json.data[panel.dx];
     var dy = panel.json.data[panel.dy];
-    //console.log('Displaying dimension X');
+    console.log('Displaying dimension X', dx);
 
     this.displayCheckbox(
       {
@@ -774,7 +774,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
     }
     else {
-      //console.log('Displaying trackhub dimension Y');
+      console.log('Displaying trackhub dimension Y', dy);
       this.displayCheckbox(
         {
           data: dy.data,
@@ -902,6 +902,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel       = this;
     var ribbonObj   = {};
     var countFilter  = 0;
+    console.log('List type: ' + listType);
 
     if(listType && listType === "alphabetRibbon") {
       //creating obj with alphabet key (a->[], b->[],...)
@@ -915,27 +916,38 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
       });
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox);
-    } else  {
+    } else {
       var html = '<ul class="letter-content list-content">';
       var rhsection = panel.el.find(container).find('span.rhsection-id').html();
-      //console.log(data);
+      console.log(data);
 
-      $.each(data.sort(), function(i, item) {
-        if(item) {
-          var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
-        }
-        countFilter++;
-        panel.elLk.lookup[elementClass] = {
-          label: item,
-          parentTab: parentTabContainer,
-          parentTabId: parentRhSectionId,
-          subTab: rhsection,
-          selected: false,
-          set: obj.set || ''
-        };
+      if (listType && listType === "simpleList") {
+        // single set of checkboxes
+        $.each(Object.keys(data).sort(), function(j, item) {
+          if(item) {
+            var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
+            html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+          }
+        });
+      } else {
+        // Regulation-type interface with subtabs
+        $.each(data.sort(), function(i, item) {
+          if(item) {
+            var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
+            html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+          }
+          countFilter++;
+          panel.elLk.lookup[elementClass] = {
+            label: item,
+            parentTab: parentTabContainer,
+            parentTabId: parentRhSectionId,
+            subTab: rhsection,
+            selected: false,
+            set: obj.set || ''
+          };
+        });
+      }
 
-      });
       html += '</ul>';
       html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html; 
       panel.el.find(container).append(html);

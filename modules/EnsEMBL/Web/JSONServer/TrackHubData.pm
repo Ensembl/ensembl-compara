@@ -37,8 +37,8 @@ sub json_data {
   my $hub  = $self->hub;
 
   # TODO - replace with dynamic parameter
-  #home my $record_id = 'url_fad26ccbf77adebbbcba909979c1fd90_94481512';
-  my $record_id = 'url_093244c7b96971052ab900101f8636ff_94416749';
+  my $record_id = 'url_fad26ccbf77adebbbcba909979c1fd90_94481512';
+  #my $record_id = 'url_093244c7b96971052ab900101f8636ff_94416749';
   (my $code = $record_id) =~ s/^url_//; 
 
   my $record;
@@ -90,12 +90,14 @@ sub json_data {
       }
 
       $final->{'dimensions'} = [$dimX, $dimY];
-      $final->{'data'}{$dimX}{'name'}    = $dimX;
-      $final->{'data'}{$dimX}{'label'}   = $track->{'subGroup1'}{'label'};
-      $final->{'data'}{$dimX}{'data'}    = {};
-      $final->{'data'}{$dimY}{'name'}    = $dimY;
-      $final->{'data'}{$dimY}{'label'}   = $track->{'subGroup2'}{'label'};
-      $final->{'data'}{$dimY}{'data'}    = {};
+      $final->{'data'}{$dimX}{'name'}     = $dimX;
+      $final->{'data'}{$dimX}{'label'}    = $track->{'subGroup1'}{'label'};
+      $final->{'data'}{$dimX}{'listType'} = 'simpleList';
+      $final->{'data'}{$dimX}{'data'}     = {};
+      $final->{'data'}{$dimY}{'name'}     = $dimY;
+      $final->{'data'}{$dimY}{'label'}    = $track->{'subGroup2'}{'label'};
+      $final->{'data'}{$dimY}{'listType'} = 'simpleList';
+      $final->{'data'}{$dimY}{'data'}     = {};
     }
     elsif ($track->{'bigDataUrl'}) {
       ## Only add tracks that are displayable, i.e. not superTracks/composites/etc 
@@ -103,12 +105,23 @@ sub json_data {
       my $keyY    = $track->{'subGroups'}{$dimY};
       my $labelX  = $dimLabels->{$keyX};
       my $labelY  = $dimLabels->{$keyY};
-      my $isOn    = $track->{'on_off'} eq 'on' ? 1 : 0;
 
-      push @{$final->{'data'}{$dimX}{'data'}{$keyX}}, {'rel' => $dimY, 'val' => $keyY, 'defaultOn' => $isOn}; 
+      push @{$final->{'data'}{$dimX}{'data'}{$keyX}}, {'dimension' => $dimY, 'val' => $keyY, 'defaultState' => 'track-'.$track->{'on_off'}}; 
       push @{$final->{'data'}{$dimY}{'data'}{$keyY}}, $keyX;
     }
   }
+
+  ## Adjust interface based on number of values in dimensions
+  if (scalar keys %{$final->{'data'}{$dimX}{'data'}} > 20) {
+    $final->{'data'}{$dimX}{'listType'} = 'alphabetRibbon'; 
+  }
+  if (scalar keys %{$final->{'data'}{$dimY}{'data'}} > 20) {
+    $final->{'data'}{$dimY}{'listType'} = 'alphabetRibbon'; 
+  }
+  use Data::Dumper; 
+  $Data::Dumper::Sortkeys = 1;
+  #$Data::Dumper::Maxdepth = 2;
+  warn Dumper($final);
 
   return $final;
 }
