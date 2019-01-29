@@ -45,7 +45,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.localStoreObj        = new Object();
     this.isRegMatrix          = this.elLk.trackConfiguration.hasClass('reg-matrix');
-    console.log(this.isRegMatrix);
     // TODO - make trackhub storage key unique
     this.localStorageKey      = this.isRegMatrix ? 'RegMatrix' : 'TrackHubMatrix';
     this.jsonUrl              = this.isRegMatrix ? 'RegulationData' : 'TrackHubData';
@@ -709,13 +708,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   trackTab: function() {
     var panel = this;
-    //showing and applying cell types
+
+    //showing and applying first dimension
     var dxContainer = panel.el.find("div#dx-content");
     var rhSectionId = dxContainer.data('rhsection-id');
     panel.dx = panel.json.dimensions[0];
     panel.dy = panel.json.dimensions[1];
     var dx = panel.json.data[panel.dx];
     var dy = panel.json.data[panel.dy];
+    //console.log('Displaying dimension X');
 
     this.displayCheckbox(
       {
@@ -728,32 +729,36 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
     );
 
-    //showing experiment type tabs
-    var dy_html = '<div class="tabs dy">';
-    var content_html    = "";
+    //displaying the Y dimension
+    var dyContainer = panel.el.find("div#dy-content");
+    rhSectionId = dyContainer.data('rhsection-id');
+    
+    if (dy.subtabs) {
+      //showing experiment type tabs
+      var dy_html = '<div class="tabs dy">';
+      var content_html = "";
 
-    //sort dy object
-    Object.keys(dy.data).sort().forEach(function(key) {
+      //sort dy object
+      Object.keys(dy.data).sort().forEach(function(key) {
         var value = dy.data[key];
         delete dy.data[key];
         dy.data[key] = value;
-    });
+      });
 
-    var count = 0;
-    $.each(dy.data, function(key, item){
-      var active_class = "";
-      if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
-      dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
-      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
-      count++;
-    });
-    dy_html += '</div>';
-    var dyContainer = panel.el.find("div#dy-content");
-    dyContainer.append(dy_html).append(content_html);
-    rhSectionId = dyContainer.data('rhsection-id');
-    
-    //displaying the experiment types
-    if (dy.subtabs) {
+      //console.log('Displaying regulation dimension Y');
+      // build HTML for tabs
+      var count = 0;
+      $.each(dy.data, function(key, item){
+        var active_class = "";
+        if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
+        dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
+        content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
+        count++;
+      });
+      dy_html += '</div>';
+      dyContainer.append(dy_html).append(content_html);
+
+      // add checkboxes to each tab div
       $.each(dy.data, function(key, subTab){
         panel.displayCheckbox(
           {
@@ -769,6 +774,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
     }
     else {
+      //console.log('Displaying trackhub dimension Y');
       this.displayCheckbox(
         {
           data: dy.data,
@@ -912,6 +918,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     } else  {
       var html = '<ul class="letter-content list-content">';
       var rhsection = panel.el.find(container).find('span.rhsection-id').html();
+      //console.log(data);
 
       $.each(data.sort(), function(i, item) {
         if(item) {
