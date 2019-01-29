@@ -117,10 +117,26 @@
     <!-- Mouse strains -->
     <multiple_alignment method="CACTUS_HAL">
       <species_set name="murinae">
-        <taxonomic_group taxon_name="Murinae"/>
-        <!--These two species are not in the HAL file-->
-        <genome name="mus_caroli" exclude="1"/>
-        <genome name="mus_pahari" exclude="1"/>
+        <!-- As long as we are not able to update this alignment, the species-set must remain the same.
+             We cannot use taxonomy-based rules since they would automatically add new species to the set -->
+        <genome name="mus_musculus"/>
+        <genome name="mus_musculus_129s1svimj"/>
+        <genome name="mus_musculus_aj"/>
+        <genome name="mus_musculus_balbcj"/>
+        <genome name="mus_musculus_c3hhej"/>
+        <genome name="mus_musculus_c57bl6nj"/>
+        <genome name="mus_musculus_casteij"/>
+        <genome name="mus_musculus_cbaj"/>
+        <genome name="mus_musculus_dba2j"/>
+        <genome name="mus_musculus_fvbnj"/>
+        <genome name="mus_musculus_lpj"/>
+        <genome name="mus_musculus_nodshiltj"/>
+        <genome name="mus_musculus_nzohlltj"/>
+        <genome name="mus_musculus_pwkphj"/>
+        <genome name="mus_musculus_wsbeij"/>
+        <genome name="mus_musculus_akrj"/>
+        <genome name="mus_spretus"/>
+        <genome name="rattus_norvegicus"/>
       </species_set>
     </multiple_alignment>
 
