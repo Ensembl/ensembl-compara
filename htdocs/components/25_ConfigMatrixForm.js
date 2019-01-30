@@ -457,7 +457,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         available_LIs.removeClass('selected');
       }
 
-      // add 'selected: true/flase' to lookup
+      // add 'selected: true/false' to lookup
       available_LIs.parent().map(function() {
         panel.elLk.lookup[$(this).data('item')].selected = !selected;
       })
@@ -902,7 +902,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel       = this;
     var ribbonObj   = {};
     var countFilter  = 0;
-    console.log('List type: ' + listType);
 
     if(listType && listType === "alphabetRibbon") {
       //creating obj with alphabet key (a->[], b->[],...)
@@ -919,7 +918,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     } else {
       var html = '<ul class="letter-content list-content">';
       var rhsection = panel.el.find(container).find('span.rhsection-id').html();
-      console.log(data);
+      //console.log(data);
 
       if (listType && listType === "simpleList") {
         // single set of checkboxes
@@ -927,6 +926,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           if(item) {
             var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
             html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+            panel.elLk.lookup[elementClass] = {
+              label: item,
+              parentTab: parentTabContainer,
+              parentTabId: parentRhSectionId,
+              subTab: rhsection,
+              selected: false,
+            };
           }
         });
       } else {
