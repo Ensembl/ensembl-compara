@@ -563,7 +563,7 @@ sub about_feature {
     
     my $variation_url = $hub->url({
       type   => 'Transcript',
-      action => 'ProtVariations',
+      action => 'Variation_Transcript/Table',
       g      => $gene->stable_id
     });     
    
@@ -577,10 +577,10 @@ sub about_feature {
                         $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
                       ) if($avail->{has_domains});
 
-    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s variant %s</a>',
                         $variation_url, 
                         $avail->{has_variations}, 
-                        $avail->{has_variations} eq "1" ? "variation" : "variations",
+                        $avail->{has_variations} eq "1" ? "allele" : "alleles",
                       ) if($avail->{has_variations});    
     
     push @str_array, sprintf('maps to <a class="dynamic-link" href="%s">%s oligo %s</a>',    
