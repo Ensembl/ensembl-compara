@@ -59,7 +59,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
 
     panel.el.find("div#dy-tab div.search-box").hide();
-    this.resize();
 
     $.ajax({
       url: '/Json/RegulationData/data?species='+Ensembl.species,
@@ -74,6 +73,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.registerRibbonArrowEvents();
         this.updateRHS();
         this.addExtraDimensions();
+        this.resize();
       },
       error: function() {
         this.showError();
@@ -82,10 +82,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     this.elLk.buttonTab.on("click", function (e) { 
       panel.toggleTab(this, panel.el.find("div.track-menu"));
+      panel.resize();
     });
 
     this.elLk.breadcrumb.on("click", function (e) {
-
       panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
       panel.toggleButton();
       e.preventDefault();
@@ -262,7 +262,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   resize: function() {
     var panel = this;
     panel.elLk.resultBox.outerHeight(this.getNewPanelHeight());
-    panel.elLk.trackPanel.find('.tab-content, .tab-content > .tab-content').outerHeight(this.getNewPanelHeight() - 26);
+    if (panel.elLk[this.getActiveTab()].haveSubTabs) {
+      panel.elLk.trackPanel.find('.ribbon-content').outerHeight(this.getNewPanelHeight() - 185);
+    }
+    else {
+      panel.elLk.trackPanel.find('.ribbon-content').outerHeight(this.getNewPanelHeight() - 132);
+    }
     panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 60);
   },
 
@@ -842,6 +847,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //selecting the tab in experiment type
     this.el.find("div.dy div.track-tab").on("click", function () {
       panel.toggleTab(this, panel.el.find("div.dy"));
+      panel.resize();
     });    
     
   },
