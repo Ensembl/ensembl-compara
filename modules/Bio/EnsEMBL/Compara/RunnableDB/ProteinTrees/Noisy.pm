@@ -60,7 +60,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable');
 sub param_defaults {
     my $self = shift;
     return { %{ $self->SUPER::param_defaults },
-             'cmd'              => '#noisy_exe# -s -v --seqtype P --cutoff #noisy_cutoff# #alignment_file#',
+             'sequence_type'    => '#expr(#use_dna_for_phylogeny# ? "D" : "P")expr#',
+             'cmd'              => '#noisy_exe# -s -v --seqtype #sequence_type# --cutoff #noisy_cutoff# #alignment_file#',
              'output_file'      => 'align.#gene_tree_id#_out.fas',
              'read_tags'        => 1,
              'runtime_tree_tag' => 'noisy_runtime',
