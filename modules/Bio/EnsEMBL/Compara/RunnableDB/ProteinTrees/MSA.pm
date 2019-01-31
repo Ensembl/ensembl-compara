@@ -87,10 +87,14 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
-    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= ($self->input_job->analysis->max_retry_count // $self->db->hive_pipeline->hive_default_max_retry_count)) {
+    if (defined $self->param('escape_branch')) {
+      my $max_retry_count = $self->input_job->analysis->max_retry_count;
+      $max_retry_count //= $self->db->hive_pipeline->hive_default_max_retry_count if $self->db;
+      if (defined $max_retry_count && ($self->input_job->retry_count >= $max_retry_count)) {
         $self->dataflow_output_id(undef, $self->param('escape_branch'));
         $self->input_job->autoflow(0);
-        $self->complete_early("The MSA failed 3 times. Trying another method.");
+        $self->complete_early("The MSA failed $max_retry_count times. Trying another method.");
+      }
     }
 
 
