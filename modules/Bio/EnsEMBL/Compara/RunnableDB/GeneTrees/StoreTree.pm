@@ -128,7 +128,7 @@ sub merge_split_genes {
       }
         # We then directly override the cached alignment_string_cds
         # entry in the hash, which will be used next time it is called
-      $protein1->{'alignment_string'.($seq_type || '')} = $cdna;
+      $protein1->{'alignment_string'.($seq_type ? "_$seq_type" : '')} = $cdna;
     }
 
     if (scalar(keys %split_genes)) {
