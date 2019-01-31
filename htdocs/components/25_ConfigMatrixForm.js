@@ -156,16 +156,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
     else {
       // For subtabs
-      
-      // $.each(tabLookup.tabs, function(tabname, ele) {
-      //   // $(ele).removeClass('active');
-      //   // tabLookup.container.find('#' + tabname + '-content').removeClass('active'); 
-      // });
-      var fl = 1;
+      var currentActiveTabId;
+      var availableTabsWithData = [];
       $.each(panel.selectedTracksCount, function(key, count) {
         if (tabLookup.tabs[key] && count.available !== 0) {
           var tab_ele = tabLookup.tabs[key];
-          $(tab_ele).removeClass('active')
+          if ($(tab_ele).hasClass('active')) {
+            currentActiveTabId = key;
+          }
+
+          // $(tab_ele).removeClass('active')
           var tab_content_ele = $('#' + key + '-content', panel.el.trackPanel);
           var lis = tabLookup.tabContents[key];
           if (!lis.not("._search_hide").length) {
@@ -173,11 +173,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
           else {
             $(tabLookup.tabs[key]).removeClass('inactive');
-            if (fl == 1) {
-              // Move to first active tab
-              panel.toggleTab($(tabLookup.tabs[key]), tabLookup.container);
-              fl = 0;
-            }
+            availableTabsWithData.push(key);
           }
           // Activate available letters if list type is alphabetRibbon
           if (panel.json.data[panel[tabId]].data[key].listType === 'alphabetRibbon') {
@@ -185,6 +181,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
         }
       });
+
+      // If any of the final available tabs have class "active" then leave. If not move it to the first available
+      if (availableTabsWithData.length && currentActiveTabId) {
+        if(!currentActiveTabId || availableTabsWithData.indexOf(currentActiveTabId) < 0) {
+          // Move to first active tab
+          panel.toggleTab($(tabLookup.tabs[availableTabsWithData[0]]), $(tabLookup.tabs[availableTabsWithData[0]]).parent());
+        }
+      }
+      else {
+      }
     }
   },
 
@@ -194,7 +200,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var fl = 1;
     alphabet.forEach(function(letter) {
       var ribbon = alphabetContainer.find('.ribbon_' + letter);
-      ribbon.removeClass('active');
+      // ribbon.removeClass('active');
       var ribbonContent = alphabetContainer.find('.' + letter + '_content')
       if (alphabetContainer.find('.' + letter + '_content li').not('._search_hide').length) {
         ribbon.removeClass('inactive');
@@ -207,7 +213,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         ribbon.addClass('inactive');
       }
-    });
+    });    
 
   },
 
@@ -257,6 +263,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   resize: function() {
     var panel = this;
     panel.elLk.resultBox.height(this.getNewPanelHeight());
+    panel.elLk.trackPanel.height(this.getNewPanelHeight());
     panel.elLk.matrixContainer.height(this.getNewPanelHeight() - 60);
   },
 
@@ -892,7 +899,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   toggleTab: function(selectElement, container, selByClass, resetRibbonOffset) {
     var panel = this;
 
-    if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
+    if(resetRibbonOffset || (!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive"))) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
         panel.el.find(".search-box").hide();
@@ -943,7 +950,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
 
         // Reset is applied on filterData() if an offset reset is needed for the ribbon
-        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && $(selectElement).hasClass('track-tab')) {
+        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset')) {
           var availableAlphabets = panel.getActiveAlphabets();
           var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
           var activeAlphabetIndex = $(activeLetterDiv).parent().children().index(activeAlphabetDiv);
