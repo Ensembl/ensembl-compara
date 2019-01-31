@@ -443,15 +443,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $(this).closest('.result-content').find('.sub-result-link').click();
       }
 
+      var ele = $(this).data('item');
       if($(this).hasClass('all-box')) {
-        if(!$(this).hasClass('no-filter')) {
-          var ele = $(this).closest('.tab-content').find('li')[0];
-          panel.filterData($(ele).data('item'));
-        }
+        // if(!$(this).hasClass('no-filter')) {
+          ele = $(this).closest('.tab-content').find('li')[0];
+          ele = $(ele).data('item');
+        // }
       }
-      else {
-        panel.filterData($(this).data('item'));
-      }
+
+      panel.filterData(ele);
       panel.updateRHS();
 
       //check whether the select all box is on/off, if it is off and all filters are selected, then make it on and if it is on and all filters are not selected then make it off

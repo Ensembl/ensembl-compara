@@ -60,7 +60,6 @@ function Selectables(opts) {
         return this;
     };
     this.disable = function () {
-        console.log(this.zone);
         this.zone.forEach(function(z) {
             z.removeEventListener('mousedown', self.rectOpen);
         });
