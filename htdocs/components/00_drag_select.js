@@ -47,18 +47,23 @@ function Selectables(opts) {
             throw new Error(this.constructor.name + " :: is alredy enabled");
             return;
         }
-        this.zone = document.querySelector(this.options.zone);
+        this.zone = document.querySelectorAll(this.options.zone);
         if (!this.zone) {
             throw new Error(this.constructor.name + " :: no zone defined in options. Please use element with ID");
         }
         this.items = document.querySelectorAll(this.options.zone + ' ' + this.options.elements);
         this.disable();
-        this.zone.addEventListener('mousedown', self.rectOpen);
+        this.zone.forEach(function(z) {
+            z.addEventListener('mousedown', self.rectOpen);
+        });
         this.on = true;
         return this;
     };
     this.disable = function () {
-        this.zone.removeEventListener('mousedown', self.rectOpen);
+        console.log(this.zone);
+        this.zone.forEach(function(z) {
+            z.removeEventListener('mousedown', self.rectOpen);
+        });
         this.on = false;
         return this;
     };

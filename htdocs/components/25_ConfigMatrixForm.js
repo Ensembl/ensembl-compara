@@ -82,7 +82,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     this.elLk.buttonTab.on("click", function (e) { 
       panel.toggleTab(this, panel.el.find("div.track-menu"));
-      panel.setDragSelectEvent();
     });
 
     this.elLk.breadcrumb.on("click", function (e) {
@@ -257,14 +256,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
   getNewPanelHeight: function() {
-    return $(this.el).closest('.modal_content.js_panel').height() - 160;
+    return $(this.el).closest('.modal_content.js_panel').outerHeight() - 160;
   },
 
   resize: function() {
     var panel = this;
-    panel.elLk.resultBox.height(this.getNewPanelHeight());
-    panel.elLk.trackPanel.height(this.getNewPanelHeight());
-    panel.elLk.matrixContainer.height(this.getNewPanelHeight() - 60);
+    panel.elLk.resultBox.outerHeight(this.getNewPanelHeight());
+    panel.elLk.trackPanel.find('.tab-content, .tab-content > .tab-content').outerHeight(this.getNewPanelHeight() - 26);
+    panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 60);
   },
 
   getActiveTabContainer: function() {
@@ -334,66 +333,22 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   setDragSelectEvent: function() {
     var panel = this;
-    var zone;
 
-    if (!$('.tab-content.active .tab-content .ribbon-content', panel.el).length) {
-      if (this.dragSelect_dx) return;
-      zone = '.tab-content.active .ribbon-content';
-      this.dragSelect_dx = new Selectables({
-        elements: 'ul.letter-content li span',
-        // selectedClass: 'selected',
-        zone: zone,
-        onSelect: function(el) {
-          panel.selectBox(el.parentElement, 1);
-          this.el = el.parentElement;
-        },
-        stop: function() {
-          panel.filterData($(this.el).data('item'));
-          panel.updateRHS();
-        }
-      });
-    }
-    else {
-      if ($('.tab-content.active .tab-content.active .ribbon-content', panel.el).length) {
-        zone = '.tab-content.active .tab-content.active .ribbon-content';
+    if (this.dragSelect) return;
+
+    this.dragSelect = new Selectables({
+      elements: 'li span',
+      // selectedClass: 'selected',
+      zone: '._drag_select_zone',
+      onSelect: function(el) {
+        panel.selectBox(el.parentElement, 1);
+        this.el = el.parentElement;
+      },
+      stop: function() {
+        panel.filterData($(this.el).data('item'));
+        panel.updateRHS();
       }
-      else {
-        zone = '.tab-content.active .tab-content.active';
-      }
-
-      if (!$('.tab-content.active .tab-content.active', panel.elLk.trackPanel).length) return;
-
-      if (this.dragSelect_dy && this.dragSelect_dy[this.getActiveSubTab()]) return;
-      this.dragSelect_dy = this.dragSelect_dy || {};
-      this.dragSelect_dy[this.getActiveSubTab()] = new Selectables({
-        elements: 'li span, div.all-box',
-        zone: zone,
-        // selectedClass: 'selected',
-        onSelect: function(el) {
-          if($(el).hasClass('all-box')) {
-            // Because select-all box is also included in the drag select zone
-            // If selected, then trigger its click at the end of the dragSelect event
-            // This is because onSelect event is fired on each (LI,DIV) elements
-            this.selectAllClick = true;
-            this.allBox = el;
-          }
-          else {
-            panel.selectBox(el.parentElement);            
-            this.el = el.parentElement;
-          }
-        },
-        stop: function(e) {
-          if(this.selectAllClick) {
-            $(this.allBox).click();
-            this.selectAllClick = false;
-          }
-          else {
-            panel.filterData($(this.el).data('item'));
-            panel.updateRHS();
-          }
-        }
-      });      
-    }
+    });
   },
 
   //function when click clear all link which should reset all the filters
@@ -887,7 +842,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //selecting the tab in experiment type
     this.el.find("div.dy div.track-tab").on("click", function () {
       panel.toggleTab(this, panel.el.find("div.dy"));
-      panel.setDragSelectEvent();
     });    
     
   },
@@ -1012,7 +966,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox);
     } else  {
       var container = panel.el.find(container);
-      var html = '<ul class="letter-content list-content">';
+      var html = '<ul class="letter-content list-content _drag_select_zone">';
       var rhsection = container.find('span.rhsection-id').html();
       data = data.sort();
       $.each(data, function(i, item) {
@@ -1243,7 +1197,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       content_html += '<div data-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     var noFilterClass = noFilter_allBox ? 'no-filter' : '';
-    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content _drag_select_zone"></div></div>');
     container.find('div.letters-ribbon').append(html);
     container.find('div.ribbon-content').append(content_html);
 

@@ -274,7 +274,7 @@ div.ribbon-content                                  { display: flex; padding-lef
 div.alphabet-content                                { display: none; position: relative; }
 div.alphabet-content.active                         { display: block; }
 div.config_wrapper div.config ul.letter-content li  { margin: 5px 0; cursor: default; margin-top: 0;}
-div.config_wrapper div.config ul.list-content       { height: 297px; padding-left: 48px; columns: 4 100px; overflow-y: auto; clear: right;}
+div.config_wrapper div.config ul.list-content       { padding-left: 48px; columns: 4 100px; overflow-y: auto; clear: right;}
 
 .text-ellipsis {
   max-width: 100px;
