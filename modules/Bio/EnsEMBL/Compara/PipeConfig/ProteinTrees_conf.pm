@@ -1940,7 +1940,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'noisy_exe'    => $self->o('noisy_exe'),
                                'noisy_cutoff' => $self->o('noisy_cutoff'),
-                'use_dna_for_phylogeny' => $self->o('use_dna_for_phylogeny'),
             },
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '4Gb_job',
@@ -1953,7 +1952,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'noisy_exe'    => $self->o('noisy_exe'),
                                'noisy_cutoff'  => $self->o('noisy_cutoff_large'),
-                'use_dna_for_phylogeny' => $self->o('use_dna_for_phylogeny'),
             },
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '16Gb_job',
