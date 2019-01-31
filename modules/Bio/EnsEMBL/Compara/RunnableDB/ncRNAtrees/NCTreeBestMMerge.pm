@@ -112,7 +112,7 @@ sub fetch_input {
   my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id'));
 
   $self->param('gene_tree', $gene_tree);
-  unless ($gene_tree->gene_align_id) {
+  if (!$gene_tree->gene_align_id && $gene_tree->has_tag('genomic_alignment_gene_align_id')) {
       my $alignment_id = $self->param('gene_tree')->get_value_for_tag('genomic_alignment_gene_align_id');
       my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
       $gene_tree->alignment($aln);
