@@ -385,9 +385,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if(counter === total_div) {
       panel.el.find('button.filter').addClass('active');
       panel.el.find('li._configure').removeClass('inactive');
+      panel.elLk.displayButton.addClass('active')
     } else {
       panel.el.find('button.filter').removeClass('active');
       panel.el.find('li._configure').addClass('inactive');
+      panel.elLk.displayButton.removeClass('active')
+
     }
   },
   
@@ -1336,7 +1339,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     dyArray.unshift('');
 
     // Adding 2 extra regulatory features tracks to show by default
-    panel.json.extra_dimensions.reverse().forEach(function(k) {
+    panel.json.extra_dimensions.sort().reverse().forEach(function(k) {
       dyArray.unshift(k);
     })
 
