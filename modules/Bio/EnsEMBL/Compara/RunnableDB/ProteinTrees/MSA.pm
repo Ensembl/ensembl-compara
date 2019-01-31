@@ -286,7 +286,6 @@ sub parse_and_store_alignment_into_proteintree {
   return 0 unless($msa_output and -e $msa_output);
 
   $self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
-  $self->param('protein_tree')->seq_type('cds') if $self->param('cdna');
 
   return 1;
 }
