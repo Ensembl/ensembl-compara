@@ -58,6 +58,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       'peak-signal': 'signal_feaure'
     }
 
+    this.resize();
+
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
