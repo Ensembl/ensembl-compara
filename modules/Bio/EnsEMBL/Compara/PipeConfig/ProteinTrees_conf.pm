@@ -3389,7 +3389,7 @@ sub core_pipeline_analyses {
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -analysis_capacity => 20,
-            -rc_name => '4Gb_job',
+            -rc_name => '8Gb_job',
         },
 
         {   -logic_name => 'homology_dNdS',
