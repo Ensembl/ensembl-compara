@@ -566,7 +566,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           selectedLIs = lis.has('.selected') || [];
           allLIs = lis.has('._filtered') || [];
           // In case _filtered class is not applied
-          allLIs = allLIs.length || lis.filter(function() { return $(this).css('display') !== 'none' });
+          // Add lis with _search_hide class. because all _search_hide lis will have display = 'none'
+          allLIs = allLIs.length || lis.filter(function() { return $(this).css('display') !== 'none' || $(this).hasClass('_search_hide') });
 
           // Storing counts of each tabs - selected and available,  to activate/deactivate tabs and ribbons
           panel.selectedTracksCount[subTab] = panel.selectedTracksCount[subTab] || {};
@@ -585,7 +586,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         selectedLIs = panel.elLk[key].tabContents.has('.selected') || [];
         allLIs = panel.elLk[key].tabContents.has('._filtered') || [];
-        allLIs = allLIs.length || panel.elLk[key].tabContents.filter(function() { return $(this).css('display') !== 'none' });
+
+        // Add lis with _search_hide class. because all _search_hide lis will have display = 'none'
+        allLIs = allLIs.length || panel.elLk[key].tabContents.filter(function() { return $(this).css('display') !== 'none' || $(this).hasClass('_search_hide') });
 
         panel.selectedTracksCount[key] = panel.selectedTracksCount[key] || {};
         panel.selectedTracksCount[key].selected = panel.selectedTracksCount[key].selected || [];
