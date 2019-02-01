@@ -208,11 +208,14 @@ sub content {
     my $node_type = $tagvalues->{'node_type'};
     
     if (defined $node_type) {
-      my $label;
-         $label = 'Dubious duplication' if $node_type eq 'dubious';
-         $label = sprintf 'Duplication (%d%s confid.)', 100 * ($tagvalues->{'duplication_confidence_score'} || 0), '%' if $node_type eq 'duplication';
-         $label = 'Speciation' if $node_type eq 'speciation';
-         $label = 'Gene split' if $node_type eq 'gene_split';
+      my $label = {
+          'dubious'         => 'Dubious duplication',
+          'duplication'     => 'Duplication',
+          'speciation'      => 'Speciation',
+          'sub-speciation'  => 'Sub-speciation',
+          'gene_split'      => 'Gene split',
+      }->{$node_type};
+      $label .= sprintf ' (%d%s confid.)', 100 * ($tagvalues->{'duplication_confidence_score'} || 0), '%' if $node_type eq 'duplication';
       
       $self->add_entry({
         type  => 'Type',
