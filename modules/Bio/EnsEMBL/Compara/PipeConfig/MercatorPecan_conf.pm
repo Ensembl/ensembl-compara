@@ -415,7 +415,7 @@ sub pipeline_analyses {
         {   -logic_name => 'delete_non_nuclear_genes',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => 'DELETE seq_member FROM seq_member JOIN dnafrag USING (dnafrag_id) WHERE cellular_component != "NUC"',
+                'sql' => 'DELETE seq_member FROM seq_member JOIN dnafrag USING (dnafrag_id) WHERE cellular_component != "NUC" AND genome_db_id = #genome_db_id#',
             },
             -flow_into  => [ 'fresh_dump_subset_fasta' ],
         },
