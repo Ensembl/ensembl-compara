@@ -70,7 +70,7 @@ sub param_defaults {
         %{ $self->SUPER::param_defaults() },
         escape_branch   => undef,
         cmd_max_runtime => undef,
-
+        check_seq       => 1,
     };
 }
 
