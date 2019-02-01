@@ -86,7 +86,7 @@ my $compara_dbs = {
     'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
     #'compara_families' => [ 'mysql-ens-compara-prod-3', 'carlac_families_fix_95'  ],
     'compara_nctrees'  => [ 'mysql-ens-compara-prod-3', 'muffato_ensembl_compara_nctrees_96' ],
-    #'murinae_ptrees'   => [ 'mysql-ens-compara-prod-8', 'carlac_murinae_protein_trees_95' ],
+    'murinae_ptrees'   => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_protein_trees_96b' ],
     'murinae_nctrees'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
 
     # LASTZ dbs
