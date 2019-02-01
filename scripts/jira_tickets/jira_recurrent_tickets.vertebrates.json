@@ -230,27 +230,27 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-CreateReleaseDatabase",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
             "summary": "Create Release Database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
             "name_on_graph": "All alignments for WGA Orthology QC"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "name_on_graph": "Synteny",
             "summary": "Run syntenies pipeline on release db"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Build a new ancestral sequence core database"
          },
          {
