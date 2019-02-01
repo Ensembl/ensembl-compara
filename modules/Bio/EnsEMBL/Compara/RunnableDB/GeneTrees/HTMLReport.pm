@@ -51,18 +51,18 @@ my $txt = <<EOF;
 <html>
 <h1>Statistics on gene trees</h1>
 
-<a name='gtstat_top'/><ul>
-<li><a href='#gt_coverage'>Gene coverage</a>: Number of genes and members in total, included in trees (either species-specific, or encompassing other species), and orphaned (not in any tree)</li>
-<li><a href='#gt_sizes'>Tree size</a>: Sizes of trees (genes, and distinct species), grouped according to the root ancestral species</li>
-<li><a href='#gt_treenodes'>Predicted gene events</a>: For each ancestral species, number of speciation and duplication nodes (inc. dubious ones), with the average duplication score</li>
+<ul>
+<li>Gene coverage: Number of genes and members in total, included in trees (either species-specific, or encompassing other species), and orphaned (not in any tree)</li>
+<li>Tree size: Sizes of trees (genes, and distinct species), grouped according to the root ancestral species</li>
+<li>Predicted gene events: For each ancestral species, number of speciation and duplication nodes (inc. dubious ones), with the average duplication score</li>
 </ul>
-<br/><a name='gt_coverage' href='#gtstat_top'>Top&uarr;</a><h3>Number of genes and members in total, included in trees (either species-specific, or encompassing other species), and orphaned (not in any tree)</h3>
+<br/><h3>Number of genes and members in total, included in trees (either species-specific, or encompassing other species), and orphaned (not in any tree)</h3>
 #html_array1#
 
-<br/><a name='gt_sizes' href='#gtstat_top'>Top&uarr;</a><h3>Sizes of trees (genes, and distinct species), grouped according to the root ancestral species</h3>
+<br/><h3>Sizes of trees (genes, and distinct species), grouped according to the root ancestral species</h3>
 #html_array2#
 
-<br/><a name='gt_treenodes' href='#gtstat_top'>Top&uarr;</a><h3>For each ancestral species, number of speciation and duplication nodes (inc. dubious ones), with the average duplication score</h3>
+<br/><h3>For each ancestral species, number of speciation and duplication nodes (inc. dubious ones), with the average duplication score</h3>
 #html_array3#
 
 </html>
