@@ -207,7 +207,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         ribbon.removeClass('inactive');
         if (fl === 1) {
           // Move to first active tab
-          panel.toggleTab(ribbon, alphabetContainer, 1, 1);
+          panel.toggleTab(ribbon, alphabetContainer, 1, 1, true);
           fl = 0;
         }
       }
@@ -864,10 +864,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   // Arguments: selectElement is the tab that's clicked to be active or the tab that you want to be active (javascript object)
   //            container is the current active tab (javascript object)
   //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
-  toggleTab: function(selectElement, container, selByClass, resetRibbonOffset) {
+  toggleTab: function(selectElement, container, selByClass, resetRibbonOffset, searchTriggered) {
     var panel = this;
 
-    if(resetRibbonOffset || (!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive"))) {
+    if((!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive"))) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
         panel.el.find(".search-box").hide();
@@ -918,7 +918,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
 
         // Reset is applied on filterData() if an offset reset is needed for the ribbon
-        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset')) {
+        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && ($(selectElement).hasClass('track-tab') || searchTriggered)) {
           var availableAlphabets = panel.getActiveAlphabets();
           var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
           var activeAlphabetIndex = $(activeLetterDiv).parent().children().index(activeAlphabetDiv);
