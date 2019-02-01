@@ -122,7 +122,7 @@ my $compara_dbs = {
 
     ## primates
     'primates_epo'         => [ 'mysql-ens-compara-prod-6', 'waakanni_primates_epo_96' ],
-    'primates_epo_prev'   => [ 'mysql-ens-compara-prod-1', 'muffato_mammals_epo_95' ],      # Primates are reused from mammals (same anchors)
+    'primates_epo_prev'   => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_96' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_low'     => [ 'mysql-ens-compara-prod-3', 'muffato_primates_epo_low_coverage_96' ],
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
