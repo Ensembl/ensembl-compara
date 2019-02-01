@@ -86,8 +86,7 @@ sub default_options {
     # master database
     'master_db' => 'compara_master',
     # previous release data location for reuse
-    'reuse_db'  => 'compara_prev',
-    'paf_reuse_db' => 'amniotes_pecan_prev', # peptide_align_feature% tables only available here
+    'reuse_db'  => 'amniotes_pecan_prev',   # Cannot be the release db because we need exon members and the peptide_align_feature tables
 
     #Pecan default parameters
     'java_options'      => '-server -Xmx1000M',

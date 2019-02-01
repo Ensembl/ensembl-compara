@@ -356,7 +356,7 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('paf_reuse_db'),
+                'src_db_conn'   => $self->o('reuse_db'),
                 'table'         => 'peptide_align_feature_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
