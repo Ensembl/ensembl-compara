@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf -mlss_id <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf -mlss_id <> -species_set_name <>
 
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
