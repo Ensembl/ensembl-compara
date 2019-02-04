@@ -44,8 +44,7 @@ sub default_options {
 
         'division'  => 'vertebrates',
 
-        # 'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
-    	'dump_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+        'dump_dir'    => $self->o('pipeline_dir'),
     };
 }
 

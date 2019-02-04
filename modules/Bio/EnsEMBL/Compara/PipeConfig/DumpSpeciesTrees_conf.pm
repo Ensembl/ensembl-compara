@@ -62,7 +62,7 @@ sub default_options {
         'division'          => 'vertebrates',
 
         #Locations to write output files
-        'dump_dir'          => '/hps/nobackup2/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
+        'dump_dir'          => $self->o('pipeline_dir'),
     };
 }
 

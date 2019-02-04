@@ -92,7 +92,7 @@ sub default_options {
 
         'readme_dir'  => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),                                      # where the template README files are
 
-        'base_dir'    => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),     # where the final dumps will be stored
+        'base_dir'    => $self->o('pipeline_dir'),                                                                      # where the final dumps will be stored
         'hash_dir'    => '#base_dir#/dump_hash/#division#_#basename#',                                                  # where directory hash is created and maintained
         'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
         'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put

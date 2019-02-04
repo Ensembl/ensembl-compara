@@ -39,10 +39,10 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Where dumps are created
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix').'/cs_#mlss_id#',
+        'export_dir'    => $self->o('pipeline_dir') . '/#mlss_id#/out',
 
         # Where to keep temporary files
-        'work_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix').'/work/cs_#mlss_id#',
+        'work_dir'    => $self->o('pipeline_dir') . '/#mlss_id#/hash',
 
         # How many species can be dumped in parallel
         'capacity'    => 50,

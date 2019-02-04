@@ -72,7 +72,7 @@ sub default_options {
         # Intentionally left empty
         #'compara_db' => 'Multi',
 
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
+        'export_dir'    => $self->o('pipeline_dir'),
 
         # Maximum number of blocks per file
         'split_size' => 200,

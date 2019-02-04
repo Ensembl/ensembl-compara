@@ -38,9 +38,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # Where dumps are created
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
-
         # How many species can be dumped in parallel
         'dump_ce_capacity'    => 50,
     };

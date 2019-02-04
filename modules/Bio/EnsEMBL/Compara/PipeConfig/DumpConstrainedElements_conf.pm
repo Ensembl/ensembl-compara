@@ -75,7 +75,7 @@ sub pipeline_wide_parameters {
         'registry'      => $self->o('registry'),
         'compara_db'   => $self->o('compara_url'),
 
-        'export_dir'    => $self->o('export_dir'),
+        'export_dir'    => $self->o('pipeline_dir'),
         'ce_output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
         'bed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
         'bigbed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',
