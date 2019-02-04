@@ -87,7 +87,7 @@ sub default_options {
       'division' => 'ensembl',
 
       # Dump directory
-      'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
+      'dump_dir' => $self->o('pipeline_dir'),
 
       # The ancestral_db is created on the same server as the pipeline_db
       'ancestral_db' => { # core ancestral db

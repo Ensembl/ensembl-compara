@@ -53,7 +53,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'master_db' => 'compara_master',
-        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/'. $self->o('division') .'_release_' . $self->o('rel_with_suffix'),
+        'work_dir'  => $self->o('pipeline_dir'),
     };
 }
 

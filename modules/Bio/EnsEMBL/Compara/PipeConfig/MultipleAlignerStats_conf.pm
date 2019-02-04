@@ -74,7 +74,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Dump location
-        'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',
+        'dump_dir'      => $self->o('pipeline_dir'),
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'feature_dumps',
     };

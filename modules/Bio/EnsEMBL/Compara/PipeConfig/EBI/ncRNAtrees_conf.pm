@@ -61,7 +61,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'work_dir'      => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
+            'work_dir'      => $self->o('pipeline_dir'),
 
             'binary_species_tree_input_file' => $self->o('binary_species_tree'),
             

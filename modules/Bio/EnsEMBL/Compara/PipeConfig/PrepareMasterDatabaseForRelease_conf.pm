@@ -71,7 +71,7 @@ sub default_options {
         'host'                => 'mysql-ens-compara-prod-4:4401',
         'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('release'),
         #'host'               => 'mysql-ens-compara-prod-1:4485',
-        'work_dir'    => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/'.$self->o('pipeline_name'),
+        'work_dir'    => $self->o('pipeline_dir'),
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
         'master_db'           => 'compara_master',

@@ -83,7 +83,7 @@ sub default_options {
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
-        'work_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/LoadMembers_pipeline/' . $self->o('pipeline_name'),
+        'work_dir'        => $self->o('pipeline_dir'),
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
         'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',

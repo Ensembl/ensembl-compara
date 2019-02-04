@@ -79,7 +79,7 @@ sub default_options {
             'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
 
             #Locations to write output files
-            'bed_dir'        => sprintf('/hps/nobackup2/production/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
+            'bed_dir'        => $self->o('pipeline_dir'),
 
             #Number of workers to run base_age analysis
             'base_age_capacity'        => 100,
