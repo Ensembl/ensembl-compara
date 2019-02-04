@@ -74,7 +74,7 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
         'treefam_release'               => 10,
-        'rel_suffix'        => '', # set it to '' for the actual release
+        #'rel_suffix'        => '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('treefam_release').$self->o('rel_suffix'),
 
         # Tag attached to every single tree

@@ -69,7 +69,7 @@ sub default_options {
 
         'test_mode' => 1, #set this to 0 if this is production run
         
-        'rel_suffix'            => '',
+        #'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 

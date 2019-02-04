@@ -30,8 +30,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_hmmer_ces',
-
            # connection parameters to various databases:
         'pipeline_db' => { # the production database itself (will be created)
                 -host   => 'compara1',

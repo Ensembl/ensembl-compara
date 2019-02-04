@@ -83,7 +83,7 @@ sub default_options {
             #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'rel_suffix' => '',
+            #'rel_suffix' => '',
 
             'division'      => 'vertebrates',
             'collection'    => 'default',       # The name of the species-set within that division

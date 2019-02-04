@@ -96,7 +96,6 @@ sub default_options {
         %{$self->SUPER::default_options},
             'db_version' => 73, #ensembl version (to load core dbs)
 
-            'pipeline_name' => 'ancestral_' . $self->o('db_version'),
             'ref_species' => 'homo_sapiens',
             'chunk_size' => 10000, #sub-chunk size
             'vep_size' => 1000000, #size of final vep files for indexing

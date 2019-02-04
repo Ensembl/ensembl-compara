@@ -78,9 +78,6 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
-	'pipeline_name'         => 'ucsc_import_'.$self->o('rel_with_suffix'),
-
 	master_db => {
             -host   => 'compara1',
             -port   => 3306,
