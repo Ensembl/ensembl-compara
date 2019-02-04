@@ -83,7 +83,7 @@ sub default_options {
         'pipeline_name' => 'compara_homology_WS' . $self->o('ws_release'),
 
         # data directories:
-        'work_dir'              => '/nfs/nobackup/ensemblgenomes/wormbase/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_'.$self->o('pipeline_name'),
+        'work_dir'              => '/nfs/nobackup/ensemblgenomes/wormbase/'.$ENV{'USER'}.'/compara/ensembl_compara_'.$self->o('pipeline_name'),
 
         # blast parameters:
         

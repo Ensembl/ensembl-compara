@@ -40,7 +40,7 @@ sub default_options {
 
         'compara_innodb_schema' => 1,
 
-        'linuxbrew_home'        => $self->o('ENV', 'LINUXBREW_HOME'),
+        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
     };
 }
 

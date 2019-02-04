@@ -87,7 +87,7 @@ sub default_options {
         pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 
     # data directories:
-        'work_dir'              => '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_'. $self->o('pipeline_name'),
+        'work_dir'              => '/nfs/nobackup/ensemblgenomes/'.$ENV{'USER'}.'/compara/ensembl_compara_'. $self->o('pipeline_name'),
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
