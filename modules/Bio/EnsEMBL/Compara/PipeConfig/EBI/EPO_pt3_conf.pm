@@ -97,7 +97,7 @@ sub default_options {
           -species  => $self->o('ancestral_sequences_name'),
           -user     => $self->o('pipeline_db', '-user'),
           -pass     => $self->o('pipeline_db', '-pass'),
-          -dbname   => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
+          -dbname   => $self->o('dbowner').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
       },
 
       # master db

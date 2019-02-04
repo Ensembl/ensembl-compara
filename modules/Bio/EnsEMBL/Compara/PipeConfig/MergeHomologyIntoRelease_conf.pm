@@ -70,20 +70,12 @@ sub default_options {
 
         'pipeline_name' => 'compara_full_merge_'.$self->o('rel_with_suffix'),         # name used by the beekeeper to prefix job names on the farm
 
-        'pipeline_db' => {
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),
-        },
-
         'merged_homology_db' => {
             -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => sprintf('%s_compara_homology_merged_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
+            -dbname => sprintf('%s_compara_homology_merged_%s', $self->o('dbowner'), $self->o('ensembl_release')),
         },
 
         'rel_db' => {
@@ -91,7 +83,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
+            -dbname => sprintf('%s_ensembl_compara_%s', $self->o('dbowner'), $self->o('ensembl_release')),
         },
 
         'merged_tables'     => [ 'method_link_species_set_tag','method_link_species_set_attr',
