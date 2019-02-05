@@ -102,7 +102,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
-      if(!$(e.target).hasClass('slider') && panel.trackPopup) {
+      if(!$(e.target).parent().closest('div').hasClass('track-popup') && panel.trackPopup) {
         panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
         panel.trackPopup.hide();
       }      
@@ -243,7 +243,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         if (k.match(/_sep_/)) {
           arr = k.split('_sep_');
           key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
-          config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.render] : 'off' };
+          config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
 
           if (panel.localStoreObj.dy[arr[0]]) {
             key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
@@ -474,18 +474,29 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   removeFromMatrix: function(item) {
     var panel = this;
     if (!item) return;
-    panel.elLk.trackConfiguration.find('.matrix-container .' + item).remove();
+    panel.elLk.trackConfiguration.find('.matrix-container .' + item + ', .matrix-container ._emptyBox_' + item).remove();
+    var storeObjKey = panel.itemDimension(item);
 
     // Update localStoreObj and local storage
-    Object.keys(panel.localStoreObj.matrix).map(function(key) {
+    Object.keys(panel.localStoreObj[storeObjKey]).map(function(key) {
       if (key.match(item+'_') || key.match('_' + item)) {
-        delete panel.localStoreObj.matrix[key];
+        //update other rows/columns in store when removing item
+        var cellCurrState    = panel.localStoreObj[storeObjKey][key]["state"].replace("track-","");
+        var cellCurrRenderer = panel.localStoreObj[storeObjKey][key]["renderer"];
+
+        $.each(key.split("_sep_"),function(i, associatedEle){
+          if(associatedEle != item) {
+            panel.localStoreObj[storeObjKey][associatedEle]["total"] -= 1;
+            if(panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] -= 1; }
+            if(panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; }            
+          }
+        });
+        delete panel.localStoreObj[storeObjKey][key];
       }
     })
-    delete panel.localStoreObj.matrix[item];
+    delete panel.localStoreObj[storeObjKey][item];
 
     panel.setLocalStorage();
-    //panel.checkRowColumn(item); //comment this out because it causes performance issue (slow down matrix display)
   },
 
   updateRHS: function(item) {
@@ -672,9 +683,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.localStoreObj[parentTab][item] = 1;
     });
 
+    //main object for matrix state
     panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
 
-    //TODO: Create a hash for each dimensions (loop through dimensions, extra_dimensions), this will contain the total number of tracks, total for each renderers and total for each state
+    //state management for the extra dimension
+    $.each(panel.json.extra_dimensions, function(i, data){
+      panel.localStoreObj[data] = panel.getLocalStorage()[data]  || {};
+    });
   },
 
   removeFromStore: function(item, lhs_section_id) {
@@ -1328,6 +1343,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       
     });
   },
+
+  //function to find out which dimension dyItem belong to (used to know which state object to use; dimensions = matrix, extra_dimensions = array key)
+  itemDimension: function(item){
+    var panel = this;
+
+    if(item.match("_sep_")){
+      item = item.split("_sep_")[0];
+    }
+    if(panel.json.extra_dimensions.indexOf(item) >= 0) {
+      return panel.json.extra_dimensions[panel.json.extra_dimensions.indexOf(item)];
+    }  else {
+      return "matrix"; //object name for matrix state object
+    }
+  },
   
   // Function to show/update/delete matrix
   displayMatrix: function() {
@@ -1348,12 +1377,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       dyArray.unshift(k);
     })
 
-    // State of the column(evidence) or row (cell) which is attached to the labels
-    // whether the whole row is on/off, whole column is on/off, render is peak-signal, peak or signal
-    // default is on and peak-signal
-    // TODO: check if localstore obj matrix exists, if exists get values from localstore Obj else create store
-    var rowState, columnState, rowRender, columnRender;
-
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
@@ -1361,10 +1384,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
       }
       else {
-        if(!panel.localStoreObj.matrix[dyItem]) {
-          columnState   = "track-on";
-          columnRender  = "peak-signal";
-          panel.localStoreObj.matrix[dyItem] = {"state": columnState, "render": columnRender, "total":"", "on":"", "off":"", "peak":"", "signal":"", "peak-signal":""};
+        if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
+          //initialising state obj for dyItem (column), value setup later
+          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0} };
         }
         xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
       }
@@ -1378,11 +1400,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     $.each(panel.localStoreObj.dx, function(cellName, value){
         var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
+        var dxCount = 0, peakSignalCount = 0, onState = 0, offState = 0;
 
-        if(!panel.localStoreObj.matrix[cellName]) {
-          rowState   = "track-on";
-          rowRender  = "peak-signal";
-          panel.localStoreObj.matrix[cellName] = {"state": rowState, "render": rowRender};
+        if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
+          if(panel.itemDimension(cellName) === "matrix") {
+            panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0 }, "renderer": { "peak": 0, "signal": 0, "peak-signal": 0}};
+          }
         }
 
         yContainer += '<div class="yLabel '+cellName+'">'+cellLabel+'</div>';
@@ -1391,7 +1414,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         //drawing boxes
         $.each(dyArray, function(i, dyItem) {
           if (dyItem === '') {
-            rowContainer += '<div class="xBoxes"></div>';
+            rowContainer += '<div class="xBoxes _emptyBox_'+cellName+'"></div>';
           }
           else {
             var boxState  = "", boxDataRender = "";
@@ -1400,14 +1423,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             var boxRenderClass = "";
             var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
             var renderer, rel_dimension;
+            
+            var cellStoreObjKey = panel.itemDimension(storeKey);
+            var dyStoreObjKey   = panel.itemDimension(dyItem);
+            var matrixClass     = cellStoreObjKey === "matrix" ? cellStoreObjKey : "";
 
-            if(panel.localStoreObj.matrix[storeKey]) {
-              boxState   = panel.localStoreObj.matrix[storeKey].state;
-              boxDataRender  = panel.localStoreObj.matrix[storeKey].render;
-              popupType = panel.localStoreObj.matrix[storeKey].popupType || popupType;
+            if(panel.localStoreObj[cellStoreObjKey][storeKey]) {
+              boxState   = panel.localStoreObj[cellStoreObjKey][storeKey].state;
+              boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
+              popupType = panel.localStoreObj[cellStoreObjKey][storeKey].popupType || popupType;
               boxRenderClass = "render-"+boxDataRender;
-            }
-            else{
+              dataClass = "_hasData";
+            } else {
               //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
               $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
                 if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
@@ -1418,15 +1445,36 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
                   boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
                   boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                   boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                  panel.localStoreObj.matrix[storeKey] = {"state": boxState, "render": boxDataRender, "popupType": popupType};
+                  panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType};
+                  
+                  //setting count to update column state (dy)
+                  panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
+                  panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
+                  panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
+
+                  //calculating total in one row, we only want dy item not the extra dimensions for the matrix state obj.
+                  if(panel.json.extra_dimensions.indexOf(dyItem) === -1) {
+                    dxCount++; 
+                    peakSignalCount++;
+                    if(boxState === "track-on") { 
+                      onState++; 
+                    } else {
+                      offState++;
+                    }                                       
+                  }                  
                   return;
                 }
-              })
+              });              
             }
 
-            rowContainer += '<div class="xBoxes '+boxState+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';            
+            rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';            
           }
         });
+        //setting state for row in matrix
+        panel.localStoreObj.matrix[cellName]["total"] += dxCount;
+        panel.localStoreObj.matrix[cellName]["state"]["on"] += onState
+        panel.localStoreObj.matrix[cellName]["state"]["off"] += offState
+        panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
 
         rowContainer += "</div>";
         boxContainer += rowContainer;
@@ -1444,7 +1492,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.cellClick(); //opens popup
     panel.setLocalStorage();
-    panel.checkRowColumn(); //update renderer/state for existing element //comment outbecause of performance issue with big matrix
+    //panel.checkRowColumn(); //update renderer/state for existing element //comment outbecause of performance issue with big matrix
   },
 
   resetMatrix: function() {
@@ -1478,13 +1526,29 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.xLabel          = $(panel.elLk.rowContainer.find('div.xLabel.'+panel.xName));
       panel.yLabel          = $(panel.elLk.rowContainer.find('div.yLabel.'+panel.yName));
       panel.cellKey         = panel.xName+"_sep_"+panel.yName;
+      panel.cellStateKey    = panel.itemDimension(panel.cellKey) || "";
+      panel.dyStateKey      = panel.itemDimension(panel.yName) || "";
+      panel.dxStateKey      = panel.itemDimension(panel.xName) || "";
       
-      var boxState  = panel.localStoreObj.matrix[panel.cellKey].state; //is the track on or off
-      var boxRender = panel.localStoreObj.matrix[panel.cellKey].render; //is the track peak or signal or peak-signal
-      var rowState  = panel.localStoreObj.matrix[panel.yName].state; // get the equivalent ylabel first and then its state to determine whether row is on/off
-      var rowRender = panel.localStoreObj.matrix[panel.yName].render; // renderer of row
-      var colState  = panel.localStoreObj.matrix[panel.xName].state; // get the equivalent xlabel first and then its state to determine whether column is on/off
-      var colRender = panel.localStoreObj.matrix[panel.xName].render; // renderer of column 
+      var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
+      var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
+      var rowState  = panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total ? "track-off" : "track-on"; // get the equivalent ylabel first and then its state to determine whether row is on/off
+      var colState  = panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total ? "track-off" : "track-on"; // get the equivalent xlabel first and then its state to determine whether column is on/off
+            
+      var rowRender = "";
+      $.map(panel.localStoreObj[panel.dyStateKey][panel.yName].renderer, function(count, rendererType){
+        if(count === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
+          rowRender = rendererType;
+          return;
+        }
+      });      
+      var colRender = "";
+      $.map(panel.localStoreObj[panel.dxStateKey][panel.xName].renderer, function(count, rendererType){
+        if(count === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
+          colRender = rendererType;
+          return;
+        }
+      });       
 
       $(this).addClass("mClick");
 
@@ -1539,6 +1603,63 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
   },
 
+  //function to update the store obj when clicking the on/off or renderers
+  updateTrackStore: function(storeObj, trackKey, newState, currentState, newRenderer, currentRenderer){
+    var panel = this;
+
+    var statusKey   = newState ? "state" : "renderer";
+    var newValue    = newState ?  newState.replace("track-","") : newRenderer;
+    var currValue   = currentState ?  currentState.replace("track-","") : currentRenderer;
+    var keyDim      = panel.itemDimension(trackKey);
+    //console.log("STATUSKEY:"+statusKey+">>newValue>>"+newValue+">>TrackKey>>"+trackKey)
+
+    //update cell in store obj and update count for affected row/column
+    if(trackKey.match("_sep_")) {
+      storeObj[statusKey] = newState ?  newState : newRenderer;
+
+      $.each(trackKey.split("_sep_"), function(i, splitTrack){
+        if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey][splitTrack]["total"]) { panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] += 1; }
+        if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][currValue] > 0) { panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][currValue] -= 1; };
+        if(keyDim != "matrix") { return false; }
+      });
+
+    } else {  //if it is row or column, set new state/renderer type to total count and the previous state/renderer to 0, and for each affected row/column update the count
+      $.each(storeObj[statusKey], function(rendererType, val){
+        if(rendererType === newValue) {
+          storeObj[statusKey][rendererType] = storeObj["total"];
+        } else {
+          storeObj[statusKey][rendererType] = 0;
+        }
+      });
+
+      //update each affected row or column state/renderer type(-1 from current, +1 for new)
+      Object.keys(panel.localStoreObj[keyDim]).filter(function(key){ 
+        //find associated track with the trackKey (only the one with _sep_)         
+        if(key.match(trackKey) && key.match("_sep_")) {
+          //console.log("KEY>>>>"+key)
+          //updating the associated one only not the trackKey (only do this for matrix)
+          if(keyDim === "matrix") {
+            $.grep(key.split("_sep_"), function(associatedEle, i){
+              // console.log(keyDim+">>>>"+associatedEle);
+              // console.log(panel.localStoreObj[keyDim][key][statusKey]);
+
+              var cellCurrValue = panel.localStoreObj[keyDim][key][statusKey];
+              var cellNewValue  = newState ? newState : newRenderer;
+
+              if(associatedEle != trackKey && cellCurrValue != cellNewValue ) {
+                if(panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] < panel.localStoreObj[keyDim][associatedEle]["total"]) { panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] += 1; }
+                if(panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] > 0) { panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] -= 1; }
+              }
+            });
+          }
+          //updating each cell in the store
+          panel.localStoreObj[keyDim][key][statusKey] = newState ? newState : newRenderer;
+        }
+      });        
+    }
+    panel.setLocalStorage();
+  },
+
   //function to handle functionalities inside popup (switching off track or changing renderer) and updating state (localstore obj)
   //Argument: Object of the cell/box clicked
   popupFunctionality: function() {
@@ -1551,78 +1672,46 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var switchName    = $(this).attr("name");
       var trackState    = $(this).is(":checked") ? "track-on" : "track-off";
       var currentState  = trackState === "track-on"  ? "track-off" : "track-on"; 
-      var colStoreUpdate, rowStoreUpdate = 0;
 
       if(switchName === "column-switch") {
         //update bg for all cells in the column and also switch cell off
-        $(this).prop("checked", trackState === "track-on" ? true : false);
         panel.elLk.rowContainer.find('div.xBoxes.'+panel.xName+'.'+currentState).removeClass(currentState).addClass(trackState);        
+        panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked", trackState === "track-on" ? true : false);
 
-        //update localstore
-        Object.keys(panel.localStoreObj.matrix).filter(function(key){
-          var regex = new RegExp("^"+panel.xName,"g");
-          if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
-        });
+        //update localstore for column
+        panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.xName], panel.xName, trackState, currentState);
 
       } else if(switchName === "row-switch") {
-        //update bg for all cells in the row and also switch cell off        
-        $(this).prop("checked", trackState === "track-on" ? true : false);
-        panel.elLk.rowContainer.find('div.xBoxes.'+panel.yName+'.'+currentState).removeClass(currentState).addClass(trackState);
+        //update bg for all cells in the row belonging to matrix only and also switch cell off        
+        panel.elLk.rowContainer.find('div.xBoxes.matrix.'+panel.yName+'.'+currentState).removeClass(currentState).addClass(trackState);
+        panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked", trackState === "track-on" ? true : false);
 
-        //update localstore
-        Object.keys(panel.localStoreObj.matrix).filter(function(key){
-          var regex = new RegExp("^"+panel.yName+"|"+panel.yName+"$","g");
-          if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
-        });
+        //update localstore for row
+        panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.yName], panel.yName, trackState, currentState);
+
       } else { //cell-switch
         panel.boxObj.removeClass(currentState).addClass(trackState);//update bg for cells
 
-        //check if by switching this one cell on, all cells in the row/column are on, then update column/row switch accordingly
-        if(trackState === "track-on") {
-          if(!panel.elLk.rowContainer.find('div.xBoxes.'+panel.xName+'.track-off').length) { //there are no other cells in the column that are off
-            panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", true);
-            colStoreUpdate = 1;
-          }
-          if(!panel.elLk.rowContainer.find('div.xBoxes.'+panel.yName+'.track-off').length) { //there are no other cells in the row that are off
-            panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", true);
-            rowStoreUpdate = 1;
-          }
-        } else { //if by switching this one cell off, row/column are off, update switch
-          if(!panel.elLk.rowContainer.find('div.xBoxes.'+panel.xName+'.track-on').length) {
-            panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", false);
-            colStoreUpdate = 1;
-          }
-          if(!panel.elLk.rowContainer.find('div.xBoxes.'+panel.yName+'.track-on').length) {
-            panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", false);
-            rowStoreUpdate = 1;
-          }
-        }
-        //save in localstorage for state management
-        var storeKey = panel.xName+"_sep_"+panel.yName;
-        panel.localStoreObj.matrix[storeKey].state = trackState;
-
-        //store update for column
-        if(colStoreUpdate) {
-          Object.keys(panel.localStoreObj.matrix).filter(function(key){
-            var regex = new RegExp("^"+panel.xName,"g");
-            if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
-          });
+        //update localstore for cell and equivalent rows/columns
+        var trackComb = panel.xName+"_sep_"+panel.yName;
+        panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][trackComb], trackComb, trackState, currentState);
+        
+        //check if by switching this one cell on, all cells in the row are on, then update row switch accordingly
+        if(panel.localStoreObj[panel.dyStateKey][panel.yName].state[trackState.replace("track-","")] === panel.localStoreObj[panel.dyStateKey][panel.yName].total){
+          panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", trackState === "track-on" ? true : false);
         }
 
-        //store update for row
-        if(rowStoreUpdate) {
-          Object.keys(panel.localStoreObj.matrix).filter(function(key){
-            var regex = new RegExp("^"+panel.yName+"|"+panel.yName+"$","g");
-            if(key.match(regex)) { panel.localStoreObj.matrix[key].state = trackState; }
-          });
+        //And if by switching this one cell on, all cells in the column are on, then update column switch accordingly
+        if(panel.localStoreObj[panel.dxStateKey][panel.xName].state[trackState.replace("track-","")] === panel.localStoreObj[panel.dxStateKey][panel.xName].total){
+          panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", trackState === "track-on" ? true : false);
         }
       }
-      panel.setLocalStorage();
+      //panel.setLocalStorage();
       e.stopPropagation();
     });
 
     //choosing radio button - track renderer
-    panel.TrackPopupType.find('ul li input[type=radio]').off().on("click", function(e) {
+    panel.TrackPopupType.find('ul li input[type=radio]').off().on("change", function(e) {
       panel.updateRenderer($(this));
       e.stopPropagation();
     });
@@ -1633,57 +1722,40 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel         = this;
     var radioName     = clickedEle.attr("name");
     var renderClass   = clickedEle.attr("class").replace(/^_/,"");
-    var currentRender = panel.localStoreObj.matrix[panel.cellKey].render;
+    var currentRender = panel.localStoreObj.matrix[panel.cellKey].renderer;
     var dimension     = radioName === "column-radio" ? panel.xName : panel.yName;
-    var dimObj        = radioName === "column-radio" ? panel.localStoreObj.dx : panel.localStoreObj.dy
-    var colRenderStore, rowRenderStore = "";    
+    var storeObjKey   = panel.itemDimension(panel.xName);
 
     if(radioName === "column-radio" || radioName === "row-radio") {
       //update the radio button for cell as well
       panel.TrackPopupType.find('ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
 
-      //update the render class for all cells in the columns
-      panel.elLk.rowContainer.find('div.xBoxes._hasData.'+ dimension).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);//update bg for all cells in the column and also switch cell off
+      //update the render class for all cells in the columns, for rows only update cell belonging to matrix
+      var matrixClass = radioName === "row-radio" ? ".matrix" : "";
+      panel.elLk.rowContainer.find('div.xBoxes._hasData.'+ dimension+matrixClass).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
 
-      //console.log("Start timer now, below code is slow....")
-      //Update row/col renderer for each affected cell
-      Object.keys(dimObj).filter(function(key){
-          //check each row/column renderer are the same or not
-          panel.localStoreObj.matrix[key].render = panel.elLk.rowContainer.find("div.xBoxes._hasData."+key+".render-"+renderClass).length === panel.elLk.rowContainer.find("div.xBoxes."+key+"._hasData").length ? renderClass : "";
-      });
-      //console.log("Stop timer, code returns back.....");
-
-      //update localstore for clicked cell and column/row
-      panel.localStoreObj.matrix[panel.cellKey].render = renderClass;
-      panel.localStoreObj.matrix[dimension].render = renderClass;
-
+      panel.updateTrackStore(panel.localStoreObj[storeObjKey][dimension], dimension, "", "", renderClass, currentRender);
     } else { //cell-radio   
       //updating the render class for the cell
       panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
 
-      //save in localstorage for state management
-      panel.localStoreObj.matrix[panel.cellKey].render = renderClass;
+      //update localstore
+      panel.updateTrackStore(panel.localStoreObj[storeObjKey][panel.cellKey], panel.cellKey, "", "", renderClass, currentRender);
     }
 
-    //radio button for column renderer should be blank (nothing selected) unless they are the same renderer everywhere
-    if(panel.elLk.rowContainer.find("div.xBoxes._hasData."+panel.xName+".render-"+renderClass).length === panel.elLk.rowContainer.find("div.xBoxes."+panel.xName+"._hasData").length) {
+    //and if by changing this one cell, all cells in the column are same, then update column renderer accordingly
+    if(panel.localStoreObj[panel.dxStateKey][panel.xName].renderer[renderClass] === panel.localStoreObj[panel.dxStateKey][panel.xName].total){
       panel.TrackPopupType.find('ul li input[name=column-radio]._'+renderClass).prop("checked", true);
-      colRenderStore = renderClass;
     } else {
       panel.TrackPopupType.find('ul li input[name=column-radio]').prop("checked", false);
     }
 
-    //now for row render
-    if(panel.elLk.rowContainer.find("div.xBoxes._hasData."+panel.yName+".render-"+renderClass).length === panel.elLk.rowContainer.find("div.xBoxes."+panel.yName+"._hasData").length) {
+    //check if by changing this one cell, all cells in the row are same, then update row renderer accordingly
+    if(panel.localStoreObj[panel.dyStateKey][panel.yName].renderer[renderClass] === panel.localStoreObj[panel.dyStateKey][panel.yName].total){
       panel.TrackPopupType.find('ul li input[name=row-radio]._'+renderClass).prop("checked", true);
-      rowRenderStore = renderClass;
     } else {
       panel.TrackPopupType.find('ul li input[name=row-radio]').prop("checked", false);
     }
-
-    panel.localStoreObj.matrix[panel.xName].render = colRenderStore;
-    panel.localStoreObj.matrix[panel.yName].render = rowRenderStore;
-    panel.setLocalStorage();   
   },
 
   //function to check row and column renderer/state everytime an element is added/removed
@@ -1694,7 +1766,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //Adding element to matrix: check column/row renderer/state. By default new element renderer will be peakandsignal so if any other row/column is set to peak or signal then it will need to be blank.
     $.each(panel.localStoreObj.matrix, function(key, data){
       if(!key.match("_sep_")){ //only for row/column
-        if(data.render === "peak" || data.render === "signal") {
+        if(data.renderer === "peak" || data.renderer === "signal") {
           data.render = "";
         }
         //For state, by default new element will be on, so any existing row/column which is set to off need to be set to on
