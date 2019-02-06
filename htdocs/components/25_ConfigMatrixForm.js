@@ -55,7 +55,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       'normal': 'normal',
       'peak': 'compact',
       'signal': 'signal',
-      'peak-signal': 'signal_feaure'
+      'peak-signal': 'signal_feature'
     }
 
     this.resize();
@@ -252,8 +252,25 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
     panel.resetFilter("");    
 
-    $.each(this.localStoreObj.matrix, function (k, v) {
+    $.each(panel.json.extra_dimensions, function (i, key) {
+      $.each(panel.localStoreObj[key], function (k, v) {
+        if (v.state) {
+          set = key = '';
+          if (k.match(/_sep_/)) {
+            arr = k.split('_sep_');
+            key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
+            config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
 
+            if (panel.localStoreObj.dy[arr[0]]) {
+              key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
+              config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off'};
+            }
+          }
+        }
+      });
+    })
+
+    $.each(panel.localStoreObj.matrix, function (k, v) {
       if (v.state) {
         set = key = '';
         if (k.match(/_sep_/)) {
@@ -1018,6 +1035,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var parentTabContainer = obj.parentTabContainer;
     var parentRhSectionId = obj.rhSectionId;
     var noFilter_allBox = obj.noFilter;
+    var set = obj.set || '';
 
     var panel       = this;
     var ribbonObj   = {};
@@ -1035,7 +1053,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           ribbonObj[firstChar].push(item);
         }
       });
-      panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox);
+      panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox, set);
     } else  {
       var container = panel.el.find(container);
       var html = '<ul class="letter-content list-content _drag_select_zone">';
@@ -1053,7 +1071,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           parentTabId: parentRhSectionId,
           subTab: rhsection,
           selected: false,
-          set: obj.set || ''
+          set: set || ''
         };
 
       });
@@ -1228,7 +1246,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   // Function to create letters ribbon with left and right arrow (< A B C ... >) and add elements alphabetically
   // Arguments: data: obj of the data to be added with obj key being the first letter pointing to array of elements ( a -> [], b->[], c->[])
   //            Container is where to insert the ribbon
-  alphabetRibbon: function (data, container, parentTabContainer, parentRhSectionId, noFilter_allBox) {
+  alphabetRibbon: function (data, container, parentTabContainer, parentRhSectionId, noFilter_allBox, set) {
 
     var panel = this;
     var html  = "";
@@ -1257,7 +1275,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             parentTab: parentTabContainer,
             parentTabId: parentRhSectionId,
             subTab: rhsection,
-            selected: false
+            selected: false,
+            set: set
           };
         });
         letterHTML += '</ul>';
