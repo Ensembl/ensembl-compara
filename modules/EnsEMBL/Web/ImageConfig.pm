@@ -225,8 +225,22 @@ sub reset_user_settings {
   my $self          = shift;
   my $reset_type    = shift || '';
   my $user_settings = $self->get_user_settings;
+  my ($reset_tracks, $reset_order);
 
-  my ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
+  if ($reset_type eq 'reg_matrix') {
+    # Reset all reg matrix tracks
+    foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
+      if ($node_key =~/^reg_feats|^seg_Segmentation/) {
+        if (my $node = $self->get_node($node_key)) {
+          $node->delete_user_setting;
+          push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
+        }
+      }
+    }
+  }
+  else {
+    ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
+  }
 
   my @altered;
 
@@ -246,6 +260,7 @@ sub reset_user_settings {
 
     push @altered, 1 if delete $user_settings->{'_missing_nodes'}; # remove the data from other missing nodes too
   }
+
 
   return @altered;
 }
@@ -296,6 +311,9 @@ sub update_from_input {
 
   } else {
     my $diff = delete $params->{$self->config_type};
+
+    # Reset regulation matrix tracks by default
+    $self->altered($self->reset_user_settings('reg_matrix'));
 
     if (keys %$diff) {
       # update renderers
