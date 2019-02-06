@@ -228,7 +228,7 @@ div.tab-content.active        { display: inline-block; background-color: [[LIGHT
 
 div.tabs.cells                                                              { margin: 3em 1em 1em 1em; }
 div.cell-label                                                              { width: 75px; float: left; margin-top: 5px;}
-div.cells div.track-tab, div.dy div.track-tab                      { background-color: [[LIGHT_GREY]];  border: #ccc 1px solid; width: 100px; }
+div.cells div.track-tab, div.dy div.track-tab                      { background-color: [[LIGHT_GREY]];  border: #ccc 1px solid; width: 120px; }
 div.cells div.track-tab:hover, div.dy div.track-tab:hover          { background-color: [[WHITE]]; }
 div.cells div.track-tab.active,div.dy div.track-tab.active         { background-color: [[WHITE]];  border: #ccc 1px solid; }
 div.cells div.track-tab.active,div.dy div.track-tab.inactive:hover { background-color: [[LIGHT_GREY]]; opacity: 1; }

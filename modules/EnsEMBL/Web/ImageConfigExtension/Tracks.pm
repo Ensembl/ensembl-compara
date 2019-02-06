@@ -1090,7 +1090,7 @@ sub add_regulation_builds {
 
   #######  NOW DO BIG MATRIX NODE!
 
-  my $menu_title = 'Features by Cell Line';
+  my $menu_title = 'Features by Epigenomes';
   my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
       {
         menu   => 'matrix',
@@ -1098,7 +1098,7 @@ sub add_regulation_builds {
         matrix => {
           section     => $menu_title,
           description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'core'},
-          axes        => { x => 'Epigenome', y => 'Experimental data' },
+          axes        => { x => 'Epigenome', y => 'Experiments' },
         }
   }));
 

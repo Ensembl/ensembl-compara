@@ -505,8 +505,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.activateTabs();
     panel.updateShowHideLinks(item);
     panel.setLocalStorage();
-    panel.trackError('div#dx, div#dy, div#source');
-    panel.enableConfigureButton('div#dx, div#dy, div#source');
+    panel.trackError('div#dx, div#source');
+    panel.enableConfigureButton('div#dx, div#source');
   },
 
 
@@ -1367,10 +1367,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var xContainer = '<div  class="xContainer">';
     
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
-    var dyArray = Object.keys(panel.localStoreObj.dy);
+    var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
 
     // Add empty column
-    dyArray.unshift('');
+    if(panel.localStoreObj.dy) { dyArray.unshift(''); }
 
     // Adding 2 extra regulatory features tracks to show by default
     panel.json.extra_dimensions.sort().reverse().forEach(function(k) {

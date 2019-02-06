@@ -69,24 +69,23 @@ sub json_data {
     foreach (@{$evidence_info->{$set}{'classes'}}) {
       next if $_ eq 'Transcription Factor Complex'; #looks like an API bug, this shouldnt be coming back from the API as we dont need this for web display
       
-      my $evidence_group = $_ eq 'Transcription Factor' ? 'TFBS' :  $_;
+      my $evidence_group = $_ eq 'Transcription Factor' ? 'Transcription factors' :  $_;
       $evidence_group =~ s/[^\w\-]/_/g;
       $evidence->{$evidence_group} = {
-        "name"          => $_ eq 'Transcription Factor' ? 'TFBS' :  $_,
+        "name"          => $_ eq 'Transcription Factor' ? 'Transcription factors' :  $_,
         "listType"      => $_ eq 'Transcription Factor' ?  'alphabetRibbon' : '', #for the js side to list the track either its bullet point or alphabet ribbon 
         'set'           => "reg_feats_$set"
-      };
+      } if($evidence_group ne 'Polymerase');
 
       foreach (@{$adaptor->fetch_all_having_PeakCalling_by_class($_)}) {
         next if $_->class eq 'Transcription Factor Complex'; #ignoring this group as its not used
-        my $group = $_->class eq 'Transcription Factor' ? 'TFBS' : $_->class;
+        my $group = $_->class eq 'Transcription Factor' || $_->class eq 'Polymerase'  ? 'Transcription factors' : $_->class; #merging polymerase data and transcription factor data
         $group =~ s/[^\w\-]/_/g;
         push @{$evidence->{$group}->{"data"}}, $_->name;
         push @{$all_types{$set}},$_;
       }
     }
   }
-  
   $final->{data}->{evidence}->{'name'}   = 'evidence';
   $final->{data}->{evidence}->{'label'}  = 'Evidence';
   $final->{data}->{evidence}->{'data'} = $evidence;

@@ -100,7 +100,7 @@ sub configuration_content {
             </ul>
           </div>
 
-          <h5 class="result-header">$dimY <span class="error _dy">Please select $dimY</span></h5>
+          <h5 class="result-header">$dimY</h5>
           <div id="dy">
             <div class="result-content" id="Histone">
               <span class="_parent-tab-id hidden">dy-tab</span>
@@ -120,24 +120,15 @@ sub configuration_content {
                 <span class="hidden lhsection-id">Open_Chromatin-content</span>
               </ul>
             </div>
-            <div class="result-content" id="Polymerase">
+            <div class="result-content" id="Transcription_factors">
 							<span class="_parent-tab-id hidden">dy-tab</span>
-              <div class="sub-result-link">Polymerase</div>
+              <div class="sub-result-link">Transcription factors</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
               <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
-                <span class="hidden lhsection-id">Polymerase-content</span>
+                <span class="hidden lhsection-id">transcription_factors-content</span>
               </ul>
             </div>          
-            <div class="result-content" id="TFBS">
-              <span class="_parent-tab-id hidden">dy-tab</span>
-							<div class="sub-result-link">TFBS</div>
-              <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
-              <ul class="result-list hidden">
-                <span class="hidden lhsection-id">TFBS-content</span>
-              </ul>
-            </div>
           </div>
 
           <h5 class="result-header">Source <span class="error _source hidden">Please select Source</span></h5>
