@@ -213,15 +213,16 @@ div.cell-listing div.all-box                    { margin-top: -17px; }
 div.list-all-box                                {  }
 
 
-div.tabs                      { display: flex; }
-div.track-menu                { background-color: [[WHITE]]; }
-div.track-menu div.track-tab  { border-right: none; border-left: #ccc 1px solid; white-space: nowrap; display: flex; justify-content: center; }
-div.track-tab                 { background-color: [[WHITE]]; color: [[DARK_GREY]]; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px; width: 50%; text-align: center; padding: 5px 5px 10px 5px; margin: 0 0 0 -1px; }
-div.track-tab.active          { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  default; }
-div.track-tab:hover           { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
-div.track-tab.active:hover    { background-color: [[LIGHT_GREY]]; opacity: 1; }
-div.track-tab.inactive        { color: #cccccc; cursor: default; }
-div.track-tab.inactive:hover  { opacity: 1; }
+div.tabs                        { display: flex; }
+div.track-menu                  { background-color: [[WHITE]]; }
+div.track-menu div.track-tab    { border-right: none; border-left: #ccc 1px solid; white-space: nowrap; display: flex; justify-content: center; }
+div.track-tab                   { background-color: [[WHITE]]; color: [[DARK_GREY]]; float: left; border-right: #ccc 1px solid; border-bottom: #ccc 1px solid; cursor: pointer; height: 10px;  width: 50%; text-align: center; padding: 5px 5px 10px 5px; margin: 0 0 0 -1px; }
+div.track-tab.active            { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  default; }
+div.track-tab:hover             { background-color: [[LIGHT_GREY]]; opacity: 0.5; color: [[BLACK]]; }
+div.track-tab.active:hover      { background-color: [[LIGHT_GREY]]; opacity: 1; }
+div.track-tab.inactive          { color: #cccccc; cursor: default; }
+div.track-tab.inactive:hover    { opacity: 1; }
+div.track-tab span.tab-header   { margin-top: 4px; }
 
 div.tab-content               { display: none; width: 100%; }
 div.tab-content.active        { display: inline-block; background-color: [[LIGHT_GREY]]; }
@@ -293,8 +294,9 @@ span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b
 
 /* search box */
 div.search-box                                  { position: relative; margin-top: -2px; margin-left: 16px; margin-right: 8px; }
-div.search-box input.configuration_search_text  { width: 100%; }
-div.search-box img.search-icon                  { margin-left: -28px; }
+div.search-box input.configuration_search_text  { width: 100%; display: none; }
+div.search-box img.search-icon                  { margin-left: -1px; }
+div.search-box span.search-cross-icon           { display: none; padding: 4px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; }
 
 /* track configuration/matrix display */
 button.reset              { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; box-shadow: 1px 10px 5px -10px rgba(0,0,0,0.3); margin-top: -10px; }

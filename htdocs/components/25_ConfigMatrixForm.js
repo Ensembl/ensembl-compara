@@ -94,6 +94,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if($(this).hasClass('_configure') && !$(this).hasClass('inactive')) { panel.resetMatrix(); panel.displayMatrix(); }
     });
     
+    this.clickSearchIcon();
     this.clickSubResultLink();
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
@@ -117,20 +118,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     // Filtering functionality
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
       var inputText = $(this).val().trim();
-      panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
-      var _filtered = panel.getActiveTabContainer().find('li._filtered');
-      if (_filtered.length) {
-        _filtered.show();
-      }
-      else {
-        panel.getActiveTabContainer().find('li').show();
-      }
+
+      panel.resetFilter(inputText);
 
       var activeTabId = panel.getActiveTab();
-      if (inputText.length < 3) {
-        panel.updateAvailableTabsOrRibbons(activeTabId);
-        return;
-      }
       var re = new RegExp(inputText, "gi");
       var match = Object.keys(panel.elLk.lookup).filter(function(name) {
         return name.match(re) && panel.elLk.lookup[name].parentTabId === activeTabId;
@@ -195,6 +186,26 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
+
+  resetFilter: function (inputText) {
+    var panel = this;
+
+    panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
+    var _filtered = panel.getActiveTabContainer().find('li._filtered');
+    if (_filtered.length) {
+      _filtered.show();
+    }
+    else {
+      panel.getActiveTabContainer().find('li').show();
+    }
+
+    var activeTabId = panel.getActiveTab();
+    if (inputText.length < 3) {
+      panel.updateAvailableTabsOrRibbons(activeTabId);
+      return;
+    }
+  },  
+
   activateAlphabetRibbon: function(alphabetContainer) {
     var panel = this;
     var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
@@ -236,6 +247,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var config = {};
     var key, prefix;
     var arr = [];
+
+    //resetting filter box and content
+    panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
+    panel.resetFilter("");    
+
     $.each(this.localStoreObj.matrix, function (k, v) {
 
       if (v.state) {
@@ -369,6 +385,34 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
     
   },
+
+  // Function to show filter box when clicking on the search-icon
+  clickSearchIcon: function() {
+    var panel = this;
+    
+    panel.elLk.searchIcon      = panel.el.find("img.search-icon:visible");
+
+    panel.elLk.searchIcon.click("on", function(){
+      panel.elLk.searchIcon.parent().find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);;
+      panel.elLk.searchIcon.hide();      
+    });
+
+    panel.closeSearch();
+  },
+
+  closeSearch: function() {
+    var panel = this;
+
+    panel.elLk.searchCrossIcon      = panel.elLk.searchIcon.parent().find('span.search-cross-icon');
+
+    panel.elLk.searchCrossIcon.click("on", function(){
+      panel.elLk.searchIcon.parent().find('input.configuration_search_text, span.search-cross-icon').toggle("slide", function() {
+        panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
+        panel.resetFilter("");
+        panel.elLk.searchIcon.show();
+      });      
+    });    
+  },
   
   // Function to check divs that needs to have content to enable or disable apply filter button
   // Argument: ID of div to check for content
@@ -391,8 +435,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     } else {
       panel.el.find('button.filter').removeClass('active');
       panel.el.find('li._configure').addClass('inactive');
-      panel.elLk.displayButton.removeClass('active')
-
+      panel.elLk.displayButton.removeClass('active');
     }
   },
   
@@ -959,10 +1002,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     if(panel.el.find('div.track-configuration:visible').length){
       panel.el.find('button.view-track').addClass('active');
-      panel.el.find('button.filter').addClass("_edit").outerWidth("100px").html("View tracks");
+      panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").html("View tracks");
     } else {
       panel.el.find('button.view-track').removeClass('active');
-      panel.el.find('button.filter').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
+      panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
     }
   },
 
@@ -1491,8 +1534,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find('div.matrix-container .xContainer, div.matrix-container .yBoxWrapper').width(hwidth);
 
     panel.cellClick(); //opens popup
-    panel.setLocalStorage();
-    //panel.checkRowColumn(); //update renderer/state for existing element //comment outbecause of performance issue with big matrix
+    panel.setLocalStorage();    
   },
 
   resetMatrix: function() {
@@ -1756,52 +1798,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     } else {
       panel.TrackPopupType.find('ul li input[name=row-radio]').prop("checked", false);
     }
-  },
-
-  //function to check row and column renderer/state everytime an element is added/removed
-  checkRowColumn: function(element) {
-    var panel = this;
-    var once  = 0;
-
-    //Adding element to matrix: check column/row renderer/state. By default new element renderer will be peakandsignal so if any other row/column is set to peak or signal then it will need to be blank.
-    $.each(panel.localStoreObj.matrix, function(key, data){
-      if(!key.match("_sep_")){ //only for row/column
-        if(data.renderer === "peak" || data.renderer === "signal") {
-          data.render = "";
-        }
-        //For state, by default new element will be on, so any existing row/column which is set to off need to be set to on
-        if(data.state === "track-off") {
-          data.state = "track-on";
-        }
-      }      
-    });
-
-    // panel.elLk.rowContainer.each(function(){
-    //   once++;
-
-    //   var yName    = $(this).find("div.xBoxes._hasData").data("track-y");
-    //   var renderer = panel.localStoreObj.matrix[$(this).find("div.xBoxes._hasData").data("track-x")+"_sep_"+yName].render;
-
-    //   if($(this).find("div.xBoxes._hasData.render-"+renderer).length === $(this).find("div.xBoxes._hasData").length) {
-    //     panel.localStoreObj.matrix[yName].render = renderer;
-    //   } else {
-    //     panel.localStoreObj.matrix[yName].render = "";
-    //   }
-    //   //need to do this only once
-    //   if(once === 1) {
-    //     $(this).find("div.xBoxes").each(function(){
-    //       var xName = $(this).data("track-x");
-    //       if (!xName) return;
-    //       if(panel.elLk.matrixContainer.find("div.xBoxes."+xName+"._hasData.render-"+renderer).length === panel.elLk.matrixContainer.find("div.xBoxes."+xName+"._hasData").length) {
-    //         panel.localStoreObj.matrix[xName].render = renderer;
-    //       } else {
-    //         panel.localStoreObj.matrix[xName].render = "";
-    //       }
-    //     });
-    //   }
-    // });
-
-    panel.setLocalStorage();
   }
 
 });

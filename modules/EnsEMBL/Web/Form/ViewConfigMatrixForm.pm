@@ -73,18 +73,20 @@ sub build {
       <div class="track-panel active" id="track-content">
         <div class="tabs track-menu">
           <div class="track-tab active" id="dx-tab">
-            <span> $dimX </span>
+            <span class="tab-header"> $dimX </span>
             <span class="hidden content-id">dx-content</span>
             <div class="search-box">
-              <input class="configuration_search_text" placeholder="Search" id="dx_search" name="matrix_search">
+              <input class="configuration_search_text" placeholder="Find..." id="dx_search" name="matrix_search">
+              <span class="search-cross-icon">x</span>
               <img src="/i/16/search.png" class="search-icon" />
             </div>
           </div>
           <div class="track-tab" id="dy-tab">
-            <span> $dimY </span>
+            <span class="tab-header"> $dimY </span>
             <span class="hidden content-id">dy-content</span>
             <div class="search-box">
-              <input class="configuration_search_text" placeholder="Search" id="dy_search" name="matrix_search">
+              <input class="configuration_search_text" placeholder="Find..." id="dy_search" name="matrix_search">
+              <span class="search-cross-icon">x</span>
               <img src="/i/16/search.png"  class="search-icon"/>
             </div>
           </div>
