@@ -1090,7 +1090,7 @@ sub add_regulation_builds {
 
   #######  NOW DO BIG MATRIX NODE!
 
-  my $menu_title = 'Features by Epigenomes';
+  my $menu_title = 'Features by Epigenome';
   my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
       {
         menu   => 'matrix',
