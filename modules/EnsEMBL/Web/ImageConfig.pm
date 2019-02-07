@@ -227,6 +227,8 @@ sub reset_user_settings {
   my $user_settings = $self->get_user_settings;
   my ($reset_tracks, $reset_order);
 
+  my @altered;
+
   if ($reset_type eq 'reg_matrix') {
     # Reset all reg matrix tracks
     foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
@@ -241,8 +243,6 @@ sub reset_user_settings {
   else {
     ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
   }
-
-  my @altered;
 
   if ($reset_order && @{$self->{'track_order'}}) {
     $self->{'track_order'} = [];

@@ -272,7 +272,8 @@ div.alphabet-div                                    { position: relative; margin
 div.alphabet-div.active                             { cursor: default; background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; opacity: 0.9; }
 div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: default; }
 div.ribbon-content                                  { display: flex; padding-left: 16px; overflow: auto; }
-div.alphabet-content                                { display: none; position: relative; }
+div.ribbon-content ul                               { width: 100%;}
+div.alphabet-content                                { display: none; position: relative; width: 90%; }
 div.alphabet-content.active                         { display: block; }
 div.config_wrapper div.config ul.letter-content li  { margin: 5px 0; cursor: default; margin-top: 0;}
 div.config_wrapper div.config ul.list-content       { padding-left: 48px; columns: 4 100px; overflow-y: auto; clear: right;}
