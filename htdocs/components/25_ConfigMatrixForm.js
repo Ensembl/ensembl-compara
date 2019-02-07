@@ -272,7 +272,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
             config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
 
-            if (panel.localStoreObj.dy[arr[0]]) {
+            if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
               key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
               config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off'};
             }
@@ -289,7 +289,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
           config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
 
-          if (panel.localStoreObj.dy[arr[0]]) {
+          if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
             key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
             config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off'};
           }
