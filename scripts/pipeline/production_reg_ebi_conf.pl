@@ -144,7 +144,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -host => 'mysql-ens-compara-prod-1',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4523,
+    -port => 4485,
     -group => 'core',
     -species => 'ancestral_prev',
     -dbname => "ensembl_ancestral_$prev_release",
