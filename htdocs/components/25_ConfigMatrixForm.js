@@ -99,7 +99,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
-    this.clickDisplayButton(this.elLk.displayButton, this.el.find("li._configure"));
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
@@ -109,11 +108,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }      
     });
 
-    this.el.find('.view-track').on('click', function() {
-      panel.addExtraDimensions();
-      Ensembl.EventManager.trigger('modalClose');
-
+    this.el.find('.view-track, button.showMatrix').on('click', function() {
+      if($(this).hasClass('_edit') || $(this).hasClass('view-track')) { 
+        panel.addExtraDimensions();
+        Ensembl.EventManager.trigger('modalClose');
+      }
     });
+
+    //this has to be after on click event to capture the button class before it gets changed
+    this.clickDisplayButton(this.elLk.displayButton, this.el.find("li._configure"));
 
     // Filtering functionality
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
