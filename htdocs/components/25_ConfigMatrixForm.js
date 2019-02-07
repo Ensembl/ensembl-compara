@@ -119,7 +119,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
       var inputText = $(this).val().trim();
 
-      panel.resetFilter(inputText);
+      if (!panel.resetFilter(inputText)) {
+        return;
+      };
 
       var activeTabId = panel.getActiveTab();
       var re = new RegExp(inputText, "gi");
@@ -134,17 +136,17 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         panel.elLk[activeTabId].container.find('li').addClass('_search_hide').hide();
       }
-      panel.updateAvailableTabsOrRibbons(activeTabId);
+      panel.updateAvailableTabsOrRibbons(activeTabId, 'searchFilter');
     });
   },
 
   // Udpate available tabs or ribbons after filtering
-  updateAvailableTabsOrRibbons(tabId) {
+  updateAvailableTabsOrRibbons(tabId, filterType) {
     var panel = this;
     var tabLookup = panel.elLk[tabId];
     var dimension_name = panel[tabId];
     if (!tabLookup.haveSubTabs) {
-      panel.activateAlphabetRibbon(tabLookup.container);
+      panel.activateAlphabetRibbon(tabLookup.container, filterType);
     }
     else {
       // For subtabs
@@ -169,7 +171,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
           // Activate available letters if list type is alphabetRibbon
           if (panel.json.data[panel[tabId]].data[key].listType === 'alphabetRibbon') {
-            panel.activateAlphabetRibbon(tab_content_ele);
+            panel.activateAlphabetRibbon(tab_content_ele, filterType);
           }
         }
       });
@@ -201,12 +203,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     var activeTabId = panel.getActiveTab();
     if (inputText.length < 3) {
-      panel.updateAvailableTabsOrRibbons(activeTabId);
-      return;
+      panel.updateAvailableTabsOrRibbons(activeTabId, 'searchFilter');
+      return 0;
+    }
+    else {
+      return 1;
     }
   },  
 
-  activateAlphabetRibbon: function(alphabetContainer) {
+  activateAlphabetRibbonx: function(alphabetContainer) {
     var panel = this;
     var alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
     var fl = 1;
@@ -225,8 +230,34 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         ribbon.addClass('inactive');
       }
-    });    
+    });
+  },
 
+  activateAlphabetRibbon: function(alphabetContainer, filterType) {
+    var panel = this;
+    var activeRibbon, activeRibbonClass;
+    var fl = 1;
+
+    alphabetContainer.find('.ribbon-banner .alphabet-div').removeClass('active').addClass('inactive');
+
+    var filterClass = filterType === 'searchFilter' ? 'li:not("._search_hide")' : 'li._filtered';
+    var availableRibbonContainers = alphabetContainer.find(filterClass).closest('.alphabet-content');
+
+    if (!availableRibbonContainers.length && filterType === 'filterData') {
+      availableRibbonContainers = alphabetContainer.find('li').closest('.alphabet-content');
+    }
+
+    $.each(availableRibbonContainers, function(i, ribbonContent) {
+      console.log($(ribbonContent).data());
+      activeRibbonClass = '.' + $(ribbonContent).data('ribbon');
+      activeRibbon = alphabetContainer.find(activeRibbonClass);
+      activeRibbon.removeClass('inactive');
+      if (fl === 1) {
+        // Move to first active tab
+        panel.toggleTab(activeRibbon, alphabetContainer, 1, 1, true);
+        fl = 0;
+      }
+    });
   },
 
   addExtraDimensions: function() {
@@ -250,7 +281,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     //resetting filter box and content
     panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
-    panel.resetFilter("");    
+    panel.resetFilter("");
 
     $.each(panel.json.extra_dimensions, function (i, key) {
       $.each(panel.localStoreObj[key], function (k, v) {
@@ -1164,77 +1195,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     var resetCount = filters_class === '' ? 1 : 0;
 
-    // Code to activate/deactivate ribbons based on availability
-    var mainRHSection = panel.elLk.trackPanel.find(tabB_containerId).find("span.rhsection-id").html();
-    // loop for each li to find out where the parent content is and update count
-    $.each(panel.elLk.trackPanel.find(tabB_containerId).find('span.rhsection-id'), function(d, tab) {
-      var rhsectionId = $(tab).html();
-      var newCount    = 0;
-      var parentTab   = panel.elLk.trackPanel.find(tab).closest(".tab-content").find("li").data("parent-tab")+"-tab";
-
-      if(panel.el.find("div#"+rhsectionId+".result-content").length) {
-        var li_class = resetCount ? "" : "._filtered";  //if resetcount we need to get all li
-        $.each(panel.elLk.trackPanel.find(tabB_containerId+' li'+li_class), function(index, elem) {
-          if(rhsectionId === $(elem).closest("div.tab-content").find('span.rhsection-id').html()) {
-            newCount++;
-          } 
-        });
-
-        if($(tab).closest(".tab-content").find("div.all-box text._num").length) {
-          $(tab).closest(".tab-content").find("div.all-box text._num").html("("+newCount+")");
-        }
-        if(!newCount) {
-          panel.elLk.trackPanel.find("div#"+parentTab).addClass("inactive");
-          panel.elLk.trackPanel.find("div#"+rhsectionId+".result-content").hide();
-        } else {
-          //making sure rhsection is shown and remove inactive class
-           panel.elLk.trackPanel.find("div#"+rhsectionId+".result-content").show();
-          panel.elLk.trackPanel.find("div#"+parentTab).removeClass("inactive");
-        }
-
-        var alphabetContent = $(tab).closest(".tab-content").find("div.ribbon-content div.alphabet-content");
-        //if there is alphabet ribbon, going through alphabet ribbon, activating and deactivating the one with/without elements
-        if(alphabetContent.length) {
-          var setActive = 0; //used to set active ribbon
-          var activeCount = 0;
-          $(tab).closest(".tab-content").find("div.letters-ribbon div.active").removeClass("active"); //removing existing active first
-          $(tab).closest(".tab-content").find("div.alphabet-content.active").removeClass("active");
-
-          $.each(alphabetContent, function(i2, ac_ele) {
-            var parentRibbon = $(ac_ele).data("ribbon");
-
-            if($(ac_ele).find("li._filtered").length) {
-              activeCount++;
-              //toggling tab for first active class adding active class to first alphabet with content in ribbon
-              if(!$(tab).closest(".tab-content").find("div.letters-ribbon div.active").length){
-                 panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1, 1);
-              }
-              $(tab).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); //remove inactive class in case its present
-            } else { //empty
-
-              if($(ac_ele).find("li").length && resetCount) { //resetting everything
-                $(tab).closest(".tab-content").find("div."+parentRibbon).removeClass("inactive"); // remove inactive from alphabet ribbon with content 
-                $(tab).closest(".tab-content").find("div.rarrow").removeClass("inactive").addClass("active");
-                $("div#"+mainRHSection+" div.result-content").show(); //make sure all rhSection link/count are shown
-
-                if(!$(tab).closest(".tab-content").find("div.letters-ribbon div.active").length){
-                   panel.toggleTab($(tab).closest(".tab-content").find("div."+parentRibbon), $(tab).closest(".tab-content"), 1, 1);
-                }                
-              } else { //empty with no li at all
-                $(tab).closest(".tab-content").find("div."+parentRibbon).addClass("inactive");
-              }
-            }
-          });
-
-          //disable rarrow and larrow if there is only one ribbon available
-          if(activeCount === 1) {
-            $(tab).closest(".tab-content").find("div.larrow, div.rarrow").addClass("inactive");
-          } else {
-            $(tab).closest(".tab-content").find("div.rarrow").addClass("active"); 
-          }
-        }
-      }
-    });
+    var tabToFilter = {
+      'dx': 'dy',
+      'dy': 'dx'
+    }
+    panel.updateAvailableTabsOrRibbons(tabToFilter[panel.elLk.lookup[item].parentTabId], 'filterData');
   },
 
   getActiveAlphabets: function(container) {
