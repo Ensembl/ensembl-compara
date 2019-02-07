@@ -211,7 +211,7 @@
          },
          {
             "component": "Production tasks",
-            "description" : "Only if we have rerun the EPO Primates alignment",
+            "description" : "Only if we have rerun the EPO Primates alignment. Run the pipeline Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf",
             "summary": "Dump the ancestral alleles for the Variation team",
             "name_on_graph": "Ancestral Alleles"
          },
@@ -250,7 +250,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
          },
          {
@@ -286,7 +286,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+handover+of+databases",
             "summary": "Age of Base",
             "name_on_graph": "Age of Base:Human"
          },

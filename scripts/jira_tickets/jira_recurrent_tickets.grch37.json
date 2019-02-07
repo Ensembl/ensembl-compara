@@ -119,7 +119,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
          },
          {
