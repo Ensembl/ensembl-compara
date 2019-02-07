@@ -37,7 +37,7 @@ sub configuration_content {
           <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
         </div>
         <div class="horizontal-sub-header">$dimY</div>
-        <button class="fade-button reset">Reset</button>
+        <button class="fade-button reset-matrix">Reset</button>
         <div class="track-popup column-cell">
           <ul>
             <li>

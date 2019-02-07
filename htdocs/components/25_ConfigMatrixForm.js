@@ -91,7 +91,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
       panel.toggleButton();
       e.preventDefault();
-      if($(this).hasClass('_configure') && !$(this).hasClass('inactive')) { panel.resetMatrix(); panel.displayMatrix(); }
+      if($(this).hasClass('_configure') && !$(this).hasClass('inactive')) { panel.emptyMatrix(); panel.displayMatrix(); }
     });
     
     this.clickSearchIcon();
@@ -99,6 +99,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
+    this.resetMatrix();
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
@@ -425,11 +426,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   clickSearchIcon: function() {
     var panel = this;
     
-    panel.elLk.searchIcon      = panel.el.find("img.search-icon:visible");
+    panel.elLk.searchIcon = panel.el.find("img.search-icon");
 
     panel.elLk.searchIcon.click("on", function(){
-      panel.elLk.searchIcon.parent().find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);;
-      panel.elLk.searchIcon.hide();      
+      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);      
+      panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').hide();
     });
 
     panel.closeSearch();
@@ -438,13 +439,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   closeSearch: function() {
     var panel = this;
 
-    panel.elLk.searchCrossIcon      = panel.elLk.searchIcon.parent().find('span.search-cross-icon');
+    panel.elLk.searchCrossIcon = panel.elLk.searchIcon.parents('div.search-box').find('span.search-cross-icon');
 
     panel.elLk.searchCrossIcon.click("on", function(){
-      panel.elLk.searchIcon.parent().find('input.configuration_search_text, span.search-cross-icon').toggle("slide", function() {
-        panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
+      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').toggle("slide", function() {
+        panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').val("");
         panel.resetFilter("");
-        panel.elLk.searchIcon.show();
+        panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').show();
       });      
     });    
   },
@@ -795,7 +796,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.toggleTab(tabClick, panel.el.find("div.large-breadcrumbs"));
         panel.toggleButton();        
       }
-      panel.resetMatrix();
+      panel.emptyMatrix();
       panel.displayMatrix();
     });
   },
@@ -1508,11 +1509,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.setLocalStorage();    
   },
 
-  resetMatrix: function() {
+  emptyMatrix: function() {
     var panel = this;
 
-    panel.el.find('div.matrix-container').html('');    
-    //panel.localStoreObj.matrix = {}; //Empty matrix from localStoreObj when clicking reset
+    panel.el.find('div.matrix-container').html('');        
+  },
+
+  resetMatrix: function() {
+    var panel = this;
+    
+    this.elLk.resetMatrixButton = panel.elLk.matrixContainer.find('button.reset-matrix');
+
+    this.elLk.resetMatrixButton.click("on", function() {
+      //console.log(">>>>>");
+    });
   },
 
   cellClick: function() {

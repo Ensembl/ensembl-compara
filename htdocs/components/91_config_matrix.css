@@ -300,7 +300,7 @@ div.search-box img.search-icon                  { margin-left: -1px; }
 div.search-box span.search-cross-icon           { display: none; padding: 4px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; }
 
 /* track configuration/matrix display */
-button.reset              { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; box-shadow: 1px 10px 5px -10px rgba(0,0,0,0.3); margin-top: -10px; }
+button.reset-matrix       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; box-shadow: 1px 10px 5px -10px rgba(0,0,0,0.3); margin-top: -10px; }
 div.configuration-legend  { display: inline-block; float: left; margin-left: -30px; }
 div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }
 div.horizontal-sub-header { width: 110px; margin: 0 auto; }
