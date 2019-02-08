@@ -217,8 +217,26 @@
          },
          {
             "component": "Production tasks",
+            "description": "ImportAltAlleGroupsAsHomologies_conf",
+            "summary": "Import the Alt-allele groups",
+            "name_on_graph": "Alt-alleles import"
+         },
+         {
+            "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
+         },
+         {
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+handover+of+databases",
+            "summary": "Age of Base",
+            "name_on_graph": "Age of Base:Human"
+         },
+         {
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
+            "name_on_graph": "Synteny",
+            "summary": "Run the Synteny pipeline"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
@@ -243,21 +261,8 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
-            "name_on_graph": "Synteny",
-            "summary": "Run syntenies pipeline on release db"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "ImportAltAlleGroupsAsHomologies_conf",
-            "summary": "Run Projection pipeline"
          },
          {
             "assignee": "<RelCo>",
@@ -282,13 +287,6 @@
             "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Runthehealthchecks",
             "summary": "Run HCs"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+handover+of+databases",
-            "summary": "Age of Base",
-            "name_on_graph": "Age of Base:Human"
          },
          {
             "component": "Relco tasks",

@@ -112,6 +112,12 @@
          },
          {
             "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "name_on_graph": "Synteny",
+            "summary": "Run the Synteny pipeline"
+         },
+         {
+            "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
             "summary": "Protein-trees WGA Orthology QC",
             "name_on_graph": "Protein-trees WGA Orthology QC"
@@ -141,13 +147,6 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-MergeGeneTrees",
             "summary": "Merge GeneTrees"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
-            "name_on_graph": "Synteny",
-            "summary": "Run syntenies pipeline"
          },
          {
             "assignee": "<RelCo>",

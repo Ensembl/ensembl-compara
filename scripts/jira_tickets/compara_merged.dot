@@ -4,7 +4,7 @@ digraph {
     {"EPO", "All LastZ"} -> "EPO-2X";
     "EPO" -> "Age of Base";
     "EPO" -> "Ancestral Alleles";
-    "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing" };
+    "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing", "Alt-alleles import" };
     "Protein-trees" -> "Protein-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
     "ncRNA-trees" -> "ncRNA-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
     {"All LastZ", "EPO"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
