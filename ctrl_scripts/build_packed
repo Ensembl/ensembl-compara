@@ -73,7 +73,7 @@ if($ARGV[0] eq "ALL") {
 } else {
   echosys("cp -v $dir/conf/packed/$_.* $dest/conf/packed") for @ARGV;
 }
-echosys("cp -v $dir/conf/*.config.packed $dest/conf/packed");
+echosys("cp -v $dir/conf/*.config.packed $dest/conf/");
 #rmtree($dir,{ safe => 1 });
 
 1;
