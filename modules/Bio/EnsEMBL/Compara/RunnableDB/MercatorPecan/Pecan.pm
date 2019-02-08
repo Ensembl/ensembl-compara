@@ -170,6 +170,11 @@ sub run
 	 $@ =~ /OutOfMemoryError/ ) {
 	  print "Failed due to insufficient heap space or memory\n";
 	  $self->param('more_heap', 1);
+      } elsif ($@ =~ /Exception in thread "main" java.lang.IllegalArgumentException/m) {
+              # Not sure why this happens
+              # Let's discard this job.
+              $self->input_job->autoflow(0);
+              $self->complete_early( "Pecan failed to align the sequences. Skipping." );
       } else {
 	  throw("Pecan execution failed $@\n");
       }
@@ -183,7 +188,7 @@ sub write_output {
     if ($self->param('more_heap')) {
 	#Flow to next memory. 
         $self->complete_early_if_branch_connected("Need more memory.\n", 2);
-
+        die "Pecan needs more memory but no other analysis is connected on branch #2";
     } else {
 	#Job succeeded, write output
         $self->call_within_transaction( sub {
@@ -778,7 +783,8 @@ sub _run_ortheus {
 
     #run Ortheus.py without running MAKE_FINAL_ALIGNMENT ie OrtheusC
     $self->param('options', ['-y']);
-    Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
+    my $ortheus_output = Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
+    print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
 
     my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
     if (-e $tree_file) {
@@ -798,7 +804,7 @@ sub _run_ortheus {
 
 	print STDOUT "**NEWICK: $newick\nFILES: ", join(" -- ", @$all_files), "\n";
     } else {
-	throw("Ortheus was unable to create a tree");
+	throw("Ortheus was unable to create a tree: $ortheus_output");
     }
 }
 

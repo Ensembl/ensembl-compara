@@ -80,6 +80,7 @@ sub fetch_input {
 
         my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param_required('genome_db_id'));
         my $genome_db_file = $genome_db->_get_genome_dump_path($self->param_required('genome_dumps_dir'));
+        die "$genome_db_file doesn't exist" unless -e $genome_db_file;
         $self->dbc->disconnect_if_idle();
         $self->param_required('mlss_id');
         my $anchor_dba = $self->get_cached_compara_dba('compara_anchor_db');
@@ -113,6 +114,7 @@ sub fetch_input {
         $self->param('target_file', $genome_db_file);
 
         return unless $self->param('with_server');
+        die "Indexes for $genome_db_file doen't exist" unless -e "$genome_db_file.esi";
         $self->param('index_file', "$genome_db_file.esi");
         $self->param('log_file', $self->worker_temp_directory . "/server_gdb_". $self->param_required('genome_db_id'). '.log.' . ($self->worker->dbID // 'standalone'));
         $self->param('max_connections', 1);
@@ -283,6 +285,8 @@ sub start_server_on_port {
     if ($pid = fork) {
       last;
     } elsif (defined $pid) {
+      mkdir $self->worker_temp_directory.'/'.$port;
+      chdir $self->worker_temp_directory.'/'.$port;
       exec("exec $command") == 0 or $self->throw("Failed to run $command: $!");
     }
   }

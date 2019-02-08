@@ -72,7 +72,7 @@ sub default_options {
             'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in the alignment db
             'ortholog_mlss_id' => undef,  # if undef, will use all the orthologs found in the ptree db
             #DumpGFFAlignmentsForSynteny parameters
-            'dumpgff_capacity'  => 3,
+            'dumpgff_capacity'  => 20,
             'include_non_karyotype' => 0, #over-ride check for has_karyotype in ListChromosomes and DumpGFFAlignmentsForSynteny
             'level' => 1, #which GenomicAlignBlock level_id to use. Level=>1 will only use level 1 blocks, level=>2 will use level 1 and level 2 blocks. For human vs chimp, we would use level=>2
 

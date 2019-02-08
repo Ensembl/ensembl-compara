@@ -92,6 +92,11 @@ Mark all the objects that are created / used (GenomeDB, SpeciesSet, MethodLinkSp
 as "current", i.e. with a first_release and an undefined last_release.
 Default: not set
 
+=item B<[--retire_unmatched]>
+
+Retire the MethodLinkSpeciesSets that are not defined by the XML file.
+Default: not set
+
 =item B<[--dry-run]>
 
 When given, the script will not store / update anything in the database.
@@ -124,6 +129,7 @@ my $xml_config;
 my $xml_schema;
 my $verbose;
 my $dry_run;
+my $output_file;
 
 GetOptions(
     'help'          => \$help,
@@ -133,6 +139,7 @@ GetOptions(
     'schema=s'      => \$xml_schema,
     'release'       => \$release,
     'verbose|debug' => \$verbose,
+    'output_file=s' => \$output_file,
     'retire_unmatched'          => \$retire_unmatched,
     'dryrun|dry_run|dry-run'    => \$dry_run,
 );
@@ -502,39 +509,46 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 
 
 my $current_version = software_version();
-my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS);
+my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS CACTUS_HAL_PW GERP_CONSTRAINED_ELEMENT GERP_CONSERVATION_SCORE);
 
-print "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $mlss_ids_fh;
+if ($output_file) {
+    open($mlss_ids_fh, '>', $output_file) or die "Cannot open file '$output_file'\n";
+} else {
+    $mlss_ids_fh = \*STDOUT;
+}
+
+print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 my $n = 0;
 foreach my $mlss (@mlsss_created) {
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss->toString, "\n";
+        print $mlss_ids_fh $mlss->toString, "\n";
     } else {
         $n++
     }
 }
-print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
 $n = 0;
 foreach my $mlss (@mlsss_retired) {
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss->toString, "\n";
+        print $mlss_ids_fh $mlss->toString, "\n";
     } else {
         $n++
     }
 }
-print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print "\nWhat else is new in e$current_version ?\n-------------------------\n";
+print $mlss_ids_fh "\nWhat else is new in e$current_version ?\n-------------------------\n";
 $n = 0;
 foreach my $mlss (@mlsss_existing) {
     next if !$mlss->first_release || $mlss->first_release != $current_version;
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss->toString, "\n";
+        print $mlss_ids_fh $mlss->toString, "\n";
     } else {
         $n++
     }
 }
-print "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 

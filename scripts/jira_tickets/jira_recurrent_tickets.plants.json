@@ -47,14 +47,8 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database",
-            "summary": "Add new genomes to the master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Create+the+collections+and+MethodLinkSpeciesSets",
-            "summary": "Create the collection and MethodLinkSpeciesSets to the master database"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database+and+create+the+collections+and+mlss_ids",
+            "summary": "Add new genomes to the master and create the collection and MethodLinkSpeciesSets"
          },
          {
             "assignee": "<RelCo>",
@@ -83,19 +77,19 @@
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Members",
             "summary": "Run the member loading pipeline",
-            "ticket_map_name": "Member loading"
+            "name_on_graph": "Member loading"
          },
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Genomedumps",
             "summary": "Run the genome dumping pipeline",
-            "ticket_map_name": "Genome dumps"
+            "name_on_graph": "Genome dumps"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Species-tree",
             "summary": "Build the species-tree",
-            "ticket_map_name": "Species-tree"
+            "name_on_graph": "Species-tree"
          }
       ],
       "summary": "<Division> Release <version> Production preprocessing"
@@ -108,19 +102,19 @@
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
             "summary": "Protein trees",
-            "ticket_map_name": "Protein-trees"
+            "name_on_graph": "Protein-trees"
          },
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
             "summary": "All LastZ",
-            "ticket_map_name": "All LastZ"
+            "name_on_graph": "All LastZ"
          },
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
             "summary": "Protein-trees WGA Orthology QC",
-            "ticket_map_name": "Protein-trees WGA Orthology QC"
+            "name_on_graph": "Protein-trees WGA Orthology QC"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
@@ -140,7 +134,7 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-MergeDNAdata",
             "summary": "Merge DNA data",
-            "ticket_map_name": "All alignments for WGA Orthology QC"
+            "name_on_graph": "All alignments for WGA Orthology QC"
          },
          {
             "assignee": "<RelCo>",
@@ -152,7 +146,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
-            "ticket_map_name": "Synteny",
+            "name_on_graph": "Synteny",
             "summary": "Run syntenies pipeline"
          },
          {

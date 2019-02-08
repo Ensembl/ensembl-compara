@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf
 
 This is an EBI specific version of the general Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf -pipeline_name <> -alignment_db <> -curr_release_db <> -division <> -host <> -port <> --reg_conf <>
 
 =head1 CONTACT
 

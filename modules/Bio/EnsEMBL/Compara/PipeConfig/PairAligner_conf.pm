@@ -521,7 +521,7 @@ sub pipeline_analyses {
 			      2 => [ 'alignment_chains' ],
 			     },
                -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
-	       -rc_name => '1Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
  	    {  -logic_name => 'alignment_chains',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -602,7 +602,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
                -can_be_empty => 1,
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '4Gb_job',
  	    },
  	    {
 	       -logic_name => 'remove_inconsistencies_after_net',

@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf -mlss_id <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_conf -mlss_id <> -species_set_name <>
 
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
@@ -75,7 +75,7 @@ sub default_options {
         'port' => 4522,
 
         'division' => 'ensembl',
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
         # Where we get the genomes from
         'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',

@@ -64,7 +64,7 @@ sub default_options {
             #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             'division' => 'ensembl',
-            'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+            'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
             
             #Location url/alias of database to get EPO GenomicAlignTree objects from
             'compara_db' => 'compara_curr',

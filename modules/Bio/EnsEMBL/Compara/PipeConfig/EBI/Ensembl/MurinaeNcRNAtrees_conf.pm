@@ -64,8 +64,8 @@ sub default_options {
 
             # the production database itself (will be created)
             # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-ens-compara-prod-4',
-            'port' => 4401,
+            #'host' => 'mysql-ens-compara-prod-4',
+            #'port' => 4401,
 
             # Must be given on the command line
             #'mlss_id'          => 40100,
@@ -74,13 +74,14 @@ sub default_options {
             'rel_suffix'       => '',
 
             'division'          => 'murinae',
+            'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
             'dbID_range_index'  => 19,
             'label_prefix'      => 'mur_',
 
             'skip_epo'          => 1,
 
             # Where to draw the orthologues from
-            'ref_ortholog_db'   => 'mysql://ensro\@mysql-ens-compara-prod-4:4401/mateus_compara_nctrees_90',
+            'ref_ortholog_db'   => 'compara_nctrees',
 
             'pipeline_name'    => 'murinae_nctrees_'.$self->o('rel_with_suffix'),
 
@@ -90,7 +91,7 @@ sub default_options {
             'initialise_cafe_pipeline'  => 0,
 
             # For the homology_id_mapping
-            'prev_rel_db'  => 'mysql://ensro\@mysql-ens-compara-prod-1:4485/ensembl_compara_89',
+            'prev_rel_db'  => 'compara_prev',
     };
 }   
 
@@ -103,19 +104,14 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     }
 }
 
-sub pipeline_analyses {
+sub tweak_analyses {
     my $self = shift;
+    my $analyses_by_name = shift;
 
-    ## The analysis defined in this file
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
-
-    $analyses_by_name{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
-    $analyses_by_name{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
-    $analyses_by_name{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
-
-    return $all_analyses;
+    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [ 'mus_musculus' ];
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
+    $analyses_by_name->{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
 }
 
 

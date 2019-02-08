@@ -87,10 +87,14 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
-    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= ($self->input_job->analysis->max_retry_count // $self->db->hive_pipeline->hive_default_max_retry_count)) {
+    if (defined $self->param('escape_branch')) {
+      my $max_retry_count = $self->input_job->analysis->max_retry_count;
+      $max_retry_count //= $self->db->hive_pipeline->hive_default_max_retry_count if $self->db;
+      if (defined $max_retry_count && ($self->input_job->retry_count >= $max_retry_count)) {
         $self->dataflow_output_id(undef, $self->param('escape_branch'));
         $self->input_job->autoflow(0);
-        $self->complete_early("The MSA failed 3 times. Trying another method.");
+        $self->complete_early("The MSA failed $max_retry_count times. Trying another method.");
+      }
     }
 
 
@@ -286,7 +290,6 @@ sub parse_and_store_alignment_into_proteintree {
   return 0 unless($msa_output and -e $msa_output);
 
   $self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
-  $self->param('protein_tree')->seq_type('cds') if $self->param('cdna');
 
   return 1;
 }

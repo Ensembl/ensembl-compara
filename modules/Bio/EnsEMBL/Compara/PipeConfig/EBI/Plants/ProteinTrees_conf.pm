@@ -89,6 +89,11 @@ sub default_options {
     #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
     'clustering_mode'           => 'hybrid',
 
+    # species tree reconciliation
+        # you can define your own species_tree for 'treebest'. It can contain multifurcations
+        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.topology.nw',
+        'binary_species_tree_input_file'    => undef,
+
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels' => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],

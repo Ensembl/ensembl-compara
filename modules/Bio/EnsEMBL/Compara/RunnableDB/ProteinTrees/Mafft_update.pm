@@ -103,6 +103,14 @@ sub fetch_input {
     $self->param( 'alignment_file', $input_aln );
 } ## end sub fetch_input
 
+
+sub parse_and_store_alignment_into_proteintree {
+    my $self = shift;
+    $self->SUPER::parse_and_store_alignment_into_proteintree(@_);
+    $self->param('protein_tree')->seq_type('cds') if $self->param('cdna');
+}
+
+
 #
 # Abstract methods from the base class (MSA)
 ##############################################

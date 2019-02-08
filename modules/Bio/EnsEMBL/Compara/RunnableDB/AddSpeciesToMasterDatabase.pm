@@ -30,7 +30,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::RunUpdateGenome
+Bio::EnsEMBL::Compara::RunnableDB::AddSpeciesToMasterDatabase
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ Internal methods are usually preceded with a "_"
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::RunUpdateGenome;
+package Bio::EnsEMBL::Compara::RunnableDB::AddSpeciesToMasterDatabase;
 
 use strict;
 use warnings;
@@ -59,49 +59,29 @@ use warnings;
 use File::Find;
 use LWP::Simple;
 
+use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-             'master_db'            => '#master_db#',
-             'work_dir'             => '#work_dir#',
-             'registry_source'      => '#registry_source#',
-             'update_genome_bin'    => '#update_genome_bin#',
+             'force' => 0,
          };
 }
 
-sub run {
-    my $self = shift @_;
+sub fetch_input {
+    my ($self) = @_;
 
-    #run update_genome.pl
-    $self->_update_genome;
+    my $master_dba = $self->get_cached_compara_dba('master_db');
+    $self->param( 'master_dba', $master_dba);
 }
 
-##########################################
-#
-# internal methods
-#
-##########################################
+sub write_output{
+    my $self = shift @_;
 
-sub _update_genome {
-    my $self = shift;
-
-    my $cmd = join( ' ', "perl", $self->param('update_genome_bin'), "--reg_conf", $self->param('registry_source')."/".$self->param('reg_conf'), "--compara", $self->param('master_db'), "--species", $self->param('species_name'), "--force" );
-
-    my $cmd_out = $self->run_command( $cmd, { die_on_failure => 1 } );
-
-    my @out_lines = split(/\n/,$cmd_out->out);
-    my $genome_db_id;
-
-    foreach my $line_out (@out_lines) {
-        if ($line_out =~ /^GenomeDB after update: GenomeDB dbID=/){
-            my @tok = split(/\s+/, $line_out);
-            $genome_db_id = substr($tok[4],5);
-            last;
-        }
-    }
-
-    $self->dataflow_output_id( $genome_db_id, 3 ); # to genomes_loaded_into_master table
+    my $new_genome_dbs = [];
+    push @$new_genome_dbs, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::update_genome($self->param('master_dba'), $self->param('species_name'), -RELEASE => $self->param('release'), -FORCE => $self->param('force') ) };
 }
 
 1;

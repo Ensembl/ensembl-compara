@@ -112,7 +112,7 @@ sub fetch_input {
   $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
-  my $gab = $gaba->fetch_by_dbID($self->param('genomic_align_block_id'));
+  my $gab = $gaba->fetch_by_dbID($self->param_required('genomic_align_block_id'));
 
   my $gas = $gab->get_all_GenomicAligns;
 

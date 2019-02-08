@@ -201,7 +201,7 @@ sub default_options {
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
     # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
-        'orphan_gene_ratio_per_taxon' => {
+        'mapped_gene_ratio_per_taxon' => {
             '2759'    => 0.5,     #eukaryotes
             '33208'   => 0.65,    #metazoans
             '7742'    => 0.85,    #vertebrates
@@ -505,7 +505,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_gene_qc'        => $self->o('do_gene_qc'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
 
-        'orphan_gene_ratio_per_taxon'         => $self->o('orphan_gene_ratio_per_taxon'),
+        'mapped_gene_ratio_per_taxon'         => $self->o('mapped_gene_ratio_per_taxon'),
     };
 }
 
@@ -3389,7 +3389,7 @@ sub core_pipeline_analyses {
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
             -analysis_capacity => 20,
-            -rc_name => '4Gb_job',
+            -rc_name => '8Gb_job',
         },
 
         {   -logic_name => 'homology_dNdS',

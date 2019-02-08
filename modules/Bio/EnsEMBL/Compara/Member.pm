@@ -360,7 +360,7 @@ sub toString {
     my $self = shift;
     my $type = ref($self);
     $type =~ s/^.*:://;
-    my $str = sprintf('%s dbID=%s %s', $type, $self->dbID || '?', $self->stable_id);
+    my $str = sprintf('%s dbID=%s %s', $type, $self->dbID || '?', $self->stable_id || '___NO_STABLE_ID___');
     $str .= sprintf(' (%s)', $self->display_label) if $self->display_label;
     if ($self->genome_db_id) {
         $str .= ' ' . $self->genome_db->name;

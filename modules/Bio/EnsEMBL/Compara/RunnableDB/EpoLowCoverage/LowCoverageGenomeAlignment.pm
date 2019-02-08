@@ -1017,14 +1017,7 @@ sub _load_GenomicAligns {
 sub _load_2XGenomes {
   my ($self, $genomic_align_block_id) = @_;
 
-  my $pairwise_locations = $self->_construct_pairwise_locations();
-
-
-  #if no 2x genomes defined, return
-  if (!defined $pairwise_locations) {
-      print "No 2x genomes to load\n" if $self->debug;
-      return;
-  }
+  my $pairwise_locations = $self->param_required('pairwise_mlss_location');
 
   #Find the slice on the reference genome
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
@@ -1060,7 +1053,7 @@ sub _load_2XGenomes {
   #2X genome.
 
   #create all the adaptors now so that we can detect shared connections
-  my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-URL => $pairwise_locations->{$_})} keys %$pairwise_locations);
+  my %pairwise_compara_dba = (map {$_ => Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($pairwise_locations->{$_})} keys %$pairwise_locations);
   $_->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir')) for values %pairwise_compara_dba;
 
   $self->iterate_by_dbc([keys %$pairwise_locations],
@@ -1215,88 +1208,6 @@ sub _load_2XGenomes {
   }, 'do_disconnect');
 }
 
-sub _construct_pairwise_locations {
-    my $self = shift;
-
-    my $pairwise_location;
-
-    #list of mlss to be found in the default location (usually previous compara database)
-    my @mlsss = @{ $self->param('pairwise_default_mlss') };
-
-    #Add exceptions
-    $pairwise_location = $self->param('pairwise_exception_location');
-
-    #Add defaults which may overwrite the exceptions if the exception mlss is now in
-    #default location
-    foreach my $mlss (@mlsss) {
-	$pairwise_location->{$mlss} = $self->param('pairwise_default_location');
-    }
-
-    #Need a check here that I have pairwise_mlss for all the low coverage genomes.
-    my $gab_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor;
-    my $gab = $gab_adaptor->fetch_by_dbID($self->param('genomic_align_block_id'));
-    my $high_epo_mlss = $gab->method_link_species_set;
-    my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-
-    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $low_mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-
-    my $low_coverage_species_set;
-
-    my %all_species_set;
-    foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
-	$all_species_set{$genome_db->dbID} = 1;
-    }
-    #Find only low coverage species by removing the high coverage ones from the list of all of them
-    foreach my $high_species (@{$high_epo_mlss->species_set->genome_dbs}) {
-	$all_species_set{$high_species->dbID} = 2;
-    }
-    foreach my $genome_db_id (keys %all_species_set) {
-	if ($all_species_set{$genome_db_id} == 1) {
-	    push @$low_coverage_species_set, $genome_db_id;
-	}
-    }
-
-    #Check found all low coverage pairwise mlss_ids
-    if (@$low_coverage_species_set != scalar keys %$pairwise_location) {
-	print("Failed to find all the pairwise low coverage species method_link_species_set ids\n");
-
-	foreach my $genome_db_id (@$low_coverage_species_set) {
-	    my $species;
-	    my $found = 0;
-	    foreach my $mlss_id (keys %$pairwise_location) {
-		
-		my $this_compara_db = $pairwise_location->{$mlss_id};
-		
-        my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($this_compara_db);
-		
-		my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-		my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
-		$species = $genome_db_adaptor->fetch_by_dbID($genome_db_id)->name;
-		
-		foreach my $this_spp (@{$mlss->species_set->genome_dbs}) {
-		    if ($this_spp->name ne $self->param('reference_species')) {
-			if ($this_spp->dbID == $genome_db_id) {
-			    $found = 1;
-			    print "Found $species mlss $mlss_id " . $pairwise_location->{$mlss_id} . "\n";
-			    last;
-			}
-		    }
-		}
-	    }
-	    if (!$found) {
-		throw ("Failed to find a pairwise method_link_species_set for " . $species);
-	    }
-	}
-    }
-
-    if ($self->debug) {
-	foreach my $key (keys %$pairwise_location) {
-	    print "key $key " . $pairwise_location->{$key} . "\n";
-	}
-    }
-    return $pairwise_location;
-}
 
 =head2 _dump_fasta_and_mfa
 

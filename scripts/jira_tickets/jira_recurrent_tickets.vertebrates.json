@@ -47,14 +47,14 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database",
-            "summary": "Add new genomes to the master database"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database+and+create+the+collections+and+mlss_ids",
+            "summary": "Add new genomes to the master and create the collection and MethodLinkSpeciesSets"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Create+the+collections+and+MethodLinkSpeciesSets",
-            "summary": "Create the collection and MethodLinkSpeciesSets to the master database"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Load+the+divergence+times+from+TimeTree",
+            "summary": "Load the divergence times from TimeTree"
          },
          {
             "assignee": "<RelCo>",
@@ -76,7 +76,7 @@
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
       "subtasks": [{
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror\n{warn}Only for Vertebrates{warn}",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror",
             "summary": "Copy the core databases"
          },
          {
@@ -88,19 +88,19 @@
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Members",
             "summary": "Run the member loading pipeline",
-            "ticket_map_name": "Member loading"
+            "name_on_graph": "Member loading"
          },
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Genomedumps",
             "summary": "Run the genome dumping pipeline",
-            "ticket_map_name": "Genome dumps"
+            "name_on_graph": "Genome dumps"
          },
          {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Species-tree",
             "summary": "Run the Create Species Tree pipeline",
-            "ticket_map_name": "Species-tree"
+            "name_on_graph": "Species-tree"
          }
       ],
       "summary": "<Division> Release <version> Production preprocessing"
@@ -113,111 +113,112 @@
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run the Family pipeline",
-            "ticket_map_name": "Families"
+            "name_on_graph": "Families"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run the Protein-tree pipeline",
-            "ticket_map_name": "Protein-trees: default vertebrates"
+            "name_on_graph": "Protein-trees:Default vertebrates"
          },
          {
             "component": "Production tasks",
             "summary": "Protein-trees WGA Orthology QC",
-            "ticket_map_name": "Protein-trees WGA Orthology QC"
+            "name_on_graph": "Protein-trees WGA Orthology QC"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run ncRNA-tree pipeline",
-            "ticket_map_name": "ncRNA-trees: default vertebrates"
+            "name_on_graph": "ncRNA-trees:Default vertebrates"
          },
          {
             "component": "Production tasks",
             "summary": "ncRNA-trees WGA Orthology QC",
-            "ticket_map_name": "ncRNA-trees WGA Orthology QC"
+            "name_on_graph": "ncRNA-trees WGA Orthology QC"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run mouse strains ncRNA pipeline",
-            "ticket_map_name": "ncRNA-trees: murinae"
+            "name_on_graph": "ncRNA-trees:Murinae"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run mouse strain protein tree pipeline",
-            "ticket_map_name": "Protein-trees: murinae"
+            "name_on_graph": "Protein-trees:Murinae"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Reindex murinae gene trees",
-            "ticket_map_name": "Gene-tree reindexing: murinae"
+            "name_on_graph": "Gene-tree reindexing:Murinae"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Mammal EPO",
-            "ticket_map_name": "EPO: Mammals"
+            "name_on_graph": "EPO:Mammals"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Mammal EPO_low",
-            "ticket_map_name": "EPO-2X: Mammals"
+            "name_on_graph": "EPO-2X:Mammals"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Primate EPO",
-            "ticket_map_name": "EPO: Primates"
+            "name_on_graph": "EPO:Primates"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Primates EPO_low",
-            "ticket_map_name": "EPO-2X: Primates"
+            "name_on_graph": "EPO-2X:Primates"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Fish EPO",
-            "ticket_map_name": "EPO: Fish"
+            "name_on_graph": "EPO:Fish"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Fish EPO_low",
-            "ticket_map_name": "EPO-2X: Fish"
+            "name_on_graph": "EPO-2X:Fish"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Sauropsids EPO",
-            "ticket_map_name": "EPO: Sauropsids"
+            "name_on_graph": "EPO:Sauropsids"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Sauropsids EPO_low",
-            "ticket_map_name": "EPO-2X: Sauropsids"
+            "name_on_graph": "EPO-2X:Sauropsids"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Amniotes pecan",
-            "ticket_map_name": "Mercator Pecan: Amniotes"
+            "name_on_graph": "Mercator Pecan:Amniotes"
          },
          {
             "component": "Production tasks",
-            "description" : "Only if we have rerun the EPO Primates alignment",
-            "summary": "Dump the ancestral alleles for the Variation team"
+            "description" : "Only if we have rerun the EPO Primates alignment. Run the pipeline Bio::EnsEMBL::Compara::PipeConfig::DumpAncestralAlleles_conf",
+            "summary": "Dump the ancestral alleles for the Variation team",
+            "name_on_graph": "Ancestral Alleles"
          },
          {
             "component": "Production tasks",
             "summary": "All LastZ",
-            "ticket_map_name": "All LastZ"
+            "name_on_graph": "All LastZ"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
@@ -229,27 +230,27 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-CreateReleaseDatabase",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
             "summary": "Create Release Database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
-            "ticket_map_name": "All alignments for WGA Orthology QC"
+            "name_on_graph": "All alignments for WGA Orthology QC"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
-            "ticket_map_name": "Synteny",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
+            "name_on_graph": "Synteny",
             "summary": "Run syntenies pipeline on release db"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
          },
          {
@@ -285,9 +286,9 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+handover+of+databases",
             "summary": "Age of Base",
-            "ticket_map_name": "Age of Base"
+            "name_on_graph": "Age of Base:Human"
          },
          {
             "component": "Relco tasks",

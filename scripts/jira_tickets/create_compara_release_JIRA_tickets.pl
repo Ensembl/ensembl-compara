@@ -51,7 +51,7 @@ sub main {
     # ----------------------------
     # read command line parameters
     # ----------------------------
-    my ( $user, $relco, $release, $password, $help, $tickets_json, $ticket_mapping_file, $config, $division );
+    my ( $user, $relco, $release, $password, $help, $tickets_json, $config, $division );
 
     GetOptions(
         'relco=s'    => \$relco,
@@ -59,7 +59,6 @@ sub main {
         'password|p=s' => \$password,
         'division|d=s' => \$division,
         'tickets=s'  => \$tickets_json,
-        'mapping=s'  => \$ticket_mapping_file,
         'config|c=s' => \$config,
         'help|h'     => \$help,
     );
@@ -129,24 +128,15 @@ sub main {
     # -----------------------
     # create new JIRA tickets
     # -----------------------
-    my $mapping_str = '';
     for my $ticket ( @{$tickets} ) {
         my $ticket_key = create_ticket( $ticket, $parameters, $logger );
-        $mapping_str .= $ticket->{ticket_map_name} . "\t" . $ticket_key . "\n" if $ticket->{ticket_map_name};
         if ($ticket->{'subtasks'}) {
             foreach my $subtask (@{$ticket->{'subtasks'}}) {
                 $subtask->{'jira'}->{'parent'} = { 'key'  => $ticket_key };
                 my $subtask_key = create_ticket( $subtask, $parameters, $logger );
-                $mapping_str .= $subtask->{ticket_map_name} . "\t" . $subtask_key . "\n" if $subtask->{ticket_map_name};
             }
         }
     }
-
-    # once we're sure all tickets have been created successfully, write the mapping file
-    $ticket_mapping_file = 'jira_ticket_mapping.tsv' unless $ticket_mapping_file;
-    open( my $map_fh, '>', $ticket_mapping_file );
-    print $map_fh $mapping_str;
-    close $map_fh;
 }
 
 =head2 set_parameters
@@ -307,6 +297,11 @@ sub json_to_jira {
 
     if ($json_hash->{'assignee'}) {
         $ticket{'assignee'} = { 'name' => validate_user_name( replace_placeholders( $json_hash->{'assignee'}, $parameters), $logger ) };
+    }
+
+    if (my $name_on_graph = $json_hash->{'name_on_graph'}) {
+        $name_on_graph =~ s/ /_/g;  # JIRA doesn't allow whitespace in labels
+        $ticket{'labels'} = [ "Graph:$name_on_graph" ];
     }
 
     $json_hash->{'jira'} = \%ticket;

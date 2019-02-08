@@ -49,8 +49,8 @@ sub default_options {
         # Location of the previous dumps
         'prev_ftp_dump' => '/nfs/production/panda/ensemblgenomes/ftp/pub/release-41/plants/',
 
-        #the list of mlss_ids that we have re_ran/updated the date
-        #'updated_mlss_ids' => [ 9802, 9803,s9804, 9805, 9806, 9807, 9788, 9789, 9810, 9794, 9809, 9748, 9749, 9750, 9751, 9763, 9764, 9765,
+        ##the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release
+        #'updated_mlss_ids' => [ 9802, 9803, 9804, 9805, 9806, 9807, 9788, 9789, 9810, 9794, 9809, 9748, 9749, 9750, 9751, 9763, 9764, 9765,
         #                        9766, 9778, 9779, 9780, 9781, 9797, 9798, 9799, 9800, 9801, 9808, 9787, 9813, 9814, 9812 ],
 
         'dump_root'        => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/release_dumps_' . $self->o('division') . '_42',

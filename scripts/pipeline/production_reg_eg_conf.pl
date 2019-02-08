@@ -127,7 +127,7 @@ sub add_compara_dbs {
 
 sub get_port {
     my $host = shift;
-    my $port = `echo \$($host port)`;
+    my $port = `$host port`;
     chomp $port;
     return $port;
 }

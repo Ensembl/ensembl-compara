@@ -137,7 +137,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::CheckSketches',
             -flow_into  => {
                 '2->A' => [ 'dump_genome' ],
-                '3->A' => { 'mash_sketch' => { 'input_file' => '#genome_dump_file#', } },
+                '3->A' => [ 'mash_sketch' ],
                 'A->1' => [ 'mash_paste' ],
                 '4'    => [ 'permute_matrix' ],
             },

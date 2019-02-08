@@ -82,7 +82,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-            'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 			'mlss_id' => $self->o('low_epo_mlss_id'),
             'run_gerp' => $self->o('run_gerp'),
             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
@@ -202,7 +201,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 			'master_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
-			'registry_conf_file'  => $self->o('reg_conf'),
             'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
@@ -221,11 +219,11 @@ sub pipeline_analyses {
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
 	    {   -logic_name => 'create_default_pairwise_mlss',
-		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::CreateDefaultPairwiseMlss',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::FindPairwiseMlssLocation',
 		-parameters => {
 				'new_method_link_species_set_id' => $self->o('low_epo_mlss_id'),
 				'base_method_link_species_set_id' => $self->o('high_epo_mlss_id'),
-				'pairwise_default_location' => $self->o('pairwise_default_location'),
+				'pairwise_location' => $self->o('pairwise_location'),
 				'base_location' => $self->o('epo_db'),
 				'reference_species' => $self->o('ref_species'),
 			       },
@@ -266,8 +264,6 @@ sub pipeline_analyses {
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
 				'reference_species' => $self->o('ref_species'),
-#				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
-				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
@@ -286,8 +282,6 @@ sub pipeline_analyses {
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
 				'reference_species' => $self->o('ref_species'),
-#				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
-				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
@@ -307,8 +301,6 @@ sub pipeline_analyses {
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
 				'reference_species' => $self->o('ref_species'),
-#				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
-				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },

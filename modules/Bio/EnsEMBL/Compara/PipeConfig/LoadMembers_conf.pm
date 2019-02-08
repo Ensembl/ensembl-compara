@@ -64,7 +64,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'        => $self->o('division') . '_load_members'.$self->o('rel_with_suffix'),
+        'pipeline_name'        => $self->o('division') . '_load_members_'.$self->o('rel_with_suffix'),
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
@@ -118,7 +118,7 @@ sub default_options {
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         # 'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
         'curr_core_registry'        => $self->o('reg_conf'),
-        #'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         'reuse_member_db' => 'compara_prev',
@@ -133,7 +133,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         'default'      => { 'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"',  $reg_requirement] },
+         'default'      => { 'LSF' => ['-C0 -M200   -R"select[mem>200]   rusage[mem=200]"',  $reg_requirement] },
          '250Mb_job'    => { 'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement] },
          '500Mb_job'    => { 'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement] },
          '1Gb_job'      => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },

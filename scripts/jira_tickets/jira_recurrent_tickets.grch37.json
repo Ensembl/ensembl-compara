@@ -60,13 +60,13 @@
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Members",
             "summary": "Run the member loading pipeline",
-            "ticket_map_name": "Member loading"
+            "name_on_graph": "Member loading"
          },
          {
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Genomedumps",
             "summary": "Run the genome dumping pipeline",
-            "ticket_map_name": "Genome dumps"
+            "name_on_graph": "Genome dumps"
          }
       ],
       "summary": "<Division> Release <version> Production preprocessing"
@@ -79,29 +79,29 @@
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run the Family pipeline",
-            "ticket_map_name": "Families"
+            "name_on_graph": "Families"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run the Protein-tree pipeline",
-            "ticket_map_name": "Protein-trees"
+            "name_on_graph": "Protein-trees"
          },
          {
             "component": "Production tasks",
             "summary": "Protein-trees WGA Orthology QC",
-            "ticket_map_name": "Protein-trees WGA Orthology QC"
+            "name_on_graph": "Protein-trees WGA Orthology QC"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run ncRNA-tree pipeline",
-            "ticket_map_name": "ncRNA-trees"
+            "name_on_graph": "ncRNA-trees"
          },
          {
             "component": "Production tasks",
             "summary": "ncRNA-trees WGA Orthology QC",
-            "ticket_map_name": "ncRNA-trees WGA Orthology QC"
+            "name_on_graph": "ncRNA-trees WGA Orthology QC"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
@@ -113,13 +113,13 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-CreateReleaseDatabase",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
             "summary": "Create Release Database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
          },
          {

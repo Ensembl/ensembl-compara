@@ -97,7 +97,7 @@ sub multifurcate_tree {
             $child->distance_to_parent(int($mya));
         }
 
-        if ($node->taxon_id eq $node->parent->taxon_id) {
+        if (($node->taxon_id eq $node->parent->taxon_id) && !$node->is_leaf) {
             for my $child(@{$node->children}) {
                 $node->parent->add_child($child);
                 $child->distance_to_parent(int($mya));

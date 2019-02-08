@@ -103,9 +103,6 @@ sub pipeline_analyses_epo_anchor_mapping {
 
             {   -logic_name => 'load_genomedb',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-                -parameters => {
-                    'registry_conf_file' => $self->o('reg_conf'),
-                },
 		-hive_capacity => $self->o('low_capacity'),
                 -flow_into => [ 'copy_dnafrags_from_master' ],
             },

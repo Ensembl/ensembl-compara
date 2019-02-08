@@ -312,7 +312,7 @@ sub interpolate_best_location {
   if ($based_on_group_id) {
     my @ordered_name_strands = sort {scalar @{$name_strand_clusters{$b}} <=> scalar @{$name_strand_clusters{$a}}} keys %name_strand_clusters;
 
-    my @best_blocks = sort {$a->hstart <=> $b->hend} @{$name_strand_clusters{$ordered_name_strands[0]}||[]};
+    my @best_blocks = sort {$a->hstart <=> $b->hstart} @{$name_strand_clusters{$ordered_name_strands[0]}||[]};
 
     return undef if( !@best_blocks );
     return ($best_blocks[0]->hseqname,

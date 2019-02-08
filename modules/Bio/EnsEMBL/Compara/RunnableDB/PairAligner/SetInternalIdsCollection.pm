@@ -85,6 +85,8 @@ sub _setInternalIds {
     my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     # Update the dbIDs in genomic_align
     my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number), genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
+    # Update the dbIDs in conservation_score
+    my $sql2cs = "UPDATE conservation_score SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number)";
     # Remove the old blocks
     my $sql3 = "DELETE FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
 
@@ -106,6 +108,7 @@ sub _setInternalIds {
             print STDERR "Offsets: genomic_align_block_id=$offset_gab genomic_align_id=$offset_ga\n";
             print STDERR (my $nd = $dbc->do($sql1, undef, $offset_gab, $mlss_id)), " rows duplicated in genomic_align_block\n";
             print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block \n";
+            print STDERR $dbc->do($sql2cs, undef, $offset_gab), " rows of conservation_score redirected to the new entries in genomic_align_block \n";
             print STDERR (my $nr = $dbc->do($sql3, undef, $mlss_id)), " rows removed from genomic_align_block\n";
             die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if $nd != $nr;
         }
@@ -113,9 +116,9 @@ sub _setInternalIds {
 
     ## Let's now fix the node_ids
     my $sql4 = "SELECT MIN(root_id), COUNT(*) FROM genomic_align_tree JOIN genomic_align USING (node_id) WHERE FLOOR(node_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
-    my $sql5 = "INSERT INTO genomic_align_tree SELECT node_id + ?, IF(parent_id = NULL, NULL, parent_id + ?), root_id + ?, left_index, right_index, IF(left_node_id = NULL, NULL, left_node_id + ?), IF(right_node_id = NULL, NULL, right_node_id + ?), distance_to_parent FROM genomic_align_tree JOIN genomic_align USING (node_id) WHERE method_link_species_set_id = ? AND FLOOR(node_id / $magic_number) != ? ORDER BY root_id, left_index";
+    my $sql5 = "INSERT INTO genomic_align_tree SELECT node_id + ?, IF(parent_id = NULL, NULL, parent_id + ?), root_id + ?, left_index, right_index, IF(left_node_id = NULL, NULL, left_node_id + ?), IF(right_node_id = NULL, NULL, right_node_id + ?), distance_to_parent FROM genomic_align_tree WHERE root_id = ? ORDER BY left_index";
     # Update node_id in genomic_align
-    my $sql6 = "UPDATE genomic_align SET node_id = node_id + ? WHERE method_link_species_set_id = ? AND node_id IS NOT NULL AND FLOOR(node_id / $magic_number) != method_link_species_set_id";
+    my $sql6 = "UPDATE genomic_align JOIN genomic_align_tree USING (node_id) SET genomic_align.node_id = genomic_align.node_id + ? WHERE root_id = ?";
     # Get the list of all the trees ...
     my $sql7 = "SELECT DISTINCT root_id FROM genomic_align JOIN genomic_align_tree USING (node_id) WHERE method_link_species_set_id = ?";
     # ... to be able to remove them later
@@ -131,12 +134,16 @@ sub _setInternalIds {
         print STDERR "Offsets: genomic_align_tree.node_id=$offset_gat\n";
         my $all_root_ids = $dbc->db_handle->selectcol_arrayref($sql7, undef, $mlss_id);
         print STDERR scalar(@$all_root_ids)." trees to reindex\n";
-        print STDERR (my $nd = $dbc->do($sql5, undef, $offset_gat, $offset_gat, $offset_gat, $offset_gat, $offset_gat, $mlss_id, $mlss_id)), " rows duplicated in genomic_align_tree\n";
-        print STDERR $dbc->do($sql6, undef, $offset_gat, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_tree \n";
+        my $nd = 0;
+        my $nt = 0;
         my $nr = 0;
         foreach my $root_id (@$all_root_ids) {
+            $nd += $dbc->do($sql5, undef, $offset_gat, $offset_gat, $offset_gat, $offset_gat, $offset_gat, $root_id);
+            $nt += $dbc->do($sql6, undef, $offset_gat, $root_id);
             $nr += $dbc->do($sql8, undef, $root_id);
         }
+        print STDERR "$nd rows duplicated in genomic_align_tree\n";
+        print STDERR "$nt rows of genomic_align redirected to the new entries in genomic_align_tree \n";
         print STDERR "$nr rows removed from genomic_align_tree\n";
         die "Numbers mismatch: $nd rows duplicated and $nr removed\n" if $nd != $nr;
     } );

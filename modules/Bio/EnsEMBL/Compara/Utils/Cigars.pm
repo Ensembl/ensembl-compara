@@ -208,6 +208,25 @@ sub collapse_cigar {
 }
 
 
+=head2 alignment_length_from_cigar
+
+  Arg [1]    : String $cigar_line
+  Example    : my $alignment_length = alignment_length_from_cigar($cigar_line)
+  Description: Returns how long the alignment string would be (without expanding it in memory)
+  Returntype : int
+
+=cut
+
+sub alignment_length_from_cigar {
+    my $cigar = shift;
+    my $length = 0;
+    while ($cigar =~ /(\d*)([A-Za-z])/g) {
+        $length += ($1 || 1);
+    }
+    return $length;
+}
+
+
 =head2 consensus_cigar_line
 
   Arg [1..n] : String $cigar_line

@@ -127,23 +127,17 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-
-        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_mouse_strain_homologies_89',
-
-        # Where the members come from (as loaded by the LoadMembers pipeline)
-        'member_db'   => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/muffato_load_members_90_ensembl',
+        # Everything is set via the Registry, now
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
 
         # Where to draw the orthologues from
-        'ref_ortholog_db'   => 'mysql://ensro@mysql-ens-compara-prod-1:4485/muffato_protein_trees_90',
+        'ref_ortholog_db'   => 'compara_ptrees',
 
         # If 'prev_rel_db' above is not set, you need to set all the dbs individually
-        #'goc_reuse_db'          => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
-        #'mapping_db'            => 'mysql://ensro@mysql-ens-compara-prod-2.ebi.ac.uk:4522/waakanni_protein_trees_88',
+        'goc_reuse_db'          => undef,
 
 
+    # clustering parameters:
         # How will the pipeline create clusters (families) ?
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
         'clustering_mode'           => 'ortholog',
@@ -184,6 +178,7 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
+    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [ 'mus_musculus' ];
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';

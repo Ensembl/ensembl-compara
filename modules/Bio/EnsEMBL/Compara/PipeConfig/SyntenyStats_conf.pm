@@ -45,7 +45,7 @@ sub default_options {
         'division'     => 'ensembl',
 
         'compara_db'    => 'compara_curr',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara-release/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
     };
 }
 

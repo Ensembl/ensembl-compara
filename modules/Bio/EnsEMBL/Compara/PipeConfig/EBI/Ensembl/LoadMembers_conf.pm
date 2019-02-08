@@ -93,7 +93,6 @@ sub default_options {
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 1,
-        'family_mlss_id'            => 30055,    
 
     };
 }

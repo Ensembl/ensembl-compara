@@ -74,11 +74,6 @@ sub default_options {
     # Use "undef" if running the pipeline without reuse.
     'goc_reuse_db' => 'ptrees_prev',
 
-    # species tree reconciliation
-    # you can define your own species_tree for 'treebest'. It can contain multifurcations
-    'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.' . $self->o('division') . '.branch_len.nw',
-
-
     # executable locations:
         'hcluster_exe'              => $self->check_exe_in_cellar('hclustersg/0.5.0/bin/hcluster_sg'),
         'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336_3'),

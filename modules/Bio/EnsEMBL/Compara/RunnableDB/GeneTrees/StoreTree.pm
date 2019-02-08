@@ -128,7 +128,7 @@ sub merge_split_genes {
       }
         # We then directly override the cached alignment_string_cds
         # entry in the hash, which will be used next time it is called
-      $protein1->{'alignment_string'.($seq_type || '')} = $cdna;
+      $protein1->{'alignment_string'.($seq_type ? "_$seq_type" : '')} = $cdna;
     }
 
     if (scalar(keys %split_genes)) {
@@ -411,9 +411,7 @@ sub parse_newick_into_tree {
       #We set the children_loaded=1 to tell the API not to load the leaf
       #Then we "next" the loop
       $leaf->print_node if $self->debug;
-      $leaf->node_id(0);
-      $leaf->seq_member_id($seq_member_id);
-      $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
+      $leaf->{'dbID'} = $seq_member_id; # This is where GeneTreeMember keeps seq_member_id()
     } else {
       $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
       $leaf->node_id($old_leaf->node_id);
@@ -459,7 +457,7 @@ sub store_tree_tags {
     # Tree number of human peptides contained.
     my $num_hum_peps = 0;
     foreach my $leaf (@leaves) {
-	$num_hum_peps++ if ($leaf->taxon_id == 9606);
+	$num_hum_peps++ if ($leaf->taxon_id && $leaf->taxon_id == 9606);
     }
     $tree->store_tag("tree_num_human_peps",$num_hum_peps);
 
@@ -490,7 +488,7 @@ sub store_tree_tags {
 
     # The number of species
     my %hash_species = ();
-    map {$hash_species{$_->genome_db_id}=1} @leaves;
+    map {$hash_species{$_->genome_db_id}=1} grep {$_->genome_db_id} @leaves;
     # Could be renamed to 'tree_num_species' !
     $tree->store_tag('spec_count', scalar keys %hash_species);
 

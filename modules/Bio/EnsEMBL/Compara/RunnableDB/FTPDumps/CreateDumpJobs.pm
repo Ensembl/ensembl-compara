@@ -70,17 +70,20 @@ sub fetch_input {
 
 	my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	my @release_mlsses;
+	my %mlss_id_force;
 	my $mlss_ids = $self->param('mlss_ids');
 	if ( $mlss_ids ) {
 		foreach my $mlss_id ( @$mlss_ids ) {
 			push( @release_mlsses, $mlssa->fetch_by_dbID($mlss_id) );
+			$mlss_id_force{$mlss_id} = 1;
 		}
 	} else {
 		@release_mlsses = @{ $mlssa->fetch_all_by_release($curr_release) };	
 		my $updated_mlss_ids = $self->param('updated_mlss_ids'); #for the productions pipelines that we have decided to run again. hence the first release has not been updated but the data may have changed
 		if ( $updated_mlss_ids ) {
 			foreach my $updated_mlss_id ( @$updated_mlss_ids ) {
-				push( @release_mlsses, $mlssa->fetch_by_dbID($updated_mlss_id) ) 
+				push( @release_mlsses, $mlssa->fetch_by_dbID($updated_mlss_id) );
+				$mlss_id_force{$updated_mlss_id} = 1;
 			}
 		}	
 	}
@@ -89,7 +92,7 @@ sub fetch_input {
 	my (%dumps, @copy_jobs, %method_types);
 	foreach my $mlss ( @release_mlsses ) {
 		my $method_class = $mlss->method->class;
-		if ( $mlss_ids || $mlss->first_release == $curr_release ) {
+		if ( $mlss_id_force{$mlss->dbID} || $mlss->first_release == $curr_release ) {
 			# new analysis/user defined mlss! must be dumped
 			if ( $method_class =~ /^GenomicAlign/ ) { # all alignments
 				push( @{$dumps{DumpMultiAlign}}, $mlss );
@@ -106,12 +109,6 @@ sub fetch_input {
 				push( @{$dumps{DumpConservationScores}}, $mlss );
 			}
 		} else {
-			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
-			if ( $method_class =~ /^ConstrainedElement/ ) {
-				push( @{$dumps{DumpConstrainedElements}}, $mlss );
-				next;
-			}
-			##### hack for e95: dump all constrained elements to have fresh bigbed files #####
 			# don't flow trees for copying - they are always dumped fresh
 			if ( $method_class =~ /tree_node$/ ) { # gene trees
 				push( @{$dumps{DumpTrees}}, $mlss );

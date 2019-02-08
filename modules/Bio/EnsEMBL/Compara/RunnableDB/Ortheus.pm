@@ -347,16 +347,10 @@ sub _write_output {
 			    $mlss);
        }
    }
-    #print "tmp worker dir " . $self->worker_temp_directory . "\n";
-    chdir("$self->worker_temp_directory");
-    foreach(glob("*")){
 	#DO NOT COMMENT THIS OUT!!! (at least not permenantly). Needed
 	#to clean up after each job otherwise you get files left over from
 	#the previous job.
-	unlink($_);
-    }
-    #throw("Test commit");
-    return 1;
+    $self->cleanup_worker_temp_directory;
 }
 
 

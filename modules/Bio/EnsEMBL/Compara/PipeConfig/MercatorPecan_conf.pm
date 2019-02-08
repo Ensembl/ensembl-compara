@@ -244,7 +244,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_conf_file' => $self->o('reg_conf'),
                 'db_version' => $self->o('ensembl_release'),
                 'master_db'  => $self->o('master_db'),
             },
@@ -357,7 +356,7 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('paf_reuse_db'),
+                'src_db_conn'   => $self->o('reuse_db'),
                 'table'         => 'peptide_align_feature_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
@@ -384,8 +383,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#genome_db_id# like peptide_align_feature',
-                            'ALTER TABLE peptide_align_feature_#genome_db_id# ADD KEY hmember_hit (hmember_id, hit_rank)',
-                            'ALTER TABLE peptide_align_feature_#genome_db_id# DISABLE KEYS',
+                            'ALTER TABLE peptide_align_feature_#genome_db_id# ADD KEY hgenome_rank_hmember (hgenome_db_id, hit_rank, hmember_id)',
                ],
             },
             -flow_into => {
@@ -417,7 +415,7 @@ sub pipeline_analyses {
         {   -logic_name => 'delete_non_nuclear_genes',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => 'DELETE seq_member FROM seq_member JOIN dnafrag USING (dnafrag_id) WHERE cellular_component != "NUC"',
+                'sql' => 'DELETE seq_member FROM seq_member JOIN dnafrag USING (dnafrag_id) WHERE cellular_component != "NUC" AND genome_db_id = #genome_db_id#',
             },
             -flow_into  => [ 'fresh_dump_subset_fasta' ],
         },
