@@ -264,11 +264,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
     panel.resetFilter("");
 
-    $.each(panel.json.extra_dimensions, function (i, key) {
-      $.each(panel.localStoreObj[key], function (k, v) {
-        if (v.state) {
-          set = key = '';
-          if (k.match(/_sep_/)) {
+    $.each(panel.json.extra_dimensions, function (i, dim) {
+      $.each(panel.localStoreObj[dim], function (k, v) {
+        if (k.match(/_sep_/)) {
+          if (v.state) {
+            key = '';
             arr = k.split('_sep_');
             key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
             config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
@@ -283,9 +283,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     })
 
     $.each(panel.localStoreObj.matrix, function (k, v) {
-      if (v.state) {
-        set = key = '';
-        if (k.match(/_sep_/)) {
+      if (k.match(/_sep_/)) {
+        if (v.state) {
+          key = '';
           arr = k.split('_sep_');
           key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
           config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
@@ -1512,7 +1512,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   emptyMatrix: function() {
     var panel = this;
 
-    panel.el.find('div.matrix-container').html('');        
+    panel.el.find('div.matrix-container').html('');
   },
 
   resetMatrix: function() {
