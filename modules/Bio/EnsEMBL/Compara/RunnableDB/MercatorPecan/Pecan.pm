@@ -393,6 +393,11 @@ sub _trim_gab_right {
 	return $gab;
     }
 
+    if ($align_length == $min_d_length) {
+        # The entire alignment needs to be removed, so it would become empty
+        return new Bio::EnsEMBL::Compara::GenomicAlignBlock;
+    }
+
     my $new_gab = $gab->restrict_between_alignment_positions(1, $align_length - $min_d_length, 1);
 
     #no overlapping genomic_aligns
