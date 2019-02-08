@@ -234,7 +234,7 @@ sub reset_user_settings {
     foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
       if ($node_key =~/^reg_feats|^seg_Segmentation/) {
         if (my $node = $self->get_node($node_key)) {
-          $node->delete_user_setting;
+          $node->reset_user_settings;
           push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
         }
       }
