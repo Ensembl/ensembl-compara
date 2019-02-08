@@ -227,7 +227,7 @@ else {
 }
 
 # We get the DNA sequences from the genome dumps, except for the ancestral_sequences
-map {$_->db_adaptor->dbc->disconnect_when_inactive($genome_dumps_dir)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
+map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
 $compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('ancestral_sequences')->db_adaptor->dbc->disconnect_when_inactive(0);
 $compara_dba->get_GenomeDBAdaptor->dump_dir_location($genome_dumps_dir);
 
