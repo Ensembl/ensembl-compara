@@ -82,6 +82,20 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
     print Dumper("We are in fetch_input") if ( $self->debug);
+
+    # First, let's detect ENSEMBL_HOMOEOLOGUES and spawn 1 job per pair of components
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('goc_mlss_id'));
+    if (($mlss->method->type eq 'ENSEMBL_HOMOEOLOGUES') && !$self->param('genome_db_ids')) {
+        my $genome_db = $mlss->species_set->genome_dbs->[0];
+        my @components = @{$genome_db->component_genome_dbs};
+        while (my $gdb1 = shift @components) {
+            foreach my $gdb2 (@components) {
+                $self->dataflow_output_id({'genome_db_ids' => [$gdb1->dbID, $gdb2->dbID]}, 3);
+            }
+        }
+        $self->complete_early('Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs');
+    }
+
     # IN: goc_mlss_id
     # OUT: ref_species_dbid
     # OUT: non_ref_species_dbid

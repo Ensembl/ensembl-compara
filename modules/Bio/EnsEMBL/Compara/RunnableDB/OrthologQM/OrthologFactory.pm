@@ -71,15 +71,13 @@ sub fetch_input {
 	my $speciesSet_obj= $mlss->species_set();
 	my $speciesSet = $speciesSet_obj->genome_dbs();
 
-    # Homoeologues only have 1 species in the species set
-    if (scalar(@$speciesSet) == 1){
-		$species1_dbid = $speciesSet->[0]->dbID();
-		$species2_dbid = $speciesSet->[0]->dbID();
-    }
-    elsif ($speciesSet) {
-		$species1_dbid = $speciesSet->[0]->dbID();
-		$species2_dbid = $speciesSet->[1]->dbID();
-	}
+        if ($self->param('genome_db_ids')) {
+            # Used for ENSEMBL_HOMOEOLOGUES mlss to select two components
+            ($species1_dbid, $species2_dbid) = @{$self->param('genome_db_ids')};
+        } else {
+            $species1_dbid = $speciesSet->[0]->dbID();
+            $species2_dbid = $speciesSet->[1]->dbID();
+        }
 
         $self->disconnect_from_hive_database;
 	my $homologs = $self->compara_dba->get_HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
@@ -109,26 +107,36 @@ sub run {
 	my $c = 0;
 	my $ref_species_dbid = $self->param('ref_species_dbid');
 	my $non_ref_species_dbid = $self->param('non_ref_species_dbid');
+        my $discard_alien_members = $self->param('genome_db_ids') ? 1 : 0; # For ENSEMBL_HOMOEOLOGUES, we process 1 pair of component at a time, so some homologies won't match
+        my @ok_orthologs;
 	foreach my $ortholog ( @{ $self->param('ortholog_objects') } ) {
 		my $ortholog_dbID = $ortholog->dbID();
 		my $ref_gene_member = $ortholog->get_all_GeneMembers($ref_species_dbid)->[0];
+                next if $discard_alien_members && !$ref_gene_member;
 		print $ref_gene_member->dbID() , "  <<-- ref_gene_member id\n" if ( $self->debug >3 );
 		die "this homolog  : $ortholog_dbID , appears to not have a gene member for this genome_db_id : $ref_species_dbid \n" unless defined $ref_gene_member;
 		my $non_ref_gene_member = $ortholog->get_all_GeneMembers($non_ref_species_dbid)->[0];
+                next if $discard_alien_members && !$non_ref_gene_member;
 		print $non_ref_gene_member->dbID() , " <<--- non_ref_gene_member id\n" if ( $self->debug >3 );
 		die "this homolog  : $ortholog_dbID , appears to not have a gene member for this genome_db_id : $non_ref_species_dbid \n" unless defined $non_ref_gene_member;
 
+                my $is_ok = 0;
 		if ($ref_gene_member->biotype_group eq 'coding') {
 			$ref_ortholog_info_hashref->{$ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $ref_gene_member->dnafrag_start();
+                        $is_ok++;
 		}
 
 		if ($non_ref_gene_member->biotype_group eq 'coding') {
 			$non_ref_ortholog_info_hashref->{$non_ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $non_ref_gene_member->dnafrag_start();
+                        $is_ok++;
 			$c++;
 		}
+
+                push @ok_orthologs, $ortholog if $is_ok == 2;
 		
 #		last if $c >= 10;
 	}
+        $self->param('ortholog_objects', \@ok_orthologs);
 
 	print " \n removing chromosome or scaffolds with only 1 gene----------\n\n" if ( $self->debug >1);
 	for my $dnaf_id (keys %$ref_ortholog_info_hashref) {
