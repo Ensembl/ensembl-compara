@@ -120,20 +120,15 @@ sub run {
 		print $non_ref_gene_member->dbID() , " <<--- non_ref_gene_member id\n" if ( $self->debug >3 );
 		die "this homolog  : $ortholog_dbID , appears to not have a gene member for this genome_db_id : $non_ref_species_dbid \n" unless defined $non_ref_gene_member;
 
-                my $is_ok = 0;
 		if ($ref_gene_member->biotype_group eq 'coding') {
+                    if ($non_ref_gene_member->biotype_group eq 'coding') {
 			$ref_ortholog_info_hashref->{$ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $ref_gene_member->dnafrag_start();
-                        $is_ok++;
+                        $non_ref_ortholog_info_hashref->{$non_ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $non_ref_gene_member->dnafrag_start();
+                        push @ok_orthologs, $ortholog;
+                        $c++;
+                    }
 		}
 
-		if ($non_ref_gene_member->biotype_group eq 'coding') {
-			$non_ref_ortholog_info_hashref->{$non_ref_gene_member->dnafrag_id()}{$ortholog->dbID()} = $non_ref_gene_member->dnafrag_start();
-                        $is_ok++;
-			$c++;
-		}
-
-                push @ok_orthologs, $ortholog if $is_ok == 2;
-		
 #		last if $c >= 10;
 	}
         $self->param('ortholog_objects', \@ok_orthologs);
