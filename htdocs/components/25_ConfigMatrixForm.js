@@ -571,8 +571,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $.each(key.split("_sep_"),function(i, associatedEle){
           if(associatedEle != item) {
             panel.localStoreObj[storeObjKey][associatedEle]["total"] -= 1;
-            if(panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] -= 1; }
-            if(panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; }
+            if(panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] > 0) { 
+              panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] -= 1; 
+              panel.localStoreObj[storeObjKey][associatedEle]["state"]["reset-"+cellCurrState] -= 1; 
+            }
+            if(panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { 
+              panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; 
+              panel.localStoreObj[storeObjKey][associatedEle]["renderer"]["reset-"+cellCurrRenderer] -= 1; 
+            }
           }
         });
         delete panel.localStoreObj[storeObjKey][key];
@@ -1406,7 +1412,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0} };
+          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
         }
         xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
       }
@@ -1424,7 +1430,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
         if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
           if(panel.itemDimension(cellName) === "matrix") {
-            panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0 }, "renderer": { "peak": 0, "signal": 0, "peak-signal": 0}};
+            panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": { "peak": 0, "signal": 0, "normal": 0, "peak-signal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0}};
           }
         }
 
@@ -1465,12 +1471,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
                   boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
                   boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                   boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                  panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType};
+                  panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType, "reset-state": boxState, "reset-renderer": boxDataRender};
                   
                   //setting count to update column state (dy)
                   panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
                   panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
+                  panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"]["reset-"+boxDataRender] += 1;
                   panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
+                  panel.localStoreObj[dyStoreObjKey][dyItem]["state"]["reset-"+boxState.replace("track-","")]++;
 
                   //calculating total in one row, we only want dy item not the extra dimensions for the matrix state obj.
                   if(panel.json.extra_dimensions.indexOf(dyItem) === -1) {
@@ -1493,8 +1501,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         //setting state for row in matrix
         panel.localStoreObj.matrix[cellName]["total"] += dxCount;
         panel.localStoreObj.matrix[cellName]["state"]["on"] += onState
+        panel.localStoreObj.matrix[cellName]["state"]["reset-on"] += onState
         panel.localStoreObj.matrix[cellName]["state"]["off"] += offState
+        panel.localStoreObj.matrix[cellName]["state"]["reset-off"] += offState
         panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
+        panel.localStoreObj.matrix[cellName]["renderer"]["reset-peak-signal"] += peakSignalCount;
 
         rowContainer += "</div>";
         boxContainer += rowContainer;
@@ -1544,10 +1555,36 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   resetMatrix: function() {
     var panel = this;
     
-    this.elLk.resetMatrixButton = panel.elLk.matrixContainer.find('button.reset-button._matrix');
+    this.elLk.resetMatrixButton = panel.elLk.trackConfiguration.find('button.reset-button._matrix');
 
     this.elLk.resetMatrixButton.click("on", function() {
-      //console.log(">>>>>");
+      var allStoreObjects = $.extend({}, panel.localStoreObj.matrix);
+      $.each(panel.json.extra_dimensions,function(i, dim){
+        $.extend(allStoreObjects, panel.localStoreObj[dim]);
+      });
+
+      Object.keys(allStoreObjects).map(function(key) {
+        var storeObjKey = panel.itemDimension(key);
+        if(key.match("_sep_")) {
+          var currentState    = allStoreObjects[key]["state"];
+          var currentRenderer = allStoreObjects[key]["renderer"]; 
+          var resetState      = allStoreObjects[key]["reset-state"];
+          var resetRenderer   = allStoreObjects[key]["reset-renderer"];
+
+          panel.elLk.matrixContainer.find('div.xBoxes.'+key.split("_sep_")[0]+'.'+key.split("_sep_")[1]).removeClass(currentState).addClass(resetState);
+          panel.elLk.matrixContainer.find('div.xBoxes.'+key.split("_sep_")[0]+'.'+key.split("_sep_")[1]).removeClass("render-"+currentRenderer).addClass("render-"+resetRenderer);
+
+          panel.localStoreObj[storeObjKey][key]["state"]    = resetState;
+          panel.localStoreObj[storeObjKey][key]["renderer"] = resetRenderer;
+        } else {          
+          panel.localStoreObj[storeObjKey][key]["state"]["on"]              = allStoreObjects[key]["state"]["reset-on"];
+          panel.localStoreObj[storeObjKey][key]["state"]["off"]             = allStoreObjects[key]["state"]["reset-off"];
+          panel.localStoreObj[storeObjKey][key]["renderer"]["peak"]         = allStoreObjects[key]["renderer"]["reset-peak"];
+          panel.localStoreObj[storeObjKey][key]["renderer"]["signal"]       = allStoreObjects[key]["renderer"]["reset-signal"];
+          panel.localStoreObj[storeObjKey][key]["renderer"]["peak-signal"]  = allStoreObjects[key]["renderer"]["reset-peak-signal"];
+          panel.localStoreObj[storeObjKey][key]["renderer"]["normal"]       = allStoreObjects[key]["renderer"]["reset-normal"];
+        }
+      });
     });
   },
 
@@ -1586,14 +1623,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             
       var rowRender = "";
       $.map(panel.localStoreObj[panel.dyStateKey][panel.yName].renderer, function(count, rendererType){
-        if(count === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
+        if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
           rowRender = rendererType;
           return;
         }
       });      
       var colRender = "";
       $.map(panel.localStoreObj[panel.dxStateKey][panel.xName].renderer, function(count, rendererType){
-        if(count === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
+        if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
           colRender = rendererType;
           return;
         }
@@ -1677,7 +1714,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         if(rendererType === newValue) {
           storeObj[statusKey][rendererType] = storeObj["total"];
         } else {
-          storeObj[statusKey][rendererType] = 0;
+          if(!rendererType.match("reset-")) {
+            storeObj[statusKey][rendererType] = 0;
+          }
         }
       });
 
