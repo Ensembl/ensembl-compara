@@ -554,11 +554,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     if (!item) return;
     panel.elLk.trackConfiguration.find('.matrix-container .' + item + ', .matrix-container ._emptyBox_' + item).remove();
-    var storeObjKey = panel.itemDimension(item);
+    var allStoreObjects = $.extend({}, panel.localStoreObj.matrix);
+
+    $.each(panel.json.extra_dimensions,function(i, dim){
+      $.extend(allStoreObjects, panel.localStoreObj[dim]);
+    });
 
     // Update localStoreObj and local storage
-    Object.keys(panel.localStoreObj[storeObjKey]).map(function(key) {
+    Object.keys(allStoreObjects).map(function(key) {
       if (key.match(item+'_') || key.match('_' + item)) {
+        var storeObjKey = panel.itemDimension(key);
         //update other rows/columns in store when removing item
         var cellCurrState    = panel.localStoreObj[storeObjKey][key]["state"].replace("track-","");
         var cellCurrRenderer = panel.localStoreObj[storeObjKey][key]["renderer"];
@@ -567,13 +572,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           if(associatedEle != item) {
             panel.localStoreObj[storeObjKey][associatedEle]["total"] -= 1;
             if(panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] -= 1; }
-            if(panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; }            
+            if(panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; }
           }
         });
         delete panel.localStoreObj[storeObjKey][key];
       }
-    })
-    delete panel.localStoreObj[storeObjKey][item];
+    });
+    delete panel.localStoreObj[panel.itemDimension(item)][item];
 
     panel.setLocalStorage();
   },
@@ -1506,6 +1511,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find('div.matrix-container .xContainer, div.matrix-container .yBoxWrapper').width(hwidth);
 
     panel.cellClick(); //opens popup
+    panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();    
   },
 
@@ -1515,10 +1521,30 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find('div.matrix-container').html('');
   },
 
+  cleanMatrixStore: function() {
+    var panel = this;
+
+    var dimensionsArray = ["matrix"];
+    var dyItems         = panel.localStoreObj.dy;
+    $.map(panel.json.extra_dimensions, function(extraItem) {
+      dyItems[extraItem] = 1;
+    });
+
+    $.each($.merge(dimensionsArray, panel.json.extra_dimensions), function(i,storeKey){
+      $.each(panel.localStoreObj[storeKey], function(item, data) {
+        if(!item.match("_sep_")) {
+          if(!dyItems[item] && !panel.localStoreObj.dx[item]) {
+            panel.removeFromMatrix(item);
+          }
+        }
+      });
+    });
+  },
+
   resetMatrix: function() {
     var panel = this;
     
-    this.elLk.resetMatrixButton = panel.elLk.matrixContainer.find('button.reset-matrix');
+    this.elLk.resetMatrixButton = panel.elLk.matrixContainer.find('button.reset-button._matrix');
 
     this.elLk.resetMatrixButton.click("on", function() {
       //console.log(">>>>>");
