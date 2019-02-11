@@ -1525,7 +1525,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
 
     var dimensionsArray = ["matrix"];
-    var dyItems         = panel.localStoreObj.dy;
+    var dyItems         =  $.extend({}, panel.localStoreObj.dy);
     $.map(panel.json.extra_dimensions, function(extraItem) {
       dyItems[extraItem] = 1;
     });
