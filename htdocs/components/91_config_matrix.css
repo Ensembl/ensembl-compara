@@ -301,6 +301,7 @@ div.search-box span.search-cross-icon           { display: none; padding: 4px 6p
 
 /* track configuration/matrix display */
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
+button.reset-button:hover { color: [[OK_DARK]]; border-color: [[OK_DARK]]; }
 div.configuration-legend  { display: inline-block; float: left; margin-left: -30px; }
 div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }
 div.horizontal-sub-header { width: 110px; margin: 0 auto; }
