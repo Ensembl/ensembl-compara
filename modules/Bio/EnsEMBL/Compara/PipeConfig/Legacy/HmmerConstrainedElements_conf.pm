@@ -92,8 +92,6 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
         my ($self) = @_;
-        print "pipeline_analyses\n";
-
     return [
 	    {
 		-logic_name    => 'drop_dnafrag_index_on_genomic_align',

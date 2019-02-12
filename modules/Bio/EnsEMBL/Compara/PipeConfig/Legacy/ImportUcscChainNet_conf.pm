@@ -170,8 +170,6 @@ sub resource_classes {
 
 sub pipeline_analyses {
     my ($self) = @_;
-    print "pipeline_analyses\n";
-
     return [
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
