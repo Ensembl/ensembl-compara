@@ -1121,10 +1121,6 @@ sub _sort_similarity_links {
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
 
       if ($link) {
-        ## KEGG Enzyme xrefs are compound, consisting of pathway and enzyme ids.
-        ## Need to modify the xref for linkouts to work.
-        $link =~ s/%2B/&multi_query=/ if $externalDB eq 'KEGG_Enzyme';
-        
         $text = qq{<a href="$link" class="constant">$word</a>};
       } else {
         $text = $word;
