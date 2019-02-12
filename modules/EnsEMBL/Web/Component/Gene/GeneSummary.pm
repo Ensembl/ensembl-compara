@@ -110,7 +110,7 @@ sub content {
         action => 'Matches',
         g      => $gene->stable_id, 
       });
-      $table->add_row('RefSeq', sprintf(qq{This Gencode gene contains transcript(s) that are identical to RefSeq transcript(s). Links to other RefSeq transcripts, identified by sequence comparison, may be available in the <a href="%s">External references</a> table}, $url));
+      $table->add_row('RefSeq', sprintf(qq{This Ensembl/Gencode gene contains transcript(s) that are identical to RefSeq transcript(s). If there are other matching RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $url));
     } 
   }
 

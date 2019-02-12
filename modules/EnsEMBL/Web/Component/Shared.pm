@@ -361,7 +361,7 @@ sub transcript_table {
       push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
     }
     push @columns, { key => 'refseq_match', sort => 'html', title => 'RefSeq Match' } if $species eq 'Homo_sapiens';
-    push @columns, { key => 'flags', sort => 'html', title => '' };
+    push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
