@@ -28,8 +28,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf -host compara1
 
-    By default the pipeline dumps the database named "compara_curr" in the registry, but a different database can be given:
-    -production_registry /path/to/reg_conf.pl -rel_db compara_db_name
+    By default the pipeline dumps the database named "compara_curr" in the
+    registry, but a different database can be selected with -rel_db
 
 =head1 DESCRIPTION
 

@@ -117,7 +117,6 @@ sub default_options {
         	},
         	DumpTrees               => { 
         		dump_per_species_tsv => 1,
-        		production_registry  => '--reg_conf #reg_conf#', 
         		rel_db               => '#compara_db#',
         		base_dir             => '#dump_root#',
         	},
