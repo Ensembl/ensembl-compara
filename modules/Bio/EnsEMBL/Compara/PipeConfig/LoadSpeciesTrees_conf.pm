@@ -92,12 +92,6 @@ sub hive_meta_table {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        'default' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-    };
-}
 
 sub pipeline_wide_parameters {
     my ($self) = @_;

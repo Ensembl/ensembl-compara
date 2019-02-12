@@ -127,13 +127,6 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
          'default'      => { 'LSF' => ['-C0 -M200   -R"select[mem>200]   rusage[mem=200]"',  $reg_requirement] },
-         '250Mb_job'    => { 'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement] },
-         '500Mb_job'    => { 'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement] },
-         '1Gb_job'      => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
-         '2Gb_job'      => { 'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
-         '4Gb_job'      => { 'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
-         '8Gb_job'      => { 'LSF' => ['-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"', $reg_requirement] },
-
     };
 }
 

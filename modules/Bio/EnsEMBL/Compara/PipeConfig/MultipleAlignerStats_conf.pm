@@ -91,15 +91,6 @@ sub pipeline_create_commands {
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-        '3.5Gb' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-    };
-}
-
-
 sub hive_meta_table {
     my ($self) = @_;
     return {

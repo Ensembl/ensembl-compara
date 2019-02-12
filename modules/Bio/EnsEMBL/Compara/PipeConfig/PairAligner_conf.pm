@@ -342,7 +342,7 @@ sub pipeline_analyses {
  	       -flow_into => {
  	          2 => [ 'store_sequence' ],
  	       },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
  	    {  -logic_name => 'store_sequence',
  	       -hive_capacity => 100,
@@ -354,7 +354,7 @@ sub pipeline_analyses {
 	       -flow_into => {
  	          -1 => [ 'store_sequence_again' ],
  	       },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
   	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
  	    {  -logic_name => 'store_sequence_again',
@@ -365,7 +365,7 @@ sub pipeline_analyses {
                    'dump_min_chunk_size' => $self->o('dump_min_chunk_size'),
                },
 	       -can_be_empty  => 1,
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
   	    },
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
@@ -391,7 +391,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
 	    },
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
@@ -478,7 +478,7 @@ sub pipeline_analyses {
 			      2 => [ 'dump_large_nib_for_chains' ],
 			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -491,7 +491,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
 	    {  -logic_name => 'dump_large_nib_for_chains_himem',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -525,7 +525,7 @@ sub pipeline_analyses {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
                -wait_for   => [ 'create_alignment_chains_jobs' ],
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
 	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -548,7 +548,7 @@ sub pipeline_analyses {
             -parameters => $self->o('chain_parameters'),
             -can_be_empty  => 1,
             -max_retry_count => 10,
-            -rc_name => '10Gb_job',
+            -rc_name => '16Gb_job',
             -wait_for => ['alignment_chains'],
             -can_be_empty  => 1,
         },
@@ -613,7 +613,7 @@ sub pipeline_analyses {
                               2 => { 'filter_duplicates_net' => INPUT_PLUS() },
                             },
                -can_be_empty  => 1,
-               -rc_name => '1.8Gb_job',
+               -rc_name => '2Gb_job',
            },
            {  -logic_name   => 'filter_duplicates_net',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
@@ -691,12 +691,12 @@ sub pipeline_analyses {
                   'A->1' => [ 'coding_exon_stats_summary' ],
                   '2->A' => [ 'coding_exon_stats' ],
 			     },
-	      -rc_name => '1.8Gb_job',
+	      -rc_name => '2Gb_job',
 	    },
             {   -logic_name => 'coding_exon_stats',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
                 -hive_capacity => 5,
-                -rc_name => '1.8Gb_job',
+                -rc_name => '2Gb_job',
             },
             {   -logic_name => 'coding_exon_stats_summary',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',

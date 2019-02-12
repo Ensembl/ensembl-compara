@@ -313,24 +313,9 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
     return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
 
-         '250Mb_job'        => {'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-         '250Mb_2_hour_job' => {'LSF' => '-W 02:00 -C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-         '500Mb_job'        => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'          => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '1Gb_4c_job'       => {'LSF' => '-n 4 -C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]  span[hosts=1]"' },
-         '4Gb_4c_job'       => {'LSF' => '-n 4 -C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]  span[hosts=1]"' },
-         '16Gb_16c_job'       => {'LSF' => '-n 16 -C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]  span[hosts=1]"' },
-         '32Gb_16c_job'       => {'LSF' => '-n 16 -C0 -M32000  -R"select[mem>32000]  rusage[mem=32000]  span[hosts=1]"' },
-         '2Gb_job'          => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '2Gb_2_hour_job'   => {'LSF' => '-W 02:00 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '4Gb_job'          => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '4Gb_big_tmp_job'  => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000,tmp=102400]"' },
-         '8Gb_job'          => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '16Gb_job'         => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '32Gb_job'         => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '64Gb_job'         => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
     };
 }
 

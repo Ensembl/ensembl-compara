@@ -99,19 +99,6 @@ sub default_options {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $production_registry = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => {'LSF' => [ '', $production_registry ], 'LOCAL' => [ '', $production_registry ]  },
-         '1Gb_job'      => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },
-         '2Gb_job'      => {'LSF' => [ '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },
-         '4Gb_job'      => {'LSF' => [ '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },
-         '10Gb_job'      => {'LSF' => [ '-C0 -M10000  -R"select[mem>10000]  rusage[mem=10000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },
-    };
-}
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;

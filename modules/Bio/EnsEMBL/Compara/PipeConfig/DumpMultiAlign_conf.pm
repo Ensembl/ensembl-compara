@@ -145,17 +145,6 @@ sub pipeline_wide_parameters {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_options = $self->o('registry') ? '--reg_conf '.$self->o('registry') : '';
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default' => { 'LSF' => ['', $reg_options], 'LOCAL' => ['', $reg_options] },
-        '2Gb_job' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options], 'LOCAL' => ['', $reg_options] },
-    };
-}
-
 sub pipeline_create_commands {
     my $self = shift;
 

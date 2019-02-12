@@ -247,19 +247,6 @@ sub pipeline_wide_parameters {
     }
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        'default'  => {'LSF' => [ '', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ]  },
-	    '1Gb_job'  => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ] },
-	    '2Gb_job'  => {'LSF' => [ '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ] },
-	    '4Gb_job'  => {'LSF' => [ '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ] },
-	    '10Gb_job' => {'LSF' => [ '-C0 -M10000  -R"select[mem>10000]  rusage[mem=10000]"', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ] },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;

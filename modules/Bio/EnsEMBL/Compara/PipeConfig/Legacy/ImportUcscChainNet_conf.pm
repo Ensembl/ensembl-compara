@@ -158,16 +158,6 @@ sub pipeline_create_commands {
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-         '100Mb' => { 'LSF' => '-C0 -M100000 -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb'   => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
-         '1.8Gb' => { 'LSF' => '-C0 -M1800000 -R"select[mem>1800] rusage[mem=1800]"' },
-         '3.6Gb' => { 'LSF' => '-C0 -M3600000 -R"select[mem>3600] rusage[mem=3600]"' },
-    };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -186,7 +176,7 @@ sub pipeline_analyses {
 			      1 => [ 'load_genomedb_factory' ],
 			     },
 	       -input_ids => [{}],
-               -rc_name => '1Gb',
+               -rc_name => '1Gb_job',
 	    },
 	    {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -199,7 +189,7 @@ sub pipeline_analyses {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
 			      },
-                -rc_name => '100Mb',
+                -rc_name => '100Mb_job',
 	    },
 
 	    {   -logic_name => 'load_genomedb',
@@ -209,7 +199,7 @@ sub pipeline_analyses {
                                 'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-                -rc_name => '100Mb',
+                -rc_name => '100Mb_job',
 	    },
 	    {   -logic_name => 'load_genomedb_funnel',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -232,12 +222,12 @@ sub pipeline_analyses {
 			       '2->A' => [ 'ucsc_to_ensembl_mapping' ],
 			       'A->1' => [ 'chain_factory' ],
 		},
-                -rc_name => '100Mb',
+                -rc_name => '100Mb_job',
 	    },
 
 	    {  -logic_name => 'ucsc_to_ensembl_mapping',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping',
-               -rc_name => '100Mb',
+               -rc_name => '100Mb_job',
 	    },
 
 	    {   -logic_name => 'chain_factory',
@@ -250,7 +240,7 @@ sub pipeline_analyses {
 			       '2->A' => [ 'import_chains' ],
 			       'A->1' => [ 'set_internal_ids' ],
 			      },
-                -rc_name => '100Mb',
+                -rc_name => '100Mb_job',
 	    },
 	    
  	    {  -logic_name => 'import_chains',
@@ -262,7 +252,7 @@ sub pipeline_analyses {
 			       'output_method_link_type' => $self->o('chain_method_link_type'),
 			      },
  	       -hive_capacity => 20,
-               -rc_name => '1.8Gb',
+               -rc_name => '2Gb_job',
  	    },
 	    
 	    {  -logic_name => 'net_factory',
@@ -274,7 +264,7 @@ sub pipeline_analyses {
 			       '2->A' => [ 'import_nets'  ],
 			       'A->1' => [ 'update_max_alignment_length_after_net' ],
 			      },
-               -rc_name => '100Mb',
+               -rc_name => '100Mb_job',
 	    },
 	    {  -logic_name => 'set_internal_ids',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
@@ -282,7 +272,7 @@ sub pipeline_analyses {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
 			       'method_link_species_set_id' => $self->o('mlss_id'),
 			      },
-               -rc_name => '100Mb',
+               -rc_name => '100Mb_job',
                -flow_into  => [ 'net_factory' ],
  	    },
  	    {  -logic_name => 'import_nets',
@@ -299,7 +289,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'import_nets_himem' ],
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => '2Gb_job',
  	    },
  	    {  -logic_name => 'import_nets_himem',
  	       -hive_capacity => 20,
@@ -312,7 +302,7 @@ sub pipeline_analyses {
 			       'input_method_link_type' => $self->o('chain_method_link_type'),
 			       'output_method_link_type' => $self->o('net_method_link_type'),
 			      },
-               -rc_name => '3.6Gb',
+               -rc_name => '4Gb_job',
  	    },
   	    {  -logic_name => 'update_max_alignment_length_after_net',
   	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
@@ -326,7 +316,7 @@ sub pipeline_analyses {
 						      ],
 				    },
 			      },
-               -rc_name => '100Mb',
+               -rc_name => '100Mb_job',
   	    },
  	    { -logic_name => 'healthcheck',
  	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
@@ -341,7 +331,7 @@ sub pipeline_analyses {
 							     ],
 				  },
 			    },
-              -rc_name => '100Mb',
+              -rc_name => '100Mb_job',
  	    },
             { -logic_name => 'pairaligner_stats',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
@@ -356,7 +346,7 @@ sub pipeline_analyses {
 			      'output_dir' => $self->o('output_dir'),
                               'ucsc_url' => $self->o('ucsc_url'),
 			     },
-	      -rc_name => '1Gb',
+	      -rc_name => '1Gb_job',
 	    },
 
 	   ];

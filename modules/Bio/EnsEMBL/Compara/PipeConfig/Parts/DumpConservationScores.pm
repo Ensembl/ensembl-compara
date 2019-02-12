@@ -81,7 +81,7 @@ sub pipeline_analyses_dump_conservation_scores {
             -parameters     => {
                 'cmd'   => [ $self->o('big_wig_exe'), '#bedgraph_file#', '#chromsize_file#', '#bigwig_file#' ],
             },
-            -rc_name        => '10Gb_job',
+            -rc_name        => '16Gb_job',
         },
 
         {   -logic_name     => 'md5sum_cs',

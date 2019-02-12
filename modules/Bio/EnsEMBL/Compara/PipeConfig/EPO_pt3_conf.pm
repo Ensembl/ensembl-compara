@@ -121,11 +121,8 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_; 
     return {
-        'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' },
-        'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-        'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
+        %{$self->SUPER::resource_classes},
         'hugemem' => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
-        '3.5Gb'   => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
     };  
 }
 

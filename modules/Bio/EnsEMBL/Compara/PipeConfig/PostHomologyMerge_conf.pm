@@ -89,19 +89,6 @@ sub pipeline_wide_parameters {
     }
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] }, # override default default to always incl reg_conf
-    };
-}
-
 
 sub pipeline_analyses {
     my ($self) = @_;

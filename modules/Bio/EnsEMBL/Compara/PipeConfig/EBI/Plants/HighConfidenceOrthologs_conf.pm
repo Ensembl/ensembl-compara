@@ -72,14 +72,6 @@ sub default_options {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default'      => {'LSF' => [ '', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ]  },
-    };
-}
 
 1;
 

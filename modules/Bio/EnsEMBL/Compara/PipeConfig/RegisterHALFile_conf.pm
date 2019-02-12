@@ -71,15 +71,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	 '1Gb'  => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-     '4Gb'  => { 'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"' },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -127,7 +118,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ '?accu_name=e2u_synonyms&accu_input_variable=synonym&accu_address={genome_db_id}{name}' ],
             },
-	    -rc_name    => '1Gb',
+	    -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'aggregate_synonyms',
@@ -136,13 +127,13 @@ sub pipeline_analyses {
                 'e2u_synonyms'  => {},  # default value, in case the accu is empty
                 'sql' => [ q/REPLACE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "alt_synonyms", '#expr(stringify(#e2u_synonyms#))expr#')/ ],
             },
-	    -rc_name    => '1Gb',
+	    -rc_name    => '1Gb_job',
         },
 
         {
             -logic_name => 'generate_coverage_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats',
-            -rc_name    => '4Gb',
+            -rc_name    => '4Gb_job',
         }
 
      ];

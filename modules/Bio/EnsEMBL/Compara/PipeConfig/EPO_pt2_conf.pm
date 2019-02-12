@@ -91,18 +91,6 @@ sub default_options {
 }
 
 
-sub resource_classes {
-    my ($self) = @_; 
-    return {
-	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	'default'  => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
-	'mem3500'  => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-	'mem7500'  => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-    'mem14000' => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-
-    };  
-}
-
 sub pipeline_wide_parameters {
 	my $self = shift @_;
 	return {

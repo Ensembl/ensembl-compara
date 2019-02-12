@@ -80,33 +80,9 @@ sub default_options {
     'master_db' => 'compara_master',
     # previous release data location for reuse
     'reuse_db'  => 'amniotes_pecan_prev',   # Cannot be the release db because we need exon members and the peptide_align_feature tables
-
-    #Pecan default parameters
-    'java_options'      => '-server -Xmx1000M',
-    'java_options_mem1' => '-server -Xmx3500M -Xms3000m',
-    'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
-    'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
     };
 }
 
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');    
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '100Mb'   => { 'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"',   $reg_requirement] },
-         '1Gb'     => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"',  $reg_requirement] },
-         '1.8Gb'   => { 'LSF' => ['-C0 -M1800  -R"select[mem>1800]  rusage[mem=1800]"',  $reg_requirement] },
-         '3.5Gb'   => { 'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },
-	     '7Gb'     => { 'LSF' => ['-C0 -M7000  -R"select[mem>7000]  rusage[mem=7000]"',  $reg_requirement] },
-         '14Gb'    => { 'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] },
-         '30Gb'    => { 'LSF' => ['-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"', $reg_requirement] },
-         'gerp'    => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"',  $reg_requirement] },
-         'higerp'  => { 'LSF' => ['-C0 -M3800  -R"select[mem>3800]  rusage[mem=3800]"',  $reg_requirement] },
-    };
-}
 
 1;
 

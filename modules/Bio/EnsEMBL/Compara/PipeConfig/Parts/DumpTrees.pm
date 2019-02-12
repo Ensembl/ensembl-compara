@@ -282,7 +282,7 @@ sub pipeline_analyses_dump_trees {
                 },
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
-            -rc_name       => '10Gb_job',
+            -rc_name       => '16Gb_job',
         },
 
         {   -logic_name    => 'validate_xml',

@@ -115,7 +115,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 	    },
 	    {  -logic_name => 'populate_new_database_with_gerp',
 	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -126,7 +126,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_gerp_mlss_tag' ],
 			     },
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 	    },
 
 # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
@@ -139,7 +139,7 @@ sub pipeline_analyses {
                               ],
                              },
               -flow_into => [ 'set_mlss_tag' ],
-              -rc_name => '100Mb',
+              -rc_name => '100Mb_job',
             },
 
             { -logic_name => 'set_mlss_tag',
@@ -153,7 +153,7 @@ sub pipeline_analyses {
               -flow_into => {
                              1 => [ 'set_internal_ids' ],
                             },
-              -rc_name => '100Mb',
+              -rc_name => '100Mb_job',
             },
 
 # ------------------------------------------------------[Set internal ids ]---------------------------------------------------------------
@@ -170,7 +170,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'load_genomedb_factory' ],
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '100Mb_job',
 	    },
 
 # ---------------------------------------------[Load GenomeDB entries from master+cores]--------------------------------------------------
@@ -184,7 +184,7 @@ sub pipeline_analyses {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			       'A->1' => [ 'make_species_tree' ],    # backbone
 			      },
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 	    },
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
@@ -193,7 +193,7 @@ sub pipeline_analyses {
             'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 	    },
 
 # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
@@ -202,7 +202,7 @@ sub pipeline_analyses {
 		-parameters    => { 
                                    'species_tree_input_file' => $self->o('binary_species_tree'),
 				  },
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 		-flow_into => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
 		                    ELSE [ 'create_default_pairwise_mlss' ] ),
 	    },
@@ -229,7 +229,7 @@ sub pipeline_analyses {
 			       1 => [ 'import_alignment' ],
 			       2 => [ '?table_name=pipeline_wide_parameters' ],
 			      },
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 	    },
 
 # ------------------------------------------------[Import the high coverage alignments]---------------------------------------------------
@@ -242,7 +242,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'create_low_coverage_genome_jobs' ],
 			      },
-		-rc_name =>'1Gb',
+		-rc_name =>'1Gb_job',
 	    },
 
 # ------------------------------------------------------[Low coverage alignment]----------------------------------------------------------
@@ -255,7 +255,7 @@ sub pipeline_analyses {
 			       '2->A' => [ 'low_coverage_genome_alignment' ],
 			       'A->1' => [ 'delete_alignment' ],
 			      },
-		-rc_name => '3.5Gb',
+		-rc_name => '4Gb_job',
 	    },
 	    {   -logic_name => 'low_coverage_genome_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
@@ -272,7 +272,7 @@ sub pipeline_analyses {
                                2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
 			       -1 => [ 'low_coverage_genome_alignment_again' ],
 			      },
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with extra memory.
 	    {   -logic_name => 'low_coverage_genome_alignment_again',
@@ -290,7 +290,7 @@ sub pipeline_analyses {
                                2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
 			       -1 => [ 'low_coverage_genome_alignment_himem' ],
 			      },
-		-rc_name => '3.5Gb',
+		-rc_name => '4Gb_job',
 	    },
 
         #Super MEM analysis, there is a small amount of jobs still failing with current RAM limits
@@ -308,7 +308,7 @@ sub pipeline_analyses {
 		-flow_into => {
                                2 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
 			      },
-		-rc_name => '8Gb',
+		-rc_name => '8Gb_job',
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
@@ -318,7 +318,7 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-analysis_capacity  => 700,
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 	    },
 
 # ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------
@@ -333,7 +333,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'set_internal_ids_again' ],
 			      },
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 	    },
 
 # ----------------------------------------[In case the mlss_ids are not in the right order]----------------------------------------------
@@ -345,7 +345,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 	    },
 
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
@@ -357,7 +357,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'create_neighbour_nodes_jobs_alignment' ],
 			     },
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 	    },
 
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
@@ -370,13 +370,13 @@ sub pipeline_analyses {
 			       '2->A' => [ 'set_neighbour_nodes' ],
 			       'A->1' => [ 'healthcheck_factory' ],
 			      },
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 	    },
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
 		-batch_size    => 10,
 		-hive_capacity => 20,
-		-rc_name => '1.8Gb',
+		-rc_name => '2Gb_job',
 		-flow_into => {
 			       -1 => [ 'set_neighbour_nodes_himem' ],
 			      },
@@ -386,7 +386,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
 		-batch_size    => 5,
 		-hive_capacity => 20,
-		-rc_name => '3.5Gb',
+		-rc_name => '4Gb_job',
 	    },
 # -----------------------------------------------------------[Run healthcheck]------------------------------------------------------------
             {   -logic_name => 'healthcheck_factory',
@@ -405,7 +405,7 @@ sub pipeline_analyses {
 
 	    {   -logic_name => 'conservation_score_healthcheck',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
-		-rc_name => '100Mb',
+		-rc_name => '100Mb_job',
 	    },
 
         {   -logic_name => 'register_mlss',

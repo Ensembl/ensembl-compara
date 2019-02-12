@@ -87,16 +87,5 @@ sub default_options {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-    %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default'  => {'LSF' => ['-C0 -M2500  -R"select[mem>2500]  rusage[mem=2500]"',  $reg_requirement] },   
-         'mem3500'  => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },   
-         'mem7500'  => {'LSF' => ['-C0 -M7500  -R"select[mem>7500]  rusage[mem=7500]"',  $reg_requirement] },   
-         'mem14000' => {'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] }, 
-    };  
-}
 
 1;

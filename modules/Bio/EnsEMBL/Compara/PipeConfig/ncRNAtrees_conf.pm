@@ -851,7 +851,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_himem'],
                           },
-             -rc_name => '8Gb_mpi_4c_job',
+             -rc_name => '8Gb_4c_mpi',
             },
             {
              -logic_name => 'fast_trees_himem',
@@ -866,7 +866,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
                           },
-             -rc_name => '16Gb_mpi_4c_job',
+             -rc_name => '16Gb_4c_mpi',
             },
             {
              -logic_name => 'fast_trees_hugemem',
@@ -878,7 +878,7 @@ sub core_pipeline_analyses {
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
                              'examl_number_of_cores' => 4,
                             },
-             -rc_name => '32Gb_mpi_4c_job',
+             -rc_name => '32Gb_4c_mpi',
             },
 
         {

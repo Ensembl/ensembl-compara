@@ -98,10 +98,10 @@ sub default_options {
 
     #Pecan default parameters
     'max_block_size'    => 1000000,
-    'java_options'      => '-server -Xmx1000M',
-    'java_options_mem1' => '-server -Xmx3500M -Xms3000m',
-    'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
-    'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
+    'java_options'      => '-server -Xmx1300M',
+    'java_options_mem1' => '-server -Xmx6500M -Xms6000m',
+    'java_options_mem2' => '-server -Xmx12500M -Xms12000m',
+    'java_options_mem3' => '-server -Xmx26500M -Xms26000m',
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
@@ -181,7 +181,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
-		-rc_name => '1Gb',
+		-rc_name => '1Gb_job',
 	    },
 
 # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
@@ -195,7 +195,7 @@ sub pipeline_analyses {
               -flow_into => {
                              1 => [ 'set_internal_ids' ],
                             },
-              -rc_name => '100Mb',
+              -rc_name => '100Mb_job',
             },
 
 # ------------------------------------------------------[Set internal ids ]---------------------------------------------------------------
@@ -214,7 +214,7 @@ sub pipeline_analyses {
 		-flow_into => {
                                1 => [ 'load_genomedb_factory' ],
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '100Mb_job',
 	    },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -230,7 +230,7 @@ sub pipeline_analyses {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
                 'A->1' => [ 'create_mlss_ss' ],
             },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
 	},
 
         {   -logic_name => 'load_genomedb',
@@ -243,7 +243,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'check_reusability' ],   # each will flow into another one
             },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
         },
 
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
@@ -260,7 +260,7 @@ sub pipeline_analyses {
                 2 => [ 'check_reuse_db', '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id' ],
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
             },
-	    -rc_name => '1Gb',
+	    -rc_name => '1Gb_job',
         },
 
 	{   -logic_name => 'check_reuse_db',
@@ -268,7 +268,7 @@ sub pipeline_analyses {
 	    -parameters => {
 		      'reuse_db' => $self->o('reuse_db'),
 	    },
-	    -rc_name => '1.8Gb',
+	    -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'create_mlss_ss',
@@ -288,7 +288,7 @@ sub pipeline_analyses {
             -flow_into => {
                            1 => [ 'set_gerp_neutral_rate' ],
                           },
-            -rc_name => '100Mb',
+            -rc_name => '100Mb_job',
         },
 
         {   -logic_name => 'set_gerp_neutral_rate',
@@ -322,7 +322,7 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'seq_member_table_reuse' ],    # n_reused_species
-	    -rc_name => '1Gb',
+	    -rc_name => '1Gb_job',
         },
 
         {   -logic_name => 'seq_member_table_reuse',
@@ -362,7 +362,7 @@ sub pipeline_analyses {
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
         },
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
@@ -389,7 +389,7 @@ sub pipeline_analyses {
             -flow_into => {
                  1 => [ 'load_fresh_members' ],
             },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
         },
 
         {   -logic_name => 'load_fresh_members',
@@ -397,7 +397,7 @@ sub pipeline_analyses {
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20,
                 },
-	    -rc_name => '1.8Gb',
+	    -rc_name => '2Gb_job',
         },
 
 
@@ -405,7 +405,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'blastdb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
-            -rc_name       => '100Mb',
+            -rc_name       => '100Mb_job',
             -flow_into  => {
                 '2->A'  => [ 'delete_non_nuclear_genes' ],
                 'A->1'  => [ 'blast_species_factory' ],
@@ -428,7 +428,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-	    -rc_name => '1Gb',
+	    -rc_name => '1Gb_job',
         },
 
         {   -logic_name => 'make_blastdb',
@@ -438,7 +438,7 @@ sub pipeline_analyses {
                 'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd'           => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
             },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
         },
 
         {   -logic_name => 'blast_species_factory',
@@ -458,7 +458,7 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'mercator_blast' ],
             },
-	    -rc_name => '1Gb',
+	    -rc_name => '1Gb_job',
         },
 
         {   -logic_name    => 'mercator_blast',
@@ -470,7 +470,7 @@ sub pipeline_analyses {
             },
             -batch_size => 10,
             -hive_capacity => $self->o('blast_capacity'),
-	    -rc_name => '1.8Gb',
+	    -rc_name => '2Gb_job',
         },
 
 
@@ -482,7 +482,7 @@ sub pipeline_analyses {
 			    'A->1' => { 'mercator' => undef },
 			    '2->A' => ['dump_mercator_files'],
 			   },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
          },
 
          {   -logic_name => 'dump_mercator_files',
@@ -491,7 +491,7 @@ sub pipeline_analyses {
 			      'input_dir'   => $self->o('input_dir'),
 			      'all_hits'    => $self->o('all_hits'),
 			    },
-	     -rc_name => '1Gb',
+	     -rc_name => '1Gb_job',
          },
 
          {   -logic_name => 'mercator',
@@ -500,7 +500,7 @@ sub pipeline_analyses {
 			     'input_dir' => $self->o('input_dir'),
                              'mercator_exe' => $self->o('mercator_exe'),
 			    },
-	     -rc_name => '14Gb',
+	     -rc_name => '16Gb_job',
              -flow_into => {
                  "2->A" => WHEN (
                     "(#total_residues_count# <= 3000000) || ( #dnafrag_count# <= 10 )"                          => "pecan",
@@ -538,7 +538,7 @@ sub pipeline_analyses {
 		-1 => [ 'pecan_mem1'], #MEMLIMIT (pecan didn't fail, but lsf did)
 		-2 => [ 'pecan_mem1'], #RUNLIMIT
              },
-	    -rc_name => '1.8Gb',
+	    -rc_name => '2Gb_job',
          },
 
          {   -logic_name => 'pecan_mem1',
@@ -556,7 +556,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 15,
-	     -rc_name => '7Gb',
+	     -rc_name => '8Gb_job',
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
@@ -580,7 +580,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 20,
-	     -rc_name => '14Gb',
+	     -rc_name => '16Gb_job',
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
@@ -604,7 +604,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 40,
-	     -rc_name => '30Gb',
+	     -rc_name => '32Gb_job',
              -flow_into => {
                  1 => [ 'gerp' ],
              },
@@ -622,7 +622,7 @@ sub pipeline_analyses {
              -flow_into => {
 		 -1 => [ 'gerp_himem'], #retry with more memory
              },
-	     -rc_name => 'gerp',
+	     -rc_name => '1Gb_job',
          },
          {   -logic_name    => 'gerp_himem',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
@@ -631,7 +631,7 @@ sub pipeline_analyses {
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
              },
             -hive_capacity => $self->o('gerp_capacity'),
-	     -rc_name => 'higerp',
+	     -rc_name => '4Gb_job',
          },
 
  	 {  -logic_name => 'update_max_alignment_length',
@@ -645,7 +645,7 @@ sub pipeline_analyses {
 			    'A->1' => ['multiplealigner_stats_factory'],
 			   },
 
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
 	 },
 
 # ---------------------------------------------[healthcheck]---------------------------------------------------------------------
@@ -656,7 +656,7 @@ sub pipeline_analyses {
                                 'test' => 'conservation_scores',
                                 'method_link_species_set_id' => '#cs_mlss_id#',
              },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
 	},
 
         {   -logic_name    => 'conservation_jobs_healthcheck',
@@ -666,7 +666,7 @@ sub pipeline_analyses {
                                 'logic_name' => 'Gerp',
                                 'method_link_type' => 'PECAN',
              },
-	    -rc_name => '100Mb',
+	    -rc_name => '100Mb_job',
  	},
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },

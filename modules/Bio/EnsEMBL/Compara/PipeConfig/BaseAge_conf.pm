@@ -102,7 +102,7 @@ sub pipeline_analyses {
                               'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
                -input_ids => [{}],
-               -rc_name => '100Mb',
+               -rc_name => '100Mb_job',
               -flow_into => {
                              '1' => [ 'base_age_factory' ],
                             },
@@ -120,7 +120,7 @@ sub pipeline_analyses {
                               '2->A' => { 'base_age' => { 'seq_region' => '#name#', }, },
                               'A->1' => [ 'big_bed' ],
                              },
-               -rc_name => '100Mb',
+               -rc_name => '100Mb_job',
             },
             
             { -logic_name => 'base_age',

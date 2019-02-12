@@ -287,5 +287,17 @@ sub tweak_analyses {
 }
 
 
+sub resource_classes {
+    my ($self, $include_multi_threaded) = @_;
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+        # Always include the single-threaded resource classes
+        %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_single_thread($self) },
+        # Include the multi-threaded resource classes conditionally
+        ${ $include_multi_threaded ? Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($self) : {} },
+    };
+}
+
+
 1;
 

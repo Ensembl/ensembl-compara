@@ -226,7 +226,7 @@ return [
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 300,
- -rc_name => 'mem7500',
+ -rc_name => '8Gb_job',
  -max_retry_count => 1,
  -flow_into      => {
 		1 => [ 'gerp_constrained_element' ],
@@ -289,7 +289,7 @@ return [
     'method_link_species_set_id' => '#mlss_id#',
     'ortheus_c_exe' => $self->o('ortheus_c_exe'),
   },
- -rc_name => 'mem7500',
+ -rc_name => '8Gb_job',
  -hive_capacity => 100,
  -batch_size    => 10,
 },

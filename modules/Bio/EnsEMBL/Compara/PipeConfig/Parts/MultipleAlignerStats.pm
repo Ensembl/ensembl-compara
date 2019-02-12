@@ -62,6 +62,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -parameters => {
                 'skip_multiplealigner_stats'    => $self->o('skip_multiplealigner_stats'),
             },
+            -rc_name    => '500Mb_job',
             -flow_into  => {
                 '2->A' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats' ] ),
                 'A->1' => [ 'block_size_distribution' ],
@@ -78,13 +79,14 @@ sub pipeline_analyses_multiple_aligner_stats {
                 'ensembl_release'   => $self->o('ensembl_release'),
                 'output_dir'        => $self->o('output_dir'),
             },
-            -rc_name => '3.5Gb',
+            -rc_name => '4Gb_job',
             -hive_capacity  => 100,
         },
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
             -flow_into  => [ 'email_stats_report' ],
+            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'email_stats_report',
@@ -92,7 +94,8 @@ sub pipeline_analyses_multiple_aligner_stats {
             -parameters => {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
                 'email'     => $self->o('email'),
-            }
+            },
+            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'gab_stats_semaphore_holder',
@@ -110,6 +113,7 @@ sub pipeline_analyses_multiple_aligner_stats {
                             'contiguous'  => 0,
                             'inputquery'  => 'SELECT DISTINCT genomic_align_block_id FROM genomic_align WHERE method_link_species_set_id = #mlss_id# AND dnafrag_id < 10000000000',
                         },
+            -rc_name    => '4Gb_job',
             -flow_into  => {
                 2 => ['alignment_depth_calculator','pw_aligned_base_calculator'],
                 },
@@ -117,6 +121,7 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name =>  'alignment_depth_calculator',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::AlignmentDepthCalculator',
+            -rc_name    => '2Gb_job',
             -flow_into  => {
                 2 => [ '?accu_name=aligned_positions_counter&accu_address={genome_db_id}[]&accu_input_variable=num_of_aligned_positions' ],
                 3 => [ '?accu_name=aligned_sequences_counter&accu_address={genome_db_id}[]&accu_input_variable=sum_aligned_seq'],
@@ -125,6 +130,7 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name =>  'pw_aligned_base_calculator',
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculatePwAlignedBases',
+            -rc_name    => '2Gb_job',
             -flow_into  => {
                 2 => [ '?accu_name=aligned_bases_counter&accu_address={frm_genome_db_id}{to_genome_db_id}[]&accu_input_variable=no_of_aligned_bases' ]
             },
@@ -132,6 +138,7 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name => 'backbone_summary_job_generator',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MWGAStatsSummarizer',
+            -rc_name    => '8Gb_job',
             -flow_into  =>  {
                 2 => 'compute_genome_alignment_depth',
                 3 => 'compute_genomes_pw_aligned_bases',
@@ -140,10 +147,12 @@ sub pipeline_analyses_multiple_aligner_stats {
 
         {   -logic_name => 'compute_genome_alignment_depth',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomeAlignmentDepth',
+            -rc_name    => '8Gb_job',
         },
 
         {   -logic_name => 'compute_genomes_pw_aligned_bases',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomePwAlignedBases',
+            -rc_name    => '8Gb_job',
         },
 
     ];

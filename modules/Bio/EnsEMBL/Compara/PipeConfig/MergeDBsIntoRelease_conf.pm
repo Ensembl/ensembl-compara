@@ -104,19 +104,6 @@ sub default_options {
 
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        'default' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        '16Gb_job'=> { 'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement] },
-    };
-}
-
 
 sub pipeline_wide_parameters {
     my $self = shift @_;

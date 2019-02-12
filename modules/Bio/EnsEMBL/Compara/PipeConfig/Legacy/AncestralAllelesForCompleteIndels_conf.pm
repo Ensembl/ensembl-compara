@@ -202,16 +202,6 @@ sub pipeline_create_commands {
     ];
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-	 '100Mb' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-	 '1Gb'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-         '5.0Gb' => { 'LSF' => '-C0 -M5000 -R"select[mem>5000] rusage[mem=5000]"' },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -231,7 +221,7 @@ sub pipeline_analyses {
 			    '1->A' => ['load_genomedb_factory' , 'load_ancestral_genomedb'],
                             'A->1' => ['chunked_jobs_factory'], #backbone
 			   },
-	     -rc_name => '100Mb',
+	     -rc_name => '100Mb_job',
 	    },
 	    {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -243,7 +233,7 @@ sub pipeline_analyses {
 		-flow_into => {
                                2 => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '100Mb_job',
 	    },
 
 	    {   -logic_name => 'load_genomedb',
@@ -253,7 +243,7 @@ sub pipeline_analyses {
                                 'db_version'    => $self->o('db_version'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_name => '100Mb',
+		-rc_name => '100Mb_job',
 	    },
 
 
@@ -268,7 +258,7 @@ sub pipeline_analyses {
                                 'anc_name' => $self->o('ancestor_species_name'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_name => '100Mb',
+		-rc_name => '100Mb_job',
 	    },
 
             #Find all dnafrags for ref_species
@@ -301,7 +291,7 @@ sub pipeline_analyses {
                              'A->1' => [ 'summary' ],
 			      },
 
-	      -rc_name => '100Mb',
+	      -rc_name => '100Mb_job',
 	    },
             { -logic_name => 'create_sub_chunk_jobs',
               -module => 'Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::CreateSubChunkedJobs',
@@ -314,7 +304,7 @@ sub pipeline_analyses {
                                '2->A' => [ 'ancestral_alleles_for_indels' ],
                                'A->1' => [ 'concat_vep' ],
                             },
-              -rc_name => '100Mb',
+              -rc_name => '100Mb_job',
             },
 	    { -logic_name => 'ancestral_alleles_for_indels',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::RunAncestralAllelesCompleteFork',
@@ -331,7 +321,7 @@ sub pipeline_analyses {
 			     },
               -batch_size => 1, #this *must* be 1 if using RunAncestralAllelesCompleteFork module
 	      -hive_capacity => 500,
-	      -rc_name => '1Gb',
+	      -rc_name => '1Gb_job',
               -flow_into => {
                              -1 => [ 'ancestral_alleles_for_indels_himem' ],  # MEMLIMIT
                             },
@@ -352,7 +342,7 @@ sub pipeline_analyses {
               -batch_size => 1, #this *must* be 1 if using RunAncestralAllelesCompleteFork module
 	      -hive_capacity => 500,
               -can_be_empty  => 1,
-	      -rc_name => '5.0Gb',
+	      -rc_name => '8Gb_job',
 	    },
             { -logic_name => 'concat_vep',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::ConcatVep',
@@ -361,7 +351,7 @@ sub pipeline_analyses {
                               'bgzip' => $self->o('bgzip_exe'),
                               'tabix' => $self->o('tabix_exe'),
 			     },
-	      -rc_name => '100Mb',
+	      -rc_name => '100Mb_job',
               -hive_capacity => 10,
 	    },
 	    { -logic_name => 'summary',
@@ -371,7 +361,7 @@ sub pipeline_analyses {
                               'work_dir' => $self->o('work_dir'),
                               'seq_region' => $self->o('seq_region'),
 			     },
-	      -rc_name => '100Mb',
+	      -rc_name => '100Mb_job',
 	    },
 
     ];

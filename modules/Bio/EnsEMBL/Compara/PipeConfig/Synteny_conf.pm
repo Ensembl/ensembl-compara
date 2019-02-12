@@ -218,7 +218,7 @@ sub pipeline_analyses {
                                '1' => [ 'chr_name_factory' ],                               
                               },
               -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
-              -rc_name => '1.8Gb',
+              -rc_name => '2Gb_job',
             },
 
 
@@ -234,7 +234,7 @@ sub pipeline_analyses {
                                '1' => [ 'build_synteny' ],
                               },
               -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
-              -rc_name => '1.8Gb',
+              -rc_name => '2Gb_job',
             },
             #Build synteny regions
             { -logic_name => 'build_synteny',
@@ -244,7 +244,7 @@ sub pipeline_analyses {
                               'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
-              -rc_name => '1.8Gb',
+              -rc_name => '2Gb_job',
               -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
               -flow_into => {
                   -1 => 'build_synteny_himem',
@@ -257,7 +257,7 @@ sub pipeline_analyses {
                               'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
-              -rc_name => '3.6Gb',
+              -rc_name => '4Gb_job',
               -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
             },
             #Concatenate into single file
@@ -296,7 +296,7 @@ sub pipeline_analyses {
                             },
               -max_retry_count => 0,
               -analysis_capacity => 5,
-              -rc_name => '3.6Gb',
+              -rc_name => '4Gb_job',
             },
 
         {   -logic_name => 'delete_synteny',

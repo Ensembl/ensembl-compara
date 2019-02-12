@@ -77,23 +77,6 @@ sub default_options {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => {'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
-         '1Gb_job'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
-         '2Gb_job'      => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
-         '4Gb_job'      => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
-         '16Gb_job'     => {'LSF' => ['-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"', $reg_requirement] },
-         '2Gb_8c_job'   => {'LSF' => ['-n 8 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },
-         '2Gb_reg_conf' => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
-
-    };
-}
-
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_create_commands {
@@ -151,7 +134,7 @@ sub pipeline_analyses {
         	  -flow_into  => {
                     1 => { 'mash_sketch' => { 'input_file' => '#genome_dump_file#', } },
         	},
-        	-rc_name => '2Gb_reg_conf',
+                -rc_name => '2Gb_job',
           -analysis_capacity => 5,
         },
 

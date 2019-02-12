@@ -103,15 +103,6 @@ sub pipeline_create_commands {
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-        '1Gb'   => {'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', '--reg_conf '.$self->o('reg_conf')]},
-    };
-}
-
-
 sub hive_meta_table {
     my ($self) = @_;
     return {
@@ -152,16 +143,16 @@ sub pipeline_analyses {
                 'A->1' => [ 'coding_exon_stats_summary' ],
                 '2->A' => [ 'coding_exon_stats' ],
             },
-            -rc_name    => '1Gb',
+            -rc_name    => '1Gb_job',
         },
         {   -logic_name => 'coding_exon_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
-            -rc_name    => '1Gb',
+            -rc_name    => '1Gb_job',
             -analysis_capacity  => 100,
         },
         {   -logic_name => 'coding_exon_stats_summary',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
-            -rc_name    => '1Gb',
+            -rc_name    => '1Gb_job',
         },
     ];
 }
