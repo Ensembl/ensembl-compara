@@ -62,12 +62,6 @@ sub default_options {
 
         'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'  => 4485,
-
     # User details
 
     # parameters that are likely to change from execution to another:

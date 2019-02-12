@@ -45,9 +45,6 @@ sub default_options {
     'division' => 'ensembl',
 	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
-    #'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
-    #'port' => 4401,
-
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
     'master_db' => 'compara_master',

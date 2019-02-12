@@ -48,9 +48,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-5',    # where the pipeline database will be created
-        'port'            => 4615,
-
         'division'        => 'plants',
 
         'high_confidence_ranges'    => [

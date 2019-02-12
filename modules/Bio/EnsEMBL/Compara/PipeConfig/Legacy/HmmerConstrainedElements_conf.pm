@@ -30,14 +30,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-           # connection parameters to various databases:
-        'pipeline_db' => { # the production database itself (will be created)
-                -host   => 'compara1',
-                -port   => 3306,
-                -user   => 'ensadmin',
-                -pass   => $self->o('password'),
-                -dbname => $ENV{'USER'}.'_hmmer_constrained_elements'.$self->o('rel_with_suffix'),
-        },
 	   # database containing the constrained elements
         'compara_db' => {
                 -user => 'ensro',

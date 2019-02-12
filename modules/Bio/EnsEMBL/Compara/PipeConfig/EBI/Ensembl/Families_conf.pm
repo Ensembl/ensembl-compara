@@ -73,11 +73,6 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options },
 
-        #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-2',        # where the pipeline database will be created
-        'port'          => '4522',                      # server port
-
         'division' => 'ensembl',
 
         # used by the StableIdMapper as the reference:

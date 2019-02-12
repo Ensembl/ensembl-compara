@@ -56,12 +56,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'  => 4522,
-
     # User details
 
     # parameters that are likely to change from execution to another:

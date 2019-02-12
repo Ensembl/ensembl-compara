@@ -68,9 +68,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'host'                => 'mysql-ens-compara-prod-4:4401',
         'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('release'),
-        #'host'               => 'mysql-ens-compara-prod-1:4485',
         'work_dir'    => $self->o('pipeline_dir'),
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 

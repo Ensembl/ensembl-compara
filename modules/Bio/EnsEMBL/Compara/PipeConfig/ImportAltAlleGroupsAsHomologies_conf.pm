@@ -49,9 +49,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
-
         # Only needed if the member_db doesn't have genome_db.locator
         'division' => 'ensembl',
 

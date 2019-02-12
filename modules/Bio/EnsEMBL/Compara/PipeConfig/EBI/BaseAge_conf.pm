@@ -56,10 +56,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-            # Connection parameters for production database (the rest is defined in the base class)
-            'host' => 'mysql-ens-compara-prod-2',
-            'port' => 4522,
-
             'ref_species' => 'homo_sapiens',
             #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 

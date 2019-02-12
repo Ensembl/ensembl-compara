@@ -69,8 +69,6 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'host'      => 'mysql-ens-compara-prod-5',
-        'port'      =>  4615,
         'division'  => 'plants',
 
         # healthcheck

@@ -69,11 +69,6 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-            'host' => 'mysql-eg-prod-2.ebi.ac.uk',
-            'port' => 4239,
-            'user' => 'ensadmin',
-            'password' => $self->o('password'),
-
             'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
             'staging_loc1' => {

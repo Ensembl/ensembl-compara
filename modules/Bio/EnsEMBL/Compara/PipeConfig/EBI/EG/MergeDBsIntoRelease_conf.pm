@@ -55,9 +55,6 @@ sub default_options {
   return {
   %{$self->SUPER::default_options},
 
-  # Where the pipeline database will be created
-  'host' => undef,
-
   # Don't shout about unknown tables
   'die_if_unknown_table'    => 0,
 

@@ -48,8 +48,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
         'division'        => 'vertebrates',
 
         # ncRNAs don't have GOC, so we don't want to penalize them for that

@@ -80,10 +80,6 @@ sub default_options {
       # Used to name the databases and the working directory
       #'species_set_name' => 'primates',
 
-      # Where the pipeline lives
-      #'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-      #'port' => 4523,
-
       'division' => 'ensembl',
 
       # Dump directory

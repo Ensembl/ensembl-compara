@@ -138,15 +138,6 @@ sub default_options {
             # master database connection parameters
             'master_db'  => 'mysql://ensro@compara1/mm14_ensembl_compara_master',
 
-            'pipeline_db' => {                                  # connection parameters
-                              -host   => 'compara5',
-                              -port   => 3306,
-                              -user   => 'ensadmin',
-                              -pass   => $self->o('password'),
-                              -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
-                              -driver => 'mysql',
-                             },
-
             #Location of core databases
             'reg1' => {
                        -host   => 'ens-livemirror',

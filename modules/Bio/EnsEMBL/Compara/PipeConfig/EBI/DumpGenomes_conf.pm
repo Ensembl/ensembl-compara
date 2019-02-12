@@ -65,11 +65,6 @@ sub default_options {
         'mlss_id'           => undef,
         'all_current'       => undef,
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'              => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'              => 4522,
-
         # Which user has access to this directory
         'shared_user'       => 'compara_ensembl',
 

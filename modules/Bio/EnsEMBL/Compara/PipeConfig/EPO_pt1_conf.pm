@@ -30,7 +30,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
         pipeline_db (-host)
         resource_classes 
 
-        'password' - your mysql password
 	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
 	'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs

@@ -30,7 +30,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
         resource_classes
 
     'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
-        'password' - your mysql password
     'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
     'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
         The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use

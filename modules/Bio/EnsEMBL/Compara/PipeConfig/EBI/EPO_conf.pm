@@ -70,10 +70,6 @@ sub default_options {
         # 'species_set_name' => 'fish',
         #'rel_suffix' => 'b',
 
-        # Where the pipeline lives
-        'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port' => 4522,
-
         'division' => 'ensembl',
 
         # Capacities

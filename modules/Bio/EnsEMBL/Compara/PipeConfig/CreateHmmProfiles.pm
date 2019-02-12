@@ -262,10 +262,6 @@ sub default_options {
 
         # Uncomment and update the database locations
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host' => 'mysql-ens-compara-prod-4:4401',
-
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/treefam_master',
         #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',

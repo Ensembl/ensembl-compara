@@ -27,7 +27,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt1_conf
     EBI-specific configuration for the EPO_pt1 pipeline. Options to check before
     initializing the pipeline:
 
-      'password' - your mysql password
 	    'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	    'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
 	    

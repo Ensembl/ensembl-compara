@@ -53,12 +53,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        #'compara_db' => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
-
-        #Connection parameters for production database (the rest is defined in the base class)
-        'host'              => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'              => 4485,
-
         'division'          => 'vertebrates',
 
         #Locations to write output files

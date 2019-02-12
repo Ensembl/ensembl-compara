@@ -70,10 +70,6 @@ sub default_options {
     'species_set_name' => 'sauropsids',
     #'rel_suffix' => 'b',
 
-    # Where the pipeline lives
-    'host' => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-    'port' => 4485,
-
     'division' => 'ensembl',
 
 	# database containing the anchors for mapping

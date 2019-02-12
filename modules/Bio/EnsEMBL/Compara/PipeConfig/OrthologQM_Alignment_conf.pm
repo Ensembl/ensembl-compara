@@ -123,7 +123,6 @@ sub default_options {
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
 
-        'user'             => 'ensadmin',
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
     };
 }

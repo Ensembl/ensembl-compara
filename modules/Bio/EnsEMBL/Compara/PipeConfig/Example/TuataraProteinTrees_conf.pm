@@ -188,9 +188,6 @@ sub default_options {
         #Since we are loading members from FASTA files, we dont have the dna_frags, so we need to allow it to be missing.
         'allow_missing_coordinates' => 0,
 
-        #Compara server to be used
-        'host' => 'compara4',
-
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_file_sources_locs'    => [ '/homes/mateus/ENSEMBL/master/ensembl-compara/scripts/examples/tuatara_source.json' ],    # It can be a list of JSON files defining an additionnal set of species
