@@ -104,7 +104,6 @@ sub pipeline_analyses_alt_alleles {
             -flow_into => {
                 2 => [ 'import_altalleles_as_homologies' ],
             },
-            -rc_name    => 'default_w_reg',
         },
 
 

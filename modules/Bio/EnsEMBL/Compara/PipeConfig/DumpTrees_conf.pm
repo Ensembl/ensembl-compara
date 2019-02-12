@@ -106,7 +106,6 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
          'default'      => {'LSF' => [ '', $production_registry ], 'LOCAL' => [ '', $production_registry ]  },
-         'default_with_registry'      => {'LSF' => [ '', $production_registry ], 'LOCAL' => [ '', $production_registry ]  },
          '1Gb_job'      => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },
          '2Gb_job'      => {'LSF' => [ '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },
          '4Gb_job'      => {'LSF' => [ '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $production_registry ], 'LOCAL' => [ '', $production_registry ] },

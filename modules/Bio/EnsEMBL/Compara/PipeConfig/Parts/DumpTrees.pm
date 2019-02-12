@@ -78,7 +78,6 @@ sub pipeline_analyses_dump_trees {
                 '2->A' => [ 'mk_work_dir' ],
                 'A->1' => [ 'md5sum_tree_factory' ],
             },
-            -rc_name => 'default_with_registry',
         },
 
         {   -logic_name => 'mk_work_dir',
