@@ -237,7 +237,7 @@ div.tabs.dy                                                        { margin-top:
 
 
 /* large breadcrumbs */
-.large-breadcrumbs                              { margin-left: 16px; min-width: 420px; width:auto; margin-top: -5px; }
+.large-breadcrumbs                              { margin-left: 16px; min-width: 430px; width:auto; margin-top: -5px; }
 .large-breadcrumbs ul                           { padding: 0px; list-style: none; overflow: hidden; height: 32px; margin: 0px; }
 .large-breadcrumbs ul li.active                 { }
 .large-breadcrumbs ul>li+li:before              { padding: 0; }
@@ -248,7 +248,7 @@ div.tabs.dy                                                        { margin-top:
 .large-breadcrumbs ul li.inactive a             { cursor: default; }
 .large-breadcrumbs ul li.inactive a:hover       { background: [[MAIN_DARK]]; color: [[WHITE]]}
 .large-breadcrumbs ul li.inactive a:hover:after { border-left-color: [[MAIN_DARK]] !important; }
-.large-breadcrumbs ul li a                      { color: white; text-decoration: none; padding: 4px 10px 4px 45px; position: relative; display: block; float: left; width: 150px; }
+.large-breadcrumbs ul li a                      { color: white; text-decoration: none; padding: 4px 10px 4px 45px; position: relative; display: block; float: left; width: 160px; }
 .large-breadcrumbs ul li a:after                { content: " "; display: block; width: 0; height: 0; border-top: 50px solid transparent; border-bottom: 50px solid transparent; border-left: 30px solid [[MAIN_DARK]]; position: absolute; top: 50%; margin-top: -50px; left: 100%; z-index: 2; }
 .large-breadcrumbs ul li a:before               { content: " "; display: block; width: 0; height: 0; border-top: 50px solid transparent; border-bottom: 50px solid transparent; border-left: 30px solid white; position: absolute; top: 50%; margin-top: -50px; margin-left: 1px; left: 100%; z-index: 1; }
 .large-breadcrumbs ul li:first-child a          { padding-left: 15px; }
