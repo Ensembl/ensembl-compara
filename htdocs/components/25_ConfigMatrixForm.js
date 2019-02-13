@@ -76,25 +76,23 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.updateRHS();
         this.addExtraDimensions();
         this.resize();
+        this.goToUserLocation();
       },
       error: function() {
         this.showError();
       }
     });
-    
+
     this.elLk.buttonTab.on("click", function (e) { 
       panel.toggleTab(this, panel.el.find("div.track-menu"));
       panel.resize();
     });
 
     this.elLk.breadcrumb.on("click", function (e) {
-      panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
-      panel.toggleButton();
-      panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
+      panel.toggleBreadcrumb(this);
       e.preventDefault();
-      if($(this).hasClass('_configure') && !$(this).hasClass('inactive')) { panel.emptyMatrix(); panel.displayMatrix(); }
     });
-    
+
     this.clickSearchIcon();
     this.clickSubResultLink();
     this.showHideFilters();
@@ -266,6 +264,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
     panel.resetFilter("");
 
+    //store on which tab the user is on
+    panel.setUserLocation();
+
     $.each(panel.json.extra_dimensions, function (i, dim) {
       $.each(panel.localStoreObj[dim], function (k, v) {
         if (k.match(/_sep_/)) {
@@ -390,6 +391,30 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.updateRHS();
 
     this.loadingState = false;
+  },
+
+  setUserLocation: function() {
+    var panel = this;
+
+    //get current active panel (either select tracks or matrix)
+    panel.localStoreObj.userLocation.view = panel.elLk.breadcrumb.filter(".active").attr("id");
+    if(panel.elLk.trackPanel.hasClass("active")) {
+      panel.localStoreObj.userLocation.tab = panel.elLk.trackPanel.find("div.track-menu div.track-tab.active").attr("id");
+    } else {
+      panel.localStoreObj.userLocation.tab = "";
+    }
+    panel.setLocalStorage();
+  },
+
+  goToUserLocation: function() {
+    var panel = this;
+
+    if($.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
+
+    panel.toggleBreadcrumb('#'+panel.localStoreObj.userLocation.view);
+    if(panel.localStoreObj.userLocation.tab){
+      panel.toggleTab('#'+panel.localStoreObj.userLocation.tab, panel.el.find("div.track-menu"));
+    }    
   },
 
   setDragSelectEvent: function() {
@@ -782,6 +807,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $.each(panel.json.extra_dimensions, function(i, data){
       panel.localStoreObj[data] = panel.getLocalStorage()[data]  || {};
     });
+
+    //state management object for user location
+    panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
   },
 
   removeFromStore: function(item, lhs_section_id) {
@@ -1045,6 +1073,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $(el).offset({left: activeLetterDiv.offset().left - 2});
       })
     }
+  },
+
+  //function to change the tab in the breadcrumb and show the appropriate content
+  toggleBreadcrumb: function(element) {
+    var panel = this;
+
+    panel.toggleTab(element, panel.el.find("div.large-breadcrumbs"));
+    panel.toggleButton();
+    panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
+    if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) { panel.emptyMatrix(); panel.displayMatrix(); }
   },
 
   toggleButton: function() {

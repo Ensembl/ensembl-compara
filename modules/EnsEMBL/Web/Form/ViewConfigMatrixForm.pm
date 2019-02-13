@@ -63,8 +63,8 @@ sub build {
       <h1>$title</h1>
       <div class="large-breadcrumbs">
         <ul>
-          <li class="active _track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
-          <li class="inactive _configure"><a href="#"><span class="circle crumb-number">2</span>Configure display</a><span class="hidden content-id">configuration-content</span></li>
+          <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
+          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
         </ul>
       </div>
       <button class="fade-button view-track">View tracks</button>
