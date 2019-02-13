@@ -140,7 +140,7 @@ sub _create_ProbeFeature {
       $seen{$_->probe_id} = 1;
     }
   } else {
-    $probe = $self->_create_ProbeFeatures_by_probe_id;
+    $probe = $self->_create_ProbeFeatures;
   }
   
   my $probe_trans = $self->_create_ProbeFeatures_linked_transcripts($subtype);
@@ -151,20 +151,16 @@ sub _create_ProbeFeature {
   return $features;
 }
 
-sub _create_ProbeFeatures_by_probe_id {
+sub _create_ProbeFeatures {
   ### Helper method called by _create_ProbeFeature
   ### Fetches the probe features for a given probe id
   ### Args: none
   ### Returns: arrayref of Bio::EnsEMBL::ProbeFeature objects
   
-  my $self                  = shift;
-  my $db_adaptor            = $self->_get_funcgen_db_adaptor; 
-  my $probe_adaptor         = $db_adaptor->get_ProbeAdaptor;  
-  my @probe_objs            = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
-  my $probe_obj             = $probe_objs[0];
-  my $probe_feature_adaptor = $db_adaptor->get_ProbeFeatureAdaptor;
-  my @probe_features        = @{$probe_feature_adaptor->fetch_all_by_Probe($probe_obj)};
-  
+  my $self              = shift;
+  my $db_adaptor        = $self->_get_funcgen_db_adaptor; 
+  my $pf_adaptor        = $db_adaptor->get_ProbeFeatureAdaptor;
+  my @probe_features    = @{$pf_adaptor->fetch_all_by_array_name_probe_name($self->param('array'), $self->param('id'))};
   return \@probe_features;
 }
 
