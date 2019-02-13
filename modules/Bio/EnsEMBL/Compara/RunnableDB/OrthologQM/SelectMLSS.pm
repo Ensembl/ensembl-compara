@@ -131,9 +131,6 @@ sub fetch_input {
 		my $exit_msg = "Could not find any alignments between species " . $species1_gdb->name . " and " . $species2_gdb->name;
 		$self->complete_early($exit_msg);
 	}
-	else {
-		$self->warning( "Found " . scalar(@aln_mlss_ids) . " alignments between " . $species1_gdb->name . " and " . $species2_gdb->name );
-	}
 
 	# Find alignment db for these mlsses
 	# $self->_map_mlss_to_db( \@aln_mlss_ids );
