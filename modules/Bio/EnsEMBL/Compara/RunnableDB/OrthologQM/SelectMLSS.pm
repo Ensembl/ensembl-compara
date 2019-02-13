@@ -126,8 +126,7 @@ sub fetch_input {
 		push( @aln_mlss_ids, $lastz->dbID );
 		$self->warning( "Found LASTZ alignment. mlss_id = " . $lastz->dbID );
 	}
-
-	unless ( defined $lastz || defined $common_mlss_list ){
+        elsif (not defined $common_mlss_list) {
 		$self->input_job->autoflow(0);
 		my $exit_msg = "Could not find any alignments between species " . $species1_gdb->name . " and " . $species2_gdb->name;
 		$self->complete_early($exit_msg);
