@@ -88,6 +88,7 @@ sub configuration_content {
 
       <div class="result-box">
         <h4>Selected tracks</h4>
+        <button class="fade-button reset-button _track">Reset tracks</button>
 
         <div class="filter-content">
           <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>

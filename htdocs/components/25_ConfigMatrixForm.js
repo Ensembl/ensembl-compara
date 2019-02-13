@@ -90,6 +90,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.breadcrumb.on("click", function (e) {
       panel.toggleTab(this, panel.el.find("div.large-breadcrumbs"));
       panel.toggleButton();
+      panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
       e.preventDefault();
       if($(this).hasClass('_configure') && !$(this).hasClass('inactive')) { panel.emptyMatrix(); panel.displayMatrix(); }
     });
@@ -99,6 +100,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
+    this.resetTracks();
     this.resetMatrix();
 
     panel.el.on("click", function(e){
@@ -823,6 +825,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.el.find(".track-tab.active").first().removeClass("active");
       panel.el.find(".tab-content.active").first().removeClass("active");
       
+      panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
       //in case the track-content is not active, hide configuration panel first
       if(panel.el.find("div#configuration-content:visible").length){ 
         panel.toggleTab(panel.el.find("li._track-select"), panel.el.find("div.large-breadcrumbs"));
@@ -1389,6 +1392,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
 
     panel.trackPopup = panel.el.find('div.track-popup');
+    panel.elLk.resetTrackButton.hide(); //hiding reset tracks button (only visible on select tracks tab)
 
     var xContainer = '<div  class="xContainer">';
     
@@ -1585,6 +1589,25 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.localStoreObj[storeObjKey][key]["renderer"]["normal"]       = allStoreObjects[key]["renderer"]["reset-normal"];
         }
       });
+    });
+  },
+
+  resetTracks: function() {
+    var panel = this;
+
+    this.elLk.resetTrackButton = panel.elLk.resultBox.find('button.reset-button._track');
+
+    this.elLk.resetTrackButton.click("on", function() {
+      panel.localStoreObj.dx     = {};
+      panel.localStoreObj.dy     = {};
+      panel.localStoreObj.matrix = {};
+      panel.setLocalStorage();
+      panel.emptyMatrix();
+      $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
+        panel.selectBox(ele);
+        panel.filterData($(ele).data('item'));
+      });
+      panel.updateRHS();
     });
   },
 
