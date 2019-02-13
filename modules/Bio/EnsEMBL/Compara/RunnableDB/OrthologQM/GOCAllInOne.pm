@@ -96,6 +96,24 @@ sub fetch_input {
         $self->complete_early('Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs');
     }
 
+    # Then, let's find the ENSEMBL_ORTHOLOGUES that link polyploid genomes
+    # and spawn 1 job for each of their components
+    if (($mlss->method->type eq 'ENSEMBL_ORTHOLOGUES') && !$self->param('genome_db_ids')) {
+        my $gdb1 = $mlss->species_set->genome_dbs->[0];
+        my $gdb2 = $mlss->species_set->genome_dbs->[1];
+        if ($gdb1->is_polyploid || $gdb2->is_polyploid) {
+            # Note: both could be polyploid, e.g. T.aes vs T.dic
+            my $sub_gdb1s = $gdb1->is_polyploid ? $gdb1->component_genome_dbs : [$gdb1];
+            my $sub_gdb2s = $gdb2->is_polyploid ? $gdb2->component_genome_dbs : [$gdb2];
+            foreach my $sub_gdb1 (@$sub_gdb1s) {
+                foreach my $sub_gdb2 (@$sub_gdb2s) {
+                    $self->dataflow_output_id({'genome_db_ids' => [$sub_gdb1->dbID, $sub_gdb2->dbID]}, 3);
+                }
+            }
+            $self->complete_early('Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job component genome_db');
+        }
+    }
+
     # IN: goc_mlss_id
     # OUT: ref_species_dbid
     # OUT: non_ref_species_dbid
