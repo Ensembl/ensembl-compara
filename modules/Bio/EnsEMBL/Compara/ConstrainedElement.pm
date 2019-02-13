@@ -721,6 +721,20 @@ sub feature_so_acc {
   return 'SO:0001009';
 }
 
+=head2 feature_so_term
+
+  Example     : $ce_so_acc = $ce->feature_so_term;
+  Description : This method returns a string containing the SO term of ConstrainedElement.
+  Returns     : string (Sequence Ontology term)
+
+=cut
+
+sub feature_so_term {
+  my $self = shift;
+
+  return 'DNA_constraint_sequence';
+}
+
 
 =head2 toString
 
