@@ -477,22 +477,30 @@ sub _configure_ProbeFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $rows = [];
   
-  my $column_order = [qw(loc length names)];
+  my $column_order = [qw(name seq length loc mismatches)];
+  my $custom_columns = {
+                        'name'        => {'title' => 'Probe'},
+                        'seq'         => {'title' => 'Sequence'},
+                        'length'      => {'title' => 'Length', 'sort' => 'numeric'},
+                        'loc'         => {'title' => 'Genomic location (strand)', 'sort' => 'position_html'},
+                        'mismatches'  => {'title' => 'Mismatches'},
+                        };
 
-  my $header = 'Oligoprobes';
+  my $header = sprintf('Probe features for %s | %s', $self->param('id'), $self->param('array'));
  
   my ($data, $extras) = @$feature_set;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'loc'     => {'value' => $self->_location_link($feature)},
+              'name'    => {'value' => $feature->{'name'},            }, 
+              'seq'     => {'value' => $feature->{'sequence'},        }, 
               'length'  => {'value' => $feature->{'length'},          }, 
-              'names'   => {'value' => $feature->{'label'},           },
+              'loc'     => {'value' => $self->_location_link($feature)},
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
   }
 
-  return {'header' => $header, 'column_order' => $column_order, 'rows' => $rows}; 
+  return {'header' => $header, 'column_order' => $column_order, 'custom_columns' => $custom_columns, 'rows' => $rows}; 
 }
 
 sub _configure_RegulatoryFeature_table {
