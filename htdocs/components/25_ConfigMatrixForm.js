@@ -83,7 +83,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
     });
 
-    this.elLk.buttonTab.on("click", function (e) { 
+    this.elLk.buttonTab.on("click", function (e) {     
+      var activeTab = panel.getActiveTab();
+      if (e.target.nodeName !== 'INPUT' && e.currentTarget.id !== activeTab+'-tab') {
+        panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
+        panel.resetFilter(); // Reset filter on the active tab
+      }
       panel.toggleTab(this, panel.el.find("div.track-menu"));
       panel.resize();
     });
@@ -135,22 +140,51 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       if (match.length) {
         var classString = '.' + match.join(',.');
-        panel.elLk.lookup[match[0]].parentTab.find('li').not(classString).addClass('_search_hide').hide();
+        var li_arr = panel.elLk.lookup[match[0]].parentTab.find('li').not(classString);
+        $.each(li_arr, function(i, li) {
+          if ($(li).css('display') !== 'none') {
+            $(li).addClass('_search_hide').hide();
+          }
+        });
       }
       else {
         panel.elLk[activeTabId].container.find('li').addClass('_search_hide').hide();
       }
-      panel.updateAvailableTabsOrRibbons(activeTabId, 'searchFilter');
+      panel.updateAvailableTabsOrRibbons(activeTabId, true);
     });
   },
 
+  resetFilter: function (inputText) {
+    var panel = this;
+
+    panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
+    var _filtered = panel.getActiveTabContainer().find('li._filtered');
+    if (_filtered.length) {
+      _filtered.show();
+    }
+    else {
+      panel.getActiveTabContainer().find('li').show();
+    }
+
+    var activeTabId = panel.getActiveTab();
+
+    panel.updateAvailableTabsOrRibbons(activeTabId, true);
+
+    if (inputText && inputText.length < 3) {
+      return 0;
+    }
+    else {
+      return 1;
+    }
+  },  
+
   // Udpate available tabs or ribbons after filtering
-  updateAvailableTabsOrRibbons(tabId, filterType) {
+  updateAvailableTabsOrRibbons(tabId, reset) {
     var panel = this;
     var tabLookup = panel.elLk[tabId];
     var dimension_name = panel[tabId];
     if (!tabLookup.haveSubTabs) {
-      panel.activateAlphabetRibbon(tabLookup.container, filterType);
+      panel.activateAlphabetRibbon(tabLookup.container, reset);
     }
     else {
       // For subtabs
@@ -175,7 +209,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
           // Activate available letters if list type is alphabetRibbon
           if (panel.json.data[panel[tabId]].data[key].listType === 'alphabetRibbon') {
-            panel.activateAlphabetRibbon(tab_content_ele, filterType);
+            panel.activateAlphabetRibbon(tab_content_ele, reset);
           }
         }
       });
@@ -192,53 +226,74 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
-
-  resetFilter: function (inputText) {
-    var panel = this;
-
-    panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
-    var _filtered = panel.getActiveTabContainer().find('li._filtered');
-    if (_filtered.length) {
-      _filtered.show();
-    }
-    else {
-      panel.getActiveTabContainer().find('li').show();
-    }
-
-    var activeTabId = panel.getActiveTab();
-    if (inputText.length < 3) {
-      panel.updateAvailableTabsOrRibbons(activeTabId, 'searchFilter');
-      return 0;
-    }
-    else {
-      return 1;
-    }
-  },  
-
-  activateAlphabetRibbon: function(alphabetContainer, filterType) {
+  activateAlphabetRibbon: function(alphabetContainer, reset) {
     var panel = this;
     var activeRibbon, activeRibbonClass;
-    var fl = 1;
+    var toggleToFirstTabFlag = 1;
 
-    alphabetContainer.find('.ribbon-banner .alphabet-div').removeClass('active').addClass('inactive');
+    var alphabetRibbonDivs = alphabetContainer.find('.ribbon-banner .alphabet-div');
+    var alphabetRibbonContentDivs = alphabetContainer.find('.ribbon-content .alphabet-content');
+    var selectedActiveRibbon = alphabetContainer.find('.ribbon-content .alphabet-content.active');
 
-    var filterClass = filterType === 'searchFilter' ? 'li:not("._search_hide")' : 'li._filtered';
-    var availableRibbonContainers = alphabetContainer.find(filterClass).closest('.alphabet-content');
+    $(alphabetRibbonDivs).removeClass('active').addClass('inactive');
 
-    if (!availableRibbonContainers.length && filterType === 'filterData') {
-      availableRibbonContainers = alphabetContainer.find('li').closest('.alphabet-content');
-    }
+    var li = alphabetContainer.find('li');
+    var li_filtered = alphabetContainer.find('li._filtered');
+    var li_search_hide = alphabetContainer.find('li._search_hide');
+
+    var availableRibbonContainers = $(li).closest('.alphabet-content');
+    var arr = {};
 
     $.each(availableRibbonContainers, function(i, ribbonContent) {
-      activeRibbonClass = '.' + $(ribbonContent).data('ribbon');
-      activeRibbon = alphabetContainer.find(activeRibbonClass);
-      activeRibbon.removeClass('inactive');
-      if (fl === 1) {
-        // Move to first active tab
-        panel.toggleTab(activeRibbon, alphabetContainer, 1, 1, (filterType === 'searchFilter'));
-        fl = 0;
+      $('li', ribbonContent).each(function(i, li) {
+        if ($(li).css('display') !== 'none') {
+          flag = 1;
+          return false;
+        }
+      });
+      if (flag == 1) {
+        flag = 0;
+        activeRibbonData = $(ribbonContent).data('ribbon');
+        activeRibbonClass = '.' + activeRibbonData;
+        activeRibbon = alphabetRibbonDivs.not(':not("'+activeRibbonClass+'")');
+        activeRibbon.removeClass('inactive');
+        arr[activeRibbonData] = activeRibbon;
       }
     });
+
+    var currentlySelected = selectedActiveRibbon.data('ribbon');
+
+    if (arr[currentlySelected]) {
+      panel.toggleTab(arr[currentlySelected], alphabetContainer, 1, reset, true);
+    }
+    else {
+      console.log('activating first available', alphabetContainer.attr('id'));
+      panel.toggleTab(arr[Object.keys(arr).sort()[0]], alphabetContainer, 1, reset, true);
+    }
+
+    // Activate arrows
+    var activeAlphabets = panel.getActiveAlphabets(alphabetContainer);
+    var larrow = alphabetContainer.find('.ribbon-banner .larrow');
+    var rarrow = alphabetContainer.find('.ribbon-banner .rarrow');
+
+    $(larrow, rarrow).removeClass('inactive active');
+    if (activeAlphabets.length <= 0) return;
+
+    if ($(activeAlphabets[0]).hasClass('active')) {
+      $(larrow).addClass('inactive');
+      (activeAlphabets.length > 1) && $(rarrow).addClass('active');
+    }
+    else {
+      $(larrow).removeClass('inactive').addClass('active');
+    }
+
+    if ($(activeAlphabets[activeAlphabets.length-1]).hasClass('active')) {
+      $(rarrow).addClass('inactive');
+      (activeAlphabets.length > 1) && $(larrow).addClass('active');
+    }
+    else {
+      $(rarrow).removeClass('inactive').addClass('active');
+    }
   },
 
   addExtraDimensions: function() {
@@ -268,6 +323,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.setUserLocation();
 
     $.each(panel.json.extra_dimensions, function (i, dim) {
+      if (!panel.localStoreObj[dim]) {
+        return;
+      }
       $.each(panel.localStoreObj[dim], function (k, v) {
         if (k.match(/_sep_/)) {
           if (v.state) {
@@ -284,6 +342,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
       });
     })
+
+    if (!panel.localStoreObj.matrix) {
+      return;
+    }
 
     $.each(panel.localStoreObj.matrix, function (k, v) {
       if (k.match(/_sep_/)) {
@@ -431,8 +493,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.el = el.parentElement;
       },
       stop: function() {
-        panel.filterData($(this.el).data('item'));
-        panel.updateRHS();
+        var item = $(this.el).data('item');
+        // Making sure if item is from the active tab
+        if (item && panel.elLk.lookup[item].parentTabId === panel.getActiveTab()) {
+          panel.filterData(item);
+          panel.updateRHS();
+        }
       }
     });
   },
@@ -455,9 +521,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     
     panel.elLk.searchIcon = panel.el.find("img.search-icon");
 
-    panel.elLk.searchIcon.click("on", function(){
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);      
+    panel.elLk.searchIcon.click("on", function(e){
+      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350).focus();
       panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').hide();
+      e.stopPropagation();
     });
 
     panel.closeSearch();
@@ -1069,8 +1136,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             $(activeLetterDiv).closest('.letters-ribbon').removeData('reset');
           }
         }
-        // change offset positions of all letter content divs same as their respecitve ribbon letter div
-        $(el).offset({left: activeLetterDiv.offset().left - 2});
+
+        if (activeLetterDiv.offset()) {        
+          // change offset positions of all letter content divs same as their respecitve ribbon letter div
+          $(el).offset({left: activeLetterDiv.offset().left - 2});
+        }
       })
     }
   },
@@ -1239,7 +1309,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       'dx': 'dy',
       'dy': 'dx'
     }
-    panel.updateAvailableTabsOrRibbons(tabToFilter[panel.elLk.lookup[item].parentTabId], 'filterData');
+    panel.updateAvailableTabsOrRibbons(tabToFilter[panel.elLk.lookup[item].parentTabId]);
   },
 
   getActiveAlphabets: function(container) {
@@ -1380,10 +1450,17 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.selectArrow(container)
           );
 
-          if(activeAlphabetDiv.offset().left <= $(e.target).offset().left + 22) {
+          var prevLetterDiv = ribbonBanner.find('.ribbon_'+prevLetter);
+
+          if(prevLetterDiv.offset().left <= $(e.target).offset().left + 22) {
             ribbonBanner.offset({left: ribbonBanner.offset().left + (22 * lettersSkipped)});
             var prevletterContentDiv = ribbonContent.find("div."+prevLetter+"_content.alphabet-content");
             prevletterContentDiv.offset({left: prevletterContentDiv.offset().left + (22 * lettersSkipped)});
+          }
+
+          // Checking the distance of larrow and first alphabet
+          if (ribbonBanner.find('.ribbon_a').offset().left > $(e.target).offset().left + 22) {
+            panel.activateAlphabetRibbon(container, true);
           }
         }
 
@@ -1400,7 +1477,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.selectArrow(container)
           );
 
-          if(activeAlphabetDiv.offset().left  >= $(e.target).offset().left - 44) {
+          var nextLetterDiv = ribbonBanner.find('.ribbon_'+nextLetter);
+          if(nextLetterDiv.offset().left  >= $(e.target).offset().left - 44) {
             ribbonBanner.offset({left: ribbonBanner.offset().left - (22 * lettersSkipped)});
             var nextletterContentDiv = ribbonContent.find("div."+nextLetter+"_content.alphabet-content");
             nextletterContentDiv.offset({left: nextletterContentDiv.offset().left - (22 * lettersSkipped)});

@@ -70,7 +70,7 @@ sub build {
       <button class="fade-button view-track">View tracks</button>
     </div>
     <div class="flex-row">
-      <div class="track-panel active" id="track-content">
+      <div class="track-panel active noselect" id="track-content">
         <div class="tabs track-menu">
           <div class="track-tab active" id="dx-tab">
             <span class="tab-header"> $dimX </span>
