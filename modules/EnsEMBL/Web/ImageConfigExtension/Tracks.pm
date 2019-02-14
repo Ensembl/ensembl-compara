@@ -1378,7 +1378,7 @@ sub add_sequence_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
 
-  return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
+  return unless $menu;
 
   my $options = {
     db         => $key,
@@ -1391,12 +1391,13 @@ sub add_sequence_variations {
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
 
-  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
-    $self->add_sequence_variations_meta($key, $hashref, $options);
-  } else {
-    $self->add_sequence_variations_default($key, $hashref, $options);
+  if ($hashref->{'variation_feature'}{'rows'} > 0) {
+    if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
+      $self->add_sequence_variations_meta($key, $hashref, $options);
+    } else {
+      $self->add_sequence_variations_default($key, $hashref, $options);
+    }
   }
-
   $self->add_sequence_variations_vcf($key, $hashref, $options);
 
   $self->add_track('information', 'variation_legend', 'Variant Legend', 'variation_legend', { strand => 'r' });
@@ -1615,7 +1616,7 @@ sub add_sequence_variations_vcf {
   foreach my $coll(@{$ad->fetch_all_for_web}) {
     $vcf_menu->append_child($self->create_track_node("variation_vcf_".$coll->id, $coll->id, {
       %$options,
-      caption     => $coll->id,
+      caption     => $coll->source_name,
       description => $coll->description,
       db          => 'variation',
     }));
