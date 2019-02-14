@@ -130,38 +130,17 @@ sub _create_ProbeFeature {
   ### Returns: hashref of API objects
   
   my ($self, $db, $subtype)  = @_;
-  my $probe;
-  
-  if ($subtype && $subtype eq 'pset') {
-    my $probeset = $self->_generic_create('ProbeFeature', 'fetch_all_by_probeset_name', $db);
-    my %seen;
-    for (@$probeset) {
-      push @$probe, $_ unless $seen{$_->probe_id};
-      $seen{$_->probe_id} = 1;
-    }
-  } else {
-    $probe = $self->_create_ProbeFeatures;
-  }
-  
+  my $db_adaptor  = $self->_get_funcgen_db_adaptor; 
+  my $pf_adaptor  = $db_adaptor->get_ProbeFeatureAdaptor;
+
+  my $method    = $subtype && $subtype eq 'pset' ? 'fetch_all_by_array_name_probeset_name' : 'fetch_all_by_array_name_probe_name';
+  my $probe     = $pf_adaptor->$method($self->param('array'), $self->param('id'));   
+  my $features  = { ProbeFeature => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe) };
+
   my $probe_trans = $self->_create_ProbeFeatures_linked_transcripts($subtype);
-  my $features    = { ProbeFeature => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe) };
-  
   $features->{'Transcript'} = EnsEMBL::Web::Data::Bio::Transcript->new($self->hub, @$probe_trans) if $probe_trans;
   
   return $features;
-}
-
-sub _create_ProbeFeatures {
-  ### Helper method called by _create_ProbeFeature
-  ### Fetches the probe features for a given probe id
-  ### Args: none
-  ### Returns: arrayref of Bio::EnsEMBL::ProbeFeature objects
-  
-  my $self              = shift;
-  my $db_adaptor        = $self->_get_funcgen_db_adaptor; 
-  my $pf_adaptor        = $db_adaptor->get_ProbeFeatureAdaptor;
-  my @probe_features    = @{$pf_adaptor->fetch_all_by_array_name_probe_name($self->param('array'), $self->param('id'))};
-  return \@probe_features;
 }
 
 sub _create_ProbeFeatures_linked_transcripts {
