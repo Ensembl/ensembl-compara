@@ -200,21 +200,32 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           // $(tab_ele).removeClass('active')
           var tab_content_ele = $('#' + key + '-content', panel.el.trackPanel);
           var lis = tabLookup.tabContents[key];
-          if (!lis.not("._search_hide").length) {
-            $(tabLookup.tabs[key]).addClass('inactive');
-          }
-          else {
+          var flag = 0;
+
+          $(tabLookup.tabs[key]).addClass('inactive');
+
+          $('li', tab_content_ele).each(function(i, li) {
+            if ($(li).css('display') !== 'none') {
+              flag = 1;
+              return false;
+            }
+          });
+
+          if (flag == 1) {
+            flag = 0;
             $(tabLookup.tabs[key]).removeClass('inactive');
             availableTabsWithData.push(key);
           }
+
           // Activate available letters if list type is alphabetRibbon
           if (panel.json.data[panel[tabId]].data[key].listType === 'alphabetRibbon') {
             panel.activateAlphabetRibbon(tab_content_ele, resetRibbon, resetFilter);
           }
+
+          var visible = $('li:visible', tab_content_ele);
+          panel.updateTrackPanelSelectAllCount(key, visible.length);
+
         }
-
-        panel.updateTrackPanelSelectAllCount(key, lis.not("._search_hide").length);
-
       });
 
       // If any of the final available tabs have class "active" then leave. If not move it to the first available
@@ -223,8 +234,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           // Move to first active tab
           panel.toggleTab({'selectElement': $(tabLookup.tabs[availableTabsWithData[0]]), 'container': $(tabLookup.tabs[availableTabsWithData[0]]).parent()});
         }
-      }
-      else {
       }
     }
   },
