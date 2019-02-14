@@ -30,6 +30,7 @@ sub content {
   my $db           = $hub->param('fdb') || $hub->param('db') || 'core';
   my $object_type  = $hub->param('ftype');
   my $array_name   = $hub->param('array');
+  my $vendor       = $hub->param('vendor');
   my $db_adaptor   = $hub->database(lc $db);
   my $adaptor_name = "get_${object_type}Adaptor";
   my $feat_adap    = $db_adaptor->$adaptor_name; 
@@ -64,7 +65,7 @@ sub content {
       fdb    => 'funcgen',
       ftype  => $object_type,
       ptype  => $hub->param('ptype'),
-      array  => $array_name,
+      array  => $vendor.'__'.$array_name,
       db     => 'core'
     })
   });

@@ -135,7 +135,8 @@ sub _create_ProbeFeature {
   my $pf_adaptor  = $db_adaptor->get_ProbeFeatureAdaptor;
 
   my $method    = $subtype && $subtype eq 'pset' ? 'fetch_all_by_array_name_probeset_name' : 'fetch_all_by_array_name_probe_name';
-  my $probe     = $pf_adaptor->$method($self->param('array'), $self->param('id'));   
+  my ($vendor, $array) = split('__', $self->param('array'));
+  my $probe     = $pf_adaptor->$method($array, $self->param('id'));   
   my $features  = { ProbeFeature => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe) };
 
   my $probe_trans = $self->_create_ProbeFeatures_linked_transcripts($subtype);

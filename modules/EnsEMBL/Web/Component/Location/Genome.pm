@@ -486,6 +486,7 @@ sub _configure_Transcript_table {
 sub _configure_ProbeFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
   my $rows = [];
+  my ($vendor, $array) = split('__', $self->param('array'));
   
   my $column_order = [qw(name seq length loc mismatches)];
   my $custom_columns = {
@@ -496,15 +497,16 @@ sub _configure_ProbeFeature_table {
                         'mismatches'  => {'title' => 'Mismatches'},
                         };
 
-  my $header = sprintf('Probe features for %s | %s', $self->param('id'), $self->param('array'));
+  my $header = sprintf('Probe features for %s | %s', $self->param('id'), $array);
  
   my ($data, $extras) = @$feature_set;
+  my $track_config = sprintf('oligo_funcgen_%s', $self->param('array'));
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
               'name'    => {'value' => $feature->{'name'},            }, 
               'seq'     => {'value' => $feature->{'sequence'},        }, 
               'length'  => {'value' => $feature->{'length'},          }, 
-              'loc'     => {'value' => $self->_location_link($feature)},
+              'loc'     => {'value' => $self->_location_link($feature, {'contigviewbottom' => $track_config})},
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
@@ -618,7 +620,7 @@ sub _sort_features_by_coords {
 }
 
 sub _location_link {
-  my ($self, $f) = @_;
+  my ($self, $f, $extra) = @_;
   my $region = $f->{'seq_region'} || $f->{'region'} || $f->{'chr'};
   return 'Unmapped' unless $region;
   my $coords = $region.':'.$f->{'start'}.'-'.$f->{'end'};
@@ -630,7 +632,8 @@ sub _location_link {
             r       => $coords, 
             h       => $f->{'label'},
             ph      => $self->hub->param('ph') || undef,
-            __clear => 1
+            __clear => 1,
+            %{$extra||{}}
           }),
           $region, $f->{'start'}, $f->{'end'},
           $f->{'strand'}
