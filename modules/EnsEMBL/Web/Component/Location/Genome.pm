@@ -61,8 +61,11 @@ sub _render_features {
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
   my ($html, $total_features, $mapped_features, $unmapped_features, $has_internal_data);
-  my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
-  my %chromosome = map {$_ => 1} @$chromosomes;
+
+  my $ftype         = $hub->param('ftype');
+  my $chromosomes   = $species_defs->ENSEMBL_CHROMOSOMES || [];
+  my %chromosome    = map {$_ => 1} @$chromosomes;
+
   while (my ($type, $set) = each (%$features)) {
     foreach my $feature (@{$set->[0]}) {
       $has_internal_data++;
@@ -136,7 +139,6 @@ sub _render_features {
           $title .= 's' if $mapped_features > 1;
           $title .= ' of ';
           my ($data_type, $assoc_name, $go_link);
-          my $ftype = $hub->param('ftype');
           my $go    = $hub->param('gotype');
 
           #add extra description only for GO (gene ontologies) which is determined by param gotype in url
@@ -304,8 +306,14 @@ sub _render_features {
     'xref'    => {'title' => 'Name(s)'},
   };
 
-  while (my ($feat_type, $feature_set) = each (%$features)) {
-    $html .= $self->_feature_table($feat_type, $feature_set, $default_column_info);
+  ## Show primary feature table first
+  my $primary_set = $features->{$ftype};
+  $html .= $self->_feature_table($ftype, $primary_set, $default_column_info);
+
+  ## Now remaining tables in a consistent order (though usually there's only one of these anyway)
+  foreach my $feat_type (sort keys %$features) {
+    next if $feat_type eq $ftype;
+    $html .= $self->_feature_table($feat_type, $features->{$feat_type}, $default_column_info);
   }
 
   ## User tables
