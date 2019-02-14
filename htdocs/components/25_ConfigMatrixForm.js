@@ -614,6 +614,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if(key) {
       $('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
       $('#'+key+' span.total', this.elLk.resultBox).html(total);
+      $('#allBox-' + key + '-content ._num').html('(' + total + ')');
     }
   },
 
