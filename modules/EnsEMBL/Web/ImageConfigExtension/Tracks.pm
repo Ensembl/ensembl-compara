@@ -1397,9 +1397,9 @@ sub add_sequence_variations {
     } else {
       $self->add_sequence_variations_default($key, $hashref, $options);
     }
+  } else {
+    $self->add_sequence_variations_vcf($key, $hashref, $options);
   }
-  $self->add_sequence_variations_vcf($key, $hashref, $options);
-
   $self->add_track('information', 'variation_legend', 'Variant Legend', 'variation_legend', { strand => 'r' });
 }
 
@@ -1616,9 +1616,10 @@ sub add_sequence_variations_vcf {
   foreach my $coll(@{$ad->fetch_all_for_web}) {
     $vcf_menu->append_child($self->create_track_node("variation_vcf_".$coll->id, $coll->id, {
       %$options,
-      caption     => $coll->source_name,
+      caption     => 'Variants from ' . $coll->source_name,
       description => $coll->description,
       db          => 'variation',
+      display => 'default'
     }));
   }
 }
