@@ -270,7 +270,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.toggleTab(obj);
     }
     else {
-      console.log('activating first available', alphabetContainer.attr('id'));
+      // console.log('activating first available', alphabetContainer.attr('id'));
       obj.selectElement = arr[Object.keys(arr).sort()[0]];
       panel.toggleTab(obj);
     }
@@ -281,7 +281,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var rarrow = alphabetContainer.find('.ribbon-banner .rarrow');
 
     $(larrow, rarrow).removeClass('inactive active');
-    if (activeAlphabets.length <= 0) return;
+    if (activeAlphabets.length <= 0) {
+      $(larrow).addClass('inactive');
+      $(rarrow).addClass('inactive');
+      return;
+    }
 
     if ($(activeAlphabets[0]).hasClass('active')) {
       $(larrow).addClass('inactive');
