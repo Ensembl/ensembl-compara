@@ -89,7 +89,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
         panel.resetFilter(); // Reset filter on the active tab
       }
-      panel.toggleTab(this, panel.el.find("div.track-menu"));
+      panel.toggleTab({'selectElement': this, 'container': panel.el.find("div.track-menu")});
       panel.resize();
     });
 
@@ -154,7 +154,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
   },
 
-  resetFilter: function (inputText) {
+  resetFilter: function (inputText, reset) {
     var panel = this;
 
     panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
@@ -168,7 +168,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     var activeTabId = panel.getActiveTab();
 
-    panel.updateAvailableTabsOrRibbons(activeTabId, true);
+    panel.updateAvailableTabsOrRibbons(activeTabId, true, reset);
 
     if (inputText && inputText.length < 3) {
       return 0;
@@ -179,12 +179,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },  
 
   // Udpate available tabs or ribbons after filtering
-  updateAvailableTabsOrRibbons(tabId, reset) {
+  updateAvailableTabsOrRibbons(tabId, resetRibbon, resetFilter) {
     var panel = this;
     var tabLookup = panel.elLk[tabId];
     var dimension_name = panel[tabId];
     if (!tabLookup.haveSubTabs) {
-      panel.activateAlphabetRibbon(tabLookup.container, reset);
+      panel.activateAlphabetRibbon(tabLookup.container, resetRibbon, resetFilter);
     }
     else {
       // For subtabs
@@ -209,7 +209,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
           // Activate available letters if list type is alphabetRibbon
           if (panel.json.data[panel[tabId]].data[key].listType === 'alphabetRibbon') {
-            panel.activateAlphabetRibbon(tab_content_ele, reset);
+            panel.activateAlphabetRibbon(tab_content_ele, resetRibbon, resetFilter);
           }
         }
       });
@@ -218,7 +218,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if (availableTabsWithData.length && currentActiveTabId) {
         if(!currentActiveTabId || availableTabsWithData.indexOf(currentActiveTabId) < 0) {
           // Move to first active tab
-          panel.toggleTab($(tabLookup.tabs[availableTabsWithData[0]]), $(tabLookup.tabs[availableTabsWithData[0]]).parent());
+          panel.toggleTab({'selectElement': $(tabLookup.tabs[availableTabsWithData[0]]), 'container': $(tabLookup.tabs[availableTabsWithData[0]]).parent()});
         }
       }
       else {
@@ -226,7 +226,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
-  activateAlphabetRibbon: function(alphabetContainer, reset) {
+  activateAlphabetRibbon: function(alphabetContainer, resetRibbon, resetFilter) {
     var panel = this;
     var activeRibbon, activeRibbonClass;
     var flag = 0;
@@ -262,13 +262,17 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     var currentlySelected = selectedActiveRibbon.data('ribbon');
+    var obj = {'container': alphabetContainer, 'selByClass': 1, 'resetRibbonOffset': resetRibbon, 'searchTriggered': true}
+    obj.resetFilter = resetFilter && true;
 
     if (arr[currentlySelected]) {
-      panel.toggleTab(arr[currentlySelected], alphabetContainer, 1, reset, true);
+      obj.selectElement = arr[currentlySelected];
+      panel.toggleTab(obj);
     }
     else {
       console.log('activating first available', alphabetContainer.attr('id'));
-      panel.toggleTab(arr[Object.keys(arr).sort()[0]], alphabetContainer, 1, reset, true);
+      obj.selectElement = arr[Object.keys(arr).sort()[0]];
+      panel.toggleTab(obj);
     }
 
     // Activate arrows
@@ -317,7 +321,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     //resetting filter box and content
     panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
-    panel.resetFilter("");
+    panel.resetFilter("", true);
 
     //store on which tab the user is on
     panel.setUserLocation();
@@ -464,6 +468,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   setUserLocation: function() {
     var panel = this;
 
+    if (!panel.localStoreObj.userLocation) {
+      return;
+    }
     //get current active panel (either select tracks or matrix)
     panel.localStoreObj.userLocation.view = panel.elLk.breadcrumb.filter(".active").attr("id");
     if(panel.elLk.trackPanel.hasClass("active")) {
@@ -481,7 +488,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.toggleBreadcrumb('#'+panel.localStoreObj.userLocation.view);
     if(panel.localStoreObj.userLocation.tab){
-      panel.toggleTab('#'+panel.localStoreObj.userLocation.tab, panel.el.find("div.track-menu"));
+      panel.toggleTab({'selectElement': '#'+panel.localStoreObj.userLocation.tab, 'container': panel.el.find("div.track-menu")});
     }    
   },
 
@@ -904,10 +911,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     clickButton.on("click", function(e) {
       if(clickButton.hasClass("_edit") ) {
-        panel.toggleTab(panel.el.find("li._configure"), panel.el.find("div.large-breadcrumbs"));
+        panel.toggleTab({'selectElement': panel.el.find("li._configure"), 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();
       } else if(clickButton.hasClass("active") ) {      
-        panel.toggleTab(tabClick, panel.el.find("div.large-breadcrumbs"));
+        panel.toggleTab({'selectElement': tabClick, 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();        
       }
       panel.emptyMatrix();
@@ -929,7 +936,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
       //in case the track-content is not active, hide configuration panel first
       if(panel.el.find("div#configuration-content:visible").length){ 
-        panel.toggleTab(panel.el.find("li._track-select"), panel.el.find("div.large-breadcrumbs"));
+        panel.toggleTab({'selectElement': panel.el.find("li._track-select"), 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();
       }
 
@@ -1063,7 +1070,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     //selecting the tab in experiment type
     this.el.find("div.dy div.track-tab").on("click", function () {
-      panel.toggleTab(this, panel.el.find("div.dy"));
+      panel.toggleTab({'selectElement': this, 'container': panel.el.find("div.dy")});
       panel.resize();
     });    
     
@@ -1073,7 +1080,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   // Arguments: selectElement is the tab that's clicked to be active or the tab that you want to be active (javascript object)
   //            container is the current active tab (javascript object)
   //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
-  toggleTab: function(selectElement, container, selByClass, resetRibbonOffset, searchTriggered) {
+  toggleTab: function(obj) {
+  
+    var selectElement = obj.selectElement;
+    var container = obj.container;
+    var selByClass = obj.selByClass;
+    var resetRibbonOffset = obj.resetRibbonOffset;
+    var searchTriggered = obj.searchTriggered;
+    var noOffsetUpdate = obj.resetFilter;
     var panel = this;
 
     if((!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive"))) {
@@ -1127,7 +1141,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
 
         // Reset is applied on filterData() if an offset reset is needed for the ribbon
-        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && ($(selectElement).hasClass('track-tab') || searchTriggered)) {
+        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && ($(selectElement).hasClass('track-tab') || searchTriggered)  && !noOffsetUpdate) {
           var availableAlphabets = panel.getActiveAlphabets();
           var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
           var activeAlphabetIndex = $(activeLetterDiv).parent().children().index(activeAlphabetDiv);
@@ -1143,7 +1157,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
         }
 
-        if (activeLetterDiv.offset()) {        
+        if (activeLetterDiv.offset() && !noOffsetUpdate) {
           // change offset positions of all letter content divs same as their respecitve ribbon letter div
           $(el).offset({left: activeLetterDiv.offset().left - 2});
         }
@@ -1155,7 +1169,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   toggleBreadcrumb: function(element) {
     var panel = this;
 
-    panel.toggleTab(element, panel.el.find("div.large-breadcrumbs"));
+    panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     panel.toggleButton();
     panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
     if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) { panel.emptyMatrix(); panel.displayMatrix(); }
@@ -1398,7 +1412,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         return;
       }
       $.when(
-        panel.toggleTab(this, container, 1)
+        panel.toggleTab({'selectElement': this, 'container': container, 'selByClass': 1})
       ).then(
         panel.selectArrow(container)
       );
@@ -1451,7 +1465,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var lettersSkipped = activeAlphabet.charCodeAt(0) - prevLetter.charCodeAt(0);
 
           $.when(
-            panel.toggleTab(ribbonBanner.find("div.ribbon_"+prevLetter), container, 1)
+            panel.toggleTab({'selectElement': ribbonBanner.find("div.ribbon_"+prevLetter), 'container': container, 'selByClass': 1})
           ).then(
             panel.selectArrow(container)
           );
@@ -1478,7 +1492,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           var lettersSkipped = nextLetter.charCodeAt(0) - activeAlphabet.charCodeAt(0);
 
           $.when(
-            panel.toggleTab(ribbonBanner.find("div.ribbon_"+nextLetter), container, 1)
+            panel.toggleTab({'selectElement': ribbonBanner.find("div.ribbon_"+nextLetter), 'container': container, 'selByClass': 1})
           ).then(
             panel.selectArrow(container)
           );
