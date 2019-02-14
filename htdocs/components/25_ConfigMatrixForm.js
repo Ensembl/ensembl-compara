@@ -824,7 +824,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $(selectedElements).each(function(i, arr){
       $(arr).each(function(k, el){
         var k = $(el).data('item');
-        clones[k] = $(el).clone().removeClass('noremove');
+        clones[k] = $(el).clone().removeClass('noremove _search_hide').show();
       });
     });
     panel.updateSelectedTracks(clones);
