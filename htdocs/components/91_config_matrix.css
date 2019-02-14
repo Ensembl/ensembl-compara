@@ -270,7 +270,7 @@ div.larrow.inactive, div.rarrow.inactive            { cursor: default; color: [[
 div.letters-ribbon                                  { position:relative; color: [[BLACK]]; font-size: 0.8em; white-space: nowrap; margin: 16px 0 16px 0px; }
 div.alphabet-div                                    { position: relative; margin-left: 5px; display: inline-block; width: 13px; padding: 2px; cursor: pointer; text-align: center; }
 div.alphabet-div.active                             { cursor: default; background-color: [[MAIN_V_DARK]]; color: [[WHITE]]; opacity: 0.9; }
-div.alphabet-div.inactive                           { color: [[MEDIUM_GREY]]; cursor: default; }
+div.alphabet-div.inactive                           { color: #d9d9d9; cursor: default; }
 div.ribbon-content                                  { display: flex; padding-left: 16px; overflow: auto; }
 div.ribbon-content ul                               { width: 100%;}
 div.alphabet-content                                { display: none; position: relative; width: 90%; }
