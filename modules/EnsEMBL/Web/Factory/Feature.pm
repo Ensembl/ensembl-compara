@@ -42,6 +42,7 @@ use EnsEMBL::Web::Data::Bio::Gene;
 use EnsEMBL::Web::Data::Bio::Transcript;
 use EnsEMBL::Web::Data::Bio::Variation;
 use EnsEMBL::Web::Data::Bio::ProbeFeature;
+use EnsEMBL::Web::Data::Bio::ProbeTranscript;
 use EnsEMBL::Web::Data::Bio::AlignFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFeature;
 use EnsEMBL::Web::Data::Bio::RegulatoryFactor;
@@ -138,7 +139,7 @@ sub _create_ProbeFeature {
   my $features  = { ProbeFeature => EnsEMBL::Web::Data::Bio::ProbeFeature->new($self->hub, @$probe) };
 
   my $probe_trans = $self->_create_ProbeFeatures_linked_transcripts($subtype);
-  $features->{'Transcript'} = EnsEMBL::Web::Data::Bio::Transcript->new($self->hub, @$probe_trans) if $probe_trans;
+  $features->{'ProbeTranscript'} = EnsEMBL::Web::Data::Bio::ProbeTranscript->new($self->hub, @$probe_trans) if $probe_trans;
   
   return $features;
 }
@@ -152,7 +153,7 @@ sub _create_ProbeFeatures_linked_transcripts {
   my ($self, $ptype) = @_;
   my $db_adaptor     = $self->_get_funcgen_db_adaptor;
   
-  my (@db_entries, @probe_objs, @transcripts, %seen);
+  my (@probe_objs, @db_entries, @mappings, %seen);
 
   if ($ptype eq 'pset') {
     my $id = $self->param('id');
@@ -175,12 +176,12 @@ sub _create_ProbeFeatures_linked_transcripts {
 
     if (!exists $seen{$entry->stable_id}) {
       my $transcript = $transcript_adaptor->fetch_by_stable_id($entry->stable_id);
-      push @transcripts, $transcript if $transcript;
+      push @mappings, {'Mapping' => $entry, 'Transcript' => $transcript} if $transcript;
       $seen{$entry->stable_id} = 1;
     }
   }
 
-  return \@transcripts;
+  return \@mappings;
 }
 
 sub _get_funcgen_db_adaptor {

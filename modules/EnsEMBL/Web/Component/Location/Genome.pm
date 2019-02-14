@@ -169,6 +169,7 @@ sub _render_features {
           ## De-camelcase names
           foreach (sort keys %$features) {
             my $pretty = $feature_display_name->{$_} || $self->decamel($_);
+            $pretty = 'Transcript' if $pretty eq 'Probe Transcript';
             $pretty .= 's' if $mapped_features > 1;
             $names{$_} = $pretty;
           }
@@ -203,6 +204,7 @@ sub _render_features {
           gradient     => $gradient,
         });
         $feat_type = 'Variant' if $feat_type eq 'Variation';
+        $feat_type = 'Transcript' if $feat_type eq 'ProbeTranscript';
         $legend_info->{$feat_type} = {'colour' => $colour, 'gradient' => $gradient};  
         push @$pointers, $pointer_ref;
         $has_gradient++ if $gradient;
@@ -509,6 +511,26 @@ sub _configure_ProbeFeature_table {
   }
 
   return {'header' => $header, 'column_order' => $column_order, 'custom_columns' => $custom_columns, 'rows' => $rows}; 
+}
+
+sub _configure_ProbeTranscript_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my $rows = [];
+
+  my $header = 'Transcript Mappings';
+  my $column_order = [qw(names extname)];
+
+  my ($data, $extras) = @$feature_set;
+  push @$extras, {'key' => 'extname'};
+  foreach my $feature ($self->_sort_features_by_coords($data)) {
+    my $row = {
+              'names'   => {'value' => $self->_names_link($feature, 'Transcript')},
+              };
+    $self->add_extras($row, $feature, $extras);
+    push @$rows, $row;
+  }
+
+  return {'header' => $header, 'column_order' => $column_order, 'rows' => $rows}; 
 }
 
 sub _configure_RegulatoryFeature_table {
