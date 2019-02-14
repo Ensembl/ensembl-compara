@@ -115,7 +115,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || $(this).hasClass('view-track')) { 
+      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) { 
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
@@ -1560,7 +1560,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
         }
 
-        yContainer += '<div class="yLabel '+cellName+'">'+cellLabel+'</div>';
+        yContainer += '<div class="yLabel _ht '+cellName+'" title="'+cellName+'">'+cellLabel+'</div>';
         var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
         
         //drawing boxes
@@ -1649,7 +1649,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.cellClick(); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
-    panel.setLocalStorage();    
+    panel.setLocalStorage();
+    
+    // enable helptips
+    this.elLk.matrixContainer.find('._ht').helptip({position: { at: 'right center', using: function(position, feedback){     
+      position.left -= 20;
+      $(this).removeClass('helptip-top helptip-bottom helptip-middle').addClass('helptip-' + feedback.vertical).css(position);}} 
+    });
   },
 
   emptyMatrix: function() {
