@@ -229,7 +229,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   activateAlphabetRibbon: function(alphabetContainer, reset) {
     var panel = this;
     var activeRibbon, activeRibbonClass;
-    var toggleToFirstTabFlag = 1;
+    var flag = 0;
 
     var alphabetRibbonDivs = alphabetContainer.find('.ribbon-banner .alphabet-div');
     var alphabetRibbonContentDivs = alphabetContainer.find('.ribbon-content .alphabet-content');
@@ -321,6 +321,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     //store on which tab the user is on
     panel.setUserLocation();
+
+    // If no matrix available in localstore, that means user hasn't clicked on "Configure Display" button
+    // In that case, call displayMatrix() to create the necessary localStore objects
+    if(Object.keys(panel.localStoreObj[panel.json.extra_dimensions[0]]).length <= 0) {
+      panel.displayMatrix();
+    }
 
     $.each(panel.json.extra_dimensions, function (i, dim) {
       if (!panel.localStoreObj[dim]) {
