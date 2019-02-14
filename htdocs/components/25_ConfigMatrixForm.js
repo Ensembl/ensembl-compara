@@ -324,10 +324,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.resetFilter("", true);
 
     //store on which tab the user is on
-    panel.setUserLocation();
+    panel.localStoreObj.userLocation && panel.setUserLocation();
 
     // If no matrix available in localstore, that means user hasn't clicked on "Configure Display" button
     // In that case, call displayMatrix() to create the necessary localStore objects
+    if (Object.keys(panel.localStoreObj).length <= 0) {
+      return;
+    }
+
     if(Object.keys(panel.localStoreObj[panel.json.extra_dimensions[0]]).length <= 0) {
       panel.displayMatrix();
     }
