@@ -212,6 +212,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.activateAlphabetRibbon(tab_content_ele, resetRibbon, resetFilter);
           }
         }
+
+        panel.updateTrackPanelSelectAllCount(key, lis.not("._search_hide").length);
+
       });
 
       // If any of the final available tabs have class "active" then leave. If not move it to the first available
@@ -614,6 +617,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if(key) {
       $('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
       $('#'+key+' span.total', this.elLk.resultBox).html(total);
+      this.updateTrackPanelSelectAllCount(key, total);
+    }
+  },
+
+  updateTrackPanelSelectAllCount: function(key, total) {
+    var panel = this;
+    if(key) {
       $('#allBox-' + key + '-content ._num').html('(' + total + ')');
     }
   },
@@ -725,10 +735,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if($(ele).hasClass('all-box')) {
       var _class = '';
       if ($(ele).closest('.tab-content').find('li._filtered').length) {
-        _class = "._filtered";
+        _class = '._filtered';
       }
 
-      var available_LIs = $(ele).closest('.tab-content').find('li' + _class + ' span.fancy-checkbox');
+      var available_LIs = $(ele).closest('.tab-content').find('li' + _class + ':not("._search_hide") span.fancy-checkbox');
 
       if (!selected) {
         chkbox.addClass('selected');
