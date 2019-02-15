@@ -184,7 +184,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var tabLookup = panel.elLk[tabId];
     var dimension_name = panel[tabId];
     if (!tabLookup.haveSubTabs) {
+      // Update selectAll
       panel.activateAlphabetRibbon(tabLookup.container, resetRibbon, resetFilter);
+      panel.updateSelectAll(tabLookup.container);
     }
     else {
       // For subtabs
@@ -226,6 +228,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.updateTrackPanelSelectAllCount(key, visible.length);
 
         }
+
+        // Update selectAll
+        panel.updateSelectAll(tab_content_ele);
+
       });
 
       // If any of the final available tabs have class "active" then leave. If not move it to the first available
@@ -313,6 +319,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
     else {
       $(rarrow).removeClass('inactive').addClass('active');
+    }
+  },
+
+  updateSelectAll: function(tabContent) {
+    var lis_unselected = $(tabContent).find('li span.fancy-checkbox').not(".selected");
+    if (lis_unselected.length) {
+      $(tabContent).find('div.all-box span.fancy-checkbox').removeClass('selected');
+    }
+    else {
+      $(tabContent).find('div.all-box span.fancy-checkbox').addClass('selected');
     }
   },
 
@@ -626,7 +642,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if(key) {
       $('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
       $('#'+key+' span.total', this.elLk.resultBox).html(total);
-      this.updateTrackPanelSelectAllCount(key, total);
     }
   },
 
@@ -762,8 +777,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       // add 'selected: true/flase' to lookup
       available_LIs.parent().map(function() {
         panel.elLk.lookup[$(this).data('item')].selected = !selected;
-      })
-
+      });
     }
     else {
 
@@ -779,12 +793,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $(itemElements).find("span.fancy-checkbox").addClass("selected");
       }
 
-
       // Update all-box selected class based on selection
       var lis_unselected = $(itemElements).closest('.tab-content').find('li span.fancy-checkbox').not(".selected");
       var allBox = $(itemElements).closest('.tab-content').find('.all-box span.fancy-checkbox')
       lis_unselected.length ? allBox.removeClass('selected') : allBox.addClass('selected');
-
     }
   },
 
@@ -801,6 +813,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $.each(panel.elLk[key].tabContents, function(subTab, lis) {
           selectedLIs = lis.has('.selected') || [];
           allLIs = lis.has('._filtered') || [];
+          _search_hide = lis.has('._search_hide') || [];
+
           // In case _filtered class is not applied
           // Add lis with _search_hide class. because all _search_hide lis will have display = 'none'
           allLIs = allLIs.length || lis.filter(function() { return $(this).css('display') !== 'none' || $(this).hasClass('_search_hide') });
@@ -816,6 +830,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.totalSelected  += selectedLIs.length;
 
           panel.updateCurrentCount(subTab, selectedLIs.length, allLIs.length);
+          _search_hide.length && this.updateTrackPanelSelectAllCount(key, selectedLIs.length);
           selectedLIs.length && selectedElements.push(selectedLIs);
         })
       }
