@@ -65,7 +65,8 @@ sub content {
       fdb    => 'funcgen',
       ftype  => $object_type,
       ptype  => $hub->param('ptype'),
-      array  => $vendor.'__'.$array_name,
+      array  => $array_name,
+      vendor => $vendor,
       db     => 'core'
     })
   });

@@ -485,8 +485,9 @@ sub _configure_Transcript_table {
 
 sub _configure_ProbeFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
-  my $rows = [];
-  my ($vendor, $array) = split('__', $self->param('array'));
+  my $array   = $self->param('array');
+  my $vendor  = $self->param('vendor');
+  my $rows    = [];
   
   my $column_order = [qw(name seq length loc mismatches)];
   my $custom_columns = {
@@ -500,13 +501,13 @@ sub _configure_ProbeFeature_table {
   my $header = sprintf('Probe features for %s | %s', $self->param('id'), $array);
  
   my ($data, $extras) = @$feature_set;
-  my $track_config = sprintf('oligo_funcgen_%s', $self->param('array'));
+  my $track_config = $vendor && $array ? {'contigviewbottom' => sprintf('oligo_funcgen_%s__%s', $vendor, $array)} : undef;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
               'name'    => {'value' => $feature->{'name'},            }, 
               'seq'     => {'value' => $feature->{'sequence'},        }, 
               'length'  => {'value' => $feature->{'length'},          }, 
-              'loc'     => {'value' => $self->_location_link($feature, {'contigviewbottom' => $track_config})},
+              'loc'     => {'value' => $self->_location_link($feature, $track_config)},
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
