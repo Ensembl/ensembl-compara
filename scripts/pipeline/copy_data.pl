@@ -237,6 +237,7 @@ print "\n\n";   # to clear from possible warnings
 my %type_to_adaptor = (
                        'LASTZ_NET'              => $from_ga_adaptor,
                        'BLASTZ_NET'             => $from_ga_adaptor,
+                       'POLYPLOID'              => $from_ga_adaptor,
                        'TRANSLATED_BLAT_NET'    => $from_ga_adaptor,
                        'LASTZ_PATCH'            => $from_ga_adaptor,
                        'SYNTENY'                => $from_sr_adaptor,
