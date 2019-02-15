@@ -608,11 +608,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     if(counter === total_div) {
-      panel.el.find('button.filter').addClass('active');
+      panel.el.find('button.view-track').addClass('active');
       panel.el.find('li._configure').removeClass('inactive');
       panel.elLk.displayButton.addClass('active')
     } else {
-      panel.el.find('button.filter').removeClass('active');
+      panel.el.find('button.view-track').removeClass('active');
       panel.el.find('li._configure').addClass('inactive');
       panel.elLk.displayButton.removeClass('active');
     }
