@@ -179,7 +179,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },  
 
   // Udpate available tabs or ribbons after filtering
-  updateAvailableTabsOrRibbons(tabId, resetRibbon, resetFilter) {
+  updateAvailableTabsOrRibbons: function(tabId, resetRibbon, resetFilter) {
     var panel = this;
     var tabLookup = panel.elLk[tabId];
     var dimension_name = panel[tabId];
