@@ -82,9 +82,9 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-6', 'mateus_ensembl_load_members_96'  ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-1', 'mateus_ensembl_protein_trees_96' ],
     'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
-    #'compara_families' => [ 'mysql-ens-compara-prod-3', 'carlac_families_fix_95'  ],
+    'compara_families' => [ 'mysql-ens-compara-prod-2', 'mateus_ensembl_families_96'  ],
     'compara_nctrees'  => [ 'mysql-ens-compara-prod-3', 'muffato_ensembl_compara_nctrees_96' ],
     'murinae_ptrees'   => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_protein_trees_96b' ],
     'murinae_nctrees'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
@@ -133,7 +133,7 @@ my $compara_dbs = {
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-8', 'mateus_synteny_96' ],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-6', 'carlac_alt_allele_import_95' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-1', 'mateus_ensembl_alt_allele_import_96' ],
 };
 
 add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection

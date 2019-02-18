@@ -62,8 +62,8 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
-        'port'  => 4615,
+        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+        'port'  => 4485,
 
     # User details
 

@@ -50,7 +50,7 @@ sub default_options {
 
         'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
         'port'            => 4485,
-        'division' => 'ensembl',
+        'division'        => 'vertebrates',
 
         # 'compara_db' => 'compara_curr',
         # 'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
