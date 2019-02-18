@@ -154,6 +154,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
   },
 
+  // Set reset = true if you do not want to reset offset position
   resetFilter: function (inputText, reset) {
     var panel = this;
 
@@ -762,20 +763,23 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         _class = '._filtered';
       }
 
-      var available_LIs = $(ele).closest('.tab-content').find('li' + _class + ':not("._search_hide") span.fancy-checkbox');
+      var available_LIs = $(ele).closest('.tab-content').find('li' + _class + ':not("._search_hide")');
+      var availableFancyCheckBoxes = available_LIs.find('span.fancy-checkbox');
 
       if (!selected) {
         chkbox.addClass('selected');
         // var $(ele).closest('.tab-content').find('li span.fancy-checkbox');
-        available_LIs.addClass("selected");
+        availableFancyCheckBoxes.addClass("selected");
+        available_LIs.addClass("_selected");
       }
       else {
         chkbox.removeClass('selected')
-        available_LIs.removeClass('selected');
+        availableFancyCheckBoxes.removeClass('selected');
+        available_LIs.removeClass("_selected");
       }
 
       // add 'selected: true/flase' to lookup
-      available_LIs.parent().map(function() {
+      available_LIs.map(function() {
         panel.elLk.lookup[$(this).data('item')].selected = !selected;
       });
     }
@@ -787,10 +791,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
        // Select/deselect elements from LH and RH panels. For that, get the elements from panel.el
       var itemElements = $('.' + item, panel.el);
       if (selected) {
-        $(itemElements).find("span.fancy-checkbox").removeClass("selected");
+        $(itemElements).removeClass('_selected').find("span.fancy-checkbox").removeClass("selected");
       }
       else {
-        $(itemElements).find("span.fancy-checkbox").addClass("selected");
+        $(itemElements).addClass('_selected').find("span.fancy-checkbox").addClass("selected");
       }
 
       // Update all-box selected class based on selection
@@ -1356,14 +1360,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     // Create classees with all filters for selection below
     if (Object.keys(filters).length) {
       filters_class = 'li.' + Object.keys(filters).join(', li.');
+      var tabB_currently_selected_lis = panel.elLk.trackPanel.find(tabB_containerId).find('li._selected');
       panel.elLk.trackPanel.find(tabB_containerId).find(filters_class).addClass('_filtered').show();
+      $(tabB_currently_selected_lis).addClass('_filtered').show();
 
       // Unselect any lis which went hidden after filtering
       tabB_LIs.not('._filtered').find('span.fancy-checkbox').removeClass('selected');
     }
     else {
       // If no filters, then show all LIs in tabB
-      tabB_LIs.removeClass('_filtered').show();      
+      tabB_LIs.removeClass('_filtered').show();
     }
 
     var resetCount = filters_class === '' ? 1 : 0;
@@ -1788,6 +1794,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.localStoreObj.matrix = {};
       panel.setLocalStorage();
       panel.emptyMatrix();
+      panel.resetFilter();
       $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
         panel.filterData($(ele).data('item'));
