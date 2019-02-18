@@ -66,41 +66,18 @@ sub fetch_input {
 
     my $homology_ids = $self->param('homology_ids');
 
-    my @prev_homology_ids;
-    my @curr_homology_ids;
-
-    #Build curr - prev mappings
-    my %curr_homologies_map;
-    my %prev_homologies_map;
-
-    foreach my $h ( keys %{ $self->param('homology_ids') } ) {
-        push( @prev_homology_ids, $self->param('homology_ids')->{$h} );
-        push( @curr_homology_ids, $h );
-    }
-
-    #print Dumper @prev_homology_ids;
     my $sorted_prev_homologies;    #array of hashes
-    my $sorted_curr_homologies;    #array of hashes
-    my $prev_homologies = $prev_homology_adaptor->fetch_all_by_dbID_list( \@prev_homology_ids );
-    my $curr_homologies = $self->param('curr_homology_adaptor')->fetch_all_by_dbID_list( \@curr_homology_ids );
+    my $prev_homologies = $prev_homology_adaptor->fetch_all_by_dbID_list( [values %$homology_ids] );
+    my $curr_homologies = $self->param('curr_homology_adaptor')->fetch_all_by_dbID_list( [keys %$homology_ids] );
 
+    my %prev_homologies_map;
     foreach my $prev_homology (@$prev_homologies) {
         $prev_homologies_map{ $prev_homology->dbID } = $prev_homology;
     }
 
     foreach my $curr_homology (@$curr_homologies) {
-        $curr_homologies_map{ $curr_homology->dbID } = $curr_homology;
+        push( @$sorted_prev_homologies, $prev_homologies_map{ $homology_ids->{$curr_homology->dbID} } );
     }
-
-    foreach my $prev_homology_id (@prev_homology_ids) {
-        push( @$sorted_prev_homologies, $prev_homologies_map{$prev_homology_id} );
-    }
-
-    foreach my $curr_homology_id (@curr_homology_ids) {
-        push( @$sorted_curr_homologies, $curr_homologies_map{$curr_homology_id} );
-    }
-
-    #Create previous and current object map, to be used by direct memory access.
 
     #Preloading previous homologies
     my $sms_prev = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $prev_dba->get_AlignedMemberAdaptor, $prev_homologies );
@@ -114,7 +91,7 @@ sub fetch_input {
 
     #Setting up previous and current place holders
     $self->param( 'prev_homologies', $sorted_prev_homologies );
-    $self->param( 'curr_homologies', $sorted_curr_homologies );
+    $self->param( 'curr_homologies', $curr_homologies );
 
 } ## end sub fetch_input
 
