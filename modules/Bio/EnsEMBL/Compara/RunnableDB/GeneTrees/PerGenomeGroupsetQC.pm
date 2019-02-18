@@ -98,7 +98,7 @@ sub fetch_input {
     $self->param('mapped_gene_ratio', 1-($total_orphans_num/$total_num_genes) );
 
     if ( !$self->_is_above_orphan_ratio( $genome_db_id, $ncbi_taxon_adaptor ) ) {
-        die "genome_db_id $genome_db_id has too many orphan genes please investigate further.";
+        die "genome_db_id $genome_db_id has too many orphan genes ($total_orphans_num/$total_num_genes) please investigate further.";
     }
 
     my $reuse_this = 0;
