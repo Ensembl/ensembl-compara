@@ -60,10 +60,8 @@ sub default_options {
 
         #Pipeline capacities:
         'update_capacity'                           => 5,
-        'high_confidence_capacity'                  => 20,
+        'high_confidence_capacity'                  => 30,
         'high_confidence_batch_size'                => 10,
-        'high_confidence_capacity'                  => 5,
-        'high_confidence_batch_size'                => 2,
     };
 }
 

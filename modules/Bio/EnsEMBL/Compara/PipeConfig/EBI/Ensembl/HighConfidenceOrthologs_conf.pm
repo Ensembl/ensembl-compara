@@ -83,7 +83,7 @@ sub default_options {
             },
         ],
 
-        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
+        'high_confidence_capacity'    => 30,             # how many mlss_ids can be processed in parallel
         'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };
