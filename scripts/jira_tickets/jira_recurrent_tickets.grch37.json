@@ -131,6 +131,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run HighConfidenceOrthologs pipeline"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-MergeGeneTrees+Families+NCTrees+PatchProjectionsAsHomologies",
             "summary": "Merge GeneTrees+Families+NCTrees+PatchProjectionsAsHomologies"
          },
