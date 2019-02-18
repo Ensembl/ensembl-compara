@@ -45,18 +45,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CopyHomology_dNdS;
 
 use strict;
 use warnings;
+
 use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 
-use Statistics::Descriptive;
-
-use Bio::Tools::Run::Phylo::PAML::Codeml;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return { 'group_size' => 500, };
-}
 
 sub fetch_input {
     my $self = shift @_;
@@ -185,7 +179,6 @@ sub write_output {
     my $curr_homology_object_map = $self->param('curr_homology_object_map');
     my $recompute_dataflow       = $self->param('recompute_dataflow');
     my $copy_dataflow            = $self->param('copy_dataflow');
-    my $group_size               = $self->param('group_size');
 
     #Dataflow the ids to be recomputed
     if ( scalar(@$recompute_dataflow) > 0 ) {
