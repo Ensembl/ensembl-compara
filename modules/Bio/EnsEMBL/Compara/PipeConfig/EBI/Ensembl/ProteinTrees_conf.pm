@@ -113,6 +113,16 @@ sub default_options {
         # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes', 'Percomorphaceae'],
 
+    # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
+    # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
+        'mapped_gene_ratio_per_taxon' => {
+            '2759'    => 0.5,     #eukaryotes
+            '33208'   => 0.65,    #metazoans
+            '7742'    => 0.85,    #vertebrates
+            '117571'  => 0.9,     #bony vertebrates
+            '9443'    => 0.95,    #primates
+          },
+
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 1,
