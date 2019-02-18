@@ -133,7 +133,6 @@ sub run {
 
     for ( my $i = 0; $i < scalar(@$curr_homologies); $i++ ) {
 
-        if ( $prev_homologies->[$i] ) {
             $prev_homology_object_map{ $curr_homologies->[$i]->dbID } = $prev_homologies->[$i];
             $curr_homology_object_map{ $curr_homologies->[$i]->dbID } = $curr_homologies->[$i];
 
@@ -161,7 +160,6 @@ sub run {
                 #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tDIFF seq: dataflow to Homology_dNdS" );
                 push( @recompute_dataflow, $curr_homologies->[$i]->dbID );
             }
-        } ## end if ( $prev_homologies->...)
     } ## end for ( my $i = 0; $i < scalar...)
 
     $self->param( 'recompute_dataflow',       \@recompute_dataflow );
