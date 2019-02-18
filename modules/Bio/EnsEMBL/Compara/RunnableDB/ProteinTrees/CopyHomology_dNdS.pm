@@ -104,13 +104,11 @@ sub fetch_input {
 
     #Preloading previous homologies
     my $sms_prev = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $prev_dba->get_AlignedMemberAdaptor, $prev_homologies );
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $prev_dba->get_SequenceAdaptor, undef, $sms_prev );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $prev_dba->get_SequenceAdaptor, 'cds', $sms_prev );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags( $prev_dba->get_DnaFragAdaptor, $sms_prev );
 
     #Preloading current homologies
     my $sms_curr = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $self->compara_dba->get_AlignedMemberAdaptor, $curr_homologies );
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $self->compara_dba->get_SequenceAdaptor, undef, $sms_curr );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $self->compara_dba->get_SequenceAdaptor, 'cds', $sms_curr );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags( $self->compara_dba->get_DnaFragAdaptor, $sms_curr );
 
