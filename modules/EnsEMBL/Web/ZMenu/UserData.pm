@@ -111,15 +111,22 @@ sub feature_content {
 
     if ($_->{'extra'}) {
       foreach my $extra (@{$_->{'extra'}||[]}) {
-        next unless $extra->{'name'};
+        my $name = $extra->{'name'};
+        next unless $name;
+
+        ## Omit bigBed fields that are only important for drawing
+        next if ($name =~ /thickStart/i || $name =~ /thickEnd/i || $name =~ /itemRgb/i
+                  || $name =~ /blockCount/i || $name =~ /blockSizes/i 
+                  || $name =~ /blockStarts/i || $name =~ /chromStarts/i);
+  
         if ($extra->{'value'} =~ /<a /) {
-          $self->add_entry({'type' => $extra->{'name'}, 'label_html' => $extra->{'value'}});
+          $self->add_entry({'type' => $name, 'label_html' => $extra->{'value'}});
         }
-        elsif ($extra->{'name'} =~ /^ur[l|i]$/i) {
+        elsif ($name =~ /^ur[l|i]$/i) {
           $self->add_entry({'type' => 'Link', 'label_html' => sprintf('<a href="%s">%s</a>', $extra->{'value'}, $extra->{'value'})});
         }
         else {
-          $self->add_entry({'type' => $extra->{'name'}, 'label' => $extra->{'value'}});
+          $self->add_entry({'type' => $name, 'label' => $extra->{'value'}});
         }
       }
     }
