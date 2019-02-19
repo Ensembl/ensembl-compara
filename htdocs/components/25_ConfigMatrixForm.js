@@ -237,8 +237,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             panel.activateAlphabetRibbon(tab_content_ele, resetRibbon, resetFilter);
           }
 
-          var visible = $('li:visible', tab_content_ele);
-          panel.updateTrackPanelSelectAllCount(key, visible.length);
+          // var visible = $('li:visible', tab_content_ele);
+          var count = 0;
+          $('li', tab_content_ele).each(function(i, li) {
+            if ($(li).css('display') !== 'none') {
+              count++;
+            }
+          });
+          panel.updateTrackPanelSelectAllCount(key, count);
 
         }
 
@@ -251,7 +257,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if (availableTabsWithData.length && currentActiveTabId) {
         if(!currentActiveTabId || availableTabsWithData.indexOf(currentActiveTabId) < 0) {
           // Move to first active tab
-          panel.toggleTab({'selectElement': $(tabLookup.tabs[availableTabsWithData[0]]), 'container': $(tabLookup.tabs[availableTabsWithData[0]]).parent()});
+          panel.toggleTab({
+            'selectElement': $(tabLookup.tabs[availableTabsWithData[0]]),
+            'container': $(tabLookup.tabs[availableTabsWithData[0]]).parent(),
+            'searchTriggered': true
+          });
         }
       }
     }
@@ -269,8 +279,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $(alphabetRibbonDivs).removeClass('active').addClass('inactive');
 
     var li = alphabetContainer.find('li');
-    var li_filtered = alphabetContainer.find('li._filtered');
-    var li_search_hide = alphabetContainer.find('li._search_hide');
 
     var availableRibbonContainers = $(li).closest('.alphabet-content');
     var arr = {};
@@ -1220,7 +1228,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           // change offset positions of all letter content divs same as their respecitve ribbon letter div
           $(el).offset({left: activeLetterDiv.offset().left - 2});
         }
-      })
+      });
     }
   },
 
