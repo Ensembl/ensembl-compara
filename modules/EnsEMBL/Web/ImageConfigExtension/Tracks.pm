@@ -1037,6 +1037,23 @@ sub add_regulation_features {
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
 
+  ## Add motif features if required
+  if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
+    my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+      db          => $key,
+      glyphset    => 'fg_motif_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 1,
+      colourset   => 'fg_motif_features',
+      display     => 'off',
+      description => 'Transcription Factor Binding Motif sites', 
+      renderers   => ['off', 'Off', 'compact', 'Compact'],
+    });
+    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+  }
+
 }
 
 sub add_regulation_builds {
@@ -1070,23 +1087,6 @@ sub add_regulation_builds {
   }));
 
   my $db_tables = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-
-  ## Add motif features if required
-  if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
-    my $motif_feats = $build_menu->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
-      db          => $key,
-      glyphset    => 'fg_motif_features',
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => 1,
-      colourset   => 'fg_motif_features',
-      display     => 'off',
-      description => 'Transcription Factor Binding Motif sites', 
-      renderers   => ['off', 'Off', 'compact', 'Compact'],
-    });
-    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
-  }
 
   #######  NOW DO BIG MATRIX NODE!
 
