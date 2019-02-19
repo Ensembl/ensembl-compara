@@ -24,9 +24,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   
   init: function () {
     var panel = this;
+
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
+
+    this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
     this.elLk.dx        = {};
     this.elLk.dx.container = $('div#dx-content', this.el);
@@ -152,6 +155,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       panel.updateAvailableTabsOrRibbons(activeTabId, true);
     });
+
+    if(this.disableYdim) {
+      panel.el.find('h5.result-header._dyHeader, div#dy, div._dyMatrixHeader').hide();
+      panel.el.find('button.reset-button._matrix').css("margin-top","0");
+      panel.el.find('div#dy-tab').addClass("inactive").attr("title","No Experimental evidence is available for this view");
+    } else {
+      panel.el.find('h5.result-header._dyHeader, div#dy').show();
+      panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
+    }
   },
 
   // Set reset = true if you do not want to reset offset position
@@ -1137,7 +1149,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var noOffsetUpdate = obj.resetFilter;
     var panel = this;
 
-    if((!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive"))) {
+    if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
         panel.el.find(".search-box").hide();

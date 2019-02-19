@@ -36,7 +36,7 @@ sub configuration_content {
           <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
           <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
         </div>
-        <div class="horizontal-sub-header">$dimY</div>
+        <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset</button>
         <div class="track-popup column-cell">
           <ul>
@@ -101,7 +101,7 @@ sub configuration_content {
             </ul>
           </div>
 
-          <h5 class="result-header">$dimY</h5>
+          <h5 class="result-header _dyHeader">$dimY</h5>
           <div id="dy">
             <div class="result-content" id="Histone">
               <span class="_parent-tab-id hidden">dy-tab</span>
@@ -132,18 +132,6 @@ sub configuration_content {
             </div>          
           </div>
 
-          <h5 class="result-header">Source <span class="error _source hidden">Please select Source</span></h5>
-          <div class="result-content" id="source">
-            <ul class="result-list no-left-margin">
-              <span class="hidden lhsection-id">source-content</span>
-              <li class="noremove">
-                <span class="fancy-checkbox selected"></span><text>Blueprint</text>
-              </li>
-              <li class="noremove">
-                <span class="fancy-checkbox selected"></span><text>Another source</text>
-              </li>
-            </ul>
-          </div>
         </div>
   );
 }
