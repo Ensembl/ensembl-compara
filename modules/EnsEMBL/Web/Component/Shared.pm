@@ -185,13 +185,12 @@ sub transcript_table {
           $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
         } 
         elsif ($attrib_type eq 'appris'  && $attrib->value) {
-          ## There should only be one APPRIS code per transcript
+          ## Assume there is only one APPRIS attribute per transcript
           my $short_code = $attrib->value;
           ## Manually shorten the full attrib values to save space
           $short_code =~ s/ernative//;
           $short_code =~ s/rincipal//;
           $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
-          last;
           }
         elsif ($attrib_type eq $MANE_attrib_code && $attrib && $attrib->value) {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib;
