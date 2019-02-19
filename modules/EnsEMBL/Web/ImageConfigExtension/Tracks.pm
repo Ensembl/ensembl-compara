@@ -1001,7 +1001,7 @@ sub add_regulation_features {
   }
 
   # Add other bigBed-based tracks
-  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
+  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA methylation'));
   my $db_tables         = {};
   if ( $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
