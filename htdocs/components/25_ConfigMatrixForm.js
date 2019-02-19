@@ -1398,7 +1398,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       'dx': 'dy',
       'dy': 'dx'
     }
-    panel.updateAvailableTabsOrRibbons(tabToFilter[panel.elLk.lookup[item].parentTabId]);
+    panel.updateAvailableTabsOrRibbons(tabToFilter[panel.elLk.lookup[item].parentTabId], true);
   },
 
   getActiveAlphabets: function(container) {
