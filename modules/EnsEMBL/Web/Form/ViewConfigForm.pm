@@ -479,32 +479,44 @@ sub _add_select_all {
   if ($child_tracks > 1 || $child_tracks == 1 && scalar(@child_nodes) - $external_children > 1) {
     my $img_url = $self->view_config->species_defs->img_url;
     my %counts  = reverse %{$self->{'track_renderers'}{$id} || {}};
-    my $popup;
 
     $caption = $external ? $parent->get_data('caption') : 'tracks' if $single_menu;
-    $caption = $matrix ? "Configure matrix columns for $caption" : "Enable/disable all $caption";
-
-    if (scalar keys %counts != 1) {
-      $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
-      $popup .= qq{<li class="setting subset subset_$id"><a href="#">Configure track options</a></li>} if $matrix;
-    } else {
-      $popup = $self->{'select_all_menu'}{$id};
-    }
-
     my $description = $node->get_data('description');
        $description = $description ? sprintf('<br /><i>%s</i>', $description) : '';
+    my $inner_html;
+
+    if ($matrix) {
+      $caption = "Configure $caption";
+      $inner_html = qq(
+          <strong><a class="matrix_link subset subset_$id" href="#">$caption</a></strong>
+          $description
+      );
+    }
+    else {
+      $caption = "Enable/disable all $caption";
+
+      my $popup;
+      if (scalar keys %counts != 1) {
+        $popup .= qq{<li class="$_->[0]">$_->[1]</li>} for [ 'off', 'Off' ], [ 'all_on', 'On' ];
+        #$popup .= qq{<li class="setting subset subset_$id"><a href="#">Configure track options</a></li>} if $matrix;
+      } else {
+        $popup = $self->{'select_all_menu'}{$id};
+      }
+      $inner_html = qq(
+          <ul class="popup_menu">
+            <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
+            $popup
+          </ul>
+          <strong>$caption</strong>
+          $description
+      );
+    }
 
     $menu->before('div', {
       class      => 'select_all config_menu',
-      inner_HTML => qq(
-        <ul class="popup_menu">
-          <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
-          $popup
-        </ul>
-        <strong>$caption</strong>
-        $description
-      )
-    });
+      inner_HTML => $inner_html,
+      });
+
   } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });
   }

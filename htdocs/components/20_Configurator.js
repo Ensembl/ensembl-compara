@@ -800,6 +800,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             return findActive.call(this);
           }).removeClass('active');
         } else {
+          if (configDiv.hasClass('functional') && !subset) {
+            // Hide tracks that are configured using matrix
+            console.log('Regulation summary panel');
+            configDiv.children('.subset').each( function() {
+              if (this.className.match(/regulatory_features/)) {
+                var ul = this.childNodes[1];
+                ul.hidden = true;
+              }
+            });
+          }
           configDiv.children().map(function () {
             show.call(this);
             return findActive.call(this);
