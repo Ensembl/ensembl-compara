@@ -189,16 +189,22 @@ sub cell_line_button {
   my $count = "showing ".($shown_count - $partial_count)."/$total_count";
   $count   .= " and $partial_count partially" if $partial_count;
 
+  my $components = $self->hub->components;
+
   push @{$self->{'buttons'}||=[]},{
-    url => $url,
-    caption => "Select cells ($count)",
-    class => 'cell-line',
+    url =>  $self->hub->url({'type' => 'Config', 'action' => $self->hub->type, 'function' => $components->[0]->[0]}).'#regulatory_features',
+    caption => "Select Epigenome",
+    class => 'cell-line config',
+    rel => 'modal_config_'.lc($components->[0]->[0]),
     modal => 1
   };
 }
 
 sub evidence_button {
   my ($self) = @_;
+
+  return;
+#we dont need the evidence button anymore
 
   my $ev = $self->all_evidences->{'all'};
 
@@ -225,6 +231,10 @@ sub _current_renderer_setting {
 
 sub renderer_button {
   my ($self) = @_;
+
+  return;
+
+  # we dont need the renderer button anymore
 
   my $peaks_url = $self->hub->url('Ajax', {
     type => 'reg_renderer',
@@ -255,6 +265,9 @@ sub renderer_button {
 
 sub advanced_button {
   my ($self,$component) = @_;
+
+  return;
+  # we dont need the below anymore, new matrix interface replacing it
 
   my $hub = $self->hub;
   my @components = @{$hub->components};
