@@ -37,7 +37,6 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use strict;
 use warnings;
 no warnings "uninitialized";
-use Data::Dumper;
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::REST;
 use base qw(EnsEMBL::Web::Object);
