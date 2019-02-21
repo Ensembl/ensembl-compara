@@ -608,8 +608,6 @@ sub CADD_score {
  
   my $cadd_scores_for_source = $cadd_scores_for_all_alternatives->{$source};
 
-  my $cadd_scores = {};
-
   foreach my $allele (@alleles) {
     $cadd_scores->{$allele} = $cadd_scores_for_source->{$allele} if (exists $cadd_scores_for_source->{$allele});
   }
