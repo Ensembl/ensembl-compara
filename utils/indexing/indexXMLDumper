@@ -1324,66 +1324,85 @@ sub dumpOligoProbe {
   print LOG "    Retrieving probe_sets...".&date_and_mem()."\n";
   my $sth    = $conf->{'dbh'}->prepare(qq(
     SELECT
-      probe_set.name,
-      probe_set.probe_set_id,
-      count(distinct(concat(probe_feature.seq_region_id,':', probe_feature.seq_region_start,'-', probe_feature.seq_region_end))) as hits
+      a.vendor,
+      a.name,
+      ps.name,
+      ps.probe_set_id,
+      count(distinct(concat(pf.seq_region_id,':', pf.seq_region_start,'-', pf.seq_region_end))) as genome_hits,
+      ps.size
     FROM
-      $FUNCDB.probe_set
-      join $FUNCDB.probe using (probe_set_id)
-      join $FUNCDB.probe_feature using (probe_id)
-      join $FUNCDB.array_chip on (probe.array_chip_id=array_chip.array_chip_id)
-      join $FUNCDB.array using (array_id)
+      $FUNCDB.probe_set ps,
+      $FUNCDB.probe p,
+      $FUNCDB.probe_feature pf,
+      $FUNCDB.array_chip ac,
+      $FUNCDB.array a
+    WHERE ps.probe_set_id = p.probe_set_id  
+    AND p.probe_id = pf.probe_id
+    AND p.array_chip_id = ac.array_chip_id
+    AND ac.array_id = a.array_id
     GROUP BY
-      probe_set.name
+      ps.name,
+      a.vendor,
+      a.name
   ));
   $sth->execute();
   print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
-  while( my( $probe_name, $pset_id, $count ) = $sth->fetchrow_array ) {
-    next unless $probe_name;
-    my $locations_c = $count > 1 ? 'locations' : 'location';
-    my $desc =  qq(Probeset $probe_name has probes which hit the genome in $count $locations_c.);
-    &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
+  while( my( $array_vendor, $array_name, $probe_set_name, $pset_id, $genome_count, $probe_count ) = $sth->fetchrow_array ) {
+    next unless $probe_set_name;
+    my $locations_c = $genome_count > 1 ? 'locations' : 'location';
+    my $probes_c = $probe_count > 1 ? 'probes' : 'probe';
+    my $desc =  qq($array_vendor probeset $probe_set_name on array $array_name has $probe_count $probes_c which align to the genome in $genome_count $locations_c.);
+    &p( OligoProbeLine($dbspecies,$probe_set_name,$array_vendor,$array_name,$desc,'','pset',$db,$counter ), $fh);
   }
 
   print LOG "    Retrieving probe details...".&date_and_mem()."\n";
   $sth    = $conf->{'dbh'}->prepare(qq(
     SELECT
-      p.probe_id,
-      p.name,
       a.vendor,
-      count(distinct a.name) as array_hits,
+      a.name,
+      p.name,
+      p.probe_id,
       count(distinct(concat(pf.seq_region_id,':', pf.seq_region_start,'-', pf.seq_region_end))) as genome_hits
     FROM
       $FUNCDB.probe_feature pf,
       $FUNCDB.probe p,
       $FUNCDB.array_chip ac,
       $FUNCDB.array a
-    WHERE
-      pf.probe_id = p.probe_id
+    WHERE pf.probe_id = p.probe_id
     AND p.array_chip_id = ac.array_chip_id
     AND ac.array_id = a.array_id
     AND p.probe_set_id is null
-    GROUP BY p.name
+    GROUP BY
+      p.name,
+      a.vendor,
+      a.name
   ));
 
   $sth->execute();
   print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
-  while( my( $pid, $pname, $type, $array_count, $count ) = $sth->fetchrow_array ) {
-    my $array_c  = $array_count > 1 ? 'arrays' : 'array';
-    my $locations_c = $count > 1 ? 'locations' : 'location';
-    my $desc = "$type probe $pname is associated with $array_count $array_c and hits the genome in $count $locations_c.";
-    &p( OligoProbeLine($dbspecies,$pname,$desc,'','probe',$db,$counter ), $fh);
+  while( my( $array_vendor, $array_name, $pname, $pid, $genome_count) = $sth->fetchrow_array ) {
+    my $locations_c = $genome_count > 1 ? 'locations' : 'location';
+    my $desc = "$array_vendor probe $pname on array $array_name aligns to the genome in $genome_count $locations_c.";
+    &p( OligoProbeLine($dbspecies,$pname,$array_vendor,$array_name,$desc,'','probe',$db,$counter ), $fh);
   }
   return footer( $counter->(), $fh);
 }
 
 sub OligoProbeLine {
-  my ($species,$hid,$desc,$syns,$pset,$db,$counter) = @_; 
-  my $url = sprintf(qq(%s/Location/Genome?fdb=%s;ftype=ProbeFeature;id=%s),
+  my ($species,$hid,$array_vendor,$array_name,$desc,$syns,$pset,$db,$counter) = @_; 
+  my $url = sprintf(qq(%s/Location/Genome?fdb=%s;ftype=ProbeFeature;array=%s;vendor=%s;id=%s),
                    $species,
                    $db,
+                   $array_name,
+                   $array_vendor,
                    $hid);
-  $url .= ";ptype=$pset" if $pset eq 'pset';
+  if ($pset eq 'pset') {
+    $url .= ";ptype=$pset";
+    $hid = "Array $array_name - Probeset $hid";
+  }
+  else {
+    $hid = "Array $array_name - Probe $hid";
+  }
   $species =~ s/_/ /;
   my $xml = qq(
 <doc>
