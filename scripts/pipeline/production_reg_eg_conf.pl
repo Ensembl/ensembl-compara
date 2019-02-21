@@ -48,8 +48,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 
 my $suffix_separator = '__cut_here__';
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-eg-mirror',
-    -port   => 4157,
+    -host   => 'mysql-ens-mirror-3',
+    -port   => 4275,
     -user   => 'ensro',
     -pass   => '',
     -db_version     => $prev_release,
@@ -57,7 +57,7 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
 );
 Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-ensembl-mirror',
+    -host   => 'mysql-ens-mirror-1',
     -port   => 4240,
     -user   => 'ensro',
     -pass   => '',

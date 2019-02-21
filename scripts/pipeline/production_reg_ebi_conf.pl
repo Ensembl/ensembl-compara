@@ -62,7 +62,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 
 my $suffix_separator = '__cut_here__';
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host           => 'mysql-ensembl-mirror',
+    -host           => 'mysql-ens-mirror-1',
     -port           => 4240,
     -user           => 'ensro',
     -pass           => '',
