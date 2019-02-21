@@ -115,7 +115,7 @@ sub getFakeMungedVariationFeatures {
   my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor', 'variation');
   
   # find VCF config
-  my $c = $self->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+  my $c = $self->species_defs->ENSEMBL_VCF_COLLECTIONS;
 
   if($c) {
     my $variation_db = $self->variation_adaptor;

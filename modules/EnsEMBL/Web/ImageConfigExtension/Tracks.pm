@@ -1601,7 +1601,7 @@ sub add_sequence_variations_vcf {
   my ($self, $key, $hashref, $options) = @_;
 
   my $hub = $self->hub;
-  my $c = $hub->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+  my $c = $hub->species_defs->ENSEMBL_VCF_COLLECTIONS;
   return unless $c->{'ENABLED'};
 
   # my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_menu_node('variants', 'Sequence variants');
