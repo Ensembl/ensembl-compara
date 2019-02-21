@@ -203,8 +203,22 @@ sub count_samples {
 sub count_ldpops {
   my $self = shift;
   my $pa  = $self->database('variation')->get_PopulationAdaptor;
-  my $count = scalar @{$pa->fetch_all_LD_Populations};
-  
+  my @ldpops = @{$pa->fetch_all_LD_Populations};
+  return undef if (!scalar @ldpops);
+  my $var  = $self->Obj;
+  my $gts = $var->get_all_SampleGenotypes();
+  return undef if (!scalar @$gts);
+  my @gts_names = map {$_->sample->name} @$gts;
+  my $count = 0;
+  foreach (@ldpops) {
+    my @ldpops_sample_names = map {$_->name} @{$_->get_all_Samples};
+    foreach my $gts_name (@gts_names) {
+      if (grep {$gts_name eq $_ } @ldpops_sample_names) {
+        $count++;
+        last;
+      }
+    }
+  }
   return ($count > 0 ? $count : undef);
 }
 
