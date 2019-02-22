@@ -725,6 +725,9 @@ sub clinical_significance {
 
 sub change_tolerance {
   my $self = shift;
+  my $adaptor = $self->hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+  my $c = $self->hub->species_defs->ENSEMBL_VCF_COLLECTIONS;
+  return unless (defined $c->{'CONFIG'});
   my $object = $self->object;
   my ($CADD_scores, $CADD_source) = @{$object->CADD_score};
   my ($GERP_score, $GERP_source) = @{$object->GERP_score};
