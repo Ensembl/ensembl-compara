@@ -595,7 +595,8 @@ sub CADD_score {
   ### Returns arrayref of data, 
 
   my $self = shift;
- 
+  return [undef, undef] unless $self->hub->species_defs->ENSEMBL_VCF_COLLECTIONS; 
+
   my $vf_object = $self->get_selected_variation_feature;
   return [undef, undef] unless $vf_object;
 
@@ -623,6 +624,7 @@ sub GERP_score {
   ### Returns arrayref of data, 
 
   my $self = shift;
+  return [undef, undef] unless $self->hub->species_defs->ENSEMBL_VCF_COLLECTIONS; 
   my $vf_object = $self->get_selected_variation_feature;
   return [undef, undef] unless $vf_object;
   my $gerp_score = $vf_object->get_gerp_score;
