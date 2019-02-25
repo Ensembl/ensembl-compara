@@ -217,7 +217,7 @@ div.tabs                        { display: flex; }
 div.track-menu                  { background-color: [[DARK_GREY]]; border-right: 1px solid white; border-left: 1px solid white; padding: 4px 0 0 8px; margin: 0 -2px -1px -2px}
 div.track-menu div.track-tab    { border-right: none;  white-space: nowrap; display: flex; justify-content: center; border-radius: 5px 5px 0 0; margin-right: 8px; color: [[WHITE]]}
 div.track-menu div.track-tab.active { color: [[BLACK]]}
-div.track-menu div.track-tab.inactive { background-color: [[MEDIUM_GREY]]; color: [[LIGHT_GREY]]}
+div.track-menu div.track-tab.inactive { background-color: [[MEDIUM_GREY]]; color: [[WHITE]]; opacity: 0.4; }
 div.track-tab                   { background-color: [[MEDIUM_GREY]]; color: [[DARK_GREY]]; float: left; border-right: #ccc 1px solid; cursor: pointer; height: 10px;  width: 40%; text-align: center; padding: 5px 5px 10px 5px; }
 div.track-tab.active            { background-color: [[LIGHT_GREY]]; border-bottom: 1px solid #eee; color: [[BLACK]]; cursor:  default; }
 div.track-tab.active:hover      { background-color: [[LIGHT_GREY]]; opacity: 1; }
@@ -303,6 +303,7 @@ div.search-box span.search-cross-icon           { display: none; padding: 4px 6p
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
 button.reset-button:hover { color: [[OK_DARK]]; border-color: [[OK_DARK]]; }
 button.reset-button._track { width: 100px; position: absolute; margin-left: 203px; margin-top: -2px }
+body.ie button.reset-button._track { margin-top: -30px; }
 div.configuration-legend  { display: inline-block; float: left; margin-left: -30px; }
 div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }
 div.horizontal-sub-header { width: 110px; margin: 0 auto; }
