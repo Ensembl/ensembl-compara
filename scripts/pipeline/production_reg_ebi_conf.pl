@@ -90,16 +90,16 @@ my $compara_dbs = {
     'murinae_nctrees'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
 
     # LASTZ dbs
-    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_1' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_2' ],
-    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_3' ],
-    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_4' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_1_96' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_2_96' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_3_96' ],
+    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_4_96' ],
     'lastz_batch5'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_5_96' ],
     'lastz_batch6'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_6_96' ],
     'lastz_batch7'   => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_batch7_lastz_96' ],
-    'lastz_batch8'   => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8' ],
-    'lastz_batch_9'  => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_9' ],
-    'lastz_batch_10' => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_10' ],
+    'lastz_batch8'   => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8_96' ],
+    'lastz_batch_9'  => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_9_96' ],
+    'lastz_batch_10' => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_10_96' ],
 
     # EPO dbs
     ## mammals
