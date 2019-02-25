@@ -60,15 +60,15 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
-my $suffix_separator = '__cut_here__';
-Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host           => 'mysql-ens-mirror-1',
-    -port           => 4240,
-    -user           => 'ensro',
-    -pass           => '',
-    -db_version     => $prev_release,
-    -species_suffix => $suffix_separator.$prev_release,
-);
+#my $suffix_separator = '__cut_here__';
+#Bio::EnsEMBL::Registry->load_registry_from_db(
+#    -host           => 'mysql-ensembl-mirror',
+#    -port           => 4240,
+#    -user           => 'ensro',
+#    -pass           => '',
+#    -db_version     => $prev_release,
+#    -species_suffix => $suffix_separator.$prev_release,
+#);
 
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
@@ -111,7 +111,7 @@ my $compara_dbs = {
     ## sauropsids
     'sauropsids_epo'         => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_96' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_epo_95' ],
-    'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_low_coverage_96' ],
+    'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_low_coverage_96' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
