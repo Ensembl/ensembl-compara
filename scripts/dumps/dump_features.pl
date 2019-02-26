@@ -550,6 +550,7 @@ foreach my $slice (@$all_slices) {
         # Sort by position and decreasing score, so that we get the best score first
         my @sorted_scores = sort {($a->seq_region_pos <=> $b->seq_region_pos) || ($b->diff_score <=> $a->diff_score)}
                             grep {($_->seq_region_pos >= $sub_slice->seq_region_start) && ($_->seq_region_pos <= $sub_slice->seq_region_end)} @$scores;
+        next unless @sorted_scores;
         my $ref_score = shift @sorted_scores;
         my $last_pos = $ref_score->seq_region_pos;
         # To save space we can merge consecutive positions that have the same score
