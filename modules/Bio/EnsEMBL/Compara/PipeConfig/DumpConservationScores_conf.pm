@@ -60,7 +60,6 @@ sub pipeline_wide_parameters {
 
         'registry'      => $self->o('registry'),
         'compara_db'    => $self->o('compara_url'),
-        'mlss_id'       => $self->o('mlss_id'),
 
         'work_dir'      => $self->o('work_dir'),
         'chromsize_file'=> '#work_dir#/gerp_conservation_scores.#name#.chromsize',
@@ -71,6 +70,14 @@ sub pipeline_wide_parameters {
         'cs_output_dir' => '#export_dir#/compara/conservation_scores/#dirname#',
         'bigwig_file'   => '#cs_output_dir#/gerp_conservation_scores.#name#.#assembly#.bw',
     };
+}
+
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    }
 }
 
 
