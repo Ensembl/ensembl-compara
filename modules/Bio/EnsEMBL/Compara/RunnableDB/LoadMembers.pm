@@ -106,7 +106,7 @@ sub fetch_input {
 
         # not sure if this can be done directly in param_defaults because of the order things get initialized:
     unless(defined($self->param('verbose'))) {
-        $self->param('verbose', $self->debug == 2);
+        $self->param('verbose', $self->debug >= 2);
     }
 
     my $genome_db_id = $self->param_required('genome_db_id');
@@ -144,7 +144,7 @@ sub run {
 
     my $unfiltered_slices = $self->param('genome_db')->genome_component
         ? $core_dba->get_SliceAdaptor->fetch_all_by_genome_component($self->param('genome_db')->genome_component)
-        : $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 'include_non_reference', undef, 'include_lrg') : ());   #include_duplicates is not set
+        : $core_dba->get_SliceAdaptor->fetch_all('toplevel',  undef, $self->param('include_nonreference'), undef, 'include_lrg');   #include_duplicates is not set
     die "Could not fetch any toplevel slices from ".$core_dba->dbc->dbname() unless(scalar(@$unfiltered_slices));
 
     # Let's make sure disconnect_when_inactive is set to 0 on both connections
@@ -192,7 +192,6 @@ sub loadMembersFromCoreSlices {
   my $gene_adaptor;
 
   foreach my $slice (@$slices) {
-
     # Reference slices are excluded if $self->param('include_reference') is off
     next if !$self->param('include_reference') and $slice->is_reference();
     # Patches are excluded if $self->param('include_patches') is off
@@ -246,7 +245,7 @@ sub loadMembersFromCoreSlices {
 
           my $gene_member;
 
-          if ($self->param('store_coding') && (($biotype_group eq 'coding') or ($biotype_group eq 'LRG'))) {
+          if ($self->param('store_coding') && (($biotype_group eq 'coding') or ($biotype_group eq 'lrg'))) {
               $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
               
           } elsif ( $self->param('store_ncrna') && ($biotype_group =~ /noncoding$/) ) {
@@ -371,6 +370,7 @@ sub store_protein_coding_gene_and_all_transcripts {
             $pep_member->sequence($seq);
         }
         $seq_member_adaptor->store($pep_member);
+
         if ($self->param('store_related_pep_sequences')) {
             $pep_member->_prepare_cds_sequence;
             $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('cds'), 'cds');
