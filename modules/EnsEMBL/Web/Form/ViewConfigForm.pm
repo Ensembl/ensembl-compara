@@ -245,6 +245,7 @@ sub _add_imageconfig_menu {
   $div->append_child('div', {'class' => 'long_label', 'inner_HTML' => $desc }) if $desc;
 
   # Add sub menus and sub sections
+  my $grand_total = 0;
   if ($node->has_child_nodes) {
     my @child_nodes = grep !$_->get_data('cloned'), @{$node->child_nodes};
 
@@ -262,9 +263,18 @@ sub _add_imageconfig_menu {
         my $url = $child->get_data('url');
 
         # Count the required tracks for the LHS menu
-        my @track_ids = map $_->id, grep { !$_->get_data('cloned') && $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } @{$child->get_all_nodes};
-        my $total     = scalar @track_ids;
-        my $on        = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
+        my ($total, $on);
+        my $matrix_count = $child->get_data('matrix_count');
+        if ($matrix_count) {
+          $total = $matrix_count;
+          $on    = $child->get_data('matrix_on') || 0;
+        }
+        else {
+          my @track_ids = map $_->id, grep { !$_->get_data('cloned') && $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } @{$child->get_all_nodes};
+          $total     = scalar @track_ids;
+          $on        = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
+        }
+        $grand_total += $total;
 
         # Add submenu entries to the LHS menu
         $parent_menu->append_child($tree->create_node($id, {
@@ -288,7 +298,7 @@ sub _add_imageconfig_menu {
   }
 
   my $on    = $self->{'enabled_tracks'}{$section} || 0;
-  my $total = $self->{'total_tracks'}{$section}   || 0;
+  my $total = $grand_total || $self->{'total_tracks'}{$section}   || 0;
 
   $parent_menu->set_data('count', qq{(<span class="on">$on</span>/$total)}) if $total;
   $parent_menu->set_data('availability', $total > 0);
