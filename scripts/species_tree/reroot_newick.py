@@ -37,4 +37,4 @@ except NameError:
 
 t = Tree(opts.tree)
 t.set_outgroup(opts.outgroup)
-print(t.get_tree_root().write())
+print(t.get_tree_root().write(format=5))

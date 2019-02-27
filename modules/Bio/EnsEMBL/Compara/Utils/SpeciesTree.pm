@@ -312,7 +312,7 @@ sub new_from_newick {
             my ($node, $leaves) = @_;
             my $int_taxon = $ncbi_taxa_a->fetch_first_shared_ancestor_indexed(map {$_->{_tmp_gdb}->taxon} @$leaves);
             $node->taxon_id($int_taxon->taxon_id);
-            $node->node_name($int_taxon->name) unless $node->name;
+            $node->node_name($int_taxon->name) unless $node->name =~ /[A-Za-z]+/;
         } );
 
     return $species_tree_root;

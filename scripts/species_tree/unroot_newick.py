@@ -26,4 +26,4 @@ if not os.path.isfile(infile):
 t = Tree(infile)
 root = t.get_tree_root()
 root.unroot()
-print(root.write())
+print(root.write(format=5))
