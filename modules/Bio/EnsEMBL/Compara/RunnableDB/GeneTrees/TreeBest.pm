@@ -123,10 +123,10 @@ sub run_treebest_best {
         return $run_cmd->out unless ($run_cmd->exit_code);
 
         my $full_cmd = $run_cmd->cmd;
-        $self->throw("'$full_cmd' resulted in a segfault") if ($run_cmd->exit_code == 11);
 
         print STDERR "$full_cmd\n";
         my $logfile = $run_cmd->err;
+        $self->throw("'$full_cmd' resulted in a segfault") if ($run_cmd->exit_code == 11 or $logfile =~ /Segmentation fault/);
         $logfile =~ s/^Large distance.*$//mg;
         $logfile =~ s/\n\n*/\n/g;
         if (($logfile =~ /NNI/) || ($logfile =~ /Optimize_Br_Len_Serie/) || ($logfile =~ /Optimisation failed/) || ($logfile =~ /Brent failed/))  {
