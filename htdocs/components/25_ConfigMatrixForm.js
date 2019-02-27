@@ -1095,7 +1095,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
       dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
-      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
+      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+' _drag_select_zone" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
       count++;
     });
     dy_html += '</div>';
@@ -1284,7 +1284,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox, set);
     } else  {
       var container = panel.el.find(container);
-      var html = '<ul class="letter-content list-content _drag_select_zone">';
+      var html = '<ul class="letter-content list-content">';
       var rhsection = container.find('span.rhsection-id').html();
       data = data.sort();
       $.each(data, function(i, item) {
@@ -1428,7 +1428,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if(i === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
 
       if(data[letter] && data[letter].length) {
-        letterHTML = '<ul class="letter-content _drag_select_zone">';
+        letterHTML = '<ul class="letter-content">';
         $.each(data[letter], function(i, el) {
           total_num++;
           var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
@@ -1452,7 +1452,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       content_html += '<div data-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     var noFilterClass = noFilter_allBox ? 'no-filter' : '';
-    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
     container.find('div.letters-ribbon').append(html);
     container.find('div.ribbon-content').append(content_html);
 
@@ -1476,7 +1476,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
    
     //clicking the alphabet
     var alphabet = container.find('div.alphabet-div');      
-    alphabet.on("click", function(){
+    alphabet.on("mousedown", function(e){
       if (!$(container, panel.el).hasClass('active')) {
         return;
       }
