@@ -117,8 +117,7 @@ use YAML::Tiny;
 
 use Data::Dumper;
 
-my ($help, $reg_conf, $compara_db, $id_name, $from_id, $to_id, $file_of_ids, $dry_run, $no_dry_run);
-my $offset_first = 100000000000;
+my ($help, $reg_conf, $compara_db, $id_name, $from_id, $to_id, $file_of_ids, $offset_first, $dry_run, $no_dry_run);
 
 GetOptions(
 	'help'           => \$help,
@@ -134,6 +133,7 @@ GetOptions(
 );
 
 $dry_run = $no_dry_run ? 0 : 1 unless $dry_run;
+$offset_first = 100000000000 if defined $offset_first && $offset_first == 1;
 
 die &helptext unless ( $compara_db && (($id_name && $from_id && $to_id) || $file_of_ids) );
 
