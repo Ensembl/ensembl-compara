@@ -1857,7 +1857,20 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
       var rowState  = panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total ? "track-off" : "track-on"; // get the equivalent ylabel first and then its state to determine whether row is on/off
       var colState  = panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total ? "track-off" : "track-on"; // get the equivalent xlabel first and then its state to determine whether column is on/off
-            
+      
+      if (panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
+        colState = "track-off";
+      }
+      else {
+        if (panel.localStoreObj[panel.dxStateKey][panel.xName].state.on === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
+          colState = "track-on";
+        }
+        else {
+          colState = "track-off";
+        }
+      }
+
+
       var rowRender = "";
       $.map(panel.localStoreObj[panel.dyStateKey][panel.yName].renderer, function(count, rendererType){
         if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
@@ -1970,10 +1983,16 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
               var cellCurrValue = panel.localStoreObj[keyDim][key][statusKey];
               var cellNewValue  = newState ? newState : newRenderer;
+              cellCurrValue = cellCurrValue.replace("track-","");
+              cellNewValue = cellNewValue.replace("track-","");
 
               if(associatedEle != trackKey && cellCurrValue != cellNewValue ) {
-                if(panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] < panel.localStoreObj[keyDim][associatedEle]["total"]) { panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] += 1; }
-                if(panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] > 0) { panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] -= 1; }
+                if(panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] < panel.localStoreObj[keyDim][associatedEle]["total"]) { 
+                  panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] += 1; 
+                }
+                if(panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] > 0) { 
+                  panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] -= 1; 
+                }
               }
             });
           }
@@ -1997,6 +2016,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var switchName    = $(this).attr("name");
       var trackState    = $(this).is(":checked") ? "track-on" : "track-off";
       var currentState  = trackState === "track-on"  ? "track-off" : "track-on"; 
+      var on = false;
 
       if(switchName === "column-switch") {
         //update bg for all cells in the column and also switch cell off
@@ -2006,6 +2026,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         //update localstore for column
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.xName], panel.xName, trackState, currentState);
 
+        // Turn on/off row switch 
+        on = (panel.localStoreObj[panel.dxStateKey][panel.xName] && 
+                  panel.localStoreObj[panel.dxStateKey][panel.xName].state.on === panel.localStoreObj[panel.dxStateKey][panel.xName].total);
+
+        panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", on);
+
       } else if(switchName === "row-switch") {
         //update bg for all cells in the row belonging to matrix only and also switch cell off        
         panel.elLk.rowContainer.find('div.xBoxes.matrix.'+panel.yName+'.'+currentState).removeClass(currentState).addClass(trackState);
@@ -2014,22 +2040,40 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         //update localstore for row
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.yName], panel.yName, trackState, currentState);
 
+        // Turn on/off row switch 
+        on = (panel.localStoreObj[panel.dxStateKey][panel.xName] && 
+                  panel.localStoreObj[panel.dxStateKey][panel.xName].state.on === panel.localStoreObj[panel.dxStateKey][panel.xName].total);
+
+        panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", on);
+
       } else { //cell-switch
         panel.boxObj.removeClass(currentState).addClass(trackState);//update bg for cells
 
         //update localstore for cell and equivalent rows/columns
         var trackComb = panel.xName+"_sep_"+panel.yName;
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][trackComb], trackComb, trackState, currentState);
-        
-        //check if by switching this one cell on, all cells in the row are on, then update row switch accordingly
-        if(panel.localStoreObj[panel.dyStateKey][panel.yName].state[trackState.replace("track-","")] === panel.localStoreObj[panel.dyStateKey][panel.yName].total){
-          panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", trackState === "track-on" ? true : false);
+
+        // State data would be either inside localStoreObj.matrix or localStoreObj.<other_dimentions>
+        var xNameData, yNameData;
+        if (panel.localStoreObj[panel.dyStateKey][panel.yName]) {
+          yNameData = panel.localStoreObj[panel.dyStateKey][panel.yName];
         }
 
-        //And if by switching this one cell on, all cells in the column are on, then update column switch accordingly
-        if(panel.localStoreObj[panel.dxStateKey][panel.xName].state[trackState.replace("track-","")] === panel.localStoreObj[panel.dxStateKey][panel.xName].total){
-          panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", trackState === "track-on" ? true : false);
+        if (panel.localStoreObj[panel.dyStateKey][panel.xName]) {
+          xNameData = panel.localStoreObj[panel.dyStateKey][panel.xName];
         }
+        else if (panel.localStoreObj[panel.xName][panel.xName]) {
+          xNameData = panel.localStoreObj[panel.xName][panel.xName];
+        }
+
+        
+        //check if by switching this one cell on, all cells in the row are on, then update row switch accordingly
+        on = (yNameData.state.on === yNameData.total);
+        panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", on);
+
+        //And if by switching this one cell on, all cells in the column are on, then update column switch accordingly
+        on = (xNameData.state.on === xNameData.total);
+        panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", on);
       }
       //panel.setLocalStorage();
       e.stopPropagation();
