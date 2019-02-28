@@ -78,8 +78,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.registerRibbonArrowEvents();
         this.updateRHS();
         this.addExtraDimensions();
-        this.resize();
         this.goToUserLocation();
+        this.resize();
       },
       error: function() {
         this.showError();
@@ -1095,7 +1095,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       var active_class = "";
       if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
       dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
-      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+' _drag_select_zone" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
+      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
       count++;
     });
     dy_html += '</div>';
@@ -1284,7 +1284,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox, set);
     } else  {
       var container = panel.el.find(container);
-      var html = '<ul class="letter-content list-content">';
+      var wrapper = '<div class="content-wrapper">';
+      var html = '<div class="_drag_select_zone"> <ul class="letter-content list-content">';
       var rhsection = container.find('span.rhsection-id').html();
       data = data.sort();
       $.each(data, function(i, item) {
@@ -1303,8 +1304,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         };
 
       });
-      html += '</ul>';
-      html = '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html; 
+      html += '</ul></div>';
+      var wrapper_close = '</div>';
+      html = wrapper + '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close; 
       container.append(html);
 
       // Adding the element itself to the lookup
@@ -1510,7 +1512,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     //clicking the left and right arrow
     panel.elLk.arrows   = $('div.rarrow, div.larrow', panel.elLk.trackPanel);
-    panel.elLk.arrows.off().on("click", function(e){
+    panel.elLk.arrows.off().on("mousedown", function(e){
       container = $(e.target).closest('.tab-content');
       var ribbonBanner = container.find('.letters-ribbon');
       var ribbonContent = container.find('.ribbon-content');
