@@ -94,7 +94,7 @@ sub populate_tree {
 
   $prot_menu->append($self->create_node('PDB', '3D Protein model',
     [qw( alignment EnsEMBL::Web::Component::Transcript::PDB )],
-    { 'availability' => 'transcript translation','concise' => '3D Protein model (PDBe)' }
+    { 'availability' => 'transcript translation has_pdbe','concise' => '3D Protein model (PDBe)' }
   ));
  
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');

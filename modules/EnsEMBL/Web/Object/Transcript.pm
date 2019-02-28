@@ -70,6 +70,7 @@ sub availability {
       $availability->{'has_domains'}     = $counts->{'prot_domains'};
       $availability->{"has_$_"}          = $counts->{$_} for qw(exons evidence similarity_matches oligos);
       $availability->{ref_slice}       //= $self->Obj->slice->is_reference();
+      $availability->{'has_pdbe'}        = $self->has_pdbe_analysis();
     }
   
     $self->{'_availability'} = $availability;
@@ -270,6 +271,11 @@ sub count_oligos {
   my $total_number_of_mappings = $num_probe_set_mappings + $num_probe_mappings;
 
   return $total_number_of_mappings;
+}
+
+sub has_pdbe_analysis {
+  my $self = shift;
+  return ($self->table_info($self->get_db, 'protein_feature')->{'analyses'}{'sifts_import'}) ? 1 : 0;
 }
 
 sub default_track_by_gene {
