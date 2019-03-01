@@ -559,6 +559,7 @@ sub print_method_link_species_sets_to_update_by_collection {
 
 sub create_species_set {
     my ($genome_dbs, $species_set_name) = @_;
+
     $species_set_name ||= join('-', sort map {$_->get_short_name} @{$genome_dbs});
     return Bio::EnsEMBL::Compara::SpeciesSet->new(
         -GENOME_DBS => $genome_dbs,
@@ -646,6 +647,12 @@ sub create_pairwise_wga_mlsss {
 
 sub create_multiple_wga_mlsss {
     my ($compara_dba, $method, $species_set, $with_gerp, $source, $url) = @_;
+
+    # first, retire old copies
+    my $old_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method->type, $species_set->name);
+    $old_mlss->species_set->retire_object if $old_mlss; # causes all mlsses linked to this species_set to be retired automatically
+
+    # now create the new one
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, $source, $url);
     if ($with_gerp) {
