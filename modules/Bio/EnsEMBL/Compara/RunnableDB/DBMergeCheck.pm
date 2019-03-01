@@ -363,13 +363,15 @@ sub write_output {
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
         my $n_total_rows = $table_size->{'curr_rel_db'}->{$table} || 0;
-        my @inputlist = ();
+        # my @inputlist = ();
+        my @input_id_list = ();
         foreach my $db (@$dbs) {
-            push @inputlist, [ "#$db#" ];
+            # push @inputlist, [ "#$db#" ];
+            push @input_id_list, { src_db_conn => "#$db#" };
             $n_total_rows += $table_size->{$db}->{$table};
         }
         warn "ACTION: merge '$table' from ".join(", ", map {"'$_'"} @$dbs)."\n" if $self->debug;
-        $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}->[0]}, 3);
+        $self->dataflow_output_id( {'table' => $table, 'input_id_list' => \@input_id_list, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}->[0]}, 3);
     }
 
 }

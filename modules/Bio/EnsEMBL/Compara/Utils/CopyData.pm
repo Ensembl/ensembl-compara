@@ -442,7 +442,7 @@ sub copy_data_in_binary_mode {
 
     my $from_dbh = $from_dbc->db_handle;
 
-    my $count = $from_dbh->selectrow_array("SELECT COUNT(*) FROM temp_$table_name");
+    my $count = $from_dbh->selectrow_array("SELECT COUNT(*) FROM $table_name");
 
     ## EXIT CONDITION
     return unless !$count;

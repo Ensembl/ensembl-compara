@@ -172,40 +172,38 @@ sub pipeline_analyses {
                 2      => [ 'copy_table'  ],
                 3      => WHEN(
                             '#backup_tables#' => 'backup_table',
-                            ELSE 'merge_factory',
+                            ELSE 'disable_keys',
                         ),
             },
         },
 
         {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::CopyTable',
             -parameters    => {
                 'dest_db_conn'  => '#curr_rel_db#',
-                'mode'          => 'overwrite',
-                'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
+                'mode'          => 'replace',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
             -flow_into     => WHEN( '#analyze_optimize#' => ['analyze_optimize'] ),
         },
 
-        {   -logic_name => 'merge_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'column_names'  => [ 'src_db_conn' ],
-            },
-            -flow_into  => {
-                '2->A' => [ 'merge_table' ],
-                'A->1' => [ 'check_size' ],
+        {   -logic_name => 'merge_factory_recursive',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::Factories::RunnableDB::GrabN',
+            -flow_into => {
+                '2->A' => { 'merge_table' => INPUT_PLUS },
+                'A->1' => WHEN( '#_list_exhausted#' => [ 'enable_keys' ], ELSE [ 'merge_factory_recursive' ] ),
             },
         },
+
         {   -logic_name    => 'merge_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::CopyTable',
             -parameters    => {
                 'dest_db_conn'  => '#curr_rel_db#',
-                'mode'          => 'topup',
+                'mode'          => 'ignore',
+                'skip_disable_keys' => 1,
             },
-            -analysis_capacity => 1,                              # we can only have one worker of this kind to avoid conflicts of DISABLE KEYS / ENABLE KEYS / INSERT
-            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -analysis_capacity => 5,                          
+            -hive_capacity => $self->o('copying_capacity'),
         },
 
         {   -logic_name => 'check_size',
@@ -231,8 +229,30 @@ sub pipeline_analyses {
                     'INSERT INTO DBMERGEBACKUP_#table# SELECT * FROM #table#',
                 ]
             },
-            -flow_into  => [ 'merge_factory' ],
+            -flow_into  => [ 'disable_keys' ],
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+        },
+
+        {   -logic_name => 'disable_keys',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'db_conn' => '#curr_rel_db#',
+                'sql'     => [
+                    'ALTER TABLE #table# DISABLE KEYS',
+                ]
+            },
+            -flow_into => [ 'merge_factory_recursive' ],
+        },
+
+        {   -logic_name => 'enable_keys',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'db_conn' => '#curr_rel_db#',
+                'sql'     => [
+                    'ALTER TABLE #table# ENABLE KEYS',
+                ]
+            },
+            -flow_into => [ 'check_size' ],
         },
 
         {   -logic_name => 'drop_backup',
