@@ -263,17 +263,10 @@ sub _add_imageconfig_menu {
         my $url = $child->get_data('url');
 
         # Count the required tracks for the LHS menu
-        my ($total, $on);
-        my $matrix_count = $child->get_data('matrix_count');
-        if ($matrix_count) {
-          $total = $matrix_count;
-          $on    = $child->get_data('matrix_on') || 0;
-        }
-        else {
-          my @track_ids = map $_->id, grep { !$_->get_data('cloned') && $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } @{$child->get_all_nodes};
-          $total     = scalar @track_ids;
-          $on        = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
-        }
+        my @track_ids = map $_->id, grep { !$_->get_data('cloned') && $_->get_data('node_type') eq 'track' && $_->get_data('menu') ne 'hidden' && $_->get_data('matrix') ne 'column' } @{$child->get_all_nodes};
+        my $total = scalar @track_ids;
+        my $on    = scalar grep $self->{'enabled_tracks'}{$_}, @track_ids;
+
         $grand_total += $total;
 
         # Add submenu entries to the LHS menu
@@ -390,6 +383,7 @@ sub _build_imageconfig_menus {
 
     if ($node->get_data('matrix') ne 'column') {
       if ($display ne 'off') {
+        #warn "@@@ $id DISPLAY $display" if $node->get_data('glyphset') =~ /^fg_/;
         $self->{'enabled_tracks'}{$menu_class}++;
         $self->{'enabled_tracks'}{$id} = 1;
       }

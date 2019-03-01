@@ -1091,7 +1091,6 @@ sub add_regulation_builds {
   #######  NOW DO BIG MATRIX NODE!
 
   my $menu_title    = 'Features by Epigenome';
-  my $matrix_count  = 0;
   my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
       {
         menu   => 'matrix',
@@ -1172,7 +1171,6 @@ sub add_regulation_builds {
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
                             on          => $default_evidence_types{$_->name}
                           };
-          $matrix_count++;
         }
       }
     }
@@ -1207,7 +1205,6 @@ sub add_regulation_builds {
       section       => $segs->{$key}{'web'}{'celltypename'},
       height        => 4,
     }));
-    $matrix_count++;
   }
 # =cut
 
@@ -1216,7 +1213,6 @@ sub add_regulation_builds {
     my $display   = 'off';
     my $label     = ": $cell_line";
     my %evidence_tracks;
-    $matrix_count++;
 
 # =pod
     ## Only add regulatory features if they're in the main build
@@ -1281,7 +1277,6 @@ sub add_regulation_builds {
       }, $menu);
     }
   }
-  $menu->set_data('matrix_count', $matrix_count);
 
   if ($db_tables->{'cell_type'}{'ids'}) {
     $self->add_track('information', 'fg_regulatory_features_legend',      'Regulation Legend',              'fg_regulatory_features_legend',   { strand => 'r', colourset => 'fg_regulatory_features'   });
