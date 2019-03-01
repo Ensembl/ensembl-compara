@@ -140,6 +140,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     .on('click', '.config_header', function () {                                               // Header on search results and active tracks sections will act like the links on the left
       $('a.' + this.parentNode.className.replace(/\s*config\s*/, ''), panel.elLk.links).trigger('click');
       return false;
+    }).on('click', '.matrix_link', function () {
+      $('a.regulatory_features', panel.elLk.links).trigger('click');
+      return false;
     }).on('click', '.favourite', function () {
       var track = $(this).parents('li.track').data('track');
       Ensembl.EventManager.trigger('changeFavourite', track.id, track.fav ? 0 : 1, track.type, panel.id);
@@ -802,7 +805,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         } else {
           if (configDiv.hasClass('functional') && !subset) {
             // Hide tracks that are configured using matrix
-            console.log('Regulation summary panel');
             configDiv.children('.subset').each( function() {
               if (this.className.match(/regulatory_features/)) {
                 var ul = this.childNodes[1];

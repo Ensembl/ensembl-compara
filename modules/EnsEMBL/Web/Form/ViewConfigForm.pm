@@ -492,7 +492,7 @@ sub _add_select_all {
     if ($matrix) {
       $caption = "Configure $caption";
       $inner_html = qq(
-          <strong><a class="matrix_link subset subset_$id" href="#">$caption</a></strong>
+          <h3 class="matrix_link subset subset_$id" href="#">$caption</h3>
           $description
       );
     }
