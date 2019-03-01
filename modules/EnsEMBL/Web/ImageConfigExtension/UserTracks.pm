@@ -600,6 +600,8 @@ sub _add_trackhub_tracks {
                     description     => $name.': '.$track->{'longLabel'},
                     desc_url        => $track->{'description_url'},
                     signal_range    => $track->{'signal_range'},
+                    link_template   => $track->{'url'},
+                    link_label      => $track->{'urlLabel'},
                     };
 
       # Graph range - Track Hub default is 0-127
@@ -924,6 +926,8 @@ sub _add_bigbed_track {
     strand          => $args{'source'}{'strand'} || $strand,
     style           => $args{'source'}{'style'},
     longLabel       => $args{'source'}{'longLabel'},
+    link_template   => $args{'source'}{'link_template'},
+    link_label      => $args{'source'}{'link_label'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
     default_display => $args{'source'}{'default'} || $default,

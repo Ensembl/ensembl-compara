@@ -57,18 +57,32 @@ sub content {
     foreach my $track (@$data) {
       next unless (scalar @{$track->{'features'}||[]});
       $caption ||= $track->{'metadata'}{'zmenu_caption'};
+      my $link_substitution = ($track->{'metadata'}{'link_template'} && $track->{'metadata'}{'link_template'} =~ /\$\$/) ? 1 : 0;
       if ($feature_id) {
         foreach (@{$track->{'features'}||[]}) {
           if ($_->{'label'} eq $feature_id) {
             $_->{'track_name'} = $track->{'metadata'}{'name'};
-            $_->{'url'}        = $track->{'metadata'}{'url'};
+            if ($link_substitution) {
+              $self->_set_link_from_template($_, $track->{'metadata'}{'link_template'}, $track->{'metadata'}{'link_label'});
+            }
+            else {
+              $_->{'url'} = $track->{'metadata'}{'url'};
+            }
             delete($_->{'href'});
             push @features, $_;
           }
         }
       }
       else {
-        push @features, @{$track->{'features'}||[]};
+        if ($link_substitution) {
+          foreach (@{$track->{'features'}||[]}) {
+            $self->_set_link_from_template($_, $track->{'metadata'}{'link_template'}, $track->{'metadata'}{'link_label'});
+            push @features, $_;
+          }
+        }
+        else {
+          push @features, @{$track->{'features'}||[]};
+        }
       }
     }
   }
@@ -77,6 +91,19 @@ sub content {
     $self->summary_content(\@features, $caption);
   } else {
     $self->feature_content(\@features, $caption);
+  }
+}
+
+sub _set_link_from_template {
+  my ($self, $feature, $template, $label) = @_;
+
+  foreach (@{$feature->{'extra'}||[]}) {
+    if ($_->{'name'} =~ /linkid/i) {
+      my $link_id = $_->{'value'};
+      (my $url = $template) =~ s/\$\$/$link_id/;
+      my $link_label   = $label || 'External link';
+      $_ = {'name' => $link_label, value => sprintf '<a href="%s" rel="external">%s</a>', $url, $link_id};
+    }
   }
 }
 
