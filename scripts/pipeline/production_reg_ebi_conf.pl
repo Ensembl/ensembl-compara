@@ -60,16 +60,16 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
-my $suffix_separator = '__cut_here__';
-Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host           => 'mysql-ensembl-mirror',
-    -port           => 4240,
-    -user           => 'ensro',
-    -pass           => '',
-    -db_version     => $prev_release,
-    -species_suffix => $suffix_separator.$prev_release,
-);
 
+# my $suffix_separator = '__cut_here__';
+# Bio::EnsEMBL::Registry->load_registry_from_db(
+#     -host           => 'mysql-ens-mirror-1',
+#     -port           => 4240,
+#     -user           => 'ensro',
+#     -pass           => '',
+#     -db_version     => $prev_release,
+#     -species_suffix => $suffix_separator.$prev_release,
+# );
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
