@@ -267,7 +267,7 @@ sub _bind_params_and_execute {
 sub generic_objs_from_sth {
     my ($self, $sth, $class, $field_names, $callback) = @_;
 
-    push @$field_names, @{$self->{_all_extra_columns}};   # Requested by on-the-fly JOINs
+    push @$field_names, @{$self->{_all_extra_columns}} if $self->{_all_extra_columns};   # Requested by on-the-fly JOINs
     my @vals = map {undef} @$field_names;
     my @ind  = 0..(scalar(@vals)-1);
 
