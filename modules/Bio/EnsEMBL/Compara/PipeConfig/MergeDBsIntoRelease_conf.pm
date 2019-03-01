@@ -202,13 +202,8 @@ sub pipeline_analyses {
                 'mode'          => 'ignore',
                 'skip_disable_keys' => 1,
             },
-<<<<<<< Updated upstream
             -analysis_capacity => 5,                          
             -hive_capacity => $self->o('copying_capacity'),
-=======
-            # -analysis_capacity => 1,                              # we can only have one worker of this kind to avoid conflicts of DISABLE KEYS / ENABLE KEYS / INSERT
-            # -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
->>>>>>> Stashed changes
         },
 
         {   -logic_name => 'check_size',
@@ -245,13 +240,8 @@ sub pipeline_analyses {
                 'sql'     => [
                     'ALTER TABLE #table# DISABLE KEYS',
                 ]
-<<<<<<< Updated upstream
             },
             -flow_into => [ 'merge_factory_recursive' ],
-=======
-            }
-            -flow_into => [ 'merge_factory' ],
->>>>>>> Stashed changes
         },
 
         {   -logic_name => 'enable_keys',
@@ -261,11 +251,7 @@ sub pipeline_analyses {
                 'sql'     => [
                     'ALTER TABLE #table# ENABLE KEYS',
                 ]
-<<<<<<< Updated upstream
             },
-=======
-            }
->>>>>>> Stashed changes
             -flow_into => [ 'check_size' ],
         },
 
