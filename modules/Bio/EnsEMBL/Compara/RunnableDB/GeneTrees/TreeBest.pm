@@ -122,10 +122,6 @@ sub run_treebest_best {
         $self->param('treebest_stderr', $run_cmd->err);
         return $run_cmd->out unless ($run_cmd->exit_code);
 
-        my $full_cmd = $run_cmd->cmd;
-        $self->throw("'$full_cmd' resulted in a segfault") if ($run_cmd->exit_code == 11);
-
-        print STDERR "$full_cmd\n";
         my $logfile = $run_cmd->err;
         $logfile =~ s/^Large distance.*$//mg;
         $logfile =~ s/\n\n*/\n/g;
