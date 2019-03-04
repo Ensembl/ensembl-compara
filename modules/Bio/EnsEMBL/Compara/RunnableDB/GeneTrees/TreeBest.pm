@@ -122,8 +122,8 @@ sub run_treebest_best {
         $self->param('treebest_stderr', $run_cmd->err);
         return $run_cmd->out unless ($run_cmd->exit_code);
 
+        $run_cmd->{_err} =~ s/^Large distance.*$//mg;   # Strip those lines out
         my $logfile = $run_cmd->err;
-        $logfile =~ s/^Large distance.*$//mg;
         $logfile =~ s/\n\n*/\n/g;
         if (($logfile =~ /NNI/) || ($logfile =~ /Optimize_Br_Len_Serie/) || ($logfile =~ /Optimisation failed/) || ($logfile =~ /Brent failed/))  {
             # Increase the tolerance max_diff_lk in the computation
