@@ -43,6 +43,8 @@ sub create_tracks {
   ## Limit file seek to current slice
   my $parser = $self->parser;
   foreach my $seq_region_name (@$seq_region_names) {
+    ## Pad the seek coordinates by one either side, otherwise a zmenu fetching 
+    ## a one base pair slice is vulnerable to off-by-one errors
     last if $parser->seek($seq_region_name, $slice->start - 1, $slice->end + 1);
   }
 
