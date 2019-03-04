@@ -29,6 +29,7 @@ use List::Util qw(max);
 
 use Role::Tiny::With;
 with 'EnsEMBL::Draw::Role::Default';
+with 'EnsEMBL::Draw::Role::Wiggle';
 
 use EnsEMBL::Web::IOWrapper::Indexed;
 
@@ -193,8 +194,8 @@ sub density_features {
   ## Prepopulate bins, as histogram requires data at every point
   my %density  = map {$_, 0} (1..$im_width);
   foreach (@{$self->{'data'}[0]{'features'}}) {
-    my $key = ($_->{'POS'} - $start) / $divlen;
-    $density{int(($_->{'POS'} - $start) / $divlen)}++;
+    my $key = $_->{'start'} / $divlen;
+    $density{int($_->{'start'} / $divlen)}++;
   }
 
   my $density_features = [];
@@ -202,19 +203,6 @@ sub density_features {
     push @$density_features, $density{$_};
   }
   return $density_features;
-}
-
-sub vcf_adaptor {
-## get a vcf adaptor
-  my $self = shift;
-  my $url  = $self->my_config('url');
-
-  if ($url =~ /###CHR###/) {
-    my $region = $self->{'container'}->seq_region_name;
-       $url    =~ s/###CHR###/$region/g;
-  }
-
-  return $self->{'_cache'}{'_vcf_adaptor'} ||= Bio::EnsEMBL::IO::Adaptor::VCFAdaptor->new($url, $self->{'config'}->hub);
 }
 
 1;
