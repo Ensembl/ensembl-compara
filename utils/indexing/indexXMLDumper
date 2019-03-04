@@ -655,15 +655,6 @@ sub dumpVariation {
     my $sql = qq(SELECT hgvs_name FROM variation_hgvs where variation_id = ?);
     $hgvs_sth = $conf->{'variation_dbh'}->prepare($sql);
   }
-  print LOG "    Preparing to get HGNC data ".&date_and_mem()."\n";
-  my $all_hgnc_names = on_disk_set('all_hgnc_names');
-  $sth = $conf->{'variation_dbh'}->prepare(qq(
-     SELECT variation_id, gene_name
-       FROM variation_genename));
-  $sth->execute;
-  while ( my ($variation_id,$hgnc_name) = $sth->fetchrow_array ) {
-    set_add($all_hgnc_names,$variation_id,$hgnc_name);
-  }
 
   print LOG "    Preparing to identify GWAS variations ".&date_and_mem()."\n";
   my $gwas_variations;
@@ -686,7 +677,7 @@ sub dumpVariation {
            group_concat( distinct sta.name SEPARATOR '; ') AS lsi,
            group_concat( distinct st.external_reference SEPARATOR ';') AS st,
            group_concat( distinct pfa1.value SEPARATOR ';') AS gn,
-           group_concat( distinct pfa2.value SEPARATOR ';') AS vars,
+           group_concat( distinct pfa1.value SEPARATOR ';') AS vars,
            group_concat( distinct
              if(
                isnull(p.name),
@@ -702,11 +693,8 @@ sub dumpVariation {
            associate_study AS sa ON sa.study1_id=st.study_id left join
            study AS sta ON sta.study_id=sa.study2_id left join
            ( phenotype_feature_attrib AS pfa1
-             join attrib_type AS at1 on pfa1.attrib_type_id = at1.attrib_type_id and at1.code = 'associated_gene' )
-           on pfa1.phenotype_feature_id = pf.phenotype_feature_id left join 
-           ( phenotype_feature_attrib AS pfa2
-             join attrib_type AS at2 on pfa2.attrib_type_id = at2.attrib_type_id and at2.code = 'variation_names' )
-           on pfa2.phenotype_feature_id = pf.phenotype_feature_id
+             join attrib_type AS at1 on pfa1.attrib_type_id = at1.attrib_type_id and at1.code = 'variation_names' )
+           on pfa1.phenotype_feature_id = pf.phenotype_feature_id
      WHERE pf.type = 'Variation'
        AND pf.is_significant = 1
   GROUP BY v.variation_id
@@ -816,7 +804,7 @@ sub dumpVariation {
       my $failed_desc        = $failures->{$variation_id};
       my $somatic_var        = $row->[3];
       my $syn_c = 0;
-      my (@syns, %genes, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
+      my (@syns, @phenotypes, @studies, @hgvs_names, @ontologies, %phen_ont);
       if ($synonyms) {
         if ($synonyms->{$variation_id}) {
           foreach my $synonym_name (set_get($synonyms,$variation_id)) {
@@ -840,11 +828,6 @@ sub dumpVariation {
       my $desc;
       my $x = $snp_extra{$variation_id};
       if( $x ) {
-        foreach my $g ($x->[3]) {
-          foreach (split ';', $g) {
-            $genes{$_}++ if $_;
-          }
-        }
         push @syns,       split ';', $x->[1];
         push @syns,       split ';', $x->[4];
         push @phenotypes, $x->[5] if $x->[5];
@@ -876,12 +859,6 @@ sub dumpVariation {
         }
       }
       # ok
-      if ($all_hgnc_names->{$variation_id}) {
-        foreach my $hgnc_name (set_get($all_hgnc_names,$variation_id)) {
-          $genes{$hgnc_name}++;
-        }
-      }
-      # ok
       my $loc;
       if(exists $locations->{$variation_id}) {
         $loc = $locations->{$variation_id}[0];
@@ -891,18 +868,17 @@ sub dumpVariation {
       if(exists $gwas_variations->{$variation_name}) {
         $gwas_studies = join ', ', keys %{$gwas_variations->{$variation_name}};
       }
-      $desc = sprintf( "A $snp_source $type.%s%s%s%s%s%s",
+      $desc = sprintf( "A $snp_source $type.%s%s%s%s%s",
                        @phenotypes   ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
                        @ontologies   ? ' Phenotype ontologies: '. (join ', ', @ontologies)         . '.' : '',
-                       %genes          ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
                        @hgvs_names   ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
                        $gwas_studies ? " GWAS studies: $gwas_studies"                              . '.' : '',
                        $failed_desc  ? " $failed_desc."                                                  : '');
       if ($somatic_mutation){
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \%phen_ont, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter2 ), $fh2);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@phenotypes, \%phen_ont, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter2 ), $fh2);
       }
       else {
-        &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \%phen_ont, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter ), $fh);
+        &p( VariationLine( $dbspecies, $variation_name, \@syns, \@phenotypes, \%phen_ont, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter ), $fh);
       }
     }
   }
@@ -918,12 +894,11 @@ sub dumpVariation {
   %snp_extra    = undef;
 
   off_disk('all_hgvs_names',$all_hgvs_names);
-  off_disk('all_hgnc_names',$all_hgnc_names);
   return $c;
 }
 
 sub VariationLine {
-  my ($species, $name, $synonyms, $genes, $phenotypes, $ontologies, $studys, $hgvs_names, $type, $source, $loc, $quick_links, $desc, $counter ) = @_;
+  my ($species, $name, $synonyms, $phenotypes, $ontologies, $studys, $hgvs_names, $type, $source, $loc, $quick_links, $desc, $counter ) = @_;
   my $url = sprintf(qq(%s/Variation/Summary?v=%s),
                     $species,
                     $name);
@@ -974,10 +949,6 @@ sub VariationLine {
 
 ## These records are in the description so no need to be in as seperate fields as well. Leaving commented out though
 ## in case we do need to raise the priority of these records
-#  foreach (keys %$genes) {
-#    $xml .= qq(
-#  <field name="assoc_gene">$_</field>);
-#  }
 #  foreach (@$phenotypes) {
 #    $xml .= qq(
 #  <field name="phenotype">$_</field>);
@@ -1321,179 +1292,88 @@ sub dumpOligoProbe {
   print LOG "  Dumping $FUNCDB to $file ... ".&date_and_mem()."\n";
   header($fh);
 
-  #gene details
-  my $gene_dets;
-  my $sql = qq(
-    SELECT t.stable_id, g.stable_id, x.display_label
-      FROM transcript t, gene g, xref x
-     WHERE t.gene_id = g.gene_id
-       AND g.display_xref_id = x.xref_id);
-  my $sth = $conf->{'dbh'}->prepare($sql);
-  $sth->execute;
-  while( my( $tsi, $gsi, $gname) = $sth->fetchrow_array ) {
-    $gene_dets->{$tsi} = {
-      'gene_id'   => $gsi,
-      'gene_name' => $gname
-    };
-  }
-
-  my $probe_set_trans_dets;
-  $sql = qq(
-      SELECT probe_set_id, stable_id, stable_id
-        FROM $FUNCDB.probe_set_transcript
-    ORDER BY probe_set_id);
-  $sth = $conf->{'dbh'}->prepare($sql);
-  $sth->execute;
-  while( my( $probe_set_id, $tsi, $display_label) = $sth->fetchrow_array ) {
-    my $gene_label = $gene_dets->{$tsi}{'gene_name'};
-    push @{$probe_set_trans_dets->{$probe_set_id}{$gene_label}}, {
-      'stable_id'     => $tsi,
-      'display_label' => $display_label,
-    };
-  };
-
-  $sth    = $conf->{'dbh'}->prepare(qq(
+  print LOG "    Retrieving probe_sets...".&date_and_mem()."\n";
+  my $sth    = $conf->{'dbh'}->prepare(qq(
     SELECT
-      probe_set.name,
-      probe_set.probe_set_id,
-      count(distinct probe_feature.probe_feature_id) as hits,
-      array.name
+      a.vendor,
+      a.name,
+      ps.name,
+      ps.probe_set_id,
+      count(distinct(concat(pf.seq_region_id,':', pf.seq_region_start,'-', pf.seq_region_end))) as genome_hits,
+      ps.size
     FROM
-      $FUNCDB.probe_set
-      join $FUNCDB.probe using (probe_set_id)
-      join $FUNCDB.probe_feature using (probe_id)
-      join $FUNCDB.array_chip on (probe.array_chip_id=array_chip.array_chip_id)
-      join $FUNCDB.array using (array_id)
+      $FUNCDB.probe_set ps,
+      $FUNCDB.probe p,
+      $FUNCDB.probe_feature pf,
+      $FUNCDB.array_chip ac,
+      $FUNCDB.array a
+    WHERE ps.probe_set_id = p.probe_set_id  
+    AND p.probe_id = pf.probe_id
+    AND p.array_chip_id = ac.array_chip_id
+    AND ac.array_id = a.array_id
     GROUP BY
-      probe_set.name,
-      array.name
-));
-  $sth->execute();
-  print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
-  while( my( $probe_name, $pset_id, $count, $type ) = $sth->fetchrow_array ) {
-    next unless $probe_name;
-    my $locations_c = $count > 1 ? 'locations' : 'location';
-    my $desc =  qq($type probeset $probe_name has probes which hit the genome in $count $locations_c.);
-    if (my @gname = keys %{$probe_set_trans_dets->{$pset_id} || {}}) {
-      my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
-      $desc .= " They hit transcripts in the following $gene_c:";
-      foreach my $gene (@gname) {
-        $desc .= " $gene (";
-        foreach my $trans (@{$probe_set_trans_dets->{$pset_id}{$gene}}) {
-          $desc .= $trans->{'stable_id'}.', ';
-        }
-        $desc =~ s/, $//;
-        $desc .= '),';
-      }
-      $desc =~ s/,$/\./;
-    }
-    &p( OligoProbeLine($dbspecies,$probe_name,$desc,'','pset',$db,$counter ), $fh);
-  }
-
-  my $probe_trans_dets;
-  $sql = qq(
-        SELECT probe_id, stable_id, stable_id
-          FROM $FUNCDB.probe_transcript
-      ORDER BY probe_id
-  );
-  $sth = $conf->{'dbh'}->prepare($sql);
-  $sth->execute;
-  while( my( $probe_id, $tsi, $display_label) = $sth->fetchrow_array ) {
-    my $gene_label = $gene_dets->{$tsi}{'gene_name'};
-    push @{$probe_trans_dets->{$probe_id}{$gene_label}}, {
-      'stable_id' => $tsi,
-      'display_label' => $display_label,
-    };
-  };
-
-  $sth    = $conf->{'dbh'}->prepare(qq(
-    select
-      probe.probe_id,
-      probe.name,
-      array.vendor,
-      array.name,
-      count(distinct probe_feature.probe_feature_id) as hits
-    from
-      $FUNCDB.probe_feature
-      join $FUNCDB.probe using (probe_id)
-      join $FUNCDB.array_chip using (array_chip_id)
-      join $FUNCDB.array using (array_id)
-    where
-      probe.probe_set_id is null
-    group by
-      probe.name
+      ps.name,
+      a.vendor,
+      a.name
   ));
   $sth->execute();
-  print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
-  my $old;
-  while( my( $pid, $pname, $vendor, $aname, $count ) = $sth->fetchrow_array ) {
-    if( $old->{'pid'} != $pid ) {
-      if( $old->{'pid'}) {
-        my ($p_probe_name,$desc) = &get_oligo_terms($old);
-        if (my @gname = keys %{$probe_trans_dets->{$pid} || {}}) {
-          my $gene_c = scalar(@gname) > 1 ? 'genes' : 'gene';
-          $desc .= " It hits transcripts in the following $gene_c:";
-          foreach my $gene (@gname) {
-            $desc .= " $gene (";
-            foreach my $trans (@{$probe_trans_dets->{$pid}{$gene}}) {
-              $desc .= $trans->{'stable_id'}. ', ';
-            }
-            $desc =~ s/, $//;
-            $desc .= '),';
-          }
-          $desc =~ s/,$/\./;
-        }
-        &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
-      }
-      $old = {
-        'pid'        => $pid,
-        'array_dets' => [ [ $aname, $pname] ],
-        'vendor'     => $vendor,
-        'count'      => $count,
-      };
-    }
-    else {
-      push @{$old->{'array_dets'}}, [ $aname, $pname ];
-    }
+  print LOG "    Retrieved probe_set features; dumping to xml...".&date_and_mem()."\n";
+  while( my( $array_vendor, $array_name, $probe_set_name, $pset_id, $genome_count, $probe_count ) = $sth->fetchrow_array ) {
+    next unless $probe_set_name;
+    my $locations_c = $genome_count > 1 ? 'locations' : 'location';
+    my $probes_c = $probe_count > 1 ? 'probes' : 'probe';
+    my $desc =  qq($array_vendor probeset $probe_set_name on array $array_name has $probe_count $probes_c which align to the genome in $genome_count $locations_c.);
+    &p( OligoProbeLine($dbspecies,$probe_set_name,$array_vendor,$array_name,$desc,'','pset',$db,$counter ), $fh);
   }
-  if( $old->{'pid'} ) {
-    my ($p_probe_name,$desc) = &get_oligo_terms($old);
-    &p( OligoProbeLine($dbspecies,$p_probe_name,$desc,$old->{'array_dets'},'probe',$db,$counter ), $fh);
+
+  print LOG "    Retrieving probe details...".&date_and_mem()."\n";
+  $sth    = $conf->{'dbh'}->prepare(qq(
+    SELECT
+      a.vendor,
+      a.name,
+      p.name,
+      p.probe_id,
+      count(distinct(concat(pf.seq_region_id,':', pf.seq_region_start,'-', pf.seq_region_end))) as genome_hits
+    FROM
+      $FUNCDB.probe_feature pf,
+      $FUNCDB.probe p,
+      $FUNCDB.array_chip ac,
+      $FUNCDB.array a
+    WHERE pf.probe_id = p.probe_id
+    AND p.array_chip_id = ac.array_chip_id
+    AND ac.array_id = a.array_id
+    AND p.probe_set_id is null
+    GROUP BY
+      p.name,
+      a.vendor,
+      a.name
+  ));
+
+  $sth->execute();
+  print LOG "    Retrieved probe features; dumping to xml...".&date_and_mem()."\n";
+  while( my( $array_vendor, $array_name, $pname, $pid, $genome_count) = $sth->fetchrow_array ) {
+    my $locations_c = $genome_count > 1 ? 'locations' : 'location';
+    my $desc = "$array_vendor probe $pname on array $array_name aligns to the genome in $genome_count $locations_c.";
+    &p( OligoProbeLine($dbspecies,$pname,$array_vendor,$array_name,$desc,'','probe',$db,$counter ), $fh);
   }
   return footer( $counter->(), $fh);
 }
 
-sub get_oligo_terms {
-  my $old = shift;
-  my $primary_probe  = shift @{$old->{'array_dets'}};
-  my ($p_array_name,$p_probe_name) = @$primary_probe;
-  my $type  = $old->{'vendor'};
-  my $count = $old->{'count'};
-  my $locations_c = $count > 1 ? 'locations' : 'location';
-  my $desc = "$type probe $p_probe_name ($p_array_name array) hits the genome in $count $locations_c.";
-  if ($old->{'array_dets'}) {
-    my $c = scalar(@{$old->{'array_dets'}});
-    if ($c) {
-      my $synonyms_c = $c > 1 ? 'synonyms' : 'synonym';
-      $desc .= " It has $c $synonyms_c:";
-      foreach (@{$old->{'array_dets'}}) {
-        my ($array_name,$probe_name) = @$_;
-        $desc .= " $probe_name ($array_name array),";
-      }
-      $desc =~ s/,$//;
-      $desc .= '.';
-    }
-  }
-  return $p_probe_name,$desc;
-}
-
 sub OligoProbeLine {
-  my ($species,$hid,$desc,$syns,$pset,$db,$counter) = @_; 
-  my $url = sprintf(qq(%s/Location/Genome?fdb=%s;ftype=ProbeFeature;id=%s),
+  my ($species,$hid,$array_vendor,$array_name,$desc,$syns,$pset,$db,$counter) = @_; 
+  my $url = sprintf(qq(%s/Location/Genome?fdb=%s;ftype=ProbeFeature;array=%s;vendor=%s;id=%s),
                    $species,
                    $db,
+                   $array_name,
+                   $array_vendor,
                    $hid);
-  $url .= ";ptype=$pset" if $pset eq 'pset';
+  if ($pset eq 'pset') {
+    $url .= ";ptype=$pset";
+    $hid = "Array $array_name - Probeset $hid";
+  }
+  else {
+    $hid = "Array $array_name - Probe $hid";
+  }
   $species =~ s/_/ /;
   my $xml = qq(
 <doc>

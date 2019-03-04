@@ -37,7 +37,6 @@ use Bio::EnsEMBL::Utils::Eprof qw(eprof_start eprof_end eprof_dump);
 use strict;
 use warnings;
 no warnings "uninitialized";
-
 use HTML::Entities qw(encode_entities);
 use EnsEMBL::Web::REST;
 use base qw(EnsEMBL::Web::Object);
@@ -79,6 +78,7 @@ sub is_coding_variant {
   }
   else {
     my @vari_mappings = @{ $self->get_variation_features };
+    return 0 if (!@vari_mappings);
     foreach my $f (@vari_mappings){
       my $cons = $f->most_severe_OverlapConsequence;
       my $cons_rank = $cons->rank;
@@ -587,6 +587,52 @@ sub clinical_significance {
   return $self->vari->get_all_clinical_significance_states;
 }
 
+
+sub CADD_score {
+  ### Args       : none
+  ### Example    : my $data = $object->CADD_score;
+  ### Description: gets CADD score and CADD score source. We know from the config file that we only expect one source for the website.
+  ### Returns arrayref of data, 
+
+  my $self = shift;
+  return [undef, undef] unless $self->hub->species_defs->ENSEMBL_VCF_COLLECTIONS; 
+
+  my $vf_object = $self->get_selected_variation_feature;
+  return [undef, undef] unless $vf_object;
+
+  my @alleles = split('/', $vf_object->allele_string);
+  
+  my $cadd_scores_for_all_alternatives = $vf_object->get_all_cadd_scores;
+  my $cadd_scores = {};
+
+  my $source = (keys %$cadd_scores_for_all_alternatives)[0];  
+ 
+  my $cadd_scores_for_source = $cadd_scores_for_all_alternatives->{$source};
+
+  foreach my $allele (@alleles) {
+    $cadd_scores->{$allele} = $cadd_scores_for_source->{$allele} if (exists $cadd_scores_for_source->{$allele});
+  }
+  return [undef, undef] if (!scalar keys %$cadd_scores); 
+
+  return [$cadd_scores, $source];
+}
+
+sub GERP_score {
+  ### Args       : none
+  ### Example    : my $data = $object->GERP_score;
+  ### Description: gets GERP score and GERP score source. We know from the config file that we only expect one source for the website.
+  ### Returns arrayref of data, 
+
+  my $self = shift;
+  return [undef, undef] unless $self->hub->species_defs->ENSEMBL_VCF_COLLECTIONS; 
+  my $vf_object = $self->get_selected_variation_feature;
+  return [undef, undef] unless $vf_object;
+  my $gerp_score = $vf_object->get_gerp_score;
+  my $source = (keys %$gerp_score)[0];  
+  my $score = $gerp_score->{$source}; 
+  return [undef, undef] if (!defined $score); 
+  return [$score, $source];
+}
 
 sub freqs {
 

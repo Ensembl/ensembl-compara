@@ -54,6 +54,7 @@ sub content {
   my $summary_table = $self->new_twocol(    
     $self->most_severe_consequence(),
     $self->alleles($feature_slice),
+    $self->change_tolerance,
     $self->location,
     $feature_slice ? $self->co_located($feature_slice) : (),
     $self->evidence_status,
@@ -720,6 +721,36 @@ sub clinical_significance {
   );
 
   return [ "Clinical significance $info_link" , $cs_content ];
+}
+
+sub change_tolerance {
+  my $self = shift;
+  my $object = $self->object;
+  my ($CADD_scores, $CADD_source) = @{$object->CADD_score};
+  my ($GERP_score, $GERP_source) = @{$object->GERP_score};
+
+  return unless (defined $CADD_scores || defined $GERP_score);
+  my $html = '';
+  if (defined $CADD_scores) {
+    my $cadd_helptip = helptip(
+      'CADD',
+      'CADD scores for all alternative alleles from ' . $CADD_source
+    );
+    my $display_scores = join(', ', map {$_ . ':' . $CADD_scores->{$_}} sort keys %$CADD_scores);
+    my $cadd_summary = sprintf(qq{<span class="_ht ht">%s</span>: %s}, $cadd_helptip, $display_scores);
+    $html .= qq{<span>$cadd_summary</span>}
+  }
+  if (defined $GERP_score) {
+    my $gerp_helptip = helptip(
+      'GERP',
+      'GERP score from ' . $GERP_source
+    );
+    my $gerp_summary = sprintf(qq{<span class="_ht ht">%s</span>: %s}, $gerp_helptip, $GERP_score);
+    $html .= $self->text_separator if ($html);
+    $html .= qq{<span>$gerp_summary</span>};
+  }
+
+  return [ 'Change tolerance ', qq(<div class="twocol-cell">$html</div>) ];
 }
 
 sub hgvs {

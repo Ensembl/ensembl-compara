@@ -27,7 +27,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use EnsEMBL::Web::File::Utils::TrackHub;
+use EnsEMBL::Web::Utils::TrackHub;
 use EnsEMBL::Web::Utils::FormatText qw(add_links);
 use EnsEMBL::Web::Utils::Sanitize qw(clean_id strip_HTML);
 
@@ -328,8 +328,8 @@ sub _add_trackhub {
 
   ## Note: no need to validate assembly at this point, as this will have been done
   ## by the attachment interface - otherwise we run into issues with synonyms
-  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1, 'make_tree' => 1}); ## Do we have data for this species?
   $self->{'th_default_count'} = 0;
 
   if ($hub_info->{'error'}) {
@@ -337,8 +337,14 @@ sub _add_trackhub {
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
     my $description = $hub_info->{'details'}{'longLabel'};
-    if ($hub_info->{'details'}{'descriptionUrl'}) {
-      $description .= sprintf ' <a href="%s">More information</a>', $hub_info->{'details'}{'descriptionUrl'};
+    my $desc_url = $hub_info->{'details'}{'descriptionUrl'};
+    if ($desc_url) {
+      ## fix relative URLs
+      if ($desc_url !~ /^http/) {
+        (my $base_url = $url) =~ s/\w+\.txt$//;
+        $desc_url = $base_url.$desc_url;
+      }
+      $description .= sprintf ' <a href="%s">More information</a>', $desc_url;
     }
 
     my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $description}));
@@ -391,6 +397,7 @@ sub _add_trackhub_node {
 
   my (@next_level, @tracks);
   if ($node->has_child_nodes) {
+    my $count = 0;
     foreach my $child (@{$node->child_nodes}) {
       if ($child->has_child_nodes) {
         ## Probably a Supertrack with either a Composite or MultiWig track
@@ -411,6 +418,11 @@ sub _add_trackhub_node {
         }
       }
       else {
+        if ($child->data->{'track'} eq $menu->id) {
+          ## Probably a one-file hub, but use count just in case
+          $child->data->{'track'} = $node->data->{'track'}.'_track_'.$count;
+          $count++;
+        } 
         push @tracks, {'tracks' => [$child]};
       }
     }
@@ -464,7 +476,6 @@ sub _add_trackhub_node {
 sub _add_trackhub_tracks {
   my ($self, $parent, $tracksets, $config, $menu, $name) = @_;
   my $hub       = $self->hub;
-  my $data      = $parent->data;
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
   my $count_visible = 0;
 
@@ -474,65 +485,71 @@ sub _add_trackhub_tracks {
     my %options = (
       menu_key      => $name,
       menu_name     => $name,
-      submenu_key   => clean_id("${name}_$data->{'track'}", '\W'), 
-      submenu_name  => strip_HTML($data->{'shortLabel'}),
-      submenu_desc  => $data->{'longLabel'},
       trackhub      => 1,
     );
 
-    if ($do_matrix) {
-      $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 1, 'menu' => $options{'submenu_key'} });
+    ## Skip this section for one-file track hubs, as they don't have parents or submenus 
+    if (scalar keys %{$parent||{}}) {
+      my $data      = $parent->data;
 
-      foreach my $subgroup (keys %$config) {
-        next unless $subgroup =~ /subGroup\d/;
+      $options{'submenu_key'}   = clean_id("${name}_$data->{'track'}", '\W'); 
+      $options{'submenu_name'}  = strip_HTML($data->{'shortLabel'});
+      $options{'submenu_desc'}  = $data->{'longLabel'};
 
-        foreach (qw(x y)) {
-          if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
-            $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
-            s/_/ /g for values %{$options{'axis_labels'}{$_}};
+      if ($do_matrix) {
+        $options{'matrix_url'} = $hub->url('Config', { 'matrix' => 1, 'menu' => $options{'submenu_key'} });
+
+        foreach my $subgroup (keys %$config) {
+          next unless $subgroup =~ /subGroup\d/;
+
+          foreach (qw(x y)) {
+            if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
+              $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
+              s/_/ /g for values %{$options{'axis_labels'}{$_}};
+            }
           }
+
+          last if scalar keys %{$options{'axis_labels'}} == 2;
         }
 
-        last if scalar keys %{$options{'axis_labels'}} == 2;
+        $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
       }
 
-      $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
-    }
+      ## Check if this submenu already exists (quite possible for trackhubs)
+      my $submenu = $self->get_node($options{'submenu_key'});
+      unless ($submenu) { 
+        $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
+          external    => 1,
+          description => $options{'submenu_desc'},
+          ($do_matrix ? (
+            menu   => 'matrix',
+            url    => $options{'matrix_url'},
+            matrix => {
+              section     => $menu->data->{'caption'},
+              header      => $options{'submenu_name'},
+              desc_url    => $config->{'description_url'},
+              description => $config->{'longLabel'},
+              axes        => $options{'axes'},
+            }
+          ) : ())
+        });
 
-    ## Check if this submenu already exists (quite possible for trackhubs)
-    my $submenu = $self->get_node($options{'submenu_key'});
-    unless ($submenu) { 
-      $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
-        external    => 1,
-        description => $options{'submenu_desc'},
-        ($do_matrix ? (
-          menu   => 'matrix',
-          url    => $options{'matrix_url'},
-          matrix => {
-            section     => $menu->data->{'caption'},
-            header      => $options{'submenu_name'},
-            desc_url    => $config->{'description_url'},
-            description => $config->{'longLabel'},
-            axes        => $options{'axes'},
-          }
-        ) : ())
-      });
-
-      $menu->insert_alphabetically($submenu, $options{'submenu_key'});
-    }
-
-    ## Set up sections within supertracks (applies mainly to composite tracks)
-    my $subsection;
-    if ($set->{'submenu_key'}) {
-      my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
-      my $name  = strip_HTML($set->{'submenu_name'});
-      $subsection = $self->get_node($key);
-      unless ($subsection) {
-        $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
-        $submenu->insert_alphabetically($subsection, $key);
+        $menu->append_child($submenu, $options{'submenu_key'});
       }
-      $options{'submenu_key'}   = $key;
-      $options{'submenu_name'}  = $name;
+
+      ## Set up sections within supertracks (applies mainly to composite tracks)
+      my $subsection;
+      if ($set->{'submenu_key'}) {
+        my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
+        my $name  = strip_HTML($set->{'submenu_name'});
+        $subsection = $self->get_node($key);
+        unless ($subsection) {
+          $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
+          $submenu->append_child($subsection, $key);
+        }
+        $options{'submenu_key'}   = $key;
+        $options{'submenu_name'}  = $name;
+      }
     }
 
     my $style_mappings = {
@@ -572,6 +589,7 @@ sub _add_trackhub_tracks {
 
     foreach (@{$children||[]}) {
       my $track = $_->data;
+
       (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
       ## Note that we use a duplicate value in description and longLabel, because non-hub files
       ## often have much longer descriptions so we need to distinguish the two
@@ -582,6 +600,8 @@ sub _add_trackhub_tracks {
                     description     => $name.': '.$track->{'longLabel'},
                     desc_url        => $track->{'description_url'},
                     signal_range    => $track->{'signal_range'},
+                    link_template   => $track->{'url'},
+                    link_label      => $track->{'urlLabel'},
                     };
 
       # Graph range - Track Hub default is 0-127
@@ -906,6 +926,8 @@ sub _add_bigbed_track {
     strand          => $args{'source'}{'strand'} || $strand,
     style           => $args{'source'}{'style'},
     longLabel       => $args{'source'}{'longLabel'},
+    link_template   => $args{'source'}{'link_template'},
+    link_label      => $args{'source'}{'link_label'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
     default_display => $args{'source'}{'default'} || $default,

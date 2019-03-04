@@ -61,8 +61,11 @@ sub _render_features {
   my $species      = $hub->species;
   my $species_defs = $hub->species_defs;
   my ($html, $total_features, $mapped_features, $unmapped_features, $has_internal_data);
-  my $chromosomes  = $species_defs->ENSEMBL_CHROMOSOMES || [];
-  my %chromosome = map {$_ => 1} @$chromosomes;
+
+  my $ftype         = $hub->param('ftype');
+  my $chromosomes   = $species_defs->ENSEMBL_CHROMOSOMES || [];
+  my %chromosome    = map {$_ => 1} @$chromosomes;
+
   while (my ($type, $set) = each (%$features)) {
     foreach my $feature (@{$set->[0]}) {
       $has_internal_data++;
@@ -136,7 +139,6 @@ sub _render_features {
           $title .= 's' if $mapped_features > 1;
           $title .= ' of ';
           my ($data_type, $assoc_name, $go_link);
-          my $ftype = $hub->param('ftype');
           my $go    = $hub->param('gotype');
 
           #add extra description only for GO (gene ontologies) which is determined by param gotype in url
@@ -167,6 +169,7 @@ sub _render_features {
           ## De-camelcase names
           foreach (sort keys %$features) {
             my $pretty = $feature_display_name->{$_} || $self->decamel($_);
+            $pretty = 'Transcript' if $pretty eq 'Probe Transcript';
             $pretty .= 's' if $mapped_features > 1;
             $names{$_} = $pretty;
           }
@@ -201,6 +204,7 @@ sub _render_features {
           gradient     => $gradient,
         });
         $feat_type = 'Variant' if $feat_type eq 'Variation';
+        $feat_type = 'Transcript' if $feat_type eq 'ProbeTranscript';
         $legend_info->{$feat_type} = {'colour' => $colour, 'gradient' => $gradient};  
         push @$pointers, $pointer_ref;
         $has_gradient++ if $gradient;
@@ -304,8 +308,14 @@ sub _render_features {
     'xref'    => {'title' => 'Name(s)'},
   };
 
-  while (my ($feat_type, $feature_set) = each (%$features)) {
-    $html .= $self->_feature_table($feat_type, $feature_set, $default_column_info);
+  ## Show primary feature table first
+  my $primary_set = $features->{$ftype};
+  $html .= $self->_feature_table($ftype, $primary_set, $default_column_info);
+
+  ## Now remaining tables in a consistent order (though usually there's only one of these anyway)
+  foreach my $feat_type (sort keys %$features) {
+    next if $feat_type eq $ftype;
+    $html .= $self->_feature_table($feat_type, $features->{$feat_type}, $default_column_info);
   }
 
   ## User tables
@@ -404,9 +414,15 @@ sub _feature_table {
       $seen{$col->{'key'}} = 1;
     }
       
-    my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
     $html .= "<h3>$table_info->{'header'}</h3>";
-    $html .= $table->render;
+
+    if (!@{$table_info->{'rows'}||[]} && $table_info->{'empty_msg'}) {
+      $html .= '<p>'.$table_info->{'empty_msg'}.'</p>';
+    }
+    else {
+      my $table = $self->new_table($columns, $table_info->{'rows'}, { data_table => 1, id => "${feat_type}_table", %{$table_info->{'table_style'} || {}} });
+      $html .= $table->render;
+    }
   }
 
   return $html;
@@ -475,24 +491,59 @@ sub _configure_Transcript_table {
 
 sub _configure_ProbeFeature_table {
   my ($self, $feature_type, $feature_set) = @_;
-  my $rows = [];
+  my $array   = $self->param('array');
+  my $vendor  = $self->param('vendor');
+  my $rows    = [];
   
-  my $column_order = [qw(loc length names)];
+  my $column_order = [qw(name seq length loc mismatches)];
+  my $custom_columns = {
+                        'name'        => {'title' => 'Probe'},
+                        'seq'         => {'title' => 'Sequence'},
+                        'length'      => {'title' => 'Length', 'sort' => 'numeric'},
+                        'loc'         => {'title' => 'Genomic location (strand)', 'sort' => 'position_html'},
+                        'mismatches'  => {'title' => 'Mismatches'},
+                        };
 
-  my $header = 'Oligoprobes';
+  my $header = sprintf('Probe features for %s | %s', $self->param('id'), $array);
  
   my ($data, $extras) = @$feature_set;
+  my $track_config = $vendor && $array ? {'contigviewbottom' => sprintf('oligo_funcgen_%s__%s', $vendor, $array)} : undef;
   foreach my $feature ($self->_sort_features_by_coords($data)) {
     my $row = {
-              'loc'     => {'value' => $self->_location_link($feature)},
+              'name'    => {'value' => $feature->{'name'},            }, 
+              'seq'     => {'value' => $feature->{'sequence'},        }, 
               'length'  => {'value' => $feature->{'length'},          }, 
-              'names'   => {'value' => $feature->{'label'},           },
+              'loc'     => {'value' => $self->_location_link($feature, $track_config)},
               };
     $self->add_extras($row, $feature, $extras);
     push @$rows, $row;
   }
 
-  return {'header' => $header, 'column_order' => $column_order, 'rows' => $rows}; 
+  return {'header' => $header, 'column_order' => $column_order, 'custom_columns' => $custom_columns, 'rows' => $rows}; 
+}
+
+sub _configure_ProbeTranscript_table {
+  my ($self, $feature_type, $feature_set) = @_;
+  my $rows = [];
+
+  my $header = 'Transcript Mappings';
+  my $column_order = [qw(names extname)];
+
+  my ($data, $extras) = @$feature_set;
+  push @$extras, {'key' => 'extname'};
+  foreach my $feature ($self->_sort_features_by_coords($data)) {
+    my $row = {
+              'names'   => {'value' => $self->_names_link($feature, 'Transcript')},
+              };
+    $self->add_extras($row, $feature, $extras);
+    push @$rows, $row;
+  }
+
+  my $config = {'header' => $header, 'column_order' => $column_order, 'rows' => $rows}; 
+  if (!@$rows) {
+    $config->{'empty_msg'} = 'This probe does not map to any transcripts';
+  }
+  return $config;
 }
 
 sub _configure_RegulatoryFeature_table {
@@ -580,7 +631,7 @@ sub _sort_features_by_coords {
 }
 
 sub _location_link {
-  my ($self, $f) = @_;
+  my ($self, $f, $extra) = @_;
   my $region = $f->{'seq_region'} || $f->{'region'} || $f->{'chr'};
   return 'Unmapped' unless $region;
   my $coords = $region.':'.$f->{'start'}.'-'.$f->{'end'};
@@ -592,7 +643,8 @@ sub _location_link {
             r       => $coords, 
             h       => $f->{'label'},
             ph      => $self->hub->param('ph') || undef,
-            __clear => 1
+            __clear => 1,
+            %{$extra||{}}
           }),
           $region, $f->{'start'}, $f->{'end'},
           $f->{'strand'}

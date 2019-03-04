@@ -779,7 +779,8 @@ sub add_synteny {
 
   return unless $menu;
 
-  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$species} || {}};
+  my $prod_name = $self->hub->species_defs->get_config($species, 'SPECIES_PRODUCTION_NAME');
+  my @synteny_species = sort keys %{$hashref->{'SYNTENY'}{$prod_name} || {}};
 
   return unless @synteny_species;
 
@@ -1377,7 +1378,7 @@ sub add_sequence_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
 
-  return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
+  return unless $menu;
 
   my $options = {
     db         => $key,
@@ -1390,14 +1391,15 @@ sub add_sequence_variations {
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
 
-  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
-    $self->add_sequence_variations_meta($key, $hashref, $options);
+  if ($hashref->{'variation_feature'}{'rows'} > 0) {
+    if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
+      $self->add_sequence_variations_meta($key, $hashref, $options);
+    } else {
+      $self->add_sequence_variations_default($key, $hashref, $options);
+    }
   } else {
-    $self->add_sequence_variations_default($key, $hashref, $options);
+    $self->add_sequence_variations_vcf($key, $hashref, $options);
   }
-
-  $self->add_sequence_variations_vcf($key, $hashref, $options);
-
   $self->add_track('information', 'variation_legend', 'Variant Legend', 'variation_legend', { strand => 'r' });
 }
 
@@ -1599,7 +1601,7 @@ sub add_sequence_variations_vcf {
   my ($self, $key, $hashref, $options) = @_;
 
   my $hub = $self->hub;
-  my $c = $hub->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+  my $c = $hub->species_defs->ENSEMBL_VCF_COLLECTIONS;
   return unless $c->{'ENABLED'};
 
   # my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_menu_node('variants', 'Sequence variants');
@@ -1614,9 +1616,10 @@ sub add_sequence_variations_vcf {
   foreach my $coll(@{$ad->fetch_all_for_web}) {
     $vcf_menu->append_child($self->create_track_node("variation_vcf_".$coll->id, $coll->id, {
       %$options,
-      caption     => $coll->id,
+      caption     => 'Variants from ' . $coll->source_name,
       description => $coll->description,
       db          => 'variation',
+      display => 'default'
     }));
   }
 }
