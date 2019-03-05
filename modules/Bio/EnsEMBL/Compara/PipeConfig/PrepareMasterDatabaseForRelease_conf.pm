@@ -76,7 +76,7 @@ sub default_options {
         'master_db'                 => 'compara_master',
         'release'                   => $self->o( 'ENV', 'CURR_ENSEMBL_RELEASE' ),
         'division'                  => $self->o( 'ENV', 'COMPARA_DIV' ),
-        'incl_components'           => 0, # set to 1 if there are 
+        'incl_components'           => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates) 
         'create_all_mlss_exe'       => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/create_all_mlss.pl',
         'xml_file'                  => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml',
         'report_file'               => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/mlss_ids_' . $self->o('division') . '.list',
