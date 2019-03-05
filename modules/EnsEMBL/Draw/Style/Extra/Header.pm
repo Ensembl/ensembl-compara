@@ -153,7 +153,7 @@ sub _sublegend_zmenu {
   my $title = $args->{'title'} || 'Info';
   $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
   foreach my $link (@{$args->{'sublegend_links'}||[]}) {
-    push @entries, qq(<a href="$link->{'href'}" class="$link->{'class'}">$link->{'text'}</a>);
+    push @entries, qq(<a href="$link->{'href'}" class="$link->{'class'}" rel="$link->{'rel'}">$link->{'text'}</a>);
   }
   return [$title, @entries];
 }

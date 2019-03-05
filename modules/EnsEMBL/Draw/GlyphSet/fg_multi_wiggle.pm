@@ -347,24 +347,18 @@ sub _sublegend_links {
   my $self = shift;
  
   my $hub = $self->{'config'}->hub;
-  my $cell_type_url = $hub->url('MultiSelector', {
-            action   => 'CellTypeSelector',
-            image_config => $self->{'config'}->type,
-  });
-  my $evidence_url = $hub->url('MultiSelector', {
-            action => 'EvidenceSelector',
-            image_config => $self->{'config'}->type,
+  my $matrix_url = $hub->url('Config', {
+            action        => 'ViewBottom',
+            matrix        => 'RegMatrix',
+            menu          => 'regulatory_features',
   });
 
   return [
           {
-            text => 'Select other cell types',
-            href => $cell_type_url,
-            class => 'modal_link',
-          },{
-            text => 'Select evidence to show',
-            href => $evidence_url,
-            class => 'modal_link',
+            text  => 'Configure tracks',
+            href  => $matrix_url,
+            class => 'config modal_link',
+            rel   => 'modal_config_viewbottom',
           },
         ];
 }
