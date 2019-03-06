@@ -1503,8 +1503,7 @@ sub get_GenomicAlignTree {
 	    }
         } else {
             #remove this leaf
-            $this_leaf->disavow_parent;
-            $genomic_align_tree = $genomic_align_tree->minimize_tree;
+            $genomic_align_tree = $genomic_align_tree->disconnect_node_and_minimize_tree($this_leaf);
         }
     }
     $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);

@@ -579,8 +579,7 @@ sub binarize_flat_tree_with_species_tree {
             my $node = $castedMrca->find_leaf_by_node_id($stn->dbID);
             #since nodes are leaves at this point, we can delete them directly.
             #print "disavowing: |" . $node->name() . "|\n";
-            $node->disavow_parent();
-            $castedMrca = $castedMrca->minimize_tree;
+            $castedMrca = $castedMrca->disconnect_node_and_minimize_tree($node);
         }
         #print "AFTER DISAVOW\n";
         #$castedMrca->print_tree(10);

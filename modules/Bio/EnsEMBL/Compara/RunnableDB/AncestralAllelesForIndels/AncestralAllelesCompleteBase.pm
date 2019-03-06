@@ -2094,13 +2094,12 @@ sub remove_sequence_of_all_N_or_gap {
             if ($n_cnt == length($seq)) {
                 #print "prune\n";
                 #prune tree
-                $this_leaf->disavow_parent;
  
                 #these get destroyed by minimize_tree so need to reassign afterwards
                 my $reference_genomic_align = $gat->reference_genomic_align;
                 my $reference_genomic_align_node = $gat->reference_genomic_align_node;
 
-                $gat = $gat->minimize_tree;
+                $gat = $gat->disconnect_node_and_minimize_tree($this_leaf);
 
                 $gat->reference_genomic_align($reference_genomic_align);
                 $gat->reference_genomic_align_node($reference_genomic_align_node);

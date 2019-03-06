@@ -119,8 +119,7 @@ sub fetch_input {
 	      #skip species in species_to_skip array
 	      if (defined $self->param('species_to_skip') && @{$self->param('species_to_skip')}) {
 		  if (grep {$_ eq $genomic_align->genome_db->dbID} @{$self->param('species_to_skip')}) {
-		      $leaf->disavow_parent;
-		      $gat = $gat->minimize_tree;
+		      $gat = $gat->disconnect_node_and_minimize_tree($leaf);
 		      next;
 		  }
 	      }
@@ -769,8 +768,7 @@ sub _update_tree {
 	    
 	} else {
 	    ## If none has been found...
-	    $this_leaf->disavow_parent;
-	    $tree = $tree->minimize_tree;
+	    $tree = $tree->disconnect_node_and_minimize_tree($this_leaf);
 	}
     }
     

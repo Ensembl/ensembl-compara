@@ -863,8 +863,7 @@ sub _update_tree {
 
   } else {
       ## If none has been found...
-      $this_leaf->disavow_parent;
-      $tree = $tree->minimize_tree;
+      $tree = $tree->disconnect_node_and_minimize_tree($this_leaf);
     }
  }
  $self->param('dnafrag_regions', $ordered_dnafrag_regions);

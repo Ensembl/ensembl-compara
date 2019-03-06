@@ -309,8 +309,7 @@ sub new_from_newick {
                 # Not a single leaf is found in the genome_db table
                 return undef;
             }
-            $node->disavow_parent();
-            $species_tree_root = $species_tree_root->minimize_tree;
+            $species_tree_root = $species_tree_root->disconnect_node_and_minimize_tree($node);
         }
     }
 
@@ -345,6 +344,8 @@ sub prune_tree {
 
     my %leaves_names = map { (lc $_->name => $_) } grep { $_->name !~ /ancestral/i } @$gdb_list;
 
+    $input_tree = $input_tree->minimize_tree;
+
     foreach my $leaf (@{$input_tree->get_all_leaves}) {
         if ($leaf->genome_db_id and $leaves_names{lc($leaf->genome_db->name)}) {
             # Match by genome_db_id: nothing to do
@@ -355,8 +356,7 @@ sub prune_tree {
         } elsif ($leaf->has_parent) {
             # No match: disconnect the leaf
             #print $leaf->name," leaf disavowing parent\n";
-            $leaf->disavow_parent;
-            $input_tree = $input_tree->minimize_tree;
+            $input_tree = $input_tree->disconnect_node_and_minimize_tree($leaf);
         } else {
             # We've removed everything in the tree
             return undef;

@@ -1254,8 +1254,7 @@ sub _update_tree_2x {
 	push(@$ordered_genomic_aligns, $ga_frags);
    } else {
       ## If none has been found...
-      $this_leaf->disavow_parent;
-      $tree = $tree->minimize_tree;
+      $tree = $tree->disconnect_node_and_minimize_tree($this_leaf);
     }
   }
 

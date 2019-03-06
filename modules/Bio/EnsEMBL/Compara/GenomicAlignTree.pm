@@ -1200,10 +1200,9 @@ sub prune {
                 # All the species have been removed
                 return undef;
             }
-            $this_leaf->disavow_parent;
+            # get a new tree because the root may have changed
+            $new_root = $new_root->disconnect_node_and_minimize_tree($this_leaf);
         }
-        # get a new tree because the root may have changed
-        $new_root = $new_root->minimize_tree;
     }
     return $new_root;
 }

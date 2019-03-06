@@ -441,24 +441,7 @@ sub preload {
         my $root = $self->root;
         foreach my $leaf (@{$root->get_all_leaves}) {
             if (UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember') and not exists $genome_db_ids{$leaf->genome_db_id}) {
-                my $internal_node = $leaf->parent;
-                die "All the leaves are lost after pruning the tree !\n" if not defined $internal_node;     # $leaf was the last leaf of the tree. The tree is now empty
-                $leaf->disavow_parent;
-                # $parent
-                # +--- XXX
-                # `--- $internal_node
-                #      +--- $leaf
-                #      `--- $sibling
-                #           +--- $child1
-                #           `--- $child2
-                my $sibling = $internal_node->children->[0];
-                if ($internal_node->node_id == $root->node_id) {
-                    $root = $sibling;
-                    $sibling->disavow_parent;
-                } else {
-                    $internal_node->parent->add_child($sibling, $sibling->distance_to_parent+$internal_node->distance_to_parent);
-                    $internal_node->disavow_parent;
-                }
+                $root = $root->disconnect_node_and_minimize_tree($leaf);
                 $self->{'_pruned'} = 1;
             }
         }

@@ -237,6 +237,58 @@ sub disavow_parent {
 }
 
 
+=head2 disconnect_node_and_minimize_tree
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $node
+  Example     : $root->disconnect_node_and_minimize_tree($node);
+  Description : Disconnect $node from the tree referred by $self, and minimize the tree
+                This method assumes the tree was already minimized.
+  Returntype  : Bio::EnsEMBL::Compara::NestedSet (or derived class). The new root of the
+                tree
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub disconnect_node_and_minimize_tree {
+    my $self = shift;
+    my $node = shift;
+
+    my $parent = $node->parent;
+    unless (defined $parent) {
+        # $node was the last leaf of the tree. The tree is now empty
+        die "All the leaves are lost after pruning the tree !\n";
+    }
+
+    $node->disavow_parent;
+    my $sibling = $parent->children->[0];    # Must exist because the tree is expected to be minimized at the beginning
+    if ($parent == $self) {
+        # FROM
+        #  $parent (root node)
+        #  +--- $node
+        #  `--- $sibling
+        # TO
+        #  $sibling
+        $sibling->disavow_parent;
+        return $sibling;
+    } else {
+        # FROM
+        #  $grandparent
+        #  +--- XXX
+        #  `--- $parent
+        #       +--- $node
+        #       `--- $sibling
+        # TO
+        #  $grandparent
+        #  +--- XXX
+        #  `------- $sibling
+        $parent->parent->add_child($sibling, $sibling->distance_to_parent+$parent->distance_to_parent);
+        $parent->disavow_parent;
+        return $self;
+    }
+}
+
+
 =head2 release_children
 
   Overview   : recursive releases all children
