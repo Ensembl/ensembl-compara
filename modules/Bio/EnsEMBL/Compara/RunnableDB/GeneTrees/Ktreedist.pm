@@ -290,8 +290,7 @@ sub load_input_trees {
         for my $leaf ( @{ $other_tree->get_all_leaves } ) {
             if ( !exists( $self->param('ref_tree_seq_member_ids')->{ $leaf->dbID } ) && ( exists( $removed_members{ $leaf->dbID } ) ) ) {
                 print "\tremoving:" . $leaf->dbID . "\n" if ( $self->debug );
-                $leaf->disavow_parent;
-                $other_tree->minimize_tree;
+                $other_tree->disconnect_node_and_minimize_tree($leaf);
             }
         }
         print "ref_tree_leaves:" . scalar( keys( %{ $self->param('ref_tree_seq_member_ids') } ) ) . "\tcomp_tree_leaves:" . scalar(@{ $other_tree->get_all_leaves }) . "\tafter removing:" . scalar(@{ $other_tree->get_all_leaves }) . "\n" if ( $self->debug );

@@ -74,10 +74,9 @@ foreach my $gene (@$genes) {
   foreach my $leaf (@{$genetree->get_all_leaves}) {
     my $gene_name = $leaf->gene_member->stable_id;
     unless (defined $leaves_names{$gene_name}) {
-      $leaf->disavow_parent;
+      $genetree->disconnect_node_and_minimize_tree($leaf);
     }
   }
-  $genetree->minimize_tree;
 
   # Print the minimized tree
   $genetree->print_tree;

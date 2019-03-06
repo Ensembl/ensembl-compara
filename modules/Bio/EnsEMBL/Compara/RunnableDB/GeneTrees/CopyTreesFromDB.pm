@@ -310,14 +310,13 @@ sub _disavow_unused_members {
 
     #Disavow members' parents
     #loop through the list of members, if any found in the 2_b_deleted list, then need to disavow, if not, just copy over
-    my $root_node = $self->param('reuse_gene_tree')->root;
     foreach my $this_leaf ( @{ $self->param('all_leaves') } ) {
         my $seq_id = $this_leaf->name;
         if ( $members_2_b_changed->{$seq_id} ) {
             print "DELETING:$seq_id\n" if ( $self->debug );
-            $root_node = $root_node->disconnect_node_and_minimize_tree($this_leaf);
+            $self->param('reuse_gene_tree')->disconnect_node_and_minimize_tree($this_leaf);
         }
     }
-    $self->param('reuse_gene_tree')->{'_root'} = $root_node;
 }
+
 1;

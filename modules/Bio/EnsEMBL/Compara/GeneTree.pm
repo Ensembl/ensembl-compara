@@ -438,14 +438,12 @@ sub preload {
         my $genome_dbs = $self->adaptor->db->get_GenomeDBAdaptor->fetch_all_by_mixed_ref_lists(-SPECIES_LIST => $prune_species, -TAXON_LIST => $prune_taxa);
         my %genome_db_ids = map {$_->dbID => 1} @$genome_dbs;
         my @to_delete;
-        my $root = $self->root;
-        foreach my $leaf (@{$root->get_all_leaves}) {
+        foreach my $leaf (@{$self->root->get_all_leaves}) {
             if (UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember') and not exists $genome_db_ids{$leaf->genome_db_id}) {
-                $root = $root->disconnect_node_and_minimize_tree($leaf);
+                $self->disconnect_node_and_minimize_tree($leaf);
                 $self->{'_pruned'} = 1;
             }
         }
-        $self->{'_root'} = $root;
     }
 
     my $all_nodes = $self->root->get_all_nodes;
@@ -637,6 +635,25 @@ sub minimize_tree {
     my $self = shift;
     # Using $self->root may trigger a loading of the tree
     $self->{'_root'} = $self->root->minimize_tree;
+}
+
+
+=head2 disconnect_node_and_minimize_tree
+
+  Arg [1]     : Bio::EnsEMBL::Compara::NestedSet $node
+  Example     : $tree->disconnect_node_and_minimize_tree($node);
+  Description : Disconnect $node from the tree referred by $self, and minimize the tree
+                This method assumes the tree was already minimized.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub disconnect_node_and_minimize_tree {
+    my $self = shift;
+    # Using $self->root may trigger a loading of the tree
+    $self->{'_root'} = $self->root->disconnect_node_and_minimize_tree(@_);
 }
 
 
