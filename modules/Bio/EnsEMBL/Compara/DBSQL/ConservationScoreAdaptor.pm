@@ -656,6 +656,7 @@ sub store {
     " VALUES ('$genomic_align_block_id','$window_size', '$position', ?, ?)";
   my $sth = $self->prepare($sql);
   $sth->execute($exp_packed, $diff_packed);
+  $sth->finish;
   
   #update the conservation_score object so that it's adaptor is set
   $cs->adaptor($self);
@@ -729,6 +730,7 @@ sub _fetch_all_by_GenomicAlignBlockId_WindowSize {
 					'packed' => $packed});
 	push(@$conservation_scores, $conservation_score);
     }
+  $sth->finish;
     
   #sort into numerical order based on position
   my @sorted_scores = sort {$a->{position} <=> $b->{position}} @$conservation_scores;
@@ -1846,6 +1848,7 @@ sub _get_all_ref_genomic_aligns {
 
 	push @$light_genomic_aligns, $light_genomic_align;
     }  
+    $sth->finish;
     return $light_genomic_aligns;
 }
 
