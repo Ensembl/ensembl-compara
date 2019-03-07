@@ -94,7 +94,6 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 
 #store as 4 byte float
 my $pack_size = 4;
-my $pack_type = "f";
 
 =head2 new (CONSTRUCTOR)
 

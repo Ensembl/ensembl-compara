@@ -88,15 +88,13 @@ use Bio::EnsEMBL::Compara::ConservationScore;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref check_ref);
 use Bio::EnsEMBL::Compara::Utils::Projection;
-use Config;
 
 #global variables
 
 #store as 4 byte float. If change here, must also change in 
 #ConservationScore.pm
 my $_pack_size = 4;
-#my $_pack_type = "f<"; # not possible until perl 5.10. Avoid for now
-my $_pack_type = "f";
+my $_pack_type = 'f<';  # available since perl 5.10
 
 my $_bucket; 
 my $_score_index = 0;
@@ -104,13 +102,6 @@ my $_score_index = 0;
 my $_no_score_value = undef; #value if no score
 
 my $PACKED = 1;
-
-#Check endian-ness. Always write data to database in LITTLE ENDIAN 
-#Byteorders "1234" and "12345678" are little-endian; "4321" and "87654321" are big-endian.
-my $is_little_endian = 1;
-if ($Config{byteorder} eq "87654321" or $Config{byteorder} eq "4321") {
-    $is_little_endian = 0;
-}
 
 @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -631,20 +622,9 @@ sub store {
       my @exp_scores = split ' ',$cs->expected_score;
       my @diff_scores = split ' ',$cs->diff_score;
 
-      #Check if big or little endian
-      if ($is_little_endian) {
-	  for (my $i = 0; $i < scalar(@exp_scores); $i++) {
-	      $exp_packed .= pack($_pack_type, $exp_scores[$i]);
-	      $diff_packed .= pack($_pack_type, $diff_scores[$i]);
-	  }
-      } else {
-	  #Reverse bytes before storage on big_endian machines
-	  for (my $i = 0; $i < scalar(@exp_scores); $i++) {
-	      my $exp_packed_value = reverse(pack($_pack_type, $exp_scores[$i]));
-	      my $diff_packed_value = reverse(pack($_pack_type, $diff_scores[$i]));
-	      $exp_packed .= $exp_packed_value;
-	      $diff_packed .= $diff_packed_value;
-	  }
+      for (my $i = 0; $i < scalar(@exp_scores); $i++) {
+	  $exp_packed .= pack($_pack_type, $exp_scores[$i]);
+	  $diff_packed .= pack($_pack_type, $diff_scores[$i]);
       }
   } else {
       $exp_packed = $cs->expected_score;
@@ -821,41 +801,11 @@ sub _unpack_scores {
     my $num_scores = length($scores)/$_pack_size;
 
     my $score = "";
-    if ($is_little_endian) {
-	for (my $i = 0; $i < $num_scores * $_pack_size; $i+=$_pack_size) {
-	    my $value = substr $scores, $i, $_pack_size;
-	    $score .= unpack($_pack_type, $value) . " ";
-	}
-    } else {
-	for (my $i = 0; $i < $num_scores * $_pack_size; $i+=$_pack_size) {
-	    my $value = reverse(substr $scores, $i, $_pack_size);
-	    $score .= unpack($_pack_type, $value) . " ";
-	}
+    for (my $i = 0; $i < $num_scores * $_pack_size; $i+=$_pack_size) {
+	my $value = substr $scores, $i, $_pack_size;
+	$score .= unpack($_pack_type, $value) . " ";
     }
-
     return $score;
-}
-
-=head2 _unpack_score
-
-  Arg  1     : string $score
-  Example    : $exp_scores = _unpack_score($score);
-  Description: unpack score values retrieved from a database
-  Returntype : space delimited string of floats
-  Exceptions : none
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-sub _unpack_score {
-    my ($pack_type, $score) = @_;
-
-    if ($is_little_endian) {
-	return unpack($pack_type, $score);
-    } else {
-	return unpack($pack_type, reverse($score));
-    }
 }
 
 
@@ -944,7 +894,7 @@ sub _print_scores {
 	    my $score;
 	    if ($packed) {
 		my $value = substr $scores->[$cnt]->expected_score, $i*$_pack_size, $_pack_size;
-		$score = _unpack_score($_pack_type, $value);
+		$score = unpack($_pack_type, $value);
 	    } else {
 		$score = $values[$i];
 	    }
@@ -1106,9 +1056,9 @@ sub _get_aligned_scores_from_cigar_line {
 	    my $value;
 	    if ($PACKED) {
 		$value = substr $scores->[$cs_index]->expected_score, $csBlockCnt*$_pack_size, $_pack_size;
-		$exp_score = _unpack_score($_pack_type, $value);
+		$exp_score = unpack($_pack_type, $value);
 		$value = substr $scores->[$cs_index]->{diff_score}, $csBlockCnt*$_pack_size, $_pack_size;
-		$diff_score = _unpack_score($_pack_type, $value);
+		$diff_score = unpack($_pack_type, $value);
 	    } else {
 		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
 		$exp_score = $exp_scores[$csBlockCnt];
@@ -1334,9 +1284,9 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	    my $value;
 	    if ($PACKED) {
 		$value = substr $scores->[$cs_index]->{expected_score}, $csBlockCnt*$_pack_size, $_pack_size;
-		$exp_score = _unpack_score($_pack_type, $value);
+		$exp_score = unpack($_pack_type, $value);
 		$value = substr $scores->[$cs_index]->{diff_score}, $csBlockCnt*$_pack_size, $_pack_size;
-		$diff_score = _unpack_score($_pack_type, $value);
+		$diff_score = unpack($_pack_type, $value);
 	    } else {
 		@exp_scores = split ' ', $scores->[$cs_index]->exp_score;
 		$exp_score = $exp_scores[$csBlockCnt];
@@ -1548,10 +1498,10 @@ sub _get_alignment_scores {
 	    if ($PACKED) {
 		my $value;
 		$value = substr $conservation_scores->[$i]->expected_score, $j*$_pack_size, $_pack_size;
-		$exp_score = _unpack_score($_pack_type, $value);
+		$exp_score = unpack($_pack_type, $value);
 
 		$value = substr $conservation_scores->[$i]->diff_score, $j*$_pack_size, $_pack_size;
-		$diff_score = _unpack_score($_pack_type, $value);
+		$diff_score = unpack($_pack_type, $value);
 	    } else {
 		$exp_score = $exp_scores[$j];
 		$diff_score = $diff_scores[$j];

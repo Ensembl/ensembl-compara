@@ -808,7 +808,7 @@ sub _unpack_scores {
     my ($scores) = @_;
 
     my $_pack_size = 4;
-    my $_pack_type = "f";
+    my $_pack_type = 'f<';
 
     if (!defined $scores) {
 	return "";
