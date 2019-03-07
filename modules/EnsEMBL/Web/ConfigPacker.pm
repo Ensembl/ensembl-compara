@@ -368,12 +368,32 @@ sub _summarise_core_tables {
 #---------------
 #
 # * Assemblies...
+# Factor this out bc collections
+  $self->_add_assembly_versions($db_name);
+  
+#-------------
+#
+# * Transcript biotypes
+# get all possible transcript biotypes
+  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+    'SELECT DISTINCT(biotype) FROM transcript;'
+  )};
+
+#----------
+  $dbh->disconnect();
+}
+
+sub _add_assembly_versions {
+  my $self   = shift;
+  my $db_name = shift; 
+  my $dbh    = $self->db_connect( $db_name );
+  
 # This is a bit ugly, because there's no easy way to sort the assemblies via MySQL
-  $t_aref = $dbh->selectall_arrayref(
+  my $aref = $dbh->selectall_arrayref(
     'select version, attrib from coord_system where version is not null order by rank' 
   );
   my (%default, %not_default);
-  foreach my $row (@$t_aref) {
+  foreach my $row (@$aref) {
     my $version = $row->[0];
     my $attrib  = $row->[1];
     if ($attrib =~ /default_version/) {
@@ -387,17 +407,6 @@ sub _summarise_core_tables {
   my @assemblies = keys %default;
   push @assemblies, sort keys %not_default;
   $self->db_tree->{'CURRENT_ASSEMBLIES'} = join(',', @assemblies);
-  
-#-------------
-#
-# * Transcript biotypes
-# get all possible transcript biotypes
-  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
-    'SELECT DISTINCT(biotype) FROM transcript;'
-  )};
-
-#----------
-  $dbh->disconnect();
 }
 
 sub _summarise_xref_types {
