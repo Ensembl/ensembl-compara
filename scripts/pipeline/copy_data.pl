@@ -252,6 +252,13 @@ my %all_mlss_objects = ();
 # By default, $disable_keys depends on $merge
 $disable_keys //= !$merge;
 
+# print reminder to merge GERP with EPO_LOW_COVERAGE
+my %ml_hash = map { $_ => 1 } @method_link_types;
+if ( $ml_hash{EPO_LOW_COVERAGE} && !($ml_hash{GERP_CONSTRAINED_ELEMENT} && $ml_hash{GERP_CONSERVATION_SCORE}) ) {
+    print "\n** Warning ** GERP_CONSERVATION_SCORE and GERP_CONSTRAINED_ELEMENT should usually be merged with method_link_type EPO_LOW_COVERAGE\n\n";
+}
+
+
     # First adding MLSS objects via method_link_type values (the most portable way)
 foreach my $one_method_link_type (@method_link_types) {
     my $group_mlss_objects = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($one_method_link_type);
