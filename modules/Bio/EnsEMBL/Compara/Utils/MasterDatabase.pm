@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Array::Utils qw(array_minus);
+use List::Compare;
 
 use Data::Dumper;
 $Data::Dumper::Maxdepth=3;
@@ -568,8 +568,8 @@ sub retire_and_create_species_set {
         # check old is subset of new
         my @old_gdb_ids = map { $_->dbID } @{$old_ss->genome_dbs};
         my @new_gdb_ids = map { $_->dbID } @$genome_dbs;
-        my @minus = array_minus( @old_gdb_ids, @new_gdb_ids ); # results in empty array if old is subset of new
-        $ss_adaptor->retire_object($old_ss) unless @minus;
+        my $lc = List::Compare->new(\@old_gdb_ids, \@new_gdb_ids);
+        $ss_adaptor->retire_object($old_ss) if $lc->is_LsubsetR; # old is subset of new
     }
 
     create_species_set($genome_dbs, $species_set_name);
