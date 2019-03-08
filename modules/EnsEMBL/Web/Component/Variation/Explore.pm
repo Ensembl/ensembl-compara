@@ -83,7 +83,7 @@ sub content {
     $cit_count = $avail->{'has_citation'};
   }
 
-  if ($avail->{'is_coding'}) {
+  if ($avail->{'is_coding'} && $avail->{'has_pdbe'}) {
     $prot_url = $hub->url({'action' => 'PDB'});
   }
 
