@@ -187,15 +187,15 @@ span.error                            { float: right; color: [[SEVERE_DARK]]; ma
 .no-left-margin                       { margin-left: 0px; }
 .hidden                               { display: none; }
 
-div.result-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 330px; height: 400px; }
+div.result-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 300px; height: 400px; }
 h5.result-header                                  { display: block; margin-top: 16px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
 div.result-content                                { clear: both; }
-div.config_wrapper div.config ul.result-list      { margin-left: 12px; clear: left; }
+div.config_wrapper div.config ul.result-list      { margin-left: 20px; clear: left; }
 div.config_wrapper div.config ul.result-list li   { margin: 4px 8px; cursor: default; }
-div.result-box div.sub-result-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 12px; cursor: pointer; }
+div.result-box div.sub-result-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 20px; cursor: pointer; }
 div.result-box div.count-container                { color: [[DARK_GREY]]; }
 div.result-box span.current-count                 { color: [[BLACK]]; font-weight: bold; }
-div.result-box div.show-hide                      { float: right; color:[[LINK]]; text-decoration: underline; font-size: 11px; margin-top: -16px; cursor: pointer; }
+div.result-box div.show-hide                      { position: absolute; margin-top: -3px; }
 
 /* customised checkbox */
 .fancy-checkbox                 { width: 15px; height: 15px; display: inline-block; vertical-align: top; background-repeat: no-repeat; background-image: url(/img/dynatree/icons.gif); background-position: 0 0; margin-left: 3px; margin-right: 10px; background-position: 0 -32px;}
@@ -303,7 +303,7 @@ div.search-box span.search-cross-icon           { display: none; padding: 4px 6p
 /* track configuration/matrix display */
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
 button.reset-button:hover { color: [[OK_DARK]]; border-color: [[OK_DARK]]; }
-button.reset-button._track { width: 100px; position: absolute; margin-left: 234px; margin-top: -2px }
+button.reset-button._track { width: 100px; position: absolute; margin-left: 202px; margin-top: -2px }
 body.ie button.reset-button._track { margin-top: -30px; }
 div.configuration-legend  { display: inline-block; float: left; margin-left: -30px; }
 div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }

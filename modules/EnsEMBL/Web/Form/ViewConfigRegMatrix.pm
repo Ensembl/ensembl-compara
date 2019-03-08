@@ -93,9 +93,9 @@ sub configuration_content {
         <div class="filter-content">
           <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>
           <div class="result-content" id="dx">
+            <div class="_show show-hide hidden"><img src="/i/closed2.gif" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" /></div>          
             <div class="sub-result-link">$dimX</div>
-            <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-            <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
+            <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>  
             <ul class="result-list hidden">
               <span class="hidden lhsection-id">dx-content</span>
             </ul>
@@ -105,27 +105,27 @@ sub configuration_content {
           <div id="dy">
             <div class="result-content" id="Histone">
               <span class="_parent-tab-id hidden">dy-tab</span>
+              <div class="_show show-hide hidden"><img src="/i/closed2.gif" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" /></div>              
               <div class="sub-result-link">Histone</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Histone-content</span>
               </ul>
             </div>
             <div class="result-content" id="Open_Chromatin">
 							<span class="_parent-tab-id hidden">dy-tab</span>
+              <div class="_show show-hide hidden"><img src="/i/closed2.gif" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" /></div>              
               <div class="sub-result-link">Open chromatin</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Open_Chromatin-content</span>
               </ul>
             </div>
             <div class="result-content" id="Transcription_factors">
 							<span class="_parent-tab-id hidden">dy-tab</span>
+              <div class="_show show-hide hidden"><img src="/i/closed2.gif" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" /></div>              
               <div class="sub-result-link">Transcription factors</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">transcription_factors-content</span>
               </ul>
