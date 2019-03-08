@@ -64,6 +64,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Array::Utils qw(array_minus);
 
 use Data::Dumper;
 $Data::Dumper::Maxdepth=3;
@@ -557,6 +558,23 @@ sub print_method_link_species_sets_to_update_by_collection {
 
 }
 
+sub retire_and_create_species_set {
+    my ($compara_dba, $genome_dbs, $species_set_name) = @_;
+    my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+
+    # retire superseded species sets
+    my $old_species_sets = $ss_adaptor->fetch_all_by_name($species_set_name);
+    foreach my $old_ss ( @$old_species_sets ) {
+        # check old is subset of new
+        my @old_gdb_ids = map { $_->dbID } @{$old_ss->genome_dbs};
+        my @new_gdb_ids = map { $_->dbID } @$genome_dbs;
+        my @minus = array_minus( @old_gdb_ids, @new_gdb_ids ); # results in empty array if old is subset of new
+        $ss_adaptor->retire_object($old_ss) unless @minus;
+    }
+
+    create_species_set($genome_dbs, $species_set_name);
+}
+
 sub create_species_set {
     my ($genome_dbs, $species_set_name) = @_;
 
@@ -648,11 +666,6 @@ sub create_pairwise_wga_mlsss {
 sub create_multiple_wga_mlsss {
     my ($compara_dba, $method, $species_set, $with_gerp, $source, $url) = @_;
 
-    # first, retire old copies
-    my $old_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_species_set_name($method->type, $species_set->name);
-    $old_mlss->species_set->retire_object if $old_mlss; # causes all mlsses linked to this species_set to be retired automatically
-
-    # now create the new one
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, $source, $url);
     if ($with_gerp) {

@@ -284,7 +284,8 @@ sub make_named_species_set_from_XML_node {
             $collection = find_collection_from_xml_node_attribute($xml_species_set, 'in_collection', $method->type);
         }
         my $genome_dbs = make_species_set_from_XML_node($xml_species_set, $collection ? $collection->genome_dbs : $pool);
-        my $species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, $xml_species_set->getAttribute('name'));
+
+        my $species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::retire_and_create_species_set($compara_dba, $genome_dbs, $xml_species_set->getAttribute('name'));
         $species_set->add_tag('display_name', $xml_species_set->getAttribute('display_name')) if $xml_species_set->hasAttribute('display_name');
         return $species_set;
     }
@@ -300,7 +301,7 @@ my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {!$_->genome_compon
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
     my $collection_name = $collection_node->getAttribute('name');
-    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name");
+    $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::retire_and_create_species_set($compara_dba, $genome_dbs, "collection-$collection_name");
 }
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/pairwise_alignment')}) {
@@ -376,7 +377,7 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
         my $method2 = $compara_dba->get_MethodAdaptor->fetch_by_type($2);
         my $species_set2 = make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs);
         my @good_gdbs = grep {$_->is_good_for_alignment} @{$species_set2->genome_dbs};
-        my $species_set1 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set(\@good_gdbs, $species_set2->name);
+        my $species_set1 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::retire_and_create_species_set($compara_dba, \@good_gdbs, $species_set2->name);
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method1, $species_set1) };
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method2, $species_set2, ($xml_msa->getAttribute('gerp') // 0)) };
         next;

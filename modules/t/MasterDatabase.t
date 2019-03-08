@@ -150,7 +150,42 @@ is_deeply( \@old_comp_release, [$v-1, $v-1, $v-1], 'old components retired' );
 ##                                                                 ##
 #####################################################################
 
+#####################################################################
+##                 Test species_set editing                        ##
+note("---------------------- species_set testing -------------------------------");
 
+my $human_gdb = $gdb_adaptor->fetch_by_name_assembly('homo_sapiens');
+my $cat_gdb   = $gdb_adaptor->fetch_by_name_assembly('felis_catus');
+my $mouse_gdb = $gdb_adaptor->fetch_by_name_assembly('mus_musculus');
+my $chimp_gdb = $gdb_adaptor->fetch_by_name_assembly('pan_troglodytes');
+
+# test 1: create, store and release new species set
+my $test_species_set;
+ok( $test_species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set( [$human_gdb, $cat_gdb, $mouse_gdb], 'test_set' ), 'created test species_set' );
+is( $test_species_set->name, 'test_set', 'correct name' );
+is( $test_species_set->size, 3, 'correct size' );
+ok( $ss_adaptor->store($test_species_set), 'species_set stored successfully' );
+$ss_adaptor->make_object_current($test_species_set);
+is( $test_species_set->is_current, '1', 'species_set made current' );
+print $test_species_set->toString . "\n\n";
+
+# test 2: create, store and release new species set WITH retirement of superseded species_sets
+my $new_test_species_set;
+ok( $new_test_species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::retire_and_create_species_set( $compara_dba, [$human_gdb, $cat_gdb, $mouse_gdb, $chimp_gdb], 'test_set' ), 'test_set retired and recreated' );
+is( $new_test_species_set->name, 'test_set', 'correct name' );
+is( $new_test_species_set->size, 4, 'correct size' );
+ok( $ss_adaptor->store($new_test_species_set), 'new species_set stored successfully' );
+# ok( $ss_adaptor->make_object_current($new_test_species_set), 'species_set made current' );
+$ss_adaptor->make_object_current($new_test_species_set);
+
+print $test_species_set->toString . "\n";
+print $new_test_species_set->toString . "\n";
+
+is( $new_test_species_set->is_current, 1, 'updated species_set is current' );
+is( $test_species_set->is_current, 0, 'superseded species_set is retired' );
+
+##                                                                 ##
+#####################################################################
 
 #####################################################################
 ##                  Test collection editing                        ##
@@ -195,5 +230,7 @@ is_deeply( \@gdb_ids, [60, 115, 123, 141, 1002], 'correct genome dbs included' )
 
 ##                                                                 ##
 #####################################################################
+
+
 
 done_testing();
