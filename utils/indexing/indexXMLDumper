@@ -626,34 +626,26 @@ sub dumpVariation {
   my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
 
   my $sth;
-  my ($hgvs_sth);
   my $all_hgvs_names = on_disk_set('all_hgvs_names');
-  if ($dbspecies ne 'omo_sapiens') {
-    print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
-    my $i = 0;
-    my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
-    #split query
-    while($continue) {
-      $sth = $conf->{'variation_dbh'}->prepare(qq(
-        SELECT variation_id, hgvs_name
-          FROM variation_hgvs limit $sql_batch offset $i));
-      $sth->execute;
-      #$continue++;
-      if($sth->rows) {
-        $i += $sql_batch;
-        print LOG "    Got HGVS data set ".&date_and_mem()."\n";
-        while ( my ($variation_id,$hgvs_name) = $sth->fetchrow_array ) {
-          set_add($all_hgvs_names,$variation_id,$hgvs_name);      
-        }
-      } else {
-        $continue = 0;
+  print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
+  my $i = 0;
+  my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
+  #split query
+  while($continue) {
+    $sth = $conf->{'variation_dbh'}->prepare(qq(
+      SELECT variation_id, hgvs_name
+        FROM variation_hgvs limit $sql_batch offset $i));
+    $sth->execute;
+    #$continue++;
+    if($sth->rows) {
+      $i += $sql_batch;
+      print LOG "    Got HGVS data set ".&date_and_mem()."\n";
+      while ( my ($variation_id,$hgvs_name) = $sth->fetchrow_array ) {
+        set_add($all_hgvs_names,$variation_id,$hgvs_name);      
       }
+    } else {
+      $continue = 0;
     }
-  }
-  else {
-    print LOG "    Will get HGVS data as we go along\n";
-    my $sql = qq(SELECT hgvs_name FROM variation_hgvs where variation_id = ?);
-    $hgvs_sth = $conf->{'variation_dbh'}->prepare($sql);
   }
 
   print LOG "    Preparing to identify GWAS variations ".&date_and_mem()."\n";
@@ -835,17 +827,9 @@ sub dumpVariation {
       }
       # ok
       my $hgvs_names;
-      if ($all_hgvs_names) {
-        if ($all_hgvs_names->{$variation_id}) {
-          foreach my $hgvs_name (set_get($all_hgvs_names,$variation_id)) {
-            push @hgvs_names, $hgvs_name;
-          }
-        }
-      }
-      else {
-        $hgvs_sth->execute($variation_id);
-        while (my ($hgvs_name) = $hgvs_sth->fetchrow_array) {
-          push  @hgvs_names, $hgvs_name;
+      if ($all_hgvs_names->{$variation_id}) {
+        foreach my $hgvs_name (set_get($all_hgvs_names,$variation_id)) {
+          push @hgvs_names, $hgvs_name;
         }
       }
       if ($phenotype_ontologies->{$variation_name}) {
