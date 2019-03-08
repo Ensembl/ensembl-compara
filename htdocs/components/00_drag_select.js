@@ -47,7 +47,7 @@ function Selectables(opts) {
             throw new Error(this.constructor.name + " :: is alredy enabled");
             return;
         }
-        this.zone = document.querySelectorAll(this.options.zone);
+        this.zone = Array.prototype.slice.call(document.querySelectorAll(this.options.zone), 0);;
         if (!this.zone) {
             throw new Error(this.constructor.name + " :: no zone defined in options. Please use element with ID");
         }
