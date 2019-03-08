@@ -57,7 +57,7 @@ sub run {
 	my $from_dbc   = $self->get_cached_compara_dba('src_db_conn')->dbc;
 	my $to_dbc     = $self->get_cached_compara_dba('dest_db_conn')->dbc;
 	my $table_name = $self->param('table');
-	my $query      = $self->param('query') ? $self->param('query') : "SELECT * FROM $table_name LIMIT 100";
+	my $query      = $self->param('query') ? $self->param('query') : "SELECT * FROM $table_name";
 	my $replace    = $self->param('mode') eq 'ignore' ? 0 : 1;
 
 	my $from_str = $from_dbc->host . '/' . $from_dbc->dbname;
