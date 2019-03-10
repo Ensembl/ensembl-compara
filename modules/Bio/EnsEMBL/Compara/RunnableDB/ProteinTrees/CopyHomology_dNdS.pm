@@ -47,7 +47,6 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Digest::MD5 qw(md5_hex);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -82,12 +81,12 @@ sub fetch_input {
     #Preloading previous homologies
     my $sms_prev = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $prev_dba->get_AlignedMemberAdaptor, $prev_homologies );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $prev_dba->get_SequenceAdaptor, 'cds', $sms_prev );
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags( $prev_dba->get_DnaFragAdaptor, $sms_prev );
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $prev_dba->get_GeneMemberAdaptor, $sms_prev );
 
     #Preloading current homologies
     my $sms_curr = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies( $self->compara_dba->get_AlignedMemberAdaptor, $curr_homologies );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences( $self->compara_dba->get_SequenceAdaptor, 'cds', $sms_curr );
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags( $self->compara_dba->get_DnaFragAdaptor, $sms_curr );
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers( $self->compara_dba->get_GeneMemberAdaptor, $sms_curr );
 
     #Setting up previous and current place holders
     $self->param( 'prev_homologies', $sorted_prev_homologies );
@@ -113,22 +112,19 @@ sub run {
             $prev_homology_object_map{ $curr_homologies->[$i]->dbID } = $prev_homologies->[$i];
             $curr_homology_object_map{ $curr_homologies->[$i]->dbID } = $curr_homologies->[$i];
 
-            #Get previous and current alignments
-            my $prev_aln = $prev_homologies->[$i]->get_SimpleAlign( -seq_type => 'cds', -ID_TYPE => 'member' );
-            my $curr_aln = $curr_homologies->[$i]->get_SimpleAlign( -seq_type => 'cds', -ID_TYPE => 'member' );
+            my $prev_members = $prev_homologies->[$i]->get_all_Members;
+            my $curr_members = $curr_homologies->[$i]->get_all_Members;
 
-            #Get previous and current sequences
-            my ( $prev_seq_1, $prev_seq_2 ) = $prev_aln->each_seq;
-            my ( $curr_seq_1, $curr_seq_2 ) = $curr_aln->each_seq;
+            if ($prev_members->[0]->gene_member->stable_id ne $curr_members->[0]->gene_member->stable_id) {
+                $curr_members = [$curr_members->[1], $curr_members->[0]];
+            }
 
-            #Get previous and current sequences MD5 hashes
-            my $prev_seq_1_md5 = lc md5_hex( $prev_seq_1->seq() );
-            my $prev_seq_2_md5 = lc md5_hex( $prev_seq_2->seq() );
-
-            my $curr_seq_1_md5 = lc md5_hex( $curr_seq_1->seq() );
-            my $curr_seq_2_md5 = lc md5_hex( $curr_seq_2->seq() );
-
-            if ( ( $prev_seq_1_md5 eq $curr_seq_1_md5 ) && ( $prev_seq_2_md5 eq $curr_seq_2_md5 ) ) {
+            # This test assumes that the alignment is global, i.e.  cigar_start and cigar_end are not defined
+            # If that's not true, we could simply compare $member->alignment_string('cds')
+            if (($prev_members->[0]->other_sequence('cds') eq $curr_members->[0]->other_sequence('cds'))
+               && ($prev_members->[1]->other_sequence('cds') eq $curr_members->[1]->other_sequence('cds'))
+               && ($prev_members->[0]->cigar_line eq $curr_members->[0]->cigar_line)
+               && ($prev_members->[1]->cigar_line eq $curr_members->[1]->cigar_line)) {
 
                 #$self->warning( "homology_id:" . $curr_homologies->[$i]->dbID . "\tSAME seq: do the copy" );
                 push( @copy_dataflow, $curr_homologies->[$i]->dbID );
