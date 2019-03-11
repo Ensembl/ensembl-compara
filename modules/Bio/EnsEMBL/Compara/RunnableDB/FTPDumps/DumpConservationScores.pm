@@ -47,7 +47,7 @@ use File::Path qw(make_path);
 
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
@@ -77,6 +77,13 @@ sub fetch_input {
     make_path(dirname($self->param_required('this_bedgraph')));
 }
 
+
+sub run {
+    my $self = shift @_;
+    $self->run_command( $self->param_required('cmd'), { die_on_failure => 1 });
+}
+
+
 sub write_output {
     my $self = shift @_;
 
@@ -86,8 +93,6 @@ sub write_output {
         my $empty_file_msg = "No conservation scores found for these regions in " . $self->param('name') . "... Skipping!\n";
         $self->complete_early( $empty_file_msg );
     }
-
-    $self->SUPER::write_output();
 }
 
 #

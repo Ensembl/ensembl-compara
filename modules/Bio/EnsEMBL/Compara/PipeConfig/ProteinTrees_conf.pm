@@ -201,12 +201,15 @@ sub default_options {
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
     # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
+    # SELECT stn1.node_id, stn1.left_index, stn1.right_index, stn1.node_name, stn1.taxon_id, COUNT(*), MIN(ratio), AVG(ratio), MAX(ratio)
+    # FROM species_tree_node stn1
+    # JOIN (SELECT node_id, root_id, left_index, right_index, taxon_id, genome_db_id, node_name, nb_genes, nb_genes_in_tree/nb_genes AS ratio  FROM species_tree_node JOIN species_tree_node_attr USING (node_id) WHERE genome_db_id IS NOT NULL) stn2
+    # ON stn1.root_id = stn2.root_id AND stn1.left_index < stn2.left_index AND stn1.right_index > stn2.right_index
+    # WHERE stn1.root_id = 40140000
+    # GROUP BY stn1.node_id
+    # ORDER BY stn1.left_index;
         'mapped_gene_ratio_per_taxon' => {
             '2759'    => 0.5,     #eukaryotes
-            '33208'   => 0.65,    #metazoans
-            '7742'    => 0.85,    #vertebrates
-            '117571'  => 0.9,     #bony vertebrates
-            '9443'    => 0.95,    #primates
           },
 
     # mapping parameters:
@@ -3321,7 +3324,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'methods'   => {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
-                    'ENSEMBL_PARALOGUES'    => 2,
                 },
             },
             -rc_name   => '500Mb_job',

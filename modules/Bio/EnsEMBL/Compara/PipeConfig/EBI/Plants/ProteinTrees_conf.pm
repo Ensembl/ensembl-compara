@@ -98,6 +98,15 @@ sub default_options {
         # used by 'homology_dNdS'
         'taxlevels' => ['Liliopsida', 'eudicotyledons', 'Chlorophyta'],
 
+    # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
+    # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
+        'mapped_gene_ratio_per_taxon' => {
+            '2759'    => 0.5,     #eukaryotes
+            '33090'   => 0.65,    #plants
+            '3193'    => 0.7,     #land plants
+            '3041'    => 0.65,    #green algae
+          },
+
     # GOC parameters
         'goc_taxlevels' => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
 

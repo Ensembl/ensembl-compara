@@ -61,6 +61,10 @@ sub default_options {
 
         'division'   => 'ensembl',
         'reg_conf'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+
+        # This pipeline will faster if it's run against the production ProteinTree database:
+        # In this case it needs to be run *before* the merge, otherwise the data will not be in the release database.
+        #'compara_db' => 'compara_ptrees',
         'compara_db' => 'compara_curr',
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
@@ -83,7 +87,7 @@ sub default_options {
             },
         ],
 
-        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
+        'high_confidence_capacity'    => 30,             # how many mlss_ids can be processed in parallel
         'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
     };

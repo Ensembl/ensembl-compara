@@ -123,6 +123,22 @@ sub fetch_input {
         $self->param('n_missing_species_in_tree', scalar(@{$genomeDB_Adaptor->fetch_all()})-scalar(@{$cafe_species}));
     }
 
+    # Remove the principal genomes if their components are there
+    my $gdb_id_hash = $full_species_tree->get_genome_db_id_2_node_hash;
+    foreach my $gdb (@{$self->compara_dba->get_GenomeDBAdaptor()->fetch_all()}) {
+        next unless $gdb_id_hash->{$gdb->dbID};
+        next unless $gdb->is_polyploid;
+        my @found_components = grep {$gdb_id_hash->{$_->dbID}} @{$gdb->component_genome_dbs};
+        if (@found_components) {
+            print STDERR "Removing the principal genome ".$gdb->name." from the tree\n" if $self->debug;
+            $self->param('n_missing_species_in_tree', $self->param('n_missing_species_in_tree')+1);
+            unless ($self->param('cafe_species')) {
+                $self->param('cafe_species', {map {$_ => 1} keys %$gdb_id_hash});
+            }
+            delete $self->param('cafe_species')->{$gdb->dbID};
+        }
+    }
+
     return;
 }
 

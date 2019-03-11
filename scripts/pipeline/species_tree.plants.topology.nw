@@ -30,6 +30,8 @@
            sorghum_bicolor,
           )Andropogoneae,
           setaria_italica,
+          panicum_hallii_fil2,
+          panicum_hallii_hal2,
          )Panicoideae,
          (
           (
@@ -88,6 +90,9 @@
       (
        (
         (
+         actinidia_chinensis,
+        )Ericales,
+        (
          daucus_carota,
          helianthus_annuus,
         )campanulids,
@@ -118,7 +123,7 @@
            cajanus_cajan,
           )Phaseoleae,
          )Papilionoideae,
-         Prunus_persica,
+         prunus_persica,
          (
           manihot_esculenta,
           populus_trichocarpa,
@@ -164,4 +169,4 @@
   )Cyanidiaceae,
   chondrus_crispus,
  )Rhodophyta,
-)Eukaryota;
+)Eukaryotqa;

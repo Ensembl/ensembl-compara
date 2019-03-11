@@ -61,7 +61,7 @@ sub default_options {
 
         'division'   => 'plants',
         'reg_conf'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-        'compara_db' => 'compara_curr',
+        'compara_db' => 'compara_ptrees',
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [

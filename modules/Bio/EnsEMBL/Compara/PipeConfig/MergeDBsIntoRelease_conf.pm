@@ -108,10 +108,13 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
 
+    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
+
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
         'default' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
+        '16Gb_job'=> { 'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement] },
     };
 }
 
@@ -167,6 +170,7 @@ sub pipeline_analyses {
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
+            -rc_name    => '16Gb_job',
             -input_ids  => [ {} ],
             -flow_into  => {
                 2      => [ 'copy_table'  ],

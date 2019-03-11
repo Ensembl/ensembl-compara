@@ -64,10 +64,6 @@ standaloneJob(
 			"Found LASTZ alignment. mlss_id = 634"
 		],
 		[
-			'WARNING',
-			"Found 2 alignments between meleagris_gallopavo and gallus_gallus"
-		],
-		[
 			'DATAFLOW',
 			$exp_br1_dataflow,
 			1
@@ -108,10 +104,6 @@ standaloneJob(
 			'WARNING',
 			"Found LASTZ alignment. mlss_id = 719"
 		],
-		[
-			'WARNING',
-			"Found 1 alignments between homo_sapiens and gallus_gallus"
-		],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
 			$exp_br1_dataflow, # expected data flowed out
@@ -145,10 +137,6 @@ standaloneJob(
 		'master_db'      => $compara_db,
 	},
 	[
-		# [
-		# 	'WARNING',
-		# 	"Found 1 alignments between gallus_gallus and meleagris_gallopavo"
-		# ],
 		[ # start event
 			'DATAFLOW', # event to test for (could be WARNING)
 			$exp_br1_dataflow, # expected data flowed out

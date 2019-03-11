@@ -148,7 +148,7 @@ sub new_from_DBAdaptor {
     if ($genome_component) {
         if (grep {$_ eq $genome_component} @{$db_adaptor->get_GenomeContainer->get_genome_components}) {
             $self->genome_component($genome_component);
-            $self->display_name = $self->display_name . sprintf(' (component %s)', $genome_component);
+            $self->display_name($self->display_name . sprintf(' (component %s)', $genome_component));
         } else {
             die "The required genome component '$genome_component' cannot be found in the database, please investigate\n";
         }

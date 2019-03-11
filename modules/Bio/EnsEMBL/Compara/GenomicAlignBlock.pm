@@ -1318,6 +1318,7 @@ sub restrict_between_alignment_positions {
 
   $start = 1 if (!defined($start) or $start < 1);
   $end = $self->length if (!defined($end) or $end > $self->length);
+  throw("start > end: $start > $end") if $start > $end;
 
   my $number_of_columns_to_trim_from_the_start = $start - 1;
   my $number_of_columns_to_trim_from_the_end = $self->length - $end;

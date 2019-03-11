@@ -62,8 +62,8 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
-        'host'  => 'mysql-ens-compara-prod-5.ebi.ac.uk',
-        'port'  => 4615,
+        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
+        'port'  => 4485,
 
     # User details
 
@@ -112,6 +112,16 @@ sub default_options {
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes', 'Percomorphaceae'],
+
+    # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
+    # values were infered by checking previous releases, values that are out of these ranges may be caused by assembly and/or gene annotation problems.
+        'mapped_gene_ratio_per_taxon' => {
+            '2759'    => 0.5,     #eukaryotes
+            '33208'   => 0.65,    #metazoans
+            '7742'    => 0.85,    #vertebrates
+            '117571'  => 0.9,     #bony vertebrates
+            '9443'    => 0.95,    #primates
+          },
 
     # mapping parameters:
         'do_stable_id_mapping'      => 1,

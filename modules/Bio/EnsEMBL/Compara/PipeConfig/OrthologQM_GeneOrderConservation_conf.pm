@@ -77,7 +77,10 @@ sub default_options {
         # mlss_id of a specific pair of species
         'goc_mlss_id'   => undef, #'100021',
 
+        # Vertebrates
         'goc_taxlevels' => ["Euteleostomi","Ciona"],
+        # Plants
+        #'goc_taxlevels' => ['solanum', 'fabids', 'Brassicaceae', 'Pooideae', 'Oryzoideae', 'Panicoideae'],
         'goc_reuse_db'  => undef,
         'calculate_goc_distribution'    => 1,
         'goc_threshold' => 50,

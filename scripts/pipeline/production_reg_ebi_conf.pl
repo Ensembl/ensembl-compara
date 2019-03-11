@@ -60,7 +60,6 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #   * MercatorPecan_conf
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 
-
 # my $suffix_separator = '__cut_here__';
 # Bio::EnsEMBL::Registry->load_registry_from_db(
 #     -host           => 'mysql-ens-mirror-1',
@@ -82,24 +81,24 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'  => [ 'mysql-ens-compara-prod-6', 'mateus_ensembl_load_members_96'  ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-1', 'mateus_ensembl_protein_trees_96' ],
     'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'mateus_protein_trees_95' ],
-    #'compara_families' => [ 'mysql-ens-compara-prod-3', 'carlac_families_fix_95'  ],
+    'compara_families' => [ 'mysql-ens-compara-prod-2', 'mateus_ensembl_families_96'  ],
     'compara_nctrees'  => [ 'mysql-ens-compara-prod-3', 'muffato_ensembl_compara_nctrees_96' ],
     'murinae_ptrees'   => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_protein_trees_96b' ],
     'murinae_nctrees'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
 
     # LASTZ dbs
-    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_1' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_2' ],
-    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_3' ],
-    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_4' ],
-    'lastz_batch5'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_5' ],
-    'lastz_batch6'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_6' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_1_96' ],
+    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-1', 'mateus_lastz_ensembl_batch_2_96' ],
+    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_3_96' ],
+    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-2', 'mateus_lastz_ensembl_batch_4_96' ],
+    'lastz_batch5'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_5_96' ],
+    'lastz_batch6'   => [ 'mysql-ens-compara-prod-3', 'muffato_lastz_ensembl_batch_6_96' ],
     'lastz_batch7'   => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_batch7_lastz_96' ],
-    'lastz_batch8'   => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8' ],
-    'lastz_batch_9'  => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_9' ],
-    'lastz_batch_10' => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_10' ],
+    'lastz_batch8'   => [ 'mysql-ens-compara-prod-6', 'carlac_lastz_ensembl_batch_8_96' ],
+    'lastz_batch_9'  => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_9_96' ],
+    'lastz_batch_10' => [ 'mysql-ens-compara-prod-5', 'waakanni_lastz_ensembl_batch_10_96' ],
 
     # EPO dbs
     ## mammals
@@ -111,7 +110,7 @@ my $compara_dbs = {
     ## sauropsids
     'sauropsids_epo'         => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_96' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_epo_95' ],
-    'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_low_coverage_96' ],
+    'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_low_coverage_96' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
@@ -133,7 +132,7 @@ my $compara_dbs = {
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-8', 'mateus_synteny_96' ],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-6', 'carlac_alt_allele_import_95' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-1', 'mateus_ensembl_alt_allele_import_96' ],
 };
 
 add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
