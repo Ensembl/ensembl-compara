@@ -390,8 +390,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var panel = this;
     var trackData;
     $.each(trackData, function(key, val) {
-      trackData = $(panel.tracks[key].el).data();
-      trackData.track.renderer = val.renderer || 'off' ;
+      if (panel.tracks[key]) {
+        trackData = $(panel.tracks[key].el).data();
+        trackData.track.renderer = val.renderer || 'off' ;
+      }
     })
   },
   
