@@ -54,6 +54,7 @@ foreach my $this_species (@$species) {
 my $gdb_adaptor  = $compara_dba->get_GenomeDBAdaptor;
 my $ss_adaptor   = $compara_dba->get_SpeciesSetAdaptor;
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my $meth_adaptor = $compara_dba->get_MethodAdaptor;
 my $v = software_version();
 
 #####################################################################
@@ -151,48 +152,57 @@ is_deeply( \@old_comp_release, [$v-1, $v-1, $v-1], 'old components retired' );
 #####################################################################
 
 #####################################################################
-##                 Test species_set editing                        ##
-note("---------------------- species_set testing -------------------------------");
+##                     Test mlss editing                           ##
+note("---------------------- mlss testing -------------------------------");
 
 my $human_gdb = $gdb_adaptor->fetch_by_name_assembly('homo_sapiens');
 my $cat_gdb   = $gdb_adaptor->fetch_by_name_assembly('felis_catus');
 my $mouse_gdb = $gdb_adaptor->fetch_by_name_assembly('mus_musculus');
 my $chimp_gdb = $gdb_adaptor->fetch_by_name_assembly('pan_troglodytes');
 
-# test 1: create, store and release new species set
+my $meth_epo    = $meth_adaptor->fetch_by_type('EPO');
+my $meth_epo2x  = $meth_adaptor->fetch_by_type('EPO_LOW_COVERAGE');
+
+# test 1: create, store and release new mlss
 my $test_species_set;
+my $test_mlss;
 ok( $test_species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set( [$human_gdb, $cat_gdb, $mouse_gdb], 'test_set' ), 'created test species_set' );
 is( $test_species_set->name, 'test_set', 'correct name' );
 is( $test_species_set->size, 3, 'correct size' );
-ok( $ss_adaptor->store($test_species_set), 'species_set stored successfully' );
-$ss_adaptor->make_object_current($test_species_set);
-is( $test_species_set->is_current, '1', 'species_set made current' );
-print $test_species_set->toString . "\n\n";
+ok( $test_mlss = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($meth_epo, $test_species_set), 'created test mlss' );
+ok( $mlss_adaptor->store($test_mlss), 'mlss stored successfully' );
+$mlss_adaptor->make_object_current($test_mlss);
+is( $test_mlss->is_current, '1', 'mlss made current' );
+print $test_mlss->toString . "\n\n";
 
-# test 2: create, store and release new species set WITH retirement of superseded species_sets
+# test 2: create, store and release new mlss with the same name but a different method
 my $test_species_set_2;
-ok( $test_species_set_2 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::retire_and_create_species_set( $compara_dba, [$human_gdb, $cat_gdb, $mouse_gdb, $chimp_gdb], 'test_set' ), 'test_set retired and recreated' );
+my $test_mlss_2;
+ok( $test_species_set_2 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set( [$human_gdb, $cat_gdb, $chimp_gdb], 'test_set' ), 'new test_set created' );
 is( $test_species_set_2->name, 'test_set', 'correct name' );
-is( $test_species_set_2->size, 4, 'correct size' );
-ok( $ss_adaptor->store($test_species_set_2), 'new species_set stored successfully' );
-# ok( $ss_adaptor->make_object_current($new_test_species_set), 'species_set made current' );
-$ss_adaptor->make_object_current($test_species_set_2);
-is( $test_species_set_2->is_current, 1, 'updated species_set is current' );
-is( $test_species_set->is_current, 0, 'superseded species_set is retired' );
-print $test_species_set->toString . "\n";
-print $test_species_set_2->toString . "\n\n";
+is( $test_species_set_2->size, 3, 'correct size' );
+ok( $test_mlss_2 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($meth_epo2x, $test_species_set_2), 'created another test mlss' );
+ok( $mlss_adaptor->store($test_mlss_2), 'new mlss stored successfully' );
+$mlss_adaptor->make_object_current($test_mlss_2);
+is( $test_mlss->is_current, 1, 'old mlss still current' );
+is( $test_mlss_2->is_current, 1, 'new mlss made current' );
+print $test_mlss->toString . "\n";
+print $test_mlss_2->toString . "\n\n";
 
-# test 3: ensure species sets that aren't subsets are not retired
+# test 3: create, store and release new mlss WITH retirement of superseded mlsss, regardless of the content (doesn't have to be a superset)
 my $test_species_set_3;
-ok( $test_species_set_3 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::retire_and_create_species_set( $compara_dba, [$human_gdb, $cat_gdb, $chimp_gdb], 'test_set' ), 'test_set created' );
+my $test_mlss_3;
+ok( $test_species_set_3 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set( [$human_gdb, $cat_gdb, $chimp_gdb], 'test_set' ), 'test_set created' );
 is( $test_species_set_3->name, 'test_set', 'correct name' );
 is( $test_species_set_3->size, 3, 'correct size' );
-ok( $ss_adaptor->store($test_species_set_3), 'new species_set stored successfully' );
-$ss_adaptor->make_object_current($test_species_set_3);
-is( $test_species_set_2->is_current, 1, 'old species_set is not retired' );
-is( $test_species_set_2->is_current, 1, 'new species_set is current' );
-print $test_species_set_2->toString . "\n";
-print $test_species_set_3->toString . "\n\n";
+ok( $test_mlss_3 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($meth_epo, $test_species_set_3), 'created another test mlss' );
+ok( $mlss_adaptor->store($test_mlss_3), 'new mlss stored successfully' );
+$mlss_adaptor->make_object_current($test_mlss_3);
+is( $test_mlss->is_current, 0, 'old mlss is retired' );
+is( $test_mlss_3->is_current, 1, 'new mlss is current' );
+print $test_mlss->toString . "\n";
+print $test_mlss_2->toString . "\n";
+print $test_mlss_3->toString . "\n\n";
 
 ##                                                                 ##
 #####################################################################

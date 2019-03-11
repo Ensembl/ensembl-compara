@@ -673,6 +673,21 @@ sub make_object_current {
     $self->SUPER::make_object_current($mlss);
     # Also update the linked SpeciesSet
     $self->db->get_SpeciesSetAdaptor->make_object_current($mlss->species_set);
+
+    # In a release database, the pair (method, species-set name) should be
+    # unique. As this object is made current, others may have to be retired
+    my @mlsss_retired;
+    # It can only happen for multiple sets
+    if (scalar(@{$mlss->species_set->genome_dbs}) >= 3) {
+        my $other_mlsss = $self->_id_cache->get_all_by_additional_lookup('method', $mlss->method->dbID);
+        foreach my $other_mlss (@$other_mlsss) {
+            if ($other_mlss->is_current and ($other_mlss->species_set->name eq $mlss->species_set->name) and ($other_mlss->dbID != $mlss->dbID)) {
+                $self->retire_object($other_mlss);
+                push @mlsss_retired, $other_mlss
+            }
+        }
+    }
+    return \@mlsss_retired;
 }
 
 

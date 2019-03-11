@@ -64,7 +64,6 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use List::Compare;
 
 use Data::Dumper;
 $Data::Dumper::Maxdepth=3;
@@ -556,23 +555,6 @@ sub print_method_link_species_sets_to_update_by_collection {
     }
     print "  NONE\n" unless scalar(@$method_link_species_sets);
 
-}
-
-sub retire_and_create_species_set {
-    my ($compara_dba, $genome_dbs, $species_set_name) = @_;
-    my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
-
-    # retire superseded species sets
-    my $old_species_sets = $ss_adaptor->fetch_all_by_name($species_set_name);
-    foreach my $old_ss ( @$old_species_sets ) {
-        # check old is subset of new
-        my @old_gdb_ids = map { $_->dbID } @{$old_ss->genome_dbs};
-        my @new_gdb_ids = map { $_->dbID } @$genome_dbs;
-        my $lc = List::Compare->new(\@old_gdb_ids, \@new_gdb_ids);
-        $ss_adaptor->retire_object($old_ss) if $lc->is_LsubsetR; # old is subset of new
-    }
-
-    create_species_set($genome_dbs, $species_set_name);
 }
 
 sub create_species_set {
