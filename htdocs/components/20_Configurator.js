@@ -45,6 +45,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
     Ensembl.EventManager.register('resetConfig',         this, this.externalReset);
     Ensembl.EventManager.register('refreshConfigList',   this, this.refreshConfigList);
+    Ensembl.EventManager.register('changeMatrixTrackRenderers', this, this.changeMatrixTrackRenderers);
   },
   
   init: function () {
@@ -382,6 +383,16 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     popup = track = target = null;
     
     return false;
+  },
+
+  // e.g. data = {"seg_Segmentation_astrocyte":{"renderer":"off"},"reg_feats_astrocyte":{"renderer":"normal"}
+  changeMatrixTrackRenderers: function(trackData) {
+    var panel = this;
+    var trackData;
+    $.each(trackData, function(key, val) {
+      trackData = $(panel.tracks[key].el).data();
+      trackData.track.renderer = val.renderer || 'off' ;
+    })
   },
   
   changeTrackRenderer: function (tracks, renderer, updateCount, isConfigMatrix) {
@@ -849,7 +860,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     var diff        = false;
     var imageConfig = {};
     var viewConfig  = {};
-    var noRendererUpdate = false;
 
     $.each(this.subPanels, function (i, id) {
       var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id, true);
@@ -857,7 +867,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
         $.extend(imageConfig, conf.imageConfig);
-        noRendererUpdate = conf.noRendererUpdate;
         diff = true;
       }
     });
@@ -870,7 +879,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
                          panel.imageConfig[track.id].favourite && !track.fav ? 0 : // Making a track not a favourite
                          false;
         
-        if ((panel.imageConfig[track.id].renderer !== track.renderer) && !noRendererUpdate) {
+        if (panel.imageConfig[track.id].renderer !== track.renderer) {
           imageConfig[track.id] = { renderer: track.renderer };
           diff = true;
         }

@@ -386,7 +386,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
 
     if(Object.keys(panel.localStoreObj[panel.json.extra_dimensions[0]]).length <= 0) {
-      panel.displayMatrix();
     }
 
     $.each(panel.json.extra_dimensions, function (i, dim) {
@@ -430,8 +429,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
     });
 
-    $.extend(true, this.imageConfig, config);
-    return { imageConfig: config, noRendererUpdate: true };
+
+    Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
+
+    $.extend(this.imageConfig, config);
+    return { imageConfig: config };
   },
 
   getNewPanelHeight: function() {
