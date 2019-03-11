@@ -159,6 +159,7 @@ sub get_available_adaptors {
         'GenomicAlign'          => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor',
         'GenomicAlignTree'      => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor',
         'ConservationScore'     => 'Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor',
+        'ConservationScoreArray'=> 'Bio::EnsEMBL::Compara::DBSQL::ConservationScoreArrayAdaptor',
         'ConstrainedElement'    => 'Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor',
         'AlignSlice'            => 'Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor',
 

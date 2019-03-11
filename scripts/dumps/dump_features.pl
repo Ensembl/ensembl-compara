@@ -545,30 +545,42 @@ foreach my $slice (@$all_slices) {
     while ($it->has_next()) {
         my $sub_slice = $it->next();
         #print STDERR $sub_slice->name() . "\n";
-        my $scores = $compara_dba->get_ConservationScoreAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice, $sub_slice->length, undef, 1);
-        next unless @$scores;
-        # Sort by position and decreasing score, so that we get the best score first
-        my @sorted_scores = sort {($a->seq_region_pos <=> $b->seq_region_pos) || ($b->diff_score <=> $a->diff_score)}
-                            grep {($_->seq_region_pos >= $sub_slice->seq_region_start) && ($_->seq_region_pos <= $sub_slice->seq_region_end)} @$scores;
-        next unless @sorted_scores;
-        my $ref_score = shift @sorted_scores;
-        my $last_pos = $ref_score->seq_region_pos;
+        my $scores = $compara_dba->get_ConservationScoreArrayAdaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $sub_slice);
         # To save space we can merge consecutive positions that have the same score
-        foreach my $score (@sorted_scores) {
-            if ($score->seq_region_pos == $last_pos) {
-                # Same position -> must be a lower score -> discard
-            } elsif (($score->seq_region_pos == ($last_pos+1)) and (abs($ref_score->diff_score - $score->diff_score) < 1e-6)) {
-                # Next position and same score
-                $last_pos++;
+        my $last_score;
+        my $last_start;
+        my $current_pos = $sub_slice->seq_region_start - 1;  # Coordinates in BED are 0-based
+        foreach my $current_score (@$scores) {
+            if (defined $last_score) {
+                if (defined $current_score) {
+                    if (abs($current_score - $last_score) < 1e-6) {
+                        # Same score
+                    } else {
+                        # Different score
+                        print join("\t", $name, $last_start, $current_pos, sprintf('%.6f', $last_score)), "\n";     # The right coordinate is open
+                        $last_score = $current_score;
+                        $last_start = $current_pos;
+                    }
+                } else {
+                    # No more scores -> end of block
+                    print join("\t", $name, $last_start, $current_pos, sprintf('%.6f', $last_score)), "\n";         # The right coordinate is open
+                    undef $last_start;
+                    undef $last_score;
+                }
             } else {
-                # Something is different, we print the previous region
-                print join("\t", $name, $ref_score->seq_region_pos-1, $last_pos, sprintf('%.6f', $ref_score->diff_score)), "\n";
-                $ref_score = $score;
-                $last_pos = $ref_score->seq_region_pos;
+                if (defined $current_score) {
+                    $last_start = $current_pos;
+                    $last_score = $current_score;
+                } else {
+                    # Still no score, let's move on
+                }
             }
+            $current_pos ++;
         }
         # Don't forget the last block !
-        print join("\t", $name, $ref_score->seq_region_pos-1, $last_pos, sprintf('%.6f', $ref_score->diff_score)), "\n";
+        if (defined $last_score) {
+            print join("\t", $name, $last_start, $current_pos-1, sprintf('%.6f', $last_score)), "\n";
+        }
     }
     next;
   } elsif ($feature =~ /^mlss_?(\d+)/) {
