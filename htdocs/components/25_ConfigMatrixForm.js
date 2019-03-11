@@ -770,8 +770,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.setLocalStorage();
     panel.trackError('div#dx, div#source');
     panel.enableConfigureButton('div#dx, div#source');
+    if (Object.keys(panel.localStoreObj).length > 0 && panel.localStoreObj.dx) {
+      panel.emptyMatrix();
+      panel.displayMatrix();
+    }
   },
-
 
   //Function to select filters and adding/removing them in the relevant panel
   selectBox: function(ele) {
