@@ -418,7 +418,8 @@ foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')})
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set);
 }
 
-my %mlss_ids_to_find = map {$_->dbID => $_} @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_current};
+my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
 
 my @mlsss_created;
 my @mlsss_existing;
@@ -459,11 +460,11 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         print "2. MethodLinkSpeciesSets that need to be created:\n" if $verbose;
         foreach my $mlss (@mlsss) {
             # Check if it is already in the database
-            my $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
+            my $exist_mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs($mlss->method->type, $mlss->species_set->genome_dbs);
             # Special case for LastZ alignments: we still have some equivalent BlastZ alignments
             if (!$exist_mlss and ($mlss->method->type eq 'LASTZ_NET')) {
                 # allow for cases where BLASTZ_NET is not in the method_link table - this is the case for EG
-                $exist_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs) if ($compara_dba->get_MethodAdaptor->fetch_by_type('BLASTZ_NET'));
+                $exist_mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('BLASTZ_NET', $mlss->species_set->genome_dbs) if ($compara_dba->get_MethodAdaptor->fetch_by_type('BLASTZ_NET'));
             }
             if ($exist_mlss and ($exist_mlss->is_current || $mlss->{_no_release})) {
                 push @mlsss_existing, $exist_mlss;
@@ -478,7 +479,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
             # Special case for syntenies: when the synteny has already been tried and failed (due to low coverage), we don't need to try again
             if (!$exist_mlss and ($mlss->method->type eq 'SYNTENY')) {
-                my $lastz_mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('LASTZ_NET', $mlss->species_set->genome_dbs);
+                my $lastz_mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('LASTZ_NET', $mlss->species_set->genome_dbs);
                 if ($lastz_mlss and $lastz_mlss->has_tag('low_synteny_coverage')) {
                     print "DISCARDED (low_synteny_coverage)\n" if $verbose;
                     next;
@@ -486,8 +487,8 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
             push @mlsss_created, $mlss;
             unless ($dry_run) {
-                $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
-                push @mlsss_retired, @{$compara_dba->get_MethodLinkSpeciesSetAdaptor->make_object_current($mlss)} if $release && !$mlss->{_no_release};
+                $mlss_adaptor->store($mlss);
+                push @mlsss_retired, @{$mlss_adaptor->make_object_current($mlss)} if $release && !$mlss->{_no_release};
             }
             if ($verbose) {
                 print "NEW MLSS:", $mlss->toString, "\n";
@@ -499,7 +500,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             foreach my $mlss (sort {$a->dbID <=> $b->dbID} values %mlss_ids_to_find) {
                 push @mlsss_retired, $mlss;
                 unless ($dry_run) {
-                    $compara_dba->get_MethodLinkSpeciesSetAdaptor->retire_object($mlss);
+                    $mlss_adaptor->retire_object($mlss);
                 }
                 if ($verbose) {
                     print "UNJUSTIFIED MLSS: ", $mlss->toString, "\n";
