@@ -381,11 +381,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     // If no matrix available in localstore, that means user hasn't clicked on "Configure Display" button
     // In that case, call displayMatrix() to create the necessary localStore objects
-    if (Object.keys(panel.localStoreObj).length <= 0) {
+    if (Object.keys(panel.localStoreObj).length <= 0 || !panel.localStoreObj.dx) {
       return;
-    }
-
-    if(Object.keys(panel.localStoreObj[panel.json.extra_dimensions[0]]).length <= 0) {
     }
 
     $.each(panel.json.extra_dimensions, function (i, dim) {
