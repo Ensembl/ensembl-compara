@@ -52,7 +52,7 @@ use IO::File;
 use Symbol qw/gensym/;
 use IPC::Open3;
 use Data::Dumper;
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Time::HiRes qw(time);
 
 sub new_object {
     my ($class, $debug, $description, $return_value, $stderr, $flat_cmd, $stdout, $runtime_msec) = @_;
