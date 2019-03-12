@@ -105,8 +105,7 @@ sub _test_mlss {
 
     if ($self->param('add_conservation_scores')) {
         my $cs_mlsss = $mlss->get_all_sister_mlss_by_class('ConservationScore.conservation_score');
-        die "No Conservation scores found for ".$mlss->dbID unless @$cs_mlsss;
-        $mlss_id = $cs_mlsss->[0]->dbID;
+        $mlss_id = $cs_mlsss->[0]->dbID if @$cs_mlsss;
     }
 
     my $output_id = {
