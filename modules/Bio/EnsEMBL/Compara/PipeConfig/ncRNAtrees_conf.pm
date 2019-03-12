@@ -407,7 +407,7 @@ sub core_pipeline_analyses {
                 -parameters    => {
                     'mirbase_url'   => $self->o('mirbase_url'),
                 },
-                -flow_into     => [ 'cluster_qc_factory' ],
+                -flow_into     => [ 'expand_clusters_with_projections' ],
                 -rc_name       => '2Gb_job',
             },
 
