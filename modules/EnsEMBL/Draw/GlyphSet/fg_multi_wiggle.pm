@@ -200,14 +200,16 @@ sub _block_zmenu {
 
   my $offset = $self->{'container'}->strand>0 ? $self->{'container'}->start - 1 : $self->{'container'}->end + 1;
 
-  return $self->_url({
-    action => 'FeatureEvidence',
-    fdb    => 'funcgen',
-    pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
-    fs     => $f->fetch_PeakCalling->name,
+  my $component = $self->{'config'}->get_parameter('component');
 
-    ps     => $f->summit || 'undetermined',
-    act    => $self->{'config'}->hub->action,
+  return $self->_url({
+    action    => 'FeatureEvidence',
+    fdb       => 'funcgen',
+    pos       => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
+    fs        => $f->fetch_PeakCalling->name,
+
+    ps        => $f->summit || 'undetermined',
+    act       => $component,
     evidence => !$self->{'will_draw_wiggle'},
   });
 }
@@ -250,14 +252,15 @@ sub get_features {
         while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
           push @$structure, {'start' => $mf_start, 'end' => $mf_end};
         }
-
+  
+        my $href = $self->_block_zmenu($f);
         my $hash = {
                     start     => $f->start,
                     end       => $f->end,
                     midpoint  => $f->summit,
                     structure => $structure, 
                     label     => $label,
-                    href      => $self->_block_zmenu($f),
+                    href      => $href,
                     };
         push @{$subtrack->{'features'}}, $hash; 
       }
