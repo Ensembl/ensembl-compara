@@ -178,7 +178,7 @@ sub _add_to_matrix {
       c_header    => $matrix->{'column_label'},
       display     => 'off',
       subset      => $subset,
-      $matrix->{'row'} ? (matrix => 'column') : (),
+      $matrix->{'row'} ? (matrix => 'column') : (matrix => 1), 
       column_order => $matrix->{'column_order'} || 999999,
       %{$data->{'column_data'} || {}}
     });
