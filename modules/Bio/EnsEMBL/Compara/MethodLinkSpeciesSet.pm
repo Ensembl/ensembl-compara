@@ -415,7 +415,7 @@ sub _find_pairwise_ref {
     $ref_name ||= '';
     if ( $genome_dbs->[0]->name eq $ref_name ) {
         return @$genome_dbs; # list was already in correct order
-    } elsif ( $genome_dbs->[0]->name eq $ref_name ) {
+    } elsif ( $genome_dbs->[1]->name eq $ref_name ) {
         return ( $genome_dbs->[1], $genome_dbs->[0] );
     } else {
         # if tag is not set, always place usual references at the start
