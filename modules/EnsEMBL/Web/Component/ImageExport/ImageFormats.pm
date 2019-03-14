@@ -164,7 +164,7 @@ sub default_file_name {
   }
 
   #sanity replace in case of special characters in the name
-  $name =~ s/-/_/gr;
+  $name =~ s/-/_/g;
 
   return $name . ($ext ? ".$ext" : '');
 }
