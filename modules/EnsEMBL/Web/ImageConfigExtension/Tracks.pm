@@ -1203,6 +1203,7 @@ sub add_regulation_builds {
       caption       => "Segmentation features",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       section       => $segs->{$key}{'web'}{'celltypename'},
+      matrix_cell   => 1,
       height        => 4,
     }));
   }
@@ -1233,6 +1234,7 @@ sub add_regulation_builds {
         section       => $cell_names{$cell_line},
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
         caption       => "Epigenome Activity",
+        matrix_cell   => 1,
       }));
     }
 # =cut
