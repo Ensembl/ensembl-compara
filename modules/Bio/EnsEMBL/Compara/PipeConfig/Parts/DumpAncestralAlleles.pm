@@ -58,19 +58,32 @@ sub pipeline_analyses_dump_anc_alleles {
             }
         },
 
-        {	-logic_name => 'get_ancestral_sequence',
-        	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        	-parameters => {
-                        species_outdir => '#anc_tmp_dir#/#species_dir#',
-        		cmd => join('; ', 
-                                'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db# --genome_dumps_dir #genome_dumps_dir#',
-        			'cd #species_outdir#',
-                    'find . -empty -type f -delete',
-                                'perl #ancestral_stats_program# > summary.txt',
-        			),
-        	},
-        	-flow_into => [ 'tar' ],
-        	-hive_capacity => 400,
+        {   -logic_name => 'get_ancestral_sequence',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                species_outdir  => '#anc_tmp_dir#/#species_dir#',
+                cmd             => 'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db# --genome_dumps_dir #genome_dumps_dir#',
+            },
+            -flow_into => [ 'remove_empty_files' ],
+            -hive_capacity => 400,
+        },
+
+        {   -logic_name => 'remove_empty_files',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                species_outdir  => '#anc_tmp_dir#/#species_dir#',
+                cmd             => 'find #species_outdir# -empty -type f -delete',
+            },
+            -flow_into => [ 'generate_anc_stats' ],
+        },
+
+        {   -logic_name => 'generate_anc_stats',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                species_outdir  => '#anc_tmp_dir#/#species_dir#',
+                cmd             => 'cd #species_outdir#; perl #ancestral_stats_program# > summary.txt',
+            },
+            -flow_into => [ 'tar' ],
         },
 
         {	-logic_name => 'tar',
