@@ -186,6 +186,7 @@ species_set, and method_link_species_set)
 
 =cut
 
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
@@ -278,6 +279,10 @@ my $all_default_method_link_species_sets = get_all_method_link_species_sets($mas
 
 ## Get all the SpeciesSets with tags for the default assemblies
 my $all_default_species_sets = get_all_species_sets_with_tags($master_dba, $all_default_genome_dbs, $mlsss);
+
+## Don't copy stuff that will be regenerated
+my $rerun_tag = 'rerun_in_'.software_version();
+push @$skip_mlsses, map {$_->dbID} grep {$_->has_tag($rerun_tag)} @$all_default_method_link_species_sets;
 
 if($only_show_intentions) {
     print "GenomeDB entries to be copied:\n";
