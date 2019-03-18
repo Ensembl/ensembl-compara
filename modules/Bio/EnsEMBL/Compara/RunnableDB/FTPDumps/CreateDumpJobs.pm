@@ -70,20 +70,26 @@ sub fetch_input {
 
 	my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	my @release_mlsses;
-	my %mlss_id_force;
+	my %mlss_id_to_dump;
+
 	my $mlss_ids = $self->param('mlss_ids');
 	if ( $mlss_ids ) {
+		# only those mlss_ids
 		foreach my $mlss_id ( @$mlss_ids ) {
 			push( @release_mlsses, $mlssa->fetch_by_dbID($mlss_id) );
-			$mlss_id_force{$mlss_id} = 1;
+			$mlss_id_to_dump{$mlss_id} = 1;
 		}
 	} else {
-		@release_mlsses = @{ $mlssa->fetch_all_by_release($curr_release) };	
+		@release_mlsses = @{ $mlssa->fetch_all };
+		foreach my $mlss (@release_mlsses) {
+                    if (($mlss->first_release == $curr_release) || $mlss->has_tag("rerun_in_${curr_release}")) {
+                        $mlss_id_to_dump{$mlss->dbID} = 1;
+                    }
+                }
 		my $updated_mlss_ids = $self->param('updated_mlss_ids'); #for the productions pipelines that we have decided to run again. hence the first release has not been updated but the data may have changed
 		if ( $updated_mlss_ids ) {
 			foreach my $updated_mlss_id ( @$updated_mlss_ids ) {
-				push( @release_mlsses, $mlssa->fetch_by_dbID($updated_mlss_id) );
-				$mlss_id_force{$updated_mlss_id} = 1;
+				$mlss_id_to_dump{$updated_mlss_id} = 1;
 			}
 		}	
 	}
@@ -92,7 +98,7 @@ sub fetch_input {
 	my (%dumps, @copy_jobs, %method_types);
 	foreach my $mlss ( @release_mlsses ) {
 		my $method_class = $mlss->method->class;
-		if ( $mlss_id_force{$mlss->dbID} || $mlss->first_release == $curr_release ) {
+		if ( $mlss_id_to_dump{$mlss->dbID} ) {
 			# new analysis/user defined mlss! must be dumped
 			if ( $method_class =~ /^GenomicAlign/ ) { # all alignments
 				push( @{$dumps{DumpMultiAlign}}, $mlss );
