@@ -182,10 +182,11 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::CopyTable',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
                 'dest_db_conn'  => '#curr_rel_db#',
-                'mode'          => 'replace',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/ENGINE=InnoDB/ENGINE=MyISAM/"',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
             -flow_into     => WHEN( '#analyze_optimize#' => ['analyze_optimize'] ),
