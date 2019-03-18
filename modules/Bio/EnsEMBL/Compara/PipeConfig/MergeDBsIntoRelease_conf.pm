@@ -58,7 +58,7 @@ sub default_options {
         'curr_rel_db'   => 'compara_curr',  # Again this is a URL or a registry name
 
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
-        'copying_capacity'  => 10,
+        'copying_capacity'  => 5,
 
         # Do we want ANALYZE TABLE and OPTIMIZE TABLE on the final tables ?
         'analyze_optimize'  => 1,
@@ -207,7 +207,6 @@ sub pipeline_analyses {
                 'mode'          => 'ignore',
                 'skip_disable_keys' => 1,
             },
-            -analysis_capacity => 5,                          
             -hive_capacity => $self->o('copying_capacity'),
         },
 
