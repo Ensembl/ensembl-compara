@@ -226,9 +226,8 @@ else {
     $compara_dba = $reg->get_DBAdaptor( $default_aln_alias, 'compara' );
 }
 
-# We get the DNA sequences from the genome dumps, except for the ancestral_sequences
+# We'll constantly be hitting the databases. Don't disconnect until the end
 map {$_->db_adaptor->dbc->disconnect_when_inactive(0)} @{$compara_dba->get_GenomeDBAdaptor->fetch_all};
-$compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly('ancestral_sequences')->db_adaptor->dbc->disconnect_when_inactive(0);
 $compara_dba->get_GenomeDBAdaptor->dump_dir_location($genome_dumps_dir);
 
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
