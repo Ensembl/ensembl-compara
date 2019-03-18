@@ -737,8 +737,11 @@ sub dumpVariation {
   my $synonyms = on_disk_set('synonyms');
   $sth = $conf->{'variation_dbh'}->prepare(qq(
       SELECT v.variation_id, vs.name
-       FROM variation v, variation_synonym vs
-      WHERE v.variation_id = vs.variation_id));
+       FROM variation v, variation_synonym vs, source s
+      WHERE v.variation_id = vs.variation_id
+        AND vs.source_id = s.source_id
+        AND s.name != 'dbSNP HGVS'
+      ));
   $sth->execute;
   while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
     set_add($synonyms,$variation_id,$syn_name);
