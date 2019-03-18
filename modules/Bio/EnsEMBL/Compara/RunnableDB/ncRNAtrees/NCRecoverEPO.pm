@@ -324,7 +324,7 @@ sub iterate_over_lowcov_mlsss {
     my @gab_ids;
     $self->param('low_cov_leaves_to_delete', []);
     foreach my $epo_low_mlss (@$epolow_mlsss) {
-        my $epo_hc_mlss = $self->param('epo_mlss_adaptor')->fetch_by_dbID($epo_low_mlss->get_value_for_tag('high_coverage_mlss_id'))
+        my $epo_hc_mlss = $epo_low_mlss->get_linked_mlss_by_tag('high_coverage_mlss_id')
             || die "Could not find the matching 'EPO' MLSS in ".$self->param('epo_db')."\n";
         my %hc_gdb_id = (map {$_->dbID => 1} @{$epo_hc_mlss->species_set->genome_dbs});
         my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @{$epo_low_mlss->species_set->genome_dbs};

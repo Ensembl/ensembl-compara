@@ -176,7 +176,7 @@ uses the Pecan alignments to infer the ancestral sequences.");
 sub _create_specific_epo_low_coverage_readme {
     my ($self, $compara_dba, $mlss, $species_set, $newick_species_tree, $mlss_adaptor) = @_;
 
-    my $high_coverage_mlss = $mlss_adaptor->fetch_by_dbID($mlss->get_value_for_tag('high_coverage_mlss_id'));
+    my $high_coverage_mlss = $mlss->get_linked_mlss_by_tag('high_coverage_mlss_id');
     my $high_coverage_species_set = $high_coverage_mlss->species_set->genome_dbs;
 
     my %high_coverage_species;
