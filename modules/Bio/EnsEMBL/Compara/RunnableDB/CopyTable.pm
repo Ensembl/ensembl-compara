@@ -57,14 +57,13 @@ sub run {
 	my $from_dbc   = $self->get_cached_compara_dba('src_db_conn')->dbc;
 	my $to_dbc     = $self->get_cached_compara_dba('dest_db_conn')->dbc;
 	my $table_name = $self->param('table');
-	my $query      = $self->param('query') ? $self->param('query') : "SELECT * FROM $table_name";
 	my $replace    = $self->param('mode') eq 'ignore' ? 0 : 1;
 
 	my $from_str = $from_dbc->host . '/' . $from_dbc->dbname;
 	my $to_str   = $to_dbc->host . '/' . $to_dbc->dbname;
-	$self->warning("Copying $table_name from $from_str to $to_str using query '$query'");
+	$self->warning("Copying $table_name from $from_str to $to_str");
 
-	copy_data( $from_dbc, $to_dbc, $table_name, $query, $replace, $self->param('skip_disable_keys'), $self->debug );
+	copy_table( $from_dbc, $to_dbc, $table_name, undef, $replace, $self->param('skip_disable_keys'), $self->debug );
 }
 
 1;
