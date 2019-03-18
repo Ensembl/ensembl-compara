@@ -274,6 +274,7 @@ my $compara_dbc = $compara_dba->dbc;
 print_header($species_scientific_name, $species_assembly, $compara_dbc, $mlss);
 
 my $slices = $slice_adaptor->fetch_all("toplevel", undef, 0, 1);
+my %karyo_slices = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_karyotype };
 my $step = 10000000;
 
 # sometimes too many files for a single directory will be created
@@ -285,7 +286,7 @@ foreach my $slice (@$slices) {
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
 
-  if ( $slice->has_karyotype ) { # one file per chr
+  if ( $karyo_slices{$slice->seq_region_name} ) { # one file per chr
       open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
       open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   } else { # one file per-coord_system for non-chromosomes
