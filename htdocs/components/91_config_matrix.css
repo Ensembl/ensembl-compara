@@ -353,7 +353,7 @@ div.xBoxes.track-off.render-normal.mClick         { background-image: url("/i/re
 div.track-popup                         { display: none; font-size: 11px; width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; }
 div.track-popup ul:last-child           { border-bottom: none; }
 
-div.config_wrapper div.config div.track-popup ul li:not(:first-child) { margin-left: 76px; }
+div.config_wrapper div.config div.track-popup ul li:not(:first-child) { margin-left: 75px; }
 div.config_wrapper div.config div.track-popup ul li                   { padding: 8px; margin-bottom: -15px; }
 div.config_wrapper div.config div.track-popup ul li text              { position: relative; top: 1px; left: 10px; }
 div.config_wrapper div.config div.track-popup ul                      { border-bottom: 1px solid #b7b7b7 ; padding-bottom: 20px;}
