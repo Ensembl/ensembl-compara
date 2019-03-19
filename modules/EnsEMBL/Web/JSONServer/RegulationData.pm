@@ -134,7 +134,7 @@ sub json_data {
 
   #use Data::Dumper;warn Dumper($cell_types);
   $final->{data}->{epigenome}->{'name'}   = 'epigenome';
-  $final->{data}->{epigenome}->{'label'}  = 'Epigenome';
+  $final->{data}->{epigenome}->{'label'}  = 'Cell/Tissue';
   $final->{data}->{epigenome}->{'data'} = $cell_types;
   $final->{data}->{epigenome}->{'listType'} = 'alphabetRibbon';
 

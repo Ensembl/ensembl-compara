@@ -193,8 +193,8 @@ sub cell_line_button {
 
   push @{$self->{'buttons'}||=[]},{
     url =>  $self->hub->url({'type' => 'Config', 'action' => $self->hub->type, 'function' => $components->[0]->[0]}).'#regulatory_features',
-    caption => "Select Epigenome",
-    class => 'cell-line config',
+    caption => "Configure Cell/Tissue",
+    class => 'config',
     rel => 'modal_config_'.lc($components->[0]->[0]),
     modal => 1
   };
