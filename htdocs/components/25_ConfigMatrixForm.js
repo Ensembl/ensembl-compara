@@ -80,6 +80,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.addExtraDimensions();
         this.goToUserLocation();
         this.resize();
+        this.updateSelectAll();
       },
       error: function() {
         this.showError();
@@ -344,12 +345,26 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   },
 
   updateSelectAll: function(tabContent) {
-    var lis_unselected = $(tabContent).find('li span.fancy-checkbox').not(".selected");
-    if (lis_unselected.length) {
-      $(tabContent).find('div.all-box span.fancy-checkbox').removeClass('selected');
-    }
-    else {
-      $(tabContent).find('div.all-box span.fancy-checkbox').addClass('selected');
+    var panel = this;
+
+    if(!tabContent) {
+      $.each(panel.selectedTracksCount, function(key, count) {
+        console.log(key)
+        if(panel.selectedTracksCount[key].selected.length === panel.selectedTracksCount[key].available) {
+          $('div#allBox-'+key+'-content span.fancy-checkbox').addClass('selected');
+        } else {
+          $('div#allBox-'+key+'-content span.fancy-checkbox').removeClass('selected');
+        }
+      });
+    } else {
+      var lis_unselected   = $(tabContent).find('li._filtered').length ? $(tabContent).find('li._filtered span.fancy-checkbox').not(".selected") : $(tabContent).find('li span.fancy-checkbox').not(".selected");
+
+      if (lis_unselected.length) {
+        $(tabContent).find('div.all-box span.fancy-checkbox').removeClass('selected');
+      }
+      else {
+        $(tabContent).find('div.all-box span.fancy-checkbox').addClass('selected');
+      }
     }
   },
 
