@@ -835,8 +835,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
 
       // Update all-box selected class based on selection
-      var lis_unselected = $(itemElements).closest('.tab-content').find('li span.fancy-checkbox').not(".selected");
-      var allBox = $(itemElements).closest('.tab-content').find('.all-box span.fancy-checkbox')
+      var lis_unselected = $(itemElements).closest('.tab-content').find('li._filtered') ?  $(itemElements).closest('.tab-content').find('li._filtered span.fancy-checkbox').not(".selected") : $(itemElements).closest('.tab-content').find('li span.fancy-checkbox').not(".selected");
+      var allBox = $(itemElements).closest('.tab-content').find('.all-box span.fancy-checkbox');
       lis_unselected.length ? allBox.removeClass('selected') : allBox.addClass('selected');
     }
   },
