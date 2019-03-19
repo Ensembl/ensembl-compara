@@ -1126,18 +1126,6 @@ sub add_regulation_builds {
 
   my (@renderers, %matrix_rows);
 
-  # FIXME: put this in db
-  my %default_evidence_types = (
-    CTCF     => 1,
-    DNase1   => 1,
-    H3K4me3  => 1,
-    H3K36me3 => 1,
-    H3K27me3 => 1,
-    H3K9me3  => 1,
-    PolII    => 1,
-    PolIII   => 1,
-  );
-
   if ($data->{$key_2}{'renderers'}) {
     push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
   } else {
@@ -1169,7 +1157,6 @@ sub add_regulation_builds {
                             row         => $_->name,
                             group       => $_->class,
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
-                            on          => $default_evidence_types{$_->name}
                           };
         }
       }
