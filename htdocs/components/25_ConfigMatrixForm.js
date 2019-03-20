@@ -349,7 +349,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     if(!tabContent) {
       $.each(panel.selectedTracksCount, function(key, count) {
-        console.log(key)
         if(panel.selectedTracksCount[key].selected.length === panel.selectedTracksCount[key].available) {
           $('div#allBox-'+key+'-content span.fancy-checkbox').addClass('selected');
         } else {
