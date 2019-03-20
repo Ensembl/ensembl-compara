@@ -464,7 +464,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     else {
       panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(this.getNewPanelHeight() - 140);
     }
-    panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 60);
+    panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 100);
   },
 
   getActiveTabContainer: function() {
