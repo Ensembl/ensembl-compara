@@ -34,7 +34,7 @@ The analysis "compute_synteny_start" can be seeded multiple times.
 Extra parameters like "level", "orient", "minSize1", etc, should also be given
 at the command-line level, and not in this file.
 
-Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <> -registry <>
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <>
 
 =head1 CONTACT
 
@@ -66,7 +66,6 @@ sub default_options {
             #'alignment_db' => undef,    # alignment database to calculate the syntenies from
             'ptree_db'     => undef,     # protein database to calculate the syntenies from
             'ortholog_method_link_types'  => ['ENSEMBL_ORTHOLOGUES'],
-            #'registry' => undef,        # needed to find the core databases (and also if "alignment_db" is a registry name (a division name, for instance))
 
             # Used to restrict the pipeline to 1 mlss_id
             'pairwise_mlss_id'  => undef,   # if undef, will use all the pairwise alignments found in the alignment db
@@ -113,7 +112,7 @@ sub pipeline_wide_parameters {
         'maxDist2' => $self->o('maxDist2'),
         'minSize2' => $self->o('minSize2'),
         'orient'   => $self->o('orient'),
-        'registry' => $self->o('registry'),
+        'registry' => $self->o('reg_conf'),
         'level'     => $self->o('level'),
         'include_non_karyotype' => $self->o('include_non_karyotype'),
 
@@ -171,7 +170,6 @@ sub pipeline_analyses {
             -parameters  => 
                 {
                     'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
-                    'registry'          => $self->o('registry'),
                     'from_first_release'    => $self->o('ensembl_release'),
                 },
             
@@ -216,7 +214,6 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes',
                 -parameters => {
                                 'species_name'          => '#ref_species#',
-#                                'registry'              => $self->o('registry'),
                                },
                 -flow_into => {
                                '2->A' =>  WHEN('defined(#ptree_db#)' => ['build_synteny'] ,
