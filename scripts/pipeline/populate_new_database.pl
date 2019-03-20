@@ -267,6 +267,7 @@ $new_dba->get_MetaContainer; # tests that the DB exists
 #Allow method_link_species_sets to be specified as either --mlss mlss1 --mlss mlss2 --mlss mlss3 or --mlss mlss1,mlss2,mlss3
 @$mlsss = split(/,/, join(',', @$mlsss));
 @$skip_mlsses = split(/,/, join(',', @$skip_mlsses)); # and for --skip_mlss
+my %skipped_mlss_ids = map {$_ => 1} @$skip_mlsses;
 
 # If neither --collection nor --mlss is given, only take current species
 my $filter_current = ($collection or scalar(@$mlsss)) ? 0 : 1;
@@ -282,7 +283,7 @@ my $all_default_species_sets = get_all_species_sets_with_tags($master_dba, $all_
 
 ## Don't copy stuff that will be regenerated
 my $rerun_tag = 'rerun_in_'.software_version();
-push @$skip_mlsses, map {$_->dbID} grep {$_->has_tag($rerun_tag)} @$all_default_method_link_species_sets;
+$skipped_mlss_ids{$_->dbID} = 1 for grep {$_->has_tag($rerun_tag)} @$all_default_method_link_species_sets;
 
 if($only_show_intentions) {
     print "GenomeDB entries to be copied:\n";
@@ -294,7 +295,7 @@ if($only_show_intentions) {
     foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
         $counts{$mlss->method->type}++;
         print "\t".$mlss->dbID.": ".$mlss->name;
-        print " (mlss entry only)" if defined $skip_mlsses && grep {$mlss->dbID == $_} @$skip_mlsses;
+        print " (mlss entry only)" if $skipped_mlss_ids{$mlss->dbID};
         print "\n";
     }
     print "Additional SpeciesSet entries to be copied:\n";
@@ -336,13 +337,8 @@ store_objects($new_dba->get_SpeciesSetAdaptor, $all_default_species_sets,
 copy_all_dnafrags($master_dba, $new_dba, $all_default_genome_dbs, $cellular_component);
 $master_dba->dbc->disconnect_if_idle;
 
-if ( $skip_mlsses ) {
-    my @filtered_mlsses;
-    foreach my $mlss_id ( @$all_default_method_link_species_sets ) {
-        push(@filtered_mlsses, $mlss_id) unless grep {$mlss_id == $_} @$skip_mlsses;
-    }
-    $all_default_method_link_species_sets = \@filtered_mlsses;
-}
+## Don't copy the data of the mlss_ids that are skipped
+$all_default_method_link_species_sets = [grep {!$skipped_mlss_ids{$_->dbID}} @$all_default_method_link_species_sets];
 
 if ($old_dba and !$skip_data) {
 ## Copy all the stable ID mapping entries
