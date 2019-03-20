@@ -133,36 +133,16 @@ sub pipeline_analyses {
 
     return [
 
-        {   -logic_name => 'copy_table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        {  -logic_name  => 'populate_new_database',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'inputlist' => [ 'method_link', 'species_set_header', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'genome_db' ],
-                'column_names' => [ 'table' ],
+                'program'   => $self->o('populate_new_database_program'),
+                'cmd'       => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--reg-conf', '#registry#'],
             },
-            -input_ids => [{}],
-            -flow_into => {
-                2 => { 'copy_table' => { 'table' => '#table#' } },
-            },
-        },
-
-        {   -logic_name    => 'copy_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => '#master_db#',
-                'mode'          => 'overwrite',
-                'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
-            },
-            -analysis_capacity => 10,
-        },
-
-        {
-          -logic_name => 'syntheny_pipeline_entry_pt',
-          -module     =>  'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-          -input_ids   => [{'ortholog_mlss_id'    => $self->o('ortholog_mlss_id'),}],
-          -flow_into  => {
-            1   => WHEN('defined (#ptree_db#)' => ['compute_synteny_start_using_orthologs'] ,
-                    ELSE ['compute_synteny_start_using_alignments']),
-          },
+            -input_ids  => [{}],
+            -flow_into  => WHEN( 'defined (#ptree_db#)' => ['compute_synteny_start_using_orthologs'] ,
+                                 ELSE ['compute_synteny_start_using_alignments']
+                             ),
         },
 
         {   -logic_name => 'compute_synteny_start_using_alignments',
@@ -173,7 +153,6 @@ sub pipeline_analyses {
                     'from_first_release'    => $self->o('ensembl_release'),
                 },
             
-            -wait_for   => [ 'copy_table', 'copy_table_factory' ],
             -flow_into  => {
                 2 => 'create_work_dir',
             },
@@ -181,7 +160,12 @@ sub pipeline_analyses {
 
         {   -logic_name => 'compute_synteny_start_using_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::FetchSyntenyParametersOrthologs',
-            -wait_for   => [ 'copy_table', 'copy_table_factory' ],
+            -parameters =>
+                {
+                    'ortholog_mlss_id'    => $self->o('ortholog_mlss_id'),
+                    'from_first_release'    => $self->o('ensembl_release'),
+                },
+
             -flow_into  => {
                 2 => 'create_work_dir',
             },
