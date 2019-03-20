@@ -202,7 +202,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_ncbi_tables_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name', 'method_link', 'species_set_header', 'species_set', 'method_link_species_set' ],
+                'inputlist'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
                 'column_names' => [ 'table' ],
             },
             -flow_into => {
@@ -232,7 +232,6 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                     'ALTER TABLE species_set_header      AUTO_INCREMENT=10000001',
-                    'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
                 ],
             },
             -flow_into      => [ 'load_genomedb_factory' ],
