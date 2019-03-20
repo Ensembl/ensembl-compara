@@ -355,7 +355,7 @@ div.track-popup ul:last-child           { border-bottom: none; }
 
 div.config_wrapper div.config div.track-popup ul li:not(:first-child) { margin-left: 75px; }
 div.config_wrapper div.config div.track-popup ul li                   { padding: 8px; margin-bottom: -15px; }
-div.config_wrapper div.config div.track-popup ul li text              { position: relative; top: 1px; left: 10px; }
+div.config_wrapper div.config div.track-popup ul li text              { position: relative; top: -2px; left: 2px; }
 div.config_wrapper div.config div.track-popup ul                      { border-bottom: 1px solid #b7b7b7 ; padding-bottom: 20px;}
 
 div.config_wrapper div.config div.xBoxes img            { width: 30px; height: 30px; padding: 0px; }
