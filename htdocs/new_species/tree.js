@@ -188,12 +188,12 @@ else {
       if(!source._children && !source.children) {
         document.getElementById('sci').innerHTML = '(' + source.name + ')';
         document.getElementById('common').innerHTML = source.display_name;
-        document.getElementById('img').src = 'http://www.ensembl.org/i/species/' + source.name + '.png';
+        document.getElementById('img').src = '/i/species/' + source.name + '.png';
       }
       else {
         document.getElementById('sci').innerHTML = source.name;
         document.getElementById('common').innerHTML = '';
-        document.getElementById('img').src = 'http://www.ensembl.org/i/e-bang.gif';
+        document.getElementById('img').src = '/i/e-bang.gif';
       }
     }
 
@@ -238,7 +238,7 @@ else {
         };
         childCount(0, root);
         root.total = root.total || 1;
-        var newHeight = d3.max(levelWidth) * (root.total > 50 ? 25 : viewerHeight/(root.total) - 25); // 25 pixels per line  
+        var newHeight = d3.max(levelWidth) * (root.total > 50 ? 25 : viewerHeight/(root.total)); // 25 pixels per line  
         tree = tree.size([newHeight, viewerWidth]);
 
         // Compute the new tree layout.
@@ -289,7 +289,7 @@ else {
             .style("fill-opacity", 0);
 
         nodeEnter.append("image")
-            .attr("xlink:href", function(d) { if (!d.children) return 'http://www.ensembl.org/i/species/' + d.name + '.png' })
+            .attr("xlink:href", function(d) { if (!d.children) return '/i/species/' + d.name + '.png' })
             .attr("x", "-6px")
             .attr("y", "-6px")
             .attr("width", "12px")
