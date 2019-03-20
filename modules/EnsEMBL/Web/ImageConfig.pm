@@ -224,11 +224,28 @@ sub reset_user_settings {
   ## Abstract method implementation
   my $self          = shift;
   my $reset_type    = shift || '';
+  my $params        = shift || {};
   my $user_settings = $self->get_user_settings;
-
-  my ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
+  my ($reset_tracks, $reset_order);
 
   my @altered;
+
+  if ($reset_type eq 'reg_matrix') {
+    if (grep {$_ =~ /^(reg_feats|seg_Segmentation)/} keys %$params) {
+      # Reset all reg matrix tracks
+      foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
+        if ($node_key =~/^reg_feats|^seg_Segmentation/) {
+          if (my $node = $self->get_node($node_key)) {
+            $node->reset_user_settings;
+            push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
+          }
+        }
+      }
+    }
+  }
+  else {
+    ($reset_tracks, $reset_order) = $reset_type eq 'all' ? (1, 1) : ($reset_type eq 'track_order' ? (0, 1) : (1, 0));
+  }
 
   if ($reset_order && @{$self->{'track_order'}}) {
     $self->{'track_order'} = [];
@@ -297,7 +314,11 @@ sub update_from_input {
   } else {
     my $diff = delete $params->{$self->config_type};
 
+    # Reset regulation matrix tracks by default 
+    $self->altered($self->reset_user_settings('reg_matrix', $diff));
+
     if (keys %$diff) {
+
       # update renderers
       foreach my $track_key (grep exists $diff->{$_}{'renderer'}, keys %$diff) {
         $self->altered($self->update_track_renderer($track_key, $diff->{$track_key}{'renderer'}));

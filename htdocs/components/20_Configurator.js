@@ -45,6 +45,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
     Ensembl.EventManager.register('resetConfig',         this, this.externalReset);
     Ensembl.EventManager.register('refreshConfigList',   this, this.refreshConfigList);
+    Ensembl.EventManager.register('changeMatrixTrackRenderers', this, this.changeMatrixTrackRenderers);
   },
   
   init: function () {
@@ -119,7 +120,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     }
-    
+
     this.elLk.tracks.each(function () {
       var track = panel.tracks[this.id];
       track.el = $(this).data('track', track).removeAttr('id');
@@ -139,6 +140,9 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     .on('click', '.popup_menu li',                         $.proxy(this.setTrackConfig, this)) // Popup menus - setting values
     .on('click', '.config_header', function () {                                               // Header on search results and active tracks sections will act like the links on the left
       $('a.' + this.parentNode.className.replace(/\s*config\s*/, ''), panel.elLk.links).trigger('click');
+      return false;
+    }).on('click', '.matrix_link', function () {
+      $('a.regulatory_features', panel.elLk.links).trigger('click');
       return false;
     }).on('click', '.favourite', function () {
       var track = $(this).parents('li.track').data('track');
@@ -379,6 +383,18 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     popup = track = target = null;
     
     return false;
+  },
+
+  // e.g. data = {"seg_Segmentation_astrocyte":{"renderer":"off"},"reg_feats_astrocyte":{"renderer":"normal"}
+  changeMatrixTrackRenderers: function(trackData) {
+    var panel = this;
+    var trackData;
+    $.each(trackData, function(key, val) {
+      if (panel.tracks[key]) {
+        trackData = $(panel.tracks[key].el).data();
+        trackData.track.renderer = val.renderer || 'off' ;
+      }
+    })
   },
   
   changeTrackRenderer: function (tracks, renderer, updateCount, isConfigMatrix) {
@@ -800,6 +816,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
             return findActive.call(this);
           }).removeClass('active');
         } else {
+          if (configDiv.hasClass('functional') && !subset) {
+            // Hide tracks that are configured using matrix
+            configDiv.children('.subset').each( function() {
+              if (this.className.match(/regulatory_features/)) {
+                var ul = this.childNodes[1];
+                ul.hidden = true;
+              }
+            });
+          }
           configDiv.children().map(function () {
             show.call(this);
             return findActive.call(this);
@@ -832,14 +857,15 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     if ($('input.invalid', this.elLk.form).length) {
       return;
     }
-    
+
     var panel       = this;
     var diff        = false;
     var imageConfig = {};
     var viewConfig  = {};
-    
+
     $.each(this.subPanels, function (i, id) {
       var conf = Ensembl.EventManager.triggerSpecific('updateConfiguration', id, id, true);
+
       if (conf) {
         $.extend(viewConfig,  conf.viewConfig);
         $.extend(imageConfig, conf.imageConfig);
@@ -867,7 +893,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     });
-    
+
     this.elLk.viewConfigInputs.each(function () {
       if (viewConfig[this.name] && viewConfig[this.name] !== 'off') {
         return;
@@ -887,6 +913,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
         }
       }
     });
+
     if (diff === true || typeof saveAs !== 'undefined') {
 
       if (saveAs === true) {
@@ -895,7 +922,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
 
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
-      
+
       this.updatePage($.extend(saveAs, { image_config: JSON.stringify(imageConfig), view_config: JSON.stringify(viewConfig) }), delayReload);
       
       return diff;

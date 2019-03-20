@@ -58,7 +58,7 @@ sub init_cacheable {
   $self->modify_configs([ 'transcript' ], { render => 'gene_label', strand => 'r' });
   $self->modify_configs([ 'variation',  'variation_legend', 'structural_variation_legend',
                           'functional_other_regulatory_regions', 'functional_dna_methylation',
-                          'reg_features', 'seg_features', 'reg_feats_core', 'reg_feats_non_core' ], 
+                          'regulatory_features' ], 
                               { display => 'off', menu => 'no' });
 
   $self->add_tracks('decorations',

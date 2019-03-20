@@ -594,6 +594,7 @@ sub init_label {
   my $strand_map= { '1' => 'f', '-1' => 'r' };
   my $strand    = $node->get('drawing_strand') && $self->strand ? $strand_map->{$self->strand} : '';
   my $highlight_track_uniq_id = $strand ? "$track." . $strand : $track;
+  my $matrix_cell = $node->get('matrix_cell') ? 1 : 0;
 
   $self->{'track_highlight_class'} = $highlight_track_uniq_id;
 
@@ -651,6 +652,7 @@ sub init_label {
       off             => "$url;$track=off",
       conf_url        => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
       subset          => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
+      matrix_cell     => $matrix_cell,
     };
   }
  

@@ -155,12 +155,12 @@ sub _add_track {
     %$options
   };
 
-  $self->_add_matrix($data, $menu) if $data->{'matrix'};
+  $self->_add_to_matrix($data, $menu) if $data->{'matrix'};
 
   return $menu->append_child($self->create_track_node($name, $data->{'name'}, $data));
 }
 
-sub _add_matrix {
+sub _add_to_matrix {
   my ($self, $data, $menu) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
@@ -178,7 +178,7 @@ sub _add_matrix {
       c_header    => $matrix->{'column_label'},
       display     => 'off',
       subset      => $subset,
-      $matrix->{'row'} ? (matrix => 'column') : (),
+      $matrix->{'row'} ? (matrix => 'column') : (matrix => 1), 
       column_order => $matrix->{'column_order'} || 999999,
       %{$data->{'column_data'} || {}}
     });
@@ -942,12 +942,14 @@ sub add_alignments {
 # Functions to add tracks from functional genomics like database       #
 #----------------------------------------------------------------------#
 
-# needs configuring so tracks only display if data in species fg_database
 sub add_regulation_features {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('functional');
 
   return unless $menu;
+
+  my $db  = $self->hub->database('funcgen', $self->species);
+  return unless $db;
 
   my $reg_regions       = $menu->append_child($self->create_menu_node('functional_other_regulatory_regions', 'Other regulatory regions'));
 
@@ -999,7 +1001,7 @@ sub add_regulation_features {
   }
 
   # Add other bigBed-based tracks
-  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
+  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA methylation'));
   my $db_tables         = {};
   if ( $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
@@ -1035,8 +1037,9 @@ sub add_regulation_features {
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
 
-  ## Add motif features
-  my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features', {
+  ## Add motif features if required
+  if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
+    my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
       db          => $key,
       glyphset    => 'fg_motif_features',
       sources     => 'undef',
@@ -1045,34 +1048,32 @@ sub add_regulation_features {
       depth       => 1,
       colourset   => 'fg_motif_features',
       display     => 'off',
-      description => 'Transcription Factor Binding Motif sites. Black denotes motif features that have a matching peak (experimentally verified); they are also displayed on the epigenome activity tracks. Grey ones do not have a matching peak, and are displayed in this track only.',
+      description => 'Transcription Factor Binding Motif sites', 
       renderers   => ['off', 'Off', 'compact', 'Compact'],
-  }));
-  $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+    });
+    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+  }
+
 }
 
 sub add_regulation_builds {
   my ($self, $key, $hashref,$species,$params) = @_;
-  my $menu = $self->get_node('functional');
+  my $reg_menu = $self->get_node('functional');
+  return unless $reg_menu;
 
-  return unless $menu;
+  my $hub = $self->hub;
+  my $db  = $hub->database('funcgen', $self->species);
+  return unless $db;
 
   my ($keys, $data) = $self->_merge($hashref->{'regulatory_build'});
   my $key_2         = 'Regulatory_Build';
   my $build         = $data->{$key_2};
   my $type          = $data->{$key_2}{'type'};
-
   return unless $type;
 
-  my $hub = $self->hub;
-  my $db  = $hub->database('funcgen', $self->species);
-
-  return unless $db;
-
-  $menu = $menu->append_child($self->create_menu_node('regulatory_features', 'Regulatory features'));
-
   ## Main regulation track - replaces 'MultiCell'
-  $menu->append_child($self->create_track_node("regbuild", "Regulatory Build", {
+  my $build_menu  = $reg_menu->append_child($self->create_menu_node('regbuild', 'Regulatory Build'));
+  $build_menu->append_child($self->create_track_node("regulatory_build", "Regulatory Build", {
     glyphset    => 'fg_regulatory_features',
     sources     => 'undef',
     strand      => 'r',
@@ -1085,17 +1086,34 @@ sub add_regulation_builds {
     caption     => 'Regulatory Build',
   }));
 
-  my $db_tables     = {};
-  if ( defined $self->databases->{'DATABASE_FUNCGEN'} ) {
-    $db_tables      = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  }
+  my $db_tables = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+
+  #######  NOW DO BIG MATRIX NODE!
+
+  my $menu_title    = 'Features by Cell/Tissue';
+  my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
+      {
+        menu   => 'matrix',
+        url    => $hub->url('Config', { 'matrix' => 'RegMatrix', 'menu' => "regulatory_features" }),
+        matrix => {
+          section     => $menu_title,
+          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'core'},
+          axes        => { x => 'Cell/Tissue', y => 'Experiments' },
+        }
+  }));
+
+
+# =pod
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
+# =cut
+
   my $adaptor       = $db->get_FeatureTypeAdaptor;
-  my $evidence_info = $adaptor->get_regulatory_evidence_info;
+  my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
 
   my (@cell_lines, %cell_names, %epi_desc, %regbuild);
-
+  
+  #get all cell types
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     (my $name = $_) =~ s/:\w+$//;
     push @cell_lines, $name;
@@ -1106,19 +1124,7 @@ sub add_regulation_builds {
   }
   @cell_lines = sort { lc $a cmp lc $b } @cell_lines;
 
-  my (@renderers, %matrix_menus, %matrix_rows);
-
-  # FIXME: put this in db
-  my %default_evidence_types = (
-    CTCF     => 1,
-    DNase1   => 1,
-    H3K4me3  => 1,
-    H3K36me3 => 1,
-    H3K27me3 => 1,
-    H3K9me3  => 1,
-    PolII    => 1,
-    PolIII   => 1,
-  );
+  my (@renderers, %matrix_rows);
 
   if ($data->{$key_2}{'renderers'}) {
     push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
@@ -1127,58 +1133,37 @@ sub add_regulation_builds {
   }
 
   my %all_types;
-  foreach my $set (qw(core non_core)) {
-    $all_types{$set} = [];
+  my @sets = qw(core non_core);
+  foreach my $set (@sets) {
     foreach (@{$evidence_info->{$set}{'classes'}}) {
       foreach (@{$adaptor->fetch_all_by_class($_)}) {
-        push @{$all_types{$set}},$_;
+        push @{$all_types{$set}}, $_;
       }
     }
   }
 
-  my @sets = qw(core non_core);
-
   foreach my $cell_line (@cell_lines) {
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my $set_info;
-    $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$cell_line} || {};
-    $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$cell_line}      || {};
+    my $set_info = {
+                    'core'      => $db_tables->{'feature_types'}{'core'}{$cell_line} || {},
+                    'non_core'  => $db_tables->{'feature_types'}{'non_core'}{$cell_line} || {}
+                    };
   
-    #use Data::Dumper; 
-    #$Data::Dumper::Maxdepth = 2;
-    #warn Dumper($set_info->{'core'});
-
-    my $core_count      = scalar keys %{$set_info->{'core'}};
-    my $non_core_count  = scalar keys %{$set_info->{'non_core'}};
-
     foreach my $set (@sets) {
-      $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
-        menu   => 'matrix',
-        url    => $hub->url('Config', { 'matrix' => 1, 'menu' => "reg_feats_$set" }),
-        matrix => {
-          section     => $menu->data->{'caption'},
-          header      => $evidence_info->{$set}{'long_name'},
-          description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
-          axes        => { x => 'Cell type', y => 'Evidence type' },
-        }
-      }];
-
-      foreach (@{$all_types{$set}||[]}) {
-        #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
+      foreach (@{$all_types{$set}||[]})  {
+      #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
           $matrix_rows{$cell_line}{$set}{$_->name} ||= {
                             row         => $_->name,
                             group       => $_->class,
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
-                            on          => $default_evidence_types{$_->name}
                           };
         }
       }
     }
   }
 
-  $matrix_menus{$_} = $menu->after($self->create_menu_node(@{$matrix_menus{$_}})) for 'non_core', 'core';
-
+# =pod
   # Segmentation tracks
   my $segs = $hashref->{'segmentation'};
 
@@ -1205,15 +1190,19 @@ sub add_regulation_builds {
       caption       => "Segmentation features",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       section       => $segs->{$key}{'web'}{'celltypename'},
+      matrix_cell   => 1,
       height        => 4,
     }));
   }
+# =cut
+
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
     my $label     = ": $cell_line";
     my %evidence_tracks;
 
+# =pod
     ## Only add regulatory features if they're in the main build
     if ($regbuild{$cell_line}) {
 
@@ -1232,8 +1221,10 @@ sub add_regulation_builds {
         section       => $cell_names{$cell_line},
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
         caption       => "Epigenome Activity",
+        matrix_cell   => 1,
       }));
     }
+# =cut
 
     my %column_data = (
       db        => $key,
@@ -1253,12 +1244,14 @@ sub add_regulation_builds {
     );
 
     next if $params->{'reg_minimal'};
-    foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
-      $self->_add_matrix({
+    
+    foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
+      # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
+      $self->_add_to_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         section     => $cell_line,
         matrix      => {
-                        menu          => $matrix_menus{$_}->id,
+                        menu          => "reg_feats_". $_,
                         column        => $cell_line,
                         column_label  => $cell_names{$cell_line},
                         section       => $cell_line,
@@ -1270,7 +1263,7 @@ sub add_regulation_builds {
                         description => $data->{$key_2}{'description'}{$_},
                         %column_data
                         },
-      }, $matrix_menus{$_});
+      }, $menu);
     }
   }
 

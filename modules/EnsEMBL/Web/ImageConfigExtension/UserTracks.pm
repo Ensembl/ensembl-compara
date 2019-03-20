@@ -481,6 +481,7 @@ sub _add_trackhub_tracks {
 
   foreach my $set (@{$tracksets||[]}) {
     my %tracks;
+    my $submenu;
 
     my %options = (
       menu_key      => $name,
@@ -514,42 +515,41 @@ sub _add_trackhub_tracks {
 
         $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
       }
+    }
+    ## Check if this submenu already exists (quite possible for trackhubs)
+    $submenu = $self->get_node($options{'submenu_key'});
+    unless ($submenu) { 
+      $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
+        external    => 1,
+        description => $options{'submenu_desc'},
+        ($do_matrix ? (
+          menu   => 'matrix',
+          url    => $options{'matrix_url'},
+          matrix => {
+            section     => $menu->data->{'caption'},
+            header      => $options{'submenu_name'},
+            desc_url    => $config->{'description_url'},
+            description => $config->{'longLabel'},
+            axes        => $options{'axes'},
+          }
+        ) : ())
+      });
 
-      ## Check if this submenu already exists (quite possible for trackhubs)
-      my $submenu = $self->get_node($options{'submenu_key'});
-      unless ($submenu) { 
-        $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
-          external    => 1,
-          description => $options{'submenu_desc'},
-          ($do_matrix ? (
-            menu   => 'matrix',
-            url    => $options{'matrix_url'},
-            matrix => {
-              section     => $menu->data->{'caption'},
-              header      => $options{'submenu_name'},
-              desc_url    => $config->{'description_url'},
-              description => $config->{'longLabel'},
-              axes        => $options{'axes'},
-            }
-          ) : ())
-        });
+      $menu->append_child($submenu, $options{'submenu_key'});
+    }
 
-        $menu->append_child($submenu, $options{'submenu_key'});
+    ## Set up sections within supertracks (applies mainly to composite tracks)
+    my $subsection;
+    if ($set->{'submenu_key'}) {
+      my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
+      my $name  = strip_HTML($set->{'submenu_name'});
+      $subsection = $self->get_node($key);
+      unless ($subsection) {
+        $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
+        $submenu->append_child($subsection, $key);
       }
-
-      ## Set up sections within supertracks (applies mainly to composite tracks)
-      my $subsection;
-      if ($set->{'submenu_key'}) {
-        my $key   = clean_id("${name}_$set->{'submenu_key'}", '\W');
-        my $name  = strip_HTML($set->{'submenu_name'});
-        $subsection = $self->get_node($key);
-        unless ($subsection) {
-          $subsection = $self->create_menu_node($key, $name, {'external' => 1}); 
-          $submenu->append_child($subsection, $key);
-        }
-        $options{'submenu_key'}   = $key;
-        $options{'submenu_name'}  = $name;
-      }
+      $options{'submenu_key'}   = $key;
+      $options{'submenu_name'}  = $name;
     }
 
     my $style_mappings = {
@@ -589,7 +589,6 @@ sub _add_trackhub_tracks {
 
     foreach (@{$children||[]}) {
       my $track = $_->data;
-
       (my $source_name = strip_HTML($track->{'shortLabel'})) =~ s/_/ /g;
       ## Note that we use a duplicate value in description and longLabel, because non-hub files
       ## often have much longer descriptions so we need to distinguish the two

@@ -26,12 +26,12 @@ body.modal-open {
   left: 0;
   height: 100%;
   width: 100%;
-  background-color: [[MAIN_V_DARK]];
+  background-color: [[BLACK]];
   text-align: center;
   vertical-align: middle;
   display: none;
   z-index: 1000;
-  opacity: 0.25; filter: Alpha(Opacity=25);
+  opacity: 0.5; filter: Alpha(Opacity=50);
 }
 
 #modal_panel                  { position: fixed; left: auto; top: auto; text-align: left; background-color: [[WHITE]]; margin: 0; padding: 0; display: none; z-index: 1001; zoom: 1; }
