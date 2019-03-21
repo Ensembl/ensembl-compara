@@ -1262,10 +1262,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     
     if(panel.el.find('div.track-configuration:visible').length){
-      panel.el.find('button.view-track').addClass('active');
       panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").html("View tracks");
     } else {
-      panel.el.find('button.view-track').removeClass('active');
       panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
     }
   },
