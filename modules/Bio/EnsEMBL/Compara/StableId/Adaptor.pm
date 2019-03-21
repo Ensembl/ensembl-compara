@@ -417,7 +417,7 @@ sub get_mapping_session_id {
   }
 
   if($dbc != $master_dbc) {   # replicate it in the release database:
-      my $ms_sth2 = $dbc->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
+      my $ms_sth2 = $dbc->prepare( "REPLACE INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
       $ms_sth2->execute($mapping_session_id, $fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
       $ms_sth2->finish();
   }
