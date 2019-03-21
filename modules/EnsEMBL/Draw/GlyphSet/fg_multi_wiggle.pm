@@ -243,22 +243,11 @@ sub get_features {
       $subtrack->{'metadata'}{'feature_height'} = 8;
       my $features = $dataset->{$f_set};
       foreach my $f (@$features) {
-        ## Create motif features
-        my $structure = [];
-        my @loci = @{$f->get_underlying_structure};
-        my $end  = pop @loci;
-        my ($start, @mf_loci) = @loci;
-
-        while (my ($mf_start, $mf_end) = splice @mf_loci, 0, 2) {
-          push @$structure, {'start' => $mf_start, 'end' => $mf_end};
-        }
-  
         my $href = $self->_block_zmenu($f);
         my $hash = {
                     start     => $f->start,
                     end       => $f->end,
                     midpoint  => $f->summit,
-                    structure => $structure, 
                     label     => $label,
                     href      => $href,
                     };
