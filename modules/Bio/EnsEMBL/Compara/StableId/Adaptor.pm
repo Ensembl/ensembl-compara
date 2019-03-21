@@ -307,6 +307,7 @@ sub store_map {
     foreach my $clid (@{ $map->get_all_clids }) {
 
         my ($stid, $ver) = split(/\./, $map->clid2clname($clid));
+        die "The version must be set in $clid ".$map->clid2clname($clid) unless defined $ver;
 
         $sth->execute($stid, $ver, $clid);
         unless(++$counter % $step) {
