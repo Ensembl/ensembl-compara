@@ -31,25 +31,25 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-my $curr_release = 95;
+my $curr_release = 96;
 my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # most cores are on EG servers, but some are on ensembl's vertannot-staging
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-eg-prod-2:4239/$curr_release");
-Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # never use EG's version of yeast
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
+#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # never use EG's version of yeast
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by LoadMembers only
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-
+=head
 my $suffix_separator = '__cut_here__';
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-ens-mirror-3',
-    -port   => 4275,
+    -host   => 'mysql-eg-mirror',
+    -port   => 4157,
     -user   => 'ensro',
     -pass   => '',
     -db_version     => $prev_release,
@@ -57,36 +57,36 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
 );
 Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-ens-mirror-1',
+    -host   => 'mysql-ensembl-mirror',
     -port   => 4240,
     -user   => 'ensro',
     -pass   => '',
     -db_version     => $prev_release,
     -species_suffix => $suffix_separator.$prev_release,
 );
-
+=cut
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_42_95' ],
-    'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_41_94' ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_43_96' ],
+    'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_42_95' ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-2', 'muffato_load_members_95_plants'  ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'mateus_plants_prottrees_42_95' ],
-    'ptrees_prev'      => [ 'mysql-ens-compara-prod-4', 'carlac_plants_prottrees_41_94_B' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'waakanni_plants_load_members96'  ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'waakanni_plants_protein_trees_96' ],
+    'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'mateus_plants_prottrees_42_95' ],
 
     # LASTZ dbs
-    'lastz_a' => [ 'mysql-ens-compara-prod-8', 'carlac_plants_lastz_batch1_95' ],
-    'lastz_b' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_b_95' ],
-    'lastz_c' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_c_95' ],
-    'lastz_lang_rerun' => [ 'mysql-ens-compara-prod-8', 'carlac_plants_lastz_lang_rerun_95' ],
+    'lastz' => [ 'mysql-ens-compara-prod-7', 'waakanni_lastz_plants_96' ],
+#    'lastz_b' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_b_95' ],
+#    'lastz_c' => [ 'mysql-ens-compara-prod-6', 'muffato_plants_lastz_c_95' ],
+#    'lastz_lang_rerun' => [ 'mysql-ens-compara-prod-8', 'carlac_plants_lastz_lang_rerun_95' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'mateus_synteny_plants_42_95' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-6', 'waakanni_synteny_plants_43_96' ],
 }; 
 
 add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
