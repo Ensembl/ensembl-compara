@@ -409,11 +409,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             key = '';
             arr = k.split('_sep_');
             key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
-            config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
+            config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
 
             if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
               key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-              config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off'};
+              config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off'};
             }
           }
         }
@@ -430,11 +430,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           key = '';
           arr = k.split('_sep_');
           key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label;
-          config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off' };
+          config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
 
           if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
             key = panel.elLk.lookup[arr[0]].set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-            config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off'};
+            config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off'};
           }
         }
       }
