@@ -214,8 +214,16 @@ our $config = {
     stable_id_mapping => {
         tests => [
             {
+                description => 'All the trees should have a "real" stable_id, not Node_12345',
+                query => 'SELECT root_id FROM gene_tree_root WHERE stable_id LIKE "Node%"',
+            },
+            {
+                description => 'The version must be filled for the trees that have an Ensembl stable_id and empty for the other rows',
+                query => 'SELECT root_id FROM gene_tree_root WHERE stable_id LIKE "E%" XOR version IS NOT NULL',
+            },
+            {
                 description => 'There are stable IDs coming from at least 2 releases (Have you configured "mapping_db" correctly ?)',
-                query => 'SELECT DISTINCT LEFT(stable_id, 9) AS prefix FROM gene_tree_root WHERE stable_id IS NOT NULL',
+                query => 'SELECT DISTINCT LEFT(stable_id, 9) AS prefix FROM gene_tree_root WHERE stable_id LIKE "E%"',
                 expected_size => '>= 2',
             },
         ],
