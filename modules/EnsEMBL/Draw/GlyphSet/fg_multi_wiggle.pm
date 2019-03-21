@@ -206,7 +206,7 @@ sub _block_zmenu {
     action    => 'FeatureEvidence',
     fdb       => 'funcgen',
     pos       => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
-    fs        => $f->fetch_PeakCalling->name,
+    fs        => $f->get_PeakCalling->name,
 
     ps        => $f->summit || 'undetermined',
     act       => $component,

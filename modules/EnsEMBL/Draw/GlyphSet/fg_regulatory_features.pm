@@ -215,15 +215,15 @@ sub get_structure {
     }
 
     unless ($mfs) {
-      $mfs = eval { $f->fetch_all_MotifFeatures_with_matching_Peak; };
+      $mfs = eval { $f->get_all_experimentally_verified_MotifFeatures; };
       ## Cache motif features in case we need to draw another regfeats track
       $self->feature_cache($cache_key, $mfs);
     }
 
     ## Get peaks that overlap this epigenome
     foreach (@$mfs) {
-      my $peak = $_->fetch_overlapping_Peak_by_Epigenome($epigenome);
-      if ($peak) {
+      my $peaks = $_->get_all_overlapping_Peaks_by_Epigenome($epigenome);
+      if (scalar @{$peaks||[]}) {
         push @$extra_blocks, {
                               start   => $_->start - $slice->start, 
                               end     => $_->end - $slice->start,
