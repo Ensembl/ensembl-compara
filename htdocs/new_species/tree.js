@@ -31,7 +31,7 @@ function draw(release) {
     var url = '/Json/NewSpecies/data?release='+ release +';format=d3'
     // Get JSON data
     treeJSON = d3.json(url, function(error, treeData) {
-
+        document.getElementById('msg').innerHTML = '';
         if (!!!release) {
           document.getElementById('footer-msg').innerHTML = 'All species in e!';
         }
