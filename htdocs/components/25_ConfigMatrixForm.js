@@ -783,6 +783,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.enableConfigureButton('div#dx, div#source');
     if (Object.keys(panel.localStoreObj).length > 0 && panel.localStoreObj.dx) {
       panel.emptyMatrix();
+      // This mehod is called here only to update localStorage so that if an epigenome is selected, users can still view tracks
+      // If this becomes a performance issue, separate localStorage and matrix drawing in displayMatrix method
       panel.displayMatrix();
     }
   },
@@ -1260,7 +1262,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     panel.toggleButton();
     panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
-    if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) { panel.emptyMatrix(); panel.displayMatrix(); }
+
+    if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {
+      panel.emptyMatrix();
+      panel.displayMatrix();
+      panel.elLk.resetTrackButton.hide(); //hiding reset tracks button (only visible on select tracks tab)
+    }
   },
 
   toggleButton: function() {
@@ -1618,7 +1625,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
 
     panel.trackPopup = panel.el.find('div.track-popup');
-    panel.elLk.resetTrackButton.hide(); //hiding reset tracks button (only visible on select tracks tab)
 
     var xContainer = '<div  class="xContainer">';
     
