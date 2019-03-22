@@ -314,6 +314,10 @@ sub _writeMultiFastaAlignment {
     # Disconnecting
     $self->compara_dba->dbc->disconnect_if_idle();
 
+    # Analysis of the alignment
+    my %genome_count;
+    my @seq_array;
+
     foreach my $this_segment (@$segments) {
 
         #my $seq_name = $genomic_align->dnafrag->genome_db->name;
@@ -325,11 +329,14 @@ sub _writeMultiFastaAlignment {
         my $seq_name;
         if (UNIVERSAL::isa($this_segment, "Bio::EnsEMBL::Compara::GenomicAlignTree")) {
           $seq_name = $this_segment->name;
+          $genome_count{ $this_segment->genomic_align_group->genome_db->dbID } = 1;
         } else {
           $seq_name = _get_name_from_GenomicAlign($this_segment);
+          $genome_count{ $this_segment->genome_db->dbID } = 1;
         }
 
         my $aligned_sequence = $this_segment->aligned_sequence;
+        push @seq_array, $aligned_sequence;
         $aligned_sequence =~ s/(.{80})/$1\n/g;
         $aligned_sequence =~ s/\./\-/g;
         chomp($aligned_sequence);
@@ -339,6 +346,17 @@ sub _writeMultiFastaAlignment {
     }
 
     close ALIGN;
+
+    $self->param('num_genome_dbs', scalar(keys %genome_count));
+
+    my %per_col_count;
+    foreach my $i (0..(length($seq_array[0])-1)) {
+        my $n_with_seq = scalar(grep {($_ ne '-') && ($_ ne '.') && ($_ ne 'N')} map {substr($_, $i, 1)} @seq_array);
+        $per_col_count{$n_with_seq}++
+    }
+    # Low counts are discarded because they may be too spread to contribute anyway
+    my @sorted_seq_counts = sort {$b <=> $a} grep {$per_col_count{$_} >= 5} keys %per_col_count;
+    $self->param('max_actual_seq', $sorted_seq_counts[0]);
 }
 
 sub free_aligned_sequence {
@@ -570,6 +588,7 @@ sub _parse_rates_file {
     my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
     my $gab = $gaba->fetch_by_dbID($self->param('genomic_align_block_id'));
     my $cs_adaptor = $self->compara_dba->get_ConservationScoreAdaptor;
+    my $num_score_objects = 0;
 
     #create and initialise bucket structure for each window size
     for ($j = 0; $j < scalar(@$win_sizes); $j++) {
@@ -665,6 +684,7 @@ sub _parse_rates_file {
 				my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
 				
 				$cs_adaptor->store($conservation_score);  
+				$num_score_objects++;
 				#reset bucket values
 				$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 				$bucket->{$win_sizes->[$j]}->{called} = 0;
@@ -704,6 +724,7 @@ sub _parse_rates_file {
 			my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});
 			
 			$cs_adaptor->store($conservation_score);  
+			$num_score_objects++;
 			
 			#reinitialise bucket values
 			$bucket->{$win_sizes->[$j]}->{cnt} = 0;
@@ -726,6 +747,7 @@ sub _parse_rates_file {
 			my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(											       -genomic_align_block => $gab, -window_size => $win_sizes->[$j], -position => $bucket->{$win_sizes->[$j]}->{start_pos}, -expected_score => $bucket->{$win_sizes->[$j]}->{exp_scores}, -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores});				
 			
 			$cs_adaptor->store($conservation_score);  
+			$num_score_objects++;
 			
 			$bucket->{$win_sizes->[$j]}->{cnt} = 0;
 			$bucket->{$win_sizes->[$j]}->{called} = 0;
@@ -752,7 +774,33 @@ sub _parse_rates_file {
           -diff_score => $bucket->{$win_sizes->[$j]}->{diff_scores}
       );				
 	    $cs_adaptor->store($conservation_score);  
+	    $num_score_objects++;
 	}
+    }
+
+    unless ($num_score_objects) {
+        # GERP didn't generate any scores: check if that can be explained
+        my $ok = 0;
+        if ($self->param('num_genome_dbs') == 1) {
+            # 1) All sequences belong to the same species
+            $ok = 1;
+        } elsif ($self->param('max_actual_seq') < 4) {
+            # 2) Never more than 3 actual sequences on any column
+            $ok = 1;
+        }
+        if ($ok) {
+            # Insert a dummy row to please the HC
+            my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(
+                -genomic_align_block    => $gab,
+                -window_size            => 1,
+                -position               => 1,
+                -expected_score         => '',
+                -diff_score             => '',
+            );
+            $cs_adaptor->store($conservation_score);
+        } else {
+            die "GERP didn't compute any scores for this block. Is that normal ?";
+        }
     }
 }
 
