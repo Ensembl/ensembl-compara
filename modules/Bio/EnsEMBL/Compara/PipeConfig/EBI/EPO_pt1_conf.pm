@@ -91,10 +91,7 @@ sub default_options {
       	  
         # database containing the pairwise alignments needed to get the overlaps
       	'compara_pairwise_db' => 'compara_curr',
-      	
 
-        
-      	'gerp_program_version' => "2.1",
         'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
         'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
         'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),

@@ -105,8 +105,6 @@ sub default_options {
         'pecan_exe_dir'     => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
         'semphy_exe'        => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
 
-        'gerp_version' => '2.1', #gerp program version
-
         'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
 
         # Databases

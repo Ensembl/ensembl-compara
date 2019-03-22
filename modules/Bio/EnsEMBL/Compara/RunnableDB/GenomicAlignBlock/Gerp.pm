@@ -55,7 +55,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp;
 
 use strict;
 use warnings;
-use File::Basename;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::DnaFragRegion;
 use Bio::EnsEMBL::Compara::ConservationScore;
@@ -67,10 +67,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 my $ALIGN_FILE = "gerp_alignment.mfa";
 my $TREE_FILE = "gerp_tree.nw";
 
-#ending appended to parameter file to allow for calculation of neutral rate
-#from the tree file
-my $PARAM_FILE_SUFFIX = ".tmp";
-
 my $RATES_FILE_SUFFIX = ".rates";
 my $CONS_FILE_SUFFIX = ".elems";
 
@@ -80,7 +76,6 @@ $| = 1;
 
 sub param_defaults {
     return {
-	    'program_version' => 2.1,
             #flag as to whether to write out conservation scores to the conservation_score
             #table. Default is to write them out.
             'no_conservation_scores' => 0,
@@ -175,36 +170,6 @@ sub fetch_input {
           $self->_writeMultiFastaAlignment($gab);
       }
 
-      #if param_file defined, assume use GERP.pl else assume use gerpcol
-      if ($self->param('program_version') == 1 && (defined $self->param('param_file'))) {
-	  #calculate neutral rate if not given in the parameter file
-	  open (PARAM_FILE, $self->param('param_file')) || throw "Could not open file " . $self->param('param_file');
-	  my $neutral_rate;
-	  while (<PARAM_FILE>) {
-	      chomp;
-	      
-	      my ($flag,$value) = split /\s+/,$_;
-	      if ($flag eq "neutral_rate") {
-		  $neutral_rate = $value;
-	      }
-	  }
-	  close(PARAM_FILE);
-
-	  #copy param file into temporary param file in worker directory
-	  my ($filename) = fileparse($self->param('param_file'));
-
-	  $self->param('param_file_tmp', $self->worker_temp_directory . "/" . $filename . $PARAM_FILE_SUFFIX);
-	  my $cp_cmd = "cp " . $self->param('param_file') . " " . $self->param('param_file_tmp');
-	  unless (system ($cp_cmd) == 0) {
-	      throw("error copying " . $self->param('param_file') . " to " . $self->param('param_file_tmp') . "\n");
-	  }
-
-	  #if param file doesn't have neutral rate, then append the calculated one
-	  if (!defined $neutral_rate) {
-	      $neutral_rate = _calculateNeutralRate($tree_string);
-	      $self->_spurt($self->param('param_file_tmp'), "neutral_rate\t$neutral_rate\n", 'append');
-	  }
-      }
   } else {
       $self->complete_early('Less than 3 sequences aligned in this block. Cannot run GERP');
   }
@@ -225,13 +190,7 @@ sub run {
     my $self = shift;
 
     $self->compara_dba->dbc->disconnect_if_idle();
-    if ($self->param('program_version') == 1) { 
-	$self->run_gerp;
-    } elsif ($self->param('program_version') == 2.1) { 
-	$self->run_gerp_v2;
-    } else {
-	throw("Invalid version number. Valid values are 1 or 2 or 2.1\n");
-    }
+    $self->run_gerp_v2;
 }
 
 =head2 write_output
@@ -263,13 +222,7 @@ sub _write_output {
     print STDERR "Write Output\n";
 
     #parse results and store constraints and conserved elements in database
-    if ($self->param('program_version') == 1) {
-	$self->_parse_results;
-    } elsif ($self->param('program_version') == 2.1) {
-	$self->_parse_results_v2;
-    } else {
-	throw("Invalid version number. Valid values are 1 or 2.1\n");
-    }
+    $self->_parse_results_v2;
 
     return 1;
 }
@@ -373,22 +326,6 @@ sub free_aligned_sequence {
 }
 
 
-#run gerp version 1
-sub run_gerp {
-    my $self = shift;
-
-    #change directory to where the temporary mfa and tree file are written
-    chdir $self->worker_temp_directory;
-
-    my $command = $self->require_executable('gerp_exe');
-
-    if ($self->param('param_file')) {
-	$command .= " " . $self->param('param_file_tmp');
-    }
-    #run gerp with parameter file
-    $self->run_command($command, { die_on_failure => 1 });
-}
-
 #run gerp version 2.1
 sub run_gerp_v2 {
     my ($self) = @_;
@@ -445,47 +382,6 @@ sub run_gerp_v2 {
         }
         $cmd_status->die_with_log;
     }
-}
-
-#Parse results for Gerp version 1
-#parse the param file to find the values required to determine what GERP
-#called the rates and constrained elements
-sub _parse_results {
-  my ($self) = @_;
-
-  my $alignment_file;
-
-  #default values as defined in GERP.pl
-  my $rej_subs_min = 8.5;
-  my $merge_distance = 1;
-
-  #read in options from param file which GERP uses to generate it's output
-  #file names.
-  open (PARAM_FILE, $self->param('param_file')) || throw "Could not open file " . $self->param('param_file');
-
-  while (<PARAM_FILE>) {
-      chomp;
-      
-      my ($flag,$value) = split /\s+/,$_;
-      if ($flag eq "alignment") {
-	  $alignment_file = $self->worker_temp_directory . "/" . $value;
-      }
-      if ($flag eq "rej_subs_min") {
-	  $rej_subs_min = $value;
-      }
-      if ($flag eq "merge_distance") {
-	  $merge_distance = $value;
-      }
-  }
-  close (PARAM_FILE);
-  
-  #generate rates and constraints file names
-  my $rates_file = "$alignment_file.rates";  
-  my $cons_file = "$rates_file\_RS$rej_subs_min\_md$merge_distance\_cons.txt";
- 
-  $self->_parse_cons_file($cons_file, 1);
-  $self->_parse_rates_file($rates_file, 1);
-
 }
 
 #Parse results for Gerp version 2.1

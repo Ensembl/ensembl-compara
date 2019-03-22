@@ -48,7 +48,6 @@ sub default_options {
 
 	 #gerp parameters
         'run_gerp' => 1,
-	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
 
 	#Location of executables (or paths to executables)
@@ -315,7 +314,6 @@ sub pipeline_analyses {
 	    {   -logic_name => 'gerp',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
 		-parameters => {
-				'program_version' => $self->o('gerp_version'),
 				'window_sizes' => $self->o('gerp_window_sizes'),
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },

@@ -94,9 +94,6 @@ sub default_options {
     'java_options_mem2' => '-server -Xmx6500M -Xms6000m',
     'java_options_mem3' => '-server -Xmx21500M -Xms21000m',
 
-    'gerp_version'      => 2.1,
-	    
-
     #Location of executables (or paths to executables)
     'gerp_exe_dir'              => $self->check_dir_in_cellar('gerp/20080211_1/bin'),
     'mercator_exe'              => $self->check_exe_in_cellar('cndsrc/2013.01.11/bin/mercator'),

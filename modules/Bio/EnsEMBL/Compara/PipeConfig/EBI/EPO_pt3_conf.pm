@@ -97,7 +97,6 @@ sub default_options {
       
       'blastn'          => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
       'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
-      'gerp_version' => '2.1', #gerp program version
       'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
       'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
       'exonerate_exe'   => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'), # path to exonerate executable

@@ -70,7 +70,6 @@ sub default_options {
 	# 'ref_species' => 'homo_sapiens',       # mammals
 
 	 #gerp parameters
-	'gerp_version' => '2.1',                            #gerp program version
     'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
 
 	#Location of executables (or paths to executables)

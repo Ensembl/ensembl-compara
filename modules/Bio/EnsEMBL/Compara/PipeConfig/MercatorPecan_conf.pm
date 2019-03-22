@@ -614,7 +614,6 @@ sub pipeline_analyses {
          {   -logic_name    => 'gerp',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
              -parameters    => {
-		 'program_version' => $self->o('gerp_version'),
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
 #                 'constrained_element_method_link_type' => $self->o('constrained_element_type'),
@@ -628,7 +627,6 @@ sub pipeline_analyses {
          {   -logic_name    => 'gerp_himem',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
              -parameters    => {
-		 'program_version' => $self->o('gerp_version'),
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
              },
