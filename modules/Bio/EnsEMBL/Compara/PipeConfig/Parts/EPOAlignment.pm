@@ -140,8 +140,17 @@ return
 	-parameters    => {
 			'species_tree_input_file' => $self->o('species_tree_file'),
 	},
-        -flow_into     => [ 'dump_mappings_to_file' ],
+        -flow_into     => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
+                                ELSE [ 'dump_mappings_to_file' ] ),
 },
+
+        {   -logic_name => 'set_gerp_neutral_rate',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
+            -flow_into => {
+                1 => [ 'dump_mappings_to_file' ],
+                2 => [ '?table_name=pipeline_wide_parameters' ],
+            },
+        },
 
         {
             -logic_name => 'find_ancestral_seq_gdb',

@@ -79,7 +79,7 @@ sub param_defaults {
             #flag as to whether to write out conservation scores to the conservation_score
             #table. Default is to write them out.
             'no_conservation_scores' => 0,
-            'depth_threshold'=> undef,  #local parameter only
+            'depth_threshold'=> undef,
             'constrained_element_method_link_type' => 'GERP_CONSTRAINED_ELEMENT',   # you shouldn't have to change this
     };
 }
@@ -225,19 +225,6 @@ sub _write_output {
     return 1;
 }
 
-#Calculate the neutral rate of a tree by summing all the branch lengths.
-#Returns the neutral rate
-sub _calculateNeutralRate {
-    my ($tree_string) = @_;
-
-    my @num_list = ($tree_string =~ /:(\d*.\d*)/g);
-    my $neutral_rate = 0;
-    foreach my $num (@num_list) {
-	$neutral_rate += $num;
-    }
-
-    return $neutral_rate;
-}
 
 #write out multiple alignment in mfa format to $self->worker_temp_directory
 sub _writeMultiFastaAlignment {
@@ -329,7 +316,6 @@ sub run_gerp_v2 {
     my ($self) = @_;
     my $gerpcol_path;
     my $gerpelem_path;
-    my $default_depth_threshold = 0.5;
 
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
@@ -352,22 +338,6 @@ sub run_gerp_v2 {
     $command = $gerpelem_path;
 
     $command .= " -f " . $self->param('mfa_file').$RATES_FILE_SUFFIX;
-    # hack for birds
-    # check the database name too because the mlss doesn't have the right name at the moment
-    $command .= " -d 0.35" if ($self->param('mlss')->name =~ /(sauropsid|bird)/i) || ($self->dbc && ($self->dbc->dbname =~ /(sauropsid|bird)/i));
-
-    #Calculate the neutral_rate of the species tree for use for those alignments where the default 
-    #depth_threshold is too high to call any constrained elements (eg 3way birds)
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
-    my $species_tree_string = $species_tree->root->newick_format('simple');
-    $self->compara_dba->dbc->disconnect_if_idle();
-    $species_tree_string =~ s/:0;$//;
-    my $neutral_rate = _calculateNeutralRate($species_tree_string);
-
-    if (!defined $self->param('depth_threshold') && $neutral_rate < $default_depth_threshold) {
-        $self->param('depth_threshold', $neutral_rate);
-        print STDERR "Setting depth_threshold to neutral_rate value of $neutral_rate\n";
-    }
 
     if (defined $self->param('depth_threshold')) {
         $command .= " -d " . $self->param('depth_threshold');
@@ -682,6 +652,9 @@ sub _parse_rates_file {
             # 2) Never more than 3 actual sequences on any column
             $ok = 1;
         }
+        # NOTE: We may need to add another test based on calculating the
+        # neutral rate of the trimmed species-tree and comparing the value
+        # against the -d parameter
         if ($ok) {
             # Insert a dummy row to please the HC
             my $conservation_score =  new Bio::EnsEMBL::Compara::ConservationScore(

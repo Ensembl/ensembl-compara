@@ -154,7 +154,16 @@ return [
  -parameters    => {
    'species_tree_input_file' => $self->o('species_tree_file'),
  },
+ -flow_into     => [ 'set_gerp_neutral_rate' ],
 },
+
+
+        {   -logic_name => 'set_gerp_neutral_rate',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
+            -flow_into => {
+                2 => [ '?table_name=pipeline_wide_parameters' ],
+            },
+        },
 
 # ------------------------------------- now for the modules which create the anchors
 

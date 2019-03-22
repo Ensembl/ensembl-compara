@@ -294,9 +294,17 @@ sub pipeline_analyses {
                                'species_tree_input_file' => $self->o('species_tree_file'),
                               },
             -flow_into => {
-                           1 => [ 'genome_reuse_factory' ],
+                           1 => [ 'set_gerp_neutral_rate' ],
                           },
             -rc_name => '100Mb',
+        },
+
+        {   -logic_name => 'set_gerp_neutral_rate',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
+            -flow_into => {
+                1 => [ 'genome_reuse_factory' ],
+                2 => [ '?table_name=pipeline_wide_parameters' ],
+            },
         },
 
 # ---------------------------------------------[reuse members and pafs]--------------------------------------------------------------

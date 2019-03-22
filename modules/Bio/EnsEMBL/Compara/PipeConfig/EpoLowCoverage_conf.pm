@@ -212,8 +212,17 @@ sub pipeline_analyses {
                                    'species_tree_input_file' => $self->o('species_tree_file'),
 				  },
 		-rc_name => '1Gb',
-		-flow_into => [ 'create_default_pairwise_mlss'],
+		-flow_into => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
+		                    ELSE [ 'create_default_pairwise_mlss' ] ),
 	    },
+
+            {   -logic_name => 'set_gerp_neutral_rate',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetGerpNeutralRate',
+                -flow_into => {
+                    1 => [ 'create_default_pairwise_mlss' ],
+                    2 => [ '?table_name=pipeline_wide_parameters' ],
+                },
+            },
 
 # -----------------------------------[Create a list of pairwise mlss found in the default compara database]-------------------------------
 	    {   -logic_name => 'create_default_pairwise_mlss',
