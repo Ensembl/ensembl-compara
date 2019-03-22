@@ -197,6 +197,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     var tabLookup = panel.elLk[tabId];
     var dimension_name = panel[tabId];
+
     if (!tabLookup.haveSubTabs) {
       // Update selectAll
       panel.activateAlphabetRibbon(tabLookup.container, resetRibbon, resetFilter);
@@ -776,7 +777,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   updateRHS: function(item) {
     var panel = this;
     panel.updateSelectedTracksPanel(item);
-    panel.activateTabs();
+    // panel.activateTabs();
     panel.updateShowHideLinks(item);
     panel.setLocalStorage();
     panel.trackError('div#dx, div#source');
@@ -926,26 +927,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     $.each(clones, function(k, clone) {
       var rhs_id = panel.elLk.lookup[k].subTab;
       $('#'+rhs_id+'.result-content ul', panel.el).append(clone);
-    });
-  },
-
-  // Enable or disable tabs/ribbons and also show/hide RH panel title
-  activateTabs: function() {
-    var panel = this;
-
-    $.each(panel.selectedTracksCount, function(key, count) {
-      var tab_ele = $('.tabs #' + key + '-tab', panel.el.trackPanel);
-      var tab_content_ele = $('#' + key + '-content', panel.el.trackPanel);
-      var rhs_ele = $('#'+key, panel.elLk.resultBox);
-      if (count.available) {
-        tab_ele.removeClass('inactive');
-        rhs_ele.show();
-      }
-      else {
-        tab_ele.removeClass('active').addClass('inactive');
-        tab_content_ele.removeClass('active');
-        rhs_ele.hide();
-      }
     });
   },
 
