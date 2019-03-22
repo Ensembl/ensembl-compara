@@ -79,8 +79,6 @@ sub param_defaults {
             #flag as to whether to write out conservation scores to the conservation_score
             #table. Default is to write them out.
             'no_conservation_scores' => 0,
-            'tree_string' => undef, #local parameter only
-            'tree_file' => undef, #local parameter only
             'depth_threshold'=> undef,  #local parameter only
             'constrained_element_method_link_type' => 'GERP_CONSTRAINED_ELEMENT',   # you shouldn't have to change this
     };
