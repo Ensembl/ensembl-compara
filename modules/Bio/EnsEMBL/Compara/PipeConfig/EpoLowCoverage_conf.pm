@@ -50,7 +50,6 @@ sub default_options {
         'run_gerp' => 1,
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => [1,10,100,500],         #gerp window sizes
-        'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",

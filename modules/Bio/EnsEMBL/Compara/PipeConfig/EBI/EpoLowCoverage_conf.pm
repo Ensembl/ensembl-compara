@@ -72,7 +72,6 @@ sub default_options {
 	 #gerp parameters
 	'gerp_version' => '2.1',                            #gerp program version
     'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
-    'species_to_skip' => undef,
 
 	#Location of executables (or paths to executables)
     'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'),   #gerp program
