@@ -62,10 +62,10 @@ sub init_cacheable {
 
   $self->load_tracks;
 
-  $self->modify_configs(
-    [ 'regulatory_features', 'functional_other_regulatory_regions' ],
-    { display => 'normal' }
-  );
+  # $self->modify_configs(
+  #   [ 'regulatory_features', 'functional_other_regulatory_regions' ],
+  #   { display => 'normal' }
+  # );
 
   $self->modify_configs(
     [ 'regulatory_features_core', 'regulatory_features_non_core' ],
