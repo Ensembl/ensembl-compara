@@ -665,6 +665,7 @@ sub _parse_rates_file {
                 -diff_score             => '',
             );
             $cs_adaptor->store($conservation_score);
+            $self->warning("No scores computed but I think it's OK");
         } else {
             die "GERP didn't compute any scores for this block. Is that normal ?";
         }
