@@ -742,6 +742,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var imgConf = {};
     var hasFav = $link.hasClass('favourite');
     var hasHighlight = $link.hasClass('hl-icon-highlight');
+    var isMatrix = $link.hasClass('matrix-cell');
 
     if (hasFav || hasHighlight) {
       selected = $link.hasClass('selected') ? 'off' : 'on';
@@ -752,6 +753,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $link.parents('._label_layer').addClass('hover_label_spinner');
       imgConf[update[0]] = {'renderer' : update[1]};
       href.push('image_config=' + encodeURIComponent(JSON.stringify(imgConf)));
+    }
+
+    // Also update matrix if appropriate
+    if (isMatrix) {
+      Ensembl.EventManager.trigger('updateFromTrackLabel', update);
     }
 
     $.ajax({
