@@ -606,7 +606,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.elLk.searchIcon = panel.el.find("img.search-icon");
 
     panel.elLk.searchIcon.click("on", function(e){
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350).focus();
+      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);
+      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').focus();
       panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').hide();
       e.stopPropagation();
     });
