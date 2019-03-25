@@ -21,7 +21,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.base(id, params);
     Ensembl.EventManager.remove(id); // Get rid of all the Configurator events which we don't care about
   },
-  
+
   init: function () {
     var panel = this;
 
@@ -29,6 +29,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
+    Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
@@ -166,6 +167,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
     }
+  },
+
+  // Redraw matrix as there may be updates to localStore
+  // e.g. updateFromTrackLabel method may remove some tracks from the RID view.
+  modalOpen: function() {
+    this.emptyMatrix();
+    this.displayMatrix();
   },
 
   // Set reset = true if you do not want to reset offset position
@@ -463,7 +471,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       epigenome = trackKey.split(/_/).pop();
     }
     // or a segmentation feature? 
-    else if (panel.localStoreObj.segmentation_features && trackKey.match(/^segmentation/)) {
+    else if (panel.localStoreObj.segmentation_features && trackKey.match(/^seg_Segmentation/)) {
       section   = 'segmentation_features';
       epigenome = trackKey.split(/_/).pop();
     }
