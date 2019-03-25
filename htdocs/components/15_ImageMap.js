@@ -755,11 +755,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       href.push('image_config=' + encodeURIComponent(JSON.stringify(imgConf)));
     }
 
-    // Also update matrix if appropriate
-    if (isMatrix) {
-      Ensembl.EventManager.trigger('updateFromTrackLabel', update);
-    }
-
     $.ajax({
       url: href.join(';'),
       dataType: 'json',
@@ -768,6 +763,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (json.updated) {
           this.panel.changeConfiguration(config, this.track, this.update);
           this.panel.updateExportButton();
+          // Also update matrix if appropriate
+          if (isMatrix) {
+            Ensembl.EventManager.trigger('updateFromTrackLabel', update);
+          }
         }
       }
     });
