@@ -28,6 +28,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
+    Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
@@ -441,11 +442,47 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
     });
 
-
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
 
     $.extend(this.imageConfig, config);
     return { imageConfig: config };
+  },
+
+  updateFromTrackLabel: function(update) {
+    // Update the matrix when the track label popup functionality is triggered
+    var panel  = this;
+    var trackKey = update[0];
+    var trackDisplay = update[1];
+    if (!trackKey) { return; }
+
+    var config = {};
+    var section, epigenome;
+    // Are we updating a regulatory feature?
+    if (panel.localStoreObj.epigenomic_activity && trackKey.match(/^reg_feat/)) {
+      section   = 'epigenomic_activity';
+      epigenome = trackKey.split(/_/).pop();
+    }
+    // or a segmentation feature? 
+    else if (panel.localStoreObj.segmentation_features && trackKey.match(/^segmentation/)) {
+      section   = 'segmentation_features';
+      epigenome = trackKey.split(/_/).pop();
+    }
+    var trackName = section + '_sep_' + epigenome;
+
+    // Update localStore with new settings
+    if (trackDisplay == 'off') {
+      panel.localStoreObj[section][section].state.on--;
+      panel.localStoreObj[section][section].state.off++;
+      panel.localStoreObj[section][trackName].state = 'track-off';
+    }
+    else {
+      panel.localStoreObj[section][section].state.off--;
+      panel.localStoreObj[section][section].state.on++;
+      panel.localStoreObj[section][trackName].state = 'track-on';
+      panel.localStoreObj[section][trackName].renderer = trackDisplay;
+    }
+  
+    // Finally update the matrix
   },
 
   getNewPanelHeight: function() {
