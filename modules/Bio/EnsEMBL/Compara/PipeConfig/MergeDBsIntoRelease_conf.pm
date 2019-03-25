@@ -256,6 +256,7 @@ sub pipeline_analyses {
                     'ALTER TABLE #table# ENABLE KEYS',
                 ]
             },
+            -hive_capacity => $self->o('copying_capacity'),
             -flow_into => [ 'check_size' ],
         },
 
@@ -265,7 +266,6 @@ sub pipeline_analyses {
                 'db_conn'   => '#curr_rel_db#',
                 'sql'       => 'DROP TABLE DBMERGEBACKUP_#table#',
             },
-            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
         {   -logic_name => 'analyze_optimize',
