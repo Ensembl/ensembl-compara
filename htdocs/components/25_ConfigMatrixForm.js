@@ -747,8 +747,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     // Update localStoreObj and local storage
-    Object.keys(allStoreObjects).map(function(key) {
-      if (key.match(item+'_') || key.match('_' + item)) {
+    Object.keys(allStoreObjects).map(function(key) {      
+      if (key.match(item+'_sep_') || key.match('_sep_' + item)) {
         var storeObjKey = panel.itemDimension(key);
         //update other rows/columns in store when removing item
         var cellCurrState    = panel.localStoreObj[storeObjKey][key]["state"].replace("track-","");
@@ -756,14 +756,17 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
         $.each(key.split("_sep_"),function(i, associatedEle){
           if(associatedEle != item) {
-            panel.localStoreObj[storeObjKey][associatedEle]["total"] -= 1;
-            if(panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] > 0) { 
-              panel.localStoreObj[storeObjKey][associatedEle]["state"][cellCurrState] -= 1; 
-              panel.localStoreObj[storeObjKey][associatedEle]["state"]["reset-"+cellCurrState] -= 1; 
+            var splitObjKey = panel.itemDimension(associatedEle);
+            if(panel.localStoreObj[splitObjKey][associatedEle]["total"] > 0)  {
+              panel.localStoreObj[splitObjKey][associatedEle]["total"] -= 1;
             }
-            if(panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { 
-              panel.localStoreObj[storeObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; 
-              panel.localStoreObj[storeObjKey][associatedEle]["renderer"]["reset-"+cellCurrRenderer] -= 1; 
+            if(panel.localStoreObj[splitObjKey][associatedEle]["state"][cellCurrState] > 0) { 
+              panel.localStoreObj[splitObjKey][associatedEle]["state"][cellCurrState] -= 1; 
+              panel.localStoreObj[splitObjKey][associatedEle]["state"]["reset-"+cellCurrState] -= 1; 
+            }
+            if(panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { 
+              panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; 
+              panel.localStoreObj[splitObjKey][associatedEle]["renderer"]["reset-"+cellCurrRenderer] -= 1; 
             }
           }
         });
