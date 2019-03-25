@@ -5,6 +5,18 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-Releasedependencygraph",
+            "summary": "Set up the release dependency graph"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-DeclarationofIntentions",
+            "summary": "Create the intentions page"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-ChecktheLinuxbrewinstallation",
             "summary": "Check the Linuxbrew installation"
          },
