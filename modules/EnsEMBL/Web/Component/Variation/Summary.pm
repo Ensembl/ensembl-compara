@@ -242,9 +242,14 @@ sub variation_source {
   } elsif ($source =~ /LSDB/) {
     $version = ($version) ? " ($version)" : '';
     $source_link = $hub->get_ExtURL_link("$source_prefix $source", $source, $name);
-  }  elsif ($source =~ /PhenCode/) {
+  } elsif ($source =~ /PhenCode/) {
      $sname       = 'PHENCODE';
      $source_link = $hub->get_ExtURL_link("$source_prefix PhenCode", $sname, $name);
+  } elsif ($source =~ /^PRJEB\d+/) {
+    $sname       = 'EVA_STUDY';
+    my $eva_url  = $hub->get_ExtURL("EVA_STUDY");
+    my $source_label = "$source EVA study";
+    $source_link = $eva_url ? qq{<a href="$eva_url$source" class="constant">$source_label</a>} : $source_label;
   } else {
     $source_link = $url ? qq{<a href="$url" class="constant">$source_prefix $source</a>} : "$source $version";
   }
