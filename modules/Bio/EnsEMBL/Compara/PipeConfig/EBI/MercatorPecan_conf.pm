@@ -98,7 +98,7 @@ sub default_options {
     'gerp_exe_dir'              => $self->check_dir_in_cellar('gerp/20080211_1/bin'),
     'mercator_exe'              => $self->check_exe_in_cellar('cndsrc/2013.01.11/bin/mercator'),
     'blast_bin_dir'             => $self->check_dir_in_cellar('blast/2.2.30/bin'),
-    'exonerate_exe'             => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'),
+    'exonerate_exe'             => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
     'java_exe'                  => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
     'estimate_tree_exe'         => $self->check_file_in_cellar('pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py'),
 

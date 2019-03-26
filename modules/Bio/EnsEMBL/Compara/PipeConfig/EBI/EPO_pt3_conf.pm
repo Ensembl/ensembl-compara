@@ -99,7 +99,7 @@ sub default_options {
       'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
       'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
       'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-      'exonerate_exe'   => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'), # path to exonerate executable
+      'exonerate_exe'   => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
       'ortheus_bin_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
       'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
       'enredo_exe'      => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
