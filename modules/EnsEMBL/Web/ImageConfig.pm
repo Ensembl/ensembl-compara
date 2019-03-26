@@ -269,7 +269,7 @@ sub reset_user_settings {
 
 sub config_url_params {
   ## Abstract method implementation
-  return $_[0]->type, qw(plus_signal);
+  return $_[0]->type;
 }
 
 sub update_from_url {
@@ -278,14 +278,6 @@ sub update_from_url {
 
   foreach my $key_val (grep $_, split(/,/, $params->{$self->type} || '')) {
     $self->altered($self->update_track_renderer(split /=/, $key_val));
-  }
-
-  # plus_signal turns on some regulation tracks in a complex algorithm
-  # on both regulation and location views. It can be specified in a URL
-  # and is currently used in some zmenus. Annoyingly there seems to
-  # be no better place for this code. Move it if you know of one. --dan
-  if ($params->{'plus_signal'}) { # TODO - move to update_from_url method in appropriate sub class --harpreet
-    $self->update_reg_renderer('signals', 1);
   }
 
   $self->save_user_settings if $self->is_altered;
@@ -381,19 +373,17 @@ sub update_track_renderer {
   my ($self, $node, $renderer) = @_;
 
   $node = $self->get_node($node) unless ref $node;
+  return unless $node;
 
-  if ($node) {
+  if (my $renderers = $node->get_data('renderers')) {
 
-    if (my $renderers = $node->get_data('renderers')) {
+    my %valid = @$renderers;
 
-      my %valid = @$renderers;
+    # Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
+    $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
 
-      # Set renderer to something sensible if user has specified invalid one. 'off' is usually first option, so take next one
-      $renderer = $valid{'normal'} ? 'normal' : $renderers->[2] if $renderer ne 'off' && !$valid{$renderer};
-
-      if ($node->set_user_setting('display', $renderer)) {
-        return $node->get_data('name') || $node->get_data('caption') || 1;
-      }
+    if ($node->set_user_setting('display', $renderer)) {
+      return $node->get_data('name') || $node->get_data('caption') || 1;
     }
   }
 }
