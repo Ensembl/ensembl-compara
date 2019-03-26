@@ -73,9 +73,6 @@ sub default_options {
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
-        # Tag attached to every single tree
-        'division' => 'ensembl',
-
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,

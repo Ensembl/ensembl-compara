@@ -87,10 +87,9 @@ sub default_options {
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
-        # Tag attached to every single tree
-        'division'              => 'murinae',
-
     # Parameters to allow merging different runs of the pipeline
+        'division'              => 'vertebrates',
+        'collection'            => 'murinae',       # The name of the species-set within that division
         'dbID_range_index'      => 18,
         'label_prefix'          => 'mur_',
 
@@ -132,9 +131,6 @@ sub default_options {
     # hive_capacity values for some analyses:
 
     # connection parameters to various databases:
-
-        # Everything is set via the Registry, now
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
 
         # Where to draw the orthologues from
         'ref_ortholog_db'   => 'compara_ptrees',

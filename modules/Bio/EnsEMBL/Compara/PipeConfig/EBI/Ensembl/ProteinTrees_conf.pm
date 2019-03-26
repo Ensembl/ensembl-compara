@@ -57,7 +57,10 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Tag attached to every single tree. Also used to select params - e.g. reg_conf, species_tree 
-        'division' => 'ensembl',
+        'division'      => 'vertebrates',
+        'collection'    => 'default',
+
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'

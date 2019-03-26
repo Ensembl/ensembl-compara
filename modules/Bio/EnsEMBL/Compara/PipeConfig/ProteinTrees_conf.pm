@@ -109,6 +109,7 @@ sub default_options {
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
+        'collection'            => undef,
         'label_prefix'          => undef,
 
     #default parameters for the geneset qc
@@ -3299,6 +3300,7 @@ sub core_pipeline_analyses {
                 'label_prefix' => $self->o('label_prefix'),
             },
             -flow_into  => {
+                # FIXME this assumes that label_prefix is set iff the collection is not "default"
                 '1->A' => WHEN('#label_prefix#' => 'rename_labels'),
                 'A->1' => 'rib_fire_goc',
             },
@@ -3487,7 +3489,7 @@ sub core_pipeline_analyses {
              -logic_name => 'rename_labels',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
              -parameters => {
-                 'clusterset_id'=> $self->o('division'),
+                 'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),
              },
         },
