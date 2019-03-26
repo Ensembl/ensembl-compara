@@ -38,7 +38,7 @@ my $html  = "$root/public-plugins/docs/htdocs/info/docs/Doxygen";
 my $edocs = $apis[0] eq 'edocs' || !scalar @apis;
 
 @apis = split /,/, join ',', @apis;
-@apis = qw(core compara analysis funcgen pipeline variation production) unless scalar @apis; # core must always be first in order to generate links
+@apis = qw(core compara analysis funcgen pipeline variation production metadata) unless scalar @apis; # core must always be first in order to generate links
 
 unshift @INC, "$root/ensembl-webcode/conf", $root;
 require SiteDefs; SiteDefs->import;
@@ -75,6 +75,10 @@ if ($apis[0] ne 'edocs') {
       EXCLUDE          => "$root/ensemblgenomes-api/t $root/ensemblgenomes-api/misc-scripts",
       STRIP_FROM_PATH  => "$root/ensemblgenomes-api/modules/",
       TAGFILES         => '',
+    },
+    metadata => {
+      PROJECT_NAME     => '"Ensembl Metadata"',
+      PROJECT_BRIEF    => '"EnsEMBL Metadata API reference"',
     },
   );
 
