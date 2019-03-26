@@ -163,7 +163,7 @@ sub default_options {
         # constrained elems & conservation scores
         'big_wig_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
         'big_bed_exe'           => $self->check_exe_in_cellar('kent/v335_1/bin/bedToBigBed'),
-        'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
     	'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
         'bigbed_autosql'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/constrainedelements_autosql.as",
@@ -234,7 +234,7 @@ sub pipeline_wide_parameters {
         # constrained elems & conservation scores
         'dump_cs_capacity'      => $self->o('dump_cs_capacity'),
         'dump_ce_capacity'      => $self->o('dump_ce_capacity'),
-        'dump_features_program' => $self->o('dump_features_program'),
+        'dump_features_exe'     => $self->o('dump_features_exe'),
         'cs_readme'             => $self->o('cs_readme'),
         'ce_readme'             => $self->o('ce_readme'),
         

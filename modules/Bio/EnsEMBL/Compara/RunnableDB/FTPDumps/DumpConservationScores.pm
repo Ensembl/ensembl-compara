@@ -55,7 +55,7 @@ sub param_defaults {
     return {
         %{ $self->SUPER::param_defaults() },
         'this_bedgraph' => '#work_dir#/#dirname#/#hash_dir#/#name#.#chunkset_id#.bedgraph',
-        'cmd'           => '#dump_features_program# --feature cs_#mlss_id# --compara_db #compara_db# --species #name# --regions "#regions_bed_file#" --reg_conf "#registry#" > #this_bedgraph#',
+        'cmd'           => '#dump_features_exe# --feature cs_#mlss_id# --compara_db #compara_db# --species #name# --regions "#regions_bed_file#" --reg_conf "#registry#" > #this_bedgraph#',
     }
 }
 

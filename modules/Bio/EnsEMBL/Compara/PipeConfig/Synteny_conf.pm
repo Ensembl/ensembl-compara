@@ -136,7 +136,7 @@ sub pipeline_analyses {
         {  -logic_name  => 'populate_new_database',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'program'   => $self->o('populate_new_database_program'),
+                'program'   => $self->o('populate_new_database_exe'),
                 'cmd'       => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--reg-conf', '#registry#'],
             },
             -input_ids  => [{}],
