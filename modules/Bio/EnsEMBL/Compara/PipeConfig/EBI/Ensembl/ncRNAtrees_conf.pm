@@ -84,7 +84,10 @@ sub default_options {
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
             'rel_suffix' => '',
-            'division'   => 'ensembl',
+
+            'division'      => 'vertebrates',
+            'collection'    => 'default',       # The name of the species-set within that division
+            'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_ncrna_trees_'.$self->o('rel_with_suffix'),
 
             'test_mode' => 1, #set this to 0 if this is production run
 

@@ -3487,7 +3487,7 @@ sub core_pipeline_analyses {
              -logic_name => 'rename_labels',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
              -parameters => {
-                 'division'     => $self->o('division'),
+                 'clusterset_id'=> $self->o('division'),
                  'label_prefix' => $self->o('label_prefix'),
              },
         },

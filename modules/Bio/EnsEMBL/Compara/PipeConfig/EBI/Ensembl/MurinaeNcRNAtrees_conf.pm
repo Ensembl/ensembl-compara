@@ -73,8 +73,8 @@ sub default_options {
             #'ensembl_release'          => '76',
             'rel_suffix'       => '',
 
-            'division'          => 'murinae',
-            'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
+            'division'          => 'vertebrates',
+            'collection'        => 'murinae',       # The name of the species-set within that division
             'dbID_range_index'  => 19,
             'label_prefix'      => 'mur_',
 
@@ -82,8 +82,6 @@ sub default_options {
 
             # Where to draw the orthologues from
             'ref_ortholog_db'   => 'compara_nctrees',
-
-            'pipeline_name'    => 'murinae_nctrees_'.$self->o('rel_with_suffix'),
 
             'clustering_mode'   => 'ortholog',
 

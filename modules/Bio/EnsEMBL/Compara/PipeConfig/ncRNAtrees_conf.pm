@@ -80,8 +80,6 @@ sub default_options {
             #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
             'clustering_mode'           => 'rfam',
 
-            'division'              => undef,
-
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
         'label_prefix'          => undef,
@@ -491,7 +489,7 @@ sub core_pipeline_analyses {
              -logic_name => 'rename_labels',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
              -parameters => {
-                 'division'     => $self->o('division'),
+                 'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),
              },
              -flow_into  => [ 'homology_stats_factory', 'id_map_mlss_factory' ],
