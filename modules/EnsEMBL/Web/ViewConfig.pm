@@ -185,7 +185,7 @@ sub config_url_params {
   my $self          = shift;
   my $image_config  = $self->image_config;
 
-  return qw(config share_config plus_signal), $image_config ? $image_config->config_url_params : ();
+  return qw(config share_config), $image_config ? $image_config->config_url_params : ();
 }
 
 sub update_from_url {

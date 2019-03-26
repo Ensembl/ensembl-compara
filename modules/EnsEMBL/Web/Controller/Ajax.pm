@@ -229,21 +229,6 @@ sub ajax_evidence {
   }
 }
 
-sub ajax_reg_renderer {
-  ## /Ajax/reg_renderer endpoint
-  ## Changes the renderer type for reg tracks
-  my $self      = shift;
-  my $hub       = $self->hub;
-  my $renderer  = $hub->input->url_param('renderer');
-  my $state     = $hub->param('state');
-
-  $hub->get_imageconfig('regulation_view')->update_reg_renderer($renderer, $state);
-
-  print to_json({
-    reload_panels => ['FeaturesByCellLine'],
-  });
-}
-
 sub ajax_data_table_config {
   ## /Ajax/data_table_config endpoint
   ## Saves configs for changes in any data table
