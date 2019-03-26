@@ -58,6 +58,8 @@ sub default_options {
         'compara_db'      => 'compara_curr',
         'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
+        'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
+
         #Pipeline capacities:
         'update_capacity'                           => 5,
         'high_confidence_capacity'                  => 30,
@@ -83,7 +85,8 @@ sub pipeline_wide_parameters {
         'threshold_levels'  => $self->o('threshold_levels'),
 
         'do_member_update'      => 0,
-        'do_member_stats'       => 1,
+        'do_member_stats_gt'    => 0,
+        'do_member_stats_fam'   => 1,
         'do_high_confidence'    => 0,
     }
 }
@@ -113,7 +116,10 @@ sub pipeline_analyses {
                     'compara_db'    => $self->o('compara_db'),
                 } ],
             -flow_into  => {
-                '1->A' => WHEN( '#do_member_stats#' => { 'find_collection_species_set_id' => $self->o('member_stats_config') } ),
+                '1->A' => [
+                    WHEN( '#do_member_stats_gt#'  => [ 'set_default_values' ] ),
+                    WHEN( '#do_member_stats_fam#' => [ 'stats_families' ] ),
+                ],
                 'A->1' => ['backbone_member_update'],
             },
         },

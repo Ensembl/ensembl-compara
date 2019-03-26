@@ -58,6 +58,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -1010,6 +1011,7 @@ sub core_pipeline_analyses {
                 },
             },
             -flow_into => {
+                1 => [ 'set_default_values' ],
                 2 => {
                     'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
                 },
@@ -1068,6 +1070,7 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
     ];
 }
 

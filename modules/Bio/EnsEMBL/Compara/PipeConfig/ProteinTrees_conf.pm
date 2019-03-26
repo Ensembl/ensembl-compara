@@ -64,10 +64,9 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.5;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
-
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
-
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -3270,7 +3269,10 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_homology_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN('#do_homology_stats#' => 'homology_stats_factory'),
+                '1->A' => [
+                    WHEN('#do_homology_stats#' => 'homology_stats_factory'),
+                    'set_default_values',
+                ],
                 'A->1' => 'rib_fire_hmm_build',
             },
         },
@@ -3500,10 +3502,9 @@ sub core_pipeline_analyses {
         },
 
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe($self) },
-
-            # initialise_goc_pipeline
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC::pipeline_analyses_goc($self)  },
             @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC::pipeline_analyses_GeneSetQC($self)  },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
 
     ];
 }

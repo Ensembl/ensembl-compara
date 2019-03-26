@@ -17,19 +17,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf
+Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf
-    seed_pipeline.pl -url ${EHIVE_URL} -logic_name find_collection_species_set_id -input_id '{"collection" => "collection_name", "db_conn" => "mysql://ensro\@comparaX/hom_db"}'
+ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf -compara_db 'mysql://...'
 
 =head1 DESCRIPTION
 
-    A simple pipeline to populate the gene_member_hom_stats table.
-    This table can now hold statistics for different collections and once
-    instance of the pipeline can be seeded multiple times in order to gather
-    statistics for multiple collections.
+A single-analysis pipeline to populate the "families" column of the gene_member_hom_stats table.
 
 =head1 CONTACT
 
@@ -41,7 +37,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf;
 
 use strict;
 use warnings;
@@ -52,30 +48,13 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
-sub hive_meta_table {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-
-        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
-    };
-}
-
-
 sub pipeline_analyses {
     my ($self) = @_;
 
-    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self);
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_fam_stats($self);
     $pipeline_analyses->[0]->{'-input_ids'} = [
         {
             'db_conn'         => $self->o('compara_db'),
-            'collection'      => 'default',
-            'clusterset_id'   => 'default',
-        },
-        {
-            'db_conn'         => $self->o('compara_db'),
-            'collection'      => 'murinae',
-            'clusterset_id'   => 'murinae',
         },
     ];
 
