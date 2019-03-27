@@ -72,9 +72,22 @@ sub check_exe_in_linuxbrew_opt {
     return $self->o('linuxbrew_home').'/'.$exe_path;
 }
 
+sub check_exe_in_ensembl {
+    my ($self, $exe_path) = @_;
+    push @{$self->{'_ensembl_exe_paths'}}, $exe_path;
+    return $self->o('ensembl_cvs_root_dir').'/'.$exe_path;
+}
+
+sub check_file_in_ensembl {
+    my ($self, $file_path) = @_;
+    push @{$self->{'_ensembl_file_paths'}}, $file_path;
+    return $self->o('ensembl_cvs_root_dir').'/'.$file_path;
+}
+
+
 sub check_all_executables_exist {
     my $self = shift;
-    return unless exists $self->root()->{'linuxbrew_home'};
+   if (exists $self->root()->{'linuxbrew_home'}) {
     my $linuxbrew_home = $self->root()->{'linuxbrew_home'};
     foreach my $p (@{$self->{'_all_dir_paths'}}) {
         $p = $linuxbrew_home.'/'.$p;
@@ -91,6 +104,20 @@ sub check_all_executables_exist {
         die "'$p' cannot be found.\n" unless -e $p;
         die "'$p' is not executable.\n" unless -x $p;
     }
+   }
+   if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
+       my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
+       foreach my $p (@{$self->{'_ensembl_file_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$p;
+           die "'$p' cannot be found.\n" unless -e $p;
+           die "'$p' is not readable.\n" unless -r $p;
+       }
+       foreach my $p (@{$self->{'_ensembl_exe_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$p;
+           die "'$p' cannot be found.\n" unless -e $p;
+           die "'$p' is not executable.\n" unless -x $p;
+       }
+   }
 }
 
 sub pipeline_create_commands {
