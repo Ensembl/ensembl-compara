@@ -1246,27 +1246,29 @@ sub add_regulation_builds {
 
     next if $params->{'reg_minimal'};
     
+    my $matrix_rows = [];
     foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
       # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
-      $self->_add_to_matrix({
-        track_name  => "$evidence_info->{$_}{'name'}$label",
-        section     => $cell_line,
-        renderers   => $renderers,
-        matrix      => {
-                        menu          => "reg_feats_". $_,
+      push @$matrix_rows, values %{$matrix_rows{$cell_line}{$_}};
+    }
+    $self->_add_to_matrix({
+      track_name  => "Experiments: $label",
+      section     => $cell_line,
+      renderers   => $renderers,
+      matrix      => {
+                        menu          => "reg_feats_core",
                         column        => $cell_line,
                         column_label  => $cell_names{$cell_line},
                         section       => $cell_line,
-                        rows          => [ values %{$matrix_rows{$cell_line}{$_}} ],
-                        },
-        column_data => {
-                        set         => $_,
-                        label       => "$evidence_info->{$_}{'label'}",
-                        description => $data->{$key_2}{'description'}{$_},
+                        rows          => $matrix_rows,
+                      },
+      column_data => {
+                        set         => 'core',
+                        label       => "Experiments",
+                        description => $data->{$key_2}{'description'}{'core'},
                         %column_data
-                        },
-      }, $menu);
-    }
+                      },
+    }, $menu);
   }
 
   if ($db_tables->{'cell_type'}{'ids'}) {

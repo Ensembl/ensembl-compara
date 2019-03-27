@@ -362,7 +362,6 @@ sub get_cell_line_data {
   if ( $self->species_defs->databases->{'DATABASE_FUNCGEN'} ) {
     %cell_lines = %{$self->species_defs->databases->{'DATABASE_FUNCGEN'}->{'tables'}{'cell_type'}{'ids'}};
   }
-  my @sets  = qw(core non_core);  
   my $data  = {};
 
   foreach my $cell_line (keys %cell_lines) {
@@ -370,21 +369,19 @@ sub get_cell_line_data {
     my $ic_cell_line = $cell_line;
     clean_id($ic_cell_line);
 
-    foreach my $set (@sets) {
-      if ($image_config) {
-        my $node = $image_config->get_node("reg_feats_${set}_$ic_cell_line");
+    if ($image_config) {
+      my $node = $image_config->get_node("reg_feats_core_$ic_cell_line");
 
-        next unless $node;
+      next unless $node;
 
-        ## Configure each track separately, instead of by column
-        foreach my $track (@{$node->child_nodes||[]}) {
-          my $id = $track->id;
-          my @split = split('_', $id);
-          my $experiment = $split[-1];
+      ## Configure each track separately, instead of by column
+      foreach my $track (@{$node->child_nodes||[]}) {
+        my $id = $track->id;
+        my @split = split('_', $id);
+        my $experiment = $split[-1];
 
-          my $display = $node->tree->user_data->{$id}{'display'};;
-          $data->{$cell_line}{$experiment}{'renderer'} = $display if $display ne 'off';
-        }
+        my $display = $node->tree->user_data->{$id}{'display'};
+        $data->{$cell_line}{$experiment}{'renderer'} = $display if $display ne 'off';
       }
     }
   }
