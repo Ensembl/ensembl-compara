@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::GRCh37::HighConfidenceOrthologs_conf
+Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::GRCh37::HighConfidenceOrthologs_conf
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on the GRCh37 database
+A simple pipeline to populate the high- and low- confidence levels on a Compara database
 
 =head1 CONTACT
 
@@ -42,12 +42,16 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::GRCh37::HighConfidenceOrthologs_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::HighConfidenceOrthologs_conf');
+use Bio::EnsEMBL::Hive::Version 2.4;
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
+
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
 
 sub default_options {
@@ -55,19 +59,12 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'division'   => 'grch37',
-        'reg_conf'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
+        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
+        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
+
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default'      => {'LSF' => [ '', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ]  },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -76,14 +73,6 @@ sub pipeline_analyses {
         {
             'compara_db'        => $self->o('compara_db'),
             'threshold_levels'  => $self->o('threshold_levels'),
-            'range_label'       => 'protein',
-            'range_filter'      => 'homology_id < 100000000',
-        },
-        {
-            'compara_db'        => $self->o('compara_db'),
-            'threshold_levels'  => $self->o('threshold_levels'),
-            'range_label'       => 'ncrna',
-            'range_filter'      => 'homology_id > 100000000',
         },
     ];
 

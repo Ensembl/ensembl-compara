@@ -47,11 +47,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::HighConfidenceOrthologs
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
-
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
+use base ('Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf');
 
 
 sub default_options {
@@ -86,10 +82,6 @@ sub default_options {
                 'thresholds'    => [ undef, undef, 25 ],
             },
         ],
-
-        'high_confidence_capacity'    => 30,             # how many mlss_ids can be processed in parallel
-        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
-
     };
 }
 
