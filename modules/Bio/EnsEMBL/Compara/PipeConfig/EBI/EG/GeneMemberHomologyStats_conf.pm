@@ -38,7 +38,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf');
 
 sub default_options {
     my ($self) = @_;
