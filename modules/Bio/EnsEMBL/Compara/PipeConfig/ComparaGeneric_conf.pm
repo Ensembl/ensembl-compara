@@ -147,14 +147,14 @@ sub pipeline_create_commands {
 
             # Compara 'release' tables will be turned from MyISAM into InnoDB on the fly by default:
         ($self->o('compara_innodb_schema') ? "sed 's/ENGINE=MyISAM/ENGINE=InnoDB/g' " : 'cat ')
-            . $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/table.sql | '.$self->db_cmd(),
+            . $self->check_file_in_ensembl('ensembl-compara/sql/table.sql').' | '.$self->db_cmd(),
 
             # Compara 'pipeline' tables are already InnoDB, but can be turned to MyISAM if needed:
         ($self->o('compara_innodb_schema') ? 'cat ' : "sed 's/ENGINE=InnoDB/ENGINE=MyISAM/g' ")
-            . $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/pipeline-tables.sql | '.$self->db_cmd(),
+            . $self->check_file_in_ensembl('ensembl-compara/sql/pipeline-tables.sql').' | '.$self->db_cmd(),
 
             # MySQL specific procedures
-            $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/procedures.'.$driver) : (),
+            $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->check_file_in_ensembl('ensembl-compara/sql/procedures.'.$driver)) : (),
     ];
 }
 

@@ -83,13 +83,14 @@ sub default_options {
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
 
         'patch_dir'   => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/sql/',
-        'schema_file' => $self->o('patch_dir') . '/table.sql',
-        'alias_file'  => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql',
+        'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        'alias_file'  => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
         'java_hc_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensj-healthcheck/',
 
-        'list_genomes_script'    => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl',
-        'report_genomes_script'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl-metadata/misc_scripts/report_genomes.pl',
-        'update_metadata_script' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl-compara/scripts/pipeline/update_master_db.pl',
+        # The first two somehow miss the executable permission.  Pull-request submitted
+        'list_genomes_script'    => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
+        'report_genomes_script'  => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
+        'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species' => undef,
         'additional_species'     => undef,
     };

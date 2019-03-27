@@ -79,7 +79,7 @@ sub default_options {
 
     # connection parameters to various databases:
         # reg_conf usually relies on the division, but grch37 is an edge case where this can't be the case
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_grch37_conf.pl',
+        'reg_conf' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_grch37_conf.pl'),
 
     };
 }

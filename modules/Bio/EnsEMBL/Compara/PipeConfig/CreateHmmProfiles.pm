@@ -82,7 +82,7 @@ sub default_options {
     'do_not_reuse_list'     => [ ],
 
     # where to find the list of Compara methods. Unlikely to be changed
-    'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
+    'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
 
     # custom pipeline name, in case you don't like the default one
         # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'

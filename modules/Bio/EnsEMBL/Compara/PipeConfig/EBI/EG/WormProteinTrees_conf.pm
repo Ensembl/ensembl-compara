@@ -91,7 +91,7 @@ sub default_options {
         # clustering parameters:
         
         # tree building parameters:
-        'species_tree_input_file'   =>  $self->o('ensembl_cvs_root_dir') . "/compara-conf/compara_guide_tree.wormbase.nh",
+        'species_tree_input_file'   => $self->check_file_in_ensembl('compara-conf/compara_guide_tree.wormbase.nh'),
         'use_quick_tree_break'      => 0,
 
 

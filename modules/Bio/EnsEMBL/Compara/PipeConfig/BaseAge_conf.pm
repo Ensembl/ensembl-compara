@@ -65,7 +65,7 @@ sub default_options {
             #Location url of database to get snps from
             #'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
             
-            'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
+            'baseage_autosql' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/baseage_autosql.as'),
 
             #Locations to write output files
             #'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),

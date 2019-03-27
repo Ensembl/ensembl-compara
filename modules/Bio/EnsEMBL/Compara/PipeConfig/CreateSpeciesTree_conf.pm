@@ -72,8 +72,8 @@ sub default_options {
         'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
 
 
-        'unroot_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/species_tree/unroot_newick.py',
-        'reroot_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/species_tree/reroot_newick.py',
+        'unroot_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/species_tree/unroot_newick.py'),
+        'reroot_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/species_tree/reroot_newick.py'),
     };
 }
 

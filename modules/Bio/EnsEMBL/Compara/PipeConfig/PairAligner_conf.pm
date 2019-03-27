@@ -122,7 +122,7 @@ sub default_options {
     			                               #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
                 'masking_options' => '{default_soft_masking => 1}',
                 # if you have a specific selection of repeat elements for the masking
-                #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
+                #'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
             },
     	     #non human example
     		'default' => {
@@ -156,7 +156,7 @@ sub default_options {
     'pair_aligner_options' => {
         default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
         7742    => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # vertebrates - i.e. ensembl-specific
-        9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # primates
+        9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/primate.matrix').' --ambiguous=iupac', # primates
         33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac', # carnivora
         3913    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
         4070    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',

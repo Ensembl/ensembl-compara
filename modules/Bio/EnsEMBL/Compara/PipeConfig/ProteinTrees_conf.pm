@@ -98,7 +98,7 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
         # where to find the list of Compara methods. Unlikely to be changed
-        'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
+        'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
@@ -190,7 +190,7 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',
+        'codeml_parameters_file'    => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash'),
         'taxlevels'                 => [],
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
