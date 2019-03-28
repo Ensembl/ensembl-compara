@@ -72,10 +72,6 @@ sub fetch_input {
         die "At least one of 'from_first_release' / 'create_missing_synteny_mlsss' must be set.\n"
     }
 
-    if ($self->param("registry")) {
-        $self->load_registry($self->param("registry"));
-    }
-
     $self->param('master_dba',    $self->get_cached_compara_dba('master_db'));
     $self->param('alignment_dba', $self->get_cached_compara_dba('alignment_db'));
 

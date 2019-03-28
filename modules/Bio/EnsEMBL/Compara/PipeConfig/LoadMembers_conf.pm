@@ -105,7 +105,6 @@ sub default_options {
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         # 'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-        'curr_core_registry'        => $self->o('reg_conf'),
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
@@ -121,8 +120,7 @@ sub pipeline_checks_pre_init {
     # There must be some species on which to compute trees
     die "There must be some species on which to compute trees"
         if ref $self->o('curr_core_sources_locs') and not scalar(@{$self->o('curr_core_sources_locs')})
-        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')})
-        and not $self->o('curr_core_registry');
+        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')});
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
     die "The master dabase must be defined with a collection" if $self->o('master_db') and not $self->o('collection');
@@ -228,8 +226,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_conf_file'  => $self->o('curr_core_registry'),
-                # 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
@@ -243,8 +239,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_all_genomedbs_from_registry',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry',
             -parameters => {
-                'registry_conf_file'  => $self->o('curr_core_registry'),
-                # 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },

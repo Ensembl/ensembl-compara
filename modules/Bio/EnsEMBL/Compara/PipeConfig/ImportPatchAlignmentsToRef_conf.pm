@@ -132,9 +132,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters => {
-                'registry_conf_file'    => $self->o('reg_conf'),
-            },
             -rc_name    => '2Gb_job',
             -flow_into  => [ 'convert_patch_to_compara_align' ],
         },

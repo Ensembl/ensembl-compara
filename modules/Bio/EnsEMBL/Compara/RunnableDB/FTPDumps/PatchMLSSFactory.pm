@@ -42,8 +42,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
-        $self->load_registry($self->param('reg_conf')) if $self->param('reg_conf');
-
 	my @dataflow_jobs;
 	foreach my $patch_db ( @{ $self->param('lastz_patch_dbs') } ) {
 		my $patch_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $patch_db );

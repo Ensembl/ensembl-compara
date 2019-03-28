@@ -25,10 +25,6 @@ Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf
 
 Calculate synteny coverage statistics across a whole division (or any Registry alias)
 
-=head1 SYNOPSIS
-
- $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -registry ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -host compara1 -division compara_prev
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf;
@@ -55,7 +51,6 @@ sub pipeline_wide_parameters {
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
     'compara_db' => $self->o('compara_db'),
-    'reg_conf'   => $self->o('reg_conf'),
   };
 }
 

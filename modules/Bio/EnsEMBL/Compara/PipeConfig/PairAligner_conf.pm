@@ -260,7 +260,6 @@ sub pipeline_analyses {
 		-parameters    => { 
 				  #'compara_url' => $self->dbconn_2_url('master_db'),
 				   'master_db' => $self->o('master_db'),
-				  'reg_conf'  => $self->o('reg_conf'),
 				  'conf_file' => $self->o('conf_file'),
 				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
@@ -296,7 +295,6 @@ sub pipeline_analyses {
   	    {   -logic_name    => 'parse_pair_aligner_conf',
   		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
   		-parameters    => { 
-  				  'reg_conf'  => $self->o('reg_conf'),
   				  'conf_file' => $self->o('conf_file'),
 				  'ref_species' => $self->o('ref_species'),
 				  'non_ref_species' => $self->o('non_ref_species'),

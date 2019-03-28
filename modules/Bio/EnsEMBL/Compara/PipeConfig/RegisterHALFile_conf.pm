@@ -112,9 +112,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'get_synonyms',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms',
-            -parameters => {
-                'registry_conf_file' => $self->o('reg_conf'),
-            },
             -flow_into  => {
                 2 => [ '?accu_name=e2u_synonyms&accu_input_variable=synonym&accu_address={genome_db_id}{name}' ],
             },

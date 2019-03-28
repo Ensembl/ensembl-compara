@@ -42,8 +42,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
-        $self->load_registry($self->param('reg_conf')) if $self->param('reg_conf');
-
 	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') );
 	my $mlss_adap = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 

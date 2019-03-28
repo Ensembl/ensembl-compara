@@ -409,7 +409,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mapping_db'    => $self->o('mapping_db'),
 
         'reg_conf' => $self->o('reg_conf'),
-        'registry' => $self->o('reg_conf'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
