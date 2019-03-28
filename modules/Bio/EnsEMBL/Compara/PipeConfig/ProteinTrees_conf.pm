@@ -214,9 +214,11 @@ sub default_options {
     # plots
         #compute Jaccard Index
         'do_jaccard_index'          => 1,
+        'jaccard_index_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotJaccardIndex.r'),
 
         #Compute Gini coefficient (Lorenz curve)
         'do_gini_coefficient'       => 1,
+        'lorentz_curve_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotLorentzCurve.r'),
 
     # HMM specific parameters (set to 0 or undef if not in use)
        'hmm_library_basedir'       => undef,
@@ -1638,6 +1640,9 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'compute_jaccard_index',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
             -parameters => {
+                'jaccard_index_script'  => $self->o('jaccard_index_script'),
+                'lorentz_curve_script'  => $self->o('lorentz_curve_script'),
+
                 'output_jaccard_file'   => '#plots_dir#/jaccard_index.out',
                 'output_jaccard_pdf'    => '#plots_dir#/jaccard_index.pdf',
 
