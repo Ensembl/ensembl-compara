@@ -105,8 +105,8 @@ sub get_redirect_uri {
     return $uri =~ s/Summary/Explore/r;
   }
 
-  if ($uri =~ /\/psychic/) {
-    return $uri =~ s/psychic/Psychic/r;
+  if ($uri =~ /\/Multi\/psychic/) {
+    return $uri =~ s/\/Multi\/psychic/\/Multi\/Psychic/r;
   }
 
   ## quick fix for solr autocomplete js bug
