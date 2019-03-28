@@ -112,16 +112,6 @@ sub pipeline_create_commands {
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::resource_classes() },
-         'urgent'   => {  'LSF' => '' },
-         'more_mem' => {  'LSF' => '-M5000 -R "select[mem>5000] rusage[mem=5000]"' },
-    };
-}
-
-
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -136,7 +126,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 1 => [ 'generate_merge_jobs' ],
             },
-            -rc_name => 'urgent',
         },
 
         {   -logic_name => 'generate_merge_jobs',
@@ -148,7 +137,6 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'merge_an_ancestor' ],
             },
-            -rc_name => 'urgent',
         },
 
         {   -logic_name    => 'merge_an_ancestor',
@@ -158,7 +146,7 @@ sub pipeline_analyses {
                 'cmd'    => ['perl', $self->o('merge_script'), qw(--from_url #from_url# --to_url #to_url# --mlss_id #mlss_id#)],
             },
             -hive_capacity  => 1,   # do them one-by-one
-            -rc_name => 'more_mem',
+            -rc_name => '8Gb_job',
         },
     ];
 }
