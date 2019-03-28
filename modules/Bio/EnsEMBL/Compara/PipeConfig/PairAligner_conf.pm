@@ -655,7 +655,6 @@ sub pipeline_analyses {
                   2 => [ 'set_internal_ids_slow' ],
               },
               -analysis_capacity => 1,
-              -rc_name => '100Mb_job',
           },
           {  -logic_name => 'set_internal_ids_slow',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow',

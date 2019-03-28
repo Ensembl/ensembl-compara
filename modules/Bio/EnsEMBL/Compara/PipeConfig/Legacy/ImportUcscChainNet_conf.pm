@@ -189,7 +189,6 @@ sub pipeline_analyses {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
 			      },
-                -rc_name => '100Mb_job',
 	    },
 
 	    {   -logic_name => 'load_genomedb',
@@ -199,7 +198,6 @@ sub pipeline_analyses {
                                 'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-                -rc_name => '100Mb_job',
 	    },
 	    {   -logic_name => 'load_genomedb_funnel',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -222,12 +220,10 @@ sub pipeline_analyses {
 			       '2->A' => [ 'ucsc_to_ensembl_mapping' ],
 			       'A->1' => [ 'chain_factory' ],
 		},
-                -rc_name => '100Mb_job',
 	    },
 
 	    {  -logic_name => 'ucsc_to_ensembl_mapping',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping',
-               -rc_name => '100Mb_job',
 	    },
 
 	    {   -logic_name => 'chain_factory',
@@ -240,7 +236,6 @@ sub pipeline_analyses {
 			       '2->A' => [ 'import_chains' ],
 			       'A->1' => [ 'set_internal_ids' ],
 			      },
-                -rc_name => '100Mb_job',
 	    },
 	    
  	    {  -logic_name => 'import_chains',
@@ -264,7 +259,6 @@ sub pipeline_analyses {
 			       '2->A' => [ 'import_nets'  ],
 			       'A->1' => [ 'update_max_alignment_length_after_net' ],
 			      },
-               -rc_name => '100Mb_job',
 	    },
 	    {  -logic_name => 'set_internal_ids',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
@@ -272,7 +266,6 @@ sub pipeline_analyses {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
 			       'method_link_species_set_id' => $self->o('mlss_id'),
 			      },
-               -rc_name => '100Mb_job',
                -flow_into  => [ 'net_factory' ],
  	    },
  	    {  -logic_name => 'import_nets',
@@ -316,7 +309,6 @@ sub pipeline_analyses {
 						      ],
 				    },
 			      },
-               -rc_name => '100Mb_job',
   	    },
  	    { -logic_name => 'healthcheck',
  	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
@@ -331,7 +323,6 @@ sub pipeline_analyses {
 							     ],
 				  },
 			    },
-              -rc_name => '100Mb_job',
  	    },
             { -logic_name => 'pairaligner_stats',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',

@@ -91,12 +91,8 @@ sub default_options {
 
 sub resource_classes {
     my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
         %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
-
-         # Most light-weight analyses still neeed 250Mb. It practical to redefine "default" and skip -rc_name
-         'default'      => {'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"', $reg_requirement] },
     };
 }
 

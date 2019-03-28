@@ -110,7 +110,6 @@ sub pipeline_analyses_alt_alleles {
              -flow_into => {
                            -1 => [ 'import_altalleles_as_homologies_himem' ],  # MEMLIMIT
                            },
-            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'import_altalleles_as_homologies_himem',

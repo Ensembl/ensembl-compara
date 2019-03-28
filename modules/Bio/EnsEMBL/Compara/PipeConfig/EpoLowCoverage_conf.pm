@@ -139,7 +139,6 @@ sub pipeline_analyses {
                               ],
                              },
               -flow_into => [ 'set_mlss_tag' ],
-              -rc_name => '100Mb_job',
             },
 
             { -logic_name => 'set_mlss_tag',
@@ -153,7 +152,6 @@ sub pipeline_analyses {
               -flow_into => {
                              1 => [ 'set_internal_ids' ],
                             },
-              -rc_name => '100Mb_job',
             },
 
 # ------------------------------------------------------[Set internal ids ]---------------------------------------------------------------
@@ -170,7 +168,6 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'load_genomedb_factory' ],
 			      },
-		-rc_name => '100Mb_job',
 	    },
 
 # ---------------------------------------------[Load GenomeDB entries from master+cores]--------------------------------------------------
@@ -405,7 +402,6 @@ sub pipeline_analyses {
 
 	    {   -logic_name => 'conservation_score_healthcheck',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
-		-rc_name => '100Mb_job',
 	    },
 
         {   -logic_name => 'register_mlss',

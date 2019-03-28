@@ -186,12 +186,9 @@ sub resource_classes_single_thread {
     my ($self) = @_;
     my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
     return {
-        # Most light-weight analyses still neeed 250Mb. It practical to redefine "default" and skip -rc_name
-        #'default'      => {'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"', $reg_requirement] },
-        'default'      => {'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement],               'LOCAL' => [ '', $reg_requirement ] },
+        # 250 Mb seems to be the minimum we need nowadays, especially since we load the registry
+        'default'      => {'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"', $reg_requirement],               'LOCAL' => [ '', $reg_requirement ] },
 
-        '100Mb_job'    => {'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement],               'LOCAL' => [ '', $reg_requirement ] },
-        '250Mb_job'    => {'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"', $reg_requirement],               'LOCAL' => [ '', $reg_requirement ] },
         '500Mb_job'    => {'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
         '1Gb_job'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },
         '2Gb_job'      => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement],              'LOCAL' => [ '', $reg_requirement ] },

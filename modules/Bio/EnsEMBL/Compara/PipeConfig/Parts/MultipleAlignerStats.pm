@@ -86,7 +86,6 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
             -flow_into  => [ 'email_stats_report' ],
-            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'email_stats_report',
@@ -95,7 +94,6 @@ sub pipeline_analyses_multiple_aligner_stats {
                 'stats_exe' => $self->o('epo_stats_report_exe'),
                 'email'     => $self->o('email'),
             },
-            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'gab_stats_semaphore_holder',

@@ -337,7 +337,6 @@ sub core_pipeline_analyses {
                 'biotype_filter'        => 'biotype_group LIKE "%noncoding"',
             },
             -analysis_capacity => 10,
-            -rc_name           => '250Mb_job',
             -flow_into         => [ 'hc_members_per_genome' ],
         },
 
@@ -450,7 +449,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            -rc_name            => '250Mb_job',
             -flow_into          => [ 'cluster_qc_factory' ],
         },
 
@@ -617,7 +615,6 @@ sub core_pipeline_analyses {
                                     'dataflow_subclusters' => 1,
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
-                -rc_name            => '250Mb_job',
                 -priority           => 40,
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
@@ -711,7 +708,6 @@ sub core_pipeline_analyses {
                             2 => [ 'sec_struct_model_tree_1_core' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
-             -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_2_cores', ## pre_sec_struct_tree
@@ -772,7 +768,6 @@ sub core_pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
-            -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_2_cores', ## sec_struct_model_tree
@@ -933,7 +928,6 @@ sub core_pipeline_analyses {
                             -2 => ['genomic_tree_himem'],
                             -1 => ['genomic_tree_himem'],
                            },
-             -rc_name => '250Mb_job',
             },
 
             {
@@ -966,7 +960,6 @@ sub core_pipeline_analyses {
                 1 => [ 'hc_tree_homologies' ],
                 -1 => [ 'orthotree_himem' ],
             },
-           -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'orthotree_himem',

@@ -654,7 +654,6 @@ sub core_pipeline_analyses {
                 'exclude_tables'        => [ 'exon_boundaries', 'hmm_annot', 'seq_member_projection_stable_id' ],
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '250Mb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 
@@ -970,7 +969,6 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem_no_runlimit' ],  # MEMLIMIT
             },

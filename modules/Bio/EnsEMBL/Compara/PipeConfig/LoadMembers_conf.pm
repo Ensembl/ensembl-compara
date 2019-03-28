@@ -115,17 +115,6 @@ sub default_options {
 }
 
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => { 'LSF' => ['-C0 -M200   -R"select[mem>200]   rusage[mem=200]"',  $reg_requirement] },
-    };
-}
-
-
 sub pipeline_checks_pre_init {
     my ($self) = @_;
 
@@ -358,7 +347,6 @@ sub pipeline_analyses {
                 'reuse_db'          => '#reuse_member_db#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '250Mb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 

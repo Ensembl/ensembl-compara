@@ -212,7 +212,6 @@ sub pipeline_analyses {
 			    '1->A' => ['load_genomedb_factory' , 'load_ancestral_genomedb'],
                             'A->1' => ['chunked_jobs_factory'], #backbone
 			   },
-	     -rc_name => '100Mb_job',
 	    },
 	    {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -224,7 +223,6 @@ sub pipeline_analyses {
 		-flow_into => {
                                2 => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			      },
-		-rc_name => '100Mb_job',
 	    },
 
 	    {   -logic_name => 'load_genomedb',
@@ -234,7 +232,6 @@ sub pipeline_analyses {
                                 'db_version'    => $self->o('db_version'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_name => '100Mb_job',
 	    },
 
 
@@ -249,7 +246,6 @@ sub pipeline_analyses {
                                 'anc_name' => $self->o('ancestor_species_name'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
-		-rc_name => '100Mb_job',
 	    },
 
             #Find all dnafrags for ref_species
@@ -282,7 +278,6 @@ sub pipeline_analyses {
                              'A->1' => [ 'summary' ],
 			      },
 
-	      -rc_name => '100Mb_job',
 	    },
             { -logic_name => 'create_sub_chunk_jobs',
               -module => 'Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::CreateSubChunkedJobs',
@@ -295,7 +290,6 @@ sub pipeline_analyses {
                                '2->A' => [ 'ancestral_alleles_for_indels' ],
                                'A->1' => [ 'concat_vep' ],
                             },
-              -rc_name => '100Mb_job',
             },
 	    { -logic_name => 'ancestral_alleles_for_indels',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::RunAncestralAllelesCompleteFork',
@@ -342,7 +336,6 @@ sub pipeline_analyses {
                               'bgzip' => $self->o('bgzip_exe'),
                               'tabix' => $self->o('tabix_exe'),
 			     },
-	      -rc_name => '100Mb_job',
               -hive_capacity => 10,
 	    },
 	    { -logic_name => 'summary',
@@ -352,7 +345,6 @@ sub pipeline_analyses {
                               'work_dir' => $self->o('work_dir'),
                               'seq_region' => $self->o('seq_region'),
 			     },
-	      -rc_name => '100Mb_job',
 	    },
 
     ];

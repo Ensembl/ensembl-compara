@@ -191,7 +191,6 @@ sub pipeline_analyses {
             -parameters => {
                 'extra_parameters'  => ['name'],
             },
-            -rc_name    => '250Mb_job',
             -flow_into => {
                 '2->A' => [ 'genome_member_copy' ],
                 'A->1' => [ 'hc_nonref_members' ],
@@ -205,7 +204,6 @@ sub pipeline_analyses {
                 'biotype_filter'        => 'biotype_group IN ("coding","LRG")',
             },
             -analysis_capacity => 10,
-            -rc_name           => '250Mb_job',
             # -flow_into         => WHEN('#name# eq "homo_sapiens"' => 'copy_freshest_dnafrags_from_master'),
         },
 
