@@ -104,6 +104,11 @@ sub run {
           $self->complete_early_if_branch_connected("Trying with more memory", -1);
           die "No more _himem analysis. Giving up";
       }
+
+      # Something happened !
+      if ($command->exit_code) {
+          $command->die_with_log;
+      }
   }
 
   return 1;
