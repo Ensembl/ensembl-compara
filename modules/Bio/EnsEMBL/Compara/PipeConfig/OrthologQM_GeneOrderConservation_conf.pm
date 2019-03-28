@@ -69,9 +69,6 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-        'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
-#        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
-
         # mlss_id of the protein-trees. The pipeline will process all the orthologues found there
         'mlss_id'       => undef,
         # mlss_id of a specific pair of species
