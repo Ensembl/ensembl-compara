@@ -30,7 +30,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::AddSpeciesToMasterDatabase
+Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::AddSpeciesToMaster
 
 =head1 SYNOPSIS
 
@@ -51,13 +51,13 @@ Internal methods are usually preceded with a "_"
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::AddSpeciesToMasterDatabase;
+package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::AddSpeciesToMaster;
 
 use strict;
 use warnings;
 
-use File::Find;
-use LWP::Simple;
+# use File::Find;
+# use LWP::Simple;
 
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');

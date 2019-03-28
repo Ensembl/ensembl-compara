@@ -71,6 +71,54 @@ $Data::Dumper::Maxdepth=3;
 
 =head2 update_dnafrags
 
+  Arg[1]            : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]            : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[3]            : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
+  Arg[COORD_SYSTEM] : (optional) only load Slices with $coord_system_name
+  Description : This method fetches all the dnafrag in the compara DB
+                corresponding to the $genome_db. It also gets the list
+                of top_level seq_regions from the species core DB and
+                updates the list of dnafrags in the compara DB.
+  Returns     : Number of new DnaFrags
+  Exceptions  : -none-
+
+=cut
+
+sub update_dnafrags {
+    my $compara_dba = shift;
+    my $genome_db   = shift;
+    my $species_dba = shift;
+
+    my($coord_system_name) = rearrange([qw(COORD_SYSTEM)], @_);
+    $coord_system_name = 'toplevel' unless $coord_system_name;
+
+    # fetch relevent slices from the core
+    $species_dba = $genome_db->db_adaptor unless $species_dba;
+    my $gdb_slices = $genome_db->genome_component
+        ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
+        : $species_dba->get_SliceAdaptor->fetch_all($coord_system_name, undef, 1, 1, 1);
+    die "Could not fetch any $coord_system_name slices from ".$genome_db->name() unless(scalar(@$gdb_slices));
+
+    # fetch current dnafrags, to detect deprecations
+    my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
+    my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db, -COORD_SYSTEM_NAME => $coord_system_name);
+
+    my ( $new_dnafrags_ids, $existing_dnafrags_ids, $deprecated_dnafrags, $species_overall_len ) = _load_dnafrags_from_slices($compara_dba, $genome_db, $gdb_slices, $old_dnafrags);
+
+    # we only want to update this if we've imported toplevel frags
+    _check_is_good_for_alignment($compara_dba, $genome_db, $species_overall_len) if $coord_system_name eq 'toplevel';
+
+    $new_dnafrags_ids ||= 0;
+    $existing_dnafrags_ids ||= 0;
+    print "$existing_dnafrags_ids DnaFrags already in the database. Inserted $new_dnafrags_ids new DnaFrags.\n";
+
+    _remove_deprecated_dnafrags($compara_dba, $deprecated_dnafrags);
+
+    return $new_dnafrags_ids;
+}
+
+=head2 _load_dnafrags_from_slices
+
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
   Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
@@ -83,32 +131,19 @@ $Data::Dumper::Maxdepth=3;
 
 =cut
 
-sub update_dnafrags {
-    my ($compara_dba, $genome_db, $species_dba) = @_;
+sub _load_dnafrags_from_slices {
+    my ( $compara_dba, $genome_db, $gdb_slices, $old_dnafrags ) = @_;
 
-    $species_dba //= $genome_db->db_adaptor;
     my $dnafrag_adaptor = $compara_dba->get_adaptor('DnaFrag');
-    my $old_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db);
-    my $old_dnafrags_by_name;
-    foreach my $old_dnafrag (@$old_dnafrags) {
-        $old_dnafrags_by_name->{$old_dnafrag->name} = $old_dnafrag;
-    }
+    my %old_dnafrags_by_name = map { $_->name => $_ } @$old_dnafrags;
 
-    my $gdb_slices = $genome_db->genome_component
-        ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
-        : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
-    die 'Could not fetch any toplevel slices from '.$genome_db->name() unless(scalar(@$gdb_slices));
-
-    my $new_dnafrags_ids = 0;
-    my $existing_dnafrags_ids = 0;
-    my @species_overall_len;#rule_2
+    my ( $new_dnafrags_ids, $existing_dnafrags_ids, $species_overall_len );
     foreach my $slice (@$gdb_slices) {
-
         my $new_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $genome_db);
 
-        push( @species_overall_len, $new_dnafrag->length()) if $new_dnafrag->is_reference;#rule_2
+        push( @$species_overall_len, $new_dnafrag->length()) if $new_dnafrag->is_reference; # rule_2
 
-        if (my $old_df = delete $old_dnafrags_by_name->{$slice->seq_region_name}) {
+        if (my $old_df = delete $old_dnafrags_by_name{$slice->seq_region_name}) {
             $new_dnafrag->dbID($old_df->dbID);
             $dnafrag_adaptor->update($new_dnafrag);
             $existing_dnafrags_ids++;
@@ -118,8 +153,58 @@ sub update_dnafrags {
             $new_dnafrags_ids++;
         }
     }
+    # my @old_dnafrag_ids = map { $_->dbID } values %$old_dnafrags_by_name;
+    my @old_dnafrags = values %old_dnafrags_by_name;
 
-    #-------------------------------------------------------------------------------
+    return ( $new_dnafrags_ids, $existing_dnafrags_ids, \@old_dnafrags, $species_overall_len );
+}
+
+=head2 _remove_deprecated_dnafrags
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : ArrayRef of DnaFrag IDs
+  Description : This method deletes DnaFrags with the given IDs from
+                the compara database
+  Returns     : -none-
+  Exceptions  : -none-
+
+=cut
+
+sub _remove_deprecated_dnafrags {
+    my ( $compara_dba, $dnafrags ) = @_;
+
+    return if scalar(@$dnafrags) == 0;
+
+    print 'Now deleting ', scalar(@$dnafrags), ' former DnaFrags...';
+    my $sth = $compara_dba->dbc->prepare('DELETE FROM dnafrag WHERE dnafrag_id = ?');
+    foreach my $deprecated_dnafrag (@$dnafrags) {
+        $sth->execute($deprecated_dnafrag->dbID);
+    }
+    print "  ok!\n\n";
+
+    my $delete_warning = "Removed " . scalar(@$dnafrags) . " dnafrags:\n\t";
+    $delete_warning .= join( "\n\t", map { $_->name . '(' . $_->dbID . ')' } @$dnafrags ) . "\n";
+    die $delete_warning;
+}
+
+=head _check_is_good_for_alignment
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[3]      : Bio::EnsEMBL::DBSQL::DBAdaptor $species_dba
+  Description : This method fetches all the dnafrag in the compara DB
+                corresponding to the $genome_db. It also gets the list
+                of top_level seq_regions from the species core DB and
+                updates the list of dnafrags in the compara DB.
+  Returns     : Number of new DnaFrags
+  Exceptions  : -none-
+
+=cut
+
+sub _check_is_good_for_alignment {
+    my ($compara_dba, $genome_db, $species_lens) = @_;
+
+    my @species_overall_len = @$species_lens;
     my $top_limit;
     if ( scalar(@species_overall_len) < 50 ) {
         $top_limit = scalar(@species_overall_len) - 1;
@@ -168,20 +253,6 @@ sub update_dnafrags {
     my $sth = $compara_dba->dbc->prepare("UPDATE genome_db SET is_good_for_alignment = ? WHERE name = ? AND assembly = ?");
     $sth->execute($is_good_for_alignment,$genome_db->name(),$genome_db->assembly);
     $sth->finish;
-
-    #-------------------------------------------------------------------------------
-
-    print "$existing_dnafrags_ids DnaFrags already in the database. Inserted $new_dnafrags_ids new DnaFrags.\n";
-
-    if (keys %$old_dnafrags_by_name) {
-        print 'Now deleting ', scalar(keys %$old_dnafrags_by_name), ' former DnaFrags...';
-        my $sth = $compara_dba->dbc->prepare('DELETE FROM dnafrag WHERE dnafrag_id = ?');
-        foreach my $deprecated_dnafrag (values %$old_dnafrags_by_name) {
-            $sth->execute($deprecated_dnafrag->dbID);
-        }
-        print "  ok!\n\n";
-    }
-    return $new_dnafrags_ids;
 }
 
 
@@ -198,10 +269,10 @@ sub update_dnafrags {
   Arg[5]      : (optional) int $taxon_id
   Arg[6]      : (optional) int $offset
   Description : Does everything for this species: create / update the GenomeDB entry, and load the DnaFrags.
-  				To set the new species as current, set $release = 1. If the GenomeDB already exists, set $force = 1 
+  				To set the new species as current, set $release = 1. If the GenomeDB already exists, set $force = 1
   				to force the update of DnaFrags. Use $taxon_id to manually set the taxon id for this species (default
   				is to find it in the core db). $offset can be used to override autoincrement of dbID
-  Returns     : arrayref containing (1) new Bio::EnsEMBL::Compara::GenomeDB object, (2) arrayref of updated 
+  Returns     : arrayref containing (1) new Bio::EnsEMBL::Compara::GenomeDB object, (2) arrayref of updated
                 component GenomeDBs, (3) number of dnafrags updated
   Exceptions  : none
 
@@ -209,6 +280,7 @@ sub update_dnafrags {
 
 sub update_genome {
     # my ($compara_dba, $species, $release, $force, $taxon_id, $offset) = @_;
+    # my $self = shift;
     my $compara_dba = shift;
     my $species = shift;
 
@@ -332,6 +404,120 @@ sub _update_component_genome_dbs {
     return \@gdbs;
 }
 
+=head2 load_lrgs
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Description : This method loads new LRGs from the core database
+  Returns     : -none-
+  Exceptions  :
+
+=cut
+
+sub load_lrgs {
+    my ($compara_dba, $genome_db) = @_;
+
+    die "LRGs are only available for human" unless $genome_db->name eq 'homo_sapiens';
+
+    my $species_db = $genome_db->db_adaptor;
+    print "Fetching LRG DnaFrags from " . $species_db->dbc->host . "/" . $species_db->dbc->dbname . "\n";
+    my $new_lrg_dnafrags = update_dnafrags($compara_dba, $genome_db, $species_db, -COORD_SYSTEM => 'lrg');
+}
+
+=head2 load_assembly_patches
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Description : This method loads new assembly patches from the core database
+  Returns     : -none-
+  Exceptions  :
+
+=cut
+
+sub load_assembly_patches {
+    # my ($compara_dba, $genome_db, $release, $report_file) = @_;
+    my $compara_dba = shift;
+    my $genome_db   = shift;
+    my $release     = shift;
+    my $report_file = shift;
+
+    my($suffix_separator) = rearrange([qw(SUFFIX_SEPARATOR)], @_);
+    $suffix_separator = '__cut_here__' unless $suffix_separator;
+
+    die "Patches are only available for GRC species" unless $genome_db->assembly =~ /GRC/;
+    my $find_patches_sql = "SELECT s.name, s.seq_region_id, a.value FROM seq_region s JOIN seq_region_attrib a USING(seq_region_id) JOIN attrib_type t USING(attrib_type_id) WHERE t.code IN ('patch_fix', 'patch_novel')";
+
+    my $species_db = $genome_db->db_adaptor;
+    my $curr_patches_sth = $species_db->dbc->prepare($find_patches_sql);
+    $curr_patches_sth->execute;
+    my $curr_patches = $curr_patches_sth->fetchall_arrayref;
+    my @curr_patches_seq_region_ids = map { $_->[1] } @$curr_patches;
+    my %curr_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$curr_patches;
+
+    # $release = $species_db->dbc->db_version;
+    my $prev_species_db = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name.$suffix_separator.($release-1), 'core');
+    my $prev_patches_sth = $prev_species_db->dbc->prepare($find_patches_sql);
+    $prev_patches_sth->execute;
+    my $prev_patches = $prev_patches_sth->fetchall_arrayref;
+    my %prev_patches_by_name = map { $_->[0] => {seq_region_id => $_->[1], date => $_->[2]} } @$prev_patches;
+
+    # now detect the differences and choose the appropriate action:
+    # 1. deleted patches (present in prev, not present in curr) = add dnafrag to deprecated list
+    # 2. changed patches (present in both, but dates differ) = add dnafrag to depr list && add slice to load patch list
+    # 3. new patches (not present in prev, present in curr) = add slice to load patch list
+    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
+    my $slice_adaptor = $species_db->get_SliceAdaptor;
+    my ( @depr_patch_dnafrags, @load_patch_slices );
+    my ( @new_patches, @changed_patches, @deleted_patches ); # store names for reports only
+    foreach my $patch_name ( keys %prev_patches_by_name ) {
+        if ( !defined $curr_patches_by_name{$patch_name} ) {
+            push @deleted_patches, $patch_name;
+            my $deleted_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_name($genome_db, $patch_name);
+            push @depr_patch_dnafrags, $deleted_patch_dnafrag;
+        } elsif ( $curr_patches_by_name{$patch_name}->{date} ne $prev_patches_by_name{$patch_name}->{date} ) {
+            push @changed_patches, $patch_name;
+            my $changed_patch_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_name($genome_db, $patch_name);
+            push @depr_patch_dnafrags, $changed_patch_dnafrag;
+            my $curr_patch_slice = $slice_adaptor->fetch_by_seq_region_id($curr_patches_by_name{$patch_name}->{seq_region_id});
+            push @load_patch_slices, $curr_patch_slice;
+        }
+    }
+    foreach my $patch_name ( keys %curr_patches_by_name ) {
+        if ( !defined $prev_patches_by_name{$patch_name} ) {
+            push @new_patches, $patch_name;
+            my $new_patch_slice = $slice_adaptor->fetch_by_seq_region_id($curr_patches_by_name{$patch_name}->{seq_region_id});
+            push @load_patch_slices, $new_patch_slice;
+        }
+    }
+
+    my $report = "No patch updates found\n";
+    if ( @new_patches || @changed_patches || @deleted_patches ) {
+        $report = "New patches:\n" . join("\n", @new_patches) . "\n\n";
+        $report .= "Changed patches:\n" . join("\n", @changed_patches) . "\n\n";
+        $report .= "Deleted patches: \n" . join("\n", @deleted_patches) . "\n\n";
+        $report .= "----------------------------------------------------\n";
+        $report .= "Patch dnafrag_ids that have been removed:\n";
+        $report .= join( "\n", map { $_->dbID } @depr_patch_dnafrags );
+        $report .= "----------------------------------------------------\n";
+        if ( @new_patches || @changed_patches ) {
+            $report .= "Input for create_patch_pairaligner_conf.pl:\n--patches chromosome:";
+            $report .= join( ",chromosome:", (@new_patches, @changed_patches) ) . "\n" ;
+        }
+    }
+
+    if ( $report_file ) {
+        open( RF, '>', $report_file ) or die "Cannot open '$report_file'\n";
+        print RF $report;
+        close RF;
+        print STDERR "Assembly patch report written to $report_file\n";
+    } else {
+        print $report;
+    }
+
+    _load_dnafrags_from_slices($compara_dba, $genome_db, \@load_patch_slices, []);
+    _remove_deprecated_dnafrags($compara_dba, \@depr_patch_dnafrags);
+}
+
 =head2 print_method_link_species_sets_to_update_by_genome_db
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
@@ -402,7 +588,6 @@ sub _prev_genome_db {
     return undef unless scalar @this_species_gdbs >= 1;
     return pop @this_species_gdbs;
 }
-
 
 ############################################################
 #                edit_collection.pl methods                #
@@ -705,6 +890,68 @@ sub _sum {
 sub _mean {
     my (@items) = @_;
     return _sum(@items)/( scalar @items );
+}
+
+=head2 compare_dnafrags_to_core
+
+    Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+    Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+    Arg[3]      : (optional) String $ignore
+    Description : This method compares the given $genome_db DnaFrags with
+                  the toplevel Slices from its corresponding core database.
+                  Can optionally ignore any slices or frags matching $ignore.
+    Returns     : 1 upon match; 0 upon mismatch
+    Exceptions  :
+
+=cut
+
+sub dnafrags_match_core_slices {
+    my ( $self, $compara_dba, $genome_db, $ignore ) = @_;
+
+    my $species_dba = $genome_db->db_adaptor;
+    my $gdb_slices  = $genome_db->genome_component
+        ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
+        : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
+    my %slice_len_by_name = map { $_->seq_region_name => $_->length } @$gdb_slices;
+
+    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
+    my $gdb_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB($genome_db);
+    my %dnafrag_len_by_name = map { $_->name => $_->length } @$gdb_dnafrags;
+
+    my (@missing_dnafrags, @differing_lens);
+    foreach my $s_name ( keys %slice_len_by_name ) {
+        next if $ignore && $s_name =~ /$ignore/;
+        push( @missing_dnafrags, $s_name ) unless defined $dnafrag_len_by_name{$s_name};
+        push( @differing_lens, $s_name ) unless $dnafrag_len_by_name{$s_name} == $slice_len_by_name{$s_name};
+    }
+
+    my (@missing_slices, @differing_slices);
+    foreach my $d_name ( keys %dnafrag_len_by_name ) {
+        next if $ignore && $d_name =~ /$ignore/;
+        push( @missing_slices, $d_name ) unless defined $slice_len_by_name{$d_name};
+        push( @differing_slices, $d_name ) unless $dnafrag_len_by_name{$d_name} == $slice_len_by_name{$d_name};
+    }
+
+    if ( @missing_dnafrags || @missing_slices || @differing_lens ) {
+        if ( @missing_dnafrags ) {
+            print scalar @missing_dnafrags . " slices found in core db, but missing dnafrags in compara db:\n\t";
+            print join( "\n\t", @missing_dnafrags ) . "\n\n";
+        }
+        if ( @missing_slices ) {
+            print scalar @missing_slices . " dnafrags found in compara db, but missing slices in core db:\n\t";
+            print join( "\n\t", @missing_slices ) . "\n\n";
+        }
+        if ( @differing_lens ) {
+            print scalar @differing_lens . " dnafrags differ in length from their core counterparts:\n";
+            foreach my $d_name ( @differing_lens ) {
+                print "\t$d_name lengths: compara=" . $dnafrag_len_by_name{$d_name} . ", core=" . $slice_len_by_name{$d_name} . "\n";
+            }
+        }
+
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 1;
