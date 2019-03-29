@@ -32,9 +32,9 @@ sub content {
   my $object      = $self->object;
   my $gene        = $object->gene;
   my $gene_id     = $gene->stable_id;
-  my $gene_xref   = $gene->display_xref->primary_id;
+  my $gene_xref   = $gene->display_xref && $gene->display_xref->primary_id;
   my $transcript_id      = $object->Obj->stable_id;
-  my $transcript_xref    = $object->Obj->display_xref->primary_id;
+  my $transcript_xref    = $object->Obj->display_xref && $object->Obj->display_xref->primary_id;
   my $transcript_version = $object->Obj->version;
   my $transcript_link    = $transcript_version ? $transcript_id.'.'.$transcript_version : $transcript_id;
   my $translation = $object->Obj->translation;
@@ -44,13 +44,15 @@ sub content {
   #remove standard links to gene pages and replace with one to NCBI
   $self->delete_entry_by_type('Gene');
   $self->delete_entry_by_value($gene_id);
-  $self->add_entry({
-    type     => 'RefSeq gene',
-    label    => $gene_xref,
-    link     => $hub->get_ExtURL_link($gene_xref, 'REFSEQ_GENEIMP', $gene_xref),
-    abs_url  => 1,
-    position => 1,
-  });
+
+  $gene_xref &&
+    $self->add_entry({
+      type     => 'RefSeq gene',
+      label    => $gene_xref,
+      link     => $hub->get_ExtURL_link($gene_xref, 'REFSEQ_GENEIMP', $gene_xref),
+      abs_url  => 1,
+      position => 1,
+    });
 
   my $biotype = lc $gene->biotype;
      $biotype =~ s/_/ /g;
@@ -65,13 +67,14 @@ sub content {
   $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_value($transcript_link);
 
-  $self->add_entry({
-    type     => 'RefSeq transcript',
-    label    => $transcript_xref,
-    link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
-    abs_url  => 1,
-    position => 2,
-  });
+  $transcript_xref &&
+    $self->add_entry({
+      type     => 'RefSeq transcript',
+      label    => $transcript_xref,
+      link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
+      abs_url  => 1,
+      position => 2,
+    });
 
   if ($translation) {
     my $translation_id = $translation->stable_id;
