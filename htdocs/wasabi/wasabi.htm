@@ -2,8 +2,8 @@
 <html>
 <head>
 	<meta charset="UTF-8" />
-  <script type="text/javascript" src="http://wasabiapp.org/ensembl/wasabi.js"></script>
-  <link rel="stylesheet" type="text/css" media="screen" href="http://wasabiapp.org/ensembl/wasabi.css" />
+  <script type="text/javascript" src="https://kuva.app/ensembl/wasabi.js"></script>
+  <link rel="stylesheet" type="text/css" media="screen" href="https://kuva.app/ensembl/wasabi.css" />
   <title>Wasabi Tree</title>
   <script>
 
@@ -19,7 +19,7 @@
           document.getElementsByTagName("head")[0].appendChild(fileref);
         }
 
-        fileref = "http://wasabiapp.org/ensembl/wasabi.css",
+        fileref = document.createElement("link");
         fileref.setAttribute("type","text/css");
         fileref.setAttribute("href", '/wasabi/wasabi.css');
         fileref.setAttribute("rel", 'stylesheet');
