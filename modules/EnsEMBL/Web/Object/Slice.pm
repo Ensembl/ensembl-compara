@@ -409,6 +409,7 @@ sub get_data {
 
     my $epigenome   = $peak_calling->fetch_Epigenome;
     my $cell_line   = $epigenome->display_label;
+
     next if ($is_image && (!$data->{$cell_line}{$ftype_name} || $data->{$cell_line} eq 'off'));
     next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
     next if $filter->{'cells_only'};
@@ -427,7 +428,7 @@ sub get_data {
       my $peak_adaptor = $hub->get_adaptor('get_PeakAdaptor', 'funcgen');
       my $block_features = $peak_adaptor->fetch_all_by_Slice_PeakCalling($self->Obj, $peak_calling);
 
-      $data->{$cell_line}{$ftype_name}{'block_features'}{$key} = $block_features if scalar @$block_features;
+      $data->{$cell_line}{$ftype_name}{'block_features'}{$key} = $block_features || [];
     }
 
     ## Get path to bigWig file
