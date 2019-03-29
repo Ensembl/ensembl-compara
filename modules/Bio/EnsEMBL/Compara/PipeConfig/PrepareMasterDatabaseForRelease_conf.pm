@@ -68,7 +68,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('release'),
+        'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
         'work_dir'    => $self->o('pipeline_dir'),
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
