@@ -38,9 +38,8 @@ sub default_options {
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::shared_default_options($self) },
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::executable_locations($self) },
 
+        # Nowadays we exclusively use InnoDB
         'compara_innodb_schema' => 1,
-
-        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
     };
 }
 

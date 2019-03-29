@@ -70,6 +70,9 @@ sub shared_default_options {
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         'pipeline_dir'          => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('pipeline_name'),
 
+        # Where to find the linuxbrew installation
+        'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
+
         # All the fixed parameters that depend on a "division" parameter
         'reg_conf'              => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
