@@ -28,8 +28,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf -host compara1
 
-    By default the pipeline dumps the database named "compara_curr" in the registry, but a different database can be given:
-    -production_registry /path/to/reg_conf.pl -rel_db compara_db_name
+    By default the pipeline dumps the database named "compara_curr" in the
+    registry, but a different database can be selected with -rel_db
 
 =head1 DESCRIPTION
 
@@ -48,7 +48,8 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name'       =>    'dump_all_trees_'.$self->o('rel_with_suffix'),
+        # Restore the default pipeline name, which has been overriden in DumpTrees_conf
+        'pipeline_name'         => $self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
     }
 }
 

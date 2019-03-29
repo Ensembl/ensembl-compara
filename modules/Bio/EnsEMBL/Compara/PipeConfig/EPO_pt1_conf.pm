@@ -30,7 +30,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
         pipeline_db (-host)
         resource_classes 
 
-        'password' - your mysql password
 	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
 	'main_core_dbs' - the servers(s) hosting most/all of the core (species) dbs
@@ -75,8 +74,6 @@ sub default_options {
       	%{$self->SUPER::default_options},
         'pipeline_name' => 'generate_anchors_' . $self->o('species_set_name').'_'.$self->o('rel_with_suffix'),
 
-        'populate_new_database_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-
       	# parameters that are likely to change from execution to another:
       	'core_db_version' => 88, # version of the dbs from which to get the pairwise alignments
       	
@@ -115,8 +112,6 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
 	my ($self) = @_;
-	print "pipeline_analyses\n";
-
 return [
 # ------------------------------------- set up the necessary database tables
 
@@ -152,7 +147,7 @@ return [
  -logic_name    => 'make_species_tree',
  -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
  -parameters    => {
-   'species_tree_input_file' => $self->o('species_tree_file'),
+   'species_tree_input_file' => $self->o('binary_species_tree'),
  },
  -flow_into     => [ 'set_gerp_neutral_rate' ],
 },
@@ -230,7 +225,7 @@ return [
  },  
  -module => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
  -hive_capacity => 300,
- -rc_name => 'mem7500',
+ -rc_name => '8Gb_job',
  -max_retry_count => 1,
  -flow_into      => {
 		1 => [ 'gerp_constrained_element' ],
@@ -293,7 +288,7 @@ return [
     'method_link_species_set_id' => '#mlss_id#',
     'ortheus_c_exe' => $self->o('ortheus_c_exe'),
   },
- -rc_name => 'mem7500',
+ -rc_name => '8Gb_job',
  -hive_capacity => 100,
  -batch_size    => 10,
 },

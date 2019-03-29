@@ -73,11 +73,7 @@ sub default_options {
         # The method_link_type for this kind of alignments
         'lastz_patch_method'    => 'LASTZ_PATCH',
 
-        # Production Registry
-        'reg_conf'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-
-        # Other scripts needed by the pipeline
-        'populate_new_database_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
+        'division'              => 'vertebrates',
     };
 }
 
@@ -93,15 +89,6 @@ sub pipeline_wide_parameters {
     }
 }
 
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-        # populate_new_database needs a lot of memory !
-        'default'   => { 'LSF' => '-C0 -M1500 -R"select[mem>1500] rusage[mem=1500]"' },
-    };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
 
@@ -115,6 +102,7 @@ sub pipeline_analyses {
 
                 'inputquery'            => 'SELECT GROUP_CONCAT(CONCAT("--mlss ", method_link_species_set_id) SEPARATOR " ") AS mlss_ids FROM method_link_species_set JOIN method_link USING (method_link_id) WHERE method_link.type = "#lastz_patch_method#" AND first_release IS NOT NULL AND last_release IS NULL'
             },
+            -rc_name    => '2Gb_job',
             -flow_into  => {
                 2 => [ 'populate_new_database' ],
             },
@@ -127,6 +115,7 @@ sub pipeline_analyses {
                 'program'       => $self->o('populate_new_database_exe'),
                 'pipeline_db'   => $self->pipeline_url(),      # I would like this to be generated at runtime
             },
+            -rc_name   => '2Gb_job',
             -flow_into => [ 'genomedb_factory' ],
         },
 
@@ -135,6 +124,7 @@ sub pipeline_analyses {
             -parameters => {
                 'extra_parameters'      => [ 'locator' ],
             },
+            -rc_name   => '2Gb_job',
             -flow_into => {
                 2 => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
             },
@@ -142,19 +132,19 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters => {
-                'registry_conf_file'    => $self->o('reg_conf'),
-            },
+            -rc_name    => '2Gb_job',
             -flow_into  => [ 'convert_patch_to_compara_align' ],
         },
 
         {   -logic_name => 'convert_patch_to_compara_align',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::ConvertPatchesToComparaAlign',
+            -rc_name    => '2Gb_job',
             -flow_into  => [ 'update_max_alignment_length' ],
         },
 
         {   -logic_name => 'update_max_alignment_length',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
+            -rc_name    => '2Gb_job',
         },
     ];
 }

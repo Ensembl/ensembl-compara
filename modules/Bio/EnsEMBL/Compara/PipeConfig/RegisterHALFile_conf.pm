@@ -34,7 +34,7 @@ export COMPARA_HAL_DIR="path_to_file/data_files/"
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id <mlss_id> -species_name_mapping "{134 => 'C57B6J', ... }"
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id 835 -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}" -master_db "mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master" -registry_conf_file "/homes/waakanni/ensembl_checkout/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl" -halStats_exe '/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/halStats' -host "mysql-ens-compara-prod-2.ebi.ac.uk:4522"
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id 835 -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}" -master_db "mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master" -halStats_exe '/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/halStats' -host "mysql-ens-compara-prod-2.ebi.ac.uk:4522"
 
 =head1 DESCRIPTION  
 
@@ -71,15 +71,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	 '1Gb'  => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-     '4Gb'  => { 'LSF' => '-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"' },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -121,13 +112,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'get_synonyms',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms',
-            -parameters => {
-                'registry_conf_file' => $self->o('registry_conf_file'),
-            },
             -flow_into  => {
                 2 => [ '?accu_name=e2u_synonyms&accu_input_variable=synonym&accu_address={genome_db_id}{name}' ],
             },
-	    -rc_name    => '1Gb',
+	    -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'aggregate_synonyms',
@@ -136,13 +124,13 @@ sub pipeline_analyses {
                 'e2u_synonyms'  => {},  # default value, in case the accu is empty
                 'sql' => [ q/REPLACE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "alt_synonyms", '#expr(stringify(#e2u_synonyms#))expr#')/ ],
             },
-	    -rc_name    => '1Gb',
+	    -rc_name    => '1Gb_job',
         },
 
         {
             -logic_name => 'generate_coverage_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats',
-            -rc_name    => '4Gb',
+            -rc_name    => '4Gb_job',
         }
 
      ];

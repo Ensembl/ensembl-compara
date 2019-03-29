@@ -138,17 +138,6 @@ sub default_options {
            };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-    };
-}
-
-
 sub pipeline_analyses {
     my ($self) = @_;
     # Get the two parts

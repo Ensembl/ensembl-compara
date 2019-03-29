@@ -65,13 +65,6 @@ sub default_options {
         'mlss_id'           => undef,
         'all_current'       => undef,
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'              => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'              => 4522,
-
-        # Where to put the genome dumps
-        'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.($self->o('division')).'/',
         # Which user has access to this directory
         'shared_user'       => 'compara_ensembl',
 
@@ -80,33 +73,8 @@ sub default_options {
         # the pipeline won't redump genomes unless their size is different, or listed here
         'force_redump'      => [],
 
-        # the registry file to indicate how to get the core databases
-        'reg_conf'          => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
-        # Executables
-        'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),
-        'esd2esi_exe'       => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/esd2esi'),
-        'samtools_exe'      => $self->check_exe_in_cellar('samtools/1.6/bin/samtools'),
-
         # Capacities
         'dump_capacity'     => 10,
-    };
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         '100Mb_job'    => {'LSF' => ['-C0 -M100  -R"select[mem>100]  rusage[mem=100]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '250Mb_job'    => {'LSF' => ['-C0 -M250  -R"select[mem>250]  rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '500Mb_job'    => {'LSF' => ['-C0 -M500  -R"select[mem>500]  rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '1Gb_job'      => {'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '2Gb_job'      => {'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '4Gb_job'      => {'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '8Gb_job'      => {'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
     };
 }
 

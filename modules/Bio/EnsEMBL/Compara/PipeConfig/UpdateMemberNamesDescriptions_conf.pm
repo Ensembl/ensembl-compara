@@ -37,19 +37,16 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
-
         'pipeline_name'   => 'member_description_update_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
+        'division'        => 'vertebrates',
 
         #Pipeline capacities:
         'update_capacity'                           => '5',
@@ -57,24 +54,14 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
+
 sub hive_meta_table {
     my ($self) = @_;
     return {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     }
-}
-
-
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-    };
 }
 
 

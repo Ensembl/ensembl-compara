@@ -23,6 +23,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Compara::PipeConfig::ENV;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
@@ -32,9 +35,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'compara_innodb_schema' => 1,
+        %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::shared_default_options($self) },
+        %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::executable_locations($self) },
 
-        'linuxbrew_home'        => $self->o('ENV', 'LINUXBREW_HOME'),
+        # Nowadays we exclusively use InnoDB
+        'compara_innodb_schema' => 1,
     };
 }
 
@@ -66,9 +71,27 @@ sub check_exe_in_linuxbrew_opt {
     return $self->o('linuxbrew_home').'/'.$exe_path;
 }
 
+sub check_exe_in_ensembl {
+    my ($self, $exe_path) = @_;
+    push @{$self->{'_ensembl_exe_paths'}}, $exe_path;
+    return $self->o('ensembl_cvs_root_dir').'/'.$exe_path;
+}
+
+sub check_file_in_ensembl {
+    my ($self, $file_path) = @_;
+    push @{$self->{'_ensembl_file_paths'}}, $file_path;
+    return $self->o('ensembl_cvs_root_dir').'/'.$file_path;
+}
+
+sub check_dir_in_ensembl {
+    my ($self, $dir_path) = @_;
+    push @{$self->{'_ensembl_dir_paths'}}, $dir_path;
+    return $self->o('ensembl_cvs_root_dir').'/'.$dir_path;
+}
+
 sub check_all_executables_exist {
     my $self = shift;
-    return unless exists $self->root()->{'linuxbrew_home'};
+   if (exists $self->root()->{'linuxbrew_home'}) {
     my $linuxbrew_home = $self->root()->{'linuxbrew_home'};
     foreach my $p (@{$self->{'_all_dir_paths'}}) {
         $p = $linuxbrew_home.'/'.$p;
@@ -85,6 +108,25 @@ sub check_all_executables_exist {
         die "'$p' cannot be found.\n" unless -e $p;
         die "'$p' is not executable.\n" unless -x $p;
     }
+   }
+   if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
+       my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
+       foreach my $p (@{$self->{'_aensembl_dir_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$p;
+           die "'$p' cannot be found.\n" unless -e $p;
+           die "'$p' is not a directory.\n" unless -d $p;
+       }
+       foreach my $p (@{$self->{'_ensembl_file_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$p;
+           die "'$p' cannot be found.\n" unless -e $p;
+           die "'$p' is not readable.\n" unless -r $p;
+       }
+       foreach my $p (@{$self->{'_ensembl_exe_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$p;
+           die "'$p' cannot be found.\n" unless -e $p;
+           die "'$p' is not executable.\n" unless -x $p;
+       }
+   }
 }
 
 sub pipeline_create_commands {
@@ -114,14 +156,14 @@ sub pipeline_create_commands {
 
             # Compara 'release' tables will be turned from MyISAM into InnoDB on the fly by default:
         ($self->o('compara_innodb_schema') ? "sed 's/ENGINE=MyISAM/ENGINE=InnoDB/g' " : 'cat ')
-            . $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/table.sql | '.$self->db_cmd(),
+            . $self->check_file_in_ensembl('ensembl-compara/sql/table.sql').' | '.$self->db_cmd(),
 
             # Compara 'pipeline' tables are already InnoDB, but can be turned to MyISAM if needed:
         ($self->o('compara_innodb_schema') ? 'cat ' : "sed 's/ENGINE=InnoDB/ENGINE=MyISAM/g' ")
-            . $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/pipeline-tables.sql | '.$self->db_cmd(),
+            . $self->check_file_in_ensembl('ensembl-compara/sql/pipeline-tables.sql').' | '.$self->db_cmd(),
 
             # MySQL specific procedures
-            $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/procedures.'.$driver) : (),
+            $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->check_file_in_ensembl('ensembl-compara/sql/procedures.'.$driver)) : (),
     ];
 }
 
@@ -241,6 +283,18 @@ sub analyses_to_remove {
 sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
+}
+
+
+sub resource_classes {
+    my ($self, $include_multi_threaded) = @_;
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+        # Always include the single-threaded resource classes
+        %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_single_thread($self) },
+        # Include the multi-threaded resource classes conditionally
+        ${ $include_multi_threaded ? Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($self) : {} },
+    };
 }
 
 

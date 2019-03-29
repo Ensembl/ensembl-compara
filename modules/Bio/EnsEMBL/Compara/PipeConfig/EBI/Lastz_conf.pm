@@ -31,8 +31,6 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'master_db'     => 'compara_master',
-        'reg_conf'      => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-        'pipeline_name' => 'lastz_' . $self->o('division') . '_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         # Work directory
         'dump_dir' => '/hps/nobackup2/production/ensembl/'.$ENV{USER}.'/pair_aligner/release_'.$self->o('rel_with_suffix').'/'.$self->o('pipeline_name').'/'.$self->o('host').'/',
@@ -47,29 +45,8 @@ sub default_options {
         'filter_duplicates_hive_capacity' => 200,
         'filter_duplicates_batch_size' => 10,
 
-        #Location of executables
-        'pair_aligner_exe'  => $self->check_exe_in_cellar('lastz/1.04.00/bin/lastz'),
-        'faToNib_exe'       => $self->check_exe_in_cellar('kent/v335_1/bin/faToNib'),
-        'lavToAxt_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/lavToAxt'),
-        'axtChain_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/axtChain'),
-        'chainNet_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/chainNet'),
-
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '100Mb_job'       => { 'LSF' => ['-C0 -M100 -R"select[mem>100] rusage[mem=100]"]', $reg_requirement] },
-            '1Gb_job'         => { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
-            '1.8Gb_job'       => { 'LSF' => ['-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"', $reg_requirement] },
-            '2Gb_job'         => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_requirement] },
-            '4Gb_job'         => { 'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', $reg_requirement] },
-            '8Gb_job'         => { 'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
-            '10Gb_job'        => { 'LSF' => ['-C0 -M10000 -R"select[mem>10000] rusage[mem=10000]"', $reg_requirement] },
+        # LastZ is used to align the genomes
+        'pair_aligner_exe'  => $self->o('lastz_exe'),
     };
 }
 

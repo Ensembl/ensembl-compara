@@ -52,8 +52,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');      # we want to treat it as a 'pure' Hive pipeline
-
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -77,13 +76,11 @@ sub default_options {
             [ 'ref_genome:10090', 'mus_musculus' ],
         ],
 
-        'ensembl_species_tree' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.vertebrates.branch_len.nw',
-
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
-
+        'division'  => 'vertebrates',
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 # Ensures species output parameter gets propagated implicitly
 sub hive_meta_table {
@@ -95,12 +92,6 @@ sub hive_meta_table {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        'default' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-    };
-}
 
 sub pipeline_wide_parameters {
     my ($self) = @_;
@@ -137,7 +128,7 @@ sub pipeline_analyses {
                 # Gets #compara_db# from pipeline_wide_parameters
                 'label'     => 'Ensembl',
                 'mlss_id'   => '#method_link_species_set_id#',
-                'species_tree_input_file'   => $self->o('ensembl_species_tree'),
+                'species_tree_input_file'   => $self->o('binary_species_tree'),
             },
             -flow_into  => {
                 2 => [ 'hc_binary_species_tree' ],

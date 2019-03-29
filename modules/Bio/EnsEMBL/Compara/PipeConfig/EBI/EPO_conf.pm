@@ -70,15 +70,7 @@ sub default_options {
         # 'species_set_name' => 'fish',
         #'rel_suffix' => 'b',
 
-        # Where the pipeline lives
-        'host' => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port' => 4522,
-
         'division' => 'ensembl',
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
-        # Where we get the genomes from
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
 
         # Capacities
         'low_capacity'                  => 10,
@@ -87,25 +79,7 @@ sub default_options {
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,
 
-        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/' . $self->o('pipeline_name') . '/',
-
-        'bl2seq_exe'        => undef,   # We use blastn instead
-        'blastn'            => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
-        'enredo_exe'        => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
-        'exonerate_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
-        'server_exe'        => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
-        'fasta2esd_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),
-        'esd2esi_exe'       => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/esd2esi'),
-        'samtools_exe'      => $self->check_exe_in_cellar('samtools/1.6/bin/samtools'),
-        'gerp_exe_dir'      => $self->check_dir_in_cellar('gerp/20080211/bin'),
-        'java_exe'          => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-        'ortheus_bin_dir'   => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-        'ortheus_c_exe'     => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
-        'ortheus_lib_dir'   => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-        'pecan_exe_dir'     => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
-        'semphy_exe'        => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
-
-        'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
+        'work_dir'  => $self->o('pipeline_dir'),
 
         # Databases
         'compara_master' => 'compara_master',
@@ -122,24 +96,10 @@ sub default_options {
             -species  => $self->o('ancestral_sequences_name'),
             -user     => $self->o('pipeline_db', '-user'),
             -pass     => $self->o('pipeline_db', '-pass'),
-            -dbname   => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
+            -dbname   => $self->o('dbowner').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
         },
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default'   => {'LSF' => ['-C0 -M2500  -R"select[mem>2500]  rusage[mem=2500]"',  $reg_requirement] },
-        'mem3500'   => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },
-        '3.5Gb'     => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },
-        'mem7500'   => {'LSF' => ['-C0 -M7500  -R"select[mem>7500]  rusage[mem=7500]"',  $reg_requirement] },
-        'mem14000'  => {'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] },
-        '30Gb_job'  => {'LSF' => ['-C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"', $reg_requirement] },
-
-    };
-}
 
 1;

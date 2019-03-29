@@ -54,9 +54,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name'   => $self->o('division') . '_post_homology_merge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
         'compara_db'      => 'compara_curr',
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
+
+        'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
 
         #Pipeline capacities:
         'update_capacity'                           => 5,
@@ -83,23 +83,10 @@ sub pipeline_wide_parameters {
         'threshold_levels'  => $self->o('threshold_levels'),
 
         'do_member_update'      => 0,
-        'do_member_stats'       => 1,
+        'do_member_stats_gt'    => 0,
+        'do_member_stats_fam'   => 1,
         'do_high_confidence'    => 0,
     }
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        '500Mb_job'    => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'default_w_reg' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] }, # override default default to always incl reg_conf
-    };
 }
 
 
@@ -113,7 +100,10 @@ sub pipeline_analyses {
                     'compara_db'    => $self->o('compara_db'),
                 } ],
             -flow_into  => {
-                '1->A' => WHEN( '#do_member_stats#' => { 'find_collection_species_set_id' => $self->o('member_stats_config') } ),
+                '1->A' => [
+                    WHEN( '#do_member_stats_gt#'  => [ 'set_default_values' ] ),
+                    WHEN( '#do_member_stats_fam#' => [ 'stats_families' ] ),
+                ],
                 'A->1' => ['backbone_member_update'],
             },
         },

@@ -38,32 +38,15 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::GeneMemberHomologyStats_conf
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
+use base ('Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStatsFM_conf');
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::GeneMemberHomologyStats_conf');
+sub default_options {
+    my ($self) = @_;
+    return {
+        %{ $self->SUPER::default_options() },
 
-sub pipeline_analyses {
-  my ($self) = @_;
-  
-  my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self);
-  $pipeline_analyses->[0]->{'-input_ids'} = [ {
-          'db_conn'         => $self->o('curr_rel_db'),
-          'collection'      => $self->o('collection'),
-          'clusterset_id'   => 'default',
-      } ],
-
-  ## EG Hack ##
-  # For fungi and protists the families are on a different species-set but
-  # we still want those stats to be recorded in the "default" clusterset_id
-  # Since there is a single family MLSS and a single flow of jobs, we
-  # simply remove the filter
-  $pipeline_analyses->[2]->{'-parameters'}->{'inputquery'} =~ s/ AND species_set_id = #species_set_id#//;
-  # We still need to populate the table with the correct members. Since the
-  # families are computed across the entire set of members, we can simply
-  # remove the JOIN
-  $pipeline_analyses->[1]->{'-parameters'}->{'sql'}->[0] =~ s/JOIN species_set USING \(genome_db_id\).*WHERE species_set_id = #species_set_id#//s;
-  
-  return $pipeline_analyses;
+        'compara_db'    => $self->o('curr_rel_db'),     # For backwards compatibility
+    }
 }
 
 sub resource_classes {

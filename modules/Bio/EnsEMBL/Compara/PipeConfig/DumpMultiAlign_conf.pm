@@ -50,11 +50,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
 sub default_options {
@@ -66,19 +64,15 @@ sub default_options {
         # parameter, which by default comes from the Core API
         # 'ensembl_release' => 92
 
-        # By default, the pipeline will follow the "locator" of each
-        # genome_db. You only have to set reg_conf if the locators
-        # are missing.
-        # 'registry' => '',
-        'reg_conf' => undef,
+        # The division name
+        'division'  => 'vertebrates',
 
         # Compara reference to dump. Can be the "species" name (if loading the Registry via registry)
         # or the url of the database itself
         # Intentionally left empty
         #'compara_db' => 'Multi',
 
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix'),
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/',
+        'export_dir'    => $self->o('pipeline_dir'),
 
         # Maximum number of blocks per file
         'split_size' => 200,
@@ -103,9 +97,6 @@ sub default_options {
         # alignment blocks into chunks
         'split_by_chromosome'   => 1,
 
-        'dump_aln_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/DumpMultiAlign.pl",
-        'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
-
         # Method link types of mlss_id to retrieve
         'method_link_types' => 'BLASTZ_NET:TRANSLATED_BLAT:TRANSLATED_BLAT_NET:LASTZ_NET:PECAN:EPO:EPO_LOW_COVERAGE',
 
@@ -117,6 +108,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 # Ensures species output parameter gets propagated implicitly
 sub hive_meta_table {
@@ -150,17 +142,6 @@ sub pipeline_wide_parameters {
         output_dir      => '#export_dir#/#format#/ensembl-compara/#aln_type#/#base_filename#',
         output_file_gen => '#output_dir#/#base_filename#.#region_name#.#format#',
         output_file     => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_options = $self->o('registry') ? '--reg_conf '.$self->o('registry') : '';
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default_with_registry' => { 'LSF' => ['', $reg_options], 'LOCAL' => ['', $reg_options] },
-        '2Gb_job' => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_options], 'LOCAL' => ['', $reg_options] },
     };
 }
 

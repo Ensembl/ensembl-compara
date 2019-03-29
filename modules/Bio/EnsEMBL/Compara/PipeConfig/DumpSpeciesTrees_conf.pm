@@ -44,33 +44,23 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
 
-        #'compara_db' => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
-
-        #Connection parameters for production database (the rest is defined in the base class)
-        'host'              => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'              => 4485,
-
-        # The registry file in case the compara databse is a registry name
-        'reg_conf'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl',
+        'division'          => 'vertebrates',
 
         #Locations to write output files
-        'dump_dir'          => '/hps/nobackup2/production/ensembl/'. $ENV{USER} . '/' . $self->o('pipeline_name'),
-
-        # Script to dump a tree
-        'dump_species_tree_exe'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/examples/species_getSpeciesTree.pl',
+        'dump_dir'          => $self->o('pipeline_dir'),
     };
 }
+
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_wide_parameters {
     my ($self) = @_;

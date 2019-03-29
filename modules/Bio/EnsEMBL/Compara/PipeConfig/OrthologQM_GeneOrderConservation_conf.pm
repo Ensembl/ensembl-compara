@@ -69,9 +69,6 @@ sub default_options {
     return {
             %{ $self->SUPER::default_options() },
 
-        'compara_db' => undef, #'mysql://ensadmin:'.$ENV{ENSADMIN_PSW}.'@compara2/wa2_protein_trees_snapshot_84'
-#        'compara_db' => 'mysql://ensro@compara4/OrthologQM_test_db'
-
         # mlss_id of the protein-trees. The pipeline will process all the orthologues found there
         'mlss_id'       => undef,
         # mlss_id of a specific pair of species
@@ -106,17 +103,6 @@ sub pipeline_wide_parameters {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'default'      => {'LSF' => '-q production-rh7'},
-#        'urgent'       => {'LSF' => '-q production-rh7'},
-        '1Gb_job'      => {'LSF' => '-C0 -M1000 -q production-rh7 -R"select[mem>1000]  rusage[mem=1000]"' },
-        '500Mb_job'      => {'LSF' => '-C0 -M500 -q production-rh7 -R"select[mem>500]  rusage[mem=500]"' },
-        '4Gb_job'      => {'LSF' => '-C0 -M4000 -q production-rh7 -R"select[mem>4000]  rusage[mem=4000]"' },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;

@@ -68,10 +68,6 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    if ($self->param("registry")) {
-        $self->load_registry($self->param("registry"));
-    }
-
     # Get the GenomeDB entry
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly( $self->param_required('species_name') )
     # All the reference dnafrags

@@ -30,16 +30,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'compara_hmmer_ces',
-
-           # connection parameters to various databases:
-        'pipeline_db' => { # the production database itself (will be created)
-                -host   => 'compara1',
-                -port   => 3306,
-                -user   => 'ensadmin',
-                -pass   => $self->o('password'),
-                -dbname => $ENV{'USER'}.'_hmmer_constrained_elements'.$self->o('rel_with_suffix'),
-        },
 	   # database containing the constrained elements
         'compara_db' => {
                 -user => 'ensro',
@@ -65,15 +55,6 @@ sub default_options {
 }
 
 
-sub resource_classes {
-    my ($self) = @_; 
-    return {
-         'mem7500'  => { 'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-         'mem11400' => { 'LSF' => '-C0 -M11400000 -R"select[mem>11400] rusage[mem=11400]"' },
-    };  
-}
-
-
 sub pipeline_wide_parameters {
         my $self = shift @_;
         return {
@@ -94,8 +75,6 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
         my ($self) = @_;
-        print "pipeline_analyses\n";
-
     return [
 	    {
 		-logic_name    => 'drop_dnafrag_index_on_genomic_align',
@@ -137,7 +116,7 @@ sub pipeline_analyses {
 		-logic_name    => 'dump_genome_repeats',
 		-module        => 'Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::DumpRepeats',
 		-hive_capacity  => 20,	
-		-rc_name        => 'mem7500',
+		-rc_name        => '8Gb_job',
 		-wait_for => 'import_genome_dbs_and_dnafrags',
 	   },
 	   {   -logic_name      => 'load_cons_eles',
@@ -149,7 +128,7 @@ sub pipeline_analyses {
 	   {
 		-logic_name     => 'find_repeat_gabs',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::FindRepeatGabs',
-		-rc_name        => 'mem7500',
+		-rc_name        => '8Gb_job',
 		-wait_for       => [ 'load_cons_eles' ],
 		-hive_capacity  => 20,
 	  },
@@ -161,7 +140,7 @@ sub pipeline_analyses {
                                    'inputquery' => "SELECT genomic_align_block_id gab_id FROM genomic_align_block WHERE score IS NULL",
                                   },  
 		-wait_for       => [ 'find_repeat_gabs', ],
-		-rc_name        => 'mem11400',
+		-rc_name        => '16Gb_job',
 		-flow_into	=> {
 			2 => [ 'hmm_search' ],
 		},

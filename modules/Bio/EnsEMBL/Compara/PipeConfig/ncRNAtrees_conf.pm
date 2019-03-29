@@ -58,6 +58,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -79,8 +80,6 @@ sub default_options {
             #   'blastp' means that the pipeline will clusters genes according to their RFAM accession
             #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
             'clustering_mode'           => 'rfam',
-
-            'division'              => undef,
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
@@ -121,9 +120,7 @@ sub pipeline_create_commands {
     return [
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-            'mkdir -p '.$self->o('work_dir'),
-            'mkdir -p '.$self->o('dump_dir'),
-            'mkdir -p '.$self->o('ss_picts_dir'),
+            $self->pipeline_create_commands(['work_dir', 'dump_dir', 'ss_picts_dir']),
     ];
 }
 
@@ -338,7 +335,6 @@ sub core_pipeline_analyses {
                 'biotype_filter'        => 'biotype_group LIKE "%noncoding"',
             },
             -analysis_capacity => 10,
-            -rc_name           => '250Mb_job',
             -flow_into         => [ 'hc_members_per_genome' ],
         },
 
@@ -451,7 +447,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            -rc_name            => '250Mb_job',
             -flow_into          => [ 'cluster_qc_factory' ],
         },
 
@@ -491,7 +486,7 @@ sub core_pipeline_analyses {
              -logic_name => 'rename_labels',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RenameLabelsBeforMerge',
              -parameters => {
-                 'division'     => $self->o('division'),
+                 'clusterset_id'=> $self->o('collection'),
                  'label_prefix' => $self->o('label_prefix'),
              },
              -flow_into  => [ 'homology_stats_factory', 'id_map_mlss_factory' ],
@@ -500,7 +495,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'write_stn_tags',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
+                'input_file'    => $self->o('tree_stats_sql'),
             },
             -flow_into      => [ 'email_tree_stats_report' ],
         },
@@ -618,7 +613,6 @@ sub core_pipeline_analyses {
                                     'dataflow_subclusters' => 1,
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
-                -rc_name            => '250Mb_job',
                 -priority           => 40,
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
@@ -712,7 +706,6 @@ sub core_pipeline_analyses {
                             2 => [ 'sec_struct_model_tree_1_core' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
-             -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_2_cores', ## pre_sec_struct_tree
@@ -773,7 +766,6 @@ sub core_pipeline_analyses {
                            -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
-            -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_2_cores', ## sec_struct_model_tree
@@ -852,7 +844,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_himem'],
                           },
-             -rc_name => '8Gb_mpi_4c_job',
+             -rc_name => '8Gb_4c_mpi',
             },
             {
              -logic_name => 'fast_trees_himem',
@@ -867,7 +859,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
                           },
-             -rc_name => '16Gb_mpi_4c_job',
+             -rc_name => '16Gb_4c_mpi',
             },
             {
              -logic_name => 'fast_trees_hugemem',
@@ -879,7 +871,7 @@ sub core_pipeline_analyses {
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
                              'examl_number_of_cores' => 4,
                             },
-             -rc_name => '32Gb_mpi_4c_job',
+             -rc_name => '32Gb_4c_mpi',
             },
 
         {
@@ -934,7 +926,6 @@ sub core_pipeline_analyses {
                             -2 => ['genomic_tree_himem'],
                             -1 => ['genomic_tree_himem'],
                            },
-             -rc_name => '250Mb_job',
             },
 
             {
@@ -967,7 +958,6 @@ sub core_pipeline_analyses {
                 1 => [ 'hc_tree_homologies' ],
                 -1 => [ 'orthotree_himem' ],
             },
-           -rc_name => '250Mb_job',
         },
 
         {   -logic_name    => 'orthotree_himem',
@@ -1012,6 +1002,7 @@ sub core_pipeline_analyses {
                 },
             },
             -flow_into => {
+                1 => [ 'set_default_values' ],
                 2 => {
                     'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
                 },
@@ -1070,6 +1061,7 @@ sub core_pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
     ];
 }
 

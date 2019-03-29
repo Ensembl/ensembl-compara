@@ -55,7 +55,6 @@ sub pipeline_analyses_dump_conservation_scores {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ChunkAndGroupDnaFrags',
             -parameters     => {
                 'chunk_size'    => 10_000_000,
-                # 'cmd'   => '#dump_features_program# --feature cs_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" > #bedgraph_file#',
             },
             -flow_into      => {
                 '2->A' => { 'dump_conservation_scores' => INPUT_PLUS() },
@@ -82,7 +81,7 @@ sub pipeline_analyses_dump_conservation_scores {
             -parameters     => {
                 'cmd'   => [ $self->o('big_wig_exe'), '#bedgraph_file#', '#chromsize_file#', '#bigwig_file#' ],
             },
-            -rc_name        => '10Gb_job',
+            -rc_name        => '16Gb_job',
         },
 
         {   -logic_name     => 'md5sum_cs',

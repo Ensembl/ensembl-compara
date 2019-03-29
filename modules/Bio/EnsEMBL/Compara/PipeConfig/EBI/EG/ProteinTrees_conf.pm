@@ -39,7 +39,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::ProteinTrees_conf
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EG::ProteinTrees_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease>
+        -division <eg_division>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -81,13 +81,13 @@ sub default_options {
         # names of species we don't want to reuse this time
         'do_not_reuse_list' => [],
 
-    # custom pipeline name, in case you don't like the default one
+    # custom pipeline name
         # Used to prefix the database name (in HiveGeneric_conf)
         # Define rel_suffix for re-runs of the pipeline
         pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 
-    # dependent parameters: updating 'base_dir' should be enough
-        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_',
+    # data directories:
+        'work_dir'              => '/nfs/nobackup/ensemblgenomes/'.$ENV{'USER'}.'/compara/ensembl_compara_'. $self->o('pipeline_name'),
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,

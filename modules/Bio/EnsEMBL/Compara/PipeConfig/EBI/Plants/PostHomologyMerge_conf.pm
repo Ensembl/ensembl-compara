@@ -48,21 +48,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-5',    # where the pipeline database will be created
-        'port'            => 4615,
-
         'division'        => 'plants',
-        # 'compara_db'      => 'compara_curr',
-        # 'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
-
-        # The list of collections and clusterset_ids
-        'member_stats_config'   => [
-            INPUT_PLUS({
-                'collection'      => 'plants',
-                'clusterset_id'   => 'default',
-                'db_conn'         => '#compara_db#',
-            }),
-        ],
 
         'high_confidence_ranges'    => [
             {

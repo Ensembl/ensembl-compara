@@ -60,7 +60,6 @@ sub default_options {
     my ($self) = @_;
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
-            'pipeline_name' => $self->o('division').'_synteny_'.$self->o('rel_with_suffix'),
 
             # Connection to the alignment database must be given
             #'alignment_db' => undef,    # alignment database to calculate the syntenies from
@@ -136,7 +135,7 @@ sub pipeline_analyses {
         {  -logic_name  => 'populate_new_database',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'program'   => $self->o('populate_new_database_program'),
+                'program'   => $self->o('populate_new_database_exe'),
                 'cmd'       => ['#program#', '--master', $self->o('master_db'), '--new', $self->pipeline_url(), '--reg-conf', '#registry#'],
             },
             -input_ids  => [{}],
@@ -219,7 +218,7 @@ sub pipeline_analyses {
                                '1' => [ 'chr_name_factory' ],                               
                               },
               -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
-              -rc_name => '1.8Gb',
+              -rc_name => '2Gb_job',
             },
 
 
@@ -235,7 +234,7 @@ sub pipeline_analyses {
                                '1' => [ 'build_synteny' ],
                               },
               -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
-              -rc_name => '1.8Gb',
+              -rc_name => '2Gb_job',
             },
             #Build synteny regions
             { -logic_name => 'build_synteny',
@@ -245,7 +244,7 @@ sub pipeline_analyses {
                               'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
-              -rc_name => '1.8Gb',
+              -rc_name => '2Gb_job',
               -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
               -flow_into => {
                   -1 => 'build_synteny_himem',
@@ -258,7 +257,7 @@ sub pipeline_analyses {
                               'gff_file' => '#synteny_dir#/#seq_region_name#.syten.gff', #to agree with output of DumpGFFAlignmentsForSynteny.pl
                               'output_file' => '#synteny_dir#/#seq_region_name#.#maxDist1#.#minSize1#.BuildSynteny.out',
                               },
-              -rc_name => '3.6Gb',
+              -rc_name => '4Gb_job',
               -meadow_type  => 'LSF',   # The head nodes cannot run Java programs
             },
             #Concatenate into single file
@@ -297,7 +296,7 @@ sub pipeline_analyses {
                             },
               -max_retry_count => 0,
               -analysis_capacity => 5,
-              -rc_name => '3.6Gb',
+              -rc_name => '4Gb_job',
             },
 
         {   -logic_name => 'delete_synteny',

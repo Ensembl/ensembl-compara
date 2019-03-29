@@ -81,9 +81,8 @@ sub default_options {
       'pipeline_name' => 'parasite_hom_'.$ENV{PARASITE_VERSION} . '_' . $ENV{ENSEMBL_VERSION},
       'division'  => 'parasite',
 
-      # dependent parameters: updating 'work_dir' should be enough
-      'base_dir'              =>  $ENV{PARASITE_SCRATCH} . '/compara/',
-      # work_dir and exe_dir are defined in the base class
+      # data directories:
+      'work_dir'              =>  $ENV{PARASITE_SCRATCH} . '/compara/' . $self->o('pipeline_name'),
 
       # "Member" parameters:
       

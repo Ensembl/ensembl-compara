@@ -104,27 +104,26 @@ sub hive_meta_table {
     };
 }
 
+sub default_pipeline_name {         # Instead of ortholog_qm_alignment
+    return 'orth_qm_wga';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name' => $self->o('division').'_wga_' . $self->o('rel_with_suffix'),
 
         'species1'         => undef,
         'species2'         => undef,
         'species_set_name' => undef,
         'species_set_id'   => undef,
         'ref_species'      => undef,
-        'reg_conf'         => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
 
-        'user'             => 'ensadmin',
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
-
-        'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
     };
 }
 

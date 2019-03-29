@@ -39,7 +39,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
     #4. Run init_pipeline.pl script:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease>
+        -division <eg_division>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -74,11 +74,6 @@ sub default_options {
 
     division => 'plants',
     # mlss_id  => 40138,
-    # eg_release => 41,
-
-
-    # custom pipeline name, in case you don't like the default one
-    pipeline_name => $self->o('division').'_prottrees_'.$self->o('eg_release').'_'.$self->o('rel_with_suffix'),
 
     # How will the pipeline create clusters (families) ?
     # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -91,7 +86,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.plants.topology.nw',
+        'species_tree_input_file'   => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/species_tree.plants.topology.nw'),
         'binary_species_tree_input_file'    => undef,
 
     # homology_dnds parameters:

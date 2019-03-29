@@ -47,7 +47,6 @@ sub pipeline_analyses_dump_multi_align {
                 '2->A' => [ 'count_blocks' ],
                 'A->2' => [ 'md5sum_aln_factory' ],
             },
-            -rc_name => 'default_with_registry',
         },
 
         {  -logic_name  => 'count_blocks',
@@ -63,7 +62,6 @@ sub pipeline_analyses_dump_multi_align {
                     '!#split_by_chromosome# && #split_size#==0' => { 'dumpMultiAlign' => {'region_name' => 'all', 'filename_suffix' => '*', 'num_blocks' => '#num_blocks#'} },    # a job to dump all the blocks in 1 file
                 ),
             },
-            -rc_name    => 'default_with_registry',
         },
 
         {  -logic_name  => 'initJobs',
@@ -74,7 +72,6 @@ sub pipeline_analyses_dump_multi_align {
                 3 => [ 'createSuperJobs' ],
                 4 => [ 'createOtherJobs' ],
             },
-            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on chromosomes (1 job per chromosome)
         {  -logic_name    => 'createChrJobs',
@@ -83,7 +80,6 @@ sub pipeline_analyses_dump_multi_align {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks on supercontigs (1 job per coordinate-system)
         {  -logic_name    => 'createSuperJobs',
@@ -92,7 +88,6 @@ sub pipeline_analyses_dump_multi_align {
             -flow_into => {
                 2 => [ 'dumpMultiAlign' ]
             },
-            -rc_name => 'default_with_registry',
         },
         # Generates DumpMultiAlign jobs from genomic_align_blocks that do not contain $species
         {  -logic_name    => 'createOtherJobs',
@@ -148,7 +143,6 @@ sub pipeline_analyses_dump_multi_align {
                 'readme_file' => '#output_dir#/README.#base_filename#',
             },
             -flow_into     => WHEN( '#make_tar_archive#' => [ 'targz' ] ),
-            -rc_name => 'default_with_registry',
         },
         {   -logic_name     => 'targz',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',

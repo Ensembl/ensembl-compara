@@ -39,28 +39,13 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Where dumps are created
-        'export_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix').'/cs_#mlss_id#',
+        'export_dir'    => $self->o('pipeline_dir') . '/#mlss_id#/out',
 
         # Where to keep temporary files
-        'work_dir'    => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/dumps_'.$self->o('rel_with_suffix').'/work/cs_#mlss_id#',
+        'work_dir'    => $self->o('pipeline_dir') . '/#mlss_id#/hash',
 
         # How many species can be dumped in parallel
         'capacity'    => 50,
-
-        # executable locations:
-        'big_wig_exe'   => $self->check_exe_in_cellar('kent/v335_1/bin/bedGraphToBigWig'),
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_options = $self->o('registry') ? '--reg_conf '.$self->o('registry') : '';
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        'crowd' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-        '2Gb_job' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
-        '10Gb_job' => { 'LSF' => '-C0 -M10000  -R"select[mem>10000]  rusage[mem=10000]"' },
     };
 }
 

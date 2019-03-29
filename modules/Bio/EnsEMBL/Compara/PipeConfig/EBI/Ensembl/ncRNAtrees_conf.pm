@@ -74,17 +74,15 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # the production database itself (will be created)
-            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-            'host' => 'mysql-ens-compara-prod-4',
-            'port' => 4401,
-
             # Must be given on the command line
             #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'rel_suffix' => '',
-            'division'   => 'ensembl',
+            #'rel_suffix' => '',
+
+            'division'      => 'vertebrates',
+            'collection'    => 'default',       # The name of the species-set within that division
+            'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_ncrna_trees_'.$self->o('rel_with_suffix'),
 
             'test_mode' => 1, #set this to 0 if this is production run
 

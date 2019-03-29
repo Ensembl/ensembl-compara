@@ -98,6 +98,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('member_type') . '_reindexed_trees_' . $self->o('rel_with_suffix'),
+
         # Must be "protein" or "ncrna"
         #'member_type'   => undef,
 
@@ -143,8 +145,6 @@ sub pipeline_analyses {
     # In this pipeline here, both default to the current db, so no need to
     # set the parameter
     delete $_->{'-parameters'}->{'compara_db'} for grep {$_->{'-logic_name'} eq 'species_factory'} @$hc_analyses;
-    # Give more memory to these guys
-    $_->{'-rc_name'} = '250Mb_job' for grep {$_->{'-logic_name'} =~ /trees_factory$/} @$hc_analyses;
 
     return [
 
@@ -205,7 +205,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 1 => 'load_members_factory',
             },
-            -rc_name    => '250Mb_job',
         },
 
         {   -logic_name => 'load_members_factory',
@@ -223,7 +222,6 @@ sub pipeline_analyses {
                 'biotype_filter'        => q{#expr(#member_type# eq "protein" ? 'biotype_group = "coding"' : 'biotype_group LIKE "%noncoding"')expr#},
             },
             -analysis_capacity => $self->o('copy_capacity'),
-            -rc_name           => '250Mb_job',
         },
 
         {   -logic_name => 'gene_tree_tables_factory',
@@ -257,7 +255,6 @@ sub pipeline_analyses {
         {   -logic_name        => 'map_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
             -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
-            -rc_name           => '250Mb_job',
             -flow_into         => {
                 2 => 'delete_tree',
             }

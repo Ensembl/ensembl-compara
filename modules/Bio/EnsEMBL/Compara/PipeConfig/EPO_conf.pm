@@ -30,7 +30,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_conf
         resource_classes
 
     'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
-        'password' - your mysql password
     'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
     'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
         The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
@@ -110,11 +109,6 @@ sub default_options {
         'anc_seq_count_cut_off' => 15,
         # Usually set to 0 because we run Gerp on the EPO2X alignment instead
         'run_gerp' => 0,
-
-        # Scripts
-        'dump_features_exe'     => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe'      => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'epo_stats_report_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 

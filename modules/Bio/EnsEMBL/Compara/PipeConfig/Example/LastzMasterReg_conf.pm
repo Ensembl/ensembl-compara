@@ -35,7 +35,6 @@ sub default_options {
     my ($self) = @_;
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
-	    'pipeline_name'         => 'LASTZ_TEST_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
 	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_73', #Use a release database for the test only.
@@ -46,7 +45,7 @@ sub default_options {
 			     'reference'   => {'chunk_size' => 30000000,
 					       'overlap'    => 0,
 					       'include_non_reference' => 1,
-					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
+					       'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
 					       'region' => 'chromosome:22'},
 			     #non human example
 #   			    'reference'     => {'chunk_size'      => 10000000,

@@ -27,7 +27,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::EPO_pt1_conf
     EBI-specific configuration for the EPO_pt1 pipeline. Options to check before
     initializing the pipeline:
 
-      'password' - your mysql password
 	    'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	    'reference_genome_db_name' - the production name of the species which is in all your pairwise alignments
 	    
@@ -79,42 +78,13 @@ sub default_options {
         #'reference_genome_db_name' => 'oryzias_latipes',
 
         'division' => 'ensembl',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
-        #location of full species tree, will be pruned
-        'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
-
-        # Where we get the genomes from
-        'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
 
         'master_db' => 'compara_master',
       	  
         # database containing the pairwise alignments needed to get the overlaps
       	'compara_pairwise_db' => 'compara_curr',
-
-        'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
-        'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
-        'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-        'exonerate_exe'   => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'), # path to exonerate executable
-        'ortheus_c_exe'   => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
-        'ortheus_py'      => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/Ortheus.py'),
-        'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-        'ortheus_bin_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-        'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
-        'estimate_tree_exe' => $self->check_file_in_cellar('pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py'),
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-    %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default'  => {'LSF' => ['-C0 -M2500  -R"select[mem>2500]  rusage[mem=2500]"',  $reg_requirement] },   
-         'mem3500'  => {'LSF' => ['-C0 -M3500  -R"select[mem>3500]  rusage[mem=3500]"',  $reg_requirement] },   
-         'mem7500'  => {'LSF' => ['-C0 -M7500  -R"select[mem>7500]  rusage[mem=7500]"',  $reg_requirement] },   
-         'mem14000' => {'LSF' => ['-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"', $reg_requirement] }, 
-    };  
-}
 
 1;

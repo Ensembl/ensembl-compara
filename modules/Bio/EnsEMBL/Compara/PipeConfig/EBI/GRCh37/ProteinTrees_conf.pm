@@ -56,12 +56,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'  => 4522,
-
     # User details
 
     # parameters that are likely to change from execution to another:
@@ -69,12 +63,9 @@ sub default_options {
 
         'test_mode' => 1, #set this to 0 if this is production run
         
-        'rel_suffix'            => '',
+        #'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
-
-        # Tag attached to every single tree
-        'division' => 'ensembl',
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
@@ -82,7 +73,7 @@ sub default_options {
 
     # connection parameters to various databases:
         # reg_conf usually relies on the division, but grch37 is an edge case where this can't be the case
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_grch37_conf.pl',
+        'reg_conf' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_grch37_conf.pl'),
 
     };
 }

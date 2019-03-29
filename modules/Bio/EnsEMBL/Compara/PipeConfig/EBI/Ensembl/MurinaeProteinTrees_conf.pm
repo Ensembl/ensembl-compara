@@ -73,31 +73,22 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'  => 4485,
-
-    # User details
-
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
-        'rel_suffix'            => '',
+        #'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
-        # Tag attached to every single tree
-        'division'              => 'murinae',
-
     # Parameters to allow merging different runs of the pipeline
+        'division'              => 'vertebrates',
+        'collection'            => 'murinae',       # The name of the species-set within that division
         'dbID_range_index'      => 18,
         'label_prefix'          => 'mur_',
 
 
     #default parameters for the geneset qc
 
-    # dependent parameters: updating 'base_dir' should be enough
+    # data directories:
 
     # "Member" parameters:
 
@@ -132,9 +123,6 @@ sub default_options {
     # hive_capacity values for some analyses:
 
     # connection parameters to various databases:
-
-        # Everything is set via the Registry, now
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_vertebrates_conf.pl',
 
         # Where to draw the orthologues from
         'ref_ortholog_db'   => 'compara_ptrees',

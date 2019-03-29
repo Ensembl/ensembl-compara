@@ -30,7 +30,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
         resource_classes 
 
 	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
-        'password' - your mysql password
 	'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
 	'master_db' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
         The dummy values - you should not need to change these unless they clash with pre-existing values associated with the pairwise alignments you are going to use
@@ -90,18 +89,6 @@ sub default_options {
     };
 }
 
-
-sub resource_classes {
-    my ($self) = @_; 
-    return {
-	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-	'default'  => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
-	'mem3500'  => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-	'mem7500'  => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-    'mem14000' => {'LSF' => '-C0 -M14000 -R"select[mem>14000] rusage[mem=14000]"' },
-
-    };  
-}
 
 sub pipeline_wide_parameters {
 	my $self = shift @_;

@@ -47,9 +47,8 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Paths to compara files
-        'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'ce_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/constrained_elements.txt",
-        'bigbed_autosql'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/constrainedelements_autosql.as",
+        'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
+        'bigbed_autosql'        => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/constrainedelements_autosql.as'),
     };
 }
 
@@ -70,13 +69,13 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'dump_features_program' => $self->o('dump_features_program'),
+        'dump_features_exe'     => $self->o('dump_features_exe'),
         'ce_readme'             => $self->o('ce_readme'),
 
         'registry'      => $self->o('registry'),
         'compara_db'   => $self->o('compara_url'),
 
-        'export_dir'    => $self->o('export_dir'),
+        'export_dir'    => $self->o('pipeline_dir'),
         'ce_output_dir'    => '#export_dir#/bed/ensembl-compara/#dirname#',
         'bed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bed',
         'bigbed_file'   => '#ce_output_dir#/gerp_constrained_elements.#name#.bb',

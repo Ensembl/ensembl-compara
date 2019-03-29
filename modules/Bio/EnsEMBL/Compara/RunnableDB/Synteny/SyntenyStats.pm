@@ -61,10 +61,6 @@ sub run {
 sub initialize_db_adaptors {
   my ($self) = @_;
 
-  if ($self->param("reg_conf")) {
-      $self->load_reg_conf($self->param("reg_conf"));
-  }
-
   my $mlss_id  = $self->param_required('mlss_id');
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
   $self->param('mlss', $mlss);

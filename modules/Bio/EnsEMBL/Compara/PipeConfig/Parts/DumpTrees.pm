@@ -28,8 +28,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host compara1 -member_type ncrna -clusterset_id murinae
 
-    By default the pipeline dumps the database named "compara_curr" in the registry, but a different database can be given:
-    -production_registry /path/to/reg_conf.pl -rel_db compara_db_name
+    By default the pipeline dumps the database named "compara_curr" in the
+    registry, but a different database can be selected with -rel_db
 
 =head1 DESCRIPTION
 
@@ -78,7 +78,6 @@ sub pipeline_analyses_dump_trees {
                 '2->A' => [ 'mk_work_dir' ],
                 'A->1' => [ 'md5sum_tree_factory' ],
             },
-            -rc_name => 'default_with_registry',
         },
 
         {   -logic_name => 'mk_work_dir',
@@ -245,10 +244,10 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'dump_script'       => $self->o('dump_script'),
+                'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
-                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
+                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
             },
             -flow_into     => {
                 1 => {
@@ -268,10 +267,10 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name    => 'dump_a_tree_himem',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'dump_script'       => $self->o('dump_script'),
+                'dump_script'       => $self->o('dump_gene_tree_exe'),
                 'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'base_filename'     => '#hash_dir#/#hashed_id#/#tree_id#',
-                'cmd'               => '#dump_script# #production_registry# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
+                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #hash_dir#/#hashed_id# --tree_id #tree_id# #tree_args#',
             },
             -flow_into     => {
                 1 => {
@@ -283,7 +282,7 @@ sub pipeline_analyses_dump_trees {
                 },
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
-            -rc_name       => '10Gb_job',
+            -rc_name       => '16Gb_job',
         },
 
         {   -logic_name    => 'validate_xml',

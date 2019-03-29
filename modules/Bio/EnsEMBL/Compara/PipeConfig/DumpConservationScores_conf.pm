@@ -39,8 +39,7 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Paths to compara files
-        'dump_features_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'cs_readme'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/docs/ftp/conservation_scores.txt",
+        'cs_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/conservation_scores.txt'),
     };
 }
 
@@ -54,7 +53,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'dump_features_program' => $self->o('dump_features_program'),
+        'dump_features_exe'     => $self->o('dump_features_exe'),
         'cs_readme'             => $self->o('cs_readme'),
         'dump_cs_capacity'      => 100,
 

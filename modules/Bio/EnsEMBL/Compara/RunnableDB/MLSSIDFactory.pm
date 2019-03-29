@@ -55,7 +55,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'registry'  => undef,   # In case the Compara DBA is not a URL
         'methods'   => {
             #'ENSEMBL_PARALOGUES'    => 2,
             #'ENSEMBL_ORTHOLOGUES'   => 3,
@@ -66,9 +65,6 @@ sub param_defaults {
 sub write_output {
     my $self = shift @_;
 
-    if ($self->param("registry")) {
-        $self->load_registry($self->param("registry"));
-    }
     my $mlss_a  = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $methods = $self->param_required('methods');
 

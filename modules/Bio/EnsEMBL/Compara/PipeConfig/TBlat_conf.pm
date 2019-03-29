@@ -77,7 +77,7 @@ sub default_options {
                     #human
                     'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
                     # if you have a specific selection of repeat elements for the masking
-                    #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
+                    #'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
                     #non-human
                     'masking_options' => '{default_soft_masking => 1}',
                 },

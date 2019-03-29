@@ -66,24 +66,17 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
-
         # Dump location
-        'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/alignerstats_'.$self->o('rel_with_suffix').'/',
+        'dump_dir'      => $self->o('pipeline_dir'),
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'feature_dumps',
-
-        # Executable locations
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
     };
 }
 
@@ -92,18 +85,8 @@ sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-        'mkdir -p '.$self->o('bed_dir'),
-        'mkdir -p '.$self->o('output_dir'),
+        $self->pipeline_create_commands(['output_dir', 'bed_dir']),
     ];
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-        '3.5Gb' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-    };
 }
 
 

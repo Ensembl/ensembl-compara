@@ -44,15 +44,17 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
+
+sub default_pipeline_name {         # Instead of merge_dbs_into_release
+    return 'dbmerge';
+}
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-        'pipeline_name' => $self->o('division') . '_dbmerge_' . $self->o('rel_with_suffix'),
-        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # The target database
         'curr_rel_db'   => 'compara_curr',  # Again this is a URL or a registry name
@@ -69,15 +71,11 @@ sub default_options {
         # Do we want to be very picky and die if a table hasn't been listed above / isn't in the target database ?
         'die_if_unknown_table'      => 1,
 
-        # A registry file to avoid having to use only URLs
-        #'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
-
         # All the source databases
         'src_db_aliases'    => {
             # Mapping 'db_alias' => 'db_location':
-            #   'db_alias' is the alias used for the database within the config file
+            #   'db_alias' is the alias used for the database within the registry config file
             #   'db_location' is the actual location of the database. Can be a URL or a registry name
-            #   (if you use a registry name, you probably need to define "reg_conf" above)
         },
 
         # From these databases, only copy these tables. Other tables are ignored
@@ -104,19 +102,7 @@ sub default_options {
    };
 }
 
-
-sub resource_classes {
-    my ($self) = @_;
-
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        'default' => { 'LSF' => ['', '--reg_conf '.$self->o('reg_conf')], 'LOCAL' => ['', '--reg_conf '.$self->o('reg_conf')] },
-        '16Gb_job'=> { 'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement] },
-    };
-}
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 
 sub pipeline_wide_parameters {
@@ -256,6 +242,7 @@ sub pipeline_analyses {
                     'ALTER TABLE #table# ENABLE KEYS',
                 ]
             },
+            -hive_capacity => $self->o('copying_capacity'),
             -flow_into => [ 'check_size' ],
         },
 
@@ -265,7 +252,6 @@ sub pipeline_analyses {
                 'db_conn'   => '#curr_rel_db#',
                 'sql'       => 'DROP TABLE DBMERGEBACKUP_#table#',
             },
-            -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
         {   -logic_name => 'analyze_optimize',

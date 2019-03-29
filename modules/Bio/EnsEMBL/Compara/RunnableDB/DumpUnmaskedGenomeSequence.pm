@@ -119,10 +119,6 @@ sub fetch_input {
     $self->param('genome_dump_file',            $tmp_dump_file);    # Somewhere under /tmp
     $self->param('repeat_masked',               undef);             # and not masked.
 
-    if ($self->param('reg_conf')) {
-        $self->load_registry($self->param('reg_conf'));
-    }
-
     $self->SUPER::fetch_input();
 }
 

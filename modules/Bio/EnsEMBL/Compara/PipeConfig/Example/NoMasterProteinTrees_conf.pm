@@ -108,9 +108,6 @@ sub default_options {
         #Since we are loading members from FASTA files, we dont have the dna_frags, so we need to allow it to be missing.
         'allow_missing_coordinates' => 0,
 
-        #Compara/MySQL server to be used
-        'host' => 'compara4',
-
     # connection parameters to various databases:
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)

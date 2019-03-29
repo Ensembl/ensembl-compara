@@ -28,8 +28,8 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf -host compara1 -member_type ncrna -clusterset_id murinae
 
-    By default the pipeline dumps the database named "compara_curr" in the registry, but a different database can be given:
-    -production_registry /path/to/reg_conf.pl -rel_db compara_db_name
+    By default the pipeline dumps the database named "compara_curr" in the
+    registry, but a different database can be selected with -rel_db
 
 =head1 DESCRIPTION
 
@@ -77,9 +77,7 @@ sub default_options {
         # Can be "ensembl", "plants", etc
         'division'    => 'ensembl',
 
-        # Standard registry file
-        'pipeline_name'       => 'dump_trees_'.$self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('rel_with_suffix'),
-        'production_registry' => "--reg_conf ".$self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_ebi_conf.pl",
+        'pipeline_name'       => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
         'rel_db'        => 'compara_curr',
 
         'dump_trees_capacity' => 100,   # how many trees can be dumped in parallel
@@ -90,12 +88,9 @@ sub default_options {
         'dump_per_species_tsv'  => 0,
         'max_files_per_tar'     => 500,
 
-        'xmllint_exe' => $self->check_exe_in_linuxbrew_opt('libxml2/bin/xmllint'),
+        'readme_dir'  => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),                                      # where the template README files are
 
-        'dump_script' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/dumps/dumpTreeMSA_id.pl',           # script to dump 1 tree
-        'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/ftp',                                  # where the template README files are
-
-        'base_dir'    => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),     # where the final dumps will be stored
+        'base_dir'    => $self->o('pipeline_dir'),                                                                      # where the final dumps will be stored
         'hash_dir'    => '#base_dir#/dump_hash/#division#_#basename#',                                                  # where directory hash is created and maintained
         'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
         'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put
@@ -104,19 +99,6 @@ sub default_options {
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => {'LSF' => [ '', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ]  },
-         'default_with_registry'      => {'LSF' => [ '', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ]  },
-         '1Gb_job'      => {'LSF' => [ '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
-         '2Gb_job'      => {'LSF' => [ '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
-         '4Gb_job'      => {'LSF' => [ '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
-         '10Gb_job'      => {'LSF' => [ '-C0 -M10000  -R"select[mem>10000]  rusage[mem=10000]"', $self->o('production_registry') ], 'LOCAL' => [ '', $self->o('production_registry') ] },
-    };
-}
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
@@ -138,7 +120,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'rel_db'        => $self->o('rel_db'),
 
-        'production_registry' => $self->o('production_registry'),
+        'reg_conf'      => $self->o('reg_conf'),
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'  ),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),

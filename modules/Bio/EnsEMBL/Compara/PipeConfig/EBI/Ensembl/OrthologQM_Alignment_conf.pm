@@ -101,7 +101,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::OrthologQM_Alignment_co
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::OrthologQM_Alignment_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf');
 
 
 sub default_options {
