@@ -224,6 +224,7 @@ sub pipeline_analyses {
             -flow_into => {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
+                '4->A' => [ 'rename_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name => '4Gb_job',
@@ -238,6 +239,13 @@ sub pipeline_analyses {
 
         {   -logic_name => 'retire_species_from_master',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::RetireSpeciesFromMaster',
+        },
+
+        {   -logic_name => 'rename_genome',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'db_conn' => $self->o('master_db'),
+            },
         },
 
         {   -logic_name => 'sync_metadata',
@@ -333,7 +341,9 @@ sub pipeline_analyses {
                 'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
                 'java_hc_dir' => $self->o('java_hc_dir'),
             },
-            -flow_into => ['backup_master_again']
+            -rc_name         => '2Gb_job',
+            -max_retry_count => 0,
+            -flow_into       => ['backup_master_again']
         },
 
         {   -logic_name => 'backup_master_again',

@@ -78,6 +78,11 @@ sub fetch_input {
 
     my $cmd = "cd $java_hc_dir; ./run-configurable-testrunner.sh \$($host details script) -d $db_name --release $release ";
 
+    if ( $self->param('master_db') ) {
+        my $master_dbc = $self->get_cached_compara_dba('master_db')->dbc;
+        $cmd .= "--compara_master.database " . $master_dbc->dbname . " ";
+    }
+
     if( $self->param('testgroup') ) {
         $cmd .= '-g ' . $self->param('testgroup');
     } elsif ( $self->param('testcase') ) {
@@ -99,16 +104,24 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->param('hc_version', $self->param('hc_version')+1) if $self->param('hc_version'); # increment version number for versioning the output file
+    # increment number for versioning the output file
+    if ( $self->param('hc_version') ) {
+        $self->db->hive_pipeline->add_new_or_update('PipelineWideParameters',
+            'param_name' => 'hc_version',
+            'param_value' => $self->param_required('hc_version') + 1,
+        );
+        $self->db->hive_pipeline->save_collections();
+    }
 
     my $hc_output_file = $self->param_required('output_file');
-    die "Detected HC failure! Check $hc_output_file for details\n" if grep_file('FAIL', $hc_output_file);
+    die "Detected HC failure! Check $hc_output_file for details\n" if $self->grep_file('FAIL', $hc_output_file);
 }
 
 sub grep_file {
-    my ( $term, $file ) = @_;
+    my ( $self, $term, $file ) = @_;
 
-    my $grep_output = `grep -m 1 '$term' $file`;
+    my $grep_run = $self->run_command("grep -m 1 '$term' $file", {die_on_failure => 1});
+    my $grep_output = $grep_run->out;
     if ( $grep_output eq '' || !defined $grep_output ) {
         return 0;
     } else {

@@ -62,6 +62,14 @@ sub fetch_input {
 	# use metadata script to report genomes that need to be updated
 	my ($genomes_to_update, $renamed_genomes) = $self->fetch_genome_report($release, $division);
 
+    # prepare renaming SQL cmds
+    my @rename_cmds;
+    foreach my $new_name ( keys %$renamed_genomes ) {
+        my $old_name = $renamed_genomes->{$new_name};
+        push(@rename_cmds, "UPDATE genome_db SET name = '$new_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL");
+    }
+    $self->param('rename_cmds', \@rename_cmds);
+
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my $list_run = $self->run_command($list_cmd);
@@ -128,6 +136,9 @@ sub write_output {
 
 	my @retire_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_to_retire') };
 	$self->dataflow_output_id( \@retire_genomes_dataflow, 3 );
+
+    my @rename_genomes_dataflow = map { {sql => [$_]} } @{ $self->param('rename_cmds') };
+    $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
 }
 
 sub fetch_genome_report {
