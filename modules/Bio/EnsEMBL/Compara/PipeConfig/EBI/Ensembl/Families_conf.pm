@@ -88,7 +88,6 @@ sub default_options {
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
-        'hmm_library_basedir' => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2019-01-02',
 
         # data directories:
         'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('rel_with_suffix').'/',

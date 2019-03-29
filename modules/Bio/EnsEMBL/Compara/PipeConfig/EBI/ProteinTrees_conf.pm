@@ -71,16 +71,6 @@ sub default_options {
         'treerecs_exe'              => '/homes/mateus/reconcile/Treerecs/bin/Treerecs',
 
         # HMM specific parameters
-        # HMMer versions could be either 2 or 3
-        # The location of the HMM library:
-
-        #HMMER 2
-        'hmm_library_version'           => '2',
-        'hmm_library_basedir'           => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2019-01-02',
-
-        #HMMER 3
-        #'hmm_library_version'       => '3',
-        #'hmm_library_basedir'       => '/hps/nobackup2/production/ensembl/compara_ensembl/compara_hmm_91/',
         'hmm_library_name'              => 'compara_hmm_91.hmm3',
         'hmmer_search_cutoff'           => '1e-23',
 
