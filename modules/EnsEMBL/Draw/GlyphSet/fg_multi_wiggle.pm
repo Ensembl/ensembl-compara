@@ -40,7 +40,6 @@ sub render_compact {
 sub render_signal {
   my $self = shift;
   #warn "### RENDERING SIGNAL";
-  #$self->{'my_config'}->set('on_error',555);
   $self->_render_aggregate;
 }
 
@@ -109,39 +108,40 @@ sub draw_aggregate {
     next unless $info->{'renderer'};
     #warn ">>> TRACK $track HAS RENDERER ".$info->{'renderer'};
     if ($info->{'renderer'} eq 'compact') {
-      #warn "... WITH FEATURES: ".$info->{'block_features'};
+      #warn "... WITH FEATURES: ".Dumper($info->{'block_features'});
       %blocks = (%blocks, %{$info->{'block_features'}||{}});
     }
     elsif ($info->{'renderer'} eq 'signal') {
-      #warn "... WITH WIGGLE: ".$info->{'wiggle_features'};
+      #warn "... WITH WIGGLE: ".Dumper($info->{'wiggle_features'});
       %wiggles = (%wiggles, %{$info->{'wiggle_features'}||{}});
     }
     elsif ($info->{'renderer'} eq 'signal_feature') {
-      #warn "... WITH FEATURES: ".$info->{'block_features'};
-      #warn "... WITH WIGGLE: ".$info->{'wiggle_features'};
+      %blocks = (%blocks, %{$info->{'block_features'}||{}});
+      #warn "... WITH FEATURES: ".Dumper($info->{'block_features'});
+      %wiggles = (%wiggles, %{$info->{'wiggle_features'}||{}});
+      #warn "... WITH WIGGLE: ".Dumper($info->{'wiggle_features'});
     }
   }
   #warn "@@@ BLOCKS: ".Dumper(\%blocks);
   #warn "@@@ WIGGLES: ".Dumper(\%wiggles);
 
   ## Prepare to draw any headers/labels in lefthand column
-  if (keys %blocks) {
+  if (%blocks) {
     $self->{'my_config'}->set('height', $h * 2);
     $self->{'my_config'}->set('extra_height',12);
   }
   my %config  = %{$self->track_style_config};
   my $header  = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
-  my $data_for_legend = [];
-
-  ## Draw the track(s)
   my $colours   = $self->{'config'}{'fg_multi_wiggle_colours'} ||= $self->get_colours;
   my $args = {
               'label'     => $label, 
               'colours'   => $colours, 
               };
-
   my ($block_style, $wiggle_style, $subhead_height);
-  if (keys %blocks) {
+  my $data_for_legend = [];
+
+  ## Draw the peaks
+  if (%blocks) {
     my $style_class = 'EnsEMBL::Draw::Style::Feature::Peaks';
     if ($self->dynamic_use($style_class)) {
 
@@ -154,6 +154,7 @@ sub draw_aggregate {
       $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
 
       ## Draw features
+      if (scalar @
       $args->{'feature_type'} = 'block_features';
       my $subset    = $self->get_features(\%blocks, $args);
       $block_style  = $style_class->new(\%config, $subset);
@@ -165,13 +166,16 @@ sub draw_aggregate {
       push @$data_for_legend, @$subset;
     }
   }
+  $self->push($block_style->create_glyphs) if $block_style;
 
-  if (keys %wiggles) {
+  ## Draw the graph tracks
+  if (%wiggles) {
     my $style_class = 'EnsEMBL::Draw::Style::Graph';
     if ($self->dynamic_use($style_class)) {
 
+      $self->{'my_config'}->set('on_error', 555);
       $self->{'my_config'}->set('height', $h * 15);
-      $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $h * 3);
+      $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $self->{'my_config'}->get('height'));
 
       unless ($subhead_height) {
         ## Add a summary title in the lefthand margin
@@ -184,18 +188,28 @@ sub draw_aggregate {
       my $subset    = $self->get_features(\%wiggles, $args);
       $wiggle_style  = $style_class->new(\%config, $subset);
 
-      ## Label each subtrack in the margin
-      $header->draw_margin_sublabels($subset);
-
       ## And add to legend
       push @$data_for_legend, @$subset;
     }
   }
-
-  ## Finally, add all the glyphs to the glyphset
-  $self->push(@{$header->glyphs||[]}); 
-  $self->push($block_style->create_glyphs) if $block_style;
   $self->push($wiggle_style->create_glyphs) if $wiggle_style;
+
+  ## Finally create the popup menu and add the header to the glyphset
+  my $colour_legend = $self->_colour_legend($data_for_legend);
+  my $params = {
+                label           => 'Legend & More',
+                title           => $label,
+                colour_legend   => $colour_legend,
+                sublegend_links => $self->_sublegend_links,
+               };
+  if (%blocks && %wiggles) {
+    $params->{'y_offset'} = $self->{'my_config'}->get('total_height') - 30;
+  }
+  if (%blocks) {
+    $params->{'show_peaks'} = 1;
+  }
+  $header->draw_sublegend($params);
+  $self->push(@{$header->glyphs||[]}); 
 
   ## This is clunky, but it's the only way we can make the new code
   ## work in a nice backwards-compatible way right now!
@@ -203,6 +217,7 @@ sub draw_aggregate {
   $self->{'label_y_offset'} = $self->{'my_config'}->get('label_y_offset');
 
   ## Everything went OK, so no error to return
+  #warn "############## DONE ##########\n\n";
   return 0;
 }
 
