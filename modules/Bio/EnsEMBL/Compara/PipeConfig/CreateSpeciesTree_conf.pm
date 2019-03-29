@@ -85,7 +85,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        'mkdir -p '.$self->o('output_dir'),
+        $self->pipeline_create_commands('output_dir'),
     ];
 }
 

@@ -97,8 +97,7 @@ sub pipeline_create_commands {
         PRIMARY KEY (method_link_species_set_id,dnafrag_id)
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
-       'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+        $self->pipeline_create_commands_rm_mkdir(['output_dir', 'bed_dir']),
     ];
 }
 

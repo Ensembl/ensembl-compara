@@ -151,7 +151,7 @@ sub pipeline_create_commands {
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
+       $self->pipeline_create_commands('output_dir'),
        $self->db_cmd('CREATE TABLE ucsc_to_ensembl_mapping (genome_db_id int(10) unsigned, ucsc varchar(40),ensembl  varchar(40)) ENGINE=InnoDB'),
 
     ];

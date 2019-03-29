@@ -140,10 +140,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        'mkdir -p '.$self->o('blastdb_dir'),
-        'mkdir -p '.$self->o('mercator_dir'),
-        'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
-        'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+        $self->pipeline_create_commands(['blastdb_dir', 'mercator_dir', 'output_dir', 'bed_dir']),
         $self->pipeline_create_commands_lfs_setstripe('blastdb_dir'),
      ];
 }
