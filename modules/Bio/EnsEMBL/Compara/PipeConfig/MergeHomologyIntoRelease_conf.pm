@@ -68,22 +68,6 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'merged_homology_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => sprintf('%s_compara_homology_merged_%s', $self->o('dbowner'), $self->o('ensembl_release')),
-        },
-
-        'rel_db' => {
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => sprintf('%s_ensembl_compara_%s', $self->o('dbowner'), $self->o('ensembl_release')),
-        },
-
         'merged_tables'     => [ 'method_link_species_set_tag','method_link_species_set_attr',
                                  'species_tree_node', 'species_tree_root' ],
         'skipped_tables'    => [ 'dnafrag', 'genome_db', 'meta', 'ktreedist_score',
