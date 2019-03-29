@@ -63,7 +63,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -71,18 +71,13 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         # Dump location
-        'dump_dir'      => '/hps/nobackup2/production/ensembl/'.$ENV{'USER'}.'/pairalignerstats_'.$self->o('rel_with_suffix').'/',
+        'dump_dir'      => $self->o('pipeline_dir'),
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'output_dir',
-	# A registry file to avoid having to use only URLs
-#        'reg_conf' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_conf.pl",
-        # Executable locations
-        'dump_features_exe'             => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe'              => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'create_pair_aligner_page_exe'  => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/report/create_pair_aligner_page.pl",
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_create_commands {
     my ($self) = @_;
@@ -102,18 +97,8 @@ sub pipeline_create_commands {
         PRIMARY KEY (method_link_species_set_id,dnafrag_id)
         ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-       'mkdir -p '.$self->o('output_dir'), #Make output_dir directory
-       'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+        $self->pipeline_create_commands_rm_mkdir(['output_dir', 'bed_dir']),
     ];
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes}, # inherit 'default' from the parent class
-        '1Gb'   => {'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', '--reg_conf '.$self->o('reg_conf')]},
-    };
 }
 
 
@@ -157,16 +142,16 @@ sub pipeline_analyses {
                 'A->1' => [ 'coding_exon_stats_summary' ],
                 '2->A' => [ 'coding_exon_stats' ],
             },
-            -rc_name    => '1Gb',
+            -rc_name    => '1Gb_job',
         },
         {   -logic_name => 'coding_exon_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
-            -rc_name    => '1Gb',
+            -rc_name    => '1Gb_job',
             -analysis_capacity  => 100,
         },
         {   -logic_name => 'coding_exon_stats_summary',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
-            -rc_name    => '1Gb',
+            -rc_name    => '1Gb_job',
         },
     ];
 }

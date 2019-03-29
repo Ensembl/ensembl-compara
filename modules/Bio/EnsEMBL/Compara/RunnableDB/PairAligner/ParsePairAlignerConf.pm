@@ -82,10 +82,7 @@ sub fetch_input {
     #Must load the registry first
     #
     
-    if ($self->param('reg_conf')) { 	    
-    	## die if file cannot be loaded
-    	$self->load_registry($self->param('reg_conf'));
-    } elsif ($self->param('core_dbs')) {
+    if ($self->param('core_dbs')) {
 		#list of individual core databases
 		foreach my $core_db (@{$self->param('core_dbs')}) {
 		    new Bio::EnsEMBL::DBSQL::DBAdaptor(%$core_db);

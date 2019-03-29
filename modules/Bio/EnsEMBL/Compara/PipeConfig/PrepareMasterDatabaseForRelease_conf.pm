@@ -68,58 +68,37 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'email'               => $self->o('ENV', 'USER').'@ebi.ac.uk',
-        'host'                => 'mysql-ens-compara-prod-4:4401',
-        'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('release'),
-        #'host'               => 'mysql-ens-compara-prod-1:4485',
-        'work_dir'    => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/'.$self->o('pipeline_name'),
+        'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
+        'work_dir'    => $self->o('pipeline_dir'),
         'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
-        'reg_conf'            => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) .'/ensembl-compara/scripts/pipeline/production_reg_' . $self->o('division') . '_conf.pl',
         'master_db'           => 'compara_master',
         'taxonomy_db'         => 'ncbi_taxonomy',
-        'release'             => $self->o( 'ENV', 'CURR_ENSEMBL_RELEASE' ),
-        'division'            => $self->o( 'ENV', 'COMPARA_DIV' ),
         'incl_components'     => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
-        'create_all_mlss_exe' => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/create_all_mlss.pl',
-        'xml_file'            => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml',
+        'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
+        'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
 
-        'patch_dir'   => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/sql/',
-        'schema_file' => $self->o('patch_dir') . '/table.sql',
-        'alias_file'  => $self->o( 'ENV', 'ENSEMBL_CVS_ROOT_DIR' ) . '/ensembl-compara/scripts/taxonomy/ensembl_aliases.sql',
-        'java_hc_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensj-healthcheck/',
+        'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
+        'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        'alias_file'  => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
+        'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
 
-        'list_genomes_script'    => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl',
-        'report_genomes_script'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl-metadata/misc_scripts/report_genomes.pl',
-        'update_metadata_script' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR') . '/ensembl-compara/scripts/pipeline/update_master_db.pl',
+        # The first two somehow miss the executable permission.  Pull-request submitted
+        'list_genomes_script'    => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
+        'report_genomes_script'  => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
+        'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species' => undef,
         'additional_species'     => undef,
     };
 }
-
-# This section has to be filled in any derived class
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default'  => {'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"',       $reg_requirement] },
-         '1Gb_job'  => {'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"',    $reg_requirement] },
-         '2Gb_job'  => {'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"',    $reg_requirement] },
-         '4Gb_job'  => {'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"',    $reg_requirement] },
-         '16Gb_job' => {'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement] },
-    };
-}
-
 
 
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
-        'mkdir -p ' . $self->o('work_dir'),
-        'mkdir -p ' . $self->o('backups_dir'),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
     ];
 }
 

@@ -89,7 +89,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'murinae_' . $self->o('member_type') . '_trees_' . $self->o('rel_with_suffix'),
+        'collection'    => 'murinae',
 
         # Main capacity for the pipeline
         'copy_capacity'                 => 4,
@@ -111,20 +111,6 @@ sub default_options {
         'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
     };
 }
-
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::resource_classes() },
-        'default'                 => { 'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' },
-        '250Mb_job'               => { 'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
-        '500Mb_job'               => { 'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-        '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-    };
-}
-
 
 
 1;

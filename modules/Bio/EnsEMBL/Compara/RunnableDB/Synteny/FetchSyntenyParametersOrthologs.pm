@@ -70,10 +70,6 @@ sub fetch_input {
         die "At least one of 'recompute_existing_syntenies' / 'create_missing_synteny_mlsss' must be set.\n"
     }
 
-    if ($self->param("registry")) {
-        $self->load_registry($self->param("registry"));
-    }
-
     $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
     $self->param('ptree_dba',  $self->get_cached_compara_dba('ptree_db'));
 

@@ -59,7 +59,7 @@ sub pipeline_analyses_dump_constrained_elems {
         {   -logic_name     => 'dump_constrained_elements',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
-                'cmd'   => '#dump_features_program# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#',
+                'cmd'   => '#dump_features_exe# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#',
             },
             -hive_capacity => $self->o('dump_ce_capacity'),
             -flow_into      => [ 'check_not_empty' ],

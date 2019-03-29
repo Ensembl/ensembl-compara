@@ -70,10 +70,6 @@ sub default_options {
         #'rel_suffix'            => 'b',
         #'collection'            => 'ensembl',
 
-    # custom pipeline name, in case you don't like the default one
-        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        #'pipeline_name'        => 'load_members'.$self->o('rel_with_suffix'),
-
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list'     => [ ],
@@ -97,13 +93,6 @@ sub default_options {
         'loadmembers_capacity'      =>  30,
 
     # connection parameters to various databases:
-
-        # Uncomment and update the database locations
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        #'host'  => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        #'port'  => 4522,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',

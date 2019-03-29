@@ -109,12 +109,12 @@ sub run {
 
 
     #Plot Jaccard:
-    my $cmd = "Rscript ". $ENV{'ENSEMBL_CVS_ROOT_DIR'} . "/ensembl-compara/scripts/homology/plotJaccardIndex.r ". $self->param('output_jaccard_file') . " " . $self->param('output_jaccard_pdf');
-    my $cmd_out = $self->run_command($cmd);
+    my $cmd = [$self->param_required('jaccard_index_script'), $self->param('output_jaccard_file'), $self->param('output_jaccard_pdf')];
+    my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
     #Plot the Lorentz curve for the Gini coefficient:
-    $cmd = "Rscript ". $ENV{'ENSEMBL_CVS_ROOT_DIR'} . "/ensembl-compara/scripts/homology/plotLorentzCurve.r ". $self->param('output_gini_file') . " " . $self->param('output_gini_pdf');
-    $cmd_out = $self->run_command($cmd);
+    $cmd = [$self->param_required('lorentz_curve_script'), $self->param('output_gini_file'), $self->param('output_gini_pdf')];
+    $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
 
 } ## end sub run

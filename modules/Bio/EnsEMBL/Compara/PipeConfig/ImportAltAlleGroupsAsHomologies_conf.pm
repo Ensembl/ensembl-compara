@@ -39,29 +39,24 @@ use Bio::EnsEMBL::Compara::PipeConfig::Parts::ImportAltAlleGroupsAsHomologies;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
+
+sub default_pipeline_name {         # Instead of import_alt_allele_groups_as_homologies
+    return 'alt_allele_import';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
-
-        'pipeline_name'   => $self->o('division').'_alt_allele_import_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
-
         # Only needed if the member_db doesn't have genome_db.locator
         'division' => 'ensembl',
-        'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         'master_db'       => 'compara_master',  # Source of MLSSs
         'member_db'       => 'compara_members', # Source of GenomeDBs and members
 
         #Pipeline capacities:
         'import_altalleles_as_homologies_capacity'  => '300',
-
-        #Software dependencies
-        'mafft_home'            => $self->check_dir_in_cellar('mafft/7.305'),
-
     };
 }
 
@@ -82,19 +77,6 @@ sub pipeline_wide_parameters {
         'mafft_home'    => $self->o('mafft_home'),
         'master_db'     => $self->o('master_db'),
     }
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-        'patch_import'  => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'patch_import_himem'  => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'default_w_reg' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-        'default'       => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-    };
 }
 
 

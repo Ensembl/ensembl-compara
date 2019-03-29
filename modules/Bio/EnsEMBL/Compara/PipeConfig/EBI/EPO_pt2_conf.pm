@@ -70,24 +70,11 @@ sub default_options {
     'species_set_name' => 'sauropsids',
     #'rel_suffix' => 'b',
 
-    # Where the pipeline lives
-    'host' => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-    'port' => 4485,
-
     'division' => 'ensembl',
-    'reg_conf' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
 
 	# database containing the anchors for mapping
 	'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',
     'reuse_db' => $self->o('species_set_name').'_epo_prev',
-
-    'exonerate_exe'  => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate'),
-    'server_exe'     => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/exonerate-server'),
-    'fasta2esd_exe'  => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/fasta2esd'),
-    'esd2esi_exe'    => $self->check_exe_in_cellar('exonerate24/2.4.0/bin/esd2esi'),
-    'samtools_exe'   => $self->check_exe_in_cellar('samtools/1.6/bin/samtools'),
-    'ortheus_c_exe'  => $self->check_exe_in_cellar('ortheus/0.5.0_1/bin/ortheus_core'),
 
         # Capacities
         'low_capacity'                  => 10,
@@ -96,8 +83,6 @@ sub default_options {
         'trim_anchor_align_batch_size'  => 20,
         'trim_anchor_align_capacity'    => 500,
 
-	 # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
     'master_db' => 'compara_master',
      };
 }

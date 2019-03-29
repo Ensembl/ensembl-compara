@@ -50,31 +50,8 @@ sub default_options {
         # Work directory
         'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/pair_aligner/release_' . $self->o('rel_with_suffix') . '/tblat_'.$self->o('pipeline_name') . '/' . $self->o('host') . '/',
 
-        #Location of executables
-        'pair_aligner_exe'  => $self->check_exe_in_cellar('kent/v335_1/bin/blat'),
-        'faToNib_exe'       => $self->check_exe_in_cellar('kent/v335_1/bin/faToNib'),
-        'lavToAxt_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/lavToAxt'),
-        'axtChain_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/axtChain'),
-        'chainNet_exe'      => $self->check_exe_in_cellar('kent/v335_1/bin/chainNet'),
-
-    };
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-        '100Mb_job' => { 'LSF' => '-C0 -M100 -R"select[mem>100] rusage[mem=100]"' },
-        '500Mb_job' => { 'LSF' => '-C0 -M500 -R"select[mem>500] rusage[mem=500]"' },
-        '1Gb_job'   => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-        '1.8Gb_job' => { 'LSF' => '-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"' },
-        '3.6Gb_job' => { 'LSF' => '-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"' },
-        '4.2Gb_job' => { 'LSF' => '-C0 -M4200 -R"select[mem>4200] rusage[mem=4200]"' },
-        '8Gb_job'   => { 'LSF' => '-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"' },
-        '8.4Gb_job' => { 'LSF' => '-C0 -M8400 -R"select[mem>8400] rusage[mem=8400]"' },
-        '10Gb_job'  => { 'LSF' => '-C0 -M10000 -R"select[mem>10000] rusage[mem=10000]"' },
+        # TBlat is used to align the genomes
+        'pair_aligner_exe'  => $self->o('blat_exe'),
     };
 }
 

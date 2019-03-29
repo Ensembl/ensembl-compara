@@ -98,13 +98,7 @@ sub default_options {
         'do_not_reuse_list'     => [ ],
 
         # where to find the list of Compara methods. Unlikely to be changed
-        'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
-
-    # custom pipeline name, in case you don't like the default one
-        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'        => $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
-        # Tag attached to every single tree
-        #'division'              => undef,
+        'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
@@ -116,9 +110,8 @@ sub default_options {
         'missing_sequence_threshold' => 0.05,
         'species_threshold'  => '#expr(#species_count#/2)expr#', #half of ensembl species
 
-    # dependent parameters: updating 'base_dir' should be enough
-        # Note that you can omit the trailing / in base_dir if you want 'pipeline_name' to be added as a suffix
-        'work_dir'              => $self->o('base_dir') . $self->o('pipeline_name'),
+    # data directories:
+        'work_dir'              => $self->o('pipeline_dir'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -196,7 +189,7 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',
+        'codeml_parameters_file'    => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash'),
         'taxlevels'                 => [],
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
@@ -221,9 +214,11 @@ sub default_options {
     # plots
         #compute Jaccard Index
         'do_jaccard_index'          => 1,
+        'jaccard_index_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotJaccardIndex.r'),
 
         #Compute Gini coefficient (Lorenz curve)
         'do_gini_coefficient'       => 1,
+        'lorentz_curve_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotLorentzCurve.r'),
 
     # HMM specific parameters (set to 0 or undef if not in use)
        'hmm_library_basedir'       => undef,
@@ -290,10 +285,6 @@ sub default_options {
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        #'host' => 'compara1',
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
@@ -367,61 +358,6 @@ sub default_options {
 }
 
 
-=head2 RESOURCE CLASSES
-
-# This section has to be filled in any derived class
-sub resource_classes {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '24Gb_job'     => {'LSF' => '-C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"' },
-         '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
-         '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
-         '512Gb_job'     => {'LSF' => '-C0 -M512000 -R"select[mem>512000] rusage[mem=512000]"' },
-
-         '8Gb_8c_job'  => {'LSF' => '-n 8 -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]  span[hosts=1]"' },
-         '16Gb_8c_job' => {'LSF' => '-n 8 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_8c_job' => {'LSF' => '-n 8 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-
-         '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_16c_job' => {'LSF' => '-n 16 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000] span[hosts=1]"' },
-
-         '16Gb_32c_job' => {'LSF' => '-n 32 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_32c_job' => {'LSF' => '-n 32 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-
-         '16Gb_64c_job' => {'LSF' => '-n 64 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000] span[hosts=1]"' },
-         '32Gb_64c_job' => {'LSF' => '-n 64 -C0 -M32000 -R"select[mem>32000] rusage[mem=32000] span[hosts=1]"' },
-         '256Gb_64c_job' => {'LSF' => '-n 64 -C0 -M256000 -R"select[mem>256000] rusage[mem=256000] span[hosts=1]"' },
-
-         '8Gb_8c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 8 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=8]"' },
-         '8Gb_16c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 16 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '8Gb_24c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 24 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=12]"' },
-         '8Gb_32c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 32 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-
-         '16Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
-
-         '32Gb_8c_mpi' => {'LSF' => '-q parallel -a openmpi -n 8 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=8]"' },
-         '32Gb_16c_mpi' => {'LSF' => '-q parallel -a openmpi -n 16 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-         '32Gb_24c_mpi' => {'LSF' => '-q parallel -a openmpi -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"' },
-         '32Gb_32c_mpi' => {'LSF' => '-q parallel -a openmpi -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-
-         '8Gb_64c_mpi'  => {'LSF' => '-q parallel -a openmpi -n 64 -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
-         '32Gb_64c_mpi' => {'LSF' => '-q parallel -a openmpi -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
-    };
-}
-
-=cut
-
-
 sub pipeline_checks_pre_init {
     my ($self) = @_;
 
@@ -475,7 +411,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mapping_db'    => $self->o('mapping_db'),
 
         'reg_conf' => $self->o('reg_conf'),
-        'registry' => $self->o('reg_conf'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
@@ -1705,6 +1640,9 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'compute_jaccard_index',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
             -parameters => {
+                'jaccard_index_script'  => $self->o('jaccard_index_script'),
+                'lorentz_curve_script'  => $self->o('lorentz_curve_script'),
+
                 'output_jaccard_file'   => '#plots_dir#/jaccard_index.out',
                 'output_jaccard_pdf'    => '#plots_dir#/jaccard_index.pdf',
 
@@ -1717,7 +1655,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'write_stn_tags',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
-                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
+                'input_file'    => $self->o('tree_stats_sql'),
             },
             -flow_into      => [ 'email_tree_stats_report' ],
         },

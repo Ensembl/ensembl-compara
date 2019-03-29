@@ -83,7 +83,6 @@ sub default_options {
         'pipeline_name' => $self->o('species_set_name').'_epo_'.$self->o('rel_with_suffix'),
 
         # 'mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
-        #'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.vertebrates.branch_len.nw',
 
         'run_gerp' => 0,
 
@@ -103,9 +102,6 @@ sub default_options {
 
         'gerp_window_sizes'    => [1,10,100,500], #gerp window sizes
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'epo_stats_report_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/production/epo_stats.pl",
 
         'ancestral_sequences_name' => 'ancestral_sequences',
     }; 
@@ -115,22 +111,8 @@ sub pipeline_create_commands {
     my ($self) = @_; 
     return [
         @{$self->SUPER::pipeline_create_commands}, 
-	'mkdir -p '.$self->o('dump_dir'),
-	'mkdir -p '.$self->o('bl2seq_dump_dir'),
-        'mkdir -p '.$self->o('bed_dir'),
-        'mkdir -p '.$self->o('output_dir'),
+        $self->pipeline_create_commands(['dump_dir', 'bl2seq_dump_dir', 'output_dir', 'bed_dir']),
            ];  
-}
-
-sub resource_classes {
-    my ($self) = @_; 
-    return {
-        'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' },
-        'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-        'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },
-        'hugemem' => {'LSF' => '-q hugemem -C0 -M30000 -R"select[mem>30000] rusage[mem=30000]"' },
-        '3.5Gb'   => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
-    };  
 }
 
 sub pipeline_wide_parameters {

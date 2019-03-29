@@ -80,32 +80,10 @@ sub default_options {
       # Used to name the databases and the working directory
       #'species_set_name' => 'primates',
 
-      # Where the pipeline lives
-      #'host' => 'mysql-ens-compara-prod-3.ebi.ac.uk',
-      #'port' => 4523,
-
       'division' => 'ensembl',
-      'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',
-
-      'bl2seq_exe' => undef,
 
       # Dump directory
-      'dump_dir' => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/epo/'.$self->o('species_set_name').'_'.$self->o('rel_with_suffix').'/',
-
-      # place to get the genome dumps
-      'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
-      
-      'blastn'          => $self->check_exe_in_cellar('blast/2.2.30/bin/blastn'),
-      'pecan_exe_dir'   => $self->check_dir_in_cellar('pecan/0.8.0/libexec'),
-      'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'), #gerp program
-      'java_exe'        => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
-      'exonerate_exe'   => $self->check_exe_in_cellar('exonerate22/2.2.0/bin/exonerate'), # path to exonerate executable
-      'ortheus_bin_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1/bin'),
-      'ortheus_lib_dir' => $self->check_dir_in_cellar('ortheus/0.5.0_1'),
-      'enredo_exe'      => $self->check_exe_in_cellar('enredo/0.5.0/bin/enredo'),
-      'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'),
-
-      'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
+      'dump_dir' => $self->o('pipeline_dir'),
 
       # The ancestral_db is created on the same server as the pipeline_db
       'ancestral_db' => { # core ancestral db
@@ -115,7 +93,7 @@ sub default_options {
           -species  => $self->o('ancestral_sequences_name'),
           -user     => $self->o('pipeline_db', '-user'),
           -pass     => $self->o('pipeline_db', '-pass'),
-          -dbname   => $self->o('ENV', 'USER').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
+          -dbname   => $self->o('dbowner').'_'.$self->o('species_set_name').'_ancestral_core_'.$self->o('rel_with_suffix'),
       },
 
       # master db

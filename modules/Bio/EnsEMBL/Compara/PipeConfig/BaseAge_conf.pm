@@ -65,8 +65,7 @@ sub default_options {
             #Location url of database to get snps from
             #'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
             
-            #'big_bed_exe' => '/software/ensembl/funcgen/bedToBigBed',
-            'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
+            'baseage_autosql' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/baseage_autosql.as'),
 
             #Locations to write output files
             #'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
@@ -83,7 +82,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
-            'mkdir -p '.$self->o('bed_dir'), #Make bed_dir directory
+            $self->pipeline_create_commands('bed_dir'),
 
 	   ];
 }
@@ -103,7 +102,6 @@ sub pipeline_analyses {
                               'output_file' => "#bed_dir#/#chr_sizes_file#",
                              },
                -input_ids => [{}],
-               -rc_name => '100Mb',
               -flow_into => {
                              '1' => [ 'base_age_factory' ],
                             },
@@ -121,7 +119,6 @@ sub pipeline_analyses {
                               '2->A' => { 'base_age' => { 'seq_region' => '#name#', }, },
                               'A->1' => [ 'big_bed' ],
                              },
-               -rc_name => '100Mb',
             },
             
             { -logic_name => 'base_age',

@@ -91,7 +91,7 @@ return
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
   'db_conn' => '#ancestral_db#',
-  'input_file' => $self->o('ensembl_cvs_root_dir')."/ensembl/sql/table.sql",
+  'input_file' => $self->o('core_schema_sql'),
   },
   -flow_into => { 1 => 'store_ancestral_species_name' },
 },
@@ -138,10 +138,11 @@ return
 	-logic_name    => 'make_species_tree',
 	-module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
 	-parameters    => {
-			'species_tree_input_file' => $self->o('species_tree_file'),
+			'species_tree_input_file' => $self->o('binary_species_tree'),
 	},
         -flow_into     => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
                                 ELSE [ 'dump_mappings_to_file' ] ),
+        -rc_name       => '500Mb_job',
 },
 
         {   -logic_name => 'set_gerp_neutral_rate',
@@ -160,6 +161,7 @@ return
                 'call_list'     => [ 'compara_dba', 'get_GenomeDBAdaptor', ['fetch_by_name_assembly', $self->o('ancestral_sequences_name')] ],
                 'column_names2getters'  => { 'master_dbID' => 'dbID' },
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => 'store_ancestral_seq_gdb',
             },
@@ -170,6 +172,7 @@ return
     -parameters    => {
         'locator'   => '#ancestral_db#',
     },
+    -rc_name       => '500Mb_job',
 },
 # ------------------------------------- run enredo
 {
@@ -178,7 +181,7 @@ return
 	-parameters => {
 		'cmd' => $self->o('enredo_exe').' '.$self->o('enredo_params').' #enredo_output_file# #enredo_mapping_file#',
 	},
-	-rc_name => 'mem7500',
+	-rc_name => '8Gb_job',
         -flow_into => [ 'load_dnafrag_region' ],
 },
 
@@ -189,6 +192,7 @@ return
 	-parameters => {
                 'add_non_nuclear_alignments' => $self->o('add_non_nuclear_alignments'),
 	},
+        -rc_name   => '4Gb_job',
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],
                 '3->A' => [ 'ortheus' ],
@@ -202,9 +206,10 @@ return
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
 		bl2seq_exe => $self->o('bl2seq_exe'),
-        blastn_exe  => $self->o('blastn'),
+        blastn_exe  => $self->o('blastn_exe'),
 		bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
+        -rc_name   => '4Gb_job',
 	-hive_capacity => 10,
 	-flow_into => { 
 		2 => 'ortheus',
@@ -217,10 +222,10 @@ return
 	-module    => 'Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand',
 	-parameters => {
 		bl2seq_exe => $self->o('bl2seq_exe'),
-        blastn_exe  => $self->o('blastn'),
+        blastn_exe  => $self->o('blastn_exe'),
         bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
-	-rc_name => 'mem3500',
+	-rc_name => '4Gb_job',
 	-flow_into => {
 		2 => 'ortheus',
 	},
@@ -239,6 +244,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
+        -rc_name   => '2Gb_job',
 	-hive_capacity => 2000,
 	-max_retry_count => 3,
 	-flow_into => {
@@ -260,7 +266,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-	-rc_name => 'mem7500',
+	-rc_name => '8Gb_job',
 	-max_retry_count => 2,
 	-flow_into => { 
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -280,7 +286,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
         },  
         -module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-        -rc_name => '30Gb_job',
+        -rc_name => '32Gb_job',
 	-max_retry_count => 1,
 	-flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -296,6 +302,7 @@ return
         },
         -max_retry_count => 3,
         -hive_capacity   => 50,
+        -rc_name         => '2Gb_job',
         -failed_job_tolerance => 1,
         -flow_into => {
                 -1 => [ 'gerp_high_mem' ],
@@ -309,7 +316,7 @@ return
             'gerp_exe_dir' => $self->o('gerp_exe_dir'),
         },
         -hive_capacity   => 10,
-        -rc_name => 'mem7500',
+        -rc_name => '8Gb_job',
         -failed_job_tolerance => 100,
 },
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
@@ -323,6 +330,7 @@ return
                 -parameters => {
                                'method_link_species_set_id' => '#mlss_id#',
                               },  
+               -rc_name => '2Gb_job',
                -flow_into => {
                               1 => [ 'create_neighbour_nodes_jobs_alignment' ],
                              },  
@@ -334,6 +342,7 @@ return
                 -parameters => {
                                 'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id IS NULL',
                                },  
+                -rc_name => '2Gb_job',
                 -flow_into => {
                                '2->A' => [ 'set_neighbour_nodes' ],
                                'A->1' => [ 'healthcheck_factory' ],
@@ -341,6 +350,7 @@ return
             },  
             {   -logic_name => 'set_neighbour_nodes',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
+                -rc_name    => '2Gb_job',
                 -batch_size    => 10, 
                 -hive_capacity => 20, 
             },  
@@ -361,6 +371,7 @@ return
 
             {   -logic_name => 'conservation_score_healthcheck',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
+                -rc_name    => '4Gb_job',
             },
 
         {   -logic_name    => 'register_mlss',

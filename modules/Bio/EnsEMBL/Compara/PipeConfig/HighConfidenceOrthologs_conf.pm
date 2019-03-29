@@ -17,17 +17,20 @@ limitations under the License.
 
 =cut
 
+
+=pod 
+
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_url <url_of_the_compara_db>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
-Dumps all the species-trees from the database
+A simple pipeline to populate the high- and low- confidence levels on a Compara database
 
 =head1 CONTACT
 
@@ -39,46 +42,43 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf;
 
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
+use Bio::EnsEMBL::Hive::Version 2.4;
+
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+
 
 sub default_options {
     my ($self) = @_;
     return {
-        %{$self->SUPER::default_options},
+        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'division'          => 'vertebrates',
+        'high_confidence_capacity'    => 20,             # how many mlss_ids can be processed in parallel
+        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
 
-        #Locations to write output files
-        'dump_dir'          => $self->o('pipeline_dir'),
     };
 }
 
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
-sub pipeline_wide_parameters {
-    my ($self) = @_;
-    return {
-        'dump_dir'      => $self->o('dump_dir'),
-        'compara_db'    => $self->o('compara_db'),
-        'reg_conf'      => $self->o('reg_conf'),
-        'dump_species_tree_exe' => $self->o('dump_species_tree_exe'),
-    };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
-
-    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees::pipeline_analyses_dump_species_trees($self);
-    $pipeline_analyses->[0]->{'-input_ids'} = [{}];
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self);
+    $pipeline_analyses->[0]->{'-input_ids'} = [
+        {
+            'compara_db'        => $self->o('compara_db'),
+            'threshold_levels'  => $self->o('threshold_levels'),
+        },
+    ];
 
     return $pipeline_analyses;
 }
 
 1;
+

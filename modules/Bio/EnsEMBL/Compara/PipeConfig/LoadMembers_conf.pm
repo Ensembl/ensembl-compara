@@ -62,10 +62,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # custom pipeline name, in case you don't like the default one
-        # 'rel_with_suffix' is the concatenation of 'ensembl_release' and 'rel_suffix'
-        'pipeline_name'        => $self->o('division') . '_load_members_'.$self->o('rel_with_suffix'),
-
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list'     => [ ],
@@ -87,7 +83,7 @@ sub default_options {
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
-        'work_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/LoadMembers_pipeline/' . $self->o('pipeline_name'),
+        'work_dir'        => $self->o('pipeline_dir'),
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
         'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
         'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
@@ -102,13 +98,6 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host'  => 'mysql-ens-compara-prod-2',
-        'port'  => 4522,
-
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'compara_master',
         'master_db_is_missing_dnafrags' => 0,
@@ -116,29 +105,10 @@ sub default_options {
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         # 'curr_core_sources_locs'    => [ $self->o('staging_loc') ],
-        'curr_core_registry'        => $self->o('reg_conf'),
         'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         'reuse_member_db' => 'compara_prev',
-
-    };
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => { 'LSF' => ['-C0 -M200   -R"select[mem>200]   rusage[mem=200]"',  $reg_requirement] },
-         '250Mb_job'    => { 'LSF' => ['-C0 -M250   -R"select[mem>250]   rusage[mem=250]"',  $reg_requirement] },
-         '500Mb_job'    => { 'LSF' => ['-C0 -M500   -R"select[mem>500]   rusage[mem=500]"',  $reg_requirement] },
-         '1Gb_job'      => { 'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
-         '2Gb_job'      => { 'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
-         '4Gb_job'      => { 'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
-         '8Gb_job'      => { 'LSF' => ['-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"', $reg_requirement] },
 
     };
 }
@@ -150,8 +120,7 @@ sub pipeline_checks_pre_init {
     # There must be some species on which to compute trees
     die "There must be some species on which to compute trees"
         if ref $self->o('curr_core_sources_locs') and not scalar(@{$self->o('curr_core_sources_locs')})
-        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')})
-        and not $self->o('curr_core_registry');
+        and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')});
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
     die "The master dabase must be defined with a collection" if $self->o('master_db') and not $self->o('collection');
@@ -257,8 +226,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
-                'registry_conf_file'  => $self->o('curr_core_registry'),
-                # 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
@@ -272,8 +239,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_all_genomedbs_from_registry',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadAllGenomeDBsFromRegistry',
             -parameters => {
-                'registry_conf_file'  => $self->o('curr_core_registry'),
-                # 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
@@ -376,7 +341,6 @@ sub pipeline_analyses {
                 'reuse_db'          => '#reuse_member_db#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -rc_name => '250Mb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 

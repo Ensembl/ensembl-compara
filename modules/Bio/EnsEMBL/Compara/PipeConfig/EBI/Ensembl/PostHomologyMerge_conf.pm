@@ -48,12 +48,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'mysql-ens-compara-prod-1',    # where the pipeline database will be created
-        'port'            => 4485,
         'division'        => 'vertebrates',
-
-        # 'compara_db' => 'compara_curr',
-        # 'reg_conf'        => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/production_reg_" . $self->o('division') . "_conf.pl",
 
         # ncRNAs don't have GOC, so we don't want to penalize them for that
         'high_confidence_ranges'    => [

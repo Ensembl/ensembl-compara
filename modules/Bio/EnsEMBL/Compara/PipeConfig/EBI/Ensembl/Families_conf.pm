@@ -73,15 +73,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options },
 
-        #'mlss_id'         => 30047,                    # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'host'          => 'compara2',                 # where the pipeline database will be created
-        'host'          => 'mysql-ens-compara-prod-2',        # where the pipeline database will be created
-        'port'          => '4522',                      # server port
-
-        'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',
-
         'division' => 'ensembl',
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'compara_prev',
@@ -96,17 +88,8 @@ sub default_options {
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
-        'hmm_library_basedir' => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2019-01-02',
-
-        # code directories:
-        'blast_bin_dir'     => $self->check_dir_in_cellar('blast/2.2.30/bin'),
-        'mcl_bin_dir'       => $self->check_dir_in_cellar('mcl/14-137/bin'),
-        'mafft_home'        => $self->check_dir_in_cellar('mafft/7.305'),
-        'pantherScore_path' => $self->check_dir_in_cellar('pantherscore/1.03'),
-        'hmmer2_home'       => $self->check_dir_in_cellar('hmmer2/2.3.2/bin'),
 
         # data directories:
-        'work_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o( 'ENV', 'USER' ) . '/family_pipeline/' . $self->o('pipeline_name'),
         'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('rel_with_suffix').'/',
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
@@ -118,14 +101,6 @@ sub default_options {
 
         # resource requirements:
         'blast_minibatch_size'    => 25,                         # we want to reach the 1hr average runtime per minibatch
-        'blast_gigs'              => 4,
-        'blast_hm_gigs'           => 6,
-        'mcl_gigs'                => 72,
-        'mcl_threads'             => 12,
-        'mafft_threads'           => 8,
-        'lomafft_gigs'            => 4,
-        'himafft_gigs'            => 64,
-        'humafft_gigs'            => 96,
         'blast_capacity'          => 5000,                       # work both as hive_capacity and resource-level throttle
         'mafft_capacity'          => 400,
         'cons_capacity'           => 100,
@@ -135,30 +110,6 @@ sub default_options {
     };
 } ## end sub default_options
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{ $self->SUPER::resource_classes },    # inherit 'default' from the parent class
-
-        'default'     => { 'LSF' => ['-M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
-        'urgent'      => { 'LSF' => ['-M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
-        'RegBlast'    => { 'LSF' => [ '-C0 -M' . $self->o('blast_gigs') . '000 -R"select[mem>'. $self->o('blast_gigs') . '000] rusage[mem=' . $self->o('blast_gigs') . '000]"', "-lifespan 360 $reg_requirement" ] },
-        'LongBlastHM' => { 'LSF' => [ '-C0 -M' . $self->o('blast_hm_gigs') . '000 -R"select[mem>' .  $self->o('blast_hm_gigs') . '000] rusage[mem=' . $self->o('blast_hm_gigs') . '000]"', "-lifespan 1440 $reg_requirement" ] },
-        'BigMcxload'  => { 'LSF' => ['-C0 -M' . $self->o('mcl_gigs') . '000 -R"select[mem>' . $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000]"', $reg_requirement] },
-        'BigMcl'      => { 'LSF' => ['-C0 -M' . $self->o('mcl_gigs') . '000 -n ' . $self->o('mcl_threads') . ' -R"select[ncpus>=' . $self->o('mcl_threads') . ' && mem>' .  $self->o('mcl_gigs') . '000] rusage[mem=' . $self->o('mcl_gigs') . '000] span[hosts=1]"', $reg_requirement] },
-        'BigMafft'    => { 'LSF' => ['-C0 -M'.$self->o('himafft_gigs').'000', $reg_requirement] },
-        'LoMafft'     => { 'LSF' => ['-C0 -M' . $self->o('lomafft_gigs') . '000 -R"select[mem>' . $self->o('lomafft_gigs') . '000] rusage[mem=' . $self->o('lomafft_gigs') . '000]"', $reg_requirement] },
-        '250Mb_job'   => { 'LSF' => ['-C0 -M250 -R"select[mem>250] rusage[mem=250]"', $reg_requirement] },
-        '500MegMem'   => { 'LSF' => ['-C0 -M500 -R"select[mem>500] rusage[mem=500]"', $reg_requirement] },
-        '2GigMem'     => { 'LSF' => ['-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"', $reg_requirement] }, 
-        '4GigMem'     => { 'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', $reg_requirement] },
-        '8GigMem'     => { 'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement] }, 
-        '16GigMem'    => { 'LSF' => ['-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"', $reg_requirement] },
-        'HugeMafft_multi_core' => { 'LSF' => ['-C0 -M' . $self->o('humafft_gigs') . '000 -n ' . $self->o('mafft_threads') . ' -R"span[hosts=1]"', $reg_requirement] },
-
-    };
-}
 
 1;
 

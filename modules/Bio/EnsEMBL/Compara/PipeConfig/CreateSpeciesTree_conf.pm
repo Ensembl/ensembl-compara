@@ -41,12 +41,14 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
+sub default_pipeline_name {         # Instead of create_species_tree
+    return 'species_tree';
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'pipeline_name'   => $self->o('division') . '_species_tree_' . $self->o('rel_with_suffix'),
-        'reg_conf'        => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/production_reg_' . $self->o('division') . '_conf.pl',
 
         'collection'      => $self->o('division'), # build tree with everything by default
         'species_set_id'  => undef,
@@ -55,45 +57,23 @@ sub default_options {
         'outgroup'        => 'saccharomyces_cerevisiae',
         'outgroup_id'     => 127,
 
-        'output_dir'        => "/gpfs/nobackup/ensembl/". $self->o('ENV', 'USER'). "/species_tree_" . $self->o('division') . '_' . $self->o('rel_with_suffix'),
+        'output_dir'        => $self->o('pipeline_dir'),
         'sketch_dir'        => '/hps/nobackup2/production/ensembl/compara_ensembl/species_tree/' . $self->o('division') . '_sketches',
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
         
-        'mash_exe'          => $self->check_exe_in_cellar('mash/2.0/bin/mash'),
         'mash_kmer_size'    => 24, 
         'mash_sketch_size'  => 1000000, 
 
         'master_db'          => 'compara_master',
-        'rapidnj_exe'        => $self->check_exe_in_cellar('rapidnj/2.3.2/bin/rapidnj'),
-        'erable_exe'         => $self->check_exe_in_cellar('erable/1.0/bin/erable'),
 
-        # pass location of pre-dumped genomes, if it exists (generated with DumpGenomes_conf)
-        'genome_dumps_dir'  => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.($self->o('division')).'/',
         'representative_species' => undef,
         'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
         'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
 
 
-        'unroot_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/species_tree/unroot_newick.py',
-        'reroot_script' => $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/species_tree/reroot_newick.py',
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-         'default'      => {'LSF' => ['-C0 -M100   -R"select[mem>100]   rusage[mem=100]"', $reg_requirement] },
-         '1Gb_job'      => {'LSF' => ['-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"', $reg_requirement] },
-         '2Gb_job'      => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
-         '4Gb_job'      => {'LSF' => ['-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"', $reg_requirement] },
-         '16Gb_job'     => {'LSF' => ['-C0 -M16000  -R"select[mem>16000]  rusage[mem=16000]"', $reg_requirement] },
-         '2Gb_8c_job'   => {'LSF' => ['-n 8 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },
-         '2Gb_reg_conf' => {'LSF' => ['-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"', $reg_requirement] },
-
+        'unroot_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/species_tree/unroot_newick.py'),
+        'reroot_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/species_tree/reroot_newick.py'),
     };
 }
 
@@ -105,7 +85,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        'mkdir -p '.$self->o('output_dir'),
+        $self->pipeline_create_commands('output_dir'),
     ];
 }
 
@@ -154,7 +134,7 @@ sub pipeline_analyses {
         	  -flow_into  => {
                     1 => { 'mash_sketch' => { 'input_file' => '#genome_dump_file#', } },
         	},
-        	-rc_name => '2Gb_reg_conf',
+                -rc_name => '2Gb_job',
           -analysis_capacity => 5,
         },
 

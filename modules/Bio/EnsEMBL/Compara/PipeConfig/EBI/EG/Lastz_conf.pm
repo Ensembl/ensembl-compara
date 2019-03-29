@@ -69,13 +69,6 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-            'host' => 'mysql-eg-prod-2.ebi.ac.uk',
-            'port' => 4239,
-            'user' => 'ensadmin',
-            'password' => $self->o('password'),
-
-	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-
             'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
 
             'staging_loc1' => {
@@ -156,18 +149,6 @@ sub default_options {
 	   };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-
-    return {
-            %{$self->SUPER::resource_classes},
-            '1Gb_job'   => { 'LSF' => '-q production-rh7 -M1000 -R"rusage[mem=1000]"' },
-            '3.6Gb_job' => { 'LSF' => '-q production-rh7 -M3600 -R"rusage[mem=3600]"' },
-            '4.2Gb_job' => { 'LSF' => '-q production-rh7 -M4200 -R"rusage[mem=4200]"' },
-            '8.4Gb_job' => { 'LSF' => '-q production-rh7 -M8400 -R"rusage[mem=8400]"' },
-    };
-}
-
 
 sub pipeline_analyses {
     my $self = shift;
@@ -176,21 +157,21 @@ sub pipeline_analyses {
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-          'pairaligner_stats'                             => '1.8Gb_job',
-          'alignment_nets'                                => '1.8Gb_job',
-          'alignment_nets_himem'                          => '3.6Gb_job',
-          'create_alignment_nets_jobs'                    => '1.8Gb_job',
+          'pairaligner_stats'                             => '2Gb_job',
+          'alignment_nets'                                => '2Gb_job',
+          'alignment_nets_himem'                          => '4Gb_job',
+          'create_alignment_nets_jobs'                    => '2Gb_job',
           'alignment_chains'                              => '1Gb_job',
-          'create_alignment_chains_jobs'                  => '3.6Gb_job',
-          'create_filter_duplicates_jobs'                 => '1.8Gb_job',
-          'create_pair_aligner_jobs'                      => '1.8Gb_job',
-          'populate_new_database'                         => '8.4Gb_job',
-          'parse_pair_aligner_conf'                       => '4.2Gb_job',
+          'create_alignment_chains_jobs'                  => '4Gb_job',
+          'create_filter_duplicates_jobs'                 => '2Gb_job',
+          'create_pair_aligner_jobs'                      => '2Gb_job',
+          'populate_new_database'                         => '8Gb_job',
+          'parse_pair_aligner_conf'                       => '4Gb_job',
           'set_internal_ids_collection'                   => '1Gb_job',
           'store_sequence'                                => '1Gb_job',
-          'store_sequence_again'                          => '3.6Gb_job',
-          $self->o('pair_aligner_logic_name')             => '3.6Gb_job',
-          $self->o('pair_aligner_logic_name') . "_himem1" => '8.4Gb_job',
+          'store_sequence_again'                          => '4Gb_job',
+          $self->o('pair_aligner_logic_name')             => '4Gb_job',
+          $self->o('pair_aligner_logic_name') . "_himem1" => '8Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

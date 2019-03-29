@@ -53,30 +53,9 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'master_db' => 'compara_master',
-        'work_dir'  => '/hps/nobackup2/production/ensembl/' . $ENV{USER} . '/synteny/'. $self->o('division') .'_release_' . $self->o('rel_with_suffix'),
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
-        #executable locations
-        'DumpGFFAlignmentsForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl",
-        'DumpGFFHomologuesForSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/DumpGFFHomologuesForSynteny.pl",
-        'BuildSynteny_exe' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/synteny/BuildSynteny.jar",
-	'populate_new_database_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-
-        'java_exe'      => $self->check_exe_in_linuxbrew_opt('jdk@8/bin/java'),
+        'work_dir'  => $self->o('pipeline_dir'),
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-            %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-            '100Mb' => { 'LSF' => ['-C0 -M100 -R"select[mem>100] rusage[mem=100]"', $reg_requirement] },
-            '1Gb'   => { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
-            '1.8Gb' => { 'LSF' => ['-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"', $reg_requirement] },
-            '3.6Gb' => { 'LSF' => ['-C0 -M3600 -R"select[mem>3600] rusage[mem=3600]"', $reg_requirement] },
-    };
-}
 
 1;

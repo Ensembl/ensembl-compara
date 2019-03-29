@@ -45,14 +45,8 @@ sub default_options {
     'division' => 'ensembl',
 	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
-    #'host' => 'mysql-ens-compara-prod-4.ebi.ac.uk',
-    #'port' => 4401,
-
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
-    # place to get the genome dumps
-    'genome_dumps_dir' => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division'),
-    'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
     'master_db' => 'compara_master',
 	
     #default location for pairwise alignments (can be a string or an array-ref)
@@ -68,31 +62,6 @@ sub default_options {
  	# 'ref_species' => 'gallus_gallus',    # sauropsids 
 	#'ref_species' => 'oryzias_latipes',  # fish
 	# 'ref_species' => 'homo_sapiens',       # mammals
-
-	 #gerp parameters
-    'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.'.$self->o('division').'.branch_len.nw',     # location of full species tree, will be pruned
-
-	#Location of executables (or paths to executables)
-    'gerp_exe_dir'    => $self->check_dir_in_cellar('gerp/20080211_1/bin'),   #gerp program
-    'semphy_exe'      => $self->check_exe_in_cellar('semphy/2.0b3/bin/semphy'), #semphy program
-    'treebest_exe'    => $self->check_exe_in_cellar('treebest/88/bin/treebest'), #treebest program
-
-    # stats report email
-  	'epo_stats_report_email' => $ENV{'USER'} . '@ebi.ac.uk',
-    };
-}
-
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default' => { 'LSF' => ['', $reg_requirement], 'LOCAL' => ['', $reg_requirement] },
-         '100Mb' => { 'LSF' => ['-C0 -M100  -R"select[mem>100]  rusage[mem=100]"', $reg_requirement] },
-         '1Gb'   => { 'LSF' => ['-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
-	 	 '1.8Gb' => { 'LSF' => ['-C0 -M1800 -R"select[mem>1800] rusage[mem=1800]"', $reg_requirement] },
-         '3.5Gb' => { 'LSF' => ['-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"', $reg_requirement] },
-         '8Gb'   => { 'LSF' => ['-C0 -M8000 -R"select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
     };
 }
 

@@ -47,11 +47,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::HighConfidenceOrthologs
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
-
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs;
-
-use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
+use base ('Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf');
 
 
 sub default_options {
@@ -60,7 +56,6 @@ sub default_options {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'division'   => 'ensembl',
-        'reg_conf'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
 
         # This pipeline will faster if it's run against the production ProteinTree database:
         # In this case it needs to be run *before* the merge, otherwise the data will not be in the release database.
@@ -86,21 +81,9 @@ sub default_options {
                 'thresholds'    => [ undef, undef, 25 ],
             },
         ],
-
-        'high_confidence_capacity'    => 30,             # how many mlss_ids can be processed in parallel
-        'high_confidence_batch_size'  => 10,            # how many mlss_ids' jobs can be batched together
-
     };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    my $reg_requirement = '--reg_conf '.$self->o('reg_conf');
-    return {
-        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         'default'      => {'LSF' => [ '', $reg_requirement ], 'LOCAL' => [ '', $reg_requirement ]  },
-    };
-}
 
 sub pipeline_analyses {
     my ($self) = @_;

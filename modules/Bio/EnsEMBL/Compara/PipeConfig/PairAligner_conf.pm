@@ -77,13 +77,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        # executable locations:
-        'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-        'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
-        'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/report/create_pair_aligner_page.pl",
-
             #Set for single pairwise mode
         'mlss_id' => '',
         'mlss_id_list' => undef,
@@ -94,9 +87,8 @@ sub default_options {
 	#Set to use pairwise configuration file
 	'conf_file' => '',
 
-	#Set to use registry configuration file
-	'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-    'master_db' => 'compara_master',
+        #The registry file "reg_conf" is automatically set up in the parent class
+        'master_db' => 'compara_master',
 
 	#Reference species (if not using pairwise configuration file)
         'ref_species' => undef,
@@ -130,7 +122,7 @@ sub default_options {
     			                               #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
                 'masking_options' => '{default_soft_masking => 1}',
                 # if you have a specific selection of repeat elements for the masking
-                #'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec",
+                #'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
             },
     	     #non human example
     		'default' => {
@@ -164,7 +156,7 @@ sub default_options {
     'pair_aligner_options' => {
         default => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # ensembl genomes settings
         7742    => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', # vertebrates - i.e. ensembl-specific
-        9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->o('ensembl_cvs_root_dir') . '/ensembl-compara/scripts/pipeline/primate.matrix --ambiguous=iupac', # primates
+        9526    => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=' . $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/primate.matrix').' --ambiguous=iupac', # primates
         33554   => 'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 --ambiguous=iupac', # carnivora
         3913    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
         4070    => 'T=1 L=3000 H=2200 O=400 E=30 --ambiguous=iupac --matchcount=1000',
@@ -268,7 +260,6 @@ sub pipeline_analyses {
 		-parameters    => { 
 				  #'compara_url' => $self->dbconn_2_url('master_db'),
 				   'master_db' => $self->o('master_db'),
-				  'reg_conf'  => $self->o('reg_conf'),
 				  'conf_file' => $self->o('conf_file'),
 				  # 'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'get_species_list' => 1,
@@ -304,7 +295,6 @@ sub pipeline_analyses {
   	    {   -logic_name    => 'parse_pair_aligner_conf',
   		-module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf',
   		-parameters    => { 
-  				  'reg_conf'  => $self->o('reg_conf'),
   				  'conf_file' => $self->o('conf_file'),
 				  'ref_species' => $self->o('ref_species'),
 				  'non_ref_species' => $self->o('non_ref_species'),
@@ -350,7 +340,7 @@ sub pipeline_analyses {
  	       -flow_into => {
  	          2 => [ 'store_sequence' ],
  	       },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
  	    {  -logic_name => 'store_sequence',
  	       -hive_capacity => 100,
@@ -362,7 +352,7 @@ sub pipeline_analyses {
 	       -flow_into => {
  	          -1 => [ 'store_sequence_again' ],
  	       },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
   	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
  	    {  -logic_name => 'store_sequence_again',
@@ -373,7 +363,7 @@ sub pipeline_analyses {
                    'dump_min_chunk_size' => $self->o('dump_min_chunk_size'),
                },
 	       -can_be_empty  => 1,
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
   	    },
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
@@ -399,7 +389,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
 	    },
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
@@ -486,7 +476,7 @@ sub pipeline_analyses {
 			      2 => [ 'dump_large_nib_for_chains' ],
 			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -499,7 +489,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
 	    {  -logic_name => 'dump_large_nib_for_chains_himem',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -533,7 +523,7 @@ sub pipeline_analyses {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
                -wait_for   => [ 'create_alignment_chains_jobs' ],
-	       -rc_name => '1.8Gb_job',
+	       -rc_name => '2Gb_job',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
 	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -556,7 +546,7 @@ sub pipeline_analyses {
             -parameters => $self->o('chain_parameters'),
             -can_be_empty  => 1,
             -max_retry_count => 10,
-            -rc_name => '10Gb_job',
+            -rc_name => '16Gb_job',
             -wait_for => ['alignment_chains'],
             -can_be_empty  => 1,
         },
@@ -621,7 +611,7 @@ sub pipeline_analyses {
                               2 => { 'filter_duplicates_net' => INPUT_PLUS() },
                             },
                -can_be_empty  => 1,
-               -rc_name => '1.8Gb_job',
+               -rc_name => '2Gb_job',
            },
            {  -logic_name   => 'filter_duplicates_net',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
@@ -663,7 +653,6 @@ sub pipeline_analyses {
                   2 => [ 'set_internal_ids_slow' ],
               },
               -analysis_capacity => 1,
-              -rc_name => '100Mb_job',
           },
           {  -logic_name => 'set_internal_ids_slow',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsSlow',
@@ -699,12 +688,12 @@ sub pipeline_analyses {
                   'A->1' => [ 'coding_exon_stats_summary' ],
                   '2->A' => [ 'coding_exon_stats' ],
 			     },
-	      -rc_name => '1.8Gb_job',
+	      -rc_name => '2Gb_job',
 	    },
             {   -logic_name => 'coding_exon_stats',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
                 -hive_capacity => 5,
-                -rc_name => '1.8Gb_job',
+                -rc_name => '2Gb_job',
             },
             {   -logic_name => 'coding_exon_stats_summary',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',

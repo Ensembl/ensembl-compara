@@ -62,12 +62,6 @@ sub default_options {
 
         'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
 
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        'host'  => 'mysql-ens-compara-prod-1.ebi.ac.uk',
-        'port'  => 4485,
-
     # User details
 
     # parameters that are likely to change from execution to another:
@@ -75,14 +69,13 @@ sub default_options {
 
         'test_mode' => 1, #set this to 0 if this is production run
         
-        'rel_suffix'            => '',
+        #'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
     #default parameters for the geneset qc
 
-    # dependent parameters: updating 'base_dir' should be enough
-        'base_dir'              => '/hps/nobackup2/production/ensembl/'.$self->o('ENV', 'USER').'/',
+    # data directories:
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
@@ -110,7 +103,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'notung' or 'CAFE'. It *has* to be binary
-        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.ensembl.branch_len.nw',
+        'binary_species_tree_input_file'   => $self->o('binary_species_tree'),
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'

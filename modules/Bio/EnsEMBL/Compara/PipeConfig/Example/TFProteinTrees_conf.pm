@@ -74,14 +74,9 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
         'treefam_release'               => 10,
-        'rel_suffix'        => '', # set it to '' for the actual release
+        #'rel_suffix'        => '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('treefam_release').$self->o('rel_suffix'),
 
-    # custom pipeline name, in case you don't like the default one
-		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
-		#'pipeline_name'         => 'treefam_10_mammals_baboon',
-		#'pipeline_name'         => 'ckong_protein_trees_compara_homology_protists_topup24',
-		'pipeline_name'         => 'TreeFam10',
         # Tag attached to every single tree
         'division'              => 'treefam',
 
@@ -109,7 +104,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.treefam.topology.nw',
+        'species_tree_input_file'   => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/species_tree.treefam.topology.nw'),
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
@@ -169,30 +164,9 @@ sub default_options {
 
     # hive priority for non-LOCAL health_check analysis:
 
-    # connection parameters to various databases:
-
-        # the production database itself (will be created)
-        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-
-        # the master database for synchronization of various ids (use undef if you don't have a master database)
-        #'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
-		#'master_db' => 'mysql://admin:XXXXXXXX@mysql-treefam-prod:4401/treefam_master10',
-
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
 
-    pipeline_db => {
-      -host   => 'mysql-treefam-prod',
-      -port   => 4401,
-      -user   => 'admin',
-      -pass   => $self->o('password'),
-	  #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
-	  #-dbname => 'treefam_10_mammals_baboon',
-	  #-dbname => 'ckong_protein_trees_compara_homology_protists_topup24',
-	  -dbname => 'TreeFam10',
-	  -driver => 'mysql',
-      #-db_version => $self->o('ensembl_release')
-    },
     eg_mirror => {       
             -host => 'mysql-eg-mirror.ebi.ac.uk',
             -port => 4157,
@@ -209,9 +183,8 @@ sub default_options {
     },
 	master_db=> {
             -host => 'mysql-treefam-prod',
-            -user => 'admin',
+            -user => 'ensro',
             -port => '4401',
-			-pass => $self->o('password'),
             #-verbose => 1,
             #-dbname => 'treefam_master10',
             -dbname => 'treefam_master',

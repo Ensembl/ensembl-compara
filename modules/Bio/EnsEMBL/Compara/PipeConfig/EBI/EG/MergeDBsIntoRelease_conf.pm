@@ -55,12 +55,6 @@ sub default_options {
   return {
   %{$self->SUPER::default_options},
 
-  # Where the pipeline database will be created
-  'host' => undef,
-
-  # Also used to differentiate submitted processes
-  'pipeline_name' => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),
-
   # Don't shout about unknown tables
   'die_if_unknown_table'    => 0,
 
@@ -93,12 +87,5 @@ sub default_options {
   };
 }
 
-sub resource_classes {
-  my ($self) = @_;
-  return {
-    %{$self->SUPER::resource_classes},
-    'default' => { 'LSF' => '-q production-rh7' },
-  };
-}
 
 1;

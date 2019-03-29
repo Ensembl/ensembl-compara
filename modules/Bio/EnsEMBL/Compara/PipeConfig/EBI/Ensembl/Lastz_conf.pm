@@ -37,9 +37,6 @@ sub default_options {
     return {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'host'      => 'mysql-ens-compara-prod-2.ebi.ac.uk',
-        'port'      =>  4522,
-	    
         'division'  => 'ensembl',
 	   };
 }
