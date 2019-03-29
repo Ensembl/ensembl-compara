@@ -211,6 +211,7 @@ sub _add_to_matrix {
   }
 
   foreach (@rows) {
+    $subset         = $_->{'subset'};
     my $option_key  = "${subset}_${column}_$_->{'row'}";
     my $node        = $self->get_node($option_key);
     my $display     = $_->{'renderer'} || 'off';
@@ -1154,6 +1155,7 @@ sub add_regulation_builds {
       #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
           $matrix_rows{$cell_line}{$set}{$_->name} ||= {
+                            subset      => 'reg_feats_'.$set,
                             row         => $_->name,
                             group       => $_->class,
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
