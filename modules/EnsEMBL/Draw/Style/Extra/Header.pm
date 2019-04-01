@@ -45,7 +45,7 @@ sub draw_margin_subhead {
 
 sub draw_margin_sublabels {
   my ($self, $track, $offset) = @_;
-  my $y_offset = $offset;
+  my $y_offset = 0;
   foreach my $s (@$track) {
     $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, $x_offset, $y_offset);
     $y_offset += $offset;

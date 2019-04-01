@@ -128,7 +128,7 @@ sub draw_aggregate {
   ## Prepare to draw any headers/labels in lefthand column
   if (%blocks) {
     $self->{'my_config'}->set('height', $h * 2);
-    $self->{'my_config'}->set('extra_height',2);
+    $self->{'my_config'}->set('extra_height', 4);
   }
   my %config  = %{$self->track_style_config};
   my $header  = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
@@ -203,7 +203,7 @@ sub draw_aggregate {
                 sublegend_links => $self->_sublegend_links,
                };
   if (%blocks && %wiggles) {
-    $params->{'y_offset'} = $self->{'my_config'}->get('total_height') - 30;
+    $params->{'y_offset'} = $self->{'my_config'}->get('total_height') - 50;
   }
   if (%blocks) {
     $params->{'show_peaks'} = 1;
