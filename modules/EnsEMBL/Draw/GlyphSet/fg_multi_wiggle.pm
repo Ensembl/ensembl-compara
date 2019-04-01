@@ -128,7 +128,7 @@ sub draw_aggregate {
   ## Prepare to draw any headers/labels in lefthand column
   if (%blocks) {
     $self->{'my_config'}->set('height', $h * 2);
-    $self->{'my_config'}->set('extra_height',12);
+    $self->{'my_config'}->set('extra_height',2);
   }
   my %config  = %{$self->track_style_config};
   my $header  = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
@@ -154,7 +154,6 @@ sub draw_aggregate {
       $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
 
       ## Draw features
-      if (scalar @
       $args->{'feature_type'} = 'block_features';
       my $subset    = $self->get_features(\%blocks, $args);
       $block_style  = $style_class->new(\%config, $subset);
