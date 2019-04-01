@@ -159,7 +159,8 @@ sub draw_aggregate {
       $block_style  = $style_class->new(\%config, $subset);
 
       ## Label each subtrack in the margin
-      $header->draw_margin_sublabels($subset);
+      my $extra_height = $self->{'my_config'}->get('extra_height');
+      $header->draw_margin_sublabels($subset, $self->{'my_config'}->get('extra_height'));
 
       ## And add to legend
       push @$data_for_legend, @$subset;
