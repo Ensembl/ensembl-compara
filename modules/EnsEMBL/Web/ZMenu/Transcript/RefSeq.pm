@@ -39,7 +39,7 @@ sub content {
   my $transcript_link    = $transcript_version ? $transcript_id.'.'.$transcript_version : $transcript_id;
   my $translation = $object->Obj->translation;
  
-  $self->caption($gene_xref);
+  $self->caption($gene_xref || $gene_id);
 
   #remove standard links to gene pages and replace with one to NCBI
   $self->delete_entry_by_type('Gene');
