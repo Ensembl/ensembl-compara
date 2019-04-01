@@ -1529,6 +1529,7 @@ sub _summarise_go_db {
       from ontology
         join term using (ontology_id)
       where is_root = 1
+       and is_obsolete = 0
       order by ontology.ontology_id');
   foreach my $row (@$t_aref) {
       my ($oid, $ontology, $root_term, $description) = @$row;
