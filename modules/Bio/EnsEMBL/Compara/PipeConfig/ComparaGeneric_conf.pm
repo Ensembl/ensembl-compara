@@ -111,7 +111,7 @@ sub check_all_executables_exist {
    }
    if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
        my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
-       foreach my $p (@{$self->{'_aensembl_dir_paths'}}) {
+       foreach my $p (@{$self->{'_ensembl_dir_paths'}}) {
            $p = $ensembl_cvs_root_dir.'/'.$p;
            die "'$p' cannot be found.\n" unless -e $p;
            die "'$p' is not a directory.\n" unless -d $p;
