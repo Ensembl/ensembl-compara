@@ -393,9 +393,10 @@ sub get_SimpleAlign {
     my $removed_members = undef;
     my $map_long_seq_names = undef;
     my $annotations = undef;
+    my $member_sources = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $removed_members, $map_long_seq_names, $annotations) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES ANNOTATIONS)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns, $removed_members, $map_long_seq_names, $annotations, $member_sources) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS REMOVED_MEMBERS MAP_LONG_SEQ_NAMES ANNOTATIONS MEMBER_SOURCES)], @args);
     }
 
     die "-SEQ_TYPE and \$self->seq_type cannot have different (defined) values" if $seq_type and $self->seq_type and ($seq_type ne $self->seq_type);
@@ -425,6 +426,12 @@ sub get_SimpleAlign {
         @all_members = sort {$b->dbID <=> $a->dbID} @{$self->get_all_Members};
     }else{
         @all_members = @{$self->get_all_Members};
+    }
+
+    # Filter by source_name
+    if ($member_sources) {
+        my %sources_ok = map {$_ => 1} @$member_sources;
+        @all_members = grep {$sources_ok{$_->source_name}} @all_members;
     }
 
     foreach my $member (@all_members) {
