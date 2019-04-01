@@ -157,28 +157,20 @@ sub pipeline_analyses {
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-          'pairaligner_stats'                             => '2Gb_job',
           'alignment_nets'                                => '2Gb_job',
-          'alignment_nets_himem'                          => '4Gb_job',
           'create_alignment_nets_jobs'                    => '2Gb_job',
-          'alignment_chains'                              => '1Gb_job',
           'create_alignment_chains_jobs'                  => '4Gb_job',
           'create_filter_duplicates_jobs'                 => '2Gb_job',
           'create_pair_aligner_jobs'                      => '2Gb_job',
           'populate_new_database'                         => '8Gb_job',
           'parse_pair_aligner_conf'                       => '4Gb_job',
           'set_internal_ids_collection'                   => '1Gb_job',
-          'store_sequence'                                => '1Gb_job',
-          'store_sequence_again'                          => '4Gb_job',
           $self->o('pair_aligner_logic_name')             => '4Gb_job',
           $self->o('pair_aligner_logic_name') . "_himem1" => '8Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
-
-    # Other parameters that have to be set
-    $analyses_by_name{'store_sequence_again'}->{'-hive_capacity'} = 50;
 
     return $all_analyses;
 }

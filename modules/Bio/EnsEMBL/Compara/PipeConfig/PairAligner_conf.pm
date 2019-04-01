@@ -354,16 +354,15 @@ sub pipeline_analyses {
  	       },
 	       -rc_name => '2Gb_job',
   	    },
-	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
  	    {  -logic_name => 'store_sequence_again',
- 	       -hive_capacity => 100,
+ 	       -hive_capacity => 50,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
                -parameters => {
                    'dump_min_chunkset_size' => $self->o('dump_min_chunkset_size'),
                    'dump_min_chunk_size' => $self->o('dump_min_chunk_size'),
                },
 	       -can_be_empty  => 1,
-	       -rc_name => '2Gb_job',
+	       -rc_name => '4Gb_job',
   	    },
  	    {  -logic_name => 'create_pair_aligner_jobs',  #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs',
@@ -592,15 +591,26 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
                -can_be_empty => 1,
+               -flow_into => {
+                   -1 => [ 'alignment_nets_hugemem' ],  # MEMLIMIT
+               },
 	       -rc_name => '4Gb_job',
  	    },
+            {   -logic_name     => 'alignment_nets_hugemem',
+                -hive_capacity  => $self->o('net_hive_capacity'),
+                -batch_size     => $self->o('net_batch_size'),
+                -module         => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
+                -parameters     => $self->o('net_parameters'),
+                -can_be_empty   => 1,
+                -rc_name        => '8Gb_job',
+            },
  	    {
 	       -logic_name => 'remove_inconsistencies_after_net',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
 	       -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'create_alignment_nets_jobs' ],    # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'alignment_nets_hugemem', 'create_alignment_nets_jobs' ],    # Needed because of bi-directional netting: 2 jobs in create_alignment_nets_jobs can result in 1 job here
 	       -rc_name => '1Gb_job',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory

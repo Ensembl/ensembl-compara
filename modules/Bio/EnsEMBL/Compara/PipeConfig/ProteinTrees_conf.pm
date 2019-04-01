@@ -1407,7 +1407,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'sort_clusters'         => 1,
             },
-            -rc_name    => '2Gb_job',
+            -rc_name    => '4Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
         },
 
@@ -1764,10 +1764,10 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
                 'mafft_home'                 => $self->o('mafft_home'),
-                'mafft_threads'              => 4,
+                'mafft_threads'              => 16,
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '32Gb_4c_job',
+            -rc_name    => '64Gb_16c_job',
             -priority   => $self->o('mafft_himem_priority'),
         },
 
@@ -3124,7 +3124,7 @@ sub core_pipeline_analyses {
                 'type'          => 't',
             },
             -flow_into          => [ 'hc_stable_id_mapping' ],
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name         => 'hc_stable_id_mapping',
@@ -3144,7 +3144,7 @@ sub core_pipeline_analyses {
                 'tf_release'  => $self->o('tf_release'),
                 'tag_prefix'  => '',
             },
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'build_HMM_factory',
@@ -3332,8 +3332,20 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
             },
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -flow_into  => {
+                -1 => [ 'homology_id_mapping_hugemem' ],
+            },
             -analysis_capacity => 20,
             -rc_name => '8Gb_job',
+        },
+
+        {   -logic_name => 'homology_id_mapping_hugemem',
+            -parameters => {
+                'prev_rel_db'   => '#mapping_db#',
+            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -analysis_capacity => 20,
+            -rc_name => '16Gb_job',
         },
 
         {   -logic_name => 'homology_dNdS',
@@ -3373,6 +3385,15 @@ sub core_pipeline_analyses {
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -flow_into  => {
+                -1 => 'threshold_on_dS_himem',
+            },
+        },
+
+        {   -logic_name => 'threshold_on_dS_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
+            -hive_capacity => $self->o('homology_dNdS_capacity'),
+            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'rib_fire_goc',

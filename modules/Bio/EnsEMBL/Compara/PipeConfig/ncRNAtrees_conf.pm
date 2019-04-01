@@ -448,6 +448,7 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
             -flow_into          => [ 'cluster_qc_factory' ],
+            -flow_into          => '500Mb_job',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
@@ -615,8 +616,22 @@ sub core_pipeline_analyses {
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
                 -flow_into     => {
+                                   -1 => [ 'other_paralogs_himem' ],
                                    2 => [ 'tree_backup' ],
                                    3 => { 'other_paralogs' => INPUT_PLUS },
+                                  },
+            },
+
+            {   -logic_name     => 'other_paralogs_himem',
+                -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+                -parameters     => {
+                                    'dataflow_subclusters' => 1,
+                                   },
+                -analysis_capacity  => $self->o('other_paralogs_capacity'),
+                -priority           => 40,
+                -flow_into     => {
+                                   2 => [ 'tree_backup' ],
+                                   3 => { 'other_paralogs_himem' => INPUT_PLUS },
                                   },
             },
 
@@ -990,6 +1005,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
+            -rc_name            => '500Mb_job',
             %hc_params,
         },
 

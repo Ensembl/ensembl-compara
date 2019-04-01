@@ -102,6 +102,7 @@ sub default_options {
     'java_options_mem1' => '-server -Xmx6500M -Xms6000m',
     'java_options_mem2' => '-server -Xmx12500M -Xms12000m',
     'java_options_mem3' => '-server -Xmx26500M -Xms26000m',
+    'java_options_mem4' => '-server -Xmx56500M -Xms56000m',
 
     #Gerp default parameters
     'window_sizes'      => [1,10,100,500],
@@ -592,6 +593,29 @@ sub pipeline_analyses {
              -max_retry_count => 1,
              -priority => 40,
 	     -rc_name => '32Gb_job',
+             -flow_into => {
+                 1 => [ 'gerp' ],
+                 2 => [ 'pecan_mem4'], #retry with even more heap memory
+                 -1 => [ 'pecan_mem4'], #MEMLIMIT
+                 -2 => [ 'pecan_mem4'], #RUNLIMIT
+             },
+         },
+         {   -logic_name => 'pecan_mem4',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan',
+             -parameters => {
+                 'max_block_size'             => $self->o('max_block_size'),
+                 'java_options'               => $self->o('java_options_mem4'),
+                 'pecan_exe_dir'              => $self->o('pecan_exe_dir'),
+                 'exonerate_exe'              => $self->o('exonerate_exe'),
+                 'java_exe'                   => $self->o('java_exe'),
+                 'estimate_tree_exe'          => $self->o('estimate_tree_exe'),
+                 'ortheus_bin_dir'            => $self->o('ortheus_bin_dir'),
+                 'ortheus_lib_dir'            => $self->o('ortheus_lib_dir'),
+                 'semphy_exe'                 => $self->o('semphy_exe'),
+             },
+             -max_retry_count => 1,
+             -priority => 50,
+             -rc_name => '64Gb_job',
              -flow_into => {
                  1 => [ 'gerp' ],
              },
