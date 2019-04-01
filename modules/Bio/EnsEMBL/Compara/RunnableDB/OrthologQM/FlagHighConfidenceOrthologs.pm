@@ -69,7 +69,7 @@ sub fetch_input {
     my $condition = "perc_id >= ".$thresholds->[2]." AND ";
 
     # Check whether there are GOC and WGA scores for this mlss_id
-    my $sql_score_count = "SELECT COUNT(goc_score IS NOT NULL), COUNT(wga_coverage IS NOT NULL) FROM homology WHERE $homology_filter";
+    my $sql_score_count = "SELECT COUNT(goc_score), COUNT(wga_coverage) FROM homology WHERE $homology_filter";
     my ($has_goc, $has_wga) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_score_count, undef, $mlss_id);
 
     my @external_conditions;
