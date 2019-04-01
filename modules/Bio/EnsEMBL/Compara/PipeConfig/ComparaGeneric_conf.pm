@@ -293,7 +293,7 @@ sub resource_classes {
         # Always include the single-threaded resource classes
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_single_thread($self) },
         # Include the multi-threaded resource classes conditionally
-        ${ $include_multi_threaded ? Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($self) : {} },
+        %{ $include_multi_threaded ? Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($self) : {} },
     };
 }
 
