@@ -69,8 +69,13 @@ sub fetch_input {
     my $condition = "perc_id >= ".$thresholds->[2]." AND ";
 
     # Check whether there are GOC and WGA scores for this mlss_id
-    my $sql_score_count = "SELECT COUNT(goc_score), COUNT(wga_coverage) FROM homology WHERE $homology_filter";
-    my ($has_goc, $has_wga) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_score_count, undef, $mlss_id);
+    my $sql_score_count = "SELECT COUNT(*), COUNT(goc_score), COUNT(wga_coverage) FROM homology WHERE $homology_filter";
+    my ($n_hom, $has_goc, $has_wga) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_score_count, undef, $mlss_id);
+
+    # There could be 0 homologies for this mlss
+    unless ($n_hom) {
+        $self->complete_early("No homologies for mlss_id=$mlss_id. Nothing to do");
+    }
 
     my @external_conditions;
     if ($has_goc and $thresholds->[0]) {
@@ -90,6 +95,7 @@ sub fetch_input {
     $self->param('mlss',                        $mlss);
     $self->param('homology_filter',             $homology_filter);
     $self->param('high_confidence_condition',   $condition);
+    $self->param('num_homologies',              $n_hom);
 }
 
 sub write_output {
@@ -103,6 +109,7 @@ sub write_output {
     my $range_label                 = $self->param('range_label') // '';
     my $homology_filter             = $self->param('homology_filter');
     my $high_confidence_condition   = $self->param('high_confidence_condition');
+    my $n_hom                       = $self->param('num_homologies');
 
     if ($range_label) {
         $range_label .= '_';
@@ -117,13 +124,10 @@ sub write_output {
     $self->compara_dba->dbc->do($sql_reset, undef, $mlss_id);
 
     # Get some statistics for the mlss_tag table
-    my $sql_hc_count         = "SELECT COUNT(*), SUM(is_high_confidence) FROM homology WHERE $homology_filter";
+    my $sql_hc_count         = "SELECT SUM(is_high_confidence) FROM homology WHERE $homology_filter";
     my $sql_hc_per_gdb_count = "SELECT genome_db_id, COUNT(DISTINCT gene_member_id) FROM homology JOIN homology_member USING (homology_id) JOIN gene_member USING (gene_member_id) WHERE $homology_filter AND is_high_confidence = 1 GROUP BY genome_db_id";
-    my ($n_hom, $n_hc) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_hc_count, undef, $mlss_id);
+    my ($n_hc) = $self->compara_dba->dbc->db_handle->selectrow_array($sql_hc_count, undef, $mlss_id);
     my $hc_per_gdb = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_hc_per_gdb_count, undef, $mlss_id);
-
-    # There could be 0 homologies for this mlss
-    return unless $n_hom;
     
     # Print them
     my $msg_for_gdb = join(" and ", map {$_->[1]." for genome_db_id=".$_->[0]} @$hc_per_gdb);
