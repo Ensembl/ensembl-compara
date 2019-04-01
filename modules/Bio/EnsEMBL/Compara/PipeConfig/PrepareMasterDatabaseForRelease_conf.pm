@@ -84,9 +84,8 @@ sub default_options {
         'alias_file'  => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
         'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
 
-        # The first two somehow miss the executable permission.  Pull-request submitted
-        'list_genomes_script'    => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
-        'report_genomes_script'  => $self->check_file_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
+        'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
+        'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species' => undef,
         'additional_species'     => undef,
