@@ -409,6 +409,7 @@ sub add_variations {
         push @{$href{$_}{'vf'}}, $vf->dbID;
       }
       else {
+        push @{$href{$_}{'vf'}}, $variation->dbID; #upstream/downstream variant object is in fact variation feature obj.
         push @{$href{$_}{'flanking_variant'}}, 1;
       }
       if($config->{'variants_as_n'}) {
