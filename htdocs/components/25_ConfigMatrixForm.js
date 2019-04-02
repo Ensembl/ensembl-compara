@@ -49,7 +49,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.localStoreObj        = new Object();
-    this.localStorageKey      = 'RegMatrix';
+    this.localStorageKey      = 'RegMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
     
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
