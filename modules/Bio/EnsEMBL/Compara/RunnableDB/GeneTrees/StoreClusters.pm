@@ -207,7 +207,7 @@ sub add_cluster {
     for my $tag (keys %$cluster_def) {
         next if $tag eq 'members';
         print STDERR "Storing tag $tag => ", $cluster_def->{$tag} , "\n" if ($self->debug);
-        $cluster->store_tag($tag, $cluster_def->{$tag});
+        $cluster->store_tag($tag, substr($cluster_def->{$tag}, 0, 10));
     }
 
     # Dataflows immediately or keep it for later
