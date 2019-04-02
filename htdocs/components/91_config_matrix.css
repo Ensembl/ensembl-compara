@@ -350,7 +350,7 @@ div.xBoxes.track-off.render-signal.mClick         { background-image: url("/i/re
 div.xBoxes.track-off.render-normal.mClick         { background-image: url("/i/render/normal_blue.svg"); }
 
 /* track popup/zmenu */
-div.track-popup                         { display: none; font-size: 11px; width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; }
+div.track-popup                         { display: none; font-size: 11px; width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; z-index: 1;}
 div.track-popup ul:last-child           { border-bottom: none; }
 
 div.config_wrapper div.config div.track-popup ul li:not(:first-child) { margin-left: 75px; }

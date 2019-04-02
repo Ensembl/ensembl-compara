@@ -28,13 +28,15 @@ use EnsEMBL::Draw::Utils::Text;
 
 use parent qw(EnsEMBL::Draw::Style::Extra);
 
+our $x_offset = -118;
+
 sub draw_margin_subhead {
 ### Draws a subheader in the lefthand margin, e.g. regulatory features
   my ($self, $text, $tracks_on) = @_;
 
-  my $height = $self->_draw_name($text, 'black', -118, undef);
+  my $height = $self->_draw_name($text, 'black', $x_offset);
   if ($tracks_on) {
-    $height += $self->_draw_name($tracks_on, 'grey40', -118, 0);
+    $height += $self->_draw_name($tracks_on, 'grey40', $x_offset);
   } else {
     $height += $self->_draw_space_glyph;
   }
@@ -42,10 +44,11 @@ sub draw_margin_subhead {
 }
 
 sub draw_margin_sublabels {
-  my ($self, $track) = @_;
-
+  my ($self, $track, $offset) = @_;
+  my $y_offset = 0;
   foreach my $s (@$track) {
-    $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, -118);
+    $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, $x_offset, $y_offset);
+    $y_offset += $offset;
   }
 }
 
@@ -161,7 +164,7 @@ sub _sublegend_zmenu {
 sub _draw_sublegend_box {
   my ($self,$args,$zmenu) = @_;
 
-  my $offset = $self->_offset + 10;
+  my $offset = $self->_offset;
   $offset   += $args->{'y_offset'} || 0;
  
   my $click_text = $args->{'label'} || 'Details';

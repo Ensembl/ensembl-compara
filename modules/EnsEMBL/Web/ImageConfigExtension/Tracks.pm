@@ -211,15 +211,16 @@ sub _add_to_matrix {
   }
 
   foreach (@rows) {
+    $subset         = $_->{'subset'};
     my $option_key  = "${subset}_${column}_$_->{'row'}";
     my $node        = $self->get_node($option_key);
-    my $display     = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
+    my $display     = $_->{'renderer'} || 'off';
 
     if ($node) {
-      $node->set_data('display', 'on') if $display eq 'on';
+      $node->set_data('display', $display);
     } else {
 
-      $node = $column_track->append_child($self->create_option_node($option_key, $_->{'row'}, $display, undef, [qw(on on off off)]));
+      $node = $column_track->append_child($self->create_option_node($option_key, $_->{'row'}, $display, undef, $data->{'renderers'}));
 
       $node->set_data('menu', 'no');
       $node->set_data('caption', "$column - $_->{'row'}");
@@ -1154,6 +1155,7 @@ sub add_regulation_builds {
       #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
           $matrix_rows{$cell_line}{$set}{$_->name} ||= {
+                            subset      => 'reg_feats_'.$set,
                             row         => $_->name,
                             group       => $_->class,
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
@@ -1226,6 +1228,12 @@ sub add_regulation_builds {
     }
 # =cut
 
+    my $renderers = [
+                      'off',            'Off',
+                      'compact',        'Peaks',
+                      'signal',         'Signal',
+                      'signal_feature', 'Both',
+                    ];
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
@@ -1235,36 +1243,34 @@ sub add_regulation_builds {
       cell_line => $cell_line,
       section   => $cell_line,
       menu_key  => 'regulatory_features',
-      renderers => [
-        'off',            'Off',
-        'compact',        'Peaks',
-        'signal',         'Signal',
-        'signal_feature', 'Both',
-      ],
+      renderers => $renderers,
     );
 
     next if $params->{'reg_minimal'};
     
+    my $matrix_rows = [];
     foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
       # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
-      $self->_add_to_matrix({
-        track_name  => "$evidence_info->{$_}{'name'}$label",
-        section     => $cell_line,
-        matrix      => {
-                        menu          => "reg_feats_". $_,
+      push @$matrix_rows, values %{$matrix_rows{$cell_line}{$_}};
+    }
+    $self->_add_to_matrix({
+      track_name  => "Experiments: $label",
+      section     => $cell_line,
+      renderers   => $renderers,
+      matrix      => {
+                        menu          => "reg_feats_core",
                         column        => $cell_line,
                         column_label  => $cell_names{$cell_line},
                         section       => $cell_line,
-                        rows          => [ values %{$matrix_rows{$cell_line}{$_}} ],
-                        },
-        column_data => {
-                        set         => $_,
-                        label       => "$evidence_info->{$_}{'label'}",
-                        description => $data->{$key_2}{'description'}{$_},
+                        rows          => $matrix_rows,
+                      },
+      column_data => {
+                        set         => 'core',
+                        label       => "Experiments",
+                        description => $data->{$key_2}{'description'}{'core'},
                         %column_data
-                        },
-      }, $menu);
-    }
+                      },
+    }, $menu);
   }
 
   if ($db_tables->{'cell_type'}{'ids'}) {
@@ -1332,31 +1338,6 @@ sub update_evidence {
           $self->update_track_renderer($option, $changes->{$_});
         }
       }
-    }
-  }
-
-  $self->save_user_settings;
-}
-
-sub update_reg_renderer {
-  ## Updates user settings for reg track renderer - signal, peak or both
-  my ($self, $renderer, $state) = @_;
-
-  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
-
-  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $self->get_node($type);
-    next unless $menu;
-    foreach my $node (@{$menu->child_nodes}) {
-      my $old = $node->get('display');
-      my $renderer = firstidx { $old eq $_ }
-        qw(off compact signal signal_feature);
-      next if $renderer <= 0;
-      $renderer |= $mask if $state;
-      $renderer &=~ $mask unless $state;
-      $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact signal signal_feature) ]->[$renderer];
-      $self->update_track_renderer($node, $renderer);
     }
   }
 
