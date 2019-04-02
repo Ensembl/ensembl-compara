@@ -220,8 +220,7 @@ sub default_options {
         'do_gini_coefficient'       => 1,
         'lorentz_curve_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotLorentzCurve.r'),
 
-    # HMM specific parameters (set to 0 or undef if not in use)
-       'hmm_library_basedir'       => undef,
+    # HMM specific parameters (mostly set in the ENV file)
 
        # Dumps coming from InterPro
        'panther_annotation_file'    => '/dev/null',
