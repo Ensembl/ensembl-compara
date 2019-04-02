@@ -32,23 +32,22 @@ sub label { return undef; }
 
 sub render_compact {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Feature::Peaks']);
-  $self->{'my_config'}->set('extra_height',12);
+  #warn "### RENDERING PEAKS";
+  #$self->{'my_config'}->set('extra_height',12);
   $self->_render_aggregate;
 }
 
 sub render_signal {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Graph']);
-  $self->{'my_config'}->set('on_error',555);
+  #warn "### RENDERING SIGNAL";
   $self->_render_aggregate;
 }
 
 sub render_signal_feature {
   my $self = shift;
-  $self->{'my_config'}->set('drawing_style', ['Feature::Peaks', 'Graph']);
-  $self->{'my_config'}->set('extra_height',12);
-  $self->{'my_config'}->set('on_error',555);
+  #warn "### RENDERING BOTH";
+  #$self->{'my_config'}->set('extra_height',12);
+  #$self->{'my_config'}->set('on_error',555);
   $self->_render_aggregate;
 }
 
@@ -83,6 +82,8 @@ sub draw_aggregate {
   my $self = shift;
 
   ## Set some defaults for all displays
+  my $top = 0;
+  my $h   = 4;
   $self->{'my_config'}->set('multi', 1);
   $self->{'my_config'}->set('vspacing', 0);
   $self->{'my_config'}->set('hide_subtitle',1);
@@ -90,84 +91,108 @@ sub draw_aggregate {
   $self->{'my_config'}->set('display_summit', 1);
   $self->{'my_config'}->set('slice_start', $self->{'container'}->start);
 
-  ## Draw the track(s)
+  ## Get the features and/or wiggle URL(s)
   my $cell_line = $self->my_config('cell_line');
-  my $label     = $self->my_config('label');
-  my $colours   = $self->{'config'}{'fg_multi_wiggle_colours'} ||= $self->get_colours;
+  my $label   = 'Experiments';
+  my $data    = $self->data_by_cell_line($cell_line);
+  #warn "### $label: DRAWING AGGREGATE FOR $cell_line";
 
+  #use Data::Dumper;
+  #$Data::Dumper::Sortkeys = 1;
+  #$Data::Dumper::Maxdepth = 2;
+
+  ## Work out what we need to draw
+  my (%blocks, %wiggles);
+  foreach my $track (keys %$data) {
+    my $info = $data->{$track};
+    next unless $info->{'renderer'};
+    #warn ">>> TRACK $track HAS RENDERER ".$info->{'renderer'};
+    if ($info->{'renderer'} eq 'compact') {
+      #warn "... WITH FEATURES: ".Dumper($info->{'block_features'});
+      %blocks = (%blocks, %{$info->{'block_features'}||{}});
+    }
+    elsif ($info->{'renderer'} eq 'signal') {
+      #warn "... WITH WIGGLE: ".Dumper($info->{'wiggle_features'});
+      %wiggles = (%wiggles, %{$info->{'wiggle_features'}||{}});
+    }
+    elsif ($info->{'renderer'} eq 'signal_feature') {
+      %blocks = (%blocks, %{$info->{'block_features'}||{}});
+      #warn "... WITH FEATURES: ".Dumper($info->{'block_features'});
+      %wiggles = (%wiggles, %{$info->{'wiggle_features'}||{}});
+      #warn "... WITH WIGGLE: ".Dumper($info->{'wiggle_features'});
+    }
+  }
+  #warn "@@@ BLOCKS: ".Dumper(\%blocks);
+  #warn "@@@ WIGGLES: ".Dumper(\%wiggles);
+
+  ## Prepare to draw any headers/labels in lefthand column
+  if (%blocks) {
+    $self->{'my_config'}->set('height', $h * 2);
+    $self->{'my_config'}->set('extra_height', 4);
+  }
+  my %config  = %{$self->track_style_config};
+  my $header  = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+  my $colours   = $self->{'config'}{'fg_multi_wiggle_colours'} ||= $self->get_colours;
   my $args = {
               'label'     => $label, 
               'colours'   => $colours, 
               };
-
-  my $data    = $self->data_by_cell_line($cell_line);
-  my $set     = $self->my_config('set');
-  my %config  = %{$self->track_style_config};
-
-  my $show_blocks = grep(/Feature/, @{$self->{'my_config'}->get('drawing_style')||[]});
-  my $show_wiggle = grep(/Graph/, @{$self->{'my_config'}->get('drawing_style')||[]});
-
-  my $top = 0;
-  my $h   = 4;
-
-  ## Prepare to draw any headers/labels in lefthand column
-  my $header = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
+  my ($block_style, $wiggle_style, $subhead_height);
   my $data_for_legend = [];
 
-  foreach (@{$self->{'my_config'}->get('drawing_style')||[]}) {
-    my $style_class = 'EnsEMBL::Draw::Style::'.$_;
-    my $any_on = scalar keys %{$data->{'on'}};
+  ## Draw the peaks
+  if (%blocks) {
+    my $style_class = 'EnsEMBL::Draw::Style::Feature::Peaks';
     if ($self->dynamic_use($style_class)) {
-      my ($data_method, $feature_type, $count_header, $sublabels, $message_text);
 
-      if ($_ =~ /Feature/) {
-        $self->{'my_config'}->set('height', $h * 2);
-        $feature_type   = 'block_features';
-        $message_text   = 'peaks';
-        $count_header   = 1;
-        $sublabels      = 1;
-      }
-      else {
-        $self->{'my_config'}->set('height', $h * 15);
-        $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $h * 3);
-        $feature_type   = 'wiggle_features';
-        $message_text   = 'wiggle';
-      }
-      
-      if ($data->{$set}{$feature_type}) {
+      ## Add a summary title in the lefthand margin
+      my $tracks_on = '';
+      $subhead_height = $header->draw_margin_subhead('Experiments', $tracks_on);
 
-        $args->{'feature_type'} = $feature_type;
-        my $subset  = $self->get_features($data->{$set}{$feature_type}, $args);
-        push @$data_for_legend, @$subset;
+      ## Push features down a bit, so their labels don't overlap this header
+      my $y_start = $self->{'my_config'}->get('y_start');
+      $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
 
-        ## Add a summary title in the lefthand margin
-        my $label     = $self->my_config('label');
-        my $tracks_on;
-        if ($count_header) {
-          $tracks_on = $data->{$set}{'on'} 
-                    ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) 
-                    : '';
-        }
-        my $subhead_height  = $header->draw_margin_subhead($label, $tracks_on);
-        ## Push features down a bit, so their labels don't overlap this header
-        my $y_start = $self->{'my_config'}->get('y_start');
-        $self->{'my_config'}->set('y_start', $y_start + $subhead_height);
-        
-        ## Draw the features next, so we know where to put the labels in the margin
-        my $style   = $style_class->new(\%config, $subset);
-        $self->push($style->create_glyphs);
+      ## Draw features
+      $args->{'feature_type'} = 'block_features';
+      my $subset    = $self->get_features(\%blocks, $args);
+      $block_style  = $style_class->new(\%config, $subset);
 
-        if ($sublabels) {
-          ## Label each subtrack in the margin
-          $header->draw_margin_sublabels($subset);
-        }
+      ## Label each subtrack in the margin
+      my $extra_height = $self->{'my_config'}->get('extra_height');
+      $header->draw_margin_sublabels($subset, $self->{'my_config'}->get('extra_height'));
 
-      }
-      else {
-        $self->display_error_message($cell_line, $set, $message_text) if $any_on;
-      }
+      ## And add to legend
+      push @$data_for_legend, @$subset;
     }
   }
+  $self->push($block_style->create_glyphs) if $block_style;
+
+  ## Draw the graph tracks
+  if (%wiggles) {
+    my $style_class = 'EnsEMBL::Draw::Style::Graph';
+    if ($self->dynamic_use($style_class)) {
+
+      $self->{'my_config'}->set('on_error', 555);
+      $self->{'my_config'}->set('height', $h * 15);
+      $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $self->{'my_config'}->get('height'));
+
+      unless ($subhead_height) {
+        ## Add a summary title in the lefthand margin
+        my $tracks_on = '';
+        $subhead_height = $header->draw_margin_subhead('Experiments', $tracks_on);
+      }
+
+      ## Draw features
+      $args->{'feature_type'} = 'wiggle_features';
+      my $subset    = $self->get_features(\%wiggles, $args);
+      $wiggle_style  = $style_class->new(\%config, $subset);
+
+      ## And add to legend
+      push @$data_for_legend, @$subset;
+    }
+  }
+  $self->push($wiggle_style->create_glyphs) if $wiggle_style;
 
   ## Finally create the popup menu and add the header to the glyphset
   my $colour_legend = $self->_colour_legend($data_for_legend);
@@ -177,14 +202,14 @@ sub draw_aggregate {
                 colour_legend   => $colour_legend,
                 sublegend_links => $self->_sublegend_links,
                };
-  if ($show_blocks && $show_wiggle) {
-    $params->{'y_offset'} = $self->{'my_config'}->get('total_height');
+  if (%blocks && %wiggles) {
+    $params->{'y_offset'} = $self->{'my_config'}->get('total_height') - 50;
   }
-  if ($show_blocks) {
+  if (%blocks) {
     $params->{'show_peaks'} = 1;
   }
   $header->draw_sublegend($params);
-  $self->push(@{$header->glyphs||[]});
+  $self->push(@{$header->glyphs||[]}); 
 
   ## This is clunky, but it's the only way we can make the new code
   ## work in a nice backwards-compatible way right now!
@@ -192,6 +217,7 @@ sub draw_aggregate {
   $self->{'label_y_offset'} = $self->{'my_config'}->get('label_y_offset');
 
   ## Everything went OK, so no error to return
+  #warn "############## DONE ##########\n\n";
   return 0;
 }
 
@@ -215,17 +241,17 @@ sub _block_zmenu {
 }
 
 sub get_features {
-  my ($self, $dataset, $args) = @_;
+  my ($self, $tracks, $args) = @_;
 
   my $data = [];
   my $legend = {};
 
-  foreach my $f_set (sort { $a cmp $b } keys %$dataset) {
+  foreach my $key (sort { $a cmp $b } keys %$tracks) {
     my $subtrack = {'metadata' => {},
                     'features' => [],
                     };
 
-    my @temp          = split /:/, $f_set;
+    my @temp          = split /:/, $key;
     
     pop @temp;
     my $feature_name  = pop @temp;
@@ -241,7 +267,7 @@ sub get_features {
 
     if ($args->{'feature_type'} eq 'block_features') {
       $subtrack->{'metadata'}{'feature_height'} = 8;
-      my $features = $dataset->{$f_set};
+      my $features = $tracks->{$key};
       foreach my $f (@$features) {
         my $href = $self->_block_zmenu($f);
         my $hash = {
@@ -256,7 +282,7 @@ sub get_features {
     }
     elsif ($args->{'feature_type'} eq 'wiggle_features') {
       my $bins                    = $self->bins;
-      my $url                     = $dataset->{$f_set};
+      my $url                     = $tracks->{$key};
       my $wiggle                  = $self->get_data($bins, $url);
       $subtrack->{'features'}     = $wiggle->[0]{'features'};
 
