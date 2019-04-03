@@ -39,20 +39,23 @@ sub content {
   my $transcript_link    = $transcript_version ? $transcript_id.'.'.$transcript_version : $transcript_id;
   my $translation = $object->Obj->translation;
  
-  $self->caption($gene_xref || $gene_id);
+  $gene_xref ||= $gene_id;
+  $transcript_xref ||= $transcript_id;
+
+  $self->caption($gene_xref);
 
   #remove standard links to gene pages and replace with one to NCBI
   $self->delete_entry_by_type('Gene');
   $self->delete_entry_by_value($gene_id);
 
-  $gene_xref &&
-    $self->add_entry({
-      type     => 'RefSeq gene',
-      label    => $gene_xref,
-      link     => $hub->get_ExtURL_link($gene_xref, 'REFSEQ_GENEIMP', $gene_xref),
-      abs_url  => 1,
-      position => 1,
-    });
+
+  $self->add_entry({
+    type     => 'RefSeq gene',
+    label    => $gene_xref,
+    link     => $hub->get_ExtURL_link($gene_xref, 'REFSEQ_GENEIMP', $gene_xref),
+    abs_url  => 1,
+    position => 1,
+  });
 
   my $biotype = lc $gene->biotype;
      $biotype =~ s/_/ /g;
@@ -67,19 +70,18 @@ sub content {
   $self->delete_entry_by_type('Transcript');
   $self->delete_entry_by_value($transcript_link);
 
-  $transcript_xref &&
-    $self->add_entry({
-      type     => 'RefSeq transcript',
-      label    => $transcript_xref,
-      link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
-      abs_url  => 1,
-      position => 2,
-    });
+  $self->add_entry({
+    type     => 'RefSeq transcript',
+    label    => $transcript_xref,
+    link     => $hub->get_ExtURL_link($transcript_xref, 'REFSEQ_MRNA_PREDICTED', $transcript_xref),
+    abs_url  => 1,
+    position => 2,
+  });
 
   if ($translation) {
     my $translation_id = $translation->stable_id;
     $self->delete_entry_by_type('Protein');
-    my $translation_xref =  $translation->get_all_DBEntries('GenBank')->[0]->primary_id;
+    my $translation_xref =  $translation->get_all_DBEntries('GenBank')->[0]->primary_id || $translation_id;
     $self->add_entry({
       type     => 'RefSeq protein',
       label    => $translation_xref,
