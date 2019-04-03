@@ -378,7 +378,7 @@ div.config_wrapper div.config span.track-key img        { width: 30px; height: 3
 
 /* toggle switch */
 /* The switch - the box around the slider */
-.switch {
+.track-popup .switch {
   position: relative;
   display: inline-block;
   width: 25px;
@@ -386,16 +386,16 @@ div.config_wrapper div.config span.track-key img        { width: 30px; height: 3
   margin-right: 50px;
 }
 
-span.switch-label { position: absolute; margin-left: 6px; }
+.track-popup span.switch-label { position: absolute; margin-left: 6px; }
 
 /* Hide default HTML checkbox */
-.switch input {
+.track-popup .switch input {
   opacity: 0;
   height: 0;
 }
 
 /* The slider */
-.slider {
+.track-popup .slider {
   position: absolute;
   margin-right: 4px;
   cursor: pointer;
@@ -408,7 +408,7 @@ span.switch-label { position: absolute; margin-left: 6px; }
   transition: .2s;
 }
 
-.slider:before {
+.track-popup .slider:before {
   position: absolute;
   content: "";
   height: 7px;
@@ -420,22 +420,22 @@ span.switch-label { position: absolute; margin-left: 6px; }
   transition: .2s;
 }
 
-input:checked + .slider {
+.track-popup input:checked + .slider {
   background-color: [[OK_DARK]];
 }
 
-input:checked + .slider:before {
+.track-popup input:checked + .slider:before {
   -webkit-transform: translateX(6px);
   -ms-transform: translateX(6px);
   transform: translateX(6px);
 }
 
 /* Rounded sliders */
-.slider.round {
+.track-popup .slider.round {
   border-radius: 34px;
 }
 
-.slider.round:before {
+.track-popup .slider.round:before {
   border-radius: 50%;
 }
 
