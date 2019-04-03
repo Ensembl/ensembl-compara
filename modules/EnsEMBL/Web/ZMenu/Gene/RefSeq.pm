@@ -30,6 +30,7 @@ sub content {
   my $gene      = $object->Obj;
   my $gene_xref   = $gene->display_xref->primary_id;
 
+  $gene_xref ||= $stable_id;
   
   $self->SUPER::content;
 
