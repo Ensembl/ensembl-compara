@@ -95,6 +95,7 @@ sub json_data {
 
   #get all cell types and the evidence type related to each of them (e.g: A549 -> [{evidence_type = 'HH3K27ac', on = 1},{evidence_type='H3K36me3', on = 0},....]) 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
+    my $id_key = $_;
     (my $name = $_) =~ s/:\w+$//;
     my $set_info;
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$name}     || {};
@@ -112,17 +113,21 @@ sub json_data {
           };
           push @$cell_evidence, $hash;
 
-          foreach my $k (@{$final->{extra_dimensions}}) {
-            my $ex = $final->{data}->{$k};
-            if (!$tmp_hash->{$ex}) {
-              $tmp_hash->{$ex} = 1;
-              $hash =  {
-                dimension => $k,
-                val => $ex->{label},
-                set => $ex->{set},
-                defaultState => $ex->{defaultState} || "track-off"
-              };
-              push @$cell_evidence, $hash;
+          # Add regulatory features only of it is available.
+          if ($db_tables->{'cell_type'}{'ids'}->{$id_key}) {
+            foreach my $k (@{$final->{extra_dimensions}}) {
+              my $ex = $final->{data}->{$k};
+              if (!$tmp_hash->{$ex->{label}}) {
+                # print Data::Dumper::Dumper $tmp_hash;
+                $tmp_hash->{$ex->{label}} = 1;
+                $hash =  {
+                  dimension => $k,
+                  val => $ex->{label},
+                  set => $ex->{set},
+                  defaultState => $ex->{defaultState} || "track-off"
+                };
+                push @$cell_evidence, $hash;
+              }
             }
           }
         }
