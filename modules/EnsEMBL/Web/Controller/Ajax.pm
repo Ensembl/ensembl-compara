@@ -210,25 +210,6 @@ sub ajax_cell_type {
   $image_config->update_cell_type(\%changes);
 }
 
-sub ajax_evidence {
-  ## /Ajax/evidence endpoint
-  ## Turns the evidences on-off for regulation views via the cloud selector
-  my $self  = shift;
-  my $hub   = $self->hub;
-
-  my %changes;
-  foreach my $key (grep $hub->param($_), qw(evidence_on evidence_off)) {
-    foreach my $ev (split(/,/,uri_unescape($hub->param($key)))) {
-      $changes{$ev} = $key eq 'evidence_on' ? 'on' : 'off';
-    }
-  }
-
-  # add changes to both reg view and reg summary page image config
-  foreach my $image_config_name (qw(regulation_view reg_summary_page)) {
-    $hub->get_imageconfig($image_config_name)->update_evidence(\%changes);
-  }
-}
-
 sub ajax_data_table_config {
   ## /Ajax/data_table_config endpoint
   ## Saves configs for changes in any data table
