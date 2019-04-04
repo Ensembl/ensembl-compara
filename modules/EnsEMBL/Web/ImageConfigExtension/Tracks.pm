@@ -1104,10 +1104,8 @@ sub add_regulation_builds {
   }));
 
 
-# =pod
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
-# =cut
 
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
@@ -1204,7 +1202,6 @@ sub add_regulation_builds {
     my $label     = ": $cell_line";
     my %evidence_tracks;
 
-# =pod
     ## Only add regulatory features if they're in the main build
     if ($regbuild{$cell_line}) {
 
@@ -1226,7 +1223,6 @@ sub add_regulation_builds {
         matrix_cell   => 1,
       }));
     }
-# =cut
 
     my $renderers = [
                       'off',            'Off',
@@ -1317,26 +1313,6 @@ sub update_cell_type {
     for (keys %$changes) {
       if (clean_id($track->get_data('cell_line')) eq clean_id($_)) {
         $self->update_track_renderer($track, $changes->{$_});
-      }
-    }
-  }
-
-  $self->save_user_settings;
-}
-
-sub update_evidence {
-  ## Updates user settings for evidences for reg based image configs
-  my ($self, $changes) = @_;
-
-  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
-    my $menu = $self->get_node($type);
-    next unless $menu;
-
-    foreach my $option (@{$menu->get_all_nodes}) {
-      for (keys %$changes) {
-        if (clean_id($option->get_data('name')) eq clean_id($_)) {
-          $self->update_track_renderer($option, $changes->{$_});
-        }
       }
     }
   }
