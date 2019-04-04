@@ -175,13 +175,21 @@ sub apply_user_settings {
 
     my $node = $self->get_node($track_key);
 
+    ## Filthy hack for merging the two regulation matrices
+    my $real_key = $track_key;
+    if ($track_key =~ /reg_feats_non_core/ && !$node) {
+      ## All regulation tracks are now attached to the core node, even if they're non-core
+      $track_key =~ s/non_//;
+      $node = $self->get_node($track_key);
+    }
+
     # track doesn't exist, move the data aside temporarily (it could be a track on another species, or externally attached one)
     if (!$node) {
       $user_settings->{'_missing_nodes'}{$track_key} = delete $user_settings->{'nodes'}{$track_key};
       next;
     }
 
-    my $data = $user_settings->{'nodes'}{$track_key} || {};
+    my $data = $user_settings->{'nodes'}{$real_key} || {};
     next unless keys %$data; # no changes to this track
 
     # add track specific user data to the corresponding track node
