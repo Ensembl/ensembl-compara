@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::QfoBlastProteinTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
 
 
 sub default_options {
@@ -43,49 +43,58 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the Ensembl ones
 
-    # parameters that are likely to change from execution to another:
+        # User details
+        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
+        'base_dir'              => '/hps/nobackup2/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
+
+        # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         'mlss_id'   => undef,
 
-    # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'qfo_201104_e'.$self->o('rel_with_suffix'),
+        # custom pipeline name, in case you don't like the default one
+        'pipeline_name'         => 'qfo_2019_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
         'division'              => 'qfo',
 
-    # "Member" parameters:
+        # "Member" parameters:
         'allow_missing_coordinates' => 1,
         'allow_missing_cds_seqs'    => 1,
 
-    # blast parameters:
+        # blast parameters:
 
-    # clustering parameters:
+        # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                 => { },
 
-    # species tree reconciliation
-        'species_tree_input_file'   => '/nfs/users/nfs_m/mm14/workspace/src/qfo/ensembl-compara/scripts/pipeline/species_tree.qfo_2015.nw',
+        # species tree reconciliation
+        'species_tree_input_file'   => '/homes/mateus/qfo/2019/species_tree_qfo_2019.tree',
 
-    # homology_dnds parameters:
+        # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels'                 => [ ],
 
-    # mapping parameters:
+        # mapping parameters:
         'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
 
-    # executable locations:
-        'treebest_exe'              => '/nfs/users/nfs_m/mm14/workspace/treebest/treebest.qfo',
+        # executable locations:
+        #'treebest_exe'              => '/homes/muffato/workspace/treebest/treebest.qfo',
 
-    # connection parameters to various databases:
+        # connection parameters to various databases:
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => undef,
-        'ncbi_db'   => 'mysql://ensro@compara1:3306/mm14_ensembl_compara_master',
+        'master_db'     => undef,
+        'prev_rel_db'   => undef,
+        'ncbi_db'       => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        'member_db'     => 'mysql://ensro@mysql-ens-compara-prod-6:4616/mateus_qfo_load_members_96',
+        'goc_reuse_db'  => undef,
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ ],
-        'curr_file_sources_locs'    => [ '/nfs/users/nfs_m/mm14/workspace/src/qfo/ensembl-compara/qfo.json' ],    # It can be a list of JSON files defining an additionnal set of species
+        'curr_file_sources_locs'    => [ '/homes/mateus/qfo/2019/qfo_2019.json' ],    # It can be a list of JSON files defining an additionnal set of species
+
+        'hmm_library_basedir' => '/gpfs/nobackup/ensembl/mateus/hmms/treefam/2019-01-02',
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ ],
@@ -104,14 +113,13 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     foreach my $logic_name (qw(treebest treebest_short treebest_long_himem)) {
-        $analyses_by_name->{$logic_name}->{'-parameters'}{'cdna'} = 0;
+        #$analyses_by_name->{$logic_name}->{'-parameters'}{'cdna'} = 0;
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_intermediate_trees'} = 0;
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_filtered_align'} = 0;
         $analyses_by_name->{$logic_name}->{'-parameters'}{'store_tree_support'} = 0;
     }
     $analyses_by_name->{'cluster_factory'}->{'-rc_name'} = '500Mb_job';
 }
-
 
 1;
 
