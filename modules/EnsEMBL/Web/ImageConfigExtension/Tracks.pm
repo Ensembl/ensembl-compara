@@ -1152,8 +1152,8 @@ sub add_regulation_builds {
       foreach (@{$all_types{$set}||[]})  {
       #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
-          $matrix_rows{$cell_line}{$set}{$_->name} ||= {
-                            subset      => 'reg_feats_'.$set,
+          $matrix_rows{$cell_line}{'core'}{$_->name} ||= {
+                            subset      => 'reg_feats_core',
                             row         => $_->name,
                             group       => $_->class,
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
