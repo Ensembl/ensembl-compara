@@ -110,7 +110,7 @@ sub pipeline_analyses_hom_stats {
                      FROM gene_member',
                 ],
             },
-            -flow_into  => [ 'stats_gene_trees', 'stats_homologies' ],
+            -flow_into  => [ 'stats_gene_trees', 'gene_member_id_range_factory' ],
         },
 
         # Gene-tree statistics
@@ -141,6 +141,18 @@ sub pipeline_analyses_hom_stats {
             },
         },
 
+        # gene_member_id_chunks
+        {   -logic_name => 'gene_member_id_range_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MemberIDRangeFactory',
+            -parameters => {
+                'table'         => 'gene_member',
+                'chunk_size'    => 100_000,
+            },
+            -flow_into  => {
+                2 => 'stats_homologies',
+            },
+        },
+
         # Homology statistics
         {   -logic_name => 'stats_homologies',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -152,12 +164,14 @@ sub pipeline_analyses_hom_stats {
                     'CREATE TEMPORARY TABLE temp_member_hom_counts AS
                      SELECT gene_member_id, SUM(method_link_id=201) AS orthologues, SUM(method_link_id=202) AS paralogues, SUM(method_link_id=206) AS homoeologues
                      FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id)
+                     WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#
                      GROUP BY gene_member_id',
                     # Add an index on gene_member_id
                     'ALTER TABLE temp_member_hom_counts ADD INDEX (gene_member_id)',
                     # Reset the counts (for reruns)
                     'UPDATE gene_member_hom_stats
-                     SET orthologues = 0, paralogues = 0, homoeologues = 0',
+                     SET orthologues = 0, paralogues = 0, homoeologues = 0
+                     WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#',
                     # And set them to its right values
                     'UPDATE gene_member_hom_stats g JOIN temp_member_hom_counts t USING (gene_member_id)
                      SET g.orthologues=t.orthologues, g.paralogues=t.paralogues, g.homoeologues=t.homoeologues',
