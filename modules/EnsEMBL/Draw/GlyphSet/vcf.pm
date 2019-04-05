@@ -162,16 +162,14 @@ sub get_data {
 
     my $limit = $self->{'my_config'}->get('bigbed_limit') || 500;
     if ($total > $limit) {
-      $self->{'data'} = [];
+      $data = [];
       $self->{'no_empty_track_message'}  = 1;
-      return $self->errorTrack('This track has too many features to show at this scale. Please zoom in.');
+      $self->errorTrack('This track has too many features to show at this scale. Please zoom in.');
     }
   } else {
-    $self->{'data'} = [];
-    return $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
+    $data = [];
+    $self->errorTrack(sprintf 'Could not read file %s', $self->my_config('caption'));
   }
-  #use Data::Dumper; 
-  #$Data::Dumper::Sortkeys = 1;
   #warn Dumper($data->[0]{'features'});
   return $data;
 }
