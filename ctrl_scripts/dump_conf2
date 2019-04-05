@@ -29,8 +29,6 @@ use Storable qw(retrieve);
 use JSON qw(to_json);
 use Storable qw(store_fd);
 
-use FindBin qw($Bin);
-
 BEGIN {
   require "$Bin/helper.pl";
 };
@@ -89,7 +87,7 @@ foreach my $species (keys %$packed) {
   }
 }
 
-my $dir = qx(../../ebi-plugins/common/find-sconf);
+my $dir = qx($Bin/../../ebi-plugins/common/find-sconf);
 system("mkdir -p $dir");
 open(FILE,">","$dir/sconf") || die "Cannot write $dir/sconf";
 store_fd($data,\*FILE);
