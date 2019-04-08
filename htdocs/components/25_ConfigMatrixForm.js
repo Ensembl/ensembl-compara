@@ -1675,7 +1675,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      if (dyItem === '') {
+      if (dyItem === '' && !panel.disableYdim) {
         xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
       }
       else {
@@ -1683,7 +1683,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           //initialising state obj for dyItem (column), value setup later
           panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
         }
-        xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
+
+        if(panel.disableYdim) {
+          if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
+            xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
+          }
+        } else {
+          xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
+        }
       }
     });
 
@@ -1708,7 +1715,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         
         //drawing boxes
         $.each(dyArray, function(i, dyItem) {
-          if (dyItem === '') {
+          if (dyItem === '' && !panel.disableYdim) {
             rowContainer += '<div class="xBoxes _emptyBox_'+cellName+'"></div>';
           }
           else {
@@ -1764,7 +1771,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               });              
             }
 
-            rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';            
+            if(panel.disableYdim) {
+              if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
+                rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
+              }
+            } else {
+              rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
+            }
           }
         });
         //setting state for row in matrix
