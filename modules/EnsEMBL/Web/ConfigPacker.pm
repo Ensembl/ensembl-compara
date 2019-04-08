@@ -755,7 +755,7 @@ sub _summarise_funcgen_db {
 ### the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
     'select
-      distinct epigenome.display_label, epigenome.epigenome_id, 
+      distinct epigenome.short_name, epigenome.epigenome_id, 
                 epigenome.description
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
@@ -775,7 +775,7 @@ sub _summarise_funcgen_db {
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.display_label, epigenome.epigenome_id, epigenome.description
+        epigenome.short_name, epigenome.epigenome_id, epigenome.description
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -831,7 +831,7 @@ sub _summarise_funcgen_db {
 	        select 
 	          logic_name,
 	          epigenome_id,
-	          epigenome.display_label,
+	          epigenome.short_name,
             epigenome.description,
             displayable,
             segmentation_file.name
@@ -914,7 +914,7 @@ sub _summarise_funcgen_db {
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
         select
-            epigenome.display_label,
+            epigenome.short_name,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
         from
@@ -924,7 +924,7 @@ sub _summarise_funcgen_db {
         where
             class in ($classes)
         group by
-            epigenome.display_label,
+            epigenome.short_name,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
     ));
