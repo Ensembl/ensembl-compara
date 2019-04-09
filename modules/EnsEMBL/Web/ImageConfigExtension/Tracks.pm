@@ -155,12 +155,12 @@ sub _add_track {
     %$options
   };
 
-  $self->_add_to_matrix($data, $menu) if $data->{'matrix'};
+  $self->_add_to_old_matrix($data, $menu) if $data->{'matrix'};
 
   return $menu->append_child($self->create_track_node($name, $data->{'name'}, $data));
 }
 
-sub _add_to_matrix {
+sub _add_to_new_matrix {
   my ($self, $data, $menu) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
@@ -231,6 +231,78 @@ sub _add_to_matrix {
 
   return $column_track;
 }
+
+sub _add_to_old_matrix {
+  my ($self, $data, $menu) = @_;
+  my $menu_data    = $menu->data;
+  my $matrix       = $data->{'matrix'};
+  my $caption      = $data->{'caption'};
+  my $column       = $matrix->{'column'};
+  my $subset       = $matrix->{'menu'};
+  my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
+  my $column_key   = clean_id("${subset}_$column");
+  my $column_track = $self->get_node($column_key);
+
+  unless ($column_track && $column_track->parent_node) {
+    $column_track = $self->create_track_node($column_key, $data->{'track_name'} || $column, {
+      renderers   => $data->{'renderers'},
+      label_x     => $column,
+      c_header    => $matrix->{'column_label'},
+      display     => 'off',
+      subset      => $subset,
+      $matrix->{'row'} ? (matrix => 'column') : (),
+      column_order => $matrix->{'column_order'} || 999999,
+      %{$data->{'column_data'} || {}}
+    });
+
+    $menu->insert_alphabetically($column_track, 'label_x');
+  }
+
+  if ($matrix->{'row'}) {
+    push @{$column_track->data->{'subtrack_list'}}, [ $caption, $column_track->data->{'no_subtrack_description'} ? () : $data->{'description'} ];
+    $data->{'option_key'} = clean_id("${subset}_${column}_$matrix->{'row'}");
+  }
+
+  $data->{'column_key'}  = $column_key;
+  $data->{'menu'}        = 'matrix_subtrack';
+  $data->{'source_name'} = $data->{'name'};
+
+  if (!$data->{'display'} || $data->{'display'} eq 'off') {
+    $data->{'display'} = 'default';
+  }
+
+  if (!$menu_data->{'matrix'}) {
+    my $hub = $self->hub;
+
+    $menu_data->{'menu'}   = 'matrix';
+    $menu_data->{'url'}    = $hub->url('Config', { 'matrix' => 1, 'menu' => $menu->id });
+    $menu_data->{'matrix'} = {
+      section => $menu->parent_node->data->{'caption'},
+      header  => $menu_data->{'caption'},
+    }
+  }
+
+  foreach (@rows) {
+    my $option_key  = "${subset}_${column}_$_->{'row'}";
+    my $node        = $self->get_node($option_key);
+    my $display     = ($_->{'on'} || ($data->{'display'} ne 'off' && $data->{'display'} ne 'default')) ? 'on' : 'off';
+
+    if ($node) {
+      $node->set_data('display', 'on') if $display eq 'on';
+    } else {
+
+      $node = $column_track->append_child($self->create_option_node($option_key, $_->{'row'}, $display, undef, [qw(on on off off)]));
+
+      $node->set_data('menu', 'no');
+      $node->set_data('caption', "$column - $_->{'row'}");
+      $node->set_data('group', $_->{'group'}) if $_->{'group'};
+      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, row_order => $_->{'row_order'}, column => $column };
+    }
+  }
+
+  return $column_track;
+}
+
 
 sub add_dna_align_features {
   ## Loop through all core databases - and attach the dna align features from the dna_align_feature tables...
@@ -1249,7 +1321,7 @@ sub add_regulation_builds {
       # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
       push @$matrix_rows, values %{$matrix_rows{$cell_line}{$_}};
     }
-    $self->_add_to_matrix({
+    $self->_add_to_new_matrix({
       track_name  => "Experiments: $label",
       section     => $cell_line,
       renderers   => $renderers,
