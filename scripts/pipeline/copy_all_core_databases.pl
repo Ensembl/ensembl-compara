@@ -155,7 +155,13 @@ my @existing_dbs;
 my @all_dbs_on_source_server;
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
     my $dbname = $db_adaptor->dbc->dbname;
-    push @all_dbs_on_source_server, $dbname;
+
+    # The ancestral database is a "core" database but *we* will *build* it.
+    # No need to copy it around.
+    next if $dbname =~ /ensembl_ancestral/;
+
+    push @databases_to_copy, $dbname;
+
     if ($existing_target_species{$db_adaptor->species}) {
         my $all_dbs = $existing_target_species{ $db_adaptor->species };
         my @same_dbs = grep {$_ eq $dbname} @$all_dbs;
@@ -166,8 +172,6 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
         if (@diff_dbs) {
             push @db_clash, [$dbname, \@diff_dbs];
         }
-    } elsif ($dbname !~ /ensembl_ancestral/) {
-        push @databases_to_copy, $dbname;
     }
 }
 
@@ -184,20 +188,19 @@ if (@db_clash) {
     }
 }
 
-die "Add the --force option if you want to carry on with the copy of the other databases or --update option to ignore warnings and overwrite all the core db in the target server\n" if (!$force && !$update) && (@existing_dbs || @db_clash);
+die "Add the --force option if you want to carry on with the copy of the other databases or --update option to ignore warnings and overwrite all the core db in the target server\n" if !$force && (@existing_dbs || @db_clash);
 
-unless ($update) {
-    foreach my $dbname (@databases_to_copy) {
-	my @cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
-	if (system(@cmd)) {
-	    die "Could not run the command: ", join(" ", @cmd), "\n";
-	}
-    }
+my @base_cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri);
+if ($update) {
+    push @base_cmd, ('-p' => 'UPDATE');
 } else {
-    foreach my $dbname (@all_dbs_on_source_server) {
-        my @cmd = ($db_copy_client, '-a' => 'submit', '-u' => $endpoint_uri, '-p' => "UPDATE", '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
-        if (system(@cmd)) {
-            die "Could not run the command: ", join(" ", @cmd), "\n";
-        }
+    push @base_cmd, ('-d' => 'DROP');
+}
+
+foreach my $dbname (@databases_to_copy) {
+    my @cmd = (@base_cmd, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname");
+    if (system(@cmd)) {
+        die "Could not run the command: ", join(" ", @cmd), "\n";
     }
 }
+
