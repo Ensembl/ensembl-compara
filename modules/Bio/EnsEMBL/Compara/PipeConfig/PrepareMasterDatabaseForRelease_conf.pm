@@ -205,7 +205,7 @@ sub pipeline_analyses {
                 '4->A' => [ 'rename_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '16Gb_job',
         },
 
         {   -logic_name     => 'add_species_into_master',
