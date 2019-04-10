@@ -109,7 +109,7 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'master_db'  => $self->o('master_db'),
         'division'   => $self->o('division'),
-        'release'    => $self->o('release'),
+        'release'    => $self->o('ensembl_release'),
         'hc_version' => 1,
     };
 }
