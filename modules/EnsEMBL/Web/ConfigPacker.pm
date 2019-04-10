@@ -923,6 +923,7 @@ sub _summarise_funcgen_db {
             join epigenome using (epigenome_id)
         where
             class in ($classes)
+            and peak_calling.run_failed IS NULL
         group by
             epigenome.display_label,
             peak_calling.feature_type_id,
