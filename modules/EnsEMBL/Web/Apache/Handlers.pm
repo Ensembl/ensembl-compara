@@ -537,7 +537,8 @@ sub handler {
   return DECLINED unless defined $response_code;
 
   # kill off the process when it grows too large
-  $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
+  # Rely on OOB now. (Mart exceeds what this package can handle)
+#  $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
 
   tidy_databases();
 
