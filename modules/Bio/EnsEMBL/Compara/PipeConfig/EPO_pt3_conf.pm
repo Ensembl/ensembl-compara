@@ -111,7 +111,7 @@ sub pipeline_create_commands {
     my ($self) = @_; 
     return [
         @{$self->SUPER::pipeline_create_commands}, 
-        $self->pipeline_create_commands(['dump_dir', 'bl2seq_dump_dir', 'output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['dump_dir', 'bl2seq_dump_dir', 'output_dir', 'bed_dir']),
            ];  
 }
 
