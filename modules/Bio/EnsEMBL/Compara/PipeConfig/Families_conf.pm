@@ -148,6 +148,14 @@ sub hive_meta_table {
 }
 
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
+    };
+}
+
+
 sub pipeline_analyses {
     my ($self) = @_;
     return [
