@@ -64,7 +64,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
 
     this.resize();
-
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
@@ -174,6 +173,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   modalOpen: function() {
     this.emptyMatrix();
     this.displayMatrix();
+    this.toggleButton();
   },
 
   // Set reset = true if you do not want to reset offset position
@@ -1307,7 +1307,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
     
     if(panel.el.find('div.track-configuration:visible').length){
-      panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").html("View tracks");
+      panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").css({'height':"auto", 'padding': "4px"}).html("View tracks");
     } else {
       panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
     }
