@@ -49,11 +49,13 @@ sub fetch_input {
 	my @filelist = @{ $self->param_required('file_list') };
 	my $become_user = $self->param('become_user');
 
+	my $cp_cmd = $self->param('verbose') ? 'cp -v' : 'cp';
+
 	my $cmd;
 
 	$cmd .= "become - $become_user; "  if ( $become_user );
 	foreach my $f ( @filelist ) {
-		$cmd .= "cp $f $dest_dir; ";
+		$cmd .= "$cp_cmd $f $dest_dir; ";
 	}
 	$self->param('cmd', $cmd);
 }

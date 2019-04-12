@@ -61,9 +61,9 @@ sub default_options {
         'sketch_dir'        => '/hps/nobackup2/production/ensembl/compara_ensembl/species_tree/' . $self->o('division') . '_sketches',
         'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
                                                   # sketch_dir, 'become' this user to place files there
-        
-        'mash_kmer_size'    => 24, 
-        'mash_sketch_size'  => 1000000, 
+
+        'mash_kmer_size'    => 24,
+        'mash_sketch_size'  => 1000000,
 
         'master_db'          => 'compara_master',
 
@@ -85,8 +85,15 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-        $self->pipeline_create_commands('output_dir'),
+        $self->pipeline_create_commands_rm_mkdir('output_dir'),
     ];
+}
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
+    };
 }
 
 sub hive_meta_table {
@@ -278,7 +285,7 @@ sub pipeline_analyses {
                 '#source_dir#/*.dists',
               ],
           },
-        },    
+        },
     ];
 }
 
