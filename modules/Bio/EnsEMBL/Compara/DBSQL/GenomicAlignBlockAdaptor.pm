@@ -558,6 +558,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   my $projection_segments = Bio::EnsEMBL::Compara::Utils::Projection::project_Slice_to_reference_toplevel($reference_slice);
   return [] if(!@$projection_segments);
 
+  my %seen_gab_ids;
   foreach my $this_projection_segment (@$projection_segments) {
     my $offset    = $this_projection_segment->from_start();
     my $this_slice = $this_projection_segment->to_Slice;
@@ -578,6 +579,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             $limit_index_start,
             $restrict
         );
+    # Exclude blocks that have already been fetched via a previous projection-segment
+    $these_genomic_align_blocks = [grep {!$seen_gab_ids{$_->dbID}} @$these_genomic_align_blocks];
 
     #If the GenomicAlignBlock has been restricted, set up the correct values 
     #for restricted_aln_start and restricted_aln_end
@@ -622,6 +625,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
+        $seen_gab_ids{$this_genomic_align_block->dbID} = 1;
       }
     } else {
       foreach my $this_genomic_align_block (@$these_genomic_align_blocks) {
@@ -634,6 +638,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
         $this_genomic_align_block->reverse_complement()
             if ($reference_slice->strand != $this_genomic_align_block->reference_genomic_align->dnafrag_strand);
         push (@$all_genomic_align_blocks, $this_genomic_align_block);
+        $seen_gab_ids{$this_genomic_align_block->dbID} = 1;
       }
     }
   }    
