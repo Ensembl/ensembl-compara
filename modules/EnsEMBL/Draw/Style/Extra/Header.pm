@@ -47,6 +47,7 @@ sub draw_margin_sublabels {
   my ($self, $track, $offset) = @_;
   my $y_offset = 0;
   foreach my $s (@$track) {
+    next if (scalar @{$s->{'features'}} == 0 && $self->image_config->get_option('opt_empty_tracks') == 0);
     $self->_draw_name($s->{'metadata'}{'sublabel'}, $s->{'metadata'}{'colour'}, $x_offset, $y_offset);
     $y_offset += $offset;
   }
