@@ -81,7 +81,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
-    # 'compara_members'  => [ 'mysql-ens-compara-prod-6', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_load_members_97' ],
     # 'compara_ptrees'   => [ 'mysql-ens-compara-prod-1', '' ],
     'ptrees_prev'      => [ 'mysql-ens-compara-prod-1', 'mateus_ensembl_protein_trees_96' ],
     # 'compara_families' => [ 'mysql-ens-compara-prod-2', '' ],
@@ -90,7 +90,9 @@ my $compara_dbs = {
     # 'murinae_nctrees'  => [ 'mysql-ens-compara-prod-5', '' ],
 
     # LASTZ dbs
-    # 'lastz_batch_1'    => [ 'mysql-ens-compara-prod-1', '' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch1' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_lastz_batch2' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch3_97' ],
 
     # EPO dbs
     ## mammals
