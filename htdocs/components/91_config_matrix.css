@@ -304,7 +304,7 @@ div.search-box span.search-cross-icon           { display: none; padding: 4px 6p
 /* track configuration/matrix display */
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
 button.reset-button:hover { color: [[OK_DARK]]; border-color: [[OK_DARK]]; }
-button.reset-button._track { width: 100px; position: absolute; margin-left: 202px; margin-top: -2px }
+button.reset-button._track { width: 101px; position: absolute; margin-left: 202px; margin-top: -2px }
 body.ie11 button.reset-button._track { margin-top: -30px; }
 div.configuration-legend  { display: inline-block; float: left; margin-left: -30px; }
 div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }
