@@ -726,6 +726,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                             },
              -flow_into => {
+                           -1 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has more memory
                             2 => [ 'sec_struct_model_tree_1_core' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
@@ -741,6 +742,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
                             2 => [ 'sec_struct_model_tree_2_cores' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
@@ -757,6 +759,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
                             2 => [ 'sec_struct_model_tree_4_cores' ],
                             3 => [ 'pre_sec_struct_tree_8_cores' ],
                            },
