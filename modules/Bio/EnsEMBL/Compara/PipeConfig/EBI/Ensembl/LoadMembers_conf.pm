@@ -72,12 +72,13 @@ sub default_options {
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-        'division'   => 'ensembl',
-        'collection' => $self->o('division'),
+        'division'   => 'vertebrates',
+        # 'collection' => $self->o('division'),
+        'collection' => 'ensembl',
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
-        'do_not_reuse_list'     => [ ],
+        'do_not_reuse_list'     => [ 'equus_caballus' ], # new gene in e97
 
     # "Member" parameters:
         # Store protein-coding genes
@@ -95,4 +96,3 @@ sub default_options {
 
 
 1;
-
