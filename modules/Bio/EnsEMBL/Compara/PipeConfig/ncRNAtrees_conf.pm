@@ -456,7 +456,7 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
             -flow_into          => [ 'cluster_qc_factory' ],
-            -flow_into          => '500Mb_job',
+            -rc_name            => '500Mb_job',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
