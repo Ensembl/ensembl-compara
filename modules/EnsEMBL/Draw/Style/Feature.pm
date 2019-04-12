@@ -79,6 +79,9 @@ sub create_glyphs {
 
   ## Strand settings
   foreach my $subtrack (@$data) {
+    my @features = @{$subtrack->{'features'}||[]}; 
+    next if (scalar @features == 0 && $image_config->get_option('opt_empty_tracks') == 0);
+
     ## Keep track of all the feature heights so we can calculate a correct total height
     my $heights = {};
     my $subtitle_height = 0;
@@ -89,8 +92,6 @@ sub create_glyphs {
       $subtitle_height = $self->draw_subtitle($subtrack->{'metadata'}, $total_height);
       $subtrack_start += $subtitle_height + 2;
     }
-
-    my @features = @{$subtrack->{'features'}||[]}; 
 
     ## FIRST LOOP - process features
     foreach my $feature (@features) {
@@ -283,7 +284,7 @@ sub create_glyphs {
     }
     else {
       ## Show message if no features (we really only need to do this 
-      ## if the track consists of multiple subtracks 
+      ## if the track consists of multiple subtracks) 
       if (scalar @$data > 1) {
         ## Track needs to be tall enough to hold an error message
         my $feature_height  = $track_config->get('height');
