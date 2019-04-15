@@ -37,9 +37,9 @@ my $prev_release = $curr_release - 1;
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # most cores are on EG servers, but some are on ensembl's vertannot-staging
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
-#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # never use EG's version of yeast
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
+#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae', 'core'); # never use EG's version of yeast
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
@@ -47,8 +47,8 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 my $suffix_separator = '__cut_here__';
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-eg-mirror',
-    -port   => 4157,
+    -host   => 'mysql-ens-mirror-3',
+    -port   => 4275,
     -user   => 'ensro',
     -pass   => '',
     -db_version     => $prev_release,
@@ -56,7 +56,7 @@ Bio::EnsEMBL::Registry->load_registry_from_db(
 );
 Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
 Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-ensembl-mirror',
+    -host   => 'mysql-ens-mirror-1',
     -port   => 4240,
     -user   => 'ensro',
     -pass   => '',
@@ -73,12 +73,12 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_43_96' ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-8', ''  ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', '' ],
-    'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'waakanni_plants_protein_trees_96' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'mateus_plants_load_members_97'  ],
+    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'mateus_default_plants_protein_trees_97' ],
+    'ptrees_prev'      => [ 'mysql-ens-compara-prod-7', 'waakanni_plants_protein_trees_96' ],
 
     # LASTZ dbs
-    #'lastz' => [ 'mysql-ens-compara-prod-7', 'waakanni_lastz_plants_96' ],
+    'lastz' => [ 'mysql-ens-compara-prod-8', 'mateus_plants_lastz_97' ],
 
     # synteny
     #'compara_syntenies' => [ 'mysql-ens-compara-prod-6', '' ],
