@@ -543,7 +543,7 @@ sub _read_in_ini_file {
           $tree->{$current_section} ||= {}; # create new element if required
           
           # add settings from default
-          if (defined $defaults->{$current_section}) {
+          if (!%{$tree->{$current_section}} && defined $defaults->{$current_section}) {
             my %hash = %{$defaults->{$current_section}};
             
             $tree->{$current_section}{$_} = $defaults->{$current_section}{$_} for keys %hash;
