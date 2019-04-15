@@ -480,6 +480,7 @@ sub pipeline_analyses {
 			      'all_hits'    => $self->o('all_hits'),
 			    },
 	     -rc_name => '1Gb_job',
+             -analysis_capacity => 8,
          },
 
          {   -logic_name => 'mercator',
