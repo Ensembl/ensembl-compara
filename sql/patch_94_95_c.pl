@@ -35,7 +35,7 @@ foreach my $genome_db (@{$compara_dba->get_GenomeDBAdaptor->fetch_all}) {
     #next if $genome_db->name eq 'ancestral_sequences';
     my $is_good_for_alignment = compute_is_good_for_alignment($genome_db);
     if ($is_good_for_alignment != $genome_db->is_good_for_alignment) {
-        print sprintf(q{UPDATE genome_db SET is_good_for_alignment = %d WHERE genome_db_id = %d;}, $is_good_for_alignment, $genome_db->dbID), "\n";
+        print sprintf(q{UPDATE genome_db SET is_good_for_alignment = %d WHERE genome_db_id = %d; -- %s}, $is_good_for_alignment, $genome_db->dbID, $genome_db->name), "\n";
     } else {
         #print sprintf(q{# %s OK =%d}, $genome_db->name, $is_good_for_alignment), "\n";
     }
