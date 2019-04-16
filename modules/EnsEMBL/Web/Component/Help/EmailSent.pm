@@ -38,7 +38,7 @@ sub content {
 
   my $html = $hub->param('result')
     ? qq(<p>Your message has been sent to our HelpDesk.</p>
-      <p>If you don't get a reply soon, please try again, <b>checking your email address carefully</b>.</p>)
+      <p>You should receive an auto-reply with a ticket number within 24 hours; if you do not get this, please try again, <b>checking your email address carefully</b>.</p>)
     : qq(<p>There was a problem sending your message. Please try again, or email us directly at <a href="mailto:$email">$email</a>.</p>)
   ;
   $html .= '<p>Thank you.</p>';
