@@ -20,30 +20,15 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
-use Getopt::Long;
 use List::Util qw(max);
-use Pod::Usage;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
-
-## Command-line options
-my ($compara_url, $help);
-
-GetOptions(
-    'compara_url=s' => \$compara_url,
-    'help'          => \$help,
-);
-
-if ($help) {
-    pod2usage({-exitvalue => 0, -verbose => 2});
-}
-
 $| = 1;
 
-die "Must provide the URL of the compara database\n" unless $compara_url;
+die "Must provide the URL of the compara database: $0 <url>\n" unless @ARGV;
 
+my $compara_url = $ARGV[0];
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( -URL => $compara_url );
 
 foreach my $genome_db (@{$compara_dba->get_GenomeDBAdaptor->fetch_all}) {
