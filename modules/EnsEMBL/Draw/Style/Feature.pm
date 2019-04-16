@@ -75,6 +75,7 @@ sub create_glyphs {
   my $y_start         = $track_config->get('y_start') || 0;
   my $subtrack_start  = $y_start;
   my $font_height     = 0;
+  my $label_height    = 0;
   my $total_height    = 0;
 
   ## Strand settings
@@ -111,13 +112,18 @@ sub create_glyphs {
       $feature->{'label_colour'}  ||= $feature->{'colour'} || $feature->{'bordercolour'};
       $feature->{'_bstart'} = $feature->{'start'};
       $feature->{'_bend'} = $feature->{'end'};
+
+      ## Get some general font info
+      my $text_info   = $self->get_text_info($feature->{'label'} || 'Label');
+      $font_height = max($font_height, $text_info->{'height'});
+
+      ## plus some specific stuff for features with labels
       if ($show_label && !$overlay) {
-        my $text_info   = $self->get_text_info($feature->{'label'});
         ## Round up, since we're working in base-pairs - otherwise we may still overlap the next feature
         my $lwidth_bp = ceil(($text_info->{'width'} + $label_padding) / $self->{'pix_per_bp'});
         $feature->{'_bend'} = $alongside ? $feature->{'_bend'} + $lwidth_bp
                                          : max($feature->{'_bend'}, $feature->{'_bstart'} + $lwidth_bp);
-        $font_height = max($font_height, $text_info->{'height'});
+        $label_height = $font_height;
       }
     }
 
@@ -165,13 +171,13 @@ sub create_glyphs {
         my $feature_width = $drawn_end - $drawn_start + 1; 
         $feature_width    = 1 if $feature_width < 1;
   
-        my $labels_height   = $label_row * $font_height;
+        my $labels_height   = $label_row * $label_height;
 
         ## Is it a multi-line label?
         $label_lines = split("\n", $feature->{'label'});
 
         ## Only "ordinary" bumping requires adding the label to the feature height
-        my $space_for_labels  = ($bumped && $bumped eq '1') ? $font_height * $label_lines : 0;
+        my $space_for_labels  = ($bumped && $bumped eq '1') ? $label_height * $label_lines : 0;
         my $y                 = $subtrack_start + ($feature_row * ($feature_height + $vspacing + $space_for_labels));
 
         my $position  = {
@@ -209,7 +215,7 @@ sub create_glyphs {
             $new_x = $feature->{'start'} - 1;
             $new_x = 0 if $new_x < 0;
             $new_y = $position->{'y'} + $approx_height;
-            $new_y += ($label_row * $font_height * $label_lines) if ($bumped && $bumped eq 'labels_only');
+            $new_y += ($label_row * $label_height * $label_lines) if ($bumped && $bumped eq 'labels_only');
           
             ## Pad width to match bumped position
             $text_width += 10;
@@ -288,8 +294,6 @@ sub create_glyphs {
       if (scalar @$data > 1) {
         ## Track needs to be tall enough to hold an error message
         my $feature_height  = $track_config->get('height');
-        my $extra           = $self->track_config->get('extra_height') || 0;
-        my $approx_height   = $feature_height + $extra;
 
         my $message     = 'No features in this region';
         my $text_info   = $self->get_text_info($message);
@@ -297,7 +301,7 @@ sub create_glyphs {
         my $text_height = $text_info->{'height'};
 
         my $x           = ($slice_width - $text_width) / 2; 
-        my $height      = max($approx_height, $text_height);
+        my $height      = max($feature_height, $text_height);
         my $colour      = $track_config->get('default_colour') || $subtrack->{'metadata'}{'colour'} || 'black';
 
         my $no_features = {
@@ -316,9 +320,6 @@ sub create_glyphs {
         push @{$self->glyphs}, $self->Text($no_features);
         my $total_height = $subtitle_height + $height + $vspacing;
         push @{$heights->{0}}, ($total_height);
-        $subtrack_start += $total_height;
-=pod
-=cut
       }
     }
 
@@ -328,6 +329,11 @@ sub create_glyphs {
       my $max = max(@$values);
       $subtrack_height += $max;
     }
+    ## Set it to the same height as the font if we're showing sublabels
+    if ($track_config->get('has_sublabels')) {
+      $subtrack_height = $font_height if $font_height > $subtrack_height;
+    } 
+
     $subtrack_start += $subtrack_height;
     $total_height   += $subtrack_height;
     $track_config->set('real_feature_height', $subtrack_height);
@@ -467,7 +473,5 @@ sub draw_connection {
                 };
   $self->add_connection($glyph, $connection->{'key'}, $params);
 }
-
-
 
 1;
