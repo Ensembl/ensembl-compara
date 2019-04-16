@@ -170,7 +170,7 @@ CREATE TABLE constrained_element_production (
 DROP TABLE IF EXISTS ktreedist_score;
 CREATE TABLE ktreedist_score (
   node_id int(10) unsigned NOT NULL,
-  tag varchar(50) DEFAULT NULL,
+  tag varchar(50) NOT NULL DEFAULT '',
   k_score_rank int(10) default NULL,
   k_score float DEFAULT NULL,
   scale_factor float DEFAULT NULL,
