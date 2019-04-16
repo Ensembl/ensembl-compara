@@ -54,7 +54,7 @@ $| = 1;
 
 my $tmpdir = '.';
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help,$array);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$check_xml,$help,$array,$hgvs_file,$synonym_file);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
@@ -65,9 +65,11 @@ GetOptions('species=s'        => \$species_list,
            'log=s'            => \$log,
            'dir=s'            => \$dir,
            'check_xml'        => \$check_xml,
-     'help'             => \$help,
-     'tmpdir=s'         => \$tmpdir,
-     'array'        => \$array,
+           'help'             => \$help,
+           'tmpdir=s'         => \$tmpdir,
+           'array'            => \$array,
+           'hgvs_file=s'      => \$hgvs_file,
+           'synonym_file=s'   => \$synonym_file,
          );
 
 if ($help){
@@ -626,29 +628,39 @@ sub dumpVariation {
   my $sources = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, name from source" )} };
 
   my $sth;
-  my $all_hgvs_names = on_disk_set('all_hgvs_names');
+  my $all_hgvs_names;
   print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
-  my $i = 0;
-  my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
-  #split query
-  while($continue) {
-    $sth = $conf->{'variation_dbh'}->prepare(qq(
-      SELECT variation_id, hgvs_name
-        FROM variation_hgvs limit $sql_batch offset $i));
-    $sth->execute;
-    #$continue++;
-    if($sth->rows) {
-      $i += $sql_batch;
-      print LOG "    Got HGVS data set ".&date_and_mem()."\n";
-      while ( my ($variation_id,$hgvs_name) = $sth->fetchrow_array ) {
-        set_add($all_hgvs_names,$variation_id,$hgvs_name);      
-      }
-    } else {
-      $continue = 0;
-    }
+  if ($hgvs_file && -e "$tmpdir/$hgvs_file") {
+    print LOG "      Retrieving from previous run ($hgvs_file) ".&date_and_mem()."\n"; 
+    $all_hgvs_names = on_disk_set('all_hgvs_names',$hgvs_file);
   }
-
-  print LOG "    Preparing to identify GWAS variations ".&date_and_mem()."\n";
+  else {
+    unless (-e "$tmpdir/$hgvs_file") {
+      print LOG "WARNING, incorrect file name ($hgvs_file) for HGVS data, retrieving again\n";
+    }
+    $all_hgvs_names = on_disk_set('all_hgvs_names');
+    my $i = 0;
+    my $continue = 1; #variable to check if there is more data, if query returns 0 then do not carry on
+    #split query
+    while($continue) {
+      $sth = $conf->{'variation_dbh'}->prepare(qq(
+        SELECT variation_id, hgvs_name
+          FROM variation_hgvs limit $sql_batch offset $i));
+      $sth->execute;
+      if($sth->rows) {
+        $i += $sql_batch;
+        while ( my ($variation_id,$hgvs_name) = $sth->fetchrow_array ) {
+          set_add($all_hgvs_names,$variation_id,$hgvs_name);      
+        }
+      }
+      else {
+        $continue = 0;
+      }
+    }
+    print LOG "      Got HGVS data set ".&date_and_mem()."\n";
+  }
+  
+  print LOG "    Preparing to get GWAS data ".&date_and_mem()."\n";
   my $gwas_variations;
   $sth = $conf->{'variation_dbh'}->prepare(qq(
      SELECT distinct pf.object_id, s.name
@@ -661,6 +673,7 @@ sub dumpVariation {
     $gwas_study =~ s/_/ /g;
     $gwas_variations->{$variation_name}{$gwas_study}++;
   }
+  print LOG "      Got GWAS variations ".&date_and_mem()."\n";
 
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
@@ -734,19 +747,29 @@ sub dumpVariation {
 
   ## get synonym info
   print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
-  my $synonyms = on_disk_set('synonyms');
-  $sth = $conf->{'variation_dbh'}->prepare(qq(
-      SELECT v.variation_id, vs.name
-       FROM variation v, variation_synonym vs, source s
-      WHERE v.variation_id = vs.variation_id
-        AND vs.source_id = s.source_id
-        AND s.name != 'dbSNP HGVS'
-      ));
-  $sth->execute;
-  while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
-    set_add($synonyms,$variation_id,$syn_name);
+  my $synonyms;
+  if ($synonym_file && -e "$tmpdir/$synonym_file") {
+    print LOG "      Retrieving from previous file $synonym_file ".&date_and_mem()."\n";
+    $synonyms = on_disk_set('synonyms',$synonym_file);
   }
-  print LOG "      Got all general synonyms ".&date_and_mem()."\n";
+  else {
+    unless (-e "$tmpdir/$synonym_file") {
+      print LOG "WARNING, incorrect file name ($synonym_file) for synonyms, retrieving again\n";
+    }
+    $synonyms = on_disk_set('synonyms');
+    $sth = $conf->{'variation_dbh'}->prepare(qq(
+        SELECT v.variation_id, vs.name
+         FROM variation v, variation_synonym vs, source s
+        WHERE v.variation_id = vs.variation_id
+          AND vs.source_id = s.source_id
+          AND s.name != 'dbSNP HGVS'
+        ));
+    $sth->execute;
+    while ( my ($variation_id,$syn_name) = $sth->fetchrow_array ) {
+      set_add($synonyms,$variation_id,$syn_name);
+    }
+    print LOG "      Got all general synonyms ".&date_and_mem()."\n";
+  }
 
   ## get CLINGEN alleles
   print LOG "    Preparing to get CLINGEN alleles ".&date_and_mem()."\n";
@@ -832,6 +855,7 @@ sub dumpVariation {
       my $hgvs_names;
       if ($all_hgvs_names->{$variation_id}) {
         foreach my $hgvs_name (set_get($all_hgvs_names,$variation_id)) {
+#          warn $hgvs_name;
           push @hgvs_names, $hgvs_name;
         }
       }
@@ -880,7 +904,7 @@ sub dumpVariation {
 
   %snp_extra    = undef;
 
-  off_disk('all_hgvs_names',$all_hgvs_names);
+#  off_disk('all_hgvs_names',$all_hgvs_names);
   return $c;
 }
 
@@ -3248,10 +3272,14 @@ sub LRGLine {
 #######################################################################
 
 sub on_disk_set {
-  my ($name) = @_;
-
+  my ($name,$existing) = @_;
   my %var;
-  tie(%var,'DB_File',"$tmpdir/$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
+  if ($existing) {
+    tie(%var,'DB_File',"$tmpdir/$existing",O_RDWR|O_CREAT,0666,$DB_BTREE) or die "$!";
+  }
+  else {
+    tie(%var,'DB_File',"$tmpdir/$name.$$.db",O_RDWR|O_CREAT|O_TRUNC,0666,$DB_BTREE) or die "$!";
+  } 
   return \%var;
 }
 
@@ -3452,10 +3480,11 @@ Examine the log file for 'WARNING' messages, particularly 'WARNING XML' - this w
 
 Examples:
 
-./indexXMLDumper --species=ALL --index=ALL --debug --log=debug.log  #all log output to debug.log; xml to input; all indices for all species, only each one once
-./indexXMLDumper --species=ALL --index=ALL                          #all log output to dumping_$release.log; xml to input; all indices for all species
-./indexXMLDumper --species=ALL --ignore_species=Homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; xml to /nfs/web_data/search/lucene/ensembl_$release; Variations for all species but human
-./indexXMLDumper --species=ALL --ignore_index=Variation --log=no_variations.log  #log output to no_variations.log; xml to  /nfs/web_data/search/lucene/ensembl_$release; All indexes apart from Variations for for all species
+./indexXMLDumper --species=ALL --index=ALL --debug --log=debug.log  #all log output to debug.log; all indices for all species, only each one once
+./indexXMLDumper --species=ALL --index=ALL                          #all log output to dumping_$release.log; all indices for all species
+./indexXMLDumper --species=ALL --ignore_species=homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; Variations for all species but human
+./indexXMLDumper --species=ALL --ignore_species=homo_sapiens --index=Variation --log=no_hs_variations.log #log output to no_hs_variations; Variations for all species but human
+./indexXMLDumper --species=homo_sapiens --index=Variation -hgvs_file all_hgvs_names.15366.db -synonym_file synonyms.15366.db --log=human_variations.log  #log output to human_variations.log; Reuse files from previous failed runs; All indexes apart from Variations for for all species
 ./indexXMLDumper --species=ALL --index=Gene --engine solr  -log dumping.log #output in format for solr (for testing, only works for genes as yet)
 
 ABOUT_END
