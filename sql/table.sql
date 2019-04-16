@@ -1670,7 +1670,6 @@ CREATE TABLE gene_tree_root_tag (
 @column taxonomic_coverage                  Taxonomic coverage of the species present in the gene tree over all the species for that particular node on the species tree.
 @column ratio_species_genes                 Ration of the number of species over the number of genes in a tree.
 @column model_name                          HMM model name (cluster table_id).
-@column division                            Division name (e.g.: treefam, ensembl).
 
 @see gene_tree_root
 @see gene_tree_root_tag
@@ -1701,7 +1700,6 @@ CREATE TABLE `gene_tree_root_attr` (
   taxonomic_coverage                FLOAT(5),
   ratio_species_genes               FLOAT(5),
   model_name                        VARCHAR(40),
-  division                          VARCHAR(10),
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_root(root_id),
   FOREIGN KEY (lca_node_id) REFERENCES species_tree_node(node_id),

@@ -98,7 +98,6 @@ sub run {
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
 
-    my $division      = $self->param('division'),
     my $sth = $self->compara_dba->dbc->prepare($sql_unexpandable_members);
     $sth->execute();
     while (my $row = $sth->fetchrow_arrayref()) {
@@ -106,7 +105,6 @@ sub run {
             push @{ $allclusters{$row->[0]}->{'members'} }, $row->[1];
         } else {
             $allclusters{$row->[0]} = { 'members' => [@$row] };
-            $allclusters{$row->[0]}->{'division'} = $division if $division;
         }
     }
     $sth->finish();

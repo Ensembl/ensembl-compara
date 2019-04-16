@@ -881,7 +881,6 @@ sub core_pipeline_analyses {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize',
              -parameters => {
-                 'division'     => $self->o('division'),
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
              },
              -rc_name => '16Gb_job',
@@ -1034,9 +1033,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'hcluster_parse_output',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
-            -parameters => {
-                'division'                  => $self->o('division'),
-            },
             -rc_name => '16Gb_job',
         },
 

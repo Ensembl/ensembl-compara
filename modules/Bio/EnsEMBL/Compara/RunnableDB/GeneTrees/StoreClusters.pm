@@ -204,7 +204,6 @@ sub add_cluster {
     print STDERR "cluster root_id=", $cluster->root_id, " in clusterset '", $clusterset->clusterset_id, "' with ", scalar(@$gene_list), " leaves\n" if $self->debug;
     
     # Stores the tags
-    $cluster_def->{division} = substr($cluster_def->{division}, 0, 10) if $cluster_def->{division};
     for my $tag (keys %$cluster_def) {
         next if $tag eq 'members';
         print STDERR "Storing tag $tag => ", $cluster_def->{$tag} , "\n" if ($self->debug);

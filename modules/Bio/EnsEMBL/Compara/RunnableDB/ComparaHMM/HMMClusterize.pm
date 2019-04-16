@@ -82,7 +82,6 @@ sub write_output {
 
 sub load_hmmer_classifications {
     my ($self) = @_;
-    my $division    = $self->param('division'),
 
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
@@ -103,7 +102,6 @@ sub load_hmmer_classifications {
         } else {
             # If it is not a singleton, we add the name of the model to store in the db
             $allclusters{$model_name}{model_id} = $model_name;
-            $allclusters{$model_name}{division} = $division if $division;
             print STDERR Dumper $allclusters{$model_name} if $self->debug;
         }
     }

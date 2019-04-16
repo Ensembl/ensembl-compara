@@ -312,6 +312,8 @@ if($only_show_intentions) {
 
 ## Sets the schema version for the new database
 update_schema_version($master_dba, $new_dba);
+## Copy the division name
+copy_division_name($master_dba, $new_dba);
 
 ## Copy taxa and method_link tables
 print "Copying taxa and method_link tables...\n";
@@ -415,6 +417,29 @@ sub update_schema_version {
     $new_dba->dbc->do("INSERT INTO meta (meta_key, meta_value) VALUES ('schema_version', $old_schema_version+1)");
   }
 }
+
+
+=head2 copy_division_name
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $old_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $new_dba
+  Description : Copy the name of the division from the old DB to the new DB
+  Returns     : none
+
+=cut
+
+sub copy_division_name {
+    my ($old_dba, $new_dba) = @_;
+
+    my $key = 'division';
+    print "Copying $key meta key...\n";
+
+    my ($old_division_name) = $old_dba->dbc->db_handle->selectrow_array("SELECT meta_value FROM meta WHERE meta_key = '$key'");
+    die "Can't find the '$key' meta key" unless $old_division_name;
+    $new_dba->dbc->do("DELETE FROM meta WHERE meta_key = '$key'");
+    $new_dba->dbc->do("INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, '$key', '$old_division_name')");
+}
+
 
 =head2 get_all_default_genome_dbs
 
