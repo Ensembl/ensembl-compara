@@ -169,13 +169,14 @@ sub draw_aggregate {
   }
 
   ## Draw the graph tracks
+  my $wiggle_offset = 20;
   if (%wiggles) {
     my $style_class = 'EnsEMBL::Draw::Style::Graph';
     if ($self->dynamic_use($style_class)) {
 
       $self->{'my_config'}->set('on_error', 555);
       $self->{'my_config'}->set('height', $h * 15);
-      $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $self->{'my_config'}->get('height'));
+      $self->{'my_config'}->set('initial_offset', $self->{'my_config'}->get('y_start') + $wiggle_offset);
 
       unless ($subhead_height) {
         ## Add a summary title in the lefthand margin
@@ -203,7 +204,7 @@ sub draw_aggregate {
                 sublegend_links => $self->_sublegend_links,
                };
   if (%blocks && %wiggles) {
-    $params->{'y_offset'} = $self->{'my_config'}->get('total_height') - 50;
+    $params->{'y_offset'} = $wiggle_offset;
   }
   if (%blocks) {
     $params->{'show_peaks'} = 1;
