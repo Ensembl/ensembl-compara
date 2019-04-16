@@ -45,6 +45,7 @@ sub draw_margin_subhead {
 
 sub draw_margin_sublabels {
   my ($self, $track, $offset) = @_;
+  $offset ||= 0;
   my $y_offset = 0;
   foreach my $s (@$track) {
     next if (scalar @{$s->{'features'}} == 0 && $self->image_config->get_option('opt_empty_tracks') == 0);
@@ -61,7 +62,7 @@ sub draw_sublegend {
 }
 
 sub _draw_name {
-  ### Draws the name of the predicted features track
+  ### Draws the name of the track
   ### @param arrayref of Feature objects
   ### @param colour of the track
   ### @return 1

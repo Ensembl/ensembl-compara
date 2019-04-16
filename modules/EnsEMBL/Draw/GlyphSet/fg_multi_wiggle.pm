@@ -33,7 +33,6 @@ sub label { return undef; }
 sub render_compact {
   my $self = shift;
   #warn "### RENDERING PEAKS";
-  #$self->{'my_config'}->set('extra_height',12);
   $self->_render_aggregate;
 }
 
@@ -46,7 +45,6 @@ sub render_signal {
 sub render_signal_feature {
   my $self = shift;
   #warn "### RENDERING BOTH";
-  #$self->{'my_config'}->set('extra_height',12);
   #$self->{'my_config'}->set('on_error',555);
   $self->_render_aggregate;
 }
@@ -128,7 +126,6 @@ sub draw_aggregate {
   ## Prepare to draw any headers/labels in lefthand column
   if (%blocks) {
     $self->{'my_config'}->set('height', $h * 2);
-    $self->{'my_config'}->set('extra_height', 4);
   }
   my %config  = %{$self->track_style_config};
   my $header  = EnsEMBL::Draw::Style::Extra::Header->new(\%config);
@@ -158,15 +155,18 @@ sub draw_aggregate {
       my $subset    = $self->get_features(\%blocks, $args);
       $block_style  = $style_class->new(\%config, $subset);
 
-      ## Label each subtrack in the margin
-      my $extra_height = $self->{'my_config'}->get('extra_height');
-      $header->draw_margin_sublabels($subset, $self->{'my_config'}->get('extra_height'));
+      if ($block_style) {
+        $self->{'my_config'}->set('has_sublabels', 1);
+        $self->push($block_style->create_glyphs);
 
-      ## And add to legend
-      push @$data_for_legend, @$subset;
+        ## Label each subtrack in the margin
+        $header->draw_margin_sublabels($subset);
+
+        ## And add to legend
+        push @$data_for_legend, @$subset;
+      }
     }
   }
-  $self->push($block_style->create_glyphs) if $block_style;
 
   ## Draw the graph tracks
   if (%wiggles) {
