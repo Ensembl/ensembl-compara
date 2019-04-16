@@ -97,21 +97,25 @@ sub content {
   }
 
   ## add RefSeq match info where appropriate
-  if ($ensembl_select && ($hub->species eq 'Homo_sapiens')) {
+  if ($hub->species eq 'Homo_sapiens') {
+    my $url  = $hub->url({
+      type   => 'Gene',
+      action => 'Matches',
+      g      => $gene->stable_id, 
+    });
+    my $msg = 'This Ensembl/Gencode gene does not contain any transcripts that are identical to RefSeq transcripts.'; 
     my $has_mane_select = 0;
-    foreach my $t (@{$gene->get_all_Transcripts}){
-      next if $has_mane_select;
-      next unless $t->stable_id eq $ensembl_select;
-      $has_mane_select = 1 if (@{$t->get_all_Attributes('MANE_select')});
-    } 
+    if ($ensembl_select) {
+      foreach my $t (@{$gene->get_all_Transcripts}){
+        next if $has_mane_select;
+        next unless $t->stable_id eq $ensembl_select;
+        $has_mane_select = 1 if (@{$t->get_all_Attributes('MANE_select')});
+      }
+    }  
     if ($has_mane_select) {
-      my $url  = $hub->url({
-        type   => 'Gene',
-        action => 'Matches',
-        g      => $gene->stable_id, 
-      });
-      $table->add_row('RefSeq', sprintf(qq{This Ensembl/Gencode gene contains transcript(s) that are identical to RefSeq transcript(s). If there are other matching RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $url));
+      $msg = 'This Ensembl/Gencode gene contains transcript(s) that are identical to RefSeq transcript(s).';
     } 
+    $table->add_row('RefSeq', sprintf(qq{%s If there are other matching RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $msg, $url)); 
   }
 
   ## LRG info
