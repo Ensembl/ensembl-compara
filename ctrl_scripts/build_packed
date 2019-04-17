@@ -56,6 +56,7 @@ mkdir "$dir/conf";
 mkdir "$dir/conf/packed";
 
 if(($ARGV[0]||'') eq 'SOME') {
+  $| = 1;
   print "\nPlease enter space separated list of packeds to rebuild.\n";
   print "Each entry should be the binomial name in lowercase separated by _\n";
   print "eg \"rattus_norvegicus saimiri_boliviensis_boliviensis\"\n\n";
