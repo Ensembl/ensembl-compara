@@ -78,7 +78,7 @@ sub default_options {
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
-        'do_not_reuse_list'     => [ 'equus_caballus' ], # new gene in e97
+        'do_not_reuse_list'     => [ ],
 
     # "Member" parameters:
         # Store protein-coding genes
