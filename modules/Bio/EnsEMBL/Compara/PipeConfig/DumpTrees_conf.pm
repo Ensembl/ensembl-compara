@@ -115,8 +115,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'basename'      => '#member_type#_#clusterset_id#',
         'name_root'     => 'Compara.'.$self->o('rel_with_suffix').'.#basename#',
 
-        'dump_per_species_tsv'  => $self->o('dump_per_species_tsv'),
-
         'rel_db'        => $self->o('rel_db'),
 
         'reg_conf'      => $self->o('reg_conf'),
