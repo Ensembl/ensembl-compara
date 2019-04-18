@@ -74,7 +74,9 @@ sub param_defaults {
                         h.dn,
                         h.ds,
                         h.goc_score,
-                        h.wga_coverage
+                        h.wga_coverage,
+                        h.is_high_confidence,
+                        h.homology_id
                     FROM
                         homology h
                         JOIN (homology_member hm1 JOIN gene_member gm1 USING (gene_member_id) JOIN genome_db gdb1 USING (genome_db_id) JOIN seq_member sm1 USING (seq_member_id)) USING (homology_id)

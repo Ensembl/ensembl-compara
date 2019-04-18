@@ -18,7 +18,7 @@ limitations under the License.
 =cut
 
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -85,7 +85,6 @@ sub default_options {
         'dump_per_genome_cap' => 50,
         'batch_size'          => 25,    # how may trees' dumping jobs can be batched together
 
-        'dump_per_species_tsv'  => 0,
         'max_files_per_tar'     => 500,
 
         'readme_dir'  => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),                                      # where the template README files are
@@ -162,7 +161,7 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     my $pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
-    $pa->[0]->{'-input_ids'} = [{}];  
+    $pa->[0]->{'-input_ids'} = [{}];
     $pa->[1]->{'-parameters'} = {
         'column_names'      => [ 'clusterset_id', 'member_type' ],
         'inputlist'         => [ [$self->o('clusterset_id'), $self->o('member_type')] ],
@@ -171,4 +170,3 @@ sub pipeline_analyses {
 }
 
 1;
-
