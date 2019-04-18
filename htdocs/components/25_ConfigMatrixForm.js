@@ -120,7 +120,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) { 
+      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
@@ -174,6 +174,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.emptyMatrix();
     this.displayMatrix();
     this.toggleButton();
+    this.goToUserLocation();
   },
 
   // Set reset = true if you do not want to reset offset position
@@ -605,7 +606,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     if($.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
 
-    panel.toggleBreadcrumb('#'+panel.localStoreObj.userLocation.view);
+    panel.toggleBreadcrumb(panel.localStoreObj.userLocation.view ? '#'+panel.localStoreObj.userLocation.view : "#track-select");
     if(panel.localStoreObj.userLocation.tab){
       panel.toggleTab({'selectElement': '#'+panel.localStoreObj.userLocation.tab, 'container': panel.el.find("div.track-menu")});
     }    
@@ -692,11 +693,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     });
 
     if(counter === total_div) {
-      panel.el.find('button.view-track').addClass('active');
+      panel.el.find('li.view-track').removeClass('inactive');
       panel.el.find('li._configure').removeClass('inactive');
       panel.elLk.displayButton.addClass('active')
     } else {
-      panel.el.find('button.view-track').removeClass('active');
+      panel.el.find('li.view-track').addClass('inactive');
       panel.el.find('li._configure').addClass('inactive');
       panel.elLk.displayButton.removeClass('active');
     }
@@ -711,8 +712,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         var error_class = "_" + $(ele).attr('id');
         if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
             $("span." + error_class).hide();
+            $('div#dx.result-content').show();
         } else {
             $("span." + error_class).show();
+            $('div#dx.result-content').hide();
         }
     });
 
@@ -1056,7 +1059,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.el.find(".track-tab.active").first().removeClass("active");
       panel.el.find(".tab-content.active").first().removeClass("active");
       
-      panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
       //in case the track-content is not active, hide configuration panel first
       if(panel.el.find("div#configuration-content:visible").length){ 
         panel.toggleTab({'selectElement': panel.el.find("li._track-select"), 'container': panel.el.find("div.large-breadcrumbs")});
@@ -1294,12 +1296,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     panel.toggleButton();
-    panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
 
     if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {
       panel.emptyMatrix();
       panel.displayMatrix();
-      panel.elLk.resetTrackButton.hide(); //hiding reset tracks button (only visible on select tracks tab)
     }
   },
 
@@ -1879,9 +1879,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   resetTracks: function() {
     var panel = this;
 
-    this.elLk.resetTrackButton = panel.elLk.resultBox.find('button.reset-button._track');
+    this.elLk.resetTrack = panel.elLk.resultBox.find('div.reset_track');
 
-    this.elLk.resetTrackButton.click("on", function() {
+    this.elLk.resetTrack.click("on", function() {
       panel.localStoreObj.dx     = {};
       panel.localStoreObj.dy     = {};
       panel.localStoreObj.matrix = {};
@@ -1893,6 +1893,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.filterData($(ele).data('item'));
       });
       panel.updateRHS();
+      panel.toggleBreadcrumb("#track-select");
     });
   },
 
