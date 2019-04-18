@@ -44,6 +44,10 @@ my %PACKED_WANTED = map { $_ => 1} (
   "ENSEMBL_GENOME_SIZE"
 );
 
+my %SITEDEFS_ARRAYS_WANTED = map {$_=>1} (
+  "ENSEMBL_LIB_DIRS"
+);
+
 my %WANTED_SUBSUBKEYS = (
   "databases" => ["NAME","HOST","PORT","USER","PASS"]
 );
@@ -54,12 +58,12 @@ my $data = {
 };
 
 foreach my $k (keys %SiteDefs::) {
-  if(!ref ${$SiteDefs::{$k}}) {
+  if(!ref(${$SiteDefs::{$k}})) {
     # Include all string-valued sitedefs entries: they're cheap.
     $data->{'SiteDefs'}{$k} = ${$SiteDefs::{$k}};
-  } else {
-    # In theory we could include select array- or hash-valued sitedefs entries
-    # here, but it turns out nobody wants them yet.
+  }
+  if($SITEDEFS_ARRAYS_WANTED{$k}) {
+    $data->{'SiteDefs'}{$k} = [@{$SiteDefs::{$k}}];
   }
 }
 
@@ -89,36 +93,11 @@ foreach my $species (keys %$packed) {
 
 my $dir = qx($Bin/../../ebi-plugins/common/find-sconf);
 system("mkdir -p $dir");
+warn "Writing to $dir\n";
 open(FILE,">","$dir/sconf") || die "Cannot write $dir/sconf";
 store_fd($data,\*FILE);
 close FILE;
 open(FILE,">","$dir/jconf") || die "Cannot write $dir/jconf";
 print FILE to_json($data);
 close FILE;
-
-#use Data::Dumper;
-#warn Dumper($data);
-
-__DATA__
-
-
-
-
-if($filename) {
-  open(FILE,'>',$filename) or die "Cannot write '$filename': $!";
-} else {
-  *FILE = *STDOUT;
-}
-
-warn "Writing data\n";
-if($format eq 'json') {
-  print FILE to_json($data);
-} elsif($format eq 'storable') {
-  store_fd($data,\*FILE);
-} elsif($format eq 'human') {
-  human($data,\*FILE);
-}
-close FILE;
-
-1;
 
