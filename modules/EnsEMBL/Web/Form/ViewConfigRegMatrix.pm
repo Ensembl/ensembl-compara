@@ -80,6 +80,17 @@ sub configuration_content {
               <input type='radio' name="cell-radio" class="_signal"/><text>Signal</text>
             </li>
           </ul>
+          <ul>
+            <li>
+              <label class="switch"><input type="checkbox" name="all-switch"><span class="slider round"></span><span class="switch-label">All</span></label><input type='radio' name="all-radio" class="_peak-signal"/><text>Peaks & signal</text>
+            </li>
+            <li>
+              <input type='radio' name="all-radio" class="_peak"/><text>Peaks</text>
+            </li>
+            <li>
+              <input type='radio' name="all-radio" class="_signal"/><text>Signal</text>
+            </li>
+          </ul>          
         </div>
         <div class="hidebox"></div>
         <div class="matrix-container">
