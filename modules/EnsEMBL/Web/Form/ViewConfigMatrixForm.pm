@@ -49,7 +49,7 @@ sub build {
 
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->get_data('matrix');
-  
+
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
   #$Data::Dumper::Maxdepth = 2;
@@ -78,7 +78,6 @@ sub build {
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Find..." id="dx_search" name="matrix_search">
               <span class="search-cross-icon">x</span>
-              <img src="/i/16/search.png" class="search-icon" />
             </div>
           </div>
           <div class="track-tab" id="dy-tab">
@@ -87,7 +86,6 @@ sub build {
             <div class="search-box">
               <input class="configuration_search_text" placeholder="Find..." id="dy_search" name="matrix_search">
               <span class="search-cross-icon">x</span>
-              <img src="/i/16/search.png"  class="search-icon"/>
             </div>
           </div>
         </div>
@@ -102,7 +100,7 @@ sub build {
       </div>
   );
 
-  $html .= $self->configuration_content($dimX, $dimY); 
+  $html .= $self->configuration_content($dimX, $dimY);
 
   $html .= qq(
         <div class="bottom-buttons">

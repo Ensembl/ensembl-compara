@@ -103,11 +103,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       e.preventDefault();
     });
 
-    this.clickSearchIcon();
     this.clickSubResultLink();
     this.showHideFilters();
     this.clickCheckbox(this.elLk.filterList, 1);
     this.clearAll(this.elLk.clearAll);
+    this.clearSearch();
     this.resetTracks();
     this.resetMatrix();
 
@@ -144,6 +144,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
 
       if (match.length) {
+        panel.elLk[activeTabId].container.find("span.search-error").hide();
         var classString = '.' + match.join(',.');
         var li_arr = panel.elLk.lookup[match[0]].parentTab.find('li').not(classString);
         $.each(li_arr, function(i, li) {
@@ -154,6 +155,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
       else {
         panel.elLk[activeTabId].container.find('li').addClass('_search_hide').hide();
+        panel.elLk[activeTabId].container.find("span.search-error").show();
       }
       panel.updateAvailableTabsOrRibbons(activeTabId, true);
     });
@@ -182,6 +184,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var panel = this;
 
     panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
+    panel.getActiveTabContainer().find("span.search-error").hide();
     var _filtered = panel.getActiveTabContainer().find('li._filtered');
     if (_filtered.length) {
       _filtered.show();
@@ -648,33 +651,15 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   },
 
-  // Function to show filter box when clicking on the search-icon
-  clickSearchIcon: function() {
+  clearSearch: function() {
     var panel = this;
 
-    panel.elLk.searchIcon = panel.el.find("img.search-icon");
-
-    panel.elLk.searchIcon.click("on", function(e){
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').focus();
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').hide();
-      e.stopPropagation();
-    });
-
-    panel.closeSearch();
-  },
-
-  closeSearch: function() {
-    var panel = this;
-
-    panel.elLk.searchCrossIcon = panel.elLk.searchIcon.parents('div.search-box').find('span.search-cross-icon');
+    panel.elLk.searchCrossIcon = panel.elLk.buttonTab.find('span.search-cross-icon');
 
     panel.elLk.searchCrossIcon.click("on", function(){
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').toggle("slide", function() {
-        panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').val("");
-        panel.resetFilter("");
-        panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').show();
-      });
+      panel.getActiveTabContainer().find("span.search-error").hide();
+      $(this).parent().find('input.configuration_search_text').val("");
+      panel.resetFilter("");
     });
   },
 
@@ -1094,13 +1079,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           $(parentTab).find("div.search-box").show();
         }
       }
-
       //showing/hiding searchbox in the main tab
       if($(tabId).find("div.search-box").length) {
         panel.el.find(".search-box").hide();
         $(tabId).find("div.search-box").show();
       }
-
       panel.el.find(tabId).addClass("active");
       panel.el.find(contentId).addClass("active");
     });
@@ -1378,7 +1361,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
       html += '</ul></div>';
       var wrapper_close = '</div>';
-      html = wrapper + '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close;
+      html = wrapper + '<span class="hidden error search-error">No matches</span><div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close;
       container.append(html);
 
       // Adding the element itself to the lookup
@@ -1526,7 +1509,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       content_html += '<div data-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     var noFilterClass = noFilter_allBox ? 'no-filter' : '';
-    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    container.append('<span class="hidden error search-error">No matches</span><div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
     container.find('div.letters-ribbon').append(html);
     container.find('div.ribbon-content').append(content_html);
 
@@ -1965,10 +1948,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
-      var rowState  = panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total ? "track-off" : "track-on"; // get the equivalent ylabel first and then its state to determine whether row is on/off
-      var colState  = panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total ? "track-off" : "track-on"; // get the equivalent xlabel first and then its state to determine whether column is on/off
+      var rowState  = "";
+      var colState  = "";
       var allState = panel.localStoreObj[panel.dxStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dxStateKey]["allSelection"].total ? "track-on" : "track-off"; // check if all is on/off
 
+      // get the equivalent xlabel first and then its state to determine whether column is on/off
       if (panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
         colState = "track-off";
       }
@@ -1978,6 +1962,19 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
         else {
           colState = "track-off";
+        }
+      }
+
+      //now for rowstate
+      if (panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
+        rowState = "track-off";
+      }
+      else {
+        if (panel.localStoreObj[panel.dyStateKey][panel.yName].state.on === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
+          rowState = "track-on";
+        }
+        else {
+          rowState = "track-off";
         }
       }
 
@@ -2104,6 +2101,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if(trackKey.match("_sep_")) {
       storeObj[statusKey] = newState ?  newState : newRenderer;
 
+      var allUpdated = 0;
+
       $.each(trackKey.split("_sep_"), function(i, splitTrack){
         if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey][splitTrack]["total"]) {
           panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] += 1;
@@ -2113,11 +2112,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
 
         //updating allSelection
-        if(panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey]["allSelection"]["total"]) {
-          panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][newValue] += 1;
-        }
-        if(panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][currValue] > 0) {
-          panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][currValue] -= 1;
+        if(!allUpdated) {
+          if(panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey]["allSelection"]["total"]) {
+            panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][newValue] += 1;
+          }
+          if(panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][currValue] > 0) {
+            panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][currValue] -= 1;
+          }
+          allUpdated = 1; //CAUTION HERE: the above only needs to be done once
         }
         if(keyDim != "matrix") { return false; }
       });

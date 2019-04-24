@@ -1,13 +1,13 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * Copyright [2016-2018] EMBL-European Bioinformatics Institute
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ table.config_matrix                                                 { border-col
 table.config_matrix.short                                           { margin-bottom: 100px; }
 table.config_matrix tr                                              { height: 26px; }
 table.config_matrix tr.hidden                                       { display: none!important; }
-table.config_matrix tr th,                                     
+table.config_matrix tr th,
 table.config_matrix tr td                                           { width: 25px; height: 25px; padding: 0; }
 table.config_matrix thead th p                                      { position: relative; left: 5px; font-size: 14px; white-space: nowrap; margin: 0; pointer-events: none; }
 table.config_matrix thead th p.rotate                               { width: 22px; -webkit-transform: rotate(-45deg); -moz-transform: rotate(-45deg); -o-transform: rotate(-45deg); -ms-transform: rotate(-45deg); }
@@ -139,7 +139,7 @@ div.config div.config_matrix .header_tutorial_wrapper   { position: relative; }
 div.config div.config_matrix .toggle_tutorial           { position: absolute; top: 2px; left: 300px; width: 110px; height: 25px; background: url(/i/tutorial.png) 0 top no-repeat; cursor: pointer; }
 div.config div.config_matrix .toggle_tutorial.on        { background-position: 0 bottom; }
 div.config div.config_matrix .tutorial                  { position: absolute; display: none; padding: 8px; background: [[V_DARK_GREY]]; color: [[WHITE]]; text-align: center; z-index: 10000; white-space: normal; line-height: 16px; border-radius: 10px; }
-div.config div.config_matrix .tutorial:before, 
+div.config div.config_matrix .tutorial:before,
 div.config div.config_matrix .tutorial:after            { border-color: transparent [[V_DARK_GREY]]; border-style: solid; content: ""; display: block; position: absolute; width: 0; }
 div.config div.config_matrix .tutorial.style            { width: 130px; margin: -53px 0 0 -102px; }
 div.config div.config_matrix .tutorial.style:before     { border-width: 0 20px 20px 0; bottom: -20px; right: 30px; }
@@ -161,7 +161,7 @@ div.config div.config_matrix .tutorial.fil:before       { border-width: 30px 30p
 div.config div.config_matrix .tutorial.fil:after        { border-width: 0 30px 30px 0; top:    50%; left: -30px; }
 div.config div.config_matrix .tutorial.video            { top: -2px; left: 430px; }
 div.config div.config_matrix .tutorial.video a          { color: [[WHITE]]!important; }
-div.config div.config_matrix .tutorial.video:before,    
+div.config div.config_matrix .tutorial.video:before,
 div.config div.config_matrix .tutorial.video:after      { display: none; }
 div.config div.config_matrix span.close                 { background: url("/i/close.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0); cursor: pointer; height: 20px; position: absolute; right: -12px; top: -7px; width: 20px; }
 
@@ -183,8 +183,9 @@ div.filter-content                    { flex: 1; overflow-y: auto; overflow-x: h
 button.fade-button.view-track         { margin-left: 30px; min-width: 100px; width: 100px; }
 button.fade-button.showMatrix         { height:auto; padding: 4px; }
 div.flex-row                          { display: flex; }
-.circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; } 
+.circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; }
 span.error                            { color: [[HOVER]]; margin-left: 18px; font-weight: bold; }
+span.search-error                     { margin: 22px; position: absolute;}
 .no-left-margin                       { margin-left: 0px; }
 .hidden                               { display: none; }
 
@@ -301,9 +302,8 @@ span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b
 
 /* search box */
 div.search-box                                  { position: relative; margin-top: -2px; margin-left: 16px; margin-right: 8px; }
-div.search-box input.configuration_search_text  { width: 100%; display: none; }
-div.search-box img.search-icon                  { margin-left: -1px; }
-div.search-box span.search-cross-icon           { display: none; padding: 4px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; }
+div.search-box input.configuration_search_text  { width: 100%; }
+div.search-box span.search-cross-icon           { padding: 4px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; }
 
 /* track configuration/matrix display */
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
