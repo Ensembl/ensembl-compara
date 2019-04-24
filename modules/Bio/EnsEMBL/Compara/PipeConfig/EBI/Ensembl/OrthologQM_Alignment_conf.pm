@@ -29,7 +29,7 @@ limitations under the License.
   <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
-	
+
 	Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::OrthologQM_Alignment_conf;
 
 =head1 SYNOPSIS
@@ -63,7 +63,7 @@ limitations under the License.
     -previous_rel_db    reuse scores from a previous release (requires a homology_id_mapping table in compara_db)
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
-    remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd 
+    remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd
     like the final scores written to the homology database, assign this as compara_db and use the alt_aln_dbs option
     to specify the location of the alignments. Likewise, if you want the scores written to the alignment-containing
     database, assign it as compara_db and use the alt_homology_db option.
@@ -81,9 +81,9 @@ limitations under the License.
 
     # standard production run:
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::OrthologQM_Alignment_conf -compara_db <current protein tree db> -alt_aln_dbs
-        <previous release database (unless new alignments were run)> -previous_rel_db <previous release database> 
+        <previous release database (unless new alignments were run)> -previous_rel_db <previous release database>
         -species_set_name "collection-default"
-    
+
     (note: compara_db is supplied here in the pipeconfig, so may not be needed at init step)
 
 =head1 CONTACT
@@ -110,15 +110,17 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'vertebrates',
+        # 'member_type'   => undef, # should be 'protein' or 'ncrna'
 
         'master_db'  => 'compara_master',
 
         # location of homology data. note: wga_score will be written here
-        'compara_db' => 'compara_curr',
+        'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',,
         # if alignments are not all present in compara_db, define alternative db locations
-        #'alt_aln_dbs' => [
+        'alt_aln_dbs' => [
             # list of databases with EPO or LASTZ data
-        #],
+            'compara_curr',
+        ],
         'previous_rel_db'  => 'compara_prev',
         'species_set_name' => 'collection-default',
     };
