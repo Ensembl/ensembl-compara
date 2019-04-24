@@ -182,8 +182,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'concatenate_genome_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                # 'cmd'         => 'cat #tsv_dir#/*/#name_root#.homologies.tsv > #output_file#',
-                'cmd'         => "rm #output_file#; for filename in #tsv_dir#/*/#name_root#.homologies.tsv; do if [ ! -e #output_file# ]; then head -1 \$filename > #output_file#; fi; awk '\$1 > \$6 {print \$0}' \$filename >> #output_file#; done",
+                'cmd'         => q{rm #output_file#; for filename in $(find #tsv_dir# -name #name_root#.homologies.tsv); do if [ ! -e #output_file# ]; then head -1 $filename > #output_file#; fi; awk '$1 > $6 {print $0}' $filename >> #output_file#; done},
                 'output_file' => '#tsv_dir#/#name_root#.homologies.tsv',
             },
             -flow_into => { 1 => {
