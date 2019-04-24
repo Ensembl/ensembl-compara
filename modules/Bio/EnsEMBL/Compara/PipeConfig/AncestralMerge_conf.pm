@@ -18,7 +18,7 @@ limitations under the License.
 =cut
 
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -28,13 +28,13 @@ Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf -password <your_password>
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
     A pipeline to create the EnsEMBL core database with ancestral sequences merged from different sources.
 
     In rel.64 it took ~30min to run.
     In rel.65 it took ~38min to run.
-    In rel.71 it took 
+    In rel.71 it took
 
 =head1 CONTACT
 
@@ -66,12 +66,12 @@ sub default_options {
 
         'merge_script'  => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
-        'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_95',
+        'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_96',
 
         # map EPO mlss_ids to their source ancestral db
         'epo_mlsses' => [ # this table needs to be edited prior to running the pipeline, fish, sauropsids, primates and mammals ancestral DBs ALWAYS need to be defined:
             [ '1497' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/muffato_fish_ancestral_core_96',], # fish
-            [ '1491' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/mateus_mammals_ancestral_core_96',], # mammals
+            [ '1541' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_mammals_ancestral_core_97',], # mammals
             [ '1489' => 'mysql://ensro@mysql-ens-compara-prod-6:4616/waakanni_primates_ancestral_core_96' ], # primates
             [ '1494' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_sauropsids_ancestral_core_96' ], # sauropsids
         ],
@@ -152,4 +152,3 @@ sub pipeline_analyses {
 }
 
 1;
-
