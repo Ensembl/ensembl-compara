@@ -131,7 +131,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
-        'mafft_home'        => $self->o('mafft_home'),
+        'mafft_exe'         => $self->o('mafft_exe'),
         'mafft_threads'    => $self->o('mafft_threads'),
 
         'master_db'         => $self->o('master_db'),               # databases

@@ -1708,7 +1708,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
-                'mafft_home'                 => $self->o('mafft_home'),
+                'mafft_exe'                  => $self->o('mafft_exe'),
                 'escape_branch'              => -1,
             },
             -hive_capacity        => $self->o('mafft_capacity'),
@@ -1722,7 +1722,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft_update',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update',
             -parameters => {
-                'mafft_home'                 => $self->o('mafft_home'),
+                'mafft_exe'                  => $self->o('mafft_exe'),
             },
             -hive_capacity        => $self->o('mafft_update_capacity'),
             -rc_name    => '2Gb_job',
@@ -1749,7 +1749,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
-                'mafft_home'                 => $self->o('mafft_home'),
+                'mafft_exe'                  => $self->o('mafft_exe'),
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
             -rc_name    => '8Gb_job',
@@ -1763,7 +1763,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft_huge',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
-                'mafft_home'                 => $self->o('mafft_home'),
+                'mafft_exe'                  => $self->o('mafft_exe'),
                 'mafft_threads'              => 4,
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),

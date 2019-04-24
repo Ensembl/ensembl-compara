@@ -53,7 +53,6 @@ sub param_defaults {
     return {
         'dry_run'       => 0,
         'method_type'   => 'ENSEMBL_PROJECTIONS',
-        'mafft_exe'     => '/bin/mafft',
     };
 }
 
@@ -62,8 +61,7 @@ sub fetch_input {
     my $self = shift @_;
 
     $self->param_required('alt_allele_group_id');
-    $self->param_required('mafft_home');
-    $self->param_required('mafft_exe');
+    $self->require_executable('mafft_exe');
 
     # Adaptors in the current Compara DB
     $self->param('gene_member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
@@ -133,10 +131,8 @@ sub run {
 
     my $msa_output = "$tempdir/output.fa";
 
-    my $mafft_home = $self->param('mafft_home');
     my $mafft_exe = $self->param('mafft_exe');
-    die "Cannot execute '$mafft_exe' in '$mafft_home'" unless(-x $mafft_home.'/'.$mafft_exe);
-    my $cmdline = sprintf('%s/%s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $fastafile, $msa_output);
+    my $cmdline = sprintf('%s --anysymbol --thread 1 --auto %s > %s', $mafft_exe, $fastafile, $msa_output);
     $self->run_command($cmdline, { die_on_failure => 1 });
 
     $set->load_cigars_from_file($msa_output);

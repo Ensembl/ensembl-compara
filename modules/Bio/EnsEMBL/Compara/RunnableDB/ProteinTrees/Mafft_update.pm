@@ -63,7 +63,6 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults },
-        'mafft_exe'           => '/bin/mafft',                                 # where to find the mafft executable from $mafft_home
         'input_clusterset_id' => 'copy',
         'output_clusterset_id'=> 'default',
     };
@@ -118,8 +117,7 @@ sub parse_and_store_alignment_into_proteintree {
 sub get_msa_command_line {
     my $self = shift;
 
-    my $mafft_home = $self->param_required('mafft_home');
-    my $mafft_exe  = $self->param_required('mafft_exe');
+    my $mafft_exe  = $self->require_executable('mafft_exe');
 
     #This logic should be replaced by the new method for getting the alignment sequences directly from the adaptor.
     #--------------------------------------------------------------------------------------------------------------
@@ -150,9 +148,7 @@ sub get_msa_command_line {
 
     #--------------------------------------------------------------------------------------------------------------
 
-    die "Cannot execute '$mafft_exe' in '$mafft_home'" unless ( -x $mafft_home . '/' . $mafft_exe );
-
-    return sprintf( '%s/%s --add %s --anysymbol --thread 1 --auto %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
+    return sprintf( '%s --add %s --anysymbol --thread 1 --auto %s > %s', $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
 } ## end sub get_msa_command_line
 
 1;

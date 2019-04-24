@@ -51,9 +51,9 @@ be declared as pipeline-wide.
 
 =over
 
-=item mafft_home
+=item mafft_exe
 
-The home directory of the Mafft aligner
+The path to the Mafft aligner
 
 =back
 

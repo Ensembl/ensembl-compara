@@ -74,7 +74,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'mafft_home'    => $self->o('mafft_home'),
+        'mafft_exe'     => $self->o('mafft_exe'),
         'master_db'     => $self->o('master_db'),
     }
 }
