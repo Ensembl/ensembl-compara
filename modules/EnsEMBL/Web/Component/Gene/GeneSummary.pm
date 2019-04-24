@@ -103,7 +103,7 @@ sub content {
       action => 'Matches',
       g      => $gene->stable_id, 
     });
-    my $msg = 'This Ensembl/Gencode gene does not contain any transcripts for which we have selected identical model(s) in RefSeq.'; 
+    my $msg = 'This Ensembl/Gencode gene does not contain any transcripts for which we have <a href="/info/genome/genebuild/mane.html">selected identical model(s) in RefSeq</a>.'; 
     my $has_mane_select = 0;
     if ($ensembl_select) {
       foreach my $t (@{$gene->get_all_Transcripts}){
@@ -113,9 +113,9 @@ sub content {
       }
     }  
     if ($has_mane_select) {
-      $msg = 'This Ensembl/Gencode gene contains transcript(s) for which we have selected identical RefSeq transcript(s).';
+      $msg = 'This Ensembl/Gencode gene contains transcript(s) for which we have <a href="/info/genome/genebuild/mane.html">selected identical RefSeq transcript(s)</a>.';
     } 
-    $table->add_row('RefSeq', sprintf(qq{%s If there are other matching RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $msg, $url)); 
+    $table->add_row('RefSeq', sprintf(qq{%s If there are other RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $msg, $url)); 
   }
 
   ## LRG info
