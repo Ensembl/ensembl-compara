@@ -73,7 +73,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options },
 
-        'division' => 'ensembl',
+        'division' => 'vertebrates',
 
         # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'compara_prev',

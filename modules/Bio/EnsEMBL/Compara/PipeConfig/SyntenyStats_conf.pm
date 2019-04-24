@@ -38,7 +38,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        'division'     => 'ensembl',
+        'division'     => 'vertebrates',
 
         'compara_db'    => 'compara_curr',
     };

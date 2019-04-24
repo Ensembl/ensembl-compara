@@ -59,7 +59,7 @@ sub default_options {
             'ref_species' => 'homo_sapiens',
             #'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
-            'division' => 'ensembl',
+            'division' => 'vertebrates',
             
             #Location url/alias of database to get EPO GenomicAlignTree objects from
             'compara_db' => 'compara_curr',

@@ -74,8 +74,8 @@ sub default_options {
         # either 'default' or 'murinae'
         #'clusterset_id'     => 'default',
 
-        # Can be "ensembl", "plants", etc
-        'division'    => 'ensembl',
+        # Can be "vertebrates", "plants", etc
+        'division'    => 'vertebrates',
 
         'pipeline_name'       => $self->o('member_type').'_'.$self->o('clusterset_id').'_'.$self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
         'rel_db'        => 'compara_curr',

@@ -57,7 +57,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-        'division' => 'ensembl',
+        'division' => 'vertebrates',
 
         # How many tables can be dumped and re-created in parallel (too many will slow the process down)
         'copying_capacity'  => 10,

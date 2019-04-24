@@ -73,7 +73,7 @@ sub default_options {
 #       'mlss_id'               => 522,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'work_dir'              => $self->o('pipeline_dir'),
         'species_set_name'      => 'amniotes',
-        'division'              => 'ensembl',
+        'division'              => 'vertebrates',
         'do_not_reuse_list'     => [ ],
 
     # master database

@@ -70,7 +70,7 @@ sub default_options {
         # 'species_set_name' => 'fish',
         #'rel_suffix' => 'b',
 
-        'division' => 'ensembl',
+        'division' => 'vertebrates',
 
         # Capacities
         'low_capacity'                  => 10,

@@ -91,7 +91,7 @@ sub default_options {
 
 
     	# general settings
-        'division'        => 'ensembl',
+        'division'        => 'vertebrates',
         'dump_dir'        => '#dump_root#/release-#curr_release#',
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps

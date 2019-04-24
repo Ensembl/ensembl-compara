@@ -53,7 +53,7 @@ sub default_options {
         'collection'      => $self->o('division'), # build tree with everything by default
         'species_set_id'  => undef,
 
-        # 'division'        => 'ensembl',
+        # 'division'        => 'vertebrates',
         'outgroup'        => 'saccharomyces_cerevisiae',
         'outgroup_id'     => 127,
 
