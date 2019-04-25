@@ -200,7 +200,7 @@ sub pipeline_analyses {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
             },
-            -rc_name => '500M_job',
+            -rc_name => '500Mb_job',
             -analysis_capacity => 50,
         },
 
