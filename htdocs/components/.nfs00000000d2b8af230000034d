@@ -1773,7 +1773,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
         }
 
-        yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
+        yContainer += '<div class="yLabel _ht _ht_delay '+cellName+'" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</div>';
         var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
         //drawing boxes
@@ -1878,7 +1878,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.setLocalStorage();
 
     // enable helptips
-    this.elLk.matrixContainer.find('._ht').helptip();
+    this.elLk.matrixContainer.find('._ht').helptip({position: { at: 'right center', using: function(position, feedback){
+      position.left -= 20;
+      $(this).removeClass('helptip-top helptip-bottom helptip-middle').addClass('helptip-' + feedback.vertical).css(position);}}
+    });
   },
 
   emptyMatrix: function() {
