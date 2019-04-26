@@ -1354,15 +1354,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   createTooltipText: function(item) {
     if (item === undefined) return;
-    var name, tooltip;
+    var name, tooltip = '';
     if (this.json.info && this.json.info[item]) {
       name = this.json.info[item].full_name ? this.json.info[item].full_name : item;
       tooltip = '<p> <u>' + name + '</u></p>' +
                 '<p>' + this.json.info[item].description + '</p>';
 
     }
-    return tooltip ? 'class="_ht _ht_delay" title="'+tooltip+'"' : '';
-
+    return tooltip;
   },
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayCheckbox: function(obj) {
@@ -1402,7 +1401,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
           var tip = panel.createTooltipText(item);
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text '+tip+'>'+item+'</text></li>';
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text class="_ht _ht_delay" title="'+tip+'">'+item+'</text></li>';
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
@@ -1546,7 +1545,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           total_num++;
           var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
           var tip = panel.createTooltipText(el);
-          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text '+tip+'>'+el+'</text></li>';
+          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text class="_ht _ht_delay" title="'+tip+'">'+el+'</text></li>';
 
           panel.elLk.lookup[elementClass] = {
             label: el,
@@ -1774,7 +1773,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
         }
 
-        yContainer += '<div class="yLabel _ht '+cellName+'" title="'+cellLabel+'">'+cellLabel+'</div>';
+        yContainer += '<div class="yLabel _ht _ht_delay '+cellName+'" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</div>';
         var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
         //drawing boxes
