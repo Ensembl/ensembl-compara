@@ -434,7 +434,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var arr = [];
 
     //resetting filter box and content
-    panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
+    panel.elLk.searchCrossIcon.parent().find('input.configuration_search_text').val("");
     panel.resetFilter("", true);
 
     //store on which tab the user is on
