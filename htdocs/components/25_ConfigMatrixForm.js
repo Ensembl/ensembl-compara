@@ -95,6 +95,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             this.addExtraDimensions();
             this.goToUserLocation();
             this.resize();
+            this.selectDeselectAll();
             // this.updateSelectAll();
             panel.el.find('._ht').helptip();
           },
