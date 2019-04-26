@@ -48,8 +48,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift;
 
+    my $mlss_id = $self->param('ortholog_mlss_id') || $self->param('pairwise_mlss_id');
+    $self->param('mlss_id', $mlss_id);
+
     $self->param_required('synteny_mlss_id');
-    $self->param_required('mlss_id');
     $self->param('avg_genomic_coverage');
     $self->param('master_dba', $self->get_cached_compara_dba('master_db'));
     $self->param('curr_release_dba', $self->get_cached_compara_dba('curr_release_db'));

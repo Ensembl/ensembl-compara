@@ -301,9 +301,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'delete_synteny',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::DeleteSynteny',
-            -parameters => {
-                'mlss_id' => '#expr( #ortholog_mlss_id# || #pairwise_mlss_id# )expr#',
-            },
         },
 
         {   -logic_name => 'update_mlss_tag_table',
