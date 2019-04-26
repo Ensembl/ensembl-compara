@@ -130,7 +130,6 @@ sub run {
 #                                    {
 #                                     'gene_tree_id' => $nc_tree_id,
 #                                     'alignment_id' => $self->param('alignment_id'),
-#                                     'aln_seq_type' => $self->param('aln_seq_type'),
 #                                    }, -1
 #                                   );
 #         # We die here. Nothing more to do in the Runnable

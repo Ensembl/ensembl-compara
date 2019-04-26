@@ -41,8 +41,6 @@ sub fetch_input {
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
-    $self->param('aln_seq_type', "seq_with_flanking");
-
     # Autovivification
     $self->param("method_treefile", {});
 }
@@ -73,7 +71,6 @@ sub run {
                                     'fastTreeTag' => "ftga_it_nj",
                                     'raxmlLightTag' => "ftga_it_ml",
                                     'alignment_id' => $self->param('alignment_id'),
-                                    'aln_seq_type' => $self->param('aln_seq_type'),
                                    },3
                                   );
         $self->input_job->autoflow(0);
@@ -242,7 +239,6 @@ sub run_RAxML {
                     'fastTreeTag'   => "ftga_it_nj",
                     'raxmlLightTag' => "ftga_it_ml",
                     'alignment_id'  => $self->param('alignment_id'),
-                    'aln_seq_type'  => $self->param('aln_seq_type'),
                 }, 3 #branch 3 (fast_trees)
             );
             $self->input_job->autoflow(0);
@@ -310,7 +306,6 @@ sub run_prank {
                     'fastTreeTag'   => "ftga_it_nj",
                     'raxmlLightTag' => "ftga_it_ml",
                     'alignment_id'  => $self->param('alignment_id'),
-                    'aln_seq_type'  => $self->param('aln_seq_type'),
                 }, 3 #branch 3 (fast_trees)
             );
             $self->input_job->autoflow(0);
@@ -367,11 +362,10 @@ sub store_fasta_alignment {
 
     my $nc_tree_id = $self->param('gene_tree_id');
     my $aln_file = $self->param("${aln_method}_output");
-    my $aln_seq_type = $self->param('aln_seq_type');
 
     my $aln = $self->param('gene_tree')->deep_copy();
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
-    $aln->seq_type($aln_seq_type);
+    $aln->seq_type('seq_with_flanking');
     $aln->aln_method($aln_method);
     $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
