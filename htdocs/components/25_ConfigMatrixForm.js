@@ -55,6 +55,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
     this.matrixLoadState     = true;
+    this.json = {};
+    this.searchTerms = {};
 
     this.rendererConfig = {
       'normal': 'normal',
@@ -67,22 +69,39 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/RegulationData/data?species='+Ensembl.species,
+      url: '/Json/RegulationData/info?species='+Ensembl.species,
       dataType: 'json',
       context: this,
       success: function(json) {
-        this.json = json;
-        this.trackTab();
-        this.populateLookUp();
-        this.loadState();
-        this.setDragSelectEvent();
-        this.registerRibbonArrowEvents();
-        this.updateRHS();
-        this.addExtraDimensions();
-        this.goToUserLocation();
-        this.resize();
-        this.selectDeselectAll();
-        //this.updateSelectAll();
+        Object.assign(this.json, json);
+        $.each(json.info, function(k, v) {
+          if (v.search_terms){
+            k = k.replace(/[^\w\-]/g,'_')
+            panel.searchTerms[v.search_terms] = k;
+          }
+        })
+        $.ajax({
+          url: '/Json/RegulationData/data?species='+Ensembl.species,
+          dataType: 'json',
+          context: this,
+          success: function(json) {
+            Object.assign(this.json, json);
+            this.trackTab();
+            this.populateLookUp();
+            this.loadState();
+            this.setDragSelectEvent();
+            this.registerRibbonArrowEvents();
+            this.updateRHS();
+            this.addExtraDimensions();
+            this.goToUserLocation();
+            this.resize();
+            // this.updateSelectAll();
+            panel.el.find('._ht').helptip();
+          },
+          error: function() {
+            this.showError();
+          }
+        });
       },
       error: function() {
         this.showError();
@@ -130,7 +149,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     //this has to be after on click event to capture the button class before it gets changed
     this.clickDisplayButton(this.elLk.displayButton, this.el.find("li._configure"));
 
-    // Filtering functionality
+    // Search functionality
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
       var inputText = $(this).val().trim();
 
@@ -144,11 +163,19 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         return name.match(re) && panel.elLk.lookup[name].parentTabId === activeTabId;
       });
 
-      if (match.length) {
+      $.each(panel.searchTerms, function(k, v) {
+        if (k.match(re)) {
+          match.push(v);
+        }
+      })
+
+      var match_uniq = $.unique(match);
+
+      if (match_uniq.length) {
         panel.elLk[activeTabId].container.find("span.search-error").hide();
         panel.elLk[activeTabId].container.find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
-        var classString = '.' + match.join(',.');
-        var li_arr = panel.elLk.lookup[match[0]].parentTab.find('li').not(classString);
+        var classString = '.' + match_uniq.join(',.');
+        var li_arr = panel.elLk.lookup[match_uniq[0]].parentTab.find('li').not(classString);
         $.each(li_arr, function(i, li) {
           if ($(li).css('display') !== 'none') {
             $(li).addClass('_search_hide').hide();
@@ -1324,6 +1351,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
+  createTooltipText: function(item) {
+    if (item === undefined) return;
+    var name, tooltip;
+    if (this.json.info && this.json.info[item]) {
+      name = this.json.info[item].full_name ? this.json.info[item].full_name : item;
+      tooltip = '<p> <u>' + name + '</u></p>' +
+                '<p>' + this.json.info[item].description + '</p>';
+
+    }
+    return tooltip ? 'class="_ht _ht_delay" title="'+tooltip+'"' : '';
+
+  },
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayCheckbox: function(obj) {
 
@@ -1361,7 +1400,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+          var tip = panel.createTooltipText(item);
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text '+tip+'>'+item+'</text></li>';
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
@@ -1504,7 +1544,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         $.each(data[letter], function(i, el) {
           total_num++;
           var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
+          var tip = panel.createTooltipText(el);
+          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text '+tip+'>'+el+'</text></li>';
 
           panel.elLk.lookup[elementClass] = {
             label: el,
@@ -1732,7 +1773,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           }
         }
 
-        yContainer += '<div class="yLabel _ht '+cellName+'" title="'+cellName+'">'+cellLabel+'</div>';
+        yContainer += '<div class="yLabel _ht '+cellName+'" title="'+cellLabel+'">'+cellLabel+'</div>';
         var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
         //drawing boxes

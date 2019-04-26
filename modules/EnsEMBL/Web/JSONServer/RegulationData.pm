@@ -39,6 +39,9 @@ sub json_data {
   if ( defined $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables      = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
   }
+  else {
+    return {};
+  }
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment  
   my ($evidence, $cell_types, %all_types); 
@@ -92,11 +95,11 @@ sub json_data {
   $final->{data}->{evidence}->{'subtabs'} = 1;
   $final->{data}->{evidence}->{'popupType'} = 'peak-signal';
   $final->{data}->{evidence}->{'renderer'} = 'peak-signal';
-
   #get all cell types and the evidence type related to each of them (e.g: A549 -> [{evidence_type = 'HH3K27ac', on = 1},{evidence_type='H3K36me3', on = 0},....]) 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
     my $id_key = $_;
     (my $name = $_) =~ s/:\w+$//;
+
     my $set_info;
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$name}     || {};
     $set_info->{'non_core'} = $db_tables->{'feature_types'}{'non_core'}{$name} || {};
@@ -142,8 +145,50 @@ sub json_data {
   $final->{data}->{epigenome}->{'label'}  = 'Cell/Tissue';
   $final->{data}->{epigenome}->{'data'} = $cell_types;
   $final->{data}->{epigenome}->{'listType'} = 'alphabetRibbon';
-
   $final->{dimensions} = ['epigenome', 'evidence'];
+
+  return $final;
+}
+
+sub json_info {
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $db   = $hub->database('funcgen', $hub->param('species'));
+  my $final = {};
+
+  my $db_tables     = {};
+
+  if ( defined $self->databases->{'DATABASE_FUNCGEN'} ) {
+    $db_tables      = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
+  }
+  else {
+    return {};
+  }
+
+  foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
+    my $id_key = $_;
+    (my $name = $_) =~ s/:\w+$//;
+    $final->{info} = $db_tables->{'cell_type'}{'info'};
+  }
+
+  my $adaptor       = $db->get_FeatureTypeAdaptor;
+  my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment  
+  my ($evidence); 
+
+  # evidence is the other name for experiment on the web interface
+  # get all evidence and their corresponding evidence_type as a hash
+  # e.g.: {histone -> {evidence_type -> [h2ka,...], name -> histone}, ....}
+  foreach my $set (qw(core non_core)) {
+    foreach (@{$evidence_info->{$set}{'classes'}}) {
+      next if $_ eq 'Transcription Factor Complex'; #looks like an API bug, this shouldnt be coming back from the API as we dont need this for web display
+      foreach (@{$adaptor->fetch_all_having_PeakCalling_by_class($_)}) {
+        next if $_->class eq 'Transcription Factor Complex'; #ignoring this group as its not used
+        my $group = $_->class eq 'Transcription Factor' || $_->class eq 'Polymerase'  ? 'Transcription factors' : $_->class; #merging polymerase data and transcription factor data
+        $group =~ s/[^\w\-]/_/g;
+        $final->{info}->{$_->name}->{'description'} = $_->description;
+      }
+    }
+  }
 
   return $final;
 }
