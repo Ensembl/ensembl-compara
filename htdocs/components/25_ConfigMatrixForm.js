@@ -81,7 +81,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         this.addExtraDimensions();
         this.goToUserLocation();
         this.resize();
-        this.updateSelectAll();
+        this.selectDeselectAll();
+        //this.updateSelectAll();
       },
       error: function() {
         this.showError();
@@ -105,7 +106,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     this.clickSubResultLink();
     this.showHideFilters();
-    this.clickCheckbox(this.elLk.filterList, 1);
+    this.clickCheckbox(this.elLk.filterList);
     this.clearAll(this.elLk.clearAll);
     this.clearSearch();
     this.resetTracks();
@@ -145,6 +146,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
       if (match.length) {
         panel.elLk[activeTabId].container.find("span.search-error").hide();
+        panel.elLk[activeTabId].container.find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
         var classString = '.' + match.join(',.');
         var li_arr = panel.elLk.lookup[match[0]].parentTab.find('li').not(classString);
         $.each(li_arr, function(i, li) {
@@ -156,6 +158,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         panel.elLk[activeTabId].container.find('li').addClass('_search_hide').hide();
         panel.elLk[activeTabId].container.find("span.search-error").show();
+        panel.elLk[activeTabId].container.find("div.selectall-container div.select-link, div.selectall-container div.divider").hide();
       }
       panel.updateAvailableTabsOrRibbons(activeTabId, true);
     });
@@ -185,6 +188,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
     panel.getActiveTabContainer().find("span.search-error").hide();
+    panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
     var _filtered = panel.getActiveTabContainer().find('li._filtered');
     if (_filtered.length) {
       _filtered.show();
@@ -259,7 +263,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               count++;
             }
           });
-          panel.updateTrackPanelSelectAllCount(key, count);
+          //panel.updateTrackPanelSelectAllCount(key, count);
 
         }
 
@@ -358,6 +362,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
+  //function checking if all tracks are selected then checked all checkbox (can be removed)
   updateSelectAll: function(tabContent) {
     var panel = this;
 
@@ -658,6 +663,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
     panel.elLk.searchCrossIcon.click("on", function(){
       panel.getActiveTabContainer().find("span.search-error").hide();
+      panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
       $(this).parent().find('input.configuration_search_text').val("");
       panel.resetFilter("");
     });
@@ -724,12 +730,46 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
+  //function when clicking on the select all | deselect all link
+  // it will either select all checkbox or unselect all checkbox and apply filtering where there is !no-filter
+  selectDeselectAll: function() {
+    var panel = this;
+
+    panel.el.find('div.selectall-container div.select-link').on("click", function(e){
+      var selected = $(this).hasClass('all-box');
+      var _class   = '';
+
+      if ($(this).closest('.tab-content').find('li._filtered').length) {
+        _class = '._filtered';
+      }
+
+      var available_LIs = $(this).closest('.tab-content').find('li' + _class + ':not("._search_hide")');
+      var availableFancyCheckBoxes = available_LIs.find('span.fancy-checkbox');
+
+      if (selected) {
+        availableFancyCheckBoxes.addClass("selected");
+        available_LIs.addClass("_selected");
+      }
+      else {
+        availableFancyCheckBoxes.removeClass('selected');
+        available_LIs.removeClass("_selected");
+      }
+
+      // add 'selected: true/flase' to lookup
+      available_LIs.map(function() {
+        panel.elLk.lookup[$(this).data('item')].selected = selected;
+      });
+
+      var ele = available_LIs.data('item');
+      panel.filterData(ele);
+      panel.updateRHS();
+      e.stopPropagation();
+    });
+  },
+
   // Function to select/unselect checkbox and removing them from the right hand panel (optional) and adding them to the right hand panel (optional)
   //Argument: container is an object where the checkbox element is
-  //        : removeElement either 1 or 0 whether to remove element
-  //        : AddElement is either 1 or 0
-  //        : allBox is Object of select all box, check if it needs to be on or off
-  clickCheckbox: function (container, removeElement, addElement, allBox) {
+  clickCheckbox: function (container) {
     var panel = this;
     var itemListen = "li";
     if(container[0].nodeName === 'DIV') {
@@ -750,24 +790,9 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       }
 
       var ele = $(this).data('item');
-      if($(this).hasClass('all-box')) {
-        // if(!$(this).hasClass('no-filter')) {
-          ele = $(this).closest('.tab-content').find('li')[0];
-          ele = $(ele).data('item');
-        // }
-      }
 
       panel.filterData(ele);
       panel.updateRHS();
-
-      //check whether the select all box is on/off, if it is off and all filters are selected, then make it on and if it is on and all filters are not selected then make it off
-      if(allBox && itemListen === "li"){
-        if(container.find("span.fancy-checkbox.selected").length === container.find("span.fancy-checkbox").length) {
-          allBox.find("span.fancy-checkbox").addClass("selected");
-        } else {
-          allBox.find("span.fancy-checkbox").removeClass("selected");
-        }
-      }
       e.stopPropagation();
     });
   },
@@ -888,16 +913,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       else {
         $(itemElements).addClass('_selected').find("span.fancy-checkbox").addClass("selected");
       }
-
-      // Update all-box selected class based on selection
-      var lis_unselected = $(itemElements).closest('.tab-content').find('li._filtered').length ?  $(itemElements).closest('.tab-content').find('li._filtered span.fancy-checkbox').not(".selected") : $(itemElements).closest('.tab-content').find('li span.fancy-checkbox').not(".selected");
-      var allBox = $(itemElements).closest('.tab-content').find('.all-box span.fancy-checkbox');
-
-      if(lis_unselected.length) {
-        allBox.removeClass('selected');
-      } else {
-        allBox.addClass('selected');
-      }
     }
   },
 
@@ -931,7 +946,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.totalSelected  += selectedLIs.length;
 
           panel.updateCurrentCount(subTab, selectedLIs.length, allLIs.length);
-          _search_hide.length && this.updateTrackPanelSelectAllCount(key, selectedLIs.length);
+          //_search_hide.length && this.updateTrackPanelSelectAllCount(key, selectedLIs.length);
           selectedLIs.length && selectedElements.push(selectedLIs);
         })
       }
@@ -1361,7 +1376,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       });
       html += '</ul></div>';
       var wrapper_close = '</div>';
-      html = wrapper + '<span class="hidden error search-error">No matches</span><div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close;
+      html = wrapper + '<span class="hidden error search-error">No matches</span><div class="selectall-container"><div class="deselect-box select-link" id="deSelectBox-'+$(container).attr("id")+'">Deselect all</div><div class="divider">|</div><div class="all-box select-link" id="allBox-'+$(container).attr("id")+'">Select all</div></div>' + html + wrapper_close;
       container.append(html);
 
       // Adding the element itself to the lookup
@@ -1376,7 +1391,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
 
       //clicking select all checkbox
-      panel.clickCheckbox(container.find("div.all-box"));
+      //panel.clickCheckbox(container.find("div.all-box"));
     }
   },
 
@@ -1509,7 +1524,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       content_html += '<div data-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     var noFilterClass = noFilter_allBox ? 'no-filter' : '';
-    container.append('<span class="hidden error search-error">No matches</span><div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    container.append('<span class="hidden error search-error">No matches</span><div class="selectall-container"><div class="deselect-box select-link '+ noFilterClass +'" id="deSelectBox-'+$(container).attr("id")+'">Deselect all</div><div class="divider">|</div><div class="select-link all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'">Select all</div></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+
     container.find('div.letters-ribbon').append(html);
     container.find('div.ribbon-content').append(content_html);
 
@@ -1529,7 +1545,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
 
     //clicking select all checkbox
-    panel.clickCheckbox(container.find("div.all-box"));
+    //panel.clickCheckbox(container.find("div.all-box"));
 
     //clicking the alphabet
     var alphabet = container.find('div.alphabet-div');
