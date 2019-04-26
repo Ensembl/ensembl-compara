@@ -142,27 +142,11 @@ sub dump_sequences_to_workdir {
     }
     close OUTSEQ;
 
-    if(scalar (@{$member_list}) <= 1) {
-        $self->update_single_peptide_tree($cluster);
-        $self->param('single_peptide_tree', 1);
-    }
-
     $self->param('tag_residue_count', $residues);
 
     return $fastafile;
 }
 
-sub update_single_peptide_tree {
-    my ($self, $tree) = @_;
-
-    foreach my $member (@{$tree->get_all_leaves}) {
-        next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-        next unless($member->sequence);
-        $member->cigar_line(length($member->sequence)."M");
-        $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
-        printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
-    }
-}
 
 sub run_mafft {
     my ($self) = @_;
