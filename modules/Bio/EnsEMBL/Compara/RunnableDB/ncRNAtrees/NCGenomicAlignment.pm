@@ -112,7 +112,7 @@ sub write_output {
 }
 
 sub dump_sequences_to_workdir {
-    my ($self,$cluster) = @_;
+    my ($self,$cluster,$no_flanking) = @_;
     my $fastafile = $self->worker_temp_directory . "/cluster_" . $cluster->root_id . ".fasta";
 
     my $member_list = $cluster->get_all_leaves;
@@ -128,10 +128,12 @@ sub dump_sequences_to_workdir {
     my $residues = 0;
     my $count = 0;
     $cluster->adaptor->db->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+    my $max_length = 0;
     foreach my $member (@{$member_list}) {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
-        my $seq = $gene_member->expand_Locus('500%')->get_sequence();
+        my $seq = $no_flanking ? $member->sequence() : $gene_member->expand_Locus('500%')->get_sequence();
+        $max_length = length($seq) if length($seq) > $max_length;
         $residues += length($seq);
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
@@ -141,6 +143,13 @@ sub dump_sequences_to_workdir {
         print STDERR "sequences $count\n" if ($count % 50 == 0);
     }
     close OUTSEQ;
+
+    if ($max_length >= 1_000_000) {
+        $self->param('no_flanking', 1);
+        $cluster->print_sequences_to_file($fastafile, -FORMAT => 'fasta');
+        $residues = 0;
+        $residues += length($_->sequence) for @$member_list;
+    }
 
     $self->param('tag_residue_count', $residues);
 
@@ -349,13 +358,17 @@ sub store_fasta_alignment {
 
     my $aln = $self->param('gene_tree')->deep_copy();
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
-    $aln->seq_type('seq_with_flanking');
     $aln->aln_method($aln_method);
-    $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
+    if ($self->param('no_flanking')) {
+        $aln->load_cigars_from_file($aln_file, -format => 'fasta');
+    } else {
+        $aln->seq_type('seq_with_flanking');
+        $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
-    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
-    foreach my $member (@{$aln->get_all_Members}) {
-        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
+        my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
+        foreach my $member (@{$aln->get_all_Members}) {
+            $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
+        }
     }
 
     $aln->dbID( $self->param('gene_tree')->get_value_for_tag('genomic_alignment_gene_align_id') );
