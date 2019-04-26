@@ -208,7 +208,7 @@ div.result-box div.show-hide                      { float: right; margin-top: -3
 .tab-content.active .ribbon-content .alphabet-content.active .letter-content li .ui-selecting,
 .tab-content.active .letter-content li .ui-selecting { background: #FECA40; }
 
-div.selectall-container                         { float: right; width: 300px; padding: 16px; }
+div.selectall-container                         { float: right; width: 300px; padding: 16px; height: 20px; }
 div.selectall-container div.divider             { float: right; font-size: 16px; margin:-3px 8px 0px 8px; }
 div.selectall-container div.select-link         { float: right; color: [[LINK]]; border-bottom: 1px solid [[LINK]]; cursor: pointer; }
 div.all-box text                                { padding: 5px; }
