@@ -58,6 +58,7 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;  
   my $species     = $hub->species;
+  my $sub_type    = $hub->species_defs->ENSEMBL_SUBTYPE;
   my $table       = $self->new_twocol;
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
@@ -248,6 +249,9 @@ sub transcript_table {
     my %extra_links = (
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
     );
+    if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
+      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1 };
+    }
     my %any_extras;
  
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
@@ -358,7 +362,9 @@ sub transcript_table {
       my $x = $extra_links{$k};
       push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
     }
-    push @columns, { key => 'refseq_match', sort => 'html', title => 'RefSeq Match' } if $species eq 'Homo_sapiens';
+    if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
+      push @columns, { key => 'refseq_match', sort => 'html', title => 'RefSeq Match' };
+    }  
     push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
 
     ## Additionally, sort by CCDS status and length

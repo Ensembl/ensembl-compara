@@ -39,7 +39,7 @@ sub content {
   my $gene          = $object->gene;
   my $species_defs  = $hub->species_defs;
   my $table         = $self->new_twocol;
-  my $site_type     = $species_defs->ENSEMBL_SITETYPE;
+  my $sub_type      = $species_defs->ENSEMBL_SUBTYPE;
   my @CCDS          = @{$object->Obj->get_all_DBLinks('CCDS')};
   my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db            = $object->get_db;
@@ -97,7 +97,7 @@ sub content {
   }
 
   ## add RefSeq match info where appropriate
-  if ($hub->species eq 'Homo_sapiens') {
+  if ($hub->species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
     my $url  = $hub->url({
       type   => 'Gene',
       action => 'Matches',
@@ -114,7 +114,7 @@ sub content {
     }  
     if ($has_mane_select) {
       $msg = 'This Ensembl/Gencode gene contains transcript(s) for which we have <a href="/info/genome/genebuild/mane.html">selected identical RefSeq transcript(s)</a>.';
-    } 
+    }
     $table->add_row('RefSeq', sprintf(qq{%s If there are other RefSeq transcripts available they will be in the <a href="%s">External references</a> table}, $msg, $url)); 
   }
 
