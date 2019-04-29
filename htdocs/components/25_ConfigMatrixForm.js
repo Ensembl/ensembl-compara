@@ -1657,6 +1657,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
   displayMatrix: function() {
     var panel = this;
 
+    if($.isEmptyObject(panel.localStoreObj)) { return; }
+
     panel.trackPopup = panel.el.find('div.track-popup');
 
     var xContainer = '<div  class="xContainer">';
