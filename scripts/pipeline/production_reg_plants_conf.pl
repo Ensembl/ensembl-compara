@@ -45,24 +45,24 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 
 # previous release core databases will be required by LoadMembers only
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
-my $suffix_separator = '__cut_here__';
-Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-ens-mirror-3',
-    -port   => 4275,
-    -user   => 'ensro',
-    -pass   => '',
-    -db_version     => $prev_release,
-    -species_suffix => $suffix_separator.$prev_release,
-);
-Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
-Bio::EnsEMBL::Registry->load_registry_from_db(
-    -host   => 'mysql-ens-mirror-1',
-    -port   => 4240,
-    -user   => 'ensro',
-    -pass   => '',
-    -db_version     => $prev_release,
-    -species_suffix => $suffix_separator.$prev_release,
-);
+#my $suffix_separator = '__cut_here__';
+#Bio::EnsEMBL::Registry->load_registry_from_db(
+#    -host   => 'mysql-ens-mirror-3',
+#    -port   => 4275,
+#    -user   => 'ensro',
+#    -pass   => '',
+#    -db_version     => $prev_release,
+#    -species_suffix => $suffix_separator.$prev_release,
+#);
+#Bio::EnsEMBL::Registry->remove_DBAdaptor('saccharomyces_cerevisiae'.$suffix_separator.$prev_release, 'core'); # never use EG's version of yeast
+#Bio::EnsEMBL::Registry->load_registry_from_db(
+#    -host   => 'mysql-ens-mirror-1',
+#    -port   => 4240,
+#    -user   => 'ensro',
+#    -pass   => '',
+#    -db_version     => $prev_release,
+#    -species_suffix => $suffix_separator.$prev_release,
+#);
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 
@@ -81,7 +81,7 @@ my $compara_dbs = {
     'lastz' => [ 'mysql-ens-compara-prod-8', 'mateus_plants_lastz_97' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-6', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'mateus_synteny_plants_44_97' ],
 }; 
 
 add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
