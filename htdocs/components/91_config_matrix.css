@@ -186,6 +186,7 @@ div.flex-row                          { display: flex; }
 .circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; }
 span.error                            { color: [[HOVER]]; margin-left: 18px; font-weight: bold; }
 span.search-error                     { margin: 22px; position: absolute;}
+span.error._ajax                      { top: 250px; position: absolute; width: 500px; display: none; }
 .no-left-margin                       { margin-left: 0px; }
 .hidden                               { display: none; }
 

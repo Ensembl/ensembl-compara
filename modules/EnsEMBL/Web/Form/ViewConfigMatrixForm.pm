@@ -96,10 +96,12 @@ sub build {
 
         <div id="dx-content" class="tab-content active" data-rhsection-id="dx">
           <span class="hidden rhsection-id">dx</span>
+          <span class="error _ajax">There is a problem with the data request, please try again later.</span>
         </div>
 
         <div id="dy-content" class="tab-content" data-rhsection-id="dy">
           <span class="hidden rhsection-id">dy</span>
+          <span class="error _ajax">There is a problem with the data request, please try again later.</span>
         </div>
       </div>
   );

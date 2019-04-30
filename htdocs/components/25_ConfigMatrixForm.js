@@ -48,6 +48,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.clearAll        = this.el.find("span.clearall");
+    this.elLk.ajaxError       = this.el.find('span.error._ajax');
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'RegMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
@@ -73,6 +74,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       dataType: 'json',
       context: this,
       success: function(json) {
+        if(this.checkError(json)) {
+          console.log("Fetching extra information error....");
+          return;
+        } else {
+          panel.elLk.ajaxError.hide();
+        }
         Object.assign(this.json, json);
         $.each(json.info, function(k, v) {
           if (v.search_terms){
@@ -85,6 +92,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           dataType: 'json',
           context: this,
           success: function(json) {
+            if(this.checkError(json)) {
+              console.log("Fetching main regulation data error....");
+              return;
+            } else {
+              panel.elLk.ajaxError.hide();
+            }
             Object.assign(this.json, json);
             this.trackTab();
             this.populateLookUp();
@@ -101,11 +114,13 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           },
           error: function() {
             this.showError();
+            return;
           }
         });
       },
       error: function() {
         this.showError();
+        return;
       }
     });
 
@@ -199,6 +214,25 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
     }
+  },
+
+  //Function to check if ajax request return 404 (Because bad request are returned as success with header: 404)
+  checkError: function(json) {
+    var panel = this;
+
+    if(json.header.status === '404'){
+      panel.showError();
+      return 1;
+    } else {
+      return 0;
+    }
+  },
+
+  //Function to show error when ajax request failed
+  showError: function() {
+    var panel = this;
+
+    panel.elLk.ajaxError.show();
   },
 
   // Redraw matrix as there may be updates to localStore
