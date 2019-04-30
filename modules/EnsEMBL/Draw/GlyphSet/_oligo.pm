@@ -88,6 +88,7 @@ sub href {
     'ftype'  => 'ProbeFeature',
     'id'     => $probe_name,
     'ptype'  => $probe_type,
+    'vendor' => $vendor,
     'array'  => $array_name,
   }); 
 }

@@ -73,6 +73,8 @@ sub get_data {
                     'spectrum'        => $self->{'my_config'}->get('spectrum'),
                     'colorByStrand'   => $self->{'my_config'}->get('colorByStrand'),
                     'use_synonyms'    => $hub->species_defs->USE_SEQREGION_SYNONYMS,
+                    'link_template'   => $self->{'my_config'}->get('link_template'),
+                    'link_label'      => $self->{'my_config'}->get('link_label'),
                     'zmenu_extras'    => $self->{'my_config'}->get('zmenu_extras'), 
                     'custom_fields'   => $self->{'my_config'}->get('custom_fields'), 
                     };

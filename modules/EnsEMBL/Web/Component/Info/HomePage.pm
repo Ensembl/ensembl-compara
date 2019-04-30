@@ -259,6 +259,12 @@ sub variation_text {
 
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
+
+    ## Split variation param if required (e.g. vervet monkey)
+    my ($v, $vf) = split(';vf=', $sample_data->{'VARIATION_PARAM'});
+    my %v_params = ('v' => $v);
+    $v_params{'vf'} = $vf if $vf;
+
     my $ftp          = $self->ftp_url;
        $html         = sprintf('
       <div class="homepage-icon">
@@ -271,9 +277,9 @@ sub variation_text {
       <p><a href="/info/genome/variation/" class="nodeco">%sMore about variation in %s</a></p>
       %s',
       
-      $sample_data->{'VARIATION_PARAM'} ? sprintf(
+      $v ? sprintf(
         $self->{'img_link'},
-        $hub->url({ type => 'Variation', action => 'Explore', v => $sample_data->{'VARIATION_PARAM'}, __clear => 1 }),
+        $hub->url({ type => 'Variation', action => 'Explore', __clear => 1, %v_params }),
         "Go to variant $sample_data->{'VARIATION_TEXT'}", 'variation', 'Example variant'
       ) : '',
       

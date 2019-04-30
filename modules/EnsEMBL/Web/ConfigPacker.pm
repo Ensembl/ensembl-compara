@@ -368,12 +368,32 @@ sub _summarise_core_tables {
 #---------------
 #
 # * Assemblies...
+# Factor this out bc collections
+  $self->_add_assembly_versions($db_name);
+  
+#-------------
+#
+# * Transcript biotypes
+# get all possible transcript biotypes
+  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
+    'SELECT DISTINCT(biotype) FROM transcript;'
+  )};
+
+#----------
+  $dbh->disconnect();
+}
+
+sub _add_assembly_versions {
+  my $self   = shift;
+  my $db_name = shift; 
+  my $dbh    = $self->db_connect( $db_name );
+  
 # This is a bit ugly, because there's no easy way to sort the assemblies via MySQL
-  $t_aref = $dbh->selectall_arrayref(
+  my $aref = $dbh->selectall_arrayref(
     'select version, attrib from coord_system where version is not null order by rank' 
   );
   my (%default, %not_default);
-  foreach my $row (@$t_aref) {
+  foreach my $row (@$aref) {
     my $version = $row->[0];
     my $attrib  = $row->[1];
     if ($attrib =~ /default_version/) {
@@ -387,17 +407,6 @@ sub _summarise_core_tables {
   my @assemblies = keys %default;
   push @assemblies, sort keys %not_default;
   $self->db_tree->{'CURRENT_ASSEMBLIES'} = join(',', @assemblies);
-  
-#-------------
-#
-# * Transcript biotypes
-# get all possible transcript biotypes
-  @{$self->db_details($db_name)->{'tables'}{'transcript'}{'biotypes'}} = map {$_->[0]} @{$dbh->selectall_arrayref(
-    'SELECT DISTINCT(biotype) FROM transcript;'
-  )};
-
-#----------
-  $dbh->disconnect();
 }
 
 sub _summarise_xref_types {
@@ -746,7 +755,7 @@ sub _summarise_funcgen_db {
 ### the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
     'select
-      distinct epigenome.display_label, epigenome.epigenome_id, 
+      distinct epigenome.short_name, epigenome.epigenome_id, 
                 epigenome.description
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
@@ -766,7 +775,7 @@ sub _summarise_funcgen_db {
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.display_label, epigenome.epigenome_id, epigenome.description
+        epigenome.short_name, epigenome.epigenome_id, epigenome.description
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -822,7 +831,7 @@ sub _summarise_funcgen_db {
 	        select 
 	          logic_name,
 	          epigenome_id,
-	          epigenome.display_label,
+	          epigenome.short_name,
             epigenome.description,
             displayable,
             segmentation_file.name
@@ -905,7 +914,7 @@ sub _summarise_funcgen_db {
   while (my ($set, $classes) = each(%sets)) {
     my $ft_aref = $dbh->selectall_arrayref(qq(
         select
-            epigenome.display_label,
+            epigenome.short_name,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
         from
@@ -914,8 +923,9 @@ sub _summarise_funcgen_db {
             join epigenome using (epigenome_id)
         where
             class in ($classes)
+            and peak_calling.run_failed IS NULL
         group by
-            epigenome.display_label,
+            epigenome.short_name,
             peak_calling.feature_type_id,
             peak_calling.peak_calling_id
     ));
@@ -1520,6 +1530,7 @@ sub _summarise_go_db {
       from ontology
         join term using (ontology_id)
       where is_root = 1
+       and is_obsolete = 0
       order by ontology.ontology_id');
   foreach my $row (@$t_aref) {
       my ($oid, $ontology, $root_term, $description) = @$row;

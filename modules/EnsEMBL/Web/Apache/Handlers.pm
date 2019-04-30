@@ -105,8 +105,8 @@ sub get_redirect_uri {
     return $uri =~ s/Summary/Explore/r;
   }
 
-  if ($uri =~ /\/psychic/) {
-    return $uri =~ s/psychic/Psychic/r;
+  if ($uri =~ /\/Multi\/psychic/) {
+    return $uri =~ s/\/Multi\/psychic/\/Multi\/Psychic/r;
   }
 
   ## quick fix for solr autocomplete js bug
@@ -537,7 +537,8 @@ sub handler {
   return DECLINED unless defined $response_code;
 
   # kill off the process when it grows too large
-  $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
+  # Rely on OOB now. (Mart exceeds what this package can handle)
+#  $r->push_handlers(PerlCleanupHandler => \&Apache2::SizeLimit::handler) if $response_code == OK;
 
   tidy_databases();
 

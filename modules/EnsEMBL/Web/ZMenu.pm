@@ -209,10 +209,12 @@ sub render {
         if ($entry->{'abs_url'}) {
           $value = $entry->{'link'};
         } else {
+          my $link_rel = $entry->{'link_rel'} ? sprintf(' rel="%s"', $entry->{'link_rel'}) 
+                                              : $entry->{'external'} ? ' rel="external"' : '';
           $value = sprintf(
             '<a href="%s"%s%s>%s%s%s</a>',
             encode_entities(decode_entities($entry->{'link'})), # Decode links before encoding them stops double encoding when the link is created by EnsEMBL::Web::ExtURL->get_url
-            $entry->{'external'} ? ' rel="external"' : '',
+            $link_rel,
             $entry->{'link_class'} ? qq( class="$entry->{'link_class'}") : '',
             encode_entities($entry->{'label'}),
             $entry->{'label_html'},

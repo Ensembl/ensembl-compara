@@ -340,8 +340,14 @@ sub _add_trackhub {
     push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
     my $description = $hub_info->{'details'}{'longLabel'};
-    if ($hub_info->{'details'}{'descriptionUrl'}) {
-      $description .= sprintf ' <a href="%s">More information</a>', $hub_info->{'details'}{'descriptionUrl'};
+    my $desc_url = $hub_info->{'details'}{'descriptionUrl'};
+    if ($desc_url) {
+      ## fix relative URLs
+      if ($desc_url !~ /^http/) {
+        (my $base_url = $url) =~ s/\w+\.txt$//;
+        $desc_url = $base_url.$desc_url;
+      }
+      $description .= sprintf ' <a href="%s">More information</a>', $desc_url;
     }
 
     my $menu     = $existing_menu || $self->tree->root->append_child($self->create_menu_node($menu_name, $menu_name, { external => 1, trackhub_menu => 1, description =>  $description}));
@@ -608,6 +614,8 @@ sub _add_trackhub_tracks {
                     description     => $name.': '.$track->{'longLabel'},
                     desc_url        => $track->{'description_url'},
                     signal_range    => $track->{'signal_range'},
+                    link_template   => $track->{'url'},
+                    link_label      => $track->{'urlLabel'},
                     };
 
       # Graph range - Track Hub default is 0-127
@@ -930,6 +938,8 @@ sub _add_bigbed_track {
     strand          => $args{'source'}{'strand'} || $strand,
     style           => $args{'source'}{'style'},
     longLabel       => $args{'source'}{'longLabel'},
+    link_template   => $args{'source'}{'link_template'},
+    link_label      => $args{'source'}{'link_label'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
     default_display => $args{'source'}{'default'} || $default,

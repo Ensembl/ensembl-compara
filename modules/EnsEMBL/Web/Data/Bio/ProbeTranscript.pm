@@ -17,13 +17,9 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Data::Bio::ProbeFeature;
+package EnsEMBL::Web::Data::Bio::ProbeTranscript;
 
-### NAME: EnsEMBL::Web::Data::Bio::ProbeFeature
-### Base class - wrapper around a Bio::EnsEMBL::ProbeFeature API object 
-
-### STATUS: Under Development
-### Replacement for EnsEMBL::Web::Object::ProbeFeature
+### NAME: EnsEMBL::Web::Data::Bio::ProbeTranscript
 
 ### DESCRIPTION:
 ### This module provides additional data-handling
@@ -41,38 +37,29 @@ sub convert_to_drawing_parameters {
   my $self = shift;
   my $data = $self->data_objects;
   my $results = [];
-  my %seen;
 
-  foreach my $probe_feature (@$data) {
-    if (ref($probe_feature) =~ /UnmappedObject/) {
-      my $unmapped = $self->unmapped_object($probe_feature);
+  foreach (@$data) {
+    my $t = $_->{'Transcript'};
+    my $m = $_->{'Mapping'};
+    if (ref($t) =~ /UnmappedObject/) {
+      my $unmapped = $self->unmapped_object($t);
       push(@$results, $unmapped);
     }
     else {
-      my $name = join ' ', map { /^(.*):(.*):\2/? "$1:$2" : $_ } sort @{$probe_feature->probe->get_all_probenames()};
-      my $features = $probe_feature->probe->get_all_ProbeFeatures();
-      my $f = $features->[0];
-      my $loc = $f->seq_region_name.':'.$f->start.'-'.$f->end;
-      next if $seen{$loc};
-      $seen{$loc} = 1;
       push @$results, {
-          'region'      => $f->seq_region_name,
-          'start'       => $f->start,
-          'end'         => $f->end,
-          'strand'      => $f->strand,
-          'length'      => $f->end-$f->start+1,
-          'label'       => $name,
-          'name'        => $name,
-          'sequence'    => $f->probe->sequence,
-          'mismatches'  => $f->mismatchcount, 
-      };
+        'region'   => $t->seq_region_name,
+        'start'    => $t->start,
+        'end'      => $t->end,
+        'label'    => $t->stable_id,
+        'trans_id' => [ $t->stable_id ],
+        'extname'  => $t->external_name,
+        'extra'    => {'description' => $m->description},
+      }
+
     }
   }
-  my $extra_columns = [
-                        {'key' => 'mismatches', 'title' => 'Mismatches'}, 
-  ];
+  my $extra_columns = [{'key' => 'description', 'title' => 'Description'}];
   return [$results, $extra_columns];
-
 }
 
 1;

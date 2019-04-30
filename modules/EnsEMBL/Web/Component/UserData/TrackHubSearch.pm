@@ -100,7 +100,7 @@ sub content {
 
     if ($message) {
       $html .= $message;
-      $html .= sprintf('<p>You can search the <a href="%s">Track Hub Registry website</a> for the full range of publicly available data.</p>', $sd->TRACKHUB_REGISTRY_UR);
+      $html .= sprintf('<p>You can search the <a href="%s">Track Hub Registry website</a> for the full range of publicly available data.</p>', $sd->TRACKHUB_REGISTRY_URL);
     }
     else {
       ## Add remaining fields and show form

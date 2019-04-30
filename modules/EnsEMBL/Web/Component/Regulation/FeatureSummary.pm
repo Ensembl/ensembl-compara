@@ -53,6 +53,7 @@ sub content {
     'slice_number',     => '1|1',
   });
 
+  $wuc->{'data_by_cell_line'} = $self->new_object('Slice', $object_slice, $object->__data)->get_cell_line_data($wuc);
 
   my $image    = $self->new_image( $object_slice, $wuc, [$object->stable_id] );
       $image->imagemap           = 'yes';

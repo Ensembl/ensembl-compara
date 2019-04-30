@@ -58,6 +58,7 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;  
   my $species     = $hub->species;
+  my $sub_type    = $hub->species_defs->ENSEMBL_SUBTYPE;
   my $table       = $self->new_twocol;
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
@@ -172,25 +173,30 @@ sub transcript_table {
     my $action      = $hub->action;
     @proj_attrib    = @{ $gene->get_all_Attributes('proj_parent_g') };
     my %biotype_rows;
+    my $MANE_attrib_code = 'MANE_Select';
 
     my $trans_attribs = {};
     my $trans_gencode = {};
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
+      foreach my $attrib_type ('CDS_start_NF','CDS_end_NF','gencode_basic','TSL','appris',$MANE_attrib_code) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         next unless $attrib;
         if($attrib_type eq 'gencode_basic' && $attrib->value) {
           $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-        } elsif ($attrib_type eq 'appris'  && $attrib->value) {
-          ## There should only be one APPRIS code per transcript
+        } 
+        elsif ($attrib_type eq 'appris'  && $attrib->value) {
+          ## Assume there is only one APPRIS attribute per transcript
           my $short_code = $attrib->value;
           ## Manually shorten the full attrib values to save space
           $short_code =~ s/ernative//;
           $short_code =~ s/rincipal//;
           $trans_attribs->{$trans->stable_id}{'appris'} = [$short_code, $attrib->value]; 
-          last;
-        } else {
+          }
+        elsif ($attrib_type eq $MANE_attrib_code && $attrib && $attrib->value) {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib;
+        }
+        else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
       }
@@ -238,13 +244,14 @@ sub transcript_table {
     );
 
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
-    
     my @rows;
    
     my %extra_links = (
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
-      refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
     );
+    if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
+      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1 };
+    }
     my %any_extras;
  
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
@@ -301,7 +308,6 @@ sub transcript_table {
           push @flags, helptip("TSL:$tsl", get_glossary_entry($hub, "TSL:$tsl").get_glossary_entry($hub, 'TSL'));
         }
       }
-
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
           push @flags, helptip('GENCODE basic', $gencode_desc);
@@ -311,6 +317,12 @@ sub transcript_table {
         my ($code, $key) = @{$trans_attribs->{$tsi}{'appris'}};
         my $short_code = $code ? ' '.uc($code) : '';
           push @flags, helptip("APPRIS$short_code", get_glossary_entry($hub, "APPRIS: $key").get_glossary_entry($hub, 'APPRIS'));
+      }
+      my $refseq_url;
+      if (my $mane_attrib = $trans_attribs->{$tsi}{$MANE_attrib_code}) {
+        my $refseq_id = $mane_attrib->value;
+        $refseq_url  = $hub->get_ExtURL_link($refseq_id, 'REFSEQ_MRNA', $refseq_id);
+        push @flags, helptip($mane_attrib->name, get_glossary_entry($hub, $mane_attrib->name)); 
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
@@ -334,20 +346,25 @@ sub transcript_table {
         has_ccds    => $ccds eq '-' ? 0 : 1,
         cds_tag     => $cds_tag,
         gencode_set => $gencode_set,
+        refseq_match  => $refseq_url ? $refseq_url : '-',
         options     => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags       => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
+        flags       => @flags ? join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags) : '-',
         evidence    => join('', @evidence),
       };
-      
+
       $biotype_text = '.' if $biotype_text eq 'Protein coding';
       $biotype_rows{$biotype_text} = [] unless exists $biotype_rows{$biotype_text};
       push @{$biotype_rows{$biotype_text}}, $row;
     }
+
     foreach my $k (sort { $extra_links{$a}->{'order'} cmp
                           $extra_links{$b}->{'order'} } keys %any_extras) {
       my $x = $extra_links{$k};
       push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
     }
+    if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
+      push @columns, { key => 'refseq_match', sort => 'html', title => 'RefSeq Match' };
+    }  
     push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
 
     ## Additionally, sort by CCDS status and length
@@ -550,7 +567,7 @@ sub about_feature {
     
     my $variation_url = $hub->url({
       type   => 'Transcript',
-      action => 'ProtVariations',
+      action => 'Variation_Transcript/Table',
       g      => $gene->stable_id
     });     
    
@@ -564,10 +581,10 @@ sub about_feature {
                         $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
                       ) if($avail->{has_domains});
 
-    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s %s</a>', 
+    push @str_array, sprintf('is associated with <a class="dynamic-link"href="%s">%s variant %s</a>',
                         $variation_url, 
                         $avail->{has_variations}, 
-                        $avail->{has_variations} eq "1" ? "variation" : "variations",
+                        $avail->{has_variations} eq "1" ? "allele" : "alleles",
                       ) if($avail->{has_variations});    
     
     push @str_array, sprintf('maps to <a class="dynamic-link" href="%s">%s oligo %s</a>',    
@@ -1108,10 +1125,6 @@ sub _sort_similarity_links {
       $word .= " ($primary_id)" if $A eq 'MARKERSYMBOL';
 
       if ($link) {
-        ## KEGG Enzyme xrefs are compound, consisting of pathway and enzyme ids.
-        ## Need to modify the xref for linkouts to work.
-        $link =~ s/%2B/&multi_query=/ if $externalDB eq 'KEGG_Enzyme';
-        
         $text = qq{<a href="$link" class="constant">$word</a>};
       } else {
         $text = $word;

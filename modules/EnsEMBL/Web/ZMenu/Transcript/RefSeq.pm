@@ -32,18 +32,23 @@ sub content {
   my $object      = $self->object;
   my $gene        = $object->gene;
   my $gene_id     = $gene->stable_id;
-  my $gene_xref   = $gene->display_xref->primary_id;
+  my $gene_xref   = $gene->display_xref && $gene->display_xref->primary_id;
   my $transcript_id      = $object->Obj->stable_id;
-  my $transcript_xref    = $object->Obj->display_xref->primary_id;
+  my $transcript_xref    = $object->Obj->display_xref && $object->Obj->display_xref->primary_id;
   my $transcript_version = $object->Obj->version;
   my $transcript_link    = $transcript_version ? $transcript_id.'.'.$transcript_version : $transcript_id;
   my $translation = $object->Obj->translation;
  
+  $gene_xref ||= $gene_id;
+  $transcript_xref ||= $transcript_id;
+
   $self->caption($gene_xref);
 
   #remove standard links to gene pages and replace with one to NCBI
   $self->delete_entry_by_type('Gene');
   $self->delete_entry_by_value($gene_id);
+
+
   $self->add_entry({
     type     => 'RefSeq gene',
     label    => $gene_xref,
@@ -76,7 +81,7 @@ sub content {
   if ($translation) {
     my $translation_id = $translation->stable_id;
     $self->delete_entry_by_type('Protein');
-    my $translation_xref =  $translation->get_all_DBEntries('GenBank')->[0]->primary_id;
+    my $translation_xref =  $translation->get_all_DBEntries('GenBank')->[0]->primary_id || $translation_id;
     $self->add_entry({
       type     => 'RefSeq protein',
       label    => $translation_xref,

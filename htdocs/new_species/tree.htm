@@ -50,7 +50,6 @@
   }
 
   .info {
-    position: absolute;
     right: 10px;
     top: 10px;
     background: #fff;
@@ -59,32 +58,92 @@
     padding: 8px;
     color: #999;
   }
+  #msg {
+    font-size: 16px;
+    color: #dc1010;
+  }
   .info td{
     padding: 4px;
   }
   #footer {
-    position: absolute;
-    top: 0;
     z-index: 1;
     display: block;
-    font-size: 36px;
+    font-size: 30px;
     font-weight: 300;
     text-shadow: 0 1px 0 #fff;
     left: 10px;
     text-align: right;
   }
   .hint {
-    position: absolute;
-    right: 0;
     /*width: 1280px;*/
     font-size: 12px;
     color: #999;
   }
+  #custom-handle {
+    width: 2em;
+    height: 2em;
+    font-size: 16px;
+    top: 50%;
+    margin-top: -1em;
+    text-align: center;
+    line-height: 2em;
+  }
+  #slider {
+    margin: 16px;
+    width: 50%;
+  }
+  .wrapper {
+    display: flex;
+    justify-content: space-between;
+  }
 </style>
-<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="tree.js"></script>
+<script>
+  $(document).ready(function() {
+    var release = window.location.search.split('=')[1] || 0;
+    $.ajax({
+      url: 'https://rest.ensembl.org/info/software?content-type=application/json',
+      success: function(json) {
+        var last_release_no = json.release;
+        defaultSelected = release || last_release_no;
+        var handle = $( "#custom-handle" );
+        $( "#slider" ).slider({
+          create: function() {
+            handle.text( $( this ).slider( "value" ) );
+          },
+          slide: function( event, ui ) {
+            handle.text( ui.value );
+          },
+          min: 1,
+          max: last_release_no + 1,
+          value: defaultSelected,
+          change: function( event, ui ) {
+            $('#tree-container').html('');
+            draw(ui.value)
+          }
+        });
+        draw(defaultSelected)
+      }
+    });
+    
+
+  })
+</script>
 <body>
+  <div class="wrapper">
+    <div id="footer">
+      <span id="footer-msg">New species in Release: <span id="rel"></span></span>
+      <div class="hint">Click to expand or collapse</div>
+      <div id="msg"></div>
+    </div>
+
+    <div id="slider">
+      <div id="custom-handle" class="ui-slider-handle"></div>
+    </div>
     <div class="info">
       <table>
         <tr>
@@ -98,11 +157,9 @@
         </tr>
       </table>      
     </div>
-    <div id="tree-container"></div>
-    <div id="footer">
-      <span id="footer-msg">New species in Release: <span id="rel"></span></span>
-      <div class="hint">click or option-click to expand or collapse</div>
-    </div>
+  </div>
+
+  <div id="tree-container"></div>
 
 </body>
 </html>

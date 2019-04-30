@@ -28,27 +28,16 @@ sub _add_nav_entries {
 
   my @zmenu_links = qw(regulation_view);
 
+  my $action = $self->hub->param('act');
   my $config = $self->hub->param('config');
-  if(grep { $config eq $_ } @zmenu_links) {
-    my $cell_type_url = $self->hub->url('MultiSelector', {
-      type => 'Regulation',
-      action   => 'CellTypeSelector',
-      image_config => $config,
+  if(($evidence&1) || grep { $config eq $_ } @zmenu_links) {
+    my $matrix_url = $self->hub->url('Config', {
+                                          action        => $action,
+                                          matrix        => 'RegMatrix',
+                                          menu          => 'regulatory_features',
     });
-    my $evidence_url = $self->hub->url('MultiSelector', {
-      type => 'Regulation',
-      action => 'EvidenceSelector',
-      image_config => $config,
-    });
-    $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });
-    $self->add_entry({ label => "Select evidence to show", link => $evidence_url, link_class => 'modal_link' });
-  }
-  if($evidence&1) {
-    my $signal_url = $self->hub->url({
-      action => $self->hub->param('act'),
-      plus_signal => $config,
-    });
-    $self->add_entry({ label => "Also show raw signal", link => $signal_url });
+    $self->add_entry({ label => "Configure tracks", link => $matrix_url, 
+                        link_class => 'modal_link', link_rel => 'modal_config_'.lc($action)  });
   }
 }
 

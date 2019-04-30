@@ -155,12 +155,84 @@ sub _add_track {
     %$options
   };
 
-  $self->_add_to_matrix($data, $menu) if $data->{'matrix'};
+  $self->_add_to_old_matrix($data, $menu) if $data->{'matrix'};
 
   return $menu->append_child($self->create_track_node($name, $data->{'name'}, $data));
 }
 
-sub _add_to_matrix {
+sub _add_to_new_matrix {
+  my ($self, $data, $menu) = @_;
+  my $menu_data    = $menu->data;
+  my $matrix       = $data->{'matrix'};
+  my $caption      = $data->{'caption'};
+  my $column       = $matrix->{'column'};
+  my $subset       = $matrix->{'menu'};
+  my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
+  my $column_key   = clean_id("${subset}_$column");
+  my $column_track = $self->get_node($column_key);
+
+  unless ($column_track && $column_track->parent_node) {
+    $column_track = $self->create_track_node($column_key, $data->{'track_name'} || $column, {
+      renderers   => $data->{'renderers'},
+      label_x     => $column,
+      c_header    => $matrix->{'column_label'},
+      display     => 'off',
+      subset      => $subset,
+      $matrix->{'row'} ? (matrix => 'column') : (matrix => 1), 
+      column_order => $matrix->{'column_order'} || 999999,
+      %{$data->{'column_data'} || {}}
+    });
+
+    $menu->insert_alphabetically($column_track, 'label_x');
+  }
+
+  if ($matrix->{'row'}) {
+    push @{$column_track->data->{'subtrack_list'}}, [ $caption, $column_track->data->{'no_subtrack_description'} ? () : $data->{'description'} ];
+    $data->{'option_key'} = clean_id("${subset}_${column}_$matrix->{'row'}");
+  }
+
+  $data->{'column_key'}  = $column_key;
+  $data->{'menu'}        = 'matrix_subtrack';
+  $data->{'source_name'} = $data->{'name'};
+
+  if (!$data->{'display'} || $data->{'display'} eq 'off') {
+    $data->{'display'} = 'default';
+  }
+
+  if (!$menu_data->{'matrix'}) {
+    my $hub = $self->hub;
+
+    $menu_data->{'menu'}   = 'matrix';
+    $menu_data->{'url'}    = $hub->url('Config', { 'matrix' => 1, 'menu' => $menu->id });
+    $menu_data->{'matrix'} = {
+      section => $menu->parent_node->data->{'caption'},
+      header  => $menu_data->{'caption'},
+    }
+  }
+
+  foreach (@rows) {
+    $subset         = $_->{'subset'};
+    my $option_key  = "${subset}_${column}_$_->{'row'}";
+    my $node        = $self->get_node($option_key);
+    my $display     = $_->{'renderer'} || 'off';
+
+    if ($node) {
+      $node->set_data('display', $display);
+    } else {
+
+      $node = $column_track->append_child($self->create_option_node($option_key, $_->{'row'}, $display, undef, $data->{'renderers'}));
+
+      $node->set_data('menu', 'no');
+      $node->set_data('caption', "$column - $_->{'row'}");
+      $node->set_data('group', $_->{'group'}) if $_->{'group'};
+      $menu_data->{'matrix'}{'rows'}{$_->{'row'}} = { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, row_order => $_->{'row_order'}, column => $column };
+    }
+  }
+
+  return $column_track;
+}
+
+sub _add_to_old_matrix {
   my ($self, $data, $menu) = @_;
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
@@ -230,6 +302,7 @@ sub _add_to_matrix {
 
   return $column_track;
 }
+
 
 sub add_dna_align_features {
   ## Loop through all core databases - and attach the dna align features from the dna_align_feature tables...
@@ -1001,7 +1074,7 @@ sub add_regulation_features {
   }
 
   # Add other bigBed-based tracks
-  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA Methylation'));
+  my $methylation_menu  = $reg_regions->before($self->create_menu_node('functional_dna_methylation', 'DNA methylation'));
   my $db_tables         = {};
   if ( $self->databases->{'DATABASE_FUNCGEN'} ) {
     $db_tables          = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
@@ -1037,6 +1110,23 @@ sub add_regulation_features {
 
   $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });
 
+  ## Add motif features if required
+  if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
+    my $motif_feats = $reg_regions->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
+      db          => $key,
+      glyphset    => 'fg_motif_features',
+      sources     => 'undef',
+      strand      => 'r',
+      labels      => 'on',
+      depth       => 1,
+      colourset   => 'fg_motif_features',
+      display     => 'off',
+      description => 'Transcription Factor Binding Motif sites', 
+      renderers   => ['off', 'Off', 'compact', 'Compact'],
+    });
+    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
+  }
+
 }
 
 sub add_regulation_builds {
@@ -1071,26 +1161,9 @@ sub add_regulation_builds {
 
   my $db_tables = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
 
-  ## Add motif features if required
-  if ($self =~ /contigviewbottom/ || $self =~ /reg_summary/) {
-    my $motif_feats = $build_menu->append_child($self->create_track_node('fg_motif_features', 'Motif features'), {
-      db          => $key,
-      glyphset    => 'fg_motif_features',
-      sources     => 'undef',
-      strand      => 'r',
-      labels      => 'on',
-      depth       => 1,
-      colourset   => 'fg_motif_features',
-      display     => 'off',
-      description => 'Transcription Factor Binding Motif sites', 
-      renderers   => ['off', 'Off', 'compact', 'Compact'],
-    });
-    $self->add_track('information', 'fg_motif_features_legend',      'Motif Feature Legend',              'fg_motif_features_legend',   { strand => 'r', colourset => 'fg_motif_features'   });
-  }
-
   #######  NOW DO BIG MATRIX NODE!
 
-  my $menu_title = 'Features by Cell Line';
+  my $menu_title    = 'Features by Cell/Tissue';
   my $menu = $reg_menu->append_child($self->create_menu_node('regulatory_features', $menu_title,
       {
         menu   => 'matrix',
@@ -1098,15 +1171,13 @@ sub add_regulation_builds {
         matrix => {
           section     => $menu_title,
           description => $db_tables->{'regulatory_build'}{'analyses'}{'Regulatory_Build'}{'desc'}{'core'},
-          axes        => { x => 'Epigenome', y => 'Experimental data' },
+          axes        => { x => 'Cell/Tissue', y => 'Experiments' },
         }
   }));
 
 
-# =pod
   my $reg_feats     = $menu->append_child($self->create_menu_node('reg_features', 'Epigenomic activity'));
   my $reg_segs      = $menu->append_child($self->create_menu_node('seg_features', 'Segmentation features'));
-# =cut
 
   my $adaptor       = $db->get_FeatureTypeAdaptor;
   my $evidence_info = $adaptor->get_regulatory_evidence_info; #get all experiment
@@ -1125,18 +1196,6 @@ sub add_regulation_builds {
   @cell_lines = sort { lc $a cmp lc $b } @cell_lines;
 
   my (@renderers, %matrix_rows);
-
-  # FIXME: put this in db
-  my %default_evidence_types = (
-    CTCF     => 1,
-    DNase1   => 1,
-    H3K4me3  => 1,
-    H3K36me3 => 1,
-    H3K27me3 => 1,
-    H3K9me3  => 1,
-    PolII    => 1,
-    PolIII   => 1,
-  );
 
   if ($data->{$key_2}{'renderers'}) {
     push @renderers, $_, $data->{$key_2}{'renderers'}{$_} for sort keys %{$data->{$key_2}{'renderers'}};
@@ -1165,11 +1224,11 @@ sub add_regulation_builds {
       foreach (@{$all_types{$set}||[]})  {
       #warn ">>> ADDING TRACKS TO MATRIX FOR ID ".$_->dbID;
         if ($set_info->{$set}{$_->dbID}) {
-          $matrix_rows{$cell_line}{$set}{$_->name} ||= {
+          $matrix_rows{$cell_line}{'core'}{$_->name} ||= {
+                            subset      => 'reg_feats_core',
                             row         => $_->name,
                             group       => $_->class,
                             group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2,
-                            on          => $default_evidence_types{$_->name}
                           };
         }
       }
@@ -1203,6 +1262,7 @@ sub add_regulation_builds {
       caption       => "Segmentation features",
       section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
       section       => $segs->{$key}{'web'}{'celltypename'},
+      matrix_cell   => 1,
       height        => 4,
     }));
   }
@@ -1214,7 +1274,6 @@ sub add_regulation_builds {
     my $label     = ": $cell_line";
     my %evidence_tracks;
 
-# =pod
     ## Only add regulatory features if they're in the main build
     if ($regbuild{$cell_line}) {
 
@@ -1233,10 +1292,16 @@ sub add_regulation_builds {
         section       => $cell_names{$cell_line},
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
         caption       => "Epigenome Activity",
+        matrix_cell   => 1,
       }));
     }
-# =cut
 
+    my $renderers = [
+                      'off',            'Off',
+                      'compact',        'Peaks',
+                      'signal',         'Signal',
+                      'signal_feature', 'Both',
+                    ];
     my %column_data = (
       db        => $key,
       glyphset  => 'fg_multi_wiggle',
@@ -1246,36 +1311,34 @@ sub add_regulation_builds {
       cell_line => $cell_line,
       section   => $cell_line,
       menu_key  => 'regulatory_features',
-      renderers => [
-        'off',            'Off',
-        'compact',        'Peaks',
-        'signal',         'Signal',
-        'signal_feature', 'Both',
-      ],
+      renderers => $renderers,
     );
 
     next if $params->{'reg_minimal'};
     
+    my $matrix_rows = [];
     foreach (grep exists $matrix_rows{$cell_line}{$_}, @sets) { 
       # warn Data::Dumper::Dumper $menu->id, " $cell_line" if $cell_line=~/A549/;
-      $self->_add_to_matrix({
-        track_name  => "$evidence_info->{$_}{'name'}$label",
-        section     => $cell_line,
-        matrix      => {
-                        menu          => "reg_feats_". $_,
+      push @$matrix_rows, values %{$matrix_rows{$cell_line}{$_}};
+    }
+    $self->_add_to_new_matrix({
+      track_name  => "Experiments: $label",
+      section     => $cell_line,
+      renderers   => $renderers,
+      matrix      => {
+                        menu          => "reg_feats_core",
                         column        => $cell_line,
                         column_label  => $cell_names{$cell_line},
                         section       => $cell_line,
-                        rows          => [ values %{$matrix_rows{$cell_line}{$_}} ],
-                        },
-        column_data => {
-                        set         => $_,
-                        label       => "$evidence_info->{$_}{'label'}",
-                        description => $data->{$key_2}{'description'}{$_},
+                        rows          => $matrix_rows,
+                      },
+      column_data => {
+                        set         => 'core',
+                        label       => "Experiments",
+                        description => $data->{$key_2}{'description'}{'core'},
                         %column_data
-                        },
-      }, $menu);
-    }
+                      },
+    }, $menu);
   }
 
   if ($db_tables->{'cell_type'}{'ids'}) {
@@ -1329,51 +1392,6 @@ sub update_cell_type {
   $self->save_user_settings;
 }
 
-sub update_evidence {
-  ## Updates user settings for evidences for reg based image configs
-  my ($self, $changes) = @_;
-
-  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
-    my $menu = $self->get_node($type);
-    next unless $menu;
-
-    foreach my $option (@{$menu->get_all_nodes}) {
-      for (keys %$changes) {
-        if (clean_id($option->get_data('name')) eq clean_id($_)) {
-          $self->update_track_renderer($option, $changes->{$_});
-        }
-      }
-    }
-  }
-
-  $self->save_user_settings;
-}
-
-sub update_reg_renderer {
-  ## Updates user settings for reg track renderer - signal, peak or both
-  my ($self, $renderer, $state) = @_;
-
-  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
-
-  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $self->get_node($type);
-    next unless $menu;
-    foreach my $node (@{$menu->child_nodes}) {
-      my $old = $node->get('display');
-      my $renderer = firstidx { $old eq $_ }
-        qw(off compact signal signal_feature);
-      next if $renderer <= 0;
-      $renderer |= $mask if $state;
-      $renderer &=~ $mask unless $state;
-      $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact signal signal_feature) ]->[$renderer];
-      $self->update_track_renderer($node, $renderer);
-    }
-  }
-
-  $self->save_user_settings;
-}
-
 #----------------------------------------------------------------------#
 # Functions to add tracks from variation like databases                #
 #----------------------------------------------------------------------#
@@ -1382,7 +1400,7 @@ sub add_sequence_variations {
   my ($self, $key, $hashref) = @_;
   my $menu = $self->get_node('variation');
 
-  return unless $menu && $hashref->{'variation_feature'}{'rows'} > 0;
+  return unless $menu;
 
   my $options = {
     db         => $key,
@@ -1395,14 +1413,15 @@ sub add_sequence_variations {
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
 
-  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
-    $self->add_sequence_variations_meta($key, $hashref, $options);
+  if ($hashref->{'variation_feature'}{'rows'} > 0) {
+    if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
+      $self->add_sequence_variations_meta($key, $hashref, $options);
+    } else {
+      $self->add_sequence_variations_default($key, $hashref, $options);
+    }
   } else {
-    $self->add_sequence_variations_default($key, $hashref, $options);
+    $self->add_sequence_variations_vcf($key, $hashref, $options);
   }
-
-  $self->add_sequence_variations_vcf($key, $hashref, $options);
-
   $self->add_track('information', 'variation_legend', 'Variant Legend', 'variation_legend', { strand => 'r' });
 }
 
@@ -1604,7 +1623,7 @@ sub add_sequence_variations_vcf {
   my ($self, $key, $hashref, $options) = @_;
 
   my $hub = $self->hub;
-  my $c = $hub->species_defs->multi_val('ENSEMBL_VCF_COLLECTIONS');
+  my $c = $hub->species_defs->ENSEMBL_VCF_COLLECTIONS;
   return unless $c->{'ENABLED'};
 
   # my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_menu_node('variants', 'Sequence variants');
@@ -1619,9 +1638,10 @@ sub add_sequence_variations_vcf {
   foreach my $coll(@{$ad->fetch_all_for_web}) {
     $vcf_menu->append_child($self->create_track_node("variation_vcf_".$coll->id, $coll->id, {
       %$options,
-      caption     => $coll->id,
+      caption     => 'Variants from ' . $coll->source_name,
       description => $coll->description,
       db          => 'variation',
+      display => 'default'
     }));
   }
 }

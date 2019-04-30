@@ -49,15 +49,16 @@ my $version = $SiteDefs::ENSEMBL_VERSION;
 
 my %write_dirs = (
                   'tmp'       => ['ENSEMBL_TMP_DIR', {
-                                    'tmp'         => 'ENSEMBL_TMP_DIR',
-                                    'tmp_tmp'     => 'ENSEMBL_TMP_TMP',
-                                    'server'      => 'ENSEMBL_SYS_DIR',
-                                    'img'         => 'ENSEMBL_TMP_DIR_IMG',
-                                    'precache'    => 'ENSEMBL_PRECACHE_DIR',
-                                    'udcCache'    => 'UDC_CACHEDIR',
-                                    'failure_dir' => 'ENSEMBL_FAILUREDIR',
-                                    'server/logs' => 'ENSEMBL_LOGDIR',
-                                    'procedure'   => '',
+                                    'tmp'                => 'ENSEMBL_TMP_DIR',
+                                    'tmp_tmp'            => 'ENSEMBL_TMP_TMP',
+                                    'server'             => 'ENSEMBL_SYS_DIR',
+                                    'img'                => 'ENSEMBL_TMP_DIR_IMG',
+                                    'precache'           => 'ENSEMBL_PRECACHE_DIR',
+                                    'udcCache'           => 'UDC_CACHEDIR',
+                                    'failure_dir'        => 'ENSEMBL_FAILUREDIR',
+                                    'server/logs'        => 'ENSEMBL_LOGDIR',
+                                    'server/conf/packed' => '',
+                                    'procedure'          => '',
                                   }],
                   'userdata'  => ['ENSEMBL_USERDATA_DIR', {
                                     'persistent'          => '',

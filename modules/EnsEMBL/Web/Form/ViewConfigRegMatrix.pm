@@ -36,8 +36,8 @@ sub configuration_content {
           <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
           <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
         </div>
-        <div class="horizontal-sub-header">$dimY</div>
-        <button class="fade-button reset">Reset</button>
+        <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
+        <button class="fade-button reset-button _matrix">Reset</button>
         <div class="track-popup column-cell">
           <ul>
             <li>
@@ -88,70 +88,50 @@ sub configuration_content {
 
       <div class="result-box">
         <h4>Selected tracks</h4>
+        <button class="fade-button reset-button _track">Reset tracks</button>
 
         <div class="filter-content">
           <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>
           <div class="result-content" id="dx">
+            <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <div class="sub-result-link">$dimX</div>
-            <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-            <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
+            <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>  
             <ul class="result-list hidden">
               <span class="hidden lhsection-id">dx-content</span>
             </ul>
           </div>
 
-          <h5 class="result-header">$dimY <span class="error _dy">Please select $dimY</span></h5>
+          <h5 class="result-header _dyHeader">$dimY</h5>
           <div id="dy">
             <div class="result-content" id="Histone">
               <span class="_parent-tab-id hidden">dy-tab</span>
+              <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
               <div class="sub-result-link">Histone</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Histone-content</span>
               </ul>
             </div>
             <div class="result-content" id="Open_Chromatin">
 							<span class="_parent-tab-id hidden">dy-tab</span>
+              <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
               <div class="sub-result-link">Open chromatin</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
                 <span class="hidden lhsection-id">Open_Chromatin-content</span>
               </ul>
             </div>
-            <div class="result-content" id="Polymerase">
+            <div class="result-content" id="Transcription_factors">
 							<span class="_parent-tab-id hidden">dy-tab</span>
-              <div class="sub-result-link">Polymerase</div>
+              <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
+              <div class="sub-result-link">Transcription factors</div>
               <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
               <ul class="result-list hidden">
-                <span class="hidden lhsection-id">Polymerase-content</span>
+                <span class="hidden lhsection-id">transcription_factors-content</span>
               </ul>
             </div>          
-            <div class="result-content" id="TFBS">
-              <span class="_parent-tab-id hidden">dy-tab</span>
-							<div class="sub-result-link">TFBS</div>
-              <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-              <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
-              <ul class="result-list hidden">
-                <span class="hidden lhsection-id">TFBS-content</span>
-              </ul>
-            </div>
           </div>
 
-          <h5 class="result-header">Source <span class="error _source hidden">Please select Source</span></h5>
-          <div class="result-content" id="source">
-            <ul class="result-list no-left-margin">
-              <span class="hidden lhsection-id">source-content</span>
-              <li class="noremove">
-                <span class="fancy-checkbox selected"></span><text>Blueprint</text>
-              </li>
-              <li class="noremove">
-                <span class="fancy-checkbox selected"></span><text>Another source</text>
-              </li>
-            </ul>
-          </div>
         </div>
   );
 }

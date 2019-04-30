@@ -82,7 +82,7 @@ sub content {
   my $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
   my $epigenomes = $object->regbuild_epigenomes;
 
-  foreach my $key (sort {$epigenomes->{$a} cmp $epigenomes->{$b}} keys %$epigenomes) {
+  foreach my $key (sort {lc $epigenomes->{$a} cmp lc $epigenomes->{$b}} keys %$epigenomes) {
     my $name = $epigenomes->{$key};
     my $activity = $object->activity($name) || 'UNKNOWN';
     $activity = ucfirst(lc($activity));

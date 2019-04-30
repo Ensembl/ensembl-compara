@@ -79,6 +79,7 @@ sub pointer_default {
         Xref                => [ 'rharrow', 'red' ],
         Gene                => [ 'lharrow', 'orange'],
         Transcript          => [ 'lharrow', 'blue'],
+        ProbeTranscript     => [ 'lharrow', 'blue'],
         Domain              => [ 'lharrow', 'blue' ],
         Variation           => [ 'rharrow', 'gradient', [qw(90 #0000FF #770088 #BB0044 #CC0000)]],
   );

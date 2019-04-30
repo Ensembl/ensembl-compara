@@ -416,7 +416,9 @@ sub hover_label_tabs {
   }
 
   if ($label->{'off'}) {
-    push @buttons, qq(<div class="_hl_icon hl-icon"><a href="$label->{'off'}" class="config closetrack" rel="$label->{'component'}"></a></div>);
+    my $classes = 'config closetrack';
+    $classes .= ' matrix-cell' if $label->{'matrix_cell'};
+    push @buttons, qq(<div class="_hl_icon hl-icon"><a href="$label->{'off'}" class="$classes" rel="$label->{'component'}"></a></div>);
     push @contents, qq(<div class="_hl_tab hl-tab"><p>Click on the cross to turn the track off</p></div>);
   }
 

@@ -57,7 +57,7 @@ Ensembl.extend({
         }
       } else if (ua.match(/firefox/)) {
         b.firefox = true;
-      } else if (ua.match(/msie/i)) {
+      } else if (ua.match(/msie|trident/i)) {
         b.ie = true;
       }
       return b;

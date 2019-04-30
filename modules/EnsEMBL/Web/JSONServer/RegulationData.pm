@@ -69,24 +69,23 @@ sub json_data {
     foreach (@{$evidence_info->{$set}{'classes'}}) {
       next if $_ eq 'Transcription Factor Complex'; #looks like an API bug, this shouldnt be coming back from the API as we dont need this for web display
       
-      my $evidence_group = $_ eq 'Transcription Factor' ? 'TFBS' :  $_;
+      my $evidence_group = $_ eq 'Transcription Factor' ? 'Transcription factors' :  $_;
       $evidence_group =~ s/[^\w\-]/_/g;
       $evidence->{$evidence_group} = {
-        "name"          => $_ eq 'Transcription Factor' ? 'TFBS' :  $_,
+        "name"          => $_ eq 'Transcription Factor' ? 'Transcription factors' :  $_,
         "listType"      => $_ eq 'Transcription Factor' ?  'alphabetRibbon' : '', #for the js side to list the track either its bullet point or alphabet ribbon 
         'set'           => "reg_feats_$set"
-      };
+      } if($evidence_group ne 'Polymerase');
 
       foreach (@{$adaptor->fetch_all_having_PeakCalling_by_class($_)}) {
         next if $_->class eq 'Transcription Factor Complex'; #ignoring this group as its not used
-        my $group = $_->class eq 'Transcription Factor' ? 'TFBS' : $_->class;
+        my $group = $_->class eq 'Transcription Factor' || $_->class eq 'Polymerase'  ? 'Transcription factors' : $_->class; #merging polymerase data and transcription factor data
         $group =~ s/[^\w\-]/_/g;
         push @{$evidence->{$group}->{"data"}}, $_->name;
         push @{$all_types{$set}},$_;
       }
     }
   }
-  
   $final->{data}->{evidence}->{'name'}   = 'evidence';
   $final->{data}->{evidence}->{'label'}  = 'Evidence';
   $final->{data}->{evidence}->{'data'} = $evidence;
@@ -94,20 +93,9 @@ sub json_data {
   $final->{data}->{evidence}->{'popupType'} = 'peak-signal';
   $final->{data}->{evidence}->{'renderer'} = 'peak-signal';
 
-  #by default these track are on
-  my %default_evidence_types = (
-    CTCF     => 1,
-    DNase1   => 1,
-    H3K4me3  => 1,
-    H3K36me3 => 1,
-    H3K27me3 => 1,
-    H3K9me3  => 1,
-    PolII    => 1,
-    PolIII   => 1,
-  );
-
   #get all cell types and the evidence type related to each of them (e.g: A549 -> [{evidence_type = 'HH3K27ac', on = 1},{evidence_type='H3K36me3', on = 0},....]) 
   foreach (keys %{$db_tables->{'cell_type'}{'ids'}||{}}) {
+    my $id_key = $_;
     (my $name = $_) =~ s/:\w+$//;
     my $set_info;
     $set_info->{'core'}     = $db_tables->{'feature_types'}{'core'}{$name}     || {};
@@ -121,21 +109,25 @@ sub json_data {
             dimension => 'evidence',
             val => $_->name,
             set => "reg_feats_$set",
-            defaultState => $default_evidence_types{$_->name} ? "track-on" : "track-off",
+            defaultState => "track-on"
           };
           push @$cell_evidence, $hash;
 
-          foreach my $k (@{$final->{extra_dimensions}}) {
-            my $ex = $final->{data}->{$k};
-            if (!$tmp_hash->{$ex}) {
-              $tmp_hash->{$ex} = 1;
-              $hash =  {
-                dimension => $k,
-                val => $ex->{label},
-                set => $ex->{set},
-                defaultState => $ex->{defaultState} || "track-off"
-              };
-              push @$cell_evidence, $hash;
+          # Add regulatory features only of it is available.
+          if ($db_tables->{'cell_type'}{'ids'}->{$id_key}) {
+            foreach my $k (@{$final->{extra_dimensions}}) {
+              my $ex = $final->{data}->{$k};
+              if (!$tmp_hash->{$ex->{label}}) {
+                # print Data::Dumper::Dumper $tmp_hash;
+                $tmp_hash->{$ex->{label}} = 1;
+                $hash =  {
+                  dimension => $k,
+                  val => $ex->{label},
+                  set => $ex->{set},
+                  defaultState => $ex->{defaultState} || "track-off"
+                };
+                push @$cell_evidence, $hash;
+              }
             }
           }
         }
@@ -147,7 +139,7 @@ sub json_data {
 
   #use Data::Dumper;warn Dumper($cell_types);
   $final->{data}->{epigenome}->{'name'}   = 'epigenome';
-  $final->{data}->{epigenome}->{'label'}  = 'Epigenome';
+  $final->{data}->{epigenome}->{'label'}  = 'Cell/Tissue';
   $final->{data}->{epigenome}->{'data'} = $cell_types;
   $final->{data}->{epigenome}->{'listType'} = 'alphabetRibbon';
 

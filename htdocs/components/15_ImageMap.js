@@ -742,6 +742,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var imgConf = {};
     var hasFav = $link.hasClass('favourite');
     var hasHighlight = $link.hasClass('hl-icon-highlight');
+    var isMatrix = $link.hasClass('matrix-cell');
 
     if (hasFav || hasHighlight) {
       selected = $link.hasClass('selected') ? 'off' : 'on';
@@ -762,6 +763,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         if (json.updated) {
           this.panel.changeConfiguration(config, this.track, this.update);
           this.panel.updateExportButton();
+          // Also update matrix if appropriate
+          if (isMatrix) {
+            Ensembl.EventManager.trigger('updateFromTrackLabel', update);
+          }
         }
       }
     });

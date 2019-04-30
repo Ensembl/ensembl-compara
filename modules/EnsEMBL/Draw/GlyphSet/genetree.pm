@@ -314,7 +314,7 @@ sub _init {
             'height'    => 5 + 2 * $bold,
             'colour'    => $node_colour,
             'bordercolour' => $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? 'black' : $node_colour,            
-            'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
+            'zindex'    => ($f->{_node_type} !~ /speciation/ ? 40 : -20),
             'href'      => $node_href
           });
       push @node_glyphs, $node_glyph;
@@ -325,7 +325,7 @@ sub _init {
               'width'     => 5,
               'height'    => 5,
               'bordercolour' => "white",
-              'zindex'    => ($f->{_node_type} ne 'speciation' ? 40 : -20),
+              'zindex'    => ($f->{_node_type} !~ /speciation/ ? 40 : -20),
               'href'      => $node_href
             });
         push @node_glyphs, $node_glyph;

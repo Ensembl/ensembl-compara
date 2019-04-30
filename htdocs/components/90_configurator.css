@@ -78,6 +78,8 @@ div.config_wrapper div.config div.subset.active                     { margin-top
 div.config_wrapper div.config div.subset.active h4                  { display: block; margin-top: 10px; }
 div.config_wrapper div.config div.select_all strong:hover,
 div.config_wrapper div.config li.track div.track_name:hover,
+div.config_wrapper div.config h3.matrix_link                        { cursor: pointer; }
+
 div.config_wrapper div.track_order ul.config_menu li div.track_name:hover,
 div.config_wrapper div.config ul.popup_menu li:hover                { background-color: [[MAIN_V_LIGHT]]; }
 div.config_wrapper div.favourite_tracks img                         { vertical-align: top; }

@@ -72,7 +72,6 @@ sub render {
 
 
   my $json_ld = create_bioschema($data);
-  warn $json_ld;
   return $json_ld;
 }
 
