@@ -138,7 +138,7 @@ sub fetch_input {
     }
 
     # Gets the list of non-empty tables for each db
-    my $table_list = {};
+    my $table_size = {};
     foreach my $db (keys %$dbconnections) {
 
         # Production-only tables
@@ -155,18 +155,20 @@ sub fetch_input {
         my $this_db_handle = $dbconnections->{$db}->db_handle;
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
         my $sql_table_status = "SHOW TABLE STATUS WHERE Engine IS NOT NULL AND Name NOT IN ($bad_tables) $extra";
-        my $table_list = $this_db_handle->selectcol_arrayref($sql_table_status, { Columns => [1] });
-        $table_list->{$db} = {};
-        foreach my $t (@$table_list) {
-            my ($s) = $this_db_handle->selectrow_array("SELECT 1 FROM $t LIMIT 1");
-            $s //= 0;
+        my $table_list = $this_db_handle->selectall_hashref($sql_table_status, 'Name');
+        # print Dumper $table_list;
+        $table_size->{$db} = {};
+        foreach my $t (keys %$table_list) {
+            # my ($s) = $this_db_handle->selectrow_array("SELECT 1 FROM $t LIMIT 1");
+            # $s //= 0;
+            my $s = $table_list->{$t}->{'Rows'};
             # We want all the tables on the release database in order to detect production tables
             # but we only need the non-empty tables of the other databases
-            $table_list->{$db}->{$t} = $s if ($db eq 'curr_rel_db') or $s;
+            $table_size->{$db}->{$t} = $s if ($db eq 'curr_rel_db') or $s;
         }
     }
-    print Dumper($table_list) if $self->debug;
-    $self->param('table_size', $table_list);
+    print Dumper($table_size) if $self->debug;
+    $self->param('table_size', $table_size);
 }
 
 sub _find_primary_key {
@@ -225,7 +227,7 @@ sub run {
             # All the non-empty tables
             push @ok_tables, keys %{$table_size->{$db}};
         }
-        
+
         foreach my $table (@ok_tables) {
             $all_tables->{$table} = [] unless exists $all_tables->{$table};
             push @{$all_tables->{$table}}, $db;
@@ -395,6 +397,3 @@ sub _assert_same_table_schema {
 
 
 1;
-
-
- 
