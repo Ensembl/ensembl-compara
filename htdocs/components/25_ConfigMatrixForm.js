@@ -1391,6 +1391,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         }
       });
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox, set);
+      panel.updateAvailableTabsOrRibbons(panel.getActiveTab());
     } else  {
       var container = panel.el.find(container);
       var wrapper = '<div class="content-wrapper">';
