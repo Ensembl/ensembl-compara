@@ -239,14 +239,12 @@ sub reset_user_settings {
   my @altered;
 
   if ($reset_type eq 'reg_matrix') {
-    if (grep {$_ =~ /^(reg_feats|seg_Segmentation)/} keys %$params) {
-      # Reset all reg matrix tracks
-      foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
-        if ($node_key =~/^reg_feats|^seg_Segmentation/) {
-          if (my $node = $self->get_node($node_key)) {
-            $node->reset_user_settings;
-            push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
-          }
+    # Reset all reg matrix tracks
+    foreach my $node_key (keys %{$user_settings->{'nodes'} || {}}) {
+      if ($node_key =~/^reg_feats|^seg_Segmentation/) {
+        if (my $node = $self->get_node($node_key)) {
+          $node->reset_user_settings;
+          push @altered, $node->get_data('name') || $node->get_data('caption') || 1;
         }
       }
     }
@@ -314,8 +312,8 @@ sub update_from_input {
   } else {
     my $diff = delete $params->{$self->config_type};
 
-    # Reset regulation matrix tracks by default 
-    $self->altered($self->reset_user_settings('reg_matrix', $diff));
+    # Reset regulation matrix tracks by default
+    $self->altered($self->reset_user_settings('reg_matrix'));
 
     if (keys %$diff) {
 
