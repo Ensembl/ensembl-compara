@@ -67,7 +67,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/'+this.jsonUrl+'/data?species='+Ensembl.species,
+      url: '/Json/RegulationData/data?species='+Ensembl.species,
       dataType: 'json',
       context: this,
       success: function(json) {
