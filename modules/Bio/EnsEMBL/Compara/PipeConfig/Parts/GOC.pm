@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 sub pipeline_analyses_goc {
     my ($self) = @_;
@@ -60,12 +60,13 @@ sub pipeline_analyses_goc {
         },
 
         {   -logic_name => 'copy_prev_goc_score_table',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithJoin',
-            -parameters => {
-                'db_conn'       => '#goc_reuse_db#',
-                'table'         => 'prev_ortholog_goc_metric',
-                # This query will transform gene_member_id into stable_id
-                'inputquery'    => 'SELECT method_link_species_set_id, homology_id, stable_id, goc_score, left1, left2, right1, right2 FROM ortholog_goc_metric JOIN gene_member USING (gene_member_id)',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'   => '#goc_reuse_db#',
+                'table'         => 'ortholog_goc_metric',
+                'renamed_table' => 'prev_ortholog_goc_metric',
+                'mode'          => 'overwrite',
+                'filter_cmd'    => 'sed "s/gene_member_id/prev_gene_member_id/"',
             },
         },
 
@@ -109,7 +110,7 @@ sub pipeline_analyses_goc {
             -rc_name => '1Gb_job',
             -hive_capacity  =>  $self->o('goc_capacity'),
             # -flow_into => {
-                
+
             # },
         },
 
@@ -159,7 +160,7 @@ sub pipeline_analyses_goc {
             -hive_capacity  =>  $self->o('goc_stats_capacity'),
         },
 
-        
+
     ];
 }
 

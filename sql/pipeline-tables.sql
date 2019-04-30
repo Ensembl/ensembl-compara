@@ -1,12 +1,12 @@
 -- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 -- Copyright [2016-2019] EMBL-European Bioinformatics Institute
--- 
+--
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
 -- You may obtain a copy of the License at
--- 
+--
 --      http://www.apache.org/licenses/LICENSE-2.0
--- 
+--
 -- Unless required by applicable law or agreed to in writing, software
 -- distributed under the License is distributed on an "AS IS" BASIS,
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@
 --
 -- Table structure for table 'dnafrag_chunk'
 --
--- overview: This tables holds chunking information. 
+-- overview: This tables holds chunking information.
 --
 -- semantics:
 --   dnafrag_chunk_id     - primary key
@@ -27,7 +27,7 @@
 --   seq_start            - start offset in dnafrag
 --   seq_end              - end offset in dnafrag
 --   sequence_id          - optional use (store chunk sequence in DB)
-                       
+
 CREATE TABLE dnafrag_chunk (
   dnafrag_chunk_id           int(10) NOT NULL auto_increment,
   dnafrag_chunk_set_id       int(10) NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE dnafrag_chunk (
 CREATE TABLE dnafrag_chunk_set (
  dnafrag_chunk_set_id    int(10) NOT NULL auto_increment,
  dna_collection_id       int(10) NOT NULL,
- description             varchar(255), 
+ description             varchar(255),
 
  PRIMARY KEY (dnafrag_chunk_set_id)
 ) ENGINE=InnoDB;
@@ -77,7 +77,7 @@ CREATE TABLE dnafrag_chunk_set (
 --           to storage.
 -- semantics:
 --   dna_collection_id   - primary key
---   description         - unique description of collection 
+--   description         - unique description of collection
 --   dump_loc            - directory path to dump files
 --   masking_options     - masking options
 
@@ -89,7 +89,7 @@ CREATE TABLE dna_collection (
 
  PRIMARY KEY (dna_collection_id),
  UNIQUE (description)
- 
+
 ) ENGINE=InnoDB;
 
 
@@ -119,7 +119,7 @@ CREATE TABLE `anchor_sequence` (
 --
 -- Table structure for table 'anchor_align'
 --
--- This table stores anchor information after they have been mapped (exonerated) to target genomes 
+-- This table stores anchor information after they have been mapped (exonerated) to target genomes
 --
 
 
@@ -181,7 +181,7 @@ CREATE TABLE ktreedist_score (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
-DROP TABLE IF EXISTS recovered_member; 
+DROP TABLE IF EXISTS recovered_member;
 CREATE TABLE recovered_member (
   recovered_id  int(10) unsigned NOT NULL AUTO_INCREMENT,
   node_id int(10) unsigned NOT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE recovered_member (
   UNIQUE KEY (stable_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-DROP TABLE IF EXISTS cmsearch_hit; 
+DROP TABLE IF EXISTS cmsearch_hit;
 CREATE TABLE cmsearch_hit (
   hit_id int(10) unsigned NOT NULL AUTO_INCREMENT,
   recovered_id int(10) unsigned NOT NULL,
@@ -301,10 +301,11 @@ CREATE TABLE hmm_thresholding (
 -- Table structure for tables 'ortholog_goc_metric'
 -- overview: This table contains the full breakdown of what is used to calculate the goc score.
 
-CREATE TABLE IF NOT EXISTS ortholog_goc_metric ( 
+CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   method_link_species_set_id int(10) unsigned NOT NULL,
   homology_id int(10) unsigned NOT NULL,
   gene_member_id int(10) unsigned NOT NULL,
+  stable_id varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   goc_score TINYINT NOT NULL,
   left1 TINYINT(1),
   left2 TINYINT(1),
@@ -312,7 +313,7 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
   right2 TINYINT(1),
 
   PRIMARY KEY (homology_id, gene_member_id),
-  
+
   FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set (method_link_species_set_id),
   FOREIGN KEY (gene_member_id) REFERENCES gene_member (gene_member_id),
   FOREIGN KEY (homology_id) REFERENCES homology (homology_id)
@@ -328,6 +329,7 @@ CREATE TABLE IF NOT EXISTS ortholog_goc_metric (
 CREATE TABLE IF NOT EXISTS prev_ortholog_goc_metric (
   method_link_species_set_id int(10) unsigned NOT NULL,
   homology_id int(10) unsigned NOT NULL,
+  prev_gene_member_id int(10) unsigned NOT NULL,
   stable_id varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   goc_score TINYINT NOT NULL,
   left1 TINYINT(1),
@@ -384,4 +386,3 @@ CREATE TABLE homology_id_mapping (
 	FOREIGN KEY (mlss_id) REFERENCES method_link_species_set(method_link_species_set_id),
 	INDEX (mlss_id)
 ) ENGINE=InnoDB;
-
