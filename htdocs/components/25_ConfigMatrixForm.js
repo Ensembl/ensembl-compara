@@ -99,6 +99,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               panel.elLk.ajaxError.hide();
             }
             Object.assign(this.json, json);
+            $(this.el).find('div.spinner').remove();
             this.trackTab();
             this.populateLookUp();
             this.loadState();
