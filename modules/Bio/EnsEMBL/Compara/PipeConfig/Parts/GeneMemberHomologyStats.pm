@@ -163,7 +163,9 @@ sub pipeline_analyses_hom_stats {
                     # Temporary table with the counts
                     'CREATE TEMPORARY TABLE temp_member_hom_counts AS
                      SELECT gene_member_id, SUM(method_link_id=201) AS orthologues, SUM(method_link_id=202) AS paralogues, SUM(method_link_id=206) AS homoeologues
-                     FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id)
+                     FROM homology_member
+                     STRAIGHT_JOIN homology ON homology_member.homology_id = homology.homology_id
+                     STRAIGHT_JOIN method_link_species_set ON method_link_species_set.method_link_species_set_id = homology.method_link_species_set_id
                      WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#
                      GROUP BY gene_member_id',
                     # Add an index on gene_member_id
@@ -185,4 +187,3 @@ sub pipeline_analyses_hom_stats {
 }
 
 1;
-
