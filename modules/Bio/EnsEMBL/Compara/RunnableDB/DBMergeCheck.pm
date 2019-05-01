@@ -159,9 +159,9 @@ sub fetch_input {
         # print Dumper $table_list;
         $table_size->{$db} = {};
         foreach my $t (keys %$table_list) {
-            # my ($s) = $this_db_handle->selectrow_array("SELECT 1 FROM $t LIMIT 1");
-            # $s //= 0;
-            my $s = $table_list->{$t}->{'Rows'};
+            my ($s) = $this_db_handle->selectrow_array("SELECT 1 FROM $t LIMIT 1");
+            $s //= 0;
+            # my $s = $table_list->{$t}->{'Rows'};
             # We want all the tables on the release database in order to detect production tables
             # but we only need the non-empty tables of the other databases
             $table_size->{$db}->{$t} = $s if ($db eq 'curr_rel_db') or $s;
