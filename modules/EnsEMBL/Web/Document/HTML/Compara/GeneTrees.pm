@@ -294,6 +294,10 @@ sub get_html_for_gene_tree_coverage {
 
   foreach my $sp (@$species) {
     my $piecharts; 
+    # Exclude species with no data. This only applies to polyploid genomes
+    # for which we use the components in the gene-trees instead of the
+    # total genome
+    next unless $sp->get_value_for_tag('nb_genes');
 
     if ($method eq 'PROTEIN_TREES') { 
       $piecharts = $self->get_piecharts_for_species($sp, $counter_raphael_holders);
@@ -473,7 +477,12 @@ sub get_html_for_tree_stats_overview {
 
 sub draw_tree {
   my ($self, $matrix, $node, $next_y, $counter_raphael_holders, $method) = @_;
-  my $nchildren = scalar(@{$node->children});
+
+  # Exclude species with no data. This only applies to polyploid genomes
+  # for which we use the components in the gene-trees instead of the
+  # total genome
+  my @children = grep {$_->get_value_for_tag('nb_nodes') || $_->get_value_for_tag('nb_genes')} @{$node->sorted_children};
+  my $nchildren = scalar(@children);
 
   my $horiz_branch  = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_hor.png" />};
   my $vert_branch   = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_ver.png" />};
@@ -483,7 +492,7 @@ sub draw_tree {
   my $half_horiz_branch  = q{<img style="width: 14px; height: 28px;" alt="-" src="ct_half_hor.png" />};
 
   if ($nchildren) {
-    my @subtrees = map {$self->draw_tree($matrix, $_, $next_y, $counter_raphael_holders, $method)} @{$node->sorted_children};
+    my @subtrees = map {$self->draw_tree($matrix, $_, $next_y, $counter_raphael_holders, $method)} @children;
     my $anchor_x_pos = min(map {$_->[0]} @subtrees)-1;
     my $min_y = min(map {$_->[1]} @subtrees);
     my $max_y = max(map {$_->[1]} @subtrees);
