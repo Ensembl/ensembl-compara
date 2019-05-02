@@ -112,10 +112,6 @@ sub build {
 
   $html .= qq(
         <div class="bottom-buttons">
-          <div class="save-config-wrapper">
-            <span class="fancy-checkbox inactive"></span>
-            <text class="save-config">Save configuration</text>
-          </div>
           <button class="showMatrix fade-button">Configure track display</button>
         </div>
       </div>
