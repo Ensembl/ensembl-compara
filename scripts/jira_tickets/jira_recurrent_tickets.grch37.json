@@ -177,7 +177,19 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
             "summary": "test the documentation and statistics"
-         }
+        },
+        {
+           "assignee": "<RelCo>",
+           "component": "Relco tasks",
+           "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+           "summary": "Handover of release DB"
+        },
+        {
+           "assignee": "<RelCo>",
+           "component": "Relco tasks",
+           "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+           "summary": "Handover of ancestral DB"
+        }
       ],
       "summary": "<Division> Release <version> Database merge and handover"
    },

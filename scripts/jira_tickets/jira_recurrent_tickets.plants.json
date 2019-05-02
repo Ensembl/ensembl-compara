@@ -194,7 +194,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
-            "summary": "Final Handover of DBs"
+            "summary": "Handover of release DB"
          }
       ],
       "summary": "<Division> Release <version> Database merge and handover"

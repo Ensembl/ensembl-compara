@@ -19,6 +19,9 @@ limitations under the License.
 
 package Bio::EnsEMBL::Compara::Utils::JIRA;
 
+use strict;
+use warnings;
+
 use JSON;
 use HTTP::Request;
 use LWP::UserAgent;
