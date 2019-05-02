@@ -744,6 +744,18 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
 
   },
 
+  //function to show/hide reset all link in RH panel when something is selected
+  //Argument: containers where to look for empty elements
+  showResetLink: function(containers) {
+    var panel = this;
+
+    if ($(containers).find('li').length && $(containers).find('span.fancy-checkbox.selected').length) {
+      $("div.reset_track").show();
+    } else {
+      $("div.reset_track").hide();
+    }
+  },
+
   // Function to update the current count in the right hand panel (can be adding/removing 1 or select all)
   // Argument: element/container object where current count is to be updated
   //           how much to add to the current value
@@ -882,6 +894,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.updateSelectedTracksPanel(item);
     // panel.activateTabs();
     panel.updateShowHideLinks(item);
+    panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
     panel.trackError('div#dx, div#source');
     panel.enableConfigureButton('div#dx, div#source');
