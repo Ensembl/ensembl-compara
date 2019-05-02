@@ -110,7 +110,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
             this.goToUserLocation();
             this.resize();
             this.selectDeselectAll();
-            // this.updateSelectAll();
             panel.el.find('._ht').helptip();
           },
           error: function() {
@@ -281,7 +280,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     if (!tabLookup.haveSubTabs) {
       // Update selectAll
       panel.activateAlphabetRibbon(tabLookup.container, resetRibbon, resetFilter);
-      panel.updateSelectAll(tabLookup.container);
     }
     else {
       // For subtabs
@@ -326,12 +324,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
               count++;
             }
           });
-          //panel.updateTrackPanelSelectAllCount(key, count);
-
         }
-
-        // Update selectAll
-        panel.updateSelectAll(tab_content_ele);
 
       });
 
@@ -422,30 +415,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
     else {
       $(rarrow).removeClass('inactive').addClass('active');
-    }
-  },
-
-  //function checking if all tracks are selected then checked all checkbox (can be removed)
-  updateSelectAll: function(tabContent) {
-    var panel = this;
-
-    if(!tabContent) {
-      $.each(panel.selectedTracksCount, function(key, count) {
-        if(panel.selectedTracksCount[key].selected.length === panel.selectedTracksCount[key].available) {
-          $('div#allBox-'+key+'-content span.fancy-checkbox').addClass('selected');
-        } else {
-          $('div#allBox-'+key+'-content span.fancy-checkbox').removeClass('selected');
-        }
-      });
-    } else {
-      var lis_unselected   = $(tabContent).find('li._filtered').length ? $(tabContent).find('li._filtered span.fancy-checkbox').not(".selected") : $(tabContent).find('li span.fancy-checkbox').not(".selected");
-
-      if (lis_unselected.length) {
-        $(tabContent).find('div.all-box span.fancy-checkbox').removeClass('selected');
-      }
-      else {
-        $(tabContent).find('div.all-box span.fancy-checkbox').addClass('selected');
-      }
     }
   },
 
@@ -786,13 +755,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
   },
 
-  updateTrackPanelSelectAllCount: function(key, total) {
-    var panel = this;
-    if(key) {
-      $('#allBox-' + key + '-content ._num').html('(' + total + ')');
-    }
-  },
-
   //function when clicking on the select all | deselect all link
   // it will either select all checkbox or unselect all checkbox and apply filtering where there is !no-filter
   selectDeselectAll: function() {
@@ -1009,7 +971,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.totalSelected  += selectedLIs.length;
 
           panel.updateCurrentCount(subTab, selectedLIs.length, allLIs.length);
-          //_search_hide.length && this.updateTrackPanelSelectAllCount(key, selectedLIs.length);
           selectedLIs.length && selectedElements.push(selectedLIs);
         })
       }
