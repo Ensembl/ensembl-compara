@@ -105,7 +105,6 @@ my $hc_task_json_ticket = {
     summary     => "$hc_file ($timestamp)",
     description => "Java healthcheck failures for HC run on $timestamp\nFrom file: $hc_abs_path",
     links       => [ ['Blocks', $blocked_ticket_key] ],
-    labels      => [ "Testing:to delete" ],
 };
 my $hc_task_jira_ticket = Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($hc_task_json_ticket, 'Task', $parameters, $logger);
 
@@ -115,7 +114,6 @@ foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
         summary => $testcase,
         description => $testcase_failures->{$testcase},
-        labels      => [ "Testing:to delete" ],
     };
     push(@jira_subtasks, Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($failure_subtask_json, 'Sub-task', $parameters, $logger));
 }
