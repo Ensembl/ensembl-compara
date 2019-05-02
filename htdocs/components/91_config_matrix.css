@@ -290,7 +290,7 @@ div.config_wrapper div.config div.content-wrapper   { overflow-y: auto; }
 }
 
 /* configure track display button */
-div.bottom-buttons            { display: flex; justify-content: space-between; padding-top: 16px; }
+div.bottom-buttons            { display: flex; justify-content: flex-end; padding-top: 16px; }
 div.bottom-buttons .save-config-wrapper { display: inline-flex; align-items: center; }
 button.fade-button            { min-width: 100px; width: 155px; background-color: [[WHITE]]; color: [[PALE_GREY]]; border-radius: 3px; height: 25px; outline: none; border: 1px solid #b7b7b7; padding-bottom: 2px; }
 button.fade-button.active     { background-color: [[OK_DARK]]; cursor: pointer; color: [[WHITE]]; }
