@@ -127,8 +127,11 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.buttonTab.on("click", function (e) {
       var activeTab = panel.getActiveTab();
       if (e.target.nodeName !== 'INPUT' && e.currentTarget.id !== activeTab+'-tab') {
-        panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
-        panel.resetFilter(); // Reset filter on the active tab
+        if(panel.elLk.trackPanel.find('input[name="matrix_search"]').val()) {
+          panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
+          panel.elLk.searchCrossIcon.hide();
+          panel.resetFilter(); // Reset filter on the active tab
+        }
       }
       panel.toggleTab({'selectElement': this, 'container': panel.el.find("div.track-menu")});
       panel.resize();
@@ -175,7 +178,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.elLk.searchCrossIcon.hide();
       }
 
-      if (!panel.resetFilter(inputText)) {
+      if (!panel.resetFilter(inputText,true)) {
         return;
       };
 
@@ -257,6 +260,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
     panel.getActiveTabContainer().find("span.search-error").hide();
     panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
+
     var _filtered = panel.getActiveTabContainer().find('li._filtered');
     if (_filtered.length) {
       _filtered.show();
@@ -266,7 +270,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     }
 
     var activeTabId = panel.getActiveTab();
-
     panel.updateAvailableTabsOrRibbons(activeTabId, true, reset);
 
     if (inputText && inputText.length < 3) {
@@ -385,13 +388,14 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var obj = {'container': alphabetContainer, 'selByClass': 1, 'resetRibbonOffset': resetRibbon, 'searchTriggered': true}
     obj.resetFilter = resetFilter && true;
 
-    if (arr[currentlySelected]) {
+    if (arr[currentlySelected] && !resetFilter) {
       obj.selectElement = arr[currentlySelected];
       panel.toggleTab(obj);
     }
     else {
       // console.log('activating first available', alphabetContainer.attr('id'));
       obj.selectElement = arr[Object.keys(arr).sort()[0]];
+      obj.searchTriggered = false;
       panel.toggleTab(obj);
     }
 
@@ -703,7 +707,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.getActiveTabContainer().find("span.search-error").hide();
       panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
       $(this).parent().find('input.configuration_search_text').val("");
-      panel.resetFilter("");
+      panel.resetFilter("", true);
       panel.elLk.searchCrossIcon.hide();
       panel.elLk.searchCrossIcon.parent().find('input').focus();
     });
@@ -1982,7 +1986,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.localStoreObj.matrix = {};
       panel.setLocalStorage();
       panel.emptyMatrix();
-      panel.resetFilter();
+      panel.resetFilter("",true);
       $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
         panel.filterData($(ele).data('item'));
