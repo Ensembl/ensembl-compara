@@ -169,6 +169,12 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
       var inputText = $(this).val().trim();
 
+      if(inputText) {
+        panel.elLk.searchCrossIcon.show();
+      }else {
+        panel.elLk.searchCrossIcon.hide();
+      }
+
       if (!panel.resetFilter(inputText)) {
         return;
       };
@@ -698,6 +704,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
       $(this).parent().find('input.configuration_search_text').val("");
       panel.resetFilter("");
+      panel.elLk.searchCrossIcon.hide();
+      panel.elLk.searchCrossIcon.parent().find('input').focus();
     });
   },
 

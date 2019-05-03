@@ -300,8 +300,16 @@ span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b
 /* search box */
 div.search-box-container                        { display: flex; justify-content: center; align-items: baseline; }
 div.search-box                                  { position: relative; display: flex; align-items: center; }
-div.search-box input.configuration_search_text  { margin-left: 8px; height: 15px; }
-div.search-box span.search-cross-icon           { padding: 0px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; }
+div.search-box input.configuration_search_text  { margin-left: 8px; height: 15px; padding-left: 5px; }
+div.search-box span.search-cross-icon           { padding: 0px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; display: none; }
+
+/* placeholder browser specific style */
+div.search-box input.configuration_search_text::placeholder                     { color: #ccc; }
+div.search-box input.configuration_search_text:focus::-webkit-input-placeholder { opacity: 0; }
+div.search-box input.configuration_search_text:focus:-moz-placeholder           { opacity: 0; }
+div.search-box input.configuration_search_text:focus::-moz-placeholder          { opacity: 0; }
+div.search-box input.configuration_search_text:focus:-ms-input-placeholder      { opacity: 0; }
+div.search-box input.configuration_search_text:focus::placeholder               { opacity: 0; }
 
 /* track configuration/matrix display */
 button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
