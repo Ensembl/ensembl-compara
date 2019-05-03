@@ -57,7 +57,7 @@ sub process {
   if ($species) {
     if ($url) {
       my $new_action  = '';
-      ($new_action, $params)  = check_attachment($hub, $url);
+      ($new_action, $params) = $hub->param('assembly_name') ? () : check_attachment($hub, $url);
 
       if ($new_action) {
         ## Hub is already attached, so just go there
