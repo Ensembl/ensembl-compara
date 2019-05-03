@@ -88,6 +88,10 @@ foreach my $ref (@{$list_ref_of_gdbs}) {
         }
         $node = $node->parent();
     }
+    # Replace species name by GenomeDB name
+    if (grep(/^species$/, @target_ranks)) {
+        $taxonomy{'species'} = $ref->name();
+    }
     # Push the template into the taxonomy hash
     my $level = $taxonomy_db;
     foreach my $rank (@target_ranks) {
