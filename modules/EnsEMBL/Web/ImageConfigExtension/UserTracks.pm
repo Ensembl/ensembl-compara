@@ -353,8 +353,8 @@ sub _add_trackhub {
     my $assemblies = $self->hub->species_defs->get_config($self->species,'TRACKHUB_ASSEMBLY_ALIASES');
     $assemblies ||= [];
     $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
-    foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
-      my $assembly = $self->hub->species_defs->get_config($self->species,$assembly_var);
+    foreach my $assembly_var (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION ASSEMBLY_NAME)) {
+      my $assembly = $self->hub->species_defs->get_config($self->species, $assembly_var);
       next unless $assembly;
       push @$assemblies,$assembly;
     }
@@ -368,7 +368,7 @@ sub _add_trackhub {
 
       $self->{'_attached_trackhubs'}{$url} = 1;
     } else {
-      my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
+      my $assembly = $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION') || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
       $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
     }
   }

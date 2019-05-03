@@ -1323,7 +1323,7 @@ sub assembly_lookup {
   my ($self, $old_assemblies) = @_;
   my $lookup = {};
   foreach ($self->valid_species) {
-    my $assembly = $self->get_config($_, 'ASSEMBLY_VERSION');
+    my $assembly = $self->get_config($_, 'ASSEMBLY_VERSION') || $self->get_config($_, 'ASSEMBLY_NAME');
 
     ## REMOTE INDEXED FILES
     ## Unique keys, needed for attaching URL data to correct species
