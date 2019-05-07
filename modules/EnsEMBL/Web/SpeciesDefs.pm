@@ -1323,7 +1323,10 @@ sub assembly_lookup {
   my ($self, $old_assemblies) = @_;
   my $lookup = {};
   foreach ($self->valid_species) {
-    my $assembly = $self->get_config($_, 'ASSEMBLY_VERSION') || $self->get_config($_, 'ASSEMBLY_NAME');
+    my $assembly        = $self->get_config($_, 'ASSEMBLY_VERSION');
+    my $assembly_name   = $self->get_config($_, 'ASSEMBLY_NAME');
+    my @assemblies      = ($assembly);
+    push @assemblies, $assembly_name if $assembly_name ne $assembly;
 
     ## REMOTE INDEXED FILES
     ## Unique keys, needed for attaching URL data to correct species
@@ -1337,7 +1340,9 @@ sub assembly_lookup {
     }
     else {
       ## Otherwise assembly-only keys for species with no UCSC id configured
-      $lookup->{$assembly} = [$_, $assembly, 0];
+      foreach my $a (@assemblies) {
+        $lookup->{$a} = [$_, $a, 0];
+      }
     }
     if ($old_assemblies) {
       ## Include past UCSC assemblies
