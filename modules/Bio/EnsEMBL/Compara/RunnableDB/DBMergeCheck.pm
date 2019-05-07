@@ -244,8 +244,9 @@ sub run {
     my %copy = ();
     my %merge = ();
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
-    foreach my $table (keys %$all_tables) {
-
+    my @table_order = grep { $_ !~ /homology/ } keys %$all_tables;
+    push( @table_order, grep { $_ =~ /homology/ } keys %$all_tables ); # do these last, since they take longest
+    foreach my $table (@table_order) { # start with smallest tables
         #Record all the errors then die after all the values were checked, reporting the list of errors:
         my %error_list;
 
