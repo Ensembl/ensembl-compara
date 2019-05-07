@@ -29,7 +29,6 @@ use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
 use JSON qw(from_json);
 use URI::Escape;
-use Data::Dumper;
 
 sub munge {
   my ($self, $func) = @_;
@@ -1058,7 +1057,7 @@ sub _summarise_website_db {
       if ($children_link) {
         $result{'children'} = [ fetch_children_terms($children_link) ];
       }
-      return %result;
+      return \%result;
     }
 
     sub fetch_children_terms {
@@ -1067,15 +1066,12 @@ sub _summarise_website_db {
       my $response = $self->_get_rest_data($url);
       my $children = $response->{_embedded}->{terms};
       
-     return map { fetch_term($_->{_links}->{self}->{href}) } @{$children};
+      return map { fetch_term($_->{_links}->{self}->{href}) } @{$children};
     }
 
-    my %root_term = fetch_term($biotype_term_url);
+    my $root_term = fetch_term($biotype_term_url);
 
-print'FINALLY!';
-    print Dumper %root_term;
- 
-    $self->db_tree->{'ENSEMBL_BIOTYPES'} = %root_term; 
+    $self->db_tree->{'ENSEMBL_BIOTYPES'} = $root_term;
  }
 
 
