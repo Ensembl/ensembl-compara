@@ -34,6 +34,7 @@ use Bio::EnsEMBL::Utils::Logger;
 use POSIX;
 use Term::ReadKey;
 use Cwd 'abs_path';
+use File::Basename;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 use Data::Dumper;
@@ -46,7 +47,9 @@ GetOptions(
     "p|password=s" => \$password,
 );
 my $hc_file = $ARGV[0];
+die "Cannot find $hc_file - file does not exist" unless -e $hc_file;
 my $hc_abs_path = abs_path($hc_file);
+my $hc_basename = fileparse($hc_abs_path,('.txt', '.out'));
 
 die &helptext if ( $help || !($release && $hc_file && $division) );
 our $logger = Bio::EnsEMBL::Utils::Logger->new();
@@ -102,7 +105,7 @@ my $testcase_failures = parse_healthchecks($hc_file);
 my $blocked_ticket_key = find_handover_ticket($release, $division, $parameters, $logger);
 my $hc_task_json_ticket = {
     assignee    => $parameters->{user},
-    summary     => "$hc_file ($timestamp)",
+    summary     => "$hc_basename ($timestamp)",
     description => "Java healthcheck failures for HC run on $timestamp\nFrom file: $hc_abs_path",
     links       => [ ['Blocks', $blocked_ticket_key] ],
 };
