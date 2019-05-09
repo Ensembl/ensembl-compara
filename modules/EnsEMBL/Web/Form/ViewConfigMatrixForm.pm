@@ -35,7 +35,8 @@ sub render {
 
 sub js_panel {
   ## Panel used by JS
-  return 'ConfigMatrixForm';
+  my $self = shift;
+  return $self->get_js_panel();
 }
 
 sub build {
@@ -116,7 +117,8 @@ sub build {
     </div>
   );
 
-  $self->append_child('div', { inner_HTML => $html, class => 'js_panel config_matrix_form', id => "matrix_form" });
+  my $js_panel = $self->get_js_panel();
+  $self->append_child('div', { inner_HTML => $html, class => "js_panel $js_panel", id => $js_panel });
 }
 
 1;

@@ -23,6 +23,10 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Form::ViewConfigMatrixForm);
 
+sub get_js_panel {
+  return 'ConfigTrackHubMatrixForm';
+}
+
 sub configuration_content {
   my ($self, $dimX, $dimY) = @_;
 

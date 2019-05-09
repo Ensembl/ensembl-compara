@@ -23,10 +23,14 @@ use warnings;
 
 use parent qw(EnsEMBL::Web::Form::ViewConfigMatrixForm);
 
+sub get_js_panel {
+  return 'ConfigRegMatrixForm';
+}
+
 sub configuration_content {
   my ($self, $dimX, $dimY) = @_;
 
-  return qq(      
+  return qq(
       <div class="track-panel track-configuration reg-matrix" id="configuration-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
