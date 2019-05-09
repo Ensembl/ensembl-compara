@@ -408,7 +408,7 @@ sub get_data {
     my $ftype_name  = $ftype->name;
 
     my $epigenome   = $peak_calling->fetch_Epigenome;
-    my $cell_line   = $epigenome->display_label;
+    my $cell_line   = $epigenome->short_name;
 
     next if ($is_image && (!$data->{$cell_line}{$ftype_name} || $data->{$cell_line} eq 'off'));
     next if $filter->{'cell'} and !grep { $_ eq $cell_line } @{$filter->{'cell'}};
