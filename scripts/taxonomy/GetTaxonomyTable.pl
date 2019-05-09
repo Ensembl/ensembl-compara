@@ -49,7 +49,8 @@ my @target_ranks = qw(class superorder order suborder family subfamily species);
 # Number of ranks (plus the default addition of "GenomeDB name" as last rank)
 my $num_ranks = $#target_ranks + 1;
 # Create the taxonomy template: if a rank is missing, assign "N/A"
-my %rank_template = map {$_ => 'N/A'} @target_ranks;
+my $null_value = 'N/A';
+my %rank_template = map {$_ => $null_value} @target_ranks;
 # @taxonomy_table will have one string per species' taxonomy in tab-separated
 # values (TSV) format
 my @taxonomy_table;
@@ -70,13 +71,9 @@ foreach my $gdb (@{$list_of_gdbs}) {
         }
         $node = $node->parent();
     }
-    # Get the taxonomy in a TSV-like string and append it to the taxonomy table
-    my $taxonomy_str = "";
-    foreach my $rank (@target_ranks) {
-        $taxonomy_str .= $taxonomy{$rank} . "\t";
-    }
-    # Add GenomeDB name as the last level/rank of the taxonomy
-    $taxonomy_str .= $gdb->name();
+    # Get the taxonomy in a TSV-like string, add GenomeDB name as the last
+    # level/rank and append it to the taxonomy table
+    my $taxonomy_str = join("\t", (map {$taxonomy{$_}} @target_ranks), $gdb->name());
     push(@taxonomy_table, $taxonomy_str);
 }
 # Sort the rows in alphabetical order
@@ -89,13 +86,27 @@ if ($group_ranks) {
         my @taxonomy = split(/\t/, $taxonomy_table[$i]);
         # Grouped version of the taxonomy (string)
         my $grouped_taxonomy = "";
+        # Flag when two consecutive species have a not-null matching rank
+        my $not_null_match_found = 0;
         # Loop over each rank to compare it with the value in the previous row
         foreach my $j (0 .. $num_ranks) {
             if ($prev_taxonomy[$j] eq $taxonomy[$j]) {
-                $grouped_taxonomy .= "''\t";
+                # Get the flag to True if the ranks are not null and equal
+                if ($taxonomy[$j] ne $null_value) {
+                    $not_null_match_found = 1;
+                }
             } else {
+                # If there is a not-null match, all the ranks matched can be
+                # replaced by "''". If not, it means all the ranks were missing
+                # until this point, so leave the null value.
+                my @values;
+                if ($not_null_match_found) {
+                    @values = ("''") x $j;
+                } else {
+                    @values = ($null_value) x $j;
+                }
                 # As soon as one rank is different, the remaining will be too
-                $grouped_taxonomy .= join("\t", @taxonomy[$j .. $num_ranks]);
+                $grouped_taxonomy .= join("\t", @values, @taxonomy[$j .. $num_ranks]);
                 last;
             }
         }
