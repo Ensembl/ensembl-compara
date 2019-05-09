@@ -123,7 +123,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{
                 'division'    => $self->o('division'),
-                'release'     => $self->o('release'),
+                'release'     => $self->o('ensembl_release'),
             }],
             -parameters => {
                 'src_db_conn' => $self->o('master_db'),
@@ -271,7 +271,7 @@ sub pipeline_analyses {
             -parameters => {
                     'collection_name'   => $self->o('division'),
                     'incl_components'   => $self->o('incl_components'),
-                    # 'release'           => $self->o('release'),
+                    # 'release'           => $self->o('ensembl_release'),
             },
             -flow_into  => [ 'add_mlss_to_master' ],
         },
