@@ -89,7 +89,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'division'      => 'ensembl',
+        'division'      => 'vertebrates',
         'collection'    => 'murinae',
 
         # Main capacity for the pipeline
