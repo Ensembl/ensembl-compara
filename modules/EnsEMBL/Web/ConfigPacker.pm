@@ -1581,7 +1581,7 @@ sub _munge_meta {
     provider.url                  PROVIDER_URL
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
-    species.strain_collection     STRAIN_COLLECTION
+    species.strain_group          STRAIN_GROUP
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );
