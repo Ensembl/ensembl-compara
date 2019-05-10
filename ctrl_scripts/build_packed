@@ -32,6 +32,11 @@ use warnings;
 
 use FindBin qw($Bin);
 
+# The following line is a hack to allow MySQL to always autoreconnect. This is the
+# default behaviour in mod_perl and CGI scripts, which is why we never notice in
+# other situations. Here we lie to DBI that we are a CGI script.
+$ENV{"GATEWAY_INTERFACE"} = 1;
+
 BEGIN {
   require "$Bin/helper.pl";
 }
