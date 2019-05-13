@@ -49,7 +49,7 @@ sub build {
 
   my $menu_node     = $tree->get_node($menu);
   my $matrix_data   = $menu_node->get_data('matrix');
-  
+
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
   #$Data::Dumper::Maxdepth = 2;
@@ -65,51 +65,53 @@ sub build {
         <ul>
           <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
           <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
+          <li class="inactive view-track"><a href="#"><span class="circle crumb-number">3</span>View tracks</a></li>
         </ul>
       </div>
-      <button class="fade-button view-track">View tracks</button>
     </div>
     <div class="flex-row">
       <div class="track-panel active noselect" id="track-content">
         <div class="tabs track-menu">
           <div class="track-tab active" id="dx-tab">
-            <span class="tab-header"> $dimX </span>
             <span class="hidden content-id">dx-content</span>
-            <div class="search-box">
-              <input class="configuration_search_text" placeholder="Find..." id="dx_search" name="matrix_search">
-              <span class="search-cross-icon">x</span>
-              <img src="/i/16/search.png" class="search-icon" />
+            <div class="search-box-container">
+              <span class="tab-header"> $dimX </span>
+              <div class="search-box">
+                <input class="configuration_search_text" placeholder="Find..." id="dx_search" name="matrix_search">
+                <span class="search-cross-icon">x</span>
+              </div>
             </div>
           </div>
           <div class="track-tab" id="dy-tab">
-            <span class="tab-header"> $dimY </span>
             <span class="hidden content-id">dy-content</span>
-            <div class="search-box">
-              <input class="configuration_search_text" placeholder="Find..." id="dy_search" name="matrix_search">
-              <span class="search-cross-icon">x</span>
-              <img src="/i/16/search.png"  class="search-icon"/>
+            <div class="search-box-container">
+              <span class="tab-header"> $dimY </span>
+              <div class="search-box">
+                <input class="configuration_search_text" placeholder="Find..." id="dy_search" name="matrix_search">
+                <span class="search-cross-icon">x</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div id="dx-content" class="tab-content active" data-rhsection-id="dx">
           <span class="hidden rhsection-id">dx</span>
+          <span class="error _ajax">There is a problem with the data request, please try again later.</span>
+          <div class="spinner"></div>
         </div>
 
         <div id="dy-content" class="tab-content" data-rhsection-id="dy">
           <span class="hidden rhsection-id">dy</span>
+          <span class="error _ajax">There is a problem with the data request, please try again later.</span>
+          <div class="spinner"></div>
         </div>
       </div>
   );
 
-  $html .= $self->configuration_content($dimX, $dimY); 
+  $html .= $self->configuration_content($dimX, $dimY);
 
   $html .= qq(
         <div class="bottom-buttons">
-          <div class="save-config-wrapper">
-            <span class="fancy-checkbox inactive"></span>
-            <text class="save-config">Save configuration</text>
-          </div>
           <button class="showMatrix fade-button">Configure track display</button>
         </div>
       </div>

@@ -80,6 +80,17 @@ sub configuration_content {
               <input type='radio' name="cell-radio" class="_signal"/><text>Signal</text>
             </li>
           </ul>
+          <ul>
+            <li>
+              <label class="switch"><input type="checkbox" name="all-switch"><span class="slider round"></span><span class="switch-label">All</span></label><input type='radio' name="all-radio" class="_peak-signal"/><text>Peaks & signal</text>
+            </li>
+            <li>
+              <input type='radio' name="all-radio" class="_peak"/><text>Peaks</text>
+            </li>
+            <li>
+              <input type='radio' name="all-radio" class="_signal"/><text>Signal</text>
+            </li>
+          </ul>          
         </div>
         <div class="hidebox"></div>
         <div class="matrix-container">
@@ -88,10 +99,11 @@ sub configuration_content {
 
       <div class="result-box">
         <h4>Selected tracks</h4>
-        <button class="fade-button reset-button _track">Reset tracks</button>
+        <div class="reset_track">Reset all</div>
 
         <div class="filter-content">
-          <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>
+          <h5 class="result-header">$dimX</h5>
+          <span class="error _dx">Please select $dimX</span>
           <div class="result-content" id="dx">
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <div class="sub-result-link">$dimX</div>
