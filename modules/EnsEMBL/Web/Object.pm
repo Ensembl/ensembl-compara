@@ -177,12 +177,16 @@ sub get_slice_display_name {
 }
 
 sub long_caption {
-  my $self = shift;
+  my ($self, $versioned) = @_;
   
   my $dxr   = $self->Obj->can('display_xref') ? $self->Obj->display_xref : undef;
   my $label = $dxr ? ' (' . $dxr->display_id . ')' : '';
-  
-  return $self->stable_id . $label;
+
+  my $name  = $self->stable_id;
+  if ($versioned && $self->Obj->version) {
+    $name .= '.'.$self->Obj->version;
+  }
+  return $name . $label;
 }
 
 sub get_earliest_archive { 

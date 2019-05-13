@@ -415,7 +415,8 @@ sub get_families {
   return unless $translation;
 
   my $member = $self->database($cdb)->get_SeqMemberAdaptor->fetch_by_stable_id($translation->stable_id);
-  my $family = $self->database($cdb)->get_FamilyAdaptor->fetch_by_SeqMember($member);
+
+  my $family = $member && $self->database($cdb)->get_FamilyAdaptor->fetch_by_SeqMember($member);
 
   # munge data
   my $family_hash = {};

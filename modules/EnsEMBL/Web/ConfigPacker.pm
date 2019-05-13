@@ -755,8 +755,9 @@ sub _summarise_funcgen_db {
 ### the current regulatory build
   my $c_aref =  $dbh->selectall_arrayref(
     'select
-      distinct epigenome.short_name, epigenome.epigenome_id, 
-                epigenome.description
+      distinct  epigenome.short_name, epigenome.epigenome_id,
+                epigenome.description, epigenome.search_terms,
+                epigenome.full_name, epigenome.name
         from regulatory_build 
       join regulatory_build_epigenome using (regulatory_build_id) 
       join epigenome using (epigenome_id)
@@ -770,12 +771,19 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 1;
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'regbuild_ids'}{$cell_type_key} = 1;
+
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'info'}{$row->[0]} = {
+      description => $row->[2],
+      search_terms => $row->[3],
+      full_name => $row->[4],
+      name => $row->[5]
+    };
   }
 
   ## Now look for cell lines that _aren't_ in the build
   $c_aref = $dbh->selectall_arrayref(
     'select
-        epigenome.short_name, epigenome.epigenome_id, epigenome.description
+        epigenome.short_name, epigenome.epigenome_id, epigenome.description, epigenome.search_terms
      from epigenome 
         left join (regulatory_build_epigenome rbe, regulatory_build rb) 
           on (rbe.epigenome_id = epigenome.epigenome_id 
@@ -790,6 +798,12 @@ sub _summarise_funcgen_db {
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'names'}{$cell_type_key} = $row->[0];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'epi_desc'}{$cell_type_key} = $row->[2];
     $self->db_details($db_name)->{'tables'}{'cell_type'}{'ids'}{$cell_type_key} = 0;
+
+    $self->db_details($db_name)->{'tables'}{'cell_type'}{'info'}{$row->[0]} = {
+      description => $row->[2],
+      search_terms => $row->[3],
+      full_name => $row->[4]
+    };
   }
   
 #---------- Additional queries - by type...
@@ -1581,7 +1595,7 @@ sub _munge_meta {
     provider.url                  PROVIDER_URL
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
-    species.strain_collection     STRAIN_COLLECTION
+    species.strain_group          STRAIN_GROUP
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );

@@ -225,7 +225,7 @@ sub create_structure {
   if ($self->parser->get_blockCount) {
     my @block_starts  = @{$self->parser->get_blockStarts};
     my @block_lengths = @{$self->parser->get_blockSizes};
-    my $offset        = $start_coord - $slice_start;
+    my $offset        = $start_coord - $slice_start + 1;
 
     foreach(0..($self->parser->get_blockCount - 1)) {
       my $start   = shift @block_starts; 

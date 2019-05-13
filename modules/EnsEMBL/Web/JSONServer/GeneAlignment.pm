@@ -21,6 +21,7 @@ package EnsEMBL::Web::JSONServer::GeneAlignment;
 
 use strict;
 use warnings;
+use Bio::AlignIO;
 use EnsEMBL::Web::File;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
@@ -45,12 +46,6 @@ sub json_fetch_wasabi {
   my $type      = $hub->param('_type') || '';
 
   my $fam_obj         = $object->create_family($family_id, $cdb);
-  my $ensembl_members = $fam_obj->get_Member_by_source('ENSEMBLPEP');
-
-  my @all_pep_members;
-  push @all_pep_members, @$ensembl_members;
-  push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SPTREMBL')};
-  push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SWISSPROT')};
 
   # # Wasabi key for session
   # my $wasabi_session_key  = join ('_', ($g_id, $family_id, $type));
@@ -61,14 +56,7 @@ sub json_fetch_wasabi {
   #   return $wasabi_session_data->{$wasabi_session_key};
   # }
 
-  my $file = {};
-  #  If not in session then create files for wasabi
-  if ($type eq 'Ensembl') {
-    $file = $self->generate_alignment($type, $ensembl_members);
-  }
-  else {
-    $file = $self->generate_alignment($type, \@all_pep_members);
-  }
+  my $file = $self->generate_alignment($type, $fam_obj);
 
   # # Store new data into session
   # if (! keys %$wasabi_session_data) {
@@ -84,35 +72,38 @@ sub json_fetch_wasabi {
 # Takes a gene tree and dumps the alignment and newick tree as text files.
 # Returns the urls of the files that contain the trees
 sub generate_alignment {
-  my( $self, $type, $refs ) = @_;
-  my $object   = $self->object;
-  my $count    = @$refs;
-  my $outcount = 0;
-  return unless $count;
-  
+  my( $self, $type, $fam_obj ) = @_;
+  my $var;
   my $file = EnsEMBL::Web::File->new(
                                       hub             => $self->hub,
                                       extension       => 'fa',
                                       input_drivers   => ['IO'],
                                       output_drivers  => ['IO'],
-                                      base_dir        => 'image',
+                                      sub_dir         => 'gene_alignment',
                                     );
 
-  foreach my $member (@$refs) {
-    my $align;
-    eval { $align = $member->alignment_string; };
-    unless ($@) {
-      if($member->alignment_string) {
-        $file->write_line([
-                            '>'.$member->stable_id,
-                            $member->alignment_string,
-                          ]);
-        $outcount++;
-      }
-    }
+  my $aln;
+  if ($type eq 'Ensembl') {
+    $aln = $fam_obj->get_SimpleAlign(
+        -MEMBER_SOURCES => ['ENSEMBLPEP'],
+        -REMOVE_GAPS => 1
+      );
   }
-  return {} unless $outcount;
+  else {
+    $aln = $fam_obj->get_SimpleAlign();
+  }
+
+  return {} unless $aln->num_sequences;
+
+  my $alignIO = Bio::AlignIO->new(
+      -format => 'fasta',
+      -fh => IO::String->new($var)
+  );
+
+  $alignIO->write_aln($aln);
   
+  $file->write($var);
+
   return { alignment => $file->read_url };
 }
 
