@@ -1,13 +1,13 @@
 /*
  * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * Copyright [2016-2018] EMBL-European Bioinformatics Institute
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,6 @@
 
 
 Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
-
-
   init: function () {
     var panel = this;
 
@@ -28,6 +26,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
+    //getting the session id from the panel url (record=)
+    var record_match = $(this.params.links).find('li.active a').attr('href').match(/record=([^;&]+)/g);
+    var session_id = record_match[0].split("=")[1];
+
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
     this.elLk.dx        = {};
@@ -35,11 +37,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     this.elLk.dy        = {};
     this.elLk.dy.container = $('div#dy-content', this.el);
-
     this.elLk.buttonTab       = this.el.find("div.track-tab");
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
-    this.elLk.matrixContainer = this.el.find('div.matrix-container');    
+    this.elLk.matrixContainer = this.el.find('div.matrix-container');
     this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
     this.elLk.resultBox       = this.el.find(".result-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
@@ -48,7 +49,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'TrackHubMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
-    
+
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
     this.matrixLoadState     = true;
@@ -64,7 +65,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?species='+Ensembl.species,
+      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
       dataType: 'json',
       context: this,
       success: function(json) {
@@ -85,7 +86,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     });
 
-    this.elLk.buttonTab.on("click", function (e) {     
+    this.elLk.buttonTab.on("click", function (e) {
       var activeTab = panel.getActiveTab();
       if (e.target.nodeName !== 'INPUT' && e.currentTarget.id !== activeTab+'-tab') {
         panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
@@ -113,11 +114,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       if(!$(e.target).parent().closest('div').hasClass('track-popup') && panel.trackPopup) {
         panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
         panel.trackPopup.hide();
-      }      
+      }
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) { 
+      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
@@ -196,7 +197,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     else {
       return 1;
     }
-  },  
+  },
 
   // Udpate available tabs or ribbons after filtering
   updateAvailableTabsOrRibbons: function(tabId, resetRibbon, resetFilter) {
@@ -470,7 +471,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       section   = 'epigenomic_activity';
       epigenome = trackKey.split(/_/).pop();
     }
-    // or a segmentation feature? 
+    // or a segmentation feature?
     else if (panel.localStoreObj.segmentation_features && trackKey.match(/^seg_Segmentation/)) {
       section   = 'segmentation_features';
       epigenome = trackKey.split(/_/).pop();
@@ -489,7 +490,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj[section][trackName].state = 'track-on';
       panel.localStoreObj[section][trackName].renderer = trackDisplay;
     }
-  
+
     // Finally update the matrix
   },
 
@@ -605,7 +606,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.toggleBreadcrumb('#'+panel.localStoreObj.userLocation.view);
     if(panel.localStoreObj.userLocation.tab){
       panel.toggleTab({'selectElement': '#'+panel.localStoreObj.userLocation.tab, 'container': panel.el.find("div.track-menu")});
-    }    
+    }
   },
 
   setDragSelectEvent: function() {
@@ -635,19 +636,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   //function when click clear all link which should reset all the filters
   clearAll: function (clearLink) {
     var panel = this;
-    
+
     clearLink.on("click",function(e){
       $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
       });
     });
-    
+
   },
 
   // Function to show filter box when clicking on the search-icon
   clickSearchIcon: function() {
     var panel = this;
-    
+
     panel.elLk.searchIcon = panel.el.find("img.search-icon");
 
     panel.elLk.searchIcon.click("on", function(e){
@@ -670,20 +671,20 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').val("");
         panel.resetFilter("");
         panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').show();
-      });      
-    });    
+      });
+    });
   },
-  
+
   // Function to check divs that needs to have content to enable or disable apply filter button
   // Argument: ID of div to check for content
   enableConfigureButton: function (content) {
     var panel = this;
-    
+
     var total_div = $(content).length;
     var counter   = 0;
 
     $(content).each(function(i, el){
-      if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) { 
+      if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) {
         counter++;
       }
     });
@@ -698,7 +699,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.elLk.displayButton.removeClass('active');
     }
   },
-  
+
   //function to show/hide error message for empty track filters
   // Argument: containers where to listen for empty elements (Note: span error id should match container id with an underscore)
   trackError: function(containers) {
@@ -735,7 +736,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   // Function to select/unselect checkbox and removing them from the right hand panel (optional) and adding them to the right hand panel (optional)
   //Argument: container is an object where the checkbox element is
-  //        : removeElement either 1 or 0 whether to remove element 
+  //        : removeElement either 1 or 0 whether to remove element
   //        : AddElement is either 1 or 0
   //        : allBox is Object of select all box, check if it needs to be on or off
   clickCheckbox: function (container, removeElement, addElement, allBox) {
@@ -778,9 +779,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
       }
       e.stopPropagation();
-    });  
+    });
   },
-  
+
   removeFromMatrix: function(item) {
     var panel = this;
     if (!item) return;
@@ -792,7 +793,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     // Update localStoreObj and local storage
-    Object.keys(allStoreObjects).map(function(key) {      
+    Object.keys(allStoreObjects).map(function(key) {
       if (key.match(item+'_sep_') || key.match('_sep_' + item)) {
         var storeObjKey = panel.itemDimension(key);
         //update other rows/columns in store when removing item
@@ -805,13 +806,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             if(panel.localStoreObj[splitObjKey][associatedEle]["total"] > 0)  {
               panel.localStoreObj[splitObjKey][associatedEle]["total"] -= 1;
             }
-            if(panel.localStoreObj[splitObjKey][associatedEle]["state"][cellCurrState] > 0) { 
-              panel.localStoreObj[splitObjKey][associatedEle]["state"][cellCurrState] -= 1; 
-              panel.localStoreObj[splitObjKey][associatedEle]["state"]["reset-"+cellCurrState] -= 1; 
+            if(panel.localStoreObj[splitObjKey][associatedEle]["state"][cellCurrState] > 0) {
+              panel.localStoreObj[splitObjKey][associatedEle]["state"][cellCurrState] -= 1;
+              panel.localStoreObj[splitObjKey][associatedEle]["state"]["reset-"+cellCurrState] -= 1;
             }
-            if(panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) { 
-              panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1; 
-              panel.localStoreObj[splitObjKey][associatedEle]["renderer"]["reset-"+cellCurrRenderer] -= 1; 
+            if(panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] > 0) {
+              panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1;
+              panel.localStoreObj[splitObjKey][associatedEle]["renderer"]["reset-"+cellCurrRenderer] -= 1;
             }
           }
         });
@@ -1023,7 +1024,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
     //TODO need to remove from matrix as well
   },
-  
+
   // Function to show track configuration panel (matrix) when button is clicked
   // Arguments javascript object of the button element and the panel to show
   clickDisplayButton: function(clickButton, tabClick) {
@@ -1033,15 +1034,15 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       if(clickButton.hasClass("_edit") ) {
         panel.toggleTab({'selectElement': panel.el.find("li._configure"), 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();
-      } else if(clickButton.hasClass("active") ) {      
+      } else if(clickButton.hasClass("active") ) {
         panel.toggleTab({'selectElement': tabClick, 'container': panel.el.find("div.large-breadcrumbs")});
-        panel.toggleButton();        
+        panel.toggleButton();
       }
       panel.emptyMatrix();
       panel.displayMatrix();
     });
   },
-  
+
   //function to jump to tab based on the link
   clickSubResultLink: function() {
     var panel = this;
@@ -1052,10 +1053,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       panel.el.find(".track-tab.active").first().removeClass("active");
       panel.el.find(".tab-content.active").first().removeClass("active");
-      
+
       panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
       //in case the track-content is not active, hide configuration panel first
-      if(panel.el.find("div#configuration-content:visible").length){ 
+      if(panel.el.find("div#configuration-content:visible").length){
         panel.toggleTab({'selectElement': panel.el.find("li._track-select"), 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();
       }
@@ -1137,7 +1138,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     //displaying the Y dimension
     var dyContainer = panel.el.find("div#dy-content");
     rhSectionId = dyContainer.data('rhsection-id');
-    
+
     if (dy.subtabs) {
       //showing experiment type tabs
       var dy_html = '<div class="tabs dy">';
@@ -1183,7 +1184,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       this.displayCheckbox(
         {
           data: dy.data,
-          container: "div#dy-content", 
+          container: "div#dy-content",
           listType: dy.listType,
           parentTabContainer: dyContainer,
           rhSectionId: rhSectionId,
@@ -1199,16 +1200,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.el.find("div.dy div.track-tab").on("click", function () {
       panel.toggleTab({'selectElement': this, 'container': panel.el.find("div.dy")});
       panel.resize();
-    });    
-    
+    });
+
   },
-  
+
   // Function to toggle tabs and show the corresponding content which can be accessed by #id or .class
   // Arguments: selectElement is the tab that's clicked to be active or the tab that you want to be active (javascript object)
   //            container is the current active tab (javascript object)
   //            selByClass is either 1 or 0 - decide how the selection is made for the container to be active (container accessed by #id or .class)
   toggleTab: function(obj) {
-  
+
     var selectElement = obj.selectElement;
     var container = obj.container;
     var selByClass = obj.selByClass;
@@ -1309,7 +1310,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   toggleButton: function() {
     var panel = this;
-    
+
     if(panel.el.find('div.track-configuration:visible').length){
       panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").html("View tracks");
     } else {
@@ -1369,7 +1370,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
       html += '</ul></div>';
       var wrapper_close = '</div>';
-      html = wrapper + '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close; 
+      html = wrapper + '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close;
       container.append(html);
 
       // Adding the element itself to the lookup
@@ -1379,7 +1380,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.elLk.lookup[elementClass].el = container.find("." + elementClass);
         }
       });
-      
+
       //updating available count in right hand panel
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
 
@@ -1387,7 +1388,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.clickCheckbox(container.find("div.all-box"));
     }
   },
-  
+
   //function to add dx and dy in data-filter attribute which link the dx checkbox to the dy checkbox and vice versa, used for filtering to show/hide checkboxes
   addRelationData: function () {
     var panel = this;
@@ -1400,14 +1401,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(dx_data, function(index, el) {
         var relClassName = el.val.replace(/[^\w\-]/g,'_');
         relClassNameString += relClassName + " ";
-        
+
         //adding cells atribute to experiments
         var relDataFilter = panel.el.find("li."+relClassName).attr('data-filter');
         relDataFilter ?  panel.el.find("li."+relClassName).attr('data-filter', relDataFilter+" "+dx_className) :  panel.el.find("li."+relClassName).attr('data-filter', dx_className);
 
         if(!panel.el.find("li."+relClassName).attr('data-filtercontainer')){
           panel.el.find("li."+relClassName).attr('data-filtercontainer', 'dx-content');
-        } 
+        }
       });
       //data-filter contains the classname that needs to be shown and data-filtercontainer is the id where elements to be shown are located
       panel.el.find("li."+dx_className).attr('data-filter', relClassNameString).attr('data-filtercontainer', 'dy-content');
@@ -1489,7 +1490,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var letter = String.fromCharCode(i + 97);
       var active_class = "";
       var letterHTML   = "";
-      
+
       if(i === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
 
       if(data[letter] && data[letter].length) {
@@ -1535,12 +1536,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //updating available count in right hand panel
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
-    
+
     //clicking select all checkbox
     panel.clickCheckbox(container.find("div.all-box"));
-   
+
     //clicking the alphabet
-    var alphabet = container.find('div.alphabet-div');      
+    var alphabet = container.find('div.alphabet-div');
     alphabet.on("mousedown", function(e){
       if (!$(container, panel.el).hasClass('active')) {
         return;
@@ -1560,10 +1561,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var endLetter   = $(activeAlphabets.get(-1)).html().charAt(0);
     if (!activeAlphabets.length) return;
 
-    if($('div.alphabet-div.active', container).html().match(startLetter)) { 
+    if($('div.alphabet-div.active', container).html().match(startLetter)) {
       $('div.larrow', container).removeClass("active").addClass("inactive");
       $('div.rarrow', container).removeClass("inactive").addClass("active"); //just in case jumping from Z to A
-    } else if($('div.alphabet-div.active', container).html().match(endLetter)) { 
+    } else if($('div.alphabet-div.active', container).html().match(endLetter)) {
       $('div.rarrow', container).removeClass("active").addClass("inactive");
       $('div.larrow', container).removeClass("inactive").addClass("active"); //just in case jumping from A to Z
     }else {
@@ -1593,7 +1594,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         if(this.className.match(/larrow/gi)) {
           if (!availableAlphabets[activeAlphabetIndex-1]) return;
 
-          //get previous letter 
+          //get previous letter
           var prevLetter = $(availableAlphabets[activeAlphabetIndex-1]).html().charAt(0).toLowerCase();
           // Get total letters skipped to adjust offset (charcode(currentletter - prevLetter))
           var lettersSkipped = activeAlphabet.charCodeAt(0) - prevLetter.charCodeAt(0);
@@ -1639,7 +1640,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           }
         }
       }
-      
+
     });
   },
 
@@ -1656,7 +1657,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       return "matrix"; //object name for matrix state object
     }
   },
-  
+
   // Function to show/update/delete matrix
   displayMatrix: function() {
     var panel = this;
@@ -1666,7 +1667,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.trackPopup = panel.el.find('div.track-popup');
 
     var xContainer = '<div  class="xContainer">';
-    
+
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
     var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
 
@@ -1718,7 +1719,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         yContainer += '<div class="yLabel _ht '+cellName+'" title="'+cellName+'">'+cellLabel+'</div>';
         var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
-        
+
         //drawing boxes
         $.each(dyArray, function(i, dyItem) {
           if (dyItem === '' && !panel.disableYdim) {
@@ -1729,9 +1730,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             var popupType = "peak-signal"; //class of type of popup to use
             var dataClass = ""; //to know which cell has data
             var boxRenderClass = "";
-            var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_ 
+            var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_
             var renderer, rel_dimension;
-            
+
             var cellStoreObjKey = panel.itemDimension(storeKey);
             var dyStoreObjKey   = panel.itemDimension(dyItem);
             var matrixClass     = cellStoreObjKey === "matrix" ? cellStoreObjKey : "";
@@ -1754,7 +1755,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                   boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
                   panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType, "reset-state": boxState, "reset-renderer": boxDataRender};
-                  
+
                   //setting count to update column state (dy)
                   panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
                   panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
@@ -1764,17 +1765,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
                   //calculating total in one row, we only want dy item not the extra dimensions for the matrix state obj.
                   if(panel.json.extra_dimensions.indexOf(dyItem) === -1) {
-                    dxCount++; 
+                    dxCount++;
                     peakSignalCount++;
-                    if(boxState === "track-on") { 
-                      onState++; 
+                    if(boxState === "track-on") {
+                      onState++;
                     } else {
                       offState++;
-                    }                                       
-                  }                  
+                    }
+                  }
                   return;
                 }
-              });              
+              });
             }
 
             if(panel.disableYdim) {
@@ -1812,11 +1813,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.cellClick(); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
-    
+
     // enable helptips
-    this.elLk.matrixContainer.find('._ht').helptip({position: { at: 'right center', using: function(position, feedback){     
+    this.elLk.matrixContainer.find('._ht').helptip({position: { at: 'right center', using: function(position, feedback){
       position.left -= 20;
-      $(this).removeClass('helptip-top helptip-bottom helptip-middle').addClass('helptip-' + feedback.vertical).css(position);}} 
+      $(this).removeClass('helptip-top helptip-bottom helptip-middle').addClass('helptip-' + feedback.vertical).css(position);}}
     });
   },
 
@@ -1848,7 +1849,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   resetMatrix: function() {
     var panel = this;
-    
+
     this.elLk.resetMatrixButton = panel.elLk.trackConfiguration.find('button.reset-button._matrix');
 
     this.elLk.resetMatrixButton.click("on", function() {
@@ -1861,7 +1862,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         var storeObjKey = panel.itemDimension(key);
         if(key.match("_sep_")) {
           var currentState    = allStoreObjects[key]["state"];
-          var currentRenderer = allStoreObjects[key]["renderer"]; 
+          var currentRenderer = allStoreObjects[key]["renderer"];
           var resetState      = allStoreObjects[key]["reset-state"];
           var resetRenderer   = allStoreObjects[key]["reset-renderer"];
 
@@ -1870,7 +1871,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           panel.localStoreObj[storeObjKey][key]["state"]    = resetState;
           panel.localStoreObj[storeObjKey][key]["renderer"] = resetRenderer;
-        } else {          
+        } else {
           panel.localStoreObj[storeObjKey][key]["state"]["on"]              = allStoreObjects[key]["state"]["reset-on"];
           panel.localStoreObj[storeObjKey][key]["state"]["off"]             = allStoreObjects[key]["state"]["reset-off"];
           panel.localStoreObj[storeObjKey][key]["renderer"]["peak"]         = allStoreObjects[key]["renderer"]["reset-peak"];
@@ -1917,7 +1918,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){
       panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick').removeClass("mClick");
       panel.trackPopup.hide();
-      
+
       panel.boxObj          = $(this);
       panel.popupType       = $(this).data("popup-type"); //type of popup to use which is associated with the class name
       panel.TrackPopupType  = panel.el.find('div.track-popup.'+panel.popupType);
@@ -1929,12 +1930,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.cellStateKey    = panel.itemDimension(panel.cellKey) || "";
       panel.dyStateKey      = panel.itemDimension(panel.yName) || "";
       panel.dxStateKey      = panel.itemDimension(panel.xName) || "";
-      
+
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
       var rowState  = panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total ? "track-off" : "track-on"; // get the equivalent ylabel first and then its state to determine whether row is on/off
       var colState  = panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total ? "track-off" : "track-on"; // get the equivalent xlabel first and then its state to determine whether column is on/off
-      
+
       if (panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
         colState = "track-off";
       }
@@ -1954,14 +1955,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           rowRender = rendererType;
           return;
         }
-      });      
+      });
       var colRender = "";
       $.map(panel.localStoreObj[panel.dxStateKey][panel.xName].renderer, function(count, rendererType){
         if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
           colRender = rendererType;
           return;
         }
-      });       
+      });
 
       $(this).addClass("mClick");
 
@@ -1977,7 +1978,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.TrackPopupType.find('ul li input[name=column-radio]._'+colRender).prop("checked",true);
       } else {
         panel.TrackPopupType.find('ul li input[name=column-radio]').prop("checked",false);
-      }      
+      }
 
      //setting row switch for whether it is on/off
       if(rowState === "track-on") {
@@ -2048,8 +2049,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
 
       //update each affected row or column state/renderer type(-1 from current, +1 for new)
-      Object.keys(panel.localStoreObj[keyDim]).filter(function(key){ 
-        //find associated track with the trackKey (only the one with _sep_)         
+      Object.keys(panel.localStoreObj[keyDim]).filter(function(key){
+        //find associated track with the trackKey (only the one with _sep_)
         if(key.match(trackKey) && key.match("_sep_")) {
           //console.log("KEY>>>>"+key)
           //updating the associated one only not the trackKey (only do this for matrix)
@@ -2064,11 +2065,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               cellNewValue = cellNewValue.replace("track-","");
 
               if(associatedEle != trackKey && cellCurrValue != cellNewValue ) {
-                if(panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] < panel.localStoreObj[keyDim][associatedEle]["total"]) { 
-                  panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] += 1; 
+                if(panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] < panel.localStoreObj[keyDim][associatedEle]["total"]) {
+                  panel.localStoreObj[keyDim][associatedEle][statusKey][newValue] += 1;
                 }
-                if(panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] > 0) { 
-                  panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] -= 1; 
+                if(panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] > 0) {
+                  panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] -= 1;
                 }
               }
             });
@@ -2076,7 +2077,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           //updating each cell in the store
           panel.localStoreObj[keyDim][key][statusKey] = newState ? newState : newRenderer;
         }
-      });        
+      });
     }
     panel.setLocalStorage();
   },
@@ -2092,33 +2093,33 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.TrackPopupType.find('ul li label.switch input[type=checkbox]').off().on("click", function(e) {
       var switchName    = $(this).attr("name");
       var trackState    = $(this).is(":checked") ? "track-on" : "track-off";
-      var currentState  = trackState === "track-on"  ? "track-off" : "track-on"; 
+      var currentState  = trackState === "track-on"  ? "track-off" : "track-on";
       var on = false;
 
       if(switchName === "column-switch") {
         //update bg for all cells in the column and also switch cell off
-        panel.elLk.rowContainer.find('div.xBoxes.'+panel.xName+'.'+currentState).removeClass(currentState).addClass(trackState);        
+        panel.elLk.rowContainer.find('div.xBoxes.'+panel.xName+'.'+currentState).removeClass(currentState).addClass(trackState);
         panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked", trackState === "track-on" ? true : false);
 
         //update localstore for column
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.xName], panel.xName, trackState, currentState);
 
-        // Turn on/off row switch 
-        on = (panel.localStoreObj[panel.dxStateKey][panel.xName] && 
+        // Turn on/off row switch
+        on = (panel.localStoreObj[panel.dxStateKey][panel.xName] &&
                   panel.localStoreObj[panel.dxStateKey][panel.xName].state.on === panel.localStoreObj[panel.dxStateKey][panel.xName].total);
 
         panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", on);
 
       } else if(switchName === "row-switch") {
-        //update bg for all cells in the row belonging to matrix only and also switch cell off        
+        //update bg for all cells in the row belonging to matrix only and also switch cell off
         panel.elLk.rowContainer.find('div.xBoxes.matrix.'+panel.yName+'.'+currentState).removeClass(currentState).addClass(trackState);
         panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked", trackState === "track-on" ? true : false);
 
         //update localstore for row
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.yName], panel.yName, trackState, currentState);
 
-        // Turn on/off row switch 
-        on = (panel.localStoreObj[panel.dxStateKey][panel.xName] && 
+        // Turn on/off row switch
+        on = (panel.localStoreObj[panel.dxStateKey][panel.xName] &&
                   panel.localStoreObj[panel.dxStateKey][panel.xName].state.on === panel.localStoreObj[panel.dxStateKey][panel.xName].total);
 
         panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", on);
@@ -2143,7 +2144,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           xNameData = panel.localStoreObj[panel.xName][panel.xName];
         }
 
-        
+
         //check if by switching this one cell on, all cells in the row are on, then update row switch accordingly
         on = (yNameData.state.on === yNameData.total);
         panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", on);
@@ -2181,7 +2182,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.elLk.rowContainer.find('div.xBoxes._hasData.'+ dimension+matrixClass).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
 
       panel.updateTrackStore(panel.localStoreObj[storeObjKey][dimension], dimension, "", "", renderClass, currentRender);
-    } else { //cell-radio   
+    } else { //cell-radio
       //updating the render class for the cell
       panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
 

@@ -35,9 +35,9 @@ sub json_data {
   my $hub  = $self->hub;
 
   # TODO - replace with dynamic parameter
-  my $record_id = 'url_53103f6c810b3ff5bb3da64d7fecad42_511';
-  #my $record_id = 'url_093244c7b96971052ab900101f8636ff_94416749';
-  (my $code = $record_id) =~ s/^url_//; 
+  my $record_id = $hub->param('record');
+  #$record_id ="url_53103f6c810b3ff5bb3da64d7fecad42_449";
+  (my $code = $record_id) =~ s/^url_//;
 
   my $record;
   foreach my $m (grep $_, $hub->user, $hub->session) {
@@ -66,7 +66,7 @@ sub json_data {
     last if $data;
   }
 
-  #use Data::Dumper; 
+  #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
   #$Data::Dumper::Maxdepth = 2;
   #warn Dumper($data);
@@ -78,11 +78,11 @@ sub json_data {
   #     ## We only need this information once
   #     $dimX = $track->{'dimensions'}{'x'};
   #     $dimY = $track->{'dimensions'}{'y'};
-  #     ## Create a lookup for all the dimensions' individual values 
-  #     my %combined_hash = (%{$track->{'subGroup1'}}, %{$track->{'subGroup2'}}); 
+  #     ## Create a lookup for all the dimensions' individual values
+  #     my %combined_hash = (%{$track->{'subGroup1'}}, %{$track->{'subGroup2'}});
   #     while (my($k, $v) = each (%combined_hash)) {
   #       ## Skip the information about the dimensions themselves
-  #       next if ($k eq 'name' || $k eq 'label'); 
+  #       next if ($k eq 'name' || $k eq 'label');
   #       (my $pretty_label = $v) =~ s/_/ /g;
   #       $dimLabels->{$k} = $pretty_label;
   #     }
@@ -98,25 +98,25 @@ sub json_data {
   #     $final->{'data'}{$dimY}{'data'}     = {};
   #   }
   #   elsif ($track->{'bigDataUrl'}) {
-  #     ## Only add tracks that are displayable, i.e. not superTracks/composites/etc 
+  #     ## Only add tracks that are displayable, i.e. not superTracks/composites/etc
   #     my $keyX    = $track->{'subGroups'}{$dimX};
   #     my $keyY    = $track->{'subGroups'}{$dimY};
   #     my $labelX  = $dimLabels->{$keyX};
   #     my $labelY  = $dimLabels->{$keyY};
 
-  #     push @{$final->{'data'}{$dimX}{'data'}{$keyX}}, {'dimension' => $dimY, 'val' => $keyY, 'defaultState' => 'track-'.$track->{'on_off'}}; 
+  #     push @{$final->{'data'}{$dimX}{'data'}{$keyX}}, {'dimension' => $dimY, 'val' => $keyY, 'defaultState' => 'track-'.$track->{'on_off'}};
   #     push @{$final->{'data'}{$dimY}{'data'}{$keyY}}, $keyX;
   #   }
   # }
 
   # ## Adjust interface based on number of values in dimensions
   # if (scalar keys %{$final->{'data'}{$dimX}{'data'}} > 20) {
-  #   $final->{'data'}{$dimX}{'listType'} = 'alphabetRibbon'; 
+  #   $final->{'data'}{$dimX}{'listType'} = 'alphabetRibbon';
   # }
   # if (scalar keys %{$final->{'data'}{$dimY}{'data'}} > 20) {
-  #   $final->{'data'}{$dimY}{'listType'} = 'alphabetRibbon'; 
+  #   $final->{'data'}{$dimY}{'listType'} = 'alphabetRibbon';
   # }
-  # use Data::Dumper; 
+  # use Data::Dumper;
   # $Data::Dumper::Sortkeys = 1;
   # #$Data::Dumper::Maxdepth = 2;
   # warn Dumper($final);
