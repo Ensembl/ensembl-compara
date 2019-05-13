@@ -68,8 +68,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
       dataType: 'json',
       context: this,
-      success: function(json) {
-        this.json = json;
+      success: function(data) {
+        this.rawJSON = data;
+        this.buildJSON();
         this.trackTab();
         this.populateLookUp();
         this.loadState();
@@ -164,6 +165,57 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
     }
+  },
+
+  // Function to create the relationship between the different track
+  buildJSON: function() {
+    var panel = this;
+
+    var dimX, dimY;
+    var finalObj = {};
+    var dimLabels = {};
+
+    $.each(panel.rawJSON.hub_data, function(index, track) {
+      if(track.dimensions && $.isEmptyObject(finalObj.dimensions)) {
+        dimX = track.dimensions.x;
+        dimY = track.dimensions.y;
+
+        //Create a lookup for all the dimensions' individual values
+        var combined_hash = track.subGroup1;
+        $.each($.extend(combined_hash,track.subGroup2), function(k, v) {
+          //Skip the information about the dimensions themselves
+          if(k === "name" || k === "label") { return; }
+          var pretty_label = k.replace('_', ' ');
+          dimLabels[k] = pretty_label;
+        });
+
+        finalObj.dimensions = [dimX,dimY];
+        finalObj.data = {};
+
+        finalObj.data[dimX] = {"name": dimX, "label": track.subGroup1.label, "listType": "simpleList", "data": {} };
+        finalObj.data[dimY] = {"name": dimX, "label": track.subGroup2.label, "listType": "simpleList", "data": {} };
+      }
+      else if(track.bigDataUrl) {
+        // Only add tracks that are displayable, i.e. not superTracks/composites/etc
+        var keyX    = track.subGroups[dimX];
+        var keyY    = track.subGroups[dimY];
+        var labelX  = dimLabels[keyX];
+        var labelY  = dimLabels[keyY];
+
+        if($.isEmptyObject(finalObj.data[dimX]["data"][keyX])){
+          finalObj["data"][dimX]["data"][keyX] = [{"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off }];
+        } else {
+          finalObj["data"][dimX]["data"][keyX].push({"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off });
+        }
+
+        if($.isEmptyObject(finalObj.data[dimY]["data"][keyY])){
+          finalObj.data[dimY]["data"][keyY] = [keyX];
+        } else {
+          finalObj.data[dimY]["data"][keyY].push(keyX);
+        }
+      }
+    });
+    panel.json = finalObj;
   },
 
   // Redraw matrix as there may be updates to localStore
@@ -1183,7 +1235,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       console.log('Displaying trackhub dimension Y', dy);
       this.displayCheckbox(
         {
-          data: dy.data,
+          data: Object.keys(dy.data),
           container: "div#dy-content",
           listType: dy.listType,
           parentTabContainer: dyContainer,
