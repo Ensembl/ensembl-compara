@@ -184,6 +184,7 @@ button.fade-button.view-track         { margin-left: 30px; min-width: 100px; wid
 button.fade-button.showMatrix         { height:auto; padding: 4px; }
 div.flex-row                          { display: flex; }
 .circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; }
+div#ConfigTrackHubMatrixForm span.error { margin-left: 40px; }
 span.error                            { color: [[HOVER]]; margin-left: 18px; font-weight: bold; }
 span.search-error                     { margin: 22px; position: absolute;}
 span.error._ajax                      { top: 250px; position: absolute; width: 500px; display: none; }

@@ -124,17 +124,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?species='+Ensembl.species,
+      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
       dataType: 'json',
       context: this,
-      success: function(json) {
-        if(this.checkError(json)) {
+      success: function(data) {
+        if(this.checkError(data)) {
           console.log("Fetching main trackhub data error....");
           return;
         } else {
           panel.elLk.ajaxError.hide();
         }
-        this.json = json;
+        this.rawJSON = data;
+        this.buildJSON();
         $(this.el).find('div.spinner').remove();
         this.trackTab();
         this.populateLookUp();
@@ -254,6 +255,57 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
     }
+  },
+
+  // Function to create the relationship between the different track
+  buildJSON: function() {
+    var panel = this;
+
+    var dimX, dimY;
+    var finalObj = {};
+    var dimLabels = {};
+
+    $.each(panel.rawJSON.hub_data, function(index, track) {
+      if(track.dimensions && $.isEmptyObject(finalObj.dimensions)) {
+        dimX = track.dimensions.x;
+        dimY = track.dimensions.y;
+
+        //Create a lookup for all the dimensions' individual values
+        var combined_hash = track.subGroup1;
+        $.each($.extend(combined_hash,track.subGroup2), function(k, v) {
+          //Skip the information about the dimensions themselves
+          if(k === "name" || k === "label") { return; }
+          var pretty_label = k.replace('_', ' ');
+          dimLabels[k] = pretty_label;
+        });
+
+        finalObj.dimensions = [dimX,dimY];
+        finalObj.data = {};
+
+        finalObj.data[dimX] = {"name": dimX, "label": track.subGroup1.label, "listType": "simpleList", "data": {} };
+        finalObj.data[dimY] = {"name": dimX, "label": track.subGroup2.label, "listType": "simpleList", "data": {} };
+      }
+      else if(track.bigDataUrl) {
+        // Only add tracks that are displayable, i.e. not superTracks/composites/etc
+        var keyX    = track.subGroups[dimX];
+        var keyY    = track.subGroups[dimY];
+        var labelX  = dimLabels[keyX];
+        var labelY  = dimLabels[keyY];
+
+        if($.isEmptyObject(finalObj.data[dimX]["data"][keyX])){
+          finalObj["data"][dimX]["data"][keyX] = [{"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off }];
+        } else {
+          finalObj["data"][dimX]["data"][keyX].push({"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off });
+        }
+
+        if($.isEmptyObject(finalObj.data[dimY]["data"][keyY])){
+          finalObj.data[dimY]["data"][keyY] = [keyX];
+        } else {
+          finalObj.data[dimY]["data"][keyY].push(keyX);
+        }
+      }
+    });
+    panel.json = finalObj;
   },
 
   //Function to check if ajax request return 404 (Because bad request are returned as success with header: 404)
@@ -774,17 +826,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   trackError: function(containers) {
     var panel = this;
 
-    $(containers).each(function(i, ele) {
-        var error_class = "_" + $(ele).attr('id');
-        if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
-            $("span." + error_class).hide();
-            $('div#dx.result-content').show();
-        } else {
-            $("span." + error_class).show();
-            $('div#dx.result-content').hide();
-        }
-    });
-
+    //if either dx or dy has an element selected then hide error
+    if($(containers).find('li').length && $(containers).find('span.fancy-checkbox.selected').length) {
+      $(containers).find("span.error").hide();
+    } else {
+      $(containers).find("span.error").show();
+    }
   },
 
   //function to show/hide reset all link in RH panel when something is selected
@@ -1229,9 +1276,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     );
 
-    //showing experiment type tabs
-    var dy_html = '<div class="tabs dy">';
-    var content_html    = "";
+    //displaying the Y dimension
+    var dyContainer = panel.el.find("div#dy-content");
+    rhSectionId = dyContainer.data('rhsection-id');
+
+    if (dy.subtabs) {
+      //showing experiment type tabs
+      var dy_html = '<div class="tabs dy">';
+      var content_html = "";
 
     //sort dy object
     Object.keys(dy.data).sort().forEach(function(key) {
@@ -1249,12 +1301,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       count++;
     });
     dy_html += '</div>';
-    var dyContainer = panel.el.find("div#dy-content");
     dyContainer.append(dy_html).append(content_html);
-    rhSectionId = dyContainer.data('rhsection-id');
 
-    //displaying the experiment types
-    if (dy.subtabs) {
+      // add checkboxes to each tab div
       $.each(dy.data, function(key, subTab){
         panel.displayCheckbox(
           {
