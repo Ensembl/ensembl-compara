@@ -60,6 +60,60 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'signal': 'signal',
       'peak-signal': 'signal_feature'
     }
+/*
+    this.rendererConfig = {
+      'bigbed': {
+                'alignment-nolabel': 'as_alignment_nolabel',
+                'alignment-label': 'as_alignment_label',
+                'transcript-nolabel': 'as_transcript_nolabel',
+                'transcript-label': 'as_transcript_label',
+                'half-height': 'half_height',
+                'stack': 'stack',
+                'unlimited': 'unlimited',
+                'ungrouped': 'ungrouped'
+      },
+      'bigwig': {
+                'normal': 'normal',
+                'peak': 'compact',
+                'signal': 'signal',
+                'peak-signal': 'signal_feature'
+      },
+      'biggenepred': {
+                'alignment-nolabel': 'as_alignment_nolabel',
+                'alignment-label': 'as_alignment_label',
+                'collapsed-nolabel': 'as_collapsed_nolabel',
+                'collapsed-label': 'as_collapsed_label',
+                'transcript-nolabel': 'as_transcript_nolabel',
+                'transcript-label': 'as_transcript_label',
+                'half-height': 'half_height',
+                'stack': 'stack',
+                'unlimited': 'unlimited',
+                'ungrouped': 'ungrouped'
+      },
+      'bigint': {
+                'interaction': 'interaction'
+      },
+      'bam': {
+                'coverage': 'coverage_with_reads',
+                'unlimited': 'unlimited',
+                'histogram': 'histogram'
+      },
+      'bam': {
+                'coverage': 'coverage_with_reads',
+                'unlimited': 'unlimited',
+                'histogram': 'histogram'
+      },
+      'vcf': {
+                'alignment-nolabel': 'as_alignment_nolabel',
+                'alignment-label': 'as_alignment_label',
+                'half-height': 'half_height',
+                'stack': 'stack',
+                'unlimited': 'unlimited',
+                'ungrouped': 'ungrouped',
+                'difference': 'difference'
+      }
+    }
+*/
 
     this.resize();
     panel.el.find("div#dy-tab div.search-box").hide();
