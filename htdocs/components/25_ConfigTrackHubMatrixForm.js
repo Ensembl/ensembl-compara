@@ -20,7 +20,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   init: function () {
     var panel = this;
 
-    Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
@@ -120,7 +119,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/RegulationData/info?species='+Ensembl.species,
+      url: '/Json/TrackHubData/info?species='+Ensembl.species,
       dataType: 'json',
       context: this,
       success: function(json) {
