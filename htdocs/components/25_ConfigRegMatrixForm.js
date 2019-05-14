@@ -20,6 +20,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   init: function () {
     var panel = this;
 
+    this.base(arguments);
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);

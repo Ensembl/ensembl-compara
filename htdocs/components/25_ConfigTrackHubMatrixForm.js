@@ -20,6 +20,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   init: function () {
     var panel = this;
 
+    this.base(arguments);
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
@@ -123,54 +124,29 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
+      url: '/Json/TrackHubData/data?species='+Ensembl.species,
       dataType: 'json',
       context: this,
       success: function(json) {
         if(this.checkError(json)) {
-          console.log("Fetching extra information error....");
+          console.log("Fetching main trackhub data error....");
           return;
         } else {
           panel.elLk.ajaxError.hide();
         }
-        Object.assign(this.json, json);
-        $.each(json.info, function(k, v) {
-          if (v.search_terms){
-            k = k.replace(/[^\w\-]/g,'_')
-            panel.searchTerms[v.search_terms] = k;
-          }
-        })
-        $.ajax({
-          url: '/Json/TrackHubData/data?species='+Ensembl.species,
-          dataType: 'json',
-          context: this,
-          success: function(json) {
-            if(this.checkError(json)) {
-              console.log("Fetching main trackhub data error....");
-              return;
-            } else {
-              panel.elLk.ajaxError.hide();
-            }
-            Object.assign(this.json, json);
-            $(this.el).find('div.spinner').remove();
-            this.trackTab();
-            this.populateLookUp();
-            this.loadState();
-            this.setDragSelectEvent();
-            this.registerRibbonArrowEvents();
-            this.updateRHS();
-            this.addExtraDimensions();
-            this.goToUserLocation();
-            this.resize();
-            this.selectDeselectAll();
-            panel.el.find('._ht').helptip();
-          },
-          error: function() {
-            $(this.el).find('div.spinner').remove();
-            this.showError();
-            return;
-          }
-        });
+        this.json = json;
+        $(this.el).find('div.spinner').remove();
+        this.trackTab();
+        this.populateLookUp();
+        this.loadState();
+        this.setDragSelectEvent();
+        this.registerRibbonArrowEvents();
+        this.updateRHS();
+        this.addExtraDimensions();
+        this.goToUserLocation();
+        this.resize();
+        this.selectDeselectAll();
+        panel.el.find('._ht').helptip();
       },
       error: function() {
         $(this.el).find('div.spinner').remove();
