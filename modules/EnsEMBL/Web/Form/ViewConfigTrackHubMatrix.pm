@@ -30,7 +30,7 @@ sub get_js_panel {
 sub configuration_content {
   my ($self, $dimX, $dimY) = @_;
 
-  my $html = qq(      
+  my $html = qq(
       <div class="track-panel track-configuration" id="configuration-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
@@ -40,8 +40,8 @@ sub configuration_content {
           <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
           <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
         </div>
-        <div class="horizontal-sub-header">$dimY</div>
-        <button class="fade-button reset">Reset</button>
+        <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
+        <button class="fade-button reset-button _matrix">Reset</button>
         <div class="track-popup column-cell">
           <ul>
             <li>
@@ -56,29 +56,30 @@ sub configuration_content {
         </div>
         <div class="hidebox"></div>
         <div class="matrix-container">
-        </div>        
+        </div>
       </div>
 
       <div class="result-box">
         <h4>Selected tracks</h4>
+        <div class="reset_track">Reset all</div>
 
         <div class="filter-content">
 
-          <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>
+          <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX or $dimY</span></h5>
           <div class="result-content" id="dx">
+            <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <div class="sub-result-link">$dimX</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-            <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
             <ul class="result-list hidden">
               <span class="hidden lhsection-id">dx-content</span>
             </ul>
           </div>
 
-          <h5 class="result-header">$dimY <span class="error _dy">Please select $dimY</span></h5>
+          <h5 class="result-header">$dimY</h5>
           <div class="result-content" id="dy">
             <div class="sub-result-link">$dimY</div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-            <div class="_show show-hide hidden">Show selected</div><div class="_hide show-hide hidden">Hide selected</div>
+<div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <ul class="result-list hidden">
               <span class="hidden lhsection-id">dy-content</span>
             </ul>

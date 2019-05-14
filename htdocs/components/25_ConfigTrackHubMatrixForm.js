@@ -632,7 +632,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
     // cell elements
     this.elLk.dx.ribbonBanner = $('.ribbon-banner .letters-ribbon .alphabet-div', this.elLk.dx.container);
-    this.elLk.dx.tabContents = $('.ribbon-content li', this.elLk.dx.container);
+    this.elLk.dx.tabContents = panel.json.data[panel.dx].listType === 'alphabetRibbon' ? $('.ribbon-content li', this.elLk.dx.container) : $(' li', this.elLk.dx.container);
     this.elLk.dx.haveSubTabs = false;
 
     // ExpType elements
@@ -1056,7 +1056,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         // Add lis with _search_hide class. because all _search_hide lis will have display = 'none'
         allLIs = allLIs.length || panel.elLk[key].tabContents.filter(function() { return $(this).css('display') !== 'none' || $(this).hasClass('_search_hide') });
-
         panel.selectedTracksCount[key] = panel.selectedTracksCount[key] || {};
         panel.selectedTracksCount[key].selected = panel.selectedTracksCount[key].selected || [];
         $(selectedLIs).map(function(){
@@ -1123,9 +1122,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
 
     //state management for the extra dimension
-    $.each(panel.json.extra_dimensions, function(i, data){
-      panel.localStoreObj[data] = panel.getLocalStorage()[data]  || {};
-    });
+    if(!$.isEmptyObject(panel.json.extra_dimensions)){
+      $.each(panel.json.extra_dimensions, function(i, data){
+        panel.localStoreObj[data] = panel.getLocalStorage()[data]  || {};
+      });
+    }
 
     //state management object for user location
     panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
@@ -1473,8 +1474,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
+<<<<<<< Updated upstream
           var tip = panel.createTooltipText(item);
           html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text class="_ht _ht_delay" title="'+tip+'">'+item+'</text></li>';
+=======
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item.replace("_"," ")+'</text></li>';
+>>>>>>> Stashed changes
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
