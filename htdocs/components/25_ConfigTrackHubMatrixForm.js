@@ -25,6 +25,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
+    //getting the session id from the panel url (record=)
+    var record_match = $(this.params.links).find('li.active a').attr('href').match(/record=([^;&]+)/g);
+    var session_id = record_match[0].split("=")[1];
+
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
     this.elLk.dx        = {};
@@ -119,7 +123,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/info?species='+Ensembl.species,
+      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
       dataType: 'json',
       context: this,
       success: function(json) {
@@ -1292,7 +1296,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     else {
       this.displayCheckbox(
         {
-          data: dy.data,
+          data: Object.keys(dy.data),
           container: "div#dy-content",
           listType: dy.listType,
           parentTabContainer: dyContainer,
@@ -1439,7 +1443,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayCheckbox: function(obj) {
 
-    var data = obj.data
+    var data = obj.data;
     var container = obj.container;
     var listType = obj.listType;
     var parentTabContainer = obj.parentTabContainer;
@@ -1474,12 +1478,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-<<<<<<< Updated upstream
-          var tip = panel.createTooltipText(item);
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text class="_ht _ht_delay" title="'+tip+'">'+item+'</text></li>';
-=======
           html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item.replace("_"," ")+'</text></li>';
->>>>>>> Stashed changes
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
