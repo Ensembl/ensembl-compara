@@ -20,15 +20,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   init: function () {
     var panel = this;
 
-    this.base.apply(this, arguments);
+    Ensembl.Panel.prototype.init.call(this); // skip the Configurator init - does a load of stuff that isn't needed here
     Ensembl.EventManager.register('modalPanelResize', this, this.resize);
     Ensembl.EventManager.register('updateConfiguration', this, this.updateConfiguration);
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
-
-    //getting the session id from the panel url (record=)
-    var record_match = $(this.params.links).find('li.active a').attr('href').match(/record=([^;&]+)/g);
-    var session_id = record_match[0].split("=")[1];
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
@@ -37,6 +33,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     this.elLk.dy        = {};
     this.elLk.dy.container = $('div#dy-content', this.el);
+
     this.elLk.buttonTab       = this.el.find("div.track-tab");
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
@@ -46,6 +43,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.clearAll        = this.el.find("span.clearall");
+    this.elLk.ajaxError       = this.el.find('span.error._ajax');
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'TrackHubMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
@@ -53,6 +51,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
     this.matrixLoadState     = true;
+    this.json = {};
+    this.searchTerms = {};
 
     this.rendererConfig = {
       'normal': 'normal',
@@ -60,6 +60,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'signal': 'signal',
       'peak-signal': 'signal_feature'
     }
+
 /*
     this.rendererConfig = {
       'bigbed': {
@@ -119,33 +120,68 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
+      url: '/Json/RegulationData/info?species='+Ensembl.species,
       dataType: 'json',
       context: this,
-      success: function(data) {
-        this.rawJSON = data;
-        this.buildJSON();
-        this.trackTab();
-        this.populateLookUp();
-        this.loadState();
-        this.setDragSelectEvent();
-        this.registerRibbonArrowEvents();
-        this.updateRHS();
-        this.addExtraDimensions();
-        this.goToUserLocation();
-        this.resize();
-        this.updateSelectAll();
+      success: function(json) {
+        if(this.checkError(json)) {
+          console.log("Fetching extra information error....");
+          return;
+        } else {
+          panel.elLk.ajaxError.hide();
+        }
+        Object.assign(this.json, json);
+        $.each(json.info, function(k, v) {
+          if (v.search_terms){
+            k = k.replace(/[^\w\-]/g,'_')
+            panel.searchTerms[v.search_terms] = k;
+          }
+        })
+        $.ajax({
+          url: '/Json/TrackHubData/data?species='+Ensembl.species,
+          dataType: 'json',
+          context: this,
+          success: function(json) {
+            if(this.checkError(json)) {
+              console.log("Fetching main trackhub data error....");
+              return;
+            } else {
+              panel.elLk.ajaxError.hide();
+            }
+            Object.assign(this.json, json);
+            $(this.el).find('div.spinner').remove();
+            this.trackTab();
+            this.populateLookUp();
+            this.loadState();
+            this.setDragSelectEvent();
+            this.registerRibbonArrowEvents();
+            this.updateRHS();
+            this.addExtraDimensions();
+            this.goToUserLocation();
+            this.resize();
+            this.selectDeselectAll();
+            panel.el.find('._ht').helptip();
+          },
+          error: function() {
+            this.showError();
+            return;
+          }
+        });
       },
       error: function() {
         this.showError();
+        return;
       }
     });
 
     this.elLk.buttonTab.on("click", function (e) {
       var activeTab = panel.getActiveTab();
       if (e.target.nodeName !== 'INPUT' && e.currentTarget.id !== activeTab+'-tab') {
-        panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
-        panel.resetFilter(); // Reset filter on the active tab
+        if(panel.elLk.trackPanel.find('input[name="matrix_search"]').val()) {
+          panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
+          panel.elLk.searchCrossIcon.hide();
+          panel.resetFilter(); // Reset filter on the active tab
+        }
       }
       panel.toggleTab({'selectElement': this, 'container': panel.el.find("div.track-menu")});
       panel.resize();
@@ -156,11 +192,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       e.preventDefault();
     });
 
-    this.clickSearchIcon();
     this.clickSubResultLink();
     this.showHideFilters();
-    this.clickCheckbox(this.elLk.filterList, 1);
+    this.clickCheckbox(this.elLk.filterList);
     this.clearAll(this.elLk.clearAll);
+    this.clearSearch();
     this.resetTracks();
     this.resetMatrix();
 
@@ -182,11 +218,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     //this has to be after on click event to capture the button class before it gets changed
     this.clickDisplayButton(this.elLk.displayButton, this.el.find("li._configure"));
 
-    // Filtering functionality
+    // Search functionality
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
       var inputText = $(this).val().trim();
 
-      if (!panel.resetFilter(inputText)) {
+      if(inputText) {
+        panel.elLk.searchCrossIcon.show();
+      }else {
+        panel.elLk.searchCrossIcon.hide();
+      }
+
+      if (!panel.resetFilter(inputText,true)) {
         return;
       };
 
@@ -196,9 +238,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         return name.match(re) && panel.elLk.lookup[name].parentTabId === activeTabId;
       });
 
-      if (match.length) {
-        var classString = '.' + match.join(',.');
-        var li_arr = panel.elLk.lookup[match[0]].parentTab.find('li').not(classString);
+      $.each(panel.searchTerms, function(k, v) {
+        if (k.match(re)) {
+          match.push(v);
+        }
+      })
+
+      var match_uniq = $.unique(match);
+
+      if (match_uniq.length) {
+        panel.elLk[activeTabId].container.find("span.search-error").hide();
+        panel.elLk[activeTabId].container.find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
+        var classString = '.' + match_uniq.join(',.');
+        var li_arr = panel.elLk.lookup[match_uniq[0]].parentTab.find('li').not(classString);
         $.each(li_arr, function(i, li) {
           if ($(li).css('display') !== 'none') {
             $(li).addClass('_search_hide').hide();
@@ -207,6 +259,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
       else {
         panel.elLk[activeTabId].container.find('li').addClass('_search_hide').hide();
+        panel.elLk[activeTabId].container.find("span.search-error").show();
+        panel.elLk[activeTabId].container.find("div.selectall-container div.select-link, div.selectall-container div.divider").hide();
       }
       panel.updateAvailableTabsOrRibbons(activeTabId, true);
     });
@@ -221,55 +275,23 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
-  // Function to create the relationship between the different track
-  buildJSON: function() {
+  //Function to check if ajax request return 404 (Because bad request are returned as success with header: 404)
+  checkError: function(json) {
     var panel = this;
 
-    var dimX, dimY;
-    var finalObj = {};
-    var dimLabels = {};
+    if(json.header.status === '404'){
+      panel.showError();
+      return 1;
+    } else {
+      return 0;
+    }
+  },
 
-    $.each(panel.rawJSON.hub_data, function(index, track) {
-      if(track.dimensions && $.isEmptyObject(finalObj.dimensions)) {
-        dimX = track.dimensions.x;
-        dimY = track.dimensions.y;
+  //Function to show error when ajax request failed
+  showError: function() {
+    var panel = this;
 
-        //Create a lookup for all the dimensions' individual values
-        var combined_hash = track.subGroup1;
-        $.each($.extend(combined_hash,track.subGroup2), function(k, v) {
-          //Skip the information about the dimensions themselves
-          if(k === "name" || k === "label") { return; }
-          var pretty_label = k.replace('_', ' ');
-          dimLabels[k] = pretty_label;
-        });
-
-        finalObj.dimensions = [dimX,dimY];
-        finalObj.data = {};
-
-        finalObj.data[dimX] = {"name": dimX, "label": track.subGroup1.label, "listType": "simpleList", "data": {} };
-        finalObj.data[dimY] = {"name": dimX, "label": track.subGroup2.label, "listType": "simpleList", "data": {} };
-      }
-      else if(track.bigDataUrl) {
-        // Only add tracks that are displayable, i.e. not superTracks/composites/etc
-        var keyX    = track.subGroups[dimX];
-        var keyY    = track.subGroups[dimY];
-        var labelX  = dimLabels[keyX];
-        var labelY  = dimLabels[keyY];
-
-        if($.isEmptyObject(finalObj.data[dimX]["data"][keyX])){
-          finalObj["data"][dimX]["data"][keyX] = [{"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off }];
-        } else {
-          finalObj["data"][dimX]["data"][keyX].push({"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off });
-        }
-
-        if($.isEmptyObject(finalObj.data[dimY]["data"][keyY])){
-          finalObj.data[dimY]["data"][keyY] = [keyX];
-        } else {
-          finalObj.data[dimY]["data"][keyY].push(keyX);
-        }
-      }
-    });
-    panel.json = finalObj;
+    panel.elLk.ajaxError.show();
   },
 
   // Redraw matrix as there may be updates to localStore
@@ -278,6 +300,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.emptyMatrix();
     this.displayMatrix();
     this.toggleButton();
+    this.goToUserLocation();
   },
 
   // Set reset = true if you do not want to reset offset position
@@ -285,6 +308,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
 
     panel.getActiveTabContainer().find('li._search_hide').removeClass('_search_hide');
+    panel.getActiveTabContainer().find("span.search-error").hide();
+    panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
+
     var _filtered = panel.getActiveTabContainer().find('li._filtered');
     if (_filtered.length) {
       _filtered.show();
@@ -294,7 +320,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
 
     var activeTabId = panel.getActiveTab();
-
     panel.updateAvailableTabsOrRibbons(activeTabId, true, reset);
 
     if (inputText && inputText.length < 3) {
@@ -314,7 +339,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if (!tabLookup.haveSubTabs) {
       // Update selectAll
       panel.activateAlphabetRibbon(tabLookup.container, resetRibbon, resetFilter);
-      panel.updateSelectAll(tabLookup.container);
     }
     else {
       // For subtabs
@@ -359,12 +383,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               count++;
             }
           });
-          panel.updateTrackPanelSelectAllCount(key, count);
-
         }
-
-        // Update selectAll
-        panel.updateSelectAll(tab_content_ele);
 
       });
 
@@ -419,13 +438,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var obj = {'container': alphabetContainer, 'selByClass': 1, 'resetRibbonOffset': resetRibbon, 'searchTriggered': true}
     obj.resetFilter = resetFilter && true;
 
-    if (arr[currentlySelected]) {
+    if (arr[currentlySelected] && !resetFilter) {
       obj.selectElement = arr[currentlySelected];
       panel.toggleTab(obj);
     }
     else {
       // console.log('activating first available', alphabetContainer.attr('id'));
       obj.selectElement = arr[Object.keys(arr).sort()[0]];
+      obj.searchTriggered = false;
       panel.toggleTab(obj);
     }
 
@@ -458,29 +478,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
-  updateSelectAll: function(tabContent) {
-    var panel = this;
-
-    if(!tabContent) {
-      $.each(panel.selectedTracksCount, function(key, count) {
-        if(panel.selectedTracksCount[key].selected.length === panel.selectedTracksCount[key].available) {
-          $('div#allBox-'+key+'-content span.fancy-checkbox').addClass('selected');
-        } else {
-          $('div#allBox-'+key+'-content span.fancy-checkbox').removeClass('selected');
-        }
-      });
-    } else {
-      var lis_unselected   = $(tabContent).find('li._filtered').length ? $(tabContent).find('li._filtered span.fancy-checkbox').not(".selected") : $(tabContent).find('li span.fancy-checkbox').not(".selected");
-
-      if (lis_unselected.length) {
-        $(tabContent).find('div.all-box span.fancy-checkbox').removeClass('selected');
-      }
-      else {
-        $(tabContent).find('div.all-box span.fancy-checkbox').addClass('selected');
-      }
-    }
-  },
-
   addExtraDimensions: function() {
     var panel = this;
     // Add extra columns data to lookup (for reg feats)
@@ -501,7 +498,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var arr = [];
 
     //resetting filter box and content
-    panel.elLk.searchIcon.parent().find('input.configuration_search_text').val("");
+    panel.elLk.searchCrossIcon.parent().find('input.configuration_search_text').val("");
     panel.resetFilter("", true);
 
     //store on which tab the user is on
@@ -510,7 +507,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     // If no matrix available in localstore, that means user hasn't clicked on "Configure Display" button
     // In that case, call displayMatrix() to create the necessary localStore objects
     if (Object.keys(panel.localStoreObj).length <= 0 || !panel.localStoreObj.dx) {
-      return;
+      return {image_config: {}};
     }
 
     $.each(panel.json.extra_dimensions, function (i, dim) {
@@ -709,7 +706,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if($.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
 
-    panel.toggleBreadcrumb('#'+panel.localStoreObj.userLocation.view);
+    panel.toggleBreadcrumb(panel.localStoreObj.userLocation.view ? '#'+panel.localStoreObj.userLocation.view : "#track-select");
     if(panel.localStoreObj.userLocation.tab){
       panel.toggleTab({'selectElement': '#'+panel.localStoreObj.userLocation.tab, 'container': panel.el.find("div.track-menu")});
     }
@@ -751,33 +748,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   },
 
-  // Function to show filter box when clicking on the search-icon
-  clickSearchIcon: function() {
+  clearSearch: function() {
     var panel = this;
 
-    panel.elLk.searchIcon = panel.el.find("img.search-icon");
-
-    panel.elLk.searchIcon.click("on", function(e){
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').animate({width:'toggle'},350);
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').focus();
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').hide();
-      e.stopPropagation();
-    });
-
-    panel.closeSearch();
-  },
-
-  closeSearch: function() {
-    var panel = this;
-
-    panel.elLk.searchCrossIcon = panel.elLk.searchIcon.parents('div.search-box').find('span.search-cross-icon');
+    panel.elLk.searchCrossIcon = panel.elLk.buttonTab.find('span.search-cross-icon');
 
     panel.elLk.searchCrossIcon.click("on", function(){
-      panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text, span.search-cross-icon').toggle("slide", function() {
-        panel.elLk.searchIcon.parents('div.search-box:visible').find('input.configuration_search_text').val("");
-        panel.resetFilter("");
-        panel.elLk.searchIcon.parents('div.search-box:visible').find('img.search-icon').show();
-      });
+      panel.getActiveTabContainer().find("span.search-error").hide();
+      panel.getActiveTabContainer().find("div.selectall-container div.select-link, div.selectall-container div.divider").show();
+      $(this).parent().find('input.configuration_search_text').val("");
+      panel.resetFilter("", true);
+      panel.elLk.searchCrossIcon.hide();
+      panel.elLk.searchCrossIcon.parent().find('input').focus();
     });
   },
 
@@ -796,11 +778,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     if(counter === total_div) {
-      panel.el.find('button.view-track').addClass('active');
+      panel.el.find('li.view-track').removeClass('inactive');
       panel.el.find('li._configure').removeClass('inactive');
       panel.elLk.displayButton.addClass('active')
     } else {
-      panel.el.find('button.view-track').removeClass('active');
+      panel.el.find('li.view-track').addClass('inactive');
       panel.el.find('li._configure').addClass('inactive');
       panel.elLk.displayButton.removeClass('active');
     }
@@ -815,11 +797,25 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         var error_class = "_" + $(ele).attr('id');
         if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
             $("span." + error_class).hide();
+            $('div#dx.result-content').show();
         } else {
             $("span." + error_class).show();
+            $('div#dx.result-content').hide();
         }
     });
 
+  },
+
+  //function to show/hide reset all link in RH panel when something is selected
+  //Argument: containers where to look for empty elements
+  showResetLink: function(containers) {
+    var panel = this;
+
+    if ($(containers).find('li').length && $(containers).find('span.fancy-checkbox.selected').length) {
+      $("div.reset_track").show();
+    } else {
+      $("div.reset_track").hide();
+    }
   },
 
   // Function to update the current count in the right hand panel (can be adding/removing 1 or select all)
@@ -833,19 +829,46 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
-  updateTrackPanelSelectAllCount: function(key, total) {
+  //function when clicking on the select all | deselect all link
+  // it will either select all checkbox or unselect all checkbox and apply filtering where there is !no-filter
+  selectDeselectAll: function() {
     var panel = this;
-    if(key) {
-      $('#allBox-' + key + '-content ._num').html('(' + total + ')');
-    }
+
+    panel.el.find('div.selectall-container div.select-link').on("click", function(e){
+      var selected = $(this).hasClass('all-box');
+      var _class   = '';
+
+      if ($(this).closest('.tab-content').find('li._filtered').length) {
+        _class = '._filtered';
+      }
+
+      var available_LIs = $(this).closest('.tab-content').find('li' + _class + ':not("._search_hide")');
+      var availableFancyCheckBoxes = available_LIs.find('span.fancy-checkbox');
+
+      if (selected) {
+        availableFancyCheckBoxes.addClass("selected");
+        available_LIs.addClass("_selected");
+      }
+      else {
+        availableFancyCheckBoxes.removeClass('selected');
+        available_LIs.removeClass("_selected");
+      }
+
+      // add 'selected: true/flase' to lookup
+      available_LIs.map(function() {
+        panel.elLk.lookup[$(this).data('item')].selected = selected;
+      });
+
+      var ele = available_LIs.data('item');
+      panel.filterData(ele);
+      panel.updateRHS();
+      e.stopPropagation();
+    });
   },
 
   // Function to select/unselect checkbox and removing them from the right hand panel (optional) and adding them to the right hand panel (optional)
   //Argument: container is an object where the checkbox element is
-  //        : removeElement either 1 or 0 whether to remove element
-  //        : AddElement is either 1 or 0
-  //        : allBox is Object of select all box, check if it needs to be on or off
-  clickCheckbox: function (container, removeElement, addElement, allBox) {
+  clickCheckbox: function (container) {
     var panel = this;
     var itemListen = "li";
     if(container[0].nodeName === 'DIV') {
@@ -866,24 +889,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
 
       var ele = $(this).data('item');
-      if($(this).hasClass('all-box')) {
-        // if(!$(this).hasClass('no-filter')) {
-          ele = $(this).closest('.tab-content').find('li')[0];
-          ele = $(ele).data('item');
-        // }
-      }
 
       panel.filterData(ele);
       panel.updateRHS();
-
-      //check whether the select all box is on/off, if it is off and all filters are selected, then make it on and if it is on and all filters are not selected then make it off
-      if(allBox && itemListen === "li"){
-        if(container.find("span.fancy-checkbox.selected").length === container.find("span.fancy-checkbox").length) {
-          allBox.find("span.fancy-checkbox").addClass("selected");
-        } else {
-          allBox.find("span.fancy-checkbox").removeClass("selected");
-        }
-      }
       e.stopPropagation();
     });
   },
@@ -920,6 +928,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               panel.localStoreObj[splitObjKey][associatedEle]["renderer"][cellCurrRenderer] -= 1;
               panel.localStoreObj[splitObjKey][associatedEle]["renderer"]["reset-"+cellCurrRenderer] -= 1;
             }
+
+            //updating all selection
+            if(panel.localStoreObj[splitObjKey]["allSelection"]["total"] > 0)  {
+              panel.localStoreObj[splitObjKey]["allSelection"]["total"] -= 1;
+            }
+            if(panel.localStoreObj[splitObjKey]["allSelection"]["state"][cellCurrState] > 0) {
+              panel.localStoreObj[splitObjKey]["allSelection"]["state"][cellCurrState] -= 1;
+              panel.localStoreObj[splitObjKey]["allSelection"]["state"]["reset-"+cellCurrState] -= 1;
+            }
+            if(panel.localStoreObj[splitObjKey]["allSelection"]["renderer"][cellCurrRenderer] > 0) {
+              panel.localStoreObj[splitObjKey]["allSelection"]["renderer"][cellCurrRenderer] -= 1;
+              panel.localStoreObj[splitObjKey]["allSelection"]["renderer"]["reset-"+cellCurrRenderer] -= 1;
+            }
           }
         });
         delete panel.localStoreObj[storeObjKey][key];
@@ -935,6 +956,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.updateSelectedTracksPanel(item);
     // panel.activateTabs();
     panel.updateShowHideLinks(item);
+    panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
     panel.trackError('div#dx, div#source');
     panel.enableConfigureButton('div#dx, div#source');
@@ -991,16 +1013,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       else {
         $(itemElements).addClass('_selected').find("span.fancy-checkbox").addClass("selected");
       }
-
-      // Update all-box selected class based on selection
-      var lis_unselected = $(itemElements).closest('.tab-content').find('li._filtered').length ?  $(itemElements).closest('.tab-content').find('li._filtered span.fancy-checkbox').not(".selected") : $(itemElements).closest('.tab-content').find('li span.fancy-checkbox').not(".selected");
-      var allBox = $(itemElements).closest('.tab-content').find('.all-box span.fancy-checkbox');
-
-      if(lis_unselected.length) {
-        allBox.removeClass('selected');
-      } else {
-        allBox.addClass('selected');
-      }
     }
   },
 
@@ -1034,7 +1046,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.totalSelected  += selectedLIs.length;
 
           panel.updateCurrentCount(subTab, selectedLIs.length, allLIs.length);
-          _search_hide.length && this.updateTrackPanelSelectAllCount(key, selectedLIs.length);
           selectedLIs.length && selectedElements.push(selectedLIs);
         })
       }
@@ -1160,7 +1171,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find(".track-tab.active").first().removeClass("active");
       panel.el.find(".tab-content.active").first().removeClass("active");
 
-      panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
       //in case the track-content is not active, hide configuration panel first
       if(panel.el.find("div#configuration-content:visible").length){
         panel.toggleTab({'selectElement': panel.el.find("li._track-select"), 'container': panel.el.find("div.large-breadcrumbs")});
@@ -1183,13 +1193,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           $(parentTab).find("div.search-box").show();
         }
       }
-
       //showing/hiding searchbox in the main tab
       if($(tabId).find("div.search-box").length) {
         panel.el.find(".search-box").hide();
         $(tabId).find("div.search-box").show();
       }
-
       panel.el.find(tabId).addClass("active");
       panel.el.find(contentId).addClass("active");
     });
@@ -1220,15 +1228,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   trackTab: function() {
     var panel = this;
-
-    //showing and applying first dimension
+    //showing and applying cell types
     var dxContainer = panel.el.find("div#dx-content");
     var rhSectionId = dxContainer.data('rhsection-id');
     panel.dx = panel.json.dimensions[0];
     panel.dy = panel.json.dimensions[1];
     var dx = panel.json.data[panel.dx];
     var dy = panel.json.data[panel.dy];
-    console.log('Displaying dimension X', dx);
 
     this.displayCheckbox(
       {
@@ -1241,36 +1247,32 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     );
 
-    //displaying the Y dimension
-    var dyContainer = panel.el.find("div#dy-content");
-    rhSectionId = dyContainer.data('rhsection-id');
+    //showing experiment type tabs
+    var dy_html = '<div class="tabs dy">';
+    var content_html    = "";
 
-    if (dy.subtabs) {
-      //showing experiment type tabs
-      var dy_html = '<div class="tabs dy">';
-      var content_html = "";
-
-      //sort dy object
-      Object.keys(dy.data).sort().forEach(function(key) {
+    //sort dy object
+    Object.keys(dy.data).sort().forEach(function(key) {
         var value = dy.data[key];
         delete dy.data[key];
         dy.data[key] = value;
-      });
+    });
 
-      //console.log('Displaying regulation dimension Y');
-      // build HTML for tabs
-      var count = 0;
-      $.each(dy.data, function(key, item){
-        var active_class = "";
-        if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
-        dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
-        content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
-        count++;
-      });
-      dy_html += '</div>';
-      dyContainer.append(dy_html).append(content_html);
+    var count = 0;
+    $.each(dy.data, function(key, item){
+      var active_class = "";
+      if(count === 0) { active_class = "active"; } //TODO: check the first letter that there is data and then add active class
+      dy_html += '<div class="track-tab '+active_class+'" id="'+key+'-tab">'+item.name+'<span class="hidden content-id">'+key+'-content</span></div>';
+      content_html += '<div id="'+key+'-content" class="tab-content '+active_class+'" data-rhsection-id="'+ key +'""><span class="hidden rhsection-id">'+key+'</span></div>';
+      count++;
+    });
+    dy_html += '</div>';
+    var dyContainer = panel.el.find("div#dy-content");
+    dyContainer.append(dy_html).append(content_html);
+    rhSectionId = dyContainer.data('rhsection-id');
 
-      // add checkboxes to each tab div
+    //displaying the experiment types
+    if (dy.subtabs) {
       $.each(dy.data, function(key, subTab){
         panel.displayCheckbox(
           {
@@ -1286,10 +1288,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
     }
     else {
-      console.log('Displaying trackhub dimension Y', dy);
       this.displayCheckbox(
         {
-          data: Object.keys(dy.data),
+          data: dy.data,
           container: "div#dy-content",
           listType: dy.listType,
           parentTabContainer: dyContainer,
@@ -1405,12 +1406,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     panel.toggleButton();
-    panel.elLk.resetTrackButton.show(); //showing reset tracks button on select tracks tab
 
     if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {
       panel.emptyMatrix();
       panel.displayMatrix();
-      panel.elLk.resetTrackButton.hide(); //hiding reset tracks button (only visible on select tracks tab)
     }
   },
 
@@ -1424,10 +1423,21 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
+  createTooltipText: function(item) {
+    if (item === undefined) return;
+    var name, tooltip = '';
+    if (this.json.info && this.json.info[item]) {
+      name = this.json.info[item].full_name ? this.json.info[item].full_name : item;
+      tooltip = '<p> <u>' + name + '</u></p>' +
+                '<p>' + this.json.info[item].description + '</p>';
+
+    }
+    return tooltip;
+  },
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayCheckbox: function(obj) {
 
-    var data = obj.data;
+    var data = obj.data
     var container = obj.container;
     var listType = obj.listType;
     var parentTabContainer = obj.parentTabContainer;
@@ -1452,6 +1462,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
       });
       panel.alphabetRibbon(ribbonObj, container, parentTabContainer, parentRhSectionId, noFilter_allBox, set);
+      panel.updateAvailableTabsOrRibbons(panel.getActiveTab());
     } else  {
       var container = panel.el.find(container);
       var wrapper = '<div class="content-wrapper">';
@@ -1461,7 +1472,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+          var tip = panel.createTooltipText(item);
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text class="_ht _ht_delay" title="'+tip+'">'+item+'</text></li>';
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
@@ -1476,7 +1488,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
       html += '</ul></div>';
       var wrapper_close = '</div>';
-      html = wrapper + '<div class="all-box list-all-box" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text class="_num">('+countFilter+')</text></div>' + html + wrapper_close;
+      html = wrapper + '<span class="hidden error search-error">No matches</span><div class="selectall-container"><div class="deselect-box select-link" id="deSelectBox-'+$(container).attr("id")+'">Deselect all</div><div class="divider">|</div><div class="all-box select-link" id="allBox-'+$(container).attr("id")+'">Select all</div></div>' + html + wrapper_close;
       container.append(html);
 
       // Adding the element itself to the lookup
@@ -1491,7 +1503,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
 
       //clicking select all checkbox
-      panel.clickCheckbox(container.find("div.all-box"));
+      //panel.clickCheckbox(container.find("div.all-box"));
     }
   },
 
@@ -1604,7 +1616,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         $.each(data[letter], function(i, el) {
           total_num++;
           var elementClass = el.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text>'+el+'</text></li>';
+          var tip = panel.createTooltipText(el);
+          letterHTML += '<li class="noremove ' + elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass + '"><span class="fancy-checkbox"></span><text class="_ht _ht_delay" title="'+tip+'">'+el+'</text></li>';
 
           panel.elLk.lookup[elementClass] = {
             label: el,
@@ -1624,7 +1637,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       content_html += '<div data-ribbon="ribbon_'+letter+'" class="'+letter+'_content alphabet-content '+active_class+'">'+letterHTML+'</div>';
     });
     var noFilterClass = noFilter_allBox ? 'no-filter' : '';
-    container.append('<div class="all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'"><span class="fancy-checkbox"></span>Select all<text>(A-Z)</text></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+    container.append('<span class="hidden error search-error">No matches</span><div class="selectall-container"><div class="deselect-box select-link '+ noFilterClass +'" id="deSelectBox-'+$(container).attr("id")+'">Deselect all</div><div class="divider">|</div><div class="select-link all-box '+ noFilterClass +'" id="allBox-'+$(container).attr("id")+'">Select all</div></div><div class="cell-listing _drag_select_zone"><div class="ribbon-banner"><div class="larrow inactive">&#x25C0;</div><div class="alpha-wrapper"><div class="letters-ribbon"></div></div><div class="rarrow">&#x25B6;</div></div><div class="ribbon-content"></div></div>');
+
     container.find('div.letters-ribbon').append(html);
     container.find('div.ribbon-content').append(content_html);
 
@@ -1644,7 +1658,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
 
     //clicking select all checkbox
-    panel.clickCheckbox(container.find("div.all-box"));
+    //panel.clickCheckbox(container.find("div.all-box"));
 
     //clicking the alphabet
     var alphabet = container.find('div.alphabet-div');
@@ -1796,6 +1810,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           //initialising state obj for dyItem (column), value setup later
           panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
         }
+        if(!panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"]) {
+          //initialising state obj for dyItem (column), value setup later
+          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
+        }
 
         if(panel.disableYdim) {
           if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
@@ -1810,6 +1828,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     xContainer += "</div>";
     panel.el.find('div.matrix-container').append(xContainer);
 
+    //initialising allSelection for matrix storage
+    if(!panel.localStoreObj["matrix"]["allSelection"]) {
+      //initialising state obj for dyItem (column), value setup later
+      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
+    }
+
     var yContainer = '<div class="yContainer">';
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
@@ -1823,7 +1847,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           }
         }
 
-        yContainer += '<div class="yLabel _ht '+cellName+'" title="'+cellName+'">'+cellLabel+'</div>';
+        yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
         var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
         //drawing boxes
@@ -1861,6 +1885,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                   boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
                   panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType, "reset-state": boxState, "reset-renderer": boxDataRender};
+
+                  //setting count for all selection section
+                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
+                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"][boxDataRender] += 1;
+                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"]["reset-"+boxDataRender] += 1;
+                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
+                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
 
                   //setting count to update column state (dy)
                   panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
@@ -1921,10 +1952,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.setLocalStorage();
 
     // enable helptips
-    this.elLk.matrixContainer.find('._ht').helptip({position: { at: 'right center', using: function(position, feedback){
-      position.left -= 20;
-      $(this).removeClass('helptip-top helptip-bottom helptip-middle').addClass('helptip-' + feedback.vertical).css(position);}}
-    });
+    this.elLk.matrixContainer.find('._ht').helptip();
   },
 
   emptyMatrix: function() {
@@ -1944,7 +1972,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     $.each($.merge(dimensionsArray, panel.json.extra_dimensions), function(i,storeKey){
       $.each(panel.localStoreObj[storeKey], function(item, data) {
-        if(!item.match("_sep_")) {
+        if(!item.match("_sep_") && item != "allSelection") {
           if(!dyItems[item] && !panel.localStoreObj.dx[item]) {
             panel.removeFromMatrix(item);
           }
@@ -1984,6 +2012,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.localStoreObj[storeObjKey][key]["renderer"]["signal"]       = allStoreObjects[key]["renderer"]["reset-signal"];
           panel.localStoreObj[storeObjKey][key]["renderer"]["peak-signal"]  = allStoreObjects[key]["renderer"]["reset-peak-signal"];
           panel.localStoreObj[storeObjKey][key]["renderer"]["normal"]       = allStoreObjects[key]["renderer"]["reset-normal"];
+
+          //resetting all selection
+          panel.localStoreObj[storeObjKey]["allSelection"]["state"]["on"]              = allStoreObjects["allSelection"]["state"]["reset-on"];
+          panel.localStoreObj[storeObjKey]["allSelection"]["state"]["off"]             = allStoreObjects["allSelection"]["state"]["reset-off"];
+          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["peak"]         = allStoreObjects["allSelection"]["renderer"]["reset-peak"];
+          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["signal"]       = allStoreObjects["allSelection"]["renderer"]["reset-signal"];
+          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["peak-signal"]  = allStoreObjects["allSelection"]["renderer"]["reset-peak-signal"];
+          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["normal"]       = allStoreObjects["allSelection"]["renderer"]["reset-normal"];
         }
       });
     });
@@ -1992,20 +2028,21 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   resetTracks: function() {
     var panel = this;
 
-    this.elLk.resetTrackButton = panel.elLk.resultBox.find('button.reset-button._track');
+    this.elLk.resetTrack = panel.elLk.resultBox.find('div.reset_track');
 
-    this.elLk.resetTrackButton.click("on", function() {
+    this.elLk.resetTrack.click("on", function() {
       panel.localStoreObj.dx     = {};
       panel.localStoreObj.dy     = {};
       panel.localStoreObj.matrix = {};
       panel.setLocalStorage();
       panel.emptyMatrix();
-      panel.resetFilter();
+      panel.resetFilter("",true);
       $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
         panel.filterData($(ele).data('item'));
       });
       panel.updateRHS();
+      panel.toggleBreadcrumb("#track-select");
     });
   },
 
@@ -2039,9 +2076,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
-      var rowState  = panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total ? "track-off" : "track-on"; // get the equivalent ylabel first and then its state to determine whether row is on/off
-      var colState  = panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total ? "track-off" : "track-on"; // get the equivalent xlabel first and then its state to determine whether column is on/off
+      var rowState  = "";
+      var colState  = "";
+      var allState = panel.localStoreObj[panel.dxStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dxStateKey]["allSelection"].total ? "track-on" : "track-off"; // check if all is on/off
 
+      // get the equivalent xlabel first and then its state to determine whether column is on/off
       if (panel.localStoreObj[panel.dxStateKey][panel.xName].state.off === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
         colState = "track-off";
       }
@@ -2051,6 +2090,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
         else {
           colState = "track-off";
+        }
+      }
+
+      //now for rowstate
+      if (panel.localStoreObj[panel.dyStateKey][panel.yName].state.off === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
+        rowState = "track-off";
+      }
+      else {
+        if (panel.localStoreObj[panel.dyStateKey][panel.yName].state.on === panel.localStoreObj[panel.dyStateKey][panel.yName].total) {
+          rowState = "track-on";
+        }
+        else {
+          rowState = "track-off";
         }
       }
 
@@ -2066,6 +2118,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.map(panel.localStoreObj[panel.dxStateKey][panel.xName].renderer, function(count, rendererType){
         if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dxStateKey][panel.xName].total) {
           colRender = rendererType;
+          return;
+        }
+      });
+
+      var allRender = "";
+      $.map(panel.localStoreObj[panel.dxStateKey]["allSelection"].renderer, function(count, rendererType){
+        if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dxStateKey]["allSelection"].total) {
+          allRender = rendererType;
           return;
         }
       });
@@ -2114,6 +2174,20 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.TrackPopupType.find('ul li input[name=cell-radio]').prop("checked",false);
       }
 
+      //setting all switch on/off
+      if(allState === "track-on") {
+        panel.TrackPopupType.find('ul li label.switch input[name="all-switch"]').prop("checked",true);
+      } else {
+        panel.TrackPopupType.find('ul li label.switch input[name="all-switch"]').prop("checked",false);
+      }
+
+      //setting radio button for all render
+      if(allRender) {
+        panel.TrackPopupType.find('ul li input[name=all-radio]._'+allRender).prop("checked",true);
+      } else {
+        panel.TrackPopupType.find('ul li input[name=all-radio]').prop("checked",false);
+      }
+
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
       panel.TrackPopupType.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top': ($(this)[0].offsetTop - $('div.matrix-container')[0].scrollTop) + 15,'left': ($(this)[0].offsetLeft - $('div.matrix-container')[0].scrollLeft) + 15}).show();
@@ -2130,6 +2204,24 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var statusKey   = newState ? "state" : "renderer";
     var newValue    = newState ?  newState.replace("track-","") : newRenderer;
     var currValue   = currentState ?  currentState.replace("track-","") : currentRenderer;
+
+    if(trackKey === "allSelection"){
+      Object.keys(storeObj).filter(function(key){
+        if(key.match("_sep_")){
+          storeObj[key][statusKey] = newState ?  newState : newRenderer;
+        } else {
+          $.each(storeObj[key][statusKey], function(keyName, count){
+            if(newValue === keyName) {
+              storeObj[key][statusKey][keyName] = storeObj[key]["total"];
+            } else {
+              if(!keyName.match("reset-")) { storeObj[key][statusKey][keyName] = 0; }
+            }
+          });
+        }
+      });
+      panel.setLocalStorage();
+      return;
+    }
     var keyDim      = panel.itemDimension(trackKey);
     //console.log("STATUSKEY:"+statusKey+">>newValue>>"+newValue+">>TrackKey>>"+trackKey)
 
@@ -2137,13 +2229,30 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if(trackKey.match("_sep_")) {
       storeObj[statusKey] = newState ?  newState : newRenderer;
 
+      var allUpdated = 0;
+
       $.each(trackKey.split("_sep_"), function(i, splitTrack){
-        if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey][splitTrack]["total"]) { panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] += 1; }
-        if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][currValue] > 0) { panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][currValue] -= 1; };
+        if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey][splitTrack]["total"]) {
+          panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][newValue] += 1;
+        }
+        if(panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][currValue] > 0) {
+          panel.localStoreObj[panel.dxStateKey][splitTrack][statusKey][currValue] -= 1;
+        }
+
+        //updating allSelection
+        if(!allUpdated) {
+          if(panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][newValue] < panel.localStoreObj[panel.dxStateKey]["allSelection"]["total"]) {
+            panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][newValue] += 1;
+          }
+          if(panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][currValue] > 0) {
+            panel.localStoreObj[panel.dxStateKey]["allSelection"][statusKey][currValue] -= 1;
+          }
+          allUpdated = 1; //CAUTION HERE: the above only needs to be done once
+        }
         if(keyDim != "matrix") { return false; }
       });
 
-    } else {  //if it is row or column, set new state/renderer type to total count and the previous state/renderer to 0, and for each affected row/column update the count
+    } else {  //if it is row or column or allSelection, set new state/renderer type to total count and the previous state/renderer to 0, and for each affected row/column update the count
       $.each(storeObj[statusKey], function(rendererType, val){
         if(rendererType === newValue) {
           storeObj[statusKey][rendererType] = storeObj["total"];
@@ -2176,6 +2285,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 }
                 if(panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] > 0) {
                   panel.localStoreObj[keyDim][associatedEle][statusKey][cellCurrValue] -= 1;
+                }
+
+                //updating allSelection
+                if(panel.localStoreObj[keyDim]["allSelection"][statusKey][newValue] < panel.localStoreObj[keyDim]["allSelection"]["total"]) {
+                  panel.localStoreObj[keyDim]["allSelection"][statusKey][newValue] += 1;
+                }
+                if(panel.localStoreObj[keyDim]["allSelection"][statusKey][cellCurrValue] > 0) {
+                  panel.localStoreObj[keyDim]["allSelection"][statusKey][cellCurrValue] -= 1;
                 }
               }
             });
@@ -2216,6 +2333,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", on);
 
+        // Turn on/off all switch
+        allOn = (panel.localStoreObj[panel.dxStateKey]["allSelection"] &&
+          panel.localStoreObj[panel.dxStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dxStateKey]["allSelection"].total);
+
+        panel.TrackPopupType.find('ul li label.switch input[name="all-switch"]').prop("checked", allOn);
+
       } else if(switchName === "row-switch") {
         //update bg for all cells in the row belonging to matrix only and also switch cell off
         panel.elLk.rowContainer.find('div.xBoxes.matrix.'+panel.yName+'.'+currentState).removeClass(currentState).addClass(trackState);
@@ -2224,11 +2347,25 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         //update localstore for row
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey][panel.yName], panel.yName, trackState, currentState);
 
-        // Turn on/off row switch
+        // Turn on/off column switch
         on = (panel.localStoreObj[panel.dxStateKey][panel.xName] &&
                   panel.localStoreObj[panel.dxStateKey][panel.xName].state.on === panel.localStoreObj[panel.dxStateKey][panel.xName].total);
 
         panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", on);
+
+        // Turn on/off all switch
+        allOn = (panel.localStoreObj[panel.dxStateKey]["allSelection"] &&
+          panel.localStoreObj[panel.dxStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dxStateKey]["allSelection"].total);
+
+        panel.TrackPopupType.find('ul li label.switch input[name="all-switch"]').prop("checked", allOn);
+
+      } else if(switchName === "all-switch") {
+        //update bg for all cells in the row belonging to matrix only and also switch cell off
+        panel.elLk.rowContainer.find('div.xBoxes.matrix._hasData.'+currentState).removeClass(currentState).addClass(trackState);
+        panel.TrackPopupType.find('ul li label.switch input[name$=-switch]').prop("checked", trackState === "track-on" ? true : false);
+
+        //update localstore for whole matrix
+        panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey], "allSelection", trackState, currentState);
 
       } else { //cell-switch
         panel.boxObj.removeClass(currentState).addClass(trackState);//update bg for cells
@@ -2250,7 +2387,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           xNameData = panel.localStoreObj[panel.xName][panel.xName];
         }
 
-
         //check if by switching this one cell on, all cells in the row are on, then update row switch accordingly
         on = (yNameData.state.on === yNameData.total);
         panel.TrackPopupType.find('ul li label.switch input[name="row-switch"]').prop("checked", on);
@@ -2258,6 +2394,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         //And if by switching this one cell on, all cells in the column are on, then update column switch accordingly
         on = (xNameData.state.on === xNameData.total);
         panel.TrackPopupType.find('ul li label.switch input[name="column-switch"]').prop("checked", on);
+
+        // Turn on/off all switch
+        allOn = (panel.localStoreObj[panel.dyStateKey]["allSelection"] &&
+          panel.localStoreObj[panel.dyStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dyStateKey]["allSelection"].total);
+
+        panel.TrackPopupType.find('ul li label.switch input[name="all-switch"]').prop("checked", allOn);
       }
       //panel.setLocalStorage();
       e.stopPropagation();
@@ -2288,6 +2430,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.elLk.rowContainer.find('div.xBoxes._hasData.'+ dimension+matrixClass).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
 
       panel.updateTrackStore(panel.localStoreObj[storeObjKey][dimension], dimension, "", "", renderClass, currentRender);
+    } else if (radioName === "all-radio"){
+      panel.TrackPopupType.find('ul li input[name$=-radio]._'+renderClass).prop("checked", true);
+
+      panel.elLk.rowContainer.find('div.xBoxes._hasData.matrix').removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
+
+      panel.updateTrackStore(panel.localStoreObj[storeObjKey], "allSelection", "", "", renderClass, currentRender);
     } else { //cell-radio
       //updating the render class for the cell
       panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
@@ -2308,6 +2456,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.TrackPopupType.find('ul li input[name=row-radio]._'+renderClass).prop("checked", true);
     } else {
       panel.TrackPopupType.find('ul li input[name=row-radio]').prop("checked", false);
+    }
+
+    //check if by changing this one cell, all cells in the whole matrix are same, then update all renderer accordingly
+    if(panel.localStoreObj[panel.dyStateKey]["allSelection"].renderer[renderClass] === panel.localStoreObj[panel.dyStateKey]["allSelection"].total){
+      panel.TrackPopupType.find('ul li input[name=all-radio]._'+renderClass).prop("checked", true);
+    } else {
+      panel.TrackPopupType.find('ul li input[name=all-radio]').prop("checked", false);
     }
   }
 });
