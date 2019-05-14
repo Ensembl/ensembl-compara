@@ -163,12 +163,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             panel.el.find('._ht').helptip();
           },
           error: function() {
+            $(this.el).find('div.spinner').remove();
             this.showError();
             return;
           }
         });
       },
       error: function() {
+        $(this.el).find('div.spinner').remove();
         this.showError();
         return;
       }
