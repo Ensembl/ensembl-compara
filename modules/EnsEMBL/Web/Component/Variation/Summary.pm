@@ -460,7 +460,7 @@ sub alleles {
 
       my $ht =
         '<b>Highest population Minor Allele Frequency</b><br />Highest minor allele frequency observed in any population'.
-        ($species eq 'Homo_sapiens' ? ' from 1000 Genomes Phase 3, ESP and ExAC' : '');
+        ($species eq 'Homo_sapiens' ? ' including 1000 Genomes Phase 3, ESP and gnomAD' : '');
 
       my $allele_hover_text;
       if(scalar @$max_alleles > 1) {
