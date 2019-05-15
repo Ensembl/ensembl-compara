@@ -152,12 +152,6 @@ sub _get_phenotype {
   my $pfa = $self->phenotype_feature_adaptor($args);
   my $phen_count = $pfa->count_all_by_Gene($args->{'gene'});
   return $phen_count if $phen_count;
-  my $hgncs = $args->{'gene'}->get_all_DBEntries('hgnc');
-  if($hgncs and @$hgncs and $hgncs->[0]) {
-    my $hgnc_name = $hgncs->[0]->display_id;
-    $phen_count = $pfa->_check_gene_by_HGNC($hgnc_name) if $hgnc_name;
-    return $phen_count if $phen_count;
-  }
   return 0;
 }
 
