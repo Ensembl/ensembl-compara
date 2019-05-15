@@ -51,6 +51,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'TrackHubMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
+    this.trackHub             = true;
 
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
@@ -264,6 +265,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var dimX, dimY;
     var finalObj = {};
     var dimLabels = {};
+    finalObj.extra_dimensions = []; //it needs to be in the json and empty so that code know there is no extra dimensions
 
     $.each(panel.rawJSON.hub_data, function(index, track) {
       if(track.dimensions && $.isEmptyObject(finalObj.dimensions)) {
@@ -668,9 +670,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.dx.haveSubTabs = false;
 
     // ExpType elements
-    this.elLk.dy.haveSubTabs = true;
+    this.elLk.dy.haveSubTabs = false;
     this.elLk.dy.tabs = {}
-    this.elLk.dy.tabContents = {};
+    this.elLk.dy.tabContents = panel.json.data[panel.dy].listType === 'alphabetRibbon' ? $('.ribbon-content li', this.elLk.dy.container) : $(' li', this.elLk.dy.container);
     panel.elLk.dy.tabContentContainer = {};
     var dyTabs = $('.tabs.dy div.track-tab', this.elLk.dy.container);
     $.each(dyTabs, function(i, el) {
@@ -704,8 +706,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if (this.localStoreObj.dy) {
       var el, subTab;
       $.each(this.localStoreObj.dy, function(k) {
-        subTab = panel.elLk.lookup[k].subTab;
-        el = panel.elLk.dy.tabContents[subTab].filter(function() {return $(this).hasClass(k)});
+        //subTab = panel.elLk.lookup[k].subTab;
+        el = panel.elLk.dy.tabContents.filter(function() {return $(this).hasClass(k)});
         panel.selectBox(el);
       });
 
@@ -826,12 +828,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   trackError: function(containers) {
     var panel = this;
 
-    //if either dx or dy has an element selected then hide error
-    if($(containers).find('li').length && $(containers).find('span.fancy-checkbox.selected').length) {
-      $(containers).find("span.error").hide();
-    } else {
-      $(containers).find("span.error").show();
-    }
+    $(containers).each(function(i, ele) {
+      var error_class = "_" + $(ele).attr('id');
+      if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
+        $("span." + error_class).hide();
+      } else {
+        $("span." + error_class).show();
+      }
+    });
   },
 
   //function to show/hide reset all link in RH panel when something is selected
@@ -986,8 +990,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.updateShowHideLinks(item);
     panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
-    panel.trackError('div#dx, div#source');
-    panel.enableConfigureButton('div#dx, div#source');
+    panel.trackError('div#dx, div#dy');
+    panel.enableConfigureButton('div#dx, div#dy');
     if (Object.keys(panel.localStoreObj).length > 0 && panel.localStoreObj.dx) {
       panel.emptyMatrix();
       // This mehod is called here only to update localStorage so that if an epigenome is selected, users can still view tracks
@@ -1503,7 +1507,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item.replace("_"," ")+'</text></li>';
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
@@ -1801,7 +1805,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if(item.match("_sep_")){
       item = item.split("_sep_")[0];
     }
-    if(panel.json.extra_dimensions.indexOf(item) >= 0) {
+    if(panel.json.extra_dimensions && panel.json.extra_dimensions.indexOf(item) >= 0) {
       return panel.json.extra_dimensions[panel.json.extra_dimensions.indexOf(item)];
     }  else {
       return "matrix"; //object name for matrix state object
@@ -1825,14 +1829,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if(panel.localStoreObj.dy) { dyArray.unshift(''); }
 
     // Adding 2 extra regulatory features tracks to show by default
-    panel.json.extra_dimensions.sort().reverse().forEach(function(k) {
-      dyArray.unshift(k);
-    })
+    if (panel.json.extra_dimensions) {
+      panel.json.extra_dimensions.sort().reverse().forEach(function(k) {
+        dyArray.unshift(k);
+     })
+    }
 
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      if (dyItem === '' && !panel.disableYdim) {
+      if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
         xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
       }
       else {
@@ -1867,105 +1873,107 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var yContainer = '<div class="yContainer">';
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
-    $.each(panel.localStoreObj.dx, function(cellName, value){
-        var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
-        var dxCount = 0, peakSignalCount = 0, onState = 0, offState = 0;
+    if(panel.localStoreObj.dx) {
+      $.each(panel.localStoreObj.dx, function(cellName, value){
+          var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
+          var dxCount = 0, peakSignalCount = 0, onState = 0, offState = 0;
 
-        if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
-          if(panel.itemDimension(cellName) === "matrix") {
-            panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": { "peak": 0, "signal": 0, "normal": 0, "peak-signal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0}};
-          }
-        }
-
-        yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
-        var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
-
-        //drawing boxes
-        $.each(dyArray, function(i, dyItem) {
-          if (dyItem === '' && !panel.disableYdim) {
-            rowContainer += '<div class="xBoxes _emptyBox_'+cellName+'"></div>';
-          }
-          else {
-            var boxState  = "", boxDataRender = "";
-            var popupType = "peak-signal"; //class of type of popup to use
-            var dataClass = ""; //to know which cell has data
-            var boxRenderClass = "";
-            var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_
-            var renderer, rel_dimension;
-
-            var cellStoreObjKey = panel.itemDimension(storeKey);
-            var dyStoreObjKey   = panel.itemDimension(dyItem);
-            var matrixClass     = cellStoreObjKey === "matrix" ? cellStoreObjKey : "";
-
-            if(panel.localStoreObj[cellStoreObjKey][storeKey]) {
-              boxState   = panel.localStoreObj[cellStoreObjKey][storeKey].state;
-              boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
-              popupType = panel.localStoreObj[cellStoreObjKey][storeKey].popupType || popupType;
-              boxRenderClass = "render-"+boxDataRender;
-              dataClass = "_hasData";
-            } else {
-              //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-              $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
-                if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
-                  dataClass = "_hasData";
-                  rel_dimension = relation.dimension;
-                  popupType = panel.json.data[rel_dimension].popupType || popupType;
-                  renderer = panel.json.data[rel_dimension].renderer;
-                  boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
-                  boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
-                  boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                  panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType, "reset-state": boxState, "reset-renderer": boxDataRender};
-
-                  //setting count for all selection section
-                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
-                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"][boxDataRender] += 1;
-                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"]["reset-"+boxDataRender] += 1;
-                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
-                  panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
-
-                  //setting count to update column state (dy)
-                  panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
-                  panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
-                  panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"]["reset-"+boxDataRender] += 1;
-                  panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
-                  panel.localStoreObj[dyStoreObjKey][dyItem]["state"]["reset-"+boxState.replace("track-","")]++;
-
-                  //calculating total in one row, we only want dy item not the extra dimensions for the matrix state obj.
-                  if(panel.json.extra_dimensions.indexOf(dyItem) === -1) {
-                    dxCount++;
-                    peakSignalCount++;
-                    if(boxState === "track-on") {
-                      onState++;
-                    } else {
-                      offState++;
-                    }
-                  }
-                  return;
-                }
-              });
+          if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
+            if(panel.itemDimension(cellName) === "matrix") {
+              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": { "peak": 0, "signal": 0, "normal": 0, "peak-signal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0}};
             }
+          }
 
-            if(panel.disableYdim) {
-              if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
+          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
+          var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
+
+          //drawing boxes
+          $.each(dyArray, function(i, dyItem) {
+            if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
+              rowContainer += '<div class="xBoxes _emptyBox_'+cellName+'"></div>';
+            }
+            else {
+              var boxState  = "", boxDataRender = "";
+              var popupType = "peak-signal"; //class of type of popup to use
+              var dataClass = ""; //to know which cell has data
+              var boxRenderClass = "";
+              var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_
+              var renderer, rel_dimension;
+
+              var cellStoreObjKey = panel.itemDimension(storeKey);
+              var dyStoreObjKey   = panel.itemDimension(dyItem);
+              var matrixClass     = cellStoreObjKey === "matrix" ? cellStoreObjKey : "";
+
+              if(panel.localStoreObj[cellStoreObjKey][storeKey]) {
+                boxState   = panel.localStoreObj[cellStoreObjKey][storeKey].state;
+                boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
+                popupType = panel.localStoreObj[cellStoreObjKey][storeKey].popupType || popupType;
+                boxRenderClass = "render-"+boxDataRender;
+                dataClass = "_hasData";
+              } else {
+                //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+                $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
+                  if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
+                    dataClass = "_hasData";
+                    rel_dimension = relation.dimension;
+                    popupType = panel.json.data[rel_dimension].popupType || popupType;
+                    renderer = panel.json.data[rel_dimension].renderer;
+                    boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
+                    boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
+                    boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
+                    panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType, "reset-state": boxState, "reset-renderer": boxDataRender};
+
+                    //setting count for all selection section
+                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
+                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"][boxDataRender] += 1;
+                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"]["reset-"+boxDataRender] += 1;
+                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
+                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
+
+                    //setting count to update column state (dy)
+                    panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
+                    panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
+                    panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"]["reset-"+boxDataRender] += 1;
+                    panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
+                    panel.localStoreObj[dyStoreObjKey][dyItem]["state"]["reset-"+boxState.replace("track-","")]++;
+
+                    //calculating total in one row, we only want dy item not the extra dimensions for the matrix state obj.
+                    if(panel.json.extra_dimensions.indexOf(dyItem) === -1) {
+                      dxCount++;
+                      peakSignalCount++;
+                      if(boxState === "track-on") {
+                        onState++;
+                      } else {
+                        offState++;
+                      }
+                    }
+                    return;
+                  }
+                });
+              }
+
+              if(panel.disableYdim) {
+                if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
+                  rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
+                }
+              } else {
                 rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
               }
-            } else {
-              rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
             }
-          }
-        });
-        //setting state for row in matrix
-        panel.localStoreObj.matrix[cellName]["total"] += dxCount;
-        panel.localStoreObj.matrix[cellName]["state"]["on"] += onState
-        panel.localStoreObj.matrix[cellName]["state"]["reset-on"] += onState
-        panel.localStoreObj.matrix[cellName]["state"]["off"] += offState
-        panel.localStoreObj.matrix[cellName]["state"]["reset-off"] += offState
-        panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
-        panel.localStoreObj.matrix[cellName]["renderer"]["reset-peak-signal"] += peakSignalCount;
+          });
+          //setting state for row in matrix
+          panel.localStoreObj.matrix[cellName]["total"] += dxCount;
+          panel.localStoreObj.matrix[cellName]["state"]["on"] += onState
+          panel.localStoreObj.matrix[cellName]["state"]["reset-on"] += onState
+          panel.localStoreObj.matrix[cellName]["state"]["off"] += offState
+          panel.localStoreObj.matrix[cellName]["state"]["reset-off"] += offState
+          panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
+          panel.localStoreObj.matrix[cellName]["renderer"]["reset-peak-signal"] += peakSignalCount;
 
-        rowContainer += "</div>";
-        boxContainer += rowContainer;
-    });
+          rowContainer += "</div>";
+          boxContainer += rowContainer;
+      });
+    }
     yContainer += "</div>";
     boxContainer += "</div>";
 
@@ -2003,7 +2011,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     $.each($.merge(dimensionsArray, panel.json.extra_dimensions), function(i,storeKey){
       $.each(panel.localStoreObj[storeKey], function(item, data) {
         if(!item.match("_sep_") && item != "allSelection") {
-          if(!dyItems[item] && !panel.localStoreObj.dx[item]) {
+          if(!dyItems[item] && panel.localStoreObj.dx && !panel.localStoreObj.dx[item]) {
             panel.removeFromMatrix(item);
           }
         }
