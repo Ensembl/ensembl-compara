@@ -26,10 +26,10 @@ no warnings "uninitialized";
 use base qw(EnsEMBL::Web::Component::Help);
 
 sub _init {
-#  my $self = shift;
-#  $self->cacheable( 0 );
-#  $self->ajaxable(  0 );
-#  $self->configurable( 0 );
+  my $self = shift;
+  $self->cacheable( 1 );
+  $self->ajaxable( 0 );
+  $self->configurable( 0 );
 }
 
 sub content {
@@ -38,7 +38,7 @@ sub content {
   my %biotypes = $hub->species_defs->multiX('ENSEMBL_BIOTYPES');
   my $rendered_term_tree = render_term(\%biotypes);
 
-  return "<ul>${rendered_term_tree}</ul>"
+  return "<ul>$rendered_term_tree</ul>"
 }
 
 sub render_term {
@@ -53,7 +53,7 @@ sub render_term {
     $rendered_children = render_children($children);
   }
  
-  my $html = "<li><strong>${label}:</strong> ${description} ${rendered_children}</li>";
+  my $html = "<li><strong>$label:</strong> $description $rendered_children</li>";
   return $html;
 }
 
@@ -67,7 +67,7 @@ sub render_children {
     $rendered_children = $rendered_children . render_term($term);
   }
 
-  return "<ul>${rendered_children}</ul>";
+  return "<ul>$rendered_children</ul>";
 }
 
 1;
