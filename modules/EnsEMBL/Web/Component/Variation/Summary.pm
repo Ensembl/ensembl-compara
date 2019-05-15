@@ -1036,15 +1036,19 @@ sub allele_registry_synonyms_urls {
 
   return []  if (!$hgvsg);
 
+  my $allele_synonyms = $object->get_allele_synonyms();
+  return [] if (!$allele_synonyms);
+
+  my %ar_lu = map {$_->hgvs_genomic => $_->name } @$allele_synonyms;
+
   my $hgvs_ar;
 
   # For each allele, for each HGVSg, lookup caid
   foreach my $allele (keys %$hgvsg) {
     next if $hgvsg->{$allele} !~ /^NC_/;
-    my $ar_results = $object->get_allele_registry_data($hgvsg->{$allele});
-    next if (! %$ar_results);
+    next if (! defined $ar_lu{$hgvsg->{$allele}});
     $hgvs_ar->{$allele} = [$hgvsg->{$allele},
-                           $ar_results->{'caid'},
+                           $ar_lu{$hgvsg->{$allele}},
                           ];
   }
   return [] if (!$hgvs_ar);
