@@ -37,8 +37,8 @@ sub configuration_content {
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
           <div class="config-key"><span class="track-key off"></span>Data track off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
-          <div class="config-key"><span class="track-key peak"><img src="/i/render/peak_blue50.svg" /></span>Peaks</div>
-          <div class="config-key"><span class="track-key signal"><img src="/i/render/signal_blue50.svg" /></span>Signal</div>
+          <div class="config-key"><span class="track-key peak"><img src="/i/svg/peak_blue50.svg" /></span>Peaks</div>
+          <div class="config-key"><span class="track-key signal"><img src="/i/svg/signal_blue50.svg" /></span>Signal</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset</button>
