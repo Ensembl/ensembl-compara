@@ -26,9 +26,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.register('updateFromTrackLabel', this, this.updateFromTrackLabel);
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
-    //getting the session id from the panel url (record=)
-    var record_match = $(this.params.links).find('li.active a').attr('href').match(/record=([^;&]+)/g);
-    var session_id = record_match[0].split("=")[1];
+    //getting the node id from the panel url (menu=) to pass to ajax request to get imageconfig
+    var url_match = $(this.params.links).find('li.active a').attr('href').match(/submenu=([^;&]+)/g);
+    var node_id   = url_match[0].split("=")[1];
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
@@ -125,7 +125,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+session_id,
+      url: '/Json/TrackHubData/data?species='+Ensembl.species+';submenu='+node_id+';imageconfigtype='+panel.params['image_config_type'],
       dataType: 'json',
       context: this,
       success: function(data) {
@@ -293,11 +293,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         var keyY    = track.subGroups[dimY];
         var labelX  = dimLabels[keyX];
         var labelY  = dimLabels[keyY];
+        var state   = track.on_off ? track.on_off : "off";
 
         if($.isEmptyObject(finalObj.data[dimX]["data"][keyX])){
-          finalObj["data"][dimX]["data"][keyX] = [{"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off }];
+          finalObj["data"][dimX]["data"][keyX] = [{"dimension": dimY, "val": keyY, "defaultState": "track-"+state }];
         } else {
-          finalObj["data"][dimX]["data"][keyX].push({"dimension": dimY, "val": keyY, "defaultState": "track-"+track.on_off });
+          finalObj["data"][dimX]["data"][keyX].push({"dimension": dimY, "val": keyY, "defaultState": "track-"+state });
         }
 
         if($.isEmptyObject(finalObj.data[dimY]["data"][keyY])){
@@ -1826,7 +1827,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
 
     // Add empty column
-    if(panel.localStoreObj.dy) { dyArray.unshift(''); }
+    //if(panel.localStoreObj.dy) { dyArray.unshift(''); }
 
     // Adding 2 extra regulatory features tracks to show by default
     if (panel.json.extra_dimensions) {
@@ -1873,7 +1874,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var yContainer = '<div class="yContainer">';
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
-    if(panel.localStoreObj.dx) {
+    if(panel.localStoreObj.dx && panel.localStoreObj.dy) {
       $.each(panel.localStoreObj.dx, function(cellName, value){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
           var dxCount = 0, peakSignalCount = 0, onState = 0, offState = 0;

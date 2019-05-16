@@ -48,8 +48,9 @@ sub build {
   my $tree          = $image_config->tree;
   my $menu          = $hub->param('menu');
 
-  my $menu_node     = $tree->get_node($menu);
-  my $matrix_data   = $menu_node->get_data('matrix');
+  my $menu_node         = $tree->get_node($menu);
+  my $matrix_data       = $menu_node->get_data('matrix');
+  my $image_config_type = $image_config->{code};
 
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
@@ -60,6 +61,7 @@ sub build {
   my $dimY  = $matrix_data->{'axes'}{'y'};
 
   my $html = qq(
+    <input type="hidden" class="js_param" name="image_config_type" value="$image_config_type" />
     <div class="header_tutorial_wrapper flex-row">
       <h1>$title</h1>
       <div class="large-breadcrumbs">
