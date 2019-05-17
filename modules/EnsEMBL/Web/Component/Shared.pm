@@ -214,6 +214,7 @@ sub transcript_table {
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
+      my $gene_version = $gene->version ? $gene_id.'.'.$gene->version : $gene_id;
       my $gene_url = $hub->url({
         type   => 'Gene',
         action => 'Summary',
@@ -221,7 +222,7 @@ sub transcript_table {
       });
       $gene_html .= sprintf('<p>This transcript is a product of gene <a href="%s">%s</a> %s',
         $gene_url,
-        $gene_id,
+        $gene_version,
         $button
       );
     }
