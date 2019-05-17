@@ -261,6 +261,7 @@ sub transcript_table {
       my $tsi               = $_->stable_id;
       my $protein           = '';
       my $translation_id    = '';
+      my $translation_ver   = '';
       my $protein_url       = '';
       my $protein_length    = '-';
       my $ccds              = '-';
@@ -278,6 +279,7 @@ sub transcript_table {
       if (my $translation = $_->translation) {
         $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
         $translation_id = $translation->stable_id;
+        $translation_ver = $translation->version ? $translation_id.'.'.$translation->version:$translation_id;
         $protein_length = $translation->length;
       }
 
@@ -340,7 +342,7 @@ sub transcript_table {
         transcript  => sprintf('<a href="%s">%s%s</a>', $url, $tsi, $version),
         bp_length   => $transcript_length,
         protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
-        translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
+        translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_ver : '-',
         biotype     => $self->colour_biotype($biotype_text, $_),
         ccds        => $ccds,
         %extras,
