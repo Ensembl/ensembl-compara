@@ -18,7 +18,7 @@ limitations under the License.
 =cut
 
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -57,8 +57,7 @@ sub write_output {
     my $uniprot_version_data = $self->_slurp($self->param('output_file'));
 
     my $meta_container = $self->compara_dba->get_MetaContainer;
-    $meta_container->store_store_key_value('uniprot_version', $uniprot_version_data);
+    $meta_container->store_key_value('uniprot_version', $uniprot_version_data);
 }
 
 1;
-

@@ -90,7 +90,7 @@ sub fetch_input{
     my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($homologs->[0]->adaptor->db->get_AlignedMemberAdaptor, $homologs);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($homologs->[0]->adaptor->db->get_GeneMemberAdaptor, $sms);
 
-  #loop through the preloaded homologies to create a hash table homology id => homology object. this will serve as a look up table 
+  #loop through the preloaded homologies to create a hash table homology id => homology object. this will serve as a look up table
     while ( my $ortholog = shift( @{ $homologs} ) ) {
         $preloaded_homologs_hashref->{$ortholog->dbID()} = $ortholog;
     }
@@ -110,7 +110,7 @@ sub run {
     my $count_homologs = 0;
     while (my ($ref_chr_dnafragID, $ordered_orth_arrayref) = each(%$chr_orth_hashref) ) {
         my @ordered_orth_array = @$ordered_orth_arrayref;
-        my $ordered_orth_array_size = @ordered_orth_array; 
+        my $ordered_orth_array_size = @ordered_orth_array;
         print $ordered_orth_array_size, " <<<-- size of ordered_orth_array \n\n" if ( $self->debug >1 );
         foreach my $index (0 .. $#ordered_orth_array ) {
             $count_homologs ++;
@@ -133,10 +133,10 @@ sub run {
                 $right2 = $ordered_orth_array[$index + 2];
 
             }
-            $query = $ordered_orth_array[$index];  
+            $query = $ordered_orth_array[$index];
             my $goc_score_hashref = $self->_compute_ortholog_score($left1, $left2, $query, $right1, $right2);
             push @{$self->param('all_goc_score_arrayref')}, $goc_score_hashref ;
-        
+
         }
     }
     print "\n\n This is how many homology ids were in the input : $count_homologs  \n Compare_orthologs run sub finished!!! \n\n" if ( $self->debug );
@@ -158,10 +158,10 @@ sub _insert_goc_scores {
   foreach ( @$goc_arrayref ) {
     defined $_->{'goc_score'} or die " the goc score should atleast be 0. mlss id :  $_->{'method_link_species_set_id'} , homology_id : $_->{'homology_id'} ";
     defined $_->{'method_link_species_set_id'} or die " the method_link_species_set_id can not be empty. homology_id : $_->{'homology_id'} ";
-    push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
+    push @goc_data, [$_->{'method_link_species_set_id'}, $_->{'homology_id'}, $_->{'gene_member_id'}, $_->{'stable_id'}, $_->{'goc_score'}, $_->{'left1'}, $_->{'left2'}, $_->{'right1'}, $_->{'right2'}];
   }
 
-  bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id goc_score left1 left2 right1 right2)], 'INSERT IGNORE');
+  bulk_insert($self->compara_dba->dbc, 'ortholog_goc_metric', \@goc_data, [qw(method_link_species_set_id homology_id gene_member_id stable_id goc_score left1 left2 right1 right2)], 'INSERT IGNORE');
 }
 
 
@@ -214,7 +214,7 @@ sub _compute_ortholog_score {
 
     my $query_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('ref_species_dbid'))->[0];
     my $query_non_ref_gmem_obj = $homology->get_all_GeneMembers($self->param('non_ref_species_dbid'))->[0];
-    
+
     $non_ref_gmembers_list->{'query'} = $query_non_ref_gmem_obj->dbID;
     my $start = $query_non_ref_gmem_obj->dnafrag_start;
     my $end = $query_non_ref_gmem_obj->dnafrag_end;
@@ -247,11 +247,11 @@ sub _compute_ortholog_score {
     # and end range of the given chromosome. dnafrag_id  == chromosome, that have homologs on the ref genome
     $self->param('non_ref_gmembers_ordered', $self->_get_non_ref_gmembers($query_non_ref_dnafragID, $start, $end));
 
-    if (scalar @{$self->param('non_ref_gmembers_ordered')} == 1) { 
+    if (scalar @{$self->param('non_ref_gmembers_ordered')} == 1) {
         $result = {'left1' => 0, 'right1' => 0, 'left2' => 0, 'right2' => 0};
         print $result, " result --<<<<---  the non_ref_gmembers_ordered is 1 \n" if ( $self->debug >1 );
     }
-    else { 
+    else {
     #Create the result hash showing if the order gene conservation indicated by the ortholog matches the order of genes retrieve from the geneme.
         if ($strand == 1) {
             $result = $self->_compare($non_ref_gmembers_list, $self->param('non_ref_gmembers_ordered'));
@@ -278,6 +278,7 @@ sub _compute_ortholog_score {
     $result->{'goc_score'}      = $percentage;
     $result->{'dnafrag_id'}     = $query_ref_gmem_obj->dnafrag_id();
     $result->{'gene_member_id'} = $query_ref_gmem_obj->dbID();
+    $result->{'stable_id'}      = $query_ref_gmem_obj->stable_id;
     $result->{'homology_id'}    = $query;
     $result->{'method_link_species_set_id'} = $self->param('goc_mlss_id');
     print "RESULTS hash--------------->>>>>   \n" if ( $self->debug >1);
@@ -369,8 +370,8 @@ sub _compare {
     my $right1_result = undef ;
     my $right2_result = undef;
 
-    #we are checking left2 and right2 against '$query_index -2' even though Left1 0r Right1 may have matched '$query_index -2' 
-    #because the list is distinct so if l1 matches '$query_index -2' then l2 won't match. We could have decided to 
+    #we are checking left2 and right2 against '$query_index -2' even though Left1 0r Right1 may have matched '$query_index -2'
+    #because the list is distinct so if l1 matches '$query_index -2' then l2 won't match. We could have decided to
     #find another way to recognise this special case but the consequnces of doing this extra match sometimes did not justify changing the code.
     if (defined($orth_non_ref_gmembers_hashref->{'left1'} )) {
         $left1_result =    (grep {$_ == $query_index-1} @indexes)

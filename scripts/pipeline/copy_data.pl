@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2019] EMBL-European Bioinformatics Institute
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,8 +78,8 @@ perl copy_data.pl
 
 example:
 
-bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000 
-copy_data.pl --from_url mysql://username@server_name/sf5_production 
+bsub  -q yesterday -ooutput_file -Jcopy_data -R "select[mem>5000] rusage[mem=5000]" -M5000000
+copy_data.pl --from_url mysql://username@server_name/sf5_production
 --to_url mysql://username:password@server_name/sf5_release --mlss 340
 
 
@@ -149,7 +149,7 @@ the copy to several mlss.
 
 =item B<[--merge boolean]>
 
-If true, add new data to an existing data set in the release database. Default FALSE. 
+If true, add new data to an existing data set in the release database. Default FALSE.
 
 =back
 
@@ -183,10 +183,10 @@ my $re_enable = 1;
 
 my $disable_keys;
 
-#If true, then trust the TO database tables and update the FROM tables if 
-#necessary. Currently only applies to differences in the dnafrag table and 
+#If true, then trust the TO database tables and update the FROM tables if
+#necessary. Currently only applies to differences in the dnafrag table and
 #will only update the genomic_align table.
-my $trust_to = 0; 
+my $trust_to = 0;
 
 #If true, assume that the range of ce_ids does not need to be shifted.
 my $trust_ce = 0;
@@ -368,6 +368,11 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
     print " ** ERROR **  Copying data of class $class is not supported yet!\n";
     exit(1);
   }
+
+  # add disconnect commands to force reconnection for next mlss - prevent timeouts mid-copy
+  $from_dbc->disconnect_if_idle;
+  $to_dbc->disconnect_if_idle;
+  
 }
 
 _reenable_all_disabled_keys($to_dba->dbc) if $re_enable;
@@ -544,7 +549,7 @@ sub copy_genomic_align_blocks {
   my $sth = $from_dbc->prepare( $minmax_sql );
 
   $sth->execute($mlss_id);
-  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga, 
+  my ($min_gab, $max_gab, $min_gab_gid, $max_gab_gid, $min_ga, $max_ga,
 		$min_gat, $max_gat, $min_root_id, $max_root_id) =
       $sth->fetchrow_array();
 
@@ -634,7 +639,7 @@ sub copy_genomic_align_blocks {
           $fix_gat = 0;
       }
   }
-  
+
   ## Check availability of the internal IDs in the TO database
   $sth = $to_dbc->prepare("SELECT count(*)
       FROM genomic_align_block
@@ -702,7 +707,7 @@ sub copy_genomic_align_blocks {
   }
 
   #copy genomic_align_tree table
-  #Fixes node_id, parent_id, root_id, left_node_id, right_node_id 
+  #Fixes node_id, parent_id, root_id, left_node_id, right_node_id
   #Needs to correct parent_id, left_node_id, right_node_id if these were 0
   if(defined($max_gat)) {
     if ($fix_gat) {
@@ -713,7 +718,7 @@ sub copy_genomic_align_blocks {
 	"WHERE root_id >= $min_root_id AND root_id <= $max_root_id",
         @copy_data_args);
 
-    #Reset the appropriate nodes to zero. Only needs to be done if fix_lower 
+    #Reset the appropriate nodes to zero. Only needs to be done if fix_lower
     #has been applied.
 
 	#NEED TO CHECK THIS ONE!!
@@ -738,7 +743,7 @@ sub copy_genomic_align_blocks {
       #create a temporary genomic_align table with TO dnafrag_ids
       my $temp_genomic_align = "temp_genomic_align";
       fix_genomic_align_table($from_dbc, $to_dbc, $mlss_id, $temp_genomic_align);
-      
+
       #copy from the temporary genomic_align table
       copy_data($from_dbc, $to_dbc,
   	    "genomic_align",
@@ -800,7 +805,7 @@ sub copy_ancestral_dnafrags {
   }
   #Check name does not already exist in TO database
   $sth = $to_dbc->prepare("SELECT count(*) FROM dnafrag WHERE genome_db_id = $ancestral_dbID AND name LIKE '" . $dnafrag_name . "%'");
-  
+
   $sth->execute();
   my ($count) = $sth->fetchrow_array();
   $sth->finish();
@@ -826,7 +831,7 @@ sub copy_ancestral_dnafrags {
   } else {
       die " ** ERROR **  Internal IDs are funny: dnafrag_ids between $min_dnafrag_id and $max_dnafrag_id\n";
   }
-  
+
   ## Check availability of the internal IDs in the TO database
   $sth = $to_dbc->prepare("SELECT count(*)
       FROM dnafrag
@@ -841,7 +846,7 @@ sub copy_ancestral_dnafrags {
 	  " ** ERROR **  convention!\n";
       exit(1);
   }
-  
+
   #copy dnafrag table
    copy_data($from_dbc, $to_dbc,
        "dnafrag",
@@ -952,7 +957,7 @@ sub copy_conservation_scores {
     copy_data($from_dbc, $to_dbc,
         "conservation_score",
         "SELECT cs.genomic_align_block_id+$fix, window_size, position, expected_score, diff_score".
-          " FROM conservation_score cs" . 
+          " FROM conservation_score cs" .
 	  " WHERE genomic_align_block_id >= $min_cs AND genomic_align_block_id <= $max_cs",
         undef, 'skip_disable_keys',
     );
@@ -1104,24 +1109,24 @@ sub fix_genomic_align_table {
     my $rows = $sth->fetchall_arrayref();
     $sth->finish();
     if (@$rows) {
-	print "\n** ERROR ** The following dnafrags are present in the production (FROM) dnafrag table and are not present in the release (TO) dnafrag table\n"; 
+	print "\n** ERROR ** The following dnafrags are present in the production (FROM) dnafrag table and are not present in the release (TO) dnafrag table\n";
 	foreach my $row (@$rows) {
 	    print "@$row\n";
 	}
 	$from_dbc->db_handle->do("DROP TABLE temp_dnafrag");
 	exit(1);
     }
-    
+
     #copy genomic_align table into a temporary table
     $from_dbc->db_handle->do("CREATE TABLE $temp_genomic_align LIKE genomic_align");
-      
+
     #fill the table
     #doing this in 2 steps means we don't have to make assumptions as to the column names in the genomic_align table
     $sth = $from_dbc->prepare("INSERT INTO $temp_genomic_align SELECT * FROM genomic_align WHERE method_link_species_set_id=$mlss_id");
     $sth->execute();
     $sth->finish();
-    
-    #update the table 
+
+    #update the table
     $sth = $from_dbc->prepare("UPDATE $temp_genomic_align ga, dnafrag df, temp_dnafrag df_temp SET ga.dnafrag_id=df_temp.dnafrag_id WHERE ga.dnafrag_id=df.dnafrag_id AND df.genome_db_id=df_temp.genome_db_id AND df.name=df_temp.name AND df.coord_system_name=df_temp.coord_system_name AND ga.method_link_species_set_id=$mlss_id");
     $sth->execute();
     $sth->finish();
@@ -1146,4 +1151,3 @@ sub _reenable_all_disabled_keys {
     $dbc->db_handle->do("ALTER TABLE $_ ENABLE KEYS") for keys %disabled_keys;
     %disabled_keys = ();
 }
-

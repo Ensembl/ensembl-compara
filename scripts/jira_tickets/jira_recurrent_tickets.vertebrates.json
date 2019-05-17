@@ -317,9 +317,15 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
-            "summary": "Final Handover of DBs"
-         }
+            "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases",
+            "summary": "Handover of release DB"
+        },
+        {
+           "assignee": "<RelCo>",
+           "component": "Relco tasks",
+           "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases",
+           "summary": "Handover of ancestral DB"
+        }
       ],
       "summary": "<Division> Release <version> Database merge and handover"
    },

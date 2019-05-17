@@ -120,7 +120,7 @@ sub write_output {
 sub grep_file {
     my ( $self, $term, $file ) = @_;
 
-    my $grep_run = $self->run_command("grep -m 1 '$term' $file", {die_on_failure => 1});
+    my $grep_run = $self->run_command("grep -m 1 '$term' $file");
     my $grep_output = $grep_run->out;
     if ( $grep_output eq '' || !defined $grep_output ) {
         return 0;

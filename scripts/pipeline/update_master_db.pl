@@ -138,6 +138,11 @@ if ($help or !$reg_conf or !$compara) {
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
+if ($division) {
+    $division = "Ensembl$division" unless $division =~ /^ensembl/i;
+    $division = lc $division;
+}
+
 Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
@@ -162,7 +167,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
-    if ($division and $mc->get_division and ($mc->get_division ne $division)) {
+    if ($division and $mc->get_division and (lc $mc->get_division ne $division)) {
         $db_adaptor->dbc->disconnect_if_idle();
         next;
     }

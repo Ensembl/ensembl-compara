@@ -111,18 +111,18 @@ sub check_all_executables_exist {
    }
    if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
        my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
-       foreach my $p (@{$self->{'_aensembl_dir_paths'}}) {
-           $p = $ensembl_cvs_root_dir.'/'.$p;
+       foreach my $p (@{$self->{'_ensembl_dir_paths'}}) {
+           $p = $ensembl_cvs_root_dir.'/'.$self->substitute(\$p);
            die "'$p' cannot be found.\n" unless -e $p;
            die "'$p' is not a directory.\n" unless -d $p;
        }
        foreach my $p (@{$self->{'_ensembl_file_paths'}}) {
-           $p = $ensembl_cvs_root_dir.'/'.$p;
+           $p = $ensembl_cvs_root_dir.'/'.$self->substitute(\$p);
            die "'$p' cannot be found.\n" unless -e $p;
            die "'$p' is not readable.\n" unless -r $p;
        }
        foreach my $p (@{$self->{'_ensembl_exe_paths'}}) {
-           $p = $ensembl_cvs_root_dir.'/'.$p;
+           $p = $ensembl_cvs_root_dir.'/'.$self->substitute(\$p);
            die "'$p' cannot be found.\n" unless -e $p;
            die "'$p' is not executable.\n" unless -x $p;
        }
@@ -293,7 +293,7 @@ sub resource_classes {
         # Always include the single-threaded resource classes
         %{ Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_single_thread($self) },
         # Include the multi-threaded resource classes conditionally
-        ${ $include_multi_threaded ? Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($self) : {} },
+        %{ $include_multi_threaded ? Bio::EnsEMBL::Compara::PipeConfig::ENV::resource_classes_multi_thread($self) : {} },
     };
 }
 

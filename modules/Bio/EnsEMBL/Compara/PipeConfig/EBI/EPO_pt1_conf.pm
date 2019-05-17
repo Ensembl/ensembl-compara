@@ -77,7 +77,7 @@ sub default_options {
         #'species_set_name' => 'fish',
         #'reference_genome_db_name' => 'oryzias_latipes',
 
-        'division' => 'ensembl',
+        'division' => 'vertebrates',
 
         'master_db' => 'compara_master',
       	  

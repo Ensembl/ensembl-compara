@@ -34,6 +34,7 @@ use Term::ReadKey;
 use Bio::EnsEMBL::Utils::Logger;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::IO qw (slurp);
+use Bio::EnsEMBL::Compara::Utils::JIRA;
 
 use Data::Dumper;
 
@@ -101,9 +102,11 @@ sub main {
     # convert to JIRA format
     # ----------------------
     foreach my $ticket (@$tickets) {
-        json_to_jira($ticket, 'Task', $parameters, $logger);
+        $ticket->{'jira'} = Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($ticket, 'Task', $parameters, $logger);
         if ($ticket->{'subtasks'}) {
-            json_to_jira($_, 'Sub-task', $parameters, $logger) for @{$ticket->{'subtasks'}};
+            foreach my $subtask ( @{$ticket->{'subtasks'}} ) {
+                $subtask->{'jira'} = Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($subtask, 'Sub-task', $parameters, $logger);
+            }
         }
     }
     $logger->info('Tickets to submit: '. Dumper($tickets));
@@ -116,10 +119,11 @@ sub main {
     $fixVersion =~ s/ /\\u0020/g;
     my $jql = sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $fixVersion);
     $jql .= sprintf(' and cf[11130]="%s"', $parameters->{division}) if $parameters->{division};
-    my $existing_tickets_response
-        = post_request( 'rest/api/latest/search',
+    my $existing_tickets_response = Bio::EnsEMBL::Compara::Utils::JIRA->post_request( 
+        'rest/api/latest/search',
         { "maxResults" => 300, "jql" => $jql, },
-        $parameters, $logger );
+        $parameters, $logger 
+    );
     my $existing_tickets
         = decode_json( $existing_tickets_response->content() );
     $parameters->{existing_tickets} = {map {(($parameters->{division} // '') . '--' . $_->{fields}->{summary}) => $_->{key}} @{$existing_tickets->{issues}}};
@@ -129,11 +133,11 @@ sub main {
     # create new JIRA tickets
     # -----------------------
     for my $ticket ( @{$tickets} ) {
-        my $ticket_key = create_ticket( $ticket, $parameters, $logger );
+        my $ticket_key = Bio::EnsEMBL::Compara::Utils::JIRA->create_ticket( $ticket->{'jira'}, $parameters, $logger );
         if ($ticket->{'subtasks'}) {
             foreach my $subtask (@{$ticket->{'subtasks'}}) {
-                $subtask->{'jira'}->{'parent'} = { 'key'  => $ticket_key };
-                my $subtask_key = create_ticket( $subtask, $parameters, $logger );
+                $subtask->{'jira'}->{'fields'}->{'parent'} = { 'key'  => $ticket_key };
+                my $subtask_key = Bio::EnsEMBL::Compara::Utils::JIRA->create_ticket( $subtask->{'jira'}, $parameters, $logger );
             }
         }
     }
@@ -160,9 +164,9 @@ sub set_parameters {
     my ( $relco, $release, $password, $tickets_json, $config, $division, $logger ) = @_;
 
     $relco = $ENV{'USER'} if !$relco;
-    $relco = validate_user_name( $relco, $logger );
+    $relco = Bio::EnsEMBL::Compara::Utils::JIRA->validate_user_name( $relco, $logger );
 
-    my $user = validate_user_name( $ENV{'USER'}, $logger );
+    my $user = Bio::EnsEMBL::Compara::Utils::JIRA->validate_user_name( $ENV{'USER'}, $logger );
 
     $release = Bio::EnsEMBL::ApiVersion->software_version() if !$release;
 
@@ -229,203 +233,6 @@ sub set_parameters {
     return ( $user, $relco, $release, $password, $tickets_json, $config, $division );
 }
 
-=head2 validate_user_name
-
-  Arg[1]      : String $user - a Regulation team member name or JIRA username
-  Arg[2]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $valid_user = validate_user_name($user, $logger)
-  Description : Checks if the provided user name is valid, returns valid JIRA
-                username
-  Return type : String
-  Exceptions  : none
-
-=cut
-
-sub validate_user_name {
-    my ( $user, $logger ) = @_;
-
-    my %valid_user_names = (
-        'aj'   => 'waakanni',
-	'wasiu' => 'waakanni',
-	'waakanni' => 'waakanni',
-        'carla' => 'carlac',
-        'carlac'    => 'carlac',
-        'muffato'    => 'muffato',
-        'matthieu'  => 'muffato',
-        'mateus'  => 'mateus'
-    );
-
-    if ( exists $valid_user_names{$user} ) {
-        return $valid_user_names{$user};
-    }
-    else {
-        my $valid_names = join( "\n", sort keys %valid_user_names );
-        $logger->error(
-            "User name $user not valid! Here is a list of valid names:\n"
-                . $valid_names,
-            0, 0
-        );
-    }
-}
-
-
-sub json_to_jira {
-    my ($json_hash, $issuetype, $parameters, $logger) = @_;
-
-    # We can define one or many components
-    my @components;
-    if ($json_hash->{'component'}) {
-        push @components, { 'name' => $json_hash->{'component'} };
-    } else {
-        push @components, { 'name' => $_ } for @{$json_hash->{'components'}};
-    }
-
-    my %ticket = (
-        'project'     => { 'key'  => $json_hash->{'project'} || $parameters->{'tickets'}->{'project'} },
-        'issuetype'   => { 'name' => $issuetype },
-        'summary'     => replace_placeholders( $json_hash->{'summary'}, $parameters ),
-        'priority'    => { 'name' => $json_hash->{'priority'} || $parameters->{'tickets'}->{'priority'} },
-        'fixVersions' => [
-            { 'name' => $parameters->{'tickets'}->{'fixVersion'} },
-        ],
-        'components'  => \@components,
-        'description' => replace_placeholders( $json_hash->{'description'}, $parameters ),
-    );
-    if ($parameters->{'division'}) {
-        $ticket{'customfield_11130'} = { 'value' => $parameters->{'division'} };
-    }
-
-    if ($json_hash->{'assignee'}) {
-        $ticket{'assignee'} = { 'name' => validate_user_name( replace_placeholders( $json_hash->{'assignee'}, $parameters), $logger ) };
-    }
-
-    if (my $name_on_graph = $json_hash->{'name_on_graph'}) {
-        $name_on_graph =~ s/ /_/g;  # JIRA doesn't allow whitespace in labels
-        $ticket{'labels'} = [ "Graph:$name_on_graph" ];
-    }
-
-    $json_hash->{'jira'} = \%ticket;
-    return \%ticket;
-}
-
-=head2 replace_placeholders
-
-  Arg[1]      : String $line - One line from the json input file
-  Arg[2]      : Hashref $parameters - parameters from command line and config
-  Example     : $line = replace_placeholders( $line, $parameters );
-  Description : Replaces the placeholder tags with valid values and returns a
-                a new string
-  Return type : String
-  Exceptions  : none
-
-=cut
-
-sub replace_placeholders {
-    my ( $line, $parameters ) = @_;
-
-    return '' unless $line;
-
-    $line =~ s/<RelCo>/$parameters->{relco}/g;
-    $line =~ s/<version>/$parameters->{release}/g;
-    if ($parameters->{division}) {
-        $line =~ s/<Division>/$parameters->{division}/g;
-        my $lcdiv = lc $parameters->{division};
-        $line =~ s/<division>/$lcdiv/g;
-    }
-
-    return $line;
-}
-
-
-=head2 create_ticket
-
-  Arg[1]      : Hashref $line - Holds the ticket data
-  Arg[2]      : Hashref $parameters - parameters from command line and config
-  Arg[3]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $ticket_key = create_ticket( $ticket, $parameters, $logger );
-  Description : Submits a post request to the JIRA server that creates a new
-                ticket. Returns the key of the created ticket
-  Return type : String
-  Exceptions  : none
-
-=cut
-
-sub create_ticket {
-    my ( $ticket, $parameters, $logger ) = @_;
-
-    $logger->info( 'Creating' . ' "' . $ticket->{summary} . '" ... ' );
-
-    # First check if the ticket already exists
-    if (my $existing_ticket_key = $parameters->{existing_tickets}->{ ($parameters->{division} // '') . '--' . $ticket->{jira}->{summary} }) {
-        $logger->info(
-            'Skipped: This seems to be a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
-                . $existing_ticket_key
-                . "\n" );
-        return $existing_ticket_key;
-    }
-
-    my $endpoint = 'rest/api/latest/issue';
-
-    my $content = { 'fields' => $ticket->{jira} };
-    my $response = post_request( $endpoint, $content, $parameters, $logger );
-
-    my $ticket_key = decode_json( $response->content() )->{'key'};
-    $logger->info( "Done\t" . $ticket_key . "\n" );
-    return $ticket_key;
-}
-
-=head2 post_request
-
-  Arg[1]      : String $endpoint - the request's endpoint
-  Arg[2]      : Hashref $content - the request's content
-  Arg[3]      : Hashref $parameters - parameters used for authorization
-  Arg[4]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $response = post_request( $endpoint, $content, $parameters, $logger )
-  Description : Sends a POST request to the JIRA server
-  Return type : HTTP::Response object
-  Exceptions  : none
-
-=cut
-
-sub post_request {
-    my ( $endpoint, $content, $parameters, $logger ) = @_;
-
-    my $host = 'https://www.ebi.ac.uk/panda/jira/';
-    my $url  = $host . $endpoint;
-    $logger->info("Request on $url\n");
-    my $json_content = encode_json($content);
-
-    my $request = HTTP::Request->new( 'POST', $url );
-
-    $request->authorization_basic( $parameters->{user},
-        $parameters->{password} );
-    $request->header( 'Content-Type' => 'application/json' );
-    $request->content($json_content);
-
-    my $agent    = LWP::UserAgent->new();
-    my $response = $agent->request($request);
-
-    if ( $response->code() == 401 ) {
-        $logger->error( 'Your JIRA password is not correct. Please try again',
-            0, 0 );
-    }
-
-    if ( $response->code() == 403 ) {
-        $logger->error(
-            'You do not have permission to submit JIRA tickets programmatically',
-            0, 0
-        );
-    }
-
-    if ( !$response->is_success() ) {
-        my $error_message = $response->as_string();
-
-        $logger->error( $error_message, 0, 0 );
-    }
-
-    return $response;
-}
-
 
 sub usage {
     print <<EOF;
@@ -447,4 +254,3 @@ Reads the -tickets input file and creates JIRA tickets
 EOF
     exit 0;
 }
-

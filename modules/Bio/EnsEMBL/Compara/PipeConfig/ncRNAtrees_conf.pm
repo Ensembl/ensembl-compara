@@ -120,7 +120,7 @@ sub pipeline_create_commands {
     return [
             @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
-            $self->pipeline_create_commands(['work_dir', 'dump_dir', 'ss_picts_dir']),
+            $self->pipeline_create_commands_rm_mkdir(['work_dir', 'dump_dir', 'ss_picts_dir']),
     ];
 }
 
@@ -143,6 +143,14 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
     }
+}
+
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
+    };
 }
 
 
@@ -448,6 +456,7 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
             -flow_into          => [ 'cluster_qc_factory' ],
+            -rc_name            => '500Mb_job',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
@@ -615,8 +624,22 @@ sub core_pipeline_analyses {
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
                 -flow_into     => {
+                                   -1 => [ 'other_paralogs_himem' ],
                                    2 => [ 'tree_backup' ],
                                    3 => { 'other_paralogs' => INPUT_PLUS },
+                                  },
+            },
+
+            {   -logic_name     => 'other_paralogs_himem',
+                -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
+                -parameters     => {
+                                    'dataflow_subclusters' => 1,
+                                   },
+                -analysis_capacity  => $self->o('other_paralogs_capacity'),
+                -priority           => 40,
+                -flow_into     => {
+                                   2 => [ 'tree_backup' ],
+                                   3 => { 'other_paralogs_himem' => INPUT_PLUS },
                                   },
             },
 
@@ -703,6 +726,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                             },
              -flow_into => {
+                           -1 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has more memory
                             2 => [ 'sec_struct_model_tree_1_core' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
@@ -718,6 +742,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
                             2 => [ 'sec_struct_model_tree_2_cores' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
@@ -734,6 +759,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '43200',
                            },
             -flow_into => {
+                           -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
                             2 => [ 'sec_struct_model_tree_4_cores' ],
                             3 => [ 'pre_sec_struct_tree_8_cores' ],
                            },
@@ -990,6 +1016,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
+            -rc_name            => '500Mb_job',
             %hc_params,
         },
 

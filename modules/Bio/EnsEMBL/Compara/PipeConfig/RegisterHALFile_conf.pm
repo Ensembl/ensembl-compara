@@ -36,7 +36,7 @@ export COMPARA_HAL_DIR="path_to_file/data_files/"
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id 835 -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}" -master_db "mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master" -halStats_exe '/nfs/software/ensembl/RHEL7-JUL2017-core2/linuxbrew/bin/halStats' -host "mysql-ens-compara-prod-2.ebi.ac.uk:4522"
 
-=head1 DESCRIPTION  
+=head1 DESCRIPTION
 
 Mini-pipeline to load the species-tree and the chromosome-name mapping from a HAL file
 
@@ -67,6 +67,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'master_db'     => $self->o('master_db'),
+        'compara_db'    => $self->o('master_db'),
         'halStats_exe'  => $self->o('halStats_exe'),
     };
 }
@@ -93,12 +94,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
+                'db_conn' => '#compara_db#',
             },
             -flow_into  => [ 'load_species_tree', 'species_factory' ],
         },
 
         {   -logic_name => 'load_species_tree',
-	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree',
+	        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree',
         },
 
         {   -logic_name => 'species_factory',
@@ -123,6 +125,7 @@ sub pipeline_analyses {
             -parameters => {
                 'e2u_synonyms'  => {},  # default value, in case the accu is empty
                 'sql' => [ q/REPLACE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "alt_synonyms", '#expr(stringify(#e2u_synonyms#))expr#')/ ],
+                'db_conn' => '#compara_db#',
             },
 	    -rc_name    => '1Gb_job',
         },
