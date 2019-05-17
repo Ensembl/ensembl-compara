@@ -35,120 +35,42 @@ sub json_data {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $record_id = $hub->param('record');
-  return {} unless $record_id;
-  (my $code = $record_id) =~ s/^url_//;
+  my $ic_type = $hub->param('ictype');
+  my $species = $hub->param('th_species');
+  my $menu    = $hub->param('submenu');
+  my $tree    = $hub->get_imageconfig({type => $ic_type, species => $species});
+  return {} unless ($menu && $tree);
 
-  my $record;
-  foreach my $m (grep $_, $hub->user, $hub->session) {
-    $record = $m->get_record_data({'type' => 'url', 'code' => $code});
-    last if ($record && keys %$record);
+  my $node = $tree->get_node($menu);
+  return {} unless $node;
+
+  my $metadata = {};
+  while (my ($k, $v) = each (%{$node->data})) {
+    if ($k eq 'shortLabel' || $k eq 'dimensions' || $k =~ /subGroup/) {
+      $metadata->{$k} = $v;
+    }
   }
-  my $url = $record->{'url'};
-  return {} unless $url;
 
-  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1, 'make_tree' => 1}); 
-  $self->{'th_default_count'} = 0;
-
-
-  ## Get the track tree for this genome
-  my $tree;
-  my $assemblies = $hub->species_defs->get_config($hub->param('species'), 'TRACKHUB_ASSEMBLY_ALIASES');
-  $assemblies ||= [];
-  $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
-  foreach (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION ASSEMBLY_NAME)) {
-    my $assembly = $hub->species_defs->get_config($hub->param('species'), $_);
-    next unless $assembly;
-    push @$assemblies,$assembly;
-  }
-  foreach my $assembly (@$assemblies) {
-    $tree = $hub_info->{'genomes'}{$assembly}{'tree'};
-    $tree = $tree->root if $tree;
-    last if $tree;
-  }
-  return {} unless $tree;
-
-  ## Now process the raw data into something we can use!
   my $tracks = [];
-  $self->process_tree($tree, $tracks);
+  ## Only use the fields we need to draw the matrix, to prevent the JSON becoming too large
+  my @fields = qw(track shortLabel longLabel subGroups format default_display);
+  foreach my $child (@{$node->child_nodes||[]}) {
+    my $hash = {'id' => $child->id};
+    foreach (@fields) {
+      $hash->{$_} = $child->data->{$_} if defined $child->data->{$_};
+    }
+    push @$tracks, $hash;
+  }
 
+  my $data = {
+    'metadata' => $metadata,
+    'tracks'   => $tracks
+  };
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
-  #$Data::Dumper::Maxdepth = 3;
-  #warn Dumper($tracks);
-
-  return {hub_data => $tracks};
-}
-
-our $style_mappings = {
-                          'bam'     => {
-                                        'default' => 'coverage_with_reads',
-                                        },
-                          'cram'    => {
-                                        'default' => 'coverage_with_reads',
-                                        },
-                          'bigbed'  => {
-                                        'full'    => 'as_transcript_nolabel',
-                                        'pack'    => 'as_transcript_label',
-                                        'squish'  => 'half_height',
-                                        'dense'   => 'as_alignment_nolabel',
-                                        'default' => 'as_transcript_label',
-                                        },
-                          'biggenepred' => {
-                                        'full'    => 'as_transcript_nolabel',
-                                        'pack'    => 'as_transcript_label',
-                                        'squish'  => 'half_height',
-                                        'dense'   => 'as_collapsed_label',
-                                        'default' => 'as_collapsed_label',
-                                        },
-                          'bigwig'  => {
-                                        'full'    => 'signal',
-                                        'dense'   => 'compact',
-                                        'default' => 'compact',
-                                        },
-                          'vcf'     =>  {
-                                        'full'    => 'histogram',
-                                        'dense'   => 'compact',
-                                        'default' => 'compact',
-                                        },
-
-};
-
-sub process_tree {
-  my ($self, $node, $tracks, $inherited) = @_;
-  $inherited ||= {};
-
-  my @inheritable = qw(on_off visibility viewLimits maxHeightPixels);
-  my $data = {};
-  
-  if ($node->has_child_nodes) {
-    foreach my $child (@{$node->child_nodes}) {
-      $data = $child->data;
-      my $inherit = {};
-      foreach (@inheritable) {
-        $inherit->{$_} = $data->{$_} if defined $data->{$_};
-      }
-      $self->process_tree($child, $tracks, $inherit);
-    }
-  }
-  else {
-    $data = $node->data;
-    ## Overwrite inherited values
-    while (my($k, $v) = each (%$inherited)) {
-      $data->{$k} = $v if defined $v;
-    }
-    $data->{'shortLabel'} = strip_HTML($data->{'shortLabel'});
-    ## Translate between UCSC terms and Ensembl ones
-    $data->{'on_off'} = $data->{'visibility'} eq 'hide' ? 'off' : 'on';
-    my $default = $style_mappings->{$data->{'type'}}{$data->{'visibility'}}
-                  || $style_mappings->{$data->{'type'}}{'default'}
-                  || 'normal';
-    $data->{'default'} = $default;
-    delete($data->{'visibility'});
-    ## OK, done!
-    push @$tracks, $data;
-  }
+  #$Data::Dumper::Maxdepth = 2;
+  #warn Dumper($data);
+  return $data;
 }
 
   # TODO - build dimensions in JavaScript

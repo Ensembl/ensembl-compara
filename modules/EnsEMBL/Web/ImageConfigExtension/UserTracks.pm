@@ -510,44 +510,41 @@ sub _add_trackhub_tracks {
 
       if ($do_matrix) {
         $options{'matrix_url'} = $hub->url('Config', { 
-                                                      'matrix'  => 'TrackHubMatrix', 
-                                                      'menu'    => $options{'submenu_key'},
-                                                      'record'  => $code,
+                                                      'matrix'      => 'TrackHubMatrix', 
+                                                      'menu'        => $options{'submenu_key'},
+                                                      'record'      => $code,
+                                                      'th_species'  => $hub->species,
                                   });
-
-        foreach my $subgroup (keys %$config) {
-          next unless $subgroup =~ /subGroup\d/;
-
-          foreach (qw(x y)) {
-            if ($config->{$subgroup}{'name'} eq $config->{'dimensions'}{$_}) {
-              $options{'axis_labels'}{$_} = { %{$config->{$subgroup}} }; # Make a deep copy so that the regex below doesn't affect the subgroup config
-              s/_/ /g for values %{$options{'axis_labels'}{$_}};
-            }
-          }
-
-          last if scalar keys %{$options{'axis_labels'}} == 2;
-        }
-
-        $options{'axes'} = { map { $_ => $options{'axis_labels'}{$_}{'label'} } qw(x y) };
       }
     }
     ## Check if this submenu already exists (quite possible for trackhubs)
     $submenu = $options{'submenu_key'} ? $self->get_node($options{'submenu_key'}) : undef;
     unless ($submenu) { 
+      my %matrix_params = ();
+      if ($do_matrix) {
+        $matrix_params{'menu'}  = 'matrix';
+        $matrix_params{'url'}   = $options{'matrix_url'}; 
+        ## Build metadata for matrix structure
+        while (my ($k, $v) = each (%{$parent->data})) {
+          if ($k eq 'shortLabel' || $k eq 'dimensions') {
+            $matrix_params{$k} = $v;
+          }
+          elsif ($k =~ /subGroup/) {
+            while (my ($k2, $v2) = each (%{$v||{}})) {
+              if ($k2 eq 'name' || $k2 eq 'label') {
+                $matrix_params{$k}{$k2} = $v2;
+              }
+              else {
+                $matrix_params{$k}{'values'}{$k2} = $v2;
+              }
+            }
+          }
+        }
+      }
       $submenu = $self->create_menu_node($options{'submenu_key'}, $options{'submenu_name'}, {
         external    => 1,
         description => $options{'submenu_desc'},
-        ($do_matrix ? (
-          menu   => 'matrix',
-          url    => $options{'matrix_url'},
-          matrix => {
-            section     => $menu->data->{'caption'},
-            header      => $options{'submenu_name'},
-            desc_url    => $config->{'description_url'},
-            description => $config->{'longLabel'},
-            axes        => $options{'axes'},
-          }
-        ) : ())
+        %matrix_params,
       });
 
       $menu->append_child($submenu, $options{'submenu_key'});
@@ -617,6 +614,10 @@ sub _add_trackhub_tracks {
                     link_template   => $track->{'url'},
                     link_label      => $track->{'urlLabel'},
                     };
+
+      if ($do_matrix) {
+        $source->{'subGroups'} = $track->{'subGroups'};       
+      }
 
       # Graph range - Track Hub default is 0-127
       if (exists $track->{'viewLimits'}) {
@@ -711,13 +712,6 @@ sub _add_trackhub_tracks {
           $source->{'section'} = strip_HTML($parent->data->{'shortLabel'});
           ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
           $source->{'labelcaption'} = $caption;
-
-          $source->{'matrix'} = {
-            menu   => $options{'submenu_key'},
-            column => $options{'axis_labels'}{'x'}{$track->{'subGroups'}{$config->{'dimensions'}{'x'}}},
-            row    => $options{'axis_labels'}{'y'}{$track->{'subGroups'}{$config->{'dimensions'}{'y'}}},
-          };
-          $source->{'column_data'} = { desc_url => $config->{'description_url'}, description => $config->{'longLabel'}, no_subtrack_description => 1 };
         }
 
         $source = {%$source, %options};
@@ -1167,8 +1161,7 @@ sub _add_file_format_track {
   }
 
   #$args{'options'}{'display'} = $self->check_threshold($args{'options'}{'display'});
-
-  $self->_add_track($menu, undef, $args{'key'}, {}, {
+  my $params = {
     strand      => 'f',
     format      => $args{'format'},
     glyphset    => $type,
@@ -1181,7 +1174,12 @@ sub _add_file_format_track {
     url         => $url || $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}
-  });
+  };
+  if ($args{'source'}{'trackhub'}) {
+    $params->{'subGroups'} = $args{'source'}{'subGroups'};
+    $params->{'shortLabel'} = $args{'source'}{'labelcaption'};
+  }
+  $self->_add_track($menu, undef, $args{'key'}, {}, $params);
 }
 
 sub _user_track_settings {

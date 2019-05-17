@@ -27,8 +27,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
     //getting the node id from the panel url (menu=) to pass to ajax request to get imageconfig
-    var record_match = $(this.params.links).find('li.active a').attr('href').match(/record=([^;&]+)/g);
-    var record_id    = record_match[0].split("=")[1];
+    var submenu_match = $(this.params.links).find('li.active a').attr('href').match(/submenu=([^;&]+)/g);
+    var submenu_id    = submenu_match[0].split("=")[1];
+    var species_match = $(this.params.links).find('li.active a').attr('href').match(/th_species=([^;&]+)/g);
+    var species_name  = species_match[0].split("=")[1];
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
@@ -125,7 +127,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?species='+Ensembl.species+';record='+record_id,
+      url: '/Json/TrackHubData/data?th_species='+species_name+';submenu='+node_id+';ictype='+panel.params['image_config_type'],
       dataType: 'json',
       context: this,
       success: function(data) {
