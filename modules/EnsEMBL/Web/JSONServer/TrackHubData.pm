@@ -119,7 +119,7 @@ sub process_tree {
   my ($self, $node, $tracks, $inherited) = @_;
   $inherited ||= {};
 
-  my @inherited = qw(on_off visibility viewLimits maxHeightPixels);
+  my @inheritable = qw(on_off visibility viewLimits maxHeightPixels);
   my $data = {};
   
   if ($node->has_child_nodes) {
