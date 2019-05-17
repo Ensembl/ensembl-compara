@@ -34,57 +34,46 @@ sub json_data {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $tree = $hub->get_imageconfig($hub->param('imageconfigtype'))->tree;
-  my $submenu = $hub->param('submenu');
-#warn ">>>>".$submenu;
-  my $menu_node         = $tree->get_node($submenu);
-  #my $matrix_data       = $menu_node->get_data('matrix');
+  my $record_id = $hub->param('record');
+  return {} unless $record_id;
+  (my $code = $record_id) =~ s/^url_//;
 
-  # use Data::Dumper;
-  # $Data::Dumper::Sortkeys = 1;
-  # $Data::Dumper::Maxdepth = 2;
-  # warn Dumper($menu_node);
+  my $record;
+  foreach my $m (grep $_, $hub->user, $hub->session) {
+    $record = $m->get_record_data({'type' => 'url', 'code' => $code});
+    last if ($record && keys %$record);
+  }
+  my $url = $record->{'url'};
+  warn ">>> URL $url";
+  return {} unless $url;
 
+  my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); 
+  $self->{'th_default_count'} = 0;
+
+
+  ## Get the track data for this genome
   my $data;
-
-  # # TODO - replace with dynamic parameter
-  # my $record_id = $hub->param('record');
-  # #$record_id ="url_53103f6c810b3ff5bb3da64d7fecad42_449";
-  # (my $code = $record_id) =~ s/^url_//;
-
-  # my $record;
-  # foreach my $m (grep $_, $hub->user, $hub->session) {
-  #   $record = $m->get_record_data({'type' => 'url', 'code' => $code});
-  #   last if ($record && keys %$record);
-  # }
-  # my $url = $record->{'url'};
-  # #warn ">>> URL $url";
-
-  # my $trackhub  = EnsEMBL::Web::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
-  # my $hub_info = $trackhub->get_hub({'parse_tracks' => 1}); ## Do we have data for this species?
-  # $self->{'th_default_count'} = 0;
-
-
-  # ## Get the track data for this genome
-  # my $data;
-  # my $assemblies = $hub->species_defs->get_config($hub->param('species'), 'TRACKHUB_ASSEMBLY_ALIASES');
-  # $assemblies ||= [];
-  # $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
-  # foreach (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
-  #   my $assembly = $hub->species_defs->get_config($hub->param('species'), $_);
-  #   next unless $assembly;
-  #   push @$assemblies,$assembly;
-  # }
-  # foreach my $assembly (@$assemblies) {
-  #   $data = $hub_info->{'genomes'}{$assembly}{'data'};
-  #   last if $data;
-  # }
+  my $assemblies = $hub->species_defs->get_config($hub->param('species'), 'TRACKHUB_ASSEMBLY_ALIASES');
+  $assemblies ||= [];
+  $assemblies = [ $assemblies ] unless ref($assemblies) eq 'ARRAY';
+  foreach (qw(UCSC_GOLDEN_PATH ASSEMBLY_VERSION)) {
+    my $assembly = $hub->species_defs->get_config($hub->param('species'), $_);
+    next unless $assembly;
+    push @$assemblies,$assembly;
+  }
+  foreach my $assembly (@$assemblies) {
+    $data = $hub_info->{'genomes'}{$assembly}{'data'};
+    last if $data;
+  }
+  return {hub_data => $data};
 
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
   #$Data::Dumper::Maxdepth = 2;
   #warn Dumper($data);
 
+  # TODO - build dimensions in JavaScript
   # my ($dimX, $dimY);
   # my $dimLabels = {};
   # foreach my $track (@{$data||[]}) {
@@ -130,12 +119,6 @@ sub json_data {
   # if (scalar keys %{$final->{'data'}{$dimY}{'data'}} > 20) {
   #   $final->{'data'}{$dimY}{'listType'} = 'alphabetRibbon';
   # }
-  # use Data::Dumper;
-  # $Data::Dumper::Sortkeys = 1;
-  # #$Data::Dumper::Maxdepth = 2;
-  # warn Dumper($final);
-# print Data::Dumper::Dumper $data;
-  return {hub_data => $data};
 }
 
 1;
