@@ -42,24 +42,24 @@ sub default_options {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
         #'species_set_name'  => 'primates',
-    'division' => 'ensembl',
+    'division' => 'vertebrates',
 	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
     'master_db' => 'compara_master',
-	
+
     #default location for pairwise alignments (can be a string or an array-ref)
-    'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3 lastz_batch_4 lastz_batch5 lastz_batch6 lastz_batch7 lastz_batch8 lastz_batch_9 lastz_batch_10) ],
+    'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3) ],
     #'pairwise_location' => 'compara_curr',
 
 	#Location of compara db containing the high coverage alignments
         #'epo_db' => 'compara_curr',
         'epo_db' => $self->o('species_set_name').'_epo', # registry name usually follows this convention for new EPO runs
-	
+
 
     #ref species for pairwise alignments
- 	# 'ref_species' => 'gallus_gallus',    # sauropsids 
+ 	# 'ref_species' => 'gallus_gallus',    # sauropsids
 	#'ref_species' => 'oryzias_latipes',  # fish
 	# 'ref_species' => 'homo_sapiens',       # mammals
     };

@@ -506,6 +506,7 @@ CREATE TABLE `ortholog_goc_metric` (
   `method_link_species_set_id` int(11) NOT NULL,
   `homology_id` int(11) NOT NULL,
   `gene_member_id` int(11) NOT NULL,
+  `stable_id` varchar(128) NOT NULL,
   `goc_score` int(11) NOT NULL,
   `left1` int(11) DEFAULT NULL,
   `left2` int(11) DEFAULT NULL,
@@ -699,4 +700,3 @@ CREATE TABLE `synteny_region` (
   PRIMARY KEY (`synteny_region_id`),
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-

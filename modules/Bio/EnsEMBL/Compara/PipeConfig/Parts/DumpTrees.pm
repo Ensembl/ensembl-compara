@@ -18,7 +18,7 @@ limitations under the License.
 =cut
 
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -102,8 +102,8 @@ sub pipeline_analyses_dump_trees {
                 'output_file'   => sprintf('#base_dir#/#division#.GeneTree_content.#clusterset_id#.e%s.txt', $self->o('ensembl_release')),
                 'append'        => [qw(-N -q)],
                 'input_query'   => sprintf q|
-                    SELECT 
-                        gtr.stable_id AS GeneTreeStableID, 
+                    SELECT
+                        gtr.stable_id AS GeneTreeStableID,
                         pm.stable_id AS EnsPeptideStableID,
                         gm.stable_id AS EnsGeneStableID,
                         IF(m.seq_member_id = pm.seq_member_id, 'Y', 'N') as Canonical
@@ -135,20 +135,7 @@ sub pipeline_analyses_dump_trees {
                 'inputquery'            => 'SELECT MIN(homology_id) AS min_hom_id, MAX(homology_id) AS max_hom_id FROM homology JOIN gene_tree_root ON gene_tree_root_id = root_id WHERE clusterset_id = "#clusterset_id#" AND member_type = "#member_type#"',
             },
             -hive_capacity => $self->o('dump_trees_capacity'),
-            -flow_into => {
-                2 => WHEN(
-                    '#max_hom_id#' => {
-                        'dump_all_homologies_tsv' => undef,
-                        'dump_all_homologies_orthoxml' => [
-                            {'file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
-                            {'file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
-                        ],
-                    } ,
-                    '#max_hom_id# && #dump_per_species_tsv#' => {
-                        'factory_per_genome_homology_range_dumps' => undef,
-                    },
-                ),
-            },
+            -flow_into => { 2 => 'factory_per_genome_homology_range_dumps' },
         },
 
         {   -logic_name => 'factory_per_genome_homology_range_dumps',
@@ -159,21 +146,9 @@ sub pipeline_analyses_dump_trees {
             },
             -hive_capacity => $self->o('dump_trees_capacity'),
             -flow_into => {
-                2 => 'dump_per_genome_homologies_tsv',
+                '2->A' => [ 'dump_per_genome_homologies_tsv' ],
+                'A->1' => [ 'concatenate_genome_homologies_tsv' ],
             },
-        },
-
-        {   -logic_name => 'dump_all_homologies_orthoxml',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
-            -parameters => {
-                'compara_db'            => '#rel_db#',
-            },
-            -flow_into => {
-                1 => {
-                    'archive_long_files' => { 'full_name' => '#file#', },
-                    }
-            },
-            -hive_capacity => $self->o('dump_hom_capacity'),
         },
 
         {   -logic_name => 'dump_all_trees_orthoxml',
@@ -204,17 +179,31 @@ sub pipeline_analyses_dump_trees {
             },
         },
 
-          { -logic_name => 'dump_all_homologies_tsv',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
+        {   -logic_name => 'concatenate_genome_homologies_tsv',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'       => '#rel_db#',
-                'output_file'   => '#tsv_dir#/#name_root#.homologies.tsv',
+                'cmd'         => q{rm #output_file#; for filename in $(find #tsv_dir# -name #name_root#.homologies.tsv); do if [ ! -e #output_file# ]; then head -1 $filename > #output_file#; fi; awk '$1 > $6 {print $0}' $filename >> #output_file#; done},
+                'output_file' => '#tsv_dir#/#name_root#.homologies.tsv',
             },
-            -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
+            -flow_into => { 1 => {
+                'convert_tsv_to_orthoxml' => [
+                    {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
+                    {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
+                ],
+                'archive_long_files' => { 'full_name' => '#output_file#' },
+            }},
+        },
+
+        {   -logic_name => 'convert_tsv_to_orthoxml',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HomologiesTSVToOrthoXML',
+            -parameters => {
+                'compara_db' => '#rel_db#',
             },
-            -hive_capacity => $self->o('dump_hom_capacity'),
-          },
+            -flow_into  => {
+                1 => {'archive_long_files' => { 'full_name' => '#xml_file#' }}
+            },
+            -rc_name => '8Gb_job',
+        },
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
@@ -292,7 +281,7 @@ sub pipeline_analyses_dump_trees {
                 'cmd'           => '[[ ! -e #filename# ]] || #xmllint_exe# --noout --schema /homes/compara_ensembl/warehouse/xml_schema/#schema#.xsd #filename#',
             },
             -batch_size    => $self->o('batch_size'),
-            -hive_capacity => $self->o('dump_aln_capacity'),
+            # -hive_capacity => $self->o('dump_aln_capacity'),
             -rc_name       => '2Gb_job',
         },
 
@@ -364,6 +353,7 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'cmd'         => 'gzip #full_name#',
             },
+            -wait_for => [ 'dump_per_genome_homologies_tsv', 'concatenate_genome_homologies_tsv', 'convert_tsv_to_orthoxml' ],
         },
 
         {   -logic_name => 'remove_empty_file',
@@ -395,4 +385,3 @@ sub pipeline_analyses_dump_trees {
 }
 
 1;
-

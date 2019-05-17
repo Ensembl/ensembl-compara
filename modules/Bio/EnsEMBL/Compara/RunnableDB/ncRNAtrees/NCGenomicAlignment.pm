@@ -41,8 +41,6 @@ sub fetch_input {
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
-    $self->param('aln_seq_type', "seq_with_flanking");
-
     # Autovivification
     $self->param("method_treefile", {});
 }
@@ -73,7 +71,6 @@ sub run {
                                     'fastTreeTag' => "ftga_it_nj",
                                     'raxmlLightTag' => "ftga_it_ml",
                                     'alignment_id' => $self->param('alignment_id'),
-                                    'aln_seq_type' => $self->param('aln_seq_type'),
                                    },3
                                   );
         $self->input_job->autoflow(0);
@@ -115,26 +112,28 @@ sub write_output {
 }
 
 sub dump_sequences_to_workdir {
-    my ($self,$cluster) = @_;
+    my ($self,$cluster,$no_flanking) = @_;
     my $fastafile = $self->worker_temp_directory . "/cluster_" . $cluster->root_id . ".fasta";
 
     my $member_list = $cluster->get_all_leaves;
     $self->param('tag_gene_count', scalar (@{$member_list}) );
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($cluster->adaptor->db->get_DnaFragAdaptor, $member_list);
 
-    open (OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for writing: $!");
     if (scalar @{$member_list} < 2) {
         $self->param('single_peptide_tree', 1);
         return 1;
     }
+    open (OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for writing: $!");
 
     my $residues = 0;
     my $count = 0;
     $cluster->adaptor->db->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+    my $max_length = 0;
     foreach my $member (@{$member_list}) {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
-        my $seq = $gene_member->expand_Locus('500%')->get_sequence();
+        my $seq = $no_flanking ? $member->sequence() : $gene_member->expand_Locus('500%')->get_sequence();
+        $max_length = length($seq) if length($seq) > $max_length;
         $residues += length($seq);
         $seq =~ s/(.{72})/$1\n/g;
         chomp $seq;
@@ -145,9 +144,11 @@ sub dump_sequences_to_workdir {
     }
     close OUTSEQ;
 
-    if(scalar (@{$member_list}) <= 1) {
-        $self->update_single_peptide_tree($cluster);
-        $self->param('single_peptide_tree', 1);
+    if ($max_length >= 1_000_000) {
+        $self->param('no_flanking', 1);
+        $cluster->print_sequences_to_file($fastafile, -FORMAT => 'fasta');
+        $residues = 0;
+        $residues += length($_->sequence) for @$member_list;
     }
 
     $self->param('tag_residue_count', $residues);
@@ -155,17 +156,6 @@ sub dump_sequences_to_workdir {
     return $fastafile;
 }
 
-sub update_single_peptide_tree {
-    my ($self, $tree) = @_;
-
-    foreach my $member (@{$tree->get_all_leaves}) {
-        next unless($member->isa('Bio::EnsEMBL::Compara::GeneTreeMember'));
-        next unless($member->sequence);
-        $member->cigar_line(length($member->sequence)."M");
-        $self->compara_dba->get_GeneTreeNodeAdaptor->store_node($member);
-        printf("single_pepide_tree %s : %s\n", $member->stable_id, $member->cigar_line) if($self->debug);
-    }
-}
 
 sub run_mafft {
     my ($self) = @_;
@@ -242,7 +232,6 @@ sub run_RAxML {
                     'fastTreeTag'   => "ftga_it_nj",
                     'raxmlLightTag' => "ftga_it_ml",
                     'alignment_id'  => $self->param('alignment_id'),
-                    'aln_seq_type'  => $self->param('aln_seq_type'),
                 }, 3 #branch 3 (fast_trees)
             );
             $self->input_job->autoflow(0);
@@ -310,7 +299,6 @@ sub run_prank {
                     'fastTreeTag'   => "ftga_it_nj",
                     'raxmlLightTag' => "ftga_it_ml",
                     'alignment_id'  => $self->param('alignment_id'),
-                    'aln_seq_type'  => $self->param('aln_seq_type'),
                 }, 3 #branch 3 (fast_trees)
             );
             $self->input_job->autoflow(0);
@@ -367,17 +355,20 @@ sub store_fasta_alignment {
 
     my $nc_tree_id = $self->param('gene_tree_id');
     my $aln_file = $self->param("${aln_method}_output");
-    my $aln_seq_type = $self->param('aln_seq_type');
 
     my $aln = $self->param('gene_tree')->deep_copy();
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
-    $aln->seq_type($aln_seq_type);
     $aln->aln_method($aln_method);
-    $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
+    if ($self->param('no_flanking')) {
+        $aln->load_cigars_from_file($aln_file, -format => 'fasta');
+    } else {
+        $aln->seq_type('seq_with_flanking');
+        $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
-    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
-    foreach my $member (@{$aln->get_all_Members}) {
-        $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
+        my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
+        foreach my $member (@{$aln->get_all_Members}) {
+            $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
+        }
     }
 
     $aln->dbID( $self->param('gene_tree')->get_value_for_tag('genomic_alignment_gene_align_id') );

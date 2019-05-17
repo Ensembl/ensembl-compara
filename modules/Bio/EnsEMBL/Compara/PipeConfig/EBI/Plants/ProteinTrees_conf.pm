@@ -75,6 +75,8 @@ sub default_options {
     division => 'plants',
     # mlss_id  => 40138,
 
+    'do_not_reuse_list'     => [ 'saccharomyces_cerevisiae' ],
+
     # How will the pipeline create clusters (families) ?
     # Possible values: 'blastp' (default), 'hmm', 'hybrid'
     #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
@@ -133,11 +135,12 @@ sub tweak_analyses {
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'tree_building_entry_point'}->{'-rc_name'} = '500Mb_job';
-    $analyses_by_name->{'mafft_huge'}->{'-rc_name'} = '128Gb_4c_job';
     $analyses_by_name->{'homology_factory'}->{'-rc_name'}         = '1Gb_job';
     $analyses_by_name->{'copy_homology_dNdS'}->{'-rc_name'}       = '1Gb_job';
     $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
     $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
+    $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-rc_name'} = '2Gb_job';
+    $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
 
     $analyses_by_name->{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_job';

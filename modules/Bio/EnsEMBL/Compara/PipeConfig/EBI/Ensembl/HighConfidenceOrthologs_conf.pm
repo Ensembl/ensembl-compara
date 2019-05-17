@@ -55,7 +55,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'division'   => 'ensembl',
+        'division'   => 'vertebrates',
 
         # This pipeline will faster if it's run against the production ProteinTree database:
         # In this case it needs to be run *before* the merge, otherwise the data will not be in the release database.

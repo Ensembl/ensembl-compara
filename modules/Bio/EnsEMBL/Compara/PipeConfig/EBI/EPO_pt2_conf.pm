@@ -70,7 +70,7 @@ sub default_options {
     'species_set_name' => 'sauropsids',
     #'rel_suffix' => 'b',
 
-    'division' => 'ensembl',
+    'division' => 'vertebrates',
 
 	# database containing the anchors for mapping
 	'compara_anchor_db' => $self->o('species_set_name').'_epo_anchors',

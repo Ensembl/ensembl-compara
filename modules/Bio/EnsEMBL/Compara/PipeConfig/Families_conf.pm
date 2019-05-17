@@ -105,7 +105,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        $self->pipeline_create_commands(['pipeline_dir', 'blastdb_dir', 'uniprot_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'blastdb_dir', 'uniprot_dir']),
         $self->pipeline_create_commands_lfs_setstripe('blastdb_dir'),
     ];
 }
@@ -132,7 +132,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_exe'         => $self->o('mafft_exe'),
-        'mafft_threads'    => $self->o('mafft_threads'),
 
         'master_db'         => $self->o('master_db'),               # databases
         'member_db'         => $self->o('member_db'),
@@ -146,6 +145,14 @@ sub hive_meta_table {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
         'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     }
+}
+
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
+    };
 }
 
 

@@ -29,7 +29,7 @@ limitations under the License.
   <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
-	
+
 	Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf;
 
 =head1 SYNOPSIS
@@ -58,7 +58,7 @@ limitations under the License.
     -alt_homology_db    take homology objects from a different source
 
     Note: If you wish to use homologies from one database, but the alignments live in a different database,
-    remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd 
+    remember that final scores will be written to the homology table of the appointed compara_db. So, if you'd
     like the final scores written to the homology database, assign this as compara_db and use the alt_aln_dbs option
     to specify the location of the alignments. Likewise, if you want the scores written to the alignment-containing
     database, assign it as compara_db and use the alt_homology_db option.
@@ -105,7 +105,8 @@ sub hive_meta_table {
 }
 
 sub default_pipeline_name {         # Instead of ortholog_qm_alignment
-    return 'orth_qm_wga';
+    my ($self) = @_;
+    return $self->o('member_type') . '_orth_qm_wga';
 }
 
 sub default_options {
@@ -118,7 +119,7 @@ sub default_options {
         'species_set_name' => undef,
         'species_set_id'   => undef,
         'ref_species'      => undef,
-        
+
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
@@ -127,8 +128,8 @@ sub default_options {
     };
 }
 
-=head2 pipeline_create_commands 
-	
+=head2 pipeline_create_commands
+
 	Description: create tables for writing data to
 
 =cut
@@ -183,6 +184,7 @@ sub pipeline_analyses {
                 'master_db'        => $self->o('master_db'),
                 'alt_homology_db'  => $self->o('alt_homology_db'),
                 'previous_rel_db'  => $self->o('previous_rel_db'),
+                'member_type'      => $self->o('member_type'),
             }],
         },
 
@@ -200,13 +202,13 @@ sub pipeline_analyses {
                 1 => [ '?accu_name=alignment_mlsses&accu_address=[]&accu_input_variable=accu_dataflow' ],
                 2 => [ '?accu_name=mlss_db_mapping&accu_address={mlss_id}&accu_input_variable=mlss_db' ],
             },
-            -rc_name => '500M_job',
+            -rc_name => '500Mb_job',
             -analysis_capacity => 50,
         },
 
         {   -logic_name => 'copy_compara_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepTableCopy',
-            -parameters => { 
+            -parameters => {
                 'copy_chunk_size' => 10,
                 'program'         => $self->o('populate_new_database_exe'),
                 'reg_conf'        => $self->o('reg_conf'),
@@ -227,7 +229,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
                 'table'       => 'genomic_align_block',
-                'mode'        => 'topup',     
+                'mode'        => 'topup',
              },
             -analysis_capacity => 1,
             -flow_into => { 1 => [ 'copy_genomic_aligns' ] },
@@ -238,7 +240,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'where'       => 'method_link_species_set_id IN ( #expr( join( ",", @{ #mlss_id_list# } ) )expr# )',
                 'table'       => 'genomic_align',
-                'mode'        => 'topup',      
+                'mode'        => 'topup',
              },
             -analysis_capacity => 1,
         },

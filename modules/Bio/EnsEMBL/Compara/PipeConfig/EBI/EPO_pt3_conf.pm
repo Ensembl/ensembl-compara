@@ -80,7 +80,7 @@ sub default_options {
       # Used to name the databases and the working directory
       #'species_set_name' => 'primates',
 
-      'division' => 'ensembl',
+      'division' => 'vertebrates',
 
       # Dump directory
       'dump_dir' => $self->o('pipeline_dir'),

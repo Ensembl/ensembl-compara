@@ -79,6 +79,8 @@ sub param_defaults {
             #flag as to whether to write out conservation scores to the conservation_score
             #table. Default is to write them out.
             'no_conservation_scores' => 0,
+            # Same for the constrained elements
+            'no_constrained_elements' => 0,
             'depth_threshold'=> undef,
             'constrained_element_method_link_type' => 'GERP_CONSTRAINED_ELEMENT',   # you shouldn't have to change this
     };
@@ -345,10 +347,11 @@ sub run_gerp_v2 {
     my $cmd_status = $self->run_command($command);
     if ($cmd_status->exit_code) {
         if ($cmd_status->err =~ /The matrix is too big .* and is causing an integer overflow. Aborting/) {
-            $self->input_job->autoflow(0);
-            $self->complete_early("Cannot run GERP (integer overflow). Discarding this family");
+            # gerpelem cannot run, but we still have the scores
+            $self->param('no_constrained_elements', 1);
+        } else {
+            $cmd_status->die_with_log;
         }
-        $cmd_status->die_with_log;
     }
 }
 
@@ -360,7 +363,9 @@ sub _parse_results_v2 {
   unless (defined $self->param('no_conservation_scores') && $self->param('no_conservation_scores')) {
       $self->_parse_rates_file($self->param('mfa_file').$RATES_FILE_SUFFIX, 2);
   }
-  $self->_parse_cons_file($self->param('mfa_file').$RATES_FILE_SUFFIX.$CONS_FILE_SUFFIX, 2);
+  unless (defined $self->param('no_constrained_elements') && $self->param('no_constrained_elements')) {
+      $self->_parse_cons_file($self->param('mfa_file').$RATES_FILE_SUFFIX.$CONS_FILE_SUFFIX, 2);
+  }
 }
 
 

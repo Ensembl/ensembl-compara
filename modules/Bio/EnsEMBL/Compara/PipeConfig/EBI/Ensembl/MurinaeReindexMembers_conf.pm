@@ -89,6 +89,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
+        'division'      => 'vertebrates',
         'collection'    => 'murinae',
 
         # Main capacity for the pipeline
@@ -114,4 +115,3 @@ sub default_options {
 
 
 1;
-

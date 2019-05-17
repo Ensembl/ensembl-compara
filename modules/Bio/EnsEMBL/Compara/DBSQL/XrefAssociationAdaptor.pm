@@ -62,7 +62,7 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
-my $insert_member_base_sql = q/insert into member_xref(gene_member_id,dbprimary_acc,external_db_id)/;
+my $insert_member_base_sql = q/insert ignore into member_xref(gene_member_id,dbprimary_acc,external_db_id)/;
 
 my $insert_member_sql = $insert_member_base_sql. q/ select gene_member_id,?,? from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
  

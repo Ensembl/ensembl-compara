@@ -56,7 +56,7 @@ sub default_options {
         ######################################################
         # Review these options prior to running each release #
         ######################################################
-        
+
         # Where to put the new dumps and the symlinks
         'dump_root'    => $self->o('pipeline_dir'),
         # Location of the previous dumps
@@ -91,9 +91,9 @@ sub default_options {
 
 
     	# general settings
-        'division'        => 'ensembl',
+        'division'        => 'vertebrates',
         'dump_dir'        => '#dump_root#/release-#curr_release#',
-		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?       
+		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
         #'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release
 		# define input options for DumpMultiAlign for each method_link_type
@@ -106,17 +106,16 @@ sub default_options {
 
         # define which params should ALWAYS be passed to each dump pipeline
         'default_dump_options' => {
-        	DumpMultiAlign          => { 
+        	DumpMultiAlign          => {
          		make_tar_archive => 0,
         	},
-        	DumpConstrainedElements => { 
-        		compara_url => '#compara_db#', 
+        	DumpConstrainedElements => {
+        		compara_url => '#compara_db#',
         	},
-        	DumpConservationScores  => { 
-        		compara_url => '#compara_db#', 
+        	DumpConservationScores  => {
+        		compara_url => '#compara_db#',
         	},
-        	DumpTrees               => { 
-        		dump_per_species_tsv => 1,
+        	DumpTrees               => {
         		rel_db               => '#compara_db#',
         		base_dir             => '#dump_root#',
         	},
@@ -151,7 +150,7 @@ sub default_options {
         'readme_dir'    => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),    # where the template README files are
         'max_files_per_tar'     => 500,
         'batch_size'            => 25,    # how may trees' dumping jobs can be batched together
-        
+
         # constrained elems & conservation scores
         'cs_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/conservation_scores.txt'),
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
@@ -190,7 +189,7 @@ sub pipeline_wide_parameters {
         'registry'        => '#reg_conf#',
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
-        'ftp_root'        => $self->o('ftp_root'),  
+        'ftp_root'        => $self->o('ftp_root'),
         'division'        => $self->o('division'),
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
 
@@ -218,7 +217,7 @@ sub pipeline_wide_parameters {
         'dump_features_exe'     => $self->o('dump_features_exe'),
         'cs_readme'             => $self->o('cs_readme'),
         'ce_readme'             => $self->o('ce_readme'),
-        
+
         'export_dir'     => '#dump_dir#',
         'ce_output_dir'  => '#export_dir#/bed/ensembl-compara/#dirname#',
         'cs_output_dir'  => '#export_dir#/compara/conservation_scores/#dirname#',
@@ -268,9 +267,9 @@ sub pipeline_analyses {
             -flow_into  => {
                 '9'    => [ 'DumpMultiAlign_start' ],
                 '2'    => [ 'DumpTrees_start' ],
-                '3'    => [ 'DumpConstrainedElements_start' ], 
-                '4'    => [ 'DumpConservationScores_start'  ], 
-                '5'    => [ 'DumpSpeciesTrees_start'        ], 
+                '3'    => [ 'DumpConstrainedElements_start' ],
+                '4'    => [ 'DumpConservationScores_start'  ],
+                '5'    => [ 'DumpSpeciesTrees_start'        ],
                 '6'    => [ 'DumpAncestralAlleles_start'    ],
                 '7'    => [ 'DumpMultiAlignPatches_start'   ],
                 '8'    => [ 'create_ftp_skeleton'           ],
@@ -312,7 +311,7 @@ sub pipeline_analyses {
                         'A->1' => [ 'patch_lastz_dump' ],
         	},
         },
-        
+
        #------------------------------------------------------------------#
 
 
@@ -341,7 +340,7 @@ sub pipeline_analyses {
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles::pipeline_analyses_dump_anc_alleles($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements::pipeline_analyses_dump_constrained_elems($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores::pipeline_analyses_dump_conservation_scores($self) },
-    
+
     );
 
 	# add DumpTree analyses seperately in order to set the collection_factory parameters

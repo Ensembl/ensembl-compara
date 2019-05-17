@@ -225,7 +225,7 @@ sub _memoized_insert {
         my @cols = keys %this_row;
         my @qms  = map {'?'} @cols;
         my @vals = @this_row{@cols};
-        my $insert_sql = sprintf('INSERT IGNORE INTO %s (%s) VALUES (%s)', $table, join(',', @cols), join(',', @qms));
+        my $insert_sql = sprintf('INSERT IGNORE INTO %s (%s) VALUES (%s)', $table, join(',', map{"`$_`"}@cols), join(',', @qms));
         #warn ">> $insert_sql using '", join("','", map {$_//'<NULL>'} @vals), "'\n";
         my $rows = $to_dbc->do($insert_sql, undef, @vals);
         #warn "".($rows ? "true" : "false")." ".($rows == 0 ? "zero" : "non-zero")."\n";

@@ -156,6 +156,7 @@
     )Magnoliophyta,
    )Tracheophyta,
    physcomitrella_patens,
+   marchantia_polymorpha_str_tak_1,
   )Embryophyta,
   (
    ostreococcus_lucimarinus,
@@ -169,4 +170,4 @@
   )Cyanidiaceae,
   chondrus_crispus,
  )Rhodophyta,
-)Eukaryotqa;
+)Eukaryota;

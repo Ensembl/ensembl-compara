@@ -103,6 +103,20 @@ sub pipeline_analyses_dump_multi_align {
             -hive_capacity => $self->o('dump_aln_capacity'),
             -rc_name => '2Gb_job',
             -max_retry_count    => 0,
+            -flow_into => {
+              1 => WHEN(
+                '#run_emf2maf#' => [ 'emf2maf' ],
+                '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress_aln' ],
+                # '!#make_tar_archive#' => [ 'compress_aln' ],
+              ),
+              -1 => 'dumpMultiAlign_himem',
+            },
+        },
+        {  -logic_name    => 'dumpMultiAlign_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign',
+            -hive_capacity => $self->o('dump_aln_capacity'),
+            -rc_name => '8Gb_job',
+            -max_retry_count    => 0,
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
                 '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress_aln' ],

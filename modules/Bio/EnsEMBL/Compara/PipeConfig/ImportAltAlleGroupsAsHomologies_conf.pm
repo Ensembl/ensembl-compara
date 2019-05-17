@@ -50,7 +50,7 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # Only needed if the member_db doesn't have genome_db.locator
-        'division' => 'ensembl',
+        'division' => 'vertebrates',
 
         'master_db'       => 'compara_master',  # Source of MLSSs
         'member_db'       => 'compara_members', # Source of GenomeDBs and members
