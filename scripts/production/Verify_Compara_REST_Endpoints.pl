@@ -447,7 +447,7 @@ try{
     
         print $server.$ext.';content-type=text/x-phyloxml;aligned=0' . "\n";
         $phyloXml = process_phyloXml_get($server.$ext.';content-type=text/x-phyloxml;aligned=0'.($extra_params ? ";$extra_params" : ''));
-        print Dumper $phyloXml;
+        #print Dumper $phyloXml;
         ok($phyloXml->{phylogeny}->{clade}->{sequence}->{mol_seq}->{is_aligned} == 0, "Check get alignment region and unaligned sequences");
     
         $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;display_species_set=$species_1".($extra_params ? ";$extra_params" : ''));
