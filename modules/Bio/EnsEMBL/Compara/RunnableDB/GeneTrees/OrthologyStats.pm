@@ -89,6 +89,17 @@ sub fetch_input {
     my $gdb_id_1     = $genome_dbs->[0]->dbID;
     my $gdb_id_2     = $genome_dbs->[1]->dbID;
 
+    # Default values (in case some categories are not found in the data)
+    foreach my $c1 ('one', 'many') {
+        foreach my $c2 ('one', 'many') {
+            my $homology_type = sprintf('%s_%s-to-%s', $member_type, $c1, $c2);
+            $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), 0);
+            $mlss->store_tag(sprintf('n_%s_groups', $homology_type), 0);
+            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_1), 0);
+            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_2), 0);
+        }
+    }
+
     my $data = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_orthologies, undef,
         $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $mlss_id);
     foreach my $line (@$data) {
