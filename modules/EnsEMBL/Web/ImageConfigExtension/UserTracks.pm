@@ -534,7 +534,7 @@ sub _add_trackhub_tracks {
         delete($parent->data->{'dimensions'});
         $matrix_params{'dimLookup'} = $dim_lookup;
         while (my ($k, $v) = each (%{$parent->data})) {
-          if ($k eq 'shortLabel' || $k eq 'dimensions') {
+          if ($k eq 'shortLabel') {
             $matrix_params{$k} = $v;
           }
           elsif ($k =~ /subGroup/) {
