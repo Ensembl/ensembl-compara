@@ -222,6 +222,42 @@
             "name_on_graph": "Alt-alleles import"
          },
          {
+             "component": "Production tasks",
+             "description": "https://github.com/Ensembl/ensembl-compara/blob/release/97/docs/production/READMEs/pair_aligner_patches.rst",
+             "summary": "Merge LastZ_Patch human alignments",
+             "name_on_graph": "LastZ_Patch:Human"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://github.com/Ensembl/ensembl-compara/blob/release/97/docs/production/READMEs/pair_aligner_patches.rst",
+             "summary": "Merge LastZ_Patch mouse alignments",
+             "name_on_graph": "LastZ_Patch:Mouse"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://github.com/Ensembl/ensembl-compara/blob/release/97/docs/production/READMEs/pair_aligner_patches.rst",
+             "summary": "Merge LastZ_Patch zebrafish alignments",
+             "name_on_graph": "LastZ_Patch:Zebrafish"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Haplotypesandassemblypatchesagainstotherspecies",
+             "summary": "Top-up LastZ_NET human alignments",
+             "name_on_graph": "LastZ_NET:Human"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Haplotypesandassemblypatchesagainstotherspecies",
+             "summary": "Top-up LastZ_NET mouse alignments",
+             "name_on_graph": "LastZ_NET:Mouse"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Haplotypesandassemblypatchesagainstotherspecies",
+             "summary": "Top-up LastZ_NET zebrafish alignments",
+             "name_on_graph": "LastZ_NET:Zebrafish"
+         },
+         {
             "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
