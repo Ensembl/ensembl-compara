@@ -37,7 +37,7 @@ sub json_data {
 
   my $ic_type = $hub->param('ictype');
   my $species = $hub->param('th_species');
-  my $menu    = $hub->param('submenu');
+  my $menu    = $hub->param('menu');
   my $tree    = $hub->get_imageconfig({type => $ic_type, species => $species});
   return {} unless ($menu && $tree);
 
@@ -46,13 +46,8 @@ sub json_data {
 
   my $metadata = {};
   while (my ($k, $v) = each (%{$node->data})) {
-    if ($k eq 'shortLabel' || $k eq 'dimensions') {
+    if ($k eq 'shortLabel' || $k eq 'dimensions' || $k eq 'dimLookup') {
       $metadata->{$k} = $v;
-    }
-    elsif ($k =~ /subGroup/) {
-      my $k2 = $v->{'name'};
-      delete($v->{'name'});
-      $metadata->{$k2} = $v;
     }
   }
 

@@ -512,7 +512,6 @@ sub _add_trackhub_tracks {
         $options{'matrix_url'} = $hub->url('Config', { 
                                                       'matrix'      => 'TrackHubMatrix', 
                                                       'menu'        => $options{'submenu_key'},
-                                                      'record'      => $code,
                                                       'th_species'  => $hub->species,
                                   });
       }
@@ -525,17 +524,28 @@ sub _add_trackhub_tracks {
         $matrix_params{'menu'}  = 'matrix';
         $matrix_params{'url'}   = $options{'matrix_url'}; 
         ## Build metadata for matrix structure
+        ## Do dimensions first as they're fiddly!
+        my $dimensions = $parent->data->{'dimensions'};
+        my $dim_lookup = {};
+        while (my($k, $v) = each (%{$dimensions||{}})) {
+          $matrix_params{'dimensions'}{$k} = {'key' => $v};
+          $dim_lookup->{$v} = $k;
+        }
+        delete($parent->data->{'dimensions'});
+        $matrix_params{'dimLookup'} = $dim_lookup;
         while (my ($k, $v) = each (%{$parent->data})) {
           if ($k eq 'shortLabel' || $k eq 'dimensions') {
             $matrix_params{$k} = $v;
           }
           elsif ($k =~ /subGroup/) {
+            my $k1 = $v->{'name'};
+            delete($v->{'name'});
             while (my ($k2, $v2) = each (%{$v||{}})) {
-              if ($k2 eq 'name' || $k2 eq 'label') {
-                $matrix_params{$k}{$k2} = $v2;
+              if ($k2 eq 'label') {
+                $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'label'} = $v2;
               }
               else {
-                $matrix_params{$k}{'values'}{$k2} = $v2;
+                $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'values'}{$k2} = $v2;
               }
             }
           }

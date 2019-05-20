@@ -49,16 +49,16 @@ sub build {
   my $menu          = $hub->param('menu');
 
   my $menu_node         = $tree->get_node($menu);
-  my $matrix_data       = $menu_node->get_data('matrix');
   my $image_config_type = $image_config->{code};
 
   #use Data::Dumper;
   #$Data::Dumper::Sortkeys = 1;
   #$Data::Dumper::Maxdepth = 2;
-  #warn Dumper($matrix_data);
-  my $title = $matrix_data->{'section'};
-  my $dimX  = $matrix_data->{'axes'}{'x'};
-  my $dimY  = $matrix_data->{'axes'}{'y'};
+  #warn Dumper($metadata);
+  my $title = $menu_node->get_data('shortLabel');
+  my $dims  = $menu_node->get_data('dimensions');
+  my $dimX  = $dims->{'x'}{'label'};
+  my $dimY  = $dims->{'y'}{'label'};
 
   my $html = qq(
     <input type="hidden" class="js_param" name="image_config_type" value="$image_config_type" />
