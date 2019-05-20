@@ -27,8 +27,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
     //getting the node id from the panel url (menu=) to pass to ajax request to get imageconfig
-    var submenu_match = $(this.params.links).find('li.active a').attr('href').match(/menu=([^;&]+)/g);
-    var submenu_id    = submenu_match[0].split("=")[1];
+    var menu_match    = $(this.params.links).find('li.active a').attr('href').match(/menu=([^;&]+)/g);
+    var node_id       = menu_match[0].split("=")[1];
     var species_match = $(this.params.links).find('li.active a').attr('href').match(/th_species=([^;&]+)/g);
     var species_name  = species_match[0].split("=")[1];
 
@@ -269,47 +269,42 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var dimLabels = {};
     finalObj.extra_dimensions = []; //it needs to be in the json and empty so that code know there is no extra dimensions
 
-    $.each(panel.rawJSON.hub_data, function(index, track) {
-      if(track.dimensions && $.isEmptyObject(finalObj.dimensions)) {
-        dimX = track.dimensions.x;
-        dimY = track.dimensions.y;
+    //Populating the dimensions and data for each dimension
+    if($.isEmptyObject(finalObj.dimensions)) {
+      dimX = panel.rawJSON.metadata.dimensions.x.key;
+      dimY = panel.rawJSON.metadata.dimensions.y.key;
 
-        //Create a lookup for all the dimensions' individual values
-        var combined_hash = track.subGroup1;
-        $.each($.extend(combined_hash,track.subGroup2), function(k, v) {
-          //Skip the information about the dimensions themselves
-          if(k === "name" || k === "label") { return; }
-          var pretty_label = k.replace('_', ' ');
-          dimLabels[k] = pretty_label;
-        });
+      finalObj.dimensions = [dimX,dimY];
+      finalObj.data = {};
+      
+      //getting dimY data, assuming subgroup2 is always dimY
+      var dimYData = {}
+      $.each(Object.keys(panel.rawJSON.metadata.dimensions.y.values), function(index, value) {
+        dimYData[value] = {name: value.replace("_", " ")};
+      });
 
-        finalObj.dimensions = [dimX,dimY];
-        finalObj.data = {};
+      var dimXData = {};
+      //getting dimX data and the relationship
+      $.each(panel.rawJSON.tracks, function(i, track){
+        var state = track.display;
+        var keyX = track.subGroups[dimX];
 
-        finalObj.data[dimX] = {"name": dimX, "label": track.subGroup1.label, "listType": "simpleList", "data": {} };
-        finalObj.data[dimY] = {"name": dimX, "label": track.subGroup2.label, "listType": "simpleList", "data": {} };
-      }
-      else if(track.bigDataUrl) {
-        // Only add tracks that are displayable, i.e. not superTracks/composites/etc
-        var keyX    = track.subGroups[dimX];
-        var keyY    = track.subGroups[dimY];
-        var labelX  = dimLabels[keyX];
-        var labelY  = dimLabels[keyY];
-        var state   = track.on_off ? track.on_off : "off";
+        $.each(track.subGroups, function(dimension, trackName){
+          if(dimension === dimX) { return; }
+          
+          if($.isEmptyObject(dimXData[keyX])){
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state }]  
+          } else {
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state });
+          }
+        });          
+      });
 
-        if($.isEmptyObject(finalObj.data[dimX]["data"][keyX])){
-          finalObj["data"][dimX]["data"][keyX] = [{"dimension": dimY, "val": keyY, "defaultState": "track-"+state }];
-        } else {
-          finalObj["data"][dimX]["data"][keyX].push({"dimension": dimY, "val": keyY, "defaultState": "track-"+state });
-        }
+      finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
+      finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };          
+    }
 
-        if($.isEmptyObject(finalObj.data[dimY]["data"][keyY])){
-          finalObj.data[dimY]["data"][keyY] = [keyX];
-        } else {
-          finalObj.data[dimY]["data"][keyY].push(keyX);
-        }
-      }
-    });
+    //console.log(finalObj);
     panel.json = finalObj;
   },
 
@@ -1504,7 +1499,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     } else  {
       var container = panel.el.find(container);
       var wrapper = '<div class="content-wrapper">';
-      var html = '<div class="_drag_select_zone"> <ul class="letter-content list-content">';
+      var html = '<div class="_drag_select_zone"> <ul class="list-content">';
       var rhsection = container.find('span.rhsection-id').html();
       data = data.sort();
       $.each(data, function(i, item) {
