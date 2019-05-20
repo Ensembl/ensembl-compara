@@ -282,6 +282,7 @@ div.alphabet-content                                { display: none; position: r
 div.alphabet-content.active                         { display: block; }
 div.config_wrapper div.config ul.letter-content li  { margin: 5px 0; cursor: default; margin-top: 0;}
 div.config_wrapper div.config ul.list-content       { padding: 8px 0 0 48px; columns: 6 100px; width: 90%; }
+div.config_wrapper div.config ul.list-content li    { width: 110%; }
 div.config_wrapper div.config div.content-wrapper   { overflow-y: auto; }
 
 .text-ellipsis {
