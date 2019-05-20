@@ -62,8 +62,8 @@ sub build {
     ## New trackhub structure
     $title = $menu_node->get_data('shortLabel');
     my $dims  = $menu_node->get_data('dimensions');
-    $dimX  = $dims->{'x'}{'label'};
-    $dimY  = $dims->{'y'}{'label'};
+    ($dimX  = ucfirst($dims->{'x'}{'label'})) =~ s/_/ /g;
+    ($dimY  = ucfirst($dims->{'y'}{'label'})) =~ s/_/ /g;
   }
 
   my $html = qq(
