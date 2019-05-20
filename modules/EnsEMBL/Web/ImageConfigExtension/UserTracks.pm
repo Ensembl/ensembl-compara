@@ -530,12 +530,14 @@ sub _add_trackhub_tracks {
             $matrix_params{$k} = $v;
           }
           elsif ($k =~ /subGroup/) {
+            my $k1 = $v->{'name'};
+            delete($v->{'name'});
             while (my ($k2, $v2) = each (%{$v||{}})) {
-              if ($k2 eq 'name' || $k2 eq 'label') {
-                $matrix_params{$k}{$k2} = $v2;
+              if ($k2 eq 'label') {
+                $matrix_params{$k1}{$k2} = $v2;
               }
               else {
-                $matrix_params{$k}{'values'}{$k2} = $v2;
+                $matrix_params{$k1}{'values'}{$k2} = $v2;
               }
             }
           }
