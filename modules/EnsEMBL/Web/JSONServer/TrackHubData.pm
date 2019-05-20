@@ -46,8 +46,13 @@ sub json_data {
 
   my $metadata = {};
   while (my ($k, $v) = each (%{$node->data})) {
-    if ($k eq 'shortLabel' || $k eq 'dimensions' || $k =~ /subGroup/) {
+    if ($k eq 'shortLabel' || $k eq 'dimensions') {
       $metadata->{$k} = $v;
+    }
+    elsif ($k =~ /subGroup/) {
+      my $k2 = $v->{'name'};
+      delete($v->{'name'});
+      $metadata->{$k2} = $v;
     }
   }
 
