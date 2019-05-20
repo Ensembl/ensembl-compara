@@ -51,14 +51,20 @@ sub build {
   my $menu_node         = $tree->get_node($menu);
   my $image_config_type = $image_config->{code};
 
-  #use Data::Dumper;
-  #$Data::Dumper::Sortkeys = 1;
-  #$Data::Dumper::Maxdepth = 2;
-  #warn Dumper($metadata);
-  my $title = $menu_node->get_data('shortLabel');
-  my $dims  = $menu_node->get_data('dimensions');
-  my $dimX  = $dims->{'x'}{'label'};
-  my $dimY  = $dims->{'y'}{'label'};
+  my ($title, $dimX, $dimY);
+  my $matrix_data   = $menu_node->get_data('matrix');
+  if ($matrix_data) {
+    $title = $matrix_data->{'section'};
+    $dimX  = $matrix_data->{'axes'}{'x'};
+    $dimY = $matrix_data->{'axes'}{'y'};
+  }
+  else {
+    ## New trackhub structure
+    $title = $menu_node->get_data('shortLabel');
+    my $dims  = $menu_node->get_data('dimensions');
+    $dimX  = $dims->{'x'}{'label'};
+    $dimY  = $dims->{'y'}{'label'};
+  }
 
   my $html = qq(
     <input type="hidden" class="js_param" name="image_config_type" value="$image_config_type" />
