@@ -22,7 +22,7 @@ package EnsEMBL::Web::ZMenu::ComparaTreeNode;
 use strict;
 
 use LWP::Simple qw($ua head);
-use URI::Escape qw(uri_escape uri_unescape);
+use URI::Escape qw(uri_escape);
 use IO::String;
 use Bio::AlignIO;
 
@@ -400,11 +400,10 @@ sub content {
 
           if ($hub->wasabi_status) {
             $link = $hub->get_ExtURL('WASABI_ENSEMBL', {
-              'URL' => $rest_url
+              'URL' => uri_escape($rest_url)
             });
           }
           
-          $link = uri_unescape($link);
         }
         else {
           my $filegen_url = $hub->url('Json', {
