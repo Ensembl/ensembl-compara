@@ -293,9 +293,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           if(dimension === dimX) { return; }
           
           if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state }]  
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display }]
           } else {
-            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state });
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display });
           }
         });          
       });
@@ -1915,7 +1915,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     dataClass = "_hasData";
                     rel_dimension = relation.dimension;
                     popupType = panel.json.data[rel_dimension].popupType || popupType;
-                    renderer = panel.json.data[rel_dimension].renderer;
+                    renderer = relation.renderer || panel.json.data[rel_dimension].renderer;
                     boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
                     boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                     boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg

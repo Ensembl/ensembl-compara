@@ -346,10 +346,40 @@ div.xBoxes.track-on.render-peak-signal           { background-image: url("/i/svg
 div.xBoxes.track-on.render-peak                  { background-image: url("/i/svg/peak_white50.svg"); }
 div.xBoxes.track-on.render-signal                { background-image: url("/i/svg/signal_white50.svg"); }
 div.xBoxes.track-on.render-normal                { background-image: url("/i/svg/normal_white50.svg"); }
-div.xBoxes.track-on.render-peak-signal.mClick    { background-image: url("/i/svg/peak_signal_white.svg"); }
-div.xBoxes.track-on.render-peak.mClick           { background-image: url("/i/svg/peak_white.svg"); }
-div.xBoxes.track-on.render-signal.mClick         { background-image: url("/i/svg/signal_white.svg"); }
-div.xBoxes.track-on.render-normal.mClick         { background-image: url("/i/svg/normal_white.svg"); }
+div.xBoxes.track-on.render-alignment-nolabel     { background-image: url("/i/svg/alignment_nolabel_white50.svg"); } 
+div.xBoxes.track-on.render-alignment-label       { background-image: url("/i/svg/alignment_label_white50.svg"); }
+div.xBoxes.track-on.render-transcript-nolabel    { background-image: url("/i/svg/transcript_nolabel_white50.svg"); }
+div.xBoxes.track-on.render-transcript-label      { background-image: url("/i/svg/transcript_label_white50.svg"); }
+div.xBoxes.track-on.render-half-height           { background-image: url("/i/svg/half_height_white50.svg"); }
+div.xBoxes.track-on.render-stack                 { background-image: url("/i/svg/stack_white50.svg"); }
+div.xBoxes.track-on.render-unlimited             { background-image: url("/i/svg/unlimited_white50.svg"); }
+div.xBoxes.track-on.render-ungrouped             { background-image: url("/i/svg/ungrouped_white50.svg"); }
+div.xBoxes.track-on.render-collapsed-nolabel     { background-image: url("/i/svg/collapsed_nolabel_white50.svg"); }
+div.xBoxes.track-on.render-collapsed-label       { background-image: url("/i/svg/collapsed_label_white50.svg"); }
+div.xBoxes.track-on.render-interaction           { background-image: url("/i/svg/interaction_white50.svg"); }
+div.xBoxes.track-on.render-coverage              { background-image: url("/i/svg/coverage_white50.svg"); }
+div.xBoxes.track-on.render-histogram             { background-image: url("/i/svg/histogram_white50.svg"); }
+div.xBoxes.track-on.render-difference            { background-image: url("/i/svg/difference_white50.svg"); }
+
+div.xBoxes.track-on.render-peak-signal.mClick         { background-image: url("/i/svg/peak_signal_white.svg"); }
+div.xBoxes.track-on.render-peak.mClick                { background-image: url("/i/svg/peak_white.svg"); }
+div.xBoxes.track-on.render-signal.mClick              { background-image: url("/i/svg/signal_white.svg"); }
+div.xBoxes.track-on.render-normal.mClick              { background-image: url("/i/svg/normal_white.svg"); }
+div.xBoxes.track-on.render-alignment-nolabel.mClick   { background-image: url("/i/svg/alignment_nolabel_white.svg"); } 
+div.xBoxes.track-on.render-alignment-label.mClick     { background-image: url("/i/svg/alignment_label_white.svg"); }
+div.xBoxes.track-on.render-transcript-nolabel.mClick  { background-image: url("/i/svg/transcript_nolabel_white.svg"); }
+div.xBoxes.track-on.render-transcript-label.mClick    { background-image: url("/i/svg/transcript_label_white.svg"); }
+div.xBoxes.track-on.render-half-height.mClick         { background-image: url("/i/svg/half_height_white.svg"); } 
+div.xBoxes.track-on.render-stack.mClick               { background-image: url("/i/svg/stack_white.svg"); }
+div.xBoxes.track-on.render-unlimited.mClick           { background-image: url("/i/svg/unlimited_white.svg"); }
+div.xBoxes.track-on.render-ungrouped.mClick           { background-image: url("/i/svg/ungrouped_white.svg"); }
+div.xBoxes.track-on.render-collapsed-nolabel.mClick   { background-image: url("/i/svg/collapsed_nolabel_white.svg"); }
+div.xBoxes.track-on.render-collapsed-label.mClick     { background-image: url("/i/svg/collapsed_label_white.svg"); }  
+div.xBoxes.track-on.render-interaction.mClick         { background-image: url("/i/svg/interaction_white.svg"); }
+div.xBoxes.track-on.render-coverage.mClick            { background-image: url("/i/svg/coverage_white.svg"); }
+div.xBoxes.track-on.render-histogram.mClick           { background-image: url("/i/svg/histogram_white.svg"); }
+div.xBoxes.track-on.render-difference.mClick          { background-image: url("/i/svg/difference_white.svg"); }
+
 
 /* track status for off */
 div.xBoxes.track-off                              { background-color: [[WHITE]] }
@@ -357,10 +387,40 @@ div.xBoxes.track-off.render-peak-signal           { background-image: url("/i/sv
 div.xBoxes.track-off.render-peak                  { background-image: url("/i/svg/peak_blue50.svg"); }
 div.xBoxes.track-off.render-signal                { background-image: url("/i/svg/signal_blue50.svg"); }
 div.xBoxes.track-off.render-normal                { background-image: url("/i/svg/normal_blue50.svg"); }
-div.xBoxes.track-off.render-peak-signal.mClick    { background-image: url("/i/svg/peak_signal_blue.svg"); }
-div.xBoxes.track-off.render-peak.mClick           { background-image: url("/i/svg/peak_blue.svg"); }
-div.xBoxes.track-off.render-signal.mClick         { background-image: url("/i/svg/signal_blue.svg"); }
-div.xBoxes.track-off.render-normal.mClick         { background-image: url("/i/svg/normal_blue.svg"); }
+div.xBoxes.track-off.render-alignment-nolabel     { background-image: url("/i/svg/alignment_nolabel_blue50.svg"); }     
+div.xBoxes.track-off.render-alignment-label       { background-image: url("/i/svg/alignment_label_blue50.svg"); } 
+div.xBoxes.track-off.render-transcript-nolabel    { background-image: url("/i/svg/transcript_nolabel_blue50.svg"); } 
+div.xBoxes.track-off.render-transcript-label      { background-image: url("/i/svg/transcript_label_blue50.svg"); } 
+div.xBoxes.track-off.render-half-height           { background-image: url("/i/svg/half_height_blue50.svg"); } 
+div.xBoxes.track-off.render-stack                 { background-image: url("/i/svg/stack_blue50.svg"); } 
+div.xBoxes.track-off.render-unlimited             { background-image: url("/i/svg/unlimited_blue50.svg"); }
+div.xBoxes.track-off.render-ungrouped             { background-image: url("/i/svg/ungrouped_blue50.svg"); }
+div.xBoxes.track-off.render-collapsed-nolabel     { background-image: url("/i/svg/collapsed_nolabel_blue50.svg"); }
+div.xBoxes.track-off.render-collapsed-label       { background-image: url("/i/svg/collapsed_label_blue50.svg"); }
+div.xBoxes.track-off.render-interaction           { background-image: url("/i/svg/interaction_blue50.svg"); }
+div.xBoxes.track-off.render-coverage              { background-image: url("/i/svg/coverage_blue50.svg"); }
+div.xBoxes.track-off.render-histogram             { background-image: url("/i/svg/histogram_blue50.svg"); }
+div.xBoxes.track-off.render-difference            { background-image: url("/i/svg/difference_blue50.svg"); }
+
+
+div.xBoxes.track-off.render-peak-signal.mClick         { background-image: url("/i/svg/peak_signal_blue.svg"); }
+div.xBoxes.track-off.render-peak.mClick                { background-image: url("/i/svg/peak_blue.svg"); }
+div.xBoxes.track-off.render-signal.mClick              { background-image: url("/i/svg/signal_blue.svg"); }
+div.xBoxes.track-off.render-normal.mClick              { background-image: url("/i/svg/normal_blue.svg"); }
+div.xBoxes.track-off.render-alignment-nolabel.mClick   { background-image: url("/i/svg/alignment_nolabel_blue.svg"); } 
+div.xBoxes.track-off.render-alignment-label.mClick     { background-image: url("/i/svg/alignment_label_blue.svg"); }
+div.xBoxes.track-off.render-transcript-nolabel.mClick  { background-image: url("/i/svg/transcript_nolabel_blue.svg"); }
+div.xBoxes.track-off.render-transcript-label.mClick    { background-image: url("/i/svg/transcript_label_blue.svg"); }
+div.xBoxes.track-off.render-half-height.mClick         { background-image: url("/i/svg/half_height_blue.svg"); }
+div.xBoxes.track-off.render-stack.mClick               { background-image: url("/i/svg/stack_blue.svg"); }
+div.xBoxes.track-off.render-unlimited.mClick           { background-image: url("/i/svg/unlimited_blue.svg"); }
+div.xBoxes.track-off.render-ungrouped.mClick           { background-image: url("/i/svg/ungrouped_blue.svg"); }
+div.xBoxes.track-off.render-collapsed-nolabel.mClick   { background-image: url("/i/svg/collapsed_nolabel_blue.svg"); }
+div.xBoxes.track-off.render-collapsed-label.mClick     { background-image: url("/i/svg/collapsed_label_blue.svg"); }
+div.xBoxes.track-off.render-interaction.mClick         { background-image: url("/i/svg/interaction_blue.svg"); }
+div.xBoxes.track-off.render-coverage.mClick            { background-image: url("/i/svg/coverage_blue.svg"); }
+div.xBoxes.track-off.render-histogram.mClick           { background-image: url("/i/svg/histogram_blue.svg"); }
+div.xBoxes.track-off.render-difference.mClick          { background-image: url("/i/svg/difference_blue.svg"); }
 
 /* track popup/zmenu */
 div.track-popup                         { display: none; font-size: 11px; width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; z-index: 1;}
