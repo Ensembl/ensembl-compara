@@ -61,67 +61,38 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.json = {};
     this.searchTerms = {};
 
-    this.rendererConfig = {
-      'normal': 'normal',
-      'peak': 'compact',
-      'signal': 'signal',
-      'peak-signal': 'signal_feature'
-    }
 
-/*
+    // Mapping of renderer type and text to display in matrix popup 
+    this.rendererTextMap = {
+      'normal' : 'Normal',
+      'compact': 'Peaks',
+      'signal' : 'Signal',
+      'signal_feature' : 'Peaks & Signal',
+      'as_alignment_nolabel' : 'Normal', 
+      'as_alignment_label' : 'Labels',
+      'as_transcript_nolabel' : '',
+      'as_transcript_label' : '',
+      'half_height' : 'Half height',
+      'stack' : 'Stacked',
+      'unlimited' : 'Stacked unlimited',
+      'ungrouped' : 'Ungrouped',
+      'coverage_with_reads' : 'Coverage',
+      'histogram' : 'Histogram',
+      'as_collapsed_nolabel' : 'Collapsed no label',
+      'as_collapsed_label' : 'Collapsed label'
+
+    };
+
     this.rendererConfig = {
-      'bigbed': {
-                'alignment-nolabel': 'as_alignment_nolabel',
-                'alignment-label': 'as_alignment_label',
-                'transcript-nolabel': 'as_transcript_nolabel',
-                'transcript-label': 'as_transcript_label',
-                'half-height': 'half_height',
-                'stack': 'stack',
-                'unlimited': 'unlimited',
-                'ungrouped': 'ungrouped'
-      },
-      'bigwig': {
-                'normal': 'normal',
-                'peak': 'compact',
-                'signal': 'signal',
-                'peak-signal': 'signal_feature'
-      },
-      'biggenepred': {
-                'alignment-nolabel': 'as_alignment_nolabel',
-                'alignment-label': 'as_alignment_label',
-                'collapsed-nolabel': 'as_collapsed_nolabel',
-                'collapsed-label': 'as_collapsed_label',
-                'transcript-nolabel': 'as_transcript_nolabel',
-                'transcript-label': 'as_transcript_label',
-                'half-height': 'half_height',
-                'stack': 'stack',
-                'unlimited': 'unlimited',
-                'ungrouped': 'ungrouped'
-      },
-      'bigint': {
-                'interaction': 'interaction'
-      },
-      'bam': {
-                'coverage': 'coverage_with_reads',
-                'unlimited': 'unlimited',
-                'histogram': 'histogram'
-      },
-      'bam': {
-                'coverage': 'coverage_with_reads',
-                'unlimited': 'unlimited',
-                'histogram': 'histogram'
-      },
-      'vcf': {
-                'alignment-nolabel': 'as_alignment_nolabel',
-                'alignment-label': 'as_alignment_label',
-                'half-height': 'half_height',
-                'stack': 'stack',
-                'unlimited': 'unlimited',
-                'ungrouped': 'ungrouped',
-                'difference': 'difference'
-      }
-    }
-*/
+      'bigbed': [ 'as_alignment_nolabel', 'as_alignment_label', 'as_transcript_nolabel', 'as_transcript_label', 'half_height', 'stack', 'unlimited', 'ungrouped' ],
+      'bigwig': [ 'normal', 'compact', 'signal', 'signal_feature' ],
+      'biggenepred': [ 'as_alignment_nolabel', 'as_alignment_label', 'as_collapsed_nolabel', 'as_collapsed_label', 'as_transcript_nolabel', 'as_transcript_label', 'half_height', 'stack', 'unlimited', 'ungrouped' ],
+      'bigint': [ 'interaction' ],
+      'bam': [ 'coverage_with_reads', 'unlimited', 'histogram' ],
+      'bam': [ 'coverage_with_reads', 'unlimited', 'histogram' ],
+      'vcf': [ 'as_alignment_nolabel', 'as_alignment_label', 'half_height', 'stack', 'unlimited', 'ungrouped', 'difference' ]
+    };
+
 
     this.resize();
     panel.el.find("div#dy-tab div.search-box").hide();
@@ -558,7 +529,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
             if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
               key = set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-              config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off'};
+              config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
             }
           }
         }
@@ -581,7 +552,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
             key = set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-            config[key] = { renderer : v.state === 'track-on' ? panel.rendererConfig[v.renderer] : 'off'};
+            config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
           }
         }
       }
