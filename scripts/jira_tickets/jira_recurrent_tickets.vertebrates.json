@@ -222,6 +222,42 @@
             "name_on_graph": "Alt-alleles import"
          },
          {
+             "component": "Production tasks",
+             "description": "https://github.com/Ensembl/ensembl-compara/blob/release/97/docs/production/READMEs/pair_aligner_patches.rst",
+             "summary": "Run LastZ_PATCH alignments for human",
+             "name_on_graph": "LastZ_PATCH:Human"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://github.com/Ensembl/ensembl-compara/blob/release/97/docs/production/READMEs/pair_aligner_patches.rst",
+             "summary": "Run LastZ_PATCH alignments for mouse",
+             "name_on_graph": "LastZ_PATCH:Mouse"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://github.com/Ensembl/ensembl-compara/blob/release/97/docs/production/READMEs/pair_aligner_patches.rst",
+             "summary": "Run LastZ_PATCH alignments for zebrafish",
+             "name_on_graph": "LastZ_PATCH:Zebrafish"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
+             "summary": "Top-up LastZ_NET human alignments",
+             "name_on_graph": "LastZ_NET:Human"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
+             "summary": "Top-up LastZ_NET mouse alignments",
+             "name_on_graph": "LastZ_NET:Mouse"
+         },
+         {
+             "component": "Production tasks",
+             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
+             "summary": "Top-up LastZ_NET zebrafish alignments",
+             "name_on_graph": "LastZ_NET:Zebrafish"
+         },
+         {
             "component": "Production tasks",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
