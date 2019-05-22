@@ -69,7 +69,7 @@ sub content {
     }
   }
 
-  if ($avail->{'has_ega'}) {
+  if ($avail->{'has_ega'} && $avail->{'has_locations'}) {
     $pheno_url   = $hub->url({'action' => 'Phenotype'});
     $pheno_count = $avail->{'has_ega'}
   }
