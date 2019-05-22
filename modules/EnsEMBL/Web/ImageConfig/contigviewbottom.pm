@@ -243,6 +243,7 @@ sub init_cacheable {
     marker
     trans_associated
     transcript
+    longreads
     prediction
     lrg
     dna_align_cdna
