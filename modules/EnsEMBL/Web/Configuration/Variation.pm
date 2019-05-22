@@ -78,7 +78,7 @@ sub populate_tree {
         phenotype EnsEMBL::Web::Component::Variation::Phenotype 
         genes     EnsEMBL::Web::Component::Variation::LocalGenes
     )],
-    { 'availability' => 'variation has_ega', 'concise' => 'Phenotype Data' }
+    { 'availability' => 'variation has_locations has_ega', 'concise' => 'Phenotype Data' }
   );
   
   $self->create_node('Populations', 'Sample information',

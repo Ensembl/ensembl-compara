@@ -106,7 +106,7 @@ sub feature_summary {
                       $phenotype_url, 
                       $avail->{has_ega}, 
                       $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
-                  ) if($avail->{has_ega});  
+                  ) if($avail->{has_ega} && $avail->{has_locations});
   push @str_array, sprintf('is mentioned in <a class="dynamic-link" href="%s">%s %s</a>', 
                       $citation_url, 
                       $avail->{has_citation}, 
