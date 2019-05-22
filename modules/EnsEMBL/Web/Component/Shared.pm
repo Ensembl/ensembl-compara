@@ -236,12 +236,12 @@ sub transcript_table {
     }   
 
     my @columns = (
-       { key => 'name',       sort => 'string',  title => 'Name'          },
-       { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
-       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Length in base pairs'},
+       { key => 'name',       sort => 'string',  label => 'Name', title => 'Transcript name' },
+       { key => 'transcript', sort => 'html',    label => 'Transcript ID', title => 'Stable ID' },
+       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Transcript length in base pairs'},
        { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids' },
-       { key => 'translation',sort => 'html',    title => 'Translation ID', 'hidden' => 1 },
-       { key => 'biotype',    sort => 'html',    title => 'Biotype', align => 'left' },
+       { key => 'translation',sort => 'html',    label => 'Translation ID', title => 'Protein information', 'hidden' => 1 },
+       { key => 'biotype',    sort => 'html',    label => 'Biotype', align => 'left' },
     );
 
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
@@ -251,7 +251,7 @@ sub transcript_table {
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
     );
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
-      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1 };
+      $extra_links{refseq} = { match => "^RefSeq", label => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
     my %any_extras;
  
@@ -366,9 +366,9 @@ sub transcript_table {
       push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
-      push @columns, { key => 'refseq_match', sort => 'html', title => 'RefSeq Match' };
+      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs' };
     }  
-    push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
+    push @columns, { key => 'flags', sort => 'html', label => 'Flags', title => 'Tags'};
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
