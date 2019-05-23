@@ -128,7 +128,7 @@ sub build {
   );
 
   my $js_panel = $self->get_js_panel();
-  $self->append_child('div', { inner_HTML => $html, class => "js_panel $js_panel", id => $js_panel });
+  $self->append_child('div', { inner_HTML => $html, class => "js_panel $js_panel", id => $menu });
 }
 
 1;
