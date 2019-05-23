@@ -70,8 +70,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'signal_feature' : 'Peaks & Signal',
       'as_alignment_nolabel' : 'Normal', 
       'as_alignment_label' : 'Labels',
-      'as_transcript_nolabel' : '',
-      'as_transcript_label' : '',
+      'as_transcript_nolabel' : 'Transcript label',
+      'as_transcript_label' : 'Transcript no label',
       'half_height' : 'Half height',
       'stack' : 'Stacked',
       'unlimited' : 'Stacked unlimited',
@@ -255,27 +255,30 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
 
       var dimXData = {};
+      var formats = [];
       //getting dimX data and the relationship
       $.each(panel.rawJSON.tracks, function(i, track){
         var state = track.display;
         var keyX = track.subGroups[dimX];
+        formats.push(track.format.toLowerCase());
 
         $.each(track.subGroups, function(dimension, trackName){
           if(dimension === dimX) { return; }
           
           if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display }]
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display, "format": track.format.toLowerCase() }]
           } else {
-            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display });
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display, "format": track.format.toLowerCase() });
           }
         });          
       });
 
+      finalObj.format = $.unique(formats);
       finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
       finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };          
     }
 
-    //console.log(finalObj);
+    console.log(finalObj);
     panel.json = finalObj;
   },
 
@@ -1863,11 +1866,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             }
             else {
               var boxState  = "", boxDataRender = "";
-              var popupType = "peak-signal"; //class of type of popup to use
               var dataClass = ""; //to know which cell has data
               var boxRenderClass = "";
               var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_
-              var renderer, rel_dimension;
+              var renderer, rel_dimension, format;
 
               var cellStoreObjKey = panel.itemDimension(storeKey);
               var dyStoreObjKey   = panel.itemDimension(dyItem);
@@ -1876,7 +1878,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               if(panel.localStoreObj[cellStoreObjKey][storeKey]) {
                 boxState   = panel.localStoreObj[cellStoreObjKey][storeKey].state;
                 boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
-                popupType = panel.localStoreObj[cellStoreObjKey][storeKey].popupType || popupType;
+                format = panel.localStoreObj[cellStoreObjKey][storeKey].format;
                 boxRenderClass = "render-"+boxDataRender;
                 dataClass = "_hasData";
               } else {
@@ -1885,12 +1887,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
                     dataClass = "_hasData";
                     rel_dimension = relation.dimension;
-                    popupType = panel.json.data[rel_dimension].popupType || popupType;
                     renderer = relation.renderer || panel.json.data[rel_dimension].renderer;
                     boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
+                    format  = relation.format || panel.elLk.lookup[dyItem].format;
                     boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
                     boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                    panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "popupType": popupType, "reset-state": boxState, "reset-renderer": boxDataRender};
+                    panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "format": format,"reset-state": boxState, "reset-renderer": boxDataRender};
 
                     //setting count for all selection section
                     panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
@@ -1923,10 +1925,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
               if(panel.disableYdim) {
                 if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
-                  rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
+                  rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell" data-format="'+format+'"></div>';
                 }
               } else {
-                rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="'+popupType+'"></div>';
+                rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell" data-format="'+format+'"></div>';
               }
             }
           });
@@ -2053,6 +2055,22 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
   },
 
+  buildMatrixPopup: function(format) {
+    var panel = this;
+
+    this.elLk.popup = panel.el.find('div.track-popup ul._cell');
+    var popupHTML = "";
+
+    $.each(panel.rendererConfig[format], function(i, renderer){
+      if(i === 0) {
+        popupHTML = '<li><label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label><input type="radio" name="cell-radio" class="_'+renderer+'"/><text>'+panel.rendererTextMap[renderer]+'</text></li>';
+      } else {
+        popupHTML += '<li><input type="radio" name="cell-radio" class="_'+renderer+'"/><text>'+panel.rendererTextMap[renderer]+'</text></li>';
+      }
+    }); 
+    this.elLk.popup.html(popupHTML);   
+  },  
+
   cellClick: function() {
     var panel = this;
 
@@ -2065,9 +2083,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.yName          = "";
     panel.boxObj         = "";
 
-    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){
+    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){      
       panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick').removeClass("mClick");
       panel.trackPopup.hide();
+      panel.buildMatrixPopup($(this).data("format"));
 
       panel.boxObj          = $(this);
       panel.popupType       = $(this).data("popup-type"); //type of popup to use which is associated with the class name

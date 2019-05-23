@@ -43,6 +43,9 @@ sub configuration_content {
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset</button>
         <div class="track-popup column-cell">
+          <ul class="_cell">
+
+          </ul>
           <ul>
             <li>
               <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label>
@@ -50,7 +53,12 @@ sub configuration_content {
           </ul>
           <ul>
             <li>
-              <label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label>
+              <label class="switch"><input type="checkbox" name="row-switch"><span class="slider round"></span><span class="switch-label">Row</span></label>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <label class="switch"><input type="checkbox" name="all-switch"><span class="slider round"></span><span class="switch-label">All</span></label>
             </li>
           </ul>
         </div>
