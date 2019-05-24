@@ -100,13 +100,12 @@
       "description": "relco_doc#Releasecoordinationdocumentation-Production",
       "subtasks": [{
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
+            "description": "relco_doc#Releasecoordinationdocumentation-Plants",
             "summary": "Protein trees",
             "name_on_graph": "Protein-trees"
          },
          {
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
             "summary": "All LastZ",
             "name_on_graph": "All LastZ"
          },
@@ -118,7 +117,6 @@
          },
          {
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Production.1",
             "summary": "Protein-trees WGA Orthology QC",
             "name_on_graph": "Protein-trees WGA Orthology QC"
          }
@@ -128,42 +126,48 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Endofproductionwindow",
+      "description": "relco_doc#Releasecoordinationdocumentation-Endofproductionwindow",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-CreateReleaseDatabase",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
             "summary": "Create Release Database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-MergeDNAdata",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
             "name_on_graph": "All alignments for WGA Orthology QC"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-MergeGeneTrees",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run HighConfidenceOrthologs pipeline"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
             "summary": "Merge GeneTrees"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-MergeGeneTrees",
+            "description": "Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblPostHomologyMerge_conf",
             "summary": "PostHomologyMerge_conf pipeline"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finaldatabasechecks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
             "summary": "Final database checks"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Runthehealthchecks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
             "summary": "Run HCs"
          },
          {
@@ -193,7 +197,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+            "description": "http://eg-prod-01.ebi.ac.uk:7000/#!/database_handover_submit",
             "summary": "Handover of release DB"
          }
       ],
@@ -202,11 +206,11 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Post-handover",
+      "description": "relco_doc#Releasecoordinationdocumentation-Post-handover",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Datadumps",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
             "summary": "Data dump"
          },
          {
@@ -221,17 +225,17 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Testthesites",
+      "description": "relco_doc#Releasecoordinationdocumentation-Testthesites",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "Find out the URL",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
             "summary": "test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "Find out the URL",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
             "summary": "test the REST server"
          }
       ],
