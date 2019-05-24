@@ -156,6 +156,7 @@ sub pipeline_analyses_hom_stats {
         # Homology statistics
         {   -logic_name => 'stats_homologies',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -hive_capacity  => 5,
             -parameters => {
                 'sql'   => [
                     # Clean up partial runs
