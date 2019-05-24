@@ -3132,7 +3132,7 @@ sub core_pipeline_analyses {
                 mode            => 'stable_id_mapping',
             },
             -flow_into  => [
-                    WHEN('#do_jaccard_index#' => 'compute_jaccard_index'),
+                    WHEN('#do_jaccard_index# && #reuse_db#' => 'compute_jaccard_index'),
                 ],
             %hc_analysis_params,
         },
