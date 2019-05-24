@@ -1649,8 +1649,9 @@ sub get_all_underlying_Slices {
 #   } else {
 #     $current_position = $end;
 #   }
+    my $this_slice;
   foreach my $pair (sort {$a->{start} <=> $b->{start}} @{$self->get_all_Slice_Mapper_pairs}) {
-    my $this_slice = $pair->{slice};
+    $this_slice = $pair->{slice};
     my $mapper = $pair->{mapper};
     my $slice_start = $pair->{start};
     my $slice_end = $pair->{end};
@@ -1691,6 +1692,8 @@ sub get_all_underlying_Slices {
             );
         $this_underlying_slice->{seq} = "." x ($start_position - $current_position);
         $this_underlying_slice->{karyotype} = 0; #$this_slice->has_karyotype;
+        $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
+        weaken($this_underlying_slice->{_node_in_tree});
         push(@$underlying_slices, $this_underlying_slice);
       }
 #     } else {
@@ -1729,14 +1732,14 @@ sub get_all_underlying_Slices {
       $this_underlying_slice->{karyotype} = 0; #$this_slice->has_karyotype;
     }
     $this_underlying_slice->{_tree} = $this_slice->{_tree} if (defined($this_slice->{_tree}));
-    $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
+    $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));    
     weaken($this_underlying_slice->{_node_in_tree});
 #     if ($strand == 1) {
       push(@$underlying_slices, $this_underlying_slice);
 #     } else {
 #       unshift(@$underlying_slices, $this_underlying_slice);
 #     }
-  }
+ }
   if ($end >= $current_position) {
     my $this_underlying_slice = new Bio::EnsEMBL::Slice(
           -coord_system => $gap_coord_system,
@@ -1748,6 +1751,8 @@ sub get_all_underlying_Slices {
         );
     $this_underlying_slice->{seq} = "." x ($end - $current_position + 1);
     $this_underlying_slice->{karyotype} = 0; #(@$underlying_slices ? $underlying_slices->[-1]->has_karyotype() : 0);
+    $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
+    weaken($this_underlying_slice->{_node_in_tree});
     push(@$underlying_slices, $this_underlying_slice);
   }
   if ($strand == -1) {
