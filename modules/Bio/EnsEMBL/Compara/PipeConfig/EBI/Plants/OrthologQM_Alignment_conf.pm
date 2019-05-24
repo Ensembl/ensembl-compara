@@ -83,7 +83,9 @@ limitations under the License.
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::OrthologQM_Alignment_conf -compara_db <current protein tree db> -alt_aln_dbs
         <previous release database (unless new alignments were run)> -previous_rel_db <previous release database> 
         -species_set_name "collection-default"
-    
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::OrthologQM_Alignment_conf -host $(mysql-ens-compara-prod-6-ensadmin details hive) -member_type protein
+
     (note: compara_db is supplied here in the pipeconfig, so may not be needed at init step)
 
 =head1 CONTACT
