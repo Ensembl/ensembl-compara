@@ -236,22 +236,22 @@ sub transcript_table {
     }   
 
     my @columns = (
-       { key => 'name',       sort => 'string',  label => 'Name', title => 'Transcript name' },
-       { key => 'transcript', sort => 'html',    label => 'Transcript ID', title => 'Stable ID' },
-       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Transcript length in base pairs'},
-       { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids' },
-       { key => 'translation',sort => 'html',    label => 'Translation ID', title => 'Protein information', 'hidden' => 1 },
-       { key => 'biotype',    sort => 'html',    label => 'Biotype', align => 'left' },
+       { key => 'name',       sort => 'string',  label => 'Name', title => 'Transcript name', class => '_ht'},
+       { key => 'transcript', sort => 'html',    label => 'Transcript ID', title => 'Stable ID', class => '_ht'},
+       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Transcript length in base pairs', class => '_ht'},
+       { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids', class => '_ht'},
+       { key => 'translation',sort => 'html',    label => 'Translation ID', title => 'Protein information', 'hidden' => 1, class => '_ht'},
+       { key => 'biotype',    sort => 'html',    label => 'Biotype', align => 'left', class => '_ht'},
     );
 
-    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
+    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
     my @rows;
    
     my %extra_links = (
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
     );
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
-      $extra_links{refseq} = { match => "^RefSeq", label => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
+      $extra_links{refseq} = { match => "^RefSeq", label => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap", class => '_ht'};
     }
     my %any_extras;
  
@@ -363,12 +363,14 @@ sub transcript_table {
     foreach my $k (sort { $extra_links{$a}->{'order'} cmp
                           $extra_links{$b}->{'order'} } keys %any_extras) {
       my $x = $extra_links{$k};
-      push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
+      push @columns, { key => $k, sort => 'html', title => $x->{'name'}, class => '_ht'};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
-      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs' };
-    }  
-    push @columns, { key => 'flags', sort => 'html', label => 'Flags', title => 'Tags'};
+      push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
+    }
+
+    my $title = encode_entities('<a href="/info/genome/genebuild/transcript_quality_tags.html" target="_blank">Tags</a>');
+    push @columns, { key => 'flags', sort => 'html', label => 'Flags', title => $title, class => '_ht'};
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
