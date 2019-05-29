@@ -54,7 +54,7 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Updatedocumentationanddiagrams[edit]",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update",
             "summary": "Generate and commit diagrams"
          }
       ],
