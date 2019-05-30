@@ -55,6 +55,7 @@ print "\n\n";
 
 my $hub = EnsEMBL::Web::DBHub->new;
 my $sd  = $hub->species_defs;
+my $tmp_dir = $sd->ENSEMBL_TMP_DIR;
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
@@ -65,28 +66,33 @@ my ($sql, $sth, @args);
 my $release_id = $sd->ENSEMBL_VERSION;
 my $release = $adaptor->fetch_release($release_id);
 
+my $file = 'Update_ensembl_archive_for_release_'.$release_id.'.sql';
+open PATCH, ">$tmp_dir/$file" or die "ERROR: $!";
+
+print PATCH "use ensembl_archive_".$release_id.';';
+
 if ($release) {
-  print "# Release $release_id is currently scheduled for ". $release->{'date'} .".
+  print "Release $release_id is currently scheduled for ". $release->{'date'} .".
             Is this correct? [y/n]";
 
   while (<STDIN>) {
     chomp;
     unless (/^y$/i) {
-      print "# Please give the correct release date, formatted as full month name and year separated by a space, e.g. March 2015:";
+      print "Please give the correct release date, formatted as full month name and year separated by a space, e.g. March 2015:";
       INPUT: while (<STDIN>) {
         chomp;
         my ($month, $year) = /([A-Z][a-z]+) (\d{4})/;
         if ($month && $year) {
           my $short_month = substr($month, 0, 3);
           my $archive = $short_month.$year;
-          print "# Setting release date to $_ and archive subdomain to $archive\n\n";
+          print "Setting release date to $_ and archive subdomain to $archive\n\n";
           $sql = "UPDATE ens_release SET date = '$_', archive = '$archive' WHERE release_id = $release_id";
 
-          print "$sql\n\n" unless $DEBUG;
+          print PATCH "$sql\n\n";
           last INPUT;
         }
         else {
-          print "# Sorry, that was not a valid date format.\n";
+          print "Sorry, that was not a valid date format.\n";
           exit;
         }
       }
@@ -97,11 +103,11 @@ if ($release) {
   my $archive = $sd->ARCHIVE_VERSION;
   my $date = $hub->pretty_date($archive);
   $sql = "INSERT INTO ens_release (release_id, number, date, archive, online, mart) values($release_id, $release_id, \"$date\", \"$archive\", \"Y\", \"Y\")";
-  print "# For inserting release $release_id, scheduled for $date.\n\n";
-  print "$sql\n\n" unless $DEBUG;
+  print "For inserting release $release_id, scheduled for $date.\n\n";
+  print PATCH "$sql\n\n";
 }
 
-print "# Adding species...\n\n";
+print "Adding species...\n\n";
 
 # get the hash of all species in the database
 my @db_spp = @{$adaptor->fetch_all_species};
@@ -127,8 +133,8 @@ SPECIES: foreach my $sp (sort @species) {
     $sql = sprintf ('INSERT INTO species SET species_id = %s, code = %s, name = "%s", common_name = "%s", vega = "%s", online = "%s";',
             ($species_id, $code ? qq("$code") : 'NULL'), $sd->get_config($sp, 'SPECIES_URL'),
             $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
-    print "\n$sql\n" unless $DEBUG;
-    print "# Added new species $sp to database, with ID $species_id\n";
+    print PATCH "\n$sql\n";
+    print "Added new species $sp to database, with ID $species_id\n";
   }
   else {
     $species_id = $lookup{$sp};
@@ -145,7 +151,7 @@ SPECIES: foreach my $sp (sort @species) {
       $already_done = 1;
     }
     if ($already_done) {
-      print "# Species $sp is already in the database.\n";
+      print "Species $sp is already in the database.\n";
     }
     else {
       my $a_name = $sd->get_config($sp, 'ASSEMBLY_NAME') || '';
@@ -162,15 +168,15 @@ SPECIES: foreach my $sp (sort @species) {
         if ($old_version) {
           my $is_different  = 0;
           if ($old_version ne $a_version) {
-            print "# !!! Old assembly version was $old_version; new version is $a_version\n";
+            print "!!! Old assembly version was $old_version; new version is $a_version\n";
             $is_different = 1;
           }
           if ($old_name ne $a_name) {
-            print "# !!! Old assembly name was $old_name; new name is $a_name\n";
+            print "!!! Old assembly name was $old_name; new name is $a_name\n";
             $is_different = 1;
           }
           if ($is_different) {
-            print "# If this is not correct, please manually patch the core and ensembl_archive databases after this script has run\n";
+            print "If this is not correct, please manually patch the core and ensembl_archive databases after this script has run\n";
           }
         }
       }
@@ -180,13 +186,15 @@ SPECIES: foreach my $sp (sort @species) {
       my $latest = $sd->get_config($sp, 'GENEBUILD_LATEST') || '';
       $sql = sprintf ('INSERT INTO release_species VALUES (%d, %d, "%s", "%s", "%s", "%s", "%s", "%s", "%s");',
               $release_id, $species_id, $sd->get_config($sp, 'SPECIES_URL'), $a_version, $a_name, '', '', $initial, $latest);
-      print "$sql\n\n" unless $DEBUG;
+      print PATCH "$sql\n\n";
     }
   }
   else {
-    print "# Sorry, unable to add record for $sp\n";
+    print "Sorry, unable to add record for $sp\n";
   }
 }
+
+close PATCH;
 
 =head1 NAME
 
