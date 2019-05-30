@@ -50,6 +50,7 @@ sub init_cacheable {
     sequence
     marker
     transcript
+    longreads
     prediction
     dna_align_cdna
     dna_align_est
