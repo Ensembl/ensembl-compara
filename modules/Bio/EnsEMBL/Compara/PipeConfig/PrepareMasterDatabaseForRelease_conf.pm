@@ -287,6 +287,15 @@ sub pipeline_analyses {
                 'cmd'                   => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
             -rc_name        => '2Gb_job',
+            -flow_into => [ 'set_last_release_to_mlss' ],
+        },
+
+        {   -logic_name => 'retire_old_species_sets',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+            -parameters => {
+                'db_conn' => '#master_db#',
+                'input_query' => 'UPDATE species_set_header JOIN (SELECT species_set_id, MAX(method_link_species_set.last_release) AS highest_last_release FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE species_set_header.first_release IS NOT NULL AND species_set_header.last_release IS NULL GROUP BY species_set_id HAVING SUM(method_link_species_set.first_release IS NOT NULL AND method_link_species_set.last_release IS NULL) = 0) _t USING (species_set_id) SET last_release = highest_last_release;',
+             },
             -flow_into => WHEN(
                 '#division# eq "vertebrates"' => 'load_timetree',
                 ELSE 'reset_master_urls',
