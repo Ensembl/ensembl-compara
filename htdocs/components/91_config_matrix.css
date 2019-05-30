@@ -184,7 +184,7 @@ button.fade-button.view-track         { margin-left: 30px; min-width: 100px; wid
 button.fade-button.showMatrix         { height:auto; padding: 4px; }
 div.flex-row                          { display: flex; }
 .circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; }
-div#ConfigTrackHubMatrixForm span.error { float: right; margin-right: 8px; }
+div.ConfigTrackHubMatrixForm span.error { float: right; margin-right: 8px; }
 span.error                            { color: [[HOVER]]; margin-left: 18px; font-weight: bold; }
 span.search-error                     { margin: 22px; position: absolute;}
 span.error._ajax                      { top: 250px; position: absolute; width: 500px; display: none; }
@@ -193,7 +193,7 @@ span.error._ajax                      { top: 250px; position: absolute; width: 5
 
 div.result-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 300px; height: 400px; }
 h5.result-header                                  { display: block; margin-top: 16px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
-div#ConfigTrackHubMatrixForm div#dx.result-content { display: block; }
+div.ConfigTrackHubMatrixForm div#dx.result-content { display: block; }
 div#dx.result-content                             { display: none; }
 div.result-content                                { clear: both; }
 div.config_wrapper div.config ul.result-list      { margin-left: 12px; clear: left; }
@@ -349,7 +349,7 @@ div.xBoxes.track-on.render-peak                  { background-image: url("/i/svg
 div.xBoxes.track-on.render-compact               { background-image: url("/i/svg/peak_white50.svg"); }
 div.xBoxes.track-on.render-signal                { background-image: url("/i/svg/signal_white50.svg"); }
 div.xBoxes.track-on.render-normal                { background-image: url("/i/svg/normal_white50.svg"); }
-div.xBoxes.track-on.render-as_alignment_nolabel  { background-image: url("/i/svg/alignment_nolabel_white50.svg"); } 
+div.xBoxes.track-on.render-as_alignment_nolabel  { background-image: url("/i/svg/alignment_nolabel_white50.svg"); }
 div.xBoxes.track-on.render-as_alignment_label    { background-image: url("/i/svg/alignment_label_white50.svg"); }
 div.xBoxes.track-on.render-as_transcript_nolabel { background-image: url("/i/svg/transcript_nolabel_white50.svg"); }
 div.xBoxes.track-on.render-as_transcript_label   { background-image: url("/i/svg/transcript_label_white50.svg"); }
@@ -370,16 +370,16 @@ div.xBoxes.track-on.render-peak.mClick                   { background-image: url
 div.xBoxes.track-on.render-compact.mClick                { background-image: url("/i/svg/peak_white.svg"); }
 div.xBoxes.track-on.render-signal.mClick                 { background-image: url("/i/svg/signal_white.svg"); }
 div.xBoxes.track-on.render-normal.mClick                 { background-image: url("/i/svg/normal_white.svg"); }
-div.xBoxes.track-on.render-as_alignment_nolabel.mClick   { background-image: url("/i/svg/alignment_nolabel_white.svg"); } 
+div.xBoxes.track-on.render-as_alignment_nolabel.mClick   { background-image: url("/i/svg/alignment_nolabel_white.svg"); }
 div.xBoxes.track-on.render-as_alignment_label.mClick     { background-image: url("/i/svg/alignment_label_white.svg"); }
 div.xBoxes.track-on.render-as_transcript_nolabel.mClick  { background-image: url("/i/svg/transcript_nolabel_white.svg"); }
 div.xBoxes.track-on.render-as_transcript_label.mClick    { background-image: url("/i/svg/transcript_label_white.svg"); }
-div.xBoxes.track-on.render-half_height.mClick            { background-image: url("/i/svg/half_height_white.svg"); } 
+div.xBoxes.track-on.render-half_height.mClick            { background-image: url("/i/svg/half_height_white.svg"); }
 div.xBoxes.track-on.render-stack.mClick                  { background-image: url("/i/svg/stack_white.svg"); }
 div.xBoxes.track-on.render-unlimited.mClick              { background-image: url("/i/svg/unlimited_white.svg"); }
 div.xBoxes.track-on.render-ungrouped.mClick              { background-image: url("/i/svg/ungrouped_white.svg"); }
 div.xBoxes.track-on.render-as_collapsed_nolabel.mClick   { background-image: url("/i/svg/collapsed_nolabel_white.svg"); }
-div.xBoxes.track-on.render-as_collapsed_label.mClick     { background-image: url("/i/svg/collapsed_label_white.svg"); }  
+div.xBoxes.track-on.render-as_collapsed_label.mClick     { background-image: url("/i/svg/collapsed_label_white.svg"); }
 div.xBoxes.track-on.render-interaction.mClick            { background-image: url("/i/svg/interaction_white.svg"); }
 div.xBoxes.track-on.render-coverage_with_reads.mClick    { background-image: url("/i/svg/coverage_white.svg"); }
 div.xBoxes.track-on.render-histogram.mClick              { background-image: url("/i/svg/histogram_white.svg"); }
@@ -394,12 +394,12 @@ div.xBoxes.track-off.render-peak                  { background-image: url("/i/sv
 div.xBoxes.track-off.render-compact               { background-image: url("/i/svg/peak_blue50.svg"); }
 div.xBoxes.track-off.render-signal                { background-image: url("/i/svg/signal_blue50.svg"); }
 div.xBoxes.track-off.render-normal                { background-image: url("/i/svg/normal_blue50.svg"); }
-div.xBoxes.track-off.render-as_alignment_nolabel  { background-image: url("/i/svg/alignment_nolabel_blue50.svg"); }     
-div.xBoxes.track-off.render-as_alignment_label    { background-image: url("/i/svg/alignment_label_blue50.svg"); } 
-div.xBoxes.track-off.render-as_transcript_nolabel { background-image: url("/i/svg/transcript_nolabel_blue50.svg"); } 
-div.xBoxes.track-off.render-as_transcript_label   { background-image: url("/i/svg/transcript_label_blue50.svg"); } 
-div.xBoxes.track-off.render-half-height           { background-image: url("/i/svg/half_height_blue50.svg"); } 
-div.xBoxes.track-off.render-stack                 { background-image: url("/i/svg/stack_blue50.svg"); } 
+div.xBoxes.track-off.render-as_alignment_nolabel  { background-image: url("/i/svg/alignment_nolabel_blue50.svg"); }
+div.xBoxes.track-off.render-as_alignment_label    { background-image: url("/i/svg/alignment_label_blue50.svg"); }
+div.xBoxes.track-off.render-as_transcript_nolabel { background-image: url("/i/svg/transcript_nolabel_blue50.svg"); }
+div.xBoxes.track-off.render-as_transcript_label   { background-image: url("/i/svg/transcript_label_blue50.svg"); }
+div.xBoxes.track-off.render-half-height           { background-image: url("/i/svg/half_height_blue50.svg"); }
+div.xBoxes.track-off.render-stack                 { background-image: url("/i/svg/stack_blue50.svg"); }
 div.xBoxes.track-off.render-unlimited             { background-image: url("/i/svg/unlimited_blue50.svg"); }
 div.xBoxes.track-off.render-ungrouped             { background-image: url("/i/svg/ungrouped_blue50.svg"); }
 div.xBoxes.track-off.render-as_collapsed_nolabel  { background-image: url("/i/svg/collapsed_nolabel_blue50.svg"); }
@@ -416,7 +416,7 @@ div.xBoxes.track-off.render-peak.mClick                   { background-image: ur
 div.xBoxes.track-off.render-compact.mClick                { background-image: url("/i/svg/peak_blue.svg"); }
 div.xBoxes.track-off.render-signal.mClick                 { background-image: url("/i/svg/signal_blue.svg"); }
 div.xBoxes.track-off.render-normal.mClick                 { background-image: url("/i/svg/normal_blue.svg"); }
-div.xBoxes.track-off.render-as_alignment_nolabel.mClick   { background-image: url("/i/svg/alignment_nolabel_blue.svg"); } 
+div.xBoxes.track-off.render-as_alignment_nolabel.mClick   { background-image: url("/i/svg/alignment_nolabel_blue.svg"); }
 div.xBoxes.track-off.render-as_alignment_label.mClick     { background-image: url("/i/svg/alignment_label_blue.svg"); }
 div.xBoxes.track-off.render-as_transcript_nolabel.mClick  { background-image: url("/i/svg/transcript_nolabel_blue.svg"); }
 div.xBoxes.track-off.render-as_transcript_label.mClick    { background-image: url("/i/svg/transcript_label_blue.svg"); }

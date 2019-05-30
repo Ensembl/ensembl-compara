@@ -51,7 +51,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.elLk.ajaxError       = this.el.find('span.error._ajax');
     this.localStoreObj        = new Object();
-    this.localStorageKey      = 'TrackHubMatrix-' + Ensembl.species;
+    this.localStorageKey      = node_id+'-TrackHubMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
     this.trackHub             = true;
 
@@ -62,13 +62,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.searchTerms = {};
 
 
-    // Mapping of renderer type and text to display in matrix popup 
+    // Mapping of renderer type and text to display in matrix popup
     this.rendererTextMap = {
       'normal' : 'Normal',
       'compact': 'Peaks',
       'signal' : 'Signal',
       'signal_feature' : 'Peaks & Signal',
-      'as_alignment_nolabel' : 'Normal', 
+      'as_alignment_nolabel' : 'Normal',
       'as_alignment_label' : 'Labels',
       'as_transcript_nolabel' : 'Transcript label',
       'as_transcript_label' : 'Transcript no label',
@@ -247,7 +247,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       finalObj.dimensions = [dimX,dimY];
       finalObj.data = {};
-      
+
       //getting dimY data, assuming subgroup2 is always dimY
       var dimYData = {}
       $.each(Object.keys(panel.rawJSON.metadata.dimensions.y.values), function(index, value) {
@@ -264,18 +264,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         $.each(track.subGroups, function(dimension, trackName){
           if(dimension === dimX) { return; }
-          
+
           if($.isEmptyObject(dimXData[keyX])){
             dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display, "format": track.format.toLowerCase() }]
           } else {
             dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display, "format": track.format.toLowerCase() });
           }
-        });          
+        });
       });
 
       finalObj.format = $.unique(formats);
       finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
-      finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };          
+      finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };
     }
 
     console.log(finalObj);
@@ -2067,9 +2067,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       } else {
         popupHTML += '<li><input type="radio" name="cell-radio" class="_'+renderer+'"/><text>'+panel.rendererTextMap[renderer]+'</text></li>';
       }
-    }); 
-    this.elLk.popup.html(popupHTML);   
-  },  
+    });
+    this.elLk.popup.html(popupHTML);
+  },
 
   cellClick: function() {
     var panel = this;
@@ -2083,7 +2083,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.yName          = "";
     panel.boxObj         = "";
 
-    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){      
+    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){
       panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick').removeClass("mClick");
       panel.trackPopup.hide();
       panel.buildMatrixPopup($(this).data("format"));
