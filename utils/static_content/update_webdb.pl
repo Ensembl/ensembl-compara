@@ -105,8 +105,11 @@ print "# Adding species...\n\n";
 
 # get the hash of all species in the database
 my @db_spp = @{$adaptor->fetch_all_species};
+my $max_id = 0;
 my %lookup;
+
 foreach my $sp (@db_spp) {
+  $max_id = $sp->{'id'} if $sp->{'id'} > $max_id;
   $lookup{$sp->{'name'}} = $sp->{'id'};
 }
 
@@ -118,26 +121,20 @@ SPECIES: foreach my $sp (sort @species) {
 
   # check if this species is in the database yet
   if (!$lookup{$sp}) {
+    $max_id++;
+    $species_id = $max_id;
     my $code = $sd->get_config($sp, 'SPECIES_CODE');
-    $sql = sprintf ('INSERT INTO species SET code = %s, name = "%s", common_name = "%s", vega = "%s", online = "%s";',
-            ($code ? qq("$code") : 'NULL'), $sd->get_config($sp, 'SPECIES_URL'),
+    $sql = sprintf ('INSERT INTO species SET species_id = %s, code = %s, name = "%s", common_name = "%s", vega = "%s", online = "%s";',
+            ($species_id, $code ? qq("$code") : 'NULL'), $sd->get_config($sp, 'SPECIES_URL'),
             $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
-    print "$sql\n\n" unless $DEBUG;
-
-    ## Get ID back
-    $sql = 'SELECT species_id FROM species WHERE name = ?';
-    @args = ($sd->get_config($sp, 'SPECIES_URL'));
-    $sth = $adaptor->db->prepare($sql);
-    $sth->execute(@args) unless $DEBUG;
-    while (my @data = $sth->fetchrow_array()) {
-      $species_id = $data[0];
-    }
-    print "# Adding new species $sp to database, with ID $species_id\n";
+    print "\n$sql\n" unless $DEBUG;
+    print "# Added new species $sp to database, with ID $species_id\n";
   }
   else {
     $species_id = $lookup{$sp};
   }
 
+  ## Now add the species to this release
   if ($species_id) {
     $sql = 'SELECT release_id FROM release_species WHERE release_id = ? AND species_id = ?';
     @args = ($release_id, $species_id);
@@ -187,7 +184,7 @@ SPECIES: foreach my $sp (sort @species) {
     }
   }
   else {
-    print "# Sorry, unable to add record for $sp as no species ID found\n";
+    print "# Sorry, unable to add record for $sp\n";
   }
 }
 
