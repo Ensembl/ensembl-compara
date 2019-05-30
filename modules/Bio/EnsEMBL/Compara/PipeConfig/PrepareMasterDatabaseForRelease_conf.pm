@@ -290,7 +290,7 @@ sub pipeline_analyses {
             -flow_into => [ 'set_last_release_to_mlss' ],
         },
 
-        {   -logic_name => 'set_last_release_to_mlss',
+        {   -logic_name => 'retire_old_species_sets',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn' => '#master_db#',
