@@ -69,7 +69,7 @@ my $release = $adaptor->fetch_release($release_id);
 my $file = 'Update_ensembl_archive_for_release_'.$release_id.'.sql';
 open PATCH, ">$tmp_dir/$file" or die "ERROR: $!";
 
-print PATCH "use ensembl_archive_".$release_id.';';
+print PATCH "use ensembl_archive_".$release_id.";\n\n";
 
 if ($release) {
   print "Release $release_id is currently scheduled for ". $release->{'date'} .".
