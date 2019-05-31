@@ -241,7 +241,7 @@ sub transcript_table {
        { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Transcript length in base pairs', class => '_ht'},
        { key => 'protein',sort => 'html_numeric',label => 'Protein', title => 'Protein length in amino acids', class => '_ht'},
        { key => 'translation',sort => 'html',    label => 'Translation ID', title => 'Protein information', 'hidden' => 1, class => '_ht'},
-       { key => 'biotype',    sort => 'html',    label => 'Biotype', align => 'left', class => '_ht'},
+       { key => 'biotype',    sort => 'html',    label => 'Biotype', title => encode_entities('<a href="/info/genome/genebuild/biotypes.html" target="_blank">Transcript biotype</a>'), align => 'left', class => '_ht'},
     );
 
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
