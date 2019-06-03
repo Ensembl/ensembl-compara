@@ -34,10 +34,27 @@ BEGIN {
 }
 
 my $nodelete = 0;
-GetOptions ('nodelete' => \$nodelete);
+my ($host, $port, $user, $pass, $release);
+
+GetOptions (
+            'nodelete'  => \$nodelete,
+            'release'   => \$release,
+            'host'      => \$host, 
+            'port'      => \$port,
+            'user'      => \$user,
+            'pass'      => \$pass,
+          );
+
+my $settings = {
+                'name'  => sprintf 'ensembl_website_%s', $release
+                'host'  => $host,
+                'port'  => $port,
+                'user'  => $user,
+                'pass'  => $pass,
+                };
 
 my $hub         = EnsEMBL::Web::DBHub->new;
-my $dbh         = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->db;
+my $dbh         = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub, $settings)->db;
 my $sd          = $hub->species_defs;
 my $name_lookup = $sd->production_name_lookup;
 my $sth;
