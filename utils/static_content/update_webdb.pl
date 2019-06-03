@@ -130,7 +130,7 @@ SPECIES: foreach my $sp (sort @species) {
     $max_id++;
     $species_id = $max_id;
     my $code = $sd->get_config($sp, 'SPECIES_CODE');
-    $sql = sprintf ('INSERT INTO species SET species_id = %s, code = %s, name = "%s", common_name = "%s", vega = "%s", online = "%s";',
+    $sql = sprintf ('INSERT INTO species (species_id, code, name, common_name, vega, online) VALUES (%s, %s, "%s", "%s", "%s", "%s");',
             ($species_id, $code ? qq("$code") : 'NULL'), $sd->get_config($sp, 'SPECIES_URL'),
             $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
     print PATCH "\n$sql\n";
