@@ -15,11 +15,15 @@
 # limitations under the License.
 
 
+## Now requires database connection details and will be run on all species:
+
+# perl utils/make_gene_autocomplete.pl -h mydbserver -P 3306 -u myuser -p mypassword
+
 use strict;
 
 use File::Basename qw(dirname);
 use FindBin qw($Bin);
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case);
 
 BEGIN {
   my $serverroot = dirname($Bin);
@@ -37,25 +41,26 @@ my $nodelete = 0;
 my ($host, $port, $user, $pass, $release);
 
 GetOptions (
-            'nodelete'  => \$nodelete,
-            'release'   => \$release,
-            'host'      => \$host, 
-            'port'      => \$port,
-            'user'      => \$user,
-            'pass'      => \$pass,
+            'nodelete'    => \$nodelete,
+            'release|r:i' => \$release,
+            'host|h=s'    => \$host, 
+            'port|P=i'    => \$port,
+            'user|u=s'    => \$user,
+            'pass|p:s'    => \$pass,
           );
 
-my $settings = {
-                'name'  => sprintf 'ensembl_website_%s', $release
-                'host'  => $host,
-                'port'  => $port,
-                'user'  => $user,
-                'pass'  => $pass,
-                };
-
 my $hub         = EnsEMBL::Web::DBHub->new;
-my $dbh         = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub, $settings)->db;
 my $sd          = $hub->species_defs;
+$release      ||= $sd->ENSEMBL_VERSION;
+my $settings    = {
+                  'name'  => sprintf('ensembl_website_%s', $release),
+                  'host'  => $host,
+                  'port'  => $port,
+                  'user'  => $user,
+                  'pass'  => $pass,
+                  };
+
+my $dbh         = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub, $settings)->db;
 my $name_lookup = $sd->production_name_lookup;
 my $sth;
 
@@ -72,9 +77,9 @@ $dbh->do(
   )'
 );
 
-if (!@ARGV and !$nodelete) {
-  my %existing_species = map { lc $_ => 1 } @{$sd->multi_hash->{'ENSEMBL_DATASETS'}};
-  my @delete = grep !$existing_species{$_}, @{$dbh->selectcol_arrayref('select distinct(species) from gene_autocomplete')};
+print "NO DELETE? $nodelete";
+if (!$nodelete) {
+  my @delete = @{$dbh->selectcol_arrayref('select distinct(species) from gene_autocomplete')};
   
   if (@delete) {
     warn sprintf "Deleting old species: %s\n", join ', ', @delete;
@@ -82,7 +87,7 @@ if (!@ARGV and !$nodelete) {
   }
 }
 
-foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::PRODUCTION_NAMES) {
+foreach my $dataset (@$SiteDefs::PRODUCTION_NAMES) {
   warn "$dataset\n";
 
   my $species = $name_lookup->{$dataset};
