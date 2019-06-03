@@ -76,7 +76,7 @@ sub add_table_columns {
     { key => 'pop_name', title => 'Population'                     , align => 'left', sort => 'none' },
     { key => 'pop_size', title => 'Size'                           , align => 'left', sort => 'none' },
     { key => 'a_freqs',  title => 'Allele type: frequency (count)' , align => 'left', sort => 'none' },
-    { key => 'freqs',    title => 'Global allele frequency (count)', align => 'left', sort => 'none' },
+    { key => 'freqs',    title => 'Non-reference frequency (count)', align => 'left', sort => 'none' },
   );
 
   return $table;
@@ -144,9 +144,10 @@ sub table_data {
       $group_member = 1;
     }
 
-    my $pop_name = (split(':',$svpf->name))[2];
-    my $pop_desc = $svpf->description;
-    my $pop_size = $svpf->size;
+    my @pop_parts = split(':',$svpf->name);
+    my $pop_name  = (@pop_parts > 2) ? $pop_parts[$#pop_parts] : $pop_parts[0].':<b>'.$pop_parts[1].'</b>';
+    my $pop_desc  = $svpf->description;
+    my $pop_size  = $svpf->size;
     my $global_freq = sprintf("%.4f",$svpf->frequency);
     my $global_allele_count = 0;
     my $freqs_by_SO_term = $svpf->frequencies_by_class_SO_term;
