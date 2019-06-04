@@ -3137,12 +3137,11 @@ sub dumpRegulatoryFeature {
     group_concat(distinct mrf.accession), 
     count(distinct mrf.mirna_target_feature_id),
     ft.description, 
-    ft.class, 
-    fs.name
+    ft.class,
+    ft.name
   from 
     $dbname.mirna_target_feature mrf
     join $dbname.feature_type ft using (feature_type_id)
-    join $dbname.feature_set fs using (feature_set_id)
     join seq_region sr using (seq_region_id)
   group by 
     mrf.display_label
@@ -3155,7 +3154,7 @@ sub dumpRegulatoryFeature {
       push @syns unless $id eq 'display_label';
     }
     push @syns, split ',', $accs;
-    $params = { 'fs_name' => $fs_name, 'subtype' => 'TarBase miRNA' };
+    $params = { 'fs_name' => $fs_name, 'subtype' => $fs_name };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
     &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@syns,$ftype,$params,$db,$counter), $fh);
   }
