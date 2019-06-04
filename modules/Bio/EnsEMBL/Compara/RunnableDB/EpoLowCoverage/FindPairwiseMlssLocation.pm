@@ -72,6 +72,9 @@ sub write_output {
     my $mlss_location = $self->param('mlss_location');
     $self->dataflow_output_id({'param_name' => 'pairwise_mlss_location',
 			       'param_value' => stringify($mlss_location)}, 2);
+    my $refs_per_species = $self->param('refs_per_species');
+    $self->dataflow_output_id({'param_name' => 'refs_per_species',
+			       'param_value' => stringify($refs_per_species)}, 2);  # to pipeline_wide_parameters
 }
 
 
@@ -89,14 +92,16 @@ sub _find_location_of_all_required_mlss {
     my %high_coverage_genome_db_ids;
     $high_coverage_genome_db_ids{$_->dbID} = 1 for @{$base_mlss->species_set->genome_dbs};
 
-    my %mlss_location;
+    my (%mlss_location, %refs_per_species);
     foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
-	unless ($high_coverage_genome_db_ids{$genome_db->dbID}) {
-            my ($compara_db, $mlss_id) = @{ $self->_find_compara_db_for_genome_db_id($genome_db->dbID) };
-            #print "LASTZ found mlss " . $pairwise_mlss->dbID . "\n" if ($self->debug);
+	    unless ($high_coverage_genome_db_ids{$genome_db->dbID}) {
+            my ($compara_db, $mlss_id, $ref_gdb_id) = @{ $self->_find_compara_db_for_genome_db_id($genome_db->dbID) };
+            print "picked mlss_id $mlss_id (ref: $ref_gdb_id) for " . $genome_db->name . "\n\n" if $self->debug;
             $mlss_location{$mlss_id} = $compara_db;
-	}
+            $refs_per_species{$genome_db->dbID} = $ref_gdb_id;
+	    }
     }
+    $self->param('refs_per_species', \%refs_per_species);
     return \%mlss_location;
 }
 
@@ -104,21 +109,24 @@ sub _find_location_of_all_required_mlss {
 sub _find_compara_db_for_genome_db_id {
     my ($self, $genome_db_id) = @_;
 
+    my %all_alns_for_gdb;
     foreach my $compara_db (@{$self->param('pairwise_location')}) {
-        my $genome_db_ids_there = $self->_load_mlss_from_compara_db($compara_db);
-        if (exists $genome_db_ids_there->{$genome_db_id}) {
-            return [$compara_db, $genome_db_ids_there->{$genome_db_id}];
+        my $mlss_per_reference = $self->_load_mlss_from_compara_db($compara_db, $genome_db_id);
+        foreach my $ref_genome_db_id ( keys %$mlss_per_reference ) {
+            $all_alns_for_gdb{$ref_genome_db_id} = { mlss_id => $mlss_per_reference->{$ref_genome_db_id}, compara_db => $compara_db };
         }
     }
+    
+    die "Could not find an alignment for genome_db_id=$genome_db_id in any of the servers: ".join(",",@{$self->param('pairwise_location')}) unless defined $all_alns_for_gdb{150};
 
-    die "Could not find an alignment for genome_db_id=$genome_db_id in any of the servers: ".join(",",@{$self->param('pairwise_location')});
+    return $self->_optimal_aln_for_genome_db(\%all_alns_for_gdb, $genome_db_id);
 }
 
 # List all the alignments available in a given database
 sub _load_mlss_from_compara_db {
-    my ($self, $compara_db) = @_;
+    my ($self, $compara_db, $non_ref_gdb_id) = @_;
 
-    return $self->param('dbs_loaded')->{$compara_db} if $self->param('dbs_loaded')->{$compara_db};
+    return $self->param('dbs_loaded')->{$compara_db}->{$non_ref_gdb_id} if $self->param('dbs_loaded')->{$compara_db}->{$non_ref_gdb_id};
 
     my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara_db);
 
@@ -126,24 +134,72 @@ sub _load_mlss_from_compara_db {
     foreach my $method_link_type (qw(LASTZ_NET BLASTZ_NET)) {
         my $some_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link_type);
         foreach my $mlss (@$some_mlsss) {
-            my $found_ref;
-            my $non_ref_gdb;
+            my ($found_non_ref, $ref_gdb);
             foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
-                if ($genome_db->name eq $self->param('reference_species')) {
-                    $found_ref = 1;
+                if ($genome_db->dbID eq $non_ref_gdb_id) {
+                    $found_non_ref = 1;
                 } else {
-                    $non_ref_gdb = $genome_db;
+                    $ref_gdb = $genome_db;
                 }
             }
-            if ($found_ref && $non_ref_gdb) {
-                $mlss_found{$non_ref_gdb->dbID} = $mlss->dbID;
+            if ($found_non_ref && $ref_gdb) {
+                $mlss_found{$ref_gdb->dbID} = $mlss->dbID;
             }
         }
     }
 
-    $self->param('dbs_loaded')->{$compara_db} = \%mlss_found;
+    $self->param('dbs_loaded')->{$compara_db}->{$non_ref_gdb_id} = \%mlss_found;
     return \%mlss_found;
 }
 
+sub _optimal_aln_for_genome_db {
+    my ( $self, $all_alns_for_gdb, $non_ref_gdb_id ) = @_;
+    
+    my $epo_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('high_epo_db'));
+    
+    my ($best_aln_mlss_id, $best_ref_gdb_id);
+    my $max_coverage = 0;
+    print "non-ref_name\tref_name\tmlss_name\tepo_cov\tlastz_cov\tcombined_cov\n";
+    foreach my $ref_gdb_id ( keys %$all_alns_for_gdb ) {
+        my $this_mlss_id = $all_alns_for_gdb->{$ref_gdb_id}->{mlss_id};
+        
+        # first, get the EPO coverage for this reference species
+        my $stn_tag_sql = "SELECT value FROM species_tree_node_tag JOIN species_tree_node USING(node_id) WHERE genome_db_id = $ref_gdb_id AND tag = ?";
+        my $epo_sth = $epo_dba->dbc->prepare($stn_tag_sql);
+        
+        $epo_sth->execute('genome_coverage');
+        my $epo_genome_coverage = $epo_sth->fetchall_arrayref->[0]->[0];
+        $epo_sth->execute('genome_length');
+        my $epo_genome_length = $epo_sth->fetchall_arrayref->[0]->[0];
+                
+        # then, get the pairwise coverage
+        my $pw_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($all_alns_for_gdb->{$ref_gdb_id}->{compara_db});
+        my $mlss_tag_sql = "SELECT value FROM method_link_species_set_tag WHERE method_link_species_set_id = $this_mlss_id AND tag = ?";
+        my $pw_sth = $pw_dba->dbc->prepare($mlss_tag_sql);
+        
+        $pw_sth->execute('ref_genome_coverage');
+        my $pw_genome_coverage = $pw_sth->fetchall_arrayref->[0]->[0];
+        $pw_sth->execute('ref_genome_length');
+        my $pw_genome_length = $pw_sth->fetchall_arrayref->[0]->[0];
+        
+        my $comb_coverage_for_ref = ($epo_genome_coverage/$epo_genome_length) * ($pw_genome_coverage/$pw_genome_length);
+
+        if ( $self->debug ) {
+            my $gdba = $pw_dba->get_GenomeDBAdaptor;
+            my $mlssa = $pw_dba->get_MethodLinkSpeciesSetAdaptor;
+            my $mlss = $mlssa->fetch_by_dbID($this_mlss_id);
+            my $nr_gdb = $gdba->fetch_by_dbID($non_ref_gdb_id);
+            my $r_gdb = $gdba->fetch_by_dbID($ref_gdb_id);
+            print $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t" . ($epo_genome_coverage/$epo_genome_length) . "\t" . ($pw_genome_coverage/$pw_genome_length) . "\t$comb_coverage_for_ref\n";
+        }
+
+        if ( $comb_coverage_for_ref > $max_coverage ) {
+            $max_coverage = $comb_coverage_for_ref;
+            $best_aln_mlss_id = $this_mlss_id;
+            $best_ref_gdb_id = $ref_gdb_id;
+        }
+    }
+    return [$all_alns_for_gdb->{$best_ref_gdb_id}->{compara_db}, $best_aln_mlss_id, $best_ref_gdb_id];
+}
 
 1;

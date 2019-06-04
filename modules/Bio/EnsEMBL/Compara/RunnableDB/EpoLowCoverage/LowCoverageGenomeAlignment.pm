@@ -1020,31 +1020,29 @@ sub _load_2XGenomes {
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
   #DEBUG this opens up connections to all the databases
-  my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
-  #my $ref_dba = $ref_genome_db->db_adaptor;
-  #my $ref_slice_adaptor = $ref_dba->get_SliceAdaptor();
-
+  # my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
+  
   #Get multiple alignment genomic_align_block adaptor
   my $multi_gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
 
   #Find all the dnafrag_regions for the reference genome in this synteny region
   my $ref_gas =[];
   my $multi_gab = $multi_gaba->fetch_by_dbID($genomic_align_block_id);
-  my $all_gas = $multi_gab->get_all_GenomicAligns;
+  my $all_epo_gas = $multi_gab->get_all_GenomicAligns;
 
-  foreach my $ga (@$all_gas) {
-      if ($ga->genome_db->dbID == $ref_genome_db->dbID) {
-	  push @$ref_gas, $ga;
-      }
-  }
-  
-  #Return if there is no reference sequence in this gab region
-  if (scalar(@$ref_gas) == 0) {
-      print "No " . $self->param('reference_species') . " sequences found in genomic_align_block $genomic_align_block_id\n";
-      return;
-  }
-
-  print "GAB $genomic_align_block_id num ref copies " . scalar(@$ref_gas) . "\n" if $self->debug;
+  # foreach my $ga (@$all_gas) {
+  #     if ($ga->genome_db->dbID == $ref_genome_db->dbID) {
+	#   push @$ref_gas, $ga;
+  #     }
+  # }
+  # 
+  # #Return if there is no reference sequence in this gab region
+  # if (scalar(@$ref_gas) == 0) {
+  #     print "No " . $self->param('reference_species') . " sequences found in genomic_align_block $genomic_align_block_id\n";
+  #     return;
+  # }
+  # 
+  # print "GAB $genomic_align_block_id num ref copies " . scalar(@$ref_gas) . "\n" if $self->debug;
 
   #Find the LASTZ_NET alignments between the reference species and each
   #2X genome.
@@ -1056,9 +1054,6 @@ sub _load_2XGenomes {
   $self->iterate_by_dbc([keys %$pairwise_locations],
     sub {my $mlss_id = shift; return $pairwise_compara_dba{$mlss_id}->dbc;},
     sub {my $mlss_id = shift;
-
-      my $target_species;
-
       #open compara database containing 2x genome vs $ref_name blastz results
       my $compara_dba = $pairwise_compara_dba{$mlss_id};
 
@@ -1070,18 +1065,13 @@ sub _load_2XGenomes {
       #my $pairwise_mlss = $p_mlss_adaptor->fetch_by_dbID($param->{'method_link_species_set_id'});
       my $pairwise_mlss = $p_mlss_adaptor->fetch_by_dbID($mlss_id);
 
-      #find non_reference species name in pairwise alignment
-      foreach my $genome_db (@{$pairwise_mlss->species_set->genome_dbs}) {
-	  if ($genome_db->name ne $self->param('reference_species')) {
-	      $target_species = $genome_db->name;
-	      last;
-	  }
+      # find ref and non-ref genome_dbs from PW alignment
+      my ($ref_genome_db, $target_genome_db) = $pairwise_mlss->find_pairwise_reference();
+      my $ref_gas;
+      foreach my $epo_ga ( @$all_epo_gas ) {
+          push @$ref_gas, $epo_ga if $epo_ga->genome_db->dbID == $ref_genome_db->dbID;
       }
-     
-      my $target_genome_db = $genome_db_adaptor->fetch_by_name_assembly($target_species);
-      #my $target_dba = $target_genome_db->db_adaptor;
-      #my $target_slice_adaptor = $target_dba->get_SliceAdaptor();
-
+      
       #Foreach copy of the ref_genome in the multiple alignment block, 
       #find the alignment blocks between the ref_genome and the 2x 
       #target_genome in the pairwise database
@@ -1451,11 +1441,6 @@ sub _create_frag_array {
     foreach my $ref_ga (@$ref_gas) {
 	print "  " . $ref_ga->dnafrag->name . " " . $ref_ga->dnafrag_start . " " . $ref_ga->dnafrag_end . " " . $ref_ga->dnafrag_strand . "\n" if $self->debug;
 	
-	#find the slice corresponding to the ref_genome
-	#my $slice = $ref_ga->get_Slice;
-
-	#print "ref_seq " . $slice->start . " " . $slice->end . " " . $slice->strand . " " . substr($slice->seq,0,120) . "\n" if $self->debug;
-
 	#find the pairwise blocks between ref_genome and the 2x genome
 	#my $pairwise_gabs = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($pairwise_mlss, $slice, undef,undef,"restrict");
 
@@ -1469,8 +1454,7 @@ sub _create_frag_array {
 
 	#sort by reference_genomic_align start position (NB I sort again when parsing
 	#the results if the ref strand is reverse since the fragments will be in the
-	#reverse order ie A-B-C should be C-B-A). Don't do it here because I try to find
-	#duplicates in load_2XGenomes.
+	#reverse order ie A-B-C should be C-B-A). 
 	@$pairwise_gabs = sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$pairwise_gabs;
 
 	print "    pairwise gabs " . scalar(@$pairwise_gabs) . "\n" if $self->debug;
@@ -1480,8 +1464,7 @@ sub _create_frag_array {
 	
 	my $ga_frags;
 
-	#need to save each match separately but still use same structure as
-	#create_span_frag_array in case we change our minds back again
+	# need to save each match separately
 	foreach my $pairwise_gab (@$pairwise_gabs) {
 
 	    #should only have 1!
@@ -1499,7 +1482,7 @@ sub _create_frag_array {
 			       ref_ga => $ref_ga,
 			      };
 
-	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_sequence,0,120) . "\n" if $self->debug;
+	    print "GAB " . $ga_fragment->{genomic_align}->genome_db->name . " " . $ga_fragment->{genomic_align}->dnafrag_start . " " . $ga_fragment->{genomic_align}->dnafrag_end . " " . $ga_fragment->{genomic_align}->dnafrag_strand . " " . $ga_fragment->{genomic_align}->cigar_line . " " . substr($ga_fragment->{genomic_align}->get_sequence, 0, 120) . "\n" if $self->debug;
 	    push @$ga_frags, $ga_fragment;
 	}
 	#add to array of fragments for each reference genomic_align

@@ -145,7 +145,6 @@ sub pipeline_analyses {
               -parameters => {
                               'sql' => [
                                   'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')',
-                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "reference_species", "' . $self->o('ref_species') . '")'
                               ],
                              },
               -flow_into => {
@@ -219,7 +218,7 @@ sub pipeline_analyses {
 				'base_method_link_species_set_id' => $self->o('high_epo_mlss_id'),
 				'pairwise_location' => $self->o('pairwise_location'),
 				'base_location' => $self->o('epo_db'),
-				'reference_species' => $self->o('ref_species'),
+                'high_epo_db' => $self->o('epo_db'),
 			       },
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
@@ -257,7 +256,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'reference_species' => $self->o('ref_species'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
@@ -275,7 +273,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'reference_species' => $self->o('ref_species'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },
@@ -294,7 +291,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
-				'reference_species' => $self->o('ref_species'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
 			       },

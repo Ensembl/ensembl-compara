@@ -393,7 +393,7 @@ sub filename {
     
     # expand species names to include assembly
     if ( $self->species_set->size == 2 ) {
-        my ($ref_gdb, $nonref_gdb) = $self->_find_pairwise_ref($self->species_set->genome_dbs);
+        my ($ref_gdb, $nonref_gdb) = $self->find_pairwise_reference();
         $name = $ref_gdb->get_short_name . "_" . $ref_gdb->assembly . '.v.';
         $name .= $nonref_gdb->get_short_name . "_" . $nonref_gdb->assembly;
     } elsif ( $self->species_set->size == 1 && $self->method->class =~ /pairwise/ ) { # self alignment!
@@ -407,8 +407,11 @@ sub filename {
     return $dir;
 }
 
-sub _find_pairwise_ref {
-    my ( $self, $genome_dbs ) = @_;
+sub find_pairwise_reference {
+    my $self = shift;
+
+    die "This method can only be used for LASTZ_NET MethodLinkSpeciesSets\n" unless $self->method->type eq 'LASTZ_NET';
+    my $genome_dbs = $self->species_set->genome_dbs;
 
     # first, check for mlss_tags
     my $ref_name = $self->_getter_setter_for_tag('reference_species');
