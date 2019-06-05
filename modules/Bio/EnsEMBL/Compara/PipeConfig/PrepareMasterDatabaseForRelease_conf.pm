@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesIntoMaster_conf
+Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
 =head1 DESCRIPTION
 
