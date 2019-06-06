@@ -64,7 +64,7 @@ sub populate_tree {
         phenotype EnsEMBL::Web::Component::StructuralVariation::Phenotype  
         genes     EnsEMBL::Web::Component::StructuralVariation::LocalGenes 
     )],
-    { 'availability' => 'has_phenotype', 'concise' => 'Phenotype Data' }
+    { 'availability' => 'has_phenotypes', 'concise' => 'Phenotype Data' }
   );
 }
 1;
