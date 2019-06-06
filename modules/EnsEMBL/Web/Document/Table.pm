@@ -326,7 +326,7 @@ sub data_table_config {
   my $default_hidden = $self->{'options'}{'hidden_columns'} ? $self->jsonify({ map { $_ => 1 } @$hidden_cols }) : '';
   my $config         = sprintf '<input type="hidden" name="code" value="%s" />', encode_entities($code);
   my $sort           = [];
-  
+
   foreach (@$sorting) {
     my ($col, $dir) = split / /;
     $col = $columns{$col} unless $col =~ /^\d+$/ && $col < $col_count;
@@ -336,8 +336,8 @@ sub data_table_config {
   if (scalar @$sort) {
     $config .= sprintf '<input type="hidden" name="aaSorting" value="%s" />', encode_entities($self->jsonify($sort));
   }
-  
-  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', encode_entities($self->jsonify($hidden_cols)) if scalar @$hidden_cols;
+
+  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', encode_entities($self->jsonify($hidden)) if scalar @$hidden;
   $config .= sprintf '<input type="hidden" name="defaultHiddenColumns" value="%s" />', encode_entities($default_hidden) if $default_hidden;
 
   foreach (keys %{$self->{'options'}{'data_table_config'}}) {
