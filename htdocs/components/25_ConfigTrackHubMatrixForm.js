@@ -28,7 +28,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //getting the node id from the panel url (menu=) to pass to ajax request to get imageconfig
     var menu_match    = $(this.params.links).find('li.active a').attr('href').match(/menu=([^;&]+)/g);
-    var node_id       = menu_match[0].split("=")[1];
+    this.node_id       = menu_match[0].split("=")[1];
     var species_match = $(this.params.links).find('li.active a').attr('href').match(/th_species=([^;&]+)/g);
     var species_name  = species_match[0].split("=")[1];
 
@@ -51,7 +51,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.elLk.ajaxError       = this.el.find('span.error._ajax');
     this.localStoreObj        = new Object();
-    this.localStorageKey      = node_id+'-TrackHubMatrix-' + Ensembl.species;
+    this.localStorageKey      = this.node_id+'-TrackHubMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
     this.trackHub             = true;
 
@@ -98,7 +98,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find("div#dy-tab div.search-box").hide();
 
     $.ajax({
-      url: '/Json/TrackHubData/data?th_species='+species_name+';menu='+node_id+';ictype='+panel.params['image_config_type'],
+      url: '/Json/TrackHubData/data?th_species='+species_name+';menu='+panel.node_id+';ictype='+panel.params['image_config_type'],
       dataType: 'json',
       context: this,
       success: function(data) {
@@ -266,9 +266,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           if(dimension === dimX) { return; }
 
           if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display, "format": track.format.toLowerCase() }]
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": track.default_display, "format": track.format.toLowerCase() }]
           } else {
-            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "renderer": track.default_display, "format": track.format.toLowerCase() });
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": track.default_display, "format": track.format.toLowerCase() });
           }
         });
       });
@@ -526,13 +526,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           if (v.state) {
             key = '';
             arr = k.split('_sep_');
-            var set = panel.elLk.lookup[arr[0]].set.replace(/_non_core/,'_core');
-            key = set + '_' + panel.elLk.lookup[arr[1]].label;
-            config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
+            key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
+            config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
 
             if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
-              key = set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-              config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
+              key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
+              config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
             }
           }
         }
@@ -548,14 +547,24 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         if (v.state) {
           key = '';
           arr = k.split('_sep_');
-          var set = panel.elLk.lookup[arr[0]].set.replace(/_non_core/,'_core');
-
-          key = set + '_' + panel.elLk.lookup[arr[1]].label;
-          config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
+          key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
+          config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
+          if (v.id && config[key].renderer !== 'off') {
+            // Track key is a unique id for the track created by ImageConfigExtension/UserTracks
+            // which is a combination of submenu_key(node_id) and track name;
+            var track_key = panel.node_id + '_' + v.id;
+            config[track_key] = { renderer: v.renderer };
+          }
 
           if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
-            key = set + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-            config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
+            key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
+            config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
+            if (v.id && config[key].renderer !== 'off') {
+              // Track key is a unique id for the track created by ImageConfigExtension/UserTracks
+              // which is a combination of submenu_key(node_id) and track name;
+              var track_key = panel.node_id + '_' + v.id;
+              config[track_key] = { renderer: v.renderer };
+            }
           }
         }
       }
@@ -711,7 +720,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   goToUserLocation: function() {
     var panel = this;
 
-    if($.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
+    if(!panel.localStoreObj && $.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
 
     panel.toggleBreadcrumb(panel.localStoreObj.userLocation.view ? '#'+panel.localStoreObj.userLocation.view : "#track-select");
     if(panel.localStoreObj.userLocation.tab){
@@ -1885,14 +1894,15 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
                 $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
                   if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
-                    dataClass = "_hasData";
-                    rel_dimension = relation.dimension;
-                    renderer = relation.renderer || panel.json.data[rel_dimension].renderer;
-                    boxState = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
-                    format  = relation.format || panel.elLk.lookup[dyItem].format;
-                    boxDataRender = renderer || panel.elLk.lookup[dyItem].renderer;
+                    dataClass      = "_hasData";
+                    rel_dimension  = relation.dimension;
+                    renderer       = relation.renderer || panel.json.data[rel_dimension].renderer;
+                    boxState       = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
+                    format         = relation.format || panel.elLk.lookup[dyItem].format;
+                    id             = relation.id;
+                    boxDataRender  = renderer || panel.elLk.lookup[dyItem].renderer;
                     boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-                    panel.localStoreObj[cellStoreObjKey][storeKey] = {"state": boxState, "renderer": boxDataRender, "format": format,"reset-state": boxState, "reset-renderer": boxDataRender};
+                    panel.localStoreObj[cellStoreObjKey][storeKey] = {"id": id, "state": boxState, "renderer": boxDataRender, "format": format,"reset-state": boxState, "reset-renderer": boxDataRender};
 
                     //setting count for all selection section
                     panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
