@@ -1019,9 +1019,6 @@ sub _load_2XGenomes {
   #Find the slice on the reference genome
   my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
 
-  #DEBUG this opens up connections to all the databases
-  # my $ref_genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('reference_species'));
-  
   #Get multiple alignment genomic_align_block adaptor
   my $multi_gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
 
@@ -1029,20 +1026,6 @@ sub _load_2XGenomes {
   my $ref_gas =[];
   my $multi_gab = $multi_gaba->fetch_by_dbID($genomic_align_block_id);
   my $all_epo_gas = $multi_gab->get_all_GenomicAligns;
-
-  # foreach my $ga (@$all_gas) {
-  #     if ($ga->genome_db->dbID == $ref_genome_db->dbID) {
-	#   push @$ref_gas, $ga;
-  #     }
-  # }
-  # 
-  # #Return if there is no reference sequence in this gab region
-  # if (scalar(@$ref_gas) == 0) {
-  #     print "No " . $self->param('reference_species') . " sequences found in genomic_align_block $genomic_align_block_id\n";
-  #     return;
-  # }
-  # 
-  # print "GAB $genomic_align_block_id num ref copies " . scalar(@$ref_gas) . "\n" if $self->debug;
 
   #Find the LASTZ_NET alignments between the reference species and each
   #2X genome.

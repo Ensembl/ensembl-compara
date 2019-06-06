@@ -155,7 +155,7 @@ sub _load_mlss_from_compara_db {
 sub _optimal_aln_for_genome_db {
     my ( $self, $all_alns_for_gdb, $non_ref_gdb_id ) = @_;
     
-    my $epo_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param_required('high_epo_db'));
+    my $epo_dba = $self->get_cached_compara_dba('base_location');
     
     my ($best_aln_mlss_id, $best_ref_gdb_id);
     my $max_coverage = 0;
@@ -171,6 +171,8 @@ sub _optimal_aln_for_genome_db {
         my $epo_genome_coverage = $epo_sth->fetchall_arrayref->[0]->[0];
         $epo_sth->execute('genome_length');
         my $epo_genome_length = $epo_sth->fetchall_arrayref->[0]->[0];
+                
+        next unless defined $epo_genome_length && $epo_genome_length > 0; # skip if the ref isn't in this epo db
                 
         # then, get the pairwise coverage
         my $pw_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($all_alns_for_gdb->{$ref_gdb_id}->{compara_db});
