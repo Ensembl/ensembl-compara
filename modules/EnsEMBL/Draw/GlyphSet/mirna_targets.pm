@@ -31,13 +31,8 @@ sub get_features {
   my $aa  =  $fg_db->get_AnalysisAdaptor;
   my $fsa = $fg_db->get_FeatureSetAdaptor;
   my $analysis = $aa->fetch_by_logic_name($logic_name);
-  my $fsets = $fsa->fetch_all_by_feature_class('mirna_target',undef,{
-    constraints => {
-      analyses => [$analysis],
-    },
-  });
   my $mirna_adaptor  = $fg_db->get_MirnaTargetFeatureAdaptor;
-  return $mirna_adaptor->fetch_all_by_Slice_FeatureSets($slice, $fsets);
+  return $mirna_adaptor->fetch_all_by_Slice($slice);
 }
 
 sub href {
