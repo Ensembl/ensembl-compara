@@ -420,10 +420,21 @@ sub get_alignments {
   my $species = $args->{species};
   my @selected_species;
 
-  my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
-  while (my($k,$v) = each (%$alignments_session_data)) {
-    next unless ($k =~ /species_${align}_(.+)/ && $v eq 'yes');
-    push @selected_species, $1 unless $1 =~ /^$species$/i;
+  my $alignments_session_data = $hub->viewconfig->get_alignments_selector_settings(\%session_data);
+  if (keys %$alignments_session_data) {
+    while (my($k,$v) = each (%$alignments_session_data)) {
+      next unless ($k =~ /species_${align}_(.+)/ && $v eq 'yes');
+      push @selected_species, $1 unless $1 =~ /^$species$/i;
+    }
+  }
+  else {
+    my $db_key    = $args->{cdb} =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
+    my $alignment = $hub->species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
+
+    @selected_species = keys %{$alignment->{'species'}};
+    my %session_data = map { sprintf('species_%s_%s', $align, lc) => 'yes' } keys %{$alignment->{'species'}};
+    $session_data{'align'} = $align;
+    $hub->viewconfig->save_alignments_selector_settings(\%session_data);
   }
 
   unshift @selected_species, lc $species unless $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} =~ /pairwise/;
