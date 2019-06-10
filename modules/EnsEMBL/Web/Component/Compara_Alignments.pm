@@ -38,7 +38,7 @@ sub _init {
   $self->mcacheable(0);
 
   my $alignments_session_data = $hub->session ? $hub->session->get_record_data({'type' => 'view_config', 'code' => 'alignments_selector'}) : {};
-  %{$self->{'viewconfig'}{$hub->type}->{_user_settings}} = (%{$self->{'viewconfig'}{$hub->type}->{_user_settings}}, %$alignments_session_data);
+  %{$self->{'viewconfig'}{$hub->type}->{'_user_settings'}} = (%{$self->{'viewconfig'}{$hub->type}->{'_user_settings'}}, %$alignments_session_data);
   $self->SUPER::_init(100);
 }
 

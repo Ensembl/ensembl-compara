@@ -173,7 +173,7 @@ sub share_accept {
         }
 
         if (my $aln_settings = $data->{$component_code}{'alignments_selector'}) {
-          $viewconfig->receive_alignments_selector_settings($aln_settings);
+          $viewconfig->save_alignments_selector_settings($aln_settings);
         }
 
       }
