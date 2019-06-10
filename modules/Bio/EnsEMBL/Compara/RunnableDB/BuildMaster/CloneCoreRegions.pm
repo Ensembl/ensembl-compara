@@ -75,14 +75,11 @@ sub run {
 
 sub write_output {
     my $self = shift;
-    my $json_file_path = $self->param('json_file');
-    # Remove ".json" from JSON file name to get species name
-    my $species = substr(basename($json_file_path), 0, -5);
     my $runCmd = $self->param_required('runCmd');
     # The clone script prints to stderr by default
     my $output = $runCmd->err;
     my ( $dbname ) = ( $output =~ /(\Q$ENV{USER}\E[^\n']+)/ );
-    $self->dataflow_output_id({'cloned_dbs' => ($species => $dbname)}, 1);
+    $self->dataflow_output_id({'cloned_dbs' => $dbname}, 1);
 }
 
 1;
