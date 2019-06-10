@@ -32,21 +32,23 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 # NOTE: this flag needs to be set to 0 before running the pipeline to create a new master database
-my test_core_dbs_created = 0;
+my $test_core_dbs_created = 0;
 
 my $curr_release = 97;
 # my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES --------------------------------
 
-if (!test_core_dbs_created) {
+if (! $test_core_dbs_created) {
     # The majority of core databases live on staging servers:
     Bio::EnsEMBL::Registry->load_registry_from_url(
             "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 }
 
+# FORMAT: species/alias name => [ host, db_name ]
+# NOTE: "species/alias name" has to match the ones in the JSON file(s) used to create the test core databases
 our $test_core_dbs = {
-    'anolis_carolensis'    => [ 'mysql-ens-compara-prod-6', 'test_anolis_carolensis' ],
+    'anolis_carolinensis'  => [ 'mysql-ens-compara-prod-6', 'test_anolis_carolinensis' ],
     'canis_familiaris'     => [ 'mysql-ens-compara-prod-6', 'test_canis_familiaris' ],
     'danio_rerio'          => [ 'mysql-ens-compara-prod-6', 'test_danio_rerio' ],
     'gallus_gallus'        => [ 'mysql-ens-compara-prod-6', 'test_gallus_gallus' ],
@@ -56,7 +58,7 @@ our $test_core_dbs = {
     'pan_troglodytes'      => [ 'mysql-ens-compara-prod-6', 'test_pan_troglodytes' ],
 };
 
-if (test_core_dbs_created) {
+if ($test_core_dbs_created) {
     add_test_core_dbs( $test_core_dbs );
 }
 
