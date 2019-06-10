@@ -1,0 +1,16 @@
+{
+    "homo_sapiens" : {
+        "core" : {
+            "regions" : [
+                ["15", 82988441, 84039842],
+                ["17",   137526,  1400222],
+                ["21", 17513043, 18485879],
+                ["Y",   5000226,  6249019]
+            ],
+            "adaptors" : [
+                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

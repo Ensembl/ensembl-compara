@@ -1,0 +1,16 @@
+{
+    "danio_rerio" : {
+        "core" : {
+            "regions" : [
+                ["5",  60919378, 63065912],
+                ["7",  12389866, 12909352],
+                ["10", 35059856, 37928125],
+                ["15", 24583682, 25153403]
+            ],
+            "adaptors" : [
+                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}
