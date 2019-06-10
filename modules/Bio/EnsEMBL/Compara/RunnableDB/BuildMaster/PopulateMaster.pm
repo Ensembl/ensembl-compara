@@ -1,0 +1,103 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2019] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+=pod
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::PopulateMaster
+
+=head1 SYNOPSIS
+
+Runs the script 'clone_core_database.pl' (located at 'ensembl-test/scripts/' by default)
+over a given JSON configuration file with the regions of data to clone.
+
+Requires several inputs:
+    'clone_data_regions' : full path to the clone script 'clone_core_database.pl'
+    'reg_conf'  : full path to the registry configuration file
+    'dst_host'  : host name where the new core database will be created
+    'dst_port'  : host port
+    'json_file' : JSON configuration file with the regions of data to clone
+
+The dataflow output writes the new core database's name into the accumulator named 'cloned_db'.
+
+=cut
+
+package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::PopulateMaster;
+
+use warnings;
+use strict;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Data::Dumper;
+use File::Slurp;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::param_defaults},
+    }
+}
+
+sub fetch_input {
+    my $self = shift;
+    # my $cloned_db = $self->param_required('cloned_db');
+    # my $dst_host = $self->param_required('dst_host');
+    # my $dst_port = $self->param_required('dst_port');
+    # my $json_file_path = $self->param_required('json_file');
+    # my $cmd = "perl $clone_script -registry $registry_conf -dest_host $dst_host -dest_port $dst_port -dest_user ensadmin -dest_pass $ENV{'ENSADMIN_PSW'} -json $json_file_path";
+    # $self->param('cmd', $cmd);
+}
+
+sub run {
+    my $self = shift;
+    my $reg_conf = $self->param_required('reg_conf');
+    my $rename_db_script = $self->param_required('rename_db');
+    require $reg_conf;
+    my $cloned_dbs = $self->param_required('cloned_dbs');
+    foreach my $species (keys %$cloned_dbs) {
+        my $cloned_dbname = $cloned_dbs->{$species};
+        my ( $host, $prod_dbname ) = @{ $test_core_dbs->{$species} };
+        print $species . ": " . $cloned_dbname . " - " . $prod_dbname . "\n";
+        my $cmd = "$rename_db_script $host-ensadmin $cloned_dbname $prod_dbname";
+        #$self->run_command($cmd, {die_on_failure => 1});
+        print $cmd . "\n";
+    }
+
+    my $content = read_file($reg_conf);
+    # Set the flag to 1 as the test core databases have been created
+    $content =~ s/my test_core_dbs_created = 0;/my test_core_dbs_created = 1;/;
+    # Save changes back in the registry configuration file
+    open(my $file, '>', $reg_conf) or die "Could not open file '$reg_conf' $!";
+    print $file $content;
+    close $file;
+}
+
+sub write_output {
+    my $self = shift;
+    # my $runCmd = $self->param_required('runCmd');
+    # # The clone script prints to the standard error by default
+    # my $output = $runCmd->err;
+    # my ($dbname) = ($output =~ /(\Q$ENV{USER}\E[^\n']+)/);
+    # $self->dataflow_output_id({'cloned_db' => $dbname}, 1);
+}
+
+1;
