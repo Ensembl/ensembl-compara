@@ -1,0 +1,16 @@
+{
+    "anolis_carolinensis" : {
+        "core" : {
+            "regions" : [
+                ["3",          153355496, 153758173],
+                ["GL343370.1",    105275,    295118],
+                ["GL343740.1",     65557,    185596],
+                ["GL343836.1",     51152,    166047]
+            ],
+            "adaptors" : [
+                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

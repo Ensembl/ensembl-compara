@@ -1,0 +1,16 @@
+{ 
+   "pan_troglodytes" : {
+        "core" : {
+            "regions" : [
+                ["15", 63941980, 65003669],
+                ["17",    32787,  1392261],
+                ["21",  4005750,  4909596],
+                ["Y",  15096978, 16471274]
+            ],
+            "adaptors" : [
+                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}
