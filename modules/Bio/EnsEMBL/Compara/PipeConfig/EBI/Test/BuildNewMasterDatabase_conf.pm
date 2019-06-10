@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -host <host_master_db> -port <host_port>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -dst_host <host_master_db> -dst_port <host_port>
 
     #1. clone data regions from JSON files
     #2. create a new master_db
@@ -65,8 +65,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'division'  => 'test',
-        'input' => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
+        'division' => 'test',
+        'input'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
     };
 }
 
