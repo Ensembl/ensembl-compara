@@ -525,13 +525,12 @@ sub _add_trackhub_tracks {
         $matrix_params{'url'}   = $options{'matrix_url'}; 
         ## Build metadata for matrix structure
         ## Do dimensions first as they're fiddly!
-        my $dimensions = $parent->data->{'dimensions'};
+        my $dimensions = $config->{'dimensions'};
         my $dim_lookup = {};
         while (my($k, $v) = each (%{$dimensions||{}})) {
           $matrix_params{'dimensions'}{$k} = {'key' => $v};
           $dim_lookup->{$v} = $k;
         }
-        delete($parent->data->{'dimensions'});
         $matrix_params{'dimLookup'} = $dim_lookup;
         while (my ($k, $v) = each (%{$parent->data})) {
           if ($k eq 'shortLabel') {
