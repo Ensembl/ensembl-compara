@@ -39,7 +39,7 @@ The dataflow output writes the new core database's name into the accumulator nam
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabases;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabase;
 
 use warnings;
 use strict;
@@ -59,46 +59,24 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-    # my $reg_conf = $self->param_required('reg_conf');
-    # my $rename_db_script = $self->param_required('rename_db');
-    # my $cloned_dbs = $self->param_required('cloned_dbs');
-    # my $dst_port = $self->param_required('dst_port');
-    # my $json_file_path = $self->param_required('json_file');
-    # my $cmd = "perl $clone_script -registry $registry_conf -dest_host $dst_host -dest_port $dst_port -dest_user ensadmin -dest_pass $ENV{'ENSADMIN_PSW'} -json $json_file_path";
-    # $self->param('cmd', $cmd);
+    my $script = $self->require_executable('rename_db');
+    my $reg_conf = $self->param_required('reg_conf');
+    my $species = $self->param_required('species');
+    #
+    my $cloned_dbname = $self->param_required('cloned_dbname');
+    #
+    our $test_core_dbs;
+    require $reg_conf;
+    my ( $host, $prod_dbname ) = @{ $test_core_dbs->{$species} };
+    my $port = get_port($host);
+    #
+    my $cmd = "$script $host-ensadmin $cloned_dbname $prod_dbname";
+    $self->param('cmd', $cmd);
 }
 
 sub run {
     my $self = shift;
-    my $reg_conf = $self->param_required('reg_conf');
-
-    my $content = read_file($reg_conf);
-    # Set the flag to 1 as the test core databases have been created
-    $content =~ s/my \$test_core_dbs_created = 0;/my \$test_core_dbs_created = 1;/;
-    # Save changes back in the registry configuration file
-    open(my $file, '>', $reg_conf) or die "Could not open file '$reg_conf' $!";
-    print $file $content;
-    close $file;
-
-    my $rename_db_script = $self->param_required('rename_db');
-    my $cloned_dbs = $self->param_required('cloned_dbs');
-    our $test_core_dbs;
-    require $reg_conf;
-    foreach my $species (keys %{ $test_core_dbs }) {
-        my ( $host, $prod_dbname ) = @{ $test_core_dbs->{$species} };
-        my $cloned_dbname = $cloned_dbs->{$species};
-        my $cmd = "$rename_db_script $host-ensadmin $cloned_dbname $prod_dbname";
-        $self->run_command($cmd, {die_on_failure => 1});
-    }
-}
-
-sub write_output {
-    my $self = shift;
-    # my $runCmd = $self->param_required('runCmd');
-    # # The clone script prints to the standard error by default
-    # my $output = $runCmd->err;
-    # my ($dbname) = ($output =~ /(\Q$ENV{USER}\E[^\n']+)/);
-    # $self->dataflow_output_id({'cloned_db' => $dbname}, 1);
+    $self->param('runCmd', $self->run_command($self->param_required('cmd'), {die_on_failure => 1}));
 }
 
 1;
