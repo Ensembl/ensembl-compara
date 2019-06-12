@@ -61,8 +61,6 @@ sub fetch_input {
     my $self = shift;
     my $script = $self->require_executable('clone_core_db');
     my $reg_conf = $self->param_required('reg_conf');
-    # my $dst_host = $self->param_required('dst_host');
-    # my $dst_port = $self->param_required('dst_port');
     my $json_file_path = $self->param_required('json_file');
     my $species = $self->param_required('species');
     #
@@ -86,7 +84,7 @@ sub write_output {
     # The clone script prints to stderr by default
     my $output = $runCmd->err;
     my ( $dbname ) = ( $output =~ /(\Q$ENV{USER}\E[^\n']+)/ );
-    $self->dataflow_output_id({'cloned_dbs' => $dbname}, 1);
+    $self->dataflow_output_id({'cloned_dbname' => $dbname}, 1);
 }
 
 1;

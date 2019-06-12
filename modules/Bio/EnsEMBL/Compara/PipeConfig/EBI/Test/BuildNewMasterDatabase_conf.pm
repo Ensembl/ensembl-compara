@@ -38,7 +38,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
-    -dst_host <host_master_db> -dst_port <host_port>
 
     #1. clone data regions from JSON files
     #2. create a new master_db
