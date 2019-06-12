@@ -37,7 +37,8 @@ Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -input <path_to_regions_file(s)> -dst_host <host_master_db> -dst_port <host_port> -division <division>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -input <path_to_regions_file(s)> -division <division>
+    -dst_host <host_master_db> -dst_port <host_port>
 
     #1. clone data regions from JSON file(s) (one per species)
     #2. create a new master_db
@@ -71,8 +72,8 @@ sub default_options {
         'pipeline_name' => 'build_master_for_' . $self->o('division'),
         'work_dir'      => $self->o('pipeline_dir'),
         'backups_dir'   => $self->o('work_dir') . '/backups/',
-        'dst_host'      => $self->o('dst_host'),
-        'dst_port'      => $self->o('dst_port'),
+        # 'dst_host'      => $self->o('dst_host'),
+        # 'dst_port'      => $self->o('dst_port'),
 
         'master_db'   => 'compara_master',
         # 'taxonomy_db' => 'ncbi_taxonomy',
@@ -119,8 +120,8 @@ sub pipeline_analyses {
                 'inputcmd' => 'find #input# -type f -name "*.json"',
             },
             -flow_into  => {
-                '2->A' => { 'clone_core_regions' => {'json_file' => '#_0#'} },
-                            # 'create_new_master' => {} },
+                '2->A' => { 'clone_core_regions' => {'json_file' => '#_0#'},
+                            'create_new_master'  => {} },
                 'A->1' => [ 'rename_test_databases' ],
             },
         },
@@ -130,32 +131,32 @@ sub pipeline_analyses {
             -parameters => {
                 'clone_core_db' => $self->o('clone_core_db'),
                 'reg_conf'      => $self->o('reg_conf'),
-                'dst_host'      => $self->o('dst_host'),
-                'dst_port'      => $self->o('dst_port'),
+                # 'dst_host'      => $self->o('dst_host'),
+                # 'dst_port'      => $self->o('dst_port'),
                 # Get the species name from JSON file path
                 'species'       => '#expr( substr(#json_file#, rindex(#json_file#, "/") + 1, -5) )expr#',
             },
             # Restrict the number of running workers to one at a time to avoid overload the server
             -analysis_capacity => 1,
             -rc_name   => '500Mb_job',
-            -flow_into => [ '?accu_name=cloned_dbs&accu_address={species}&accu_input_variable=dbname' ],
+            -flow_into => [ '?accu_name=cloned_dbs&accu_address={species}' ],
         },
 
-        # {   -logic_name => 'create_new_master',
-        #     -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        #     -parameters => {
-        #         'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# -sql "CREATE DATABASE"',
-        #     },
-        #     -flow_into => [ 'load_schema_master' ],
-        # },
+        {   -logic_name => 'create_new_master',
+            -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# -sql "CREATE DATABASE"',
+            },
+            -flow_into => [ 'load_schema_master' ],
+        },
 
-        # {   -logic_name => 'load_schema_master',
-        #     -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-        #     -parameters => {
-        #         'schema_file'  => $self->o('schema_file'),
-        #         'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# < #schema_file#',
-        #     },
-        # },
+        {   -logic_name => 'load_schema_master',
+            -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'schema_file'  => $self->o('schema_file'),
+                'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# < #schema_file#',
+            },
+        },
 
         {   -logic_name => 'rename_test_databases',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabases',
