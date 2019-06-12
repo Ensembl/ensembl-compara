@@ -158,7 +158,7 @@ add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a re
 #     -dbname => "ensembl_ancestral_$curr_release",
 # );
 
-NCBI taxonomy database (also maintained by production team):
+# NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
     -host => 'mysql-ens-sta-1.ebi.ac.uk',
     -user => 'ensro',
