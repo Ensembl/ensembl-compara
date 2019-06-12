@@ -173,8 +173,8 @@ sub feature_content {
   } else {
     if ($source eq 'LOVD') {
       # http://varcache.lovd.nl/redirect/hg38.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
-       my $tmp_chr_end = ($chr_start>$chr_end) ? $chr_start+1 : $chr_end;
-       my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$chr:$chr_start\_$tmp_chr_end($name)" });
+       my $position = ($chr_start>$chr_end) ? "$chr_end\_$chr_start" : "$chr_start\_$chr_end";
+       my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$chr:$position($name)" });
        $self->add_entry({
          label_html => $external_url
        });
