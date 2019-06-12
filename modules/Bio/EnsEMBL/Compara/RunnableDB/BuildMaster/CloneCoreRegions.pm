@@ -61,9 +61,16 @@ sub fetch_input {
     my $self = shift;
     my $script = $self->require_executable('clone_core_db');
     my $reg_conf = $self->param_required('reg_conf');
-    my $dst_host = $self->param_required('dst_host');
-    my $dst_port = $self->param_required('dst_port');
+    # my $dst_host = $self->param_required('dst_host');
+    # my $dst_port = $self->param_required('dst_port');
     my $json_file_path = $self->param_required('json_file');
+    my $species = $self->param_required('species');
+    #
+    our $test_core_dbs;
+    require $reg_conf;
+    my ( $dst_host, $prod_dbname ) = @{ $test_core_dbs->{$species} };
+    my $dst_port = get_port($dst_host);
+    #
     my $cmd = "perl $script -registry $reg_conf -dest_host $dst_host -dest_port $dst_port -dest_user ensadmin -dest_pass $ENV{'ENSADMIN_PSW'} -json $json_file_path";
     $self->param('cmd', $cmd);
 }
