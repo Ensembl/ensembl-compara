@@ -48,14 +48,14 @@ if (! $test_core_dbs_created) {
 # FORMAT: species/alias name => [ host, db_name ]
 # NOTE: "species/alias name" has to match the ones in the JSON file(s) used to create the test core databases
 our $test_core_dbs = {
-    'anolis_carolinensis'  => [ 'mysql-ens-compara-prod-6', 'test_anolis_carolinensis' ],
-    'canis_familiaris'     => [ 'mysql-ens-compara-prod-6', 'test_canis_familiaris' ],
-    'danio_rerio'          => [ 'mysql-ens-compara-prod-6', 'test_danio_rerio' ],
-    'gallus_gallus'        => [ 'mysql-ens-compara-prod-6', 'test_gallus_gallus' ],
-    'homo_sapiens'         => [ 'mysql-ens-compara-prod-6', 'test_homo_sapiens' ],
-    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-6', 'test_lepisosteus_oculatus' ],
-    'mus_musculus'         => [ 'mysql-ens-compara-prod-6', 'test_mus_musculus' ],
-    'pan_troglodytes'      => [ 'mysql-ens-compara-prod-6', 'test_pan_troglodytes' ],
+    'anolis_carolinensis'  => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_anolis_carolinensis' ],
+    'canis_familiaris'     => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_canis_familiaris' ],
+    'danio_rerio'          => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_danio_rerio' ],
+    'gallus_gallus'        => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_gallus_gallus' ],
+    'homo_sapiens'         => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_homo_sapiens' ],
+    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_lepisosteus_oculatus' ],
+    'mus_musculus'         => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_mus_musculus' ],
+    'pan_troglodytes'      => [ 'mysql-ens-compara-prod-6', 'jalvarez_test_pan_troglodytes' ],
 };
 
 if ($test_core_dbs_created) {
@@ -158,15 +158,15 @@ add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a re
 #     -dbname => "ensembl_ancestral_$curr_release",
 # );
 
-# NCBI taxonomy database (also maintained by production team):
-# Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
-#     -host => 'mysql-ens-sta-1.ebi.ac.uk',
-#     -user => 'ensro',
-#     -port => 4519,
-#     -group => 'taxonomy',
-#     -species => 'ncbi_taxonomy',
-#     -dbname => 'ncbi_taxonomy',
-# );
+NCBI taxonomy database (also maintained by production team):
+Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
+    -host => 'mysql-ens-sta-1.ebi.ac.uk',
+    -user => 'ensro',
+    -port => 4519,
+    -group => 'taxonomy',
+    -species => 'ncbi_taxonomy',
+    -dbname => 'ncbi_taxonomy',
+);
 
 # ------------------------------------------------------------------------------
 
