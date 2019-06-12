@@ -239,6 +239,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var finalObj = {};
     var dimLabels = {};
     finalObj.extra_dimensions = []; //it needs to be in the json and empty so that code know there is no extra dimensions
+    var storeObj = panel.getLocalStorage();
+    var updateStore = false;
 
     //Populating the dimensions and data for each dimension
     if($.isEmptyObject(finalObj.dimensions)) {
@@ -258,17 +260,41 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var formats = [];
       //getting dimX data and the relationship
       $.each(panel.rawJSON.tracks, function(i, track){
-        var state = track.display;
-        var keyX = track.subGroups[dimX];
+        var state, renderer;
+        if(track.display && track.display != "off") {
+          state     =  "on"; //track.display is the value set for this specific track in trackhub
+          renderer  =  track.display; //track.default_display is the default renderer for this track
+        } else {
+          state     =  "off"; //track.display is the value set for this specific track in trackhub
+          renderer  =  track.default_display; //track.default_display is the default renderer for this track
+        }
+
+        var keyX      = track.subGroups[dimX];
         formats.push(track.format.toLowerCase());
 
         $.each(track.subGroups, function(dimension, trackName){
           if(dimension === dimX) { return; }
 
+          if(state === "on" && $.isEmptyObject(storeObj["matrix"])) {
+            updateStore = true;
+            if($.isEmptyObject(panel.localStoreObj["dx"])) {
+              panel.localStoreObj["dx"] = {};
+              panel.localStoreObj["dx"][keyX] = 1;
+            }else {
+              panel.localStoreObj["dx"][keyX] = 1;
+            }
+            if($.isEmptyObject(panel.localStoreObj["dy"])) {
+              panel.localStoreObj["dy"] = {};
+              panel.localStoreObj["dy"][trackName] = 1;
+            }else {
+              panel.localStoreObj["dy"][trackName] = 1;
+            }
+          }
+
           if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": track.default_display, "format": track.format.toLowerCase() }]
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() }]
           } else {
-            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": track.default_display, "format": track.format.toLowerCase() });
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
           }
         });
       });
@@ -277,7 +303,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
       finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };
     }
-
+    if(updateStore) {
+      panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
+      panel.setLocalStorage();
+    }
     console.log(finalObj);
     panel.json = finalObj;
   },
@@ -720,7 +749,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   goToUserLocation: function() {
     var panel = this;
 
-    if(!panel.localStoreObj && $.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
+    if(!panel.localStoreObj || $.isEmptyObject(panel.localStoreObj.userLocation)) { return; }
 
     panel.toggleBreadcrumb(panel.localStoreObj.userLocation.view ? '#'+panel.localStoreObj.userLocation.view : "#track-select");
     if(panel.localStoreObj.userLocation.tab){
