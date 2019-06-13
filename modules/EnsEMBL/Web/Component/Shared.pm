@@ -244,7 +244,7 @@ sub transcript_table {
        { key => 'biotype',    sort => 'html',    label => 'Biotype', title => encode_entities('<a href="/info/genome/genebuild/biotypes.html" target="_blank">Transcript biotype</a>'), align => 'left', class => '_ht'},
     );
 
-    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
+    push @columns, { key => 'ccds', sort => 'html', label => 'CCDS', class => '_ht' } if $species =~ /^Homo_sapiens|Mus_musculus/;
     my @rows;
    
     my %extra_links = (
@@ -363,7 +363,7 @@ sub transcript_table {
     foreach my $k (sort { $extra_links{$a}->{'order'} cmp
                           $extra_links{$b}->{'order'} } keys %any_extras) {
       my $x = $extra_links{$k};
-      push @columns, { key => $k, sort => 'html', title => $x->{'name'}, class => '_ht'};
+      push @columns, { key => $k, sort => 'html', label => $x->{'name'}, class => '_ht'};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
       push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
