@@ -1366,7 +1366,7 @@ sub add_oligo_probes {
     my $key_3 = $key_2;
     $key_2    =~ s/:/__/;
 
-    $menu->append_child($self->create_track_node("oligo_${key}_" . uc $key_2, $key_3, {
+    $menu->append_child($self->create_track_node("oligo_${key}_" . $key_2, $key_3, {
       glyphset    => '_oligo',
       db          => $key,
       sub_type    => 'oligo',

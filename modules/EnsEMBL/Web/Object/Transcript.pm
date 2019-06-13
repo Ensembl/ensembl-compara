@@ -1181,6 +1181,7 @@ sub sort_oligo_data {
         'ftype'  => 'ProbeFeature',
         'fdb'    => 'funcgen',
         'ptype'  => $p_type, 
+        'array'  => $array,
       });
       
       $text .= '<p>';

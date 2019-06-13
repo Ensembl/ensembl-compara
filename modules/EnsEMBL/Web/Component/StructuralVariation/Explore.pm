@@ -46,9 +46,9 @@ sub content {
     $gt_count = $avail->{'has_transcripts'};
   }
 
-  if ($avail->{'has_transcripts'} || $avail->{'has_phenotypes'}) {
+  if ($avail->{'has_phenotypes'}) {
     $pheno_url = $hub->url({'action' => 'Phenotype'});
-    $pheno_count = $avail->{'has_phenotypes'} if ($avail->{'has_phenotypes'});
+    $pheno_count = $avail->{'has_phenotypes'};
   }
 
   if ($avail->{'has_supporting_structural_variation'}) {
