@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -dst_host <host> -dst_port <port>
 
     #1. clone data regions from JSON files
     #2. create a new master_db
@@ -54,6 +54,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_con
 
 use strict;
 use warnings;
+use File::Spec;
 
 use Bio::EnsEMBL::Hive::Version 2.4;
 
@@ -67,6 +68,7 @@ sub default_options {
 
         'division' => 'test',
         'input'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
+        'reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_reg_pre_test_conf.pl'),
     };
 }
 
