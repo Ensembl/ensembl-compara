@@ -295,14 +295,20 @@ sub _create_RegulatoryFactor {
       $self->problem('fatal', 'No identifier', "No feature set provided.");
       return undef;
     }
-    my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
-    my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
-    ## Defensive programming against API barfs
-    if (ref($ftype)) {
-      $features = $fset->get_Features_by_FeatureType($ftype);
+    if ($self->param('fset') =~ /TarBase/) {
+      my $mirna_adaptor = $fg_db->get_MirnaTargetFeatureAdaptor;
+      $features = $mirna_adaptor->fetch_all();
     }
     else {
-      warn ">>> UNKNOWN FEATURE TYPE";
+      my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
+      my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
+      ## Defensive programming against API barfs
+      if (ref($ftype)) {
+        $features = $fset->get_Features_by_FeatureType($ftype);
+      }
+      else {
+        warn ">>> UNKNOWN FEATURE TYPE";
+      }
     }
   }
 

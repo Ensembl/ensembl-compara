@@ -43,13 +43,21 @@ sub convert_to_drawing_parameters {
   my $results = [];
 
   foreach my $reg (@$data) {
-    my @stable_ids;
-    my $gene_links;
-    my $db_ent = $reg->get_all_DBEntries;
-    foreach ( @{ $db_ent} ) {
-      push @stable_ids, $_->primary_id;
-      my $url = $self->hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_ids[-1] });
-      $gene_links  .= qq(<a href="$url">$stable_ids[-1]</a>);
+    my ($gene_links, @stable_ids);
+    if (ref($reg) =~ /Mirna/) {
+      my $stable_id = $reg->gene_stable_id;
+      @stable_ids   = ($stable_id);
+    }
+    else {
+      my $db_ent = $reg->get_all_DBEntries;
+      foreach ( @{ $db_ent} ) {
+        push @stable_ids, $_->primary_id;
+      }
+    }
+
+    foreach my $stable_id (@stable_ids) {
+      my $url = $self->hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $stable_id });
+      $gene_links .= qq(<a href="$url">$stable_id</a>);
     }
 
     my @extra_results = $reg->analysis->description;
