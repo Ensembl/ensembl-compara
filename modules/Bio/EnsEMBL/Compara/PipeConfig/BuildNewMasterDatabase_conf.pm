@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -input <path_to_regions_file(s)> -division <division>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -input <path_to_regions_file(s)> -division <division> -dst_host <host> -dst_port <port>
 
     #1. clone data regions from JSON file(s) (one per species)
     #2. create a new master_db
@@ -71,6 +71,8 @@ sub default_options {
         'pipeline_name' => 'build_master_for_' . $self->o('division'),
         'work_dir'      => $self->o('pipeline_dir'),
         'backups_dir'   => $self->o('work_dir') . '/backups/',
+        'dst_host'      => $self->o('dst_host'),
+        'dst_port'      => $self->o('dst_port'),
 
         'master_db'   => 'compara_master',
         # 'taxonomy_db' => 'ncbi_taxonomy',
@@ -79,7 +81,7 @@ sub default_options {
         # 'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
 
         'clone_core_db' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
-        'rename_db' => '/nfs/software/ensembl/mysql-cmds/ensembl/bin/rename_db',
+        # 'rename_db' => '/nfs/software/ensembl/mysql-cmds/ensembl/bin/rename_db',
     };
 }
 
@@ -89,7 +91,7 @@ sub pipeline_create_commands {
         # Inherit creation of database, hive tables and compara tables
         @{$self->SUPER::pipeline_create_commands},
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
+        # $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
     ];
 }
 
@@ -128,27 +130,27 @@ sub pipeline_analyses {
             -parameters => {
                 'clone_core_db' => $self->o('clone_core_db'),
                 'reg_conf'      => $self->o('reg_conf'),
+                'dst_host'      => $self->o('dst_host'),
+                'dst_port'      => $self->o('dst_port'),
                 # Get species name from JSON file path
                 'species'       => '#expr( substr(#json_file#, rindex(#json_file#, "/") + 1, -5) )expr#',
             },
             # Restrict the number of running workers to one at a time to avoid overload the server
-            -analysis_capacity => 1,
+            -analysis_capacity => 4,
             -rc_name   => '500Mb_job',
-            -flow_into => {
-                1 => { 'rename_test_database' => INPUT_PLUS(), }
-            },
+            -flow_into => [ '?accu_name=cloned_dbs&accu_address={species}' ],
         },
 
-        {   -logic_name => 'rename_test_database',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabase',
-            -parameters => {
-                'rename_db' => $self->o('rename_db'),
-                'reg_conf'  => $self->o('reg_conf'),
-                'species'   => $self->o('species'),
-            },
-            # Restrict the number of running workers to one at a time to avoid overload the server
-            -analysis_capacity => 1,
-        },
+        # {   -logic_name => 'rename_test_database',
+        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabase',
+        #     -parameters => {
+        #         'rename_db' => $self->o('rename_db'),
+        #         'reg_conf'  => $self->o('reg_conf'),
+        #         'species'   => $self->o('species'),
+        #     },
+        #     # Restrict the number of running workers to one at a time to avoid overload the server
+        #     -analysis_capacity => 1,
+        # },
 
         {   -logic_name => 'create_new_master',
             -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
@@ -171,6 +173,8 @@ sub pipeline_analyses {
         #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::PopulateMasterDatabase',
         #     -parameters => {
         #         'reg_conf'  => $self->o('reg_conf'),
+        #         'dst_host'  => $self->o('dst_host'),
+        #         'dst_port'  => $self->o('dst_port'),
         #     },
         #     # -flow_into  => [ 'rm_empty_tables_master' ],
         },
