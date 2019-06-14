@@ -25,7 +25,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory
 
 =head1 SYNOPSIS
 
-
+Returns the list of species/genomes to add to the master database from the core
+databases in the registry file
 
 =cut
 

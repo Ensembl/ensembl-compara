@@ -197,7 +197,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'update_genome_from_metadata_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory',
             -parameters => {
                 'list_genomes_script'   => $self->o('list_genomes_script'),
                 'report_genomes_script' => $self->o('report_genomes_script'),

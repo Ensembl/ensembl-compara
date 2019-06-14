@@ -21,15 +21,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFactory
+Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory
 
 =head1 SYNOPSIS
 
-
+Returns the list of species/genomes to update, rename and retire in the master
+database, obtained from ensembl-metadata
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFactory;
+package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory;
 
 use warnings;
 use strict;
