@@ -27,7 +27,7 @@ my $curr_release = 97;
 # ---------------------- TEST CORE DATABASES -----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
-my $test_core_dbs;
+my $test_core_dbs = {<dbs_hash>};
 
 add_test_core_dbs( $test_core_dbs );
 

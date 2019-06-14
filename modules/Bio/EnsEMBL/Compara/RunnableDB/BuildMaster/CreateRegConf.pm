@@ -47,6 +47,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
 use File::Slurp;
+use File::Basename;
 use File::Spec;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -60,11 +61,11 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-    #
     my $dst_host = $self->param_required('dst_host');
     my $cloned_dbs = $self->param_required('cloned_dbs');
-    #
-    my $dbs_hash = '';
+    # Create the cloned core databases hash with the format:
+    #     species/alias name => [ host, db_name ]
+    my $dbs_hash = "\n";
     foreach my $species (keys %{ $cloned_dbs }) {
         my $dbname = $cloned_dbs->{$species};
         $dbs_hash .= "    '$species' => [ '$dst_host', '$dbname' ],\n";
@@ -77,11 +78,14 @@ sub run {
     my $reg_conf_tmpl = $self->param_required('reg_conf_tmpl');
     my $work_dir = $self->param_required('work_dir');
     my $dbs_hash = $self->param_required('dbs_hash');
-    #
+    # Find the spot (labelled "<dbs_hash>") where the cloned core databases must
+    # be stored and add the required information
     my $content = read_file($reg_conf_tmpl);
-    $content =~ s/my \$test_core_dbs;/my \$test_core_dbs = {\n$dbs_hash};/;
-    #
-    my ( $reg_conf_fname ) = ( $reg_conf_tmpl =~ s/_tmpl// );
+    $content =~ s/<dbs_hash>/$dbs_hash/;
+    # Remove "_tmpl" suffix from registry conf template filename
+    my ( $reg_conf_fname, $dirs, $suffix ) = fileparse($reg_conf_tmpl);
+    $reg_conf_fname =~ s/_tmpl//;
+    # Create the new registry conf file
     my $reg_conf = File::Spec->join($work_dir, $reg_conf_fname);
     open(my $file, '>', $reg_conf) or die "Could not open file '$reg_conf' $!";
     print $file $content;

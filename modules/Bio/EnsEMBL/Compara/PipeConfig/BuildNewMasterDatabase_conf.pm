@@ -102,8 +102,9 @@ sub pipeline_wide_parameters {
         # Inherit anything from the base class
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'master_db'  => $self->o('master_db'),
-        'division'   => $self->o('division'),
+        'master_db'     => $self->o('master_db'),
+        'division'      => $self->o('division'),
+        'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
     };
 }
 
@@ -160,6 +161,7 @@ sub pipeline_analyses {
         {   -logic_name => 'create_reg_conf',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf',
             -parameters => {
+                'work_dir'      => $self->o('work-dir'),
                 'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
                 'dst_host'      => $self->o('dst_host'),
             },
