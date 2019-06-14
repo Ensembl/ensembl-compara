@@ -66,9 +66,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'division' => 'test',
-        'input'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
-        'reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_reg_pre_test_conf.pl'),
+        'division'      => 'test',
+        'input'         => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
+        'reg_conf'      => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_reg_pre_test_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_test_conf_tmpl.pl'),
     };
 }
