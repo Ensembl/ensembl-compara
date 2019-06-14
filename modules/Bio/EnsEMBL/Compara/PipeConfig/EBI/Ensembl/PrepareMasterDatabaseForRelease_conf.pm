@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease_conf  -release <release>
 
 =head1 AUTHORSHIP
 
