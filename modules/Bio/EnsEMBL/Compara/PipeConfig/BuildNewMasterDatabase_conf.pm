@@ -91,7 +91,7 @@ sub pipeline_create_commands {
         # Inherit creation of database, hive tables and compara tables
         @{$self->SUPER::pipeline_create_commands},
 
-        # $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir']),
     ];
 }
 
@@ -121,7 +121,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 '2->A' => { 'clone_core_regions' => {'json_file' => '#_0#'},
                             'create_new_master'  => {} },
-                'A->1' => [ 'populate_master' ],
+                'A->1' => [ 'create_reg_conf' ],
             },
         },
 
@@ -137,46 +137,33 @@ sub pipeline_analyses {
             },
             # Restrict the number of running workers to one at a time to avoid overload the server
             -analysis_capacity => 4,
-            -rc_name   => '500Mb_job',
-            -flow_into => [ '?accu_name=cloned_dbs&accu_address={species}' ],
+            -rc_name    => '500Mb_job',
+            -flow_into  => [ '?accu_name=cloned_dbs&accu_address={species}' ],
         },
 
-        # {   -logic_name => 'rename_test_database',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabase',
-        #     -parameters => {
-        #         'rename_db' => $self->o('rename_db'),
-        #         'reg_conf'  => $self->o('reg_conf'),
-        #         'species'   => $self->o('species'),
-        #     },
-        #     # Restrict the number of running workers to one at a time to avoid overload the server
-        #     -analysis_capacity => 1,
-        # },
-
         {   -logic_name => 'create_new_master',
-            -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# -sql "CREATE DATABASE"',
             },
-            -flow_into => [ 'load_schema_master' ],
+            -flow_into  => [ 'load_schema_master' ],
         },
 
         {   -logic_name => 'load_schema_master',
-            -module => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'schema_file'  => $self->o('schema_file'),
-                'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# < #schema_file#',
+                'schema_file' => $self->o('schema_file'),
+                'cmd'         => 'db_cmd.pl $COMPARA_REG #master_db# < #schema_file#',
             },
         },
 
-        {   -logic_name => 'populate_master',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::PopulateMasterDatabase',
-        #     -parameters => {
-        #         'reg_conf'  => $self->o('reg_conf'),
-        #         'dst_host'  => $self->o('dst_host'),
-        #         'dst_port'  => $self->o('dst_port'),
-        #     },
-        #     # -flow_into  => [ 'rm_empty_tables_master' ],
+        {   -logic_name => 'create_reg_conf',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf',
+            -parameters => {
+                'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
+                'dst_host'      => $self->o('dst_host'),
+            },
+            # -flow_into  => [ 'rm_empty_tables_master' ],
         },
 
         # {   -logic_name => 'rm_empty_tables_master',

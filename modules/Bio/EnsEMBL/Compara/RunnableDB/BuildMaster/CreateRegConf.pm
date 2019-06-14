@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::PopulateMaster
+Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf
 
 =head1 SYNOPSIS
 
@@ -39,7 +39,7 @@ The dataflow output writes the new core database's name into the accumulator nam
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::RenameTestDatabase;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf;
 
 use warnings;
 use strict;
@@ -47,6 +47,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
 use File::Slurp;
+use File::Spec;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -59,24 +60,36 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-    my $script = $self->require_executable('rename_db');
-    my $reg_conf = $self->param_required('reg_conf');
-    my $species = $self->param_required('species');
     #
-    my $cloned_dbname = $self->param_required('cloned_dbname');
+    my $dst_host = $self->param_required('dst_host');
+    my $cloned_dbs = $self->param_required('cloned_dbs');
     #
-    our $test_core_dbs;
-    require $reg_conf;
-    my ( $host, $prod_dbname ) = @{ $test_core_dbs->{$species} };
-    my $port = get_port($host);
-    #
-    my $cmd = "$script $host-ensadmin $cloned_dbname $prod_dbname";
-    $self->param('cmd', $cmd);
+    my $dbs_hash = '';
+    foreach my $species (keys %{ $cloned_dbs }) {
+        my $dbname = $cloned_dbs->{$species};
+        $dbs_hash .= "    '$species' => [ '$dst_host', '$dbname' ],\n";
+    }
+    $self->param('dbs_hash', $dbs_hash);
 }
 
 sub run {
     my $self = shift;
-    $self->param('runCmd', $self->run_command($self->param_required('cmd'), {die_on_failure => 1}));
+    my $reg_conf_tmpl = $self->param_required('reg_conf_tmpl');
+    my $work_dir = $self->param_required('work_dir');
+    my $dbs_hash = $self->param_required('dbs_hash');
+    #
+    my $content = read_file($reg_conf_tmpl);
+    $content =~ s/my \$test_core_dbs;/my \$test_core_dbs = {\n$dbs_hash};/;
+    #
+    my ( $reg_conf_fname ) = ( $reg_conf_tmpl =~ s/_tmpl// );
+    my $reg_conf = File::Spec->join($work_dir, $reg_conf_fname);
+    open(my $file, '>', $reg_conf) or die "Could not open file '$reg_conf' $!";
+    print $file $content;
+    close $file;
+}
+
+sub write_output {
+    my $self = shift;
 }
 
 1;
