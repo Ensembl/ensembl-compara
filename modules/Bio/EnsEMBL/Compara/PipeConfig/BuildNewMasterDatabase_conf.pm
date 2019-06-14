@@ -39,8 +39,8 @@ Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -input <path_to_regions_file(s)> -division <division> -dst_host <host> -dst_port <port>
 
-    #1. clone data regions from JSON file(s) (one per species)
-    #2. create a new master_db
+    #1. Clone data regions from JSON file(s) (one per species)
+    #2. Create a new master_db
 
 =head1 AUTHORSHIP
 
@@ -70,7 +70,7 @@ sub default_options {
 
         'pipeline_name' => 'build_master_for_' . $self->o('division'),
         'work_dir'      => $self->o('pipeline_dir'),
-        'backups_dir'   => $self->o('work_dir') . '/backups/',
+        # 'backups_dir'   => $self->o('work_dir') . '/backups/',
         'dst_host'      => $self->o('dst_host'),
         'dst_port'      => $self->o('dst_port'),
 
@@ -120,9 +120,9 @@ sub pipeline_analyses {
                 'inputcmd' => 'find #input# -type f -name "*.json"',
             },
             -flow_into  => {
-                '2->A' => { 'clone_core_regions' => {'json_file' => '#_0#'},
-                            'create_new_master'  => {} },
-                'A->1' => [ 'create_reg_conf' ],
+                '2->A' => {'clone_core_regions' => {'json_file' => '#_0#'},
+                           'create_new_master'  => {}},
+                'A->1' => ['create_reg_conf'],
             },
         },
 
@@ -139,7 +139,7 @@ sub pipeline_analyses {
             # Restrict the number of running workers to one at a time to avoid overload the server
             -analysis_capacity => 4,
             -rc_name    => '500Mb_job',
-            -flow_into  => [ '?accu_name=cloned_dbs&accu_address={species}' ],
+            -flow_into  => ['?accu_name=cloned_dbs&accu_address={species}'],
         },
 
         {   -logic_name => 'create_new_master',
@@ -147,7 +147,7 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# -sql "CREATE DATABASE"',
             },
-            -flow_into  => [ 'load_schema_master' ],
+            -flow_into  => ['load_schema_master'],
         },
 
         {   -logic_name => 'load_schema_master',
