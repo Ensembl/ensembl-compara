@@ -91,7 +91,7 @@ sub default_options {
         'assembly_patch_species' => undef,
         'additional_species'     => undef,
 
-        'do_update_from_metadata' => 0,
+        'do_update_from_metadata' => 1,
         'do_load_timetree'        => 0,
     };
 }
@@ -101,7 +101,7 @@ sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
-        # $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
     ];
 }
 
@@ -123,85 +123,73 @@ sub pipeline_analyses {
 
     return [
 
-        # {   -logic_name => 'backup_master',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-        #     -input_ids  => [{
-        #         'division'    => $self->o('division'),
-        #         'release'     => $self->o('release'),
-        #     }],
-        #     -parameters => {
-        #         'src_db_conn' => $self->o('master_db'),
-        #         'backups_dir' => $self->o('backups_dir'),
-        #         'output_file' => '#backups_dir#/compara_master_#division#.pre#release#.sql'
-        #     },
-        #     -flow_into => [ 'patch_master_db' ],
-        #     -rc_name   => '1Gb_job'
-        # },
-        #
-        # {   -logic_name => 'patch_master_db',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::PatchMasterDB',
-        #     -parameters => {
-        #         'schema_file'  => $self->o('schema_file'),
-        #         'patch_dir'    => $self->o('patch_dir'),
-        #         'prev_release' => '#expr( #release# - 1 )expr#',
-        #         'patch_names'  => '#patch_dir#/patch_#prev_release#_#release#_*.sql',
-        #     },
-        #     -flow_into => ['load_ncbi_node'],
-        # },
-        #
-        # {   -logic_name => 'load_ncbi_node',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-        #     -parameters    => {
-        #         'src_db_conn'  => $self->o('taxonomy_db'),
-        #         'dest_db_conn' => $self->o('master_db'),
-        #         'mode'         => 'overwrite',
-        #         'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
-        #         'table'        => 'ncbi_taxa_node',
-        #     },
-        #     -flow_into => ['load_ncbi_name']
-        # },
-        #
-        # {   -logic_name => 'load_ncbi_name',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-        #     -parameters    => {
-        #         'src_db_conn'  => $self->o('taxonomy_db'),
-        #         'dest_db_conn' => $self->o('master_db'),
-        #         'mode'         => 'overwrite',
-        #         'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
-        #         'table'        => 'ncbi_taxa_name',
-        #     },
-        #     -flow_into => ['import_aliases'],
-        # },
-        #
-        # {   -logic_name => 'import_aliases',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PatchDB',
-        #     -parameters => {
-        #         'db_conn'    => $self->o('master_db'),
-        #         'patch_file' => $self->o('alias_file'),
-        #         'ignore_failure' => 1,
-        #         'record_output'  => 1,
-        #     },
-        #     -flow_into => ['hc_taxon_names'],
-        # },
-        #
-        # {   -logic_name => 'hc_taxon_names',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::SqlHealthChecks',
-        #     -parameters => {
-        #         'mode'    => 'taxonomy',
-        #         'db_conn' => $self->o('master_db'),
-        #     },
-        #     -flow_into => WHEN(
-        #         '#do_update_from_metadata#' => 'update_genome_factory_from_metadata',
-        #         ELSE 'update_genome_factory_from_registry',
-        #     ),
-        # },
-
-        {   -logic_name => 'starting_point',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name => 'backup_master',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{
                 'division'    => $self->o('division'),
                 'release'     => $self->o('release'),
             }],
+            -parameters => {
+                'src_db_conn' => $self->o('master_db'),
+                'backups_dir' => $self->o('backups_dir'),
+                'output_file' => '#backups_dir#/compara_master_#division#.pre#release#.sql'
+            },
+            -flow_into => [ 'patch_master_db' ],
+            -rc_name   => '1Gb_job'
+        },
+
+        {   -logic_name => 'patch_master_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::PatchMasterDB',
+            -parameters => {
+                'schema_file'  => $self->o('schema_file'),
+                'patch_dir'    => $self->o('patch_dir'),
+                'prev_release' => '#expr( #release# - 1 )expr#',
+                'patch_names'  => '#patch_dir#/patch_#prev_release#_#release#_*.sql',
+            },
+            -flow_into => ['load_ncbi_node'],
+        },
+
+        {   -logic_name => 'load_ncbi_node',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'  => $self->o('taxonomy_db'),
+                'dest_db_conn' => $self->o('master_db'),
+                'mode'         => 'overwrite',
+                'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
+                'table'        => 'ncbi_taxa_node',
+            },
+            -flow_into => ['load_ncbi_name']
+        },
+
+        {   -logic_name => 'load_ncbi_name',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters    => {
+                'src_db_conn'  => $self->o('taxonomy_db'),
+                'dest_db_conn' => $self->o('master_db'),
+                'mode'         => 'overwrite',
+                'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
+                'table'        => 'ncbi_taxa_name',
+            },
+            -flow_into => ['import_aliases'],
+        },
+
+        {   -logic_name => 'import_aliases',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PatchDB',
+            -parameters => {
+                'db_conn'    => $self->o('master_db'),
+                'patch_file' => $self->o('alias_file'),
+                'ignore_failure' => 1,
+                'record_output'  => 1,
+            },
+            -flow_into => ['hc_taxon_names'],
+        },
+
+        {   -logic_name => 'hc_taxon_names',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::SqlHealthChecks',
+            -parameters => {
+                'mode'    => 'taxonomy',
+                'db_conn' => $self->o('master_db'),
+            },
             -flow_into => WHEN(
                 '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
                 ELSE 'update_genome_from_registry_factory',
@@ -226,18 +214,11 @@ sub pipeline_analyses {
 
         {   -logic_name => 'update_genome_from_registry_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
-            # -parameters => {
-            #     'list_genomes_script'   => $self->o('list_genomes_script'),
-            #     'report_genomes_script' => $self->o('report_genomes_script'),
-            #     'additional_species'    => $self->o('additional_species'),
-            # },
             -flow_into => {
                 '2->A' => [ 'add_species_into_master' ],
-                # '3->A' => [ 'retire_species_from_master' ],
-                # '4->A' => [ 'rename_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
-            -rc_name => '8Gb_job',
+            -rc_name => '16Gb_job',
         },
 
         {   -logic_name     => 'add_species_into_master',

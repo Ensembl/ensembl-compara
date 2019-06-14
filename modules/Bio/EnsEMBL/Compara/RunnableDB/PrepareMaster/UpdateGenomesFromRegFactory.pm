@@ -35,9 +35,6 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
-# use JSON qw( decode_json );
-
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
