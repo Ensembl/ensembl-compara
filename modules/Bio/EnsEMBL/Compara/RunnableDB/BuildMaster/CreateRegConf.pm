@@ -25,17 +25,15 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf
 
 =head1 SYNOPSIS
 
-Runs the script 'clone_core_database.pl' (located at 'ensembl-test/scripts/' by default)
-over a given JSON configuration file with the regions of data to clone.
+Creates a new registry configuration file with the information of each species'
+cloned core database.
 
 Requires several inputs:
-    'clone_data_regions' : full path to the clone script 'clone_core_database.pl'
-    'reg_conf'  : full path to the registry configuration file
-    'dst_host'  : host name where the new core database will be created
-    'dst_port'  : host port
-    'json_file' : JSON configuration file with the regions of data to clone
+    'work_dir'      : full path where the new registry configuration file will be created
+    'reg_conf_tmpl' : full path to the registry configuration template file
+    'dst_host'      : host name where the new core database have been created
+    'cloned_dbs'    : hash accumulator of "species" => "database_name"
 
-The dataflow output writes the new core database's name into the accumulator named 'cloned_db'.
 
 =cut
 
@@ -92,8 +90,8 @@ sub run {
     close $file;
 }
 
-sub write_output {
-    my $self = shift;
-}
+# sub write_output {
+#     my $self = shift;
+# }
 
 1;

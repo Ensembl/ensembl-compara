@@ -78,6 +78,8 @@ sub write_output {
     my $runCmd = $self->param_required('runCmd');
     # NOTE: the clone script prints to stderr by default
     my $output = $runCmd->err;
+    # The cloned database name is found in the printed information and starts
+    # with the username
     my ( $dbname ) = ( $output =~ /(\Q$ENV{USER}\E[^\n']+)/ );
     $self->dataflow_output_id({'cloned_dbs' => $dbname}, 1);
 }
