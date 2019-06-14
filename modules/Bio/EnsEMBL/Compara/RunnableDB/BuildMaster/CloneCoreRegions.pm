@@ -79,7 +79,7 @@ sub write_output {
     # NOTE: the clone script prints to stderr by default
     my $output = $runCmd->err;
     my ( $dbname ) = ( $output =~ /(\Q$ENV{USER}\E[^\n']+)/ );
-    $self->dataflow_output_id({'cloned_dbname' => $dbname}, 1);
+    $self->dataflow_output_id({'cloned_dbs' => $dbname}, 1);
 }
 
 1;
