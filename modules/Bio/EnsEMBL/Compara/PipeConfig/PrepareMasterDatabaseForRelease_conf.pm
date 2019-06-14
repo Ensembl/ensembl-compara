@@ -32,15 +32,16 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
 =head1 DESCRIPTION
 
-    Add/update all species to master database
+    Prepare master database for next release
 
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -password <your_password> -inputfile file_new_species_production_names.txt
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -division <division>
 
-    #1. fetch species from text file
-    #2. add all to master_db
+    #1. Update NCBI taxonomy
+    #2. Add/update all species to master database
+    #3. Update collections and mlss
 
 =head1 AUTHORSHIP
 
@@ -89,6 +90,8 @@ sub default_options {
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species' => undef,
         'additional_species'     => undef,
+
+        'do_load_timetree'       => 0,
     };
 }
 
@@ -123,7 +126,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{
                 'division'    => $self->o('division'),
-                'release'     => $self->o('ensembl_release'),
+                'release'     => $self->o('release'),
             }],
             -parameters => {
                 'src_db_conn' => $self->o('master_db'),
@@ -166,10 +169,7 @@ sub pipeline_analyses {
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_name',
             },
-            -flow_into => WHEN(
-                '#division# eq "vertebrates"' => 'import_aliases',
-                ELSE 'hc_taxon_names',
-            ),
+            -flow_into => ['import_aliases'],
         },
 
         {   -logic_name => 'import_aliases',
@@ -271,7 +271,7 @@ sub pipeline_analyses {
             -parameters => {
                     'collection_name'   => $self->o('division'),
                     'incl_components'   => $self->o('incl_components'),
-                    # 'release'           => $self->o('ensembl_release'),
+                    # 'release'           => $self->o('release'),
             },
             -flow_into  => [ 'add_mlss_to_master' ],
         },
@@ -297,7 +297,7 @@ sub pipeline_analyses {
                 'input_query' => 'UPDATE species_set_header JOIN (SELECT species_set_id, MAX(method_link_species_set.last_release) AS highest_last_release FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE species_set_header.first_release IS NOT NULL AND species_set_header.last_release IS NULL GROUP BY species_set_id HAVING SUM(method_link_species_set.first_release IS NOT NULL AND method_link_species_set.last_release IS NULL) = 0) _t USING (species_set_id) SET last_release = highest_last_release;',
              },
             -flow_into => WHEN(
-                '#division# eq "vertebrates"' => 'load_timetree',
+                '#do_load_timetree#' => 'load_timetree',
                 ELSE 'reset_master_urls',
             ),
         },
