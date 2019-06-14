@@ -36,9 +36,12 @@ sub _init {
 
 sub content {
   my $self          = shift;
+
+  return if(!$self->object);
+
   my $hub           = $self->hub;
   my $object        = $self->object;
-  my $variation     = $object->Obj if(exists $object->Obj);
+  my $variation     = $object->Obj;
   my $var_id        = $hub->param('v');
   my $feature_slice = $object->slice;
   my $avail         = $object->availability;  
