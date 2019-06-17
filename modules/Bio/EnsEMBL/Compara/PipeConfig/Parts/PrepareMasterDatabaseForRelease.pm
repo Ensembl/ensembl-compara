@@ -268,7 +268,6 @@ sub pipeline_analyses_prep_master_db_for_release {
             },
             -rc_name         => '2Gb_job',
             -max_retry_count => 0,
-            -flow_into       => ['backup_master_again']
         },
     ];
 }

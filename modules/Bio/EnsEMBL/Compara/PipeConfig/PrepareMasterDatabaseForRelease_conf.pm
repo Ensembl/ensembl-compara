@@ -123,12 +123,12 @@ sub pipeline_wide_parameters {
 sub pipeline_analyses {
     my ($self) = @_;
 
-    return [
+    my $pipeline_analyses = [
         {   -logic_name => 'backup_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{
                 'division'    => $self->o('division'),
-                'release'     => $self->o('release'),
+                'release'     => $self->o('ensembl_release'),
             }],
             -parameters => {
                 'src_db_conn' => $self->o('master_db'),
@@ -151,6 +151,11 @@ sub pipeline_analyses {
             -rc_name => '1Gb_job',
         },
     ];
+    # Update the flow from last analysis in
+    # Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
+    # to 'backup_master_again'
+    $pipeline_analyses->[-2]->{'-flow_into'} = ['backup_master_again'];
+    return $pipeline_analyses;
 }
 
 1;
