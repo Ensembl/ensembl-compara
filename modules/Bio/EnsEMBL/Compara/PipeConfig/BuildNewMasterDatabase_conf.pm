@@ -60,6 +60,8 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease;
+
 sub no_compara_schema {};
 
 sub default_options {
@@ -82,6 +84,10 @@ sub default_options {
 
         'clone_core_db' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
         # 'rename_db' => '/nfs/software/ensembl/mysql-cmds/ensembl/bin/rename_db',
+
+        # Flag configuration for PrepareMasterDatabaseForRelease pipeline
+        'do_update_from_metadata' => 0,
+        'do_load_timetree'        => 1,
     };
 }
 
@@ -165,37 +171,10 @@ sub pipeline_analyses {
                 'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
                 'dst_host'      => $self->o('dst_host'),
             },
-            # -flow_into  => [ 'rm_empty_tables_master' ],
+            -flow_into  => [ 'patch_master_db' ],
         },
 
-        # {   -logic_name => 'rm_empty_tables_master',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        #     # -flow_into  => [ 'hc_master' ],
-        # },
-
-        # {   -logic_name => 'hc_master',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
-        #     -parameters => {
-        #         'compara_db'  => $self->o('master_db'),
-        #         'work_dir'    => $self->o('work_dir'),
-        #         'testgroup'   => 'ComparaMaster',
-        #         'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
-        #         'java_hc_dir' => $self->o('java_hc_dir'),
-        #     },
-        #     -rc_name         => '1Gb_job',
-        #     -max_retry_count => 0,
-        #     # -flow_into       => ['backup_master_again'],
-        # },
-
-        # {   -logic_name => 'backup_master',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-        #     -parameters => {
-        #         'src_db_conn' => $self->o('master_db'),
-        #         'backups_dir' => $self->o('backups_dir'),
-        #         'output_file' => '#backups_dir#/compara_#division#_master.sql',
-        #     },
-        #     -rc_name => '500Mb_job',
-        # },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease::pipeline_analyses_prep_master_db_for_release($self) },
     ];
 }
 
