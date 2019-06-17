@@ -76,16 +76,24 @@ sub default_options {
         'dst_host'      => $self->o('dst_host'),
         'dst_port'      => $self->o('dst_port'),
 
-        'master_db'   => 'compara_master',
-        # 'taxonomy_db' => 'ncbi_taxonomy',
-
+        'master_db'           => 'compara_master',
         'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
-        # 'java_hc_dir' => $self->check_dir_in_ensembl('ensj-healthcheck/'),
-
         'clone_core_db' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
-        # 'rename_db' => '/nfs/software/ensembl/mysql-cmds/ensembl/bin/rename_db',
 
-        # Flag configuration for PrepareMasterDatabaseForRelease pipeline
+        # PrepareMasterDatabaseForRelease pipeline configuration:
+        'taxonomy_db'             => 'ncbi_taxonomy',
+        'incl_components'         => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
+        'create_all_mlss_exe'     => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
+        'xml_file'                => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml'),
+        'report_file'             => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
+        'patch_dir'               => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
+        'alias_file'              => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
+        'java_hc_dir'             => $self->check_dir_in_ensembl('ensj-healthcheck/'),
+        'list_genomes_script'     => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
+        'report_genomes_script'   => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
+        'update_metadata_script'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
+        'assembly_patch_species'  => undef,
+        'additional_species'      => undef,
         'do_update_from_metadata' => 0,
         'do_load_timetree'        => 1,
     };
@@ -167,7 +175,7 @@ sub pipeline_analyses {
         {   -logic_name => 'create_reg_conf',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf',
             -parameters => {
-                'work_dir'      => $self->o('work-dir'),
+                'work_dir'      => $self->o('work_dir'),
                 'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
                 'dst_host'      => $self->o('dst_host'),
             },
