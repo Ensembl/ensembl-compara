@@ -412,9 +412,12 @@ sub get_alignments_selector_settings {
 sub save_alignments_selector_settings {
   my $self   = shift;
   my $params = shift;
-  $params->{code} ||= 'alignments_selector';
-  $params->{type} ||= $self->config_type;
-  $self->hub->session->set_record_data($params);
+
+  my $session_data = $self->get_alignments_selector_settings;
+  my %merged = (%$session_data, %$params);
+  $merged{code} ||= 'alignments_selector';
+  $merged{type} ||= $self->config_type;
+  $self->hub->session->set_record_data(\%merged);
 }
 
 1;

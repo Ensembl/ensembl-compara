@@ -579,7 +579,7 @@ sub multi_params {
 
 sub get_alignment_id {
   my $self = shift;
-  return $self->param('align') || $self->session->get_record_data({type => 'view_config', code => 'alignments_selector'})->{'align'} || '';
+  return $self->param('align') || $self->session->get_record_data({type => 'view_config', code => 'alignments_selector'})->{$self->species}->{'align'} || '';
 }
 
 sub filename {

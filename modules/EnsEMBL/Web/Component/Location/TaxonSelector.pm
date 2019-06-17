@@ -26,6 +26,7 @@ use base qw(EnsEMBL::Web::Component::TaxonSelector);
 sub _init {
   my $self = shift;
   my $hub  = $self->hub;
+  my $species = $hub->species;
   $self->{multiselect} = 0;
 
   # For region comparison
@@ -48,12 +49,15 @@ sub _init {
     $self->{default_species} = [];
     $self->{title} = 'Alignments Selector';
 
+
     foreach (keys %{$alignment->{species}}) {
       next if ($_ eq $hub->species);
       if ($alignment->{'class'} !~ /pairwise/) { # Multiple alignments
         $vc_key = join '_', ('species', $alignment->{id}, lc($_));
-        $vc_val = $alignment_selector_vc->{$vc_key};
-        push @{$self->{default_species}}, $vc_key if $vc_val eq 'yes';
+        if (keys %$alignment_selector_vc && $alignment_selector_vc->{$species}) {
+          $vc_val = $alignment_selector_vc->{$species}->{$vc_key};
+          push @{$self->{default_species}}, $vc_key if $vc_val eq 'yes';
+        }
       }
       else {
         push @{$self->{default_species}}, $_;
