@@ -912,7 +912,6 @@ sub check_for_missing_species {
 
   foreach (keys %{$align_details->{'species'}}) {
     next if $_ eq $species;
-
     if ($align_details->{'class'} !~ /pairwise/
         && ($self->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
       push @skipped, $species_defs->production_name_mapping($_) unless ($args->{ignore} && $args->{ignore} eq 'ancestral_sequences');

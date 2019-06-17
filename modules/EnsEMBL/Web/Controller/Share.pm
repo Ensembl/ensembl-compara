@@ -109,7 +109,7 @@ sub share_create {
 
       $data->{$component_code}{'view_config'}   = $vc_settings if keys %$vc_settings;
       $data->{$component_code}{'image_config'}  = $ic_settings if keys %$ic_settings;
-      $data->{$component_code}{'alignments_selector'}  = $aln_settings if keys %$aln_settings;
+      $data->{$component_code}{'alignments_selector'}  = $aln_settings if keys %{$aln_settings->{$hub->species}};
     }
   }
 
