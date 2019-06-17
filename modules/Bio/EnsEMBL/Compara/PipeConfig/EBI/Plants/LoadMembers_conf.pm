@@ -74,7 +74,7 @@ sub default_options {
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
-        'do_not_reuse_list'     => [ 'saccharomyces_cerevisiae' ],
+        'do_not_reuse_list'     => [ ],
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
