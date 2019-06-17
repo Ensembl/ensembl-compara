@@ -23,6 +23,7 @@
 #    meta table than in the gene_tree_root_attr table
 
 INSERT INTO meta (species_id, meta_key, meta_value) SELECT NULL, 'division', division FROM gene_tree_root_attr WHERE division IS NOT NULL LIMIT 1;
+UPDATE meta SET meta_value = 'vertebrates' WHERE meta_key = 'division' AND meta_value = 'vertebrate'; -- Because the division was limited to 10 characters
 ALTER TABLE gene_tree_root_attr DROP COLUMN division;
 
 INSERT INTO meta (species_id, meta_key, meta_value)
