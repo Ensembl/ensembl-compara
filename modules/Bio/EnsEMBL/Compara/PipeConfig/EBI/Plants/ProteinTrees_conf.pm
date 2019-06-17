@@ -75,7 +75,7 @@ sub default_options {
     division => 'plants',
     # mlss_id  => 40138,
 
-    'do_not_reuse_list'     => [ 'saccharomyces_cerevisiae' ],
+    'do_not_reuse_list'     => [ ],
 
     # How will the pipeline create clusters (families) ?
     # Possible values: 'blastp' (default), 'hmm', 'hybrid'
