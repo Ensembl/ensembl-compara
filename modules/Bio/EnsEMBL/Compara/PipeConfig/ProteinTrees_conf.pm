@@ -475,6 +475,7 @@ sub core_pipeline_analyses {
         'parse_examl_exe'       => $self->o('parse_examl_exe'),
         'treebest_exe'          => $self->o('treebest_exe'),
         'mpirun_exe'            => $self->o('mpirun_exe'),
+        'use_dna_for_phylogeny' => $self->o('use_dna_for_phylogeny'),
         'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
         'input_clusterset_id'   => 'raxml_parsimony',
     );
