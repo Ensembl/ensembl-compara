@@ -47,9 +47,9 @@ function create_db () {
 
 
 # Load, patch and dump the old schema
-dump_schema mysql-ensembl-mirror ensembl_compara_${last_release} > old_schema.sql
+dump_schema mysql-ens-mirror-1 ensembl_compara_${last_release} > old_schema.sql
 create_db "$(${server} details url)${USER}_schema_patch_test_old_patched" old_schema.sql
-mysqldump $(mysql-ensembl-mirror details mysql) --skip-lock-tables ensembl_compara_${last_release} meta | db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_old_patched"
+mysqldump $(mysql-ens-mirror-1 details mysql) --skip-lock-tables ensembl_compara_${last_release} meta | db_cmd.pl -url "$(${server} details url)${USER}_schema_patch_test_old_patched"
 
 ${ENSEMBL_CVS_ROOT_DIR}/ensembl/misc-scripts/schema_patcher.pl $(${server} details script) --database ${USER}_schema_patch_test_old_patched --type compara --from ${last_release} --release ${this_release} --verbose
 
