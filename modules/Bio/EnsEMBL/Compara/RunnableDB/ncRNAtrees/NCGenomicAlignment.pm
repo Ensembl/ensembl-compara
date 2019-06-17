@@ -31,6 +31,14 @@ use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+        'mafft_mode'        => '--auto',
+    };
+}
+
 # We should receive:
 # gene_tree_id
 sub fetch_input {

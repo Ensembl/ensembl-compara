@@ -58,6 +58,7 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'mafft_threads'     => 1,
+        'mafft_mode'        => '--auto',
     };
 }
 
@@ -72,8 +73,9 @@ sub get_msa_command_line {
 
     my $mafft_exe = $self->require_executable('mafft_exe');
     my $mafft_threads = $self->param('mafft_threads');
+    my $mafft_mode = $self->param('mafft_mode');
 
-    return sprintf('%s --anysymbol --thread %s --auto %s > %s', $mafft_exe, $mafft_threads, $self->param('input_fasta'), $self->param('msa_output'));
+    return sprintf('%s --anysymbol --thread %s %s %s > %s', $mafft_exe, $mafft_threads, $mafft_mode, $self->param('input_fasta'), $self->param('msa_output'));
 }
 
 1;

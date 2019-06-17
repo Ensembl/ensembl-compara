@@ -1705,9 +1705,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'mafft_exe'                  => $self->o('mafft_exe'),
                 'escape_branch'              => -1,
+                'mafft_threads'              => 2,
             },
             -hive_capacity        => $self->o('mafft_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_2c_job',
             -priority   => $self->o('mafft_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
@@ -1745,9 +1746,10 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
                 'mafft_exe'                  => $self->o('mafft_exe'),
+                'mafft_threads'              => 4,
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_4c_job',
             -priority   => $self->o('mafft_himem_priority'),
             -flow_into     => {
                 -1 => [ 'mafft_huge' ],
@@ -1758,11 +1760,11 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft_huge',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
-                'mafft_exe'                  => $self->o('mafft_exe'),
-                'mafft_threads'              => 16,
+                'mafft_threads'              => 8,
+                'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '64Gb_16c_job',
+            -rc_name    => '16Gb_16c_job',
             -priority   => $self->o('mafft_himem_priority'),
         },
 
