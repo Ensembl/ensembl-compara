@@ -21,6 +21,10 @@
       <taxonomic_group taxon_name="Murinae"/>
     </collection>
 
+    <collection name="sus">
+      <taxonomic_group taxon_name="Sus"/>
+    </collection>
+
   </collections>
 
   <pairwise_alignments>
@@ -46,6 +50,9 @@
         <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
       </species_set>
     </one_vs_all>
+
+    <!-- Pigs: all pigs vs sus_scrofa -->
+    <one_vs_all method="LASTZ_NET" ref_genome="sus_scrofa" against="Sus"/>
 
     <!-- Fish -->
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes" against="Actinopterygii"/>
@@ -107,6 +114,13 @@
       </species_set>
     </multiple_alignment>
 
+    <!-- Pigs -->
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="sus">
+        <taxonomic_group taxon_name="Sus"/>
+      </species_set>
+    </multiple_alignment>
+
     <!-- Amniotes, excl. mouse strains -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates" in_collection="default">
@@ -158,8 +172,10 @@
   <gene_trees>
     <protein_trees collection="default"/>
     <protein_trees collection="murinae"/>
+    <protein_trees collection="sus"/>
     <nc_trees collection="default"/>
     <nc_trees collection="murinae"/>
+    <nc_trees collection="sus"/>
   </gene_trees>
 
   <species_trees>
