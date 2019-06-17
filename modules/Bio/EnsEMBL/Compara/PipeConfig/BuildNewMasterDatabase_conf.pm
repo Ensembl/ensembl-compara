@@ -140,9 +140,9 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'clone_core_regions',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions',
-            -parameters => {
+        {   -logic_name        => 'clone_core_regions',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions',
+            -parameters        => {
                 'clone_core_db' => $self->o('clone_core_db'),
                 'reg_conf'      => $self->o('reg_conf'),
                 'dst_host'      => $self->o('dst_host'),
@@ -150,10 +150,10 @@ sub pipeline_analyses {
                 # Get species name from JSON file path
                 'species'       => '#expr( substr(#json_file#, rindex(#json_file#, "/") + 1, -5) )expr#',
             },
+            -flow_into         => ['?accu_name=cloned_dbs&accu_address={species}'],
             # Restrict the number of running workers to one at a time to avoid overload the server
             -analysis_capacity => 4,
-            -rc_name    => '500Mb_job',
-            -flow_into  => ['?accu_name=cloned_dbs&accu_address={species}'],
+            -rc_name           => '500Mb_job',
         },
 
         {   -logic_name => 'create_new_master',

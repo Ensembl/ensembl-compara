@@ -71,31 +71,31 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'prev_release' => '#expr( #release# - 1 )expr#',
                 'patcpipeline_analyses_prepare_master_db_for_releaseh_names'  => '#patch_dir#/patch_#prev_release#_#release#_*.sql',
             },
-            -flow_into => ['load_ncbi_node'],
+            -flow_into  => ['load_ncbi_node'],
         },
 
         {   -logic_name => 'load_ncbi_node',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
+            -parameters => {
                 'src_db_conn'  => $self->o('taxonomy_db'),
                 'dest_db_conn' => $self->o('master_db'),
                 'mode'         => 'overwrite',
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_node',
             },
-            -flow_into => ['load_ncbi_name']
+            -flow_into  => ['load_ncbi_name']
         },
 
         {   -logic_name => 'load_ncbi_name',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
+            -parameters => {
                 'src_db_conn'  => $self->o('taxonomy_db'),
                 'dest_db_conn' => $self->o('master_db'),
                 'mode'         => 'overwrite',
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_name',
             },
-            -flow_into => ['import_aliases'],
+            -flow_into  => ['import_aliases'],
         },
 
         {   -logic_name => 'import_aliases',
@@ -106,7 +106,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'ignore_failure' => 1,
                 'record_output'  => 1,
             },
-            -flow_into => ['hc_taxon_names'],
+            -flow_into  => ['hc_taxon_names'],
         },
 
         {   -logic_name => 'hc_taxon_names',
@@ -115,7 +115,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'mode'    => 'taxonomy',
                 'db_conn' => $self->o('master_db'),
             },
-            -flow_into => WHEN(
+            -flow_into  => WHEN(
                 '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
                 ELSE 'update_genome_from_registry_factory',
             ),
@@ -128,29 +128,29 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'report_genomes_script' => $self->o('report_genomes_script'),
                 'additional_species'    => $self->o('additional_species'),
             },
-            -flow_into => {
+            -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
                 '4->A' => [ 'rename_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
-            -rc_name => '16Gb_job',
+            -rc_name    => '16Gb_job',
         },
 
         {   -logic_name => 'update_genome_from_registry_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
-            -flow_into => {
+            -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
                 'A->1' => [ 'sync_metadata' ],
             },
-            -rc_name => '16Gb_job',
+            -rc_name    => '16Gb_job',
         },
 
-        {   -logic_name     => 'add_species_into_master',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::AddSpeciesToMaster',
-            -parameters     => { 'release' => 1 },
-            -hive_capacity  => 10,
-            -rc_name        => '16Gb_job',
+        {   -logic_name    => 'add_species_into_master',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::AddSpeciesToMaster',
+            -parameters    => { 'release' => 1 },
+            -hive_capacity => 10,
+            -rc_name       => '16Gb_job',
         },
 
         {   -logic_name => 'retire_species_from_master',
@@ -173,7 +173,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'division'               => $self->o('division'),
                 'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division#'
             },
-            -flow_into  => ['load_lrg_dnafrags'],
+            -flow_into  => [ 'load_lrg_dnafrags' ],
         },
 
         {   -logic_name => 'load_lrg_dnafrags',
@@ -181,7 +181,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'compara_db' => $self->o('master_db'),
             },
-            -flow_into => ['assembly_patch_factory'],
+            -flow_into  => [ 'assembly_patch_factory' ],
         },
 
          {  -logic_name => 'assembly_patch_factory',
@@ -190,7 +190,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'inputlist'  => $self->o('assembly_patch_species'),
                 'column_names' => ['species_name'],
             },
-            -flow_into => {
+            -flow_into  => {
                 '2->A' => [ 'load_assembly_patches' ],
                 'A->1' => [ 'update_collection' ],
             },
@@ -207,9 +207,8 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'update_collection',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReleaseCollection',
             -parameters => {
-                    'collection_name'   => $self->o('division'),
-                    'incl_components'   => $self->o('incl_components'),
-                    # 'release'           => $self->o('release'),
+                'collection_name' => $self->o('division'),
+                'incl_components' => $self->o('incl_components'),
             },
             -flow_into  => [ 'add_mlss_to_master' ],
         },
@@ -217,24 +216,24 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'add_mlss_to_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'create_all_mlss_exe'   => $self->o('create_all_mlss_exe'),
-                'reg_conf'              => $self->o('reg_conf'),
-                'master_db'             => $self->o('master_db'),
-                'xml_file'              => $self->o('xml_file'),
-                'report_file'           => $self->o('report_file'),
-                'cmd'                   => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
+                'create_all_mlss_exe' => $self->o('create_all_mlss_exe'),
+                'reg_conf'            => $self->o('reg_conf'),
+                'master_db'           => $self->o('master_db'),
+                'xml_file'            => $self->o('xml_file'),
+                'report_file'         => $self->o('report_file'),
+                'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
-            -rc_name        => '2Gb_job',
-            -flow_into => [ 'retire_old_species_sets' ],
+            -flow_into  => [ 'retire_old_species_sets' ],
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'retire_old_species_sets',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
-                'db_conn' => '#master_db#',
+                'db_conn'     => '#master_db#',
                 'input_query' => 'UPDATE species_set_header JOIN (SELECT species_set_id, MAX(method_link_species_set.last_release) AS highest_last_release FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE species_set_header.first_release IS NOT NULL AND species_set_header.last_release IS NULL GROUP BY species_set_id HAVING SUM(method_link_species_set.first_release IS NOT NULL AND method_link_species_set.last_release IS NULL) = 0) _t USING (species_set_id) SET last_release = highest_last_release;',
              },
-            -flow_into => WHEN(
+            -flow_into  => WHEN(
                 '#do_load_timetree#' => 'load_timetree',
                 ELSE 'reset_master_urls',
             ),
@@ -243,23 +242,23 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'load_timetree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::LoadTimeTree',
             -parameters => {
-                  'compara_db' => $self->o('master_db'),
+                'compara_db' => $self->o('master_db'),
             },
-            -flow_into => ['reset_master_urls'],
+            -flow_into  => [ 'reset_master_urls' ],
         },
 
         {   -logic_name => 'reset_master_urls',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
-               'db_conn' => '#master_db#',
-               'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
-             },
-             -flow_into => ['hc_master'],
+                'db_conn'     => '#master_db#',
+                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
+            },
+            -flow_into  => [ 'hc_master' ],
         },
 
-        {   -logic_name => 'hc_master',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
-            -parameters => {
+        {   -logic_name      => 'hc_master',
+            -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunJavaHealthCheck',
+            -parameters      => {
                 'compara_db'  => $self->o('master_db'),
                 'work_dir'    => $self->o('work_dir'),
                 'testgroup'   => 'ComparaMaster',
