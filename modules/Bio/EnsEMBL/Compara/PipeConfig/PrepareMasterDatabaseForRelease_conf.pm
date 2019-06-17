@@ -32,15 +32,16 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
 =head1 DESCRIPTION
 
-    Add/update all species to master database
+    Prepare master database for next release
 
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -password <your_password> -inputfile file_new_species_production_names.txt
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -division <division>
 
-    #1. fetch species from text file
-    #2. add all to master_db
+    #1. Update NCBI taxonomy
+    #2. Add/update all species to master database
+    #3. Update collections and mlss
 
 =head1 AUTHORSHIP
 
@@ -89,6 +90,9 @@ sub default_options {
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species' => undef,
         'additional_species'     => undef,
+
+        'do_update_from_metadata' => 1,
+        'do_load_timetree'        => 0,
     };
 }
 
@@ -166,10 +170,7 @@ sub pipeline_analyses {
                 'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
                 'table'        => 'ncbi_taxa_name',
             },
-            -flow_into => WHEN(
-                '#division# eq "vertebrates"' => 'import_aliases',
-                ELSE 'hc_taxon_names',
-            ),
+            -flow_into => ['import_aliases'],
         },
 
         {   -logic_name => 'import_aliases',
@@ -189,11 +190,14 @@ sub pipeline_analyses {
                 'mode'    => 'taxonomy',
                 'db_conn' => $self->o('master_db'),
             },
-            -flow_into => [ 'update_genome_factory' ],
+            -flow_into => WHEN(
+                '#do_update_from_metadata#' => 'update_genome_from_metadata_factory',
+                ELSE 'update_genome_from_registry_factory',
+            ),
         },
 
-        {   -logic_name => 'update_genome_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFactory',
+        {   -logic_name => 'update_genome_from_metadata_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory',
             -parameters => {
                 'list_genomes_script'   => $self->o('list_genomes_script'),
                 'report_genomes_script' => $self->o('report_genomes_script'),
@@ -203,6 +207,15 @@ sub pipeline_analyses {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
                 '4->A' => [ 'rename_genome' ],
+                'A->1' => [ 'sync_metadata' ],
+            },
+            -rc_name => '16Gb_job',
+        },
+
+        {   -logic_name => 'update_genome_from_registry_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
+            -flow_into => {
+                '2->A' => [ 'add_species_into_master' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name => '16Gb_job',
@@ -271,7 +284,6 @@ sub pipeline_analyses {
             -parameters => {
                     'collection_name'   => $self->o('division'),
                     'incl_components'   => $self->o('incl_components'),
-                    # 'release'           => $self->o('ensembl_release'),
             },
             -flow_into  => [ 'add_mlss_to_master' ],
         },
@@ -287,7 +299,7 @@ sub pipeline_analyses {
                 'cmd'                   => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
             -rc_name        => '2Gb_job',
-            -flow_into => [ 'set_last_release_to_mlss' ],
+            -flow_into => [ 'retire_old_species_sets' ],
         },
 
         {   -logic_name => 'retire_old_species_sets',
@@ -297,7 +309,7 @@ sub pipeline_analyses {
                 'input_query' => 'UPDATE species_set_header JOIN (SELECT species_set_id, MAX(method_link_species_set.last_release) AS highest_last_release FROM species_set_header JOIN method_link_species_set USING (species_set_id) WHERE species_set_header.first_release IS NOT NULL AND species_set_header.last_release IS NULL GROUP BY species_set_id HAVING SUM(method_link_species_set.first_release IS NOT NULL AND method_link_species_set.last_release IS NULL) = 0) _t USING (species_set_id) SET last_release = highest_last_release;',
              },
             -flow_into => WHEN(
-                '#division# eq "vertebrates"' => 'load_timetree',
+                '#do_load_timetree#' => 'load_timetree',
                 ELSE 'reset_master_urls',
             ),
         },

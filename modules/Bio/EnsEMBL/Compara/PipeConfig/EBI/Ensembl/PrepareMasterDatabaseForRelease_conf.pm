@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease
 
 =head1 DESCRIPTION
 
-    Add/update all species to master database
+    Prepare master database for next release
 
 
 =head1 SYNOPSIS
@@ -65,6 +65,7 @@ sub default_options {
 
         'division'               => 'vertebrates',
         'assembly_patch_species' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
+        'do_load_timetree'       => 1,
     };
 }
 

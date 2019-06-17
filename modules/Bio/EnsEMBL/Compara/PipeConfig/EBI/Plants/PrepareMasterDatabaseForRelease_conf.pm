@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::PrepareMasterDatabaseForRelease_
 
 =head1 DESCRIPTION
 
-    Add/update all species to master database
+    Prepare master database for next release
 
 
 =head1 SYNOPSIS
