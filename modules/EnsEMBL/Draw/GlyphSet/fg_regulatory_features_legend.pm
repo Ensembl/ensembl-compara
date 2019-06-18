@@ -29,13 +29,24 @@ sub _init {
   my $self = shift;
 
   ## Hide if corresponding tracks are all off
-  my $node = $self->{'config'}->get_node('regulatory_features');
-  return unless $node;
   my $show = 0;
-  foreach ($node->descendants) {
-    if ($_->get('display') && $_->get('display') ne 'off') {
-      $show = 1;
-      last;
+
+  ## Check main regulatory build track
+  my $reg_build = $self->{'config'}->get_node('regulatory_build');
+  if ($reg_build->get('display') && $reg_build->get('display') ne 'off') {
+    $show = 1;
+  }
+
+  ## Also check regulatory features
+  unless ($show) {
+    my $node = $self->{'config'}->get_node('regulatory_features');
+    if ($node) {
+      foreach ($node->descendants) {
+        if ($_->get('display') && $_->get('display') ne 'off') {
+          $show = 1;
+          last;
+        }
+      }
     }
   }
   return unless $show; 
