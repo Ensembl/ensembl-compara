@@ -27,9 +27,12 @@ use base qw(EnsEMBL::Draw::GlyphSet::legend);
 
 sub _init {
   my $self = shift;
+  my $Config         = $self->{'config'};
+
+  my $entries     = $self->{'legend'}{'fg_motif_features_legend'}{'entries'} || {};
+  return unless scalar keys %$entries;
 
   # Let them accumulate in structure if accumulating and not last
-  my $Config         = $self->{'config'};
   return if ($self->my_config('accumulate') eq 'yes' &&
              $Config->get_parameter('more_slices'));
   # Clear features (for next legend)
@@ -37,16 +40,8 @@ sub _init {
 
   $self->init_legend();
 
-  my $states = [
-                {'text' => 'Verified experimentally', 'colour' => '000000'},
-                {'text' => 'Not verified', 'colour' => '999999'},
-               ];
-
-  foreach (@$states) {
-    $self->add_to_legend({
-      legend => $_->{'text'},
-      colour => $_->{'colour'},
-    });
+  foreach (sort keys %$entries) {
+    $self->add_to_legend($entries->{$_});
   }
 
   $self->add_space;
