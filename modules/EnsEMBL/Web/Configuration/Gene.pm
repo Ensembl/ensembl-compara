@@ -241,10 +241,10 @@ sub populate_tree {
   $self->create_node('Regulation', 'Regulation',
     [qw(
       regulation EnsEMBL::Web::Component::Gene::RegulationImage
+      features   EnsEMBL::Web::Component::Gene::RegulationTable
     )],
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
-      #features   EnsEMBL::Web::Component::Gene::RegulationTable
 
   $self->create_node('Matches', 'External references',
     [qw( 
