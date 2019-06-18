@@ -28,14 +28,14 @@ cache:
 before_install:
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-rest.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-variation.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-io.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-analysis.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-test.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-rest.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-funcgen.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-variation.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-io.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-hive.git
+    - git clone --branch release/98 --depth 1 https://github.com/Ensembl/ensembl-analysis.git
     - ln -s . ensembl-compara
     - ln -s Blast.pm.example ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/Blast.pm
     - ln -s Compara.pm.example ensembl-analysis/modules/Bio/EnsEMBL/Analysis/Config/Compara.pm
