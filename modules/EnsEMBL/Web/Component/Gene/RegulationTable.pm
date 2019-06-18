@@ -42,19 +42,13 @@ sub content {
   ## Only show TarBase features, as there are too many of the other kinds
   my $fg_db         = $hub->database('funcgen');
   my $mirna_adaptor = $fg_db->get_MirnaTargetFeatureAdaptor;
-  my $slice         = $object->Obj->slice;
-  my @reg_features  = $self->hub->species =~/Drosophila_melanogaster/ ? () : @{$mirna_adaptor->fetch_all_by_Slice($slice)};
+  my @reg_features  = $self->hub->species =~/Drosophila_melanogaster/ ? () : @{$mirna_adaptor->fetch_all_by_gene_stable_id($object->stable_id)};
 
   ## return if no regulatory elements ##
   if (scalar @reg_features < 1) {
     my $html = "<p><strong>There are no TarBase features linked to this gene</strong></p>";
     return $html;
   }
-
-  ## If there are factors to display ##
-  my $gene_slice = $object->Obj->feature_Slice;
-  my $offset = $gene_slice->start -1;
-  my $str = "positive";
 
   my $table = $self->new_table([], [], { data_table => 1 });
   $table->add_columns(
