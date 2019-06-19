@@ -76,9 +76,10 @@ sub default_options {
         'dst_host'      => $self->o('dst_host'),
         'dst_port'      => $self->o('dst_port'),
 
-        'master_db'     => 'compara_master',
-        'schema_file'   => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
-        'clone_core_db' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
+        'master_db'        => 'compara_master',
+        'schema_file'      => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        'method_link_dump' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
+        'clone_core_db'    => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
 
         # PrepareMasterDatabaseForRelease pipeline configuration:
         'taxonomy_db'             => 'ncbi_taxonomy',
@@ -172,6 +173,14 @@ sub pipeline_analyses {
             -parameters => {
                 'schema_file' => $self->o('schema_file'),
                 'cmd'         => 'db_cmd.pl $COMPARA_REG #master_db# < #schema_file#',
+            },
+            -flow_into  => ['init_method_link_table'],
+        },
+
+        {   -logic_name => 'init_method_link_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# -executable mysqlimport #method_link_dump#',
             },
         },
 
