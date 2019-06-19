@@ -27,20 +27,14 @@ sub content {
   my $self              = shift;
   my $hub               = $self->hub;
   my $feature           = $hub->database('funcgen')->get_MirnaTargetFeatureAdaptor->fetch_by_dbID($hub->param('dbid'));
-
   my $adaptor           = $hub->database('funcgen')->get_DBEntryAdaptor;
-  my @xrefs             = @{$feature->get_all_DBEntries||[]};
-  my @gene_stable_ids   = ();
-  foreach (@xrefs) {
-    next unless $_;
-    push @gene_stable_ids, $_->primary_id;
-  }
-  
+  my $gene_stable_id    = $feature->gene_stable_id;
+
   my $logic_name = $feature->analysis->logic_name;
   my $source_page = $hub->get_ExtURL($logic_name, 
                       {
                         'ID' => $feature->accession,
-                        'GENE' => $gene_stable_ids[0],
+                        'GENE' => $gene_stable_id,
                       }
                     );
   
@@ -70,13 +64,9 @@ sub content {
     link_class  => '_location_change _location_mark'
   });
 
-  my @gene_links;
-  foreach (@gene_stable_ids) {
-    push @gene_links, sprintf('<a href="%s">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_, 'db' => 'core'}), $_);
-  }
   $self->add_entry ({
     type      => 'Target(s)',
-    label_html => join(', ', @gene_links), 
+    label_html => sprintf('<a href="%s">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $gene_stable_id, 'db' => 'core'}), $gene_stable_id), 
   });
 
   $self->add_entry ({
@@ -93,12 +83,12 @@ sub content {
                               type   => 'Location',
                               action => 'Genome',
                               ftype  => 'RegulatoryFactor',
-                              fset   => $feature->feature_set->name,
+                              fset   => $feature->get_FeatureType->name,
                               id     => $feature->display_label,
                             });
 
   # Temporarily disable TarBase links
-  if ($feature_view_link && $feature->feature_set->name !~ /TarBase/){
+  if ($feature_view_link && $feature->get_FeatureType->name !~ /TarBase/){
     $self->add_entry({
       label_html => 'View all locations',
       link       => $feature_view_link,
