@@ -486,4 +486,169 @@ sub get_cigar_array {
     }
     return \@cigar_array;
 }
+
+=head2 create_2x_cigar_line
+
+    Arg[1]      : String $aligned_sequence
+    Arg[2]      : Arrayref $genomic_align_deletions
+    Description : create cigar line for 2x genomes manually because I need to add in the
+                  insertions, that is "I" in the cigar_line to represent the 2x-only sequences
+                  that are not found in the reference species which I removed during the
+                  creation of the _create_mfa routine.
+    Returntype  : String $cigar_line
+                  
+=cut
+
+sub create_2x_cigar_line {
+    my ($self, $aligned_sequence, $ga_deletions) = @_;
+
+    my $cigar_line = "";
+    my $base_pos = 0;
+    my $current_deletion;
+    if (defined $ga_deletions && @$ga_deletions > 0) {
+	$current_deletion = shift @$ga_deletions;
+    }
+    
+    my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
+    foreach my $piece (@pieces) {
+	my $elem = '';
+
+	#length of current piece
+	my $this_len = length($piece);
+	
+	my $mode;
+	if ($piece =~ /\-/) {
+	    $mode = "D"; # D for gaps (deletions)
+	    $elem = _cigar_element($mode, $this_len);
+	} elsif ($piece =~ /\./) {
+	    $mode = "X"; # X for pads (in 2X genomes)
+	    $elem = _cigar_element($mode, $this_len);
+	} else {
+	    $mode = "M"; # M for matches/mismatches
+	    my $next_pos = $base_pos + $this_len;
+
+	    #TODO need special case if have insertion as the last base.
+	    #need to have >= and < (not <=) otherwise if an insertion occurs
+	    #in the same position as a - then I is added twice.
+
+	    #check to see if next deletion occurs in this cigar element
+	    if (defined $current_deletion && 
+		$current_deletion->{pos} >= $base_pos && 
+		$current_deletion->{pos} < $next_pos) {
+		
+		#find all deletions that occur in this cigar element
+		my $this_del_array;
+		while ($current_deletion->{pos} >= $base_pos && 
+		       $current_deletion->{pos} < $next_pos) {
+		    push @$this_del_array, $current_deletion;
+
+		    last if (@$ga_deletions == 0);
+		    $current_deletion = shift @$ga_deletions;
+		} 
+		
+		#loop through all deletions, adding them instead of this cigar element
+		my $prev_pos = $base_pos;
+		foreach my $this_del (@$this_del_array) {
+		    my $piece_len = ($this_del->{pos} - $prev_pos);
+		    $elem .= _cigar_element($mode, $piece_len);
+		    $elem .= _cigar_element("I", $this_del->{len});
+		    $prev_pos = $this_del->{pos};
+		    
+		}
+		#add final bit
+		$elem .= _cigar_element($mode, ($base_pos+$this_len) - $this_del_array->[-1]->{pos});
+	    } else {
+		$elem = _cigar_element($mode, $this_len);
+	    }
+	    
+	    $base_pos += $this_len;
+	    #print "LENGTH $this_len BASE POS $base_pos\n";
+	}
+	$cigar_line .= $elem;
+    }	
+    #print "cigar $cigar_line\n";
+    return $cigar_line;
+}
+
+#create cigar element from mode and length
+sub _cigar_element {
+    my ($mode, $len) = @_;
+    my $elem = '';
+    if ($len == 1) {
+	$elem = $mode;
+    } elsif ($len > 1) { #length can be 0 if the sequence starts with a gap
+	$elem = $len.$mode;
+    }
+    return $elem;
+}
+
+=head2 check_cigar_line
+
+    Arg[1]      : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
+    Arg[2]      : int $total_gap
+    Description : check the new cigar_line is consistent ie the seq_length and number of 
+                  (M+I) agree and the alignment length and total of cig_elems agree.
+
+=cut
+
+sub check_cigar_line {
+    my ($genomic_align, $total_gap) = @_;
+
+    #can't check ancestral nodes because these don't have a dnafarg_start
+    #or dnafrag_end.
+    return if ($genomic_align->dnafrag_id == -1);
+
+    my $seq_pos = 0;
+    my $align_len = 0;
+    my $cigar_line = $genomic_align->cigar_line;
+    my $length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
+    my $gab = $genomic_align->genomic_align_block;
+
+    my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
+    for my $cigElem ( @cig ) {
+	my $cigType = substr( $cigElem, -1, 1 );
+	my $cigCount = substr( $cigElem, 0 ,-1 );
+	$cigCount = 1 unless ($cigCount =~ /^\d+$/);
+
+	if( $cigType eq "M" ) {
+	    $seq_pos += $cigCount;
+	} elsif( $cigType eq "I") {
+	    $seq_pos += $cigCount;
+	} elsif( $cigType eq "X") {
+	} elsif( $cigType eq "G" || $cigType eq "D") {	
+	}
+	if ($cigType ne "I") {
+	    $align_len += $cigCount;
+	}
+    }
+
+    throw ("Cigar line aligned length $align_len does not match (genomic_align_block_length (" . $gab->length . ") - num of gaps ($total_gap)) " . ($gab->length - $total_gap) . " for gab_id " . $gab->dbID . "\n")
+      if ($align_len != ($gab->length - $total_gap));
+
+    throw("Cigar line ($seq_pos) does not match sequence length $length\n") 
+      if ($seq_pos != $length);
+}
+
+
+
+#If a gap has been found in a cig_elem of type M, need to split it into
+#firstM - I - lastM. This function adds firstM and I to new_cigar_line
+sub _add_match_elem {
+    my ($firstM, $gap_len, $new_cigar_line) = @_;
+
+    #add firstM
+    if ($firstM == 1) {
+	$new_cigar_line .= "M";
+    } elsif($firstM > 1) {
+	$new_cigar_line .= $firstM . "M";
+    } 
+    
+    if ($gap_len == 1) {
+	$new_cigar_line .= "I";
+    } elsif ($gap_len > 1) {
+	$new_cigar_line .= $gap_len . "I";
+    } 
+    return ($new_cigar_line);
+}
+
 1;

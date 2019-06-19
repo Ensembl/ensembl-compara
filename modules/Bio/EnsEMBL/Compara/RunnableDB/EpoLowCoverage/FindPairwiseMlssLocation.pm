@@ -103,9 +103,9 @@ sub _find_location_of_all_required_mlss {
             
             # store species_tree_node_tag with ref_species information
             my $ref_gdb = $low_gdb_adaptor->fetch_by_dbID($ref_gdb_id);
-            my $tag_sql = "INSERT INTO species_tree_node_tag SELECT node_id, 'reference_species', '?' FROM species_tree_node WHERE genome_db_id = ?";
+            my $tag_sql = "INSERT INTO species_tree_node_tag SELECT node_id, 'reference_species', '".$ref_gdb->name."' FROM species_tree_node WHERE genome_db_id = ?";
             my $sth = $self->compara_dba->dbc->prepare($tag_sql);
-            $sth->execute($ref_gdb->name, $genome_db->dbID);            
+            $sth->execute($genome_db->dbID);            
 	    }
     }
     $self->param('refs_per_species', \%refs_per_species);

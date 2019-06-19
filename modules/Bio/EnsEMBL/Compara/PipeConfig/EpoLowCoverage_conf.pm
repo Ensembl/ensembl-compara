@@ -36,10 +36,11 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
+    'pipeline_name' => $self->o('species_set_name').'_epo_low_coverage_'.$self->o('rel_with_suffix'),
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
-	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
+	'base_epo_mlss_id' => $self->o('base_epo_mlss_id'), #mlss_id for the base alignment we're topping up
+                                                        # (can be EPO or EPO_LOW_COVERAGE)
 	'mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment, needed for the alignment stats
 
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
@@ -144,7 +145,7 @@ sub pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
               -parameters => {
                               'sql' => [
-                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')',
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "base_mlss_id", ' . $self->o('base_epo_mlss_id') . ')',
                               ],
                              },
               -flow_into => {
@@ -215,10 +216,9 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::FindPairwiseMlssLocation',
 		-parameters => {
 				'new_method_link_species_set_id' => $self->o('low_epo_mlss_id'),
-				'base_method_link_species_set_id' => $self->o('high_epo_mlss_id'),
+				'base_method_link_species_set_id' => $self->o('base_epo_mlss_id'),
 				'pairwise_location' => $self->o('pairwise_location'),
 				'base_location' => $self->o('epo_db'),
-                'high_epo_db' => $self->o('epo_db'),
 			       },
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
@@ -227,11 +227,11 @@ sub pipeline_analyses {
 		-rc_name => '1Gb_job',
 	    },
 
-# ------------------------------------------------[Import the high coverage alignments]---------------------------------------------------
+# ------------------------------------------------[Import the base alignments]---------------------------------------------------
 	    {   -logic_name => 'import_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment',
 		-parameters => {
-				'method_link_species_set_id' => $self->o('high_epo_mlss_id'),
+				'method_link_species_set_id' => $self->o('base_epo_mlss_id'),
 				'from_db'                    => $self->o('epo_db'),
 			       },
 		-flow_into => {
@@ -244,7 +244,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'create_low_coverage_genome_jobs',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
 		-parameters => {
-				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id') . ' AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
+				'inputquery' => 'SELECT genomic_align_block_id FROM genomic_align ga LEFT JOIN dnafrag USING (dnafrag_id) WHERE method_link_species_set_id=' . $self->o('base_epo_mlss_id') . ' AND coord_system_name != "ancestralsegment" GROUP BY genomic_align_block_id',
 			       },
 		-flow_into => {
 			       '2->A' => [ 'low_coverage_genome_alignment' ],
@@ -313,13 +313,13 @@ sub pipeline_analyses {
 		-rc_name => '2Gb_job',
 	    },
 
-# ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------
+# ---------------------------------------------------[Delete base alignment]-----------------------------------------------------
 	    {   -logic_name => 'delete_alignment',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
 		-parameters => {
 				'sql' => [
-					  'DELETE gat, ga FROM genomic_align_tree gat JOIN genomic_align ga USING (node_id) WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
-					  'DELETE FROM genomic_align_block WHERE method_link_species_set_id=' . $self->o('high_epo_mlss_id'),
+					  'DELETE gat, ga FROM genomic_align_tree gat JOIN genomic_align ga USING (node_id) WHERE method_link_species_set_id=' . $self->o('base_epo_mlss_id'),
+					  'DELETE FROM genomic_align_block WHERE method_link_species_set_id=' . $self->o('base_epo_mlss_id'),
 					 ],
 			       },
 		-flow_into => {

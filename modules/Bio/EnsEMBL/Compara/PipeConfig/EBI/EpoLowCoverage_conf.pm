@@ -53,15 +53,10 @@ sub default_options {
     'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3) ],
     #'pairwise_location' => 'compara_curr',
 
-	#Location of compara db containing the high coverage alignments
-        #'epo_db' => 'compara_curr',
-        'epo_db' => $self->o('species_set_name').'_epo', # registry name usually follows this convention for new EPO runs
+	#Location of compara db containing EPO/EPO_LOW_COVERAGE alignment to use as a base
+    #'epo_db' => 'compara_curr',
+    'epo_db' => $self->o('species_set_name').'_epo', # registry name usually follows this convention for new EPO runs
 
-
-    #ref species for pairwise alignments
- 	# 'ref_species' => 'gallus_gallus',    # sauropsids
-	#'ref_species' => 'oryzias_latipes',  # fish
-	# 'ref_species' => 'homo_sapiens',       # mammals
     };
 }
 

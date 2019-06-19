@@ -928,7 +928,7 @@ sub original_dbID {
 sub _get_cigar_line_from_aligned_sequence {
   my ($aligned_sequence) = @_;
   my $cigar_line = "";
-  
+    
   my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
   foreach my $piece (@pieces) {
     my $mode;
@@ -1123,7 +1123,7 @@ sub toString {
     $str .= sprintf(' (%s)', $self->method_link_species_set->name) if $self->method_link_species_set;
     $str .= sprintf(' %s %s:%d-%d%s', $self->dnafrag->genome_db->name, $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end, ($self->dnafrag_strand < 0 ? '(-1)' : '')) if $self->dnafrag_id;
     my %cigar_breakout = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->cigar_line);
-    $str .= ' cigar_line:' . join(',', map {$cigar_breakout{$_}.'*'.$_} sort keys %cigar_breakout);
+    $str .= ' cigar_line:' . $self->cigar_line . ' (breakdown: ' . join(',', map {$cigar_breakout{$_}.'*'.$_} sort keys %cigar_breakout) . ')';
     return $str;
 }
 

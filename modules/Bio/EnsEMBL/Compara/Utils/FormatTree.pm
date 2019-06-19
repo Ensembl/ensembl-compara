@@ -395,11 +395,16 @@ sub new {
 
 sub format_newick {
   my ($self, $tree) = @_;
-  return $self->_internal_format_newick($tree);
+  
+  my $newick = $self->_internal_format_newick($tree);
+  return $newick if $newick =~ /^\(/;
+  # account for cases where input tree is a single node
+  return '(' . $tree->node_name . ")$newick";
 }
 
 sub _internal_format_newick {
     my ($self, $tree) = @_;
+    
     my $newick = "";
     if ($tree->get_child_count()>0) {
         $newick .= "(";

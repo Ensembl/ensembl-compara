@@ -56,9 +56,19 @@ use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Production::Analysis::LowCoverageGenomeAlignment;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults},
+
+        '_low_cov_genomic_aligns' => {},
+    }
+}
 
 =head2 fetch_input
 
@@ -228,8 +238,13 @@ sub _write_output {
 sub _write_gerp_dataflow {
     my ($self, $gab_id) = @_;
     
-    my $output_id = { genomic_align_block_id => $gab_id };
-    $self->dataflow_output_id($output_id, 2);
+    if ( defined $gab_id ) {
+        my $output_id = { genomic_align_block_id => $gab_id };
+        $self->dataflow_output_id($output_id, 2);
+    } else { # account for cases where the tree was too small and was not stored
+        $self->input_job->autoflow(0);
+        return;
+    }
 }
 
 =head2 _parse_results
@@ -319,6 +334,7 @@ sub _parse_results {
     open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
+    my $these_genomic_aligns;
 
     #Create genomic_align_group object to store genomic_aligns for
     #each node. For 2x genomes, there may be several genomic_aligns
@@ -346,6 +362,7 @@ sub _parse_results {
     my $frag_limits;
     my @ga_lengths;
     my $ga_deletions;
+    my $gaa  = $self->compara_dba->get_GenomicAlignAdaptor;
 
     while (<$fh>) {
 	next if (/^\s*$/);
@@ -383,7 +400,7 @@ sub _parse_results {
 			#Add aligned sequence
 			$genomic_align->aligned_sequence($subseq);
 
-			my $cigar_line = create_2x_cigar_line($subseq, $ga_deletions->[$i]);
+			my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars->create_2x_cigar_line($subseq, $ga_deletions->[$i]);
 			$genomic_align->cigar_line($cigar_line);
 
 
@@ -414,28 +431,28 @@ sub _parse_results {
 		    undef $ga_deletions;
 		    undef $frag_limits;
 		} else {
+            foreach my $this_galign ( @$these_genomic_aligns ) {
+    		    $this_galign->aligned_sequence($seq) unless defined $this_galign->aligned_sequence;
 
-		    print "add aligned_sequence " . $this_genomic_align->dnafrag_id . " " . $this_genomic_align->dnafrag_start . " " . $this_genomic_align->dnafrag_end . "\n" if $self->debug;
+    		    #need to add original sequence here because the routine
+    		    #remove_empty_columns can delete parts of the alignment and
+    		    #so the original_sequence cannot be reconstructed from the
+    		    #aligned_sequence
+    		    if ($this_galign->dnafrag_id == -1) {
+    			    $this_galign->original_sequence;
+    		    }
+    		    #undef aligned_sequence now. Necessary because otherwise 
+    		    #when I remove_empty_columns, this
+    		    #modifies the cigar_line only and not the aligned_sequence
+    		    #so not removing it here causes the genomic_align_block
+    		    #length to be wrong since it finds the length of the
+    		    #aligned_sequence
+    		    $this_galign->cigar_line;
+    		    undef($this_galign->{'aligned_sequence'});
 
-		    $this_genomic_align->aligned_sequence($seq);
-
-		    #need to add original sequence here because the routine
-		    #remove_empty_columns can delete parts of the alignment and
-		    #so the original_sequence cannot be reconstructed from the
-		    #aligned_sequence
-		    if ($this_genomic_align->dnafrag_id == -1) {
-			$this_genomic_align->original_sequence;
-		    }
-		    #undef aligned_sequence now. Necessary because otherwise 
-		    #when I remove_empty_columns, this
-		    #modifies the cigar_line only and not the aligned_sequence
-		    #so not removing it here causes the genomic_align_block
-		    #length to be wrong since it finds the length of the
-		    #aligned_sequence
-		    $this_genomic_align->cigar_line;
-		    undef($this_genomic_align->{'aligned_sequence'});
-
-		    $this_genomic_align_block->add_GenomicAlign($this_genomic_align);
+                print "add genomic_align to genomic_align_block: " . $this_galign->dnafrag_id . " " . $this_galign->dnafrag_start . " " . $this_galign->dnafrag_end . "\n" if $self->debug;
+    		    $this_genomic_align_block->add_GenomicAlign($this_galign);
+            }
 
 		}
 	    }
@@ -465,6 +482,7 @@ sub _parse_results {
 		$this_genomic_align->dnafrag_start(1);
 		$this_genomic_align->dnafrag_end(0);
 		$this_genomic_align->dnafrag_strand(1);
+        $this_genomic_align->adaptor($gaa);
 
 		bless($this_node, "Bio::EnsEMBL::Compara::GenomicAlignTree");
 		$genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
@@ -522,46 +540,51 @@ sub _parse_results {
 			$genomic_align->dnafrag_start($non_ref_genomic_align->dnafrag_start);
 			$genomic_align->dnafrag_end($non_ref_genomic_align->dnafrag_end);
 			$genomic_align->dnafrag_strand($non_ref_genomic_align->dnafrag_strand);
+            $genomic_align->adaptor($gaa);
 
 			print "store start " . $genomic_align->dnafrag_start . " end " . $genomic_align->dnafrag_end . " strand " . $genomic_align->dnafrag_strand . "\n" if $self->debug;
 
-			#print "LENGTHS " . $ga_frag->{length} . "\n";
 			push @$ga_deletions, $ga_frag->{deletions};
 			push @ga_lengths, $ga_frag->{length};
 			push @num_frag_pads, $ga_frag->{num_pads};
 			push @$genomic_aligns_2x_array, $genomic_align;
 		    }
-		    #Add genomic align to genomic align group 
+		    #Add genomic aligns to genomic align group 
 		    $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-											#-genomic_align_array => $genomic_aligns_2x_array,
+											-genomic_align_array => $genomic_aligns_2x_array,
 										        -type => "epo");
-		    foreach my $this_genomic_align (@$genomic_aligns_2x_array) {
-			$genomic_align_group->add_GenomicAlign($this_genomic_align);
-		    }
 
 		    bless($this_leaf, "Bio::EnsEMBL::Compara::GenomicAlignTree");
 		    $this_leaf->genomic_align_group($genomic_align_group);
 		    print "size of array " . @$genomic_aligns_2x_array . "\n" if $self->debug;
 		    print "store gag1 $this_leaf\n" if $self->debug;
-
-		    #$self->{$this_leaf} = $genomic_align_group;
 		} else  {
 		    print "normal name " . $ga->genome_db->name . "\n" if $self->debug;
 
-
-		    $this_genomic_align->dnafrag_id($ga->dnafrag_id);
-		    $this_genomic_align->dnafrag_start($ga->dnafrag_start);
-		    $this_genomic_align->dnafrag_end($ga->dnafrag_end);
-		    $this_genomic_align->dnafrag_strand($ga->dnafrag_strand);
-
+            $this_genomic_align->dnafrag_id($ga->dnafrag_id);
+            $this_genomic_align->dnafrag_start($ga->dnafrag_start);
+            $this_genomic_align->dnafrag_end($ga->dnafrag_end);
+            $this_genomic_align->dnafrag_strand($ga->dnafrag_strand);
+            $this_genomic_align->cigar_line($ga->cigar_line);
+            $this_genomic_align->adaptor($gaa);
+            
+            # if a low coverage genome is found, expand $these_genomic_aligns to include any
+            # that were trimmed out at an earlier stage
+            if ( $ga->genome_db->is_good_for_alignment ) {
+                $these_genomic_aligns = [$this_genomic_align];
+            } else {
+                $these_genomic_aligns = $self->_expand_trimmed_low_coverage_alignments($ga->genome_db->dbID);
+                $these_genomic_aligns = [$this_genomic_align] unless defined $these_genomic_aligns->[0];
+            }
+		    
 		    $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-											#-genomic_align_array => [$this_genomic_align],
-										        -type => "epo");
-		    $genomic_align_group->add_GenomicAlign($this_genomic_align);
-
-		    bless($this_leaf, "Bio::EnsEMBL::Compara::GenomicAlignTree");
-		    $this_leaf->genomic_align_group($genomic_align_group);
-		    print "store gag2 $this_leaf\n" if $self->debug;
+											-genomic_align_array => $these_genomic_aligns,
+										    -type => "epo",
+                                            -genome_db => $ga->genome_db);
+            
+            bless($this_leaf, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+            $this_leaf->genomic_align_group($genomic_align_group);
+            print "store gag2 $this_leaf\n" if $self->debug;
 		}
 	    } else {
 		throw("Error while parsing the FASTA header. It must start by \">DnaFrag#####\" where ##### is the dnafrag_id\n$_");
@@ -599,7 +622,7 @@ sub _parse_results {
 # 	    #Add aligned sequence
  	    $genomic_align->aligned_sequence($subseq);
 
-	    my $cigar_line = create_2x_cigar_line($subseq, $ga_deletions->[$i]);
+	    my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars->create_2x_cigar_line($subseq, $ga_deletions->[$i]);
 	    $genomic_align->cigar_line($cigar_line);
 
 # 	    #Add X padding characters to ends of seq
@@ -673,155 +696,6 @@ sub _fix_internal_ids {
 	$new_group_id = $group_id;
     }
     return $new_group_id;
-}
-
-#create cigar line for 2x genomes manually because I need to add in the
-#insertions, that is "I" in the cigar_line to represent the 2x-only sequences
-#that are not found in the reference species which I removed during the
-#creation of the _create_mfa routine.
-sub create_2x_cigar_line {
-    my ($aligned_sequence, $ga_deletions) = @_;
-
-    my $cigar_line = "";
-    my $base_pos = 0;
-    my $current_deletion;
-    if (defined $ga_deletions && @$ga_deletions > 0) {
-	$current_deletion = shift @$ga_deletions;
-    }
-    
-    my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
-    foreach my $piece (@pieces) {
-	my $elem = '';
-
-	#length of current piece
-	my $this_len = length($piece);
-	
-	my $mode;
-	if ($piece =~ /\-/) {
-	    $mode = "D"; # D for gaps (deletions)
-	    $elem = cigar_element($mode, $this_len);
-	} elsif ($piece =~ /\./) {
-	    $mode = "X"; # X for pads (in 2X genomes)
-	    $elem = cigar_element($mode, $this_len);
-	} else {
-	    $mode = "M"; # M for matches/mismatches
-	    my $next_pos = $base_pos + $this_len;
-
-	    #TODO need special case if have insertion as the last base.
-	    #need to have >= and < (not <=) otherwise if an insertion occurs
-	    #in the same position as a - then I is added twice.
-
-	    #check to see if next deletion occurs in this cigar element
-	    if (defined $current_deletion && 
-		$current_deletion->{pos} >= $base_pos && 
-		$current_deletion->{pos} < $next_pos) {
-		
-		#find all deletions that occur in this cigar element
-		my $this_del_array;
-		while ($current_deletion->{pos} >= $base_pos && 
-		       $current_deletion->{pos} < $next_pos) {
-		    push @$this_del_array, $current_deletion;
-
-		    last if (@$ga_deletions == 0);
-		    $current_deletion = shift @$ga_deletions;
-		} 
-		
-		#loop through all deletions, adding them instead of this cigar element
-		my $prev_pos = $base_pos;
-		foreach my $this_del (@$this_del_array) {
-		    my $piece_len = ($this_del->{pos} - $prev_pos);
-		    $elem .= cigar_element($mode, $piece_len);
-		    $elem .= cigar_element("I", $this_del->{len});
-		    $prev_pos = $this_del->{pos};
-		    
-		}
-		#add final bit
-		$elem .= cigar_element($mode, ($base_pos+$this_len) - $this_del_array->[-1]->{pos});
-	    } else {
-		$elem = cigar_element($mode, $this_len);
-	    }
-	    
-	    $base_pos += $this_len;
-	    #print "LENGTH $this_len BASE POS $base_pos\n";
-	}
-	$cigar_line .= $elem;
-    }	
-    #print "cigar $cigar_line\n";
-    return $cigar_line;
-}
-
-#create cigar element from mode and length
-sub cigar_element {
-    my ($mode, $len) = @_;
-    my $elem = '';
-    if ($len == 1) {
-	$elem = $mode;
-    } elsif ($len > 1) { #length can be 0 if the sequence starts with a gap
-	$elem = $len.$mode;
-    }
-    return $elem;
-}
-
-#check the new cigar_line is consistent ie the seq_length and number of (M+I) 
-#agree and the alignment length and total of cig_elems agree.
-sub check_cigar_line {
-    my ($genomic_align, $total_gap) = @_;
-
-    #can't check ancestral nodes because these don't have a dnafarg_start
-    #or dnafrag_end.
-    return if ($genomic_align->dnafrag_id == -1);
-
-    my $seq_pos = 0;
-    my $align_len = 0;
-    my $cigar_line = $genomic_align->cigar_line;
-    my $length = $genomic_align->dnafrag_end-$genomic_align->dnafrag_start+1;
-    my $gab = $genomic_align->genomic_align_block;
-
-    my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
-    for my $cigElem ( @cig ) {
-	my $cigType = substr( $cigElem, -1, 1 );
-	my $cigCount = substr( $cigElem, 0 ,-1 );
-	$cigCount = 1 unless ($cigCount =~ /^\d+$/);
-
-	if( $cigType eq "M" ) {
-	    $seq_pos += $cigCount;
-	} elsif( $cigType eq "I") {
-	    $seq_pos += $cigCount;
-	} elsif( $cigType eq "X") {
-	} elsif( $cigType eq "G" || $cigType eq "D") {	
-	}
-	if ($cigType ne "I") {
-	    $align_len += $cigCount;
-	}
-    }
-
-    throw ("Cigar line aligned length $align_len does not match (genomic_align_block_length (" . $gab->length . ") - num of gaps ($total_gap)) " . ($gab->length - $total_gap) . " for gab_id " . $gab->dbID . "\n")
-      if ($align_len != ($gab->length - $total_gap));
-
-    throw("Cigar line ($seq_pos) does not match sequence length $length\n") 
-      if ($seq_pos != $length);
-}
-
-
-
-#If a gap has been found in a cig_elem of type M, need to split it into
-#firstM - I - lastM. This function adds firstM and I to new_cigar_line
-sub add_match_elem {
-    my ($firstM, $gap_len, $new_cigar_line) = @_;
-
-    #add firstM
-    if ($firstM == 1) {
-	$new_cigar_line .= "M";
-    } elsif($firstM > 1) {
-	$new_cigar_line .= $firstM . "M";
-    } 
-    
-    if ($gap_len == 1) {
-	$new_cigar_line .= "I";
-    } elsif ($gap_len > 1) {
-	$new_cigar_line .= $gap_len . "I";
-    } 
-    return ($new_cigar_line);
 }
 
 #
@@ -980,7 +854,7 @@ sub _load_GenomicAligns {
 
   Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $gab->get_all_GenomicAligns);
 
-  foreach my $ga (@{ $gab->get_all_GenomicAligns }) {
+  foreach my $ga (@{ $gab->get_all_GenomicAligns }) {      
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths
 
@@ -1228,10 +1102,6 @@ sub _dump_fasta_and_mfa {
     #add taxon_id to end of fasta files
     $file .= "_" . $ga->genome_db->taxon_id . ".fa";
     print "file $file\n" if $self->debug;
-    
-    #print $mfa_fh ">SeqID" . $seq_id . "\n";
-
-    #print $mfa_fh ">seq" . $seq_id . "\n";
     print $mfa_fh ">seq" . $seq_id . "_" . $ga->genome_db->taxon_id . "\n";
 
     print ">DnaFrag", $ga->dnafrag->dbID, "|", $ga->dnafrag->name, ".",
@@ -1287,11 +1157,9 @@ sub _build_tree_string {
   return if (!$tree);
   
   $tree = $self->_update_tree_2x($tree);
-
   return if (!$tree);
 
   my $tree_string = $tree->newick_format('simple');
-
 
   # Remove quotes around node labels
   $tree_string =~ s/"(seq\d+)"/$1/g;
@@ -1327,12 +1195,14 @@ sub _update_tree_2x {
   my $tree = shift;
 
   my $all_genomic_aligns = $self->param('genomic_aligns');
+  my $genome_db_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
   my $ordered_genomic_aligns = [];
   my $ordered_2x_genomes = [];
 
   my $idx = 1;
   my $all_leaves = $tree->get_all_leaves;
   foreach my $this_leaf (@$all_leaves) {
+      my $this_leaf_genome_db = $genome_db_adaptor->fetch_by_dbID($this_leaf->genome_db_id);
     my $these_genomic_aligns = [];
     my $these_2x_genomes = [];
     ## Look for genomic_aligns belonging to this genome_db_id
@@ -1341,6 +1211,8 @@ sub _update_tree_2x {
         push (@$these_genomic_aligns, $this_genomic_align);
       }
     }
+
+    $these_genomic_aligns = $self->_trim_low_coverage_alignments($these_genomic_aligns, $this_leaf_genome_db);
 
     my $index = 0;
     if ($self->param('ga_frag')) {
@@ -1354,7 +1226,7 @@ sub _update_tree_2x {
 	    $index++;
 	}
     }
-    print "num " . @$these_genomic_aligns . " " . @$these_2x_genomes . "\n" if $self->debug;
+    print "updating tree -- num genomic_aligns: " . @$these_genomic_aligns . ", num 2x genomes: " . @$these_2x_genomes . "\n" if $self->debug;
 
     if (@$these_genomic_aligns == 1) {
       ## If only 1 has been found...
@@ -1387,7 +1259,6 @@ sub _update_tree_2x {
        my $taxon_id = $ga_frags->[0]->{taxon_id};
 	print "2x seq$idx" . "_" . $taxon_id . " " . $ga_frags->[0]->{genome_db_id} . "\n" if $self->debug;
 	$this_leaf->name("seq".$idx++."_".$taxon_id);
-	#push(@$ordered_2x_genomes, $these_2x_genomes->[0]);
 	push(@$ordered_genomic_aligns, $ga_frags);
    } else {
       ## If none has been found...
@@ -1700,7 +1571,7 @@ sub _create_mfa {
 	## New aligned sequence for the 2X genome. Empty (only dashes) at creation time
 	my $aligned_sequence = "-" x $multi_gab_length;
 	
-	foreach my $ga_frag (@$ga_frag_array) {
+    	foreach my $ga_frag (@$ga_frag_array) {
 	    my $pairwise_gab = $ga_frag->{genomic_align_block};
 	    
 	    my $pairwise_non_ref_ga = $pairwise_gab->get_all_non_reference_genomic_aligns->[0];
@@ -1837,6 +1708,59 @@ sub get_seq_length_from_cigar {
 	}
     }
     return $seq_pos;
+}
+
+sub _trim_low_coverage_alignments {
+    my ($self, $these_genomic_aligns, $this_leaf_genome_db) = @_;
+        
+    if ( @$these_genomic_aligns > 1 && !$this_leaf_genome_db->is_good_for_alignment ) {
+        # first, store the full set of genomic_aligns for this genome
+        my $low_cov_genomic_aligns = $self->param('_low_cov_genomic_aligns');
+        $low_cov_genomic_aligns->{$this_leaf_genome_db->dbID} = $these_genomic_aligns;
+        $self->param('_low_cov_genomic_aligns', $low_cov_genomic_aligns);
+        
+        # first, select the longest one to return
+        print "compressing " . scalar(@$these_genomic_aligns) . " " . $this_leaf_genome_db->name . " genomic_aligns into 1..\n" if $self->debug;
+        my ($max_ga_len, $longest_low_cov_ga) = (0,0);
+        foreach my $this_ga ( @$these_genomic_aligns ) {
+            if ( length($this_ga->original_sequence) > $max_ga_len ) {
+                $longest_low_cov_ga = $this_ga;
+                $max_ga_len = length($this_ga->original_sequence);
+            }
+        }
+        return [$longest_low_cov_ga];
+    }
+    return $these_genomic_aligns;
+}
+
+sub _expand_trimmed_low_coverage_alignments {
+    my ($self, $genome_db_id) = @_;
+    
+    print " -- expanding genomic_aligns for genome_db_id $genome_db_id\n";
+    
+    my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
+    my $low_cov_genomic_aligns = $self->param('_low_cov_genomic_aligns')->{$genome_db_id};
+    my @expanded_genomic_aligns;
+    foreach my $low_ga ( @$low_cov_genomic_aligns ) {
+        # only copy essential fields, so that others (e.g. genomic_align_block_id)
+        # can be generated automatically later on
+        my $stripped_genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign;
+        $stripped_genomic_align->dnafrag_id($low_ga->dnafrag_id);
+        $stripped_genomic_align->dnafrag_start($low_ga->dnafrag_start);
+        $stripped_genomic_align->dnafrag_end($low_ga->dnafrag_end);
+        $stripped_genomic_align->dnafrag_strand($low_ga->dnafrag_strand);
+        $stripped_genomic_align->cigar_line($low_ga->cigar_line);
+        $stripped_genomic_align->original_sequence($low_ga->original_sequence);
+        $stripped_genomic_align->adaptor($gaa);
+        push @expanded_genomic_aligns, $stripped_genomic_align;
+        
+        # undef($low_ga->{'method_link_species_set'});
+        # $low_ga->method_link_species_set_id($self->param('mlss_id'));
+        # $low_ga->adaptor($gaa);
+        # push @expanded_genomic_aligns, $low_ga;
+    }
+    print " ---- returning " . scalar(@expanded_genomic_aligns) . " genomic_aligns\n";
+    return \@expanded_genomic_aligns;
 }
 
 1;
