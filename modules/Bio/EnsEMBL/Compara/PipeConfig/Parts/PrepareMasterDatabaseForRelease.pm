@@ -69,7 +69,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'schema_file'  => $self->o('schema_file'),
                 'patch_dir'    => $self->o('patch_dir'),
                 'prev_release' => '#expr( #release# - 1 )expr#',
-                'patcpipeline_analyses_prepare_master_db_for_releaseh_names'  => '#patch_dir#/patch_#prev_release#_#release#_*.sql',
+                'patch_names'  => '#patch_dir#/patch_#prev_release#_#release#_*.sql',
             },
             -flow_into  => ['load_ncbi_node'],
         },
@@ -101,8 +101,8 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'import_aliases',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PatchDB',
             -parameters => {
-                'db_conn'    => $self->o('master_db'),
-                'patch_file' => $self->o('alias_file'),
+                'db_conn'        => $self->o('master_db'),
+                'patch_file'     => $self->o('alias_file'),
                 'ignore_failure' => 1,
                 'record_output'  => 1,
             },
@@ -173,7 +173,10 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'division'               => $self->o('division'),
                 'cmd' => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --division #division#'
             },
-            -flow_into  => [ 'load_lrg_dnafrags' ],
+            -flow_into  => WHEN(
+                '#do_load_lrg_dnafrags#' => 'load_lrg_dnafrags',
+                ELSE 'assembly_patch_factory',
+            ),
         },
 
         {   -logic_name => 'load_lrg_dnafrags',
@@ -187,7 +190,7 @@ sub pipeline_analyses_prep_master_db_for_release {
          {  -logic_name => 'assembly_patch_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'  => $self->o('assembly_patch_species'),
+                'inputlist'    => $self->o('assembly_patch_species'),
                 'column_names' => ['species_name'],
             },
             -flow_into  => {

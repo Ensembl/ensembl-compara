@@ -70,6 +70,9 @@ sub default_options {
         'input'         => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
         'reg_conf'      => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_reg_pre_test_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_test_conf_tmpl.pl'),
+
+        # PrepareMasterDatabaseForRelease pipeline configuration:
+        'assembly_patch_species' => [],
     };
 }
 

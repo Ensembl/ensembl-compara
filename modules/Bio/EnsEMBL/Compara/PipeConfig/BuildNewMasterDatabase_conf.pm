@@ -95,6 +95,7 @@ sub default_options {
         'assembly_patch_species'  => undef,
         'additional_species'      => undef,
         'do_update_from_metadata' => 0,
+        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 1,
     };
 }
@@ -119,6 +120,8 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'division'      => $self->o('division'),
         'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
+        'release'       => $self->o('ensembl_release'),
+        'hc_version'    => 1,
     };
 }
 
@@ -178,6 +181,15 @@ sub pipeline_analyses {
                 'work_dir'      => $self->o('work_dir'),
                 'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
                 'dst_host'      => $self->o('dst_host'),
+            },
+            -flow_into  => [ 'set_new_reg_conf' ],
+        },
+
+        {   -logic_name => 'set_new_reg_conf',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReplaceRegConf',
+            -parameters => {
+                'pipeline_url' => $self->SUPER::pipeline_url(),
+                'resources'    => $self->SUPER::resource_classes($self),
             },
             -flow_into  => [ 'patch_master_db' ],
         },
