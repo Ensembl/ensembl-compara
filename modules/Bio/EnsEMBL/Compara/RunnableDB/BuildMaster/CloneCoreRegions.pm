@@ -37,16 +37,13 @@ Requires several inputs:
 
 The dataflow output writes the new core database's name into the accumulator named 'cloned_db'.
 
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions;
 
 use warnings;
 use strict;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
-use File::Basename;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

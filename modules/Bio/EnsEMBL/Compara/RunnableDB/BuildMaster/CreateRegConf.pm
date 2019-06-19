@@ -34,6 +34,8 @@ Requires several inputs:
     'dst_host'      : host name where the new core database have been created
     'cloned_dbs'    : hash accumulator of "species" => "database_name"
 
+The dataflow output writes the new registry configuration file path into branch #1.
+
 
 =cut
 
@@ -41,9 +43,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf;
 
 use warnings;
 use strict;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 use File::Slurp;
 use File::Basename;
 use File::Spec;
@@ -88,10 +87,13 @@ sub run {
     open(my $file, '>', $reg_conf) or die "Could not open file '$reg_conf' $!";
     print $file $content;
     close $file;
+    $self->param('new_reg_conf', $reg_conf);
 }
 
-# sub write_output {
-#     my $self = shift;
-# }
+sub write_output {
+    my $self = shift;
+    my $reg_conf = $self->param_required('new_reg_conf');
+    $self->dataflow_output_id({'new_reg_conf' => $reg_conf}, 1);
+}
 
 1;
