@@ -18,7 +18,7 @@ limitations under the License.
 
 =cut
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -65,8 +65,7 @@ sub write_output {
     my $dry_run = 0;
 
     #Update the release collection.
-    Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $self->param('master_dba'), $self->param('collection_name'), $self->param( 'current_species' ), -DRY_RUN => $dry_run, -RELEASE => $self->param('release'), -INCL_COMPONENTS => $self->param('incl_components') );
+    Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $self->param('master_dba'), $self->param_required('collection_name'), $self->param( 'current_species' ), -DRY_RUN => $dry_run, -RELEASE => $self->param_required('release'), -INCL_COMPONENTS => $self->param_required('incl_components') );
 }
 
 1;
-
