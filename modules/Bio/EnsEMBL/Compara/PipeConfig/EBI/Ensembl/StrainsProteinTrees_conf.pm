@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsProteinTrees_conf
 
 =head1 SYNOPSIS
 
