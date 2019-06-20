@@ -129,9 +129,9 @@ add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a re
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
-    -host => 'mysql-ens-sta-1.ebi.ac.uk',
+    -host => 'mysql-ens-mirror-1',
     -user => 'ensro',
-    -port => 4519,
+    -port => 4240,
     -group => 'taxonomy',
     -species => 'ncbi_taxonomy',
     -dbname => 'ncbi_taxonomy',
