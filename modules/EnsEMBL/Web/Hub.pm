@@ -434,7 +434,8 @@ sub url {
   delete $pars{'v'}  if $params->{'vf'};
   delete $pars{'time'};
   delete $pars{'_'};
-
+  # db param not required for tools (as it breaks when accessing RID view from blast results with db=otherfeatures param which gets added from search results).
+  delete $pars{'db'} if $params->{'type'} eq 'Tools';
   # add the requested GET params to the query string
   foreach (keys %$params) {
     $_ =~ /^(__)?(species|type|action|function)?(.*)$/;
