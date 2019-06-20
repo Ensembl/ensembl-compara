@@ -33,7 +33,7 @@ sub _init {
 
   ## Check main regulatory build track
   my $reg_build = $self->{'config'}->get_node('regulatory_build');
-  if ($reg_build->get('display') && $reg_build->get('display') ne 'off') {
+  if ($reg_build && $reg_build->get('display') && $reg_build->get('display') ne 'off') {
     $show = 1;
   }
 
