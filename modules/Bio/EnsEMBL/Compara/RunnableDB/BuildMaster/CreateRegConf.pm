@@ -31,7 +31,7 @@ cloned core database.
 Requires several inputs:
     'work_dir'      : full path where the new registry configuration file will be created
     'reg_conf_tmpl' : full path to the registry configuration template file
-    'dst_host'      : host name where the new core database have been created
+    'dst_host'      : host name where the new core database(s) have been created
     'cloned_dbs'    : hash accumulator of "species" => "database_name"
 
 The dataflow output writes the new registry configuration file path into branch #1.

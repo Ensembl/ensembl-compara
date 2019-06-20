@@ -25,12 +25,18 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline
 
 =head1 SYNOPSIS
 
-Replaces the registry configuration file of each resource class and meadow type.
+Replaces the registry configuration file of each resource class and meadow type,
+and updates the information in 'database.default.properties' file (used by Java
+healthchecks) to point to the right host.
 
 Requires several inputs:
-    'new_reg_conf' : full path where the new registry configuration file is located
-    'pipeline_url' : url of the pipeline to be edited
-    'resources'    : hash with the resouce classes of the pipeline
+    'new_reg_conf'    : full path where the new registry configuration file is located
+    'pipeline_url'    : url of the pipeline to be edited
+    'resources'       : hash with the resouce classes of the pipeline
+    'java_hc_db_prop' : full path to 'database.default.properties' file (used by Java healthchecks)
+    'backups_dir'     : full path to the pipeline's backup directory
+    'dst_host'        : host name where the cloned core and master databases have been created
+    'dst_port'        : host port
 
 
 =cut
