@@ -59,9 +59,9 @@ sub default_options {
         'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
 
         #Pipeline capacities:
-        'update_capacity'                           => 5,
-        'high_confidence_capacity'                  => 30,
-        'high_confidence_batch_size'                => 10,
+        # 'update_capacity'                           => 5,
+        # 'high_confidence_capacity'                  => 30,
+        # 'high_confidence_batch_size'                => 10,
     };
 }
 
@@ -82,10 +82,10 @@ sub pipeline_wide_parameters {
 
         'threshold_levels'  => $self->o('threshold_levels'),
 
-        'do_member_update'      => 0,
-        'do_member_stats_gt'    => 0,
-        'do_member_stats_fam'   => 1,
-        'do_high_confidence'    => 0,
+        # 'do_member_update'      => 0,
+        # 'do_member_stats_gt'    => 0,
+        # 'do_member_stats_fam'   => 1,
+        # 'do_high_confidence'    => 0,
     }
 }
 
@@ -94,46 +94,51 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
-        {   -logic_name => 'backbone_member_stats',
+        {   -logic_name => 'backbone_family_member_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ {
                     'compara_db'    => $self->o('compara_db'),
                 } ],
             -flow_into  => {
-                '1->A' => [
-                    WHEN( '#do_member_stats_gt#'  => [ 'set_default_values' ] ),
-                    WHEN( '#do_member_stats_fam#' => [ 'stats_families' ] ),
-                ],
-                'A->1' => ['backbone_member_update'],
+                # '1->A' => [
+                #     WHEN( '#do_member_stats_gt#'  => [ 'set_default_values' ] ),
+                #     WHEN( '#do_member_stats_fam#' => [ 'stats_families' ] ),
+                # ],
+                '1->A' => ['stats_families'],
+                'A->1' => ['summarise_wga_stats'],
             },
         },
 
-        {   -logic_name => 'backbone_member_update',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => WHEN( '#do_member_update#' => 'species_update_factory' ),
-                'A->1' => ['backbone_high_confidence'],
-            },
-        },
-
-        {   -logic_name => 'backbone_high_confidence',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => WHEN( '#do_high_confidence#' => { 'mlss_id_for_high_confidence_factory' => $self->o('high_confidence_ranges') } ),
-                'A->1' => ['backbone_end'],
-            },
+        # {   -logic_name => 'backbone_member_update',
+        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        #     -flow_into  => {
+        #         '1->A' => WHEN( '#do_member_update#' => 'species_update_factory' ),
+        #         'A->1' => ['backbone_high_confidence'],
+        #     },
+        # },
+        # 
+        # {   -logic_name => 'backbone_high_confidence',
+        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        #     -flow_into  => {
+        #         '1->A' => WHEN( '#do_high_confidence#' => { 'mlss_id_for_high_confidence_factory' => $self->o('high_confidence_ranges') } ),
+        #         'A->1' => ['backbone_end'],
+        #     },
+        # },
+        
+        {   -logic_name => 'summarise_wga_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SummariseWGAStats',
+            -flow_into  => ['backbone_end'],
         },
 
         {   -logic_name => 'backbone_end',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
 
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions::pipeline_analyses_member_names_descriptions($self) },
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
+        # @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_fam_stats($self) },
+        # @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::UpdateMemberNamesDescriptions::pipeline_analyses_member_names_descriptions($self) },
+        # @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::HighConfidenceOrthologs::pipeline_analyses_high_confidence($self) },
     ];
 }
 
 1;
-
-
