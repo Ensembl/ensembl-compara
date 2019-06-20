@@ -37,7 +37,7 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf \
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsProteinTrees_conf \
         -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
@@ -57,7 +57,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsProteinTrees_conf;
 
 use strict;
 use warnings;
@@ -82,9 +82,9 @@ sub default_options {
     # Parameters to allow merging different runs of the pipeline
     # Need to be defined for each different Strain
         'division'              => 'vertebrates',
-        'collection'            => 'murinae',       # The name of the species-set within that division
+        #'collection'            => 'murinae',       # The name of the species-set within that division
         'dbID_range_index'      => 18,
-        'label_prefix'          => 'mur_',
+        #'label_prefix'          => 'mur_',
 
 
     #default parameters for the geneset qc
@@ -107,12 +107,12 @@ sub default_options {
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels'                 => ['Murinae'],
+        #'taxlevels'                 => ['Murinae'],
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
     # values are lower than in the Verterbates config file because the clustering method is less comprehensive
         'mapped_gene_ratio_per_taxon' => {
-            '39107'   => 0.75,    #murinae
+            #'39107'   => 0.75,    #murinae
           },
 
     # mapping parameters:
@@ -142,7 +142,7 @@ sub default_options {
         'initialise_cafe_pipeline'  => 0,
 
     # GOC parameters
-        'goc_taxlevels'                 => ['Murinae'],
+        #'goc_taxlevels'                 => ['Murinae'],
 
     # Extra analyses
         # Export HMMs ?
