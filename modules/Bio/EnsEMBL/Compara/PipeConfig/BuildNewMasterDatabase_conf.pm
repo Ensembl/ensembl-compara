@@ -72,7 +72,7 @@ sub default_options {
 
         'pipeline_name' => 'build_master_for_' . $self->o('division'),
         'work_dir'      => $self->o('pipeline_dir'),
-        # 'backups_dir'   => $self->o('work_dir') . '/backups/',
+        'backups_dir'   => $self->o('work_dir') . '/backups/',
         'dst_host'      => $self->o('dst_host'),
         'dst_port'      => $self->o('dst_port'),
 
@@ -90,8 +90,8 @@ sub default_options {
         'patch_dir'               => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'alias_file'              => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
         'java_hc_dir'             => $self->check_dir_in_ensembl('ensj-healthcheck/'),
-        'list_genomes_script'     => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
-        'report_genomes_script'   => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
+        'list_genomes_script'     => undef, # required but not used: do_update_from_metadata = 0
+        'report_genomes_script'   => undef, # required but not used: do_update_from_metadata = 0
         'update_metadata_script'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species'  => undef,
         'additional_species'      => undef,
@@ -107,7 +107,7 @@ sub pipeline_create_commands {
         # Inherit creation of database, hive tables and compara tables
         @{$self->SUPER::pipeline_create_commands},
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
     ];
 }
 
@@ -180,7 +180,8 @@ sub pipeline_analyses {
         {   -logic_name => 'init_method_link_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => 'db_cmd.pl $COMPARA_REG #master_db# -executable mysqlimport #method_link_dump#',
+                'method_link_dump' => $self->o('method_link_dump'),
+                'cmd'              => 'db_cmd.pl $COMPARA_REG #master_db# -executable mysqlimport #method_link_dump#',
             },
         },
 
@@ -191,14 +192,19 @@ sub pipeline_analyses {
                 'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
                 'dst_host'      => $self->o('dst_host'),
             },
-            -flow_into  => [ 'set_new_reg_conf' ],
+            -flow_into  => [ 'reconfigure_pipeline' ],
         },
 
-        {   -logic_name => 'set_new_reg_conf',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReplaceRegConf',
+        {   -logic_name => 'reconfigure_pipeline',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline',
             -parameters => {
-                'pipeline_url' => $self->SUPER::pipeline_url(),
-                'resources'    => $self->SUPER::resource_classes($self),
+                'pipeline_url'    => $self->SUPER::pipeline_url(),
+                'resources'       => $self->SUPER::resource_classes($self),
+                'java_hc_dir'     => $self->o('java_hc_dir'),
+                'java_hc_db_prop' => '#java_hc_dir#/database.defaults.properties',
+                'backups_dir'     => $self->o('backups_dir'),
+                'dst_host'        => $self->o('dst_host'),
+                'dst_port'        => $self->o('dst_port'),
             },
             -flow_into  => [ 'patch_master_db' ],
         },

@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReplaceRegConf
+Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline
 
 =head1 SYNOPSIS
 
@@ -35,10 +35,11 @@ Requires several inputs:
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReplaceRegConf;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline;
 
 use warnings;
 use strict;
+use File::Slurp;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -70,6 +71,21 @@ sub run {
             }
         }
     }
+    my $java_hc_db_prop = $self->param_required('java_hc_db_prop');
+    my $backups_dir = $self->param_required('backups_dir');
+    # Make a backup copy of the Java healthchecks database properties file
+    $self->run_command("cp $java_hc_db_prop $backups_dir", {die_on_failure => 1});
+    # All cloned core and new master databases are in the same host, so replace
+    # that information in the Java healthchecks database properties file
+    # ('host', 'host1' and 'host2', and 'port', 'port1' and 'port2')
+    my $dst_host = $self->param_required('dst_host');
+    my $dst_port = $self->param_required('dst_port');
+    my $content = read_file($java_hc_db_prop);
+    $content =~ s/(^)(host[12]?[ ]*=)[ ]*[\w\.-]+/$1$2 $dst_host/gm;
+    $content =~ s/(^)(port[12]?[ ]*=)[ ]*\d+/$1$2 $dst_port/gm;
+    open(my $file, '>', $java_hc_db_prop) or die "Could not open file '$java_hc_db_prop' $!";
+    print $file $content;
+    close $file;
 }
 
 1;
