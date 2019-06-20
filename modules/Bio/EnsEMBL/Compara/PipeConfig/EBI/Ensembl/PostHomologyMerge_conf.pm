@@ -49,43 +49,44 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'        => 'vertebrates',
+        'collection'      => 'default',  # The name of the clusterset_id in which to find the trees
 
-        # ncRNAs don't have GOC, so we don't want to penalize them for that
-        'high_confidence_ranges'    => [
-            {
-                'range_label'       => 'protein',
-                'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
-            },
-            {
-                'range_label'       => 'ncrna',
-                'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000))',
-            },
-        ],
+        'do_member_stats_fam'   => 1,
 
-        # In this structure, the "thresholds" are for resp. the GOC score,
-        # the WGA coverage and %identity
-        'threshold_levels' => [
-            {
-                'taxa'          => [ 'Apes', 'Murinae' ],
-                'thresholds'    => [ 75, 75, 80 ],
-            },
-            {
-                'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
-                'thresholds'    => [ 75, 75, 50 ],
-            },
-            {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
-            },
-        ],
+        # # ncRNAs don't have GOC, so we don't want to penalize them for that
+        # 'high_confidence_ranges'    => [
+        #     {
+        #         'range_label'       => 'protein',
+        #         'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
+        #     },
+        #     {
+        #         'range_label'       => 'ncrna',
+        #         'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000))',
+        #     },
+        # ],
+        # 
+        # # In this structure, the "thresholds" are for resp. the GOC score,
+        # # the WGA coverage and %identity
+        # 'threshold_levels' => [
+        #     {
+        #         'taxa'          => [ 'Apes', 'Murinae' ],
+        #         'thresholds'    => [ 75, 75, 80 ],
+        #     },
+        #     {
+        #         'taxa'          => [ 'Mammalia', 'Aves', 'Percomorpha' ],
+        #         'thresholds'    => [ 75, 75, 50 ],
+        #     },
+        #     {
+        #         'taxa'          => [ 'Euteleostomi', 'Ciona' ],
+        #         'thresholds'    => [ 50, 50, 25 ],
+        #     },
+        #     {
+        #         'taxa'          => [ 'all' ],
+        #         'thresholds'    => [ undef, undef, 25 ],
+        #     },
+        # ],
 
     };
 }
 
 1;
-
-

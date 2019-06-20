@@ -56,8 +56,6 @@ sub default_options {
 
         'compara_db'      => 'compara_curr',
 
-        'collection'      => undef,  # The name of the clusterset_id in which to find the trees
-
         #Pipeline capacities:
         # 'update_capacity'                           => 5,
         # 'high_confidence_capacity'                  => 30,
@@ -81,11 +79,10 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'threshold_levels'  => $self->o('threshold_levels'),
-        'division' => $self->o('division'),
 
         # 'do_member_update'      => 0,
         # 'do_member_stats_gt'    => 0,
-        # 'do_member_stats_fam'   => 1,
+        'do_member_stats_fam'   => $self->o('do_member_stats_fam'),
         # 'do_high_confidence'    => 0,
     }
 }
@@ -105,7 +102,7 @@ sub pipeline_analyses {
                 #     WHEN( '#do_member_stats_gt#'  => [ 'set_default_values' ] ),
                 #     WHEN( '#do_member_stats_fam#' => [ 'stats_families' ] ),
                 # ],
-                '1->A' => [WHEN( '#division# eq "vertebrates"' => 'stats_families')],
+                '1->A' => [WHEN( '#do_member_stats_fam#' => 'stats_families')],
                 'A->1' => ['summarise_wga_stats'],
             },
         },
