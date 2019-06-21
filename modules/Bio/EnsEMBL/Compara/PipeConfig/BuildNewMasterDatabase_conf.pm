@@ -109,6 +109,11 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},
 
         $self->pipeline_create_commands_rm_mkdir(['work_dir', 'backups_dir']),
+        # Make a backup of the current registry configuration file
+        'cp ' . $self->o('reg_conf') . ' ' . $self->o('backups_dir') . '/production_reg_' . $self->o('division') . '_conf.pl',
+        # Replace the registry configuration file by the one provided for the
+        # first part of the pipeline
+        'cp ' . $self->o('pre_reg_conf') . ' ' . $self->o('reg_conf'),
     ];
 }
 
@@ -141,7 +146,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 '2->A' => {'clone_core_regions' => {'json_file' => '#_0#'},
                            'create_new_master'  => {}},
-                'A->1' => ['create_reg_conf'],
+                'A->1' => ['reconfigure_pipeline'],
             },
         },
 
@@ -186,21 +191,11 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'create_reg_conf',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CreateRegConf',
-            -parameters => {
-                'work_dir'      => $self->o('work_dir'),
-                'reg_conf_tmpl' => $self->o('reg_conf_tmpl'),
-                'dst_host'      => $self->o('dst_host'),
-            },
-            -flow_into  => [ 'reconfigure_pipeline' ],
-        },
-
         {   -logic_name => 'reconfigure_pipeline',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline',
             -parameters => {
-                'pipeline_url'    => $self->SUPER::pipeline_url(),
-                'resources'       => $self->SUPER::resource_classes($self),
+                'reg_conf'        => $self->o('reg_conf'),
+                'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
                 'java_hc_dir'     => $self->o('java_hc_dir'),
                 'java_hc_db_prop' => '#java_hc_dir#/database.defaults.properties',
                 'backups_dir'     => $self->o('backups_dir'),
