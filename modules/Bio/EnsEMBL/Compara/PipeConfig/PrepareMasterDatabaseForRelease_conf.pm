@@ -81,7 +81,7 @@ sub default_options {
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
-        'master_backup_file'  => '#backups_dir#/compara_master_#division#.post#release#.sql',
+        'master_backup_file'  => $self->o('backups_dir') . '/compara_master_' . $self->o('division') . '.post' . $self->o('release') . '.sql',
 
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),

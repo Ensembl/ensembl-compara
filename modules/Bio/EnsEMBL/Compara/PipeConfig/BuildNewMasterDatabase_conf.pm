@@ -87,7 +87,7 @@ sub default_options {
         'create_all_mlss_exe'     => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'                => $self->o('input') . '/compara_' . $self->o('division') . '.xml',
         'report_file'             => $self->o('work_dir') . '/mlss_ids_' . $self->o('division') . '.list',
-        'master_backup_file'      => '#backups_dir#/new_master_#division#.sql',
+        'master_backup_file'      => $self->o('backups_dir') . '/new_master_' . $self->o('division') . '.sql',
         'patch_dir'               => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'alias_file'              => $self->check_file_in_ensembl('ensembl-compara/scripts/taxonomy/ensembl_aliases.sql'),
         'java_hc_dir'             => $self->check_dir_in_ensembl('ensj-healthcheck/'),

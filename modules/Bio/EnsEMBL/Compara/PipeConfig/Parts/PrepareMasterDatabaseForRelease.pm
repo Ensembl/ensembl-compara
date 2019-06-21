@@ -277,7 +277,6 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'src_db_conn' => $self->o('master_db'),
-                'backups_dir' => $self->o('backups_dir'),
                 'output_file' => $self->o('master_backup_file'),
             },
             -rc_name => '1Gb_job',
