@@ -268,8 +268,19 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'output_file' => '#work_dir#/healthcheck.#testgroup#.out',
                 'java_hc_dir' => $self->o('java_hc_dir'),
             },
+            -flow_into       => [ 'backup_master' ],
             -rc_name         => '2Gb_job',
             -max_retry_count => 0,
+        },
+
+        {   -logic_name => 'backup_master',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'src_db_conn' => $self->o('master_db'),
+                'backups_dir' => $self->o('backups_dir'),
+                'output_file' => $self->o('master_backup_file'),
+            },
+            -rc_name => '1Gb_job',
         },
     ];
 }

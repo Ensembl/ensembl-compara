@@ -81,6 +81,7 @@ sub default_options {
         'create_all_mlss_exe' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/compara_' . $self->o('division') . '.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
+        'master_backup_file'  => '#backups_dir#/compara_master_#division#.post#release#.sql',
 
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
         'schema_file' => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
@@ -123,9 +124,8 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
     my ($self) = @_;
-
-    my $pipeline_analyses = [
-        {   -logic_name => 'backup_master',
+    return [
+        {   -logic_name => 'backup_current_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{
                 'division'    => $self->o('division'),
@@ -141,22 +141,7 @@ sub pipeline_analyses {
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease::pipeline_analyses_prep_master_db_for_release($self) },
-
-        {   -logic_name => 'backup_master_again',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-            -parameters => {
-                'src_db_conn' => $self->o('master_db'),
-                'backups_dir' => $self->o('backups_dir'),
-                'output_file' => '#backups_dir#/compara_master_#division#.post#release#.sql'
-            },
-            -rc_name => '1Gb_job',
-        },
     ];
-    # Update the flow from last analysis in
-    # Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
-    # to 'backup_master_again'
-    $pipeline_analyses->[-2]->{'-flow_into'} = ['backup_master_again'];
-    return $pipeline_analyses;
 }
 
 1;
