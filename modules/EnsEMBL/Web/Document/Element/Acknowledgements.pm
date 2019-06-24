@@ -33,7 +33,8 @@ use base qw(EnsEMBL::Web::Document::Element);
 sub content {
   my $self = shift;
   
-  my $species_defs = $self->species_defs;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
   my $species_path = $species_defs->species_path;
   my $ack_text     = $species_defs->ACKNOWLEDGEMENT;
   my $db_provider  = $species_defs->DB_BUILDER;
@@ -59,6 +60,21 @@ sub content {
     };
   }
   
+  ## Temporary ad for survey
+  my $show_survey = 1;
+  my $is_relevant_page = ($hub->type eq 'Gene' || $hub->type eq 'Transcript' || $hub->type eq 'Variation');
+
+  ## Only show it to returning visitors who haven't clicked on the button
+  if ($show_survey && $is_relevant_page) {
+    $content .= qq(
+      <div class="survey-box">
+        <p>Would you help us with the design of new landing pages for Genes, Transcripts and Variants?</p>
+        <p class="survey-button"><a href="https://forms.gle/6Bi66yNpS3z7wDib6" class="survey-link" target="_blank">Take the survey</a></p>
+        <p>See our <a href="http://www.ensembl.info/2019/06/17/your-input-into-ensembls-new-design" target="_blank">blog post</a><br/>for more information</p>
+      </div>
+    );
+  }
+
   return $content;
 }
 
