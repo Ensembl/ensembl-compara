@@ -142,7 +142,7 @@ sub get_phenotype_data {
              ph          => $pheno->dbID,
              oa          => $accession,
              onto_relation  => $onto_type,
-             onto_url    => $self->external_ontology($accession,$accession_term),
+             onto_url    => $hub->url({ action => "Phenotype", action => "Locations",  oa => $accession, ph => undef }),
              onto_text   => $accession_term // $accession,
              description => $pheno->description,
              raw_desc    => $pheno->description,
@@ -203,22 +203,16 @@ sub make_table {
   },{
     _key => 'oa', _type => 'numeric unshowable no_filter'
   },{
-    _key => 'onto_type', _type => 'iconic no_filter unshowable',
-    label => 'Ontology Term',
-  },{
     _key => 'onto_url', _type => 'string no_filter unshowable',
-    label => 'Ontology Term',
-    width => 2,
   },{
     _key => 'onto_text', _type => 'iconic',
     label => 'Mapped ontology Term',
     url_column => 'onto_url',
-    url_rel => 'external',
     filter_label => 'Mapped ontology term',
     filter_keymeta_enum => 1,
     filter_sorted => 1,
     primary => 1,
-    width => 2,
+    width => 2
   },{
     _key => 'onto_relation', _type => 'iconic',
     label => "Relationship with $ontology_accession",

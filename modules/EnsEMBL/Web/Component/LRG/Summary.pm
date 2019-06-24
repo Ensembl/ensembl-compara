@@ -48,11 +48,13 @@ sub content {
   my $external_urls = $hub->species_defs->ENSEMBL_EXTERNAL_URLS;
   my $html;
   
+  my $lrg_url = $external_urls->{'LRG_URL'};
+
   if ($hub->action eq 'Genome' || !$object) {
     $html =
       '<p>LRG (Locus Reference Genomic) sequences provide a stable genomic DNA framework ' .
       'for reporting mutations with a permanent ID and core content that never changes. ' . 
-      'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.</p>';
+      'For more information, visit the <a href="'.$lrg_url.'">LRG website</a>.</p>';
   } else {
     my $lrg         = $object->Obj;
     my $lrg_gene    = $hub->param('lrg');
@@ -66,8 +68,9 @@ sub content {
     my $slice       = $lrg->feature_Slice;
     my $source      = $genes[0]->source;
        $source      = 'LRG' if $source =~ /LRG/;
-    (my $source_url = $external_urls->{uc $source}) =~ s/\/###ID###//;
-    
+    my $source_url  = ($source eq 'LRG') ?  $lrg_url : $external_urls->{uc $source};
+       $source_url  =~ s/\/###ID###//;
+
     if (scalar(@hgnc_xrefs)) {
       my $hgnc = $hgnc_xrefs[0]->display_id;
       $description .= sprintf(
