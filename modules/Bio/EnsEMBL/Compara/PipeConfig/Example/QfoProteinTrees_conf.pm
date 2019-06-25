@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::QfoBlastProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf
 
 =head1 DESCRIPTION  
 
@@ -30,7 +30,7 @@ Please contact Compara with questions/suggestions
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::QfoBlastProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf;
 
 use strict;
 use warnings;
