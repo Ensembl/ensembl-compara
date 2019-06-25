@@ -43,14 +43,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the Ensembl ones
 
-        # User details
-        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
-        'base_dir'              => '/hps/nobackup2/production/ensembl/' . $self->o('ENV', 'USER') . '/protein_trees/',
-
-        # parameters that are likely to change from execution to another:
-        # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        'mlss_id'   => undef,
-
         # custom pipeline name, in case you don't like the default one
         'pipeline_name'         => 'qfo_2019_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree
@@ -93,8 +85,6 @@ sub default_options {
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ ],
         'curr_file_sources_locs'    => [ '/homes/mateus/qfo/2019/qfo_2019.json' ],    # It can be a list of JSON files defining an additionnal set of species
-
-        'hmm_library_basedir' => '/gpfs/nobackup/ensembl/mateus/hmms/treefam/2019-01-02',
 
         # Add the database entries for the core databases of the previous release
         'prev_core_sources_locs'   => [ ],
