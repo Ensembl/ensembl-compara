@@ -83,7 +83,7 @@ our %archive_mapping = (
                         'Info/Content'                            => { 'initial_release' => 51 },
                         'Info/Expression'                         => { 'initial_release' => 77 },
                         'Info/LocationGallery'                    => { 'initial_release' => 88 },
-                        'Info/GereGallery'                        => { 'initial_release' => 88 },
+                        'Info/GeneGallery'                        => { 'initial_release' => 88 },
                         'Info/VariationGallery'                   => { 'initial_release' => 88 },
                         'Info/CheckGallery'                       => { 'initial_release' => 88 },
 
