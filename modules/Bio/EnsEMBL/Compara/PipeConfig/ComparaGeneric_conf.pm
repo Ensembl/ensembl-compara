@@ -146,8 +146,10 @@ sub pipeline_create_commands {
     $self->{'_is_second_pass'} = $second_pass;
 
     # Pre-checks framework: only run them once we have all the values in $self->o()
-    $self->check_all_executables_exist if $second_pass;
-    $self->pipeline_checks_pre_init if ($self->can('pipeline_checks_pre_init') and $second_pass);
+    if ($second_pass) {
+        $self->check_all_executables_exist;
+        $self->pipeline_checks_pre_init if $self->can('pipeline_checks_pre_init');
+    }
 
     return $self->SUPER::pipeline_create_commands if $self->can('no_compara_schema');
 
