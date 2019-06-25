@@ -148,6 +148,7 @@ sub pipeline_create_commands {
     # Pre-checks framework: only run them once we have all the values in $self->o()
     if ($second_pass) {
         $self->check_all_executables_exist;
+        _assert_file($self->o('reg_conf')); # Used in all resource classes
         $self->pipeline_checks_pre_init if $self->can('pipeline_checks_pre_init');
     }
 
