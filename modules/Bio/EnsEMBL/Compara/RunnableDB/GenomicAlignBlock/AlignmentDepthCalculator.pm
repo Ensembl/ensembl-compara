@@ -50,10 +50,9 @@ sub param_defaults {
 sub fetch_input {
     my $self         = shift @_;
     my $gab_adaptor = $self->compara_dba->get_GenomicAlignBlockAdaptor;
-    $self->param('genomic_align_block', $gab_adaptor->fetch_by_dbID($self->param('genomic_align_block_id')));
-    my $GAB = $self->param_required('genomic_align_block');
+    my $genomic_align_block = $gab_adaptor->fetch_by_dbID($self->param('genomic_align_block_id'));
 
-    $self->param('genomic_aligns', $GAB->genomic_align_array());
+    $self->param('genomic_aligns', $genomic_align_block->genomic_align_array());
   
     print "$_->dbID \n" foreach $self->param('genomic_aligns');
 }
