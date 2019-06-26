@@ -67,13 +67,28 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'test',
-        'input'         => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
-        'pre_reg_conf'  => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_reg_pre_test_conf.pl'),
+        'compara_dir'   => $self->check_dir_in_ensembl('ensembl-compara/'),
+        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
+        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_init_reg_test_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_test_conf_tmpl.pl'),
-
-        # PrepareMasterDatabaseForRelease pipeline configuration:
-        'assembly_patch_species' => [],
     };
+}
+
+sub pipeline_create_commands {
+    my ($self) = @_;
+    return [
+        # Inherit creation of database, hive tables and compara tables
+        @{$self->SUPER::pipeline_create_commands},
+
+        # Make a backup of the current registry configuration file and the Java
+        # healthchecks database properties file
+        'cp ' . $self->o('reg_conf') . ' ' . $self->o('backups_dir') . '/production_reg_' . $self->o('division') . '_conf.pl',
+        'cp ' . $self->o('java_hc_db_prop') . ' ' . $self->o('backups_dir') . '/database.defaults.properties',
+        # Replace the backed-up files by their default content to ensure a safe
+        # setup to start of the pipeline
+        'cd ' . $self->o('compara_dir') . '; git checkout -- ' . $self->o('reg_conf'),
+        'cd ' . $self->o('java_hc_dir') . '; git checkout -- ' . $self->o('java_hc_db_prop'),
+    ];
 }
 
 1;
