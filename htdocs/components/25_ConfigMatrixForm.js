@@ -1329,7 +1329,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       if (resetRibbonOffset) {
         $(selectElement).closest('.letters-ribbon').data({'reset': true});
       }
-console.log(searchTriggered);
+
       activeAlphabetContentDiv = panel.elLk.trackPanel.find('div.ribbon-content .alphabet-content.active');
       $.each(activeAlphabetContentDiv, function(i, el) {
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
