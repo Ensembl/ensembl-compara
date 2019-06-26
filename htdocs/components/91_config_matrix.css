@@ -225,7 +225,7 @@ div.track-tab.active:hover      { background-color: [[LIGHT_GREY]]; opacity: 1; 
 div.track-tab.inactive          { color: #cccccc; cursor: default; }
 
 div.tab-content               { display: none; width: 100%; }
-div.tab-content.active        { display: inline-block; background-color: [[LIGHT_GREY]]; overflow: auto; }
+div.tab-content.active        { display: inline-block; background-color: [[LIGHT_GREY]]; overflow: auto; position:relative; }
 
 div.tabs.cells                                                              { margin: 3em 1em 1em 1em; }
 div.cell-label                                                              { width: 75px; float: left; margin-top: 5px;}
@@ -300,8 +300,8 @@ span.fancy-checkbox.inactive  { background-image: none; border: 1px solid #b7b7b
 /* search box */
 div.search-box-container                        { display: flex; justify-content: center; align-items: baseline; }
 div.search-box                                  { position: relative; display: flex; align-items: center; }
-div.search-box input.configuration_search_text  { margin-left: 8px; height: 15px; padding-left: 5px; }
-div.search-box span.search-cross-icon           { padding: 0px 6px 0 0; color: #ccc; font-weight: 100; font-size: 16px; margin-left: -18px; display: none; }
+div.search-box input.configuration_search_text  { margin-left: 8px; padding-left: 5px; width: 100%; }
+div.search-box span.search-cross-icon           { padding: 0px 5px; color: #ccc; background-color: #fff; z-index: 1; font-weight: 100; font-size: 12px; margin-left: -18px; display: none; }
 
 /* placeholder browser specific style */
 div.search-box input.configuration_search_text::placeholder                     { color: #ccc; }
