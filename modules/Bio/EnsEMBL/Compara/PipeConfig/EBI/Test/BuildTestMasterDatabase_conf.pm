@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf
 
 =head1 DESCRIPTION
 
@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf -dst_host <host> -dst_port <port>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf -dst_host <host> -dst_port <port>
 
     #1. Clone data regions from JSON files
     #2. Create a new master_db
@@ -50,7 +50,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildNewMasterDatabase_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf;
 
 use strict;
 use warnings;
