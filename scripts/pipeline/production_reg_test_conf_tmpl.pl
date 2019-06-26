@@ -27,7 +27,7 @@ my $curr_release = 97;
 # ---------------------- TEST CORE DATABASES -----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
-my $test_core_dbs = {<dbs_hash>};
+my $test_core_dbs = {<core_dbs_hash>};
 
 add_test_core_dbs( $test_core_dbs );
 
@@ -36,8 +36,7 @@ add_test_core_dbs( $test_core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-prod-6', 'jalvarez_master_test' ],
-    # 'compara_master' => [ 'mysql-ens-compara-prod-1', 'ensembl_compara_test_master' ],
+    'compara_master' => [<master_db_info>],
     # 'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     # 'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
@@ -47,10 +46,6 @@ my $compara_dbs = {
     # 'ptrees_prev'           => [ 'mysql-ens-compara-prod-1', 'mateus_ensembl_protein_trees_96' ],
     # 'compara_families'      => [ 'mysql-ens-compara-prod-7', 'muffato_ensembl_families_97' ],
     # 'compara_nctrees'       => [ 'mysql-ens-compara-prod-6', 'muffato_default_vertebrates_ncrna_trees_97' ],
-    # 'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_protein_trees_96b' ],
-    # 'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-5', 'muffato_murinae_nctrees_96' ],
-    # 'murinae_ptrees'        => [ 'mysql-ens-compara-prod-2', 'carlac_murinae_protein_reindexed_trees_97' ],
-    # 'murinae_nctrees'       => [ 'mysql-ens-compara-prod-4', 'carlac_murinae_ncrna_reindexed_trees_97' ],
 
     # LASTZ dbs
     # 'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch1' ],
@@ -92,7 +87,7 @@ my $compara_dbs = {
     # 'alt_allele_projection' => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_alt_allele_import_97' ],
 };
 
-add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+#add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
 
 # ---------------------- NON-COMPARA DATABASES ---------------------------------
 
