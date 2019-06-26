@@ -120,4 +120,12 @@ sub pipeline_analyses {
     return $pipeline_analyses;
 }
 
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'Genomic_Align_Block_Job_Generator'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+}
+
+
 1;
