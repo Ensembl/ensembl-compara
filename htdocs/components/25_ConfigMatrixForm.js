@@ -127,8 +127,8 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     this.elLk.buttonTab.on("click", function (e) {
       var activeTab = panel.getActiveTab();
       if (e.target.nodeName !== 'INPUT' && e.currentTarget.id !== activeTab+'-tab') {
-        if(panel.elLk.trackPanel.find('input[name="matrix_search"]').val()) {
-          panel.elLk.trackPanel.find('input[name="matrix_search"]').val('');
+        if(panel.elLk.trackPanel.find('input[name="matrix_search"]:visible').val()) {
+          panel.elLk.trackPanel.find('input[name="matrix_search"]:visible').val('');
           panel.elLk.searchCrossIcon.hide();
           panel.resetFilter(); // Reset filter on the active tab
         }
@@ -178,21 +178,26 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
         panel.elLk.searchCrossIcon.hide();
       }
 
+      var activeTabId = panel.getActiveTab();
+
       if (!panel.resetFilter(inputText,true)) {
+        panel.updateAvailableTabsOrRibbons(activeTabId);
         return;
       };
 
-      var activeTabId = panel.getActiveTab();
       var re = new RegExp(inputText, "gi");
       var match = Object.keys(panel.elLk.lookup).filter(function(name) {
         return name.match(re) && panel.elLk.lookup[name].parentTabId === activeTabId;
       });
 
-      $.each(panel.searchTerms, function(k, v) {
-        if (k.match(re)) {
-          match.push(v);
-        }
-      })
+      // We only have searchterms for epigenome
+      if (activeTabId === 'dx') {
+        $.each(panel.searchTerms, function(k, v) {
+          if (k.match(re)) {
+            match.push(v);
+          }
+        })
+      }
 
       var match_uniq = $.unique(match);
 
@@ -276,7 +281,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       return 0;
     }
     else {
-      return 1;
+      return inputText ? 1 : 0;
     }
   },
 
@@ -344,6 +349,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
           panel.toggleTab({
             'selectElement': $(tabLookup.tabs[availableTabsWithData[0]]),
             'container': $(tabLookup.tabs[availableTabsWithData[0]]).parent(),
+            'resetRibbonOffset': resetRibbon,
             'searchTriggered': true
           });
         }
@@ -395,7 +401,6 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     else {
       // console.log('activating first available', alphabetContainer.attr('id'));
       obj.selectElement = arr[Object.keys(arr).sort()[0]];
-      obj.searchTriggered = false;
       panel.toggleTab(obj);
     }
 
@@ -1275,6 +1280,10 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
     var noOffsetUpdate = obj.resetFilter;
     var panel = this;
 
+    var resetRibbonOffset = true;
+    var searchTriggered = obj.searchTriggered;
+    var noOffsetUpdate = obj.resetFilter;
+
     if(!$(selectElement).hasClass("active") && !$(selectElement).hasClass("inactive")) {
       //showing/hiding searchbox in the main tab
       if($(selectElement).find("div.search-box").length) {
@@ -1325,8 +1334,7 @@ Ensembl.Panel.ConfigMatrixForm = Ensembl.Panel.Configurator.extend({
       $.each(activeAlphabetContentDiv, function(i, el) {
         var activeLetterDiv = $(el).closest('.tab-content').find('div.alphabet-div.active');
 
-        // Reset is applied on filterData() if an offset reset is needed for the ribbon
-        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && ($(selectElement).hasClass('track-tab') || searchTriggered)  && !noOffsetUpdate) {
+        if ($(activeLetterDiv).closest('.letters-ribbon').data('reset') && searchTriggered) {
           var availableAlphabets = panel.getActiveAlphabets();
           var activeAlphabetDiv = availableAlphabets.filter(function(){return $(this).hasClass('active');});
           var activeAlphabetIndex = $(activeLetterDiv).parent().children().index(activeAlphabetDiv);
