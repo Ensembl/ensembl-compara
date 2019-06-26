@@ -376,7 +376,7 @@ return
 
         {   -logic_name    => 'register_mlss',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -flow_into     => [ 'multiplealigner_stats_factory' ],
+            -flow_into     => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
