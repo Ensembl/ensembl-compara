@@ -44,6 +44,9 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
     #3. Update master database's metadata
     #4. Update collections and mlss
 
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division and release.
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
