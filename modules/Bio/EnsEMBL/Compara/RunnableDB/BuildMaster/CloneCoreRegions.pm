@@ -25,17 +25,18 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions
 
 =head1 SYNOPSIS
 
-Runs the script 'clone_core_database.pl' (located at 'ensembl-test/scripts/' by default)
-over a given JSON configuration file with the regions of data to clone.
+Runs the script 'clone_core_database.pl' (located at 'ensembl-test/scripts/' by
+default) over a given JSON configuration file with the regions of data to clone.
 
 Requires several inputs:
     'clone_core_db' : full path to the clone script 'clone_core_database.pl'
-    'reg_conf'      : full path to the registry configuration file
+    'init_reg_conf' : full path to the initial registry configuration file
     'dst_host'      : host name where the new core database will be created
     'dst_port'      : host port
     'json_file'     : JSON configuration file with the regions of data to clone
 
-The dataflow output writes the new core database's name into the accumulator named 'cloned_db'.
+The dataflow output writes the new core database's name into the accumulator
+'cloned_db'.
 
 
 =cut
@@ -57,11 +58,11 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
     my $script = $self->require_executable('clone_core_db');
-    my $reg_conf = $self->param_required('reg_conf');
+    my $init_reg_conf = $self->param_required('init_reg_conf');
     my $dst_host = $self->param_required('dst_host');
     my $dst_port = $self->param_required('dst_port');
     my $json_file_path = $self->param_required('json_file');
-    my $cmd = "perl $script -registry $reg_conf -dest_host $dst_host -dest_port $dst_port -dest_user ensadmin -dest_pass $ENV{'ENSADMIN_PSW'} -json $json_file_path";
+    my $cmd = "perl $script -registry $init_reg_conf -dest_host $dst_host -dest_port $dst_port -dest_user ensadmin -dest_pass $ENV{'ENSADMIN_PSW'} -json $json_file_path";
     $self->param('cmd', $cmd);
 }
 
@@ -73,7 +74,7 @@ sub run {
 sub write_output {
     my $self = shift;
     my $runCmd = $self->param_required('runCmd');
-    # NOTE: the clone script prints to stderr by default
+    # NOTE: clone script prints to stderr by default
     my $output = $runCmd->err;
     # The cloned database name is found in the printed information and starts
     # with the username
