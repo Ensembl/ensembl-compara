@@ -37,11 +37,12 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -division <division> -release <release>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf -division <division>
 
     #1. Update NCBI taxonomy
     #2. Add/update all species to master database
-    #3. Update collections and mlss
+    #3. Update master database's metadata
+    #4. Update collections and mlss
 
 =head1 AUTHORSHIP
 
@@ -71,9 +72,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
-        'work_dir'    => $self->o('pipeline_dir'),
-        'backups_dir' => $self->o('work_dir') . '/master_backups/',
+        'pipeline_name' => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
+        'work_dir'      => $self->o('pipeline_dir'),
+        'backups_dir'   => $self->o('work_dir') . '/master_backups/',
 
         'master_db'           => 'compara_master',
         'taxonomy_db'         => 'ncbi_taxonomy',

@@ -32,16 +32,11 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
 
 =head1 DESCRIPTION
 
-    Prepare master database for next release
-
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease -division <division>
-
-    #1. Update NCBI taxonomy
-    #2. Add/update all species to master database
-    #3. Update collections and mlss
+    This is a partial PipeConfig for most part of the PrepareMasterDatabaseForRelease
+    pipeline. This will update the NCBI taxonomy, add/update all species to master
+    database, update master database's metadata, and update collections and mlss.
+    Finally, it will run the healthchecks and perform a backup of the updated master
+    database.
 
 =head1 AUTHORSHIP
 
