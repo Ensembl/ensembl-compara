@@ -315,7 +315,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblPostHomologyMerge_conf",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-PostHomologyMergepipeline",
             "summary": "PostHomologyMerge_conf pipeline"
          },
          {

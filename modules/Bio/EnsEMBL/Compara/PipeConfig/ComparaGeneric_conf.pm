@@ -94,40 +94,47 @@ sub check_all_executables_exist {
    if (exists $self->root()->{'linuxbrew_home'}) {
     my $linuxbrew_home = $self->root()->{'linuxbrew_home'};
     foreach my $p (@{$self->{'_all_dir_paths'}}) {
-        $p = $linuxbrew_home.'/'.$p;
-        die "'$p' cannot be found.\n" unless -e $p;
-        die "'$p' is not a directory.\n" unless -d $p;
+        _assert_dir( $linuxbrew_home.'/'.$p );
     }
     foreach my $p (@{$self->{'_all_file_paths'}}) {
-        $p = $linuxbrew_home.'/'.$p;
-        die "'$p' cannot be found.\n" unless -e $p;
-        die "'$p' is not readable.\n" unless -r $p;
+        _assert_file( $linuxbrew_home.'/'.$p );
     }
     foreach my $p (@{$self->{'_all_exe_paths'}}) {
-        $p = $linuxbrew_home.'/'.$p;
-        die "'$p' cannot be found.\n" unless -e $p;
-        die "'$p' is not executable.\n" unless -x $p;
+        _assert_exe( $linuxbrew_home.'/'.$p );
     }
    }
    if (exists $self->root()->{'ensembl_cvs_root_dir'}) {
        my $ensembl_cvs_root_dir = $self->root()->{'ensembl_cvs_root_dir'};
        foreach my $p (@{$self->{'_ensembl_dir_paths'}}) {
-           $p = $ensembl_cvs_root_dir.'/'.$self->substitute(\$p);
-           die "'$p' cannot be found.\n" unless -e $p;
-           die "'$p' is not a directory.\n" unless -d $p;
+           _assert_dir( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
        }
        foreach my $p (@{$self->{'_ensembl_file_paths'}}) {
-           $p = $ensembl_cvs_root_dir.'/'.$self->substitute(\$p);
-           die "'$p' cannot be found.\n" unless -e $p;
-           die "'$p' is not readable.\n" unless -r $p;
+           _assert_file( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
        }
        foreach my $p (@{$self->{'_ensembl_exe_paths'}}) {
-           $p = $ensembl_cvs_root_dir.'/'.$self->substitute(\$p);
-           die "'$p' cannot be found.\n" unless -e $p;
-           die "'$p' is not executable.\n" unless -x $p;
+           _assert_exe( $ensembl_cvs_root_dir.'/'.$self->substitute(\$p) );
        }
    }
 }
+
+sub _assert_dir {
+    my $p = shift;
+    die "'$p' cannot be found.\n" unless -e $p;
+    die "'$p' is not a directory.\n" unless -d $p;
+}
+
+sub _assert_file {
+    my $p = shift;
+    die "'$p' cannot be found.\n" unless -e $p;
+    die "'$p' is not readable.\n" unless -r $p;
+}
+
+sub _assert_exe {
+    my $p = shift;
+    die "'$p' cannot be found.\n" unless -e $p;
+    die "'$p' is not executable.\n" unless -x $p;
+}
+
 
 sub pipeline_create_commands {
     my $self            = shift @_;
@@ -139,8 +146,11 @@ sub pipeline_create_commands {
     $self->{'_is_second_pass'} = $second_pass;
 
     # Pre-checks framework: only run them once we have all the values in $self->o()
-    $self->check_all_executables_exist if $second_pass;
-    $self->pipeline_checks_pre_init if ($self->can('pipeline_checks_pre_init') and $second_pass);
+    if ($second_pass) {
+        $self->check_all_executables_exist;
+        _assert_file($self->o('reg_conf')); # Used in all resource classes
+        $self->pipeline_checks_pre_init if $self->can('pipeline_checks_pre_init');
+    }
 
     return $self->SUPER::pipeline_create_commands if $self->can('no_compara_schema');
 

@@ -49,25 +49,29 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'        => 'plants',
+        'collection'      => 'plants',  # The name of the clusterset_id in which to find the trees
 
-        'high_confidence_ranges'    => [
-            {
-                'range_label'       => 'protein',
-                'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
-            },
-        ],
+        'do_member_stats_fam'   => 0,
 
-        # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
-        'threshold_levels' => [
-            {
-                'taxa'          => [ 'Euteleostomi', 'Ciona', 'Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'all' ],
-                'thresholds'    => [ undef, undef, 25 ],
-            },
-        ],
+
+        # 'high_confidence_ranges'    => [
+        #     {
+        #         'range_label'       => 'protein',
+        #         'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
+        #     },
+        # ],
+        # 
+        # # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
+        # 'threshold_levels' => [
+        #     {
+        #         'taxa'          => [ 'Euteleostomi', 'Ciona', 'Panicoideae', 'Oryzinae', 'Pooideae', 'Solanaceae', 'Brassicaceae', 'Malvaceae', 'fabids' ],
+        #         'thresholds'    => [ 50, 50, 25 ],
+        #     },
+        #     {
+        #         'taxa'          => [ 'all' ],
+        #         'thresholds'    => [ undef, undef, 25 ],
+        #     },
+        # ],
     };
 }
 
@@ -75,5 +79,3 @@ sub default_options {
 
 
 1;
-
-

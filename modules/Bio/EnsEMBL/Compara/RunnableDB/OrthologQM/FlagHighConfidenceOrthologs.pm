@@ -143,7 +143,8 @@ sub write_output {
     }
     if ($high_confidence_condition =~ /wga_coverage/) {
         my $sql_wga_distribution = "SELECT FLOOR(wga_coverage/25)*25, COUNT(*) FROM homology WHERE $homology_filter GROUP BY FLOOR(wga_coverage/25)";
-        $self->_write_distribution($mlss, 'wga', $thresholds->[1], $sql_wga_distribution);
+        # unlike goc, wga is calculated on both protein and ncrna - add the range_label to ensure mergeability
+        $self->_write_distribution($mlss, "${range_label}wga", $thresholds->[1], $sql_wga_distribution);
     }
 }
 
@@ -161,7 +162,14 @@ sub _write_distribution {
         }
     }
     $mlss->store_tag($label.'_quality_threshold', $threshold);
-    $mlss->store_tag('perc_orth_above_'.$label.'_thresh', 100*$n_over_threshold/$n_tot);
+    if ( $label =~ /goc/ ) {
+        $mlss->store_tag('perc_orth_above_'.$label.'_thresh', 100*$n_over_threshold/$n_tot);
+    } elsif ( $label =~ /wga/ ) {
+        # for wga, we want to store the values seperately, so that they can be
+        # summarised across protein and ncrna later
+        $mlss->store_tag('orth_above_'.$label.'thresh', $n_over_threshold);
+        $mlss->store_tag('total_'.$label.'orth_count', $n_tot);
+    }
 }
 
 1;
