@@ -109,8 +109,6 @@ my ($jsontxt, $xml, $nh, $orthoXml, $phyloXml, $json_leaf);
 my $sleepTime = 0;
 
 
-# FIXME: replace all tabs with spaces
-
 # FIXME: all process_*_get functions have the same structure -> factor out !
 
 sub process_nh_get {
