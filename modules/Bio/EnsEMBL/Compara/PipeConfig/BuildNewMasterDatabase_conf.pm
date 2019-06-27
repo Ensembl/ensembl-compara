@@ -111,7 +111,7 @@ sub default_options {
         'assembly_patch_species'  => [], # by default, skip this step
         'additional_species'      => {}, # by default, skip this step
         'do_update_from_metadata' => 0,
-        'do_load_lrg_dnafrags'    => 1,
+        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 1,
     };
 }

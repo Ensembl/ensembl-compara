@@ -86,6 +86,9 @@ sub default_options {
         'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
         'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_init_reg_test_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_test_conf_tmpl.pl'),
+
+        # PrepareMasterDatabaseForRelease pipeline configuration:
+        'do_load_lrg_dnafrags' => 1,
     };
 }
 
