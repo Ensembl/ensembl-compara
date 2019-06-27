@@ -210,9 +210,10 @@ sub content {
 
   if ($object->analysis) {
     my $analysis = $transcript->analysis;
+    my $trans_source = $object->transcript->source;
     $self->add_entry({
       type        => 'Source',
-      label_html  => helptip($analysis->display_label, $analysis->description)
+      label_html  => $trans_source eq 'havana_tagene' ? helptip('Havana tagene', 'Transcript which was created by the HAVANA-Ensembl manually supervised computational pipeline for long-read sequence data') : helptip($analysis->display_label, $analysis->description)
     });
   }
   my $alt_allele_link = $object->get_alt_allele_link('Location');
