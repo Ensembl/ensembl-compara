@@ -34,6 +34,8 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
 
     Prepare master database for next release
 
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division and release.
 
 =head1 SYNOPSIS
 
@@ -43,9 +45,6 @@ Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf
     #2. Add/update all species to master database
     #3. Update master database's metadata
     #4. Update collections and mlss
-
-    WARNING: the previous reports and backups will be removed if the pipeline is
-    initialised again for the same division and release.
 
 =head1 AUTHORSHIP
 

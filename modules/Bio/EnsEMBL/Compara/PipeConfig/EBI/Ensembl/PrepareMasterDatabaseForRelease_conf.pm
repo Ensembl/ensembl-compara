@@ -34,10 +34,12 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease
 
     Prepare master database for next release
 
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division and release.
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease_conf  -release <release>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease_conf
 
 =head1 AUTHORSHIP
 
