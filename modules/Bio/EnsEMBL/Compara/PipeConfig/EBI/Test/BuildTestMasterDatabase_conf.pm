@@ -89,6 +89,7 @@ sub default_options {
 
         # PrepareMasterDatabaseForRelease pipeline configuration:
         'do_load_lrg_dnafrags' => 1,
+        'do_load_timetree'     => 1,
     };
 }
 
