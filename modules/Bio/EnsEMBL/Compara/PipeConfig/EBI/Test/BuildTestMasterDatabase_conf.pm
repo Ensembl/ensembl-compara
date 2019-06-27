@@ -32,15 +32,29 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf
 
 =head1 DESCRIPTION
 
-    Create a new master database from scratch
+    Create a new master database from scratch from a set of species' regions
+    (from core databases) that will be cloned before copying their information
+    into the new master database. This pipeline requires a configuration
+    directory (parameter 'config_dir') that contains:
+        - one JSON file per species (with all the regions to be cloned), named
+          with the species' scientific name with spaces replaced by underscores,
+          e.g. 'homo_sapiens.json', 'mus_musculus.json'
+        - initial registry configuration file with the information about the
+          location of the core databases from which to clone the regions, and
+          the location where the new master database will be created
+        - XML file with all the desired method_link_species_set entries, named
+          'compara_<division>.xml'
 
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division
 
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf -dst_host <host> -dst_port <port>
 
-    #1. Clone data regions from JSON files
-    #2. Create a new master_db
+    #1. Create a new master database
+    #2. Clone data regions from JSON files located in 'config_dir'
+    #3. Populate the new master database through PrepareMasterDatabaseForRelease pipeline
 
 =head1 AUTHORSHIP
 
