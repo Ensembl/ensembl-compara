@@ -36,9 +36,10 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf
     (from core databases) that will be cloned before copying their information
     into the new master database. This pipeline requires a configuration
     directory (parameter 'config_dir') that contains:
-        - one JSON file per species (with all the regions to be cloned), named
-          with the species' scientific name with spaces replaced by underscores,
-          e.g. 'homo_sapiens.json', 'mus_musculus.json'
+        - one JSON file per species (following the format described in
+          https://github.com/Ensembl/ensembl-test/blob/release/98/scripts/clone_core_database.pl),
+          named with the species' scientific name with spaces replaced by
+          underscores, e.g. 'homo_sapiens.json', 'mus_musculus.json'
         - initial registry configuration file with the information about the
           location of the core databases from which to clone the regions, and
           the location where the new master database will be created
