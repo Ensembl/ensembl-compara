@@ -74,9 +74,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name' => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
-        'work_dir'      => $self->o('pipeline_dir'),
-        'backups_dir'   => $self->o('work_dir') . '/master_backups/',
+        'pipeline_name'       => 'prep_' . $self->o('division') . '_master_for_rel_' . $self->o('rel_with_suffix'),
+        'work_dir'    => $self->o('pipeline_dir'),
+        'backups_dir' => $self->o('work_dir') . '/master_backups/',
 
         'master_db'           => 'compara_master',
         'taxonomy_db'         => 'ncbi_taxonomy',
@@ -127,7 +127,9 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
     my ($self) = @_;
+
     return [
+
         {   -logic_name => 'backup_current_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -input_ids  => [{
