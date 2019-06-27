@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compara_db division="test">
+
+  <pairwise_alignments>
+
+    <!-- First, our top four species, which are references for all chordates -->
+    <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
+      <!-- "default" collection means that the mouse strains are excluded (because only the reference mouse deserves to be aligned to human) -->
+      <species_set>
+        <taxonomic_group taxon_name="Chordata"/>
+      </species_set>
+    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="mus_musculus" ref_amongst="Chordata">
+      <!-- "default" collection means that the mouse strains are excluded (because we have the Cactus alignment for those) -->
+      <species_set>
+        <taxonomic_group taxon_name="Rodentia"/>
+      </species_set>
+    </one_vs_all>
+    <one_vs_all method="LASTZ_NET" ref_genome="gallus_gallus" against="Sauropsida" ref_amongst="Chordata"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="danio_rerio" ref_amongst="Chordata">
+      <species_set>
+        <!-- Include urochordates, cephalochordates, cyclostomes, cartilaginous fishes, ray-finned fishes, coelacanths and lungfishes -->
+        <taxonomic_group taxon_name="Chordata"/>
+        <taxonomic_group taxon_name="Tetrapoda" exclude="1"/>
+      </species_set>
+    </one_vs_all>
+
+    <!-- Mammals -->
+    <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
+
+    <!-- These genomes are currently the only ones in their clades, so no alignment within the "against"/"species_set" -->
+    <!-- However they will be aligned against the other reference genomes in "ref_amongst" -->
+    <one_vs_all method="LASTZ_NET" ref_genome="anolis_carolinensis" against="Lepidosauria" ref_amongst="Sauropsida"/>
+
+  </pairwise_alignments>
+
+  <multiple_alignments>
+    <!-- Mammals, excl. the mouse strains -->
+    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="mammals" display_name="eutherian mammals">
+        <taxonomic_group taxon_name="Eutheria"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Amniotes, excl. mouse strains -->
+    <multiple_alignment method="PECAN" gerp="1">
+      <species_set name="amniotes" display_name="amniota vertebrates">
+        <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
+      </species_set>
+    </multiple_alignment>
+
+  </multiple_alignments>
+
+  <self_alignments>
+    <genome name="homo_sapiens"/>
+  </self_alignments>
+
+  <families>
+    <family collection="test"/>
+  </families>
+
+  <gene_trees>
+    <protein_trees collection="test"/>
+    <nc_trees collection="test"/>
+  </gene_trees>
+
+  <species_trees>
+    <species_tree collection="test"/>
+  </species_trees>
+
+</compara_db>

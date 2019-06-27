@@ -35,8 +35,17 @@ package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFa
 use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::param_defaults},
+    }
+}
 
 sub fetch_input {
     my $self = shift;

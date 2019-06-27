@@ -1,0 +1,16 @@
+{
+    "gallus_gallus" : {
+        "core" : {
+            "regions" : [
+                ["1",  100685485, 101000642],
+                ["4",    6565250,   6989919],
+                ["10",  11643180,  12107184],
+                ["19",   5330957,   7196511]
+            ],
+            "adaptors" : [
+                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

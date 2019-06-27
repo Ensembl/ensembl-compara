@@ -1,0 +1,16 @@
+{
+    "lepisosteus_oculatus" : {
+        "core" : {
+            "regions" : [
+                ["LG3",  21779652, 22199782],
+                ["LG3",  38404366, 38756782],
+                ["LG22",  4148979,  6297578],
+                ["LG22",  9526889, 11511999]
+            ],
+            "adaptors" : [
+                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}
