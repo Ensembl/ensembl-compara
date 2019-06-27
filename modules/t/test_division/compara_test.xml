@@ -36,7 +36,7 @@
 
   <multiple_alignments>
     <!-- Mammals, excl. the mouse strains -->
-    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
+    <multiple_alignment method="EPO" gerp="1">
       <species_set name="mammals" display_name="eutherian mammals">
         <taxonomic_group taxon_name="Eutheria"/>
       </species_set>
