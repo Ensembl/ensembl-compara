@@ -57,7 +57,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusProteinTrees_conf;
 
 use strict;
 use warnings;
@@ -75,25 +75,26 @@ sub default_options {
 
     # Parameters to allow merging different runs of the pipeline
         'division'              => 'vertebrates',
-        'collection'            => 'murinae',       # The name of the species-set within that division
-        'dbID_range_index'      => 18,
-        'label_prefix'          => 'mur_',
+        'collection'            => 'sus',       # The name of the species-set within that division
+        'dbID_range_index'      => 20,
+        'label_prefix'          => 'sus_',
 
-        'projection_source_species_names' => ['mus_musculus'],
-        'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
+        'projection_source_species_names' => ['sus_scrofa'],
+        'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
+
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
-        'taxlevels' => ['Murinae'],
+        'taxlevels' => ['Suidae'],
 
     # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
     # values are lower than in the Verterbates config file because the clustering method is less comprehensive
         'mapped_gene_ratio_per_taxon' => {
-            '39107'   => 0.75,    #murinae
+            '9821'   => 0.75,    # suidae
           },
 
     # GOC parameters
-        'goc_taxlevels' => ['Murinae'],
+        'goc_taxlevels' => ['Suidae'],
 
     };
 }

@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
 
 =head1 DESCRIPTION
 
@@ -50,7 +50,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeNcRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusNcRNAtrees_conf;
 
 use strict;
 use warnings;
@@ -69,12 +69,12 @@ sub default_options {
             #'rel_suffix'       => '',
 
             'division'          => 'vertebrates',
-            'collection'        => 'murinae',       # The name of the species-set within that division
-            'dbID_range_index'  => 19,
-            'label_prefix'      => 'mur_',
+            'collection'        => 'sus',       # The name of the species-set within that division
+            'dbID_range_index'  => 21,
+            'label_prefix'      => 'sus_',
 
-            'projection_source_species_names' => ['mus_musculus'],
-            'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
+            'projection_source_species_names' => ['sus_scrofa'],
+            'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
 
     };
 }   

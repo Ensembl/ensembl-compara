@@ -455,8 +455,28 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            -flow_into          => [ 'cluster_qc_factory' ],
-            -rc_name            => '500Mb_job',
+            # -flow_into          => [ 'cluster_qc_factory' ],
+            -flow_into => WHEN(
+                '#ref_ortholog_db#' => 'check_strains_cluster_factory',
+                ELSE 'cluster_qc_factory',
+            ),
+            -rc_name => '500Mb_job',
+        },
+        
+        {   -logic_name => 'check_strains_cluster_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                '2->A' => [ 'cleanup_strains_clusters' ],
+                'A->1' => [ 'cluster_qc_factory' ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+        
+        {   -logic_name => 'cleanup_strains_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
@@ -1093,4 +1113,3 @@ sub core_pipeline_analyses {
 }
 
 1;
-

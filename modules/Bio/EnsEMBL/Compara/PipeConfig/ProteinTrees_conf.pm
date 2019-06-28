@@ -93,7 +93,8 @@ sub default_options {
 
        #production run or test/development run
        
-        'test_mode' => 1, 
+        'test_mode' => 1,
+                                         
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -409,7 +410,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
 
-        'reg_conf' => $self->o('reg_conf'),
+        'reg_conf'      => $self->o('reg_conf'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
@@ -442,7 +443,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_gene_qc'        => $self->o('do_gene_qc'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
 
-        'mapped_gene_ratio_per_taxon'         => $self->o('mapped_gene_ratio_per_taxon'),
+        'mapped_gene_ratio_per_taxon' => $self->o('mapped_gene_ratio_per_taxon'),
     };
 }
 
@@ -1481,8 +1482,28 @@ sub core_pipeline_analyses {
             -parameters         => {
                 blacklist_file      => $self->o('gene_blacklist_file'),
             },
-            -flow_into          => [ 'hc_clusters' ],
+            # -flow_into          => [ 'hc_clusters' ],
+            -flow_into => WHEN(
+                '#ref_ortholog_db#' => 'check_strains_cluster_factory',
+                ELSE 'hc_clusters',
+            ),
             -rc_name => '500Mb_job',
+        },
+        
+        {   -logic_name => 'check_strains_cluster_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                '2->A' => [ 'cleanup_strains_clusters' ],
+                'A->1' => [ 'hc_clusters' ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+        {   -logic_name => 'cleanup_strains_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+
         },
 
         {   -logic_name         => 'hc_clusters',
@@ -3467,4 +3488,3 @@ sub core_pipeline_analyses {
 }
 
 1;
-
