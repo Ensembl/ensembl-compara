@@ -311,6 +311,7 @@ sub default_options {
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         'clustering_mode'           => 'blastp',
 
+        # List of species some genes have been projected from
         'projection_source_species_names' => [],
 
         # How much the pipeline will try to reuse from "prev_rel_db"

@@ -79,13 +79,15 @@ sub default_options {
         'dbID_range_index'      => 18,
         'label_prefix'          => 'mur_',
 
-        'projection_source_species_names' => ['mus_musculus'],
         'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
 
     # clustering parameters:
         # How will the pipeline create clusters (families) ?
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
         'clustering_mode' => 'ortholog',
+
+        # List of species some genes have been projected from
+        'projection_source_species_names' => ['mus_musculus'],
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'

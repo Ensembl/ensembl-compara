@@ -79,9 +79,11 @@ sub default_options {
         'dbID_range_index'      => 20,
         'label_prefix'          => 'sus_',
 
-        'projection_source_species_names' => ['sus_scrofa'],
         'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
 
+    # clustering parameters:
+        # List of species some genes have been projected from
+        'projection_source_species_names' => ['sus_scrofa'],
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
