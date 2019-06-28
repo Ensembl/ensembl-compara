@@ -305,6 +305,7 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
             "summary": "Run HighConfidenceOrthologs pipeline"
+            "name_on_graph": "HighConfidenceOrthologs"
          },
          {
             "assignee": "<RelCo>",
