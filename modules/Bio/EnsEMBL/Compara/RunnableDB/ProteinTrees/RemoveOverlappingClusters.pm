@@ -54,10 +54,7 @@ sub run {
     my $non_overlapping_species_count = $self->_get_non_overlapping_species_count();
     if ( $non_overlapping_species_count > 0 ) {
         $self->input_job->autoflow(0);
-        $self->complete_early("Cluster contains strain-only species - do not delete");
-    } else {
-        # set gene_tree_id param for RunnableDB::GeneTrees::DeleteOneTree to delete the cluster
-        $self->param('gene_tree_id', $self->param('gene_tree'));
+        $self->complete_early("Cluster contains at least 1 strain-only species - do not delete");
     }
 }
 
