@@ -523,11 +523,11 @@ sub set_colour {
     my $rgb = $strand == 1 ? $pos : $neg;
     $colour = $self->rgb_to_hex($rgb);
   }
-  elsif ($metadata->{'color'}) {
-    $colour = $metadata->{'color'};
-  }
   elsif ($metadata->{'colour'}) {
     $colour = $metadata->{'colour'};
+  }
+  elsif ($metadata->{'color'}) {
+    $colour = $metadata->{'color'};
   }
 
   return $colour;

@@ -88,7 +88,7 @@ sub activity {
   if (ref $epigenome ne 'Bio::EnsEMBL::Funcgen::Epigenome') {
     my $db      = $self->hub->database('funcgen');
     my $adaptor = $db->get_adaptor('Epigenome');
-    $epigenome  = $adaptor->fetch_by_display_label($epigenome);
+    $epigenome  = $adaptor->fetch_by_short_name($epigenome);
   }
   return unless $epigenome;
 

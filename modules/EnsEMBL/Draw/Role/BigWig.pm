@@ -26,6 +26,7 @@ use strict;
 
 use Role::Tiny;
 use List::Util qw(min max);
+use Scalar::Util qw(looks_like_number);
 
 use EnsEMBL::Web::File::Utils::IO;
 use EnsEMBL::Web::File::Utils::URL;
@@ -67,7 +68,7 @@ sub get_data {
 
       ## Otherwise constrain to configured view limits 
       unless(defined $min_score) {
-        if (defined($self->my_config('y_min'))) { ## Give priority to user settings
+        if (defined($self->my_config('y_min')) && looks_like_number($self->my_config('y_min'))) { ## Give priority to user settings
           $min_score = $self->my_config('y_min');
           $_->{'metadata'}{'y_min'} = $min_score;
         } 
@@ -80,7 +81,7 @@ sub get_data {
         }
       }
       unless(defined $max_score) {
-        if (defined($self->my_config('y_max'))) { ## Give priority to user settings
+        if (defined($self->my_config('y_max')) && looks_like_number($self->my_config('y_min'))) { ## Give priority to user settings
           $max_score = $self->my_config('y_max');
           $_->{'metadata'}{'y_max'} = $max_score;
         } 
