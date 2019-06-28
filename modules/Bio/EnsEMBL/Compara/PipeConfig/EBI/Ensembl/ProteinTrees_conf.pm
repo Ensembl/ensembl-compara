@@ -173,6 +173,7 @@ sub default_options {
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
         'clustering_mode'           => 'hybrid',
+        'projection_source_species_names' => [ 'homo_sapiens', 'mus_musculus' ],
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
@@ -231,4 +232,3 @@ sub tweak_analyses {
 
 
 1;
-

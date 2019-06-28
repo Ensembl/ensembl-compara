@@ -147,7 +147,7 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = $self->o('projection_source_species_names');
+    # $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = $self->o('projection_source_species_names');
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';

@@ -311,6 +311,8 @@ sub default_options {
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         'clustering_mode'           => 'blastp',
 
+        'projection_source_species_names' => [],
+
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'members'
         #   'members' means that only the members are copied over, and the rest will be re-computed
@@ -875,7 +877,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'insert_member_projections',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
             -parameters => {
-                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', ],
+                'source_species_names'  => $self->o('projection_source_species_names'),
             },
             -flow_into  => WHEN('#dbID_range_index#' => 'offset_homology_tables' ),
         },
