@@ -248,12 +248,6 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    ## Extend this section to redefine the parameters of some analyses
-    # turn off projections
-    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [];
-    # prevent principal components from being flowed
-    # $analyses_by_name->{'member_copy_factory'}->{'-parameters'}->{'polyploid_genomes'} = 0;
-
     ## Extend this section to redefine the resource names of some analysis
     ## Here we bump the resource class of some commonly MEMLIMIT failing analyses.
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
