@@ -82,6 +82,11 @@ sub default_options {
         'projection_source_species_names' => ['mus_musculus'],
         'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
 
+    # clustering parameters:
+        # How will the pipeline create clusters (families) ?
+        #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
+        'clustering_mode' => 'ortholog',
+
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'taxlevels' => ['Murinae'],

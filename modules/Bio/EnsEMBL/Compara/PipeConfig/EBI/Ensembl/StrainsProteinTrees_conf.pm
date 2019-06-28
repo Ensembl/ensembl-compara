@@ -114,12 +114,6 @@ sub default_options {
         # If 'prev_rel_db' above is not set, you need to set all the dbs individually
         'goc_reuse_db'          => undef,
 
-
-    # clustering parameters:
-        # How will the pipeline create clusters (families) ?
-        #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-        'clustering_mode'           => 'hybrid',
-
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
         'initialise_cafe_pipeline'  => 0,
