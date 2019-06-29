@@ -158,18 +158,15 @@ my @existing_dbs;
 print "Running on check meta mode\n";
 my $meta_script             = "\$ENSEMBL_CVS_ROOT_DIR/ensembl-metadata/misc_scripts/get_list_databases_for_division.pl";
 my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --division $division --release $release";
-my $cmd                     = "perl $meta_script $metadata_script_options | grep core";
+my $cmd                     = "perl $meta_script $metadata_script_options | grep _core_";
 my $meta_run                = qx/$cmd/;
 my @dbs_from_meta = split( /\s+/, $meta_run );
 
 my %meta_hash;
 my $repeated_db = 0;
 foreach my $db (@dbs_from_meta) {
-    my @tok = split( /\_/, $db );
-    my $str = join( " ", @tok );
-    $str =~ s/\d|core//g;
-    @tok = split( /\s/, $str );
-    my $species_name = join( "_", @tok );
+    my $species_name = $db;
+    $species_name =~ s/_core_.*//;
     if (exists $meta_hash{$species_name}){
         print "\tMultiple databases for $species_name\t$db\t$meta_hash{$species_name}\n";
         $repeated_db = 1;
