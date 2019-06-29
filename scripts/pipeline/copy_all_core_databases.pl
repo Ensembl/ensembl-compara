@@ -222,15 +222,12 @@ if ($update) {
 }
 
 foreach my $dbname (@databases_to_copy) {
+    my @cmd = ( @base_cmd, '-s ' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname" );
     if ($dry_mode) {
-        my $str = join( " ", @base_cmd );
-        print $str, ' -s ' => "$source_server_url$dbname", ' -t ' => "$target_server_url$dbname\n";
+        print join( " ", @cmd ), "\n";
     }
-    else {
-        my @cmd = ( @base_cmd, '-s ' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname" );
-        if ( system(@cmd) ) {
-            die "Could not run the command: ", join( " ", @cmd ), "\n";
-        }
+    elsif ( system(@cmd) ) {
+        die "Could not run the command: ", join( " ", @cmd ), "\n";
     }
 }
 
