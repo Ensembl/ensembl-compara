@@ -171,7 +171,7 @@ foreach my $db (@dbs_from_meta) {
     @tok = split( /\s/, $str );
     my $species_name = join( "_", @tok );
     if (exists $meta_hash{$species_name}){
-        print "\tRepeated database for $species_name\t$db\n";
+        print "\tMultiple databases for $species_name\t$db\t$meta_hash{$species_name}\n";
         $repeated_db = 1;
     }
     else{
@@ -180,7 +180,7 @@ foreach my $db (@dbs_from_meta) {
     push @databases_to_copy, $db;
 }
 
-die "There are repeated databases for the same species, sort out with Production before progressing" if $repeated_db;
+die "There are multiple databases for the same species, sort out with Production before progressing" if $repeated_db;
 
 foreach my $species_name (keys %meta_hash){
 
