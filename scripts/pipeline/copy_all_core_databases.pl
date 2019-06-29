@@ -90,6 +90,7 @@ use warnings;
 use Getopt::Long;
 use Pod::Usage;
 
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 
 
@@ -133,6 +134,7 @@ if (not $target_server_url) {
     }
 }
 
+$release            ||= software_version();
 $endpoint_uri       ||= 'http://ens-prod-1.ebi.ac.uk:8000/dbcopy/';
 $source_server_url  ||= 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/';
 $target_server_url  ||= "mysql://ensadmin:$ensadmin_psw\@mysql-ens-vertannot-staging.ebi.ac.uk:4573/";
