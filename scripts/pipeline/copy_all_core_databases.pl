@@ -134,6 +134,8 @@ if (not $target_server_url) {
     }
 }
 
+die "--division <division> must be provided\n" unless $division;
+
 $release            ||= software_version();
 $endpoint_uri       ||= 'http://ens-prod-1.ebi.ac.uk:8000/dbcopy/';
 $source_server_url  ||= 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/';
