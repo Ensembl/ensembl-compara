@@ -135,7 +135,7 @@ sub default_options {
         'clustering_mode'           => 'hybrid',
 
         # List of species some genes have been projected from
-        'projection_source_species_names' => [ 'homo_sapiens', 'mus_musculus' ],
+        'projection_source_species_names' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'

@@ -358,7 +358,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'insert_member_projections',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
             -parameters => {
-                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', ],
+                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
             },
         },
 
