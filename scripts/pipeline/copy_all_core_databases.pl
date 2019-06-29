@@ -138,7 +138,7 @@ die "--division <division> must be provided\n" unless $division;
 
 $release            ||= software_version();
 $endpoint_uri       ||= 'http://ens-prod-1.ebi.ac.uk:8000/dbcopy/';
-$source_server_url  ||= 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/';
+$source_server_url  ||= $division eq 'vertebrates' ? 'mysql://ensro@mysql-ens-sta-1.ebi.ac.uk:4519/' : 'mysql://ensro@mysql-ens-sta-3.ebi.ac.uk:4160/';
 $target_server_url  ||= "mysql://ensadmin:$ensadmin_psw\@mysql-ens-vertannot-staging.ebi.ac.uk:4573/";
 
 
