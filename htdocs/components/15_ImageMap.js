@@ -359,11 +359,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             tip = area.a.attrs.alt;
             
             if (!panel.elLk.helpTip) {
-              panel.elLk.helpTip = $('<div class="ui-tooltip helptip-bottom"><div class="ui-tooltip-content"></div></div>');
+              panel.elLk.helpTip = $('<div class="ui-tooltip helptip-top"><div class="ui-tooltip-content"></div></div>');
             }
             
             panel.elLk.helpTip.children().html(tip).end().appendTo('body').position({
-              of: { pageX: panel.imgOffset.left + area.l + 10, pageY: panel.imgOffset.top + area.t - 48, preventDefault: true }, // fake an event
+              of: { pageX: panel.imgOffset.left + area.l + 10 , pageY: panel.imgOffset.top + area.b + (area.b -area.t) - 15, preventDefault: true }, // fake an event
               my: 'center top'
             });
           }
