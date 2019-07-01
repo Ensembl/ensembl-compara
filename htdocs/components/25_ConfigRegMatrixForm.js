@@ -715,10 +715,10 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   enableConfigureButton: function (content) {
     var panel = this;
 
-    var total_div = $(content).length;
+    var total_div = panel.el.find(content).length;
     var counter   = 0;
 
-    $(content).each(function(i, el){
+    panel.el.find(content).each(function(i, el){
       if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) {
         counter++;
       }
@@ -740,14 +740,14 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   trackError: function(containers) {
     var panel = this;
 
-    $(containers).each(function(i, ele) {
+    panel.el.find(containers).each(function(i, ele) {
         var error_class = "_" + $(ele).attr('id');
         if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
-            $("span." + error_class).hide();
-            $('div#dx.result-content').show();
+            panel.el.find("span." + error_class).hide();
+            panel.el.find('div#dx.result-content').show();
         } else {
-            $("span." + error_class).show();
-            $('div#dx.result-content').hide();
+            panel.el.find("span." + error_class).show();
+            panel.el.find('div#dx.result-content').hide();
         }
     });
 
@@ -758,10 +758,10 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   showResetLink: function(containers) {
     var panel = this;
 
-    if ($(containers).find('li').length && $(containers).find('span.fancy-checkbox.selected').length) {
-      $("div.reset_track").show();
+    if (panel.el.find(containers).find('li').length && panel.el.find(containers).find('span.fancy-checkbox.selected').length) {
+      panel.el.find("div.reset_track").show();
     } else {
-      $("div.reset_track").hide();
+      panel.el.find("div.reset_track").hide();
     }
   },
 
@@ -771,8 +771,8 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   updateCurrentCount: function(key, selected, total) {
     var panel = this;
     if(key) {
-      $('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
-      $('#'+key+' span.total', this.elLk.resultBox).html(total);
+      panel.el.find('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
+      panel.el.find('#'+key+' span.total', this.elLk.resultBox).html(total);
     }
   },
 
@@ -1350,13 +1350,13 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   //function to change the tab in the breadcrumb and show the appropriate content
   toggleBreadcrumb: function(element) {
     var panel = this;
-    
-    if(!$(element).hasClass('view-track')) { 
+
+    if(!panel.el.find(element).hasClass('view-track')) { 
       panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     }
     panel.toggleButton();
 
-    if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {
+    if(panel.el.find(element).hasClass('_configure') && !panel.el.find(element).hasClass('inactive')) {
       panel.emptyMatrix();
       panel.displayMatrix();
     }
@@ -1386,7 +1386,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   //function to display filters (checkbox label), it can either be inside a letter ribbon or just list
   displayCheckbox: function(obj) {
 
-    var data = obj.data
+    var data = obj.data;
     var container = obj.container;
     var listType = obj.listType;
     var parentTabContainer = obj.parentTabContainer;
@@ -1605,9 +1605,6 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //updating available count in right hand panel
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
-
-    //clicking select all checkbox
-    //panel.clickCheckbox(container.find("div.all-box"));
 
     //clicking the alphabet
     var alphabet = container.find('div.alphabet-div');

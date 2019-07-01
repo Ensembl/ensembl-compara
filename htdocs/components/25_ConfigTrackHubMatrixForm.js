@@ -1447,12 +1447,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   toggleBreadcrumb: function(element) {
     var panel = this;
 
-    if(!$(element).hasClass('view-track')) { 
+    if(!panel.el.find(element).hasClass('view-track')) { 
       panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     }
     panel.toggleButton();
 
-    if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {
+    if(panel.el.find(element).hasClass('_configure') && !panel.el.find(element).hasClass('inactive')) {
       panel.emptyMatrix();
       panel.displayMatrix();
     }
