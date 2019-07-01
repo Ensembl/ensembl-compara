@@ -813,10 +813,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   enableConfigureButton: function (content) {
     var panel = this;
 
-    var total_div = $(content).length;
+    var total_div = panel.el.find(content).length;
     var counter   = 0;
 
-    $(content).each(function(i, el){
+    panel.el.find(content).each(function(i, el){
       if($(el).find('li').length && $(el).find('span.fancy-checkbox.selected').length) {
         counter++;
       }
@@ -838,12 +838,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   trackError: function(containers) {
     var panel = this;
 
-    $(containers).each(function(i, ele) {
+    panel.el.find(containers).each(function(i, ele) {
       var error_class = "_" + $(ele).attr('id');
       if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
-        $("span." + error_class).hide();
+        panel.el.find("span." + error_class).hide();
       } else {
-        $("span." + error_class).show();
+        panel.el.find("span." + error_class).show();
       }
     });
   },
@@ -853,10 +853,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   showResetLink: function(containers) {
     var panel = this;
 
-    if ($(containers).find('li').length && $(containers).find('span.fancy-checkbox.selected').length) {
-      $("div.reset_track").show();
+    if (panel.el.find(containers).find('li').length && panel.el.find(containers).find('span.fancy-checkbox.selected').length) {
+      panel.el.find("div.reset_track").show();
     } else {
-      $("div.reset_track").hide();
+      panel.el.find("div.reset_track").hide();
     }
   },
 
@@ -866,8 +866,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   updateCurrentCount: function(key, selected, total) {
     var panel = this;
     if(key) {
-      $('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
-      $('#'+key+' span.total', this.elLk.resultBox).html(total);
+      panel.el.find('#'+key+' span.current-count', this.elLk.resultBox).html(selected);
+      panel.el.find('#'+key+' span.total', this.elLk.resultBox).html(total);
     }
   },
 
@@ -1545,9 +1545,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       //updating available count in right hand panel
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
-
-      //clicking select all checkbox
-      //panel.clickCheckbox(container.find("div.all-box"));
     }
   },
 
@@ -1700,9 +1697,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //updating available count in right hand panel
     panel.el.find('div#'+rhsection+' span.total').html(total_num);
-
-    //clicking select all checkbox
-    //panel.clickCheckbox(container.find("div.all-box"));
 
     //clicking the alphabet
     var alphabet = container.find('div.alphabet-div');
