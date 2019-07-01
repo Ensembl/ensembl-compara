@@ -56,6 +56,7 @@
   <self_alignments>
     <genome name="triticum_aestivum"/>
     <genome name="triticum_dicoccoides"/>
+    <genome name="triticum_turgidum"/>
   </self_alignments>
 
   <gene_trees>
