@@ -165,7 +165,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) {
+      if($(this).hasClass('_edit') || !$(this).hasClass('view-track inactive')) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
@@ -260,22 +260,20 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var formats = [];
       //getting dimX data and the relationship
       $.each(panel.rawJSON.tracks, function(i, track){
-        var state, renderer;
+        var renderer;
         if(track.display && track.display != "off") {
-          state     =  "on"; //track.display is the value set for this specific track in trackhub
           renderer  =  track.display; //track.default_display is the default renderer for this track
         } else {
-          state     =  "off"; //track.display is the value set for this specific track in trackhub
           renderer  =  track.default_display; //track.default_display is the default renderer for this track
         }
 
-        var keyX      = track.subGroups[dimX];
+        var keyX = track.subGroups[dimX];
         formats.push(track.format.toLowerCase());
 
         $.each(track.subGroups, function(dimension, trackName){
           if(dimension === dimX) { return; }
 
-          if(state === "on" && $.isEmptyObject(storeObj["matrix"])) {
+          if(track.display && track.display != "off" && $.isEmptyObject(storeObj["matrix"])) {
             updateStore = true;
             if($.isEmptyObject(panel.localStoreObj["dx"])) {
               panel.localStoreObj["dx"] = {};
@@ -292,9 +290,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           }
 
           if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() }]
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-on", "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() }]
           } else {
-            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-"+state, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-on", "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
           }
         });
       });
@@ -1449,7 +1447,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   toggleBreadcrumb: function(element) {
     var panel = this;
 
-    panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
+    if(!$(element).hasClass('view-track')) { 
+      panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
+    }
     panel.toggleButton();
 
     if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {

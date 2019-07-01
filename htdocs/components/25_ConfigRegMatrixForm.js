@@ -156,7 +156,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || $(this).hasClass('view-track active')) {
+      if($(this).hasClass('_edit') || !$(this).hasClass('view-track inactive')) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
@@ -1350,8 +1350,10 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   //function to change the tab in the breadcrumb and show the appropriate content
   toggleBreadcrumb: function(element) {
     var panel = this;
-
-    panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
+    
+    if(!$(element).hasClass('view-track')) { 
+      panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
+    }
     panel.toggleButton();
 
     if($(element).hasClass('_configure') && !$(element).hasClass('inactive')) {
