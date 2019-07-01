@@ -31,7 +31,7 @@ Abel Ureta-Vidal <abel@ebi.ac.uk>
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Runnable::Lastz - 
+Bio::EnsEMBL::Compara::Production::Analysis::Lastz - 
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ Bio::EnsEMBL::Analysis::Runnable::Lastz -
 
   my $database = 'multifastafile.fa';
 
-  my $lastz =  Bio::EnsEMBL::Analysis::Runnable::Lastz->new 
+  my $lastz =  Bio::EnsEMBL::Compara::Production::Analysis::Lastz->new 
     ('-query'     => $query,
      '-database'  => $database,
      '-options'   => 'T=2');
@@ -57,14 +57,14 @@ Bio::EnsEMBL::Analysis::Runnable::Lastz -
 
   # Additionally if you have lastz runs lying around that need parsing
   # you can use the EnsEMBL blastz parser module 
-  # perldoc Bio::EnsEMBL::Analysis::Runnable::Parser::Blastz
+  # perldoc Bio::EnsEMBL::Compara::Production::Analysis::Parser::Blastz
 
 
 =head1 DESCRIPTION
 
 Lastz takes a Bio::Seq (or Bio::PrimarySeq) object and runs lastz with against 
 the specified multi-FASTA file database. Tthe output is parsed by 
-Bio::EnsEMBL::Analysis::Runnable::Parser::Lastz and stored as Bio::EnsEMBL::DnaDnaAlignFeature 
+Bio::EnsEMBL::Compara::Production::Analysis::Parser::Lastz and stored as Bio::EnsEMBL::DnaDnaAlignFeature 
 
 Other options can be passed to the lastz program using the -options method
 
@@ -72,7 +72,7 @@ Other options can be passed to the lastz program using the -options method
 
 =cut
 
-package Bio::EnsEMBL::Analysis::Runnable::Lastz;
+package Bio::EnsEMBL::Compara::Production::Analysis::Lastz;
 
 
 use warnings ;
@@ -83,7 +83,7 @@ use strict;
 
 use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
-use Bio::EnsEMBL::Analysis::Tools::Blastz;
+use Bio::EnsEMBL::Compara::Production::Analysis::Blastz;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -158,7 +158,7 @@ sub run_analysis {
                  "', There was " . ($? & 128 ? 'a' : 'no') .
                  " core dump") unless(system($cmd) == 0);
 
-    $BlastzParser = Bio::EnsEMBL::Analysis::Tools::Blastz->
+    $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->
         new('-file' => $self->resultsfile);
   } else {
     info("Running lastz to pipe...\n$cmd\n");
@@ -172,7 +172,7 @@ sub run_analysis {
                    "', There was " . ($? & 128 ? 'a' : 'no') .
                    " core dump");
 
-    $BlastzParser = Bio::EnsEMBL::Analysis::Tools::Blastz->
+    $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->
         new('-fh' => $blastz_output_pipe) || print_error($stderr_file, "Unable to parse blastz_output_pipe");
   }
 

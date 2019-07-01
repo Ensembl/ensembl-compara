@@ -17,7 +17,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Analysis::Tools::Blastz - Ensembl specific blastz output parser
+Bio::EnsEMBL::Compara::Production::Analysis::Blastz - Ensembl specific blastz output parser
 
 =head1 SYNOPSIS
 
@@ -25,13 +25,13 @@ open F,"blastz_output_file";
 
 my $fh = \*F;
 
-my $BlastzParser = new Bio::EnsEMBL::Analysis::Tools::Blastz(-fh => $fh);
+my $BlastzParser = new Bio::EnsEMBL::Compara::Production::Analysis::Blastz(-fh => $fh);
  
 or
 
 my $blastz_output_file = "blastz_output_file";
 
-my $BlastzParser = new Bio::EnsEMBL::Analysis::Tools::Blastz(-file => $blastz_output_file);
+my $BlastzParser = new Bio::EnsEMBL::Compara::Production::Analysis::Blastz(-file => $blastz_output_file);
 
 while (defined (my $alignment = $BlastzParser->nextAlignment)) {
   print $alignment->percent_id," ",$alignment->score," ",$alignment->cigar_string,"\n";
@@ -58,7 +58,7 @@ Internal methods are usually preceded by a _
 =cut 
 
 
-package Bio::EnsEMBL::Analysis::Tools::Blastz;
+package Bio::EnsEMBL::Compara::Production::Analysis::Blastz;
 
 use warnings ;
 use strict;

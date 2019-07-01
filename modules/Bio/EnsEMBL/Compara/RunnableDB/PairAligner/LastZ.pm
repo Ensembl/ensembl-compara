@@ -38,7 +38,7 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Analysis::Runnable::Lastz to add
+This object wraps Bio::EnsEMBL::Compara::Production::Analysis::Lastz to add
 functionality to read and write to databases.
 The appropriate Bio::EnsEMBL::Analysis object must be passed for
 extraction of appropriate parameters. 
@@ -57,7 +57,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Analysis::Runnable::Lastz;
+use Bio::EnsEMBL::Compara::Production::Analysis::Lastz;
 use Bio::EnsEMBL::Analysis;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
@@ -119,7 +119,7 @@ sub configure_runnable {
   $self->param('runnable', []);
 
   foreach my $dbChunkFile (@db_chunk_files) {
-    my $runnable = Bio::EnsEMBL::Analysis::Runnable::Lastz->
+    my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Lastz->
         new(
             -query      => $dbChunkFile,
             -database   => $qyChunkFile,
