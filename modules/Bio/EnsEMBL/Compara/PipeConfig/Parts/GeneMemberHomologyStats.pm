@@ -102,7 +102,7 @@ sub pipeline_analyses_hom_stats {
         {   -logic_name => 'set_default_values',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'clusterset_id' => $self->o('collection'),
+                'clusterset_id' => $self->o('collection') // "default",
                 'sql'   => [
                     'DELETE FROM gene_member_hom_stats',
                     'INSERT INTO gene_member_hom_stats (gene_member_id, collection)
