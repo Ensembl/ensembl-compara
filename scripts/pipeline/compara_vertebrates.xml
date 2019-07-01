@@ -10,6 +10,7 @@
       <taxonomic_group taxon_name="Chordata">
         <!-- But exclude everything below mus_musculus -->
         <ref_for_taxon name="mus_musculus"/>
+        <ref_for_taxon name="sus_scrofa"/>
       </taxonomic_group>
       <genome name="drosophila_melanogaster"/>
       <genome name="caenorhabditis_elegans"/>
