@@ -65,25 +65,31 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::Production::Analysis::Blat;
 
 use warnings ;
-use vars qw(@ISA);
 use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::SeqFeature;
 use Bio::EnsEMBL::FeaturePair;
-use Bio::EnsEMBL::Analysis;
+use Bio::EnsEMBL::DnaDnaAlignFeature;
+
 use Bio::PrimarySeqI;
 use Bio::SeqI;
 
-@ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
 sub new {
   my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = {};
+  bless $self, $class;
 
-  my ($database, $gapped, $query_hseq) = rearrange([qw(DATABASE GAPPED QUERYHSEQ)], @args);
+  my ($query, $program, $options,
+      $database, $gapped, $query_hseq, ) = rearrange
+        (['QUERY', 'PROGRAM', 'OPTIONS',
+          'DATABASE', 'GAPPED', 'QUERYHSEQ', ], @args);
+  $self->query($query);
+  $self->program($program);
+  $self->options($options);
+
   $self->database($database) if defined $database;
   $self->gapped($gapped) if defined $gapped;
   $self->query_as_hseq($query_hseq) if defined $query_hseq;
@@ -92,8 +98,6 @@ sub new {
   throw("You must supply a query") if not $self->query;
 
   $self->unknown_error_string('FAILED');
-
-  $self->program("blat-32") if not $self->program;
 
   return $self;
 }
@@ -649,6 +653,57 @@ sub query_as_hseq {
 }
 
 ############################################################
+
+
+=head2 program
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
+  Arg [2]   : string, path to program
+  Function  : uses locate_executable to find the path of the executable
+  Returntype: string, path to program
+  Exceptions: throws if program path isnt executable
+  Example   : 
+
+=cut
+
+
+sub program{
+  my $self = shift;
+  my $program = shift;
+  if($program){
+    $self->{'program'} = $program;
+  }
+  throw($self->{'program'}.' is not executable for '.ref($self))
+    if($self->{'program'} && !(-x $self->{'program'}));
+  return $self->{'program'};
+}
+
+
+=head2 output
+
+  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
+  Arg [2]   : arrayref of output
+  Function  : pushes passed in arrayref onto the output array
+  Returntype: arrayref
+  Exceptions: throws if not passed an arrayref
+  Example   : 
+
+=cut
+
+
+
+sub output{
+  my ($self, $output) = @_;
+  if(!$self->{'output'}){
+    $self->{'output'} = [];
+  }
+  if($output){
+    throw("Must pass Runnable:output an arrayref not a ".$output)
+      unless(ref($output) eq 'ARRAY');
+    push(@{$self->{'output'}}, @$output);
+  }
+  return $self->{'output'};
+}
 
 
 1;

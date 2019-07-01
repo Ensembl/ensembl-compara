@@ -29,10 +29,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Analysis::Runnable::Blat to add
+This object wraps Bio::EnsEMBL::Compara::Production::Analysis::Blat to add
 functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters.
 
 =cut
 
@@ -53,7 +51,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Analysis::Runnable::Blat;
+use Bio::EnsEMBL::Compara::Production::Analysis::Blat;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
@@ -89,8 +87,6 @@ sub param_defaults {
 ############################################################
 sub configure_runnable {
   my $self = shift;
-
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #
   # get the sequences and create the runnable
@@ -135,13 +131,12 @@ sub configure_runnable {
   }
 
   $self->param('runnable', []);
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blat->
+  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Blat->
     new(
 	-query      => $qyChunkFile,
 	-database   => $dbChunkFile,
 	-options    => $options,
 	-program    => $program,
-	-analysis   => $fake_analysis,
        );
   push @{$self->param('runnable')}, $runnable;
 
