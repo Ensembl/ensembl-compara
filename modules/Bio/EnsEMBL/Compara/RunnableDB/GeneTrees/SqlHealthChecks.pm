@@ -218,17 +218,16 @@ our $config = {
                 query => 'SELECT root_id FROM gene_tree_root WHERE stable_id LIKE "Node%"',
             },
             {
-                description => 'The version must be filled for the trees that have an Ensembl stable_id and empty for the other rows',
-                query => 'SELECT root_id FROM gene_tree_root WHERE stable_id LIKE "E%" XOR version IS NOT NULL',
+                description => 'The version must be filled for the trees that have a stable_id and empty for the other rows',
+                query => 'SELECT root_id FROM gene_tree_root WHERE stable_id LIKE "%GT%" XOR version IS NOT NULL',
             },
             {
                 description => 'There are stable IDs coming from at least 2 releases (Have you configured "mapping_db" correctly ?)',
-                query => 'SELECT DISTINCT LEFT(stable_id, 9) AS prefix FROM gene_tree_root WHERE stable_id LIKE "E%"',
+                query => 'SELECT DISTINCT LEFT(stable_id, 9) AS prefix FROM gene_tree_root WHERE stable_id LIKE "%GT%"',
                 expected_size => '>= 2',
             },
         ],
     },
-
 
     ### EPO Removed members
     #########################
