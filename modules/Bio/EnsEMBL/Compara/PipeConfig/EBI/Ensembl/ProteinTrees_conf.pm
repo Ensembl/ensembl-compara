@@ -58,7 +58,6 @@ sub default_options {
 
         # Tag attached to every single tree. Also used to select params - e.g. reg_conf, species_tree 
         'division'      => 'vertebrates',
-        'collection'    => 'default',
 
         'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_protein_trees_'.$self->o('rel_with_suffix'),
 
