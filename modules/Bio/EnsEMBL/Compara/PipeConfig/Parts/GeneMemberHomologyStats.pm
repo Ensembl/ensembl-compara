@@ -160,9 +160,9 @@ sub pipeline_analyses_hom_stats {
             -parameters => {
                 'sql'   => [
                     # Clean up partial runs
-                    'DROP TABLE IF EXISTS temp_member_hom_counts',
+                    'DROP TABLE IF EXISTS temp_member_hom_counts_#min_gene_member_id#',
                     # Temporary table with the counts
-                    'CREATE TEMPORARY TABLE temp_member_hom_counts AS
+                    'CREATE TEMPORARY TABLE temp_member_hom_counts_#min_gene_member_id# AS
                      SELECT gene_member_id, SUM(method_link_id=201) AS orthologues, SUM(method_link_id=202) AS paralogues, SUM(method_link_id=206) AS homoeologues
                      FROM homology_member
                      STRAIGHT_JOIN homology ON homology_member.homology_id = homology.homology_id
@@ -170,16 +170,16 @@ sub pipeline_analyses_hom_stats {
                      WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#
                      GROUP BY gene_member_id',
                     # Add an index on gene_member_id
-                    'ALTER TABLE temp_member_hom_counts ADD INDEX (gene_member_id)',
+                    'ALTER TABLE temp_member_hom_counts_#min_gene_member_id# ADD INDEX (gene_member_id)',
                     # Reset the counts (for reruns)
                     'UPDATE gene_member_hom_stats
                      SET orthologues = 0, paralogues = 0, homoeologues = 0
                      WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#',
                     # And set them to its right values
-                    'UPDATE gene_member_hom_stats g JOIN temp_member_hom_counts t USING (gene_member_id)
+                    'UPDATE gene_member_hom_stats g JOIN temp_member_hom_counts_#min_gene_member_id# t USING (gene_member_id)
                      SET g.orthologues=t.orthologues, g.paralogues=t.paralogues, g.homoeologues=t.homoeologues',
                     # Clean up the temporary table
-                    'DROP TABLE temp_member_hom_counts',
+                    'DROP TABLE temp_member_hom_counts_#min_gene_member_id#',
                 ],
             },
         },
