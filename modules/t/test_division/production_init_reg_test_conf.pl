@@ -21,15 +21,23 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-my $curr_release = 97;
+my $curr_release = 98;
 
 # ---------------------- CURRENT CORE DATABASE ---------------------------------
 
 # The majority of core databases live on staging servers:
-#Bio::EnsEMBL::Registry->load_registry_from_url(
-#   "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
 Bio::EnsEMBL::Registry->load_registry_from_url(
-    "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+    "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
+# Bio::EnsEMBL::Registry->load_registry_from_url(
+#     "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
+# Wheat (tiritcum aestivum) is located in a different server:
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host    => 'mysql-ens-sta-3',
+    -user    => 'ensro',
+    -port    => 4160,
+    -species => 'triticum_aestivum',
+    -dbname  => 'triticum_aestivum_core_45_98_4',
+);
 
 # ---------------------- COMPARA DATABASE LOCATION -----------------------------
 

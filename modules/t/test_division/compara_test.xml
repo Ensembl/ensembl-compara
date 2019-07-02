@@ -53,6 +53,7 @@
 
   <self_alignments>
     <genome name="homo_sapiens"/>
+    <genome name="triticum_aestivum"/>
   </self_alignments>
 
   <families>
