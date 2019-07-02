@@ -103,7 +103,7 @@ sub default_options {
 
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => undef,
-        'collection'            => undef,
+        'collection'            => 'default',
         'label_prefix'          => undef,
 
     #default parameters for the geneset qc
