@@ -57,7 +57,7 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-    my $script = $self->require_executable('clone_core_db');
+    my $script = $self->require_executable('clone_core_db_exe');
     my $init_reg_conf = $self->param_required('init_reg_conf');
     my $dst_host = $self->param_required('dst_host');
     my $dst_port = $self->param_required('dst_port');

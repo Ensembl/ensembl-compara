@@ -81,10 +81,10 @@ sub default_options {
         'work_dir'      => $self->o('pipeline_dir'),
         'backups_dir'   => $self->o('work_dir') . '/backups/',
 
-        'master_db'        => 'compara_master',
-        'schema_file'      => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
-        'method_link_dump' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
-        'clone_core_db'    => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
+        'master_db'         => 'compara_master',
+        'schema_file'       => $self->check_file_in_ensembl('ensembl-compara/sql/table.sql'),
+        'method_link_dump'  => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
+        'clone_core_db_exe' => $self->check_exe_in_ensembl('ensembl-test/scripts/clone_core_database.pl'),
 
         'java_hc_dir'     => $self->check_dir_in_ensembl('ensj-healthcheck/'),
         'java_hc_db_prop' => $self->check_file_in_ensembl('ensj-healthcheck/database.defaults.properties'),
@@ -195,12 +195,12 @@ sub pipeline_analyses {
         {   -logic_name        => 'clone_core_regions',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions',
             -parameters        => {
-                'clone_core_db' => $self->o('clone_core_db'),
-                'init_reg_conf' => $self->o('init_reg_conf'),
-                'dst_host'      => $self->o('dst_host'),
-                'dst_port'      => $self->o('dst_port'),
+                'clone_core_db_exe' => $self->o('clone_core_db_exe'),
+                'init_reg_conf'     => $self->o('init_reg_conf'),
+                'dst_host'          => $self->o('dst_host'),
+                'dst_port'          => $self->o('dst_port'),
                 # Get species name from JSON file path
-                'species'       => '#expr( substr(#json_file#, rindex(#json_file#, "/") + 1, -5) )expr#',
+                'species'           => '#expr( substr(#json_file#, rindex(#json_file#, "/") + 1, -5) )expr#',
             },
             -flow_into         => ['?accu_name=cloned_dbs&accu_address={species}'],
             # Restrict the number of running workers to one at a time to avoid overload the server
