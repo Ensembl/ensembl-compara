@@ -89,7 +89,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'biggenepred': [ 'as_alignment_nolabel', 'as_alignment_label', 'as_collapsed_nolabel', 'as_collapsed_label', 'as_transcript_nolabel', 'as_transcript_label', 'half_height', 'stack', 'unlimited', 'ungrouped' ],
       'bigint': [ 'interaction' ],
       'bam': [ 'coverage_with_reads', 'unlimited', 'histogram' ],
-      'bam': [ 'coverage_with_reads', 'unlimited', 'histogram' ],
       'vcf': [ 'as_alignment_nolabel', 'as_alignment_label', 'half_height', 'stack', 'unlimited', 'ungrouped', 'difference' ]
     };
 
@@ -116,7 +115,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         this.loadState();
         this.setDragSelectEvent();
         this.registerRibbonArrowEvents();
-        this.updateRHS();
         this.addExtraDimensions();
         this.goToUserLocation();
         this.resize();
@@ -241,6 +239,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     finalObj.extra_dimensions = []; //it needs to be in the json and empty so that code know there is no extra dimensions
     var storeObj = panel.getLocalStorage();
     var updateStore = false;
+    this.initialLoad = 1; //this is used to load all the default/preset tracks on first
 
     //Populating the dimensions and data for each dimension
     if($.isEmptyObject(finalObj.dimensions)) {
@@ -273,7 +272,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         $.each(track.subGroups, function(dimension, trackName){
           if(dimension === dimX) { return; }
 
-          if(track.display && track.display != "off" && $.isEmptyObject(storeObj["matrix"])) {
+          if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["matrix"]) || panel.initialLoad )) {     
             updateStore = true;
             if($.isEmptyObject(panel.localStoreObj["dx"])) {
               panel.localStoreObj["dx"] = {};
@@ -301,12 +300,22 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
       finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };
     }
+
+    panel.initialLoad = 0; //initialLoad done
     if(updateStore) {
       panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
       panel.setLocalStorage();
     }
     console.log(finalObj);
     panel.json = finalObj;
+
+    //setting rendererkeys
+    this.elLk.lookup.rendererKeys = [];
+    $.each(panel.json.format, function(i, format) {
+      $.each(panel.rendererConfig[format], function(i, renderer) {
+        panel.elLk.lookup.rendererKeys.push(renderer);
+      });
+    });
   },
 
   //Function to check if ajax request return 404 (Because bad request are returned as success with header: 404)
@@ -1823,8 +1832,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if($.isEmptyObject(panel.localStoreObj)) { return; }
 
     panel.trackPopup = panel.el.find('div.track-popup');
+    var xContainer   = '<div  class="xContainer">';
 
-    var xContainer = '<div  class="xContainer">';
+    //setting object of renderers used when initialising the localstore
+    var rendererObj = {};
+    $.map(panel.elLk.lookup.rendererKeys, function(n, i){
+      rendererObj[n] = 0;
+      rendererObj["reset-"+n] = 0;
+    });
 
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
     var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
@@ -1848,11 +1863,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
+          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
         }
         if(!panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
+          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
         }
 
         if(panel.disableYdim) {
@@ -1871,7 +1886,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     //initialising allSelection for matrix storage
     if(!panel.localStoreObj["matrix"]["allSelection"]) {
       //initialising state obj for dyItem (column), value setup later
-      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {"peak": 0, "peak-signal": 0, "signal": 0, "normal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0, "reset-normal": 0} };
+      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
     }
 
     var yContainer = '<div class="yContainer">';
@@ -1884,7 +1899,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
             if(panel.itemDimension(cellName) === "matrix") {
-              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": { "peak": 0, "signal": 0, "normal": 0, "peak-signal": 0, "reset-peak":0, "reset-peak-signal": 0, "reset-signal": 0}};
+              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
             }
           }
 
@@ -1971,8 +1986,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.localStoreObj.matrix[cellName]["state"]["reset-on"] += onState
           panel.localStoreObj.matrix[cellName]["state"]["off"] += offState
           panel.localStoreObj.matrix[cellName]["state"]["reset-off"] += offState
-          panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
-          panel.localStoreObj.matrix[cellName]["renderer"]["reset-peak-signal"] += peakSignalCount;
+          //TODO...look into below
+          //panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
+          //panel.localStoreObj.matrix[cellName]["renderer"]["reset-peak-signal"] += peakSignalCount;
 
           rowContainer += "</div>";
           boxContainer += rowContainer;
@@ -2050,18 +2066,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         } else {
           panel.localStoreObj[storeObjKey][key]["state"]["on"]              = allStoreObjects[key]["state"]["reset-on"];
           panel.localStoreObj[storeObjKey][key]["state"]["off"]             = allStoreObjects[key]["state"]["reset-off"];
-          panel.localStoreObj[storeObjKey][key]["renderer"]["peak"]         = allStoreObjects[key]["renderer"]["reset-peak"];
-          panel.localStoreObj[storeObjKey][key]["renderer"]["signal"]       = allStoreObjects[key]["renderer"]["reset-signal"];
-          panel.localStoreObj[storeObjKey][key]["renderer"]["peak-signal"]  = allStoreObjects[key]["renderer"]["reset-peak-signal"];
-          panel.localStoreObj[storeObjKey][key]["renderer"]["normal"]       = allStoreObjects[key]["renderer"]["reset-normal"];
+          $.each(panel.elLk.lookup.rendererKeys, function(rendererName, i){
+            panel.localStoreObj[storeObjKey][key]["renderer"][rendererName] = allStoreObjects[key]["renderer"]["reset-"+rendererName];  
+          });
 
           //resetting all selection
           panel.localStoreObj[storeObjKey]["allSelection"]["state"]["on"]              = allStoreObjects["allSelection"]["state"]["reset-on"];
           panel.localStoreObj[storeObjKey]["allSelection"]["state"]["off"]             = allStoreObjects["allSelection"]["state"]["reset-off"];
-          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["peak"]         = allStoreObjects["allSelection"]["renderer"]["reset-peak"];
-          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["signal"]       = allStoreObjects["allSelection"]["renderer"]["reset-signal"];
-          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["peak-signal"]  = allStoreObjects["allSelection"]["renderer"]["reset-peak-signal"];
-          panel.localStoreObj[storeObjKey]["allSelection"]["renderer"]["normal"]       = allStoreObjects["allSelection"]["renderer"]["reset-normal"];
+          $.each(panel.elLk.lookup.rendererKeys, function(rendererName, i){
+            panel.localStoreObj[storeObjKey][key]["allSelection"][rendererName]        = allStoreObjects[key]["renderer"]["reset-"+rendererName];  
+          });
         }
       });
     });
