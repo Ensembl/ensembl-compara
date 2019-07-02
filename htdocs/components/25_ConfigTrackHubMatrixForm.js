@@ -1835,8 +1835,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var xContainer   = '<div  class="xContainer">';
 
     //setting object of renderers used when initialising the localstore
-    var rendererObj = {};
-    $.map(panel.elLk.lookup.rendererKeys, function(n, i){
+    var rendererObj={};
+    $.each(panel.elLk.lookup.rendererKeys, function(i, n){
       rendererObj[n] = 0;
       rendererObj["reset-"+n] = 0;
     });
@@ -1863,11 +1863,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
+          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+          Object.assign(panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]["renderer"], rendererObj);
         }
         if(!panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
+          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+          Object.assign(panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"]["renderer"], rendererObj);
         }
 
         if(panel.disableYdim) {
@@ -1886,7 +1888,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     //initialising allSelection for matrix storage
     if(!panel.localStoreObj["matrix"]["allSelection"]) {
       //initialising state obj for dyItem (column), value setup later
-      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
+      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+      Object.assign(panel.localStoreObj["matrix"]["allSelection"]["renderer"], rendererObj);
     }
 
     var yContainer = '<div class="yContainer">';
@@ -1895,11 +1898,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if(panel.localStoreObj.dx && panel.localStoreObj.dy) {
       $.each(panel.localStoreObj.dx, function(cellName, value){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
-          var dxCount = 0, peakSignalCount = 0, onState = 0, offState = 0;
 
           if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
             if(panel.itemDimension(cellName) === "matrix") {
-              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": rendererObj };
+              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+              Object.assign(panel.localStoreObj[panel.itemDimension(cellName)][cellName]["renderer"], rendererObj);
             }
           }
 
@@ -1956,16 +1959,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
                     panel.localStoreObj[dyStoreObjKey][dyItem]["state"]["reset-"+boxState.replace("track-","")]++;
 
-                    //calculating total in one row, we only want dy item not the extra dimensions for the matrix state obj.
-                    if(panel.json.extra_dimensions.indexOf(dyItem) === -1) {
-                      dxCount++;
-                      peakSignalCount++;
-                      if(boxState === "track-on") {
-                        onState++;
-                      } else {
-                        offState++;
-                      }
-                    }
+                    //setting count to update row in matrix (dx)
+                    panel.localStoreObj.matrix[cellName]["total"] += 1;
+                    panel.localStoreObj.matrix[cellName]["renderer"][boxDataRender] += 1;
+                    panel.localStoreObj.matrix[cellName]["renderer"]["reset-"+boxDataRender] += 1;                    
+                    panel.localStoreObj.matrix[cellName]["state"][boxState.replace("track-","")]++;
+                    panel.localStoreObj.matrix[cellName]["state"]["reset-"+boxState.replace("track-","")]++;
+
                     return;
                   }
                 });
@@ -1980,15 +1980,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               }
             }
           });
-          //setting state for row in matrix
-          panel.localStoreObj.matrix[cellName]["total"] += dxCount;
-          panel.localStoreObj.matrix[cellName]["state"]["on"] += onState
-          panel.localStoreObj.matrix[cellName]["state"]["reset-on"] += onState
-          panel.localStoreObj.matrix[cellName]["state"]["off"] += offState
-          panel.localStoreObj.matrix[cellName]["state"]["reset-off"] += offState
-          //TODO...look into below
-          //panel.localStoreObj.matrix[cellName]["renderer"]["peak-signal"] += peakSignalCount;
-          //panel.localStoreObj.matrix[cellName]["renderer"]["reset-peak-signal"] += peakSignalCount;
 
           rowContainer += "</div>";
           boxContainer += rowContainer;
