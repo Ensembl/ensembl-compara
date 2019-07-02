@@ -27,18 +27,72 @@ sub get_js_panel {
   return 'ConfigTrackHubMatrixForm';
 }
 
+sub breadcrumb_html {
+  my ($self)  = @_;
+
+  my $html = qq(
+      <div class="large-breadcrumbs twoDim">
+        <ul>
+          <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
+          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
+          <li class="inactive view-track"><a href="#"><span class="circle crumb-number">3</span>View tracks</a></li>
+        </ul>
+      </div>
+      <div class="large-breadcrumbs multiDim">
+        <ul>
+          <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
+          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Filter tracks</a><span class="hidden content-id">filter-content</span></li>
+          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">3</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
+          <button class="inactive view-track fade-button">View tracks</button>
+        </ul>
+      </div>      
+  );
+
+  return $html;
+}
+
 sub configuration_content {
   my ($self, $dimX, $dimY) = @_;
 
+#filter track panel
   my $html = qq(
+      <div class="track-panel filter-track" id="filter-content">
+        <div class="vertical-sub-header">$dimX</div>
+        <div class="configuration-legend">
+          <div class="config-key"><span class="track-key on"></span>Data track on</div>
+          <div class="config-key"><span class="track-key off"></span>Data track off</div>
+          <div class="config-key"><span class="track-key no-data"></span>No data</div>
+        </div>
+        <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
+        <div class="track-popup column-cell">
+          <ul>
+            <li>
+              <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label>
+            </li>
+          </ul>
+        </div>
+        <div class="hidebox"></div>
+        <div class="filterMatrix-container">
+        </div>
+      </div>
+
+      <div class="result-box filter-track">
+        <h4>Track filters</h4>
+        <div class="filter-content">
+        
+        </div>
+
+      </div>
+  );
+
+  # track configuration panel (final matrix)
+  $html .= qq(
       <div class="track-panel track-configuration" id="configuration-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
           <div class="config-key"><span class="track-key on"></span>Data track on</div>
           <div class="config-key"><span class="track-key off"></span>Data track off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
-          <div class="config-key"><span class="track-key peak"><img src="/i/svg/peak_blue50.svg" /></span>Peaks</div>
-          <div class="config-key"><span class="track-key signal"><img src="/i/svg/signal_blue50.svg" /></span>Signal</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset</button>

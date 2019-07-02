@@ -54,6 +54,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.localStorageKey      = this.node_id+'-TrackHubMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
     this.trackHub             = true;
+    this.multiDimFlag         = 0;
 
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
@@ -110,6 +111,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         this.rawJSON = data;
         this.buildJSON();
         $(this.el).find('div.spinner').remove();
+        this.switchBreadcrumb();
         this.trackTab();
         this.populateLookUp();
         this.loadState();
@@ -240,6 +242,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var storeObj = panel.getLocalStorage();
     var updateStore = false;
     this.initialLoad = 1; //this is used to load all the default/preset tracks on first
+    
+    //flag for multi dimensional trackhub
+    if(Object.keys(panel.rawJSON.metadata.dimensions).length > 2) {
+      panel.multiDimFlag = 1;
+    };
 
     //Populating the dimensions and data for each dimension
     if($.isEmptyObject(finalObj.dimensions)) {
@@ -1450,6 +1457,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
       });
     }
+  },
+  
+  //function to show a different set of breadcrumbs for multidimensional trackhub
+  switchBreadcrumb: function() {
+      var panel = this;
+
+      if(panel.multiDimFlag) {
+        panel.el.find("div.large-breadcrumbs.twoDim").hide();
+        panel.el.find("div.large-breadcrumbs.multiDim").show();
+      } else {
+        panel.el.find("div.large-breadcrumbs.twoDim").show();
+        panel.el.find("div.large-breadcrumbs.multiDim").hide();
+      }
   },
 
   //function to change the tab in the breadcrumb and show the appropriate content

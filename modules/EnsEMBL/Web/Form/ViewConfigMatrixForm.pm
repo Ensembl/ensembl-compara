@@ -66,17 +66,13 @@ sub build {
     ($dimY  = ucfirst($dims->{'y'}{'label'})) =~ s/_/ /g;
   }
 
+  my $breadcrumbHTML = $self->breadcrumb_html();
+
   my $html = qq(
     <input type="hidden" class="js_param" name="image_config_type" value="$image_config_type" />
     <div class="header_tutorial_wrapper flex-row">
       <h1>$title</h1>
-      <div class="large-breadcrumbs">
-        <ul>
-          <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
-          <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">2</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
-          <li class="inactive view-track"><a href="#"><span class="circle crumb-number">3</span>View tracks</a></li>
-        </ul>
-      </div>
+      $breadcrumbHTML
     </div>
     <div class="flex-row">
       <div class="track-panel active noselect" id="track-content">
