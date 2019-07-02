@@ -87,6 +87,11 @@ sub default_options {
         'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_init_reg_test_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_test_conf_tmpl.pl'),
 
+        # Change working directory
+        'pipeline_name' => 'build_master',
+        'work_dir'      => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('division') . '_division/' . $self->o('pipeline_name'),
+        'backups_dir'   => $self->o('work_dir') . '/backups/',
+
         # PrepareMasterDatabaseForRelease pipeline configuration:
         'do_load_lrg_dnafrags' => 1,
         'do_load_timetree'     => 1,
