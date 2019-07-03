@@ -681,8 +681,7 @@ sub program{
 
 =head2 output
 
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
-  Arg [2]   : arrayref of output
+  Arg [1]   : arrayref of output
   Function  : pushes passed in arrayref onto the output array
   Returntype: arrayref
   Exceptions: throws if not passed an arrayref
