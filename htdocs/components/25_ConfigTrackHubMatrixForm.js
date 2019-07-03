@@ -55,7 +55,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.lookup          = new Object();
     this.trackHub             = true;
     this.multiDimFlag         = 0;
-    this.rendererSelect       = this.el.find('div.track-popup .renderer-selection')
+    this.rendererSelectDropdown = this.el.find('div.track-popup .renderer-selection .renderers')
 
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
@@ -230,6 +230,40 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
     }
+
+    this.dropDown.prototype = {
+      initEvents : function() {
+        var obj = this;
+
+        obj.dd.on('click', function(event){
+          $(this).toggleClass('active');
+          return false;
+        });
+
+        obj.opts.on('click',function(){
+          var opt = $(this);
+          obj.val = opt.text();
+          obj.index = opt.index();
+          obj.placeholder.text(obj.val);
+          console.log(obj.val);
+        });
+      },
+      getValue : function() {
+        return this.val;
+      },
+      getIndex : function() {
+        return this.index;
+      }
+    }
+  },
+
+  dropDown: function(el) {
+    this.dd = el;
+    this.placeholder = this.dd.children('span');
+    this.opts = this.dd.find('ul.dropdown > li');
+    this.val = '';
+    this.index = -1;
+    this.initEvents();
   },
 
   // Function to create the relationship between the different track
@@ -2117,14 +2151,15 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   buildMatrixPopup: function(format) {
     var panel = this;
 
-    this.elLk.popup = panel.el.find('div.track-popup ul._cell .cell-style select');
-    var popupHTML = '';
+    var ul = panel.el.find('div.track-popup ul._cell .cell-style .renderers ul');
+    var defaultVal = 'Default';
+    var r_opts = '';
 
     $.each(panel.rendererConfig[format], function(i, renderer){
-      popupHTML += '<option value="'+renderer+'">' + panel.rendererTextMap[renderer] + '</option>';
+      r_opts += '<li><i class="' + panel.rendererTextMap[renderer] + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
-    console.log(popupHTML);
-    this.elLk.popup.html(popupHTML);
+    ul.html(r_opts);
+    var dd = new this.dropDown(this.rendererSelectDropdown);
   },
 
   cellClick: function() {

@@ -108,7 +108,12 @@ sub configuration_content {
             <li class="renderer-selection">
               <label class="wide-label"> Cell style </label>
               <div class="cell-style">
-                <select></select>
+          
+                <div id="dd" class="renderers">
+                  <span>Select Renderer</span>
+                  <ul class="dropdown"></ul>
+                </div>
+
                 <div>
                   <input id="apply_to_all" type="checkbox" checked=false>
                   <label for="apply_to_all">Apply to all cells of this type</label>
