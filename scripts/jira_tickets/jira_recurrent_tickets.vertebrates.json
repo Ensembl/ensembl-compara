@@ -146,8 +146,20 @@
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run mouse strain protein tree pipeline",
+            "summary": "Run mouse strains protein tree pipeline",
             "name_on_graph": "Protein-trees:Murinae"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run pig strains ncRNA pipeline",
+            "name_on_graph": "ncRNA-trees:Sus"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run pig strains protein tree pipeline",
+            "name_on_graph": "Protein-trees:Sus"
          },
          {
             "component": "Production tasks",
