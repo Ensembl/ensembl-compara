@@ -6,12 +6,6 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
-            "summary": "Declaration of Intentions"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Registry Configuration file"
          },
          {
