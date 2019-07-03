@@ -46,9 +46,6 @@ It adds functionality to read and write to a compara databases.
 It takes as input (via input_id or analysis->parameters) DnaFragChunk or DnaFragChunkSet
 objects (via dbID reference) and stores GenomicAlignBlock entries.
 
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. 
-
 =cut
 
 =head1 APPENDIX
@@ -66,7 +63,6 @@ use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -207,20 +203,11 @@ sub write_output {
 
 sub _write_output {
     my ($self) = @_;
-    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
   my $starttime = time();
 
   foreach my $runnable (@{$self->param('runnable')}) {
       foreach my $fp ( @{ $runnable->output() } ) {
           if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
-              #since the Blast runnable takes in analysis parameters rather than an
-              #analysis object, it creates new Analysis objects internally
-              #(a new one for EACH FeaturePair generated)
-              #which are a shadow of the real analysis object ($self->analysis)
-              #The returned FeaturePair objects thus need to be reset to the real analysis object
-
-              $fp->analysis($fake_analysis);
-
               $self->store_featurePair_as_genomicAlignBlock($fp);
           }
       }

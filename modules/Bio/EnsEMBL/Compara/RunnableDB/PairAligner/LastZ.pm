@@ -40,9 +40,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ
 
 This object wraps Bio::EnsEMBL::Compara::Production::Analysis::Lastz to add
 functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. 
-required for databse access.
 
 =cut
 
@@ -58,7 +55,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Compara::Production::Analysis::Lastz;
-use Bio::EnsEMBL::Analysis;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -77,8 +73,6 @@ sub param_defaults {
 
 sub configure_runnable {
   my $self = shift;
-
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #
   # get the sequences and create the runnable
@@ -125,7 +119,6 @@ sub configure_runnable {
             -database   => $qyChunkFile,
             -options    => $options,
             -program    => $program,
-            -analysis   => $fake_analysis,
             );
     
     if($self->debug >1) {
