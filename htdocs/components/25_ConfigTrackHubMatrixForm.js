@@ -55,6 +55,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.lookup          = new Object();
     this.trackHub             = true;
     this.multiDimFlag         = 0;
+    this.rendererSelect       = this.el.find('div.track-popup .renderer-selection')
 
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
@@ -158,7 +159,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
-      if(!$(e.target).parent().closest('div').hasClass('track-popup') && panel.trackPopup) {
+      if(!$(e.target).closest('.track-popup').length && panel.trackPopup) {
         panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
         panel.trackPopup.hide();
       }
@@ -2116,16 +2117,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   buildMatrixPopup: function(format) {
     var panel = this;
 
-    this.elLk.popup = panel.el.find('div.track-popup ul._cell');
-    var popupHTML = "";
+    this.elLk.popup = panel.el.find('div.track-popup ul._cell .cell-style select');
+    var popupHTML = '';
 
     $.each(panel.rendererConfig[format], function(i, renderer){
-      if(i === 0) {
-        popupHTML = '<li><label class="switch"><input type="checkbox" name="cell-switch"><span class="slider round"></span><span class="switch-label">Cell</span></label><input type="radio" name="cell-radio" class="_'+renderer+'"/><text>'+panel.rendererTextMap[renderer]+'</text></li>';
-      } else {
-        popupHTML += '<li><input type="radio" name="cell-radio" class="_'+renderer+'"/><text>'+panel.rendererTextMap[renderer]+'</text></li>';
-      }
+      popupHTML += '<option value="'+renderer+'">' + panel.rendererTextMap[renderer] + '</option>';
     });
+    console.log(popupHTML);
     this.elLk.popup.html(popupHTML);
   },
 

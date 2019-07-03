@@ -98,21 +98,30 @@ sub configuration_content {
         <button class="fade-button reset-button _matrix">Reset</button>
         <div class="track-popup column-cell">
           <ul class="_cell">
-
-          </ul>
-          <ul>
             <li>
-              <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label>
+              <label class="switch">
+                <input type="checkbox" name="cell-switch">
+                <span class="slider round"></span>
+              </label>
+              <span class="switch-label">Cell on/off</span>
             </li>
-          </ul>
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="row-switch"><span class="slider round"></span><span class="switch-label">Row</span></label>
+            <li class="renderer-selection">
+              <label class="wide-label"> Cell style </label>
+              <div class="cell-style">
+                <select></select>
+                <div>
+                  <input id="apply_to_all" type="checkbox" checked=false>
+                  <label for="apply_to_all">Apply to all cells of this type</label>
+                </div>
+              </div>
             </li>
-          </ul>
-          <ul>
             <li>
-              <label class="switch"><input type="checkbox" name="all-switch"><span class="slider round"></span><span class="switch-label">All</span></label>
+              <label class="wide-label"> All cells </label>
+              <div>
+                <input type="radio" id="all_cells" name="all_cells" value="on"> <label for="all_cells"> On </label>
+                <input type="radio" id="off" name="all_cells" value="off"> <label for="off"> Off </label>
+                <input type="radio" id="default" name="all_cells" value="default"> <label for="default"> Default </label>
+              </div>
             </li>
           </ul>
         </div>
