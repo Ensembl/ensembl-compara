@@ -219,7 +219,7 @@ if ($update) {
 }
 
 foreach my $dbname (@databases_to_copy) {
-    my @cmd = ( @base_cmd, '-s ' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname" );
+    my @cmd = ( @base_cmd, '-s' => "$source_server_url$dbname", '-t' => "$target_server_url$dbname" );
     if ($dry_mode) {
         print join( " ", @cmd ), "\n";
     }
