@@ -164,6 +164,15 @@ sub pipeline_analyses {
                 'schema_file'   => $self->o('schema_file'),
                 'cmd'           => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# < #schema_file#',
             },
+            -flow_into  => ['add_division_to_meta_table'],
+        },
+
+        {   -logic_name => 'add_division_to_meta_table',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'init_reg_conf' => $self->o('init_reg_conf'),
+                'cmd'           => 'echo "INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, \"division\", \"#division#\");" | db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# < /dev/stdin'
+            },
             -flow_into  => ['init_method_link_table'],
         },
 
