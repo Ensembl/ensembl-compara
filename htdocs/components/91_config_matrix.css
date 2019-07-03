@@ -435,24 +435,19 @@ div.xBoxes.track-off.render-difference.mClick             { background-image: ur
 
 
  /* trackhub popup/zmenu */
-div.ConfigTrackHubMatrixForm div.track-popup                         { width: 240px;}
-
-/*div.config_wrapper div.config div.track-popup ul li:not(:first-child) { margin-left: 75px; }
-div.config_wrapper div.config div.track-popup ul li                   { padding: 8px; margin-bottom: -15px; }
-div.config_wrapper div.config div.track-popup ul li text              { position: relative; top: 0px; left: 2px; }
-div.config_wrapper div.config div.track-popup ul                      { border-bottom: 1px solid #b7b7b7 ; padding-bottom: 20px;}
-*/
-div.ConfigTrackHubMatrixForm .track-popup                         { padding: 8px; }
+div.ConfigTrackHubMatrixForm .track-popup                         { width: 240px; padding: 8px; }
 div.ConfigTrackHubMatrixForm .track-popup ul li                   { padding: 16px 8px; border-bottom: 1px solid #b7b7b7; margin-bottom: none;}
 div.ConfigTrackHubMatrixForm .track-popup ul li:not(:first-child) { margin-left: none; }
 div.ConfigTrackHubMatrixForm .track-popup ul li.renderer-selection{ display: flex; margin: none; }
-div.ConfigTrackHubMatrixForm .track-popup ul li .wide-label       { width: 60px; padding: 3px;}
+div.ConfigTrackHubMatrixForm .track-popup ul li .wide-label       { width: 60px; padding: 3px; }
 div.ConfigTrackHubMatrixForm .track-popup ul li .cell-style       {  }
 div.ConfigTrackHubMatrixForm .track-popup ul li select            { width: auto; margin-bottom: 8px; }
 
 div.ConfigTrackHubMatrixForm .track-popup ul                      { padding-bottom: none; }
 div.ConfigTrackHubMatrixForm .track-popup ul li:last-child        { border-bottom: none; display: flex; }
-div.ConfigTrackHubMatrixForm .track-popup ul li:last-child div input { padding-left: 4px; }
+div.ConfigTrackHubMatrixForm .track-popup ul li:last-child div label { padding-right: 8px; }
+div.ConfigTrackHubMatrixForm .track-popup .switch                 { position: relative; display: inline-block; width: 25px; height: 15px; }
+div.ConfigTrackHubMatrixForm .track-popup span.switch-label       { position: absolute; margin-top: 2px; }
 
 
 /* reg matrix track popup/zmenu */
@@ -466,9 +461,6 @@ div.ConfigRegMatrixForm div.track-popup ul                      { border-bottom:
 
 div.ConfigRegMatrixForm div.xBoxes img            { width: 30px; height: 30px; padding: 0px; }
 div.ConfigRegMatrixForm span.track-key img        { width: 30px; height: 30px; display: inline-block; margin-left: -8px; margin-top: -10px;}
-
-.track-popup .switch { margin: none; }
-
 
 
 .s-noselect {
@@ -488,7 +480,7 @@ div.ConfigRegMatrixForm span.track-key img        { width: 30px; height: 30px; d
 
 /* toggle switch */
 /* The switch - the box around the slider */
-.track-popup .switch {
+div.ConfigRegMatrixForm .track-popup .switch {
   position: relative;
   display: inline-block;
   width: 25px;
@@ -496,7 +488,7 @@ div.ConfigRegMatrixForm span.track-key img        { width: 30px; height: 30px; d
   margin-right: 50px;
 }
 
-.track-popup span.switch-label { position: absolute; margin-left: 6px; }
+div.ConfigRegMatrixForm .track-popup span.switch-label { position: absolute; margin-left: 6px; }
 
 /* Hide default HTML checkbox */
 .track-popup .switch input {
