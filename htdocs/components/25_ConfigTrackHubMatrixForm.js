@@ -2156,7 +2156,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var r_opts = '';
 
     $.each(panel.rendererConfig[format], function(i, renderer){
-      r_opts += '<li><i class="' + panel.rendererTextMap[renderer] + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
+      r_opts += '<li><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
     ul.html(r_opts);
     var dd = new this.dropDown(this.rendererSelectDropdown);

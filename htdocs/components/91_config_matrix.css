@@ -342,6 +342,28 @@ div.boxContainer          { display: flex; flex-direction: column; }
 div.rowContainer          { display: flex; }
 div.hidebox               { width: 112px; height: 128px; background: #eee; z-index: 1; top: -48px; position: relative; left: 118px; clear: both; }
 
+div.renderers i.peak-signal            { background-image: url("/i/svg/peak_signal_blue.svg"); }
+div.renderers i.signal_feature         { background-image: url("/i/svg/peak_signal_blue.svg"); }
+div.renderers i.peak                   { background-image: url("/i/svg/peak_blue.svg"); }
+div.renderers i.compact                { background-image: url("/i/svg/peak_blue.svg"); }
+div.renderers i.signal                 { background-image: url("/i/svg/signal_blue.svg"); }
+div.renderers i.normal                 { background-image: url("/i/svg/normal_blue.svg"); }
+div.renderers i.as_alignment_nolabel   { background-image: url("/i/svg/as_alignment_nolabel_blue.svg"); }
+div.renderers i.as_alignment_label     { background-image: url("/i/svg/as_alignment_label_blue.svg"); }
+div.renderers i.as_transcript_nolabel  { background-image: url("/i/svg/as_transcript_nolabel_blue.svg"); }
+div.renderers i.as_transcript_label    { background-image: url("/i/svg/as_transcript_label_blue.svg"); }
+div.renderers i.half_height            { background-image: url("/i/svg/half_height_blue.svg"); }
+div.renderers i.stack                  { background-image: url("/i/svg/stack_blue.svg"); }
+div.renderers i.unlimited              { background-image: url("/i/svg/unlimited_blue.svg"); }
+div.renderers i.ungrouped              { background-image: url("/i/svg/ungrouped_blue.svg"); }
+div.renderers i.as_collapsed_nolabel   { background-image: url("/i/svg/collapsed_nolabel_blue.svg"); }
+div.renderers i.as_collapsed_label     { background-image: url("/i/svg/collapsed_label_blue.svg"); }
+div.renderers i.interaction            { background-image: url("/i/svg/interaction_blue.svg"); }
+div.renderers i.coverage_with_reads    { background-image: url("/i/svg/coverage_blue.svg"); }
+div.renderers i.histogram              { background-image: url("/i/svg/histogram_blue.svg"); }
+div.renderers i.difference             { background-image: url("/i/svg/difference_blue.svg"); }
+
+
 /* track status for on */
 div.xBoxes.track-on                              { background-color: #0735ba; }
 /* className with both - and _ is because - is used in reg matrix and _ in trackhub */
@@ -536,6 +558,10 @@ div.ConfigTrackHubMatrixForm .track-popup .renderers .dropdown li {
 
 div.ConfigTrackHubMatrixForm .track-popup .renderers .dropdown li i {
     float: right;
+    height: 22px;
+    width: 22px;
+    position: relative;
+    top: -4px;
 }
 
 /* Hover state */
