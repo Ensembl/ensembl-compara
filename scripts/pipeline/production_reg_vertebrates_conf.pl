@@ -146,25 +146,25 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 );
 
 # this alias is need for the epo data dumps to work:
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -group => 'core',
-    -species => 'ancestral_sequences_for_dumps',     # FIXME: this needs to be renamed to ancestral_sequences when we run the dumps
-    -dbname => "ensembl_ancestral_$curr_release",
-);
+#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    #-host => 'mysql-ens-compara-prod-1',
+    #-user => 'ensadmin',
+    #-pass => $ENV{'ENSADMIN_PSW'},
+    #-port => 4485,
+    #-group => 'core',
+    #-species => 'ancestral_sequences_for_dumps',     # FIXME: this needs to be renamed to ancestral_sequences when we run the dumps
+    #-dbname => "ensembl_ancestral_$curr_release",
+#);
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -group => 'core',
-    -species => 'ancestral_curr',
-    -dbname => "ensembl_ancestral_$curr_release",
-);
+#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    #-host => 'mysql-ens-compara-prod-1',
+    #-user => 'ensadmin',
+    #-pass => $ENV{'ENSADMIN_PSW'},
+    #-port => 4485,
+    #-group => 'core',
+    #-species => 'ancestral_curr',
+    #-dbname => "ensembl_ancestral_$curr_release",
+#);
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
