@@ -67,7 +67,8 @@ my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
-	if (($this_mlss->first_release || 0) == $release) {
+    if ((($this_mlss->first_release || 0) == $release)
+        || (defined $this_mlss->get_tagvalue("rerun_in_$release"))) {
 		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
 		push @current_lastz_mlsses, $this_mlss;
 		foreach my $this_gdb ( @{ $this_mlss->species_set->genome_dbs } ) {
