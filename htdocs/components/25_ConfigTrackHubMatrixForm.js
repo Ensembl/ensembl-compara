@@ -232,20 +232,20 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
 
     this.dropDown.prototype = {
-      initEvents : function() {
+      initEvents : function(panel) {
         var obj = this;
 
-        obj.dd.on('click', function(event){
+        obj.dd.off().on('click', function(event){
           $(this).toggleClass('active');
           return false;
         });
 
-        obj.opts.on('click',function(){
+        obj.opts.off().on('click',function(){
           var opt = $(this);
-          obj.val = opt.text();
+          obj.val = opt.find('i').attr('class');
           obj.index = opt.index();
           obj.placeholder.text(obj.val);
-          console.log(obj.val);
+          panel.updateRenderer(obj.val)
         });
       },
       getValue : function() {
@@ -257,13 +257,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
-  dropDown: function(el) {
-    this.dd = el;
+  dropDown: function(panel, defaultVal) {
+    this.dd = panel.rendererSelectDropdown;
     this.placeholder = this.dd.children('span');
+    this.placeholder.html(panel.rendererTextMap[defaultVal]);
     this.opts = this.dd.find('ul.dropdown > li');
     this.val = '';
     this.index = -1;
-    this.initEvents();
+    this.initEvents(panel);
   },
 
   // Function to create the relationship between the different track
@@ -349,7 +350,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};      
       panel.setLocalStorage();
     }
-    console.log(finalObj);
     panel.json = finalObj;
 
     //setting rendererkeys
@@ -2178,7 +2178,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       r_opts += '<li><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
     ul.html(r_opts);
-    var dd = new this.dropDown(this.rendererSelectDropdown);
   },
 
   cellClick: function() {
@@ -2221,7 +2220,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       var allRender = "";
       $.map(panel.localStoreObj[panel.dxStateKey]["allSelection"]["renderer"], function(count, rendererType){
-        if(!rendererType.match("reset-") && boxRender === rendererType && count === panel.localStoreObj[panel.dxStateKey]["allSelection"][format][cellFormat]) {
+        if(!rendererType.match("reset-") && boxRender === rendererType && count === panel.localStoreObj[panel.dxStateKey]["allSelection"]['format'][cellFormat]) {
           allRender = true;
           return;
         }
@@ -2259,6 +2258,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       } else {
         panel.TrackPopupType.find('input#apply_to_all').prop("checked",false);
       }
+
+      var dd = new panel.dropDown(panel, boxRender);
+
 
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
@@ -2472,11 +2474,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   },
 
-  updateRenderer: function(clickedEle) {
+  updateRenderer: function(renderClass) {
     var panel         = this;
-    var renderClass   = clickedEle.attr("class").replace(/^_/,"");
     var currentRender = panel.localStoreObj.matrix[panel.cellKey].renderer;
-    var dimension     = radioName === "column-radio" ? panel.xName : panel.yName;
+    // var dimension     = radioName === "column-radio" ? panel.xName : panel.yName;
     var storeObjKey   = panel.itemDimension(panel.xName);
 
     //updating the render class for the cell
