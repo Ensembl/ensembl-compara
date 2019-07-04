@@ -134,15 +134,6 @@ sub run{
   $self->write_seq_files();
   $self->run_analysis();
 
-  $self->delete_files;
-  return 1;
-}
-
-
-
-sub run_analysis {
-  my $self = shift;
-
   my $cmd = $self->program  ." ".
             $self->query ." ".
             $self->database ." ".
@@ -192,6 +183,8 @@ sub run_analysis {
   close($blastz_output_pipe) if(defined($blastz_output_pipe));
 
   $self->output(\@results);
+
+  $self->delete_files;
 }
 
 
