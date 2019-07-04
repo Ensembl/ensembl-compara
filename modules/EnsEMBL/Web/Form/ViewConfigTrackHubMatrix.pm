@@ -95,7 +95,7 @@ sub configuration_content {
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
-        <button class="fade-button reset-button _matrix">Reset</button>
+        <button class="fade-button reset-button _matrix">Reset all</button>
         <div class="track-popup column-cell">
           <ul class="_cell">
             <li>
@@ -123,9 +123,9 @@ sub configuration_content {
             <li>
               <label class="wide-label"> All cells </label>
               <div>
-                <input type="radio" id="all_cells" name="all_cells" value="on"> <label for="all_cells"> On </label>
-                <input type="radio" id="off" name="all_cells" value="off"> <label for="off"> Off </label>
-                <input type="radio" id="default" name="all_cells" value="default"> <label for="default"> Default </label>
+                <input type="radio" id="on_all_cells" name="all_cells" value="on"> <label for="all_cells"> On </label>
+                <input type="radio" id="off_all_cells" name="all_cells" value="off"> <label for="off"> Off </label>
+                <div class="reset_track_state">Reset</div>
               </div>
             </li>
           </ul>
