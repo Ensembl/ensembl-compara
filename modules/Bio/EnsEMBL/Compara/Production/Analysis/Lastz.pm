@@ -47,9 +47,7 @@ Bio::EnsEMBL::Compara::Production::Analysis::Lastz -
      '-database'  => $database,
      '-options'   => 'T=2');
 
-  $lastz->run();
-
-  @featurepairs = $last->output();
+  @featurepairs = @{$lastz->run()};
 
   foreach my $fp (@featurepairs) {
       print $fp->gffstring . "\n";
@@ -182,9 +180,9 @@ sub run{
   }
   close($blastz_output_pipe) if(defined($blastz_output_pipe));
 
-  $self->output(\@results);
-
   $self->delete_files;
+
+  return \@results;
 }
 
 
@@ -387,39 +385,6 @@ sub program{
   throw($self->{'program'}.' is not executable for '.ref($self))
     if($self->{'program'} && !(-x $self->{'program'}));
   return $self->{'program'};
-}
-
-
-
-=head2 output
-
-  Arg [1]   : arrayref of output
-  Arg [2]   : flag to attach the runnable->query as a slice
-  Function  : pushes passed in arrayref onto the output array
-  Returntype: arrayref
-  Exceptions: throws if not passed an arrayref
-  Example   : 
-
-=cut
-
-
-
-sub output{
-  my ($self, $output, $attach_slice) = @_;
-  if(!$self->{'output'}){
-    $self->{'output'} = [];
-  }
-  if($output){
-    throw("Must pass Runnable:output an arrayref not a ".$output)
-      unless(ref($output) eq 'ARRAY');
-    push(@{$self->{'output'}}, @$output);
-  }
-  if($attach_slice) {
-    foreach my $output_unit (@{$output}) {
-      $output_unit->slice($self->{'query'});
-    }
-  }
-  return $self->{'output'};
 }
 
 

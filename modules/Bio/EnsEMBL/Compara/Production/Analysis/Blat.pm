@@ -148,7 +148,7 @@ sub run {
               "', SIGNAL '" . ($? & 127) . "', There was " . 
               ($? & 128 ? 'a' : 'no') . " core dump");
   }
-  $self->output($results);
+  return $results;
 }
 
 #
@@ -676,32 +676,6 @@ sub program{
   throw($self->{'program'}.' is not executable for '.ref($self))
     if($self->{'program'} && !(-x $self->{'program'}));
   return $self->{'program'};
-}
-
-
-=head2 output
-
-  Arg [1]   : arrayref of output
-  Function  : pushes passed in arrayref onto the output array
-  Returntype: arrayref
-  Exceptions: throws if not passed an arrayref
-  Example   : 
-
-=cut
-
-
-
-sub output{
-  my ($self, $output) = @_;
-  if(!$self->{'output'}){
-    $self->{'output'} = [];
-  }
-  if($output){
-    throw("Must pass Runnable:output an arrayref not a ".$output)
-      unless(ref($output) eq 'ARRAY');
-    push(@{$self->{'output'}}, @$output);
-  }
-  return $self->{'output'};
 }
 
 

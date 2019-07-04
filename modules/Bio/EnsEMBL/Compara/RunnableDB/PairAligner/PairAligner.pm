@@ -160,12 +160,15 @@ sub run
 
   my $starttime = time();
   my $work_dir = $self->worker_temp_directory;
+  my @output;
   foreach my $runnable (@{$self->param('runnable')}) {
       throw("Runnable module not set") unless($runnable);
-      $runnable->run($work_dir);
+      my $o = $runnable->run($work_dir);
+      push @output, @$o;
   }
 
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
+  $self->param('output', \@output);
 
   return 1;
 }
@@ -205,14 +208,12 @@ sub _write_output {
     my ($self) = @_;
   my $starttime = time();
 
-  foreach my $runnable (@{$self->param('runnable')}) {
-      foreach my $fp ( @{ $runnable->output() } ) {
+  foreach my $fp (@{$self->param('output')}) {
           if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
               $self->store_featurePair_as_genomicAlignBlock($fp);
           }
       }
-      if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$runnable->output}));}
-  }
+      if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$self->param('output')}));}
 
   #print STDERR (time()-$starttime), " secs to write_output\n";
 }
