@@ -369,24 +369,38 @@ sub get_cell_line_data {
     my $ic_cell_line = $cell_line;
     clean_id($ic_cell_line);
 
+    my $node;
     if ($image_config) {
-      my $node = $image_config->get_node("reg_feats_core_$ic_cell_line");
+      $node = $image_config->get_node("reg_feats_core_$ic_cell_line");
+    }
+    else {
+      my $tmp_ic = $self->hub->get_imageconfig('reg_summary');
+      $node   = $tmp_ic->get_node("reg_feats_core_$ic_cell_line");
+    }
+    next unless $node;
 
-      next unless $node;
+    ## Configure each track separately, instead of by column
+    foreach my $track (@{$node->child_nodes||[]}) {
+      my $id = $track->id;
+      my @split = split('_', $id);
+      my $experiment = $split[-1];
 
-      ## Configure each track separately, instead of by column
-      foreach my $track (@{$node->child_nodes||[]}) {
-        my $id = $track->id;
-        my @split = split('_', $id);
-        my $experiment = $split[-1];
-
+      if ($image_config) {
         my $display = $node->tree->user_data->{$id}{'display'};
         $data->{$cell_line}{$experiment}{'renderer'} = $display if $display ne 'off';
+      }
+      else {
+        $data->{$cell_line}{$experiment} = {};
       }
     }
   }
 
-  return $self->get_data($data, $filter);
+  if ($image_config) {
+    return $self->get_data($data, $filter);
+  }
+  else {
+    return $self->get_table_data($data);
+  }
 }
 
 sub get_data {
@@ -451,6 +465,27 @@ sub get_data {
   }
 
   $data->{'colours'} = \%feature_sets_on;
+  return $data;
+}
+
+sub get_table_data {
+  my ($self, $data, $filter) = @_;
+  return $data unless scalar keys %$data;
+
+  my $hub                   = $self->hub;
+  my $peak_calling_adaptor  = $hub->get_adaptor('get_PeakCallingAdaptor', 'funcgen');
+  my $all_peak_calling      = $peak_calling_adaptor->fetch_all;
+
+  foreach my $peak_calling (@{$all_peak_calling||[]}) {
+
+    my $ftype       = $peak_calling->fetch_FeatureType;
+    my $ftype_name  = $ftype->name;
+
+    my $epigenome   = $peak_calling->fetch_Epigenome;
+    my $cell_line   = $epigenome->short_name;
+
+    $data->{$cell_line}{$ftype_name} = $peak_calling;
+  }
   return $data;
 }
 
