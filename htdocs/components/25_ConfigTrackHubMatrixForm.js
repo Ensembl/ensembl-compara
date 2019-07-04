@@ -290,6 +290,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       finalObj.dimensions = [dimX,dimY];
       finalObj.data = {};
+      finalObj.format = {};
 
       //getting dimY data, assuming subgroup2 is always dimY
       var dimYData = {}
@@ -297,8 +298,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         dimYData[value] = {name: value.replace("_", " ")};
       });
 
-      var dimXData = {};
-      var formats = [];
+      var dimXData = {};      
       //getting dimX data and the relationship
       $.each(panel.rawJSON.tracks, function(i, track){
         var renderer;
@@ -309,13 +309,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
 
         var keyX = track.subGroups[dimX];
-        formats.push(track.format.toLowerCase());
 
         $.each(track.subGroups, function(dimension, trackName){
           if(dimension === dimX) { return; }
 
           if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["matrix"]) || panel.initialLoad )) {     
             updateStore = true;
+            finalObj.format[track.format.toLowerCase()] = finalObj.format[track.format.toLowerCase()]+1 || 1;
             if($.isEmptyObject(panel.localStoreObj["dx"])) {
               panel.localStoreObj["dx"] = {};
               panel.localStoreObj["dx"][keyX] = 1;
@@ -338,7 +338,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         });
       });
 
-      finalObj.format = $.unique(formats);
       finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
       finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };
     }
@@ -355,8 +354,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //setting rendererkeys
     this.elLk.lookup.rendererKeys = [];
-    $.each(panel.json.format, function(i, format) {
-      $.each(panel.rendererConfig[format], function(i, renderer) {
+    $.each(panel.json.format, function(key, val) {
+      $.each(panel.rendererConfig[key], function(i, renderer) {
         panel.elLk.lookup.rendererKeys.push(renderer);
       });
     });
@@ -1920,12 +1919,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+          panel.localStoreObj[panel.itemDimension(dyItem)][dyItem] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {}, "format": {} };
           Object.assign(panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]["renderer"], rendererObj);
         }
         if(!panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"]) {
           //initialising state obj for dyItem (column), value setup later
-          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+          panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {}, "format": {} };
           Object.assign(panel.localStoreObj[panel.itemDimension(dyItem)]["allSelection"]["renderer"], rendererObj);
         }
 
@@ -1945,7 +1944,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     //initialising allSelection for matrix storage
     if(!panel.localStoreObj["matrix"]["allSelection"]) {
       //initialising state obj for dyItem (column), value setup later
-      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+      panel.localStoreObj["matrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {}, "format": {} };
       Object.assign(panel.localStoreObj["matrix"]["allSelection"]["renderer"], rendererObj);
     }
 
@@ -1958,7 +1957,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
             if(panel.itemDimension(cellName) === "matrix") {
-              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {} };
+              panel.localStoreObj[panel.itemDimension(cellName)][cellName] = {"total": 0,"state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {}, "format": {} };
               Object.assign(panel.localStoreObj[panel.itemDimension(cellName)][cellName]["renderer"], rendererObj);
             }
           }
@@ -2004,6 +2003,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
                     //setting count for all selection section
                     panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
+                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["format"][format] = panel.localStoreObj[dyStoreObjKey]["allSelection"]["format"][format] + 1 || 1; //this is to know how many cells/tracks we have of the same format, shouldn't be changed
                     panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"][boxDataRender] += 1;
                     panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"]["reset-"+boxDataRender] += 1;
                     panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
@@ -2212,6 +2212,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
+      var cellFormat = panel.localStoreObj[panel.cellStateKey][panel.cellKey].format; //Track format
 
       // check if all is on/off
       var allState = "";
@@ -2219,9 +2220,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       if(panel.localStoreObj[panel.dxStateKey]["allSelection"].state.off === panel.localStoreObj[panel.dxStateKey]["allSelection"].total) { allState = "track-off"; } 
 
       var allRender = "";
-      $.map(panel.localStoreObj[panel.dxStateKey]["allSelection"].renderer, function(count, rendererType){
-        if(!rendererType.match("reset-") && count === panel.localStoreObj[panel.dxStateKey]["allSelection"].total) {
-          allRender = rendererType;
+      $.map(panel.localStoreObj[panel.dxStateKey]["allSelection"]["renderer"], function(count, rendererType){
+        if(!rendererType.match("reset-") && boxRender === rendererType && count === panel.localStoreObj[panel.dxStateKey]["allSelection"][format][cellFormat]) {
+          allRender = true;
           return;
         }
       });
@@ -2235,7 +2236,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked",false);
       }
 
-      //setting radio button for cell render
+      //setting dropdown for cell renderer dropdown>>>>>
       if(boxRender) {
         panel.TrackPopupType.find('ul li input[name=cell-radio]._'+boxRender).prop("checked",true);
       } else {
@@ -2252,11 +2253,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.TrackPopupType.find('div input#off_all_cells').prop("checked",false);
       }
 
-      //setting radio button for all render
+      //tick apply to all cells box
       if(allRender) {
-        panel.TrackPopupType.find('ul li input[name=all-radio]._'+allRender).prop("checked",true);
+        panel.TrackPopupType.find('input#apply_to_all').prop("checked",true);
       } else {
-        panel.TrackPopupType.find('ul li input[name=all-radio]').prop("checked",false);
+        panel.TrackPopupType.find('input#apply_to_all').prop("checked",false);
       }
 
       //center the popup on the box, get the x and y position of the box and then add half the length
@@ -2462,57 +2463,41 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });     
 
     //choosing radio button - track renderer
-    // panel.TrackPopupType.find('ul li input[type=radio]').off().on("change", function(e) {
-    //   panel.updateRenderer($(this));
-    //   e.stopPropagation();
-    // });
+    panel.TrackPopupType.find('ul li input[type=radio]').off().on("change", function(e) {
+      panel.updateRenderer($(this));
+      e.stopPropagation();
+    });
+
+    //tick apply renderers to all cell box
 
   },
 
   updateRenderer: function(clickedEle) {
     var panel         = this;
-    var radioName     = clickedEle.attr("name");
     var renderClass   = clickedEle.attr("class").replace(/^_/,"");
     var currentRender = panel.localStoreObj.matrix[panel.cellKey].renderer;
     var dimension     = radioName === "column-radio" ? panel.xName : panel.yName;
     var storeObjKey   = panel.itemDimension(panel.xName);
 
-    if(radioName === "column-radio" || radioName === "row-radio") {
-      //update the radio button for cell as well
-      panel.TrackPopupType.find('ul li input[name=cell-radio]._'+renderClass).prop("checked", true);
+    //updating the render class for the cell
+    panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
 
-      //update the render class for all cells in the columns, for rows only update cell belonging to matrix
-      var matrixClass = radioName === "row-radio" ? ".matrix" : "";
-      panel.elLk.rowContainer.find('div.xBoxes._hasData.'+ dimension+matrixClass).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
+    //update localstore
+    panel.updateTrackStore(panel.localStoreObj[storeObjKey][panel.cellKey], panel.cellKey, "", "", renderClass, currentRender);
 
-      panel.updateTrackStore(panel.localStoreObj[storeObjKey][dimension], dimension, "", "", renderClass, currentRender);
-    } else if (radioName === "all-radio"){
-      panel.TrackPopupType.find('ul li input[name$=-radio]._'+renderClass).prop("checked", true);
+  //  if (radioName === "all-radio"){
+  //     panel.TrackPopupType.find('ul li input[name$=-radio]._'+renderClass).prop("checked", true);
 
-      panel.elLk.rowContainer.find('div.xBoxes._hasData.matrix').removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
+  //     panel.elLk.rowContainer.find('div.xBoxes._hasData.matrix').removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
 
-      panel.updateTrackStore(panel.localStoreObj[storeObjKey], "allSelection", "", "", renderClass, currentRender);
-    } else { //cell-radio
-      //updating the render class for the cell
-      panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
+  //     panel.updateTrackStore(panel.localStoreObj[storeObjKey], "allSelection", "", "", renderClass, currentRender);
+  //   } else { //cell-radio
+  //     //updating the render class for the cell
+  //     panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
 
-      //update localstore
-      panel.updateTrackStore(panel.localStoreObj[storeObjKey][panel.cellKey], panel.cellKey, "", "", renderClass, currentRender);
-    }
-
-    //and if by changing this one cell, all cells in the column are same, then update column renderer accordingly
-    if(panel.localStoreObj[panel.dxStateKey][panel.xName].renderer[renderClass] === panel.localStoreObj[panel.dxStateKey][panel.xName].total){
-      panel.TrackPopupType.find('ul li input[name=column-radio]._'+renderClass).prop("checked", true);
-    } else {
-      panel.TrackPopupType.find('ul li input[name=column-radio]').prop("checked", false);
-    }
-
-    //check if by changing this one cell, all cells in the row are same, then update row renderer accordingly
-    if(panel.localStoreObj[panel.dyStateKey][panel.yName].renderer[renderClass] === panel.localStoreObj[panel.dyStateKey][panel.yName].total){
-      panel.TrackPopupType.find('ul li input[name=row-radio]._'+renderClass).prop("checked", true);
-    } else {
-      panel.TrackPopupType.find('ul li input[name=row-radio]').prop("checked", false);
-    }
+  //     //update localstore
+  //     panel.updateTrackStore(panel.localStoreObj[storeObjKey][panel.cellKey], panel.cellKey, "", "", renderClass, currentRender);
+  //   }
 
     //check if by changing this one cell, all cells in the whole matrix are same, then update all renderer accordingly
     if(panel.localStoreObj[panel.dyStateKey]["allSelection"].renderer[renderClass] === panel.localStoreObj[panel.dyStateKey]["allSelection"].total){
