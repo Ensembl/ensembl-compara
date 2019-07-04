@@ -80,6 +80,7 @@ sub fetch_input {
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->alignment($aln);
+    $self->cleanup_worker_temp_directory;
     $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree));
     $self->param('struct_aln', $self->_dumpStructToWorkdir($nc_tree));
 }
