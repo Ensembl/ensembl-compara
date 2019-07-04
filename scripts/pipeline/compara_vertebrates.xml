@@ -180,7 +180,7 @@
   </gene_trees>
 
   <species_trees>
-    <species_tree collection="ensembl"/>
+    <species_tree collection="vertebrates"/>
   </species_trees>
 
 </compara_db>
