@@ -163,6 +163,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').removeClass("mClick");
         panel.trackPopup.hide();
       }
+
+      if(!$(e.target).closest('ul.dropdown').length && panel.trackPopup) {
+        panel.el.find('.renderer-selection div.renderers').removeClass('active');
+      }
     });
 
     this.el.find('.view-track, button.showMatrix').on('click', function() {
@@ -242,9 +246,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         obj.opts.off().on('click',function(){
           var opt = $(this);
-          obj.val = opt.find('i').attr('class');
+          opt.siblings().removeClass('selected');
+          opt.addClass('selected');
+          obj.val = opt.children('i').attr('class');
           obj.index = opt.index();
-          obj.placeholder.text(obj.val);
+          obj.placeholder.text(opt.text());
           panel.updateRenderer(obj.val)
         });
       },
@@ -262,6 +268,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.placeholder = this.dd.children('span');
     this.placeholder.html(panel.rendererTextMap[defaultVal]);
     this.opts = this.dd.find('ul.dropdown > li');
+    this.opts.removeClass('selected');
+    this.opts.each(function(i, li) {
+      if($(li).hasClass(defaultVal)) {
+        $(li).addClass('selected');
+      }
+    });
     this.val = '';
     this.index = -1;
     this.initEvents(panel);
@@ -2175,7 +2187,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var r_opts = '';
 
     $.each(panel.rendererConfig[format], function(i, renderer){
-      r_opts += '<li><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
+      r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
     ul.html(r_opts);
   },
