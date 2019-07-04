@@ -310,7 +310,19 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-analysis_capacity  => 700,
+                -flow_into => {
+                    -1 => [ 'gerp_himem'], #retry with more memory
+                },
 		-rc_name => '2Gb_job',
+	    },
+	    {   -logic_name => 'gerp_himem',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
+		-parameters => {
+				'window_sizes' => $self->o('gerp_window_sizes'),
+				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+			       },
+		-analysis_capacity  => 700,
+		-rc_name => '4Gb_job',
 	    },
 
 # ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------

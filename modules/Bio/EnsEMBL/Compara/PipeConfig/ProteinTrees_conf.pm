@@ -2921,6 +2921,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => -10,
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 1   => [ 'hc_tree_homologies' ],
                 -1  => 'ortho_tree_himem',
@@ -2935,7 +2936,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => 20,
-            -rc_name        => '2Gb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => [ 'hc_tree_homologies' ],
         },
 
@@ -3120,6 +3121,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'panther_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
             -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
                 3 => { 'panther_paralogs' => INPUT_PLUS },
@@ -3129,7 +3131,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'panther_paralogs_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '2Gb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => {
                 3 => { 'panther_paralogs_himem' => INPUT_PLUS },
             }

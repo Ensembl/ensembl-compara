@@ -643,6 +643,7 @@ sub core_pipeline_analyses {
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
+                -rc_name            => '1Gb_job',
                 -flow_into     => {
                                    -1 => [ 'other_paralogs_himem' ],
                                    2 => [ 'tree_backup' ],
@@ -657,6 +658,7 @@ sub core_pipeline_analyses {
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
+                -rc_name            => '4Gb_job',
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
                                    3 => { 'other_paralogs_himem' => INPUT_PLUS },
@@ -1000,6 +1002,7 @@ sub core_pipeline_analyses {
             -parameters => {
                             'tag_split_genes'   => 0,
             },
+            -rc_name    => '1Gb_job',
             -flow_into  => {
                 1 => [ 'hc_tree_homologies' ],
                 -1 => [ 'orthotree_himem' ],
@@ -1013,7 +1016,7 @@ sub core_pipeline_analyses {
                             'tag_split_genes'   => 0,
             },
             -flow_into  => [ 'hc_tree_homologies' ],
-           -rc_name => '1Gb_job',
+            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name    => 'ktreedist',
