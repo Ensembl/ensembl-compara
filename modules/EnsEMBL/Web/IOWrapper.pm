@@ -231,7 +231,7 @@ sub create_tracks {
     ## Sort out chromosome info
     foreach my $chr (@$drawn_chrs) {
       push @$seq_region_names, $chr;
-      my $slice = $adaptor->fetch_by_region('chromosome', $chr);
+      my $slice = $adaptor->fetch_by_region('toplevel', $chr);
       ## Cache the slice temporarily, as we may need it later
       $slices->{$chr} = $slice;
       if ($bins) {
