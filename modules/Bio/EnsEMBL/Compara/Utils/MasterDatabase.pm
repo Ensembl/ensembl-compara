@@ -167,7 +167,8 @@ sub _remove_deprecated_dnafrags {
     die $delete_warning;
 }
 
-=head _check_is_good_for_alignment
+
+=head2 _check_is_good_for_alignment
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
