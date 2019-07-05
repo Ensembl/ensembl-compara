@@ -1539,8 +1539,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
 
     if(panel.el.find('div.track-configuration:visible').length){
+      panel.elLk.resultBox.find('div.reset_track').hide();
       panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").html("View tracks");
     } else {
+      panel.elLk.resultBox.find('div.reset_track').show();
       panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
     }
   },
