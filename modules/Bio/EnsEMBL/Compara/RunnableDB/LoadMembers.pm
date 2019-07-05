@@ -217,7 +217,7 @@ sub loadMembersFromCoreSlices {
     my @relevant_genes = grep {!$excluded_logic_names{$_->analysis->logic_name}} sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)};
     # Discard genes that span the end of circular chromosomes
     my $n1 = scalar(@relevant_genes);
-    @relevant_genes = grep {$_->dnafrag_start < $_->dnafrag_end} @relevant_genes;
+    @relevant_genes = grep {$_->seq_region_start < $_->seq_region_end} @relevant_genes;
     if ($n1 != scalar(@relevant_genes)) {
         $self->warning("Discarded ".($n1-scalar(@relevant_genes))." genes because they span the end of circular chromosomes");
     }
