@@ -91,6 +91,9 @@ sub default_options {
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 1,
 
+        # Load non reference sequences and patches for fresh members
+        'include_nonreference' => 1,
+        'include_patches'      => 1,
     };
 }
 
