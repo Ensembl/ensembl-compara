@@ -159,11 +159,10 @@ sub run
   $self->compara_dba->dbc->disconnect_if_idle();
 
   my $starttime = time();
-  my $work_dir = $self->worker_temp_directory;
   my @output;
   foreach my $runnable (@{$self->param('runnable')}) {
       throw("Runnable module not set") unless($runnable);
-      my $o = $runnable->run($work_dir);
+      my $o = $runnable->run($self);
       push @output, @$o;
   }
 

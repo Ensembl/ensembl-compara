@@ -76,7 +76,7 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Lastz;
 use warnings ;
 use strict;
 
-use File::Spec::Functions qw(catfile tmpdir);
+use File::Spec::Functions qw(catfile);
 use File::Temp;
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
@@ -89,19 +89,10 @@ sub new {
   my ($class,@args) = @_;
 
   my $self = bless {},$class;
-  my ($query, $program, $options,
-      $workdir, $bindir, $libdir,
-      $database,
-      $datadir, $analysis) = rearrange
-        (['QUERY', 'PROGRAM', 'OPTIONS',
-          'WORKDIR', 'BINDIR', 'LIBDIR',
-          'DATABASE',
-          'DATADIR', 'ANALYSIS'], @args);
+  my ($query, $options, $database) = rearrange (['QUERY', 'OPTIONS', 'DATABASE'], @args);
 
   $self->query($query);
-  $self->program($program);
   $self->options($options);
-  $self->workdir($workdir);
 
   $self->database($database) if defined $database;
 
@@ -122,17 +113,14 @@ sub new {
 =cut
 
 sub run{
-  my ($self, $dir) = @_;
-
-  $self->workdir($dir) if($dir);
+  my ($self, $silf) = @_;
 
   throw("Can't run ".$self." without a query sequence")
     unless($self->query);
 
-  $self->write_seq_files();
-  $self->run_analysis();
+  $self->write_seq_files($silf);
 
-  my $cmd = $self->program  ." ".
+  my $cmd = $silf->param('pair_aligner_exe')." ".
             $self->query ." ".
             $self->database ." ".
             $self->options;
@@ -140,13 +128,9 @@ sub run{
   my $BlastzParser;
   my $blastz_output_pipe = undef;
   if($self->results_to_file) {
-    if (not $self->resultsfile) {
-      my $resfile = $self->create_filename("lastz", "results");
-      $self->resultsfile($resfile);
-      $self->files_to_delete($resfile);
-    }
+    my $resultsfile = $silf->worker_temp_directory.'/lastz.results';
 
-    $cmd .=  " > ". $self->resultsfile;
+    $cmd .=  " > ". $resultsfile;
     info("Running lastz...\n$cmd\n");
 
     throw("Error runing lastz cmd\n$cmd\n." .
@@ -156,11 +140,11 @@ sub run{
                  " core dump") unless(system($cmd) == 0);
 
     $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->
-        new('-file' => $self->resultsfile);
+        new('-file' => $resultsfile);
   } else {
     info("Running lastz to pipe...\n$cmd\n");
 
-    my $stderr_file = $self->workdir()."/lastz_$$.stderr";
+    my $stderr_file = $silf->worker_temp_directory()."/lastz_$$.stderr";
 
     open($blastz_output_pipe, "$cmd 2>$stderr_file |") ||
       throw("Error opening lasts cmd <$cmd>." .
@@ -180,7 +164,7 @@ sub run{
   }
   close($blastz_output_pipe) if(defined($blastz_output_pipe));
 
-  $self->delete_files;
+  $silf->cleanup_worker_temp_directory;
 
   return \@results;
 }
@@ -274,21 +258,20 @@ sub database {
   
 
 sub write_seq_files {
-  my ($self) = @_;
+  my ($self, $silf) = @_;
 
   if (ref($self->query)) {
     # write the query
-    my $query_file = $self->create_filename("lastz", "query");
+    my $query_file = $silf->worker_temp_directory.'/lastz.query';
     my $seqio = Bio::SeqIO->new(-format => "fasta",
                                 -file   => ">$query_file");
     $seqio->write_seq($self->query);
     $seqio->close;
 
     $self->query($query_file);
-    $self->files_to_delete($query_file);
   }
   if (ref($self->database)) {
-    my $db_file = $self->create_filename("lastz", "database");    
+    my $db_file = $silf->worker_temp_directory.'/lastz.database';
     my $seqio = Bio::SeqIO->new(-format => "fasta",
                                 -file   => ">$db_file");
     foreach my $seq (@{$self->database}) {
@@ -297,7 +280,6 @@ sub write_seq_files {
     $seqio->close;
 
     $self->database($db_file);
-    $self->files_to_delete($db_file);
   }
 }
 
@@ -321,7 +303,7 @@ sub results_to_file {
 
   Arg [1]   : string
   Function  : container for specified variable. This pod refers to the
-  four methods below options, bindir, libdir and datadir. These are simple 
+  four methods below options and datadir. These are simple 
   containers which dont do more than hold and return an given value
   Returntype: string
   Exceptions: none
@@ -335,181 +317,6 @@ sub options{
   my $self = shift;
   $self->{'options'} = shift if(@_);
   return $self->{'options'} || '';
-}
-
-
-=head2 workdir
-
-  Arg [1]   : string, path to working directory
-  Function  : If given a working directory which doesnt exist
-  it will be created by as standard it default to the directory
-  specified in General.pm and then to /tmp
-  Returntype: string, directory
-  Exceptions: none
-  Example   : 
-
-=cut
-
-
-sub workdir{
-  my $self = shift;
-  my $workdir = shift;
-  if($workdir){
-    if(!$self->{'workdir'}){
-      mkdir ($workdir, '777') unless (-d $workdir);
-    }
-    $self->{'workdir'} = $workdir;
-  }
-  return $self->{'workdir'} || tmpdir();
-}
-
-
-=head2 program
-
-  Arg [1]   : string, path to program
-  Function  : getter/setter for the program being executed
-  Returntype: string, path to program
-  Exceptions: throws if program path isnt executable
-  Example   : 
-
-=cut
-
-
-
-sub program{
-  my $self = shift;
-  my $program = shift;
-  if($program){
-    $self->{'program'} = $program;
-  }
-  throw($self->{'program'}.' is not executable for '.ref($self))
-    if($self->{'program'} && !(-x $self->{'program'}));
-  return $self->{'program'};
-}
-
-
-=head2 files_to_delete
-
-  Arg [1]   : string, file name
-  Function  : both these methods create a hash keyed on file name the
-  first a list of files to delete, the second a list of files to protect
-  Returntype: hashref
-  Exceptions: none
-  Example   : 
-
-=cut
-
-
-sub files_to_delete{
-  my ($self, $file) = @_;
-  if(!$self->{'del_list'}){
-    $self->{'del_list'} = {};
-  }
-  if($file){
-    $self->{'del_list'}->{$file} = 1;
-  }
-  return $self->{'del_list'};
-}
-
-
-=head2 create_filename
-
-  Arg [1]   : string, stem of filename
-  Arg [2]   : string, extension of filename
-  Arg [3]   : directory file should live in
-  Function  : create a filename containing the PID and a random number
-  with the specified directory, stem and extension
-  Returntype: string, filename
-  Exceptions: throw if directory specifed doesnt exist
-  Example   : my $queryfile = $self->create_filename('seq', 'fa');
-
-=cut
-
-
-sub create_filename{
-  my ($self, $stem, $ext, $dir, $no_clean) = @_;
-
-  return create_file_name($stem, $ext, $dir || $self->workdir, $no_clean);
-}
-
-
-=head2 delete_files
-
-  Arg [1]   : hashref, keyed on filenames to delete
-  Function  : will unlink any file which exists on the first
-  list but not on the second
-  Returntype:
-  Exceptions: 
-  Example   : 
-
-=cut
-
-
-sub delete_files{
-  my ($self, $filehash) = @_;
-  if(!$filehash){
-    $filehash = $self->files_to_delete;
-  }
-  foreach my $name (keys(%$filehash)){
-      unlink $name;
-  }
-}
-
-
-## Copied from the ensembl-analysis' Tools/Utilities.pm
-########################################################
-
-
-
-=head2 create_file_name
-
-  Arg [1]   : string, stem of filename
-  Arg [2]   : string, extension of filename
-  Arg [3]   : directory file should live in
-  Function  : create a filename using File::Temp
-  with the specified directory, stem and extension
-  Returntype: File::Temp object
-  Exceptions: throw if directory specifed doesnt exist
-  Example   : my $queryfile = create_file_name('seq', 'fa');
-
-=cut
-
-
-sub create_file_name{
-  my ($stem, $ext, $dir, $no_clean) = @_;
-
-  my $random = 'XXXXX';
-  my %params = (DIR => tmpdir);
-  if ($dir) {
-    if (-d $dir) {
-      $params{DIR} = $dir;
-    }
-    else {
-      throw(__PACKAGE__."::create_file_name: $dir doesn't exist");
-    }
-  }
-  $params{TEMPLATE} = $stem.'_'.$random if ($stem);
-  $params{SUFFIX} = '.'.$ext if ($ext);
-  if($no_clean) {
-    $params{UNLINK} = 0;
-  }
-  my $fh = File::Temp->new(%params);
-  return $fh;
-}
-
-
-
-## Copied from the ensembl-analysis' Runnable/ProteinAnnotation
-################################################################
-
-
-sub resultsfile{
-  my ($self, $filename) = @_;
-  
-  if($filename){
-    $self->{_resultsfile} = $filename;
-  }
-  return $self->{_resultsfile};
 }
 
 

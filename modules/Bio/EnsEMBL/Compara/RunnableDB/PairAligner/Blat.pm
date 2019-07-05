@@ -101,8 +101,6 @@ sub configure_runnable {
 
   my $dbChunkFile = $self->dumpChunkSetToWorkdir($self->param('db_DnaFragChunkSet'));
 
-  my $program = $self->require_executable('pair_aligner_exe');
-
   $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
 
   #Do not create ooc files for translated blat analyses
@@ -127,7 +125,6 @@ sub configure_runnable {
   if($self->debug) {
     print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
     print("  options : ", $options, "\n");
-    print("  program : $program\n");
   }
 
   $self->param('runnable', []);
@@ -136,7 +133,6 @@ sub configure_runnable {
 	-query      => $qyChunkFile,
 	-database   => $dbChunkFile,
 	-options    => $options,
-	-program    => $program,
        );
   push @{$self->param('runnable')}, $runnable;
 

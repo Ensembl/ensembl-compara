@@ -38,7 +38,6 @@ Bio::EnsEMBL::Compara::Production::Analysis::Blat
   my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Blat->new(
 								 -database    => $self->database,
 								 -query  => $self->query,
-								 -program        => $self->program,
 								 -options     => $self->options,
 								);
 
@@ -82,22 +81,11 @@ sub new {
   my $self = {};
   bless $self, $class;
 
-  my ($query, $program, $options,
-      $database, $gapped, $query_hseq, ) = rearrange
-        (['QUERY', 'PROGRAM', 'OPTIONS',
-          'DATABASE', 'GAPPED', 'QUERYHSEQ', ], @args);
+  my ($query, $options, $database ) = rearrange (['QUERY', 'OPTIONS', 'DATABASE' ], @args);
   $self->query($query);
-  $self->program($program);
   $self->options($options);
 
   $self->database($database) if defined $database;
-  $self->gapped($gapped) if defined $gapped;
-  $self->query_as_hseq($query_hseq) if defined $query_hseq;
-
-  throw("You must supply a database") if not $self->database; 
-  throw("You must supply a query") if not $self->query;
-
-  $self->unknown_error_string('FAILED');
 
   return $self;
 }
@@ -110,16 +98,16 @@ sub new {
 
 =head2 run
 
-Usage   :   $obj->run($workdir, $args)
+Usage   :   $obj->run($args)
 Function:   Runs blat script and puts the results into the file $self->results
             It calls $self->parse_results, and results are stored in $self->output
 
 =cut
   
 sub run {
-  my ($self) = @_;
+  my ($self, $silf) = @_;
     
-  my $cmd = $self->program  ." ".
+  my $cmd = $silf->param('pair_aligner_exe')." ".
             $self->database ." ".
             $self->query ." ".
 	    $self->options;
@@ -357,11 +345,10 @@ sub parse_results {
 					      -moltype => "dna",
 					      -alphabet => 'dna',
 					      -id => "t_seq");
-            if (not $self->gapped) {
+
               # calculate a local score and percent id for the block
               ($score, $percent_id) =
                   get_best_score_in_all_frames($this_q_bioseq, $this_t_bioseq);
-            }               
             
             $feat2 {score}   = $score;
             $feat1 {score}   = $feat2 {score};
@@ -387,16 +374,6 @@ sub parse_results {
 	    $feature_pair->score($score);
 	    $feature_pair->percent_id($percent_id);
 
-            if ($self->query_as_hseq) {
-                $feature_pair->seqname($feat1{name});
-                $feature_pair->start($target_starts[$i]);
-                $feature_pair->end($target_ends[$i]);
-                $feature_pair->strand($t_strand);
-                $feature_pair->hseqname($feat2{name});
-                $feature_pair->hstart($query_starts[$i]);
-                $feature_pair->hend($query_ends[$i]);
-                $feature_pair->hstrand($q_strand);
-            } else {
                 $feature_pair->seqname($feat2{name});
                 $feature_pair->start($query_starts[$i]);
                 $feature_pair->end($query_ends[$i]);
@@ -405,18 +382,9 @@ sub parse_results {
                 $feature_pair->hstart($target_starts[$i]);
                 $feature_pair->hend($target_ends[$i]);
                 $feature_pair->hstrand($t_strand);
-            }              
 
-            if ($self->gapped) {
-                push @ungapped_blocks, $feature_pair;
-            } else {
               my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => [$feature_pair]);
               push @alignments, $alignment;
-            }
-        }
-        if ($self->gapped and @ungapped_blocks) {
-          my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@ungapped_blocks);
-          push @alignments, $alignment;
         }
     }
 #foreach my $out (@alignments) {
@@ -499,12 +467,6 @@ sub _translate_6frames {
   return @seqs, @seqs2;
 }
 
-sub unknown_error_string{
-  my $self = shift;
-  $self->{'unknown_error_string'} = shift if(@_);
-  return $self->{'unknown_error_string'};
-}
-
 
 ############################################################
 #
@@ -575,45 +537,6 @@ sub database {
 
 ############################################################
 
-sub blat {
-    my ($self, $location) = @_;
-    if ($location) {
-	throw("Blat not found at $location: $!\n") unless (-e $location);
-	$self->{_blat} = $location ;
-    }
-    return $self->{_blat};
-}
-
-############################################################
-
-sub query_type {
-    my ($self, $mytype) = @_;
-    if (defined($mytype) ){
-	my $type = lc($mytype);
-	unless( $type eq 'dna' || $type eq 'rna' || $type eq 'prot' || $type eq 'dnax' || $type eq 'rnax' ){
-	    throw("not the right query type: $type");
-	}
-	$self->{_query_type} = $type;
-    }
-    return $self->{_query_type};
-}
-
-############################################################
-
-sub target_type {
-    my ($self, $mytype) = @_;
-    if (defined($mytype) ){
-	my $type = lc($mytype);
-	unless( $type eq 'dna' || $type eq 'prot' || $type eq 'dnax' ){
-	    throw("not the right target type: $type");
-	}
-	$self->{_target_type} = $type ;
-    }
-    return $self->{_target_type};
-}
-
-############################################################
-
 sub options {
     my ($self, $options) = @_;
     if ($options) {
@@ -623,61 +546,6 @@ sub options {
 }
 
 ############################################################
-
-sub parse {
-    my ($self, $parse) = @_;
-    if ($parse) {
-	$self->{_parse} = $parse;
-    }
-    return $self->{_parse};
-}
-
-############################################################
-
-sub gapped {
-    my ($self, $gapped) = @_;
-    if ($gapped) {
-	$self->{_gapped} = $gapped;
-    }
-    return $self->{_gapped};
-}
-
-############################################################
-
-sub query_as_hseq {
-    my ($self, $qashseq) = @_;
-    if ($qashseq) {
-	$self->{_query_as_hseq} = $qashseq;
-    }
-    return $self->{_query_as_hseq};
-}
-
-############################################################
-
-
-=head2 program
-
-  Arg [1]   : Bio::EnsEMBL::Analysis::Runnable
-  Arg [2]   : string, path to program
-  Function  : uses locate_executable to find the path of the executable
-  Returntype: string, path to program
-  Exceptions: throws if program path isnt executable
-  Example   : 
-
-=cut
-
-
-sub program{
-  my $self = shift;
-  my $program = shift;
-  if($program){
-    $self->{'program'} = $program;
-  }
-  throw($self->{'program'}.' is not executable for '.ref($self))
-    if($self->{'program'} && !(-x $self->{'program'}));
-  return $self->{'program'};
-}
-
 
 1;
 

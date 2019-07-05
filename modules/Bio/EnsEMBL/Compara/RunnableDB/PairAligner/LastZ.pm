@@ -91,7 +91,6 @@ sub configure_runnable {
     $self->warning("you have given a chunkset for the database; dumping individual chunks and creating a runnable for each one");
   }
 
-  my $program = $self->require_executable('pair_aligner_exe');
   my $mlss = $self->param('method_link_species_set');
   my $options = $mlss->get_value_for_tag("param");
 
@@ -105,7 +104,6 @@ sub configure_runnable {
   if($self->debug) {
     print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
     print("  options : ", $options, "\n");
-    print("  program : $program\n");
   }
   
   $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
@@ -118,12 +116,10 @@ sub configure_runnable {
             -query      => $dbChunkFile,
             -database   => $qyChunkFile,
             -options    => $options,
-            -program    => $program,
             );
     
     if($self->debug >1) {
       my ($fid) = $dbChunkFile =~ /([^\/]+)$/;
-      $runnable->resultsfile($self->worker_temp_directory . "/results.$fid.");
       $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
     }
 
