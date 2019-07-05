@@ -147,10 +147,14 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 # print "\n\n\nMLSS GROUPS: \n";
 # print Dumper $mlss_groups;
 
+# Get the division from the given master database
+my $division = ucfirst($dba->get_division());
+$division =~ s/Vertebrates/Ensembl/;
+
 print "\nPipeline commands:\n------------------\n";
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -division " . $ENV{'COMPARA_DIV'} . " -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
+	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
 }
 
 sub get_ref_chunk_count {
