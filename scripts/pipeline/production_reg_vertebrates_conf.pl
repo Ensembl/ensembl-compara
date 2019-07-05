@@ -26,10 +26,9 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::ConfigRegistry;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
+
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = 98;
 my $prev_release = $curr_release - 1;
@@ -135,78 +134,25 @@ my $compara_dbs = {
     #'alt_allele_projection' => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_alt_allele_import_97' ],
 };
 
-add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
 
 # ----------------------NON-COMPARA DATABASES------------------------
 
-Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'mysql-ens-compara-prod-1',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 4485,
-    -group => 'core',
-    -species => 'ancestral_prev',
-    -dbname => "ensembl_ancestral_$prev_release",
-);
+my $ancestral_dbs = {
+    'ancestral_prev'    => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
+    #'ancestral_curr'    => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+};
 
-# this alias is need for the epo data dumps to work:
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    #-host => 'mysql-ens-compara-prod-1',
-    #-user => 'ensadmin',
-    #-pass => $ENV{'ENSADMIN_PSW'},
-    #-port => 4485,
-    #-group => 'core',
-    #-species => 'ancestral_sequences_for_dumps',     # FIXME: this needs to be renamed to ancestral_sequences when we run the dumps
-    #-dbname => "ensembl_ancestral_$curr_release",
-#);
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
 
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    #-host => 'mysql-ens-compara-prod-1',
-    #-user => 'ensadmin',
-    #-pass => $ENV{'ENSADMIN_PSW'},
-    #-port => 4485,
-    #-group => 'core',
-    #-species => 'ancestral_curr',
-    #-dbname => "ensembl_ancestral_$curr_release",
-#);
+# Uncoment this line when we run the dumps
+#$reg->add_alias('ancestral_curr', 'ancestral_sequences');
 
 # NCBI taxonomy database (also maintained by production team):
-Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
-    -host => 'mysql-ens-sta-1.ebi.ac.uk',
-    -user => 'ensro',
-    -port => 4519,
-    -group => 'taxonomy',
-    -species => 'ncbi_taxonomy',
-    -dbname => 'ncbi_taxonomy',
-);
+Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
+        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+    });
 
 # -------------------------------------------------------------------
-
-sub add_compara_dbs {
-    my $compara_dbs = shift;
-
-    foreach my $alias_name ( keys %$compara_dbs ) {
-        my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
-
-        my ( $user, $pass ) = ( 'ensadmin', $ENV{'ENSADMIN_PSW'} );
-        ( $user, $pass ) = ( 'ensro', '' ) if ( $alias_name =~ /_prev/ );
-
-        Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-            -host => $host,
-            -user => $user,
-            -pass => $pass,
-            -port => get_port($host),
-            -species => $alias_name,
-            -dbname  => $db_name,
-        );
-    }
-}
-
-sub get_port {
-    my $host = shift;
-    my $port = `$host port`;
-    chomp $port;
-    return $port;
-}
 
 1;

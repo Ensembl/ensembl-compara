@@ -26,10 +26,9 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::ConfigRegistry;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
+
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my $curr_release = 98;
 my $prev_release = $curr_release - 1;
@@ -84,47 +83,15 @@ my $compara_dbs = {
     'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_synteny_plants_45_98' ],
 };
 
-add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
 
 # ----------------------NON-COMPARA DATABASES------------------------
 
 # NCBI taxonomy database (also maintained by production team):
-Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
-    -host => 'mysql-ens-sta-1',
-    -user => 'ensro',
-    -port => 4519,
-    -group => 'taxonomy',
-    -species => 'ncbi_taxonomy',
-    -dbname => 'ncbi_taxonomy',
-);
+Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
+        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+    });
 
 # -------------------------------------------------------------------
-
-sub add_compara_dbs {
-    my $compara_dbs = shift;
-
-    foreach my $alias_name ( keys %$compara_dbs ) {
-        my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
-
-        my ( $user, $pass ) = ( 'ensadmin', $ENV{'ENSADMIN_PSW'} );
-        ( $user, $pass ) = ( 'ensro', '' ) if ( $alias_name =~ /_prev/ );
-
-        Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-            -host => $host,
-            -user => $user,
-            -pass => $pass,
-            -port => get_port($host),
-            -species => $alias_name,
-            -dbname  => $db_name,
-        );
-    }
-}
-
-sub get_port {
-    my $host = shift;
-    my $port = `$host port`;
-    chomp $port;
-    return $port;
-}
 
 1;
