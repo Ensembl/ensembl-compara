@@ -13,6 +13,11 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Patch the reused databases"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror",
+            "summary": "Copy the core databases"
          }
       ],
       "summary": "<Division> Release <version> Setup"
@@ -69,11 +74,6 @@
       "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
       "subtasks": [{
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror",
-            "summary": "Copy the core databases"
-         },
-         {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-LastZbatching",
             "summary": "Prepare the LastZ batches"
