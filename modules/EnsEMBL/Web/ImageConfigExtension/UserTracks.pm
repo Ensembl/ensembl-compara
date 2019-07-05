@@ -532,13 +532,11 @@ sub _add_trackhub_tracks {
           $dim_lookup->{$v} = $k;
         }
         $matrix_params{'dimLookup'} = $dim_lookup;
-        while (my ($k, $v) = each (%{$parent->data})) {
-          if ($k eq 'shortLabel') {
-            $matrix_params{$k} = $v;
-          }
-          elsif ($k =~ /subGroup/) {
+        ## Get dimension info from overall config, as parent may be an intermediate track
+        while (my ($k, $v) = each (%$config)) {
+          if ($k =~ /subGroup/) {
             my $k1 = $v->{'name'};
-            delete($v->{'name'});
+            next unless $dim_lookup->{$k1};
             while (my ($k2, $v2) = each (%{$v||{}})) {
               if ($k2 eq 'label') {
                 $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'label'} = $v2;
@@ -547,6 +545,11 @@ sub _add_trackhub_tracks {
                 $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'values'}{$k2} = $v2;
               }
             }
+          }
+        }
+        while (my ($k, $v) = each (%{$parent->data})) {
+          if ($k eq 'shortLabel') {
+            $matrix_params{$k} = $v;
           }
         }
       }
