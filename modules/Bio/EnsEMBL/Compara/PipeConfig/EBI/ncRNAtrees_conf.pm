@@ -67,7 +67,7 @@ sub default_options {
             
             'master_db'   => 'compara_master',
             'member_db'   => 'compara_members',
-            'prev_rel_db' => 'compara_prev',
+            'prev_rel_db' => 'nctrees_prev',
             'epo_db'      => 'compara_prev',
            };
 }
