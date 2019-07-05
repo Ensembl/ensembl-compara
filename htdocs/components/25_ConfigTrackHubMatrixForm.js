@@ -234,33 +234,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find('h5.result-header._dyHeader, div#dy').show();
       panel.el.find('div#dy-tab').removeClass("inactive").attr("title", "");
     }
-
-    this.dropDown.prototype = {
-      initEvents : function(panel) {
-        var obj = this;
-
-        obj.dd.off().on('click', function(event){
-          $(this).toggleClass('active');
-          return false;
-        });
-
-        obj.opts.off().on('click',function(){
-          var opt = $(this);
-          opt.siblings().removeClass('selected');
-          opt.addClass('selected');
-          obj.val = opt.children('i').attr('class');
-          obj.index = opt.index();
-          obj.placeholder.text(opt.text());
-          panel.updateRenderer(obj.val)
-        });
-      },
-      getValue : function() {
-        return this.val;
-      },
-      getIndex : function() {
-        return this.index;
-      }
-    }
   },
 
   dropDown: function(panel, defaultVal) {
@@ -275,8 +248,23 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     });
     this.val = '';
-    this.index = -1;
-    this.initEvents(panel);
+
+    var obj = this;
+
+    obj.dd.off().on('click', function(event){
+      $(this).toggleClass('active');
+      return false;
+    });
+
+    obj.opts.off().on('click',function(){
+      var opt = $(this);
+      opt.siblings().removeClass('selected');
+      opt.addClass('selected');
+      obj.val = opt.children('i').attr('class');
+      obj.placeholder.text(opt.text());
+      panel.updateRenderer(obj.val)
+    });
+
   },
 
   // Function to create the relationship between the different track
