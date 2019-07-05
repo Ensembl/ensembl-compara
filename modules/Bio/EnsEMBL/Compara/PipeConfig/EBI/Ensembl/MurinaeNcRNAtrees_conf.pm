@@ -73,6 +73,8 @@ sub default_options {
             'dbID_range_index'  => 19,
             'label_prefix'      => 'mur_',
 
+            'clustering_mode'   => 'ortholog',
+
             'projection_source_species_names' => ['mus_musculus'],
             'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
 

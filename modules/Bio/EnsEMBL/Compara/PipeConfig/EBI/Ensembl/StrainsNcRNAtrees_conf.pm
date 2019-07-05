@@ -67,8 +67,6 @@ sub default_options {
             # Where to draw the orthologues from
             'ref_ortholog_db'   => 'compara_nctrees',
 
-            'clustering_mode'   => 'ortholog',
-
             # CAFE parameters
             'initialise_cafe_pipeline'  => 0,
 
