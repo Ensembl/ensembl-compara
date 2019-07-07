@@ -85,50 +85,18 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception;
 
 
-sub new {
-  my ($class,@args) = @_;
+sub run_lastz {
+  my ($self, $query, $database) = @_;
 
-  my $self = bless {},$class;
-  my ($query, $options, $database) = rearrange (['QUERY', 'OPTIONS', 'DATABASE'], @args);
-
-  $self->query($query);
-  $self->options($options);
-
-  $self->database($database) if defined $database;
-
-  throw("You must supply a database") if not $self->database; 
-  throw("You must supply a query") if not $self->query;
-
-  return $self;
-}
-
-=head2 run
-
-    Title   :  run
-    Usage   :   $obj->run()
-    Function:   Runs lastz and BPLite and creates array of feature pairs
-    Returns :   none
-    Args    :   none
-
-=cut
-
-sub run{
-  my ($self, $silf) = @_;
-
-  throw("Can't run ".$self." without a query sequence")
-    unless($self->query);
-
-  $self->write_seq_files($silf);
-
-  my $cmd = $silf->param('pair_aligner_exe')." ".
-            $self->query ." ".
-            $self->database ." ".
-            $self->options;
+  my $cmd = $self->param('pair_aligner_exe')." ".
+            $query ." ".
+            $database ." ".
+            $self->param('method_link_species_set')->get_value_for_tag('param');
 
   my $BlastzParser;
   my $blastz_output_pipe = undef;
-  if($self->results_to_file) {
-    my $resultsfile = $silf->worker_temp_directory.'/lastz.results';
+  if($self->debug > 1) {
+    my $resultsfile = $self->worker_temp_directory.'/lastz.results';
 
     $cmd .=  " > ". $resultsfile;
     info("Running lastz...\n$cmd\n");
@@ -144,7 +112,7 @@ sub run{
   } else {
     info("Running lastz to pipe...\n$cmd\n");
 
-    my $stderr_file = $silf->worker_temp_directory()."/lastz_$$.stderr";
+    my $stderr_file = $self->worker_temp_directory()."/lastz_$$.stderr";
 
     open($blastz_output_pipe, "$cmd 2>$stderr_file |") ||
       throw("Error opening lasts cmd <$cmd>." .
@@ -153,8 +121,12 @@ sub run{
                    "', There was " . ($? & 128 ? 'a' : 'no') .
                    " core dump");
 
-    $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->
-        new('-fh' => $blastz_output_pipe) || print_error($stderr_file, "Unable to parse blastz_output_pipe");
+    $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->new('-fh' => $blastz_output_pipe);
+    unless ($BlastzParser) {
+        my $msg = $self->_slurp($stderr_file);
+        $msg .= "\nUnable to parse blastz_output_pipe";
+        throw($msg);
+    }
   }
 
   my @results;
@@ -164,160 +136,9 @@ sub run{
   }
   close($blastz_output_pipe) if(defined($blastz_output_pipe));
 
-  $silf->cleanup_worker_temp_directory;
+  $self->cleanup_worker_temp_directory;
 
   return \@results;
 }
-
-
-sub print_error {
-    my ($stderr_file, $text) = @_;
-
-    my $msg;
-    if (-e $stderr_file) {
-	print "$stderr_file\n";
-	open FH, $stderr_file or die("Unable to open $stderr_file");
-	while (<FH>) {
-	    $msg .= $_;
-	}
-	unlink($stderr_file);
-    }
-    $msg .= $text;
-
-    throw($msg);
-}
-
-#################
-# get/set methods 
-#################
-
-=head2 query
-
-    Title   :   query
-    Usage   :   $self->query($seq)
-    Function:   Get/set method for query.  If set with a Bio::Seq object it
-                will get written to the local tmp directory
-    Returns :   filename
-    Args    :   Bio::PrimarySeqI, or filename
-
-=cut
-
-sub query {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    if (not ref($val)) {   
-      throw("[$val] : file does not exist\n") unless -e $val;
-    } elsif (not $val->isa("Bio::PrimarySeqI")) {
-      throw("[$val] is neither a Bio::Seq not a file");
-    }
-    $self->{_query} = $val;
-  }
-
-  return $self->{_query}
-}
-
-=head2 database
-  
-    Title   :   database
-    Usage   :   $self->database($seq)
-    Function:   Get/set method for database.  If set with a Bio::Seq object it
-                will get written to the local tmp directory
-    Returns :   filename
-    Args    :   Bio::PrimarySeqI, or filename
-
-=cut
-
-sub database {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    if ($val eq "--self") {
-	$self->{_database} = $val;
-	return $self->{_database};
-    }
-    if (not ref($val)) {   
-      throw("[$val] : file does not exist\n") unless -e $val;
-    } else {
-      if (ref($val) eq 'ARRAY') {
-        foreach my $el (@$val) {
-          throw("All elements of given database array should be Bio::PrimarySeqs")
-              if not ref($el) or not $el->isa("Bio::PrimarySeq");
-        }
-      } elsif (not $val->isa("Bio::PrimarySeq")) {
-        throw("[$val] is neither a file nor array of Bio::Seq");
-      } else {
-        $val = [$val];
-      }
-    }
-    $self->{_database} = $val;
-  }
-
-  return $self->{_database};
-}
-  
-
-sub write_seq_files {
-  my ($self, $silf) = @_;
-
-  if (ref($self->query)) {
-    # write the query
-    my $query_file = $silf->worker_temp_directory.'/lastz.query';
-    my $seqio = Bio::SeqIO->new(-format => "fasta",
-                                -file   => ">$query_file");
-    $seqio->write_seq($self->query);
-    $seqio->close;
-
-    $self->query($query_file);
-  }
-  if (ref($self->database)) {
-    my $db_file = $silf->worker_temp_directory.'/lastz.database';
-    my $seqio = Bio::SeqIO->new(-format => "fasta",
-                                -file   => ">$db_file");
-    foreach my $seq (@{$self->database}) {
-      $seqio->write_seq($seq);
-    }
-    $seqio->close;
-
-    $self->database($db_file);
-  }
-}
-
-
-sub results_to_file {
-  my ($self, $val) = @_;
-
-  if (defined $val) {
-    $self->{_results_to_file} = $val;
-  }
-
-  return $self->{_results_to_file};
-}
-
-
-## Copied from the ensembl-analysis' Runnable.pm
-###################################################
-
-
-=head2 options
-
-  Arg [1]   : string
-  Function  : container for specified variable. This pod refers to the
-  four methods below options and datadir. These are simple 
-  containers which dont do more than hold and return an given value
-  Returntype: string
-  Exceptions: none
-  Example   : my $options = $self->options;
-
-=cut
-
-
-
-sub options{
-  my $self = shift;
-  $self->{'options'} = shift if(@_);
-  return $self->{'options'} || '';
-}
-
 
 1;

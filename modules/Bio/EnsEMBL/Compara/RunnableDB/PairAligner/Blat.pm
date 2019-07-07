@@ -84,9 +84,6 @@ sub param_defaults {
 }
 
 
-############################################################
-sub configure_runnable {}
-
 sub run {
   my $self = shift;
 

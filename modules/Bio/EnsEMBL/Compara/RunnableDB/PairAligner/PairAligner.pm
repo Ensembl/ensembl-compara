@@ -143,34 +143,9 @@ sub fetch_input {
   }
   $self->compara_dba->dbc->disconnect_if_idle();
 
-  #
-  # execute subclass configure_runnable method
-  #
-  $self->configure_runnable();
-
   return 1;
 }
 
-
-sub run
-{
-  my $self = shift;
-
-  $self->compara_dba->dbc->disconnect_if_idle();
-
-  my $starttime = time();
-  my @output;
-  foreach my $runnable (@{$self->param('runnable')}) {
-      throw("Runnable module not set") unless($runnable);
-      my $o = $runnable->run($self);
-      push @output, @$o;
-  }
-
-  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
-  $self->param('output', \@output);
-
-  return 1;
-}
 
 sub delete_fasta_dumps_but_these {
   my $self = shift;

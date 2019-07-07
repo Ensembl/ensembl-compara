@@ -71,7 +71,7 @@ sub param_defaults {
 }
 
 
-sub configure_runnable {
+sub run {
   my $self = shift;
 
   #
@@ -91,39 +91,19 @@ sub configure_runnable {
     $self->warning("you have given a chunkset for the database; dumping individual chunks and creating a runnable for each one");
   }
 
-  my $mlss = $self->param('method_link_species_set');
-  my $options = $mlss->get_value_for_tag("param");
-
-  #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
-  if (!$options) {
-      $options = $self->param('options');
-  }
-
-  throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
-
   if($self->debug) {
     print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
-    print("  options : ", $options, "\n");
   }
   
   $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
 
-  $self->param('runnable', []);
+  $self->compara_dba->dbc->disconnect_if_idle();
 
+  my $starttime = time();
+  my @output;
   foreach my $dbChunkFile (@db_chunk_files) {
-    my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Lastz->
-        new(
-            -query      => $dbChunkFile,
-            -database   => $qyChunkFile,
-            -options    => $options,
-            );
-    
-    if($self->debug >1) {
-      my ($fid) = $dbChunkFile =~ /([^\/]+)$/;
-      $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
-    }
-
-    push @{$self->param('runnable')}, $runnable;
+      my $o = Bio::EnsEMBL::Compara::Production::Analysis::Lastz::run_lastz($self, $dbChunkFile, $qyChunkFile);
+      push @output, @$o;
   }
 
   #
