@@ -25,26 +25,13 @@
 
 =cut
 
-=head1 AUTHORS
-
-Kathryn Beal
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::Analysis::Blat
 
 =head1 SYNOPSIS
 
-  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Blat->new(
-								 -database    => $self->database,
-								 -query  => $self->query,
-								 -options     => $self->options,
-								);
-
- $runnable->run; #create and fill Bio::Seq object
- my @results = $runnable->output;
- 
- where @results is an array of SeqFeatures, each one representing an aligment (e.g. a transcript), 
+ run_blat returns an array of SeqFeatures, each one representing an aligment (e.g. a transcript), 
  and each feature contains a list of alignment blocks (e.g. exons) as sub_SeqFeatures, which are
  in fact feature pairs.
 
@@ -68,7 +55,6 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::SeqFeature;
 use Bio::EnsEMBL::FeaturePair;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
@@ -76,41 +62,13 @@ use Bio::PrimarySeqI;
 use Bio::SeqI;
 
 
-sub new {
-  my ($class,@args) = @_;
-  my $self = {};
-  bless $self, $class;
-
-  my ($query, $options, $database ) = rearrange (['QUERY', 'OPTIONS', 'DATABASE' ], @args);
-  $self->query($query);
-  $self->options($options);
-
-  $self->database($database) if defined $database;
-
-  return $self;
-}
-
-############################################################
-#
-# Analysis methods
-#
-############################################################
-
-=head2 run
-
-Usage   :   $obj->run($args)
-Function:   Runs blat script and puts the results into the file $self->results
-            It calls $self->parse_results, and results are stored in $self->output
-
-=cut
-  
-sub run {
-  my ($self, $silf) = @_;
+sub run_blat {
+  my ($self, $query, $database) = @_;
     
-  my $cmd = $silf->param('pair_aligner_exe')." ".
-            $self->database ." ".
-            $self->query ." ".
-	    $self->options;
+  my $cmd = $self->param('pair_aligner_exe')." ".
+            $database ." ".
+            $query ." ".
+	    $self->param('method_link_species_set')->get_value_for_tag('param');
 
   my $blat_output_pipe = undef;
 
@@ -126,7 +84,7 @@ sub run {
 	  "', There was " . ($? & 128 ? 'a' : 'no') .
 	  " core dump");
 
-  my $results = $self->parse_results($blat_output_pipe);
+  my $results = parse_results($blat_output_pipe);
   unless(close $blat_output_pipe){
       # checking for failures when closing.
       # we should't get here but if we do then $? is translated 
@@ -144,7 +102,7 @@ sub run {
 #ensembl-pipeline/modules/Bio/EnsEMBL/Pipeline/Runnable/Blat.pm
 #
 sub parse_results {
-    my ($self, $blat_output_pipe) = @_;
+    my ($blat_output_pipe) = @_;
 
     my @alignments;
 
@@ -466,86 +424,6 @@ sub _translate_6frames {
   }
   return @seqs, @seqs2;
 }
-
-
-############################################################
-#
-# get/set methods
-#
-############################################################
-
-=head2 query
-
-    Title   :   query
-    Usage   :   $self->query($seq)
-    Function:   Get/set method for query.  If set with a Bio::Seq object it
-                will get written to the local tmp directory
-    Returns :   filename
-    Args    :   Bio::PrimarySeqI, or filename
-
-=cut
-
-sub query {
-    my ($self, $val) = @_;
-    
-    if (defined $val) {
-	if (not ref($val)) {   
-	    throw("[$val] : file does not exist\n") unless -e $val;
-	} elsif (not $val->isa("Bio::PrimarySeqI")) {
-	    throw("[$val] is neither a Bio::Seq not a file");
-	}
-	$self->{_query} = $val;
-    }
-    
-    return $self->{_query}
-}
-
-=head2 database
-
-    Title   :   database
-    Usage   :   $self->database($seq)
-    Function:   Get/set method for database.  If set with a Bio::Seq object it
-                will get written to the local tmp directory
-    Returns :   filename
-    Args    :   Bio::PrimarySeqI, or filename
-
-=cut
-
-sub database {
-    my ($self, $val) = @_;
-    
-    if (defined $val) {
-	if (not ref($val)) {   
-	    throw("[$val] : file does not exist\n") unless -e $val;
-	} else {
-	    if (ref($val) eq 'ARRAY') {
-		foreach my $el (@$val) {
-		    throw("All elements of given database array should be Bio::PrimarySeqs")
-		      if not ref($el) or not $el->isa("Bio::PrimarySeq");
-		}
-	    } elsif (not $val->isa("Bio::PrimarySeq")) {
-		throw("[$val] is neither a file nor array of Bio::Seq");
-	    } else {
-		$val = [$val];
-	    }
-	}
-	$self->{_database} = $val;
-    }
-    
-    return $self->{_database};
-}
-
-############################################################
-
-sub options {
-    my ($self, $options) = @_;
-    if ($options) {
-	$self->{_options} = $options ;
-    }
-    return $self->{_options};
-}
-
-############################################################
 
 1;
 

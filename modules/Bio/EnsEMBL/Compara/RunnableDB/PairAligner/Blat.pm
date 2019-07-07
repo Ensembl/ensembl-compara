@@ -85,7 +85,9 @@ sub param_defaults {
 
 
 ############################################################
-sub configure_runnable {
+sub configure_runnable {}
+
+sub run {
   my $self = shift;
 
   #
@@ -108,36 +110,15 @@ sub configure_runnable {
   #my $oocFile = $dbChunkFile;
   #$oocFile =~ s/(.fa)/\/5ooc/;
 
-  #my $options = $self->options . " -ooc=$oocFile";
+  $self->compara_dba->dbc->disconnect_if_idle();
 
-  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
-  my $options = $mlss->get_value_for_tag("param");
+  my $starttime = time();
+  my $output = Bio::EnsEMBL::Compara::Production::Analysis::Blat::run_blat($self, $qyChunkFile, $dbChunkFile);
 
-  #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
-  if (!$options) {
-      my $option_str = "options_" . $self->param('mlss_id');
-      $options = $self->param($option_str);
-  }
-
-  #Check options have been set.
-  throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
-
-  if($self->debug) {
-    print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
-    print("  options : ", $options, "\n");
-  }
-
-  $self->param('runnable', []);
-  my $runnable = Bio::EnsEMBL::Compara::Production::Analysis::Blat->
-    new(
-	-query      => $qyChunkFile,
-	-database   => $dbChunkFile,
-	-options    => $options,
-       );
-  push @{$self->param('runnable')}, $runnable;
-
-  return 1;
+  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
+  $self->param('output', $output);
 }
+
 
 1;
 
