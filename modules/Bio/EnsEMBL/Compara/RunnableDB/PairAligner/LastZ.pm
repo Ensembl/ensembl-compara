@@ -95,8 +95,6 @@ sub run {
     print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
   }
   
-  $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
-
   $self->compara_dba->dbc->disconnect_if_idle();
 
   my $starttime = time();
@@ -113,7 +111,8 @@ sub run {
   #
   #
                   
-  return 1;
+  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
+  $self->param('output', \@output);
 }
 
 

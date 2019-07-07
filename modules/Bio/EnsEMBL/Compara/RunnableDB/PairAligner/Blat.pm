@@ -100,8 +100,6 @@ sub run {
 
   my $dbChunkFile = $self->dumpChunkSetToWorkdir($self->param('db_DnaFragChunkSet'));
 
-  $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
-
   #Do not create ooc files for translated blat analyses
   #create 5ooc file by replacing ".fa" with "/ooo5"
   #my $oocFile = $dbChunkFile;

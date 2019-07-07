@@ -79,17 +79,6 @@ sub param_defaults {
 
 ##########################################
 #
-# subclass override methods
-# 
-##########################################
-
-sub configure_runnable {
-  my $self = shift;
-  throw("subclass must implement configure_runnable method\n");
-}
-
-##########################################
-#
 # internal RunnableDB methods that should
 # not be subclassed
 # 
@@ -141,29 +130,10 @@ sub fetch_input {
 		"  your system can cope with so many alignments.");
       }
   }
-  $self->compara_dba->dbc->disconnect_if_idle();
 
-  return 1;
+  $self->cleanup_worker_temp_directory;
 }
 
-
-sub delete_fasta_dumps_but_these {
-  my $self = shift;
-  my $fasta_files_not_to_delete = shift;
-
-  my $work_dir = $self->worker_temp_directory;
-
-  foreach my $file (glob('*.fasta')) {
-    my $delete = 1;
-    foreach my $fasta_file (@{$fasta_files_not_to_delete}) {
-      if ($file eq basename($fasta_file)) {
-        $delete = 0;
-        last;
-      }
-    }
-    unlink "$work_dir/$file" if ($delete);
-  }
-}
 
 sub write_output {
   my( $self) = @_;
