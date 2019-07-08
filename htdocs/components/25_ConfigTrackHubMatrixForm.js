@@ -72,8 +72,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'signal_feature' : 'Peaks & Signal',
       'as_alignment_nolabel' : 'Normal',
       'as_alignment_label' : 'Labels',
-      'as_transcript_nolabel' : 'Transcript label',
-      'as_transcript_label' : 'Transcript no label',
+      'as_transcript_label' : 'Transcript label',
+      'as_transcript_nolabel' : 'Transcript no label',
       'half_height' : 'Half height',
       'stack' : 'Stacked',
       'unlimited' : 'Stacked unlimited',
@@ -2032,10 +2032,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
               if(panel.disableYdim) {
                 if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
-                  rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell" data-format="'+format+'"></div>';
+                  rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+format+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell" data-format="'+format+'"></div>';
                 }
               } else {
-                rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell" data-format="'+format+'"></div>';
+                rowContainer += '<div class="xBoxes '+boxState+' '+matrixClass+' '+boxRenderClass+' '+format+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell" data-format="'+format+'"></div>';
               }
             }
           });
@@ -2274,7 +2274,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   },
 
   //function to update the store obj when clicking the on/off or renderers
-  updateTrackStore: function(storeObj, trackKey, newState, currentState, newRenderer, currentRenderer){
+  // Format is the cell format thats being updated
+  updateTrackStore: function(storeObj, trackKey, newState, currentState, newRenderer, currentRenderer, format){
     var panel = this;
 
     var statusKey   = newState ? "state" : "renderer";
@@ -2283,7 +2284,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if(trackKey === "allSelection"){
       Object.keys(storeObj).filter(function(key){
-        if(key.match("_sep_")){
+        if(key.match("_sep_") && storeObj[key]["format"] === format){
           storeObj[key][statusKey] = newState ?  newState : newRenderer;
         } else {
           $.each(storeObj[key][statusKey], function(keyName, count){
@@ -2466,47 +2467,42 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.TrackPopupType.find('div input#off_all_cells').prop("checked",allOff);
     });     
 
-    //choosing radio button - track renderer
-    panel.TrackPopupType.find('ul li input[type=radio]').off().on("change", function(e) {
-      panel.updateRenderer($(this));
+    //tick apply renderers to all cell box
+    panel.TrackPopupType.find('input#apply_to_all').off().on("click", function(e) {
+      if(e.currentTarget.checked){ //only if the box is tick then update all
+        panel.updateRenderer(panel.TrackPopupType.find('div#dd.renderers ul.dropdown li.selected i').attr('class'), $(this));
+      }      
       e.stopPropagation();
     });
-
-    //tick apply renderers to all cell box
-
   },
 
-  updateRenderer: function(renderClass) {
+  updateRenderer: function(renderClass, clickedEle) {
     var panel         = this;
     var currentRender = panel.localStoreObj.matrix[panel.cellKey].renderer;
+    var trackFormat        = panel.localStoreObj.matrix[panel.cellKey].format;
     // var dimension     = radioName === "column-radio" ? panel.xName : panel.yName;
     var storeObjKey   = panel.itemDimension(panel.xName);
 
+    // change cell renderer only via dropdown    
     //updating the render class for the cell
     panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
 
     //update localstore
     panel.updateTrackStore(panel.localStoreObj[storeObjKey][panel.cellKey], panel.cellKey, "", "", renderClass, currentRender);
 
-  //  if (radioName === "all-radio"){
-  //     panel.TrackPopupType.find('ul li input[name$=-radio]._'+renderClass).prop("checked", true);
+    if ((clickedEle && clickedEle.attr('id') === "apply_to_all") || (!clickedEle && panel.TrackPopupType.find('input#apply_to_all:checked').length)){
+      //panel.TrackPopupType.find('ul li input[name$=-radio]._'+renderClass).prop("checked", true);
 
-  //     panel.elLk.rowContainer.find('div.xBoxes._hasData.matrix').removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
+      panel.elLk.matrixContainer.find('div.xBoxes._hasData.matrix.'+trackFormat).removeClass(function(index, className){ return (className.match (/(^|\s)render-\S+/g) || []).join(' ');}).addClass("render-"+renderClass);
 
-  //     panel.updateTrackStore(panel.localStoreObj[storeObjKey], "allSelection", "", "", renderClass, currentRender);
-  //   } else { //cell-radio
-  //     //updating the render class for the cell
-  //     panel.boxObj.removeClass("render-"+currentRender).addClass("render-"+renderClass);
-
-  //     //update localstore
-  //     panel.updateTrackStore(panel.localStoreObj[storeObjKey][panel.cellKey], panel.cellKey, "", "", renderClass, currentRender);
-  //   }
+      panel.updateTrackStore(panel.localStoreObj[storeObjKey], "allSelection", "", "", renderClass, currentRender, trackFormat);
+    }
 
     //check if by changing this one cell, all cells in the whole matrix are same, then update all renderer accordingly
-    if(panel.localStoreObj[panel.dyStateKey]["allSelection"].renderer[renderClass] === panel.localStoreObj[panel.dyStateKey]["allSelection"].total){
-      panel.TrackPopupType.find('ul li input[name=all-radio]._'+renderClass).prop("checked", true);
+    if(panel.localStoreObj[panel.dyStateKey]["allSelection"].renderer[renderClass] === panel.localStoreObj[panel.dyStateKey]["allSelection"]["format"][trackFormat]){
+      panel.TrackPopupType.find('input#apply_to_all').prop("checked", true);
     } else {
-      panel.TrackPopupType.find('ul li input[name=all-radio]').prop("checked", false);
+      panel.TrackPopupType.find('input#apply_to_all').prop("checked", false);
     }
   }
 });
