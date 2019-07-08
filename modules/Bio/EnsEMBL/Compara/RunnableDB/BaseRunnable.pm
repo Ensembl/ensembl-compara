@@ -314,6 +314,13 @@ sub call_within_transaction {
 }
 
 
+=head2 run_command {
+
+Similar to eHive's run_system_command but also disconnects from the Compara
+databases and returns an object.
+
+=cut
+
 sub run_command {
     my ($self, $cmd, $options) = @_;
 
