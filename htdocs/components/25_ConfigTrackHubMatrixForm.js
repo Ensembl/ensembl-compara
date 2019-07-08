@@ -273,12 +273,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     var dimX, dimY;
     var finalObj = {};
+    var filterObj = {};
     var dimLabels = {};
     finalObj.extra_dimensions = []; //it needs to be in the json and empty so that code know there is no extra dimensions
     var storeObj = panel.getLocalStorage();
     var updateStore = false;
     this.initialLoad = 1; //this is used to load all the default/preset tracks on first
-    
+
     //flag for multi dimensional trackhub
     if(Object.keys(panel.rawJSON.metadata.dimensions).length > 2) {
       panel.multiDimFlag = 1;
@@ -310,9 +311,23 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
 
         var keyX = track.subGroups[dimX];
+        var keyY = track.subGroups[dimY];
+        var fkey = keyX + '_sep_' + keyY;
 
         $.each(track.subGroups, function(dimension, trackName){
-          if(dimension === dimX) { return; }
+          if (panel.multiDimFlag) {
+            if (dimension !== dimX && dimension !== dimY && dimension !== 'view') {
+              filterObj[fkey] = filterObj[fkey] || {};
+              filterObj[fkey][track.id] = filterObj[fkey][track.id] || [];
+              var _class = dimension + '_' + track.subGroups[dimension];
+              filterObj[fkey][track.id].push(_class);
+            }
+
+            // if (dimension === dimX || dimension === dimY) { return; }
+          }
+          else {
+            if(dimension !== dimY) { return; }
+          }
 
           if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["matrix"]) || panel.initialLoad )) {     
             updateStore = true;
@@ -355,6 +370,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};      
       panel.setLocalStorage();
     }
+
+    panel.filterMatrixObj = filterObj;
     panel.json = finalObj;
 
     //setting rendererkeys
