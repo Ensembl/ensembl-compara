@@ -89,8 +89,8 @@ sub run_lastz {
   my ($self, $query, $database) = @_;
 
   my $cmd = $self->param('pair_aligner_exe')." ".
-            $query ." ".
             $database ." ".
+            $query ." ".
             $self->param('method_link_species_set')->get_value_for_tag('param');
 
   my $BlastzParser;

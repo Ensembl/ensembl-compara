@@ -100,17 +100,10 @@ sub run {
   my $starttime = time();
   my @output;
   foreach my $dbChunkFile (@db_chunk_files) {
-      my $o = Bio::EnsEMBL::Compara::Production::Analysis::Lastz::run_lastz($self, $dbChunkFile, $qyChunkFile);
+      my $o = Bio::EnsEMBL::Compara::Production::Analysis::Lastz::run_lastz($self, $qyChunkFile, $dbChunkFile);
       push @output, @$o;
   }
 
-  #
-  #
-  # BIG WARNING!!!! I FLIPPED THE DB and Query above because it looks like
-  #                 lastz flipped them in the parameter list from expected
-  #
-  #
-                  
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
   $self->param('output', \@output);
 }
