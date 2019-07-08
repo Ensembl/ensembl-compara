@@ -302,7 +302,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var dimXData = {};      
       //getting dimX data and the relationship
       $.each(panel.rawJSON.tracks, function(i, track){
-        var renderer;
+        var renderer, defaultState;
         if(track.display && track.display != "off") {
           renderer  =  track.display; //track.default_display is the default renderer for this track
         } else {
@@ -316,6 +316,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["matrix"]) || panel.initialLoad )) {     
             updateStore = true;
+            defaultState = "track-on";
             finalObj.format[track.format.toLowerCase()] = finalObj.format[track.format.toLowerCase()]+1 || 1;
             if($.isEmptyObject(panel.localStoreObj["dx"])) {
               panel.localStoreObj["dx"] = {};
@@ -331,10 +332,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             }
           }
 
+          if(track.display === "off") {
+            defaultState = "track-off"
+          }
+
           if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": "track-on", "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() }]
+            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": defaultState, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() }]
           } else {
-            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": "track-on", "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
+            dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": defaultState, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
           }
         });
       });
