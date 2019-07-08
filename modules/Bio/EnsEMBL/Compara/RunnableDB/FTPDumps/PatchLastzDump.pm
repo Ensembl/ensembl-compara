@@ -112,9 +112,7 @@ sub run {
     	"rm MD5SUM",
     	"md5sum *.maf* > MD5SUM",
     );
-    print "MERGE_CMD: " . join(";\n", @merge_cmd) . "\n";
     my $merge_run = $self->run_command( join('; ', @merge_cmd) );
-    print "MERGE STDOUT: " . $merge_run->out . "\n";
 
     $patch_dump_dir =~ s/\/$//;
     my @tar_cmd = (
@@ -123,7 +121,6 @@ sub run {
 	    "tar cfz $mlss_filename.tar.gz $mlss_filename/",
 	    "rm -r $mlss_filename/",
     );
-    print "TAR_CMD: " . join(";\n", @tar_cmd) . "\n";
     my $tar_run = $self->run_command( join('; ', @tar_cmd) );
 }
 
