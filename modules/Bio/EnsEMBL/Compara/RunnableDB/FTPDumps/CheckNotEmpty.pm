@@ -51,10 +51,11 @@ sub fetch_input {
     my $self = shift @_;
 
     foreach my $file (glob($self->param_required('filename'))) {
-        my $size = tee { system('wc', '-l', $file) };
+        my $size = $self->get_command_output(['wc', '-l', $file]);
         $size =~ /^(\d+)\s/;
+        print "$size lines in $file";
         if ($1 < $self->param_required('min_number_of_lines')) {
-            die "$file only has $1 lines\n";
+            die "Fewer than ".$self->param('min_number_of_lines')."\n";
         }
     }
 }

@@ -55,15 +55,14 @@ sub fetch_input {
 	# build epo_stats.pl command
 	my $stats_exe = $self->param_required('stats_exe');
 	my $epo_url   = $self->compara_dba->dbc->url;
-	my $stats_cmd = "$stats_exe -url $epo_url -html";
+	my $stats_cmd = [$stats_exe, '-url', $epo_url, '-html'];
 
         if ($self->param('mlss_id')) {
-            $stats_cmd .= " -mlss_id ".$self->param('mlss_id');
+            push @$stats_cmd, '-mlss_id', $self->param('mlss_id');
         }
 
 	# run command, capture output
-        warn "CMD: $stats_cmd\n" if $self->debug;
-	my $stats_string = `$stats_cmd`;
+	my $stats_string = $self->get_command_output($stats_cmd);
 
 	# save to param to be added into email body
 	$self->param('stats_table', $stats_string);

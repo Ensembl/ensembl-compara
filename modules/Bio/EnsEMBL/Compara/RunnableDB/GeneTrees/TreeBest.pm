@@ -156,7 +156,7 @@ sub run_treebest_nj {
 
     my $args = sprintf('nj -s %s ', $self->get_species_tree_file());
 
-    return $self->_run_and_return_output($self->_get_alignment_filtering_cmd($args, $input_aln));
+    return $self->get_command_output($self->_get_alignment_filtering_cmd($args, $input_aln));
 }
 
 
@@ -172,7 +172,7 @@ sub run_treebest_phyml {
 
     my $args = sprintf('phyml -Snf %s', $self->get_species_tree_file());
 
-    return $self->_run_and_return_output($self->_get_alignment_filtering_cmd($args, $input_aln));
+    return $self->get_command_output($self->_get_alignment_filtering_cmd($args, $input_aln));
 }
 
 
@@ -192,7 +192,7 @@ sub run_treebest_branchlength_nj {
         $self->_write_temp_tree_file('input_tree', $input_tree),
         $self->get_species_tree_file());
 
-    return $self->_run_and_return_output($self->_get_alignment_filtering_cmd($args, $input_aln));
+    return $self->get_command_output($self->_get_alignment_filtering_cmd($args, $input_aln));
 }
 
 
@@ -216,7 +216,7 @@ sub run_treebest_mmerge {
         $self->_write_temp_tree_file('input_forest', join("\n", @$input_forest)),
     );
 
-    return $self->_run_and_return_output($self->_get_treebest_cmd($args));
+    return $self->get_command_output($self->_get_treebest_cmd($args));
 }
 
 
@@ -252,7 +252,7 @@ sub run_treebest_sdi {
         $self->_write_temp_tree_file('unrooted.nhx', $unreconciled_tree),
     );
 
-    return $self->_run_and_return_output($self->_get_treebest_cmd($args));
+    return $self->get_command_output($self->_get_treebest_cmd($args));
 }
 
 
@@ -296,20 +296,5 @@ sub _get_treebest_cmd {
 
     return sprintf('%s %s', $self->require_executable('treebest_exe'), $args);
 }
-
-
-=head2 _run_and_return_output
-
-    Runs the command and checks for failure.
-    Returns the output of treebest if success.
-
-=cut
-
-sub _run_and_return_output {
-    my ($self, $cmd) = @_;
-
-    return $self->run_command($cmd, {die_on_failure => 1})->out;
-}
-
 
 1;

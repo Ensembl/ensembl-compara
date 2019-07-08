@@ -335,6 +335,23 @@ sub run_command {
 }
 
 
+=head2 get_command_output
+
+Wrapper around run_command that captures the standard output of the command and raises any failure
+
+=cut
+
+sub get_command_output {
+    my ($self, $cmd, $options) = @_;
+
+    $options //= {};
+    $options->{die_on_failure} //= 1;
+
+    my $run_cmd = $self->run_command($cmd, $options);
+    return $run_cmd->out;
+}
+
+
 =head2 elevate_privileges
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection

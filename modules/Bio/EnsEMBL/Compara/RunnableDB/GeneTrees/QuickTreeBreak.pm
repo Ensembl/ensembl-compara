@@ -277,8 +277,8 @@ sub run_quicktreebreak {
     my $self = shift;
     my $input_aln = shift;
 
-    my $cmd = sprintf('%s -out t -in a %s', $self->param('quicktree_exe'), $input_aln);
-    return $self->run_command($cmd, {die_on_failure => 1})->out;
+    my $cmd = [$self->param('quicktree_exe'), -out => 't', -in => 'a', $input_aln];
+    return $self->get_command_output($cmd);
 }
 
 

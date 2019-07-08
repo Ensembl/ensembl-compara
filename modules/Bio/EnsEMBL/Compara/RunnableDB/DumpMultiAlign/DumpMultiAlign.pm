@@ -122,7 +122,7 @@ sub _healthcheck {
     } else {
         die '_healthcheck() is not implemented for '.$self->param('format')."\n";
     }
-    my $num_blocks = `$cmd`;
+    my $num_blocks = $self->get_command_output($cmd);
     chomp $num_blocks;
     if ($num_blocks != $self->param('num_blocks')) {
 	die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));

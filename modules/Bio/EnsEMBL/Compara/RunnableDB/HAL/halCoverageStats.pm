@@ -87,9 +87,9 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-    my $cmd = $self->run_command([$self->require_executable('halStats_exe'), '--coverage', $self->param('species_map')->{$self->param('genome_db_id')}, $self->param('hal_path')], {die_on_failure => 1});
+    my $cmd_out = $self->get_command_output([$self->require_executable('halStats_exe'), '--coverage', $self->param('species_map')->{$self->param('genome_db_id')}, $self->param('hal_path')]);
     #parse the result to extract the columns 'Genome' and  'sitesCovered1Times'
-    my @halCov = split /\n/, $cmd->out; #$self->param('temp_result');
+    my @halCov = split /\n/, $cmd_out; #$self->param('temp_result');
     my %halCov_hash;
     foreach my $line (@halCov){
         my @split_line = split /,/, $line;
