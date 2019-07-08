@@ -140,7 +140,7 @@ sub run {
 
 
 =head2 write_output
-`
+
     Title   :   write_output
     Usage   :   $self->write_output
     Function:   parse the alignment and update protein_tree_member tables
