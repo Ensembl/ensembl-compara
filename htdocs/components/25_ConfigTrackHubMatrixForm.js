@@ -46,8 +46,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.matrixContainer = this.el.find('div.matrix-container');
     this.elLk.filterMatrix    = this.el.find('div.filterMatrix-container');
     this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
-    this.elLk.resultBox       = this.el.find(".result-box");
+    this.elLk.resultBox       = this.el.find(".result-box#selected-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
+    this.elLk.filterTrackBox  = this.el.find(".result-box#filter-box");
     this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.elLk.ajaxError       = this.el.find('span.error._ajax');
@@ -326,9 +327,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
             // if (dimension === dimX || dimension === dimY) { return; }
           }
-          else {
-            if(dimension !== dimY) { return; }
-          }
+
+          if(dimension !== dimY) { return; }
 
           if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["matrix"]) || panel.initialLoad )) {     
             updateStore = true;
@@ -1542,11 +1542,22 @@ console.log(panel.filterMatrixObj);
     var panel = this;
 
     if(!panel.el.find(element).hasClass('view-track')) { 
+      panel.elLk.filterTrackBox.hide();
+      panel.elLk.resultBox.show();
       panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     }
     panel.toggleButton();
 
-    if(panel.el.find(element).hasClass('_configure') && !panel.el.find(element).hasClass('inactive')) {
+    if(panel.el.find(element).attr('id') === 'track-filter' && !panel.el.find(element).hasClass('inactive')) {
+      panel.elLk.filterTrackBox.show();
+      panel.elLk.resultBox.hide();
+      // panel.emptyMatrix();
+      // panel.displayFilterMatrix();
+    }
+
+    if(panel.el.find(element).attr('id') === 'track-display' && !panel.el.find(element).hasClass('inactive')) {
+      panel.elLk.filterTrackBox.hide();
+      panel.elLk.resultBox.show();
       panel.emptyMatrix();
       panel.displayMatrix();
     }
