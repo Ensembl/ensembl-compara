@@ -40,7 +40,7 @@ use File::Path;
 
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
@@ -61,8 +61,8 @@ sub fetch_input {
     my $curr_file_name = undef;
     my $chunk_id = 0;
 
-    warn "My source is '".$self->param_required('uniprot_input_cmd')."'\n" if $self->debug;
-    open(my $in_fh, '-|', $self->param_required('uniprot_input_cmd'));
+    $self->read_from_command($self->param_required('uniprot_input_cmd'), sub {
+    my $in_fh = shift;
     while(<$in_fh>) {
         if (/^ID/) {
             if ($curr_size == $self->param('buffer_size')) {
@@ -84,7 +84,7 @@ sub fetch_input {
         }
         print $curr_out_fh $_;
     }
-    close($in_fh);
+    } );
     close($curr_out_fh);
     $self->dataflow_output_id( {'uniprot_file' => $curr_file_name, 'file_size' => $curr_size}, 2);
 }

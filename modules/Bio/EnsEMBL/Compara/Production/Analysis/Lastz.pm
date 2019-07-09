@@ -93,50 +93,26 @@ sub run_lastz {
             $query ." ".
             $self->param('method_link_species_set')->get_value_for_tag('param');
 
-  my $BlastzParser;
-  my $blastz_output_pipe = undef;
-  if($self->debug > 1) {
-    my $resultsfile = $self->worker_temp_directory.'/lastz.results';
+  my @results;
+  my $stderr_file = $self->worker_temp_directory()."/lastz_$$.stderr";
 
-    $cmd .=  " > ". $resultsfile;
-    info("Running lastz...\n$cmd\n");
+  $self->read_from_command("$cmd 2>$stderr_file", sub {
 
-    throw("Error runing lastz cmd\n$cmd\n." .
-                 " Returned error $? LASTZ EXIT: '" .
-                 ($? >> 8) . "'," ." SIGNAL '" . ($? & 127) .
-                 "', There was " . ($? & 128 ? 'a' : 'no') .
-                 " core dump") unless(system($cmd) == 0);
+    my $blastz_output_pipe  = shift;
+    my $BlastzParser        = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->new('-fh' => $blastz_output_pipe);
 
-    $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->
-        new('-file' => $resultsfile);
-  } else {
-    info("Running lastz to pipe...\n$cmd\n");
-
-    my $stderr_file = $self->worker_temp_directory()."/lastz_$$.stderr";
-
-    open($blastz_output_pipe, "$cmd 2>$stderr_file |") ||
-      throw("Error opening lasts cmd <$cmd>." .
-                   " Returned error $? LAST EXIT: '" .
-                   ($? >> 8) . "'," ." SIGNAL '" . ($? & 127) .
-                   "', There was " . ($? & 128 ? 'a' : 'no') .
-                   " core dump");
-
-    $BlastzParser = Bio::EnsEMBL::Compara::Production::Analysis::Blastz->new('-fh' => $blastz_output_pipe);
     unless ($BlastzParser) {
         my $msg = $self->_slurp($stderr_file);
         $msg .= "\nUnable to parse blastz_output_pipe";
         throw($msg);
     }
-  }
 
-  my @results;
 
   while (defined (my $alignment = $BlastzParser->nextAlignment)) { # nextHSP-like
     push @results, $alignment;
   }
-  close($blastz_output_pipe) if(defined($blastz_output_pipe));
 
-  $self->cleanup_worker_temp_directory;
+  } );
 
   return \@results;
 }
