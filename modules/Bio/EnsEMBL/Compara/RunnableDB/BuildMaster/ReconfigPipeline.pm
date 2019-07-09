@@ -54,7 +54,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift;
-    my $dst_host = $self->param_required('dst_host');
+    my $dst_host   = $self->param_required('dst_host');
     my $cloned_dbs = $self->param_required('cloned_dbs');
     # Create the cloned core databases hash content with the format:
     #     species/alias name => [ host, db_name ]
@@ -76,13 +76,13 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-    my $reg_conf = $self->param_required('reg_conf');
-    my $reg_conf_tmpl = $self->param_required('reg_conf_tmpl');
-    my $core_dbs_hash = $self->param_required('core_dbs_hash');
-    my $master_db_info = $self->param_required('master_db_info');
+    my $reg_conf        = $self->param_required('reg_conf');
+    my $reg_conf_tmpl   = $self->param_required('reg_conf_tmpl');
+    my $core_dbs_hash   = $self->param_required('core_dbs_hash');
+    my $master_db_info  = $self->param_required('master_db_info');
     my $java_hc_db_prop = $self->param_required('java_hc_db_prop');
-    my $dst_host = $self->param_required('dst_host');
-    my $dst_port = $self->param_required('dst_port');
+    my $dst_host        = $self->param_required('dst_host');
+    my $dst_port        = $self->param_required('dst_port');
     # Find the tag '<core_dbs_hash>' in the registry configuration file template
     # and replace it by the cloned core databases hash content
     my $content = $self->_slurp($reg_conf_tmpl);
