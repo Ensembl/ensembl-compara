@@ -83,7 +83,7 @@ my $compara_dbs = {
     'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_synteny_plants_45_98' ],
 };
 
-Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # ----------------------NON-COMPARA DATABASES------------------------
 

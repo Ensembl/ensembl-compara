@@ -39,9 +39,9 @@ It can be directly passed to the add*dbas function like this:
 
  Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
-Note that by default, all the aliases that end with '_prev' will have a
-read-only connection (ensro user). Otherwise, a read+write connection will
-be defined, using the appropriate user (ensadmin or ensrw).
+Note that read+write connections are opened for all databases on production
+servers as long as they don't have "_prev" in the name. Otherwise, a
+read-only connection (ensro user) is used.
 
 The port and passwords are automatically retrieved through the mysql-cmd binary.
 
@@ -109,9 +109,9 @@ sub add_taxonomy_dbas {
 
   Example     : Bio::EnsEMBL::Taxonomy::Utils::Registry::add_dbas( 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', $compara_dbs );
   Description : Define a DBAdaptor of the required type for each database.  For databases
-                that contain "_prev", a read-only connection will be defined (using the
-                ensro user). Otherwise, a read_write connection will be defined (using
-                ensadmin or ensrw) and querying the password with a mysql-cmd
+                on production instances that don't contain "_prev", a read+write connection
+                is defined (using ensadmin or ensrw), querying the password with a mysql-cmd.
+                Otherwise a read-only connection is defined (using the ensro user).
   Returntype  : none
   Exceptions  : none
 
@@ -125,12 +125,12 @@ sub add_dbas {
         my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
 
         my ( $user, $pass );
-        if ( $alias_name =~ /_prev/ ) {
-            $user = 'ensro';
-            $pass = '';
-        } else {
+        if ( ($host =~ /-prod-/) && !($alias_name =~ /_prev/) ) {
             $user = get_rw_user($host);
             $pass = get_rw_pass($host);
+        } else {
+            $user = 'ensro';
+            $pass = '';
         }
 
         $dba_class->new(

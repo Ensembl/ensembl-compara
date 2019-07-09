@@ -134,7 +134,7 @@ my $compara_dbs = {
     #'alt_allele_projection' => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_alt_allele_import_97' ],
 };
 
-Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # ----------------------NON-COMPARA DATABASES------------------------
 
@@ -143,7 +143,7 @@ my $ancestral_dbs = {
     #'ancestral_curr'    => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 };
 
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # Uncoment this line when we run the dumps
 #$reg->add_alias('ancestral_curr', 'ancestral_sequences');
