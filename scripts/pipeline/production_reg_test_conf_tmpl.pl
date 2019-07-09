@@ -143,6 +143,7 @@ sub add_test_core_dbs {
         Bio::EnsEMBL::DBSQL::DBAdaptor->new(
             -host => $host,
             -user => 'ensro',
+            -pass => '',
             -port => get_port($host),
             -species => $alias_name,
             -group => 'core',
