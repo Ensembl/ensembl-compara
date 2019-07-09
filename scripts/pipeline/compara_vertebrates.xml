@@ -24,6 +24,9 @@
 
     <collection name="sus">
       <taxonomic_group taxon_name="Sus"/>
+      <genome name="ovis_aries"/>
+      <genome name="bos_taurus"/>
+      <genome name="equus_caballus"/>
     </collection>
 
   </collections>
@@ -62,7 +65,13 @@
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica" against="Metatheria" ref_amongst="Amniota"/>
     <one_vs_all method="LASTZ_NET" ref_genome="canis_familiaris" against="Carnivora" ref_amongst="Eutheria"/>
     <one_vs_all method="LASTZ_NET" ref_genome="felis_catus" against="Feliformia" ref_amongst="Carnivora"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" against="Cetartiodactyla" ref_amongst="Eutheria"/>
+
+    <one_vs_all method="LASTZ_NET" ref_genome="bos_taurus" ref_amongst="Eutheria">
+      <species_set in_collection="default">
+        <taxonomic_group taxon_name="Cetartiodactyla"/>
+      </species_set>
+    </one_vs_all>
+
     <one_vs_all method="LASTZ_NET" ref_genome="ovis_aries" against="Caprinae" ref_amongst="Cetartiodactyla"/>
 
     <!-- Early vertebrates and other chordates -->
