@@ -73,7 +73,7 @@ my %rw_passwords;
 =cut
 
 sub add_core_dbas {
-    add_dbas('Bio::EnsEMBL::DBSQL::DBAdaptor', @_);
+    add_dbas('Bio::EnsEMBL::DBSQL::DBAdaptor', $_[0]);
 }
 
 
@@ -87,7 +87,7 @@ sub add_core_dbas {
 =cut
 
 sub add_compara_dbas {
-    add_dbas('Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', @_);
+    add_dbas('Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', $_[0]);
 }
 
 
@@ -101,7 +101,7 @@ sub add_compara_dbas {
 =cut
 
 sub add_taxonomy_dbas {
-    add_dbas('Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor', @_);
+    add_dbas('Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor', $_[0], -group => 'taxonomy',);
 }
 
 
@@ -140,6 +140,7 @@ sub add_dbas {
             -port => get_port($host),
             -species => $alias_name,
             -dbname  => $db_name,
+            @_,
         );
     }
 }
