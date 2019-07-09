@@ -122,6 +122,10 @@ sub pipeline_wide_parameters {
         'division'   => $self->o('division'),
         'release'    => $self->o('ensembl_release'),
         'hc_version' => 1,
+        # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
+        'do_update_from_metadata' => $self->o('do_update_from_metadata'),
+        'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
+        'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }
 
