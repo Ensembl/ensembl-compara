@@ -44,6 +44,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
     this.elLk.matrixContainer = this.el.find('div.matrix-container');
+    this.elLk.filterMatrix    = this.el.find('div.filterMatrix-container');
     this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
     this.elLk.resultBox       = this.el.find(".result-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
@@ -373,7 +374,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     panel.filterMatrixObj = filterObj;
     panel.json = finalObj;
-
+console.log(panel.filterMatrixObj);
     //setting rendererkeys
     this.elLk.lookup.rendererKeys = [];
     $.each(panel.json.format, function(key, val) {
@@ -407,6 +408,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   modalOpen: function() {
     this.emptyMatrix();
     this.displayMatrix();
+    this.displayFilterMatrix();
     this.toggleButton();
     this.goToUserLocation();
   },
@@ -1079,6 +1081,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       // This mehod is called here only to update localStorage so that if an epigenome is selected, users can still view tracks
       // If this becomes a performance issue, separate localStorage and matrix drawing in displayMatrix method
       panel.displayMatrix();
+      this.displayFilterMatrix();
     }
   },
 
@@ -1231,8 +1234,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj[parentTab][item] = 1;
     });
 
-    //main object for matrix state
+    //main object for final matrix state
     panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
+
+    //main obj for filter matrix state
+    panel.localStoreObj.filterMatrix = panel.getLocalStorage().filterMatrix  || {};
 
     //state management for the extra dimension
     if(!$.isEmptyObject(panel.json.extra_dimensions)){
@@ -1272,6 +1278,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
       panel.emptyMatrix();
       panel.displayMatrix();
+      this.displayFilterMatrix();
     });
   },
 
@@ -1906,6 +1913,110 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   },
 
   // Function to show/update/delete matrix
+  displayFilterMatrix: function() {
+    var panel = this;
+
+    if($.isEmptyObject(panel.localStoreObj)) { return; }
+
+    panel.trackPopup = panel.el.find('div.track-popup');
+    var xContainer   = '<div  class="xContainer">';
+
+    //creating array of dy from lookup Obj. ; this will make sure the order is the same
+    var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
+
+    // creating dy label on top of matrix
+    $.each(dyArray, function(i, dyItem){ 
+      var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
+      xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>'; 
+    });
+
+    xContainer += "</div>";
+    panel.el.find('div.filterMatrix-container').append(xContainer);
+
+    // TODO: >>>>> we need to have the count for each dimension value...initialising allSelection for filter matrix storage
+    // if(!panel.localStoreObj["filterMatrix"]["allSelection"]) {
+    //   //initialising state obj for dyItem (column), value setup later
+    //   panel.localStoreObj["filterMatrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {}, "format": {} };
+    //   Object.assign(panel.localStoreObj["filterMatrix"]["allSelection"]["renderer"], rendererObj);
+    // }
+
+    var yContainer = '<div class="yContainer">';
+    var boxContainer = '<div class="boxContainer">';
+    //creating cell label with the boxes (number of boxes per row = number of experiments)
+    if(panel.localStoreObj.dx && panel.localStoreObj.dy) {
+      $.each(panel.localStoreObj.dx, function(cellName, value){
+          var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
+
+          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
+          var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
+
+          //drawing boxes
+          $.each(dyArray, function(i, dyItem) {
+            if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
+              rowContainer += '<div class="xBoxes _emptyBox_'+cellName+'"></div>';
+            }
+            else {
+              var boxState  = "";
+              var dataClass = ""; //to know which cell has data
+              var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_
+
+              // if(panel.localStoreObj["filterMatrix"][storeKey]) {
+              //   boxState   = panel.localStoreObj["filterMatrix"][storeKey].state;                
+              //   dataClass = "_hasData";
+              // } else {
+              //   //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+              //   $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
+              //     if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
+              //       dataClass      = "_hasData";
+              //       boxState       = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
+              //       id             = relation.id;
+                    
+              //       panel.localStoreObj["filterMatrix"][storeKey] = {"id": id, "state": boxState, "reset-state": boxState };
+
+              //       //setting count for all selection section
+              //       panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
+              //       panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
+              //       panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
+
+              //       return;
+              //     }
+              //   });
+              //}
+
+              if(panel.disableYdim) {
+                if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
+                  rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell"></div>';
+                }
+              } else {
+                rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="filter"></div>';
+              }
+            }
+          });
+
+          rowContainer += "</div>";
+          boxContainer += rowContainer;
+      });
+    }
+    yContainer += "</div>";
+    boxContainer += "</div>";
+
+    var yBoxWrapper = '<div class="yBoxWrapper">' + yContainer + boxContainer + '</div>';
+
+    panel.el.find('div.filterMatrix-container').append(yBoxWrapper);
+
+    // Setting width of xContainer and yBoxWrapper (32px width box times number of xlabels)
+    var hwidth = (dyArray.length * 32);
+    panel.el.find('div.filterMatrix-container .xContainer, div.filterMatrix-container .yBoxWrapper').width(hwidth);
+
+    panel.cellClick(); //opens popup
+    panel.cleanMatrixStore(); //deleting items that are not present anymore
+    panel.setLocalStorage();
+
+    // enable helptips
+    this.elLk.filterMatrix.find('._ht').helptip();
+  },  
+
+  // Function to show/update/delete matrix
   displayMatrix: function() {
     var panel = this;
 
@@ -2088,7 +2199,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   emptyMatrix: function() {
     var panel = this;
 
-    panel.el.find('div.matrix-container').html('');
+    panel.el.find('div.matrix-container, div.filterMatrix-container').html('');
   },
 
   cleanMatrixStore: function() {

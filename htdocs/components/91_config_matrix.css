@@ -323,7 +323,7 @@ div.reset_track           { color: [[LINK]]; text-decoration: underline; cursor:
 body.ie11 div.reset_track { margin-top: -30px; }
 div.reset_track_state     { color: [[LINK]]; text-decoration: underline; cursor: pointer; position: absolute; margin-top: -15px; margin-right: 35px; right: 0; }
 div.configuration-legend  { display: inline-block; padding: 8px; float: left; }
-div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }
+div.filterMatrix-container, div.matrix-container      { display: flex; flex-direction: column; overflow: auto; height: 350px; margin-top: -175px; margin-left: 62px; }
 div.horizontal-sub-header { width: 110px; margin: 0 auto; }
 div.vertical-sub-header   { transform: rotate(-90deg); position: absolute; top: calc(50vh); }
 div.config-key            { padding-bottom: 5px; }
@@ -331,6 +331,7 @@ span.track-key            { width: 15px; height: 15px;  display: inline-block; b
 span.track-key.on         { background-color: [[MAIN_V_DARK]]; }
 span.track-key.off        { background-color: [[WHITE]]; }
 span.track-key.no-data    { background-color: [[LIGHT_GREY]]; }
+span.track-key.partial    { background:linear-gradient(-45deg,#ffffff 43%,#aaa 44%, [[MAIN_V_DARK]] 45%); }
 span.track-key.peak       { border: none; margin-top: 2px; }
 span.track-key.signal     { border: none; margin-top: 2px; }
 div.xContainer            { display: flex; flex-grow: 0; flex-shrink: 0; padding: 100px 0 12px 116px; position: sticky; top: 0px; background: #eee; }
