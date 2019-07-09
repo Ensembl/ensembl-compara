@@ -138,7 +138,7 @@ sub pipeline_wide_parameters {
         'release'       => $self->o('ensembl_release'),
         'hc_version'    => 1,
         
-        'init_reg_conf' => $self->('init_reg_conf'),
+        'init_reg_conf' => $self->o('init_reg_conf'),
         
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
@@ -205,9 +205,7 @@ sub pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions',
             -parameters        => {
                 'clone_core_db_exe' => $self->o('clone_core_db_exe'),
-                'init_reg_conf'     => '#init_reg_conf#',
                 'dst_host'          => $self->o('dst_host'),
-                'dst_port'          => $self->o('dst_port'),
                 # Get species name from JSON file path
                 'species'           => '#expr( substr(#json_file#, rindex(#json_file#, "/") + 1, -5) )expr#',
             },
@@ -220,10 +218,8 @@ sub pipeline_analyses {
         {   -logic_name => 'reconfigure_pipeline',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline',
             -parameters => {
-                'init_reg_conf'   => '#init_reg_conf#',
                 'reg_conf'        => $self->o('reg_conf'),
                 'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
-                'master_db'       => $self->o('master_db'),
                 'java_hc_db_prop' => $self->o('java_hc_db_prop'),
                 'dst_host'        => $self->o('dst_host'),
                 'dst_port'        => $self->o('dst_port'),
