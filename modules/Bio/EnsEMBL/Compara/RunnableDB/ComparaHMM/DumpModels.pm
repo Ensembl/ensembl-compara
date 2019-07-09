@@ -88,9 +88,6 @@ sub fetch_input {
         print STDERR "OK creating the library\n" if ($self->debug());
 
       if (`which lfs`) {
-        my $book_stripe_cmd = "lfs setstripe " . $hmmLibrary->bookDir() . " -c -1";
-        my $global_stripe_cmd = "lfs setstripe " . $hmmLibrary->globalsDir() . " -c -1";
-
         for my $dir ($hmmLibrary->bookDir(), $hmmLibrary->globalsDir()) {
             my $stripe_cmd = "lfs setstripe $dir -c -1";
             print STDERR "$stripe_cmd\n" if ($self->debug());
