@@ -320,9 +320,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           if (panel.multiDimFlag) {
             if (dimension !== dimX && dimension !== dimY && dimension !== 'view') {
               filterObj[fkey] = filterObj[fkey] || {};
-              filterObj[fkey][track.id] = filterObj[fkey][track.id] || [];
-              var _class = dimension + '_' + track.subGroups[dimension];
-              filterObj[fkey][track.id].push(_class);
+              filterObj[fkey][track.id] = filterObj[fkey][track.id] || {};
+              filterObj[fkey][track.id][dimension + '_' + track.subGroups[dimension]] = track.display === "off" ? "off" : "on";
             }
 
             // if (dimension === dimX || dimension === dimY) { return; }
@@ -375,6 +374,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.filterMatrixObj = filterObj;
     panel.json = finalObj;
 console.log(panel.filterMatrixObj);
+
     //setting rendererkeys
     this.elLk.lookup.rendererKeys = [];
     $.each(panel.json.format, function(key, val) {
@@ -1551,8 +1551,8 @@ console.log(panel.filterMatrixObj);
     if(panel.el.find(element).attr('id') === 'track-filter' && !panel.el.find(element).hasClass('inactive')) {
       panel.elLk.filterTrackBox.show();
       panel.elLk.resultBox.hide();
-      // panel.emptyMatrix();
-      // panel.displayFilterMatrix();
+      panel.emptyMatrix();
+      panel.displayFilterMatrix();
     }
 
     if(panel.el.find(element).attr('id') === 'track-display' && !panel.el.find(element).hasClass('inactive')) {
@@ -1968,39 +1968,52 @@ console.log(panel.filterMatrixObj);
             }
             else {
               var boxState  = "";
+              var offCount  = 0;
+              var onCount   = 0;
               var dataClass = ""; //to know which cell has data
-              var storeKey = dyItem + "_sep_" + cellName; //key for identifying cell is joining experiment(x) and cellname(y) name with _sep_
+              var storeKey = cellName + "_sep_" + dyItem; //key for each cell, (dx_sep_dy)
+              var totalCount = 0;
+              var boxCountHTML = "";
 
-              // if(panel.localStoreObj["filterMatrix"][storeKey]) {
-              //   boxState   = panel.localStoreObj["filterMatrix"][storeKey].state;                
-              //   dataClass = "_hasData";
-              // } else {
-              //   //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
-              //   $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
-              //     if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
-              //       dataClass      = "_hasData";
-              //       boxState       = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
-              //       id             = relation.id;
-                    
-              //       panel.localStoreObj["filterMatrix"][storeKey] = {"id": id, "state": boxState, "reset-state": boxState };
-
-              //       //setting count for all selection section
-              //       panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
-              //       panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
-              //       panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
-
-              //       return;
-              //     }
-              //   });
-              //}
-
-              if(panel.disableYdim) {
-                if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
-                  rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="column-cell"></div>';
-                }
+              if(panel.localStoreObj["filterMatrix"] && panel.localStoreObj["filterMatrix"][storeKey]) {
+                boxState   = panel.localStoreObj["filterMatrix"][storeKey].state;                
+                dataClass = "_hasData";
               } else {
-                rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="filter"></div>';
+                //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+                if(panel.filterMatrixObj[storeKey]) {
+                  totalCount = Object.keys(panel.filterMatrixObj[storeKey]).length;
+                  dataClass  = "_hasData";                  
+                  $.each(panel.filterMatrixObj[storeKey], function(cellKey, tracks){
+                    $.each(tracks, function(dimensionValue, state){
+                      if(state === "off") { offCount++ };
+                      if(state === "on")  { onCount++ };
+                      id = dimensionValue;
+                      
+                      // panel.localStoreObj["filterMatrix"][storeKey] = {"id": id, "state": boxState, "reset-state": boxState };
+  
+                      // //setting count for all selection section
+                      // panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
+                      // panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
+                      // panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
+                    });
+                  });
+                  
+                  if(onCount === totalCount) { 
+                    boxState = "track-on";
+                    boxCountHTML = '<span class="count">'+onCount+'</span>';
+                  } else if(offCount === totalCount){
+                    boxState = "track-off";
+                    boxCountHTML = '<span class="count">0</span>';
+                  } else {
+                    boxState = "partial";
+                    var partialCount = totalCount - onCount;
+                    boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+totalCount+'</span>';
+                  }
+                }
               }
+
+              if(!dataClass) { boxCountHTML = ""; }
+              rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="filter">'+boxCountHTML+'</div>';
             }
           });
 
