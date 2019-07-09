@@ -151,6 +151,7 @@ my %found_genome_db_ids = ();
 
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
+    next if $db_adaptor->species =~ /__cut_here__/;
     next if $db_adaptor->dbc->dbname =~ /ensembl_ancestral/;
 
     eval {
