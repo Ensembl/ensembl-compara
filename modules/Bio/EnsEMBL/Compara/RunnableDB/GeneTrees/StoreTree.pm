@@ -691,7 +691,7 @@ sub call_hcs_all_trees {
 
 sub examl_exe_decision {
     my $self = shift;
-    my $avx = `grep avx /proc/cpuinfo`;
+    my $avx = $self->run_command(['grep', 'avx', '/proc/cpuinfo'])->out;
 
     if ($avx) {
         $self->param( 'examl_exe', $self->param('examl_exe_avx') );
@@ -712,7 +712,7 @@ sub raxml_exe_decision {
     my $self = shift;
     my $no_cores = $self->param('raxml_number_of_cores');
 
-    my $avx = `grep avx /proc/cpuinfo`;
+    my $avx = $self->run_command(['grep', 'avx', '/proc/cpuinfo'])->out;
     if ($avx) {
         $avx = "AVX";
         if ( (defined $no_cores) && ($no_cores >= 2) ) {
