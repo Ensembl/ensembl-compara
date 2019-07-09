@@ -35,14 +35,14 @@
   </pairwise_alignments>
 
   <multiple_alignments>
-    <!-- Mammals, excl. the mouse strains -->
+    <!-- Mammals -->
     <multiple_alignment method="EPO" gerp="1">
       <species_set name="mammals" display_name="eutherian mammals">
         <taxonomic_group taxon_name="Eutheria"/>
       </species_set>
     </multiple_alignment>
 
-    <!-- Amniotes, excl. mouse strains -->
+    <!-- Amniotes -->
     <multiple_alignment method="PECAN" gerp="1">
       <species_set name="amniotes" display_name="amniota vertebrates">
         <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
