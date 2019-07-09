@@ -93,18 +93,14 @@ sub run {
     # Uncomment the line where add_compara_dbs() is executed
     $content =~ s/\#add_compara_dbs\(/add\_compara\_dbs\(/;
     # Modify the registry configuration file
-    open(my $file, '>', $reg_conf) or die "Could not open file '$reg_conf' $!";
-    print $file $content;
-    close $file;
+    $self->_spurt($reg_conf, $content);
     # All cloned core databases are in the same host, so replace that
     # information in the Java healthchecks database properties file ('host',
     # 'host1' and 'host2', and 'port', 'port1' and 'port2')
     $content = $self->_slurp($java_hc_db_prop);
     $content =~ s/(^)(host[12]?[ ]*=)[ ]*[\w\.-]+/$1$2 $dst_host/gm;
     $content =~ s/(^)(port[12]?[ ]*=)[ ]*\d+/$1$2 $dst_port/gm;
-    open($file, '>', $java_hc_db_prop) or die "Could not open file '$java_hc_db_prop' $!";
-    print $file $content;
-    close $file;
+    $self->_spurt($java_hc_db_prop, $content);
 }
 
 1;
