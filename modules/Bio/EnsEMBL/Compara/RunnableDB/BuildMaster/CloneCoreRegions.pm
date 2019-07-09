@@ -50,12 +50,11 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {
     my $self = shift;
-    my $script         = $self->require_executable('clone_core_db_exe');
+    my $script         = $self->param_required('clone_core_db_exe');
     my $init_reg_conf  = $self->param_required('init_reg_conf');
     my $dst_host       = $self->param_required('dst_host');
-    my $dst_port       = $self->param_required('dst_port');
     my $json_file_path = $self->param_required('json_file');
-    my $cmd = "perl $script -registry $init_reg_conf -dest_host $dst_host -dest_port $dst_port -dest_user ensadmin -dest_pass $ENV{'ENSADMIN_PSW'} -json $json_file_path";
+    my $cmd = "$script -registry $init_reg_conf \$(${dst_host}-ensadmin details script_dest_) -json $json_file_path";
     $self->param('cmd', $cmd);
 }
 
