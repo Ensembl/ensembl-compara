@@ -81,7 +81,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
-    #'compara_members'       => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_load_members_97' ],
+    'compara_members'       => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_load_members_98' ],
     #'compara_ptrees'        => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
     'ptrees_prev'           => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
     #'compara_families'      => [ 'mysql-ens-compara-prod-7', 'muffato_ensembl_families_97' ],
