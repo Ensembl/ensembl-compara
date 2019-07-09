@@ -190,7 +190,9 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
         my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new_from_DBAdaptor( $db_adaptor, $c );
         my $diffs = $proper_genome_db->_check_equals($master_genome_db);
         if ($diffs) {
+            # Need to copy all the fields that don't come from the Core database
             $proper_genome_db->first_release($master_genome_db->first_release);
+            $proper_genome_db->is_good_for_alignment($master_genome_db->is_good_for_alignment);
             $proper_genome_db->adaptor($genome_db_adaptor);
             warn "> Differences for '$that_species' (assembly '$that_assembly')\n\t".($proper_genome_db->toString)."\n\t".($master_genome_db->toString)."\n$diffs\n";
             $proper_genome_db->dbID($master_genome_db->dbID);
