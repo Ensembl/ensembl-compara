@@ -7,7 +7,7 @@
                 ["1D", 7154015,  8486928]
             ],
             "adaptors" : [
-                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "gene"},
                 {"name" : "repeatfeature"}
             ]
         }

@@ -12,7 +12,7 @@
                 ["LRG_18",   44280880, 44300227, "lrg"]
             ],
             "adaptors" : [
-                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "gene"},
                 {"name" : "repeatfeature"}
             ]
         }

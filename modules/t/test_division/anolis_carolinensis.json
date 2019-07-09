@@ -9,7 +9,7 @@
                 ["GL343836.1",     51152,    166047]
             ],
             "adaptors" : [
-                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "gene"},
                 {"name" : "repeatfeature"}
             ]
         }

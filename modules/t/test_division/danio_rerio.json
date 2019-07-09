@@ -9,7 +9,7 @@
                 ["16", 34160835, 35415077]
             ],
             "adaptors" : [
-                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "gene"},
                 {"name" : "repeatfeature"}
             ]
         }

@@ -9,7 +9,7 @@
                 ["LG22",  9526889, 11511999]
             ],
             "adaptors" : [
-                {"name" : "gene", "method" : "fetch_all_by_Slice", "args" : []},
+                {"name" : "gene"},
                 {"name" : "repeatfeature"}
             ]
         }
