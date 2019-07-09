@@ -74,7 +74,7 @@ sub default_options {
         #'rel_suffix'            => 'b',
         'division'   => 'vertebrates',
         # 'collection' => $self->o('division'),
-        'collection' => 'ensembl',
+        'collection' => 'default',
 
         # names of species we don't want to reuse this time
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
