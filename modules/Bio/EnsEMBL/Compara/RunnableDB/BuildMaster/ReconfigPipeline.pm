@@ -53,13 +53,6 @@ use File::Slurp;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-    }
-}
-
 sub fetch_input {
     my $self = shift;
     my $dst_host = $self->param_required('dst_host');
