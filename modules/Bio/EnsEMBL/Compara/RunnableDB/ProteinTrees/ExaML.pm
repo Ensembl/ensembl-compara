@@ -65,17 +65,7 @@ sub fetch_input {
     $self->SUPER::fetch_input();
 
     # Auto-select for the SSE3-only or AVX-enabled version
-    my $avx = `grep avx /proc/cpuinfo`;
-    if ($avx) {
-        $self->param( 'examl_exe', $self->param('examl_exe_avx') );
-        $avx = "AVX";
-    }
-    else {
-        $self->param( 'examl_exe', $self->param('examl_exe_sse3') );
-        $avx = "SSE3";
-    }
-
-    print "CPU type: $avx\n" if ( $self->debug );
+    $self->examl_exe_decision;
 
 	#Best-fit model	
     my $best_fit_model = $self->set_raxml_model();
