@@ -38,14 +38,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-    }
-}
+use base ('Bio::EnsEMBL::Hive::Process');
 
 sub fetch_input {
     my $self = shift;
