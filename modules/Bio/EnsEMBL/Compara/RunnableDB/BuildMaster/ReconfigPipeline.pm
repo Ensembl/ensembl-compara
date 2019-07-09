@@ -49,7 +49,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline;
 use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
-use File::Slurp;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -86,7 +85,7 @@ sub run {
     my $dst_port = $self->param_required('dst_port');
     # Find the tag '<core_dbs_hash>' in the registry configuration file template
     # and replace it by the cloned core databases hash content
-    my $content = read_file($reg_conf_tmpl);
+    my $content = $self->_slurp($reg_conf_tmpl);
     $content =~ s/<core_dbs_hash>/$core_dbs_hash/;
     # Find the tag '<master_db_info>' in the registry configuration file
     # template and replace it by the new master database array content
@@ -100,7 +99,7 @@ sub run {
     # All cloned core databases are in the same host, so replace that
     # information in the Java healthchecks database properties file ('host',
     # 'host1' and 'host2', and 'port', 'port1' and 'port2')
-    $content = read_file($java_hc_db_prop);
+    $content = $self->_slurp($java_hc_db_prop);
     $content =~ s/(^)(host[12]?[ ]*=)[ ]*[\w\.-]+/$1$2 $dst_host/gm;
     $content =~ s/(^)(port[12]?[ ]*=)[ ]*\d+/$1$2 $dst_port/gm;
     open($file, '>', $java_hc_db_prop) or die "Could not open file '$java_hc_db_prop' $!";
