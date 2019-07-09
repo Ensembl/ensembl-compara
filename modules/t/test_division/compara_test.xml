@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compara_db division="test">
 
+  <!-- Collections are species-sets that are needed to define several mlsss -->
+  <collections>
+
+    <!-- Mammals + Chicken -->
+    <collection name="mammals_with_feathers">
+      <taxonomic_group taxon_name="Eutheria"/>
+      <genome name="gallus_gallus"/>
+    </collection>
+
+  </collections>
+
   <pairwise_alignments>
 
     <!-- First, our top four species, which are references for all chordates -->
@@ -39,6 +50,13 @@
     <multiple_alignment method="EPO" gerp="1">
       <species_set name="mammals" display_name="eutherian mammals">
         <taxonomic_group taxon_name="Eutheria"/>
+      </species_set>
+    </multiple_alignment>
+
+    <!-- Mammals + Chicken -->
+    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="amniotes" display_name="mammals with feathers" in_collection="mammals_with_feathers">
+        <taxonomic_group taxon_name="Amniota"/>
       </species_set>
     </multiple_alignment>
 
