@@ -54,6 +54,9 @@ package Bio::EnsEMBL::Compara::Utils::Registry;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 my %ports;
 my %rw_users;
@@ -117,8 +120,6 @@ sub add_taxonomy_dbas {
 sub add_dbas {
     my $dba_class = shift;
     my $compara_dbs = shift;
-
-    require $dba_class;
 
     foreach my $alias_name ( keys %$compara_dbs ) {
         my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
