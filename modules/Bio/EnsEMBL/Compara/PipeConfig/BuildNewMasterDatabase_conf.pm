@@ -137,6 +137,9 @@ sub pipeline_wide_parameters {
         'division'      => $self->o('division'),
         'release'       => $self->o('ensembl_release'),
         'hc_version'    => 1,
+        
+        'init_reg_conf' => $self->('init_reg_conf'),
+        
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
         'do_load_lrg_dnafrags'    => $self->o('do_load_lrg_dnafrags'),
@@ -151,7 +154,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -input_ids  => [{}],
             -parameters => {
-                'init_reg_conf' => $self->o('init_reg_conf'),
                 'cmd'          => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -sql "CREATE DATABASE"',
             },
             -flow_into  => ['load_schema_master'],
@@ -160,7 +162,6 @@ sub pipeline_analyses {
         {   -logic_name => 'load_schema_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'init_reg_conf' => $self->o('init_reg_conf'),
                 'schema_file'   => $self->o('schema_file'),
                 'cmd'           => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# < #schema_file#',
             },
@@ -170,7 +171,6 @@ sub pipeline_analyses {
         {   -logic_name => 'add_division_to_meta_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'init_reg_conf' => $self->o('init_reg_conf'),
                 'cmd'           => 'echo "INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, \"division\", \"#division#\");" | db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# < /dev/stdin'
             },
             -flow_into  => ['init_method_link_table'],
@@ -179,7 +179,6 @@ sub pipeline_analyses {
         {   -logic_name => 'init_method_link_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'init_reg_conf'    => $self->o('init_reg_conf'),
                 'method_link_dump' => $self->o('method_link_dump'),
                 'cmd'              => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -executable mysqlimport #method_link_dump#',
             },
@@ -192,8 +191,8 @@ sub pipeline_analyses {
         {   -logic_name => 'seed_species_to_clone',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'config_dir'    => $self->o('config_dir'),
-                'inputcmd' => 'find #config_dir# -type f -name "*.json"',
+                'config_dir' => $self->o('config_dir'),
+                'inputcmd'   => 'find #config_dir# -type f -name "*.json"',
             },
             -flow_into  => {
                 '2->A' => {'clone_core_regions' => {'json_file' => '#_0#'}},
@@ -205,7 +204,7 @@ sub pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions',
             -parameters        => {
                 'clone_core_db_exe' => $self->o('clone_core_db_exe'),
-                'init_reg_conf'     => $self->o('init_reg_conf'),
+                'init_reg_conf'     => '#init_reg_conf#',
                 'dst_host'          => $self->o('dst_host'),
                 'dst_port'          => $self->o('dst_port'),
                 # Get species name from JSON file path
@@ -220,7 +219,7 @@ sub pipeline_analyses {
         {   -logic_name => 'reconfigure_pipeline',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::ReconfigPipeline',
             -parameters => {
-                'init_reg_conf'   => $self->o('init_reg_conf'),
+                'init_reg_conf'   => '#init_reg_conf#',
                 'reg_conf'        => $self->o('reg_conf'),
                 'reg_conf_tmpl'   => $self->o('reg_conf_tmpl'),
                 'master_db'       => $self->o('master_db'),
