@@ -348,7 +348,11 @@ sub get_command_output {
     $options->{die_on_failure} //= 1;
 
     my $run_cmd = $self->run_command($cmd, $options);
-    return $run_cmd->out;
+    if (wantarray) {
+        return split /\n/, $run_cmd->out;
+    } else {
+        return $run_cmd->out;
+    }
 }
 
 

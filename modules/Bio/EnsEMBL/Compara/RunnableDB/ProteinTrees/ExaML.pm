@@ -76,7 +76,7 @@ sub fetch_input {
 	my $root_id = $self->param('gene_tree_id');
 	my $source_dir = $self->param('examl_dir');
 
-	my @dir = `find $source_dir -name $root_id.binary | xargs ls -t`;
+	my @dir = $self->get_command_output("find $source_dir -name $root_id.binary | xargs ls -t");
 	my @tok = split(/\//,$dir[0]);
 	my $worker_dir = $tok[-2];
 	my @list = `ls -t $source_dir/$worker_dir/ExaML_binaryCheckpoint*`;
