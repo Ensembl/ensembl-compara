@@ -89,11 +89,8 @@ sub fetch_input {
 
       if (`which lfs`) {
         for my $dir ($hmmLibrary->bookDir(), $hmmLibrary->globalsDir()) {
-            my $stripe_cmd = "lfs setstripe $dir -c -1";
-            print STDERR "$stripe_cmd\n" if ($self->debug());
-            if (system $stripe_cmd) {
-                $self->throw("Impossible to set stripe on $dir");
-            }
+            my $stripe_cmd = ['lfs', 'setstripe', $dir, '-c', '-1'];
+            $self->run_command($stripe_cmd, { die_on_failure => 1, description => "set stripe on $dir"});
         }
       }
       $self->param('hmmLibrary', $hmmLibrary);
