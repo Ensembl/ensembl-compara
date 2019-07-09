@@ -210,9 +210,11 @@ sub get_rw_pass {
     my $host = shift;
     unless (exists $rw_passwords{$host}) {
         my $rw_user = get_rw_user($host);
-        my $rw_pass = `$host-$rw_user pass`;
-        chomp $rw_pass;
-        $rw_passwords{$host} = $rw_pass;
+        if ($rw_user) {
+            my $rw_pass = `$host-$rw_user pass`;
+            chomp $rw_pass;
+            $rw_passwords{$host} = $rw_pass;
+        }
     }
     return $rw_passwords{$host};
 }
