@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::BuildMaster::CloneCoreRegions;
 use warnings;
 use strict;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub fetch_input {
     my $self = shift;
@@ -59,16 +59,11 @@ sub fetch_input {
     $self->param('cmd', $cmd);
 }
 
-sub run {
-    my $self = shift;
-    $self->param('runCmd', $self->run_command($self->param_required('cmd'), {die_on_failure => 1}));
-}
-
 sub write_output {
     my $self = shift;
-    my $runCmd = $self->param_required('runCmd');
+    $self->SUPER::write_output();
     # NOTE: clone script prints to stderr by default
-    my $output = $runCmd->err;
+    my $output = $self->param('stderr');
     # The cloned database name is found in the printed information and starts
     # with the username
     my ( $dbname ) = ( $output =~ /(\Q$ENV{USER}\E[^\n']+)/ );
