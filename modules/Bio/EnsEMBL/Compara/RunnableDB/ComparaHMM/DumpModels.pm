@@ -87,7 +87,7 @@ sub fetch_input {
     } elsif ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
 
-      if (`which lfs`) {
+      if ($self->run_command(['which', 'lfs'])->exit_code == 0) {
         for my $dir ($hmmLibrary->bookDir(), $hmmLibrary->globalsDir()) {
             my $stripe_cmd = ['lfs', 'setstripe', $dir, '-c', '-1'];
             $self->run_command($stripe_cmd, { die_on_failure => 1, description => "set stripe on $dir"});
