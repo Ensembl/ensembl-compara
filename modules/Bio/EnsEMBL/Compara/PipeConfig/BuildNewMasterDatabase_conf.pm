@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
     #1. Create a new master database
     #2. Populate it through PrepareMasterDatabaseForRelease pipeline
 
-    For test divisions see Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf
+    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::EBI::Citest::BuildCitestMasterDatabase_conf
 
 =head1 AUTHORSHIP
 
@@ -90,7 +90,7 @@ sub default_options {
         'java_hc_db_prop' => $self->check_file_in_ensembl('ensj-healthcheck/database.defaults.properties'),
 
         'init_reg_conf' => $self->o('reg_conf'), # needed to create the new master database
-        # Parameters required for 'test' division only
+        # Parameters required for 'citest' division only
         'config_dir'    => undef,
         'reg_conf_tmpl' => undef,
         'dst_host'      => undef,
@@ -184,7 +184,7 @@ sub pipeline_analyses {
                 'cmd'              => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -executable mysqlimport #method_link_dump#',
             },
             -flow_into  => WHEN(
-                '#division# =~ m/test/' => 'seed_species_to_clone',
+                '#division# =~ m/citest/' => 'seed_species_to_clone',
                 ELSE 'patch_master_db'
             ),
         },

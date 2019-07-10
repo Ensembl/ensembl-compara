@@ -27,9 +27,9 @@ my $curr_release = 98;
 # ---------------------- TEST CORE DATABASES -----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
-my $test_core_dbs = {<core_dbs_hash>};
+my $citest_core_dbs = {<core_dbs_hash>};
 
-add_test_core_dbs( $test_core_dbs );
+add_citest_core_dbs( $citest_core_dbs );
 
 # ---------------------- COMPARA DATABASE LOCATIONS ----------------------------
 
@@ -134,11 +134,11 @@ Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
 
 # ------------------------------------------------------------------------------
 
-sub add_test_core_dbs {
-    my $test_core_dbs = shift;
+sub add_citest_core_dbs {
+    my $citest_core_dbs = shift;
 
-    foreach my $alias_name ( keys %$test_core_dbs ) {
-        my ( $host, $db_name ) = @{ $test_core_dbs->{$alias_name} };
+    foreach my $alias_name ( keys %$citest_core_dbs ) {
+        my ( $host, $db_name ) = @{ $citest_core_dbs->{$alias_name} };
 
         Bio::EnsEMBL::DBSQL::DBAdaptor->new(
             -host => $host,

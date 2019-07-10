@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf
 
 =head1 DESCRIPTION
 
@@ -51,7 +51,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf -dst_host <host> -dst_port <port>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf -dst_host <host> -dst_port <port>
 
     #1. Create a new master database
     #2. Clone data regions from JSON files located in 'config_dir'
@@ -65,7 +65,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildTestMasterDatabase_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf;
 
 use strict;
 use warnings;
@@ -81,11 +81,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'division'      => 'test',
+        'division'      => 'citest',
         'compara_dir'   => $self->check_dir_in_ensembl('ensembl-compara/'),
-        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/test_division'),
-        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/test_division/production_init_reg_test_conf.pl'),
-        'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_test_conf_tmpl.pl'),
+        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/citest_division'),
+        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/citest_division/production_init_reg_citest_conf.pl'),
+        'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_citest_conf_tmpl.pl'),
 
         # Change working directory
         'pipeline_name' => 'build_master',

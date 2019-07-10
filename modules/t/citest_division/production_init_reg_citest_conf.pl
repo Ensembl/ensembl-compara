@@ -43,12 +43,12 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 # ---------------------- COMPARA DATABASE LOCATION -----------------------------
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host    => 'mysql-ens-compara-prod-6',
+    -host    => 'mysql-ens-compara-prod-7',
     -user    => 'ensadmin',
     -pass    => $ENV{'ENSADMIN_PSW'},
-    -port    => 4616,
+    -port    => 4617,
     -species => 'compara_master',
-    -dbname  => 'jalvarez_master_test',
+    -dbname  => 'jalvarez_master_citest',
 );
 
 1;
