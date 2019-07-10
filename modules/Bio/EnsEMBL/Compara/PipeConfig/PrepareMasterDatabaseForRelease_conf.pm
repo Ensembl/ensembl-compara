@@ -98,7 +98,7 @@ sub default_options {
         'additional_species'     => undef,
 
         'do_update_from_metadata' => 1,
-        'do_load_lrg_dnafrags'    => 1,
+        'do_load_lrg_dnafrags'    => 0,
         'do_load_timetree'        => 0,
     };
 }
