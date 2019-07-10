@@ -3,7 +3,7 @@ digraph {
     "Patches against other species";
 
     "Genome dumps" -> "Species-tree";
-    "Species-tree" -> { "EPO", "Mercator Pecan", "Protein-trees" };
+    "Species-tree" -> { "EPO", "EPO-2X", "Mercator Pecan", "Protein-trees" };
     {"EPO", "All LastZ"} -> "EPO-2X";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing", "Alt-alleles import" };
     "Protein-trees" -> "Protein-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
