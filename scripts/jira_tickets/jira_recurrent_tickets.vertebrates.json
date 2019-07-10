@@ -164,6 +164,12 @@
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Reindex pig gene trees",
+            "name_on_graph": "Gene-tree reindexing:Sus"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Mammal EPO",
             "name_on_graph": "EPO:Mammals"
          },
