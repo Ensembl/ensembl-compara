@@ -65,7 +65,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Citest::BuildCitestMasterDatabase_conf;
 
 use strict;
 use warnings;
