@@ -192,7 +192,7 @@ span.error._ajax                      { top: 250px; position: absolute; width: 5
 .hidden                               { display: none; }
 
 div.result-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 300px; height: 400px; }
-div.result-box.filter-track                       { display: none; }
+div.result-box#filter-box                         { display: none; }
 h5.result-header                                  { display: block; margin-top: 16px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
 div.ConfigTrackHubMatrixForm div#dx.result-content { display: block; }
 div#dx.result-content                             { display: none; }
@@ -203,6 +203,24 @@ div.result-box div.sub-result-link                { color: [[LINK]]; text-decora
 div.result-box div.count-container                { color: [[DARK_GREY]]; }
 div.result-box span.current-count                 { color: [[BLACK]]; font-weight: bold; }
 div.result-box div.show-hide                      { float: right; margin-top: -3px; margin-right: -10px; }
+
+div.filterMatrix-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 300px; height: 400px; }
+div.filterMatrix-box#filter-box                         { display: none; }
+h5.filterMatrix-header                                  { display: block; margin-top: 16px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
+div.ConfigTrackHubMatrixForm div#dx.filterMatrix-content { display: block; }
+div#dx.filterMatrix-content                             { display: none; }
+div.filterMatrix-content                                { clear: both; }
+div.config_wrapper div.config ul.filterMatrix-list      { margin-left: 12px; clear: left; }
+div.config_wrapper div.config ul.filterMatrix-list li   { margin: 4px 8px; cursor: default; }
+div.filterMatrix-box div.sub-filterMatrix-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 12px; cursor: pointer; }
+div.filterMatrix-box div.count-container                { color: [[DARK_GREY]]; }
+div.filterMatrix-box span.current-count                 { color: [[BLACK]]; font-weight: bold; }
+div.filterMatrix-box div.show-hide                      { float: right; margin-top: -3px; margin-right: -10px; }
+
+ul.filterMatrix-list {
+  height: 200px;
+  overflow: auto;
+}
 
 /* customised checkbox */
 .fancy-checkbox                 { width: 15px; height: 15px; display: inline-block; vertical-align: top; background-repeat: no-repeat; background-image: url(/img/dynatree/icons.gif); background-position: 0 0; margin-left: 3px; margin-right: 10px; background-position: 0 -32px;}

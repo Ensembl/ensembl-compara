@@ -152,7 +152,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     this.clickSubResultLink();
-    this.showHideFilters();
+    this.registerShowHideClickEvent();
     this.clickCheckbox(this.elLk.filterList);
     this.clearAll(this.elLk.clearAll);
     this.clearSearch();
@@ -321,10 +321,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             if (dimension !== dimX && dimension !== dimY && dimension !== 'view') {
               filterObj[fkey] = filterObj[fkey] || {};
               filterObj[fkey][track.id] = filterObj[fkey][track.id] || {};
-              filterObj[fkey][track.id][dimension + '_' + track.subGroups[dimension]] = track.display === "off" ? "off" : "on";
+              filterObj[fkey][track.id][dimension + '_sep_' + track.subGroups[dimension]] = track.display === "off" ? "off" : "on";
             }
-
-            // if (dimension === dimX || dimension === dimY) { return; }
           }
 
           if(dimension !== dimY) { return; }
@@ -373,7 +371,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     panel.filterMatrixObj = filterObj;
     panel.json = finalObj;
-console.log(panel.filterMatrixObj);
 
     //setting rendererkeys
     this.elLk.lookup.rendererKeys = [];
@@ -1071,7 +1068,7 @@ console.log(panel.filterMatrixObj);
     var panel = this;
     panel.updateSelectedTracksPanel(item);
     // panel.activateTabs();
-    panel.updateShowHideLinks(item);
+    panel.updateShowHideLinks(panel.elLk.filterList);
     panel.showResetLink('div#dx, div#dy');
     panel.setLocalStorage();
     panel.trackError('div#dx, div#dy');
@@ -1325,10 +1322,10 @@ console.log(panel.filterMatrixObj);
     });
   },
 
-  updateShowHideLinks: function() {
+  updateShowHideLinks: function(filterList) {
       var panel = this;
 
-      $.each(panel.elLk.filterList, function(i, ul) {
+      $.each(filterList, function(i, ul) {
         if (!$(ul).siblings("div.show-hide:visible").length && $('li', ul).length) {
           var _class =  $(ul).css('display') === 'none' ? '._show' : '._hide';
           $(ul).siblings(_class).show();
@@ -1340,11 +1337,9 @@ console.log(panel.filterMatrixObj);
   },
 
   //function to toggle filters in right hand panel when show/hide selected is clicked
-  showHideFilters: function() {
-      var panel = this;
-
-      panel.el.find('div.show-hide').on("click", function(e) {
-          panel.el.find(this).parent().find('div.show-hide, ul.result-list').toggle();
+  registerShowHideClickEvent: function() {
+      this.elLk.filterTrackBox.find('div.show-hide').off().on("click", function(e) {
+          $(this).parent().find('div.show-hide, ul.result-list, ul.filterMatrix-list').toggle();
       });
   },
 
@@ -2038,7 +2033,85 @@ console.log(panel.filterMatrixObj);
 
     // enable helptips
     this.elLk.filterMatrix.find('._ht').helptip();
-  },  
+
+
+
+    this.updateFilterMatrixRHS();
+
+  },
+
+  updateFilterMatrixRHS: function() {
+    this.createFilterMatrixList();
+    this.registerFilterListItemClickEvent();
+    this.updateShowHideLinks(this.elLk.filterMatrixList);
+    this.registerShowHideClickEvent();
+  },
+
+  createFilterMatrixList: function() {
+    var panel = this;
+    var localStorage = this.getLocalStorage();
+    var availableFilters = {};
+    $.each(localStorage.dx, function(x, v) {
+      $.each(localStorage.dy, function(y, v) {
+        var key = x + '_sep_' + y;
+        if (panel.filterMatrixObj[key]) {
+          $.each(panel.filterMatrixObj[key], function(trackId, otherDimHash) {
+            $.each(otherDimHash, function(dimVal, display){
+              availableFilters[dimVal.split('_sep_')[0]] = availableFilters[dimVal.split('_sep_')[0]] || [];
+              availableFilters[dimVal.split('_sep_')[0]].push(dimVal.split('_sep_')[1]);
+            });
+          });
+        }
+      })
+    });
+
+    var html = '';
+    $.each(availableFilters, function(dim, values) {
+      html ='\
+          <div class="filterMatrix-content">\
+            <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>\
+            <div class="sub-result-link">' + dim + '</div>\
+            <ul class="filterMatrix-list">';
+      html += '<li class="all" data-dim-val="'+ dim +'"><span class="fancy-checkbox selected"></span><text>All</text></li>';
+      $.each(values, function(i, val) {
+        html += '<li data-dim-val="'+ val +'""><span class="fancy-checkbox selected"></span><text>' + val + '</text></li>';
+      });
+      html += '</ul></div>';
+    });
+
+    panel.elLk.filterTrackBox.find('.filter-content').html(html);
+    panel.elLk.filterMatrixList= panel.elLk.filterTrackBox.find("ul.filterMatrix-list");
+  },
+
+  registerFilterListItemClickEvent: function() {
+    var panel = this;
+    $('li', panel.elLk.filterTrackBox).off().on('click', function(e) {
+
+      // Select/deslect all boxes for that dim
+      var fcb = $(this).children('span.fancy-checkbox');
+      fcb.toggleClass('selected');
+      var filterDimVal = $(this).data('dimVal');
+      if ($(this).hasClass('all')) {
+        if (fcb.hasClass('selected')) {
+          $(this).siblings().each(function(i, sib) {
+            $(sib).children('span.fancy-checkbox').removeClass('selected').addClass('selected');
+          });
+        }
+        else {
+          $(this).siblings().each(function(i, sib) {
+            $(sib).children('span.fancy-checkbox').removeClass('selected');
+          });
+        }
+
+        // All link click with filterDimVal as the dimension name (age, sex, etc.)
+
+      }
+      else {
+
+      }
+
+    });
+  },
 
   // Function to show/update/delete matrix
   displayMatrix: function() {
