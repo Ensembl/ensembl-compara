@@ -96,6 +96,9 @@ my $compara_dbs = {
     #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch1' ],
     #'lastz_batch_2'    => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_lastz_batch2' ],
     #'lastz_batch_3'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch3_97' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch_4_98' ],
+    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_5_98' ],
+    'lastz_batch_9'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_9_98' ],
 
     # EPO dbs
     ## mammals
