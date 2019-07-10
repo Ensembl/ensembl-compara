@@ -124,46 +124,6 @@ sub default_options {
         # The TreeFam release to map to
         'tf_release'                => '9_69',
 
-    # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   3,
-        'blast_factory_capacity'    =>  50,
-        'blastp_capacity'           => 1500,
-        'blastpu_capacity'          => 150,
-        'mcoffee_short_capacity'    => 600,
-        'mafft_capacity'            => 2500,
-        'mafft_himem_capacity'      => 1200,
-        'split_genes_capacity'      => 600,
-        'alignment_filtering_capacity'  => 200,
-        'cluster_tagging_capacity'  => 100,
-        'loadtags_capacity'         => 200,
-        'prottest_capacity'         => 200,
-        'treebest_capacity'         => 400,
-        'raxml_capacity'            => 200,
-        'examl_capacity'            => 400,
-        'notung_capacity'           => 200,
-        'copy_tree_capacity'        => 100,
-        'ortho_tree_capacity'       => 50,
-        'quick_tree_break_capacity' => 1500,
-        'build_hmm_capacity'        => 200,
-        'ktreedist_capacity'        => 150,
-        'other_paralogs_capacity'   => 50,
-        'homology_dNdS_capacity'    => 1300,
-        'hc_capacity'               => 150,
-        'decision_capacity'         => 150,
-        'hc_post_tree_capacity'     => 100,
-        'HMMer_classify_capacity'   => 400,
-        'loadmembers_capacity'      =>  30,
-        'HMMer_classifyPantherScore_capacity'   => 1000,
-        'copy_trees_capacity'       => 50,
-        'copy_alignments_capacity'  => 50,
-        'mafft_update_capacity'     => 50,
-        'raxml_update_capacity'     => 50,
-        'ortho_stats_capacity'      => 10,
-        'goc_capacity'              => 30,
-        'goc_stats_capacity'        => 70,
-        'genesetQC_capacity'        => 100,
-        'cafe_capacity'             => 50,
-
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
         #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
@@ -172,6 +132,9 @@ sub default_options {
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
         'clustering_mode'           => 'hybrid',
+
+        # List of species some genes have been projected from
+        'projection_source_species_names' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
@@ -230,4 +193,3 @@ sub tweak_analyses {
 
 
 1;
-

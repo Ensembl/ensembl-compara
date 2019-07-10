@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
 
 =head1 DESCRIPTION
 
@@ -50,11 +50,11 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeNcRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsNcRNAtrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsNcRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -62,23 +62,34 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # Must be given on the command line
-            #'mlss_id'          => 40100,
-            # Found automatically if the Core API is in PERL5LIB
-            #'ensembl_release'          => '76',
-            #'rel_suffix'       => '',
+            'skip_epo'          => 1,
 
-            'division'          => 'vertebrates',
-            'collection'        => 'murinae',       # The name of the species-set within that division
-            'dbID_range_index'  => 19,
-            'label_prefix'      => 'mur_',
+            # Where to draw the orthologues from
+            'ref_ortholog_db'   => 'compara_nctrees',
 
-            'clustering_mode'   => 'ortholog',
-
-            'projection_source_species_names' => ['mus_musculus'],
-            'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
-
+            # CAFE parameters
+            'initialise_cafe_pipeline'  => 0,
     };
 }   
+
+sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'ref_ortholog_db'   => $self->o('ref_ortholog_db'),
+    }
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = $self->o('projection_source_species_names');
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
+    $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
+    $analyses_by_name->{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
+}
+
 
 1;

@@ -77,14 +77,7 @@ sub default_options {
         # You can add a letter to distinguish this run from other runs on the same release
         #'rel_suffix'            => '',
         # names of species we don't want to reuse this time
-        'do_not_reuse_list'     => [ ],
-
-    # Parameters to allow merging different runs of the pipeline
-    # Need to be defined for each different Strain
-        'division'              => 'vertebrates',
-        #'collection'            => 'murinae',       # The name of the species-set within that division
-        'dbID_range_index'      => 18,
-        #'label_prefix'          => 'mur_',
+        'do_not_reuse_list'        => [ ],
 
 
     #default parameters for the geneset qc
@@ -105,16 +98,6 @@ sub default_options {
 
     # species tree reconciliation
 
-    # homology_dnds parameters:
-        # used by 'homology_dNdS'
-        #'taxlevels'                 => ['Murinae'],
-
-    # threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
-    # values are lower than in the Verterbates config file because the clustering method is less comprehensive
-        'mapped_gene_ratio_per_taxon' => {
-            #'39107'   => 0.75,    #murinae
-          },
-
     # mapping parameters:
         'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
@@ -131,18 +114,9 @@ sub default_options {
         # If 'prev_rel_db' above is not set, you need to set all the dbs individually
         'goc_reuse_db'          => undef,
 
-
-    # clustering parameters:
-        # How will the pipeline create clusters (families) ?
-        #   'ortholog' means that it makes clusters out of orthologues coming from 'ref_ortholog_db' (transitive closre of the pairwise orthology relationships)
-        'clustering_mode'           => 'hybrid',
-
     # CAFE parameters
         # Do we want to initialise the CAFE part now ?
         'initialise_cafe_pipeline'  => 0,
-
-    # GOC parameters
-        #'goc_taxlevels'                 => ['Murinae'],
 
     # Extra analyses
         # Export HMMs ?
@@ -173,13 +147,11 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [ 'mus_musculus' ];
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
-    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = [ 10088 ];    # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
 }
 
 
 1;
-

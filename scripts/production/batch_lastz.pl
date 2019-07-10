@@ -67,7 +67,8 @@ my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $all_lastz_mlsses = $mlss_adaptor->fetch_all_by_method_link_type($method_link);
 my (@current_lastz_mlsses, %genome_dbs);
 foreach my $this_mlss ( @$all_lastz_mlsses ) {
-	if (($this_mlss->first_release || 0) == $release) {
+    if ((($this_mlss->first_release || 0) == $release)
+        || (defined $this_mlss->get_tagvalue("rerun_in_$release"))) {
 		next if defined $exclude_mlss_ids && grep { $this_mlss->dbID == $_ } split(/[\s,]+/, $exclude_mlss_ids );
 		push @current_lastz_mlsses, $this_mlss;
 		foreach my $this_gdb ( @{ $this_mlss->species_set->genome_dbs } ) {
@@ -79,43 +80,54 @@ print STDERR "Found " . scalar(@current_lastz_mlsses) . "!\n\n";
 
 # calculate number of jobs per-mlss
 print STDERR "Estimating number of jobs for each method_link_species_set..\n";
-my (%mlss_job_count, %total_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count, %dnafrag_interval_counts);
+my (%mlss_job_count, %chunk_counts, %chain_dnafrag_counts, %chain_job_count, %dnafrag_interval_counts);
+# my %total_job_count;
 foreach my $mlss ( @current_lastz_mlsses ) {
-	my $ref_name = $mlss->get_tagvalue('reference_species');
-	my $mlss_gdbs = $mlss->species_set->genome_dbs;
-	my ( $ref_chunk_count, $non_ref_chunk_count );
-	if ( $mlss_gdbs->[0]->name eq $ref_name ) {
-		$ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
-		$non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[1]);
-	} else {
-		$ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[1]);
-		$non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
-	}
+    my ($mlss_gdbs, $ref_chunk_count, $non_ref_chunk_count, $filter_dups_job_count);
+    if ( defined $mlss->get_tagvalue('species_set_size') ) {
+        $mlss_gdbs = $mlss->species_set->genome_dbs;
+        $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
+        $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
+	    $filter_dups_job_count = $ref_chunk_count * 2;
+        $mlss_job_count{$mlss->dbID}->{self_aln} = 1;
+    } else {
+	    my $ref_name = $mlss->get_tagvalue('reference_species');
+	    $mlss_gdbs = $mlss->species_set->genome_dbs;
+	    if ( $mlss_gdbs->[0]->name eq $ref_name ) {
+		    $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[0]);
+		    $non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[1]);
+    	} else {
+		    $ref_chunk_count = get_ref_chunk_count($mlss_gdbs->[1]);
+	    	$non_ref_chunk_count = get_non_ref_chunk_count($mlss_gdbs->[0]);
+    	}
+        $filter_dups_job_count = get_ref_chunk_count($mlss_gdbs->[0]) + get_ref_chunk_count($mlss_gdbs->[1]);
+
+        # my ( $dnaf_count_1, $dnaf_count_2 ) = (chains_dnafrag_count($mlss_gdbs->[0]), chains_dnafrag_count($mlss_gdbs->[1]));
+        # my ( $gdb_name_1, $gdb_name_2 ) = ( $mlss_gdbs->[0]->name, $mlss_gdbs->[1]->name );
+        # print "dnaf_count $gdb_name_1: $dnaf_count_1; dnaf_count $gdb_name_2: $dnaf_count_2\n";
+        # my $chains_job_count = $dnaf_count_1 * $dnaf_count_2;
+        my $chains_job_count = chains_job_count( $mlss );
+        # my $chains_job_count = ceil($lastz_job_count/3); # generally, this is ~0.3333 of LastZ jobs
+        $mlss_job_count{$mlss->dbID}->{aln_chains} = $chains_job_count;
+        #$total_job_count{aln_chains} += $chains_job_count;
+        $mlss_job_count{$mlss->dbID}->{aln_nets} = ceil($chains_job_count/2);
+        #$total_job_count{aln_nets} += ceil($chains_job_count/2); # alignment_nets = ~ half chain jobs
+
+        $mlss_job_count{$mlss->dbID}->{self_aln} = 0;
+    }
 
 	my $lastz_job_count = ($ref_chunk_count * $non_ref_chunk_count);
 	$mlss_job_count{$mlss->dbID}->{lastz} = $lastz_job_count;
-	$total_job_count{lastz} += $lastz_job_count;
+	# $total_job_count{lastz} += $lastz_job_count;
 
-	my $filter_dups_job_count = get_ref_chunk_count($mlss_gdbs->[0]) + get_ref_chunk_count($mlss_gdbs->[1]);
 	$mlss_job_count{$mlss->dbID}->{filter_dups} = $filter_dups_job_count;
-	$total_job_count{filter_dups} += $filter_dups_job_count;
+	# $total_job_count{filter_dups} += $filter_dups_job_count;
 	# dump_large_nib_for_chains and coding_exon_stats are usually around the same value
 	$mlss_job_count{$mlss->dbID}->{dump_nibs} = $filter_dups_job_count;
-	$total_job_count{dump_nibs} += $filter_dups_job_count;
+	# $total_job_count{dump_nibs} += $filter_dups_job_count;
 	$mlss_job_count{$mlss->dbID}->{exon_stats} = $filter_dups_job_count;
-	$total_job_count{exon_stats} += $filter_dups_job_count;
+	# $total_job_count{exon_stats} += $filter_dups_job_count;
 
-	# my ( $dnaf_count_1, $dnaf_count_2 ) = (chains_dnafrag_count($mlss_gdbs->[0]), chains_dnafrag_count($mlss_gdbs->[1]));
-	# my ( $gdb_name_1, $gdb_name_2 ) = ( $mlss_gdbs->[0]->name, $mlss_gdbs->[1]->name );
-	# print "dnaf_count $gdb_name_1: $dnaf_count_1; dnaf_count $gdb_name_2: $dnaf_count_2\n";
-	# my $chains_job_count = $dnaf_count_1 * $dnaf_count_2;
-	my $chains_job_count = chains_job_count( $mlss );
-	# my $chains_job_count = ceil($lastz_job_count/3); # generally, this is ~0.3333 of LastZ jobs
-	$mlss_job_count{$mlss->dbID}->{aln_chains} = $chains_job_count;
-	$total_job_count{aln_chains} += $chains_job_count;
-	$mlss_job_count{$mlss->dbID}->{aln_nets} = ceil($chains_job_count/2);
-	$total_job_count{aln_nets} += ceil($chains_job_count/2); # alignment_nets = ~ half chain jobs
-	
 	print_verbose_summary(\%mlss_job_count, $mlss) if ($verbose);
 	print_very_verbose_summary(\%mlss_job_count, $mlss) if ($very_verbose);
 }
@@ -135,10 +147,14 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 # print "\n\n\nMLSS GROUPS: \n";
 # print Dumper $mlss_groups;
 
+# Get the division from the given master database
+my $division = ucfirst($dba->get_division());
+$division =~ s/Vertebrates/Ensembl/;
+
 print "\nPipeline commands:\n------------------\n";
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf -division " . $ENV{'COMPARA_DIV'} . " -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
+	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
 }
 
 sub get_ref_chunk_count {
@@ -265,6 +281,8 @@ sub split_mlsses {
 		if ( $mlss_job_count_full->{$k}->{all} > $max_jobs ) {
 			warn "\n** WARNING: MethodLinkSpeciesSet $k exceeds the max_jobs threshold alone **\n";
 			push( @large_mlss_groups, { mlss_ids => [$k], job_count => $mlss_job_count_full->{$k}->{all} } );
+        } elsif ( $mlss_job_count_full->{$k}->{self_aln} ) {
+            push( @large_mlss_groups, { mlss_ids => [$k], job_count => $mlss_job_count_full->{$k}->{all} } );
 		} else {
 			$mlss_job_count->{$k} = $mlss_job_count_full->{$k};
 		}

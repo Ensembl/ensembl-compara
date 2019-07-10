@@ -34,17 +34,20 @@
           panicum_hallii_hal2,
          )Panicoideae,
          (
+          eragrostis_tef,
+         )Chloridoideae,
+         (
           (
            brachypodium_distachyon,
            (
             hordeum_vulgare,
             (
-             (triticum_aestivum, triticum_dicoccoides),
+             (triticum_aestivum, triticum_dicoccoides, triticum_turgidum),
              (
               triticum_urartu,
-              (triticum_aestivum_A,triticum_dicoccoides_A),
+              (triticum_aestivum_A, triticum_dicoccoides_A, triticum_turgidum_A),
              ),
-             (triticum_aestivum_B,triticum_dicoccoides_B),
+             (triticum_aestivum_B, triticum_dicoccoides_B, triticum_turgidum_B),
              (
               aegilops_tauschii,
               triticum_aestivum_D,
@@ -99,10 +102,19 @@
         (
          nicotiana_attenuata,
          (
+          capsicum_annuum,
+         )Capsicum,
+         (
           solanum_tuberosum,
           solanum_lycopersicum,
          )Solanum,
         )Solanaceae,
+        (
+         coffea_canephora,
+        )Rubiaceae,
+        (
+         cynara_cardunculus,
+        )Asteraceae, 
        )asterids,
        (
         vitis_vinifera,
@@ -156,7 +168,7 @@
     )Magnoliophyta,
    )Tracheophyta,
    physcomitrella_patens,
-   marchantia_polymorpha_str_tak_1,
+   marchantia_polymorpha
   )Embryophyta,
   (
    ostreococcus_lucimarinus,

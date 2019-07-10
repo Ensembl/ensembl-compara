@@ -117,7 +117,7 @@ sub tweak_analyses {
 
     ## Extend this section to redefine the parameters of some analyses
     # turn off projections
-    $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [];
+    # $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = [];
     # prevent principal components from being flowed
     # $analyses_by_name->{'member_copy_factory'}->{'-parameters'}->{'polyploid_genomes'} = 0;
 

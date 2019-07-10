@@ -110,6 +110,10 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         'reuse_member_db' => 'compara_prev',
 
+        # By default, do not load non reference sequences and patches for fresh
+        # members
+        'include_nonreference' => 0,
+        'include_patches'      => 0,
     };
 }
 
@@ -473,8 +477,8 @@ sub pipeline_analyses {
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
                 'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
                 'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
-                'include_nonreference'          => 1,
-                'include_patches'               => 1,
+                'include_nonreference'          => $self->o('include_nonreference'),
+                'include_patches'               => $self->o('include_patches'),
                 'store_coding'                  => $self->o('store_coding'),
                 'store_ncrna'                   => $self->o('store_ncrna'),
                 'store_others'                  => $self->o('store_others'),

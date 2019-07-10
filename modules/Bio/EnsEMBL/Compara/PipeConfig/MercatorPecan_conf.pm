@@ -654,7 +654,7 @@ sub pipeline_analyses {
 			   },
 	    -flow_into => { 
 			    '1->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
-			    'A->1' => ['multiplealigner_stats_factory'],
+			    'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
 			   },
 
 	 },

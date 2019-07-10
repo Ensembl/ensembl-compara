@@ -156,7 +156,7 @@ if ($help or ((!$gdb_id_to_change and !$file) and (!$mlss_id_to_change and !$fil
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
-Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing");
+Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, "throw_if_missing") if $reg_conf;
 
 my $compara_dba;
 if ($compara =~ /mysql:\/\//) {

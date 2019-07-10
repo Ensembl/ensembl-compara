@@ -93,7 +93,8 @@ sub default_options {
 
        #production run or test/development run
        
-        'test_mode' => 1, 
+        'test_mode' => 1,
+                                         
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -310,6 +311,9 @@ sub default_options {
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         'clustering_mode'           => 'blastp',
 
+        # List of species some genes have been projected from
+        'projection_source_species_names' => [],
+
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'members'
         #   'members' means that only the members are copied over, and the rest will be re-computed
@@ -409,7 +413,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_db'      => $self->o('prev_rel_db'),
         'mapping_db'    => $self->o('mapping_db'),
 
-        'reg_conf' => $self->o('reg_conf'),
+        'reg_conf'      => $self->o('reg_conf'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
@@ -442,7 +446,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_gene_qc'        => $self->o('do_gene_qc'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
 
-        'mapped_gene_ratio_per_taxon'         => $self->o('mapped_gene_ratio_per_taxon'),
+        'mapped_gene_ratio_per_taxon' => $self->o('mapped_gene_ratio_per_taxon'),
     };
 }
 
@@ -874,7 +878,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'insert_member_projections',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
             -parameters => {
-                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', ],
+                'source_species_names'  => $self->o('projection_source_species_names'),
             },
             -flow_into  => WHEN('#dbID_range_index#' => 'offset_homology_tables' ),
         },
@@ -1481,8 +1485,28 @@ sub core_pipeline_analyses {
             -parameters         => {
                 blacklist_file      => $self->o('gene_blacklist_file'),
             },
-            -flow_into          => [ 'hc_clusters' ],
+            # -flow_into          => [ 'hc_clusters' ],
+            -flow_into => WHEN(
+                '#ref_ortholog_db#' => 'check_strains_cluster_factory',
+                ELSE 'hc_clusters',
+            ),
             -rc_name => '500Mb_job',
+        },
+        
+        {   -logic_name => 'check_strains_cluster_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                '2->A' => [ 'cleanup_strains_clusters' ],
+                'A->1' => [ 'hc_clusters' ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+        {   -logic_name => 'cleanup_strains_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+
         },
 
         {   -logic_name         => 'hc_clusters',
@@ -2897,6 +2921,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => -10,
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 1   => [ 'hc_tree_homologies' ],
                 -1  => 'ortho_tree_himem',
@@ -2911,7 +2936,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => 20,
-            -rc_name        => '2Gb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => [ 'hc_tree_homologies' ],
         },
 
@@ -3096,6 +3121,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'panther_paralogs',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
             -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '1Gb_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
                 3 => { 'panther_paralogs' => INPUT_PLUS },
@@ -3105,7 +3131,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'panther_paralogs_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PantherParalogs',
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '2Gb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => {
                 3 => { 'panther_paralogs_himem' => INPUT_PLUS },
             }
@@ -3467,4 +3493,3 @@ sub core_pipeline_analyses {
 }
 
 1;
-

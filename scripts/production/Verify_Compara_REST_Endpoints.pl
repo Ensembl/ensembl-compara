@@ -100,13 +100,14 @@ elsif($division eq "plants"){
     $skip_families            = 1;
     $skip_epo                 = 1;
 }
+else {
+    die "Division '$division' is not understood\n";
+}
 
 my $anyErrors = 0;
 my ($jsontxt, $xml, $nh, $orthoXml, $phyloXml, $json_leaf);
 my $sleepTime = 0;
 
-
-# FIXME: replace all tabs with spaces
 
 # FIXME: all process_*_get functions have the same structure -> factor out !
 

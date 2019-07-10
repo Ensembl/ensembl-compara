@@ -52,7 +52,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
-Example init : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf -host mysql-ens-compara-prod-2.ebi.ac.uk:4522 -pipeline_name <> -compara_db <> -mlss_id <> -skip_multiplealigner_stats 0
+Example init : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf -host mysql-ens-compara-prod-2.ebi.ac.uk:4522 -pipeline_name <> -compara_db <> -mlss_id <>
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
@@ -119,5 +119,13 @@ sub pipeline_analyses {
 
     return $pipeline_analyses;
 }
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'Genomic_Align_Block_Job_Generator'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+}
+
 
 1;

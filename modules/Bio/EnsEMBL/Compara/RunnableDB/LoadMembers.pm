@@ -215,6 +215,13 @@ sub loadMembersFromCoreSlices {
     $self->compara_dba->dbc->disconnect_if_idle() if $gene_adaptor->count_all_by_Slice($slice) > 500;
 
     my @relevant_genes = grep {!$excluded_logic_names{$_->analysis->logic_name}} sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)};
+    # Discard genes that span the end of circular chromosomes
+    my $n1 = scalar(@relevant_genes);
+    @relevant_genes = grep {$_->seq_region_start < $_->seq_region_end} @relevant_genes;
+    if ($n1 != scalar(@relevant_genes)) {
+        $self->warning("Discarded ".($n1-scalar(@relevant_genes))." genes because they span the end of circular chromosomes");
+    }
+
     $self->param('geneCount', $self->param('geneCount') + scalar(@relevant_genes) );
 
     if ($self->param('coding_exons')) {

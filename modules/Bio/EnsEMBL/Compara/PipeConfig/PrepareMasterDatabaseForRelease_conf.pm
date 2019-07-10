@@ -115,6 +115,9 @@ sub pipeline_wide_parameters {
         'division'   => $self->o('division'),
         'release'    => $self->o('ensembl_release'),
         'hc_version' => 1,
+
+        'do_update_from_metadata' => $self->o('do_update_from_metadata'),
+        'do_load_timetree'        => $self->o('do_load_timetree'),
     };
 }
 
