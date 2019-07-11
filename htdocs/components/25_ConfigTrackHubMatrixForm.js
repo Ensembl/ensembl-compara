@@ -2018,8 +2018,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                       if(state === "off" && tracks["show"] === 1) { offCount++ };
                       if(state === "on" && tracks["show"] === 1)  { onCount++ };
 
-                      panel.localStoreObj["filterMatrix"][storeKey][cellKey]  = state;
-                      panel.localStoreObj["filterMatrix"][storeKey][cellKey]["show"]   = tracks["show"];
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"] = panel.localStoreObj["filterMatrix"][storeKey]["data"] || {};
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] = panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] || {};
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = "on";
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["show"] = tracks["show"];
   
                       // //setting count for all selection section
                       // panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
@@ -2051,7 +2053,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 }
               }
               if(!dataClass) { boxCountHTML = ""; }
-              rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="filter">'+boxCountHTML+'</div>';
+              rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="_filterMatrix">'+boxCountHTML+'</div>';
             }
           });
 
@@ -2481,17 +2483,15 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   buildFilterMatrixPopup: function(key) {
     var panel = this;
-    if (key ===  undefined) return;
+    if (key ===  undefined || !panel.localStoreObj.filterMatrix) return;
     var li_html = '';
     var ul = panel.el.find('div.track-popup._filterMatrix ul');
-    $.each(panel.filterMatrixObj[key], function(id, dimHash){
-      $.each(dimHash, function(dimVal, state) {
-        // li_html += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
-      });
+    $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
+      li_html += '<li class="' + id + '"><span class="fancy-checkbox"></span><text>' + id + '</text></li>';
     //   r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
-    ul.html();
-
+    ul.html(li_html);
+    ul.parent().show();
   },
 
   cellClick: function() {
@@ -2510,9 +2510,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick, div.filterMatrix-container div.xBoxes').removeClass("mClick");
       panel.trackPopup.hide();
 
-      var key = panel.yName + '_sep_' + panel.xName;
-      panel.multiDimFlag ? panel.buildFilterMatrixPopup(key) : panel.buildMatrixPopup($(this).data("format"));
-
       panel.boxObj          = $(this);
       panel.popupType       = $(this).data("popup-type"); //type of popup to use which is associated with the class name
       panel.TrackPopupType  = panel.el.find('div.track-popup.'+panel.popupType);
@@ -2524,6 +2521,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.cellStateKey    = panel.itemDimension(panel.cellKey) || "";
       panel.dyStateKey      = panel.itemDimension(panel.yName) || "";
       panel.dxStateKey      = panel.itemDimension(panel.xName) || "";
+
+      var key = panel.yName + '_sep_' + panel.xName;
+      panel.multiDimFlag ? panel.buildFilterMatrixPopup(key) : panel.buildMatrixPopup($(this).data("format"));
 
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal
