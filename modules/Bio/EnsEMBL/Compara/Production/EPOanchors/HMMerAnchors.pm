@@ -96,24 +96,24 @@ sub fetch_input {
 
 sub run {
 	my ($self) = @_;
-	my $nhmmer_command = join(" ", $self->param_required('nhmmer'), "--noali", $self->param('query_file'), $self->param('target_file') );
-	my $exo_fh;
-	open( $exo_fh, "$nhmmer_command |" ) or throw("Error opening nhmmer command: $? $!"); #run nhmmer	
-	$self->param('exo_file', $exo_fh);
-}
-
-sub write_output {
-	my ($self) = @_;
-	my $anchor_align_adaptor = $self->compara_dba->get_AnchorAlignAdaptor();
-	my $exo_fh = $self->param('exo_file');
 	my (@hits, %hits);
-	{ local $/ = ">>";
+	my $nhmmer_command = [$self->param_required('nhmmer'), "--noali", $self->param('query_file'), $self->param('target_file')];
+	$self->read_from_command( sub {
+		my $exo_fh = shift;
+		local $/ = ">>";
 		while(my $mapping = <$exo_fh>){ 
 			next unless $mapping=~/!/;
 			push(@hits, $mapping);
 		}
-	}
-	foreach my $hit( @hits ){
+	} );
+	$self->param('hit_array', \@hits);
+	$self->param('hit_hash', \%hits);
+}
+
+sub write_output {
+	my ($self) = @_;
+	my $hits = $self->param('hit_hash');
+	foreach my $hit( @{$self->param('hit_array')} ){
 		my($target_info, $mapping_info) = (split("\n", $hit))[0,3];
 		my($coor_sys, $species, $seq_region_name) = (split(":", $target_info))[0,1,2];
 		my($score, $evalue, $alifrom, $alito) = (split(/ +/, $mapping_info))[2,4,8,9];
@@ -121,7 +121,7 @@ sub write_output {
 		($alifrom, $alito) = ($alito, $alifrom) if $strand eq "-1";
 		my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor();
 		my $dnafrag_id = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('target_genome_db_id'), $seq_region_name)->dbID;
-		push(@{ $hits{$self->param('anchor_id')} }, [ $dnafrag_id, $alifrom, $alito, $strand, $score, $evalue ]);
+		push(@{ $hits->{$self->param('anchor_id')} }, [ $dnafrag_id, $alifrom, $alito, $strand, $score, $evalue ]);
 	}
 }
 
