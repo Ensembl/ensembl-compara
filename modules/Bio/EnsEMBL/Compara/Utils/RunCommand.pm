@@ -69,13 +69,19 @@ sub new_and_exec {
         $cmd_to_run = ['bash' => ('-o' => 'errexit', $options->{'use_bash_pipefail'} ? ('-o' => 'pipefail') : (), '-c' => $flat_cmd)];
     }
 
+    my $runCmd = {
+        _cmd        => $cmd_to_run,
+        _timeout    => $timeout,
+        _purpose    => $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'",
+    };
+    bless $runCmd, ref($class) || $class;
+
     print STDERR "COMMAND: $flat_cmd\n" if ($debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $debug);
-    my $runCmd = $class->new($cmd_to_run, $timeout);
     $runCmd->run();
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
-    $runCmd->{_purpose} = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
+
     if (($runCmd->exit_code >= 256) or (($options->{'use_bash_pipefail'} or $use_bash_errexit) and ($runCmd->exit_code >= 128))) {
         # The process was killed. Perhaps a MEMLIMIT ? Wait a little bit to
         # allow LSF to kill this process too
@@ -103,15 +109,6 @@ sub join_command_args {
     return join(' ', @new_args);
 }
 
-
-sub new {
-    my ($class, $cmd, $timeout) = @_;
-    my $self = {};
-    bless $self, ref($class) || $class;
-    $self->{_cmd} = $cmd;
-    $self->{_timeout} = $timeout;
-    return $self;
-}
 
 sub cmd {
     my ($self) = @_;
