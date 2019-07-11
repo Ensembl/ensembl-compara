@@ -48,7 +48,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass    => $ENV{'ENSADMIN_PSW'},
     -port    => 4617,
     -species => 'compara_master',
-    -dbname  => 'jalvarez_master_citest',
+    -dbname  => $ENV{'USER'} . '_compara_master_citest',
 );
 
 1;
