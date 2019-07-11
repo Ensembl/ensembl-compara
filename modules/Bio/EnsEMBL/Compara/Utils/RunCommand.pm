@@ -201,11 +201,23 @@ sub _run {
 
 sub run {
     my ($self) = @_;
-    my $timeout = $self->timeout;
-    if (not $timeout) {
-        $self->_run();
-        return;
+    if ($self->timeout) {
+        $self->_run_with_timeout;
+    } else {
+        $self->_run;
     }
+}
+
+
+=head2 _run_with_timeout
+
+  Description : Runs the command with a maximum allowed runtime ($self->timeout)
+  Returntype  : None
+
+=cut
+
+sub _run_with_timeout {
+    my $self = shift;
 
     ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
     my $die_text = "_____RunCommandTimeLimit_____\n";
@@ -217,7 +229,7 @@ sub run {
         {
             local $SIG{__DIE__};     # turn die handler off in eval block
             local $SIG{ALRM} = sub { die $die_text };
-            alarm($timeout);         # set alarm
+            alarm($self->timeout);   # set alarm
             $self->_run();
         };
 
@@ -234,7 +246,7 @@ sub run {
         # the eval returned an error
         die $@ if $@ ne $die_text;
         $self->{_exit_code} = -2;
-        $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $timeout);
+        $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $self->timeout);
     }
 }
 
