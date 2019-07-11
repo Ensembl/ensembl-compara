@@ -73,6 +73,7 @@ sub new_and_exec {
         _cmd        => $cmd_to_run,
         _purpose    => $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'",
     };
+    $runCmd->{_pipe_stdout} = $options->{pipe_stdout} if $options->{pipe_stdout};
     bless $runCmd, ref($class) || $class;
 
     print STDERR "COMMAND: $flat_cmd\n" if ($debug);
@@ -156,7 +157,12 @@ sub _run {
     my $starttime = time() * 1000;
     local *CATCHERR = IO::File->new_tmpfile;
     my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", ref($cmd) ? @$cmd : $cmd);
-    $self->{_out} = $self->_read_output(\*CATCHOUT);
+    if ($self->{_pipe_stdout}) {
+        $self->{_pipe_stdout}->(\*CATCHOUT);
+        $self->{_out} = '<sent to '.$self->{_pipe_stdout}.'>';
+    } else {
+        $self->{_out} = $self->_read_output(\*CATCHOUT);
+    }
     waitpid($pid,0);
     $self->{_exit_code} = $?>>8;
     if ($? && !$self->{_exit_code}) {

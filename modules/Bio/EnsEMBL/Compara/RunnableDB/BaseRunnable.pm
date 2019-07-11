@@ -354,6 +354,23 @@ sub get_command_output {
 }
 
 
+=head2 read_from_command {
+
+Helper method to safely open a command as a pipe and read from it
+
+=cut
+
+sub read_from_command {
+    my ($self, $cmd, $read_sub, $options) = @_;
+
+    $options //= {};
+    $options->{pipe_stdout} = $read_sub;
+    $options->{die_on_failure} //= 1;
+
+    return $self->run_command($cmd, $options);
+}
+
+
 =head2 elevate_privileges
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection
