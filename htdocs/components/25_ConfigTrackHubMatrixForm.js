@@ -313,17 +313,20 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           renderer  =  track.default_display; //track.default_display is the default renderer for this track
         }
 
-        var keyX = track.subGroups[dimX];
-        var keyY = track.subGroups[dimY];
-        var fkey = keyX + '_sep_' + keyY;
+        var keyX      = track.subGroups[dimX];
+        var keyY      = track.subGroups[dimY];
+        
+        //multi dimension work
+        var fkey      = keyX + '_sep_' + keyY;
         var dimkey;
         $.each(track.subGroups, function(dimension, trackName){
           if (panel.multiDimFlag) {
             if (dimension !== dimX && dimension !== dimY && dimension !== 'view') {
-              dimkey = dimension + '_sep_' + track.subGroups[dimension];
+              dimkey        = dimension + '_sep_' + track.subGroups[dimension];
               filterObj[fkey] = filterObj[fkey] || {};
               filterObj[fkey][track.id] = filterObj[fkey][track.id] || {};
-              filterObj[fkey][track.id][dimkey] = track.display === "off" ? "off" : "on";
+              filterObj[fkey][track.id]["data"] = filterObj[fkey][track.id]["data"]  || {};
+              filterObj[fkey][track.id]["data"][dimkey] = track.display === "off" ? "off" : "on";
 
               if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["other_dimensions"]) || panel.initialLoad )) {   
                 updateStore = true;
@@ -334,6 +337,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   panel.localStoreObj["other_dimensions"][dimension + '_sep_' + track.subGroups[dimension]] = 1;
                 }
               }
+
+              filterObj[fkey][track.id]["show"] = 1;
 
               // Populating lookup
               panel.elLk.lookup.dimensionFilter[dimkey] = panel.elLk.lookup.dimensionFilter[dimkey] || {};
@@ -381,6 +386,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.initialLoad = 0; //initialLoad done
     if(updateStore) {
       panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
+      panel.localStoreObj.filterMatrix = panel.getLocalStorage().filterMatrix  || {};
       //state management object for user location
       panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};      
       panel.setLocalStorage();
@@ -1988,20 +1994,32 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               var boxCountHTML = "";
 
               if(panel.localStoreObj["filterMatrix"] && panel.localStoreObj["filterMatrix"][storeKey]) {
-                boxState   = panel.localStoreObj["filterMatrix"][storeKey].state;                
+                if(panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"] === panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]) { 
+                  boxState = "track-on";
+                  boxCountHTML = '<span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"]+'</span>';
+                } else if(panel.localStoreObj["filterMatrix"][storeKey]["state"]["off"]  === panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] ){
+                  boxState = "track-off";
+                  boxCountHTML = '<span class="count">0</span>';
+                } else {
+                  boxState = "partial";
+                  var partialCount = panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"];
+                  boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]+'</span>';
+                }
                 dataClass = "_hasData";
               } else {
-                //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
+                //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )                      
                 if(panel.filterMatrixObj[storeKey]) {
-                  totalCount = Object.keys(panel.filterMatrixObj[storeKey]).length;
-                  dataClass  = "_hasData";                  
+                  dataClass  = "_hasData";
+                  panel.localStoreObj["filterMatrix"][storeKey] = panel.localStoreObj["filterMatrix"][storeKey] || {};
+
                   $.each(panel.filterMatrixObj[storeKey], function(cellKey, tracks){
-                    $.each(tracks, function(dimensionValue, state){
-                      if(state === "off") { offCount++ };
-                      if(state === "on")  { onCount++ };
-                      id = dimensionValue;
-                      
-                      // panel.localStoreObj["filterMatrix"][storeKey] = {"id": id, "state": boxState, "reset-state": boxState };
+                    if(tracks["show"] === 1) { totalCount += 1; }
+                    $.each(tracks["data"], function(dimensionValue, state){
+                      if(state === "off" && tracks["show"] === 1) { offCount++ };
+                      if(state === "on" && tracks["show"] === 1)  { onCount++ };
+
+                      panel.localStoreObj["filterMatrix"][storeKey][cellKey]  = state;
+                      panel.localStoreObj["filterMatrix"][storeKey][cellKey]["show"]   = tracks["show"];
   
                       // //setting count for all selection section
                       // panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
@@ -2021,9 +2039,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     var partialCount = totalCount - onCount;
                     boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+totalCount+'</span>';
                   }
+
+                  //setting localstore for each box state
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]                = panel.localStoreObj["filterMatrix"][storeKey]["state"] || {};
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]       = totalCount;
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]["reset-total"] = totalCount;
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"]          = onCount;
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]["reset-on"]    = onCount;
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]["off"]         = offCount;
+                  panel.localStoreObj["filterMatrix"][storeKey]["state"]["reset-off"]   = offCount;                  
                 }
               }
-
               if(!dataClass) { boxCountHTML = ""; }
               rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="filter">'+boxCountHTML+'</div>';
             }
@@ -2074,7 +2100,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         var key = x + '_sep_' + y;
         if (panel.filterMatrixObj[key]) {
           $.each(panel.filterMatrixObj[key], function(trackId, otherDimHash) {
-            $.each(otherDimHash, function(dimVal, display){
+            $.each(otherDimHash["data"], function(dimVal, display){
               availableFilters[dimVal.split('_sep_')[0]] = availableFilters[dimVal.split('_sep_')[0]] || [];
               availableFilters[dimVal.split('_sep_')[0]].push(dimVal.split('_sep_')[1]);
             });
