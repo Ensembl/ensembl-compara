@@ -65,13 +65,7 @@ sub configuration_content {
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
-        <div class="track-popup _filterMatrix">
-          <ul>
-            <li>
-              <label class="switch"><input type="checkbox" name="column-switch"><span class="slider round"></span><span class="switch-label">Column</span></label>
-            </li>
-          </ul>
-        </div>
+        <div class="track-popup _filterMatrix"><ul></ul></div>
         <div class="hidebox"></div>
         <div class="filterMatrix-container">
         </div>

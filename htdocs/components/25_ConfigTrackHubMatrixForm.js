@@ -266,9 +266,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       opt.addClass('selected');
       obj.val = opt.children('i').attr('class');
       obj.placeholder.text(opt.text());
-      panel.updateRenderer(obj.val)
+      panel.updateRenderer(obj.val);
     });
-
   },
 
   // Function to create the relationship between the different track
@@ -297,7 +296,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       finalObj.dimensions = [dimX,dimY];
       finalObj.data = {};
       finalObj.format = {};
-
+      panel.elLk.lookup.filterMatrix = {};
       //getting dimY data, assuming subgroup2 is always dimY
       var dimYData = {}
       $.each(Object.keys(panel.rawJSON.metadata.dimensions.y.values), function(index, value) {
@@ -317,13 +316,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         var keyX = track.subGroups[dimX];
         var keyY = track.subGroups[dimY];
         var fkey = keyX + '_sep_' + keyY;
-
+        var dimkey;
         $.each(track.subGroups, function(dimension, trackName){
           if (panel.multiDimFlag) {
             if (dimension !== dimX && dimension !== dimY && dimension !== 'view') {
+              dimkey = dimension + '_sep_' + track.subGroups[dimension];
               filterObj[fkey] = filterObj[fkey] || {};
               filterObj[fkey][track.id] = filterObj[fkey][track.id] || {};
-              filterObj[fkey][track.id][dimension + '_sep_' + track.subGroups[dimension]] = track.display === "off" ? "off" : "on";
+              filterObj[fkey][track.id][dimkey] = track.display === "off" ? "off" : "on";
 
               if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["other_dimensions"]) || panel.initialLoad )) {   
                 updateStore = true;
@@ -334,6 +334,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   panel.localStoreObj["other_dimensions"][dimension + '_sep_' + track.subGroups[dimension]] = 1;
                 }
               }
+
+              // Populating lookup
+              panel.elLk.lookup.filterMatrix[dimkey] = panel.elLk.lookup.filterMatrix[dimkey] || {};
+              panel.elLk.lookup.filterMatrix[dimkey][fkey] = panel.elLk.lookup.filterMatrix[dimkey][fkey] || [];
+              panel.elLk.lookup.filterMatrix[dimkey][fkey].push(track.id);
             }
           }
 
@@ -2040,6 +2045,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find('div.filterMatrix-container .xContainer, div.filterMatrix-container .yBoxWrapper').width(hwidth);
 
     panel.cellClick(); //opens popup
+    // panel.filterMatrixCellClick(); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
 
@@ -2102,7 +2108,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
     $('li', panel.elLk.filterTrackBox).off().on('click', function(e) {
 
-      // Select/deslect all boxes for that dim
+      // Select/deslect all boxes for that dimension
       var fcb = $(this).children('span.fancy-checkbox');
       fcb.toggleClass('selected');
       var filterDimVal = $(this).data('dimVal');
@@ -2422,9 +2428,44 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var r_opts = '';
 
     $.each(panel.rendererConfig[format], function(i, renderer){
-      r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
+      // r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
-    ul.html(r_opts);
+    // ul.html(r_opts);
+  },
+
+  // filterMatrixCellClick: function() {
+  //   var panel = this;
+  //   panel.elLk.rowContainer = this.elLk.matrixContainer.find('div.rowContainer');
+  //   panel.popupType      = "";
+  //   panel.TrackPopupType = "";
+  //   panel.xLabel         = "";
+  //   panel.yLabel         = "";
+  //   panel.xName          = "";
+  //   panel.yName          = "";
+  //   panel.boxObj         = "";
+
+  //   panel.el.find('div.filterMatrix-container div.xBoxes').off().on("click", function(e){
+  //     var x = $(this).data('track-x');
+  //     var y = $(this).data('track-y');
+
+
+
+  //   });
+  // },
+
+  buildFilterMatrixPopup: function(key) {
+    var panel = this;
+    if (key ===  undefined) return;
+    var li_html = '';
+    var ul = panel.el.find('div.track-popup._filterMatrix ul');
+    $.each(panel.filterMatrixObj[key], function(id, dimHash){
+      $.each(dimHash, function(dimVal, state) {
+        // li_html += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
+      });
+    //   r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
+    });
+    ul.html();
+
   },
 
   cellClick: function() {
@@ -2439,10 +2480,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.yName          = "";
     panel.boxObj         = "";
 
-    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off').on("click", function(e){
-      panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick').removeClass("mClick");
+    panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off, div.filterMatrix-container div.xBoxes').off().on("click", function(e){
+      panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick, div.filterMatrix-container div.xBoxes').removeClass("mClick");
       panel.trackPopup.hide();
-      panel.buildMatrixPopup($(this).data("format"));
+
+      var key = panel.yName + '_sep_' + panel.xName;
+      panel.multiDimFlag ? panel.buildFilterMatrixPopup(key) : panel.buildMatrixPopup($(this).data("format"));
 
       panel.boxObj          = $(this);
       panel.popupType       = $(this).data("popup-type"); //type of popup to use which is associated with the class name
