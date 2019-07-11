@@ -71,14 +71,13 @@ sub new_and_exec {
 
     my $runCmd = {
         _cmd        => $cmd_to_run,
-        _timeout    => $timeout,
         _purpose    => $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'",
     };
     bless $runCmd, ref($class) || $class;
 
     print STDERR "COMMAND: $flat_cmd\n" if ($debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $debug);
-    $runCmd->run();
+    $runCmd->run($timeout);
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
 
@@ -113,11 +112,6 @@ sub join_command_args {
 sub cmd {
     my ($self) = @_;
     return $self->{_cmd};
-}
-
-sub timeout {
-    my ($self) = @_;
-    return $self->{_timeout};
 }
 
 sub out {
@@ -182,9 +176,9 @@ sub _run {
 =cut
 
 sub run {
-    my ($self) = @_;
-    if ($self->timeout) {
-        $self->_run_with_timeout;
+    my ($self, $timeout) = @_;
+    if (defined $timeout) {
+        $self->_run_with_timeout($timeout);
     } else {
         $self->_run;
     }
@@ -193,13 +187,14 @@ sub run {
 
 =head2 _run_with_timeout
 
-  Description : Runs the command with a maximum allowed runtime ($self->timeout)
+  Description : Runs the command with a maximum allowed runtime
   Returntype  : None
 
 =cut
 
 sub _run_with_timeout {
     my $self = shift;
+    my $timeout = shift;
 
     ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
     my $die_text = "_____RunCommandTimeLimit_____\n";
@@ -211,7 +206,7 @@ sub _run_with_timeout {
         {
             local $SIG{__DIE__};     # turn die handler off in eval block
             local $SIG{ALRM} = sub { die $die_text };
-            alarm($self->timeout);   # set alarm
+            alarm($timeout);         # set alarm
             $self->_run();
         };
 
@@ -228,7 +223,7 @@ sub _run_with_timeout {
         # the eval returned an error
         die $@ if $@ ne $die_text;
         $self->{_exit_code} = -2;
-        $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $self->timeout);
+        $self->{_err} = "Command's runtime has exceeded the limit of $timeout seconds";
     }
 }
 
