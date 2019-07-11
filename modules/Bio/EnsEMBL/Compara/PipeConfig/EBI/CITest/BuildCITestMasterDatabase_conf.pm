@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
 
 =head1 DESCRIPTION
 
@@ -51,7 +51,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Test::BuildCitestMasterDatabase_conf -dst_host <host> -dst_port <port>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf -dst_host <host> -dst_port <port>
 
     #1. Create a new master database
     #2. Clone data regions from JSON files located in 'config_dir'
@@ -65,7 +65,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Citest::BuildCitestMasterDatabase_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf;
 
 use strict;
 use warnings;
@@ -91,6 +91,8 @@ sub default_options {
         'pipeline_name' => 'build_master',
         'work_dir'      => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('division') . '_division/' . $self->o('pipeline_name'),
         'backups_dir'   => $self->o('work_dir') . '/backups/',
+        
+        'do_clone_species' => 1,
 
         # PrepareMasterDatabaseForRelease pipeline configuration:
         'do_load_lrg_dnafrags' => 1,

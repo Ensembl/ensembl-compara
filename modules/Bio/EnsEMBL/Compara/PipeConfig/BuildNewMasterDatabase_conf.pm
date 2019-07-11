@@ -47,7 +47,7 @@ Bio::EnsEMBL::Compara::PipeConfig::BuildNewMasterDatabase_conf
     #1. Create a new master database
     #2. Populate it through PrepareMasterDatabaseForRelease pipeline
 
-    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::EBI::Citest::BuildCitestMasterDatabase_conf
+    For citest division, see Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
 
 =head1 AUTHORSHIP
 
@@ -90,11 +90,13 @@ sub default_options {
         'java_hc_db_prop' => $self->check_file_in_ensembl('ensj-healthcheck/database.defaults.properties'),
 
         'init_reg_conf' => $self->o('reg_conf'), # needed to create the new master database
-        # Parameters required for 'citest' division only
+        # Parameters required for citest division only
         'config_dir'    => undef,
         'reg_conf_tmpl' => undef,
         'dst_host'      => undef,
         'dst_port'      => undef,
+        
+        'do_clone_species' => 0,
 
         # PrepareMasterDatabaseForRelease pipeline configuration:
         'taxonomy_db'             => 'ncbi_taxonomy',
@@ -138,7 +140,8 @@ sub pipeline_wide_parameters {
         'release'       => $self->o('ensembl_release'),
         'hc_version'    => 1,
         
-        'init_reg_conf' => $self->o('init_reg_conf'),
+        'init_reg_conf'    => $self->o('init_reg_conf'),
+        'do_clone_species' => $self->o('do_clone_species'),
         
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
@@ -184,7 +187,7 @@ sub pipeline_analyses {
                 'cmd'              => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -executable mysqlimport #method_link_dump#',
             },
             -flow_into  => WHEN(
-                '#division# =~ m/citest/' => 'seed_species_to_clone',
+                'do_clone_species' => 'seed_species_to_clone',
                 ELSE 'patch_master_db'
             ),
         },
