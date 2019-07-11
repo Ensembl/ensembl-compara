@@ -64,7 +64,7 @@ sub new_and_exec {
     my $flat_cmd = ref($cmd) ? join_command_args(@$cmd) : $cmd;
     die "'use_bash_pipefail' with array-ref commands are not supported !" if $options->{'use_bash_pipefail'} && ref($cmd);
     my $use_bash_errexit = $options->{'use_bash_errexit'} // ($flat_cmd =~ /;/);
-    my $cmd_to_run = $cmd;
+    my $cmd_to_run = ref($cmd) ? $cmd : [$cmd];
     if ($options->{'use_bash_pipefail'} or $use_bash_errexit) {
         $cmd_to_run = ['bash' => ('-o' => 'errexit', $options->{'use_bash_pipefail'} ? ('-o' => 'pipefail') : (), '-c' => $flat_cmd)];
     }
@@ -73,6 +73,7 @@ sub new_and_exec {
         _cmd        => $cmd_to_run,
         _purpose    => $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'",
     };
+    $runCmd->{_pipe_stdin}  = $options->{pipe_stdin}  if $options->{pipe_stdin};
     $runCmd->{_pipe_stdout} = $options->{pipe_stdout} if $options->{pipe_stdout};
     bless $runCmd, ref($class) || $class;
 
@@ -150,13 +151,43 @@ sub die_with_log {
     die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $self->{_purpose}, $self->exit_code, $self->out, $self->err);
 }
 
-sub _run {
-    my ($self) = @_;
-    my $cmd = $self->cmd;
 
-    my $starttime = time() * 1000;
+=head2 _run_with_stdin_pipe
+
+  Description : Run the command with open3, by connecting the "pipe_stdin"
+                function to the file handle of the child's standard input.
+  Returntype  : Integer (exit code)
+
+=cut
+
+sub _run_with_stdin_pipe {
+    my ($self) = @_;
+    local *CATCHOUT = IO::File->new_tmpfile;
     local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", ref($cmd) ? @$cmd : $cmd);
+    my $pid = open3(\*CATCHIN, ">&CATCHOUT", ">&CATCHERR", @{$self->cmd});
+    $self->{_pipe_stdin}->(\*CATCHIN);
+    waitpid($pid,0);
+    my $rc = $?;
+    $self->{_out} = $self->_read_output(\*CATCHOUT);
+    $self->{_err} = $self->_read_output(\*CATCHERR);
+    return $rc;
+}
+
+
+=head2 _run_no_stdin
+
+  Description : Run the command with open3, by closing the child's standard
+                input. The standard output can be connected to the "pipe_stdout"
+                function or will be accumulated into a string (like the standard
+                error).
+  Returntype  : Integer (exit code)
+
+=cut
+
+sub _run_no_stdin {
+    my ($self) = @_;
+    local *CATCHERR = IO::File->new_tmpfile;
+    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", @{$self->cmd});
     if ($self->{_pipe_stdout}) {
         $self->{_pipe_stdout}->(\*CATCHOUT);
         $self->{_out} = '<sent to '.$self->{_pipe_stdout}.'>';
@@ -164,13 +195,32 @@ sub _run {
         $self->{_out} = $self->_read_output(\*CATCHOUT);
     }
     waitpid($pid,0);
-    $self->{_exit_code} = $?>>8;
-    if ($? && !$self->{_exit_code}) {
-        $self->{_exit_code} = 256 + $?;
-    }
+    my $rc = $?;
     $self->{_err} = $self->_read_output(\*CATCHERR);
+    return $rc;
+}
+
+
+=head2 _run_wrapper
+
+  Example     : $d->_run_wrapper();
+  Description : Wrapper around _run_with_stdin_pipe and _run_no_stdin that
+                also measures the runtime (in milliseconds) and processes
+                the return code.
+  Returntype  : None
+
+=cut
+
+sub _run_wrapper {
+    my ($self) = @_;
+
+    my $starttime = time() * 1000;
+    my $rc = $self->{_pipe_stdin} ? $self->_run_with_stdin_pipe : $self->_run_no_stdin;
+    $self->{_exit_code} = $rc >> 8;
+    if ($rc && !$self->{_exit_code}) {
+        $self->{_exit_code} = 256 + $rc;
+    }
     $self->{_runtime_msec} = int(time()*1000-$starttime);
-    return;
 }
 
 
@@ -186,7 +236,7 @@ sub run {
     if (defined $timeout) {
         $self->_run_with_timeout($timeout);
     } else {
-        $self->_run;
+        $self->_run_wrapper;
     }
 }
 
@@ -213,7 +263,7 @@ sub _run_with_timeout {
             local $SIG{__DIE__};     # turn die handler off in eval block
             local $SIG{ALRM} = sub { die $die_text };
             alarm($timeout);         # set alarm
-            $self->_run();
+            $self->_run_wrapper();
         };
 
         # Note the alarm is still active here - however we assume that

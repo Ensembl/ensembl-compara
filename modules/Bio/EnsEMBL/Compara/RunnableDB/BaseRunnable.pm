@@ -371,6 +371,23 @@ sub read_from_command {
 }
 
 
+=head2 write_to_command {
+
+Helper method to safely open a command as a pipe and write to it
+
+=cut
+
+sub write_to_command {
+    my ($self, $cmd, $write_sub, $options) = @_;
+
+    $options //= {};
+    $options->{pipe_stdin} = $write_sub;
+    $options->{die_on_failure} //= 1;
+
+    return $self->run_command($cmd, $options);
+}
+
+
 =head2 elevate_privileges
 
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection
