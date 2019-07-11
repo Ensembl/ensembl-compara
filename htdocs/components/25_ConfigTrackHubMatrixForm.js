@@ -2162,6 +2162,35 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
   },
 
+  registerFilterMatrixDropdownClickEvent: function() {
+    var panel = this;
+    $('li', panel.TrackPopupType).off().on('click', function(e) {
+
+      // Select/deslect all boxes for that dimension
+      var fcb = $(this).children('span.fancy-checkbox');
+      fcb.toggleClass('selected');
+      var clickedTrackId = $(this).data('track-id');
+      if ($(this).hasClass('all')) {
+        if (fcb.hasClass('selected')) {
+          $(this).siblings().each(function(i, sib) {
+            $(sib).children('span.fancy-checkbox').removeClass('selected').addClass('selected');
+          });
+        }
+        else {
+          $(this).siblings().each(function(i, sib) {
+            $(sib).children('span.fancy-checkbox').removeClass('selected');
+          });
+        }
+
+      }
+      else {
+
+      }
+
+    });
+  },
+
+
   // Function to show/update/delete matrix
   displayMatrix: function() {
     var panel = this;
@@ -2486,8 +2515,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if (key ===  undefined || !panel.localStoreObj.filterMatrix) return;
     var li_html = '';
     var ul = panel.el.find('div.track-popup._filterMatrix ul');
+    li_html += '<li class="all"><span class="fancy-checkbox"></span><text>All</text></li>';
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
-      li_html += '<li class="' + id + '"><span class="fancy-checkbox"></span><text>' + id + '</text></li>';
+      li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox"></span><text>' + id + '</text></li>';
     //   r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
     ul.html(li_html);
@@ -2584,6 +2614,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       panel.popupFunctionality(); //interaction inside popup
       e.stopPropagation();
+      panel.multiDimFlag && panel.registerFilterMatrixDropdownClickEvent();
     });
   },
 
