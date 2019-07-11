@@ -296,7 +296,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       finalObj.dimensions = [dimX,dimY];
       finalObj.data = {};
       finalObj.format = {};
-      panel.elLk.lookup.filterMatrix = {};
+      panel.elLk.lookup.dimensionFilter = {};
       //getting dimY data, assuming subgroup2 is always dimY
       var dimYData = {}
       $.each(Object.keys(panel.rawJSON.metadata.dimensions.y.values), function(index, value) {
@@ -336,9 +336,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               }
 
               // Populating lookup
-              panel.elLk.lookup.filterMatrix[dimkey] = panel.elLk.lookup.filterMatrix[dimkey] || {};
-              panel.elLk.lookup.filterMatrix[dimkey][fkey] = panel.elLk.lookup.filterMatrix[dimkey][fkey] || [];
-              panel.elLk.lookup.filterMatrix[dimkey][fkey].push(track.id);
+              panel.elLk.lookup.dimensionFilter[dimkey] = panel.elLk.lookup.dimensionFilter[dimkey] || {};
+              panel.elLk.lookup.dimensionFilter[dimkey][fkey] = panel.elLk.lookup.dimensionFilter[dimkey][fkey] || [];
+              panel.elLk.lookup.dimensionFilter[dimkey][fkey].push(track.id);
             }
           }
 
