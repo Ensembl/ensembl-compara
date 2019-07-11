@@ -53,8 +53,7 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Blat;
 use warnings ;
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::FeaturePair;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
