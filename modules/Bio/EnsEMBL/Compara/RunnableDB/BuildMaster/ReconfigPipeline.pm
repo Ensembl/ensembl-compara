@@ -70,7 +70,7 @@ sub fetch_input {
     my $init_reg_conf = $self->param_required('init_reg_conf');
     Bio::EnsEMBL::Registry->load_all($init_reg_conf, 0, 0, 0, "throw_if_missing");
     my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
-    my $master_db_info = " '" . $compara_db->dbc->host . "', '" . $compara_db->dbc->dbname . "' ";
+    my $master_db_info = "'" . $compara_db->dbc->host . "', '" . $compara_db->dbc->dbname . "' ";
     $self->param('master_db_info', $master_db_info);
 }
 
@@ -86,12 +86,10 @@ sub run {
     # Find the tag '<core_dbs_hash>' in the registry configuration file template
     # and replace it by the cloned core databases hash content
     my $content = $self->_slurp($reg_conf_tmpl);
-    $content =~ s/<core_dbs_hash>/$core_dbs_hash/;
+    $content =~ s/}; # TAG: <core_dbs_hash>/$core_dbs_hash};/;
     # Find the tag '<master_db_info>' in the registry configuration file
     # template and replace it by the new master database array content
-    $content =~ s/<master_db_info>/$master_db_info/;
-    # Uncomment the line where add_compara_dbs() is executed
-    $content =~ s/\#add_compara_dbs\(/add\_compara\_dbs\(/;
+    $content =~ s/'', '' ], # TAG: <master_db_info>/$master_db_info],/;
     # Modify the registry configuration file
     $self->_spurt($reg_conf, $content);
     # All cloned core databases are in the same host, so replace that

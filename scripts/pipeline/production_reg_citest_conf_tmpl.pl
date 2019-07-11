@@ -27,7 +27,7 @@ my $curr_release = 98;
 # ---------------------- TEST CORE DATABASES -----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
-my $citest_core_dbs = {<core_dbs_hash>};
+my $citest_core_dbs = {}; # TAG: <core_dbs_hash>
 
 add_citest_core_dbs( $citest_core_dbs );
 
@@ -36,7 +36,7 @@ add_citest_core_dbs( $citest_core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [<master_db_info>],
+    'compara_master' => [ '', '' ], # TAG: <master_db_info>
     # 'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     # 'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
@@ -87,7 +87,7 @@ my $compara_dbs = {
     # 'alt_allele_projection' => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_alt_allele_import_97' ],
 };
 
-#add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
 
 # ---------------------- NON-COMPARA DATABASES ---------------------------------
 
