@@ -158,6 +158,16 @@ sub exit_code {
     return $self->{_exit_code};
 }
 
+
+=head2 die_with_log
+
+  Example     : $run_command->die_with_log();
+  Description : Standard method to "die" with a message made of properties of this job. This ensures
+                consistency across runnables and pipelines
+  Returntype  : None
+
+=cut
+
 sub die_with_log {
     my ($self) = @_;
     die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $self->{_purpose}, $self->exit_code, $self->out, $self->err);
@@ -180,6 +190,14 @@ sub _run {
     $self->{_runtime_msec} = int(time()*1000-$starttime);
     return;
 }
+
+
+=head2 run
+
+  Description : High-level function to run the command
+  Returntype  : None
+
+=cut
 
 sub run {
     my ($self) = @_;
@@ -219,6 +237,15 @@ sub run {
         $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $timeout);
     }
 }
+
+
+=head2 _read_output
+
+  Argument[1] : $fh file handle
+  Description : Read the entire content of the file, by first rewinding back to its beginning
+  Returntype  : String
+
+=cut
 
 sub _read_output {
     my ($self, $fh) = @_;
