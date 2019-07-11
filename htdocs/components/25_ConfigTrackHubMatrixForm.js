@@ -40,6 +40,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.dy        = {};
     this.elLk.dy.container = $('div#dy-content', this.el);
 
+    this.elLk.other_dimensions = {};
+
     this.elLk.buttonTab       = this.el.find("div.track-tab");
     this.elLk.breadcrumb      = this.el.find("div.large-breadcrumbs li");
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
@@ -322,6 +324,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               filterObj[fkey] = filterObj[fkey] || {};
               filterObj[fkey][track.id] = filterObj[fkey][track.id] || {};
               filterObj[fkey][track.id][dimension + '_sep_' + track.subGroups[dimension]] = track.display === "off" ? "off" : "on";
+
+              if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["other_dimensions"]) || panel.initialLoad )) {   
+                updateStore = true;
+                if($.isEmptyObject(panel.localStoreObj["other_dimensions"])) {
+                  panel.localStoreObj["other_dimensions"] = {};
+                  panel.localStoreObj["other_dimensions"][dimension + '_sep_' + track.subGroups[dimension]] = 1;
+                }else {
+                  panel.localStoreObj["other_dimensions"][dimension + '_sep_' + track.subGroups[dimension]] = 1;
+                }
+              }
             }
           }
 
@@ -2067,14 +2079,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     var html = '';
     $.each(availableFilters, function(dim, values) {
+      var dimSelected = "";
       html ='\
           <div class="filterMatrix-content">\
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>\
             <div class="sub-result-link">' + dim + '</div>\
             <ul class="filterMatrix-list">';
-      html += '<li class="all" data-dim-val="'+ dim +'"><span class="fancy-checkbox selected"></span><text>All</text></li>';
+      html += '<li class="all" data-dim-val="'+ dim +'"><span class="fancy-checkbox"></span><text>All</text></li>';
       $.each(values, function(i, val) {
-        html += '<li data-dim-val="'+ val +'""><span class="fancy-checkbox selected"></span><text>' + val + '</text></li>';
+        var dimKey = dim+"_sep_"+val;
+        dimSelected = panel.localStoreObj["other_dimensions"][dimKey] ? "selected" : "";
+        html += '<li data-dim-val="'+ val +'""><span class="fancy-checkbox '+dimKey+' '+dimSelected+'"></span><text>' + val + '</text></li>';
       });
       html += '</ul></div>';
     });
