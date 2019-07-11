@@ -187,7 +187,7 @@ sub pipeline_analyses {
                 'cmd'              => 'db_cmd.pl -reg_conf #init_reg_conf# -reg_type compara -reg_alias #master_db# -executable mysqlimport #method_link_dump#',
             },
             -flow_into  => WHEN(
-                'do_clone_species' => 'seed_species_to_clone',
+                '#do_clone_species#' => 'seed_species_to_clone',
                 ELSE 'patch_master_db'
             ),
         },
