@@ -162,11 +162,8 @@ sub run_cdhit {
     my $sequences_to_keep_file = "$tmp_dir/new_fasta.fasta";
 
     #Run CDHit:
-    my $cmd = "$cdhit_exe -i $aln_file -o $sequences_to_keep_file -c $cdhit_threshold -M $cdhit_mem -T $cdhit_num_threads";
-    print "CDHit COMMAND LINE:$cmd\n" if $self->debug;
-
-    #Die in case of any problems with CDHit.
-    system($cmd) == 0 or die "Error while running CDHit command: $cmd";
+    my $cmd = [$cdhit_exe, -i => $aln_file, -o => $sequences_to_keep_file, -c => $cdhit_threshold, -M => $cdhit_mem, -T => $cdhit_num_threads];
+    $self->run_command($cmd, { die_on_failure => 1 });
 
     #List of sequences to include. Sequences that are in the CDHit output:
     my %sequences_to_keep;

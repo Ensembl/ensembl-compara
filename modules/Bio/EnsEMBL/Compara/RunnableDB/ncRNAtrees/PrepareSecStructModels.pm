@@ -196,7 +196,7 @@ sub _run_bootstrap_raxml {
   # Unlink previous files
   my $temp_dir = $self->worker_temp_directory;
   my $temp_regexp = $temp_dir."*$raxml_tag.*";
-  system("rm -f $temp_regexp");
+  $self->run_command("rm -f $temp_regexp");
 
     my $bootstrap_num = 10;
 
@@ -253,7 +253,7 @@ sub _run_bootstrap_raxml {
 
   # Unlink run files
   $temp_regexp = $temp_dir."*$raxml_tag.$bootstrap_num.RUN.*";
-  system("rm -f $temp_regexp");
+  $self->run_command("rm -f $temp_regexp");
   return 1;
 }
 

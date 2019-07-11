@@ -115,7 +115,7 @@ sub fetch_input {
         # Target species are all mixed
         print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
         # Loads the files into memory
-        system sprintf('cat %s* > /dev/null', $self->param('blast_db'));
+        $self->run_command(sprintf('cat %s* > /dev/null', $self->param('blast_db')), { die_on_failure => 1 });
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
 
         #Depending on the amount of sequences and blast version.
