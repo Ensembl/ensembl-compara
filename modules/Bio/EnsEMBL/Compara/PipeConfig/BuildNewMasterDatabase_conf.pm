@@ -175,7 +175,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'sql' => 'INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "division", "#division#")',
-                'cmd' => ['db_cmd.pl', -reg_conf => '#init_reg_conf#', -reg_type => 'compara', -reg_alias => '#master_db#', sql => '#sql#']
+                'cmd' => ['db_cmd.pl', -reg_conf => '#init_reg_conf#', -reg_type => 'compara', -reg_alias => '#master_db#', -sql => '#sql#']
             },
             -flow_into  => ['init_method_link_table'],
         },
