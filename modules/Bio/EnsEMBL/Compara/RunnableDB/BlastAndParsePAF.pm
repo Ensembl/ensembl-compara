@@ -116,8 +116,6 @@ sub fetch_input {
         print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
         # Loads the files into memory
         system sprintf('cat %s* > /dev/null', $self->param('blast_db'));
-        #my $tmp_blast_db = $self->worker_temp_directory.(basename $self->param('blast_db'));
-        #system sprintf('cp -a %s* %s', $self->param('blast_db'), $self->worker_temp_directory);
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
 
         #Depending on the amount of sequences and blast version.
