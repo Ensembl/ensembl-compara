@@ -84,6 +84,10 @@ sub fetch_input {
 	push @$cmd, '--dbname', $self->param('compara_db');
     }
 
+    if ($self->param('ancestral_db')) {
+	push @$cmd, '--ancestral_db', $self->param('ancestral_db');
+    }
+
     if ($self->param('registry')) {
 	push @$cmd, '--reg_conf', $self->param('registry');
     }
