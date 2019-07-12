@@ -327,8 +327,19 @@ sub run_infernal {
   # These two errors should be taken care of by the sequence filtering
   #  - cm_from_guide(), it's illegal to construct a CM with 0 MATL, MATR and BIF nodes.
   #  - Calculating QDBs, Z got insanely large (> 1000*clen)
-  # and we now expect cmbuild not to fail
-  $self->run_command($cmd, { die_on_failure => 1 });
+  my $run_cmd = $self->run_command($cmd);
+
+  if ($run_cmd->exit_code) {
+      if ($run_cmd->err =~ /Error: cm_TrPostCodeHB.. using EL state to emit residue .*, but ELs are turned off/) {
+          if (defined $self->param('infernal_mxsize') && ($self->input_job->retry_count >= 1)) {
+              # We've already tried using --mxsize. Don't know what else to do
+              # Let's use the previous alignment and skip the refined profile
+              $self->param('stk_output', $stk_output);
+              return 0;
+          }
+      }
+      $run_cmd->die_with_log;
+  }
 
   $self->param('stk_output', $refined_stk_output);
   $self->param('refined_profile', $refined_profile);
