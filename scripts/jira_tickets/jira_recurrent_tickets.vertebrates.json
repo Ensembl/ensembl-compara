@@ -117,19 +117,9 @@
          },
          {
             "component": "Production tasks",
-            "summary": "Protein-trees WGA Orthology QC",
-            "name_on_graph": "Protein-trees WGA Orthology QC"
-         },
-         {
-            "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run ncRNA-tree pipeline",
             "name_on_graph": "ncRNA-trees:Default vertebrates"
-         },
-         {
-            "component": "Production tasks",
-            "summary": "ncRNA-trees WGA Orthology QC",
-            "name_on_graph": "ncRNA-trees WGA Orthology QC"
          },
          {
             "component": "Production tasks",
@@ -160,6 +150,12 @@
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Reindex murinae gene trees",
             "name_on_graph": "Gene-tree reindexing:Murinae"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Reindex pig gene trees",
+            "name_on_graph": "Gene-tree reindexing:Sus"
          },
          {
             "component": "Production tasks",
@@ -279,6 +275,67 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "Protein-trees WGA Orthology QC",
+            "name_on_graph": "Protein-trees WGA Orthology QC:Default vertebrates"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "Protein-trees WGA Orthology QC for mouse strains",
+            "name_on_graph": "Protein-trees WGA Orthology QC:Murinae"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "Protein-trees WGA Orthology QC for pig strains",
+            "name_on_graph": "Protein-trees WGA Orthology QC:Sus"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "ncRNA-trees WGA Orthology QC",
+            "name_on_graph": "ncRNA-trees WGA Orthology QC:Default vertebrates"
+         },
+         {
+            "component": "Production tasks",
+            "summary": "ncRNA-trees WGA Orthology QC for pig strains",
+            "name_on_graph": "ncRNA-trees WGA Orthology QC:Sus"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run HighConfidenceOrthologs pipeline for protein-coding genes",
+            "name_on_graph": "Protein-trees High Confidence Orthologues:Default vertebrates"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run mouse strains HighConfidenceOrthologs pipeline for protein-coding genes",
+            "name_on_graph": "Protein-trees High Confidence Orthologues:Murinae"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run pig strains HighConfidenceOrthologs pipeline for protein-coding genes",
+            "name_on_graph": "Protein-trees High Confidence Orthologues:Sus"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run HighConfidenceOrthologs pipeline for ncRNAs",
+            "name_on_graph": "ncRNA-trees High Confidence Orthologues:Default vertebrates"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run mouse strains HighConfidenceOrthologs pipeline for ncRNAs",
+            "name_on_graph": "ncRNA-trees High Confidence Orthologues:Murinae"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run pig strains HighConfidenceOrthologs pipeline for ncRNAs",
+            "name_on_graph": "ncRNA-trees High Confidence Orthologues:Sus"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
@@ -305,13 +362,6 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+ancestral+database",
             "summary": "Build a new ancestral sequence core database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Run HighConfidenceOrthologs pipeline",
-            "name_on_graph": "HighConfidenceOrthologs"
          },
          {
             "assignee": "<RelCo>",

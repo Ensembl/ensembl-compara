@@ -3,17 +3,18 @@ digraph {
     "Patches against other species";
 
     "Genome dumps" -> "Species-tree";
-    "Species-tree" -> { "EPO", "Mercator Pecan", "Protein-trees" };
+    "Species-tree" -> { "EPO", "EPO-2X", "Mercator Pecan", "Protein-trees" };
     {"EPO", "All LastZ"} -> "EPO-2X";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Families", "Gene-tree reindexing", "Alt-alleles import" };
     "Protein-trees" -> "Protein-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
     "ncRNA-trees" -> "ncRNA-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
     {"All LastZ", "EPO"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
-    {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"} -> "HighConfidenceOrthologs";
+    "Protein-trees WGA Orthology QC" -> "Protein-trees High Confidence Orthologues";
+    "ncRNA-trees WGA Orthology QC" -> "ncRNA-trees High Confidence Orthologues";
     "LastZ" -> "All LastZ" -> "Synteny";
 
-    "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR", headport="murinae:w", tailport="murinae:s"];
-    "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, fontsize="8", label="XOR", headport="murinae:e", tailport="murinae:s"];
+    "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
+    "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "EPO" -> "EPO" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Primates:e", tailport="Mammals:e"];
     "EPO" -> "Age of Base" [style="dashed", headport="Human:e", tailport="Mammals:w"];
     "EPO" -> "Ancestral Alleles" [style="dashed", headport="Vertebrates:w", tailport="Primates:w"];

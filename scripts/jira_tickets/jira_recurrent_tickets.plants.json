@@ -113,6 +113,13 @@
             "component": "Production tasks",
             "summary": "Protein-trees WGA Orthology QC",
             "name_on_graph": "Protein-trees WGA Orthology QC"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "summary": "Run HighConfidenceOrthologs pipeline",
+            "name_on_graph": "Protein-trees High Confidence Orthologues"
          }
       ],
       "summary": "<Division> Release <version> Production pipelines"
@@ -133,12 +140,6 @@
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
             "name_on_graph": "All alignments for WGA Orthology QC"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Run HighConfidenceOrthologs pipeline"
          },
          {
             "assignee": "<RelCo>",

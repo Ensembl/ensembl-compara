@@ -1785,6 +1785,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft_huge',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
+                'mafft_exe'                  => $self->o('mafft_exe'),
                 'mafft_threads'              => 8,
                 'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
             },
@@ -1821,7 +1822,7 @@ sub core_pipeline_analyses {
                 '!#is_already_supertree# and #use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'aln_filtering_tagging',
             ),
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },

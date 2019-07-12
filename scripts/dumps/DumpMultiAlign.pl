@@ -358,6 +358,7 @@ my $reg = "Bio::EnsEMBL::Registry";
 my $reg_conf;
 my $dbs = ['mysql://anonymous@ensembldb.ensembl.org'];
 my $dbname = "Multi";
+my $ancestral_db;
 my $compara_url;
 my $species;
 my $skip_species;
@@ -388,6 +389,7 @@ GetOptions(
     "reg_conf=s" => \$reg_conf,
     "db=s@" => \$dbs,
     "dbname=s" => \$dbname,
+    "ancestral_db=s" => \$ancestral_db,
     "compara_url=s" => \$compara_url,
     "species=s" => \$species,
     "skip_species=s" => \$skip_species,
@@ -439,6 +441,22 @@ if ($compara_url) {
 }
 
 warn "Connecting to compara_db ", $compara_dba->dbc->dbname, "\n" if $debug;
+
+# Ancestral database
+if ($ancestral_db) {
+    if ($ancestral_db =~ /^mysql:\/\//) {
+        throw("The -ancestral_db option doesn't yet support database URLs");
+    }
+    if (!$reg->get_DBAdaptor($ancestral_db, 'core')) {
+        throw("Cannot find '$ancestral_db' in the Registry");
+    }
+    if ($reg->get_DBAdaptor('ancestral_sequences', 'core')) {
+        warn "Overriding the 'ancestral_sequences' Registry entry";
+        $reg->remove_DBAdaptor('ancestral_sequences', 'core');
+    }
+    $reg->add_alias($ancestral_db, 'ancestral_sequences');
+    warn "Will connect to the ancestral database '$ancestral_db'\n";
+}
 
 # Getting Bio::EnsEMBL::Compara::MethodLinkSpeciesSet obejct
 my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();

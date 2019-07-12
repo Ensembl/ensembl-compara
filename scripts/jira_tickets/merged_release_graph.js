@@ -95,7 +95,7 @@ function process_tickets(json) {
 
 
 // fetch ticket status from REST API
-var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+fixVersion="Release+__RELEASE__"+AND+component+IN+("Relco+tasks","Production+tasks")+AND+labels+IS+NOT+EMPTY+ORDER+BY+created+ASC,id+ASC';
+var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+fixVersion="Release+__RELEASE__"+AND+component+IN+("Relco+tasks","Production+tasks")+AND+labels+IS+NOT+EMPTY+ORDER+BY+created+ASC,id+ASC&maxResults=100';
 var release = $.urlParam("release");
 var pipelines = {};
 $('#progress').text("Loading e" + release + " graph");

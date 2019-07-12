@@ -83,7 +83,7 @@ my $compara_dbs = {
     'compara_members'       => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_load_members_98' ],
     #'compara_ptrees'        => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
     'ptrees_prev'           => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
-    #'compara_families'      => [ 'mysql-ens-compara-prod-7', 'muffato_ensembl_families_97' ],
+    'compara_families'      => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_families_98' ],
     #'compara_nctrees'       => [ 'mysql-ens-compara-prod-6', 'muffato_default_vertebrates_ncrna_trees_97' ],
     'nctrees_prev'           => [ 'mysql-ens-compara-prod-6', 'muffato_default_vertebrates_ncrna_trees_97' ],
     'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-2', 'carlac_murinae_protein_reindexed_trees_97' ],
@@ -92,19 +92,22 @@ my $compara_dbs = {
     #'murinae_nctrees'       => [ 'mysql-ens-compara-prod-4', 'carlac_murinae_ncrna_reindexed_trees_97' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch1' ],
-    #'lastz_batch_2'    => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_lastz_batch2' ],
-    #'lastz_batch_3'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch3_97' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_lastz_batch_1_98' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch2_98' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-1', 'mateus_vertebrates_lastz_batch_3_98' ],
     'lastz_batch_4'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch_4_98' ],
     'lastz_batch_5'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_5_98' ],
+    'lastz_batch_6'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch6_98' ],
+    'lastz_batch_7'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch7_98' ],
+    'lastz_batch_8'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch_8_98' ],
     'lastz_batch_9'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_9_98' ],
 
     # EPO dbs
     ## mammals
-    #'mammals_epo'         => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],
-    #'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_96' ],
+    'mammals_epo'         => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
+    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],
     #'mammals_epo_low'     => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_low_coverage_97' ],
-    #'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
     #'sauropsids_epo'         => [ 'mysql-ens-compara-prod-4', 'carlac_sauropsids_epo_96' ],
@@ -119,10 +122,10 @@ my $compara_dbs = {
     #'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_96' ],
 
     ## primates
-    #'primates_epo'         => [ 'mysql-ens-compara-prod-6', 'waakanni_primates_epo_96' ],
-    #'primates_epo_prev'   => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_96' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
+    'primates_epo'         => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],
+    'primates_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     #'primates_epo_low'     => [ 'mysql-ens-compara-prod-3', 'muffato_primates_epo_low_coverage_96' ],
-    #'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
     #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-8', 'muffato_amniotes_mercator_pecan_97' ],

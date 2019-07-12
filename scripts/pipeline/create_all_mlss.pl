@@ -376,10 +376,10 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
         my $method2 = $compara_dba->get_MethodAdaptor->fetch_by_type($2);
         my $species_set2 = make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs);
         my @good_gdbs = grep {$_->is_good_for_alignment} @{$species_set2->genome_dbs};
-        if (scalar(@good_gdbs) == 0) {
-            throw(sprintf('None of the genomes of the "%s" set are "good for alignment". Only specify one method: %s or %s', $species_set2->name, $method1->type, $method2->type));
+        if (scalar(@good_gdbs) < 3) {
+            throw(sprintf('Only %d "good for alignment" genomes in the "%s" set. Need 3 or more for %s.', scalar(@good_gdbs), $species_set2->name, $method1->type));
         } elsif (scalar(@good_gdbs) == scalar(@{$species_set2->genome_dbs})) {
-            throw(sprintf('All the genomes of the "%s" set are "good for alignment". Only specify one method: %s or %s', $species_set2->name, $method1->type, $method2->type));
+            throw(sprintf('All the genomes of the "%s" set are "good for alignment". No need to require %s', $species_set2->name, $method2->type));
         }
         my $species_set1 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set(\@good_gdbs, $species_set2->name);
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method1, $species_set1) };
