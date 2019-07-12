@@ -1785,6 +1785,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'mafft_huge',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
+                'mafft_exe'                  => $self->o('mafft_exe'),
                 'mafft_threads'              => 8,
                 'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
             },
