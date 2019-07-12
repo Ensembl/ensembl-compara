@@ -135,7 +135,7 @@ sub executable_locations {
         'ktreedist_exe'             => $self->check_exe_in_cellar('ktreedist/1.0.0/bin/Ktreedist.pl'),
         'lastz_exe'                 => $self->check_exe_in_cellar('lastz/1.04.00/bin/lastz'),
         'lavToAxt_exe'              => $self->check_exe_in_cellar('kent/v335_1/bin/lavToAxt'),
-        'mafft_exe'                 => '/homes/mateus/bin/mafft',
+        'mafft_exe'                 => $self->check_exe_in_cellar('mafft/7.427/bin/mafft'),
         'mash_exe'                  => $self->check_exe_in_cellar('mash/2.0/bin/mash'),
         'mcl_bin_dir'               => $self->check_dir_in_cellar('mcl/14-137/bin'),
         'mcoffee_home'              => $self->check_dir_in_cellar('t-coffee/9.03.r1336_3'),
