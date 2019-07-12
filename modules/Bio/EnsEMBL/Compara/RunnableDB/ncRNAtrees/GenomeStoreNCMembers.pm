@@ -294,7 +294,9 @@ sub _store_seq_member_projection {
     if (@proj_attrib) {
         my $parent_name = $proj_attrib[0]->value;
         $parent_name =~ s/\.\d+$//;   # strip the version out
-        $self->compara_dba->dbc->do('INSERT INTO seq_member_projection_stable_id (target_seq_member_id, source_stable_id) VALUES (?,?)', undef, $seq_member->dbID, $parent_name);
+        $self->compara_dba->dbc->do('REPLACE INTO seq_member_projection_stable_id (target_seq_member_id, source_stable_id) VALUES (?,?)', undef, $seq_member->dbID, $parent_name);
+    } else {
+        $self->compara_dba->dbc->do('DELETE FROM seq_member_projection_stable_id WHERE target_seq_member_id = ?', undef, $seq_member->dbID);
     }
 }
 
