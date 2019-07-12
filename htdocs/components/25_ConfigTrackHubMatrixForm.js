@@ -2020,7 +2020,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
                       panel.localStoreObj["filterMatrix"][storeKey]["data"] = panel.localStoreObj["filterMatrix"][storeKey]["data"] || {};
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] = panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] || {};
-                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = "on";
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = state;
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["show"] = tracks["show"];
   
                       // //setting count for all selection section
@@ -2517,7 +2517,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var ul = panel.el.find('div.track-popup._filterMatrix ul');
     li_html += '<li class="all"><span class="fancy-checkbox"></span><text>All</text></li>';
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
-      li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox"></span><text>' + id + '</text></li>';
+      var selected = hash.state === "on" ? "selected" : "";
+      if(hash.show === 1) { 
+        li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'"></span><text>' + id + '</text></li>'; 
+      }
     //   r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
     ul.html(li_html);
