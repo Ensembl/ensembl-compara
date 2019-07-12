@@ -6,87 +6,62 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
+            "summary": "Patch the reused databases"
+         }
+      ],
+      "summary": "<Division> Release <version> Relco setup"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Registry Configuration file"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
-            "summary": "Patch the reused databases"
-         }
-      ],
-      "summary": "<Division> Release <version> Setup"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database",
-      "subtasks": [{
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "summary": "Backup the master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database#PreparationoftheMasterdatabase-2.Patchthedatabase",
-            "summary": "Patch the master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/NCBI+Taxonomy+data",
-            "summary": "Import the NCBI taxonomy"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Coredatabasesmirror",
+            "summary": "Copy the core databases"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141",
-            "summary": "Add new genomes to the master and create the collection and MethodLinkSpeciesSets"
+            "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Preparation+of+the+Master+database#PreparationoftheMasterdatabase-6.Healthcheckthemasterdatabase",
-            "summary": "Healthcheck the master database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "summary": "Final backup of the master database"
-         }
-      ],
-      "summary": "<Division> Release <version> Master database"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
-      "subtasks": [{
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-LastZbatching",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-LastZbatching",
             "summary": "Prepare the LastZ batches"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Members",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Genomedumps",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Species-tree",
-            "summary": "Build the species-tree",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree",
+            "summary": "Import the species-tree",
             "name_on_graph": "Species-tree"
          }
       ],
-      "summary": "<Division> Release <version> Production preprocessing"
+      "summary": "<Division> Release <version> Production setup"
    },
    {
       "assignee": "<RelCo>",
