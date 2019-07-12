@@ -6,12 +6,6 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
-            "summary": "Declaration of Intentions"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Registry Configuration file"
          },
          {
@@ -19,6 +13,11 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
             "summary": "Patch the reused databases"
+         },
+         {
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror",
+            "summary": "Copy the core databases"
          }
       ],
       "summary": "<Division> Release <version> Setup"
@@ -47,7 +46,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+new+genomes+to+the+master+database+and+create+the+collections+and+mlss_ids",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141",
             "summary": "Add new genomes to the master and create the collection and MethodLinkSpeciesSets"
          },
          {
@@ -75,11 +74,6 @@
       "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing",
       "subtasks": [{
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-Coredatabasesmirror",
-            "summary": "Copy the core databases"
-         },
-         {
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+preprocessing#Productionpreprocessing-LastZbatching",
             "summary": "Prepare the LastZ batches"
@@ -146,8 +140,20 @@
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
-            "summary": "Run mouse strain protein tree pipeline",
+            "summary": "Run mouse strains protein tree pipeline",
             "name_on_graph": "Protein-trees:Murinae"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run pig strains ncRNA pipeline",
+            "name_on_graph": "ncRNA-trees:Sus"
+         },
+         {
+            "component": "Production tasks",
+            "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
+            "summary": "Run pig strains protein tree pipeline",
+            "name_on_graph": "Protein-trees:Sus"
          },
          {
             "component": "Production tasks",
@@ -304,7 +310,8 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Run HighConfidenceOrthologs pipeline"
+            "summary": "Run HighConfidenceOrthologs pipeline",
+            "name_on_graph": "HighConfidenceOrthologs"
          },
          {
             "assignee": "<RelCo>",

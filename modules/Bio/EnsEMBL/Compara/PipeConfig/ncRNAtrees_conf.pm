@@ -358,7 +358,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'insert_member_projections',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::InsertMemberProjections',
             -parameters => {
-                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', ],
+                'source_species_names'  => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
             },
         },
 
@@ -455,8 +455,28 @@ sub core_pipeline_analyses {
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
-            -flow_into          => [ 'cluster_qc_factory' ],
-            -rc_name            => '500Mb_job',
+            # -flow_into          => [ 'cluster_qc_factory' ],
+            -flow_into => WHEN(
+                '#ref_ortholog_db#' => 'check_strains_cluster_factory',
+                ELSE 'cluster_qc_factory',
+            ),
+            -rc_name => '500Mb_job',
+        },
+        
+        {   -logic_name => 'check_strains_cluster_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
+            },
+            -flow_into  => {
+                '2->A' => [ 'cleanup_strains_clusters' ],
+                'A->1' => [ 'cluster_qc_factory' ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+        
+        {   -logic_name => 'cleanup_strains_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
         },
 
 # -------------------------------------------------[build trees]------------------------------------------------------------------
@@ -623,6 +643,7 @@ sub core_pipeline_analyses {
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
+                -rc_name            => '1Gb_job',
                 -flow_into     => {
                                    -1 => [ 'other_paralogs_himem' ],
                                    2 => [ 'tree_backup' ],
@@ -637,6 +658,7 @@ sub core_pipeline_analyses {
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
+                -rc_name            => '4Gb_job',
                 -flow_into     => {
                                    2 => [ 'tree_backup' ],
                                    3 => { 'other_paralogs_himem' => INPUT_PLUS },
@@ -980,6 +1002,7 @@ sub core_pipeline_analyses {
             -parameters => {
                             'tag_split_genes'   => 0,
             },
+            -rc_name    => '1Gb_job',
             -flow_into  => {
                 1 => [ 'hc_tree_homologies' ],
                 -1 => [ 'orthotree_himem' ],
@@ -993,7 +1016,7 @@ sub core_pipeline_analyses {
                             'tag_split_genes'   => 0,
             },
             -flow_into  => [ 'hc_tree_homologies' ],
-           -rc_name => '1Gb_job',
+            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name    => 'ktreedist',
@@ -1093,4 +1116,3 @@ sub core_pipeline_analyses {
 }
 
 1;
-

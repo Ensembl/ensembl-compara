@@ -107,6 +107,7 @@ sub fetch_input {
 
 ### !! Struct files are not used in this first tree!!
     # But calling _dumpStructToWorkdir helps detecting problematic ss_cons strings
+    $self->cleanup_worker_temp_directory;
     $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree));
     $self->param('struct_aln', $self->_dumpStructToWorkdir($nc_tree));
 }

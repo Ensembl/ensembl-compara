@@ -281,5 +281,22 @@ sub clear_caches {
 }
 
 
+=head2 get_division
+
+  Example     : $dba->get_division();
+  Returntype  : String
+  Description : Returns the Compara division for the given DBAdaptor.
+  Exceptions  : None
+
+=cut
+
+sub get_division {
+    my ($self) = @_;
+    my $div_sql = "SELECT meta_value FROM meta WHERE meta_key = 'division'";
+    my $division = $self->dbc->sql_helper()->execute_single_result(-SQL => $div_sql);
+    return $division;
+}
+
+
 1;
 

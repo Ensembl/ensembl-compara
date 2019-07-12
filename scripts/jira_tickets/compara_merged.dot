@@ -9,6 +9,7 @@ digraph {
     "Protein-trees" -> "Protein-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
     "ncRNA-trees" -> "ncRNA-trees WGA Orthology QC" [fontsize="8", label="Orthologues and\nhomology_id mapping\nonly"];
     {"All LastZ", "EPO"} -> "All alignments for WGA Orthology QC" -> {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"};
+    {"Protein-trees WGA Orthology QC", "ncRNA-trees WGA Orthology QC"} -> "HighConfidenceOrthologs";
     "LastZ" -> "All LastZ" -> "Synteny";
 
     "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR", headport="murinae:w", tailport="murinae:s"];

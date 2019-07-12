@@ -52,19 +52,13 @@ use Carp;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
-# Default values for the parameters used in this Runnable
-# Make sure the sub-classes import this with $self->SUPER::param_defaults() !
-sub param_defaults {
-    return {
-        'master_password'       => undef,   # Will default to $ENSADMIN_PSW
-    }
-}
 
 
 =head2 compara_dba
@@ -339,8 +333,6 @@ sub run_command {
   Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection
   Example     : $self->elevate_privileges();
   Description : Upgrades the DBConnection's user to "ensadmin" if it is on "ensro".
-                it needs the ENSADMIN_PSW environment variable to be defined, or the
-                parameter 'master_password' otherwise
   Returntype  : None
   Caller      : internal
 
@@ -351,10 +343,8 @@ sub elevate_privileges {
     my $dbc = shift;
 
     if ($dbc->username eq 'ensro') {
-        my $new_password = $self->param('master_password') || $ENV{ENSADMIN_PSW};
-        $self->throw("Cannot guess the password for 'ensadmin'\n") unless $new_password;
-        $dbc->username('ensadmin');
-        $dbc->password($new_password);
+        $dbc->username(Bio::EnsEMBL::Compara::Utils::Registry::get_rw_user($dbc->host));
+        $dbc->password(Bio::EnsEMBL::Compara::Utils::Registry::get_rw_pass($dbc->host));
         $dbc->reconnect();
     }
 }

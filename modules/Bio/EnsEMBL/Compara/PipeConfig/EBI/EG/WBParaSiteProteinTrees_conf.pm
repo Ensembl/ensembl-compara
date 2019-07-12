@@ -119,6 +119,14 @@ sub default_options {
       'master_db' => '',
 
       exclude_gene_analysis => {  'macrostomum_lignano_prjna284736' =>  ['mlignano_schatz_gene_bad']  },
+      
+      'mapped_gene_ratio_per_taxon' => {
+          '2759'   => 0.25, #eukaryotes, 
+          '119089' => 0.5, # Chromadorea, i.e. nematodes that are not clade I
+          '6243'   => 0.65, # Clade V nematodes
+          '6199'   => 0.65, # Tapeworms
+          '6179'   => 0.65, # Flukes
+      },
 
       ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
       ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs

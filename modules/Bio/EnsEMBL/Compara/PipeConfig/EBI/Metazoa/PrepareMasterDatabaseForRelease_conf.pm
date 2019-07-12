@@ -18,7 +18,6 @@ limitations under the License.
 =cut
 
 
-
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
@@ -29,15 +28,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::PrepareMasterDatabaseForRelease_conf
 
 =head1 DESCRIPTION
 
-This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+    Prepare master database for next release
+
+
+=head1 SYNOPSIS
+
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::PrepareMasterDatabaseForRelease_conf
 
 =head1 AUTHORSHIP
 
@@ -45,32 +45,26 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
-
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Metazoa::PrepareMasterDatabaseForRelease_conf;
+
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf');
+
+use Bio::EnsEMBL::Hive::Version 2.4;
+
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+use base ('Bio::EnsEMBL::Compara::PipeConfig::PrepareMasterDatabaseForRelease_conf');
 
 sub default_options {
     my ($self) = @_;
 
     return {
-            %{$self->SUPER::default_options},
+        %{$self->SUPER::default_options},   # inherit the generic ones
 
-            'work_dir'      => $self->o('pipeline_dir'),
-
-            'binary_species_tree_input_file' => $self->o('binary_species_tree'),
-            
-            'master_db'   => 'compara_master',
-            'member_db'   => 'compara_members',
-            'prev_rel_db' => 'nctrees_prev',
-            'epo_db'      => 'compara_prev',
-           };
+        'division' => 'metazoa',
+    };
 }
 
 1;
-

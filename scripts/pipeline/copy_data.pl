@@ -324,6 +324,15 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #And their tags
+  # NOTE: species_tree_node_tag is the only table that doesn't have a
+  # UNIQUE KEY. This means that multiple runs of copy_data.pl will insert
+  # the same rows multiple times. First cleanup any existing data
+  $to_dbc->do('DELETE stnt' .
+            " FROM species_tree_node stn" .
+            " JOIN species_tree_node_tag stnt USING (node_id)" .
+            " JOIN species_tree_root str using(root_id)" .
+            " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
+
   copy_data($from_dbc, $to_dbc,
             "species_tree_node_tag",
             "SELECT stnt.* " .

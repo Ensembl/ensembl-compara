@@ -47,6 +47,7 @@ sub fetch_input {
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->param('gene_tree', $nc_tree);
     $self->throw("tree with id $nc_tree_id is undefined") unless (defined $nc_tree);
+    $self->cleanup_worker_temp_directory;
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
     # Autovivification

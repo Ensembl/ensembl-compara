@@ -310,7 +310,19 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-analysis_capacity  => 700,
+                -flow_into => {
+                    -1 => [ 'gerp_himem'], #retry with more memory
+                },
 		-rc_name => '2Gb_job',
+	    },
+	    {   -logic_name => 'gerp_himem',
+		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
+		-parameters => {
+				'window_sizes' => $self->o('gerp_window_sizes'),
+				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
+			       },
+		-analysis_capacity  => 700,
+		-rc_name => '4Gb_job',
 	    },
 
 # ---------------------------------------------------[Delete base alignment]-----------------------------------------------------
@@ -404,7 +416,7 @@ sub pipeline_analyses {
             -parameters => {
                 'master_db'     => $self->o('master_db'),
             },
-            -flow_into  => [ 'multiplealigner_stats_factory' ],
+            -flow_into  => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },

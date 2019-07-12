@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016-2019] EMBL-European Bioinformatics Institute
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,12 +26,11 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::ConfigRegistry;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-my $curr_release = 97;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::Registry;
+
+my $curr_release = 98;
 my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
@@ -69,62 +68,30 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_44_97' ],
-    'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_43_96' ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_45_98' ],
+    'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_44_97' ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'mateus_plants_load_members_97'  ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'mateus_default_plants_protein_trees_97' ],
-    'ptrees_prev'      => [ 'mysql-ens-compara-prod-7', 'waakanni_plants_protein_trees_96' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_load_members_98'  ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-5', 'jalvarez_default_plants_protein_trees_98' ],
+    'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'mateus_default_plants_protein_trees_97' ],
 
     # LASTZ dbs
-    'lastz' => [ 'mysql-ens-compara-prod-8', 'mateus_plants_lastz_97' ],
+    'lastz' => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_lastz_98' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'mateus_synteny_plants_44_97' ],
-}; 
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'jalvarez_synteny_plants_45_98' ],
+};
 
-add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # ----------------------NON-COMPARA DATABASES------------------------
 
 # NCBI taxonomy database (also maintained by production team):
-Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
-    -host => 'mysql-ens-sta-1',
-    -user => 'ensro',
-    -port => 4519,
-    -group => 'taxonomy',
-    -species => 'ncbi_taxonomy',
-    -dbname => 'ncbi_taxonomy',
-);
+Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
+        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+    });
 
 # -------------------------------------------------------------------
-
-sub add_compara_dbs {
-    my $compara_dbs = shift;
-
-    foreach my $alias_name ( keys %$compara_dbs ) {
-        my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
-
-        my ( $user, $pass ) = ( 'ensadmin', $ENV{'ENSADMIN_PSW'} );
-        ( $user, $pass ) = ( 'ensro', '' ) if ( $alias_name =~ /_prev/ );
-
-        Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-            -host => $host,
-            -user => $user,
-            -pass => $pass,
-            -port => get_port($host),
-            -species => $alias_name,
-            -dbname  => $db_name,
-        );
-    }
-}
-
-sub get_port {
-    my $host = shift;
-    my $port = `$host port`;
-    chomp $port;
-    return $port;
-}
 
 1;

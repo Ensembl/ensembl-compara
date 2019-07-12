@@ -29,11 +29,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
 
 =head1 DESCRIPTION
 
@@ -50,10 +50,11 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusNcRNAtrees_conf;
+
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsNcRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;
@@ -61,16 +62,21 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'work_dir'      => $self->o('pipeline_dir'),
+            # Must be given on the command line
+            #'mlss_id'          => 40100,
+            # Found automatically if the Core API is in PERL5LIB
+            #'ensembl_release'          => '76',
+            #'rel_suffix'       => '',
 
-            'binary_species_tree_input_file' => $self->o('binary_species_tree'),
-            
-            'master_db'   => 'compara_master',
-            'member_db'   => 'compara_members',
-            'prev_rel_db' => 'nctrees_prev',
-            'epo_db'      => 'compara_prev',
-           };
-}
+            'division'          => 'vertebrates',
+            'collection'        => 'sus',       # The name of the species-set within that division
+            'dbID_range_index'  => 21,
+            'label_prefix'      => 'sus_',
+
+            'projection_source_species_names' => ['sus_scrofa'],
+            'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
+
+    };
+}   
 
 1;
-
