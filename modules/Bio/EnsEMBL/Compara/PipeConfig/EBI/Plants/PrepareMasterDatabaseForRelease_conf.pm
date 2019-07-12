@@ -34,6 +34,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::PrepareMasterDatabaseForRelease_
 
     Prepare master database for next release
 
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division and release.
 
 =head1 SYNOPSIS
 

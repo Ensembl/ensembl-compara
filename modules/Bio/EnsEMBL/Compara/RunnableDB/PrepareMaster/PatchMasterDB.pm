@@ -43,7 +43,14 @@ sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
-        'no_delete_tables'   => ['method_link_species_set_attr', 'species_set_tag'],
+        # Define all "master" tables to avoid deleting them when creating a new
+        # master database
+        'no_delete_tables' => [
+            'dnafrag', 'genome_db', 'mapping_session', 'meta', 'method_link',
+            'method_link_species_set', 'method_link_species_set_attr',
+            'method_link_species_set_tag', 'ncbi_species', 'ncbi_taxa_name',
+            'ncbi_taxa_node', 'species_set', 'species_set_header', 'species_set_tag'
+        ],
     }
 }
 

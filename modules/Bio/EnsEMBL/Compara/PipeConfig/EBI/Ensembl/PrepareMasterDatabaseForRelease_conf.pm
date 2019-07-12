@@ -34,6 +34,8 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PrepareMasterDatabaseForRelease
 
     Prepare master database for next release
 
+    WARNING: the previous reports and backups will be removed if the pipeline is
+    initialised again for the same division and release.
 
 =head1 SYNOPSIS
 
@@ -65,6 +67,7 @@ sub default_options {
 
         'division'               => 'vertebrates',
         'assembly_patch_species' => [ 'homo_sapiens', 'mus_musculus', 'danio_rerio' ],
+        'do_load_lrg_dnafrags'   => 1,
         'do_load_timetree'       => 1,
     };
 }

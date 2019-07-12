@@ -1,0 +1,15 @@
+{
+   "triticum_aestivum" : {
+        "core" : {
+            "regions" : [
+                ["1A", 8779408, 10112321],
+                ["1B", 9642196, 10975109],
+                ["1D", 7154015,  8486928]
+            ],
+            "adaptors" : [
+                {"name" : "gene"},
+                {"name" : "repeatfeature"}
+            ]
+        }
+    }
+}

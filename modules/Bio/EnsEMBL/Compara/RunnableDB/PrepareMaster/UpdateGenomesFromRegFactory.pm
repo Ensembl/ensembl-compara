@@ -36,7 +36,7 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::Process');
 
 sub fetch_input {
     my $self = shift;
