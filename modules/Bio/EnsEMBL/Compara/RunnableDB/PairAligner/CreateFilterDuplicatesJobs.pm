@@ -71,10 +71,8 @@ sub fetch_input {
   my $self = shift;
 
   # get DnaCollection
-  throw("must specify 'collection_name' to identify DnaCollection") 
-    unless(defined($self->param('collection_name')));
   $self->param('collection', $self->compara_dba->get_DnaCollectionAdaptor->
-	       fetch_by_set_description($self->param('collection_name')));
+	       fetch_by_set_description($self->param_required('collection_name')));
   throw("unable to find DnaCollection with name : ". $self->param('collection_name'))
     unless(defined($self->param('collection')));
 

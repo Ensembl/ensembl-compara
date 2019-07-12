@@ -38,11 +38,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ
 
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Analysis::Runnable::Lastz to add
+This object wraps Bio::EnsEMBL::Compara::Production::Analysis::Lastz to add
 functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. 
-required for databse access.
 
 =cut
 
@@ -57,8 +54,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Analysis::Runnable::Lastz;
-use Bio::EnsEMBL::Analysis;
+use Bio::EnsEMBL::Compara::Production::Analysis::Lastz;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
@@ -75,10 +71,8 @@ sub param_defaults {
 }
 
 
-sub configure_runnable {
+sub run {
   my $self = shift;
-
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #
   # get the sequences and create the runnable
@@ -97,54 +91,21 @@ sub configure_runnable {
     $self->warning("you have given a chunkset for the database; dumping individual chunks and creating a runnable for each one");
   }
 
-  my $program = $self->require_executable('pair_aligner_exe');
-  my $mlss = $self->param('method_link_species_set');
-  my $options = $mlss->get_value_for_tag("param");
-
-  #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
-  if (!$options) {
-      $options = $self->param('options');
-  }
-
-  throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
-
   if($self->debug) {
     print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
-    print("  options : ", $options, "\n");
-    print("  program : $program\n");
   }
   
-  $self->delete_fasta_dumps_but_these([$qyChunkFile,@db_chunk_files]);
+  $self->compara_dba->dbc->disconnect_if_idle();
 
-  $self->param('runnable', []);
-
+  my $starttime = time();
+  my @output;
   foreach my $dbChunkFile (@db_chunk_files) {
-    my $runnable = Bio::EnsEMBL::Analysis::Runnable::Lastz->
-        new(
-            -query      => $dbChunkFile,
-            -database   => $qyChunkFile,
-            -options    => $options,
-            -program    => $program,
-            -analysis   => $fake_analysis,
-            );
-    
-    if($self->debug >1) {
-      my ($fid) = $dbChunkFile =~ /([^\/]+)$/;
-      $runnable->resultsfile($self->worker_temp_directory . "/results.$fid.");
-      $runnable->results_to_file(1);  # switch on whether to use pipe or /tmp file
-    }
-
-    push @{$self->param('runnable')}, $runnable;
+      my $o = Bio::EnsEMBL::Compara::Production::Analysis::Lastz::run_lastz($self, $qyChunkFile, $dbChunkFile);
+      push @output, @$o;
   }
 
-  #
-  #
-  # BIG WARNING!!!! I FLIPPED THE DB and Query above because it looks like
-  #                 lastz flipped them in the parameter list from expected
-  #
-  #
-                  
-  return 1;
+  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
+  $self->param('output', \@output);
 }
 
 

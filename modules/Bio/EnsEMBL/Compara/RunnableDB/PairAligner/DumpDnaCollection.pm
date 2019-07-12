@@ -57,9 +57,6 @@ use File::Path;
 use File::Basename;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
-use Bio::EnsEMBL::Analysis::Runnable::Blat;
-use Bio::EnsEMBL::Analysis::RunnableDB;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 

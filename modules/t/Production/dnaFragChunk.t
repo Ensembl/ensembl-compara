@@ -99,8 +99,8 @@ subtest "Test Bio::EnsEMBL::Compara::Production::DnaFragChunk new method", sub {
 
     is($dnafrag_chunk->dnafrag_chunk_set_id, $dnafrag_chunk_set_id, "dnafrag_chunk_set_id");
     is($dnafrag_chunk->dnafrag_id, $dnafrag_id, "dnafrag_id");
-    is($dnafrag_chunk->seq_start, $seq_start, "seq_start");
-    is($dnafrag_chunk->seq_end, $seq_end, "seq_end");
+    is($dnafrag_chunk->dnafrag_start, $seq_start, "dnafrag_start");
+    is($dnafrag_chunk->dnafrag_end, $seq_end, "dnafrag_end");
     is($dnafrag_chunk->sequence_id, $sequence_id, "sequence_id");
     is($dnafrag_chunk->sequence, $sequence, "sequence");
     is($dnafrag_chunk->length, $sequence_length, "length");

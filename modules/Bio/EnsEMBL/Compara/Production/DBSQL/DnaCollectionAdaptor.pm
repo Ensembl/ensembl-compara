@@ -68,7 +68,7 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
   Arg [1]    : Bio::EnsEMBL::Compara::Production::DnaCollection
   Example    :
-  Description: stores the set of DnaFragChunk objects
+  Description: stores the DnaCollection object
   Returntype : int dbID of DnaCollection
   Exceptions :
   Caller     :
@@ -79,10 +79,8 @@ sub store {
     my ($self, $collection) = @_;
     
     assert_ref($collection, 'Bio::EnsEMBL::Compara::Production::DnaCollection', 'collection');
-    my $description = $collection->description;
-    my $dump_loc = $collection->dump_loc;
-    my $masking_options;
 
+    my $masking_options;
     if ($collection->masking_options) {
         if (ref($collection->masking_options)) {
             #from masking_option_file
@@ -92,26 +90,19 @@ sub store {
         }
     }
 
-    my $sql = "INSERT ignore INTO dna_collection (description, dump_loc, masking_options) VALUES (?, ?, ?)";
-    my $sth = $self->prepare($sql);
+    my $dbID;
 
-    my $insertCount=0;
-    $insertCount = $sth->execute($description, $dump_loc, $masking_options);
-    
-    if($insertCount>0) {
-        $collection->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dna_collection', 'dna_collection_id') );
-        $sth->finish;
+    if (my $other_collection = $self->_synchronise($collection)) {
+        $dbID = $other_collection->dbID;
+
     } else {
-        #INSERT ignore has failed on UNIQUE description
-        #Try getting dna_collection with SELECT
-        $sth->finish;
-        my $sth2 = $self->prepare("SELECT dna_collection_id FROM dna_collection WHERE description=?");
-        $sth2->execute($description);
-        my($id) = $sth2->fetchrow_array();
-        warn("DnaCollectionAdaptor: insert failed, but description SELECT failed too") unless($id);
-        $collection->dbID($id);
-        $sth2->finish;
+        $dbID = $self->generic_insert('dna_collection', {
+                'description'       => $collection->description,
+                'dump_loc'          => $collection->dump_loc,
+                'masking_options'   => $masking_options,
+            }, 'dna_collection_id');
     }
+    $self->attach($collection, $dbID);
 }
 
 #
@@ -147,6 +138,11 @@ sub fetch_by_set_description {
 #
 ###################
 
+sub object_class {
+    return 'Bio::EnsEMBL::Compara::Production::DnaCollection';
+}
+
+
 sub _tables {
   my $self = shift;
 
@@ -162,43 +158,22 @@ sub _columns {
              dc.masking_options);
 }
 
+sub _unique_attributes {
+    return qw(
+        description
+    );
+}
+
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my %collections_hash = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $collection = $collections_hash{$row_hashref->{'dna_collection_id'}};
-    
-    unless($collection) {
-      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new_fast({
-            'dbID'              => $row_hashref->{'dna_collection_id'},
-            'adaptor'           => $self,
-            '_description'      => $row_hashref->{'description'},
-            '_dump_loc'         => $row_hashref->{'dump_loc'},
-            '_masking_options'  => $row_hashref->{'masking_options'},
-      });
-
-      $collections_hash{$collection->dbID} = $collection;
-    }
-
-    if (defined($row_hashref->{'description'})) {
-      $collection->description($row_hashref->{'description'});
-    }
-    if (defined($row_hashref->{'dump_loc'})) {
-      $collection->dump_loc($row_hashref->{'dump_loc'});
-    }
-    if (defined($row_hashref->{'masking_options'})) {
-      $collection->masking_options($row_hashref->{'masking_options'});
-    }
-  }
-  $sth->finish;
-
-  my @collections = values( %collections_hash );
-
-  return \@collections;
+  return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaCollection', [
+          'dbID',
+          '_description',
+          '_dump_loc',
+          '_masking_options',
+      ] );
 }
 
 1;

@@ -32,9 +32,6 @@ Bio::EnsEMBL::Compara::RunnableDB::Ortheus
 
 =head1 DESCRIPTION
 
-This module acts as a layer between the Hive system and the Bio::EnsEMBL::Compara::Production::Analysis::Ortheus
-module since the ensembl-analysis API does not know about ensembl-compara
-
 Ortheus wants the files to be provided in the same order as in the tree string. This module starts
 by getting all the DnaFragRegions of the SyntenyRegion and then use them to edit the tree (some
 nodes must be removed and other ones must be duplicated in order to cope with deletions and

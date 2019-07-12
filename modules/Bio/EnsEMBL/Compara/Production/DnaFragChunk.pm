@@ -52,7 +52,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Hive::Utils 'dir_revhash';
 
-use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+use base ('Bio::EnsEMBL::Compara::Locus', 'Bio::EnsEMBL::Storable');
 
 
 sub new {
@@ -62,8 +62,8 @@ sub new {
   bless $self, $class;
 
   $self->dnafrag($dnafrag)                     if($dnafrag);
-  $self->seq_start($start)                     if($start);
-  $self->seq_end($end)                         if($end);
+  $self->dnafrag_start($start)                 if($start);
+  $self->dnafrag_end($end)                     if($end);
   $self->dnafrag_chunk_set_id($dnafrag_chunk_set_id) if ($dnafrag_chunk_set_id);
   return $self;
 }
@@ -93,14 +93,14 @@ sub slice {
   return undef unless(my $dba = $self->dnafrag->genome_db->db_adaptor);
 
   my $sliceDBA = $dba->get_SliceAdaptor;
-  #if ($self->seq_end > $self->seq_start) {
+  #if ($self->dnafrag_end > $self->dnafrag_start) {
 
   #Should be >= to since end can equal start and the slice be one base long
-  #If seq_start and seq_end are both 0, set the slice to be whole dnafrag
-  if ($self->seq_end >= $self->seq_start && $self->seq_end != 0) {
+  #If dnafrag_start and dnafrag_end are both 0, set the slice to be whole dnafrag
+  if ($self->dnafrag_end >= $self->dnafrag_start && $self->dnafrag_end != 0) {
     $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->coord_system_name,
                                                    $self->dnafrag->name,
-                                                   $self->seq_start, $self->seq_end);
+                                                   $self->dnafrag_start, $self->dnafrag_end);
   } else {
     $self->{'_slice'} = $sliceDBA->fetch_by_region($self->dnafrag->coord_system_name,
                                                    $self->dnafrag->name);
@@ -211,7 +211,7 @@ sub display_id {
   } elsif($self->dnafrag) {
     $id .= $self->dnafrag->display_id.":";
   }
-  $id .= $self->seq_start.".".$self->seq_end;
+  $id .= $self->dnafrag_start.".".$self->dnafrag_end;
   
   return $id;
 }
@@ -248,51 +248,6 @@ sub bioseq {
 #
 ##########################
 
-sub dnafrag {
-  my ($self,$dnafrag) = @_;
-
-  if (defined($dnafrag)) {
-    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', 'dnafrag');
-    $self->{'_dnafrag'} = $dnafrag;
-    $self->dnafrag_id($dnafrag->dbID);
-  }
-
-  #lazy load the DnaFrag
-  if(!defined($self->{'_dnafrag'}) and defined($self->dnafrag_id) and $self->adaptor) {
-    $self->{'_dnafrag'} = $self->adaptor->db->get_DnaFragAdaptor->fetch_by_dbID($self->dnafrag_id);
-  }
-
-  return $self->{'_dnafrag'};
-}
-
-sub dnafrag_id {
-  my $self = shift;
-  return $self->{'dnafrag_id'} = shift if(@_);
-  return $self->{'dnafrag_id'};
-}
-
-sub seq_start {
-  my $self = shift;
-  return $self->{'seq_start'} = shift if(@_);
-  $self->{'seq_start'}=0 unless(defined($self->{'seq_start'}));
-  return $self->{'seq_start'};
-}
-
-sub seq_end {
-  my $self = shift;
-  my $end  = shift;
-  if($end) {
-    $end=$self->dnafrag->length if($self->dnafrag and ($end > $self->dnafrag->length));
-    $self->{'seq_end'} = $end;
-  }
-  $self->{'seq_end'}=0 unless(defined($self->{'seq_end'}));
-  return $self->{'seq_end'};
-}
-
-sub length {
-  my $self = shift;
-  return $self->{'seq_end'} - $self->{'seq_start'} + 1;
-}
 
 sub dnafrag_chunk_set_id {
   my $self = shift;
@@ -340,7 +295,7 @@ sub dump_to_fasta_file
   my $bioseq = $self->bioseq;
 
   #printf("  writing chunk %s\n", $self->display_id);
-  open(OUTSEQ, ">$fastafile")
+  open(OUTSEQ, '>', $fastafile)
     or $self->throw("Error opening $fastafile for write");
   my $output_seq = Bio::SeqIO->new( -fh =>\*OUTSEQ, -format => 'Fasta');
   $output_seq->write_seq($bioseq);
@@ -369,7 +324,7 @@ sub dump_chunks_to_fasta_file
      unlink $fastafile;
   }
 
-  open(OUTSEQ, ">>$fastafile")
+  open(OUTSEQ, '>>', $fastafile)
       or $self->throw("Error opening $fastafile for write");
   print OUTSEQ ">" . $self->display_id . "\n";
       
@@ -378,8 +333,8 @@ sub dump_chunks_to_fasta_file
       $self->{'_slice'} = undef;
       $self->{'_sequence'} = undef;
 
-      $self->seq_start($start);
-      $self->seq_end($end);
+      $self->dnafrag_start($start);
+      $self->dnafrag_end($end);
 
       my $bioseq = $self->bioseq;
 

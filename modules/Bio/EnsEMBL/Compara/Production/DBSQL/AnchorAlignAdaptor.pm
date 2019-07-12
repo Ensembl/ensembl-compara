@@ -64,9 +64,9 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 =head2 store
 
-  Arg[1]     : one or many DnaFragChunk objects
-  Example    : $adaptor->store($chunk);
-  Description: stores DnaFragChunk objects into compara database
+  Arg[1]     : Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign
+  Example    : $adaptor->store($anchor_align);
+  Description: stores the AnchorAlign object into compara database
   Returntype : none
   Exceptions : none
   Caller     : general

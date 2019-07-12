@@ -40,14 +40,11 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner
 
 This object is an abstract superclass which must be inherited from.
 It uses a runnable which takes sequence as input and returns
-FeaturePair objects as output (like Bio::EnsEMBL::Analysis::Runnable::Blastz)
+FeaturePair objects as output (like Bio::EnsEMBL::Compara::Production::Analysis::Blastz)
 
 It adds functionality to read and write to a compara databases.
 It takes as input (via input_id or analysis->parameters) DnaFragChunk or DnaFragChunkSet
 objects (via dbID reference) and stores GenomicAlignBlock entries.
-
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. 
 
 =cut
 
@@ -66,7 +63,6 @@ use warnings;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -79,17 +75,6 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
         'max_alignments'    => undef,
     }
-}
-
-##########################################
-#
-# subclass override methods
-# 
-##########################################
-
-sub configure_runnable {
-  my $self = shift;
-  throw("subclass must implement configure_runnable method\n");
 }
 
 ##########################################
@@ -145,52 +130,10 @@ sub fetch_input {
 		"  your system can cope with so many alignments.");
       }
   }
-  $self->compara_dba->dbc->disconnect_if_idle();
 
-  #
-  # execute subclass configure_runnable method
-  #
-  $self->configure_runnable();
-
-  return 1;
+  $self->cleanup_worker_temp_directory;
 }
 
-
-sub run
-{
-  my $self = shift;
-
-  $self->compara_dba->dbc->disconnect_if_idle();
-
-  my $starttime = time();
-  my $work_dir = $self->worker_temp_directory;
-  foreach my $runnable (@{$self->param('runnable')}) {
-      throw("Runnable module not set") unless($runnable);
-      $runnable->run($work_dir);
-  }
-
-  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
-
-  return 1;
-}
-
-sub delete_fasta_dumps_but_these {
-  my $self = shift;
-  my $fasta_files_not_to_delete = shift;
-
-  my $work_dir = $self->worker_temp_directory;
-
-  foreach my $file (glob('*.fasta')) {
-    my $delete = 1;
-    foreach my $fasta_file (@{$fasta_files_not_to_delete}) {
-      if ($file eq basename($fasta_file)) {
-        $delete = 0;
-        last;
-      }
-    }
-    unlink "$work_dir/$file" if ($delete);
-  }
-}
 
 sub write_output {
   my( $self) = @_;
@@ -207,25 +150,14 @@ sub write_output {
 
 sub _write_output {
     my ($self) = @_;
-    my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
   my $starttime = time();
 
-  foreach my $runnable (@{$self->param('runnable')}) {
-      foreach my $fp ( @{ $runnable->output() } ) {
+  foreach my $fp (@{$self->param('output')}) {
           if($fp->isa('Bio::EnsEMBL::FeaturePair')) {
-              #since the Blast runnable takes in analysis parameters rather than an
-              #analysis object, it creates new Analysis objects internally
-              #(a new one for EACH FeaturePair generated)
-              #which are a shadow of the real analysis object ($self->analysis)
-              #The returned FeaturePair objects thus need to be reset to the real analysis object
-
-              $fp->analysis($fake_analysis);
-
               $self->store_featurePair_as_genomicAlignBlock($fp);
           }
       }
-      if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$runnable->output}));}
-  }
+      if($self->debug){printf("%d FeaturePairs found\n", scalar(@{$self->param('output')}));}
 
   #print STDERR (time()-$starttime), " secs to write_output\n";
 }
@@ -342,8 +274,8 @@ sub store_featurePair_as_genomicAlignBlock
 
     my $testChunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $testChunk->dnafrag($qyChunk->dnafrag);
-    $testChunk->seq_start($qyChunk->seq_start+$fp->start-1);
-    $testChunk->seq_end($qyChunk->seq_start+$fp->end-1);
+    $testChunk->dnafrag_start($qyChunk->dnafrag_start+$fp->start-1);
+    $testChunk->dnafrag_end($qyChunk->dnafrag_start+$fp->end-1);
     my $bioseq = $testChunk->bioseq;
     print($bioseq->seq, "\n");
   }
@@ -352,8 +284,8 @@ sub store_featurePair_as_genomicAlignBlock
   my $genomic_align1 = new Bio::EnsEMBL::Compara::GenomicAlign;
   $genomic_align1->method_link_species_set($self->param('method_link_species_set'));
   $genomic_align1->dnafrag($qyChunk->dnafrag);
-  $genomic_align1->dnafrag_start($qyChunk->seq_start + $fp->start -1);
-  $genomic_align1->dnafrag_end($qyChunk->seq_start + $fp->end -1);
+  $genomic_align1->dnafrag_start($qyChunk->dnafrag_start + $fp->start -1);
+  $genomic_align1->dnafrag_end($qyChunk->dnafrag_start + $fp->end -1);
   $genomic_align1->dnafrag_strand($fp->strand);
   $genomic_align1->visible(1);
   
@@ -366,8 +298,8 @@ sub store_featurePair_as_genomicAlignBlock
   my $genomic_align2 = new Bio::EnsEMBL::Compara::GenomicAlign;
   $genomic_align2->method_link_species_set($self->param('method_link_species_set'));
   $genomic_align2->dnafrag($dbChunk->dnafrag);
-  $genomic_align2->dnafrag_start($dbChunk->seq_start + $fp->hstart -1);
-  $genomic_align2->dnafrag_end($dbChunk->seq_start + $fp->hend -1);
+  $genomic_align2->dnafrag_start($dbChunk->dnafrag_start + $fp->hstart -1);
+  $genomic_align2->dnafrag_end($dbChunk->dnafrag_start + $fp->hend -1);
   $genomic_align2->dnafrag_strand($fp->hstrand);
   $genomic_align2->visible(1);
 

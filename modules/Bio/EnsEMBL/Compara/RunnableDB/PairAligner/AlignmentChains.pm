@@ -30,18 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnable->fetch_input(); #reads from DB
-$runnable->run();
-$runnable->output();
-$runnable->write_output(); #writes to DB
-
 =head1 DESCRIPTION
 
 Given an compara MethodLinkSpeciesSet identifer, and a reference genomic
@@ -57,14 +45,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
-use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
+
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
-our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
+
+use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentChains');
 
 
 ############################################################
@@ -82,7 +69,6 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -162,54 +148,51 @@ sub fetch_input {
     }
   }
   
+  $self->param('features', $features);
   print STDERR scalar @{$features}," features at time: ",scalar(localtime),"\n";
 
-  my %parameters = (-analysis             => $fake_analysis,
-                    -features             => $features,
-                    -workdir              => $self->worker_temp_directory,
-		    -linear_gap           => $self->param('linear_gap'));
-  
   $self->compara_dba->dbc->disconnect_if_idle();
   # Let's keep the number of connections / disconnections to the minimum
   $qy_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-      my $query_slice = $self->param('query_dnafrag')->slice;
       my $query_nib_dir = $self->param('query_nib_dir');
-      $parameters{'-query_slice'} = $query_slice;
       # If there is no .nib file, preload the sequence
-      if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $query_slice->seq_region_name . ".nib")) {
-          print STDERR "reusing the query nib file\n";
-          $parameters{'-query_nib_dir'} = $query_nib_dir;
+      if ($query_nib_dir and (-d $query_nib_dir) and (-e $query_nib_dir . "/" . $self->param('query_dnafrag')->name . ".nib")) {
+          print STDERR "reusing the query nib file ". $query_nib_dir . "/" . $self->param('query_dnafrag')->name . ".nib" . "\n";
       } else {
           print STDERR "fetching the query sequence\n";
+          my $query_slice = $self->param('query_dnafrag')->slice;
+          $self->param('query_slice', $query_slice);
           $query_slice->{'seq'} = $query_slice->seq;
           print STDERR length($query_slice->{'seq'}), " bp\n";
       }
   } );
 
   $tg_gdb->db_adaptor->dbc->prevent_disconnect( sub {
-      my $target_slice = $self->param('target_dnafrag')->slice;
+      my $target_dnafrag = $self->param('target_dnafrag');
       my $target_nib_dir = $self->param('target_nib_dir');
-      $parameters{'-target_slices'} = {$self->param('target_dnafrag')->name => $target_slice};
+      $self->param('target_dnafrags', {$target_dnafrag->name => $target_dnafrag});
       # If there is no .nib file, preload the sequence
-      if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_slice->seq_region_name . ".nib")) {
-          print STDERR "reusing the target nib file\n";
-          $parameters{'-target_nib_dir'} = $target_nib_dir;
+      if ($target_nib_dir and (-d $target_nib_dir) and (-e $target_nib_dir . "/" . $target_dnafrag->name . ".nib")) {
+          print STDERR "reusing the target nib file" . $target_nib_dir . "/" . $target_dnafrag->name . ".nib" . "\n";
       } else {
+          my $target_slice = $target_dnafrag->slice;
+          $self->param('target_slices', {$target_dnafrag->name => $target_slice});
           print STDERR "fetching the target sequence\n";
           $target_slice->{'seq'} = $target_slice->seq;
           print STDERR length($target_slice->{'seq'}), " bp\n";
       }
   } );
+}
 
-  foreach my $program (qw(faToNib lavToAxt axtChain)) {
-    #$parameters{'-' . $program} = $self->BIN_DIR . "/" . $program;
-      $parameters{'-' . $program} = $self->param($program);
-  }
 
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
-  #Store runnable in param
-  $self->param('runnable', $runnable);
 
+sub run{
+    my ($self) = @_;
+
+    $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
+    my $chains = $self->run_chains;
+    my $converted_chains = $self->convert_output($chains);
+    $self->param('chains', $converted_chains);
 }
 
 

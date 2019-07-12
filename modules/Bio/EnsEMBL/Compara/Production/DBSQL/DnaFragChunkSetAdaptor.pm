@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
+Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkSetAdaptor
 
 =cut
 
@@ -68,20 +68,13 @@ sub store {
 
   assert_ref($chunkSet, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet', 'chunkSet');
 
-  my $description = $chunkSet->description or undef;
+  my $dbID = $self->generic_insert('dnafrag_chunk_set', {
+          'dna_collection_id'   => $chunkSet->dna_collection_id || $chunkSet->dna_collection->dbID,
+          'description'         => $chunkSet->description || undef,
+      }, 'dnafrag_chunk_set_id');
+  $self->attach($chunkSet, $dbID);
 
-  my $insertCount=0;
-
-  my $sth = $self->prepare("INSERT ignore INTO dnafrag_chunk_set (dna_collection_id, description) VALUES (?,?)");
-  $insertCount = $sth->execute($chunkSet->dna_collection_id || $chunkSet->dna_collection->dbID, $description);
-  $sth->finish;
-
-  if($insertCount>0) {
-    $chunkSet->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk_set', 'dnafrag_chunk_set_id') );
-  }
-
-  return $chunkSet->dbID;
-
+  return $dbID;
 }
 
 #
@@ -130,28 +123,18 @@ sub _columns {
   my $self = shift;
 
   return qw (sc.dna_collection_id
+             sc.description
              sc.dnafrag_chunk_set_id);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my @sets = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $chunkSet = Bio::EnsEMBL::Compara::Production::DnaFragChunkSet->new_fast({
-        'adaptor'               => $self,
-        'dbID'                  => $row_hashref->{'dnafrag_chunk_set_id'},
-        '_dna_collection_id'    => $row_hashref->{'dna_collection_id'},
-    });
-
-    push @sets, $chunkSet;
-
-  }
-  $sth->finish;
-
-  return \@sets
+  return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaFragChunkSet', [
+          '_dna_collection_id',
+          '_description',
+          'dbID',
+      ] );
 }
 
 

@@ -30,18 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $runnable = Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets->new (
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$runnable->fetch_input(); #reads from DB
-$runnable->run();
-$runnable->output();
-$runnable->write_output(); #writes to DB
-
 =head1 DESCRIPTION
 
 Given an compara MethodLinkSpeciesSet identifer, and a reference genomic
@@ -60,13 +48,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
-use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::Analysis::Runnable::AlignmentNets;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::Utils::Exception qw(throw );
-
-our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
+use base ('Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets');
 
 
 =head2 fetch_input
@@ -83,7 +65,6 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -99,7 +80,7 @@ sub fetch_input {
   # and GenomicAlignBlocks
   ################################################################
   my $mlss = $mlssa->fetch_by_dbID($self->param_required('input_mlss_id'))
-              || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
+              || $self->throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('input_mlss_id'));
 
   #Check if doing self_alignment where the species_set will contain only one
   #entry
@@ -109,7 +90,7 @@ sub fetch_input {
   }
   
   my $out_mlss = $mlssa->fetch_by_dbID($self->param_required('output_mlss_id'))
-                  || throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
+                  || $self->throw("No MethodLinkSpeciesSet for method_link_species_set_id".$self->param('output_mlss_id'));
 
   ######## needed for output####################
   $self->param('output_MethodLinkSpeciesSet', $out_mlss);
@@ -174,18 +155,11 @@ sub fetch_input {
   foreach my $nm (keys %{$self->param('target_DnaFrag_hash')}) {
     $target_lengths{$nm} = $self->param('target_DnaFrag_hash')->{$nm}->length;
   }
-  my %parameters = (-analysis             => $fake_analysis, 
-                    -query_lengths        => \%query_lengths,
-                    -target_lengths       => \%target_lengths,
-                    -chains               => [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ],
-                    -chains_sorted => 1,
-                    -chainNet             =>  $self->param('chainNet'),
-                    -workdir              => $self->worker_temp_directory,
-		    -min_chain_score      => $self->param('min_chain_score'));
   
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentNets->new(%parameters);
-  #Store runnable in param
-  $self->param('runnable', $runnable);
+  $self->param('query_length_hash',     \%query_lengths);
+  $self->param('target_length_hash',    \%target_lengths);
+  $self->param('chains',                [ map {$features_by_group{$_}} sort {$group_score{$b} <=> $group_score{$a}} keys %group_score ]);
+  $self->param('chains_sorted',         1);
 }
 
 sub delete_alignments {
@@ -245,10 +219,9 @@ sub run {
   my ($self) = @_;
 
   $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
-  my $runnable = $self->param('runnable');
-  $runnable->run;
-  $self->cleanse_output($runnable->output);
-  $self->param('chains', $runnable->output);
+  my $chains = $self->run_nets;
+  $self->cleanse_output($chains);
+  $self->param('chains', $chains);
 
 }
 

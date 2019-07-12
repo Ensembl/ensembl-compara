@@ -37,10 +37,6 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreatePairAlignerJobs
 Iterates over two DnaCollections (a "query" and a "target") and dataflows
 all the pairs of DnaFragChunkSets (one of each collection).
 
-Exceptions:
- - Throws if a MT DnaFragChunkSet contains more than 1 DnaFragChunk
- - Pairs crossing MT and non-MT dnafrags are not created
-
 =cut
 
 =head1 APPENDIX

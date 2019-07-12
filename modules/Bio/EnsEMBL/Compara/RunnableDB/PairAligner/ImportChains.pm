@@ -46,15 +46,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportChains;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
-use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
+
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Utils::Exception qw(throw );
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing);
+use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
 ############################################################
 
@@ -71,7 +68,6 @@ sub fetch_input {
   my( $self) = @_; 
 
   $self->SUPER::fetch_input;
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
   my $dafa = $self->compara_dba->get_DnaAlignFeatureAdaptor;
@@ -131,40 +127,17 @@ sub fetch_input {
       $self->param('target_DnaFrag_hash')->{$ucsc_name} = $non_ref_dnafrag if (defined $ucsc_name);
   }
 
-  my $features;
-  my $query_slice = "";
-  my $target_slices;
-  @$features = [];
-  @$target_slices = [];
-
-  my %parameters = (-analysis      => $fake_analysis,
-		   -features       => $features,
-		   -query_slice    => $query_slice,
-		   -target_slices  => $target_slices);
-
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::AlignmentChains->new(%parameters);
-  $self->param('runnable', $runnable);
-
   ##################################
   # read the chain file
   ##################################
   my $fh;
-  open $fh, $self->param('chain_file') or throw("Could not open chainfile '" . $self->param('chain_file') . "' for reading\n");
+  open $fh, '<', $self->param('chain_file') or throw("Could not open chainfile '" . $self->param('chain_file') . "' for reading\n");
 
   my $chains = $self->parse_Chain_file($fh, $self->param('seek_offset'), $self->param('num_lines'));
   close($fh);
-  $runnable->output($chains);
 
-}
-
-sub run {
-    my $self = shift;
-
-    #print "RUNNING \n";
-    my $runnable = $self->param('runnable');
-    my $converted_chains = $self->convert_output($runnable->output, 0);
+    my $converted_chains = $self->convert_output($chains, 0);
     $self->param('chains', $converted_chains);
-    rmdir($runnable->workdir) if (defined $runnable->workdir);
 }
 
 
@@ -173,15 +146,11 @@ sub run {
 #
 sub get_ucsc_name {
     my ($self, $genome_db_id, $ensembl_name) = @_;
-    my $sql = "SELECT ucsc FROM ucsc_to_ensembl_mapping WHERE ensembl = '$ensembl_name'";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute();
-    my $ucsc_name;
-    $sth->bind_columns(\$ucsc_name);
-    my $ucsc_nmae = $sth->fetch();
-    $sth->finish();
-    
-    return $ucsc_name;
+    my $sql = "SELECT ucsc FROM ucsc_to_ensembl_mapping WHERE ensembl = ?i";
+    return $self->compara_dba->dbc->sql_helper->execute_single_result(
+        -SQL => $sql,
+        -PARAMS => [$ensembl_name],
+    );
 }
 
 

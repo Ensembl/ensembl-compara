@@ -69,39 +69,26 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 sub store {
   my ($self, $dfc)  = @_;
 
-  return unless($dfc);
-  return unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
-
-  my $query = "INSERT ignore INTO dnafrag_chunk".
-              "(dnafrag_id,sequence_id,seq_start,seq_end, dnafrag_chunk_set_id) ".
-              "VALUES (?,?,?,?,?)";
+  assert_ref($dfc, 'Bio::EnsEMBL::Compara::Production::DnaFragChunk', 'dfc');
 
   $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence)) if $dfc->sequence;
 
-  #print("$query\n");
-  my $sth = $self->prepare($query);
-  my $insertCount =
-     $sth->execute($dfc->dnafrag_id, $dfc->sequence_id,
-                   $dfc->seq_start, $dfc->seq_end, $dfc->dnafrag_chunk_set_id);
-  if($insertCount>0) {
-    #sucessful insert
-    $dfc->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk', 'dnafrag_chunk_id') );
-    $sth->finish;
-  } else {
-    $sth->finish;
-    #UNIQUE(dnafrag_id,seq_start,seq_end,dnafrag_chunk_set_id) prevented insert
-    #since dnafrag_chunk was already inserted so get dnafrag_chunk_id with select
-    my $sth2 = $self->prepare("SELECT dnafrag_chunk_id FROM dnafrag_chunk ".
-           " WHERE dnafrag_id=? and seq_start=? and seq_end=? and dnafrag_chunk_set_id=?");
-    $sth2->execute($dfc->dnafrag_id, $dfc->seq_start, $dfc->seq_end, $dfc->dnafrag_chunk_set_id);
-    my($id) = $sth2->fetchrow_array();
-    warn("DnaFragChunkAdaptor: insert failed, but dnafrag_chunk_id select failed too") unless($id);
-    $dfc->dbID($id);
-    $sth2->finish;
-  }
+  my $dbID;
 
-  $dfc->adaptor($self);
-  
+  if (my $other_dfc = $self->_synchronise($dfc)) {
+      $dbID = $other_dfc->dbID;
+
+  } else {
+      $dbID = $self->generic_insert('dnafrag_chunk', {
+              'dnafrag_id'            => $dfc->dnafrag_id,
+              'sequence_id'           => $dfc->sequence_id // 0,
+              'dnafrag_start'         => $dfc->dnafrag_start,
+              'dnafrag_end'           => $dfc->dnafrag_end,
+              'dnafrag_chunk_set_id'  => $dfc->dnafrag_chunk_set_id,
+          }, 'dnafrag_chunk_id');
+  }
+  $self->attach($dfc, $dbID);
+
   return $dfc;
 }
 
@@ -181,6 +168,11 @@ sub fetch_all_by_DnaFragChunkSet {
 
 #internal method used in multiple calls above to build objects from table data
 
+sub object_class {
+    return 'Bio::EnsEMBL::Compara::Production::DnaFragChunk';
+}
+
+
 sub _tables {
   my $self = shift;
 
@@ -193,35 +185,34 @@ sub _columns {
   return qw (dfc.dnafrag_chunk_id
              dfc.dnafrag_chunk_set_id
              dfc.dnafrag_id
-             dfc.seq_start
-             dfc.seq_end
+             dfc.dnafrag_start
+             dfc.dnafrag_end
              dfc.sequence_id
             );
+}
+
+sub _unique_attributes {
+    my $self = shift;
+
+    return qw(
+        dnafrag_chunk_set_id
+        dnafrag_id
+        dnafrag_start
+        dnafrag_end
+    );
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my @chunks = ();
-
-  while( my $row_hashref = $sth->fetchrow_hashref()) {
-
-    my $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new_fast({
-        'adaptor'               => $self,
-        'dbID'                  => $row_hashref->{'dnafrag_chunk_id'},
-        'seq_start'             => $row_hashref->{'seq_start'} || 0,
-        'seq_end'               => $row_hashref->{'seq_end'} || 0,
-        'sequence_id'           => $row_hashref->{'sequence_id'},
-        'dnafrag_id'            => $row_hashref->{'dnafrag_id'},
-        'dnafrag_chunk_set_id'  => $row_hashref->{'dnafrag_chunk_set_id'},
-    });
-
-    push @chunks, $dfc;
-
-  }
-  $sth->finish;
-
-  return \@chunks
+  return $self->generic_objs_from_sth($sth, 'Bio::EnsEMBL::Compara::Production::DnaFragChunk', [
+          'dbID',
+          'dnafrag_chunk_set_id',
+          'dnafrag_id',
+          'dnafrag_start',
+          'dnafrag_end',
+          'sequence_id',
+      ] );
 }
 
 1;

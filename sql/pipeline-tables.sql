@@ -24,22 +24,22 @@
 --   dnafrag_chunk_id     - primary key
 --   dnafrag_chunk_set_id - foreign key link to dnafrag_chunk_set table
 --   dnafrag_id           - foreign key link to dnafrag table
---   seq_start            - start offset in dnafrag
---   seq_end              - end offset in dnafrag
+--   dnafrag_start        - start offset in dnafrag
+--   dnafrag_end          - end offset in dnafrag
 --   sequence_id          - optional use (store chunk sequence in DB)
 
 CREATE TABLE dnafrag_chunk (
   dnafrag_chunk_id           int(10) NOT NULL auto_increment,
   dnafrag_chunk_set_id       int(10) NOT NULL,
   dnafrag_id                 bigint unsigned NOT NULL DEFAULT 0,
-  seq_start                  int(10) unsigned NOT NULL DEFAULT 0,
-  seq_end                    int(10) unsigned NOT NULL DEFAULT 0,
+  dnafrag_start              int(10) unsigned NOT NULL DEFAULT 0,
+  dnafrag_end                int(10) unsigned NOT NULL DEFAULT 0,
   sequence_id                int(10) NOT NULL DEFAULT 0,
 
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
 
   PRIMARY KEY (dnafrag_chunk_id),
-  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, seq_start, seq_end),
+  UNIQUE KEY uniq_chunk (dnafrag_chunk_set_id, dnafrag_id, dnafrag_start, dnafrag_end),
   KEY sequence_id (sequence_id)
 ) ENGINE=InnoDB;
 

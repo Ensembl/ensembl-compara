@@ -68,20 +68,14 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
 
 
 
-#############################################################
-# Implements Bio::EnsEMBL::Compara::RunnableDB::ObjectStore #
-#############################################################
+########################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
+########################################################
 
 sub object_class {
     return 'Bio::EnsEMBL::Compara::Method';
 }
 
-
-
-
-########################################################
-# Implements Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor #
-########################################################
 
 sub _tables {
     return (['method_link','m'])

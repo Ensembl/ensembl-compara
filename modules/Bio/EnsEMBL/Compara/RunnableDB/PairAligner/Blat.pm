@@ -27,26 +27,10 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat
 
 =cut
 
-=head1 SYNOPSIS
-
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Analysis::RunnableDB::Blat->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->write_output(); #writes to DB
-
-=cut
-
 =head1 DESCRIPTION
 
-This object wraps Bio::EnsEMBL::Analysis::Runnable::Blat to add
+This object wraps Bio::EnsEMBL::Compara::Production::Analysis::Blat to add
 functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. A Bio::EnsEMBL::Analysis::DBSQL::Obj is
-required for database access.
 
 =cut
 
@@ -67,7 +51,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Analysis::Runnable::Blat;
+use Bio::EnsEMBL::Compara::Production::Analysis::Blat;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
@@ -100,11 +84,8 @@ sub param_defaults {
 }
 
 
-############################################################
-sub configure_runnable {
+sub run {
   my $self = shift;
-
-  my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #
   # get the sequences and create the runnable
@@ -119,48 +100,20 @@ sub configure_runnable {
 
   my $dbChunkFile = $self->dumpChunkSetToWorkdir($self->param('db_DnaFragChunkSet'));
 
-  my $program = $self->require_executable('pair_aligner_exe');
-
-  $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
-
   #Do not create ooc files for translated blat analyses
   #create 5ooc file by replacing ".fa" with "/ooo5"
   #my $oocFile = $dbChunkFile;
   #$oocFile =~ s/(.fa)/\/5ooc/;
 
-  #my $options = $self->options . " -ooc=$oocFile";
+  $self->compara_dba->dbc->disconnect_if_idle();
 
-  my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
-  my $options = $mlss->get_value_for_tag("param");
+  my $starttime = time();
+  my $output = Bio::EnsEMBL::Compara::Production::Analysis::Blat::run_blat($self, $qyChunkFile, $dbChunkFile);
 
-  #If not in method_link_species_set_tag table (new pipeline) try param (old pipeline)
-  if (!$options) {
-      my $option_str = "options_" . $self->param('mlss_id');
-      $options = $self->param($option_str);
-  }
-
-  #Check options have been set.
-  throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
-
-  if($self->debug) {
-    print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
-    print("  options : ", $options, "\n");
-    print("  program : $program\n");
-  }
-
-  $self->param('runnable', []);
-  my $runnable = Bio::EnsEMBL::Analysis::Runnable::Blat->
-    new(
-	-query      => $qyChunkFile,
-	-database   => $dbChunkFile,
-	-options    => $options,
-	-program    => $program,
-	-analysis   => $fake_analysis,
-       );
-  push @{$self->param('runnable')}, $runnable;
-
-  return 1;
+  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
+  $self->param('output', $output);
 }
+
 
 1;
 

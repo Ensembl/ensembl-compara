@@ -55,42 +55,11 @@ sub fetch_input {
 }
 
 
-sub run{
-    my ($self) = @_;
-
-    my $runnable = $self->param('runnable');
-
-    $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
-    eval {
-        $runnable->run;
-        1;
-    } or do {
-        my $msg = $@;
-        if($@ =~ /Something went wrong with/s) {   # Add other termination signals here (different for different Runnables)
-            # Probably an ongoing MEMLIMIT
-            # Let's wait a bit to let LSF kill the worker as it should
-            sleep(30);
-        }
-
-        # If we're still there, there is something weird going on.
-        # Perhaps not a MEMLIMIT, after all. Let's die and hope that
-        # next run will be better
-        die $@;
-    };
-
-    my $converted_chains = $self->convert_output($runnable->output);
-    $self->param('chains', $converted_chains);
-    rmdir($runnable->workdir) if (defined $runnable->workdir);
-}
-
-
-
-
 =head2 write_output
 
     Title   :   write_output
     Usage   :   $self->write_output()
-    Function:   Writes contents of $self->output into $self->db
+    Function:   Writes contents of $self->param('chains') into $self->compara_dba
     Returns :   1
     Args    :   None
 
@@ -550,23 +519,5 @@ sub delete_alignments {
   }
 }
 
-
-###################################
-
-sub output{
-    my ($self, $output) = @_;
-    if(!$self->param('output')){
-	$self->param('output',[]);
-    }
-    if($output){
-	my $this_output = $self->param('output');
-	if(ref($output) ne 'ARRAY'){
-	    throw('Must pass RunnableDB:output an array ref not a '.$output);
-	}
-	push(@{$this_output}, @$output);
-	$self->param('output', $this_output);
-    }
-    return $self->param('output');
-}
 
 1;

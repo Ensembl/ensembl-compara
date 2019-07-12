@@ -329,7 +329,7 @@ sub create_dnafrag_chunks {
 
     my $chunk = new Bio::EnsEMBL::Compara::Production::DnaFragChunk();
     $chunk->dnafrag($dnafrag);
-    $chunk->seq_start($chunk_start);
+    $chunk->dnafrag_start($chunk_start);
 
     $chunk_end = $chunk_start + $chunk_size - 1;
 
@@ -337,7 +337,7 @@ sub create_dnafrag_chunks {
     if ($chunk_end > $region_end) {
 	$chunk_end = $region_end;
     }
-    $chunk->seq_end($chunk_end);
+    $chunk->dnafrag_end($chunk_end);
     
     #set chunk masking_options
     $chunk->masking_options;

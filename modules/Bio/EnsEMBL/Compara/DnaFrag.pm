@@ -520,11 +520,9 @@ sub slice {
 
 =head2 display_id
 
-  Args       : none
   Example    : my $id = $dnafrag->display_id;
-  Description: returns string describing this chunk which can be used
+  Description: returns string describing this DnaFrag which can be used
                as display_id of a Bio::Seq object or in a fasta file.
-               Uses dnafrag information in addition to start and end.
   Returntype : string
   Exceptions : none
   Caller     : general
