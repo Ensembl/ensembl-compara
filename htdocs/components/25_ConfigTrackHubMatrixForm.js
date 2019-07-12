@@ -310,7 +310,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         if(track.display && track.display != "off") {
           renderer  =  track.display; //track.default_display is the default renderer for this track
         } else {
-          renderer  =  track.default_display; //track.default_display is the default renderer for this track
+          renderer  =  track.defaultDisplay; //track.default_display is the default renderer for this track
         }
 
         var keyX      = track.subGroups[dimX];
@@ -2053,7 +2053,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 }
               }
               if(!dataClass) { boxCountHTML = ""; }
-              rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="_filterMatrix">'+boxCountHTML+'</div>';
+              rowContainer += '<div class="xBoxes matrix '+boxState+' '+dataClass+' '+cellName+' '+dyItem+' '+storeKey+'" data-track-x="'+dyItem+'" data-track-y="'+cellName+'" data-popup-type="_filterMatrix">'+boxCountHTML+'</div>';
             }
           });
 
@@ -2515,11 +2515,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if (key ===  undefined || !panel.localStoreObj.filterMatrix) return;
     var li_html = '';
     var ul = panel.el.find('div.track-popup._filterMatrix ul');
-    li_html += '<li class="all"><span class="fancy-checkbox"></span><text>All</text></li>';
+    var all_selected = panel.localStoreObj.filterMatrix[key].state.on === panel.localStoreObj.filterMatrix[key].state.total ? "selected" : "";
+    li_html += '<li class="all"><span class="fancy-checkbox all '+all_selected+'" data-cell="'+key+'"></span><text>All</text></li>';
+
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
       var selected = hash.state === "on" ? "selected" : "";
       if(hash.show === 1) { 
-        li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'"></span><text>' + id + '</text></li>'; 
+        li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + id + '</text></li>';
       }
     //   r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
@@ -2619,6 +2621,52 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       e.stopPropagation();
       panel.multiDimFlag && panel.registerFilterMatrixDropdownClickEvent();
     });
+  },
+
+  // Function to update the filtermatrix store obj when selecting/unselecting checkboxes from popup or RHS
+  //
+  updateFilterMatrixStore: function(storeObj, cellKey, newState, currentState, all, RHS) {
+    var panel = this;
+
+    if(all) {
+      $.each(storeObj.data, function(trackId, hash){
+        hash.state = newState;
+      });
+      panel.localStoreObj.filterMatrix[cellKey].state[currentState] = 0;
+      panel.localStoreObj.filterMatrix[cellKey].state[newState] = panel.localStoreObj.filterMatrix[cellKey].state.total;
+    } else {
+      storeObj.state = newState;
+      panel.localStoreObj.filterMatrix[cellKey].state[currentState] -= 1;
+      panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
+    }
+    panel.setLocalStorage();
+  },
+
+  //function to update filte matrix cells (on/off/partial) and show the counts
+  updateFilterMatrix: function(cellKey) {
+    var panel = this;
+
+    //updating just one cell
+    if(cellKey) {
+      var boxState = "";
+      var boxCountHTML = "";
+      if(panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"] === panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]) { 
+        boxState = "track-on";
+        boxCountHTML = '<span class="count">'+panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"]+'</span>';
+      } else if(panel.localStoreObj["filterMatrix"][cellKey]["state"]["off"]  === panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] ){
+        boxState = "track-off";
+        boxCountHTML = '<span class="count">0</span>';
+      } else {
+        boxState = "partial";
+        var partialCount = panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"];
+        boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]+'</span>';
+      }
+
+      panel.elLk.filterMatrix.find('div.'+cellKey).removeClass("track-on track-off partial").addClass(boxState).html(boxCountHTML);
+
+    } else { //updating whole matrix
+
+    }
   },
 
   //function to update the store obj when clicking the on/off or renderers
@@ -2734,6 +2782,27 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   //Argument: Object of the cell/box clicked
   popupFunctionality: function() {
     var panel = this;
+
+    //Filter matrix popup functionality
+    panel.TrackPopupType.find('ul').off().on("click", "li", function(e){
+      var cellKey      = $(this).find('span.fancy-checkbox').data("cell");
+      var currentState = $(this).find('span.fancy-checkbox').hasClass('selected') ? "off" : "on";
+      var newState     = currentState === "on" ? "off" : "on";
+
+      if($(this).find('span.fancy-checkbox.all').length){ //all checkbox
+        panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[cellKey], cellKey, newState, currentState, 1 );
+      } else {
+        var trackId       = $(this).data("track-id");
+        panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[cellKey].data[trackId], cellKey, newState, currentState );
+        // check if all checkbox is on, select "all" checkbox
+        if(panel.localStoreObj.filterMatrix[cellKey].state.total === panel.localStoreObj.filterMatrix[cellKey].state.on) {
+          panel.TrackPopupType.find('ul span.fancy-checkbox.all').addClass("selected");
+        } else {
+          panel.TrackPopupType.find('ul span.fancy-checkbox.all').removeClass("selected");
+        }
+      }
+      panel.updateFilterMatrix(cellKey);
+    });
 
     //choosing toggle button - column-switch/row-switch/cell-switch
     //if column is off, set data-track-state to track-off in xLabel, if row is off, set data-track-state to track-off in yLabel, if cell is off set data-track-state to track-off in xBox
