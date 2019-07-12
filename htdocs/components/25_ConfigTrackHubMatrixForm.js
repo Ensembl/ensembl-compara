@@ -694,7 +694,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
-
+console.log('TH');
     $.extend(this.imageConfig, config);
     return { imageConfig: config };
   },
@@ -741,6 +741,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   },
 
   resize: function() {
+    return;
     var panel = this;
     panel.elLk.resultBox.outerHeight(this.getNewPanelHeight());
     if (panel.elLk[this.getActiveTab()].haveSubTabs) {
@@ -1101,7 +1102,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       // This mehod is called here only to update localStorage so that if an epigenome is selected, users can still view tracks
       // If this becomes a performance issue, separate localStorage and matrix drawing in displayMatrix method
       panel.displayMatrix();
-      this.displayFilterMatrix();
+      panel.displayFilterMatrix();
     }
   },
 
@@ -1301,7 +1302,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
       panel.emptyMatrix();
       panel.displayMatrix();
-      this.displayFilterMatrix();
+      panel.displayFilterMatrix();
     });
   },
 
@@ -2023,7 +2024,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
                       panel.localStoreObj["filterMatrix"][storeKey]["data"] = panel.localStoreObj["filterMatrix"][storeKey]["data"] || {};
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] = panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] || {};
-                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = state;
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = "on";
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["show"] = tracks["show"];
   
                       // //setting count for all selection section
@@ -2513,9 +2514,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var r_opts = '';
 
     $.each(panel.rendererConfig[format], function(i, renderer){
-      // r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
+      r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
-    // ul.html(r_opts);
+    ul.html(r_opts);
   },
 
   // filterMatrixCellClick: function() {
@@ -2551,7 +2552,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       if(hash.show === 1) { 
         li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + id + '</text></li>';
       }
-    //   r_opts += '<li class="' + renderer + '"><i class="' + renderer + '"></i>' + panel.rendererTextMap[renderer] + '</li>';
     });
     ul.html(li_html);
     ul.parent().show();
