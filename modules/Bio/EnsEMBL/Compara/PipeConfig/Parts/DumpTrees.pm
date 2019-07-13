@@ -83,7 +83,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'mk_work_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'mkdir -p #hash_dir#',
+                'cmd'         => 'mkdir -p #hash_dir#/tar',
             },
             -flow_into  => [
                     WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
@@ -330,7 +330,8 @@ sub pipeline_analyses_dump_trees {
                 'inputcmd'      => 'find #hash_dir# -name "tree.*.#extension#" | sed "s:#hash_dir#/*::" | sort -t . -k2 -n',
             },
             -flow_into => {
-                2 => [ 'tar_dumps' ],
+                '2->A' => [ 'tar_dumps' ],
+                'A->1' => [ 'tar_list' ],
             },
         },
 
@@ -340,11 +341,31 @@ sub pipeline_analyses_dump_trees {
                 'file_list'     => '#expr( join("\n", @{ #_range_list# }) )expr#',   # Assumes no whitespace in the filenames
                 'min_tree_id'   => '#expr( ($_ = #_range_start#) and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
                 'max_tree_id'   => '#expr( ($_ = #_range_end#)   and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
-                'tar_archive'   => '#xml_dir#/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
+                'tar_archive'   => '#hash_dir#/tar/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
                 'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #hash_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
+            },
+        },
+
+        {   -logic_name => 'tar_list',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'file_list'     => '#hash_dir#/tar/#dump_file_name#.list',
+                'cmd'           => 'find #hash_dir#/tar -name "#dump_file_name#.*-*.tar.gz" | sed "s:#hash_dir#/tar/*::" | sort -t . -k2 -n > #file_list#',
+            },
+            -flow_into => {
+                1 => WHEN('-s #file_list#' => [ 'tar_tar_dumps' ]),
+            },
+        },
+
+        {   -logic_name => 'tar_tar_dumps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'file_list'     => '#hash_dir#/tar/#dump_file_name#.list',
+                'tar_tar_path'  => '#xml_dir#/#dump_file_name#.tar',
+                'cmd'           => 'tar cf #tar_tar_path# -C #xml_dir# --files-from #file_list#',
             },
         },
 
