@@ -186,12 +186,23 @@ sub pipeline_analyses_dump_trees {
                 'output_file' => '#tsv_dir#/#name_root#.homologies.tsv',
             },
             -flow_into => { 1 => {
+                'archive_per_genome_homologies_tsv_factory' => undef,
                 'convert_tsv_to_orthoxml' => [
                     {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
                     {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
                 ],
-                'archive_long_files' => { 'full_name' => '#output_file#' },
             }},
+        },
+
+        {   -logic_name => 'archive_per_genome_homologies_tsv_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputcmd'      => 'find #tsv_dir# -name #name_root#.homologies.tsv',
+                'column_names'  => [ 'full_name' ],
+            },
+            -flow_into => {
+                2 => 'archive_long_files'
+            },
         },
 
         {   -logic_name => 'convert_tsv_to_orthoxml',
@@ -199,9 +210,12 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'compara_db' => '#rel_db#',
             },
-            -flow_into  => {
-                1 => {'archive_long_files' => { 'full_name' => '#xml_file#' }}
-            },
+            -flow_into  => { 1 => {
+                'archive_long_files' => [
+                    { 'full_name' => '#tsv_file#', },
+                    { 'full_name' => '#xml_file#', },
+                ]
+            }},
             -rc_name => '16Gb_job',
         },
 
@@ -210,9 +224,6 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'db_conn'       => '#rel_db#',
                 'output_file'   => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
-            },
-            -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
           },
@@ -374,7 +385,6 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'cmd'         => 'gzip #full_name#',
             },
-            -wait_for => [ 'dump_per_genome_homologies_tsv', 'concatenate_genome_homologies_tsv', 'convert_tsv_to_orthoxml' ],
         },
 
         {   -logic_name => 'remove_empty_file',
