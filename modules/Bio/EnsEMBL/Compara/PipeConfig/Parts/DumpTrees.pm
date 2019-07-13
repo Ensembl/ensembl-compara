@@ -202,7 +202,7 @@ sub pipeline_analyses_dump_trees {
             -flow_into  => {
                 1 => {'archive_long_files' => { 'full_name' => '#xml_file#' }}
             },
-            -rc_name => '8Gb_job',
+            -rc_name => '16Gb_job',
         },
 
           { -logic_name => 'dump_per_genome_homologies_tsv',
