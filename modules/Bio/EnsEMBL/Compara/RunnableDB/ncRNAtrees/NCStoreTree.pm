@@ -41,11 +41,12 @@ sub store_newick_into_nc_tree {
     my $newick = $self->_slurp($newick_file);
     $newick = $self->expand_seq_names($newick, $self->param('map_long_seq_names'));
     $self->param('output_clusterset_id', lc $tag);
-    $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'), undef, 1);
+    my $newtree = $self->store_alternative_tree($newick, $tag, $self->param('gene_tree'), undef, 1);
     if (defined($self->param('model'))) {
         my $bootstrap_tag = $self->param('model') . "_bootstrap_num";
         $self->param('gene_tree')->store_tag($bootstrap_tag, $self->param('bootstrap_num'));
     }
+    return $newtree;
 }
 
 
