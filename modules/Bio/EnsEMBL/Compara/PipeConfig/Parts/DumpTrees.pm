@@ -197,7 +197,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'archive_per_genome_homologies_tsv_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputcmd'      => 'find #tsv_dir# -name #name_root#.homologies.tsv',
+                'inputcmd'      => 'find #tsv_dir# -mindepth 2 -name #name_root#.homologies.tsv',
                 'column_names'  => [ 'full_name' ],
             },
             -flow_into => {
