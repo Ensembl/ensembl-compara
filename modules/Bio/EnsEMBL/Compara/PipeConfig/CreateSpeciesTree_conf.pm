@@ -58,9 +58,8 @@ sub default_options {
         'outgroup_id'     => 127,
 
         'output_dir'        => $self->o('pipeline_dir'),
-        'sketch_dir'        => '/hps/nobackup2/production/ensembl/compara_ensembl/species_tree/' . $self->o('division') . '_sketches',
-        'write_access_user' => 'compara_ensembl', # if the current user does not have write access to
-                                                  # sketch_dir, 'become' this user to place files there
+        'sketch_dir'        => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/species_tree/' . $self->o('division') . '_sketches',
+        'write_access_user' => $self->o('shared_user'),
 
         'mash_kmer_size'    => 24,
         'mash_sketch_size'  => 1000000,

@@ -65,9 +65,6 @@ sub default_options {
         'mlss_id'           => undef,
         'all_current'       => undef,
 
-        # Which user has access to this directory
-        'shared_user'       => 'compara_ensembl',
-
         # the master database to get the genome_dbs
         'master_db'         => 'compara_master',
         # the pipeline won't redump genomes unless their size is different, or listed here

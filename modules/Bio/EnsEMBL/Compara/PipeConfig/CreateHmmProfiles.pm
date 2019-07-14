@@ -176,7 +176,7 @@ sub default_options {
     # executable locations:
         # HMM specific parameters
         # The location of the HMM library:
-        'compara_hmm_library_basedir'               => '/hps/nobackup2/production/ensembl/compara_ensembl/compara_hmm_'.$self->o('ensembl_release')."/",
+        'compara_hmm_library_basedir'               => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_'.$self->o('ensembl_release')."/",
         'shared_compara_basedir'                    => '/nfs/production/panda/ensembl/warehouse/compara/',
         'target_compara_hmm_library_basedir'        => $self->o('shared_compara_basedir') . '/treefam_hmms/compara_hmm_'.$self->o('ensembl_release')."/",
         'treefam_hmm_library_basedir'               => $self->o('shared_compara_basedir') . '/treefam_hmms/2015-12-18/',
@@ -342,9 +342,9 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         $self->pipeline_create_commands_rm_mkdir(['cluster_dir', 'dump_dir', 'fasta_dir', 'tmp_hmmsearch']),
-        $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], 'compara_ensembl'),
+        $self->pipeline_create_commands_rm_mkdir(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], $self->o('shared_user')),
         $self->pipeline_create_commands_lfs_setstripe('fasta_dir'),
-        $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], 'compara_ensembl'),
+        $self->pipeline_create_commands_lfs_setstripe(['compara_hmm_library_basedir', 'panther_hmm_library_basedir', 'seed_hmm_library_basedir'], $self->o('shared_user')),
     ];
 }
 

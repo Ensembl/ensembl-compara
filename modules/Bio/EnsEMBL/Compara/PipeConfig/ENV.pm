@@ -64,6 +64,9 @@ sub shared_default_options {
         # User details
         'email'                 => $ENV{'USER'}.'@ebi.ac.uk',
 
+        # Shared user used for shared files across all of Compara
+        'shared_user'           => 'compara_ensembl',
+
         # EG release number
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
@@ -77,13 +80,13 @@ sub shared_default_options {
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
         'reg_conf'              => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
         'binary_species_tree'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.' . $self->o('division') . '.branch_len.nw',
-        'genome_dumps_dir'      => '/hps/nobackup2/production/ensembl/compara_ensembl/genome_dumps/'.$self->o('division').'/',
+        'genome_dumps_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/genome_dumps/'.$self->o('division').'/',
 
         # HMM library
         'hmm_library_version'   => '2',
-        'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2019-01-02',
+        'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/treefam_hmms/2019-01-02',
         #'hmm_library_version'   => '3',
-        #'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/compara_ensembl/compara_hmm_91/',
+        #'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_91/',
     }
 }
 

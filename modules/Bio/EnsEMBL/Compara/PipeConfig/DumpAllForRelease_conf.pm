@@ -338,7 +338,7 @@ sub pipeline_analyses {
         {   -logic_name => 'add_hmm_lib',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
             -parameters => {
-                'shared_user'   => 'compara_ensembl',
+                'shared_user'   => $self->o('shared_user'),
             },
         },
 
