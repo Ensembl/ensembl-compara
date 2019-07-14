@@ -185,13 +185,20 @@ sub pipeline_analyses_dump_trees {
                 'cmd'         => q{rm #output_file#; for filename in $(find #tsv_dir# -name #name_root#.homologies.tsv); do if [ ! -e #output_file# ]; then head -1 $filename > #output_file#; fi; awk '$1 > $6 {print $0}' $filename >> #output_file#; done},
                 'output_file' => '#tsv_dir#/#name_root#.homologies.tsv',
             },
-            -flow_into => { 1 => {
-                'archive_per_genome_homologies_tsv_factory' => undef,
-                'convert_tsv_to_orthoxml' => [
-                    {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
-                    {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
-                ],
-            }},
+            -flow_into => {
+                1 => [ 'archive_per_genome_homologies_tsv_factory' ],
+                '1->A' => {
+                    'convert_tsv_to_orthoxml' => [
+                        {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
+                        {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
+                    ],
+                },
+                'A->1' => {
+                    'archive_long_files' => [
+                        { 'full_name' => '#output_file#', },
+                    ]
+                }
+            },
         },
 
         {   -logic_name => 'archive_per_genome_homologies_tsv_factory',
@@ -212,7 +219,6 @@ sub pipeline_analyses_dump_trees {
             },
             -flow_into  => { 1 => {
                 'archive_long_files' => [
-                    { 'full_name' => '#tsv_file#', },
                     { 'full_name' => '#xml_file#', },
                 ]
             }},
