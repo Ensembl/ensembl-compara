@@ -128,8 +128,8 @@ our $config = {
                 query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
             },
             {
-                description => 'Ambiguity codes never cover more than 20% of the CDS sequence',
-                query => 'SELECT mp.seq_member_id FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 > length*20',
+                description => 'No more than 20% of the CDS sequences should have more than 10% ambiguity codes',
+                query => 'SELECT 1 FROM seq_member mp JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" GROUP BY genome_db_id HAVING SUM( LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 >= length*20 ) * 100 >= COUNT(*) * 10',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless a few exceptions like some immunoglobulin genes)',
@@ -141,8 +141,8 @@ our $config = {
                 query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND ((sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
             },
             {
-                description => 'Ambiguity codes never cover more than 20% of the sequence',
-                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 > length*20',
+                description => 'No more than 20% of the ncRNA sequences should have more than 10% ambiguity codes',
+                query => 'SELECT 1 FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%TRANS" GROUP BY genome_db_id HAVING SUM( LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(sequence,"N",""),"A",""),"C",""),"G",""),"T",""))*100 >= length*20 ) * 100 >= COUNT(*) * 10',
             },
             {
                 description => 'ncRNA sequences cannot be entirely made of N',
