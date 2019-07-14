@@ -233,7 +233,6 @@ sub _run_examl {
     $self->store_newick_into_nc_tree($tag, $examl_output);
 
     # Unlink run files
-    my $temp_regexp = $self->worker_temp_directory;
     unlink <*$examl_tag*>;
 
     return
