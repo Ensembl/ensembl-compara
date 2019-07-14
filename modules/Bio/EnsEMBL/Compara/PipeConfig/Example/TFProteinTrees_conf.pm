@@ -112,12 +112,8 @@ sub default_options {
     # mapping parameters:
 
     # executable locations:
-        # TODO: this one has to be installed in the Cellar
-        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-       # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
-       'hmm_library_basedir'     => '/hps/nobackup2/production/ensembl/compara_ensembl/treefam_hmms/2015-12-18',
 
        # Dumps coming from InterPro
        'panther_annotation_file'    => '/dev/null',
