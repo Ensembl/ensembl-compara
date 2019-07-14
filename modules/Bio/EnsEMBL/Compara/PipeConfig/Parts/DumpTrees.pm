@@ -364,7 +364,7 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'file_list'     => '#hash_dir#/tar/#dump_file_name#.list',
-                'cmd'           => 'find #hash_dir#/tar -name "#dump_file_name#.*-*.tar.gz" | sed "s:#hash_dir#/tar/*::" | sort -t . -k2 -n > #file_list#',
+                'cmd'           => 'find #hash_dir#/tar -name "#dump_file_name#.*-*.tar.gz" | sort > #file_list#',
             },
             -flow_into => {
                 1 => WHEN('-s #file_list#' => [ 'tar_tar_dumps' ]),
@@ -376,7 +376,7 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'file_list'     => '#hash_dir#/tar/#dump_file_name#.list',
                 'tar_tar_path'  => '#xml_dir#/#dump_file_name#.tar',
-                'cmd'           => 'tar cf #tar_tar_path# -C #xml_dir# --files-from #file_list#',
+                'cmd'           => 'tar cf #tar_tar_path# -C #xml_dir# --files-from #file_list# --transform "s:^.*/::"',
             },
         },
 
