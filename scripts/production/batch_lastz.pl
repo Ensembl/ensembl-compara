@@ -19,14 +19,18 @@ use warnings;
 use strict;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::Logger;
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::JIRA;
 use Getopt::Long;
 use POSIX;
 use List::Util qw(sum);
 use Number::Format 'format_number';
+use JSON;
+use Term::ReadKey;
 
 use Data::Dumper;
-$Data::Dumper::Maxdepth=4;
 
 my $max_jobs = 6000000; # max 6 million rows allowed in job table
 
@@ -149,12 +153,68 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 
 # Get the division from the given master database
 my $division = ucfirst($dba->get_division());
-$division =~ s/Vertebrates/Ensembl/;
+$division =~ s/Grch37/GRCh37/;
+$division =~ s/Citest/CITest/;
+my $division_path = $division =~ s/Vertebrates/Ensembl/r;
 
-print "\nPipeline commands:\n------------------\n";
+# Load all the elements necessary to create one JIRA ticket per batch:
+# Initialize logger
+my $logger = Bio::EnsEMBL::Utils::Logger->new();
+# Initialize parameters used to create the JIRA tickets
+my $user = Bio::EnsEMBL::Compara::Utils::JIRA->validate_user_name( $ENV{'USER'}, $logger );
+print "\nPlease type your JIRA password:";
+ReadMode('noecho');    # make password invisible on terminal
+my $password = ReadLine(0);
+chomp $password;
+ReadMode(0);           # restore typing visibility on terminal
+print "\n";
+my $parameters = {
+    release    => $release,
+    division   => $division,
+    tickets    => {
+        fixVersion => "Release $release",
+        priority   => 'Major',
+        project    => 'ENSCOMPARASW',
+        components => ['Pairwise pipeline', 'Production tasks'],
+    },
+    user       => $user,
+    password   => $password,
+};
+# Get the parent JIRA ticket key, i.e. the production pipelines JIRA ticket for
+# the given division and release
+my $jql = sprintf('project=%s AND summary ~ "%s Release %d Production pipelines"',
+    $parameters->{tickets}->{project}, $parameters->{division}, $parameters->{release});
+my $existing_tickets_response = Bio::EnsEMBL::Compara::Utils::JIRA->post_request(
+    'rest/api/latest/search',
+    { "maxResults" => 1, "jql" => $jql, },
+    $parameters, $logger
+);
+my $existing_tickets = decode_json($existing_tickets_response->content());
+my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
+# Create subtask JIRA ticket template
+my $json_ticket_tmpl = decode_json('{ "name_on_graph": "LastZ" }');
+my $ticket_tmpl = Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($json_ticket_tmpl, 'Sub-task', $parameters, $logger);
+$ticket_tmpl->{'fields'}->{'parent'} = { 'key'  => $jira_prod_key };
+
+my $to_print;
+my $index = 1;
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
+    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division_path\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
+    # Copy the template and add the specific details for this group
+    my $ticket = { %$ticket_tmpl };
+    $ticket->{'fields'}->{'description'} = sprintf("{code:bash}%s{code}", $cmd);
+    $ticket->{'fields'}->{'summary'} = "LastZ batch $index";
+    $logger->info('Ticket to submit: '. Dumper($ticket));
+    # Create the JIRA ticket and print its key and corresponding command
+    my $subtask_key = Bio::EnsEMBL::Compara::Utils::JIRA->create_ticket( $ticket, $parameters, $logger );
+    push(@$to_print, "[$subtask_key] $cmd");
+    $index++;
+}
+# Finally, print each batch
+print "\nPipeline commands:\n------------------\n";
+foreach my $line ( @$to_print ) {
+    print "$line\n";
 }
 
 sub get_ref_chunk_count {
