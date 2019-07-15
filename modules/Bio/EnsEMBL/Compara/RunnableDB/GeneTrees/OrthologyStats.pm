@@ -54,12 +54,13 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-# NOTE: The first column ("description") is actually not used ("c1" and
-# "c2" are) but I didn't want to change all the offsets in $line
+# NOTE: The first column used to be the homology description but it is not
+# needed any more. I didn't want to change all the offsets related to
+# $line, so replaced it with NULL
 our $sql_orthologies = '
-SELECT description, c1, c2, COUNT(*), SUM(n1), SUM(n2), SUM(nh)/2, SUM(perc_id), SUM(p1), SUM(p2)
+SELECT NULL, c1, c2, COUNT(*), SUM(n1), SUM(n2), SUM(nh)/2, SUM(perc_id), SUM(p1), SUM(p2)
 FROM (
-    SELECT description, gene_tree_node_id,
+    SELECT -- description, gene_tree_node_id,
         SUM(nh) AS nh,
         SUM(perc_id) AS perc_id,
         IF(SUM(genome_db_id=?)=1, "one", "many") AS c1,
