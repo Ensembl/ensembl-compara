@@ -90,10 +90,6 @@ sub default_options {
         #'mlss_id'               => 40077,
         # Change this one to allow multiple runs
         #'rel_suffix'            => 'b',
-
-       #production run or test/development run
-       
-        'test_mode' => 1,
                                          
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
@@ -598,14 +594,6 @@ sub core_pipeline_analyses {
                 'text'  => 'The pipeline has completed.',
                 'email' => $self->o('email'),
             },
-            -flow_into  => [ 'register_pipeline_url' ],
-        },
-
-        {   -logic_name => 'register_pipeline_url',
-            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-             -parameters => { 
-                'test_mode' => $self->o('test_mode'),
-            }
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------

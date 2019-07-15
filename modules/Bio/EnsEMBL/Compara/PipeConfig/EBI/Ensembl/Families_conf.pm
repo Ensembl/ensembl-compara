@@ -83,8 +83,6 @@ sub default_options {
         # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'compara_master', 
 
-        'test_mode' => 1, #set this to 0 if this is production run. Prevents writing of the pipeline url into the master db unless it is A PRODUCTION run
-
         # HMM clustering
         #'hmm_clustering'      => 0,
         'hmm_clustering'      => 1,
