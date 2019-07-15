@@ -365,7 +365,9 @@ return
                                                                            {'test' => 'conservation_scores'},
                                                                 ],
                                     } ),
-                               'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
+                               'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
+                                               ELSE [ 'end_pipeline' ],
+                                         ),
                               },
             },
 
@@ -373,6 +375,10 @@ return
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
                 -rc_name    => '4Gb_job',
             },
+            
+        {   -logic_name  => 'end_pipeline',
+            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
 ];

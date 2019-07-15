@@ -403,13 +403,19 @@ sub pipeline_analyses {
                                                                            {'test' => 'conservation_scores','method_link_species_set_id'=>'#cs_mlss_id#'},
                                                                 ],
                                     } ),
-                               'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
+                               'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
+                                               ELSE [ 'end_pipeline' ],
+                                         ),
                               },
             },
 
 	    {   -logic_name => 'conservation_score_healthcheck',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
 	    },
+        
+        {   -logic_name  => 'end_pipeline',
+            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
 
