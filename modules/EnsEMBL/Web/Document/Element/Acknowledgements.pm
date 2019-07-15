@@ -59,14 +59,23 @@ sub content {
       </div>
     };
   }
+
+  $content .= $self->survey_box;
   
+  return $content;
+}
+
+sub survey_box {
+  my $self = shift;
+  my $hub  = $self->hub;
   ## Temporary ad for survey
+  my $html = '';
   my $show_survey = 1;
   my $is_relevant_page = ($hub->type eq 'Gene' || $hub->type eq 'Transcript' || $hub->type eq 'Variation');
 
   ## Only show it to returning visitors who haven't clicked on the button
   if ($show_survey && $is_relevant_page) {
-    $content .= qq(
+    $html = qq(
       <div class="survey-box">
         <p>Would you help us with the design of new landing pages for Genes, Transcripts and Variants?</p>
         <p class="survey-button"><a href="https://forms.gle/6Bi66yNpS3z7wDib6" class="survey-link" target="_blank">Take the survey</a></p>
@@ -74,8 +83,8 @@ sub content {
       </div>
     );
   }
-
-  return $content;
+  
+  return $html;
 }
 
 1;
