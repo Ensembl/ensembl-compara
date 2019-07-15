@@ -694,14 +694,6 @@ sub pipeline_analyses {
             -parameters => {
                 'text'  => 'The pipeline has completed.',
             },
-            -flow_into => [ 'register_pipeline_url' ],
-        },
-
-        {   -logic_name => 'register_pipeline_url',
-            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -parameters => { 
-                'test_mode' => $self->o('test_mode'),
-                }
         },
 
         #

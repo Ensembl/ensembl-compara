@@ -84,8 +84,6 @@ sub default_options {
             'collection'    => 'default',       # The name of the species-set within that division
             'pipeline_name' => $self->o('collection') . '_' . $self->o('division').'_ncrna_trees_'.$self->o('rel_with_suffix'),
 
-            'test_mode' => 1, #set this to 0 if this is production run
-
             # tree break
             'treebreak_gene_count'     => 400,
 

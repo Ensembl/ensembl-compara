@@ -365,7 +365,7 @@ return
                                                                            {'test' => 'conservation_scores'},
                                                                 ],
                                     } ),
-                               'A->1' => ['register_mlss'],
+                               'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
                               },
             },
 
@@ -373,11 +373,6 @@ return
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
                 -rc_name    => '4Gb_job',
             },
-
-        {   -logic_name    => 'register_mlss',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
-            -flow_into     => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ] ),
-        },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
 ];
