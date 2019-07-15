@@ -317,7 +317,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         var keyY      = track.subGroups[dimY];
         
         //multi dimension work
-        var fkey      = keyX + '_sep_' + keyY;
+        var fkey      = keyY + '_sep_' + keyX;
         var dimkey;
         $.each(track.subGroups, function(dimension, trackName){
           if (panel.multiDimFlag) {
@@ -332,9 +332,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 updateStore = true;
                 if($.isEmptyObject(panel.localStoreObj["other_dimensions"])) {
                   panel.localStoreObj["other_dimensions"] = {};
-                  panel.localStoreObj["other_dimensions"][dimension + '_sep_' + track.subGroups[dimension]] = 1;
+                  panel.localStoreObj["other_dimensions"][dimkey] = 1;
                 }else {
-                  panel.localStoreObj["other_dimensions"][dimension + '_sep_' + track.subGroups[dimension]] = 1;
+                  panel.localStoreObj["other_dimensions"][dimkey] = 1;
                 }
               }
 
@@ -1992,7 +1992,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               var offCount  = 0;
               var onCount   = 0;
               var dataClass = ""; //to know which cell has data
-              var storeKey = cellName + "_sep_" + dyItem; //key for each cell, (dx_sep_dy)
+              var storeKey = dyItem + "_sep_" + cellName; //key for each cell, (dy_sep_dx)
               var totalCount = 0;
               var boxCountHTML = "";
 
@@ -2102,7 +2102,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var availableFilters = {};
     $.each(localStorage.dx, function(x, v) {
       $.each(localStorage.dy, function(y, v) {
-        var key = x + '_sep_' + y;
+        var key = y + '_sep_' + x;
         if (panel.filterMatrixObj[key]) {
           $.each(panel.filterMatrixObj[key], function(trackId, otherDimHash) {
             $.each(otherDimHash["data"], function(dimVal, display){
@@ -2117,6 +2117,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var html = '';
     $.each(availableFilters, function(dim, values) {
       var dimSelected = "";
+      values = $.unique(values.sort());
       html ='\
           <div class="filterMatrix-content">\
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>\
@@ -2161,9 +2162,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         // All link click with filterDimVal as the dimension name (age, sex, etc.)
 
-      }
-      else {        
-        
+      } else {
         //Adding dimension in store
         if(newState === "on" ) {
           panel.localStoreObj["other_dimensions"][dimKey] = 1;
@@ -2318,6 +2317,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
               if(panel.localStoreObj[cellStoreObjKey][storeKey]) {
                 boxState   = panel.localStoreObj[cellStoreObjKey][storeKey].state;
+                //if it is multidimension trackhub, then cell in final matrix state is dependent on filter matrix cell
+                if(panel.localStoreObj.filterMatrix){
+                  boxState = (panel.localStoreObj.filterMatrix[storeKey].state.off === panel.localStoreObj.filterMatrix[storeKey].state.total) ? "track-off" : "track-on";
+                }
                 boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
                 format = panel.localStoreObj[cellStoreObjKey][storeKey].format;
                 boxRenderClass = "render-"+boxDataRender;
@@ -2582,7 +2585,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.dyStateKey      = panel.itemDimension(panel.yName) || "";
       panel.dxStateKey      = panel.itemDimension(panel.xName) || "";
 
-      var key = panel.yName + '_sep_' + panel.xName;
+      var key = panel.xName + '_sep_' + panel.yName;
       panel.multiDimFlag ? panel.buildFilterMatrixPopup(key) : panel.buildMatrixPopup($(this).data("format"));
 
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
