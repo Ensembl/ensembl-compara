@@ -275,6 +275,8 @@ sub resource_classes_multi_thread {
         '32Gb_24c_mpi' => {'LSF' => ['-q mpi-rh74 -n 24 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=12]"', $reg_requirement] },
         '32Gb_32c_mpi' => {'LSF' => ['-q mpi-rh74 -n 32 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
         '32Gb_64c_mpi' => {'LSF' => ['-q mpi-rh74 -n 64 -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"', $reg_requirement] },
+
+        '64Gb_4c_mpi'  => {'LSF' => ['-q mpi-rh74 -n 4  -M64000 -R"select[mem>64000] rusage[mem=64000] same[model] span[ptile=4]"', $reg_requirement] },
     };
 }
 
