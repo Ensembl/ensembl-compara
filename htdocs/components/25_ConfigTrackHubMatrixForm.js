@@ -328,7 +328,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               filterObj[fkey][track.id]["data"] = filterObj[fkey][track.id]["data"]  || {};
               filterObj[fkey][track.id]["data"][dimkey] = track.display === "off" ? "off" : "on";
 
-              if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["other_dimensions"]) || panel.initialLoad )) {   
+              if(track.display && track.display != "off" && $.isEmptyObject(storeObj["other_dimensions"]) && panel.initialLoad) {
                 updateStore = true;
                 if($.isEmptyObject(panel.localStoreObj["other_dimensions"])) {
                   panel.localStoreObj["other_dimensions"] = {};
@@ -349,7 +349,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if(dimension !== dimY) { return; }
 
-          if(track.display && track.display != "off" && ($.isEmptyObject(storeObj["matrix"]) || panel.initialLoad )) {     
+          if(track.display && track.display != "off" && $.isEmptyObject(storeObj["matrix"]) && panel.initialLoad ) {     
             updateStore = true;
             defaultState = "track-on";
             finalObj.format[track.format.toLowerCase()] = finalObj.format[track.format.toLowerCase()]+1 || 1;
@@ -1260,6 +1260,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     //main obj for filter matrix state
     panel.localStoreObj.filterMatrix = panel.getLocalStorage().filterMatrix  || {};
 
+    //other dimension filters for multi dimension 
+    panel.localStoreObj.other_dimensions = panel.getLocalStorage().other_dimensions  || {};
+
     //state management for the extra dimension
     if(!$.isEmptyObject(panel.json.extra_dimensions)){
       $.each(panel.json.extra_dimensions, function(i, data){
@@ -2002,7 +2005,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   boxCountHTML = '<span class="count">0</span>';
                 } else {
                   boxState = "partial";
-                  var partialCount = panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"];
+                  var partialCount = panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][storeKey]["state"]["off"];
                   boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]+'</span>';
                 }
                 dataClass = "_hasData";
@@ -2122,8 +2125,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       html += '<li class="all" data-dim-val="'+ dim +'"><span class="fancy-checkbox"></span><text>All</text></li>';
       $.each(values, function(i, val) {
         var dimKey = dim+"_sep_"+val;
-        dimSelected = panel.localStoreObj["other_dimensions"][dimKey] ? "selected" : "";
-        html += '<li data-dim-val="'+ val +'""><span class="fancy-checkbox '+dimKey+' '+dimSelected+'"></span><text>' + val + '</text></li>';
+        dimSelected = panel.localStoreObj["other_dimensions"][dimKey] === 1 ? "selected" : "";
+        html += '<li data-dim-val="'+ val +'" data-dim-key="'+dimKey+'"><span class="fancy-checkbox '+dimKey+' '+dimSelected+'"></span><text>' + val + '</text></li>';
       });
       html += '</ul></div>';
     });
@@ -2135,6 +2138,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   registerFilterListItemClickEvent: function() {
     var panel = this;
     $('li', panel.elLk.filterTrackBox).off().on('click', function(e) {
+      var dimKey       = $(this).data("dim-key") || "";
+      var currentState = $(this).find('span.fancy-checkbox').hasClass('selected') ? "on" : "off";
+      var newState     = currentState === "on" ? "off" : "on";
+      var showValue    = newState === "on" ? 1 : 0;
 
       // Select/deslect all boxes for that dimension
       var fcb = $(this).children('span.fancy-checkbox');
@@ -2155,8 +2162,26 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         // All link click with filterDimVal as the dimension name (age, sex, etc.)
 
       }
-      else {
-
+      else {        
+        
+        //Adding dimension in store
+        if(newState === "on" ) {
+          panel.localStoreObj["other_dimensions"][dimKey] = 1;
+        } else {
+          delete panel.localStoreObj["other_dimensions"][dimKey];
+        }        
+        // Updating store and then update cell state
+        var cellArray = [];
+        //Get the cells that are affected by the change and update the store for each affected cell
+        $.each(panel.elLk.lookup.dimensionFilter[dimKey], function(cellKey, trackArray){
+          //console.log(cellKey);
+          $.each(trackArray, function(i, trackId){
+            //console.log(trackId);
+            panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[cellKey].data[trackId], cellKey, newState, currentState,0,showValue);
+          });
+          cellArray.push(cellKey);
+        });        
+        panel.updateFilterMatrix(cellArray);
       }
 
     });
@@ -2625,7 +2650,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   // Function to update the filtermatrix store obj when selecting/unselecting checkboxes from popup or RHS
   //
-  updateFilterMatrixStore: function(storeObj, cellKey, newState, currentState, all, RHS) {
+  updateFilterMatrixStore: function(storeObj, cellKey, newState, currentState, all, showValue) {
     var panel = this;
 
     if(all) {
@@ -2635,19 +2660,31 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.filterMatrix[cellKey].state[currentState] = 0;
       panel.localStoreObj.filterMatrix[cellKey].state[newState] = panel.localStoreObj.filterMatrix[cellKey].state.total;
     } else {
+      if(showValue != undefined) { //show can be either 0 or 1 (when clicking element in RHS filter track)
+        storeObj.show = showValue;
+        if(showValue === 1) { 
+          panel.localStoreObj.filterMatrix[cellKey].state.total += 1;
+          panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
+        } else {
+          panel.localStoreObj.filterMatrix[cellKey].state.total -= 1;
+          panel.localStoreObj.filterMatrix[cellKey].state[storeObj.state] -= 1;
+        }
+      } else {
+        panel.localStoreObj.filterMatrix[cellKey].state[currentState] -= 1;
+        panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
+      }
       storeObj.state = newState;
-      panel.localStoreObj.filterMatrix[cellKey].state[currentState] -= 1;
-      panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
     }
     panel.setLocalStorage();
   },
 
   //function to update filte matrix cells (on/off/partial) and show the counts
-  updateFilterMatrix: function(cellKey) {
+  // Arguments: array of cells affected
+  updateFilterMatrix: function(cellArray) {
     var panel = this;
 
     //updating just one cell
-    if(cellKey) {
+    $.each(cellArray, function(i, cellKey) {
       var boxState = "";
       var boxCountHTML = "";
       if(panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"] === panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]) { 
@@ -2658,15 +2695,13 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         boxCountHTML = '<span class="count">0</span>';
       } else {
         boxState = "partial";
-        var partialCount = panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"];
+        var partialCount = panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][cellKey]["state"]["off"];
         boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]+'</span>';
       }
 
       panel.elLk.filterMatrix.find('div.'+cellKey).removeClass("track-on track-off partial").addClass(boxState).html(boxCountHTML);
 
-    } else { //updating whole matrix
-
-    }
+    });
   },
 
   //function to update the store obj when clicking the on/off or renderers
@@ -2801,7 +2836,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.TrackPopupType.find('ul span.fancy-checkbox.all').removeClass("selected");
         }
       }
-      panel.updateFilterMatrix(cellKey);
+      panel.updateFilterMatrix([cellKey]);
     });
 
     //choosing toggle button - column-switch/row-switch/cell-switch
