@@ -549,6 +549,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   },
 
   resize: function() {
+    return;
     var panel = this;
     panel.elLk.resultBox.outerHeight(this.getNewPanelHeight());
     if (panel.elLk[this.getActiveTab()].haveSubTabs) {

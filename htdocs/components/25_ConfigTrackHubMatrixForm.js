@@ -168,7 +168,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.trackPopup.hide();
       }
 
-      if(!$(e.target).closest('ul.dropdown').length && panel.trackPopup) {
+      if(!$(e.target).closest('ul.cell').length && panel.trackPopup) {
         panel.el.find('.renderer-selection div.renderers').removeClass('active');
       }
     });
@@ -640,27 +640,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       return {image_config: {}};
     }
 
-    $.each(panel.json.extra_dimensions, function (i, dim) {
-      if (!panel.localStoreObj[dim]) {
-        return;
-      }
-      $.each(panel.localStoreObj[dim], function (k, v) {
-        if (k.match(/_sep_/)) {
-          if (v.state) {
-            key = '';
-            arr = k.split('_sep_');
-            key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
-            config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
-
-            if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
-              key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-              config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
-            }
-          }
-        }
-      });
-    })
-
     if (!panel.localStoreObj.matrix) {
       return;
     }
@@ -670,31 +649,20 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         if (v.state) {
           key = '';
           arr = k.split('_sep_');
-          key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
-          config[key] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
-          if (v.id && config[key].renderer !== 'off') {
+          // key = 'trackhub_' + panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
+          config[v.id] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
+          if (v.id && config[v.id].renderer !== 'off') {
             // Track key is a unique id for the track created by ImageConfigExtension/UserTracks
             // which is a combination of submenu_key(node_id) and track name;
-            var track_key = panel.node_id + '_' + v.id;
+            var track_key = v.id;
             config[track_key] = { renderer: v.renderer };
-          }
-
-          if (panel.localStoreObj.dy && panel.localStoreObj.dy[arr[0]]) {
-            key = panel.node_id + '_' + panel.elLk.lookup[arr[1]].label + '_' + panel.elLk.lookup[arr[0]].label;
-            config[key] = { renderer : v.state === 'track-on' ? 'on' : 'off' };
-            if (v.id && config[key].renderer !== 'off') {
-              // Track key is a unique id for the track created by ImageConfigExtension/UserTracks
-              // which is a combination of submenu_key(node_id) and track name;
-              var track_key = panel.node_id + '_' + v.id;
-              config[track_key] = { renderer: v.renderer };
-            }
           }
         }
       }
     });
 
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
-console.log('TH');
+
     $.extend(this.imageConfig, config);
     return { imageConfig: config };
   },
@@ -1008,7 +976,7 @@ console.log('TH');
   clickCheckbox: function (container) {
     var panel = this;
     var itemListen = "li";
-    if(container[0].nodeName === 'DIV') {
+    if(container[0] && container[0].nodeName === 'DIV') {
       itemListen = "";
     }
     //clicking checkbox
@@ -2076,7 +2044,7 @@ console.log('TH');
     var hwidth = (dyArray.length * 32);
     panel.el.find('div.filterMatrix-container .xContainer, div.filterMatrix-container .yBoxWrapper').width(hwidth);
 
-    panel.cellClick(); //opens popup
+    panel.cellClick('filter'); //opens popup
     // panel.filterMatrixCellClick(); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
@@ -2319,7 +2287,7 @@ console.log('TH');
               if(panel.localStoreObj[cellStoreObjKey][storeKey]) {
                 boxState   = panel.localStoreObj[cellStoreObjKey][storeKey].state;
                 //if it is multidimension trackhub, then cell in final matrix state is dependent on filter matrix cell
-                if(panel.localStoreObj.filterMatrix){
+                if(panel.multiDimFlag && panel.localStoreObj.filterMatrix){
                   boxState = (panel.localStoreObj.filterMatrix[storeKey].state.off === panel.localStoreObj.filterMatrix[storeKey].state.total) ? "track-off" : "track-on";
                 }
                 boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
@@ -2392,7 +2360,7 @@ console.log('TH');
     var hwidth = (dyArray.length * 32);
     panel.el.find('div.matrix-container .xContainer, div.matrix-container .yBoxWrapper').width(hwidth);
 
-    panel.cellClick(); //opens popup
+    panel.cellClick('config'); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
 
@@ -2550,14 +2518,15 @@ console.log('TH');
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
       var selected = hash.state === "on" ? "selected" : "";
       if(hash.show === 1) { 
-        li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + id + '</text></li>';
+        li_html += '<li class="_ht" title="'+ id +'" data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + id + '</text></li>';
       }
     });
     ul.html(li_html);
     ul.parent().show();
+    $('._ht', ul).helptip();
   },
 
-  cellClick: function() {
+  cellClick: function(matrix) {
     var panel = this;
 
     panel.elLk.rowContainer = this.elLk.matrixContainer.find('div.rowContainer');
@@ -2586,7 +2555,7 @@ console.log('TH');
       panel.dxStateKey      = panel.itemDimension(panel.xName) || "";
 
       var key = panel.xName + '_sep_' + panel.yName;
-      panel.multiDimFlag ? panel.buildFilterMatrixPopup(key) : panel.buildMatrixPopup($(this).data("format"));
+      matrix === 'filter' ? panel.buildFilterMatrixPopup(key) : panel.buildMatrixPopup($(this).data("format"));
 
       var boxState  = panel.localStoreObj[panel.cellStateKey][panel.cellKey].state; //is the track on or off
       var boxRender = panel.localStoreObj[panel.cellStateKey][panel.cellKey].renderer; //is the track peak or signal or peak-signal

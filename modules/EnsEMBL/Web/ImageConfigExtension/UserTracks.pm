@@ -617,7 +617,7 @@ sub _add_trackhub_tracks {
       ## Note that we use a duplicate value in description and longLabel, because non-hub files
       ## often have much longer descriptions so we need to distinguish the two
       my $source = {
-                    name            => $options{'submenu_key'} . '_' . $track->{'track'},
+                    name            => 'trackhub_' . $options{'submenu_key'} . '_' . $track->{'track'},
                     source_name     => $source_name,
                     longLabel       => $track->{'longLabel'},
                     description     => $name.': '.$track->{'longLabel'},
