@@ -678,6 +678,7 @@ sub _add_trackhub_tracks {
  
         ## Set track style if appropriate
         my $default_display = 'signal';
+        $options{'default_display'} = $default_display;
         if ($on_off && $on_off eq 'on') {
           $options{'display'} = $default_display;
           $count_visible++;
@@ -1025,6 +1026,7 @@ sub _add_bigwig_track {
     y_max           => $args{'source'}{'y_max'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || 'signal',
   };
 
   ## Override default renderer (mainly used by trackhubs)
@@ -1055,6 +1057,7 @@ sub _add_multiwig_track {
     y_max           => $args{'source'}{'y_max'},
     addhiddenbgd    => 1,
     max_label_rows  => 2,
+    default_display => $args{'source'}{'default'} || 'signal',
   };
 
   ## Override default renderer (mainly used by trackhubs)
