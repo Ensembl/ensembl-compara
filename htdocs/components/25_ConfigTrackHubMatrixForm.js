@@ -1992,7 +1992,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
                       panel.localStoreObj["filterMatrix"][storeKey]["data"] = panel.localStoreObj["filterMatrix"][storeKey]["data"] || {};
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] = panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] || {};
-                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = "on";
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = state;
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["show"] = tracks["show"];
   
                       // //setting count for all selection section
@@ -2642,7 +2642,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
 
       var dd = new panel.dropDown(panel, boxRender);
-
 
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
