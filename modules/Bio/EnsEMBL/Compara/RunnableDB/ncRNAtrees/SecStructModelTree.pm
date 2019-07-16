@@ -162,21 +162,16 @@ sub run {
     print STDERR "RAxML runtime_msec: ", $command->runtime_msec, "\n";
 
     my $raxml_output = $self->worker_temp_directory . "/RAxML_bestTree.$raxml_tag.$model";
-    $self->store_newick_into_nc_tree('ss_it_'.$model, $raxml_output);
+    my $newtree = $self->store_newick_into_nc_tree('ss_it_'.$model, $raxml_output);
     my $model_runtime = "${model}_runtime_msec";
     $nc_tree->store_tag($model_runtime,$command->runtime_msec);
 
+    $self->param('gene_tree_id', $newtree->dbID);
+    $self->call_one_hc('alignment');
+    $self->call_one_hc('tree_attributes');
+    $self->call_one_hc('tree_structure');
+
     return 1;
 }
-
-
-sub cleanup {   # NOT CALLED ?
-    my ($self) = @_;
-    my $raxml_tag = $self->param('raxml_tag');
-    my $model = $self->param('model');
-    my $tmp_regexp = $self->worker_temp_directory."/*$raxml_tag.$model.RUN.*";
-    $self->run_command("rm -f $tmp_regexp", { die_on_failure => 1 });
-}
-
 
 1;

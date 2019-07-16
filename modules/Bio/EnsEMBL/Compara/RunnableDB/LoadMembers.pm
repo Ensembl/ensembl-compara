@@ -434,7 +434,7 @@ sub store_gene_generic {
                                                                             );
         $seq_member->description($fasta_description);
 
-        print STDERR "SEQMEMBER: ", $seq_member->description, "    ... ", $seq_member->display_label, "\n" if ($self->debug);
+        print STDERR "SEQMEMBER: ", $seq_member->description, "    ... ", $seq_member->display_label // '<NA>', "\n" if ($self->debug);
 
         print STDERR  " => gene " . $seq_member->stable_id if ($self->debug);
         my $transcript_spliced_seq = $seq_member->sequence;

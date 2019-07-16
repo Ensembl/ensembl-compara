@@ -96,6 +96,7 @@ sub fetch_input {
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->alignment($aln, 1); # 1 turns on option to ignore size mismatches between $aln and $nc_tree
 
+    $self->cleanup_worker_temp_directory;
     $self->param('input_aln',  $self->_dumpMultipleAlignmentToWorkdir($nc_tree, 1));
 }
 
@@ -233,7 +234,6 @@ sub _run_examl {
     $self->store_newick_into_nc_tree($tag, $examl_output);
 
     # Unlink run files
-    my $temp_regexp = $self->worker_temp_directory;
     unlink <*$examl_tag*>;
 
     return

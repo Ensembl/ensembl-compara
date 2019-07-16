@@ -266,7 +266,7 @@ sub pipeline_analyses {
                 } ],
             -flow_into  => {
                 '9'    => [ 'DumpMultiAlign_start' ],
-                '2'    => [ 'DumpTrees_start' ],
+                '2'    => [ 'DumpTrees_start','add_hmm_lib' ],
                 '3'    => [ 'DumpConstrainedElements_start' ],
                 '4'    => [ 'DumpConservationScores_start'  ],
                 '5'    => [ 'DumpSpeciesTrees_start'        ],
@@ -332,6 +332,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
             -parameters => {
             	'lastz_dump_path' => $self->o('lastz_dump_path'),
+            },
+        },
+
+        {   -logic_name => 'add_hmm_lib',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
+            -parameters => {
+                'shared_user'   => 'compara_ensembl',
             },
         },
 

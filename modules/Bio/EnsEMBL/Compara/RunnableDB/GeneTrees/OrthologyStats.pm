@@ -54,12 +54,13 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-# NOTE: The first column ("description") is actually not used ("c1" and
-# "c2" are) but I didn't want to change all the offsets in $line
-our $sql_orthologies = '
-SELECT description, c1, c2, COUNT(*), SUM(n1), SUM(n2), SUM(nh)/2, SUM(perc_id), SUM(p1), SUM(p2)
+# NOTE: The first column used to be the homology description but it is not
+# needed any more. I didn't want to change all the offsets related to
+# $line, so replaced it with NULL
+my $sql_orthologies = '
+SELECT NULL, c1, c2, COUNT(*), SUM(n1), SUM(n2), SUM(nh)/2, SUM(perc_id), SUM(p1), SUM(p2)
 FROM (
-    SELECT description, gene_tree_node_id,
+    SELECT -- description, gene_tree_node_id,
         SUM(nh) AS nh,
         SUM(perc_id) AS perc_id,
         IF(SUM(genome_db_id=?)=1, "one", "many") AS c1,
@@ -71,23 +72,42 @@ FROM (
     FROM (
         SELECT homology.description, gene_tree_node_id, gene_member_id, genome_db_id, COUNT(DISTINCT homology_id) AS nh, SUM(perc_id) AS perc_id
         FROM homology JOIN homology_member USING (homology_id) JOIN gene_member USING (gene_member_id)
-        WHERE method_link_species_set_id = ? AND biotype_group = "coding"
+        WHERE method_link_species_set_id = ? #extra_filter#
         GROUP BY homology.description, gene_tree_node_id, gene_member_id, genome_db_id
     ) t1 GROUP BY description, gene_tree_node_id
 ) te GROUP BY c1, c2;
 ';
 
 
+sub param_defaults {
+    return {
+        'member_type'       => undef,
+        'sql_orthologies'   => $sql_orthologies,
+    }
+}
+
 sub fetch_input {
     my $self = shift @_;
 
-    my $member_type  = $self->param_required('member_type');
     my $mlss_id      = $self->param_required('homo_mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $genome_dbs   = $mlss->species_set->genome_dbs;
 
     my $gdb_id_1     = $genome_dbs->[0]->dbID;
     my $gdb_id_2     = $genome_dbs->[1]->dbID;
+
+    # biotype filtering, if requested
+    my $member_type  = $self->param('member_type');
+       $member_type  = lc $member_type if $member_type;
+    if ($member_type eq 'protein') {
+        $self->param('extra_filter', 'AND biotype_group = "coding"');
+    } elsif ($member_type eq 'ncrna') {
+        $self->param('extra_filter', 'AND biotype_group LIKE "%noncoding"');
+    } elsif ($member_type) {
+        die "Unrecognized member_type '$member_type'";
+    } else {
+        $self->param('extra_filter', '');
+    }
 
     # Default values (in case some categories are not found in the data)
     foreach my $c1 ('one', 'many') {
@@ -100,7 +120,7 @@ sub fetch_input {
         }
     }
 
-    my $data = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_orthologies, undef,
+    my $data = $self->compara_dba->dbc->db_handle->selectall_arrayref($self->param_required('sql_orthologies'), undef,
         $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $mlss_id);
     foreach my $line (@$data) {
         my $homology_type = sprintf('%s_%s-to-%s', $member_type, $line->[1], $line->[2]);

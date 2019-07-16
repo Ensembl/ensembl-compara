@@ -490,7 +490,7 @@ sub core_pipeline_analyses {
                                       mode            => 'global_tree_set',
                                      },
               -flow_into          => [ 'write_stn_tags',
-                                        WHEN('#clustering_mode# eq "ortholog"' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                                        WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
                                         WHEN('#initialise_cafe_pipeline# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
                                         WHEN('#initialise_cafe_pipeline# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
                                     ],

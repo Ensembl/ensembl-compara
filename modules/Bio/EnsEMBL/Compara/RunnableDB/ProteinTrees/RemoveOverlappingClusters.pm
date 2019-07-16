@@ -44,6 +44,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree');
 
 sub fetch_input {
     my $self = shift;
+    my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param_required('gene_tree_id'));
+    $self->param('gene_tree', $tree);
     $self->_extract_tree_data;
     $self->_find_overlapping_species;
 }
