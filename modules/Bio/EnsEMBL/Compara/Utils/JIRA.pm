@@ -67,11 +67,7 @@ sub new {
     } else {
         $self->{_user} = $self->_validate_username($ENV{'USER'});
     }
-    if ($relco) {
-        $self->{_relco} = $self->_validate_username($relco);
-    } else {
-        $self->{_relco} = $self->{_user};
-    }
+    $self->{_relco} = ($relco) ? $self->_validate_username($relco) : $self->{_user};
     $self->{_project} = $project || 'ENSCOMPARASW';
     # If any of the following parameters are missing, get them from Compara
     # production environment
@@ -339,6 +335,10 @@ sub _json_to_jira {
     if ($json_hash->{'assignee'}) {
         my $assignee = $self->_replace_placeholders($json_hash->{'assignee'});
         $jira_hash{'assignee'} = { 'name' => $self->_validate_username($assignee) };
+    }
+    # $jira_hash{'parent'}
+    if ($json_hash->{'parent'}) {
+        $jira_hash{'parent'} = { 'key' => $json_hash->{'parent'} };
     }
     # Create JIRA ticket and return it
     my $ticket = { 'fields' => \%jira_hash };
