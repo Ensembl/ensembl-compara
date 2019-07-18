@@ -239,6 +239,9 @@ my %type_to_adaptor = (
                        'PECAN'                  => $from_ga_adaptor,
                        'GERP_CONSERVATION_SCORE'    => $from_cs_adaptor,
                        'GERP_CONSTRAINED_ELEMENT'   => $from_ce_adaptor,
+                       # Trick to allow the Method but skip counting
+                       'CACTUS_HAL'             => 1,
+                       'CACTUS_HAL_PW'          => 1,
 );
 
 my %all_mlss_objects = ();
@@ -264,12 +267,14 @@ foreach my $one_method_link_type (@method_link_types) {
         foreach my $one_mlss_object (@$group_mlss_objects) {
             my $one_mlss_id = $one_mlss_object->dbID;
             my $one_mlss_name = $one_mlss_object->name;
+            if (ref($adaptor)) {
                 if(my $count = $adaptor->count_by_mlss_id($one_mlss_id)) {
                     $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
                     print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type' ($count entries)\n";
                 } else {
                     print "\tSkipping empty MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
                 }
+            }
         }
     } else {
         print "** Warning ** Cannot find any MLSS objects using method_link_type '$one_method_link_type' in this database\n";
@@ -301,6 +306,7 @@ my $to_dbc = $to_dba->dbc;
 
 while (my $method_link_species_set = shift @all_method_link_species_sets) {
   my $mlss_id = $method_link_species_set->dbID;
+  my $type = $method_link_species_set->method->type;
   my $class = $method_link_species_set->method->class;
 
   exit(1) if !check_table("method_link", $from_dbc, $to_dbc, undef,
@@ -358,7 +364,9 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
 	  "method_link_species_set_tag",
 	  "method_link_species_set_id = $mlss_id") unless $dry_run;
 
-  if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
+  if ($type =~ /^CACTUS_HAL/) {
+    print " ** NOTE **  Cactus alignments are stored in a file, not in the database.\n";
+  } elsif ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
     copy_genomic_align_blocks($from_dbc, $to_dbc, $method_link_species_set);
   } elsif ($class =~ /^ConservationScore.conservation_score/) {
     copy_conservation_scores($from_dbc, $to_dbc, $method_link_species_set);
