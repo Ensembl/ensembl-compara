@@ -82,14 +82,14 @@ sub pipeline_analyses {
                 'db_conn'                       => '#master_db#',
                 'method_link_species_set_id'    => '#mlss_id#',
             },
-            -flow_into => [ 'set_mlss_tag' ],
+            -flow_into => [ 'set_name_mapping_tag' ],
             -input_ids => [ {
                 'mlss_id'   => $self->o('mlss_id'),
                 'species_name_mapping'  => $self->o('species_name_mapping'),
             } ],
         },
 
-        {   -logic_name => 'set_mlss_tag',
+        {   -logic_name => 'set_name_mapping_tag',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
