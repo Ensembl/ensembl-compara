@@ -22,235 +22,467 @@ package Bio::EnsEMBL::Compara::Utils::JIRA;
 use strict;
 use warnings;
 
-use JSON;
+use Data::Dumper;
 use HTTP::Request;
+use JSON;
 use LWP::UserAgent;
 use Term::ReadKey;
+
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::IO qw (slurp);
 use Bio::EnsEMBL::Utils::Logger;
 
-use Data::Dumper;
+=head2 new
 
-sub json_to_jira {
-    my ($self, $json_hash, $issuetype, $parameters, $logger) = @_;
+  Arg[1]      : (optional) string $user - a JIRA username. If not given, uses
+                environment variable $USER as default.
+  Arg[2]      : (optional) string $relco - a Compara RelCo JIRA username. By
+                default, $user.
+  Arg[3]      : (optional) string $division - a Compara division (can be empty
+                for RelCo tickets). If not given, uses environment variable
+                $COMPARA_DIV as default.
+  Arg[4]      : (optional) int $release - Ensembl release version. If not given,
+                uses environment variable $CURR_ENSEMBL_RELEASE as default.
+  Arg[5]      : (optional) string $project - JIRA project name. By default,
+                'ENSCOMPARASW'.
+  Example     : my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA('user', 'relco', 'metazoa', 97);
+  Description : Creates a new JIRA object
+  Return type : Bio::EnsEMBL::Compara::Utils::JIRA object
+  Exceptions  : none
 
-    # We can define one or many components
-    my @components;
-    if ($json_hash->{'component'}) {
-        push @components, { 'name' => $json_hash->{'component'} };
+=cut
+
+sub new {
+    my $caller = shift;
+    my $class = ref($caller) || $caller;
+    my ( $user, $relco, $division, $release, $project ) = rearrange(
+        [qw(USER RELCO DIVISION RELEASE PROJECT)], @_);
+    my $self = {};
+    bless $self, $class;
+    # Initialize logger
+    $self->{_logger} = Bio::EnsEMBL::Utils::Logger->new(-LOGLEVEL => 'info');
+    # Set username that will be used to create the JIRA tickets
+    if ($user) {
+        $self->{_user} = $self->_validate_username($user);
     } else {
-        push @components, { 'name' => $_ } for @{$json_hash->{'components'}};
+        $self->{_user} = $self->_validate_username($ENV{'USER'});
     }
-    if ($parameters->{'tickets'}->{'component'}) {
-        push @components, { 'name' => $parameters->{'tickets'}->{'component'} };
-    } elsif ( $parameters->{'tickets'}->{'components'} ) {
-        push @components, { 'name' => $_ } for @{$parameters->{'tickets'}->{'components'}};
+    if ($relco) {
+        $self->{_relco} = $self->_validate_username($relco);
+    } else {
+        $self->{_relco} = $self->{_user};
     }
+    $self->{_project} = $project || 'ENSCOMPARASW';
+    # If any of the following parameters are missing, get them from Compara
+    # production environment
+    # (https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Environment)
+    if (defined $division) {
+        # $division can be an empty string for RelCo tickets
+        $self->{_division} = $self->_validate_division($division);
+    } else {
+        $self->{_division} = $self->_validate_division($ENV{'COMPARA_DIV'});
+    }
+    $self->{_release} = $release || $ENV{'CURR_ENSEMBL_RELEASE'};
+    return $self;
+}
 
-    my %ticket_fields = (
-        'project'     => { 'key'  => $json_hash->{'project'} || $parameters->{'tickets'}->{'project'} },
-        'issuetype'   => { 'name' => $issuetype },
-        'summary'     => $self->_replace_placeholders( $json_hash->{'summary'}, $parameters ),
-        'priority'    => { 'name' => $json_hash->{'priority'} || $parameters->{'tickets'}->{'priority'} },
-        'fixVersions' => [
-            { 'name' => $parameters->{'tickets'}->{'fixVersion'} },
-        ],
-        'components'  => \@components,
-        'description' => $self->_replace_placeholders( $json_hash->{'description'}, $parameters ),
-    );
-    if ($parameters->{'division'}) {
-        $ticket_fields{'customfield_11130'} = { 'value' => $parameters->{'division'} };
-    }
+=head2 create_tickets
 
-    if ($json_hash->{'assignee'}) {
-        $ticket_fields{'assignee'} = { 'name' => $self->validate_user_name( $self->_replace_placeholders( $json_hash->{'assignee'}, $parameters), $logger ) };
+  Arg[1]      : string $json_input - either a string in JSON format or a path to
+                a JSON file where to find the JIRA ticket(s)
+  Arg[2]      : (optional) string $issue_type - a JIRA issue type to set if no
+                issue type is provided for a ticket. By default, 'Task'.
+  Arg[3]      : (optional) string $priority - a JIRA priority to set if no
+                priority is provided for a ticket. By default, 'Major'.
+  Arg[4]      : (optional) arrayref of strings $components - a list of JIRA
+                components to include the JIRA tickets. By default, no more
+                components are added.
+  Arg[5]      : (optional) arrayref of strings $labels - a list of JIRA labels
+                to include in the JIRA tickets. By default, no more labels are
+                added.
+  Arg[6]      : (optional) boolean $dry_mode - in dry-run mode, the JIRA tickets
+                will not be submitted to the JIRA server. By default, dry-run
+                mode is off.
+  Example     : $jira_adaptor->create_tickets('jira_recurrent_tickets.vertebrates.json');
+  Description : Submits a post request to the JIRA server that creates a new
+                ticket. Returns the key of the created ticket.
+  Return type : arrayref of strings (JIRA keys)
+  Exceptions  : thrown on invalid $json_input
+
+=cut
+
+sub create_tickets {
+    my $self = shift;
+    my ( $json_input, $issue_type, $priority, $components, $labels, $dry_mode ) = rearrange(
+        [qw(JSON_INPUT ISSUE_TYPE PRIORITY COMPONENTS LABELS DRY_MODE)], @_);
+    # Set default values for optional arguments
+    $issue_type ||= 'Task';
+    $priority ||= 'Major';
+    # Request password (if not available already)
+    my $defined_password = defined $self->{_password};
+    if (! $defined_password) {
+        $self->{_password} = $self->_request_password();
     }
-    
-    if ( $json_hash->{'labels'} ) {
-        foreach my $label ( @{ $json_hash->{'labels'} } ) {
-            $label =~ s/ /_/g; # JIRA doesn't allow whitespace in labels
-            push( @{ $ticket_fields{'labels'} }, $label );
+    # Read tickets from either a JSON formated string or a JSON file path
+    my $json_ticket_list;
+    eval { $json_ticket_list = decode_json($json_input) };
+    # If $@ is not empty, decode_json() has raised an error. Thus, treat
+    # $json_input as a file path.
+    if ($@) {
+        $json_ticket_list = decode_json(slurp($json_input))
+            or die "Could not open file '$json_input' $!";
+    }
+    # Generate the list of JIRA tickets from each JSON hash
+    my $jira_tickets = ();
+    foreach my $json_ticket ( @$json_ticket_list ) {
+        push @$jira_tickets,
+             $self->_json_to_jira($json_ticket, $issue_type, $priority, $components, $labels);
+        if ($json_ticket->{subtasks}) {
+            foreach my $json_subtask ( @{$json_ticket->{subtasks}} ) {
+                push @{$jira_tickets->[-1]->{subtasks}},
+                     $self->_json_to_jira($json_subtask, 'Sub-task', $priority, $components, $labels);
+            }
         }
     }
-
-    if (my $name_on_graph = $json_hash->{'name_on_graph'}) {
-        $name_on_graph =~ s/ /_/g;  # JIRA doesn't allow whitespace in labels
-        push( @{ $ticket_fields{'labels'} }, "Graph:$name_on_graph" );
+    # Log all generated JIRA tickets
+    $self->{_logger}->info(Dumper($jira_tickets) . "\n");
+    my $ticket_key_list = ();
+    if (! $dry_mode) {
+        # JQL queries require whitespaces to be in their Unicode equivalent
+        my $fixVersion = 'Release\u0020' . $self->{_release};
+        # Search for all available tickets in the JIRA server corresponding to
+        # the defined project, release version and division
+        my $jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
+        if ($self->{_division}) {
+            $jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
+        } else {
+            $jql .= ' AND cf[11130] IS EMPTY';
+        }
+        my $division_tickets = $self->fetch_tickets($jql);
+        # Create a hash with the summary of each ticket and its corresponding
+        # JIRA key
+        my %existing_tickets = map {$_->{fields}->{summary} => $_->{key}} @{$division_tickets->{issues}};
+        # Create each ticket only if there does not exist another ticket with
+        # an identical summary for the same project, release and division
+        foreach my $ticket ( @$jira_tickets ) {
+            push @$ticket_key_list,
+                 $self->_create_new_ticket($ticket, \%existing_tickets);
+            if ($ticket->{subtasks}) {
+                foreach my $subtask ( @{$ticket->{subtasks}} ) {
+                    # Link the subtask with its parent ticket
+                    $subtask->{'fields'}->{'parent'} = { 'key' => $ticket_key_list->[-1] };
+                    push @$ticket_key_list,
+                         $self->_create_new_ticket($subtask, \%existing_tickets);
+                }
+            }
+        }
     }
-    
-    my $ticket = { 'fields' => \%ticket_fields };
-    
-    # if ( $json_hash->{'links'} ) {
-    #     my @jira_links;
-    #     foreach my $json_link ( @{ $json_hash->{'links'} } ) {
-    #         my ($link_type, $link_key) = @$json_link;
-    #         my $link = { "add" => {
-    #             "type"         => { "name" => $link_type },
-    #             "outwardIssue" => { "key"  => $link_key  }
-    #         } };
-    #         push( @jira_links, $link );
-    #     }
-    #     $ticket->{'update'}->{'issuelinks'} = \@jira_links;
-    # }
+    # If the password was requested for this task, forget it before returning
+    if (! $defined_password) {
+        undef $self->{_password};
+    }
+    return $ticket_key_list;
+}
 
-    $json_hash->{'jira'} = $ticket;
+=head2 fetch_tickets
+
+  Arg[1]      : string $jql - JQL (JIRA Query Language) query
+  Arg[2]      : (optional) int $max_results - maximum number of matching tickets
+                to return. By default, 300.
+  Example     : my $tickets = $jira_adaptor->fetch_tickets('project=ENSCOMPARASW AND priority=Major');
+  Description : Returns up to $max_results tickets that match the given JQL
+                query
+  Return type : arrayref of JIRA tickets
+  Exceptions  : none
+
+=cut
+
+sub fetch_tickets {
+    my ( $self, $jql, $max_results ) = @_;
+    # Set default values for optional arguments
+    $max_results ||= 300;
+    # Request password (if not available already)
+    my $defined_password = defined $self->{_password};
+    if (! $defined_password) {
+        $self->{_password} = $self->_request_password();
+    }
+    # Send a search POST request for the given JQL query
+    my $tickets =  $self->_post_request(
+        'search', {'jql' => $jql, 'maxResults' => $max_results});
+    # If the password was requested for this task, forget it before returning
+    if (! $defined_password) {
+        undef $self->{_password};
+    }
+    return $tickets;
+}
+
+=head2 _validate_username
+
+  Arg[1]      : string $user - a JIRA username
+  Example     : my $user = $jira_adaptor->_validate_username('username');
+  Description : Checks if the provided username is valid, and if so, returns it
+  Return type : string
+  Exceptions  : none
+
+=cut
+
+sub _validate_username {
+    my ( $self, $user ) = @_;
+    my %compara_members = map { $_ => 1 } qw(carlac jalvarez mateus muffato);
+    # Do a case insensitive user matching
+    if (exists $compara_members{lc $user}) {
+        return lc $user;
+    } else {
+        my $user_list = join("\n", sort keys %compara_members);
+        $self->{_logger}->error("Unexpected user '$user'! Allowed user names:\n$user_list");
+    }
+}
+
+=head2 _validate_division
+
+  Arg[1]      : string $division - a Compara division (can be empty for RelCo
+                tickets)
+  Example     : my $division = $jira_adaptor->_validate_division('vertebrates');
+  Description : Checks if the provided division is valid, and if so, returns its
+                upper case equivalent
+  Return type : string
+  Exceptions  : none
+
+=cut
+
+sub _validate_division {
+    my ( $self, $division ) = @_;
+    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants citest ensembl grch37 metazoa);
+    # RelCo tickets do not need a specific division
+    if ($division eq '') {
+        return $division;
+    # Do a case insensitive division matching
+    } elsif (exists $compara_divisions{lc $division}) {
+        my $lc_division = lc $division;
+        # Return the upper case equivalent of the division
+        if ($lc_division eq 'citest') {
+            return 'CITest';
+        } elsif ($lc_division eq 'grch37') {
+            return 'GRCh37';
+        } else {
+            return ucfirst $lc_division;
+        }
+    } else {
+        my $division_list = join("\n", sort keys %compara_divisions);
+        $self->{_logger}->error("Unexpected division '$division'! Allowed divisions:\n$division_list");
+    }
+}
+
+=head2 _json_to_jira
+
+  Arg[1]      : hashref of strings $json_hash - a JSON hash JIRA ticket
+  Arg[2]      : string $issue_type - a JIRA issue type to set if no issue type
+                is provided in $json_hash
+  Arg[3]      : string $priority - a JIRA priority to set if no priority is
+                provided in $json_hash
+  Arg[4]      : (optional) arrayref of strings $components - a list of JIRA
+                components to include in the JIRA ticket
+  Arg[5]      : (optional) arrayref of strings $labels - a list of JIRA labels
+                to include in the JIRA ticket
+  Example     : my $json_hash = { "summary": "Example task",
+                                  "description": "Example for Bio::EnsEMBL::Compara::Utils::JIRA"
+                                };
+                my $components = ('Test suite');
+                my $labels = ('Example');
+                my $ticket = $jira_adaptor->_json_to_jira($json_hash, 'Task', 'Minor', $components, $labels);
+  Description : Converts the JIRA ticket information provided in the JSON hash
+                to its equivalent JIRA hash and returns it
+  Return type : hashref of hashes following the structure of a JIRA ticket
+  Exceptions  : none
+
+=cut
+
+sub _json_to_jira {
+    my ( $self, $json_hash, $issue_type, $priority, $components, $labels ) = @_;
+    my %jira_hash;
+    $jira_hash{'project'}     = { 'key' => $self->{_project} };
+    $jira_hash{'summary'}     = $self->_replace_placeholders($json_hash->{'summary'});
+    $jira_hash{'issuetype'}   = { 'name' => $json_hash->{'issuetype'} // $issue_type };
+    $jira_hash{'priority'}    = { 'name' => $json_hash->{'priority'} // $priority };
+    $jira_hash{'fixVersions'} = [{ 'name' => 'Release ' . $self->{_release} }];
+    $jira_hash{'description'} = $self->_replace_placeholders($json_hash->{'description'});
+    # $jira_hash{'components'}
+    if ($json_hash->{'component'}) {
+        push @{$jira_hash{'components'}}, { 'name' => $json_hash->{'component'} };
+    } elsif ($json_hash->{'components'}) {
+        push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$json_hash->{'components'}};
+    }
+    if ($components) {
+        push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$components};
+    }
+    # $jira_hash{'labels'}
+    my @label_list;
+    if ($json_hash->{'labels'}) {
+        push @label_list,  $json_hash->{'labels'};
+    }
+    if ($labels) {
+        push @label_list, $labels;
+    }
+    if ($json_hash->{'name_on_graph'}) {
+        push @label_list, 'Graph:' . $json_hash->{'name_on_graph'};
+    }
+    foreach my $label ( @label_list ) {
+        # JIRA does not allow whitespace in labels
+        $label =~ s/ /_/g;
+        push @{$jira_hash{'labels'}}, $label;
+    }
+    # $jira_hash{'division'}
+    if ($self->{_division} ne '') {
+        $jira_hash{'customfield_11130'} = { 'value' => $self->{_division} };
+    }
+    # $jira_hash{'assignee'}
+    if ($json_hash->{'assignee'}) {
+        my $assignee = $self->_replace_placeholders($json_hash->{'assignee'});
+        $jira_hash{'assignee'} = { 'name' => $self->_validate_username($assignee) };
+    }
+    # Create JIRA ticket and return it
+    my $ticket = { 'fields' => \%jira_hash };
     return $ticket;
 }
 
 =head2 _replace_placeholders
 
-  Arg[1]      : String $line - One line from the json input file
-  Arg[2]      : Hashref $parameters - parameters from command line and config
-  Example     : $line = _replace_placeholders( $line, $parameters );
-  Description : Replaces the placeholder tags with valid values and returns a
-                a new string
-  Return type : String
+  Arg[1]      : string $field_value - value of a JIRA ticket field
+  Example     : my $value = $jira_adaptor->_replace_placeholders(
+                    '"summary": "<Division> Release <version> Ticket"');
+  Description : Replaces the placeholder tags in the given field value by their
+                corresponding values and returns the new field value
+  Return type : string
   Exceptions  : none
 
 =cut
 
 sub _replace_placeholders {
-    my ( $self, $line, $parameters ) = @_;
-
-    return '' unless $line;
-
-    $line =~ s/<RelCo>/$parameters->{relco}/g;
-    $line =~ s/<version>/$parameters->{release}/g;
-    if ($parameters->{division}) {
-        $line =~ s/<Division>/$parameters->{division}/g;
-        my $lcdiv = lc $parameters->{division};
-        $line =~ s/<division>/$lcdiv/g;
+    my ( $self, $field_value ) = @_;
+    if ($field_value) {
+        $field_value =~ s/<RelCo>/$self->{_relco}/g;
+        $field_value =~ s/<version>/$self->{_release}/g;
+        if ($self->{_division}) {
+            $field_value =~ s/<Division>/$self->{_division}/g;
+            my $lc_division = lc $self->{_division};
+            $field_value =~ s/<division>/$lc_division/g;
+        }
     }
-
-    return $line;
+    return $field_value;
 }
 
-=head2 validate_user_name
+=head2 _request_password
 
-  Arg[1]      : String $user - a Compara team member name or JIRA username
-  Arg[2]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $valid_user = validate_user_name($user, $logger)
-  Description : Checks if the provided user name is valid, returns valid JIRA
-                username
-  Return type : String
+  Example     : my $password = $jira_adaptor->_request_password();
+  Description : Asks for the password of the given JIRA user. WARNING: the
+                password is returned as plain text, i.e. without encryption.
+  Return type : string
   Exceptions  : none
 
 =cut
 
-sub validate_user_name {
-    my ( $self, $user, $logger ) = @_;
+sub _request_password {
+    my $self = shift;
+    my $user = $self->{_user};
+    print "\nPlease, type the JIRA password for user '$user':";
+    # Make password invisible on terminal
+    ReadMode('noecho');
+    my $password = ReadLine(0);
+    chomp $password;
+    # Restore typing visibility on terminal
+    ReadMode(0);
+    print "\n\n";
+    return $password;
+}
 
-    my %valid_user_names = (
-        'carla'    => 'carlac',
-        'carlac'   => 'carlac',
-        'muffato'  => 'muffato',
-        'matthieu' => 'muffato',
-        'mateus'   => 'mateus',
-        'jorge'    => 'jalvarez',
-        'jalvarez' => 'jalvarez',
-    );
+=head2 _create_new_ticket
 
-    if ( exists $valid_user_names{$user} ) {
-        return $valid_user_names{$user};
-    }
-    else {
-        my $valid_names = join( "\n", sort keys %valid_user_names );
-        $logger->error(
-            "User name $user not valid! Here is a list of valid names:\n"
-                . $valid_names,
-            0, 0
+  Arg[1]      : hashref $ticket - a JIRA ticket to be created
+  Arg[2]      : hashref $existing_tickets - a hash of JIRA tickets with their
+                summary as key and their JIRA key as value
+  Example     : my $ticket_key = $jira_adaptor->_create_new_ticket( );
+  Description : Creates the JIRA ticket unless its summary is in
+                $existing_tickets, and returns its JIRA key
+  Return type : string
+  Exceptions  : none
+
+=cut
+
+sub _create_new_ticket {
+    my ( $self, $ticket, $existing_tickets ) = @_;
+    my $issue_type = lc $ticket->{fields}->{issuetype}->{name};
+    my $summary = $ticket->{fields}->{summary};
+    $self->{_logger}->info(sprintf('Creating %s "%s" ... ', $issue_type, $summary));
+    my $ticket_key;
+    if (exists $existing_tickets->{$summary}) {
+        # If another ticket with an identical summary exists, assume they are
+        # the same and avoid creating it again
+        $ticket_key = $existing_tickets->{$summary};
+        $self->{_logger}->info(
+            'Skipped. Likely a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
+            . $ticket_key
+            . "\n"
         );
+    } else {
+        my $new_ticket = $self->_post_request('issue', $ticket);
+        $ticket_key = $new_ticket->{key};
+        $self->{_logger}->info(sprintf("Done. Key assigned: %s\n", $ticket_key));
     }
-}
-
-
-=head2 create_ticket
-
-  Arg[1]      : Hashref $line - Holds the ticket data
-  Arg[2]      : Hashref $parameters - parameters from command line and config
-  Arg[3]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $ticket_key = create_ticket( $ticket, $parameters, $logger );
-  Description : Submits a post request to the JIRA server that creates a new
-                ticket. Returns the key of the created ticket
-  Return type : String
-  Exceptions  : none
-
-=cut
-
-sub create_ticket {
-    my ( $self, $ticket, $parameters, $logger ) = @_;
-
-    my $ticket_summary = $ticket->{fields}->{summary};
-    $logger->info( 'Creating' . ' "' . $ticket_summary . '" ... ' );
-
-    # First check if the ticket already exists
-    if (my $existing_ticket_key = $parameters->{existing_tickets}->{ ($parameters->{division} // '') . '--' . $ticket_summary }) {
-        $logger->info(
-            'Skipped: This seems to be a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
-                . $existing_ticket_key
-                . "\n" );
-        return $existing_ticket_key;
-    }
-
-    my $endpoint = 'rest/api/latest/issue';
-    print "post_request($endpoint, $ticket, ....)\n";
-    # print Dumper $ticket;
-    my $response = $self->post_request( $endpoint, $ticket, $parameters, $logger );
-    
-    my $ticket_key = decode_json( $response->content() )->{'key'};
-    $logger->info( "Done\t" . $ticket_key . "\n\n" );
     return $ticket_key;
 }
 
-=head2 post_request
+=head2 _post_request
 
-  Arg[1]      : String $endpoint - the request's endpoint
-  Arg[2]      : Hashref $content - the request's content
-  Arg[3]      : Hashref $parameters - parameters used for authorization
-  Arg[4]      : Bio::EnsEMBL::Utils::Logger $logger - object used for logging
-  Example     : my $response = post_request( $endpoint, $content, $parameters, $logger )
-  Description : Sends a POST request to the JIRA server
-  Return type : HTTP::Response object
+  Arg[1]      : string $action - a POST request's action to perform, i.e.
+                'issue' (to create new JIRA tickets) or 'search'
+  Arg[2]      : hashref $content_data - a POST request's content data
+  Example     : my $tickets = $jira_adaptor->_post_request(
+                    'search', {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
+  Description : Sends a POST request to the JIRA server and returns the response
+  Return type : arrayref of JIRA tickets
   Exceptions  : none
 
 =cut
 
-sub post_request {
-    my ( $self, $endpoint, $content, $parameters, $logger ) = @_;
-
-    my $host = 'https://www.ebi.ac.uk/panda/jira/';
-    my $url  = $host . $endpoint;
-    $logger->info("Request on $url\n");
-    my $json_content = encode_json($content);
-
-    my $request = HTTP::Request->new( 'POST', $url );
-
-    $request->authorization_basic( $parameters->{user},
-        $parameters->{password} );
-    $request->header( 'Content-Type' => 'application/json' );
-    $request->content($json_content);
-
-    my $agent    = LWP::UserAgent->new();
-    my $response = $agent->request($request);
-
-    if ( $response->code() == 401 ) {
-        $logger->error( 'Your JIRA password is not correct. Please try again',
-            0, 0 );
-    }
-
-    if ( $response->code() == 403 ) {
-        $logger->error(
-            'You do not have permission to submit JIRA tickets programmatically',
+sub _post_request {
+    my ( $self, $action, $content_data ) = @_;
+    # Check if the action requested is available
+    my %available_actions = map { $_ => 1 } qw(issue search);
+    if (! exists $available_actions{$action}) {
+        my $action_list = join("\n", sort keys %available_actions);
+        $self->{_logger}->error(
+            "Unexpected POST request '$action'! Allowed options:\n$action_list",
             0, 0
         );
     }
-
-    if ( !$response->is_success() ) {
+    # Create the HTTP POST request and LWP objects to get the response for the
+    # given $action and $content_data
+    my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action;
+    $self->{_logger}->debug("POST Request on $url\n");
+    my $request = HTTP::Request->new('POST', $url);
+    $request->authorization_basic($self->{_user}, $self->{_password});
+    # The content data will be sent in JSON format
+    $request->header('Content-Type' => 'application/json');
+    my $json_content = encode_json($content_data);
+    $request->content($json_content);
+    my $agent    = LWP::UserAgent->new();
+    my $response = $agent->request($request);
+    # Check and report possible errors
+    if ($response->code() == 401) {
+        $self->{_logger}->error(
+            'Incorrect JIRA password. Please, try again.', 0, 0);
+    } elsif ($response->code() == 403) {
+        my $user = $self->{_user};
+        $self->{_logger}->error(
+            "User '$user' unauthorised to handle JIRA tickets programmatically",
+            0, 0
+        );
+    } elsif (! $response->is_success()) {
         my $error_message = $response->as_string();
-
-        $logger->error( $error_message, 0, 0 );
+        $self->{_logger}->error($error_message, 0, 0);
     }
-
-    return $response;
+    # Return the response content
+    return decode_json($response->content());
 }
 
 1;
