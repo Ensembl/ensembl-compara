@@ -105,6 +105,7 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'                       => '#master_db#',
                 'method_link_species_set_id'    => '#pw_mlss_id#',
+                'expand_tables'                 => 0,                   # Do not try to copy the ncbi_taxa_name table again (esp. because there is no UNIQUE key and the rows will be duplicated !)
             },
             -flow_into  => [ 'connect_alt_mlss' ],
             -analysis_capacity  => 1,
