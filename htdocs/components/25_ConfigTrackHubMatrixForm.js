@@ -349,7 +349,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if(dimension !== dimY) { return; }
 
-          if(track.display && track.display != "off" && $.isEmptyObject(storeObj["matrix"]) && panel.initialLoad ) {     
+          if(track.display && (track.display != "off" || panel.multiDimFlag) && $.isEmptyObject(storeObj["matrix"]) && panel.initialLoad ) {
             updateStore = true;
             defaultState = "track-on";
             finalObj.format[track.format.toLowerCase()] = finalObj.format[track.format.toLowerCase()]+1 || 1;
@@ -2574,6 +2574,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     panel.el.find('div.matrix-container div.xBoxes.track-on, div.matrix-container div.xBoxes.track-off, div.filterMatrix-container div.xBoxes').off().on("click", function(e){
       panel.el.find('div.matrix-container div.xBoxes.track-on.mClick, div.matrix-container div.xBoxes.track-off.mClick, div.filterMatrix-container div.xBoxes').removeClass("mClick");
+
+      if(!$(this).hasClass('_hasData')) { return; }
       panel.trackPopup.hide();
 
       panel.boxObj          = $(this);
