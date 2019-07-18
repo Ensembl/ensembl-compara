@@ -22,10 +22,6 @@ use strict;
 
 create_mlss.pl
 
-=head1 AUTHORS
-
- Javier Herrero
-
 =head1 CONTACT
 
 Please email comments or questions to the public Ensembl

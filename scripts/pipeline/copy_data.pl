@@ -23,9 +23,6 @@ my $description = q{
 ##
 ## PROGRAM copy_data.pl
 ##
-## AUTHORS
-##    Javier Herrero
-##
 ## DESCRIPTION
 ##    This script copies data over compara DBs. It has been
 ##    specifically developped to copy data from a production to a
@@ -38,10 +35,6 @@ my $description = q{
 =head1 NAME
 
 copy_data.pl
-
-=head1 AUTHORS
-
- Javier Herrero
 
 =head1 CONTACT
 

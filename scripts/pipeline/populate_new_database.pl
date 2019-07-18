@@ -23,9 +23,6 @@ my $description = q{
 ##
 ## PROGRAM populate_new_database.pl
 ##
-## AUTHORS
-##    Javier Herrero
-##
 ## DESCRIPTION
 ##    This script creates a new database based on the default assemblies
 ##    in a master database a previous data in an old database.
@@ -37,10 +34,6 @@ my $description = q{
 =head1 NAME
 
 populate_new_database.pl
-
-=head1 AUTHORS
-
- Javier Herrero
 
 =head1 CONTACT
 

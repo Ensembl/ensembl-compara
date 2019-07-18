@@ -27,11 +27,6 @@ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 Questions may also be sent to the Ensembl help desk at
 <http://www.ensembl.org/Help/Contact>.
 
-=head1 AUTHORS
-
- Abel Ureta-Vidal
- Javier Herrero
-
 =head1 COPYRIGHT
 
 This modules is part of the Ensembl project http://www.ensembl.org

@@ -22,10 +22,6 @@ use warnings;
 
 update_genome.pl
 
-=head1 AUTHORS
-
- Javier Herrero et al.
-
 =head1 CONTACT
 
 Please email comments or questions to the public Ensembl
