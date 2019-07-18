@@ -67,7 +67,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'master_db'     => $self->o('master_db'),
-        'compara_db'    => $self->o('master_db'),
         'halStats_exe'  => $self->o('halStats_exe'),
     };
 }
@@ -94,7 +93,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
-                'db_conn' => '#compara_db#',
             },
             -flow_into  => [ 'load_species_tree', 'species_factory' ],
         },
@@ -125,7 +123,6 @@ sub pipeline_analyses {
             -parameters => {
                 'e2u_synonyms'  => {},  # default value, in case the accu is empty
                 'sql' => [ q/REPLACE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "alt_synonyms", '#expr(stringify(#e2u_synonyms#))expr#')/ ],
-                'db_conn' => '#compara_db#',
             },
 	    -rc_name    => '1Gb_job',
         },
