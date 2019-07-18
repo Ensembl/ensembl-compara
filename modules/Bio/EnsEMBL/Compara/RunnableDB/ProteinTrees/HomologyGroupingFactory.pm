@@ -99,6 +99,9 @@ sub fetch_input {
         push @homology_ids, $homology_id;
     }
 
+    $self->param('inputlist', \@homology_ids);
+    return unless $self->param('reuse_db'); # no need to check mapping if no reuse_db is specified
+
     #Get homology id mapping
     my $sql_2 = 'SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ?';
     my %homology_map;
@@ -111,7 +114,6 @@ sub fetch_input {
         }
     }
 
-    $self->param('inputlist', \@homology_ids);
     $self->param('homology_map', \%homology_map);
 }
 
