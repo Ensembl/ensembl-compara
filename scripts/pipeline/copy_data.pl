@@ -255,21 +255,21 @@ if ( $ml_hash{EPO_LOW_COVERAGE} && !($ml_hash{GERP_CONSTRAINED_ELEMENT} && $ml_h
 
     # First adding MLSS objects via method_link_type values (the most portable way)
 foreach my $one_method_link_type (@method_link_types) {
+    my $adaptor = $type_to_adaptor{$one_method_link_type};
+    unless ($adaptor) {
+        die ("Not recognised mlss_type ($one_method_link_type)");
+    }
     my $group_mlss_objects = $from_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($one_method_link_type);
     if( scalar(@$group_mlss_objects) ) {
         foreach my $one_mlss_object (@$group_mlss_objects) {
             my $one_mlss_id = $one_mlss_object->dbID;
             my $one_mlss_name = $one_mlss_object->name;
-            if (my $adaptor = $type_to_adaptor{$one_method_link_type}) {
                 if(my $count = $adaptor->count_by_mlss_id($one_mlss_id)) {
                     $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
                     print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type' ($count entries)\n";
                 } else {
                     print "\tSkipping empty MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
                 }
-            } else {
-                die ("Not recognised mlss_type ($one_method_link_type)");
-            }
         }
     } else {
         print "** Warning ** Cannot find any MLSS objects using method_link_type '$one_method_link_type' in this database\n";
