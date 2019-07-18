@@ -278,7 +278,7 @@ sub get_value_for_tag {
 
     my $ret = $self->get_tagvalue($tag, $default);
     if ((defined $ret) and (ref($ret) eq 'ARRAY')) {
-        throw("There are ".scalar(@$ret)." associated to the tag '$tag'. Don't know which one to return");
+        throw("There are ".scalar(@$ret)." values associated to the tag '$tag'. Don't know which one to return");
     } else {
         return $ret;
     }
