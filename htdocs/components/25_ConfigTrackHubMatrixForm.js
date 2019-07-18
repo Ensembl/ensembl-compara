@@ -644,22 +644,33 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       return;
     }
 
-    $.each(panel.localStoreObj.matrix, function (k, v) {
-      if (k.match(/_sep_/)) {
-        if (v.state) {
-          key = '';
-          arr = k.split('_sep_');
-          // key = 'trackhub_' + panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
-          config[v.id] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
-          if (v.id && config[v.id].renderer !== 'off') {
-            // Track key is a unique id for the track created by ImageConfigExtension/UserTracks
-            // which is a combination of submenu_key(node_id) and track name;
-            var track_key = v.id;
-            config[track_key] = { renderer: v.renderer };
+    if (!panel.multiDimFlag) {
+      $.each(panel.localStoreObj.matrix, function (k, v) {
+        if (k.match(/_sep_/)) {
+          if (v.state) {
+            key = '';
+            arr = k.split('_sep_');
+            // key = 'trackhub_' + panel.node_id + '_' + panel.elLk.lookup[arr[1]].label;
+            config[v.id] = { renderer : v.state === 'track-on' ? v.renderer : 'off'};
+            if (v.id && config[v.id].renderer !== 'off') {
+              // Track key is a unique id for the track created by ImageConfigExtension/UserTracks
+              // which is a combination of submenu_key(node_id) and track name;
+              var trackId = v.id;
+              config[trackId] = { renderer: v.renderer };
+            }
           }
         }
-      }
-    });
+      });
+    }
+    else {
+      $.each(panel.localStoreObj.filterMatrix, function (k, v) {
+        if (k.match(/_sep_/)) {
+          $.each(panel.localStoreObj.filterMatrix[k].data, function (trackId, data) {
+            config[trackId] = { renderer: (data.show && data.state == "on") ? panel.localStoreObj.matrix[k].renderer : 'off' };
+          })
+        }
+      });
+    }
 
     Ensembl.EventManager.trigger('changeMatrixTrackRenderers', config);
 
@@ -2069,25 +2080,24 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
     var localStorage = this.getLocalStorage();
     var availableFilters = {};
-    $.each(localStorage.dx, function(x, v) {
-      $.each(localStorage.dy, function(y, v) {
-        var key = y + '_sep_' + x;
-        if (panel.filterMatrixObj[key]) {
-          $.each(panel.filterMatrixObj[key], function(trackId, otherDimHash) {
-            $.each(otherDimHash["data"], function(dimVal, display){
-              availableFilters[dimVal.split('_sep_')[0]] = availableFilters[dimVal.split('_sep_')[0]] || [];
-              availableFilters[dimVal.split('_sep_')[0]].push(dimVal.split('_sep_')[1]);
-            });
+    var arr = [];
+    $.each(Object.keys(localStorage.filterMatrix).sort(), function(i, key) {
+      if (panel.filterMatrixObj[key]) {
+        $.each(panel.filterMatrixObj[key], function(trackId, otherDimHash) {
+          $.each(otherDimHash["data"], function(dimVal, display){
+            arr = dimVal.split('_sep_');
+            availableFilters[arr[0]] = availableFilters[arr[0]] || {};
+            availableFilters[arr[0]][arr[1]] = 1;
           });
-        }
-      })
+        });
+      }
     });
 
     var html = '';
     $.each(availableFilters, function(dim, values) {
       var dimSelected = "";
       var dim_html = "";
-      values = $.unique(values.sort());
+      values = Object.keys(values).sort();
       total  = values.length;
       var selectedCount = 0;
       var allSelected = "";     
@@ -2104,7 +2114,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       });
 
       allSelected = selectedCount === total ? "selected" : "";
-      html ='\
+      html +='\
           <div class="filterMatrix-content">\
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>\
             <div class="sub-result-link">' + dim + '</div>\
