@@ -122,7 +122,7 @@ sub write_output {
     my $self = shift @_;
 
     my $inputlist  = $self->param('inputlist');
-    my $homology_map = $self->param('homology_map');
+    my $homology_map = $self->param('homology_map') || {};
     my $group_size = $self->param('group_size');
 
     $self->input_job->autoflow(0) if scalar(@$inputlist) == 0;
