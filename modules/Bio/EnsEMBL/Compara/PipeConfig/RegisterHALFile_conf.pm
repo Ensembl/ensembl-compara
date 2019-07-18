@@ -82,11 +82,43 @@ sub pipeline_analyses {
                 'db_conn'                       => '#master_db#',
                 'method_link_species_set_id'    => '#mlss_id#',
             },
-            -flow_into => [ 'set_name_mapping_tag' ],
+            -flow_into => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
             -input_ids => [ {
                 'mlss_id'   => $self->o('mlss_id'),
                 'species_name_mapping'  => $self->o('species_name_mapping'),
             } ],
+        },
+
+        {   -logic_name => 'find_pairwise_mlss_ids',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'       => '#master_db#',
+                'inputquery'    => 'SELECT mlss.method_link_species_set_id AS pw_mlss_id FROM method_link_species_set mlss JOIN method_link USING (method_link_id) JOIN species_set ss USING (species_set_id) JOIN (species_set ss_ref JOIN method_link_species_set mlss_ref USING (species_set_id)) USING (genome_db_id) WHERE mlss_ref.method_link_species_set_id = #mlss_id# AND type = "CACTUS_HAL_PW" GROUP BY mlss.method_link_species_set_id HAVING COUNT(*) = 2',
+            },
+            -flow_into  => {
+                2   => { 'copy_alt_mlss' => INPUT_PLUS() },
+            },
+        },
+
+        {   -logic_name => 'copy_alt_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithFK',
+            -parameters => {
+                'db_conn'                       => '#master_db#',
+                'method_link_species_set_id'    => '#pw_mlss_id#',
+            },
+            -flow_into  => [ 'connect_alt_mlss' ],
+            -analysis_capacity  => 1,
+        },
+
+        {   -logic_name => 'connect_alt_mlss',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [
+                    'UPDATE method_link_species_set alt_mlss JOIN method_link_species_set ref_mlss SET alt_mlss.url = ref_mlss.url WHERE alt_mlss.method_link_species_set_id = #pw_mlss_id# AND ref_mlss.method_link_species_set_id = #mlss_id#',
+                    'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#pw_mlss_id#, "alt_hal_mlss", "#mlss_id#")',
+                ],
+            },
+            -analysis_capacity  => 1,
         },
 
         {   -logic_name => 'set_name_mapping_tag',
