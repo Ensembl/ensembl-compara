@@ -1997,6 +1997,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
                   $.each(panel.filterMatrixObj[storeKey], function(cellKey, tracks){
                     if(tracks["show"] === 1) { totalCount += 1; }
+
                     $.each(tracks["data"], function(dimensionValue, state){
                       if(state === "off" && tracks["show"] === 1) { offCount++ };
                       if(state === "on" && tracks["show"] === 1)  { onCount++ };
@@ -2010,6 +2011,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                       // panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
                       // panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
                       // panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
+                      return false;
                     });
                   });
                   
