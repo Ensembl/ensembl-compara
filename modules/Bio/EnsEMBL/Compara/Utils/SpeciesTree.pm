@@ -281,7 +281,8 @@ sub new_from_newick {
 
     # First, we remove the extra species that the tree may contain
     foreach my $node (@{$species_tree_root->get_all_leaves}) {
-        my $name = $node->name;
+      my $name = $node->name;
+      if ($name) {
         my $gdb = $all_genome_dbs{lc $name};
         if ((not $gdb) and ($name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
@@ -297,6 +298,12 @@ sub new_from_newick {
             $node->{_tmp_gdb} = $gdb;
         } else {
             warn "'" . $name, "' not found in the genome_db table.\n";
+        }
+      } else {
+        warn "Node number " . $node->node_id . " has no name. Discarding it.\n";
+      }
+
+        unless ($node->{_tmp_gdb}) {
             unless ($node->has_parent) {
                 # Not a single leaf is found in the genome_db table
                 return undef;
