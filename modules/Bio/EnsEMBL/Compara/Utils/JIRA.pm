@@ -114,6 +114,7 @@ sub create_tickets {
     # Set default values for optional arguments
     $issue_type ||= 'Task';
     $priority ||= 'Major';
+    $dry_mode ||= 0;
     # Request password (if not available already)
     my $defined_password = defined $self->{_password};
     if (! $defined_password) {
@@ -142,33 +143,57 @@ sub create_tickets {
     }
     # Log all generated JIRA tickets
     $self->{_logger}->info(Dumper($jira_tickets) . "\n");
-    my $ticket_key_list = ();
-    if (! $dry_mode) {
-        # JQL queries require whitespaces to be in their Unicode equivalent
-        my $fixVersion = 'Release\u0020' . $self->{_release};
-        # Search for all available tickets in the JIRA server corresponding to
-        # the defined project, release version and division
-        my $jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
-        if ($self->{_division}) {
-            $jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
+    # Get all the tickets on the JIRA server for the same project, release and
+    # division
+    # NOTE: JQL queries require whitespaces to be in their Unicode equivalent
+    my $fixVersion = 'Release\u0020' . $self->{_release};
+    my $jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
+    if ($self->{_division}) {
+        $jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
+    } else {
+        $jql .= ' AND cf[11130] IS EMPTY';
+    }
+    my $division_tickets = $self->fetch_tickets($jql);
+    # Create a hash with the summary of each ticket and its corresponding
+    # JIRA key
+    my %existing_tickets = map {$_->{fields}->{summary} => $_->{key}} @{$division_tickets->{issues}};
+    # Create the tickets, dicarding all for which there exists another ticket on
+    # the JIRA server with an identical summary (for the same project, release
+    # and division)
+    my $ticket_key_list;
+    my $base_url = 'https://www.ebi.ac.uk/panda/jira/browse/';
+    foreach my $ticket ( @$jira_tickets ) {
+        my $summary = $ticket->{fields}->{summary};
+        if (exists $existing_tickets{$summary}) {
+            my $ticket_key = $existing_tickets{$summary};
+            my $issue_type = lc $ticket->{fields}->{issuetype}->{name};
+            $self->{_logger}->info(
+                sprintf("Skipped %s \"%s\". Likely a duplicate of %s%s\n",
+                        $issue_type, $summary, $base_url, $ticket_key)
+            );
+            push @$ticket_key_list, $ticket_key;
         } else {
-            $jql .= ' AND cf[11130] IS EMPTY';
+            # In dry-run mode, the message will be logged but the ticket will
+            # not be created
+            push @$ticket_key_list, $self->_create_new_ticket($ticket, $dry_mode);
         }
-        my $division_tickets = $self->fetch_tickets($jql);
-        # Create a hash with the summary of each ticket and its corresponding
-        # JIRA key
-        my %existing_tickets = map {$_->{fields}->{summary} => $_->{key}} @{$division_tickets->{issues}};
-        # Create each ticket only if there does not exist another ticket with
-        # an identical summary for the same project, release and division
-        foreach my $ticket ( @$jira_tickets ) {
-            push @$ticket_key_list,
-                 $self->_create_new_ticket($ticket, \%existing_tickets);
-            if ($ticket->{subtasks}) {
-                foreach my $subtask ( @{$ticket->{subtasks}} ) {
+        if ($ticket->{subtasks}) {
+            foreach my $subtask ( @{$ticket->{subtasks}} ) {
+                my $summary = $subtask->{fields}->{summary};
+                if (exists $existing_tickets{$summary}) {
+                    my $ticket_key = $existing_tickets{$summary};
+                    my $issue_type = lc $subtask->{fields}->{issuetype}->{name};
+                    $self->{_logger}->info(
+                        sprintf("Skipped %s \"%s\". Likely a duplicate of %s%s\n",
+                                $issue_type, $summary, $base_url, $ticket_key)
+                    );
+                    push @$ticket_key_list, $ticket_key;
+                } else {
                     # Link the subtask with its parent ticket
                     $subtask->{'fields'}->{'parent'} = { 'key' => $ticket_key_list->[-1] };
-                    push @$ticket_key_list,
-                         $self->_create_new_ticket($subtask, \%existing_tickets);
+                    # In dry-run mode, the message will be logged but the ticket
+                    # will not be created
+                    push @$ticket_key_list, $self->_create_new_ticket($subtask, $dry_mode);
                 }
             }
         }
@@ -398,9 +423,18 @@ sub _request_password {
 =head2 _create_new_ticket
 
   Arg[1]      : hashref $ticket - a JIRA ticket to be created
-  Arg[2]      : hashref $existing_tickets - a hash of JIRA tickets with their
-                summary as key and their JIRA key as value
-  Example     : my $ticket_key = $jira_adaptor->_create_new_ticket( );
+  Arg[2]      : int $dry_mode - in dry-run mode, the JIRA ticket will not be
+                submitted to the JIRA server
+  Example     : my $ticket = {
+                    'priority'    => { 'name' => 'Minor' },
+                    'project'     => { 'key' => 'ENSCOMPARASW' },
+                    'fixVersions' => [{ 'name' => 'Release 98' }],
+                    'issuetype'   => { 'name' => 'Task' },
+                    'description' => 'Example for Bio::EnsEMBL::Compara::Utils::JIRA',
+                    'labels'      => ['Example'],
+                    'summary'     => 'Example task'
+                };
+                my $ticket_key = $jira_adaptor->_create_new_ticket($ticket, 0);
   Description : Creates the JIRA ticket unless its summary is in
                 $existing_tickets, and returns its JIRA key
   Return type : string
@@ -409,25 +443,18 @@ sub _request_password {
 =cut
 
 sub _create_new_ticket {
-    my ( $self, $ticket, $existing_tickets ) = @_;
+    my ( $self, $ticket, $dry_mode ) = @_;
     my $issue_type = lc $ticket->{fields}->{issuetype}->{name};
     my $summary = $ticket->{fields}->{summary};
     $self->{_logger}->info(sprintf('Creating %s "%s" ... ', $issue_type, $summary));
     my $ticket_key;
-    if (exists $existing_tickets->{$summary}) {
-        # If another ticket with an identical summary exists, assume they are
-        # the same and avoid creating it again
-        $ticket_key = $existing_tickets->{$summary};
-        $self->{_logger}->info(
-            'Skipped. Likely a duplicate of https://www.ebi.ac.uk/panda/jira/browse/'
-            . $ticket_key
-            . "\n"
-        );
+    if ($dry_mode) {
+        $ticket_key = 'None [dry-run ON]';
     } else {
         my $new_ticket = $self->_post_request('issue', $ticket);
-        $ticket_key = $new_ticket->{key};
-        $self->{_logger}->info(sprintf("Done. Key assigned: %s\n", $ticket_key));
+        my $ticket_key = $new_ticket->{key};
     }
+    $self->{_logger}->info(sprintf("Done. Key assigned: %s\n", $ticket_key));
     return $ticket_key;
 }
 
@@ -460,6 +487,11 @@ sub _post_request {
     my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action;
     $self->{_logger}->debug("POST Request on $url\n");
     my $request = HTTP::Request->new('POST', $url);
+    # Request password (if not available already)
+    my $defined_password = defined $self->{_password};
+    if (! $defined_password) {
+        $self->{_password} = $self->_request_password();
+    }
     $request->authorization_basic($self->{_user}, $self->{_password});
     # The content data will be sent in JSON format
     $request->header('Content-Type' => 'application/json');
@@ -480,6 +512,10 @@ sub _post_request {
     } elsif (! $response->is_success()) {
         my $error_message = $response->as_string();
         $self->{_logger}->error($error_message, 0, 0);
+    }
+    # If the password was requested for this task, forget it before returning
+    if (! $defined_password) {
+        undef $self->{_password};
     }
     # Return the response content
     return decode_json($response->content());
