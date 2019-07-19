@@ -83,7 +83,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'mk_work_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'         => 'mkdir -p #hash_dir#',
+                'cmd'         => 'mkdir -p #hash_dir#/tar',
             },
             -flow_into  => [
                     WHEN('#member_type# eq "protein"' => 'dump_for_uniprot'),
@@ -185,13 +185,31 @@ sub pipeline_analyses_dump_trees {
                 'cmd'         => q{rm #output_file#; for filename in $(find #tsv_dir# -name #name_root#.homologies.tsv); do if [ ! -e #output_file# ]; then head -1 $filename > #output_file#; fi; awk '$1 > $6 {print $0}' $filename >> #output_file#; done},
                 'output_file' => '#tsv_dir#/#name_root#.homologies.tsv',
             },
-            -flow_into => { 1 => {
-                'convert_tsv_to_orthoxml' => [
-                    {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
-                    {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
-                ],
-                'archive_long_files' => { 'full_name' => '#output_file#' },
-            }},
+            -flow_into => {
+                1 => [ 'archive_per_genome_homologies_tsv_factory' ],
+                '1->A' => {
+                    'convert_tsv_to_orthoxml' => [
+                        {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
+                        {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies_strict.orthoxml.xml', 'high_confidence' => 1},
+                    ],
+                },
+                'A->1' => {
+                    'archive_long_files' => [
+                        { 'full_name' => '#output_file#', },
+                    ]
+                }
+            },
+        },
+
+        {   -logic_name => 'archive_per_genome_homologies_tsv_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputcmd'      => 'find #tsv_dir# -mindepth 2 -name #name_root#.homologies.tsv',
+                'column_names'  => [ 'full_name' ],
+            },
+            -flow_into => {
+                2 => 'archive_long_files'
+            },
         },
 
         {   -logic_name => 'convert_tsv_to_orthoxml',
@@ -199,9 +217,11 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'compara_db' => '#rel_db#',
             },
-            -flow_into  => {
-                1 => {'archive_long_files' => { 'full_name' => '#xml_file#' }}
-            },
+            -flow_into  => { 1 => {
+                'archive_long_files' => [
+                    { 'full_name' => '#xml_file#', },
+                ]
+            }},
             -rc_name => '16Gb_job',
         },
 
@@ -210,9 +230,6 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'db_conn'       => '#rel_db#',
                 'output_file'   => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
-            },
-            -flow_into => {
-                1 => { 'archive_long_files' => { 'full_name' => '#output_file#' } },
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
           },
@@ -330,7 +347,8 @@ sub pipeline_analyses_dump_trees {
                 'inputcmd'      => 'find #hash_dir# -name "tree.*.#extension#" | sed "s:#hash_dir#/*::" | sort -t . -k2 -n',
             },
             -flow_into => {
-                2 => [ 'tar_dumps' ],
+                '2->A' => [ 'tar_dumps' ],
+                'A->1' => [ 'tar_list' ],
             },
         },
 
@@ -340,11 +358,31 @@ sub pipeline_analyses_dump_trees {
                 'file_list'     => '#expr( join("\n", @{ #_range_list# }) )expr#',   # Assumes no whitespace in the filenames
                 'min_tree_id'   => '#expr( ($_ = #_range_start#) and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
                 'max_tree_id'   => '#expr( ($_ = #_range_end#)   and $_ =~ s/^.*tree\.(\d+)\..*$/$1/ and $_ )expr#',
-                'tar_archive'   => '#xml_dir#/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
+                'tar_archive'   => '#hash_dir#/tar/#dump_file_name#.#min_tree_id#-#max_tree_id#.tar',
                 'cmd'           => 'echo "#file_list#" | tar cf #tar_archive# -C #hash_dir# -T /dev/stdin --transform "s:^.*/:#basename#.:"',
             },
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#tar_archive#' } },
+            },
+        },
+
+        {   -logic_name => 'tar_list',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'file_list'     => '#hash_dir#/tar/#dump_file_name#.list',
+                'cmd'           => 'find #hash_dir#/tar -name "#dump_file_name#.*-*.tar.gz" | sort > #file_list#',
+            },
+            -flow_into => {
+                1 => WHEN('-s #file_list#' => [ 'tar_tar_dumps' ]),
+            },
+        },
+
+        {   -logic_name => 'tar_tar_dumps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'file_list'     => '#hash_dir#/tar/#dump_file_name#.list',
+                'tar_tar_path'  => '#xml_dir#/#dump_file_name#.tar',
+                'cmd'           => 'tar cf #tar_tar_path# -C #xml_dir# --files-from #file_list# --transform "s:^.*/::"',
             },
         },
 
@@ -353,7 +391,6 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'cmd'         => 'gzip #full_name#',
             },
-            -wait_for => [ 'dump_per_genome_homologies_tsv', 'concatenate_genome_homologies_tsv', 'convert_tsv_to_orthoxml' ],
         },
 
         {   -logic_name => 'remove_empty_file',
