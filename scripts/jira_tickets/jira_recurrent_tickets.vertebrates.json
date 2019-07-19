@@ -190,37 +190,37 @@
          {
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
-             "summary": "Run LastZ_PATCH alignments for human",
+             "summary": "Align the human patches against the primary human assembly",
              "name_on_graph": "Patches against their primary assembly:Human"
          },
          {
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
-             "summary": "Run LastZ_PATCH alignments for mouse",
+             "summary": "Align the mouse patches against the primary mouse assembly",
              "name_on_graph": "Patches against their primary assembly:Mouse"
          },
          {
              "component": "Production tasks",
              "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data#MergetheDNAdata-Patchalignments",
-             "summary": "Run LastZ_PATCH alignments for zebrafish",
+             "summary": "Align the zebrafish patches against the primary mouse assembly",
              "name_on_graph": "Patches against their primary assembly:Zebrafish"
          },
          {
              "component": "Production tasks",
              "description": "https://github.com/Ensembl/ensembl-compara/blob/release/<version>/docs/production/READMEs/pair_aligner_patches.rst",
-             "summary": "Top-up LastZ_NET human alignments",
+             "summary": "Align the human patches against the other species",
              "name_on_graph": "Patches against other species:Human"
          },
          {
              "component": "Production tasks",
              "description": "https://github.com/Ensembl/ensembl-compara/blob/release/<version>/docs/production/READMEs/pair_aligner_patches.rst",
-             "summary": "Top-up LastZ_NET mouse alignments",
+             "summary": "Align the mouse patches against the other species",
              "name_on_graph": "Patches against other species:Mouse"
          },
          {
              "component": "Production tasks",
              "description": "https://github.com/Ensembl/ensembl-compara/blob/release/<version>/docs/production/READMEs/pair_aligner_patches.rst",
-             "summary": "Top-up LastZ_NET zebrafish alignments",
+             "summary": "Align the zebrafish patches against the other species",
              "name_on_graph": "Patches against other species:Zebrafish"
          },
          {
