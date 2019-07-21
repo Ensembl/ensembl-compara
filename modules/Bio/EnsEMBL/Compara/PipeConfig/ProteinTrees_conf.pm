@@ -209,12 +209,9 @@ sub default_options {
         'tf_release'                => undef,
 
     # plots
-        #compute Jaccard Index
+        #compute Jaccard Index and Gini coefficient (Lorenz curve)
         'do_jaccard_index'          => 1,
         'jaccard_index_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotJaccardIndex.r'),
-
-        #Compute Gini coefficient (Lorenz curve)
-        'do_gini_coefficient'       => 1,
         'lorentz_curve_script'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/homology/plotLorentzCurve.r'),
 
     # HMM specific parameters (mostly set in the ENV file)
