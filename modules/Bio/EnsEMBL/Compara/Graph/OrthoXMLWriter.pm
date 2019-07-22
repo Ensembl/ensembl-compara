@@ -413,6 +413,7 @@ sub _find_valid_genetree_roots {
   my ($self, $tree) = @_;
   no warnings 'recursion';
   
+  #if ($self->_is_reliable_duplication($tree)) {
   if (not $tree->is_leaf() and $tree->is_duplication) {
     # Goes recursively until the next speciation node
     foreach my $child (@{$tree->children()}) {
@@ -424,6 +425,19 @@ sub _find_valid_genetree_roots {
   }
   
   return;
+}
+
+
+# Legacy method used instead of $node->is_duplication to consider
+# poorly-supported duplication nodes as <orthologGroup> (since we infer
+# orthologues across them)
+sub _is_reliable_duplication {
+  my $self = shift;
+  my $node = shift;
+  return 0 if $node->is_leaf();
+  return 0 if $node->is_speciation();
+  return 0 if ($node->duplication_confidence_score // 0) <= 0.25;
+  return 1;
 }
 
 
@@ -440,6 +454,7 @@ sub _genetreenode_body {
     return $w->emptyTag("geneRef", "id" => $node->seq_member_id);
   }
 
+  #my $tagname = $self->_is_reliable_duplication($node) ? "paralogGroup" : "orthologGroup";
   my $tagname = $node->is_duplication ? "paralogGroup" : "orthologGroup";
 
   $w->startTag(
