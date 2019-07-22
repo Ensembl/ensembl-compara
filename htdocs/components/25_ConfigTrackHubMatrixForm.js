@@ -1352,9 +1352,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   //function to toggle filters in right hand panel when show/hide selected is clicked
   registerShowHideClickEvent: function() {
-      this.elLk.filterTrackBox.find('div.show-hide').off().on("click", function(e) {
-          $(this).parent().find('div.show-hide, ul.result-list, ul.filterMatrix-list').toggle();
-      });
+    var panel = this;
+
+    this.elLk.filterTrackBox.find('div.show-hide').off().on("click", function(e) {
+      $(this).parent().find('div.show-hide, ul.result-list, ul.filterMatrix-list').toggle();
+    });
+    this.elLk.resultBox.find('div.show-hide').off().on("click", function(e) {
+      panel.el.find(this).parent().find('div.show-hide, ul.result-list').toggle();
+    });
   },
 
   trackTab: function() {
