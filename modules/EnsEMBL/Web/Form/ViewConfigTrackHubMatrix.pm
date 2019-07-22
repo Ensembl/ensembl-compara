@@ -43,9 +43,9 @@ sub breadcrumb_html {
           <li class="active _track-select" id="track-select"><a href="#"><span class="circle crumb-number">1</span>Select tracks</a><span class="hidden content-id">track-content</span></li>
           <li class="inactive _configure" id="track-filter"><a href="#"><span class="circle crumb-number">2</span>Filter tracks</a><span class="hidden content-id">filter-content</span></li>
           <li class="inactive _configure" id="track-display"><a href="#"><span class="circle crumb-number">3</span>Configure track display</a><span class="hidden content-id">configuration-content</span></li>
-          <button class="inactive view-track fade-button">View tracks</button>
         </ul>
       </div>      
+      <button class="inactive view-track-button fade-button">View tracks</button>
   );
 
   return $html;

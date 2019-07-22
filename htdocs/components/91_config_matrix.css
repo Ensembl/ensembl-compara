@@ -180,7 +180,7 @@ div#track-content                     { border-top: none; max-height: 425px; }
 div.track-panel.active                { display: inline-block; }
 div.track-configuration               { padding: 8px; }
 div.filter-content                    { flex: 1; overflow-y: auto; overflow-x: hidden; padding-right: 16px; margin-right: -16px; }
-button.fade-button.view-track         { margin-left: 75px; min-width: 100px; width: 100px; margin-top: 5px; }
+button.fade-button.view-track-button  { margin-left: 16px; min-width: 100px; width: 100px; }
 button.fade-button.showMatrix         { height:auto; padding: 4px; }
 div.flex-row                          { display: flex; }
 .circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; }

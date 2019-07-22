@@ -28,7 +28,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //getting the node id from the panel url (menu=) to pass to ajax request to get imageconfig
     var menu_match    = $(this.params.links).find('li.active a').attr('href').match(/menu=([^;&]+)/g);
-    this.node_id       = menu_match[0].split("=")[1];
+    this.node_id      = menu_match[0].split("=")[1];
     var species_match = $(this.params.links).find('li.active a').attr('href').match(/th_species=([^;&]+)/g);
     var species_name  = species_match[0].split("=")[1];
 
@@ -52,6 +52,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.filterTrackBox  = this.el.find(".result-box#filter-box");
     this.elLk.displayButton   = this.el.find("button.showMatrix");
+    this.elLk.viewTrackButton = this.el.find("button.view-track-button");
     this.elLk.clearAll        = this.el.find("span.clearall");
     this.elLk.ajaxError       = this.el.find('span.error._ajax');
     this.localStoreObj        = new Object();
@@ -899,7 +900,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if(counter === total_div) {
       panel.el.find('li.view-track').removeClass('inactive');
       panel.el.find('li._configure').removeClass('inactive');
-      panel.elLk.displayButton.addClass('active')
+      panel.elLk.displayButton.addClass('active');
     } else {
       panel.el.find('li.view-track').addClass('inactive');
       panel.el.find('li._configure').addClass('inactive');
@@ -911,15 +912,22 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   // Argument: containers where to listen for empty elements (Note: span error id should match container id with an underscore)
   trackError: function(containers) {
     var panel = this;
+    var error = 0;
 
     panel.el.find(containers).each(function(i, ele) {
       var error_class = "_" + $(ele).attr('id');
       if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
         panel.el.find("span." + error_class).hide();
       } else {
+        error = 1;
         panel.el.find("span." + error_class).show();
       }
     });
+    if(error) {
+      panel.elLk.viewTrackButton.removeClass('active').addClass('inactive');
+    } else {
+      panel.elLk.viewTrackButton.removeClass('inactive').addClass('active');
+    }
   },
 
   //function to show/hide reset all link in RH panel when something is selected
