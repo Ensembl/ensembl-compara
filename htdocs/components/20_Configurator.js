@@ -792,6 +792,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       case 'active_tracks':
         this.elLk.configs.hide().filter('.on').show().parents('li, div.subset, div.config').show();
         this.elLk.configDivs.filter('.functional').find('.hidden-caption').show();
+  
+        // Hide trackhub tracks
+        this.elLk.configDivs.filter('.trackhub').hide();
+
         break;
       
       case 'favourite_tracks':
