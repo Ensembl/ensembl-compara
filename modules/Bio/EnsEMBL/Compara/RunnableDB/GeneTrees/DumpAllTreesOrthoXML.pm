@@ -69,6 +69,14 @@ use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    return {
+        'clusterset_id' => undef,
+        'member_type'   => undef,
+    };
+}
+
+
 sub fetch_input {
     my ($self) = @_;
 
