@@ -73,6 +73,7 @@ sub param_defaults {
     return {
         "ortholog_method_link_id"   => 201,
         'high_confidence'           => 0,
+        'tree_compliant'            => 0,
         "clusterset_id"             => 'default',
         "member_type"               => 'protein',
            };
@@ -149,6 +150,9 @@ sub run {
     }
     if ($self->param_required('high_confidence')) {
         $sql .= " AND is_high_confidence = 1";
+    }
+    if ($self->param_required('tree_compliant')) {
+        $sql .= " AND is_tree_compliant = 1";
     }
     $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
 
