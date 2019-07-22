@@ -237,6 +237,54 @@ sub fetch_tickets {
     return $tickets;
 }
 
+=head2 link_tickets
+
+  Arg[1]      : string $link_type - an issue link type
+  Arg[2]      : string $inward_key - inward JIRA ticket key
+  Arg[3]      : string $outward_key - outward JIRA ticket key
+  Example     : $jira_adaptor->link_tickets('Duplicate', 'ENCOMPARASW-1452', 'ENCOMPARASW-2145');
+  Description : Creates an issue link of the given type between the two tickets.
+                For more information, go to
+                https://www.ebi.ac.uk/panda/jira/rest/api/latest/issueLinkType
+  Return type : none
+  Exceptions  : none
+
+=cut
+
+sub link_tickets {
+    my $self = shift;
+    my ( $link_type, $inward_key, $outward_key ) = rearrange(
+        [qw(LINK_TYPE INWARD_KEY OUTWARD_KEY)], @_);
+    # Request password (if not available already)
+    my $defined_password = defined $self->{_password};
+    if (! $defined_password) {
+        $self->{_password} = $self->_request_password();
+    }
+    # Check if the issue link type requested is correct
+    my %jira_link_types = map { $_ => 1 } ['After', 'Before', 'Blocks', 'Cloners', 'Duplicate',
+                                           'Issue split', 'Related', 'Relates', 'Required'];
+    # Do a case insensitive issue link type matching
+    if (exists %issuelink_types{lc $link_type}) {
+        my $link_content = {
+            "type"         => { "name" => %jira_link_types{lc $link_type} },
+            "inwardIssue"  => { "key"  => $inward_key },
+            "outwardIssue" => { "key"  => $inward_key }
+        };
+        # Create the issue link for the given tickets via POST request
+        $self->{_logger}->info(sprintf('Creating link "%s" between %s and %s ... ',
+                                       $link_type, $inward_key, $outward_key));
+        $self->_post_request('issueLink', $link_content);
+        $self->{_logger}->info('Done.');
+    } else {
+        my $type_list = join("\n", sort keys %jira_link_types);
+        $self->{_logger}->error("Unexpected link type '$link_type'! Allowed link types:\n$type_list");
+    }
+    # If the password was requested for this task, forget it before returning
+    if (! $defined_password) {
+        undef $self->{_password};
+    }
+}
+
 =head2 _validate_username
 
   Arg[1]      : string $user - a JIRA username
@@ -474,7 +522,7 @@ sub _create_new_ticket {
 sub _post_request {
     my ( $self, $action, $content_data ) = @_;
     # Check if the action requested is available
-    my %available_actions = map { $_ => 1 } qw(issue search);
+    my %available_actions = map { $_ => 1 } qw(issue search issueLink);
     if (! exists $available_actions{$action}) {
         my $action_list = join("\n", sort keys %available_actions);
         $self->{_logger}->error(
