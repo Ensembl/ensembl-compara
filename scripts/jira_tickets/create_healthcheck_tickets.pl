@@ -30,21 +30,19 @@ use strict;
 
 use JSON;
 use Getopt::Long;
-use Bio::EnsEMBL::Utils::Logger;
 use POSIX;
-use Term::ReadKey;
 use Cwd 'abs_path';
 use File::Basename;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
-use Data::Dumper;
 
-my ( $help, $release, $division, $password );
+my ( $help, $release, $division, $dry_run );
+$dry_run = 0;
 GetOptions(
     "help"         => \$help,
     "r|release=s"  => \$release,
     "d|division=s" => \$division,
-    "p|password=s" => \$password,
+    'dry_run|dry-run!' => \$dry_run,
 );
 my $hc_file = $ARGV[0];
 die "Cannot find $hc_file - file does not exist" unless -e $hc_file;
@@ -52,45 +50,11 @@ my $hc_abs_path = abs_path($hc_file);
 my $hc_basename = fileparse($hc_abs_path,('.txt', '.out'));
 
 die &helptext if ( $help || !($release && $hc_file && $division) );
-our $logger = Bio::EnsEMBL::Utils::Logger->new();
 my $timestamp = strftime "%d-%m-%Y %H:%M:%S", localtime time;
 
-#----------------------------------#
-#        Set up parameters         #
-#----------------------------------#
-if ( !$password ) {
-    print 'Please type your JIRA password:';
-
-    ReadMode('noecho');    # make password invisible on terminal
-    $password = ReadLine(0);
-    chomp $password;
-    ReadMode(0);           # restore typing visibility on terminal
-    print "\n";
-}
-
-my %capitalized_divisions = (
-    'grch37'        => 'GRCh37',
-    'ensembl'       => 'EnsEMBL',
-    'vertebrates'   => 'Vertebrates',
-    'plants'        => 'Plants',
-    'metazoa'       => 'Metazoa',
-);
-die "Division '$division' not recognised!" unless exists $capitalized_divisions{lc $division};
-$division = $capitalized_divisions{lc $division};
-
-our $parameters = {
-    release    => $release,
-    division   => $division,
-    tickets    => { 
-        fixVersion => "Release $release",
-        priority   => 'Blocker',
-        project    => 'ENSCOMPARASW',
-        components => ['Java Healthchecks', 'Production tasks'],
-    },
-    user       => $ENV{USER},
-    password   => $password,    
-};
-Bio::EnsEMBL::Compara::Utils::JIRA->validate_user_name( $parameters->{user}, $logger );
+# Get a new Utils::JIRA object to create the tickets for the given division and
+# release
+my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
 
 #----------------------------------#
 #          Fetch HC info           #
@@ -102,34 +66,34 @@ my $testcase_failures = parse_healthchecks($hc_file);
 #----------------------------------#
 
 # create initial ticket for HC run - failures will become subtasks of this
-my $blocked_ticket_key = find_handover_ticket($release, $division, $parameters, $logger);
-my $hc_task_json_ticket = {
-    assignee    => $parameters->{user},
+my $blocked_ticket_key = find_handover_ticket($jira_adaptor);
+my $hc_task_json_ticket = [{
+    assignee    => $jira_adaptor->{_user},
     summary     => "$hc_basename ($timestamp)",
     description => "Java healthcheck failures for HC run on $timestamp\nFrom file: $hc_abs_path",
     links       => [ ['Blocks', $blocked_ticket_key] ],
-};
-my $hc_task_jira_ticket = Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($hc_task_json_ticket, 'Task', $parameters, $logger);
+}];
 
 # create subtask tickets for each HC failure
-my @jira_subtasks;
+my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
         summary => $testcase,
         description => $testcase_failures->{$testcase},
     };
-    push(@jira_subtasks, Bio::EnsEMBL::Compara::Utils::JIRA->json_to_jira($failure_subtask_json, 'Sub-task', $parameters, $logger));
+    push(@json_subtasks, $failure_subtask_json);
 }
-
-# POST tickets to JIRA
-my $hc_task_ticket_key = Bio::EnsEMBL::Compara::Utils::JIRA->create_ticket( $hc_task_jira_ticket, $parameters, $logger );
-print "Created ticket: $hc_task_ticket_key\n";
-create_blocker_link( $hc_task_ticket_key, $blocked_ticket_key );
-foreach my $subtask ( @jira_subtasks ) {
-    $subtask->{'fields'}->{'parent'} = { 'key' => $hc_task_ticket_key };
-    my $subtask_ticket_key = Bio::EnsEMBL::Compara::Utils::JIRA->create_ticket( $subtask, $parameters, $logger );
-    print "\tSubtask: $subtask_ticket_key\n";
-}
+# Add subtasks to the initial ticket
+$hc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
+my $components = ['Java Healthchecks', 'Production tasks'];
+# Create all JIRA tickets
+my $hc_task_keys = $jira_adaptor->create_tickets(
+    -JSON_INPUT => encode_json($hc_task_json_ticket), -PRIORITY => 'Blocker', -COMPONENTS => $components,
+    -DRY_RUN => $dry_run
+);
+# Create a blocker issue link between the newly created HC ticket and the
+# handover ticket
+$jira_adaptor->link_tickets('Blocks', $hc_task_keys->[0], $blocked_ticket_key, $dry_run);
 
 sub parse_healthchecks {
     my $hc_file = shift;
@@ -160,39 +124,18 @@ sub parse_healthchecks {
 }
 
 sub find_handover_ticket {
-    my ($release, $division) = @_;
+    my ($jira_adaptor) = @_;
     
-    my $this_fixversion = $parameters->{tickets}->{fixVersion};
-    $this_fixversion =~ s/ /\\u0020/g;
-    my $jql = sprintf('project=%s AND fixVersion=%s', $parameters->{tickets}->{project}, $this_fixversion);
-    $jql .= sprintf(' and cf[11130]="%s"', $parameters->{division}) if $parameters->{division};
+    my $fixVersion = 'Release\u0020' . $jira_adaptor->{_release};
+    my $jql = sprintf('project=%s AND fixVersion=%s', $jira_adaptor->{_project}, $fixVersion);
+    $jql .= sprintf(' and cf[11130]="%s"', $jira_adaptor->{_division}) if $jira_adaptor->{_division};
     $jql .= sprintf(' and summary ~ "%s"', 'Handover of release DB' );
-    my $handover_ticket_response = Bio::EnsEMBL::Compara::Utils::JIRA->post_request( 
-        'rest/api/latest/search',
-        { "maxResults" => 1, "jql" => $jql, },
-        $parameters, $logger 
-    );
-    my $handover_ticket = decode_json( $handover_ticket_response->content() );
+    my $handover_ticket = $jira_adaptor->fetch_tickets($jql);
     
     print "Found ticket key '" . $handover_ticket->{issues}->[0]->{key} . "'\n";
     
     return $handover_ticket->{issues}->[0]->{key};
 }
-
-sub create_blocker_link {
-    my ( $blocker_key, $blockee_key ) = @_;
-    
-    my $block_link_content = {
-        "type" => { "name" => "Blocks" },
-        "inwardIssue" => { "key" => $blocker_key },
-        "outwardIssue" => { "key" => $blockee_key }
-    };
-    
-    my $issuelink_endpoint = 'rest/api/2/issueLink';
-    my $response = Bio::EnsEMBL::Compara::Utils::JIRA->post_request( $issuelink_endpoint, $block_link_content, $parameters, $logger );
-    print "$blocker_key now blocks $blockee_key\n";
-}
-
 
 sub helptext {
 	my $msg = <<HELPEND;
