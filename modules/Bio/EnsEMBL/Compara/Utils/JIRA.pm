@@ -96,7 +96,7 @@ sub new {
   Arg[5]      : (optional) arrayref of strings $labels - a list of JIRA labels
                 to include in the JIRA tickets. By default, no more labels are
                 added.
-  Arg[6]      : (optional) boolean $dry_mode - in dry-run mode, the JIRA tickets
+  Arg[6]      : (optional) boolean $dry_run - in dry-run mode, the JIRA tickets
                 will not be submitted to the JIRA server. By default, dry-run
                 mode is off.
   Example     : $jira_adaptor->create_tickets('jira_recurrent_tickets.vertebrates.json');
@@ -109,12 +109,12 @@ sub new {
 
 sub create_tickets {
     my $self = shift;
-    my ( $json_input, $issue_type, $priority, $components, $labels, $dry_mode ) = rearrange(
-        [qw(JSON_INPUT ISSUE_TYPE PRIORITY COMPONENTS LABELS DRY_MODE)], @_);
+    my ( $json_input, $issue_type, $priority, $components, $labels, $dry_run ) = rearrange(
+        [qw(JSON_INPUT ISSUE_TYPE PRIORITY COMPONENTS LABELS DRY_RUN)], @_);
     # Set default values for optional arguments
     $issue_type ||= 'Task';
     $priority ||= 'Major';
-    $dry_mode ||= 0;
+    $dry_run ||= 0;
     # Request password (if not available already)
     my $defined_password = defined $self->{_password};
     if (! $defined_password) {
@@ -175,7 +175,7 @@ sub create_tickets {
         } else {
             # In dry-run mode, the message will be logged but the ticket will
             # not be created
-            push @$ticket_key_list, $self->_create_new_ticket($ticket, $dry_mode);
+            push @$ticket_key_list, $self->_create_new_ticket($ticket, $dry_run);
         }
         if ($ticket->{subtasks}) {
             foreach my $subtask ( @{$ticket->{subtasks}} ) {
@@ -193,7 +193,7 @@ sub create_tickets {
                     $subtask->{'fields'}->{'parent'} = { 'key' => $ticket_key_list->[-1] };
                     # In dry-run mode, the message will be logged but the ticket
                     # will not be created
-                    push @$ticket_key_list, $self->_create_new_ticket($subtask, $dry_mode);
+                    push @$ticket_key_list, $self->_create_new_ticket($subtask, $dry_run);
                 }
             }
         }
@@ -423,7 +423,7 @@ sub _request_password {
 =head2 _create_new_ticket
 
   Arg[1]      : hashref $ticket - a JIRA ticket to be created
-  Arg[2]      : int $dry_mode - in dry-run mode, the JIRA ticket will not be
+  Arg[2]      : int $dry_run - in dry-run mode, the JIRA ticket will not be
                 submitted to the JIRA server
   Example     : my $ticket = {
                     'priority'    => { 'name' => 'Minor' },
@@ -443,12 +443,12 @@ sub _request_password {
 =cut
 
 sub _create_new_ticket {
-    my ( $self, $ticket, $dry_mode ) = @_;
+    my ( $self, $ticket, $dry_run ) = @_;
     my $issue_type = lc $ticket->{fields}->{issuetype}->{name};
     my $summary = $ticket->{fields}->{summary};
     $self->{_logger}->info(sprintf('Creating %s "%s" ... ', $issue_type, $summary));
     my $ticket_key;
-    if ($dry_mode) {
+    if ($dry_run) {
         $ticket_key = 'None [dry-run ON]';
     } else {
         my $new_ticket = $self->_post_request('issue', $ticket);

@@ -76,7 +76,7 @@ sub main {
 
     # Create JIRA tickets
     my $subtask_keys = $jira_adaptor->create_tickets(
-        -JSON_INPUT => $tickets_json, -DRY_MODE => $dry_run);
+        -JSON_INPUT => $tickets_json, -DRY_RUN => $dry_run);
 }
 
 

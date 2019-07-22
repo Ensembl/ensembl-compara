@@ -184,7 +184,7 @@ foreach my $group ( @$mlss_groups ) {
 }
 # Create all JIRA tickets
 my $subtask_keys = $jira_adaptor->create_tickets(
-    -JSON_INPUT => encode_json($ticket_list), -ISSUE_TYPE => 'Sub-task', -DRY_MODE => $dry_run);
+    -JSON_INPUT => encode_json($ticket_list), -ISSUE_TYPE => 'Sub-task', -DRY_RUN => $dry_run);
 # Finally, print each batch command line
 print "\nPipeline commands:\n------------------\n";
 for my $i (0 .. $#cmd_list) {
