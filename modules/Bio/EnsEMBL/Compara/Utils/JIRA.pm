@@ -242,6 +242,9 @@ sub fetch_tickets {
   Arg[1]      : string $link_type - an issue link type
   Arg[2]      : string $inward_key - inward JIRA ticket key
   Arg[3]      : string $outward_key - outward JIRA ticket key
+  Arg[4]      : (optional) boolean $dry_run - in dry-run mode, the issue links
+                will not be submitted to the JIRA server. By default, dry-run
+                mode is off.
   Example     : $jira_adaptor->link_tickets('Duplicate', 'ENCOMPARASW-1452', 'ENCOMPARASW-2145');
   Description : Creates an issue link of the given type between the two tickets.
                 For more information, go to
@@ -253,28 +256,34 @@ sub fetch_tickets {
 
 sub link_tickets {
     my $self = shift;
-    my ( $link_type, $inward_key, $outward_key ) = rearrange(
-        [qw(LINK_TYPE INWARD_KEY OUTWARD_KEY)], @_);
+    my ( $link_type, $inward_key, $outward_key, $dry_run ) = rearrange(
+        [qw(LINK_TYPE INWARD_KEY OUTWARD_KEY DRY_RUN)], @_);
+    # Set default values for optional arguments
+    $dry_run ||= 0;
     # Request password (if not available already)
     my $defined_password = defined $self->{_password};
     if (! $defined_password) {
         $self->{_password} = $self->_request_password();
     }
     # Check if the issue link type requested is correct
-    my %jira_link_types = map { $_ => 1 } ['After', 'Before', 'Blocks', 'Cloners', 'Duplicate',
-                                           'Issue split', 'Related', 'Relates', 'Required'];
-    # Do a case insensitive issue link type matching
-    if (exists %issuelink_types{lc $link_type}) {
+    my %jira_link_types = map { $_ => 1 } ('After', 'Before', 'Blocks', 'Cloners', 'Duplicate',
+                                           'Issue split', 'Related', 'Relates', 'Required');
+    if (exists $jira_link_types{$link_type}) {
         my $link_content = {
-            "type"         => { "name" => %jira_link_types{lc $link_type} },
+            "type"         => { "name" => $link_type },
             "inwardIssue"  => { "key"  => $inward_key },
-            "outwardIssue" => { "key"  => $inward_key }
+            "outwardIssue" => { "key"  => $outward_key }
         };
         # Create the issue link for the given tickets via POST request
         $self->{_logger}->info(sprintf('Creating link "%s" between %s and %s ... ',
                                        $link_type, $inward_key, $outward_key));
-        $self->_post_request('issueLink', $link_content);
-        $self->{_logger}->info('Done.');
+        if ($dry_run) {
+            $self->{_logger}->info("\n");
+            $self->{_logger}->info(Dumper $link_content);
+        } else {
+            $self->_post_request('issueLink', $link_content);
+        }
+        $self->{_logger}->info("Done.\n");
     } else {
         my $type_list = join("\n", sort keys %jira_link_types);
         $self->{_logger}->error("Unexpected link type '$link_type'! Allowed link types:\n$type_list");
