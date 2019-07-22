@@ -94,11 +94,10 @@ sub create_chunks_and_write_chromsize_file {
     make_path(dirname($chromsize_file));
     open(my $fh, '>', $chromsize_file) or die "Cannot open $chromsize_file for writing";
 
-    # Iterator so that we don't use too much memory
-    my $dbc = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') )->dbc;
-
+    # Order the dnafrags by name, like "LC_ALL=C sort" would
     my $sql = q{SELECT name, length FROM dnafrag WHERE genome_db_id = ? AND is_reference = 1 ORDER BY name COLLATE latin1_bin};
-    my $sth = $dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
+    # Iterator so that we don't use too much memory
+    my $sth = $self->compara_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
     $sth->execute($self->param_required('genome_db_id'));
 
     my @all_chunksets;

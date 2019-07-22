@@ -65,9 +65,7 @@ sub fetch_input {
 
 	my $curr_release = $self->param_required('curr_release');
 
-	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') );
-
-	my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $mlssa = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 	my @release_mlsses;
 	my %mlss_id_to_dump;
 

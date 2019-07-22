@@ -54,10 +54,7 @@ sub fetch_input {
 	my $self = shift;
 
 	my $mlss_id = $self->param_required('mlss_id');
-	my $compara_db = $self->param_required('compara_db');
-	
-	my $dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db );
-	my $mlss = $dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+	my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 	my $mlss_filename = $mlss->filename;
 	$self->param( 'mlss_filename', $mlss_filename );
 

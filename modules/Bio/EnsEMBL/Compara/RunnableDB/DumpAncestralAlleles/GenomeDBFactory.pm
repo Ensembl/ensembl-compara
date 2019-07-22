@@ -42,8 +42,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
 	my $self = shift;
 
-	my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('compara_db') );
-	my $mlss_adap = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
+	my $mlss_adap = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
 	my $primate_epo_mlss = $mlss_adap->fetch_by_method_link_type_species_set_name('EPO', 'primates');
 	# my @species_list = map {$_->name} @{ $primate_epo_mlss->species_set->genome_dbs };
