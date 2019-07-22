@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#example : perl create_compara_release_JIRA_tickets.pl -tickets ~/Jira_recurrent_tickets.txt -c ~/AutomaticJiraTickets.conf -release 89
-
 use strict;
 use warnings;
 
