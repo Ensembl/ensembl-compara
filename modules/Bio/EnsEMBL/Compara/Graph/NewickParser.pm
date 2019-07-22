@@ -146,7 +146,6 @@ sub parse_newick_into_tree
       elsif ($state == 3) { # optional : and distance
         if($token eq ':') {
           $token = next_token(\@char_array, "[,);");
-          chomp $token;
           $node->distance_to_parent($token);
           if($debug) { print("set distance: $token"); $node->print_node; }
           $token = next_token(\@char_array, ",);"); #move to , or )
@@ -251,6 +250,11 @@ sub next_token {
   }
   unless(scalar(@$char_array)) {
     throw("couldn't find delimiter $delim\n");
+  }
+
+  # Remove the trailing whitespace
+  while (scalar(@token_array) and $whitespace->{$token_array[-1]}) {
+      pop @token_array;
   }
 
   # We want to consume at least 1 character
