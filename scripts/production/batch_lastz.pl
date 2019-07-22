@@ -41,9 +41,9 @@ my @intervals_in_mbp = (
 
 my $method_link = 'LASTZ_NET';
 
-my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids, $dry_mode );
+my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids, $dry_run );
 my ( $verbose, $very_verbose );
-$dry_mode = 0;
+$dry_run = 0;
 GetOptions(
     "help"               => \$help,
     "reg_conf=s"         => \$reg_conf,
@@ -52,7 +52,7 @@ GetOptions(
     "max_jobs=i"         => \$max_jobs,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
-    'dry_mode=i'         => \$dry_mode,
+    'dry_run|dry-run!'   => \$dry_run,
     'v|verbose!'         => \$verbose,
     'vv|very_verbose!'   => \$very_verbose,
 );
@@ -184,7 +184,7 @@ foreach my $group ( @$mlss_groups ) {
 }
 # Create all JIRA tickets
 my $subtask_keys = $jira_adaptor->create_tickets(
-    -JSON_INPUT => encode_json($ticket_list), -ISSUE_TYPE => 'Sub-task', -DRY_MODE => $dry_mode);
+    -JSON_INPUT => encode_json($ticket_list), -ISSUE_TYPE => 'Sub-task', -DRY_MODE => $dry_run);
 # Finally, print each batch command line
 print "\nPipeline commands:\n------------------\n";
 for my $i (0 .. $#cmd_list) {
