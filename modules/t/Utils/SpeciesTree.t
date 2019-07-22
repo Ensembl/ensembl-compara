@@ -73,7 +73,7 @@ subtest 'new_from_newick' => sub {
     #ok(1); return;
 
     test_new_from_newick(
-        '((homo_sapiens,(genus_species,mus_musculus))my_name,danio_rerio)',
+        "((homo_sapiens\n  ,(genus_species,\n\n   mus_musculus))\n     my_name,danio_rerio\n)",
         '((134,150),154)',
         '((10090,9606)314146,7955)117571',
         '((Homo sapiens,Mus musculus GRCm38)my_name,Danio rerio)Euteleostomi',
