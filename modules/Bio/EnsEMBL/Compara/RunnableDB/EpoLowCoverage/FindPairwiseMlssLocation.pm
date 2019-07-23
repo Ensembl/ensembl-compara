@@ -124,7 +124,7 @@ sub _find_compara_db_for_genome_db_id {
     foreach my $compara_db (@{$self->param('pairwise_location')}) {
         my $mlss_per_reference = $self->_load_mlss_from_compara_db($compara_db)->{$genome_db_id};
         foreach my $ref_genome_db_id ( keys %$mlss_per_reference ) {
-            $all_alns_for_gdb{$ref_genome_db_id} = { mlss_id => $mlss_per_reference->{$ref_genome_db_id}, compara_db => $compara_db };
+            $all_alns_for_gdb{$ref_genome_db_id} = { %{$mlss_per_reference->{$ref_genome_db_id}}, compara_db => $compara_db };
         }
     }
     
@@ -147,7 +147,10 @@ sub _load_mlss_from_compara_db {
         foreach my $mlss (@$some_mlsss) {
             next if scalar(@{$mlss->species_set->genome_dbs}) != 2;
             my ($ref_gdb, $non_ref_gdb) = $mlss->find_pairwise_reference;
-            $mlss_found{$non_ref_gdb->dbID}->{$ref_gdb->dbID} = $mlss->dbID;
+            $mlss_found{$non_ref_gdb->dbID}->{$ref_gdb->dbID} = {
+                mlss_id => $mlss->dbID,
+                ref_cov => $mlss->get_value_for_tag('ref_genome_coverage')/$mlss->get_value_for_tag('ref_genome_length'),
+            };
         }
     }
 
@@ -172,24 +175,18 @@ sub _optimal_aln_for_genome_db {
         my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
                 
         # then, get the pairwise coverage
-        my $pw_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($all_alns_for_gdb->{$ref_gdb_id}->{compara_db});
-        my $mlss_tag_sql = "SELECT value FROM method_link_species_set_tag WHERE method_link_species_set_id = $this_mlss_id AND tag = ?";
-        my $pw_sth = $pw_dba->dbc->prepare($mlss_tag_sql);
+        my $pw_cov = $all_alns_for_gdb->{$ref_gdb_id}->{ref_cov};
         
-        $pw_sth->execute('ref_genome_coverage');
-        my $pw_genome_coverage = $pw_sth->fetchall_arrayref->[0]->[0];
-        $pw_sth->execute('ref_genome_length');
-        my $pw_genome_length = $pw_sth->fetchall_arrayref->[0]->[0];
-        
-        my $comb_coverage_for_ref = ($epo_genome_coverage/$epo_genome_length) * ($pw_genome_coverage/$pw_genome_length);
+        my $comb_coverage_for_ref = ($epo_genome_coverage/$epo_genome_length) * $pw_cov;
 
         if ( $self->debug ) {
+            my $pw_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($all_alns_for_gdb->{$ref_gdb_id}->{compara_db});
             my $gdba = $pw_dba->get_GenomeDBAdaptor;
             my $mlssa = $pw_dba->get_MethodLinkSpeciesSetAdaptor;
             my $mlss = $mlssa->fetch_by_dbID($this_mlss_id);
             my $nr_gdb = $gdba->fetch_by_dbID($non_ref_gdb_id);
             my $r_gdb = $gdba->fetch_by_dbID($ref_gdb_id);
-            print $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t" . ($epo_genome_coverage/$epo_genome_length) . "\t" . ($pw_genome_coverage/$pw_genome_length) . "\t$comb_coverage_for_ref\n";
+            print $nr_gdb->name . "\t" . $r_gdb->name . "\t" . $mlss->name . "\t" . ($epo_genome_coverage/$epo_genome_length) . "\t" . $pw_cov . "\t$comb_coverage_for_ref\n";
         }
 
         if ( $comb_coverage_for_ref > $max_coverage ) {
