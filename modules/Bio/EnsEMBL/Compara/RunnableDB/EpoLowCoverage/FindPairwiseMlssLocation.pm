@@ -91,9 +91,13 @@ sub _find_location_of_all_required_mlss {
     my $base_dba            = $self->get_cached_compara_dba('base_location');
     my $base_mlss_adaptor   = $base_dba->get_MethodLinkSpeciesSetAdaptor;
     my $base_mlss           = $base_mlss_adaptor->fetch_by_dbID($self->param('base_method_link_species_set_id'));
+    my $base_species_tree   = $base_mlss->species_tree;
+    my $base_gdb_id_2_stn   = $base_species_tree->get_genome_db_id_2_node_hash();
 
     my %high_coverage_genome_db_ids;
     $high_coverage_genome_db_ids{$_->dbID} = 1 for @{$base_mlss->species_set->genome_dbs};
+
+    $self->param('base_gdb_id_2_stn', $base_gdb_id_2_stn);
 
     my (%mlss_location, %refs_per_species);
     foreach my $genome_db (@{$low_mlss->species_set->genome_dbs}) {
@@ -162,8 +166,6 @@ sub _load_mlss_from_compara_db {
 sub _optimal_aln_for_genome_db {
     my ( $self, $all_alns_for_gdb, $non_ref_gdb_id ) = @_;
     
-    my $epo_dba = $self->get_cached_compara_dba('base_location');
-    
     my ($best_aln_mlss_id, $best_ref_gdb_id);
     my $max_coverage = 0;
     print "non-ref_name\tref_name\tmlss_name\tepo_cov\tlastz_cov\tcombined_cov\n";
@@ -171,15 +173,11 @@ sub _optimal_aln_for_genome_db {
         my $this_mlss_id = $all_alns_for_gdb->{$ref_gdb_id}->{mlss_id};
         
         # first, get the EPO coverage for this reference species
-        my $stn_tag_sql = "SELECT value FROM species_tree_node_tag JOIN species_tree_node USING(node_id) WHERE genome_db_id = $ref_gdb_id AND tag = ?";
-        my $epo_sth = $epo_dba->dbc->prepare($stn_tag_sql);
-        
-        $epo_sth->execute('genome_coverage');
-        my $epo_genome_coverage = $epo_sth->fetchall_arrayref->[0]->[0];
-        $epo_sth->execute('genome_length');
-        my $epo_genome_length = $epo_sth->fetchall_arrayref->[0]->[0];
-                
-        next unless defined $epo_genome_length && $epo_genome_length > 0; # skip if the ref isn't in this epo db
+        my $epo_stn = $self->param('base_gdb_id_2_stn')->{$ref_gdb_id};
+        next unless defined $epo_stn; # skip if the ref isn't in this epo db
+
+        my $epo_genome_coverage = $epo_stn->get_value_for_tag('genome_coverage');
+        my $epo_genome_length = $epo_stn->get_value_for_tag('genome_length');
                 
         # then, get the pairwise coverage
         my $pw_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($all_alns_for_gdb->{$ref_gdb_id}->{compara_db});
