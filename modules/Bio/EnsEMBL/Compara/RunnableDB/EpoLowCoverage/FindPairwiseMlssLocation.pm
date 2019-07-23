@@ -122,7 +122,7 @@ sub _find_compara_db_for_genome_db_id {
 
     my %all_alns_for_gdb;
     foreach my $compara_db (@{$self->param('pairwise_location')}) {
-        my $mlss_per_reference = $self->_load_mlss_from_compara_db($compara_db, $genome_db_id);
+        my $mlss_per_reference = $self->_load_mlss_from_compara_db($compara_db)->{$genome_db_id};
         foreach my $ref_genome_db_id ( keys %$mlss_per_reference ) {
             $all_alns_for_gdb{$ref_genome_db_id} = { mlss_id => $mlss_per_reference->{$ref_genome_db_id}, compara_db => $compara_db };
         }
@@ -135,9 +135,9 @@ sub _find_compara_db_for_genome_db_id {
 
 # List all the alignments available in a given database
 sub _load_mlss_from_compara_db {
-    my ($self, $compara_db, $non_ref_gdb_id) = @_;
+    my ($self, $compara_db) = @_;
 
-    return $self->param('dbs_loaded')->{$compara_db}->{$non_ref_gdb_id} if $self->param('dbs_loaded')->{$compara_db}->{$non_ref_gdb_id};
+    return $self->param('dbs_loaded')->{$compara_db} if $self->param('dbs_loaded')->{$compara_db};
 
     my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara_db);
 
@@ -145,21 +145,13 @@ sub _load_mlss_from_compara_db {
     foreach my $method_link_type (qw(LASTZ_NET BLASTZ_NET)) {
         my $some_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link_type);
         foreach my $mlss (@$some_mlsss) {
-            my ($found_non_ref, $ref_gdb);
-            foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
-                if ($genome_db->dbID eq $non_ref_gdb_id) {
-                    $found_non_ref = 1;
-                } else {
-                    $ref_gdb = $genome_db;
-                }
-            }
-            if ($found_non_ref && $ref_gdb) {
-                $mlss_found{$ref_gdb->dbID} = $mlss->dbID;
-            }
+            next if scalar(@{$mlss->species_set->genome_dbs}) != 2;
+            my ($ref_gdb, $non_ref_gdb) = $mlss->find_pairwise_reference;
+            $mlss_found{$non_ref_gdb->dbID}->{$ref_gdb->dbID} = $mlss->dbID;
         }
     }
 
-    $self->param('dbs_loaded')->{$compara_db}->{$non_ref_gdb_id} = \%mlss_found;
+    $self->param('dbs_loaded')->{$compara_db} = \%mlss_found;
     return \%mlss_found;
 }
 
