@@ -2002,6 +2002,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]+'</span>';
                 }
                 dataClass = "_hasData";
+
+                if(panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] === 0) {
+                  boxState = "";
+                  dataClass = "";
+                }
               } else {
                 //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )                      
                 if(panel.filterMatrixObj[storeKey]) {
@@ -2349,6 +2354,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 format = panel.localStoreObj[cellStoreObjKey][storeKey].format;
                 boxRenderClass = "render-"+boxDataRender;
                 dataClass = "_hasData";
+                if(Object.keys(panel.localStoreObj.filterMatrix).length) {
+                  boxState = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "track-on" : "";
+                  dataClass = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "_hasData" : "";
+                }
               } else {
                 //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
                 $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
@@ -2361,6 +2370,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     id             = relation.id;
                     boxDataRender  = renderer || panel.elLk.lookup[dyItem].renderer;
                     boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
+
+                    if(Object.keys(panel.localStoreObj.filterMatrix).length) {
+                      boxState = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "track-on" : "";
+                      dataClass = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "_hasData" : "";
+                    }
+
                     panel.localStoreObj[cellStoreObjKey][storeKey] = {"id": id, "state": boxState, "renderer": boxDataRender, "format": format,"reset-state": boxState, "reset-renderer": boxDataRender};
 
                     //setting count for all selection section
