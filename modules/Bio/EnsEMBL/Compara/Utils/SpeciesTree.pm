@@ -281,8 +281,10 @@ sub new_from_newick {
 
     # First, we remove the extra species that the tree may contain
     foreach my $node (@{$species_tree_root->get_all_leaves}) {
-        my $gdb = $all_genome_dbs{lc $node->name};
-        if ((not $gdb) and ($node->name =~ m/^(.*)_([^_]*)$/)) {
+      my $name = $node->name;
+      if ($name) {
+        my $gdb = $all_genome_dbs{lc $name};
+        if ((not $gdb) and ($name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
             my $pgdb = $all_genome_dbs{lc $1};
             if ($pgdb and $pgdb->is_polyploid) {
@@ -295,7 +297,13 @@ sub new_from_newick {
             $node->node_name($gdb->get_scientific_name('unique'));
             $node->{_tmp_gdb} = $gdb;
         } else {
-            warn $node->name, " not found in the genome_db table";
+            warn "'" . $name, "' not found in the genome_db table.\n";
+        }
+      } else {
+        warn "Node number " . $node->node_id . " has no name. Discarding it.\n";
+      }
+
+        unless ($node->{_tmp_gdb}) {
             unless ($node->has_parent) {
                 # Not a single leaf is found in the genome_db table
                 return undef;
@@ -312,7 +320,9 @@ sub new_from_newick {
             my ($node, $leaves) = @_;
             my $int_taxon = $ncbi_taxa_a->fetch_first_shared_ancestor_indexed(map {$_->{_tmp_gdb}->taxon} @$leaves);
             $node->taxon_id($int_taxon->taxon_id);
-            $node->node_name($int_taxon->name) unless $node->name =~ /[A-Za-z]+/;
+            unless ($node->name && $node->name =~ /[A-Za-z]+/) {
+                $node->node_name($int_taxon->name);
+            }
         } );
 
     return $species_tree_root;

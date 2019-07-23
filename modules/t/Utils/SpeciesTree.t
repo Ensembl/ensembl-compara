@@ -73,7 +73,7 @@ subtest 'new_from_newick' => sub {
     #ok(1); return;
 
     test_new_from_newick(
-        '((homo_sapiens,(genus_species,mus_musculus))my_name,danio_rerio)',
+        "((homo_sapiens\n  ,(genus_species,\n\n   mus_musculus))\n     my_name,danio_rerio\n)",
         '((134,150),154)',
         '((10090,9606)314146,7955)117571',
         '((Homo sapiens,Mus musculus GRCm38)my_name,Danio rerio)Euteleostomi',
@@ -95,7 +95,7 @@ subtest 'new_from_newick' => sub {
 
     warning_like {
         Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(aegilops_tauschii_A)', $dba );
-    } qr/aegilops_tauschii_A not found in the genome_db table/;
+    } qr/'aegilops_tauschii_A' not found in the genome_db table/;
 
     throws_ok {Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick( '(triticum_aestivum_X)', $dba )}
                 qr/No component named 'X' in 'triticum_aestivum'/, 'Non-existing component';
