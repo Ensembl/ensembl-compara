@@ -410,7 +410,8 @@ sub filename {
 sub find_pairwise_reference {
     my $self = shift;
 
-    die "This method can only be used for LASTZ_NET MethodLinkSpeciesSets\n" unless $self->method->type eq 'LASTZ_NET';
+    die "This method can only be used for pairwise-alignment MethodLinkSpeciesSets\n" unless $self->method->class eq 'GenomicAlignBlock.pairwise_alignment';
+    die "Cactus alignments are reference-free\n" if $self->method->type eq 'CACTUS_HAL_PW';
     my $genome_dbs = $self->species_set->genome_dbs;
 
     # first, check for mlss_tags
