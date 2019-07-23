@@ -63,9 +63,6 @@ sub fetch_input {
 	$mash_cmd .= $self->mash_paste_options if $mode eq 'paste';
 	$mash_cmd .= $self->mash_sketch_options if $mode eq 'sketch';	
 
-	# replace with $self->run_command
-	# may need to spurt the output as using the arrayref input does not allow for redirection of STDOUT
-	# system($mash_cmd) == 0 or die "Error running command: $mash_cmd";
 	unlink $input_file if $self->param('cleanup_input_file');
 
 	$self->param( 'cmd', $mash_cmd );
