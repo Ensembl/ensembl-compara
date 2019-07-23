@@ -66,7 +66,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
   my( $self) = @_;
 
-	$self->param('from_comparaDBA', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($self->param('from_db')));
+    $self->param('from_comparaDBA', $self->get_cached_compara_dba('from_db'));
     $self->param('from_dbc', $self->param('from_comparaDBA')->dbc);
 }
 
