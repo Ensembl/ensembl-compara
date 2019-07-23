@@ -77,7 +77,7 @@ sub _test_mlss {
         die "Cactus alignments cannot be dumped because they already exist as files\n";
     }
 
-    if (($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') or ($mlss->method->type eq 'EPO_LOW_COVERAGE')) {
+    if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
         my $ref_species = $mlss->get_value_for_tag('reference_species');
         die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
 
