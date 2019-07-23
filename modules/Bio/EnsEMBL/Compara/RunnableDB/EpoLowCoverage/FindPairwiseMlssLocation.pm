@@ -85,6 +85,8 @@ sub _find_location_of_all_required_mlss {
     my $low_mlss_adaptor    = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $low_mlss            = $low_mlss_adaptor->fetch_by_dbID($self->param('new_method_link_species_set_id'));
     my $low_gdb_adaptor     = $self->compara_dba->get_GenomeDBAdaptor;
+    my $low_species_tree    = $low_mlss->species_tree;
+    my $low_gdb_id_2_stn    = $low_species_tree->get_genome_db_id_2_node_hash();
 
     my $base_dba            = $self->get_cached_compara_dba('base_location');
     my $base_mlss_adaptor   = $base_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -103,9 +105,7 @@ sub _find_location_of_all_required_mlss {
             
             # store species_tree_node_tag with ref_species information
             my $ref_gdb = $low_gdb_adaptor->fetch_by_dbID($ref_gdb_id);
-            my $tag_sql = "INSERT INTO species_tree_node_tag SELECT node_id, 'reference_species', ? FROM species_tree_node WHERE genome_db_id = ?";
-            my $sth = $self->compara_dba->dbc->prepare($tag_sql);
-            $sth->execute($ref_gdb->name, $genome_db->dbID);            
+            $low_gdb_id_2_stn->{$genome_db->dbID}->store_tag('reference_species', $ref_gdb->name);
 	    }
     }
     $self->param('refs_per_species', \%refs_per_species);
