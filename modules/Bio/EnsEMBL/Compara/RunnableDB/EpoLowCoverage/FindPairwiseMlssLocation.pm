@@ -163,7 +163,7 @@ sub _optimal_aln_for_genome_db {
     
     my ($best_aln_mlss_id, $best_ref_gdb_id);
     my $max_coverage = 0;
-    print "non-ref_name\tref_name\tmlss_name\tepo_cov\tlastz_cov\tcombined_cov\n";
+    print "non-ref_name\tref_name\tmlss_name\tepo_cov\tlastz_cov\tcombined_cov\n" if $self->debug;
     foreach my $ref_gdb_id ( keys %$all_alns_for_gdb ) {
         my $this_mlss_id = $all_alns_for_gdb->{$ref_gdb_id}->{mlss_id};
         
