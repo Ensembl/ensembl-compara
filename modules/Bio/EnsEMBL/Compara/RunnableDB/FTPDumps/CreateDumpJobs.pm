@@ -321,12 +321,7 @@ sub _find_mlsses_with_alignment {
 	my $aln_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $aln_db );
 	my $curr_release = $self->param('curr_release'); # add filter for old mlsses only - new ones will be dumped from scratch
 	my $sql = "SELECT method_link_species_set_id FROM method_link_species_set WHERE method_link_species_set_id IN (SELECT DISTINCT(method_link_species_set_id) FROM genomic_align_block) and method_link_id = 16 and first_release < $curr_release";
-	my $sth = $aln_dba->dbc->prepare( $sql, { 'mysql_use_result' => 1 } );
-    $sth->execute() or die "Cannot execute '$sql' on '$aln_db'\n";
-    my $aln_mlss_list = $sth->fetchall_arrayref;
-
-    return [] unless $aln_mlss_list->[0];
-    return $aln_mlss_list;
+        return $aln_dba->dbc->db_handle->selectall_arrayref($sql);
 }
 
 1;
