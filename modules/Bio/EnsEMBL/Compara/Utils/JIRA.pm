@@ -133,7 +133,7 @@ sub create_tickets {
         die "Required one of these three arguments: JSON_STR, JSON_FILE or JSON_OBJ";
     }
     # Ensure $json_ticket_list is an arrayref
-    $json_ticket_list = [$json_ticket_list] if (ref $json_ticket_list == 'HASH');
+    $json_ticket_list = [$json_ticket_list] if (ref $json_ticket_list eq 'HASH');
     # Set default values for optional arguments
     $default_issue_type ||= 'Task';
     $default_priority   ||= 'Major';
