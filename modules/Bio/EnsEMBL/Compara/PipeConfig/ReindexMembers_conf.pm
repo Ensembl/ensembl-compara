@@ -48,12 +48,6 @@ The mlss_id of the gene-tree pipelines. Used to load the GenomeDBs and the MLSSs
 The location of the master database, from which the NCBI taxonomy, the GenomeDBs
 and the MLSSs are copied over.
 
-=item curr_core_sources_locs
-
-Where to find the core databases. Although the pipeline doesn't need anything from
-them, the Runnable that loads the GenomeDBs needs them to check that the attributes
-of the GenomeDBs are all in sync.
-
 =item member_db
 
 The location of the freshest load of members
@@ -189,9 +183,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
-            -parameters => {
-                'registry_dbs'   => $self->o('curr_core_sources_locs'),
-            },
             -analysis_capacity => $self->o('copy_capacity'),
         },
 
