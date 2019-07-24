@@ -20,14 +20,14 @@ use strict;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 use Getopt::Long;
 use POSIX;
 use List::Util qw(sum);
 use Number::Format 'format_number';
-use JSON;
 
-use Data::Dumper;
+#use Data::Dumper;
 
 my $max_jobs = 6000000; # max 6 million rows allowed in job table
 
@@ -151,10 +151,8 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 # print Dumper $mlss_groups;
 
 # Get the division from the given master database
-my $division = ucfirst($dba->get_division());
-$division =~ s/Grch37/GRCh37/;
-$division =~ s/Citest/CITest/;
-my $division_path = $division =~ s/Vertebrates/Ensembl/r;
+my $division = $dba->get_division();
+my $division_pkg_name = Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf->get_division_package_name($division);
 
 # Get a new Utils::JIRA object to create the tickets for the given division and
 # release
@@ -178,7 +176,7 @@ my ( @cmd_list, $ticket_list );
 my $index = 1;
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division_path\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
+    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division_pkg_name\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
     push @cmd_list, $cmd;
     # Copy the template and add the specific details for this group
     my $ticket = { %ticket_tmpl };
@@ -189,7 +187,10 @@ foreach my $group ( @$mlss_groups ) {
 }
 # Create all JIRA tickets
 my $subtask_keys = $jira_adaptor->create_tickets(
-    -JSON_INPUT => encode_json($ticket_list), -ISSUE_TYPE => 'Sub-task', -DRY_RUN => $dry_run);
+    -JSON_OBJ   => $ticket_list,
+    -ISSUE_TYPE => 'Sub-task',
+    -DRY_RUN    => $dry_run
+);
 # Finally, print each batch command line
 print "\nPipeline commands:\n------------------\n";
 for my $i (0 .. $#cmd_list) {

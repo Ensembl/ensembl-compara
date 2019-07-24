@@ -308,5 +308,29 @@ sub resource_classes {
 }
 
 
+=head2 get_division_package_name
+
+  Arg[1]      : string $division - Compara division name
+  Example     : my $division_pkg_name = get_division_package_name('plants');
+  Description : Returns the corresponding package name of the given division
+  Returntype  : string
+  Exceptions  : none
+
+=cut
+
+sub get_division_package_name {
+    my ( $self, $division ) = @_;
+    if (lc $division eq 'grch37') {
+        return 'GRCh37';
+    } elsif (lc $division eq 'citest') {
+        return 'CITest';
+    } elsif (lc $division eq 'vertebrates') {
+        return 'Ensembl';
+    } else {
+        return ucfirst $division;
+    }
+}
+
+
 1;
 
