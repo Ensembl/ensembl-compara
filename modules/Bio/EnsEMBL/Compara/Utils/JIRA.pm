@@ -279,7 +279,7 @@ sub link_tickets {
     $dry_run ||= 0;
     # Request password (if not available already)
     my $defined_password = defined $self->{_password};
-    if (! $defined_password) {
+    if (! $defined_password and ! $dry_run) {
         $self->{_password} = $self->_request_password();
     }
     # Check if the issue link type requested is correct
@@ -306,7 +306,7 @@ sub link_tickets {
         $self->{_logger}->error("Unexpected link type '$link_type'! Allowed link types:\n$type_list");
     }
     # If the password was requested for this task, forget it before returning
-    if (! $defined_password) {
+    if (! $defined_password and ! $dry_run) {
         undef $self->{_password};
     }
 }
