@@ -43,12 +43,13 @@ GetOptions(
     "d|division=s" => \$division,
     'dry_run|dry-run!' => \$dry_run,
 );
+die &helptext if $help;
 my $hc_file = $ARGV[0];
 die "Cannot find $hc_file - file does not exist" unless -e $hc_file;
 my $hc_abs_path = abs_path($hc_file);
 my $hc_basename = fileparse($hc_abs_path,('.txt', '.out'));
 
-die &helptext if ( $help || !($release && $hc_file && $division) );
+die &helptext if ( !($release && $hc_file && $division) );
 my $timestamp = strftime "%d-%m-%Y %H:%M:%S", localtime time;
 
 # Get a new Utils::JIRA object to create the tickets for the given division and
@@ -126,7 +127,7 @@ sub parse_healthchecks {
 sub find_handover_ticket {
     my ($jira_adaptor) = @_;
     
-    $jql = 'labels=Handover_anchor';
+    my $jql = 'labels=Handover_anchor';
     my $handover_ticket = $jira_adaptor->fetch_tickets($jql);
     
     # Check that we have actually found the ticket (and only one)
@@ -140,7 +141,7 @@ sub find_handover_ticket {
 sub helptext {
 	my $msg = <<HELPEND;
 
-Usage: perl create_healthcheck_tickets.pl --release <integer> --division <string> <JavaHC output file>
+Usage: perl create_healthcheck_tickets.pl --release <integer> --division <string> [--dry_run] <JavaHC output file>
 
 HELPEND
 	return $msg;
