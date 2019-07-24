@@ -126,7 +126,7 @@ sub create_tickets {
     if ($json_str) {
         $json_ticket_list = decode_json($json_str);
     } elsif ($json_file) {
-        $json_ticket_list = decode_json(slurp($json_file)) or die "Could not open file '$json_input' $!";
+        $json_ticket_list = decode_json(slurp($json_file)) or die "Could not open file '$json_file' $!";
     } elsif ($json_obj) {
         $json_ticket_list = $json_obj;
     } else {
