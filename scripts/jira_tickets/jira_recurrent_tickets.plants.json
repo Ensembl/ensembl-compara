@@ -122,6 +122,7 @@
             "name_on_graph": "Protein-trees High Confidence Orthologues"
          }
       ],
+      "labels": ["Production_anchor"],
       "summary": "<Division> Release <version> Production pipelines"
    },
    {
@@ -193,6 +194,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "http://eg-prod-01.ebi.ac.uk:7000/#!/database_handover_submit",
+            "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
          }
       ],
