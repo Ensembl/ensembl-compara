@@ -161,13 +161,18 @@ my $division_path = $division =~ s/Vertebrates/Ensembl/r;
 my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
 # Get the parent JIRA ticket key, i.e. the production pipelines JIRA ticket for
 # the given division and release
-my $jql = sprintf('project=ENSCOMPARASW AND summary ~ "%s Release %d Production pipelines"',
-                  $division, $release);
+my $jql = 'labels=Production_anchor';
 my $existing_tickets = $jira_adaptor->fetch_tickets($jql);
+# Check that we have actually found the ticket (and only one)
+die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets);
+die 'Found more than one ticket with the label "Production_anchor"' if (scalar @{$existing_tickets->{issues}} > 1);
 my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
 # Create the subtask JIRA ticket template
-my %ticket_tmpl = ('parent' => $jira_prod_key, 'name_on_graph' => 'LastZ',
-                   'components' => ['Pairwise pipeline', 'Production tasks']);
+my %ticket_tmpl = (
+    'parent'        => $jira_prod_key,
+    'name_on_graph' => 'LastZ',
+    'components'    => ['Pairwise pipeline', 'Production tasks']
+);
 # Generate the command line of each batch and build its corresponding ticket
 my ( @cmd_list, $ticket_list );
 my $index = 1;

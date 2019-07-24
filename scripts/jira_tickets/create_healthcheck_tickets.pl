@@ -71,7 +71,6 @@ my $hc_task_json_ticket = [{
     assignee    => $jira_adaptor->{_user},
     summary     => "$hc_basename ($timestamp)",
     description => "Java healthcheck failures for HC run on $timestamp\nFrom file: $hc_abs_path",
-    links       => [ ['Blocks', $blocked_ticket_key] ],
 }];
 
 # create subtask tickets for each HC failure
@@ -88,8 +87,10 @@ $hc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Java Healthchecks', 'Production tasks'];
 # Create all JIRA tickets
 my $hc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_INPUT => encode_json($hc_task_json_ticket), -PRIORITY => 'Blocker', -COMPONENTS => $components,
-    -DRY_RUN => $dry_run
+    -JSON_INPUT => encode_json($hc_task_json_ticket),
+    -PRIORITY   => 'Blocker',
+    -COMPONENTS => $components,
+    -DRY_RUN    => $dry_run
 );
 # Create a blocker issue link between the newly created HC ticket and the
 # handover ticket
@@ -126,12 +127,12 @@ sub parse_healthchecks {
 sub find_handover_ticket {
     my ($jira_adaptor) = @_;
     
-    my $fixVersion = 'Release\u0020' . $jira_adaptor->{_release};
-    my $jql = sprintf('project=%s AND fixVersion=%s', $jira_adaptor->{_project}, $fixVersion);
-    $jql .= sprintf(' and cf[11130]="%s"', $jira_adaptor->{_division}) if $jira_adaptor->{_division};
-    $jql .= sprintf(' and summary ~ "%s"', 'Handover of release DB' );
+    $jql = 'labels=Handover_anchor';
     my $handover_ticket = $jira_adaptor->fetch_tickets($jql);
     
+    # Check that we have actually found the ticket (and only one)
+    die 'Cannot find any ticket with the label "Handover_anchor"' if (! $handover_ticket);
+    die 'Found more than one ticket with the label "Handover_anchor"' if (scalar @{$handover_ticket->{issues}} > 1);
     print "Found ticket key '" . $handover_ticket->{issues}->[0]->{key} . "'\n";
     
     return $handover_ticket->{issues}->[0]->{key};
