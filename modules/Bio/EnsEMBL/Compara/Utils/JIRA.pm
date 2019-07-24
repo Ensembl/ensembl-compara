@@ -34,17 +34,17 @@ use Bio::EnsEMBL::Utils::Logger;
 
 =head2 new
 
-  Arg[1]      : (optional) string $user - a JIRA username. If not given, uses
-                environment variable $USER as default.
-  Arg[2]      : (optional) string $relco - a Compara RelCo JIRA username. By
-                default, $user.
-  Arg[3]      : (optional) string $division - a Compara division (can be empty
-                for RelCo tickets). If not given, uses environment variable
-                $COMPARA_DIV as default.
-  Arg[4]      : (optional) int $release - Ensembl release version. If not given,
-                uses environment variable $CURR_ENSEMBL_RELEASE as default.
-  Arg[5]      : (optional) string $project - JIRA project name. By default,
-                'ENSCOMPARASW'.
+  Arg[-USER]     : (optional) string - a JIRA username. If not given, uses
+                   environment variable $USER as default.
+  Arg[-RELCO]    : (optional) string - a Compara RelCo JIRA username. By
+                   default, $user.
+  Arg[-DIVISION] : (optional) string - a Compara division (can be empty for
+                   RelCo tickets). If not given, uses environment variable
+                   $COMPARA_DIV as default.
+  Arg[-RELEASE]  : (optional) int - Ensembl release version. If not given, uses
+                   environment variable $CURR_ENSEMBL_RELEASE as default.
+  Arg[-PROJECT]  : (optional) string - JIRA project name. By default,
+                   'ENSCOMPARASW'.
   Example     : my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA('user', 'relco', 'metazoa', 97);
   Description : Creates a new JIRA object
   Return type : Bio::EnsEMBL::Compara::Utils::JIRA object
@@ -84,21 +84,24 @@ sub new {
 
 =head2 create_tickets
 
-  Arg[1]      : string $json_input - either a string in JSON format or a path to
-                a JSON file where to find the JIRA ticket(s)
-  Arg[2]      : (optional) string $issue_type - a JIRA issue type to set if no
-                issue type is provided for a ticket. By default, 'Task'.
-  Arg[3]      : (optional) string $priority - a JIRA priority to set if no
-                priority is provided for a ticket. By default, 'Major'.
-  Arg[4]      : (optional) arrayref of strings $components - a list of JIRA
-                components to include the JIRA tickets. By default, no more
-                components are added.
-  Arg[5]      : (optional) arrayref of strings $labels - a list of JIRA labels
-                to include in the JIRA tickets. By default, no more labels are
-                added.
-  Arg[6]      : (optional) boolean $dry_run - in dry-run mode, the JIRA tickets
-                will not be submitted to the JIRA server. By default, dry-run
-                mode is off.
+  Arg[-JSON_INPUT]   : string - either a string in JSON format or a path to a
+                       JSON file where to find the JIRA ticket(s)
+  Arg[-DEFAULT_ISSUE_TYPE]
+                     : (optional) string - a JIRA issue type to set if not issue
+                       type is provided for a ticket. By default, 'Task'.
+  Arg[-DEFAULT_PRIORITY]
+                     : (optional) string - a JIRA priority to set if no priority
+                       is provided for a ticket. By default, 'Major'.
+  Arg[-EXTRA_COMPONENTS]
+                     : (optional) arrayref of strings - a list of JIRA
+                       components to include the JIRA tickets. By default, no
+                       more components are added.
+  Arg[-EXTRA_LABELS] : (optional) arrayref of strings - a list of JIRA labels to
+                       include in the JIRA tickets. By default, no more labels
+                       are added.
+  Arg[-DRY_RUN]      : (optional) boolean - in dry-run mode, the JIRA tickets
+                       will not be submitted to the JIRA server. By default,
+                       dry-run mode is off.
   Example     : $jira_adaptor->create_tickets('jira_recurrent_tickets.vertebrates.json');
   Description : Submits a post request to the JIRA server that creates a new
                 ticket. Returns the key of the created ticket.
@@ -109,12 +112,12 @@ sub new {
 
 sub create_tickets {
     my $self = shift;
-    my ( $json_input, $issue_type, $priority, $components, $labels, $dry_run ) = rearrange(
-        [qw(JSON_INPUT ISSUE_TYPE PRIORITY COMPONENTS LABELS DRY_RUN)], @_);
+    my ( $json_input, $default_issue_type, $default_priority, $extra_components, $extra_labels, $dry_run ) =
+        rearrange([qw(JSON_INPUT DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_LABELS DRY_RUN)], @_);
     # Set default values for optional arguments
-    $issue_type ||= 'Task';
-    $priority ||= 'Major';
-    $dry_run ||= 0;
+    $default_issue_type ||= 'Task';
+    $default_priority   ||= 'Major';
+    $dry_run            ||= 0;
     # Request password (if not available already)
     my $defined_password = defined $self->{_password};
     if (! $defined_password) {
@@ -133,11 +136,11 @@ sub create_tickets {
     my $jira_tickets = ();
     foreach my $json_ticket ( @$json_ticket_list ) {
         push @$jira_tickets,
-             $self->_json_to_jira($json_ticket, $issue_type, $priority, $components, $labels);
+             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_labels);
         if ($json_ticket->{subtasks}) {
             foreach my $json_subtask ( @{$json_ticket->{subtasks}} ) {
                 push @{$jira_tickets->[-1]->{subtasks}},
-                     $self->_json_to_jira($json_subtask, 'Sub-task', $priority, $components, $labels);
+                     $self->_json_to_jira($json_subtask, 'Sub-task', $default_priority, $extra_components, $extra_labels);
             }
         }
     }
@@ -145,15 +148,7 @@ sub create_tickets {
     $self->{_logger}->info(Dumper($jira_tickets) . "\n");
     # Get all the tickets on the JIRA server for the same project, release and
     # division
-    # NOTE: JQL queries require whitespaces to be in their Unicode equivalent
-    my $fixVersion = 'Release\u0020' . $self->{_release};
-    my $jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
-    if ($self->{_division}) {
-        $jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
-    } else {
-        $jql .= ' AND cf[11130] IS EMPTY';
-    }
-    my $division_tickets = $self->fetch_tickets($jql);
+    my $division_tickets = $self->fetch_tickets();
     # Create a hash with the summary of each ticket and its corresponding
     # JIRA key
     my %existing_tickets = map {$_->{fields}->{summary} => $_->{key}} @{$division_tickets->{issues}};
@@ -207,19 +202,20 @@ sub create_tickets {
 
 =head2 fetch_tickets
 
-  Arg[1]      : string $jql - JQL (JIRA Query Language) query
-  Arg[2]      : (optional) int $max_results - maximum number of matching tickets
-                to return. By default, 300.
+  Arg[-JQL]         : (optional) string - JQL (JIRA Query Language) query
+  Arg[-MAX_RESULTS] : (optional) int - maximum number of matching tickets to
+                      return. By default, 300.
   Example     : my $tickets = $jira_adaptor->fetch_tickets('project=ENSCOMPARASW AND priority=Major');
   Description : Returns up to $max_results tickets that match the given JQL
-                query
+                query for the given project, release and division
   Return type : arrayref of JIRA tickets
   Exceptions  : none
 
 =cut
 
 sub fetch_tickets {
-    my ( $self, $jql, $max_results ) = @_;
+    my $self = shift;
+    my ( $jql, $max_results ) = rearrange([qw(JQL MAX_RESULTS)], @_);
     # Set default values for optional arguments
     $max_results ||= 300;
     # Request password (if not available already)
@@ -227,9 +223,19 @@ sub fetch_tickets {
     if (! $defined_password) {
         $self->{_password} = $self->_request_password();
     }
+    # Add the restrictions to fetch only tickets for the given project, release
+    # and division
+    # NOTE: JQL queries require whitespaces to be in their Unicode equivalent
+    my $fixVersion = 'Release\u0020' . $self->{_release};
+    my $final_jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
+    if ($self->{_division}) {
+        $final_jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
+    } else {
+        $final_jql .= ' AND cf[11130] IS EMPTY';
+    }
+    $final_jql .= " AND $jql" if ($jql);
     # Send a search POST request for the given JQL query
-    my $tickets =  $self->_post_request(
-        'search', {'jql' => $jql, 'maxResults' => $max_results});
+    my $tickets = $self->_post_request('search', {'jql' => $final_jql, 'maxResults' => $max_results});
     # If the password was requested for this task, forget it before returning
     if (! $defined_password) {
         undef $self->{_password};
@@ -239,12 +245,12 @@ sub fetch_tickets {
 
 =head2 link_tickets
 
-  Arg[1]      : string $link_type - an issue link type
-  Arg[2]      : string $inward_key - inward JIRA ticket key
-  Arg[3]      : string $outward_key - outward JIRA ticket key
-  Arg[4]      : (optional) boolean $dry_run - in dry-run mode, the issue links
-                will not be submitted to the JIRA server. By default, dry-run
-                mode is off.
+  Arg[-LINK_TYPE]   : string - an issue link type
+  Arg[-INWARD_KEY]  : string - inward JIRA ticket key
+  Arg[-OUTWARD_KEY] : string - outward JIRA ticket key
+  Arg[-DRY_RUN]     : (optional) boolean - in dry-run mode, the issue links will
+                      not be submitted to the JIRA server. By default, dry-run
+                      mode is off.
   Example     : $jira_adaptor->link_tickets('Duplicate', 'ENCOMPARASW-1452', 'ENCOMPARASW-2145');
   Description : Creates an issue link of the given type between the two tickets.
                 For more information, go to
@@ -330,7 +336,7 @@ sub _validate_username {
 
 sub _validate_division {
     my ( $self, $division ) = @_;
-    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants citest ensembl grch37 metazoa);
+    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants ensembl grch37 metazoa bacteria pan protists fungi);
     # RelCo tickets do not need a specific division
     if ($division eq '') {
         return $division;
@@ -338,9 +344,7 @@ sub _validate_division {
     } elsif (exists $compara_divisions{lc $division}) {
         my $lc_division = lc $division;
         # Return the upper case equivalent of the division
-        if ($lc_division eq 'citest') {
-            return 'CITest';
-        } elsif ($lc_division eq 'grch37') {
+        if ($lc_division eq 'grch37') {
             return 'GRCh37';
         } else {
             return ucfirst $lc_division;
@@ -354,14 +358,14 @@ sub _validate_division {
 =head2 _json_to_jira
 
   Arg[1]      : hashref of strings $json_hash - a JSON hash JIRA ticket
-  Arg[2]      : string $issue_type - a JIRA issue type to set if no issue type
+  Arg[2]      : string $default_issue_type - a JIRA issue type to set if no
+                issue type is provided in $json_hash
+  Arg[3]      : string $default_priority - a JIRA priority to set if no priority
                 is provided in $json_hash
-  Arg[3]      : string $priority - a JIRA priority to set if no priority is
-                provided in $json_hash
-  Arg[4]      : (optional) arrayref of strings $components - a list of JIRA
-                components to include in the JIRA ticket
-  Arg[5]      : (optional) arrayref of strings $labels - a list of JIRA labels
-                to include in the JIRA ticket
+  Arg[4]      : (optional) arrayref of strings $extra_components - a list of
+                JIRA components to include in the JIRA ticket
+  Arg[5]      : (optional) arrayref of strings $extra_labels - a list of JIRA
+                labels to include in the JIRA ticket
   Example     : my $json_hash = { "summary": "Example task",
                                   "description": "Example for Bio::EnsEMBL::Compara::Utils::JIRA"
                                 };
@@ -376,30 +380,31 @@ sub _validate_division {
 =cut
 
 sub _json_to_jira {
-    my ( $self, $json_hash, $issue_type, $priority, $components, $labels ) = @_;
+    my ( $self, $json_hash, $default_issue_type, $default_priority, $extra_components, $extra_labels ) = @_;
     my %jira_hash;
     $jira_hash{'project'}     = { 'key' => $self->{_project} };
     $jira_hash{'summary'}     = $self->_replace_placeholders($json_hash->{'summary'});
-    $jira_hash{'issuetype'}   = { 'name' => $json_hash->{'issuetype'} // $issue_type };
-    $jira_hash{'priority'}    = { 'name' => $json_hash->{'priority'} // $priority };
+    $jira_hash{'issuetype'}   = { 'name' => $json_hash->{'issuetype'} // $default_issue_type };
+    $jira_hash{'priority'}    = { 'name' => $json_hash->{'priority'} // $default_priority };
     $jira_hash{'fixVersions'} = [{ 'name' => 'Release ' . $self->{_release} }];
     $jira_hash{'description'} = $self->_replace_placeholders($json_hash->{'description'});
     # $jira_hash{'components'}
+    $jira_hash{'components'} = [];
     if ($json_hash->{'component'}) {
         push @{$jira_hash{'components'}}, { 'name' => $json_hash->{'component'} };
     } elsif ($json_hash->{'components'}) {
         push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$json_hash->{'components'}};
     }
-    if ($components) {
-        push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$components};
+    if ($extra_components) {
+        push @{$jira_hash{'components'}}, { 'name' => $_ } for @{$extra_components};
     }
     # $jira_hash{'labels'}
     my @label_list;
     if ($json_hash->{'labels'}) {
         push @label_list,  $json_hash->{'labels'};
     }
-    if ($labels) {
-        push @label_list, $labels;
+    if ($extra_labels) {
+        push @label_list, $extra_labels;
     }
     if ($json_hash->{'name_on_graph'}) {
         push @label_list, 'Graph:' . $json_hash->{'name_on_graph'};
