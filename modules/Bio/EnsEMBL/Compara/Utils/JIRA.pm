@@ -84,8 +84,11 @@ sub new {
 
 =head2 create_tickets
 
-  Arg[-JSON_INPUT]   : string - either a string in JSON format or a path to a
-                       JSON file where to find the JIRA ticket(s)
+  Arg[-JSON_STR]     : string - a string in JSON format with the JIRA ticket(s)
+  Arg[-JSON_FILE]    : string - a path to a JSON file where to find the JIRA
+                       ticket(s)
+  Arg[-JSON_OBJ]     : hashref or arrayref - a hash or array of hashes with the
+                       JIRA ticket(s)
   Arg[-DEFAULT_ISSUE_TYPE]
                      : (optional) string - a JIRA issue type to set if not issue
                        type is provided for a ticket. By default, 'Task'.
@@ -102,18 +105,35 @@ sub new {
   Arg[-DRY_RUN]      : (optional) boolean - in dry-run mode, the JIRA tickets
                        will not be submitted to the JIRA server. By default,
                        dry-run mode is off.
-  Example     : $jira_adaptor->create_tickets('jira_recurrent_tickets.vertebrates.json');
-  Description : Submits a post request to the JIRA server that creates a new
-                ticket. Returns the key of the created ticket.
+  Example     : $jira_adaptor->create_tickets(-JSON_FILE => 'jira_recurrent_tickets.vertebrates.json');
+  Description : Submits a post request to the JIRA server that creates the new
+                ticket(s). Returns an arrayref with the key of each ticket
+                created. If there is a ticket already in the JIRA server that
+                has the same summary as a ticket to be created, it will not be
+                created and the key of the existing ticket will be returned
+                instead.
   Return type : arrayref of strings (JIRA keys)
-  Exceptions  : thrown on invalid $json_input
+  Exceptions  : thrown on invalid $json_str or invalid content in $json_file
 
 =cut
 
 sub create_tickets {
     my $self = shift;
-    my ( $json_input, $default_issue_type, $default_priority, $extra_components, $extra_labels, $dry_run ) =
-        rearrange([qw(JSON_INPUT DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_LABELS DRY_RUN)], @_);
+    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_labels, $dry_run ) =
+        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_LABELS DRY_RUN)], @_);
+    # Read tickets from either a JSON formated string or a JSON file path
+    my $json_ticket_list;
+    if ($json_str) {
+        $json_ticket_list = decode_json($json_str);
+    } elsif ($json_file) {
+        $json_ticket_list = decode_json(slurp($json_file)) or die "Could not open file '$json_input' $!";
+    } elsif ($json_obj) {
+        $json_ticket_list = $json_obj;
+    } else {
+        die "Required one of these three arguments: JSON_STR, JSON_FILE or JSON_OBJ";
+    }
+    # Ensure $json_ticket_list is an arrayref
+    $json_ticket_list = [$json_ticket_list] if (ref $json_ticket_list == 'HASH');
     # Set default values for optional arguments
     $default_issue_type ||= 'Task';
     $default_priority   ||= 'Major';
@@ -122,15 +142,6 @@ sub create_tickets {
     my $defined_password = defined $self->{_password};
     if (! $defined_password) {
         $self->{_password} = $self->_request_password();
-    }
-    # Read tickets from either a JSON formated string or a JSON file path
-    my $json_ticket_list;
-    eval { $json_ticket_list = decode_json($json_input) };
-    # If $@ is not empty, decode_json() has raised an error. Thus, treat
-    # $json_input as a file path.
-    if ($@) {
-        $json_ticket_list = decode_json(slurp($json_input))
-            or die "Could not open file '$json_input' $!";
     }
     # Generate the list of JIRA tickets from each JSON hash
     my $jira_tickets = ();
@@ -205,7 +216,7 @@ sub create_tickets {
   Arg[-JQL]         : (optional) string - JQL (JIRA Query Language) query
   Arg[-MAX_RESULTS] : (optional) int - maximum number of matching tickets to
                       return. By default, 300.
-  Example     : my $tickets = $jira_adaptor->fetch_tickets('project=ENSCOMPARASW AND priority=Major');
+  Example     : my $tickets = $jira_adaptor->fetch_tickets('priority=Major');
   Description : Returns up to $max_results tickets that match the given JQL
                 query for the given project, release and division
   Return type : arrayref of JIRA tickets
@@ -357,7 +368,7 @@ sub _validate_division {
 
 =head2 _json_to_jira
 
-  Arg[1]      : hashref of strings $json_hash - a JSON hash JIRA ticket
+  Arg[1]      : hashref $json_hash - a JSON hash JIRA ticket
   Arg[2]      : string $default_issue_type - a JIRA issue type to set if no
                 issue type is provided in $json_hash
   Arg[3]      : string $default_priority - a JIRA priority to set if no priority
@@ -366,11 +377,12 @@ sub _validate_division {
                 JIRA components to include in the JIRA ticket
   Arg[5]      : (optional) arrayref of strings $extra_labels - a list of JIRA
                 labels to include in the JIRA ticket
-  Example     : my $json_hash = { "summary": "Example task",
-                                  "description": "Example for Bio::EnsEMBL::Compara::Utils::JIRA"
-                                };
-                my $components = ('Test suite');
-                my $labels = ('Example');
+  Example     : my $json_hash = {
+                    "summary" => "Example task",
+                    "description" => "Example for Bio::EnsEMBL::Compara::Utils::JIRA"
+                };
+                my $components = ['Test suite'];
+                my $labels = ['Example'];
                 my $ticket = $jira_adaptor->_json_to_jira($json_hash, 'Task', 'Minor', $components, $labels);
   Description : Converts the JIRA ticket information provided in the JSON hash
                 to its equivalent JIRA hash and returns it
@@ -400,8 +412,9 @@ sub _json_to_jira {
     }
     # $jira_hash{'labels'}
     my @label_list;
+    $jira_hash{'labels'} = [];
     if ($json_hash->{'labels'}) {
-        push @label_list,  $json_hash->{'labels'};
+        push @label_list, $json_hash->{'labels'};
     }
     if ($extra_labels) {
         push @label_list, $extra_labels;

@@ -22,8 +22,6 @@ use Getopt::Long;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 
-use Data::Dumper;
-
 main();
 
 sub main {
@@ -54,9 +52,12 @@ sub main {
     # Get a new Utils::JIRA object to create the tickets for the given relco,
     # division and release
     my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(
-        -RELCO => $relco, -DIVISION => $division, -RELEASE => $release);
+        -RELCO    => $relco,
+        -DIVISION => $division,
+        -RELEASE  => $release
+    );
     # If no division is given, set it to 'relco'
-    $division = ($division) ? lc $jira_adaptor->{_division} : 'relco';
+    $division = $division ? lc $jira_adaptor->{_division} : 'relco';
 
     # Check if the introduced/default tickets JSON file exists
     $tickets_json = $FindBin::Bin . '/jira_recurrent_tickets.' . $division . '.json'
@@ -75,8 +76,7 @@ sub main {
     die 'Aborted by user. Please rerun with correct parameters.' if ( $response ne 'y' );
 
     # Create JIRA tickets
-    my $subtask_keys = $jira_adaptor->create_tickets(
-        -JSON_INPUT => $tickets_json, -DRY_RUN => $dry_run);
+    my $subtask_keys = $jira_adaptor->create_tickets(-JSON_FILE => $tickets_json, -DRY_RUN => $dry_run);
 }
 
 

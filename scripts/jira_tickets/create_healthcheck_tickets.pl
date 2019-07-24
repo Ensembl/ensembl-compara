@@ -28,7 +28,6 @@ JIRA tickets for each failure
 use warnings;
 use strict;
 
-use JSON;
 use Getopt::Long;
 use POSIX;
 use Cwd 'abs_path';
@@ -87,7 +86,7 @@ $hc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Java Healthchecks', 'Production tasks'];
 # Create all JIRA tickets
 my $hc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_INPUT => encode_json($hc_task_json_ticket),
+    -JSON_OBJ   => $hc_task_json_ticket,
     -PRIORITY   => 'Blocker',
     -COMPONENTS => $components,
     -DRY_RUN    => $dry_run
