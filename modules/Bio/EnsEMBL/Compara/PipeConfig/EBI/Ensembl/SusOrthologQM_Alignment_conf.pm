@@ -52,7 +52,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusOrthologQM_Alignment
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::OrthologQM_Alignment_conf');
 
 
 sub default_options {
@@ -61,6 +61,8 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'vertebrates',
+        'collection'    => 'sus',
+
         # 'member_type'   => undef, # should be 'protein' or 'ncrna'
 
         'master_db'  => 'compara_master',
@@ -73,7 +75,7 @@ sub default_options {
             'compara_curr',
         ],
         'previous_rel_db'  => 'compara_prev',
-        'species_set_name' => 'collection-sus',
+        'species_set_name' => 'collection-#collection#',
     };
 }
 

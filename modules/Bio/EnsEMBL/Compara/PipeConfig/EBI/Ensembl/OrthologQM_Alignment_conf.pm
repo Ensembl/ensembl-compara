@@ -104,12 +104,19 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf');
 
 
+sub default_pipeline_name {         # Instead of ortholog_qm_alignment
+    my ($self) = @_;
+    return $self->o('collection') . '_' . $self->o('member_type') . '_orth_qm_wga';
+}
+
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'vertebrates',
+        'collection'    => 'default',
         # 'member_type'   => undef, # should be 'protein' or 'ncrna'
 
         'master_db'  => 'compara_master',
@@ -122,7 +129,7 @@ sub default_options {
             'compara_curr',
         ],
         'previous_rel_db'  => 'compara_prev',
-        'species_set_name' => 'collection-default',
+        'species_set_name' => 'collection-#collection#',
     };
 }
 
