@@ -113,7 +113,8 @@ sub new {
                 created and the key of the existing ticket will be returned
                 instead.
   Return type : arrayref of strings (JIRA keys)
-  Exceptions  : thrown on invalid $json_str or invalid content in $json_file
+  Exceptions  : thrown on: invalid $json_str xor missing/invalid content in
+                $json_file xor missing $json_obj
 
 =cut
 
