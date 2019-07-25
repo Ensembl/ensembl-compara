@@ -82,6 +82,21 @@ sub fetch_input {
   $genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
   $self->param('ref_genome_db', $genome_db);
 
+  my $reg = "Bio::EnsEMBL::Registry";
+
+  # Ancestral database explicitly set
+  if (my $ancestral_db = $self->param('ancestral_db')) {
+      if (!$reg->get_DBAdaptor($ancestral_db, 'core')) {
+          throw("Cannot find '$ancestral_db' in the Registry");
+      }
+      if ($reg->get_DBAdaptor('ancestral_sequences', 'core')) {
+          warn "Overriding the 'ancestral_sequences' Registry entry";
+          $reg->remove_DBAdaptor('ancestral_sequences', 'core');
+      }
+      $reg->add_alias($ancestral_db, 'ancestral_sequences');
+      warn "Will connect to the ancestral database '$ancestral_db'\n";
+  }
+
   my $anc_genome_db = $genome_db_adaptor->fetch_by_name_assembly('ancestral_sequences');
   $anc_genome_db->db_adaptor->dbc->disconnect_when_inactive(0);
 
@@ -100,7 +115,6 @@ sub fetch_input {
   print "mlss " . $mlss->dbID . " seq_region $seq_region $species\n" if ($self->debug);
    
   #load variation database
-  my $reg = "Bio::EnsEMBL::Registry";
   $reg->load_registry_from_url($self->param('variation_url'));
 
   #get adaptor to VariationFeature object

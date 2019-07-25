@@ -62,7 +62,8 @@ sub default_options {
             'division' => 'vertebrates',
             
             #Location url/alias of database to get EPO GenomicAlignTree objects from
-            'compara_db' => 'compara_curr',
+            'compara_db'    => 'compara_curr',
+            'ancestral_db'  => 'ancestral_curr',    # You may set this to undef if compara_db is a databae that contains genome_db locators
 
             # The name of the alignment
             'species_set_name'  => 'mammals',

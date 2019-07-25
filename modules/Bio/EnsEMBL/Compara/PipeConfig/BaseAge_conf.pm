@@ -125,6 +125,7 @@ sub pipeline_analyses {
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BaseAge',
               -parameters => {
                               'compara_db' => $self->o('compara_db'),
+                              'ancestral_db' => $self->o('ancestral_db'),
                               'variation_url' => $self->o('variation_url'),
                               'species_set_name' => $self->o('species_set_name'),
                               'species' => $self->o('ref_species'),
