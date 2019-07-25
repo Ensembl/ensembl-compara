@@ -283,11 +283,6 @@
          },
          {
             "component": "Production tasks",
-            "summary": "Protein-trees WGA Orthology QC for mouse strains",
-            "name_on_graph": "Protein-trees WGA Orthology QC:Murinae"
-         },
-         {
-            "component": "Production tasks",
             "summary": "Protein-trees WGA Orthology QC for pig strains",
             "name_on_graph": "Protein-trees WGA Orthology QC:Sus"
          },
