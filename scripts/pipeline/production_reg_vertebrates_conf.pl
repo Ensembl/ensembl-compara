@@ -135,7 +135,7 @@ my $compara_dbs = {
     #'compara_syntenies'   => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_synteny_97' ],
 
     # miscellaneous
-    #'alt_allele_projection' => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_alt_allele_import_97' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-8', 'muffato_vertebrates_alt_allele_import_98' ],
 };
 
 add_compara_dbs( $compara_dbs ); # NOTE: by default, '%_prev' dbs will have a read-only connection
