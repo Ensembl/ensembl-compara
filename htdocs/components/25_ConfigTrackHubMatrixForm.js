@@ -304,7 +304,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         dimYData[value] = {name: value.replace("_", " ")};
       });
 
-      var dimXData = {};      
+      var dimXData = {};
+      var tempObj = {};    
       //getting dimX data and the relationship
       $.each(panel.rawJSON.tracks, function(i, track){
         var renderer, defaultState;
@@ -371,12 +372,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           if(track.display === "off") {
             defaultState = "track-off"
           }
-
-          if($.isEmptyObject(dimXData[keyX])){
-            dimXData[keyX] = [{"dimension": dimension, "val": trackName, "defaultState": defaultState, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() }]
+          dimXData[keyX] = dimXData[keyX] || [];
+          if (panel.multiDimFlag) {
+            if(!tempObj[fkey]) {
+              defaultState = "track-on";
+              dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": defaultState, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
+              tempObj[fkey] = 1;
+            }
           } else {
             dimXData[keyX].push({"dimension": dimension, "val": trackName, "defaultState": defaultState, "id": track.id, "renderer": renderer, "format": track.format.toLowerCase() });
           }
+
         });
       });
 
@@ -2353,28 +2359,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 boxDataRender  = panel.localStoreObj[cellStoreObjKey][storeKey].renderer;
                 format = panel.localStoreObj[cellStoreObjKey][storeKey].format;
                 boxRenderClass = "render-"+boxDataRender;
-                dataClass = "_hasData";
-                if(Object.keys(panel.localStoreObj.filterMatrix).length) {
-                  boxState = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "track-on" : "";
-                  dataClass = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "_hasData" : "";
-                }
+                dataClass = boxState ? "_hasData" : "";
               } else {
                 //check if there is data or no data with cell and experiment (if experiment exist in cell object then data else no data )
                 $.each(panel.json.data[panel.dx].data[cellLabel], function(cellKey, relation){
                   if(relation.val.replace(/[^\w\-]/g,'_').toLowerCase() === dyItem.toLowerCase()) {
-                    dataClass      = "_hasData";
                     rel_dimension  = relation.dimension;
                     renderer       = relation.renderer || panel.json.data[rel_dimension].renderer;
                     boxState       = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
+                    dataClass      = boxState ? "_hasData" : "";
                     format         = relation.format || panel.elLk.lookup[dyItem].format;
                     id             = relation.id;
                     boxDataRender  = renderer || panel.elLk.lookup[dyItem].renderer;
                     boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
-
-                    if(Object.keys(panel.localStoreObj.filterMatrix).length) {
-                      boxState = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "track-on" : "";
-                      dataClass = (panel.localStoreObj.filterMatrix[storeKey] && panel.localStoreObj.filterMatrix[storeKey].state.on) ? "_hasData" : "";
-                    }
 
                     panel.localStoreObj[cellStoreObjKey][storeKey] = {"id": id, "state": boxState, "renderer": boxDataRender, "format": format,"reset-state": boxState, "reset-renderer": boxDataRender};
 
@@ -2487,17 +2484,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       if(key.match("_sep_")) {
         var currentState    = allStoreObjects[key]["state"];
         var resetState      = allStoreObjects[key]["reset-state"];
-        if(!stateOnly) {
-          var currentRenderer = allStoreObjects[key]["renderer"];
-          var resetRenderer   = allStoreObjects[key]["reset-renderer"];
-        }
+        if(currentState) {
+          if(!stateOnly) {
+            var currentRenderer = allStoreObjects[key]["renderer"];
+            var resetRenderer   = allStoreObjects[key]["reset-renderer"];
+          }
 
-        panel.elLk.matrixContainer.find('div.xBoxes.'+key.split("_sep_")[0]+'.'+key.split("_sep_")[1]).removeClass(currentState).addClass(resetState);
-        panel.localStoreObj[storeObjKey][key]["state"] = resetState;
+          panel.elLk.matrixContainer.find('div.xBoxes.'+key.split("_sep_")[0]+'.'+key.split("_sep_")[1]).removeClass(currentState).addClass(resetState);
+          panel.localStoreObj[storeObjKey][key]["state"] = resetState;
 
-        if(!stateOnly){
-          panel.elLk.matrixContainer.find('div.xBoxes.'+key.split("_sep_")[0]+'.'+key.split("_sep_")[1]).removeClass("render-"+currentRenderer).addClass("render-"+resetRenderer);
-          panel.localStoreObj[storeObjKey][key]["renderer"] = resetRenderer;
+          if(!stateOnly){
+            panel.elLk.matrixContainer.find('div.xBoxes.'+key.split("_sep_")[0]+'.'+key.split("_sep_")[1]).removeClass("render-"+currentRenderer).addClass("render-"+resetRenderer);
+            panel.localStoreObj[storeObjKey][key]["renderer"] = resetRenderer;
+          }
         }
       } else {
         panel.localStoreObj[storeObjKey][key]["state"]["on"]              = allStoreObjects[key]["state"]["reset-on"];
@@ -2727,6 +2726,29 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
       }
       storeObj.state = newState; // This has to be the last thing to do
+    }
+    //if no tracks selected or no tracks, it means final matrix cell will show no data, needs to update all selection count and cell state for final matrix
+    var configCellState     = panel.localStoreObj.matrix[cellKey].state;
+    var configCellFormat    = panel.localStoreObj.matrix[cellKey].format;
+    var configCellRenderer  = panel.localStoreObj.matrix[cellKey].renderer;
+    if(panel.localStoreObj.filterMatrix[cellKey].state.total === 0 || panel.localStoreObj.filterMatrix[cellKey].state.on === 0) {
+      //update matrix store (in all selection: minus count for current state and total count; set cell state)
+      panel.localStoreObj.matrix.allSelection.state[configCellState.replace("track-","")] -= 1;
+      panel.localStoreObj.matrix.allSelection.format[configCellFormat] -= 1;
+      panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] -= 1;
+      panel.localStoreObj.matrix.allSelection.total -= 1;
+      panel.localStoreObj.matrix[cellKey].state = "";
+    } else { // cell will be on in final matrix
+      if(configCellState) { // if current cell matrix is on/off, update count accordingly
+        panel.localStoreObj.matrix.allSelection.state[configCellState.replace("track-","")] -= 1;
+        panel.localStoreObj.matrix.allSelection.state["on"] += 1;
+      } else { //cell had no data, need to update all counts (on, total, format, renderer)
+        panel.localStoreObj.matrix.allSelection.format[configCellFormat] += 1;
+        panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] += 1;          
+        panel.localStoreObj.matrix.allSelection.state["on"] += 1;
+        panel.localStoreObj.matrix.allSelection["total"] += 1;
+      }
+      panel.localStoreObj.matrix[cellKey].state = "track-on";
     }
     panel.setLocalStorage();
   },
