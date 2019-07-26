@@ -2373,36 +2373,43 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     rel_dimension  = relation.dimension;
                     renderer       = relation.renderer || panel.json.data[rel_dimension].renderer;
                     boxState       = relation.defaultState || panel.elLk.lookup[dyItem].defaultState; //on means blue bg, off means white bg
-                    dataClass      = boxState ? "_hasData" : "";
                     format         = relation.format || panel.elLk.lookup[dyItem].format;
+
+                    //check for multidimension trackhub, if there is no track selected in filter matrix then cell has no data
+                    if(panel.multiDimFlag && (panel.localStoreObj.filterMatrix[storeKey].state.total === 0 || panel.localStoreObj.filterMatrix[storeKey].state.on === 0)) {
+                      boxState = "";
+                    }
+       
+                    dataClass      = boxState ? "_hasData" : "";
                     id             = relation.id;
                     boxDataRender  = renderer || panel.elLk.lookup[dyItem].renderer;
                     boxRenderClass = "render-" + boxDataRender; // peak-signal = peak_signal.svg, peak = peak.svg, signal=signal.svg
 
                     panel.localStoreObj[cellStoreObjKey][storeKey] = {"id": id, "state": boxState, "renderer": boxDataRender, "format": format,"reset-state": boxState, "reset-renderer": boxDataRender};
 
-                    //setting count for all selection section
-                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
-                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["format"][format] = panel.localStoreObj[dyStoreObjKey]["allSelection"]["format"][format] + 1 || 1; //this is to know how many cells/tracks we have of the same format, shouldn't be changed
-                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"][boxDataRender] += 1;
-                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"]["reset-"+boxDataRender] += 1;
-                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
-                    panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
+                    if(boxState) {
+                      //setting count for all selection section
+                      panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
+                      panel.localStoreObj[dyStoreObjKey]["allSelection"]["format"][format] = panel.localStoreObj[dyStoreObjKey]["allSelection"]["format"][format] + 1 || 1; //this is to know how many cells/tracks we have of the same format, shouldn't be changed
+                      panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"][boxDataRender] += 1;
+                      panel.localStoreObj[dyStoreObjKey]["allSelection"]["renderer"]["reset-"+boxDataRender] += 1;
+                      panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"][boxState.replace("track-","")]++;
+                      panel.localStoreObj[dyStoreObjKey]["allSelection"]["state"]["reset-"+boxState.replace("track-","")]++;
 
-                    //setting count to update column state (dy)
-                    panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
-                    panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
-                    panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"]["reset-"+boxDataRender] += 1;
-                    panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
-                    panel.localStoreObj[dyStoreObjKey][dyItem]["state"]["reset-"+boxState.replace("track-","")]++;
+                      //setting count to update column state (dy)
+                      panel.localStoreObj[dyStoreObjKey][dyItem]["total"] += 1;
+                      panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"][boxDataRender] += 1;
+                      panel.localStoreObj[dyStoreObjKey][dyItem]["renderer"]["reset-"+boxDataRender] += 1;
+                      panel.localStoreObj[dyStoreObjKey][dyItem]["state"][boxState.replace("track-","")]++;
+                      panel.localStoreObj[dyStoreObjKey][dyItem]["state"]["reset-"+boxState.replace("track-","")]++;
 
-                    //setting count to update row in matrix (dx)
-                    panel.localStoreObj.matrix[cellName]["total"] += 1;
-                    panel.localStoreObj.matrix[cellName]["renderer"][boxDataRender] += 1;
-                    panel.localStoreObj.matrix[cellName]["renderer"]["reset-"+boxDataRender] += 1;                    
-                    panel.localStoreObj.matrix[cellName]["state"][boxState.replace("track-","")]++;
-                    panel.localStoreObj.matrix[cellName]["state"]["reset-"+boxState.replace("track-","")]++;
-
+                      //setting count to update row in matrix (dx)
+                      panel.localStoreObj.matrix[cellName]["total"] += 1;
+                      panel.localStoreObj.matrix[cellName]["renderer"][boxDataRender] += 1;
+                      panel.localStoreObj.matrix[cellName]["renderer"]["reset-"+boxDataRender] += 1;                    
+                      panel.localStoreObj.matrix[cellName]["state"][boxState.replace("track-","")]++;
+                      panel.localStoreObj.matrix[cellName]["state"]["reset-"+boxState.replace("track-","")]++;
+                    }
                     return;
                   }
                 });
@@ -2495,6 +2502,19 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         cellHash.state.off   = cellHash.state["reset-off"];
         cellHash.state.on    = cellHash.state["reset-on"];
         cellHash.state.total = cellHash.state["reset-total"];
+
+        //check if by resetting, there are on tracks selected then need to update final matrix
+        var configCellState     = panel.localStoreObj.matrix[cellKey].state;
+        var configCellFormat    = panel.localStoreObj.matrix[cellKey].format;
+        var configCellRenderer  = panel.localStoreObj.matrix[cellKey].renderer;        
+        if(cellHash.state["reset-total"] === 0 || cellHash.state["reset-on"] === 0) {
+          //update matrix store (in all selection: minus count for current state and total count; set cell state)
+          panel.localStoreObj.matrix.allSelection.state[configCellState.replace("track-","")] -= 1;
+          panel.localStoreObj.matrix.allSelection.format[configCellFormat] -= 1;
+          panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] -= 1;
+          panel.localStoreObj.matrix.allSelection.total -= 1;
+          panel.localStoreObj.matrix[cellKey].state = "";
+        }        
       });
 
       panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
