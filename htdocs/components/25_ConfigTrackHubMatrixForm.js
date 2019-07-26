@@ -2499,8 +2499,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           }
         }
       } else {
-        panel.localStoreObj[storeObjKey][key]["state"]["on"]              = allStoreObjects[key]["state"]["reset-on"];
-        panel.localStoreObj[storeObjKey][key]["state"]["off"]             = allStoreObjects[key]["state"]["reset-off"];
+        panel.localStoreObj[storeObjKey][key]["state"]["on"]   = allStoreObjects[key]["state"]["reset-on"];
+        panel.localStoreObj[storeObjKey][key]["state"]["off"]  = allStoreObjects[key]["state"]["reset-off"];
 
         if(!stateOnly) {
           $.each(panel.elLk.lookup.rendererKeys, function(rendererName, i){
@@ -2509,8 +2509,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         }
 
         //resetting all selection
-        panel.localStoreObj[storeObjKey]["allSelection"]["state"]["on"]              = allStoreObjects["allSelection"]["state"]["reset-on"];
-        panel.localStoreObj[storeObjKey]["allSelection"]["state"]["off"]             = allStoreObjects["allSelection"]["state"]["reset-off"];
+        panel.localStoreObj[storeObjKey]["allSelection"]["state"]["on"] = panel.multiDimFlag ? allStoreObjects["allSelection"]["total"] : allStoreObjects["allSelection"]["state"]["reset-on"];
+        if(!panel.multiDimFlag) {
+          panel.localStoreObj[storeObjKey]["allSelection"]["state"]["off"] = allStoreObjects["allSelection"]["state"]["reset-off"];
+        }
 
         if(!stateOnly) {
           $.each(panel.elLk.lookup.rendererKeys, function(i, rendererName) {
@@ -2793,8 +2795,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if(trackKey === "allSelection"){
       Object.keys(storeObj).filter(function(key){
-        if(key.match("_sep_") && storeObj[key]["format"] === format){
-          storeObj[key][statusKey] = newState ?  newState : newRenderer;
+        if(key.match("_sep_")){
+          if(newRenderer) { //only for renderers we update cells with same format
+            storeObj[key][statusKey] = storeObj[key]["format"] === format ?  newRenderer : storeObj[key][statusKey];
+          } else {
+            storeObj[key][statusKey] = newState ?  newState : newRenderer;
+          }
         } else {
           $.each(storeObj[key][statusKey], function(keyName, count){
             if(newValue === keyName) {
