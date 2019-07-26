@@ -132,7 +132,7 @@ my $compara_dbs = {
 
     # other alignments
     #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-8', 'muffato_amniotes_mercator_pecan_97' ],
-    #'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-5', 'muffato_amniotes_mercator_pecan_96b' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-8', 'muffato_amniotes_mercator_pecan_97' ],
 
     #'compara_syntenies'   => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_synteny_97' ],
 
