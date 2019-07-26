@@ -40,8 +40,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamilies_conf
 
     #4. Run init_pipeline.pl script:
 
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf \
-        -password <your_password> -mlss_id <your_current_Family_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf $(mysql-ens-compara-prod-6-ensadmin details script) -mlss_id <your_current_Family_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
