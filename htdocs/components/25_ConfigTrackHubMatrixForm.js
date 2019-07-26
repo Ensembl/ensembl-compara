@@ -47,6 +47,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.trackPanel      = this.el.find(".track-panel#track-content");
     this.elLk.matrixContainer = this.el.find('div.matrix-container');
     this.elLk.filterMatrix    = this.el.find('div.filterMatrix-container');
+    this.elLk.filterTrackPanel   = this.el.find(".track-panel#filter-content");
     this.elLk.trackConfiguration = this.el.find(".track-panel#configuration-content");
     this.elLk.resultBox       = this.el.find(".result-box#selected-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
@@ -161,6 +162,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.clearSearch();
     this.resetTracks();
     this.resetMatrix();
+    this.resetFilterMatrix();
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
@@ -332,6 +334,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
               if(track.display && $.isEmptyObject(storeObj["other_dimensions"]) && panel.initialLoad) {
                 updateStore = true;
+
                 if($.isEmptyObject(panel.localStoreObj["other_dimensions"])) {
                   panel.localStoreObj["other_dimensions"] = {};
                   panel.localStoreObj["other_dimensions"][dimkey] = 1;
@@ -395,7 +398,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.localStoreObj.matrix = panel.getLocalStorage().matrix  || {};
       panel.localStoreObj.filterMatrix = panel.getLocalStorage().filterMatrix  || {};
       //state management object for user location
-      panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};      
+      panel.localStoreObj.userLocation = panel.getLocalStorage().userLocation || {};
+      panel.localStoreObj["reset_other_dimensions"] = panel.localStoreObj["other_dimensions"] || {};
       panel.setLocalStorage();
     }
 
@@ -2029,7 +2033,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                       panel.localStoreObj["filterMatrix"][storeKey]["data"] = panel.localStoreObj["filterMatrix"][storeKey]["data"] || {};
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] = panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey] || {};
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["state"] = state;
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["reset-state"] = state;
                       panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["show"] = tracks["show"];
+                      panel.localStoreObj["filterMatrix"][storeKey]["data"][cellKey]["reset-show"] = tracks["show"];
   
                       // //setting count for all selection section
                       // panel.localStoreObj[dyStoreObjKey]["allSelection"]["total"] += 1;
@@ -2470,6 +2476,33 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       panel.resetFunctionality();
     });
   },
+
+  resetFilterMatrix: function() {
+    var panel = this;
+
+    this.elLk.resetFilterMatrixButton = panel.elLk.filterTrackPanel.find('button.reset-button._filterMatrix');
+
+    this.elLk.resetFilterMatrixButton.click("on", function() {
+      var cellArray = [];
+      $.each(panel.localStoreObj.filterMatrix, function(cellKey, cellHash) {
+        $.each(cellHash.data, function(trackId, statusHash){
+            if(statusHash.state != statusHash["reset-state"] || statusHash.show != statusHash["reset-show"]){
+              cellArray.push(cellKey);
+              statusHash.state = statusHash["reset-state"];
+              statusHash.show  = statusHash["reset-show"];
+            }
+        });
+        cellHash.state.off   = cellHash.state["reset-off"];
+        cellHash.state.on    = cellHash.state["reset-on"];
+        cellHash.state.total = cellHash.state["reset-total"];
+      });
+
+      panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
+      panel.setLocalStorage();
+      panel.updateFilterMatrix(cellArray);
+      panel.updateFilterMatrixRHS();
+    });
+  },  
 
   resetFunctionality: function(stateOnly) {
     var panel = this;

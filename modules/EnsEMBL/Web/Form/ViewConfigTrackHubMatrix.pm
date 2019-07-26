@@ -65,6 +65,7 @@ sub configuration_content {
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
+        <button class="fade-button reset-button _filterMatrix">Reset</button>
         <div class="track-popup _filterMatrix"><ul></ul></div>
         <div class="hidebox"></div>
         <div class="filterMatrix-container">
