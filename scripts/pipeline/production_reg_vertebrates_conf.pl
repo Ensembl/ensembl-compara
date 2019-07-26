@@ -63,12 +63,12 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 
 #my $suffix_separator = '__cut_here__';
 #Bio::EnsEMBL::Registry->load_registry_from_db(
-#    -host           => 'mysql-ens-mirror-1',
-#    -port           => 4240,
-#    -user           => 'ensro',
-#    -pass           => '',
-#    -db_version     => $prev_release,
-#    -species_suffix => $suffix_separator.$prev_release,
+    #-host           => 'mysql-ens-mirror-1',
+    #-port           => 4240,
+    #-user           => 'ensro',
+    #-pass           => '',
+    #-db_version     => $prev_release,
+    #-species_suffix => $suffix_separator.$prev_release,
 #);
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
@@ -109,7 +109,7 @@ my $compara_dbs = {
     ## mammals
     'mammals_epo'         => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
     'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],
-    #'mammals_epo_low'     => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_low_coverage_97' ],
+    'mammals_epo_low'     => [ 'mysql-ens-compara-prod-8', 'mateus_mammals_epo_low_coverage_98' ],
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
@@ -119,15 +119,15 @@ my $compara_dbs = {
     #'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    #'fish_epo'         => [ 'mysql-ens-compara-prod-3', 'muffato_fish_epo_96' ],
-    # 'fish_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'muffato_fish_epo_96' ],
-    #'fish_epo_low'     => [ 'mysql-ens-compara-prod-2', 'carlac_fish_epo_low_coverage_97' ],
-    #'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_96' ],
+    'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_98' ],
+    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'carlac_fish_epo_low_coverage_97' ],
+    'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_low_coverage_98' ],
+    'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_96' ],
 
     ## primates
     'primates_epo'         => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],
     'primates_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
-    #'primates_epo_low'     => [ 'mysql-ens-compara-prod-3', 'muffato_primates_epo_low_coverage_96' ],
+    'primates_epo_low'     => [ 'mysql-ens-compara-prod-6', 'mateus_primates_epo_low_coverage_98' ],
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
@@ -155,25 +155,25 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 );
 
 # this alias is need for the epo data dumps to work:
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    #-host => 'mysql-ens-compara-prod-1',
-    #-user => 'ensadmin',
-    #-pass => $ENV{'ENSADMIN_PSW'},
-    #-port => 4485,
-    #-group => 'core',
-    #-species => 'ancestral_sequences_for_dumps',     # FIXME: this needs to be renamed to ancestral_sequences when we run the dumps
-    #-dbname => "ensembl_ancestral_$curr_release",
-#);
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -group => 'core',
+    -species => 'ancestral_sequences_for_dumps',     # FIXME: this needs to be renamed to ancestral_sequences when we run the dumps
+    -dbname => "ensembl_ancestral_$curr_release",
+);
 
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    #-host => 'mysql-ens-compara-prod-1',
-    #-user => 'ensadmin',
-    #-pass => $ENV{'ENSADMIN_PSW'},
-    #-port => 4485,
-    #-group => 'core',
-    #-species => 'ancestral_curr',
-    #-dbname => "ensembl_ancestral_$curr_release",
-#);
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'mysql-ens-compara-prod-1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 4485,
+    -group => 'core',
+    -species => 'ancestral_curr',
+    -dbname => "ensembl_ancestral_$curr_release",
+);
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor->new(
