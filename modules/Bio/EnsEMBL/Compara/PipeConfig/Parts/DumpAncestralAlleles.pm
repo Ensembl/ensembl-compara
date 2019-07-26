@@ -64,6 +64,7 @@ sub pipeline_analyses_dump_anc_alleles {
                 species_outdir  => '#anc_tmp_dir#/#species_dir#',
                 cmd             => 'perl #ancestral_dump_program# --conf #reg_conf# --species #species_name# --dir #species_outdir# --alignment_db #compara_db# --ancestral_db #ancestral_db# --genome_dumps_dir #genome_dumps_dir#',
             },
+            -rc_name            => '1Gb_job',
             -flow_into => [ 'remove_empty_files' ],
             -hive_capacity => 400,
         },
