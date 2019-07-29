@@ -388,7 +388,7 @@ sub hover_label_tabs {
 
   if ($label->{'scaleable'}) {
     my $url     = $label->{'scaleable'};
-    my $y_min   = $label->{'y_min'} || 0;
+    my $y_min   = $label->{'y_min'};
     my $y_max   = $label->{'y_max'};
     my $config  = $label->{'component'};
     my $track   = $label->{'track'};
