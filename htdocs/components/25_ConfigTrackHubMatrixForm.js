@@ -438,8 +438,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   // e.g. updateFromTrackLabel method may remove some tracks from the RID view.
   modalOpen: function() {
     this.emptyMatrix();
-    this.displayMatrix();
     this.displayFilterMatrix();
+    this.displayMatrix();
     this.toggleButton();
     this.goToUserLocation();
   },
@@ -1096,10 +1096,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.enableConfigureButton('div#dx, div#dy');
     if (Object.keys(panel.localStoreObj).length > 0 && panel.localStoreObj.dx) {
       panel.emptyMatrix();
+      panel.displayFilterMatrix();
       // This mehod is called here only to update localStorage so that if an epigenome is selected, users can still view tracks
       // If this becomes a performance issue, separate localStorage and matrix drawing in displayMatrix method
       panel.displayMatrix();
-      panel.displayFilterMatrix();
     }
   },
 
@@ -1298,8 +1298,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.toggleButton();
       }
       panel.emptyMatrix();
-      panel.displayMatrix();
       panel.displayFilterMatrix();
+      panel.displayMatrix();
     });
   },
 
@@ -1968,13 +1968,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     xContainer += "</div>";
     panel.el.find('div.filterMatrix-container').append(xContainer);
 
-    // TODO: >>>>> we need to have the count for each dimension value...initialising allSelection for filter matrix storage
-    // if(!panel.localStoreObj["filterMatrix"]["allSelection"]) {
-    //   //initialising state obj for dyItem (column), value setup later
-    //   panel.localStoreObj["filterMatrix"]["allSelection"] = {"total": 0, "state": { "on": 0, "off": 0, "reset-on": 0, "reset-off": 0 }, "renderer": {}, "format": {} };
-    //   Object.assign(panel.localStoreObj["filterMatrix"]["allSelection"]["renderer"], rendererObj);
-    // }
-
     var yContainer = '<div class="yContainer">';
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
@@ -2376,7 +2369,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     format         = relation.format || panel.elLk.lookup[dyItem].format;
 
                     //check for multidimension trackhub, if there is no track selected in filter matrix then cell has no data
-                    if(panel.multiDimFlag && (panel.localStoreObj.filterMatrix[storeKey].state.total === 0 || panel.localStoreObj.filterMatrix[storeKey].state.on === 0)) {
+                    if(panel.multiDimFlag && Object.keys(panel.localStoreObj.filterMatrix).length && (panel.localStoreObj.filterMatrix[storeKey].state.total === 0 || panel.localStoreObj.filterMatrix[storeKey].state.on === 0)) {
                       boxState = "";
                     }
        
