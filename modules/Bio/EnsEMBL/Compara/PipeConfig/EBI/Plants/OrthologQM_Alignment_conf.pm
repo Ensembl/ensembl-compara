@@ -113,6 +113,8 @@ sub default_options {
 
         'division'      => 'plants',
 
+        'member_type'   => 'protein',
+
         'master_db'  => 'compara_master',
 
         # location of homology data. note: wga_score will be written here
