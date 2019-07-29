@@ -88,7 +88,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'histogram' : 'Histogram',
       'as_collapsed_nolabel' : 'Collapsed no label',
       'as_collapsed_label' : 'Collapsed label'
-
     };
 
     this.rendererConfig = {
@@ -331,6 +330,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               filterObj[fkey][track.id] = filterObj[fkey][track.id] || {};
               filterObj[fkey][track.id]["data"] = filterObj[fkey][track.id]["data"]  || {};
               filterObj[fkey][track.id]["data"][dimkey] = track.display === "off" ? "off" : "on";
+
+              if (track.shortLabel) { filterObj[fkey][track.id]["shortLabel"] = track.shortLabel; }
+              if (track.longLabel)  { filterObj[fkey][track.id]["longLabel"]  = track.longLabel;  }
 
               if(track.display && $.isEmptyObject(storeObj["other_dimensions"]) && panel.initialLoad) {
                 updateStore = true;
@@ -2243,7 +2245,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             $(sib).children('span.fancy-checkbox').removeClass('selected');
           });
         }
-
       }
       else {
 
@@ -2634,8 +2635,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
       var selected = hash.state === "on" ? "selected" : "";
+      var shortLabel = panel.filterMatrixObj[key][id].shortLabel;
       if(hash.show === 1) { 
-        li_html += '<li class="_ht" title="'+ id +'" data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + id + '</text></li>';
+        li_html += '<li class="_ht" title="'+ shortLabel +'" data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + shortLabel + '</text></li>';
       }
     });
     ul.html(li_html);
@@ -2726,7 +2728,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         panel.TrackPopupType.find('input#apply_to_all').prop("checked",false);
       }
 
-      var dd = new panel.dropDown(panel, boxRender);
 
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
@@ -2734,7 +2735,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       panel.popupFunctionality(matrix); //interaction inside popup
       e.stopPropagation();
-      panel.multiDimFlag && panel.registerFilterMatrixDropdownClickEvent();
+      // Register filter matrix only when it is multi dimensional
+      panel.multiDimFlag && matrix === 'filter' && panel.registerFilterMatrixDropdownClickEvent();
+      matrix === 'config' && new panel.dropDown(panel, boxRender);
     });
   },
 
