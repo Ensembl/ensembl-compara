@@ -379,9 +379,11 @@ sub write_alignment {
         $self->object->{'alignments_function'} = 'get_SimpleAlign';
 
         $alignment = $self->object->get_alignments({
-          'slice'   => $data->slice,
-          'align'   => $hub->param('align'),
-          'species' => $hub->species,
+          'slice'     => $data->slice,
+          'align'     => $hub->param('align'),
+          'species'   => $hub->species,
+          'type'      => $hub->param('data_type'),
+          'component' => $hub->param('data_action'), 
         });
       }
 

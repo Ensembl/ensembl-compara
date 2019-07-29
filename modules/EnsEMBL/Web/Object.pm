@@ -420,7 +420,9 @@ sub get_alignments {
   my $species = $args->{species};
   my @selected_species;
 
-  my $alignments_session_data = $hub->viewconfig->get_alignments_selector_settings;
+  my $viewconfig = $args->{'component'} ? $hub->get_viewconfig({'component' => $args->{'component'}, 'type' => $args->{'type'}})
+                                        : $hub->viewconfig;
+  my $alignments_session_data = $viewconfig->get_alignments_selector_settings;
 
   if (keys %{$alignments_session_data->{$species}} && $alignments_session_data->{$species}->{$align} == $align) {
     while (my($k,$v) = each (%{$alignments_session_data->{$species}})) {
@@ -439,7 +441,7 @@ sub get_alignments {
     my $session_data;
     %{$session_data->{$species}} = map { sprintf('species_%s_%s', $align, lc) => 'yes' } @selected_species;
     $session_data->{$species}->{'align'} = $align;
-    $hub->viewconfig->save_alignments_selector_settings($session_data);
+    $viewconfig->save_alignments_selector_settings($session_data);
   }
 
   unshift @selected_species, lc $species unless $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} =~ /pairwise/;
