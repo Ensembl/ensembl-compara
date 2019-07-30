@@ -295,9 +295,9 @@ div.ribbon-content                                  { display: flex; padding: 16
 div.ribbon-content ul                               { width: 100%;}
 div.alphabet-content                                { display: none; position: relative; width: 90%; }
 div.alphabet-content.active                         { display: block; }
-div.config_wrapper div.config ul.letter-content li  { margin: 5px 0; cursor: default; margin-top: 0;}
-div.config_wrapper div.config ul.list-content       { padding: 8px 0 0 48px; columns: 6 100px; width: 90%; }
-div.config_wrapper div.config ul.list-content li    { width: 110%; }
+div.config_wrapper div.config ul.letter-content li  { margin: 4px 0; cursor: default; margin-top: 0;}
+div.config_wrapper div.config ul.list-content       { padding: 60px 8px 48px 48px }
+div.config_wrapper div.config ul.list-content li    { display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 150px; padding-right: 8px; }
 
 .text-ellipsis {
   max-width: 100px;

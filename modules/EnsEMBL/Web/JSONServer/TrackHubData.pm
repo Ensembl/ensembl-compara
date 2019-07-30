@@ -53,7 +53,7 @@ sub json_data {
 
   my $tracks = [];
   ## Only use the fields we need to draw the matrix, to prevent the JSON becoming too large
-  my @fields = qw(track shortLabel subGroups format display);
+  my @fields = qw(track shortLabel longLabel subGroups format display);
   foreach my $child (@{$node->child_nodes||[]}) {
     my $hash = {'id' => $child->id};
     foreach (@fields) {

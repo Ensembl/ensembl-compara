@@ -1601,14 +1601,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
   },
 
-  createTooltipText: function(item) {
-    if (item === undefined) return;
-    var name, tooltip = '';
-    if (this.json.info && this.json.info[item]) {
-      name = this.json.info[item].full_name ? this.json.info[item].full_name : item;
-      tooltip = '<p> <u>' + name + '</u></p>' +
-                '<p>' + this.json.info[item].description + '</p>';
+  createTooltipText: function(key, id) {
+    if (key === undefined && id === undefined) return;
 
+
+    if (this.filterMatrixObj[key] && this.filterMatrixObj[key][id]) {
+      var shortLabel = this.filterMatrixObj[key][id].shortLabel ? this.filterMatrixObj[key][id].shortLabel : id;
+      var longLabel = this.filterMatrixObj[key][id].longLabel ? this.filterMatrixObj[key][id].longLabel : id;
+      tooltip = '<p><u>' + shortLabel + '</u></p><p>' + longLabel + '</p>';
+    }
+    else {
+      tooltip = id;
     }
     return tooltip;
   },
@@ -1650,7 +1653,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(data, function(i, item) {
         if(item) {
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
+          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text class="_ht" title="'+item+'">'+item+'</text></li>';
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
@@ -1964,7 +1967,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){ 
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>'; 
+      xContainer += '<div class="xLabel _ht _ht_delay '+dyItem+'" title="'+ dyLabel +'">'+dyLabel+'</div>'; 
     });
 
     xContainer += "</div>";
@@ -1977,7 +1980,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(panel.localStoreObj.dx, function(cellName, value){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
 
-          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
+          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht" title="'+ cellLabel +'">'+cellLabel+'</span></div>';
           var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
           //drawing boxes
@@ -2088,7 +2091,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.setLocalStorage();
 
     // enable helptips
-    this.elLk.filterMatrix.find('._ht').helptip();
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('._ht').helptip();
 
 
 
@@ -2287,7 +2290,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
       if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
-        xContainer += '<div class="xLabel x-label-gap">'+dyLabel+'</div>';
+        xContainer += '<div class="xLabel x-label-gap>'+dyLabel+'</div>';
       }
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
@@ -2306,7 +2309,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
           }
         } else {
-          xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
+          xContainer += '<div class="xLabel _ht _ht_delay '+dyItem+'" title="'+ dyLabel+ '">'+dyLabel+'</div>';
         }
       }
     });
@@ -2335,7 +2338,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             }
           }
 
-          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht _ht_delay" title="'+panel.createTooltipText(cellLabel)+'">'+cellLabel+'</span></div>';
+          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht" title="'+cellLabel+'">'+cellLabel+'</span></div>';
           var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
           //drawing boxes
@@ -2439,7 +2442,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.setLocalStorage();
 
     // enable helptips
-    this.elLk.matrixContainer.find('._ht').helptip();
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-display' &&this.elLk.matrixContainer.find('._ht').helptip();
   },
 
   emptyMatrix: function() {
@@ -2637,12 +2640,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var selected = hash.state === "on" ? "selected" : "";
       var shortLabel = panel.filterMatrixObj[key][id].shortLabel;
       if(hash.show === 1) { 
-        li_html += '<li class="_ht" title="'+ shortLabel +'" data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + shortLabel + '</text></li>';
+        li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text class="_ht" title="'+ panel.createTooltipText(key,id) +'">' + shortLabel + '</text></li>';
       }
     });
     ul.html(li_html);
     ul.parent().show();
-    $('._ht', ul).helptip();
+    ul.find('._ht').helptip();
   },
 
   cellClick: function(matrix) {
