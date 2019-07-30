@@ -162,8 +162,8 @@ my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division
 my $jql = 'labels=Production_anchor';
 my $existing_tickets = $jira_adaptor->fetch_tickets($jql);
 # Check that we have actually found the ticket (and only one)
-die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets);
-die 'Found more than one ticket with the label "Production_anchor"' if (scalar @{$existing_tickets->{issues}} > 1);
+die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets->{total});
+die 'Found more than one ticket with the label "Production_anchor"' if ($existing_tickets->{total} > 1);
 my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
 # Create the subtask JIRA ticket template
 my %ticket_tmpl = (
@@ -176,7 +176,7 @@ my ( @cmd_list, $ticket_list );
 my $index = 1;
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division_pkg_name\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
+    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
     push @cmd_list, $cmd;
     # Copy the template and add the specific details for this group
     my $ticket = { %ticket_tmpl };
@@ -187,9 +187,9 @@ foreach my $group ( @$mlss_groups ) {
 }
 # Create all JIRA tickets
 my $subtask_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ   => $ticket_list,
-    -ISSUE_TYPE => 'Sub-task',
-    -DRY_RUN    => $dry_run
+    -JSON_OBJ           => $ticket_list,
+    -DEFAULT_ISSUE_TYPE => 'Sub-task',
+    -DRY_RUN            => $dry_run
 );
 # Finally, print each batch command line
 print "\nPipeline commands:\n------------------\n";

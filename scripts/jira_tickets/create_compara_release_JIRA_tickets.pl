@@ -57,7 +57,7 @@ sub main {
         -RELEASE  => $release
     );
     # If no division is given, set it to 'relco'
-    $division = $division ? lc $jira_adaptor->{_division} : 'relco';
+    $division = $division ? lc $division : 'relco';
 
     # Check if the introduced/default tickets JSON file exists
     $tickets_json = $FindBin::Bin . '/jira_recurrent_tickets.' . $division . '.json'

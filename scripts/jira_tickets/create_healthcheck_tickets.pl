@@ -87,10 +87,10 @@ $hc_task_json_ticket->[0]->{subtasks} = \@json_subtasks;
 my $components = ['Java Healthchecks', 'Production tasks'];
 # Create all JIRA tickets
 my $hc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ   => $hc_task_json_ticket,
-    -PRIORITY   => 'Blocker',
-    -COMPONENTS => $components,
-    -DRY_RUN    => $dry_run
+    -JSON_OBJ         => $hc_task_json_ticket,
+    -DEFAULT_PRIORITY => 'Blocker',
+    -EXTRA_COMPONENTS => $components,
+    -DRY_RUN          => $dry_run
 );
 # Create a blocker issue link between the newly created HC ticket and the
 # handover ticket
@@ -131,8 +131,8 @@ sub find_handover_ticket {
     my $handover_ticket = $jira_adaptor->fetch_tickets($jql);
     
     # Check that we have actually found the ticket (and only one)
-    die 'Cannot find any ticket with the label "Handover_anchor"' if (! $handover_ticket);
-    die 'Found more than one ticket with the label "Handover_anchor"' if (scalar @{$handover_ticket->{issues}} > 1);
+    die 'Cannot find any ticket with the label "Handover_anchor"' if (! $handover_ticket->{total});
+    die 'Found more than one ticket with the label "Handover_anchor"' if ($handover_ticket->{total} > 1);
     print "Found ticket key '" . $handover_ticket->{issues}->[0]->{key} . "'\n";
     
     return $handover_ticket->{issues}->[0]->{key};
