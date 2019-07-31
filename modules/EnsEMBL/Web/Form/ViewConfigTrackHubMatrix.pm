@@ -78,7 +78,7 @@ sub configuration_content {
         
         </div>
         <div class="bottom-buttons">
-          <button class="filterMatrix fade-button active">Configure track display</button>
+          <button class="filterConfigButton fade-button active">Configure track display</button>
         </div>
 
       </div>

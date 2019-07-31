@@ -121,6 +121,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         this.trackTab();
         this.populateLookUp();
         this.loadState();
+        this.renameTrackButton();
         this.setDragSelectEvent();
         this.registerRibbonArrowEvents();
         this.addExtraDimensions();
@@ -175,15 +176,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       }
     });
 
-    this.el.find('.view-track, button.showMatrix').on('click', function() {
-      if($(this).hasClass('_edit') || !$(this).hasClass('view-track inactive')) {
+    this.el.find('.view-track, .view-track-button, button.showMatrix').on('click', function() {
+      if($(this).hasClass('_edit') || ($(this).hasClass('view-track') && $(this).hasClass('active')) || ($(this).hasClass('view-track-button') && $(this).hasClass('active'))) {
         panel.addExtraDimensions();
         Ensembl.EventManager.trigger('modalClose');
       }
     });
 
     //this has to be after on click event to capture the button class before it gets changed
-    this.clickDisplayButton(this.elLk.displayButton, this.el.find("li._configure"));
+    this.clickDisplayButton(this.elLk.displayButton, this.el.find("li#track-display"));
+
+    //multidimension trackhub: configure track display button on filter panel to go to final matrix
+    this.clickDisplayButton(panel.el.find('button.filterConfigButton'), this.el.find("li#track-display"));
 
     // Search functionality
     this.elLk.trackPanel.find('input[name="matrix_search"]').on('input', function(e) {
@@ -817,6 +821,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.loadingState = false;
   },
 
+  //Rename track button to filter tracks if it is multidimensional trackhub
+  renameTrackButton: function() {
+    var panel = this;
+
+    if(panel.multiDimFlag) {
+      panel.el.find('button.showMatrix').outerWidth("110px").html("Filter tracks").removeClass("_edit").addClass("_filterButton");
+    } else {
+      panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit _filterButton");
+    }
+  },
+
   setUserLocation: function() {
     var panel = this;
 
@@ -1292,12 +1307,23 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
 
     clickButton.on("click", function(e) {
-      if(clickButton.hasClass("_edit") ) {
+      if(clickButton.hasClass("_edit")) {
+        panel.elLk.filterTrackBox.hide();
+        panel.elLk.resultBox.show();
         panel.toggleTab({'selectElement': panel.el.find("li._configure"), 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();
-      } else if(clickButton.hasClass("active") ) {
-        panel.toggleTab({'selectElement': tabClick, 'container': panel.el.find("div.large-breadcrumbs")});
-        panel.toggleButton();
+      }else if(clickButton.hasClass("active") ) {
+        if(clickButton.hasClass("_filterButton")){
+          panel.toggleTab({'selectElement': panel.el.find("li#track-filter"), 'container': panel.el.find("div.large-breadcrumbs")});
+          panel.elLk.filterTrackBox.css('display', 'flex');
+          panel.elLk.resultBox.hide();
+          panel.toggleButton();
+        } else {
+          panel.elLk.filterTrackBox.hide();
+          panel.elLk.resultBox.show();
+          panel.toggleTab({'selectElement': tabClick, 'container': panel.el.find("div.large-breadcrumbs")});
+          panel.toggleButton();
+        }
       }
       panel.emptyMatrix();
       panel.displayFilterMatrix();
@@ -1575,7 +1601,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.toggleButton();
 
     if(panel.el.find(element).attr('id') === 'track-filter' && !panel.el.find(element).hasClass('inactive')) {
-      panel.elLk.filterTrackBox.show();
+      panel.elLk.filterTrackBox.css('display', 'flex');
       panel.elLk.resultBox.hide();
       panel.emptyMatrix();
       panel.displayFilterMatrix();
@@ -1594,10 +1620,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if(panel.el.find('div.track-configuration:visible').length){
       panel.elLk.resultBox.find('div.reset_track').hide();
-      panel.el.find('button.showMatrix').addClass("_edit").outerWidth("100px").html("View tracks");
+      panel.el.find('button.showMatrix').removeClass("_filterButton").addClass("_edit").outerWidth("100px").html("View tracks");
     } else {
       panel.elLk.resultBox.find('div.reset_track').show();
-      panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit");
+      if(panel.multiDimFlag){
+        panel.el.find('button.showMatrix').outerWidth("110px").html("Filter tracks").removeClass("_edit").addClass("_filterButton");
+      } else {
+        panel.el.find('button.showMatrix').outerWidth(panel.buttonOriginalWidth).html(panel.buttonOriginalHTML).removeClass("_edit _filterButton");
+      }      
     }
   },
 
