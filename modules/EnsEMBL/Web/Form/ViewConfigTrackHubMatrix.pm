@@ -66,9 +66,10 @@ sub configuration_content {
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _filterMatrix">Reset</button>
-        <div class="track-popup _filterMatrix"><ul></ul></div>
-        <div class="hidebox"></div>
-        <div class="filterMatrix-container">
+        <div class="matrix-container-wrapper">
+          <div class="hidebox"></div>
+          <div class="filterMatrix-container"></div>
+          <div class="track-popup _filterMatrix"><ul></ul></div>
         </div>
       </div>
 
@@ -95,42 +96,44 @@ sub configuration_content {
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset all</button>
-        <div class="track-popup column-cell">
-          <ul class="_cell">
-            <li>
-              <label class="switch">
-                <input type="checkbox" name="cell-switch">
-                <span class="slider round"></span>
-              </label>
-              <span class="switch-label">Cell on/off</span>
-            </li>
-            <li class="renderer-selection">
-              <label class="wide-label"> Cell style </label>
-              <div class="cell-style">
-          
-                <div id="dd" class="renderers">
-                  <span>Select Renderer</span>
-                  <ul class="dropdown"></ul>
-                </div>
 
-                <div>
-                  <input id="apply_to_all" type="checkbox" checked=false>
-                  <label for="apply_to_all">Apply to all cells of this type</label>
+        <div class="matrix-container-wrapper">
+          <div class="hidebox"></div>
+          <div class="matrix-container"></div>
+          <div class="track-popup column-cell">
+            <ul class="_cell">
+              <li>
+                <label class="switch">
+                  <input type="checkbox" name="cell-switch">
+                  <span class="slider round"></span>
+                </label>
+                <span class="switch-label">Cell on/off</span>
+              </li>
+              <li class="renderer-selection">
+                <label class="wide-label"> Cell style </label>
+                <div class="cell-style">
+            
+                  <div id="dd" class="renderers">
+                    <span>Select Renderer</span>
+                    <ul class="dropdown"></ul>
+                  </div>
+
+                  <div>
+                    <input id="apply_to_all" type="checkbox" checked=false>
+                    <label for="apply_to_all">Apply to all cells of this type</label>
+                  </div>
                 </div>
-              </div>
-            </li>
-            <li>
-              <label class="wide-label"> All cells </label>
-              <div>
-                <input type="radio" id="on_all_cells" name="all_cells" value="on"> <label for="all_cells"> On </label>
-                <input type="radio" id="off_all_cells" name="all_cells" value="off"> <label for="off"> Off </label>
-                <div class="reset_track_state">Reset</div>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="hidebox"></div>
-        <div class="matrix-container">
+              </li>
+              <li>
+                <label class="wide-label"> All cells </label>
+                <div>
+                  <input type="radio" id="on_all_cells" name="all_cells" value="on"> <label for="all_cells"> On </label>
+                  <input type="radio" id="off_all_cells" name="all_cells" value="off"> <label for="off"> Off </label>
+                  <div class="reset_track_state">Reset</div>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 

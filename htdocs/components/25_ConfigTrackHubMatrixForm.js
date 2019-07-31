@@ -737,20 +737,22 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   },
 
   resize: function() {
-    return;
     var panel = this;
+    if (Object.keys(panel.elLk).length <= 0) return;
+
     panel.elLk.resultBox.outerHeight(this.getNewPanelHeight());
     if (panel.elLk[this.getActiveTab()].haveSubTabs) {
       $.each(panel.elLk[this.getActiveTab()].tabContentContainer, function(tabName, tabContent) {
         var ul = $('ul', tabContent);
-        ul.outerHeight(panel.getNewPanelHeight() - 145);
+        ul.outerHeight(panel.getNewPanelHeight() - 170);
       });
       panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(panel.getNewPanelHeight() - 190);
     }
     else {
       panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(this.getNewPanelHeight() - 140);
     }
-    panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 100);
+    panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 102);
+    panel.elLk.filterMatrix.outerHeight(this.getNewPanelHeight() - 102);
   },
 
   getActiveTabContainer: function() {
@@ -1997,7 +1999,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){ 
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      xContainer += '<div class="xLabel _ht _ht_delay '+dyItem+'" title="'+ dyLabel +'">'+dyLabel+'</div>'; 
+      xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
     });
 
     xContainer += "</div>";
@@ -2320,7 +2322,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
       if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
-        xContainer += '<div class="xLabel x-label-gap>'+dyLabel+'</div>';
+        xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel x-label-gap">'+dyLabel+'</div></div></div>'; 
       }
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
@@ -2336,10 +2338,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         if(panel.disableYdim) {
           if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
-            xContainer += '<div class="xLabel '+dyItem+'">'+dyLabel+'</div>';
+            xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
           }
         } else {
-          xContainer += '<div class="xLabel _ht _ht_delay '+dyItem+'" title="'+ dyLabel+ '">'+dyLabel+'</div>';
+          xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
         }
       }
     });

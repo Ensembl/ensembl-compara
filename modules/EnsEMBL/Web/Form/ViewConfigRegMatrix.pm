@@ -112,9 +112,10 @@ sub configuration_content {
             </li>
           </ul>          
         </div>
-        <div class="hidebox"></div>
-        <div class="matrix-container">
-        </div>        
+        <div class="matrix-container-wrapper">
+          <div class="hidebox"></div>
+          <div class="matrix-container"></div>
+        </div>
       </div>
 
       <div class="result-box">
