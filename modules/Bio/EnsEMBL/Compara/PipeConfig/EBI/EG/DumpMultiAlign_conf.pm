@@ -68,15 +68,6 @@ sub default_options {
     };
 }
 
-# Force an automatic loading of the registry in all workers.
-sub beekeeper_extra_cmdline_options {
-    my ($self) = @_;
-
-	my $options = join(' ', $self->SUPER::beekeeper_extra_cmdline_options, "-reg_conf ".$self->o('registry'));
-	
-return $options;
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
     # We get the analyses defined in the base class, we add a new one, and

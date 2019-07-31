@@ -22,7 +22,7 @@ limitations under the License.
 Initialise the pipeline on compara1 and dump the constrained elements of mlss_id 836
 found at cc21_ensembl_compara_86 on compara5
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_url mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1 -registry $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf -compara_url mysql://ensro@compara5/cc21_ensembl_compara_86 -mlss_id 836 -host compara1
 
 Dumps are created in a sub-directory of --export_dir, which defaults to scratch109
 
@@ -72,7 +72,7 @@ sub pipeline_wide_parameters {
         'dump_features_exe'     => $self->o('dump_features_exe'),
         'ce_readme'             => $self->o('ce_readme'),
 
-        'registry'      => $self->o('registry'),
+        'registry'      => $self->o('reg_conf'),
         'compara_db'   => $self->o('compara_url'),
 
         'export_dir'    => $self->o('pipeline_dir'),

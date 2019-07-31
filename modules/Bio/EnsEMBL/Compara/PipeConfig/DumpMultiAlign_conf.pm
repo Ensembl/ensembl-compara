@@ -27,10 +27,10 @@ Dumps are created in a sub-directory of --export_dir, which defaults to scratch1
 
 The pipeline can dump all the alignments it finds on a server, so you can do something like:
 
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db mysql://ensro@ens-staging1/ensembl_compara_80 --registry path/to/production_reg_conf.pl
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --registry path/to/production_reg_conf.pl --format maf --method_link_types EPO
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_curr
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --host comparaY --compara_db compara_prev --format maf --method_link_types EPO
 
-Note that in this case, because the locator field is not set, you need to provide a registry file
+Note that in this case, because the locator field is not set, the registry file needs to include the core databases.
 
 Format can be "emf", "maf", or anything BioPerl can provide (the pipeline will fail in the latter case, so
 come and talk to us). It also accepts "emf+maf" to generate both emf and maf files
@@ -133,7 +133,7 @@ sub pipeline_wide_parameters {
         'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-        'registry'      => $self->o('registry') || $self->o('reg_conf'),
+        'registry'      => $self->o('reg_conf'),
         'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),
