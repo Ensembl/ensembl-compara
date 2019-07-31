@@ -66,7 +66,7 @@ sub pipeline_analyses_goc {
                 'table'         => 'ortholog_goc_metric',
                 'renamed_table' => 'prev_ortholog_goc_metric',
                 'mode'          => 'overwrite',
-                'filter_cmd'    => 'sed "s/gene_member_id/prev_gene_member_id/"',
+                'filter_cmd'    => 'sed "s/\`gene_member_id\`/\`prev_gene_member_id\`/g" | sed "/^  CONSTRAINT/s/\`prev_gene_member_id\`),$/\`gene_member_id\`),/"',
             },
         },
 
