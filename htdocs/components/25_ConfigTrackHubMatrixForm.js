@@ -1994,7 +1994,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var xContainer   = '<div  class="xContainer">';
 
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
-    var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
+    var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy).sort() : [];
 
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){ 
@@ -2009,7 +2009,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     if(panel.localStoreObj.dx && panel.localStoreObj.dy) {
-      $.each(panel.localStoreObj.dx, function(cellName, value){
+      $.each(Object.keys(panel.localStoreObj.dx).sort(), function(i, cellName){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
 
           yContainer += '<div class="yLabel '+cellName+'"><span class="_ht" title="'+ cellLabel +'">'+cellLabel+'</span></div>';
@@ -2306,7 +2306,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
 
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
-    var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy) : [];;
+    var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy).sort() : [];;
 
     // Add empty column
     //if(panel.localStoreObj.dy) { dyArray.unshift(''); }
@@ -2360,7 +2360,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var boxContainer = '<div class="boxContainer">';
     //creating cell label with the boxes (number of boxes per row = number of experiments)
     if(panel.localStoreObj.dx && panel.localStoreObj.dy) {
-      $.each(panel.localStoreObj.dx, function(cellName, value){
+      $.each(Object.keys(panel.localStoreObj.dx).sort(), function(i, cellName){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
 
           if(!panel.localStoreObj[panel.itemDimension(cellName)][cellName]) {
