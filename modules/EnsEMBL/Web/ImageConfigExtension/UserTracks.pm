@@ -541,7 +541,7 @@ sub _add_trackhub_tracks {
               if ($k2 eq 'label') {
                 $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'label'} = $v2;
               }
-              else {
+              elsif ($k2 ne 'name') {
                 $matrix_params{'dimensions'}{$dim_lookup->{$k1}}{'values'}{$k2} = $v2;
               }
             }
