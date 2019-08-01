@@ -185,6 +185,7 @@ sub pipeline_analyses {
                 'alt_homology_db'  => $self->o('alt_homology_db'),
                 'previous_rel_db'  => $self->o('previous_rel_db'),
                 'member_type'      => $self->o('member_type'),
+                'collection'       => $self->o('collection'),
             }],
         },
 
