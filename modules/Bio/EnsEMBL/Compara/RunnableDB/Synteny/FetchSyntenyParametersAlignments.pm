@@ -144,8 +144,6 @@ sub _check_pairwise {
         or die sprintf("Could not find the method '%s' in the master database (%s)\n", $self->param('synteny_method_link_type'), $self->param('master_db'));
     my $master_synt_mlss = $self->param('master_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($synt_method->dbID, $mlss->species_set->dbID);
 
-    # If 'from_first_release' has not been passed, the value of $release does
-    # not matter: in that scenario we want to create known missing synteny mlsss
     my $release = $self->param('from_first_release');
     # Create a new one in the master database if needed
     if (not $master_synt_mlss) {
