@@ -80,6 +80,8 @@ sub default_options {
         #mlss_id => 40043,
         # names of species we don't want to reuse this time
         'do_not_reuse_list' => [],
+        'collection' => 'default',
+        'goc_reuse_db' => undef,
 
     # custom pipeline name
         # Used to prefix the database name (in HiveGeneric_conf)
