@@ -27,7 +27,7 @@ This is the EG Plants specific version of the general Bio::EnsEMBL::Compara::Pip
 
 Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <>
 
-#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Synteny_conf -pipeline_name synteny_plants_42_95 -alignment_db mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_42_95 -compara_curr mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_plants_42_95 -host mysql-ens-compara-prod-5 -port 4615
+#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::Synteny_conf -pipeline_name synteny_plants_42_95 -host mysql-ens-compara-prod-5 -port 4615
 
 =head1 CONTACT
 
