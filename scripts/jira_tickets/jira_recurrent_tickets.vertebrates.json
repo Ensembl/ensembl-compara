@@ -302,6 +302,7 @@
             "name_on_graph": "ncRNA-trees High Confidence Orthologues:Sus"
          }
       ],
+      "labels": ["Production_anchor"],
       "summary": "<Division> Release <version> Production pipelines"
    },
    {
@@ -375,6 +376,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Finalhandoverofdatabases",
+            "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
         },
         {

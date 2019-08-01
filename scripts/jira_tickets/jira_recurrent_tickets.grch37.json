@@ -98,6 +98,7 @@
             "name_on_graph": "ncRNA-trees WGA Orthology QC"
          }
       ],
+      "labels": ["Production_anchor"],
       "summary": "<Division> Release <version> Production pipelines"
    },
    {
@@ -176,6 +177,7 @@
            "assignee": "<RelCo>",
            "component": "Relco tasks",
            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/EG+release+coordination+documentation#EGreleasecoordinationdocumentation-Finalhandoverofdatabases[edit]",
+           "labels": ["Handover_anchor"],
            "summary": "Handover of release DB"
         },
         {

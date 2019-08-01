@@ -20,13 +20,14 @@ use strict;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
+use Bio::EnsEMBL::Compara::Utils::JIRA;
 use Getopt::Long;
 use POSIX;
 use List::Util qw(sum);
 use Number::Format 'format_number';
 
-use Data::Dumper;
-$Data::Dumper::Maxdepth=4;
+#use Data::Dumper;
 
 my $max_jobs = 6000000; # max 6 million rows allowed in job table
 
@@ -40,8 +41,9 @@ my @intervals_in_mbp = (
 
 my $method_link = 'LASTZ_NET';
 
-my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids );
+my ( $help, $reg_conf, $master_db, $release, $exclude_mlss_ids, $dry_run );
 my ( $verbose, $very_verbose );
+$dry_run = 0;
 GetOptions(
     "help"               => \$help,
     "reg_conf=s"         => \$reg_conf,
@@ -50,6 +52,7 @@ GetOptions(
     "max_jobs=i"         => \$max_jobs,
     'exclude_mlss_ids=s' => \$exclude_mlss_ids,
     'method_link=s'      => \$method_link,
+    'dry_run|dry-run!'   => \$dry_run,
     'v|verbose!'         => \$verbose,
     'vv|very_verbose!'   => \$very_verbose,
 );
@@ -148,13 +151,52 @@ my $mlss_groups = split_mlsses(\%mlss_job_count);
 # print Dumper $mlss_groups;
 
 # Get the division from the given master database
-my $division = ucfirst($dba->get_division());
-$division =~ s/Vertebrates/Ensembl/;
+my $division = $dba->get_division();
+my $division_pkg_name = Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf->get_division_package_name($division);
 
-print "\nPipeline commands:\n------------------\n";
+# Get a new Utils::JIRA object to create the tickets for the given division and
+# release
+my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
+# Get the parent JIRA ticket key, i.e. the production pipelines JIRA ticket for
+# the given division and release
+my $jql = 'labels=Production_anchor';
+my $existing_tickets = $jira_adaptor->fetch_tickets($jql);
+# Check that we have actually found the ticket (and only one)
+die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets->{total});
+die 'Found more than one ticket with the label "Production_anchor"' if ($existing_tickets->{total} > 1);
+my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
+# Create the subtask JIRA ticket template
+my %ticket_tmpl = (
+    'parent'        => $jira_prod_key,
+    'name_on_graph' => 'LastZ',
+    'components'    => ['Pairwise pipeline', 'Production tasks']
+);
+# Generate the command line of each batch and build its corresponding ticket
+my ( @cmd_list, $ticket_list );
+my $index = 1;
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-	print "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::$division\::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX\n";
+    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
+    push @cmd_list, $cmd;
+    # Copy the template and add the specific details for this group
+    my $ticket = { %ticket_tmpl };
+    $ticket->{'summary'} = "LastZ batch $index";
+    $ticket->{'description'} = sprintf("{code:bash}%s{code}", $cmd);
+    push @$ticket_list, $ticket;
+    $index++;
+}
+# Create all JIRA tickets
+my $subtask_keys = $jira_adaptor->create_tickets(
+    -JSON_OBJ           => $ticket_list,
+    -DEFAULT_ISSUE_TYPE => 'Sub-task',
+    -DRY_RUN            => $dry_run
+);
+# Finally, print each batch command line
+print "\nPipeline commands:\n------------------\n";
+for my $i (0 .. $#cmd_list) {
+    my $cmd = $cmd_list[$i];
+    my $jira_key = $subtask_keys->[$i];
+    print "[$jira_key] $cmd\n";
 }
 
 sub get_ref_chunk_count {
