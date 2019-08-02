@@ -30,9 +30,6 @@ A pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees)
 because synteny_region_id is not ranged by MLSS.
 
-Not all the parameters are defined here. Have a look at PipeConfig::Example::*MergeDBsIntoRelease_conf for
-real-life implementations.
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf;

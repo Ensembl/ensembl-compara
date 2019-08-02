@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf
     #1. update all databases' names and locations
 
     #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf -password <your_password> -host <> -port <>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
     #3. run the beekeeper.pl
 
@@ -39,7 +39,7 @@ A pipeline to merge some production databases onto the release one.
 It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees)
 because synteny_region_id is not ranged by MLSS.
 
-The default paramters work well in the context of an Ensembl Compara release (with a well-configured
+The default parameters work well in the context of a Compara release for Vertebrates (with a well-configured
 Registry file). If the list of source-databases is different, have a look at the bottom of the base file
 for alternative configurations.
 

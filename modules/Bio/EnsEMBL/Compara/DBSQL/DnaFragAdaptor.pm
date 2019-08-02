@@ -207,13 +207,6 @@ sub fetch_all_by_GenomeDB_region {  # DEPRECATED
   Arg [-CODON_TABLE_ID] (opt)
              : Integer. Only returns DnaFrags that are translated with this codon table
   Example    : $human_scaffolds = $dnafrag_adaptor->fetch_all_by_GenomeDB($human_gdb, -COORD_SYSTEM_NAME => 'scaffold', -CELLULAR_COMPONENT => 'NUC', );
-  Arg [2]    : (optional) string $coord_system_name
-  Arg [3]    : (optional) string $name
-  Arg [4]    : (optional) boolean $is_reference
-  Arg [5]    : (optional) string $cellular_component
-  Example    : my $human_chr_dnafrags = $dnafrag_adaptor->
-                   fetch_all_by_GenomeDB_region(
-                     $human_genome_db, 'chromosome')
   Description: Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to the
                Bio::EnsEMBL::Compara::GenomeDB and region given.
   Returntype : listref of Bio::EnsEMBL::Compara::DnaFrag objects
