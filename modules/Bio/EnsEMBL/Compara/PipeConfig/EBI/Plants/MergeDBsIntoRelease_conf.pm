@@ -27,7 +27,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf
 =head1 SYNOPSIS
 
     #1. initialize the pipeline:
-        e95: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-5 -port 4615
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
