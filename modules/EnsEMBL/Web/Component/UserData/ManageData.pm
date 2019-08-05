@@ -345,12 +345,12 @@ sub table_row {
   }
 
   ## Link for valid datahub
-  my ($config_link, $conf_template);
+  my ($config_link, $conf_template, $menu_name);
   if ($record_data->{'format'} eq 'TRACKHUB' && $hub->species_defs->get_config($record_data->{'species'}, 'ASSEMBLY_VERSION') eq $record_data->{'assembly'}) {
     $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($record_data->{'species'}, 'SPECIES_COMMON_NAME') });
     my $sample_data = $hub->species_defs->get_config($record_data->{'species'}, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
-    (my $menu_name = $self->strip_HTML($record_data->{'name'})) =~ s/ /_/g;
+    ($menu_name = $self->strip_HTML($record_data->{'name'})) =~ s/ /_/g;
     $config_link = $hub->url({
         species  => $record_data->{'species'},
         type     => 'Location',
@@ -372,8 +372,11 @@ sub table_row {
   #my $delete_class = $sharers ? 'modal_confirm' : 'modal_link';
   #my $title        = $sharers ? ' title="This data is shared with other users"' : '';
   my $title = '';
-  my $delete_class = 'modal_link';
   my $delete_function;
+  my $delete_class = 'modal_link';
+  if ($record_data->{'format'} eq 'TRACKHUB') {
+    $delete_class .= ' _clear_localcache';
+  }
 
   if ($multi_trackhub) { 
     my @species_list;
@@ -385,6 +388,10 @@ sub table_row {
   my $delete = $self->_icon({ link_class => $delete_class, class => 'delete_icon', title => $title });
   if ($record_data->{'format'} eq 'TRACKHUB') {
     $delete_function = 'delete_trackhub';
+    foreach my $cache_id (keys %{$record_data->{'cache_ids'}||{}}) {
+      my $trackhub_key = $cache_id.'-TrackHubMatrix-'.$record_data->{'species'};
+      $delete .= qq(<input class="hidden _trackhub_key" name="$menu_name" value="$trackhub_key" />);
+    }
   }
   else {
     $delete_function = lc($record_data->{'type'}) eq 'url' ? 'delete_remote' : 'delete_upload';

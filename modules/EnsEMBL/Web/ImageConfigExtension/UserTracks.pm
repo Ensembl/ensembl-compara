@@ -486,7 +486,6 @@ sub _add_trackhub_tracks {
   my $name  = $args->{'name'};
   my $code  = $args->{'code'};
 
-
   my $do_matrix = ($config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'}) ? 1 : 0;
   my $count_visible = 0;
 
@@ -550,6 +549,20 @@ sub _add_trackhub_tracks {
         while (my ($k, $v) = each (%{$parent->data})) {
           if ($k eq 'shortLabel') {
             $matrix_params{$k} = $v;
+          }
+        }
+        ## Save this key against the user record, so we can delete the data from localStorage later
+        if ($code) {
+          my ($manager, $record);
+          (my $short_code = $code) =~ s/^url_//;
+          foreach my $m (grep $_, $hub->user, $hub->session) {
+            $record = $m->get_record_data({'type' => 'url', 'code' => $short_code});
+            $manager = $m;
+            if ($record && keys %$record && !$record->{'cache_ids'}{$options{'submenu_key'}}) {
+              $record->{'cache_ids'}{$options{'submenu_key'}} = 1;
+              $manager->set_record_data($record);
+              last;
+            }
           }
         }
       }
