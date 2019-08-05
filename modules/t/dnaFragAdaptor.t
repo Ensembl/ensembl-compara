@@ -104,7 +104,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_by_GenomeDB_an
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB_region method", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor::fetch_all_by_GenomeDB method for a specific coordinate system", sub {
 
   my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB(
                                                          $genome_db_adaptor->fetch_by_dbID($genome_db_id),
