@@ -44,8 +44,8 @@ Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
   
   $dnafrag = $dnafrag_adaptor->fetch_by_dbID(905406);
   $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($human_genome_db, 'X');
-  $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region(
-                                $human_genome_db, 'chromosome')
+  $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB(
+                                $human_genome_db, -COORD_SYSTEM_NAME => 'chromosome');
 
   $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
   $all_dnafrags = $dnafrag_adaptor->fetch_all();
@@ -172,25 +172,6 @@ sub fetch_by_GenomeDB_and_name {
   $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
   $self->bind_param_generic_fetch($name, SQL_VARCHAR);
   return $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
-}
-
-
-sub fetch_all_by_GenomeDB_region {  # DEPRECATED
-  my ($self, $genome_db, $coord_system_name, $name, $is_reference, $cellular_component) = @_;
-
-  deprecate('DnaFragAdaptor::fetch_all_by_GenomeDB_region is deprecated and will be removed in e98. Please use fetch_all_by_GenomeDB instead');
-
-  if ($name) {
-      # Names are unique within each GenomeDB
-      my $df = $self->fetch_by_GenomeDB_and_name($genome_db, $name);
-      return $df ? [$df] : [];
-  } else {
-      return $self->fetch_all_by_GenomeDB(
-          -COORD_SYSTEM_NAME    => $coord_system_name,
-          -IS_REFERENCE         => $is_reference,
-          -CELLULAR_COMPONENT   => $cellular_component,
-      );
-  }
 }
 
 
