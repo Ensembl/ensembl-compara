@@ -92,7 +92,7 @@ sub _convert_node {
   }
 
   my $pvalue = $node->pvalue();
-  if ($pvalue) {
+  if (defined $pvalue) {
     $hash->{pvalue} = $pvalue + 0;
   }
 
