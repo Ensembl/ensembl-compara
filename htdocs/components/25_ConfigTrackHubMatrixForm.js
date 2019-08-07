@@ -296,16 +296,17 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //Populating the dimensions and data for each dimension
     if($.isEmptyObject(finalObj.dimensions)) {
-      dimX = panel.rawJSON.metadata.dimensions.x.key;
-      dimY = panel.rawJSON.metadata.dimensions.y.key;
+      //the dimensions have been flipped here so that it draws the x and y as x-axis and y-axis, cant change the drawMatrix code as too much changes are involved. Its not the right way but will do for now. In regulation matrix its the other way round. Confusing....
+      dimX = panel.rawJSON.metadata.dimensions.y.key;
+      dimY = panel.rawJSON.metadata.dimensions.x.key;
 
       finalObj.dimensions = [dimX,dimY];
       finalObj.data = {};
       finalObj.format = {};
       panel.elLk.lookup.dimensionFilter = {};
       //getting dimY data, assuming subgroup2 is always dimY
-      var dimYData = {}
-      $.each(Object.keys(panel.rawJSON.metadata.dimensions.y.values), function(index, value) {
+      var dimYData = {};
+      $.each(Object.keys(panel.rawJSON.metadata.dimensions.x.values), function(index, value) {
         dimYData[value] = {name: value.replace("_", " ")};
       });
 
@@ -395,8 +396,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         });
       });
 
-      finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
-      finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };
+      finalObj.data[dimX] = {"name": dimX, "label": panel.rawJSON.metadata.dimensions.y.label.replace('_', ' '), "listType": "simpleList", "data": dimXData };
+      finalObj.data[dimY] = {"name": dimY, "label": panel.rawJSON.metadata.dimensions.x.label.replace('_', ' '), "listType": "simpleList", "data": dimYData };
     }
 
     panel.initialLoad = 0; //initialLoad done
