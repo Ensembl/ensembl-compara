@@ -45,9 +45,13 @@ sub json_data {
   return {} unless $node;
 
   my $metadata = {};
+  my %ok_dimensions;
   while (my ($k, $v) = each (%{$node->data})) {
     if ($k eq 'shortLabel' || $k eq 'dimensions' || $k eq 'dimLookup') {
       $metadata->{$k} = $v;
+    }
+    if ($k eq 'dimensions') {
+      %ok_dimensions = map {$v->{$_}{'key'} => 1} keys %$v; 
     }
   }
 
@@ -59,6 +63,10 @@ sub json_data {
     foreach (@fields) {
       $hash->{$_} = $child->data->{$_} if defined $child->data->{$_};
     }
+    ## Remove unused subgroups, because Blueprint
+    while (my ($k, $v) = each(%{$hash->{'subGroups'}||{}})) {
+      delete $hash->{'subGroups'}{$k} unless $ok_dimensions{$k};
+    } 
     ## Change case on default_display because of JS dot notation
     $hash->{'defaultDisplay'} = $child->data->{'default_display'};
     push @$tracks, $hash;
