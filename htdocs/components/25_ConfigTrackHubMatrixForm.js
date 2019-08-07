@@ -360,7 +360,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
           if(dimension !== dimY) { return; }
 
-          if(track.display && (track.display != "off" || panel.multiDimFlag) && $.isEmptyObject(storeObj["matrix"]) && panel.initialLoad ) {
+          if(track.display && track.display != "off" && $.isEmptyObject(storeObj["matrix"]) && panel.initialLoad ) {
             updateStore = true;
             defaultState = "track-on";
             finalObj.format[track.format.toLowerCase()] = finalObj.format[track.format.toLowerCase()]+1 || 1;
