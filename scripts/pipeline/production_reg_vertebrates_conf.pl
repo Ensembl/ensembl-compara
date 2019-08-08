@@ -82,7 +82,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'       => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_load_members_98' ],
-    #'compara_ptrees'        => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
+    'compara_ptrees'        => [ 'mysql-ens-compara-prod-2', 'mateus_default_vertebrates_protein_trees_98' ],
     'ptrees_prev'           => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
     'compara_families'      => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_families_98' ],
     'compara_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_98' ],
@@ -92,6 +92,7 @@ my $compara_dbs = {
     'murinae_ptrees'        => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_protein_reindexed_trees_98' ],
     'murinae_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_ncrna_reindexed_trees_98' ],
     #'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
+    'sus_ptrees'            => [ 'mysql-ens-compara-prod-1', 'carlac_sus_vertebrates_protein_trees_98' ],
     'sus_nctrees'           => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
 
     # LASTZ dbs
