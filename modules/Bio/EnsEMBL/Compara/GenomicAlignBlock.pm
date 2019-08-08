@@ -1318,7 +1318,10 @@ sub restrict_between_alignment_positions {
 
   $start = 1 if (!defined($start) or $start < 1);
   $end = $self->length if (!defined($end) or $end > $self->length);
-  throw("start > end: $start > $end") if $start > $end;
+  
+  # check if coordinates make sense. need to allow end+1 to avoid Pecan dying 
+  # when checking for non-existent GenomicAlignBlock overlaps
+  throw("start > end+1: $start > $end + 1") if $start > $end + 1; 
 
   my $number_of_columns_to_trim_from_the_start = $start - 1;
   my $number_of_columns_to_trim_from_the_end = $self->length - $end;

@@ -57,11 +57,11 @@ sub default_options {
         # 'high_confidence_ranges'    => [
         #     {
         #         'range_label'       => 'protein',
-        #         'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
+        #         'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000) OR (homology_id BETWEEN 2000000000 AND 2100000000))',
         #     },
         #     {
         #         'range_label'       => 'ncrna',
-        #         'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000))',
+        #         'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000) OR (homology_id > 2100000000))',
         #     },
         # ],
         # 

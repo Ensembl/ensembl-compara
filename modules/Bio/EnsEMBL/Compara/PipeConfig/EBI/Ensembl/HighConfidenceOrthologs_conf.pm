@@ -93,13 +93,13 @@ sub pipeline_analyses {
             'compara_db'        => $self->o('compara_db'),
             'threshold_levels'  => $self->o('threshold_levels'),
             'range_label'       => 'protein',
-            'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000))',
+            'range_filter'      => '((homology_id < 1400000000) OR (homology_id BETWEEN 1800000000 AND 1900000000) OR (homology_id BETWEEN 2000000000 AND 2100000000))',
         },
         {
             'compara_db'        => $self->o('compara_db'),
             'threshold_levels'  => $self->o('threshold_levels'),
             'range_label'       => 'ncrna',
-            'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000))',
+            'range_filter'      => '((homology_id BETWEEN 1400000000 AND 1800000000) OR (homology_id BETWEEN 1900000000 AND 2000000000) OR (homology_id > 2100000000))',
         },
     ];
 

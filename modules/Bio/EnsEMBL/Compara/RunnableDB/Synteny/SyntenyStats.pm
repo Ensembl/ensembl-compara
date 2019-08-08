@@ -46,6 +46,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats;
 use strict;
 use warnings;
 
+use List::Util qw(max);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -78,10 +79,17 @@ sub syntenic_regions {
     foreach my $dnafrag_region (@$dnafrag_regions) {
       my $species = $dnafrag_region->genome_db->name;
       push @{$syntenic_regions{$species}{$dnafrag_region->dnafrag->name}}, [$dnafrag_region->dnafrag_start, $dnafrag_region->dnafrag_end];
-      $syntenic_lengths{$species} += $dnafrag_region->length;
     }
   }
   
+  foreach my $species (keys %syntenic_regions) {
+      $syntenic_lengths{$species} = 0;
+      foreach my $sr_name (keys %{$syntenic_regions{$species}}) {
+          $syntenic_regions{$species}{$sr_name} = $self->simplify_coord_array($syntenic_regions{$species}{$sr_name});
+          $syntenic_lengths{$species} += $self->get_total_length($syntenic_regions{$species}{$sr_name});
+      }
+  }
+
   $self->param('num_blocks', scalar(@$synteny_regions));
   $self->param('syntenic_regions', \%syntenic_regions);
   $self->param('syntenic_lengths', \%syntenic_lengths);
@@ -115,7 +123,6 @@ sub coding_regions {
             }
             if (!exists $exons{$exon->dbID}) {
               push @{$coding_regions{$species}{$exon->seq_region_name}}, [$exon->start, $exon->end];
-              $coding_lengths{$species} += $exon->length;
             }
           }
         }
@@ -124,6 +131,14 @@ sub coding_regions {
    });
   }
   
+  foreach my $species (keys %coding_regions) {
+      $coding_lengths{$species} = 0;
+      foreach my $sr_name (keys %{$coding_regions{$species}}) {
+          $coding_regions{$species}{$sr_name} = $self->simplify_coord_array($coding_regions{$species}{$sr_name});
+          $coding_lengths{$species} += $self->get_total_length($coding_regions{$species}{$sr_name});
+      }
+  }
+
   $self->param('total_lengths', \%total_lengths);
   $self->param('coding_regions', \%coding_regions);
   $self->param('coding_lengths', \%coding_lengths);
@@ -156,6 +171,12 @@ sub calculate_stats {
         }
       }
     }
+    # Healthchecks to ensure the stats have been computed correctly
+    $self->throw("No genomic regions found") if ($total_lengths{$species} == 0);
+    $self->throw("The genomic coverage is over 100%") if ($syntenic_lengths{$species} > $total_lengths{$species});
+    $self->throw("No coding exons found") if ($coding_lengths{$species} == 0);
+    $self->throw("The coding coverage is over 100%") if ($coding_overlap > $coding_lengths{$species});
+    # Save the stats in tags
     $tags{$prefix.'reference_species'} = $species;
     $tags{$prefix.'ref_genome_length'} = $total_lengths{$species};
     $tags{$prefix.'ref_genome_coverage'} = $syntenic_lengths{$species};
@@ -175,6 +196,34 @@ sub calculate_stats {
   my $avg_genomic_coverage = ($tags{'ref_genome_coverage'}/$tags{'ref_genome_length'}+$tags{'non_ref_genome_coverage'}/$tags{'non_ref_genome_length'}) / 2;
   $self->dataflow_output_id( {'avg_genomic_coverage' => $avg_genomic_coverage}, 2);
 
+}
+
+sub simplify_coord_array {
+    my ($self, $array) = @_;
+    # Sort coordinate pairs by starting coordinate and, if they have the same
+    # value, by ending coordinate (both in ascending order)
+    my @sorted_array = sort {$a->[0] <=> $b->[0] || $a->[1] <=> $b->[1]} @{$array};
+    my $i = 0;
+    while ($i < $#sorted_array) {
+        if ($sorted_array[$i]->[1] >= $sorted_array[$i+1]->[0]) {
+            # If two contiguous coordinate pairs overlap, merge them into a
+            # single one
+            my $end_coord = max($sorted_array[$i]->[1], $sorted_array[$i+1]->[1]);
+            splice @sorted_array, $i, 2, [$sorted_array[$i]->[0], $end_coord];
+        } else {
+            $i++;
+        }
+    }
+    return \@sorted_array;
+}
+
+sub get_total_length {
+    my ($self, $array) = @_;
+    my $total_length = 0;
+    foreach my $coords (@{$array}) {
+        $total_length += $coords->[1] - $coords->[0] + 1;
+    }
+    return $total_length;
 }
 
 # Given two start-stop coordinates, $v and $w, as arrayrefs, work out if they

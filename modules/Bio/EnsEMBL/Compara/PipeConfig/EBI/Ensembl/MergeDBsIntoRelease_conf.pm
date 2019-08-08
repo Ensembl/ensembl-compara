@@ -80,6 +80,8 @@ sub default_options {
             'family_db'      => 'compara_families',
             'mouse_prot_db'  => 'murinae_ptrees',
             'mouse_ncrna_db' => 'murinae_nctrees',
+            'pig_prot_db'    => 'sus_ptrees',
+            'pig_ncrna_db'   => 'sus_nctrees',
             'projection_db'  => 'alt_allele_projection',
             'members_db'     => 'compara_members',
         },

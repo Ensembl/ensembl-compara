@@ -44,7 +44,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'range_label'       => undef,
+        'range_label'       => 'protein_',
         'range_filter'      => undef,
     };
 }
@@ -167,8 +167,8 @@ sub _write_distribution {
     } elsif ( $label =~ /wga/ ) {
         # for wga, we want to store the values seperately, so that they can be
         # summarised across protein and ncrna later
-        $mlss->store_tag('orth_above_'.$label.'thresh', $n_over_threshold);
-        $mlss->store_tag('total_'.$label.'orth_count', $n_tot);
+        $mlss->store_tag('orth_above_'.$label.'_thresh', $n_over_threshold);
+        $mlss->store_tag('total_'.$label.'_orth_count', $n_tot);
     }
 }
 

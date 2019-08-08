@@ -128,7 +128,7 @@ sub _find_compara_db_for_genome_db_id {
         }
     }
     
-    die "Could not find an alignment for genome_db_id=$genome_db_id in any of the servers: ".join(",",@{$self->param('pairwise_location')}) unless defined $all_alns_for_gdb{150};
+    die "Could not find an alignment for genome_db_id=$genome_db_id in any of the servers: ".join(",",@{$self->param('pairwise_location')}) unless scalar(keys %all_alns_for_gdb) > 0;
 
     return $self->_optimal_aln_for_genome_db(\%all_alns_for_gdb, $genome_db_id);
 }

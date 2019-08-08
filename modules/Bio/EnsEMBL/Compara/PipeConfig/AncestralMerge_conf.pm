@@ -66,14 +66,14 @@ sub default_options {
 
         'merge_script'  => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
 
-        'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_96',
+        'prev_ancestral_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_97',
 
         # map EPO mlss_ids to their source ancestral db
         'epo_mlsses' => [ # this table needs to be edited prior to running the pipeline, fish, sauropsids, primates and mammals ancestral DBs ALWAYS need to be defined:
-            [ '1497' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/muffato_fish_ancestral_core_96',], # fish
-            [ '1541' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_mammals_ancestral_core_97',], # mammals
-            [ '1489' => 'mysql://ensro@mysql-ens-compara-prod-6:4616/waakanni_primates_ancestral_core_96' ], # primates
-            [ '1494' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/carlac_sauropsids_ancestral_core_96' ], # sauropsids
+            [ '1494' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_ancestral_97',], # sauropsids
+            [ '1623' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/carlac_fish_ancestral_core_98',], # fish
+            [ '1632' => 'mysql://ensro@mysql-ens-compara-prod-2:4522/mateus_mammals_ancestral_core_98',], # mammals
+            [ '1628' => 'mysql://ensro@mysql-ens-compara-prod-3:4523/mateus_primates_ancestral_core_98' ], # primates
         ],
 
         # Redefined so that the database name is *not* prefixed with the user name

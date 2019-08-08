@@ -62,7 +62,8 @@ sub default_options {
             'division' => 'vertebrates',
             
             #Location url/alias of database to get EPO GenomicAlignTree objects from
-            'compara_db' => 'compara_curr',
+            'compara_db'    => 'compara_curr',
+            'ancestral_db'  => 'ancestral_curr',    # You may set this to undef if compara_db is a databae that contains genome_db locators
 
             # The name of the alignment
             'species_set_name'  => 'mammals',
@@ -72,7 +73,7 @@ sub default_options {
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://anonymous@mysql-ensembl-mirror:4240/' . $self->o('ensembl_release'),
-            'variation_url' => 'mysql://ensro@mysql-ensembl-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
+            'variation_url' => 'mysql://ensro@mysql-ens-sta-1:4519/homo_sapiens_variation_'.$self->o('ensembl_release').'_38?group=variation',
 
             #Locations to write output files
             'bed_dir'        => $self->o('pipeline_dir'),

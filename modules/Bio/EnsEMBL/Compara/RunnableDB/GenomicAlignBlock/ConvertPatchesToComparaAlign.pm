@@ -134,7 +134,8 @@ foreach my $ref_name(keys %aligned_patch){
 						}
 					}
 					my $patch_del = $arr->[$i]->{patch_start} - $arr->[$i+1]->{patch_end} - 1;
-					$split_here = $patch_del > $gap_cutoff_size ? 1 : $split_here;
+                    # block ends here if a gap in the patch is > $gap_cutoff_size bp OR the blocks overlap (resulting in negative deletions)
+                    $split_here = ($patch_del > $gap_cutoff_size || $patch_del < 0) ? 1 : $split_here; 
 					next if $split_here; # the patch seqs are NOT adjacent OR a gap in the patch is > $gap_cutoff_size bp, so the block ends here
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $patch_del . "D",  @{ $arr->[$i+1]->{ref_aln_bases} });
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $patch_del, @{ $arr->[$i+1]->{patch_aln_bases} });
@@ -161,7 +162,8 @@ foreach my $ref_name(keys %aligned_patch){
 						}
 					}
 					my $patch_del = $arr->[$i+1]->{patch_start} - $arr->[$i]->{patch_end} - 1;
-					$split_here = $patch_del > $gap_cutoff_size ? 1 : $split_here; # block ends here if a gap in the patch is > $gap_cutoff_size bp
+                    # block ends here if a gap in the patch is > $gap_cutoff_size bp OR the blocks overlap (resulting in negative deletions)
+                    $split_here = ($patch_del > $gap_cutoff_size || $patch_del < 0) ? 1 : $split_here; 
 					next if $split_here;
 					push(@{ $arr->[$i]->{ref_aln_bases} }, $patch_del . "D", @{ $arr->[$i+1]->{ref_aln_bases} });
 					push(@{ $arr->[$i]->{patch_aln_bases} }, $patch_del, @{ $arr->[$i+1]->{patch_aln_bases} });

@@ -46,9 +46,13 @@ sub run {
     my $ortholog_mlsses = $mlss_adaptor->fetch_all_by_method_link_type('ENSEMBL_ORTHOLOGUES');
     foreach my $omlss ( @$ortholog_mlsses ) {
         my $prot_orths_above_thresh  = $omlss->get_tagvalue('orth_above_protein_wga_thresh');
+        # If the tag is not defined, there is no WGA for this mlss
+        next unless defined $prot_orths_above_thresh;
         my $prot_orths_total_count   = $omlss->get_tagvalue('total_protein_wga_orth_count');
-        my $ncrna_orths_above_thresh = $omlss->get_tagvalue('orth_above_ncrna_wga_thresh');
-        my $ncrna_orths_total_count  = $omlss->get_tagvalue('total_ncrna_wga_orth_count');
+        # ncRNA pipeline is not run for plants, and Perl does not like summing
+        # an integer and an undef
+        my $ncrna_orths_above_thresh = $omlss->get_tagvalue('orth_above_ncrna_wga_thresh') || 0;
+        my $ncrna_orths_total_count  = $omlss->get_tagvalue('total_ncrna_wga_orth_count') || 0;
         
         my $perc_orths_above_thresh = 100*($prot_orths_above_thresh+$ncrna_orths_above_thresh)/($prot_orths_total_count+$ncrna_orths_total_count);
         $omlss->store_tag('perc_orth_above_wga_thresh', $perc_orths_above_thresh);

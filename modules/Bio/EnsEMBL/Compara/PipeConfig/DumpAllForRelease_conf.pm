@@ -222,6 +222,7 @@ sub pipeline_wide_parameters {
         'ce_output_dir'  => '#export_dir#/bed/ensembl-compara/#dirname#',
         'cs_output_dir'  => '#export_dir#/compara/conservation_scores/#dirname#',
         'work_dir'       => '#dump_root#/dump_hash',
+        'hmm_library_basedir' => $self->o('hmm_library_basedir'),
 
         'bedgraph_file'  => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.bedgraph',
         'chromsize_file' => '#work_dir#/#dirname#/gerp_conservation_scores.#name#.chromsize',

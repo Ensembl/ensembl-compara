@@ -66,7 +66,13 @@ sub pipeline_analyses_goc {
                 'table'         => 'ortholog_goc_metric',
                 'renamed_table' => 'prev_ortholog_goc_metric',
                 'mode'          => 'overwrite',
-                'filter_cmd'    => 'sed "s/gene_member_id/prev_gene_member_id/"',
+                # The first sed instruction adds the prefix 'prev_' to every
+                # 'gene_member_id' key. The second sed reverts this change in:
+                #     CONSTRAINT `prev_ortholog_goc_metric_ibfk_2` FOREIGN KEY (`prev_gene_member_id`)
+                #     REFERENCES `gene_member` (`prev_gene_member_id`),
+                # where the last key should be kept as 'gene_member_id' since it
+                # references table 'gene_member'.
+                'filter_cmd'    => 'sed "s/\`gene_member_id\`/\`prev_gene_member_id\`/g" | sed "/^  CONSTRAINT/s/\`prev_gene_member_id\`),$/\`gene_member_id\`),/"',
             },
         },
 

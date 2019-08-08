@@ -50,7 +50,7 @@ sub default_options {
     'master_db' => 'compara_master',
 
     #default location for pairwise alignments (can be a string or an array-ref)
-    'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3) ],
+    'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3 lastz_batch_4 lastz_batch_5 lastz_batch_6 lastz_batch_7 lastz_batch_8 lastz_batch_9) ],
     #'pairwise_location' => 'compara_curr',
 
 	#Location of compara db containing EPO/EPO_LOW_COVERAGE alignment to use as a base

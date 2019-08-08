@@ -39,25 +39,24 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf ...
 
 
+e98 protein-trees
+    -mlss_id 40128 -member_type ncrna   -prev_rel_db murinae_nctrees_prev $(mysql-ens-compara-prod-7-ensadmin details hive)
+e98 ncRNA-trees
+    -mlss_id 40126 -member_type protein -prev_rel_db murinae_ptrees_prev  $(mysql-ens-compara-prod-7-ensadmin details hive)
+
 e94 protein-trees
     -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url mateus_murinae_protein_trees_93) $(mysql-ens-compara-prod-1-ensadmin details hive)
-
 e94 ncRNA-trees
     -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url mateus_murinae_ncrna_trees_93) $(mysql-ens-compara-prod-1-ensadmin details hive)
 
-
 e93 protein-trees
     -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_93) -prev_rel_db $(mysql-ens-compara-prod-3 details url carlac_murinae_reindex_protein_92)
-
 e93 ncRNA-trees
     -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_93) -prev_rel_db $(mysql-ens-compara-prod-2 details url muffato_murinae_ncrna_trees_92)
 
 e91 protein-trees
-
     -mlss_id 40111 -member_type protein -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_91) -prev_rel_db $(mysql-ens-compara-prod-3 details url carlac_murinae_protein_trees_90)
-
 e91 ncRNA-trees
-
     -mlss_id 40112 -member_type ncrna -member_db $(mysql-ens-compara-prod-2 details url mateus_load_members_91) -prev_rel_db $(mysql-ens-compara-prod-4 details url mateus_murinae_nctrees_90)
 
 =head1 DESCRIPTION
@@ -99,17 +98,9 @@ sub default_options {
         'hc_capacity'                     => 40,
         'hc_batch_size'                   => 10,
 
-        # Where to find the core databases
-        'curr_core_sources_locs' => [
-            {
-                -host   => 'mysql-ens-vertannot-staging.ebi.ac.uk',
-                -port   => '4573',
-                -user   => 'ensro',
-            },
-        ],
-
-        # The master database
-        'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
+        # Where to find the shared databases (use URLs or registry names)
+        'master_db' => 'compara_master',
+        'member_db' => 'compara_members',
     };
 }
 
