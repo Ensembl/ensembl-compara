@@ -338,14 +338,8 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Finaldatabasechecks",
-            "summary": "Final database checks"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "relco_doc#Releasecoordinationdocumentation-Runthehealthchecks",
-            "summary": "Run HCs"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
+            "summary": "Run the health-checks"
          },
          {
             "component": "Relco tasks",
