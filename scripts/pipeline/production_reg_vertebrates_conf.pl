@@ -131,10 +131,10 @@ my $compara_dbs = {
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
-    #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-8', 'muffato_amniotes_mercator_pecan_97' ],
+    'amniotes_pecan'      => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_98' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-8', 'muffato_amniotes_mercator_pecan_97' ],
 
-    #'compara_syntenies'   => [ 'mysql-ens-compara-prod-2', 'carlac_ensembl_synteny_97' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_synteny_98' ],
 
     # miscellaneous
     'alt_allele_projection' => [ 'mysql-ens-compara-prod-8', 'muffato_vertebrates_alt_allele_import_98' ],
