@@ -76,8 +76,8 @@ sub content {
     });
   }
 
-  $self->add_entry({
-    'label'   => 'View all hits',
+    $self->add_entry({
+    'label'   => 'View all locations',
     'link'    => $hub->url({
       'type'    => 'Location',
       'action'  => 'Genome',
@@ -86,6 +86,26 @@ sub content {
       'db'      => $db,
       '__clear' => 1
     })
+  });
+
+  my $align_type   = $features->[0] ? $features->[0]->align_type : undef;
+  my $cigar_string = $features->[0] ? $features->[0]->cigar_string : undef;
+
+  if($align_type and $cigar_string){
+    my $alength = new Bio::EnsEMBL::BaseAlignFeature( -align_type => $align_type, -cigar_string => $cigar_string)->alignment_length();
+    if($alength){
+      $self->add_entry({
+        type    => 'Alignment length',
+        'label' => $alength
+      });
+    }
+  }
+
+  my $percent_id = $features->[0] ? $features->[0]->percent_id : undef;
+  
+  $self->add_entry({
+    type    => '%id',
+    'label' => $percent_id
   });
 
   my @attrs;
