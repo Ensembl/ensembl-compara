@@ -92,16 +92,15 @@ sub content {
   my $cigar_string = $features->[0] ? $features->[0]->cigar_string : undef;
 
   if($align_type and $cigar_string){
-    my $alength = new Bio::EnsEMBL::BaseAlignFeature( -align_type => $align_type, -cigar_string => $cigar_string)->alignment_length();
-    if($alength){
-      $self->add_entry({
-        type    => 'Alignment length',
-        'label' => $alength
-      });
-    }
+    my $alength;
+    eval{ $alength = new Bio::EnsEMBL::BaseAlignFeature( -align_type => $align_type, -cigar_string => $cigar_string)->alignment_length() };
+    $self->add_entry({
+      type    => 'Alignment length',
+      'label' => $alength ? $alength : '-'
+    });
   }
 
-  my $percent_id = $features->[0] ? $features->[0]->percent_id : undef;
+  my $percent_id = $features->[0] ? $features->[0]->percent_id : '-';
   
   $self->add_entry({
     type    => '%id',
