@@ -74,7 +74,7 @@ sub pipeline_analyses_alt_alleles {
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
             -parameters => {
-                'range_index'   => 20,
+                'range_index'   => 13,
             },
             -flow_into => [ 'altallele_species_factory' ],
         },

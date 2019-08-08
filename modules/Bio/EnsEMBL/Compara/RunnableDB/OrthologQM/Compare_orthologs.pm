@@ -1,4 +1,3 @@
-=pod
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -39,9 +38,6 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs
     This new member are screened and ordered before their ordered is compared to the order depicted by the orthologous members.
     It returns an hash showing how much of the orthologous memebers match the order of the members on the genome and a percentage score to reflect this.
 
-    Example run
-
-    standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::Compare_orthologs;

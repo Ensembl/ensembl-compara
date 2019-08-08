@@ -174,7 +174,6 @@ sub write_output {
             # work out cycles of updates
             $dbc->do('SET FOREIGN_KEY_CHECKS=0');
             foreach my $r (@$to_rename) {
-                $dbc->do('UPDATE other_member_sequence SET seq_member_id = ? WHERE seq_member_id = ?',               undef, $offset+$r->{'curr'}->{'seq_member_id'}, $r->{'prev'}->{'seq_member_id'});
                 $dbc->do('UPDATE seq_member_projection SET source_seq_member_id = ? WHERE source_seq_member_id = ?', undef, $offset+$r->{'curr'}->{'seq_member_id'}, $r->{'prev'}->{'seq_member_id'});
                 $dbc->do('UPDATE seq_member_projection SET target_seq_member_id = ? WHERE target_seq_member_id = ?', undef, $offset+$r->{'curr'}->{'seq_member_id'}, $r->{'prev'}->{'seq_member_id'});
                 $dbc->do('UPDATE gene_tree_node SET seq_member_id = ? WHERE seq_member_id = ?',                      undef, $offset+$r->{'curr'}->{'seq_member_id'}, $r->{'prev'}->{'seq_member_id'});
@@ -193,7 +192,6 @@ sub write_output {
             # $dbc->do("UPDATE homology_member SET seq_member_id = seq_member_id - $offset WHERE seq_member_id > $offset");
 
             foreach my $r (@$to_rename) {
-                $dbc->do('UPDATE other_member_sequence SET seq_member_id = ? WHERE seq_member_id = ?',               undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
                 $dbc->do('UPDATE seq_member_projection SET source_seq_member_id = ? WHERE source_seq_member_id = ?', undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
                 $dbc->do('UPDATE seq_member_projection SET target_seq_member_id = ? WHERE target_seq_member_id = ?', undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});
                 $dbc->do('UPDATE gene_tree_node SET seq_member_id = ? WHERE seq_member_id = ?',                      undef, $r->{'curr'}->{'seq_member_id'}, $offset+$r->{'curr'}->{'seq_member_id'});

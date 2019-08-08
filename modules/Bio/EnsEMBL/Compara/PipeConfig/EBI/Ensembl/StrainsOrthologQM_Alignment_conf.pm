@@ -27,11 +27,11 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusOrthologQM_Alignment_conf;
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsOrthologQM_Alignment_conf;
 
 =head1 SYNOPSIS
 
- init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusOrthologQM_Alignment_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -member_type ncrna
+ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsOrthologQM_Alignment_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -member_type ncrna -collection murinae
 
 =head1 DESCRIPTION
 
@@ -47,7 +47,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::SusOrthologQM_Alignment_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsOrthologQM_Alignment_conf;
 
 use strict;
 use warnings;
@@ -61,9 +61,9 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
         'division'      => 'vertebrates',
-        'collection'    => 'sus',
 
         # 'member_type'   => undef, # should be 'protein' or 'ncrna'
+        # 'collection'    => undef, # should be 'murinae' or 'sus'
 
         'master_db'  => 'compara_master',
 
@@ -75,7 +75,7 @@ sub default_options {
             'compara_curr',
         ],
         'previous_rel_db'  => 'compara_prev',
-        'species_set_name' => 'collection-#collection#',
+        'species_set_name' => 'collection-' . $self->o('collection'),
     };
 }
 
