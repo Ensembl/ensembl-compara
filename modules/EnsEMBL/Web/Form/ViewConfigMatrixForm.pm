@@ -62,8 +62,9 @@ sub build {
     ## New trackhub structure
     $title = $menu_node->get_data('shortLabel');
     my $dims  = $menu_node->get_data('dimensions');
-    ($dimX  = ucfirst($dims->{'x'}{'label'})) =~ s/_/ /g;
-    ($dimY  = ucfirst($dims->{'y'}{'label'})) =~ s/_/ /g;
+    #reverting orientation for matrix for trackhub thats why x becomes y and y becomes x, a bit hacky but will do for now
+    ($dimY  = ucfirst($dims->{'x'}{'label'})) =~ s/_/ /g;
+    ($dimX  = ucfirst($dims->{'y'}{'label'})) =~ s/_/ /g;
   }
 
   my $breadcrumbHTML = $self->breadcrumb_html();
