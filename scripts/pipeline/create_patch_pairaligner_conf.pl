@@ -88,6 +88,7 @@ Note that setting this option to 0 implies that --species contains a single spec
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Getopt::Long;
 
@@ -143,6 +144,8 @@ my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my @pairwise_mlsss;
 push @pairwise_mlsss, @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $patched_genome_db) };
 push @pairwise_mlsss, @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $patched_genome_db) };
+#But only the ones that are still current but old enough to be missing the patches
+@pairwise_mlsss = grep {$_->is_current && $_->first_release < software_version()} @pairwise_mlsss;
 
 my %unique_genome_dbs;
 #If a set of species is set, use these else automatically determine which species to use depending on whether they
