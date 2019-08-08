@@ -53,6 +53,7 @@ sub param_defaults {
         'sql'   => [
                     'UPDATE gene_tree_root SET clusterset_id = CONCAT("#label_prefix#", clusterset_id) WHERE clusterset_id NOT LIKE "#label_prefix#%" AND clusterset_id != "default"',
                     'UPDATE gene_tree_root SET clusterset_id = "#clusterset_id#" WHERE clusterset_id = "default"',
+                    'UPDATE gene_tree_root SET stable_id = CONCAT("#label_prefix#", stable_id) WHERE stable_id IS NOT NULL AND stable_id NOT LIKE "#label_prefix#%"',
                     'UPDATE hmm_profile SET type = CONCAT("#label_prefix#", type) WHERE type NOT LIKE "#label_prefix#%"',
                 ],
     }
