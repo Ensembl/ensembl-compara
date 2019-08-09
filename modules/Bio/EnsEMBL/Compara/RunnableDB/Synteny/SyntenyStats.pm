@@ -186,6 +186,16 @@ sub calculate_stats {
     
     $prefix = 'non_';
   }
+  # For "self-syntenies" (e.g. H.sap synteny), copy the reference stats to the
+  # non-reference tags
+  if (scalar @species == 1) {
+      $tags{$prefix.'reference_species'} = $tags{'reference_species'};
+      $tags{$prefix.'ref_genome_length'} = $tags{'ref_genome_length'};
+      $tags{$prefix.'ref_genome_coverage'} = $tags{'ref_genome_coverage'};
+      $tags{$prefix.'ref_coding_exon_length'} = $tags{'ref_coding_exon_length'};
+      $tags{$prefix.'ref_covered'} = $tags{'ref_covered'};
+      $tags{$prefix.'ref_uncovered'} = $tags{'ref_uncovered'};
+  }
   $tags{'num_blocks'} = $num_blocks;
   
   foreach my $tag (sort keys %tags) {
