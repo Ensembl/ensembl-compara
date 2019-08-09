@@ -59,7 +59,8 @@ sub run {
         # Get MethodLinkSpeciesSet Objects for required method_link_type
         my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
         foreach my $mlss (@$mlss_listref) {
-            next if ( defined $self->param('from_first_release') && $mlss->first_release < $self->param('from_first_release') );
+            my $from_first_release = $self->param('from_first_release')
+            next if ( defined $from_first_release && !($mlss->first_release == $from_first_release || $mlss->has_tag("rerun_in_${from_first_release}")) );
             $self->_test_mlss($mlss);
         }
     }
@@ -144,4 +145,3 @@ sub _test_mlss {
 }
 
 1;
-
