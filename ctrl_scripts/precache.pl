@@ -177,7 +177,6 @@ if($mode eq 'start') {
 }
 
 if($mode eq 'start') {
-  warn $SiteDefs::ENSEMBL_PRECACHE_DIR;
   open(SPEC,'>',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die $!;
   print SPEC JSON->new->encode(\@procs);
   close SPEC;
