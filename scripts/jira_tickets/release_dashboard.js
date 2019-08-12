@@ -19,7 +19,7 @@ var endpoint_ticket_subtasks = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/sear
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
 var url_jira_issue = 'https://www.ebi.ac.uk/panda/jira/browse/';
 var release = $.urlParam("release");
-var all_divisions = [ 'empty', 'Vertebrates', 'GRCh37', 'Metazoa', 'Plants', 'Protists', 'Fungi', 'Pan', 'Bacteria' ];
+var all_divisions = [ 'empty', 'Vertebrates', 'Metazoa', 'Plants', 'Protists', 'Fungi', 'Pan', 'Bacteria' ];
 
 $('body').append('<h1>Release ' + release + ' dashboard</h1>');
 
@@ -100,4 +100,3 @@ for(var j = 0; j < all_divisions.length; j++){
         crossDomain: true,
     })
 }
-
