@@ -145,8 +145,10 @@ sub get_source {
   my $source_link = $source;
   
   if ($source eq 'DGVa') {
-    $source_link = $hub->get_ExtURL_link($source, 'DGVA', $source);
-  } elsif ($source =~ /affy/i ) {
+    $source_link = $hub->get_ExtURL_link($source, uc($source), $source);
+  } elsif ($source eq 'dbVar') {
+    $source_link = $hub->get_ExtURL_link($source, uc($source), $source);
+  } elsif ($source =~ /affy/i) {
     $source_link = $hub->get_ExtURL_link($source, 'AFFYMETRIX', $source);
   } elsif ($source =~ /illumina/i) {
     $source_link = $hub->get_ExtURL_link($source, 'ILLUMINA', $source);
