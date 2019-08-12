@@ -109,20 +109,14 @@ sub fetch_input {
         $self->param('extra_filter', '');
     }
 
-    # Default values (in case some categories are not found in the data)
-    foreach my $c1 ('one', 'many') {
-        foreach my $c2 ('one', 'many') {
-            my $homology_type = sprintf('%s_%s-to-%s', $member_type, $c1, $c2);
-            $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), 0);
-            $mlss->store_tag(sprintf('n_%s_groups', $homology_type), 0);
-            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_1), 0);
-            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_2), 0);
-        }
-    }
+    my %types = map {$_ => 1} qw(one-to-one one-to-many many-to-one many-to-many);
 
     my $data = $self->compara_dba->dbc->db_handle->selectall_arrayref($self->param_required('sql_orthologies'), undef,
         $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $gdb_id_1, $gdb_id_2, $mlss_id);
+    my $has_data = 0;
     foreach my $line (@$data) {
+        $has_data = 1;
+        delete $types{$line->[1].'-to-'.$line->[2]};
         my $homology_type = sprintf('%s_%s-to-%s', $member_type, $line->[1], $line->[2]);
         $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), int($line->[6]));
         $mlss->store_tag(sprintf('n_%s_groups', $homology_type), $line->[3]);
@@ -130,6 +124,19 @@ sub fetch_input {
         $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_2), $line->[5]);
         $mlss->store_tag(sprintf('avg_%s_%d_perc_id', $homology_type, $gdb_id_1), $line->[8] / $line->[6]);
         $mlss->store_tag(sprintf('avg_%s_%d_perc_id', $homology_type, $gdb_id_2), $line->[9] / $line->[6]);
+    }
+
+    # Don't run this on mlss_ids that don't have any data at all, e.g. the
+    # mlss_ids of the shared species in a strain gene-tree database
+    if ($has_data) {
+        # Add a default values for the types that are not seen
+        foreach my $c12 (keys %types) {
+            my $homology_type = sprintf('%s_%s', $member_type, $c12);
+            $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), 0);
+            $mlss->store_tag(sprintf('n_%s_groups', $homology_type), 0);
+            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_1), 0);
+            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_2), 0);
+        }
     }
 }
 
