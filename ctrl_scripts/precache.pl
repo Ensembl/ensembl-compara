@@ -168,7 +168,6 @@ foreach my $k (@jobs) {
 }
 
 if($mode eq 'start') {
-  warn $SiteDefs::ENSEMBL_PRECACHE_DIR;
   # Remove old files
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/generate.*"));
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/ready.*"));
@@ -178,6 +177,7 @@ if($mode eq 'start') {
 }
 
 if($mode eq 'start') {
+  warn $SiteDefs::ENSEMBL_PRECACHE_DIR
   open(SPEC,'>',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die $!;
   print SPEC JSON->new->encode(\@procs);
   close SPEC;
