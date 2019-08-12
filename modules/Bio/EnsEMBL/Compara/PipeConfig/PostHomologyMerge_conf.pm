@@ -79,6 +79,8 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        'db_conn'               => $self->o('compara_db'),
+
         # 'threshold_levels'  => $self->o('threshold_levels'),
 
         # 'do_member_update'      => 0,
