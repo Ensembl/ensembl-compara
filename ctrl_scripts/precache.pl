@@ -203,7 +203,7 @@ if($mode eq 'index') {
   my $task;
   {
     local $/ = undef;
-    open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die "$SiteDefs::ENSEMBL_PRECACHE_DIR/spec --- $!";
+    open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die $!;
     my $spec = JSON->new->decode(<SPEC>);
     close SPEC;
     $task = $spec->[$index];
