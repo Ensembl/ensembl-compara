@@ -137,6 +137,11 @@ sub configuration_content {
         </div>
       </div>
 
+      <div class="result-box" id="config-result-box">
+        <h4>Selected tracks</h4>
+        <div class="config-result-box-content"></div>
+      </div>
+
       <div class="result-box" id="selected-box">
         <h4>Selected tracks</h4>
         <div class="reset_track">Reset all</div>
@@ -164,6 +169,7 @@ sub configuration_content {
           </div>
 
         </div>
+      <div>
   );
 
   return $html;

@@ -52,6 +52,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.resultBox       = this.el.find(".result-box#selected-box");
     this.elLk.filterList      = this.el.find("ul.result-list");
     this.elLk.filterTrackBox  = this.el.find(".result-box#filter-box");
+    this.elLk.configResultBox = this.el.find(".result-box#config-result-box");
     this.elLk.displayButton   = this.el.find("button.showMatrix");
     this.elLk.viewTrackButton = this.el.find("button.view-track-button");
     this.elLk.clearAll        = this.el.find("span.clearall");
@@ -128,7 +129,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         this.goToUserLocation();
         this.resize();
         this.selectDeselectAll();
-        panel.el.find('._ht').helptip();
       },
       error: function() {
         $(this.el).find('div.spinner').remove();
@@ -1311,19 +1311,25 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     clickButton.on("click", function(e) {
       if(clickButton.hasClass("_edit")) {
+        // Select Tracks panel
         panel.elLk.filterTrackBox.hide();
         panel.elLk.resultBox.show();
+        panel.elLk.configResultBox.hide();
         panel.toggleTab({'selectElement': panel.el.find("li._configure"), 'container': panel.el.find("div.large-breadcrumbs")});
         panel.toggleButton();
       }else if(clickButton.hasClass("active") ) {
+        // FilterTracks button click
         if(clickButton.hasClass("_filterButton")){
           panel.toggleTab({'selectElement': panel.el.find("li#track-filter"), 'container': panel.el.find("div.large-breadcrumbs")});
           panel.elLk.filterTrackBox.css('display', 'flex');
           panel.elLk.resultBox.hide();
+          panel.elLk.configResultBox.hide();
           panel.toggleButton();
         } else {
+          // Configuration button click
           panel.elLk.filterTrackBox.hide();
-          panel.elLk.resultBox.show();
+          panel.elLk.resultBox.hide();
+          panel.elLk.configResultBox.show();
           panel.toggleTab({'selectElement': tabClick, 'container': panel.el.find("div.large-breadcrumbs")});
           panel.toggleButton();
         }
@@ -1399,6 +1405,9 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $(this).parent().find('div.show-hide, ul.result-list, ul.filterMatrix-list').toggle();
     });
     this.elLk.resultBox.find('div.show-hide').off().on("click", function(e) {
+      panel.el.find(this).parent().find('div.show-hide, ul.result-list').toggle();
+    });
+    this.elLk.configResultBox.find('div.show-hide').off().on("click", function(e) {
       panel.el.find(this).parent().find('div.show-hide, ul.result-list').toggle();
     });
   },
@@ -1598,6 +1607,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if(!panel.el.find(element).hasClass('view-track')) { 
       panel.elLk.filterTrackBox.hide();
+      panel.elLk.configResultBox.hide();
       panel.elLk.resultBox.show();
       panel.toggleTab({'selectElement': element, 'container': panel.el.find("div.large-breadcrumbs")});
     }
@@ -1605,6 +1615,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if(panel.el.find(element).attr('id') === 'track-filter' && !panel.el.find(element).hasClass('inactive')) {
       panel.elLk.filterTrackBox.css('display', 'flex');
+      panel.elLk.configResultBox.hide();
       panel.elLk.resultBox.hide();
       panel.emptyMatrix();
       panel.displayFilterMatrix();
@@ -1612,7 +1623,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     if(panel.el.find(element).attr('id') === 'track-display' && !panel.el.find(element).hasClass('inactive')) {
       panel.elLk.filterTrackBox.hide();
-      panel.elLk.resultBox.show();
+      panel.elLk.resultBox.hide();
+      panel.elLk.configResultBox.show();
       panel.emptyMatrix();
       panel.displayMatrix();
     }
@@ -1714,6 +1726,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       //updating available count in right hand panel
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
+      $(container).find('._ht').helptip({position: {at: 'left+4 center'}});
     }
   },
 
@@ -2000,7 +2013,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){ 
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
+      xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+' _ht _ht_delay" title="'+ dyLabel +'"><span>'+dyLabel+'</span></div></div></div>'; 
     });
 
     xContainer += "</div>";
@@ -2013,7 +2026,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       $.each(Object.keys(panel.localStoreObj.dx).sort(), function(i, cellName){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
 
-          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht" title="'+ cellLabel +'">'+cellLabel+'</span></div>';
+          yContainer += '<div class="yLabel _ht" title="'+ cellLabel +'"'+cellName+'"><span>'+cellLabel+'</span></div>';
           var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
           //drawing boxes
@@ -2124,7 +2137,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.setLocalStorage();
 
     // enable helptips
-    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('._ht').helptip();
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.yContainer ._ht').helptip({position: {at: 'center center'}});
 
 
 
@@ -2207,20 +2221,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           $(this).siblings().each(function(i, sib) {
             $(sib).children('span.fancy-checkbox').removeClass('selected').addClass('selected');
             panel.localStoreObj["other_dimensions"][$(sib).data("dim-key")] = 1;
-            panel.setLocalStorage();        
           });
         } else {
           $(this).siblings().each(function(i, sib) {
             $(sib).children('span.fancy-checkbox').removeClass('selected');
             delete panel.localStoreObj["other_dimensions"][$(sib).data("dim-key")];
-            panel.setLocalStorage();
           });
         }
 
         //Updating store and then update cell state
         //Get the cells that are affected by the change and update the store for each affected cell
         $.each(panel.elLk.lookup.dimensionFilter, function(dimKey, trackHash){
-          $.each(trackHash, function(cellKey,trackArray){
+          $.each(trackHash, function(cellKey, trackArray){
             //console.log(cellKey);
             $.each(trackArray, function(i, trackId){
               //console.log(trackId);
@@ -2239,7 +2251,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         } else {
           delete panel.localStoreObj["other_dimensions"][dimKey];
         }
-        panel.setLocalStorage();
+
         // Updating store and then update cell state
         //Get the cells that are affected by the change and update the store for each affected cell
         $.each(panel.elLk.lookup.dimensionFilter[dimKey], function(cellKey, trackArray){
@@ -2257,6 +2269,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           panel.elLk.filterMatrixList.find('li.all span.fancy-checkbox').removeClass('selected');
         }
       }
+      panel.setLocalStorage();
       panel.updateFilterMatrix(cellArray);
 
     });
@@ -2323,7 +2336,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
       if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
-        xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel x-label-gap">'+dyLabel+'</div></div></div>'; 
+        xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel x-label-gap _ht _ht_delay" title="'+dyLabel+'"><span>'+dyLabel+'</span></div></div></div>'; 
       }
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
@@ -2339,10 +2352,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
         if(panel.disableYdim) {
           if(dyItem === 'epigenomic_activity' || dyItem === 'segmentation_features'){
-            xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
+            // xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
           }
         } else {
-          xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
+          xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+' _ht _ht_delay" title="'+ dyLabel +'"><span>'+dyLabel+'</span></div></div></div>'; 
         }
       }
     });
@@ -2371,7 +2384,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             }
           }
 
-          yContainer += '<div class="yLabel '+cellName+'"><span class="_ht" title="'+cellLabel+'">'+cellLabel+'</span></div>';
+          yContainer += '<div class="yLabel _ht" title="'+cellLabel+'"'+cellName+'"><span>'+cellLabel+'</span></div>';
           var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
           //drawing boxes
@@ -2474,8 +2487,37 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
 
+    panel.populateConfigTracksResultBox();
+
     // enable helptips
-    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-display' &&this.elLk.matrixContainer.find('._ht').helptip();
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-display' && this.elLk.matrixContainer.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-display' && this.elLk.matrixContainer.find('.yContainer ._ht').helptip({position: {at: 'center center'}});
+  },
+
+  populateConfigTracksResultBox: function() {
+    var panel = this;
+    var htmlContent = '';
+    $.each(panel.localStoreObj.filterMatrix, function (k, v) {
+      var content = '';
+      if (k.match(/_sep_/)) {
+        content += '<div class="header-wrapper"> <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>';
+        content += '<h5 class="result-header">'+ k.replace('_sep_', ' - ') +'</h5>';
+        content += '<ul class="result-list">';
+        var flag = 0;
+        $.each(panel.localStoreObj.filterMatrix[k].data, function (trackId, data) {
+          if (data.show && data.state == "on") {
+            flag = 1;
+            content += '<li>'+ (panel.filterMatrixObj[k][trackId].shortLabel || trackId) +'</li>';
+          }
+        })
+        content += '</ul></div>'
+        if (flag === 1) htmlContent += content;
+      }
+    });
+
+    panel.elLk.configResultBox.find('.config-result-box-content').html(htmlContent);
+    panel.registerShowHideClickEvent();
+    panel.updateShowHideLinks(panel.elLk.configResultBox.find('ul'));
   },
 
   emptyMatrix: function() {
@@ -2640,26 +2682,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
     ul.html(r_opts);
   },
-
-  // filterMatrixCellClick: function() {
-  //   var panel = this;
-  //   panel.elLk.rowContainer = this.elLk.matrixContainer.find('div.rowContainer');
-  //   panel.popupType      = "";
-  //   panel.TrackPopupType = "";
-  //   panel.xLabel         = "";
-  //   panel.yLabel         = "";
-  //   panel.xName          = "";
-  //   panel.yName          = "";
-  //   panel.boxObj         = "";
-
-  //   panel.el.find('div.filterMatrix-container div.xBoxes').off().on("click", function(e){
-  //     var x = $(this).data('track-x');
-  //     var y = $(this).data('track-y');
-
-
-
-  //   });
-  // },
 
   buildFilterMatrixPopup: function(key) {
     var panel = this;
