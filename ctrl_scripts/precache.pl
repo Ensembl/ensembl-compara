@@ -168,6 +168,7 @@ foreach my $k (@jobs) {
 }
 
 if($mode eq 'start') {
+  warn $SiteDefs::ENSEMBL_PRECACHE_DIR;
   # Remove old files
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/generate.*"));
   unlink $_ for(glob("$SiteDefs::ENSEMBL_PRECACHE_DIR/ready.*"));
