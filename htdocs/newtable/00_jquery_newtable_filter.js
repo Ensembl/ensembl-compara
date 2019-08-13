@@ -94,7 +94,6 @@
         $li.on('click',function(e) {
           activate_sec($item);
           activate_menu($table,$item,false);
-          e.stopPropagation();
         });
       });
       $menu.empty().append($out);
