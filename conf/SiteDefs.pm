@@ -114,6 +114,8 @@ our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; };  # command/subr
 our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connections after request is finished
 our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stack traces to logs and send a unique error Id on the browser
 our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
+
+our $GENE_FAMILY_ACTION               = 'Family'; # Used to build the link to gene families page
 ###############################################################################
 
 

@@ -498,7 +498,7 @@ sub about_feature {
     
     my $protein_url = $hub->url({
       type   => 'Gene',
-      action => 'Family',
+      action => $SiteDefs::GENE_FAMILY_ACTION,
       g      => $gene->stable_id
     });
 
