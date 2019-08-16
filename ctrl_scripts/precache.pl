@@ -32,7 +32,6 @@ use EnsEMBL::Web::QueryStore;
 use EnsEMBL::Web::SpeciesDefs;
 $EnsEMBL::Web::SpeciesDefs::CONFIG_QUIET = 1;
 
-
 sub merge {
   my ($limit) = @_;
 
@@ -179,14 +178,14 @@ if($mode eq 'start') {
 
 if($mode eq 'start') {
   warn $SiteDefs::ENSEMBL_PRECACHE_DIR;
-  open(SPEC,'>',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
+  open(SPEC,'>',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die $!;
   print SPEC JSON->new->encode(\@procs);
   close SPEC;
   exit 0;
 }
 
 if($mode eq 'prepare') {
-  open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
+  open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die $!;
   my $spec = JSON->new->decode(<SPEC>);
   close SPEC;
   my %tasks;
@@ -204,7 +203,7 @@ if($mode eq 'index') {
   my $task;
   {
     local $/ = undef;
-    open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die;
+    open(SPEC,'<',"$SiteDefs::ENSEMBL_PRECACHE_DIR/spec") or die $!;
     my $spec = JSON->new->decode(<SPEC>);
     close SPEC;
     $task = $spec->[$index];
