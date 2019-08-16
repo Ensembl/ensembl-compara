@@ -183,7 +183,7 @@ sub render {
   if ($sd->ENSEMBL_PG_ENABLED) {
     my $link = $hub->url({'species' => $sp, qw(type Tools action Postgap)});
     $table->add_row({
-      'name'  => sprintf('<b><a class="nodeco" href="%s">Postgap</a></b>', $link),
+      'name'  => sprintf('<b><a class="nodeco" href="%s">Post-GWAS</a></b>', $link),
       'desc'  => "The Post-GWAS Analysis Pipeline allows you to upload a tab-delimited file with GWAS summary statistics. The variant p-values and effect sizes are then finemapped and collocalised with GTEx eQTL summary statistics, to highlight likely causal gene candidates and the tissue where this effect.",
       'tool'  => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'limit' => '',
