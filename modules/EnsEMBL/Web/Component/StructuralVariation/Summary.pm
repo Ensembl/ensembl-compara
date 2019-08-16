@@ -175,19 +175,36 @@ sub get_study {
 
 sub get_alias {
   my $self   = shift;
+  my $hub    = $self->hub;
   my $object = $self->object;
   my $alias  = $object->Obj->alias;
-  
-  return unless $alias;
-  
-  my $er_url = $object->external_reference;
-  if ($er_url =~ /cosmic/) {
-    $alias =~ /(\d+)/;
-    my $cosmic_id = ($1) ? $1 : '';   
-    $alias = $self->hub->get_ExtURL_link($alias, 'COSMIC_SV', $cosmic_id);
+  my $study_name = $object->study_name;
+
+  # Alias (RCV IDs) from ClinVar
+  if ($study_name && $study_name eq 'nstd102') {
+    my $cv_alias = '';
+    foreach my $ssv (@{$object->supporting_sv}) {
+      my $ssv_alias = $ssv->alias;
+      if ($ssv_alias && $ssv_alias =~ /^(RCV\d+)/) {
+        my $clinvar_alias = $1;
+        my $clinvar_url = $hub->get_ExtURL_link($clinvar_alias, 'CLINVAR', $clinvar_alias);
+        $cv_alias .= ', ' if ($cv_alias ne '');
+        $cv_alias .= $clinvar_url;
+      }
+    }
+    $alias = $cv_alias if ($cv_alias ne '');
+  }
+  # Alias (COSMIC IDs) from the COSMIC study
+  else {
+    my $er_url = $object->external_reference;
+    if ($er_url =~ /cosmic/) {
+      $alias =~ /(\d+)/;
+      my $cosmic_id = ($1) ? $1 : '';
+      $alias = $hub->get_ExtURL_link($alias, 'COSMIC_SV', $cosmic_id);
+    }
   }
   
-  return ['Alias', $alias];
+  return ($alias) ? ['Alias', $alias] : undef;
 }
 
 
