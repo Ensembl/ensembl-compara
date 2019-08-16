@@ -166,7 +166,9 @@ sub content {
   # add a row to the table
   $table->add_row('LRG', $lrg_html) if $lrg_html;
 
-  $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
+  if ($object->version) {
+    $table->add_row('Ensembl version', $object->stable_id_version);
+  }
 
   ## Link to another assembly, e.g. previous archive
   my $current_assembly = $hub->species_defs->ASSEMBLY_VERSION;

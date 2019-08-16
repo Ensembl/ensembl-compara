@@ -84,7 +84,7 @@ sub content {
     $table->add_row('Incomplete CDS', sprintf('<span class="ts_flag">%s</span>',$self->get_CDS_text($incomplete)));
   }
 
-  $table->add_row('Version', $object->stable_id.'.'.$object->version);
+  $table->add_row('Version', $object->stable_id_version);
 
   ## add some Vega info
   if ($db eq 'vega') {
