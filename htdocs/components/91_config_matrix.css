@@ -299,9 +299,22 @@ div.ribbon-content                                  { display: flex; padding: 16
 div.ribbon-content ul                               { width: 100%;}
 div.alphabet-content                                { display: none; position: relative; width: 90%; }
 div.alphabet-content.active                         { display: block; }
-div.config_wrapper div.config ul.letter-content li  { margin: 4px 0; cursor: default; margin-top: 0;}
-div.config_wrapper div.config ul.list-content       { padding: 60px 8px 48px 48px; height: calc(100% - 110px); }
-div.config_wrapper div.config ul.list-content li    { display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 150px; padding-right: 8px; }
+div.config_wrapper div.config ul.letter-content li  { margin: 4px 0; cursor: default; margin-top: 0; }
+div.config_wrapper div.config ul.list-content       { padding-left: 48px; min-height: 200px;
+columns: 4;
+position: relative;
+width: calc(100% - 110px);
+display: flex;
+flex-direction: column;
+flex-wrap: wrap;
+}
+
+div.config_wrapper div.config ul.list-content li span,
+div.config_wrapper div.config ul.list-content li text {
+  pointer-events: none;
+}
+
+div.config_wrapper div.config ul.list-content li    { display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 150px; padding: 2px 4px; }
 .text-ellipsis {
   max-width: 100px;
   overflow: hidden;

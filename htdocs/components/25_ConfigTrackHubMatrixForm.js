@@ -754,6 +754,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     }
     panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 102);
     panel.elLk.filterMatrix.outerHeight(this.getNewPanelHeight() - 102);
+    panel.elLk.dx.container.find('ul.list-content').height(this.getNewPanelHeight() - 120);
   },
 
   getActiveTabContainer: function() {
@@ -1697,8 +1698,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       data = data.sort();
       $.each(data, function(i, item) {
         if(item) {
+          var _class = '';
+          if (item.length > 15) {
+            _class = ' _ht ';
+          }
           var elementClass = item.replace(/[^\w\-]/g,'_');//this is a unique name and has to be kept unique (used for interaction between RH and LH panel and also for cell and experiment filtering)
-          html += '<li class="noremove '+ elementClass + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text class="_ht" title="'+item+'">'+item+'</text></li>';
+          html += '<li class="noremove '+ elementClass + _class + '" title="' + item + '" data-parent-tab="' + rhsection + '" data-item="' + elementClass +'"><span class="fancy-checkbox"></span><text>'+item+'</text></li>';
         }
         countFilter++;
         panel.elLk.lookup[elementClass] = {
@@ -1726,7 +1731,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
       //updating available count in right hand panel
       panel.el.find('div#'+rhsection+' span.total').html(countFilter);
-      $(container).find('._ht').helptip({position: {at: 'left+4 center'}});
+      $(container).find('._ht').helptip({position: {at: 'center bottom-10'}});
     }
   },
 
@@ -2009,11 +2014,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     //creating array of dy from lookup Obj. ; this will make sure the order is the same
     var dyArray = panel.localStoreObj.dy ? Object.keys(panel.localStoreObj.dy).sort() : [];
-
+    var _class = '';
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){ 
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
-      xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+' _ht _ht_delay" title="'+ dyLabel +'"><span>'+dyLabel+'</span></div></div></div>'; 
+      if (dyLabel.length > 15) {
+        _class = ' _ht ';
+      }
+      xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem + _class + '" title="'+ dyLabel +'"><span>'+dyLabel+'</span></div></div></div>'; 
     });
 
     xContainer += "</div>";
@@ -2025,8 +2033,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if(panel.localStoreObj.dx && panel.localStoreObj.dy) {
       $.each(Object.keys(panel.localStoreObj.dx).sort(), function(i, cellName){
           var cellLabel    = panel.elLk.lookup[cellName].label || cellName;
-
-          yContainer += '<div class="yLabel _ht" title="'+ cellLabel +'"'+cellName+'"><span>'+cellLabel+'</span></div>';
+          var _class = '';
+          if (cellLabel.length > 15) {
+            _class = ' _ht ';
+          }
+          yContainer += '<div class="yLabel '+ _class +'" title="'+ cellLabel +'"'+cellName+'"><span>'+cellLabel+'</span></div>';
           var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
           //drawing boxes
@@ -2138,7 +2149,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
     // enable helptips
     panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.xContainer ._ht').helptip({position: {at: 'left+10 bottom+76'}});
-    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.yContainer ._ht').helptip({position: {at: 'center center'}});
+    panel.elLk.breadcrumb.filter(".active").attr("id") === 'track-filter' && this.elLk.filterMatrix.find('.yContainer ._ht').helptip({position: {at: 'center bottom-15'}});
 
 
 
@@ -2335,8 +2346,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     // creating dy label on top of matrix
     $.each(dyArray, function(i, dyItem){
       var dyLabel = panel.elLk.lookup[dyItem] ? panel.elLk.lookup[dyItem].label : dyItem;
+      var _class = '';
+      if (dyLabel.length > 15) {
+        _class = ' _ht ';
+      }
       if (dyItem === '' && !panel.disableYdim && !panel.trackHub) {
-        xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel x-label-gap _ht _ht_delay" title="'+dyLabel+'"><span>'+dyLabel+'</span></div></div></div>'; 
+        xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel x-label-gap '+ _class +'" title="'+dyLabel+'"><span>'+dyLabel+'</span></div></div></div>'; 
       }
       else {
         if(!panel.localStoreObj[panel.itemDimension(dyItem)][dyItem]) {
@@ -2355,7 +2370,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             // xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+'"><span class="_ht _ht_delay" title="'+ dyLabel +'">'+dyLabel+'</span></div></div></div>'; 
           }
         } else {
-          xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+dyItem+' _ht _ht_delay" title="'+ dyLabel +'"><span>'+dyLabel+'</span></div></div></div>'; 
+          xContainer += '<div class="positionFix"><div class="rotate"><div class="overflow xLabel '+ dyItem + _class +'" title="'+ dyLabel +'"><span>'+dyLabel+'</span></div></div></div>'; 
         }
       }
     });
@@ -2383,8 +2398,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
               Object.assign(panel.localStoreObj[panel.itemDimension(cellName)][cellName]["renderer"], rendererObj);
             }
           }
-
-          yContainer += '<div class="yLabel _ht" title="'+cellLabel+'"'+cellName+'"><span>'+cellLabel+'</span></div>';
+          var _class = '';
+          if (cellName.length > 15) {
+            _class = ' _ht ';
+          }
+          yContainer += '<div class="yLabel '+_class+'" title="'+cellLabel+'"'+cellName+'"><span>'+cellLabel+'</span></div>';
           var rowContainer  = '<div class="rowContainer">'; //container for all the boxes/cells
 
           //drawing boxes
@@ -2700,7 +2718,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     });
     ul.html(li_html);
     ul.parent().show();
-    ul.find('._ht').helptip();
+    ul.find('._ht').helptip({position: {at: 'center bottom-15'}});
   },
 
   cellClick: function(matrix) {
