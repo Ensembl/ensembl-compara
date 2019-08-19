@@ -2058,9 +2058,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                 if(panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"] === panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]) { 
                   boxState = "track-on";
                   boxCountHTML = '<span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"]+'</span>';
-                } else if(panel.localStoreObj["filterMatrix"][storeKey]["state"]["off"]  === panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] ){
-                  boxState = "track-off";
-                  boxCountHTML = '<span class="count">0</span>';
                 } else {
                   boxState = "partial";
                   var partialCount = panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][storeKey]["state"]["off"];
