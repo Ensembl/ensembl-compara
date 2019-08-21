@@ -44,7 +44,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'range_label'       => 'protein_',
+        'range_label'       => undef,
         'range_filter'      => undef,
     };
 }

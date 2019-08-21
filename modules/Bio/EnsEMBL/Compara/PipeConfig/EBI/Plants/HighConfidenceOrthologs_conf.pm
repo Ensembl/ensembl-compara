@@ -72,6 +72,14 @@ sub default_options {
     };
 }
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'range_label'  => 'protein',
+    }
+}
+
 
 1;
-

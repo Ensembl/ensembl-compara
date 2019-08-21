@@ -273,6 +273,8 @@ sub tweak_analyses {
         $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
         $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
     }
+    
+    $analyses_by_name->{'set_default_values'}->{'-parameters'}->{'clusterset_id'} = $self->default_options()->{'collection'};
 
     # Leave this untouched: it is an extremely-hacky way of setting "taxlevels" to
     # a division-default only if it hasn't been redefined on the command line

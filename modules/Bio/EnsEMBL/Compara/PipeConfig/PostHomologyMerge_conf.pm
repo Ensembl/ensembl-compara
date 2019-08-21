@@ -63,6 +63,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub hive_meta_table {
     my ($self) = @_;
@@ -77,6 +78,8 @@ sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'db_conn'               => $self->o('compara_db'),
 
         # 'threshold_levels'  => $self->o('threshold_levels'),
 
@@ -125,6 +128,7 @@ sub pipeline_analyses {
         
         {   -logic_name => 'summarise_wga_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SummariseWGAStats',
+            -rc_name    => '500Mb_job',
             -flow_into  => ['backbone_end'],
         },
 
