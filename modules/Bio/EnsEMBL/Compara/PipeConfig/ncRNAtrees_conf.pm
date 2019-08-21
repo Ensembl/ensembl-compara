@@ -667,7 +667,7 @@ sub core_pipeline_analyses {
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
-                                   1 => [ 'secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
+                                   1 => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
                 -rc_name       => '1Gb_job',
             },
@@ -680,11 +680,11 @@ sub core_pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                    'infernal_mxsize' => $self->o('infernal_mxsize'),
                                   },
-                -flow_into     => [ 'secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
+                -flow_into     => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                 -rc_name       => '16Gb_job',
             },
 
-            {   -logic_name => 'secondary_structure_decision',
+            {   -logic_name => 'pre_secondary_structure_decision',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into => {
                     1 => WHEN(
@@ -741,7 +741,7 @@ sub core_pipeline_analyses {
                             },
              -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has more memory
-                            2 => [ 'sec_struct_model_tree_1_core' ],
+                            2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
         },
@@ -757,7 +757,7 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
-                            2 => [ 'sec_struct_model_tree_2_cores' ],
+                            2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
             -rc_name => '500Mb_2c_job',
@@ -774,7 +774,7 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
-                            2 => [ 'sec_struct_model_tree_4_cores' ],
+                            2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_8_cores' ],
                            },
             -rc_name => '1Gb_4c_job',
@@ -788,10 +788,24 @@ sub core_pipeline_analyses {
                             'raxml_number_of_cores' => 8,
                            },
             -flow_into => {
-                            2 => [ 'sec_struct_model_tree_8_cores' ],
+                            2 => [ 'secondary_structure_decision' ],
                           },
             -rc_name => '2Gb_8c_job',
         },
+
+            {   -logic_name => 'secondary_structure_decision',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -flow_into => {
+                    1 => WHEN(
+                        '(#aln_length# <= 200)'                                 => 'sec_struct_model_tree_1_core',
+                        '( (#aln_length# > 200) && (#aln_length# <= 600) )'     => 'sec_struct_model_tree_2_cores',
+                        '( (#aln_length# > 600) && (#aln_length# <= 1300) )'    => 'sec_struct_model_tree_4_cores',
+                        '(#aln_length# > 1300)'                                 => 'sec_struct_model_tree_8_cores',
+                        #'( #aln_length# > 4000 )'                              => 'sec_struct_model_tree_16_cores', #Right now it may be an overkill, but it may be necessary in the future.
+                    ),
+                },
+                %decision_analysis_params,
+            },
 
         {   -logic_name    => 'sec_struct_model_tree_1_core', ## sec_struct_model_tree
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree', ## SecStrucModels

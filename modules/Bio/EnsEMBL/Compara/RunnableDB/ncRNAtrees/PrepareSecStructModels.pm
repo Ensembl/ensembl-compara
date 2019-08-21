@@ -170,6 +170,7 @@ sub write_output {
                                      'gene_tree_id' => $nc_tree_id,
                                      'bootstrap_num' => $bootstrap_num,
                                      'alignment_id'  => $self->param('alignment_id'),
+                                     'aln_length'  => $self->param('aln_length'),
                                     }, 2); # fan
     }
 
