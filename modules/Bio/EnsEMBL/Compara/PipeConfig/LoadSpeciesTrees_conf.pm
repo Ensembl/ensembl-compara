@@ -73,7 +73,7 @@ sub default_options {
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades
-            [ 'ref_genome:10090', 'mus_musculus' ],
+            [ '10090', 'mus_musculus' ],
         ],
 
         'division'  => 'vertebrates',
