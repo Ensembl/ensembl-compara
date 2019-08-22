@@ -1,6 +1,9 @@
 severity  = 5
 
-# This one has to stay
+# It is Ensembl convention that fetch_by methods return undef.  If they
+# don't return anything whilst called in the array context of a hash
+# definition, the value would be skipped and the following values would be
+# shifted, resulting in an "odd number of elements in hash initialisation"
 [Subroutines::ProhibitExplicitReturnUndef]
 severity=4
 
