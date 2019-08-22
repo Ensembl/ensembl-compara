@@ -31,11 +31,7 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
-# ok this is a hack, but I'm going to pretend I've got an object here
-# by creating a blessed hash ref and passing it around like an object
-# this is to avoid using global variables in functions, and to consolidate
-# the globals into a nice '$self' package
-my $self = bless {};
+my $self = {};
 
 $self->{'speciesList'} = ();
 $self->{'outputFasta'} = undef;

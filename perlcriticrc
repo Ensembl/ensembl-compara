@@ -11,6 +11,4 @@ severity=4
 severity=4
 [BuiltinFunctions::ProhibitStringyEval]
 severity=4
-[ClassHierarchies::ProhibitOneArgBless]
-severity=4
 

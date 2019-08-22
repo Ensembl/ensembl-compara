@@ -28,7 +28,7 @@ GetOptions(
 	   'i|binary|binaryfile:s' => \$binaryfile,
            'd|debug:s' => \$debug,
           );
-my $self = bless {};
+my $self = {};
 
 Bio::EnsEMBL::Registry->load_registry_from_db(-host=>"ensembldb.ensembl.org", -user=>"anonymous");
 
