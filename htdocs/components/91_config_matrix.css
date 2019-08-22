@@ -380,8 +380,9 @@ div.boxContainer          { display: flex; flex-direction: column; }
 div.rowContainer          { display: flex; }
 div.hidebox { width: 109px; height: 91px; background: #eee; z-index: 3; position: absolute; top: 0; }
 /*div.ConfigRegMatrixForm div.hidebox { width: 110px; height: 100px; background: #eee; z-index: 3; top: -84px; position: relative; left: 119px; clear: both; }*/
-
-
+div#filter-box div.filter-rhs-popup { width: 150px; display: none; font-size: 11px; max-width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; box-shadow: 5px 5px 15px #666; z-index: 1; }
+div#filter-box div.filter-rhs-popup div { padding: 4px 8px; }
+div#filter-box div.filter-rhs-popup .title { background-color: #ccc; border-bottom: 1px solid grey; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px;}
 
 /* filter-matrix specific styling */
 div.filterMatrix-container div.xBoxes            { text-align: center; }

@@ -174,6 +174,10 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       if(!$(e.target).closest('ul.cell').length && panel.trackPopup) {
         panel.el.find('.renderer-selection div.renderers').removeClass('active');
       }
+
+      if (!$(e.target).closest('.filter-rhs-popup').length) {
+        $('.filter-rhs-popup', panel.elLk.filterTrackBox).hide();
+      }
     });
 
     this.el.find('.view-track, .view-track-button, button.showMatrix').on('click', function() {
@@ -2211,10 +2215,33 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.elLk.filterMatrixList= panel.elLk.filterTrackBox.find("ul.filterMatrix-list");
   },
 
+  createFilterRHSPopup: function(event, key) {
+    var panel = this;
+    var popup = '\
+      <div class="title">' + key.split('_sep_')[1] + '</div>\
+      <div><input type="radio" name="filter_popup_selection" value="all-on" id="filter_popup_selection1"><label for="filter_popup_selection1">All On</label></div>\
+      <div><input type="radio" name="filter_popup_selection" value="all-off" id="filter_popup_selection2"><label for="filter_popup_selection2">All Off</label></div>\
+      <div><input type="radio" name="filter_popup_selection" value="default" id="filter_popup_selection3"><label for="filter_popup_selection3">Default</label></div>';
+
+    var pos = $(event.currentTarget).position();
+    panel.elLk.filterTrackBox.find('.filter-rhs-popup').html(popup).css({top: pos.top + 20, left: pos.left}).show();
+    panel.elLk.filterTrackBox.find('.filter-rhs-popup input').click(function(e) {
+      // Do soemthing when clicked?
+      var opt = $(this).val();
+    });
+    event.stopPropagation();
+
+  },
+
   registerFilterListItemClickEvent: function() {
     var panel = this;
-    $('li', panel.elLk.filterTrackBox).off().on('click', function(e) {
+    $('text', panel.elLk.filterTrackBox).off().on('click', function(e) {
       var dimKey       = $(this).data("dim-key") || "";
+
+      panel.createFilterRHSPopup(e, dimKey);
+
+return;
+
       var currentState = $(this).find('span.fancy-checkbox').hasClass('selected') ? "on" : "off";
       var newState     = currentState === "on" ? "off" : "on";
       var showValue    = newState === "on" ? 1 : 0;
@@ -2710,7 +2737,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       var selected = hash.state === "on" ? "selected" : "";
       var shortLabel = panel.filterMatrixObj[key][id].shortLabel;
       if(hash.show === 1) { 
-        li_html += '<li data-track-id="' + id + '"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text class="_ht" title="'+ panel.createTooltipText(key,id) +'">' + shortLabel + '</text></li>';
+        li_html += '<li data-track-id="' + id + '" class="_ht" title="'+ panel.createTooltipText(key,id) +'"><span class="fancy-checkbox '+selected+'" data-cell="'+key+'"></span><text>' + shortLabel + '</text></li>';
       }
     });
     ul.html(li_html);
