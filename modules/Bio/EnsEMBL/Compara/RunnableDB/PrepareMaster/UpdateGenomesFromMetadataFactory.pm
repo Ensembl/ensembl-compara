@@ -74,7 +74,7 @@ sub fetch_input {
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
 	my $list_out = $self->get_command_output($list_cmd);
-	my @release_genomes = split( /\s+/, $list_out );
+	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
     die "No genomes reported for release" unless @release_genomes;
 
