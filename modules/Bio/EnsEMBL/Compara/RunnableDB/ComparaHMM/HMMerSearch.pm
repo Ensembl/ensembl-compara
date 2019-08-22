@@ -181,7 +181,7 @@ sub _run_HMM_search {
     }
 
     #Parsing outputs
-    open( HMM, "$fastafile.out" );
+    open( HMM, '<', "$fastafile.out" );
 
     if ( $self->param('store_all_hits') ) {
 

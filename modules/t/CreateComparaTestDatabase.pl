@@ -722,7 +722,7 @@ foreach my $genome_db_id ($ref_genome_db_id, @$other_genome_db_ids) {
     $species_name =~ s/\s+/_/g;
     my $file = $species_name . ".seq_region_file";
     
-    open F, ">$file" or
+    open(F, '>', $file) or
       die "can not open $file\n";
     print F "[\n";
     

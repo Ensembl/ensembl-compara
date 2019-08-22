@@ -132,7 +132,7 @@ sub dump_sequences_to_workdir {
         $self->param('single_peptide_tree', 1);
         return 1;
     }
-    open (OUTSEQ, ">$fastafile") or $self->throw("Error opening $fastafile for writing: $!");
+    open (OUTSEQ, '>', $fastafile) or $self->throw("Error opening $fastafile for writing: $!");
 
     my $residues = 0;
     my $count = 0;

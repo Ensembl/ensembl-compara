@@ -181,7 +181,7 @@ sub base_age {
 
     #generate bed_file location
     my $bed_file = $self->param('bed_dir') . $ref_genome_db->get_short_name . "_ages_" . $mlss->dbID . "_" . $seq_region . ".bed";
-    open (BED, ">$bed_file") || die "ERROR writing ($bed_file) file\n";
+    open (BED, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
 
     foreach my $gat (@$genomic_align_trees) {
         my $tree_string = $gat->newick_format('simple');
@@ -365,7 +365,7 @@ sub quick_base_age {
     my $seq_region = $self->param('seq_region');
     my $bed_file = $self->param('bed_dir') . "Test_ages_" . $seq_region . ".bed";
 
-    open (BED, ">$bed_file") || die "ERROR writing ($bed_file) file\n";
+    open (BED, '>', $bed_file) || die "ERROR writing ($bed_file) file\n";
     my $base = 123;
     my $node_id = 61900000001;
     my $normalised_age = 500;

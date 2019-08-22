@@ -14,6 +14,4 @@ severity=4
 # Need to solve these ones
 [InputOutput::ProhibitBarewordFileHandles]
 severity=4
-[InputOutput::ProhibitTwoArgOpen]
-severity=4
 

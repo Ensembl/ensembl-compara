@@ -165,9 +165,9 @@ sub _concatenate_profiles {
     $self->param( 'local_hmm_library', $self->param('panther_dir') . "/" . $self->param('library_name') );
     print ">>concatenating:" . $self->param('local_hmm_library') . "|\n" if ($self->debug);
 
-    open my $library_fh , ">" . $self->param('local_hmm_library') || die "Could not open local_hmm_library file.";
+    open my $library_fh , '>', $self->param('local_hmm_library') || die "Could not open local_hmm_library file.";
     foreach my $hmm (@hmm_list) {
-        open my $hmm_fh, $hmm || die "Could not open $hmm file.";
+        open my $hmm_fh, '<', $hmm || die "Could not open $hmm file.";
         my @lines = <$hmm_fh>;
         print $library_fh @lines;
         close($hmm_fh);

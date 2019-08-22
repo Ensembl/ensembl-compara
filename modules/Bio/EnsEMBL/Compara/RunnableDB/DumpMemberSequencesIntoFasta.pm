@@ -58,7 +58,7 @@ sub run {
                 " GROUP BY m.sequence_id ".
                 " ORDER BY m.sequence_id, m.stable_id";
 
-    open FASTAFILE, ">$fasta_name"
+    open(FASTAFILE, '>', $fasta_name)
         or die "Could open $fasta_name for output\n";
 
     print("writing fasta to file '$fasta_name'\n");

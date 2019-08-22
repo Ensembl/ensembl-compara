@@ -110,7 +110,7 @@ sub _fetch_and_concatenate_hmm_profiles{
 
     #New compara HMM library
     my $hmm_file = $self->param('worker_compara_hmm_lib') . "/" . $self->param('library_name');
-    open my $hmm_fh , ">" . $hmm_file || die "Could not open local hmm_library file.";
+    open my $hmm_fh , '>', $hmm_file || die "Could not open local hmm_library file.";
 
     #Running sql query
     my $hmm_sql = "SELECT model_id, UNCOMPRESS(compressed_profile) AS profile_txt FROM hmm_profile";

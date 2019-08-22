@@ -69,7 +69,7 @@ sub fetch_input {
     #Input fasta file with all the sequences
     my $worker_temp_directory = $self->worker_temp_directory;
     my $input_fasta_file      = "$worker_temp_directory/all_sequences.fasta";
-    open my $seq_fh, ">$input_fasta_file" || die "Could not open file: $worker_temp_directory/all_sequences.fasta";
+    open my $seq_fh, '>', $input_fasta_file || die "Could not open file: $worker_temp_directory/all_sequences.fasta";
 
     #Fetching all sequences:
     my $get_all_seqs_sql = "SELECT seq_member_id, sequence FROM seq_member JOIN sequence USING(sequence_id)";
@@ -167,7 +167,7 @@ sub parse_clusters {
     my $self = shift;
 
     my $cluster_file = $self->param_required('cluster_file');
-    open my $cluster_fh, $cluster_file || die "Could not open CDHit cluster file";
+    open my $cluster_fh, '<', $cluster_file || die "Could not open CDHit cluster file";
     
     my @seq_projections;
     my @this_cluster;

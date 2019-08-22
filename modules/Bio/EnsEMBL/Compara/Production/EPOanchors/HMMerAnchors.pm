@@ -79,7 +79,7 @@ sub fetch_input {
 	my $simple_align = $align_slice->get_SimpleAlign(); 
 	my $stockholm_file = $self->worker_temp_directory . "stockholm." . $genomic_align_block_id;
 	#print genomic_align_block in stockholm format
-	open F, ">$stockholm_file" || throw("Couldn't open $stockholm_file");
+	open(F, '>', $stockholm_file) || throw("Couldn't open $stockholm_file");
 	print F "# STOCKHOLM 1.0\n";
 	foreach my $seq( $simple_align->each_seq) {
 		print F $genomic_align_block->dbID . "/" . $seq->display_id . "\t" . $seq->seq . "\n";

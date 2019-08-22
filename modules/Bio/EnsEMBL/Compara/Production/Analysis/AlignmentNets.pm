@@ -148,7 +148,7 @@ sub run_nets {
     $query_net_file = $filtered_net_file;
   }
   
-  open $fh, $query_net_file or 
+  open $fh, '<', $query_net_file or
       $self->throw("Could not open net file '$query_net_file' for reading\n");
   $res_chains = $self->parse_Net_file($fh);
   close($fh);

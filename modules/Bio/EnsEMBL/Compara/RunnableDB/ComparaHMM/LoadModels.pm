@@ -139,7 +139,7 @@ sub store_hmmprofile {
 
     $multicm_file ||= $self->param('cm_file_or_directory');
     print STDERR "Opening file $multicm_file\n" if ($self->debug());
-    open MULTICM, $multicm_file or die "$!\n";
+    open(MULTICM, '<', $multicm_file) or die "$!\n";
     my ($name, $model_id) = ($hmm_name, $hmm_model_id);
     my $profile_content;
 
@@ -195,7 +195,7 @@ sub store_infernalhmmprofile {
 
     $multicm_file ||= $self->param('cm_file_or_directory');
     print STDERR "Opening file $multicm_file\n" if ($self->debug());
-    open MULTICM, $multicm_file or die "$!\n";
+    open(MULTICM, '<', $multicm_file) or die "$!\n";
     my ($name, $model_id) = ($hmm_name, $hmm_model_id);
     my $profile_content;
 

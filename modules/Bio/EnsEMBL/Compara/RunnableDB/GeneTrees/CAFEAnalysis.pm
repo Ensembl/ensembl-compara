@@ -182,7 +182,7 @@ sub parse_cafe_output {
 
     print STDERR "CAFE OUT FILE [$cafe_out_file]\n" if ($self->debug);
 
-    open my $fh, "<". $cafe_out_file or die "$!: $cafe_out_file";
+    open my $fh, "<", $cafe_out_file or die "$!: $cafe_out_file";
 
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);

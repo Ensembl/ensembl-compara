@@ -128,7 +128,7 @@ sub load {
     $self->from(Bio::EnsEMBL::Compara::StableId::NamedClusterSet->new());
     $self->to(  Bio::EnsEMBL::Compara::StableId::NamedClusterSet->new());
 
-    open(LINKFILE, $filename) || die "Cannot open '$filename' file: $@";
+    open(LINKFILE, '<', $filename) || die "Cannot open '$filename' file: $@";
     while (my ($from_clid, $from_clname, $from_size, $to_clid, $to_clname, $to_size, $contrib) = split(/\s/,<LINKFILE>)) {
 
         next unless($contrib=~/^\d+$/); # skip the header line if present
@@ -158,7 +158,7 @@ sub save {
     my $self     = shift @_;
     my $filename = shift @_;
 
-    open(LINKFILE, ">$filename");
+    open(LINKFILE, '>', $filename);
 
     foreach my $from_clid (sort {$a <=> $b} keys %{$self->direct_contrib}) {
         my $from_clname = $self->from->clid2clname($from_clid);

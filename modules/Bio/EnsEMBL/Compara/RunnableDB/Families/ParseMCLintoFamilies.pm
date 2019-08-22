@@ -49,7 +49,7 @@ sub write_output {
     my $sma           = $compara_dba->get_SeqMemberAdaptor();
     my $cluster_index = 1;
 
-    open (MCL, $mcl_name) || die "could not open '$mcl_name' for reading: $!";
+    open (MCL, '<', $mcl_name) || die "could not open '$mcl_name' for reading: $!";
     while (my $line = <MCL>) {
         chomp $line;
 

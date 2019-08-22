@@ -134,7 +134,7 @@ sub parse_blast_table_into_matrix_hash {
     my $curr_name    = '';
     my $curr_index   = 0;
 
-    open(BLASTTABLE, "<$filename") || die "Could not open the blast table file '$filename'";
+    open(BLASTTABLE, '<', $filename) || die "Could not open the blast table file '$filename'";
     while(my $line = <BLASTTABLE>) {
 
         if($line=~/^#/) {

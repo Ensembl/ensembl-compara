@@ -89,7 +89,7 @@ sub new {
     $self->{'_fh'} = $fh;
   } else {
     $self->file($file);
-    open F, $self->file;
+    open F, '<', $self->file;
     $self->{'_fh'} = \*F;
   }
   return $self->_initialize ? $self : undef;

@@ -117,11 +117,11 @@ sub fetch_and_store_a_chunk {
     my @member_ids = ();
 
     my $seq_loader_cmd = { 'mfetch' => "mfetch -d $uniprot_version", 'pfetch' => 'pfetch -F', 'file' => 'cat ' }->{$seq_loader_name};
-    my $cmd = "$seq_loader_cmd $id_string |";
+    my $cmd = "$seq_loader_cmd $id_string";
 
 
     ## would be great to detect here the case of mole server being down, but it's tricky to peek into the stream parser
-  open(IN, $cmd) or die "Error running $seq_loader_name for ids ($id_string)";
+  open(IN, '-|', $cmd) or die "Error running $seq_loader_name for ids ($id_string)";
 
   my $fh = Bio::SeqIO->new(-fh=>\*IN, -format=>"swiss");
   my $loaded_in_this_batch = 0;
