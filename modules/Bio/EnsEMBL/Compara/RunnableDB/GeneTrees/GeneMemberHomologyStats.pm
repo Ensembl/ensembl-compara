@@ -1,0 +1,120 @@
+=head1 LICENSE
+
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [2016-2019] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+=pod
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats
+
+=head1 SYNOPSIS
+
+
+
+=cut
+
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats;
+
+use warnings;
+use strict;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Data::Dumper;
+
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use File::Find;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::param_defaults},
+        'param'   => undef,
+    }
+}
+
+sub fetch_input {
+    my $self = shift;
+    
+    my $basedir = $self->param_required('homology_dumps_dir');
+    my $member_type = $self->param_required('member_type');
+    
+    my $homology_files= [];
+    my $wanted = sub { _wanted($homology_files, $member_type) };
+    find($wanted, $basedir);
+    print "Found " . scalar @$homology_files . " homology dump files to scan..\n\n" if $self->debug;
+    $self->param('homology_files', $homology_files);
+}
+
+sub _wanted {
+   return if ! -e; 
+   my ($files, $member_type) = @_;
+   push( @$files, $File::Find::name ) if $File::Find::name =~ /\.$member_type\.homologies\.tsv$/;
+}
+
+sub run {
+    my $self = shift;
+
+    my @hom_files = @{$self->param('homology_files')};
+
+    my $gm_hom_stats;
+    my $file_count = 0;
+    foreach my $hom_file ( @hom_files ) {
+        $file_count++;
+        # print "Scanning $hom_file\n" if $self->debug;
+        open(HOM, '<', $hom_file) or die "Cannot open $hom_file";
+        my $this_header = <HOM>;
+        while ( my $line = <HOM> ) {
+            my $row = map_row_to_header($line, $this_header);
+            my ( $homology_type, $gm_id_1, $gm_id_2 ) = ($row->{homology_type}, $row->{gene_member_id}, $row->{hom_gene_member_id});
+            
+            $gm_hom_stats->{$gm_id_1}->{orthologues} += 1 if ( $homology_type =~ /^ortholog/ );
+            $gm_hom_stats->{$gm_id_2}->{orthologues} += 1 if ( $homology_type =~ /^ortholog/ );
+            
+            $gm_hom_stats->{$gm_id_1}->{homoeologues} += 1 if ( $homology_type =~ /^homoeolog/ );
+            $gm_hom_stats->{$gm_id_2}->{homoeologues} += 1 if ( $homology_type =~ /^homoeolog/ );
+            
+            $gm_hom_stats->{$gm_id_1}->{paralogues} += 1 if ( $homology_type =~ /paralog$/ || $homology_type eq 'gene_split' );
+            $gm_hom_stats->{$gm_id_2}->{paralogues} += 1 if ( $homology_type =~ /paralog$/ || $homology_type eq 'gene_split' );
+        }
+        printf("%i files scanned; %i gene members recorded..\n", $file_count, scalar(keys %$gm_hom_stats)) if ($self->debug && $file_count % 1000 == 0);
+    }
+    $self->param('gm_hom_stats', $gm_hom_stats);
+}
+
+sub write_output {
+    my $self = shift;
+    
+    my $update_stats_sql = "UPDATE gene_member_hom_stats SET orthologues = ?, paralogues = ?, homoeologues = ? WHERE gene_member_id = ?";
+    my $sth = $self->compara_dba->dbc->prepare($update_stats_sql);
+    
+    my $gm_hom_stats = $self->param('gm_hom_stats');
+    foreach my $gm_id ( keys %$gm_hom_stats ) {
+        $sth->execute(
+            ($gm_hom_stats->{$gm_id}->{orthologues}  || 0),
+            ($gm_hom_stats->{$gm_id}->{paralogues}   || 0),
+            ($gm_hom_stats->{$gm_id}->{homoeologues} || 0),
+            $gm_id
+        );
+    }
+    $sth->finish;
+}
+
+1;
