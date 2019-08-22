@@ -84,6 +84,24 @@ sub compara_dba {
 }
 
 
+=head2 _get_active_compara_dba
+
+  Example     : $self->_get_active_compara_dba();
+  Description : Private method to return the currently cached compara_dba. Note that
+                this method will not update the DBA based on the current job parameters
+                and may return the DBA of the previous job. It will return undef if
+                $self->compara_dba has never been called, even though the call would
+                return a DBA
+  Returntype  : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
+
+=cut
+
+sub _get_active_compara_dba {
+    my $self = shift;
+    return $self->{'_cached_dba'}->{'compara_db'};
+}
+
+
 =head2 get_cached_compara_dba
 
     Description: Getter/setter for arbitrary DBAs coming from other parameters.
@@ -181,7 +199,9 @@ sub load_registry {
 sub disconnect_from_databases {
     my $self = shift;
     $self->dbc->disconnect_if_idle() if ($self->dbc);
-    $self->compara_dba->dbc->disconnect_if_idle() if ($self->compara_dba and $self->compara_dba->dbc);
+    if (my $compara_dba = $self->_get_active_compara_dba) {
+        $compara_dba->dbc->disconnect_if_idle() if $compara_dba->dbc;
+    }
 }
 
 
@@ -193,7 +213,9 @@ sub disconnect_from_databases {
 
 sub disconnect_from_hive_database {
     my $self = shift;
-    return if ($self->dbc and $self->compara_dba and $self->compara_dba->dbc and ($self->dbc eq $self->compara_dba->dbc));
+    if (my $compara_dba = $self->_get_active_compara_dba) {
+        return if ($self->dbc and $compara_dba->dbc and ($self->dbc eq $compara_dba->dbc));
+    }
     $self->dbc->disconnect_if_idle() if ($self->dbc);
 }
 
