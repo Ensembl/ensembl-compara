@@ -57,56 +57,125 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats;
 use strict;
 use warnings;
 
+use Data::Dumper;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+# $Data::Dumper::Maxdepth=1;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-
-our $sql_paralogies = '
-SELECT description, COUNT(*) AS ngr, SUM(nh), SUM(ng), SUM(perc_id)/SUM(2*nh)
-FROM (
-    SELECT description, gene_tree_root_id, COUNT(DISTINCT homology_id) AS nh, COUNT(DISTINCT seq_member_id) AS ng, SUM(perc_id) AS perc_id
-    FROM homology JOIN homology_member USING (homology_id)
-    WHERE method_link_species_set_id = ?
-    GROUP BY description, gene_tree_root_id
-) t GROUP BY description;
-';
-
-our $sql_paralogies_taxon = $sql_paralogies;
-$sql_paralogies_taxon =~ s/description/species_tree_node_id/g;
-$sql_paralogies_taxon =~ s/\?/? AND description != "gene_split"/;
-
-sub param_defaults {
-    my $self = shift;
-    return {
-        %{ $self->SUPER::param_defaults },
-        'species_tree_label'    => 'default',   # The label of the species-tree the gene-trees are reconciled to
-    }
-}
 
 sub fetch_input {
     my $self = shift @_;
 
     my $member_type  = $self->param_required('member_type');
-    my $mlss_id      = $self->param_required('homo_mlss_id');
+    my $mlss_id      = $self->param_required('mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 
-    my $data1 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies, undef, $mlss_id);
-    foreach my $line (@$data1) {
-        my $homology_type = sprintf('%s_%s', $member_type, $line->[0]);
-        $mlss->store_tag(sprintf('n_%s_groups', $homology_type), $line->[1]);
-        $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), $line->[2]);
-        $mlss->store_tag(sprintf('n_%s_genes', $homology_type), $line->[3]);
-        $mlss->store_tag(sprintf('avg_%s_perc_id', $homology_type), $line->[4]);
+    my $homology_flatfile = $self->param_required('homology_flatfile');
+    open( HFH, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
+    my $header_line = <HFH>;
+    my (%stats_raw, %stats_taxon_raw);
+    while ( my $line = <HFH> ) {
+        my $row = map_row_to_header($line, $header_line);
+        my ( $homology_type, $gene_tree_root_id, $species_tree_node_id, $seq_member_id, $hom_seq_member_id, $identity,
+        $hom_identity ) = ($row->{homology_type}, $row->{gene_tree_root_id}, $row->{species_tree_node_id}, $row->{seq_member_id},
+        $row->{hom_seq_member_id}, $row->{identity}, $row->{hom_identity});
+        
+        
+        # homology counts
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"num_homologies"} += 1;        
+        # unique seq_members
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"seq_members"}->{$seq_member_id} = 1;
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{"seq_members"}->{$hom_seq_member_id} = 1;
+        # sum perc_id
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{'perc_id'} += $identity;
+        $stats_raw{$homology_type}->{$gene_tree_root_id}->{'perc_id'} += $hom_identity;
+        
+        
+        # same as above, grouping on species_tree_node_id instead of homology type
+        next if $homology_type eq 'gene_split';
+        $stats_taxon_raw{$species_tree_node_id}->{$gene_tree_root_id}->{"num_homologies"} += 1;
+        $stats_taxon_raw{$species_tree_node_id}->{$gene_tree_root_id}->{"seq_members"}->{$seq_member_id} = 1;
+        $stats_taxon_raw{$species_tree_node_id}->{$gene_tree_root_id}->{"seq_members"}->{$hom_seq_member_id} = 1;
+        $stats_taxon_raw{$species_tree_node_id}->{$gene_tree_root_id}->{'perc_id'} += $identity;
+        $stats_taxon_raw{$species_tree_node_id}->{$gene_tree_root_id}->{'perc_id'} += $hom_identity;        
+    }
+    
+    my (%para_stats, %taxon_stats);
+    foreach my $ht ( keys %stats_raw ) {
+        foreach my $gtr ( keys %{$stats_raw{$ht}} ) {
+            # next unless defined $stats_raw{$ht}->{$gtr}->{'num_homologies'};
+            $para_stats{$ht}->{'count'} += 1;
+            $para_stats{$ht}->{'sum_n_homologies'} += $stats_raw{$ht}->{$gtr}->{'num_homologies'};
+            $para_stats{$ht}->{'sum_n_genes'} += scalar(keys(%{$stats_raw{$ht}->{$gtr}->{'seq_members'}}));
+            $para_stats{$ht}->{'sum_perc_id'} += $stats_raw{$ht}->{$gtr}->{'perc_id'};
+        }
+    }
+    foreach my $stn ( keys %stats_taxon_raw ) {
+        foreach my $gtr ( keys %{$stats_taxon_raw{$stn}} ) {
+            # next unless defined $stats_taxon_raw{$stn}->{$gtr}->{'num_homologies'};
+            $taxon_stats{$stn}->{'count'} += 1;
+            $taxon_stats{$stn}->{'sum_n_homologies'} += $stats_taxon_raw{$stn}->{$gtr}->{'num_homologies'};
+            $taxon_stats{$stn}->{'sum_n_genes'} += scalar(keys(%{$stats_taxon_raw{$stn}->{$gtr}->{'seq_members'}}));
+            $taxon_stats{$stn}->{'sum_perc_id'} += $stats_taxon_raw{$stn}->{$gtr}->{'perc_id'};
+        }
     }
 
-    my $data2 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies_taxon, undef, $mlss_id);
-    foreach my $line (@$data2) {
-        my $homology_type = sprintf('%s_paralogs_%s', $member_type, $line->[0]);
-        $mlss->store_tag(sprintf('n_%s_groups', $homology_type), $line->[1]);
-        $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), $line->[2]);
-        $mlss->store_tag(sprintf('n_%s_genes', $homology_type), $line->[3]);
-        $mlss->store_tag(sprintf('avg_%s_perc_id', $homology_type), $line->[4]);
+    $self->param('paralog_stats', \%para_stats);
+    $self->param('taxon_stats', \%taxon_stats);
+}
+
+sub run {
+    my $self = shift;
+    
+    if ( $self->debug ) {
+        my $member_type  = $self->param_required('member_type');
+        my $para_stats  = $self->param_required('paralog_stats');
+        foreach my $ht ( keys %$para_stats ) {
+            my $stat_type = sprintf('%s_%s', $member_type, $ht);
+            print "$ht:\n";
+            printf( "\tn_%s_groups : %s\n", $stat_type, $para_stats->{$ht}->{'count'} );
+            printf( "\tn_%s_pairs : %s\n", $stat_type, $para_stats->{$ht}->{'sum_n_homologies'} );
+            printf( "\tn_%s_genes : %s\n", $stat_type, $para_stats->{$ht}->{'sum_n_genes'} );
+            printf( "\tavg_%s_perc_id : %s\n", $stat_type, ($para_stats->{$ht}->{'sum_perc_id'}/(2*$para_stats->{$ht}->{'sum_n_homologies'})) );
+        }
+        print "\n";
+        my $taxon_stats = $self->param_required('taxon_stats');
+        foreach my $stn ( keys %$taxon_stats ) {
+            my $stat_type = sprintf('%s_paralogs_%s', $member_type, $stn);
+            print "$stn:\n";
+            printf( "\tn_%s_groups : %s\n", $stat_type, $taxon_stats->{$stn}->{'count'} );
+            printf( "\tn_%s_pairs : %s\n", $stat_type, $taxon_stats->{$stn}->{'sum_n_homologies'} );
+            printf( "\tn_%s_genes : %s\n", $stat_type, $taxon_stats->{$stn}->{'sum_n_genes'} );
+            printf( "\tavg_%s_perc_id : %s\n", $stat_type, ($taxon_stats->{$stn}->{'sum_perc_id'}/(2*$taxon_stats->{$stn}->{'sum_n_homologies'})) );
+        }
+        print "\n";
     }
 }
 
+sub write_output {
+    my $self = shift;
+    
+    my $member_type  = $self->param_required('member_type');
+    my $mlss_id      = $self->param_required('mlss_id');
+    my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    
+    my $para_stats  = $self->param_required('paralog_stats');
+    foreach my $ht ( keys %$para_stats ) {
+        my $stat_type = sprintf('%s_%s', $member_type, $ht);
+        $mlss->store_tag(sprintf("n_%s_groups", $stat_type), $para_stats->{$ht}->{'count'});
+        $mlss->store_tag(sprintf("n_%s_pairs", $stat_type), $para_stats->{$ht}->{'sum_n_homologies'});
+        $mlss->store_tag(sprintf("n_%s_genes", $stat_type), $para_stats->{$ht}->{'sum_n_genes'});
+        $mlss->store_tag(sprintf("avg_%s_perc_id", $stat_type), ($para_stats->{$ht}->{'sum_perc_id'}/(2*$para_stats->{$ht}->{'sum_n_homologies'})));
+    }
+    
+    my $taxon_stats = $self->param_required('taxon_stats');
+    foreach my $stn ( keys %$taxon_stats ) {
+        my $stat_type = sprintf('%s_paralogs_%s', $member_type, $stn);
+        $mlss->store_tag(sprintf("n_%s_groups", $stat_type), $taxon_stats->{$stn}->{'count'});
+        $mlss->store_tag(sprintf("n_%s_pairs", $stat_type), $taxon_stats->{$stn}->{'sum_n_homologies'});
+        $mlss->store_tag(sprintf("n_%s_genes", $stat_type), $taxon_stats->{$stn}->{'sum_n_genes'});
+        $mlss->store_tag(sprintf("avg_%s_perc_id", $stat_type), ($taxon_stats->{$stn}->{'sum_perc_id'}/(2*$taxon_stats->{$stn}->{'sum_n_homologies'})));
+    }
+}
 
 1;
