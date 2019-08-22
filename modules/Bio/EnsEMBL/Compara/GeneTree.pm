@@ -600,15 +600,15 @@ sub expand_subtrees {
     }
 
     # The tree is not loaded yet, we can do a fast-loading procedure
-    if (not defined $self->{'_root'}) {
-
+    if (not defined $self->{'_is_expanded'}) {
+        
         # Gets the subtrees
         my %subtrees;
         foreach my $subtree (@{$self->adaptor->fetch_subtrees($self)}) {
             $subtree->expand_subtrees if ($subtree->tree_type eq 'supertree');
             $subtrees{$subtree->root->_parent_id} = $subtree->root;
         }
-
+        
         # Attaches them
         foreach my $leaf (@{$self->root->get_all_leaves}) {
             die "All the leaves of a super-tree should be linkable to a tree" unless exists $subtrees{$leaf->node_id};
@@ -617,6 +617,7 @@ sub expand_subtrees {
         }
     }
 
+    $self->{'_is_expanded'} = 1;
     # To update it at the next get_all_Members call
     delete $self->{'_member_array'};
     # Gets the global alignment
@@ -1076,4 +1077,3 @@ sub print_tree {
 
 
 1;
-
