@@ -15,11 +15,13 @@
 # limitations under the License.
 
 
-=head1
+=head1 POD
+
   this script does homology dumps generated with this SQL statement from two different
   compara databases and compares them for differences.  
 
   perl ~/ensembl-compara/scripts/compare/homology_diff.pl --url1 mysql://ensro@mysql-ensembl-mirror:4240/ensembl_compara_93 --url2 file:///compare_reference_datasets/zebrafish_homology_homo_sapiens_e93.out --conf ~/ensembl-compara/scripts/compare/homology_diff.conf -gdb1 236 -gdb2 150
+
 =cut
 
 use strict;
