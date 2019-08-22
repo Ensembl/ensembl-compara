@@ -48,25 +48,25 @@ foreach my $emf_file (@ARGV) {
   my $maf_file = $emf_file;
   $maf_file =~ s/(\.emf)?$//;
   $maf_file .= ".maf";
-  open(EMF, '<', $emf_file) or die "Cannot open EMF file <$emf_file>\n";
-  open(MAF, '>', $maf_file) or die "Cannot open MAF file $maf_file\n";
-  print MAF "##maf version=1\n";
-  print MAF "# emf2maf.pl v$VERSION from file $emf_file\n";
-  print MAF "# Here is the header from the orginal file:\n";
+  open(my $emf_fh, '<', $emf_file) or die "Cannot open EMF file <$emf_file>\n";
+  open(my $maf_fh, '>', $maf_file) or die "Cannot open MAF file $maf_file\n";
+  print $maf_fh "##maf version=1\n";
+  print $maf_fh "# emf2maf.pl v$VERSION from file $emf_file\n";
+  print $maf_fh "# Here is the header from the orginal file:\n";
   my $data = [];
   my $pattern = "";
   my $mode = "header";
-  while ($_ = <EMF>) {
+  while ($_ = <$emf_fh>) {
     if ($_ =~ /^##/) {
      if ($_ =~ /^## ?DATE (.+)/) {
-       print MAF "# original dump date: $1\n";
+       print $maf_fh "# original dump date: $1\n";
      } elsif ($_ =~ /^## ?RELEASE (.+)/) {
-       print MAF "# ensembl release: $1\n";
+       print $maf_fh "# ensembl release: $1\n";
      } elsif ($_ =~ /^### (.+)/) {
-       print MAF "# epo2x composite sequence: $1\n";
+       print $maf_fh "# epo2x composite sequence: $1\n";
      }
     } elsif ($_ =~ /^# *(.+)/) {
-      print MAF "# emf comment: $1\n";
+      print $maf_fh "# emf comment: $1\n";
     } elsif ($_ =~ /^SEQ (.+)/) {
       my $info = $1;
       my ($species, $chromosome, $start, $end, $strand) =  $info =~ /(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)/;
@@ -79,9 +79,9 @@ foreach my $emf_file (@ARGV) {
       $pattern .= " (\-?[\\d\.]+)";
       push(@$data, {type => "SCORE", values => []});
     } elsif ($_ =~ /^TREE (.+)/) {
-      print MAF "# tree: $1\n"
+      print $maf_fh "# tree: $1\n"
     } elsif ($_ =~ /^ID (.+)/) {
-      print MAF "# id: $1\n"
+      print $maf_fh "# id: $1\n"
     } elsif ($_ =~ /^DATA/) {
       if ($mode eq "header") {
         $mode = "data";
@@ -90,7 +90,7 @@ foreach my $emf_file (@ARGV) {
       }
     } elsif ($_ =~ /^\/\//) {
       if ($mode eq "data") {
-        write_maf($data);
+        write_maf($maf_fh, $data);
 	$data = [];
 	$pattern = "";
         $mode = "header";
@@ -111,13 +111,13 @@ foreach my $emf_file (@ARGV) {
       }
     }
   }
-  close(EMF);
-  close(MAF);
+  close($emf_fh);
+  close($maf_fh);
 }
 
 sub write_maf {
-  my ($data) = @_;
-  print MAF "a\n";
+  my ($maf_fh, $data) = @_;
+  print $maf_fh "a\n";
   foreach my $this_data (@$data) {
     if ($this_data->{type} eq "SEQ") {
       if (!defined($this_data->{chr_length})) {
@@ -134,15 +134,15 @@ sub write_maf {
         die "Cannot understand strand <".$this_data->{strand}.">";
       }
       $maf_length = $this_data->{end} - $this_data->{start} + 1;
-      printf MAF "s %-30s %10d %7d %s %10d ",
+      printf $maf_fh "s %-30s %10d %7d %s %10d ",
           ($this_data->{species}.".".$this_data->{seq_region}),
 	  $maf_start, $maf_length, $maf_strand,
 	  ($this_data->{chr_length} or 0);
-      print MAF $this_data->{seq}, "\n"
+      print $maf_fh $this_data->{seq}, "\n"
     } elsif ($this_data->{type} eq "SCORE") {
-      print MAF "# gerp scores: ", join(" ", @{$this_data->{values}}), "\n";
+      print $maf_fh "# gerp scores: ", join(" ", @{$this_data->{values}}), "\n";
     }
   }
-  print MAF "\n";
+  print $maf_fh "\n";
 }
 

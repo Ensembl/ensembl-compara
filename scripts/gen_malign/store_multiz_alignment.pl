@@ -585,9 +585,9 @@ sub get_this_dnafrag_mapper {
   my ($species, $name) = @_;
   my $dnafrag_mapper;
 
-  open(GOLD, '<', "$multiz_dir/${species}_gold.txt") or return undef;
+  open(my $gold_fh, '<', "$multiz_dir/${species}_gold.txt") or return undef;
   $dnafrag_mapper = new Bio::EnsEMBL::Mapper('frag', 'chromosome');
-  while (<GOLD>) {
+  while (<$gold_fh>) {
     next if (/^#/);
     if (!/^\d+\s+(\S+)\s+(\d+)\s+(\d+)\s+\d+\s+\w\s+(\S+)\s+(\d+)\s+(\d+)\s+([\-|\+|\.])$/) {
       throw ("Wrong File format: $multiz_dir/${species}_gold.txt\n$_\n");
@@ -605,7 +605,7 @@ sub get_this_dnafrag_mapper {
             $frag, $frag_start+1, $frag_end, $frag_strand."1",
             $chr, $chr_start+1, $chr_end);
   }
-  close(GOLD);
+  close($gold_fh);
 
   return $dnafrag_mapper;
 }

@@ -192,19 +192,24 @@ sub run_cmd {
     $output->{'long_alignment'} = 0;
     $output->{'align_all_N'} = 0;
 
+    my $out_fh;
     if ($verbose) {
-        open OUT, '>', $outfile or die "Unable to open $outfile for writing";
+        open $out_fh, '>', $outfile or die "Unable to open $outfile for writing";
     }
+    my $time_fh;
     if ($show_time) {
-        open TIME, '>', $time_file or die "Unable to open $time_file for writing";
+        open $time_fh, '>', $time_file or die "Unable to open $time_file for writing";
     }
 
     #get 1bp variants from ancestor file (as opposed to 1bp insertions/deletions)
     my $ancestor_file = $ancestor_dir . $ref_species . "_ancestor_" . $seq_region . ".fa";
     my $original_anc_alleles = parse_ancestor_file($ancestor_file, $seq_region_start, $seq_region_end);
 
-    open VEP, '>', $vepfile or die "Unable to open $vepfile for writing";
+    open(my $vep_fh, '>', $vepfile) or die "Unable to open $vepfile for writing";
     my $concat_line;
+
+    $self->param('vep_fh', $vep_fh);
+    $self->param('out_fh', $out_fh);
 
     my $left = $flank;
     my $right = $flank;
@@ -215,20 +220,20 @@ sub run_cmd {
 
     #Skip if near the start or end of the chromosome
     if ($seq_region_start <= $left) {
-        print OUT "Skipped start of chromosome\n" if ($verbose);
+        print $out_fh "Skipped start of chromosome\n" if ($verbose);
         $self->param('output', $output);
         for (my $i = $seq_region_start; $i <= $left; $i++) {
             if ($verbose_vep) {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i] . "\tsubstitution\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i] . "\tsubstitution\n";
             } else {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i] . "\ts;\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i] . "\ts;\n";
             }
         }
         $seq_region_start = $left+1;
         $output->{'total_bases'}+=$left;
     }
     if ($seq_region_end > ($dnafrag->length - $right)) {
-        print OUT "Skipped end of chromosome\n" if ($verbose);
+        print $out_fh "Skipped end of chromosome\n" if ($verbose);
         $self->param('output', $output);
         $seq_region_end = $dnafrag->length - $right;
         $output->{'total_bases'}+=$right;
@@ -260,9 +265,9 @@ sub run_cmd {
         if ($n_cnt == length($seq)) {
             $output->{'all_N'}++;
             if ($verbose_vep) {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
             } else {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\ts;\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\ts;\n";
             }
             next;
         }
@@ -274,8 +279,8 @@ sub run_cmd {
         my $this_base = $seq_array[$left];
 
         if ($verbose) {
-            print OUT "==============================================================================================\n";
-            print OUT " chromosome $seq_region and position $allele_start ($this_base)\n";
+            print $out_fh "==============================================================================================\n";
+            print $out_fh " chromosome $seq_region and position $allele_start ($this_base)\n";
         }
 
         my $left_seq = substr $seq, 0, $left;
@@ -288,13 +293,13 @@ sub run_cmd {
             $output->{'count_low_complexity'}++;
 
             if ($verbose_vep) {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
             } else {
-                print VEP "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
+                print $vep_fh "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
             }
             if ($verbose) {
-                print OUT "found low complexity sequence\n";
-                print OUT "$left_seq:$this_base:$right_seq\n";
+                print $out_fh "found low complexity sequence\n";
+                print $out_fh "$left_seq:$this_base:$right_seq\n";
             }
             next;
         }
@@ -311,14 +316,14 @@ sub run_cmd {
             push @$gats, $restrict_gat if ($restrict_gat);
         }
 
-        print OUT "num gats " . @$gats . "\n" if ($verbose && $gats);
+        print $out_fh "num gats " . @$gats . "\n" if ($verbose && $gats);
         if (!$gats) {
-            print OUT "  No genomic_align_trees found in this region\n" if ($verbose);
+            print $out_fh "  No genomic_align_trees found in this region\n" if ($verbose);
             $output->{'no_gat'}++;
             if ($verbose_vep) {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
             } else {
-                print VEP "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
+                print $vep_fh "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
             }
             next;
         }
@@ -329,9 +334,9 @@ sub run_cmd {
             if ($original_gat->length > $max_alignment_length) {
                 $output->{'long_alignment'}++;
                 if ($verbose_vep) {
-                    print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                    print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
                 } else {
-                    print VEP "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
+                    print $vep_fh "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
                 }
                 next;
             }
@@ -342,14 +347,14 @@ sub run_cmd {
                 next if ($boundary_cases->{$i});
                 $boundary_cases->{$i} = 1;
 
-                print OUT "  WARNING: genomic_align_tree (" . $original_gat->reference_genomic_align->dnafrag_start . "_" .  $original_gat->reference_genomic_align->dnafrag_end . ") does not cover the whole slice (" . $slice_start . "-" . $slice_end . ")\n" if ($verbose);
+                print $out_fh "  WARNING: genomic_align_tree (" . $original_gat->reference_genomic_align->dnafrag_start . "_" .  $original_gat->reference_genomic_align->dnafrag_end . ") does not cover the whole slice (" . $slice_start . "-" . $slice_end . ")\n" if ($verbose);
                 
                 
                 $output->{'insufficient_gat'}++;
                 if ($verbose_vep) {
-                    print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                    print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
                 } else {
-                    print VEP "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
+                    print $vep_fh "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
                 }
                 next;
             }
@@ -358,9 +363,9 @@ sub run_cmd {
             if (check_for_alignments_all_N_or_gap($original_gat)) {
                 $output->{'align_all_N'}++;
                 if ($verbose_vep) {
-                    print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                    print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
                 } else {
-                    print VEP "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
+                    print $vep_fh "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
                 }
                 next;
             }
@@ -368,9 +373,9 @@ sub run_cmd {
             $output->{'num_bases_analysed'}++;
 
             if ($verbose) {
-                print OUT "Original alignment length " . $original_gat->length . "\n";
-                print_gat($original_gat, $verbose);
-                print OUT "\n";
+                print $out_fh "Original alignment length " . $original_gat->length . "\n";
+                print_gat($out_fh, $original_gat, $verbose);
+                print $out_fh "\n";
             }
 
             #Remove any sequences from original_gat that contain only Ns
@@ -379,14 +384,14 @@ sub run_cmd {
 
             if ($verbose) {
                 if ($num_sequences_of_all_N) {
-                    print OUT "Pruned original alignment length " . $original_gat->length . "\n";
-                    print_gat($original_gat, $verbose);
-                    print OUT "\n";
+                    print $out_fh "Pruned original alignment length " . $original_gat->length . "\n";
+                    print_gat($out_fh, $original_gat, $verbose);
+                    print $out_fh "\n";
                 }
             }
 
             if ($verbose_vep) {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
             } else {
                 $concat_line .= "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;";
             }
@@ -396,7 +401,7 @@ sub run_cmd {
             my ($ordered_fasta_files, $ga_lookup, $tree_string, $ordered_fasta_headers) = $self->init_files($dump_dir, $original_gat);
             
             #Run ortheus to create the 'reference' alignment
-            print OUT "\nREFERENCE\n" if ($verbose);
+            print $out_fh "\nREFERENCE\n" if ($verbose);
             my ($reference_gat, $reference_score);
 
             ($reference_gat, $reference_score) = $self->run_ortheus($compara_dba, $dump_dir, $ordered_fasta_files, $ordered_fasta_headers, $ga_lookup, $tree_string, $mlss, $ref_ga, $left-1, $i, $verbose);
@@ -409,7 +414,7 @@ sub run_cmd {
             $ref_alignments = call_ancestral_allele($reference_gat->reference_genomic_align_node,$ref_alignments, "REFERENCE", $verbose);
 
             #Run ortheus to create the 'modified' alignment (ie using the allele)
-            print OUT "\nMODIFIED\n" if ($verbose);
+            print $out_fh "\nMODIFIED\n" if ($verbose);
             
             foreach my $indel_type ("insertion", "deletion") {
                 my $alignments;
@@ -426,8 +431,8 @@ sub run_cmd {
                     $concat_line .= $output_line unless ($verbose_vep);
                 }
             }
-            print VEP "$concat_line\n";
-            print TIME "$i ". (Time::HiRes::time() - $time_start1) . "\n" if ($show_time);
+            print $vep_fh "$concat_line\n";
+            print $time_fh "$i ". (Time::HiRes::time() - $time_start1) . "\n" if ($show_time);
             
             $original_gat->release_tree;
             $reference_gat->release_tree;
@@ -439,17 +444,17 @@ sub run_cmd {
     if ($orig_seq_region_end > ($dnafrag->length - $right)) {
         for (my $i = ($dnafrag->length - $right + 1); $i <= $orig_seq_region_end; $i++) {
             if ($verbose_vep) {
-                print VEP "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
+                print $vep_fh "$seq_region\t$i\t" . $original_anc_alleles->[$i-$seq_region_start] . "\tsubstitution\n";
             } else {
-                print VEP "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
+                print $vep_fh "$seq_region\t$i\t". $original_anc_alleles->[$i-$seq_region_start]. "\ts;\n";
             }
         }
     }
 
-    print_summary($output) if ($verbose);
-    close VEP;
-    close OUT if ($verbose);
-    close TIME if ($show_time);
+    print_summary($out_fh, $output) if ($verbose);
+    close $vep_fh;
+    close $out_fh if ($verbose);
+    close $time_fh if ($show_time);
 
     } );
 
@@ -460,10 +465,13 @@ sub run_cmd {
 sub find_ancestral_alleles {
     my ($self, $indel_type, $this_slice, $slice_start, $slice_end, $allele_seq, $allele_start, $allele_end, $original_gat, $ref_ga, $reference_gat, $ref_alignments, $dump_dir, $compara_dba, $mlss, $left, $right, $flank, $seq_region, $output, $verbose, $verbose_vep) = @_;
 
+    my $vep_fh = $self->param('vep_fh');
+    my $out_fh = $self->param('out_fh');
+
     my $vep_line;
 
-    print OUT "------\n" if ($verbose);
-    print OUT "$indel_type $allele_seq\n" if ($verbose);
+    print $out_fh "------\n" if ($verbose);
+    print $out_fh "$indel_type $allele_seq\n" if ($verbose);
 
     #Create new sequence with insertion or deletion to the left of the current base
     #eg TTTGATTGCA CTGTGGTCTGA (before) 
@@ -492,13 +500,13 @@ sub find_ancestral_alleles {
     
     my ($ref_strict_ancestral_allele, $ref_flank_ancestral_allele) = get_ancestral_allele_calls($ref_alignment);
     my ($alt_strict_ancestral_allele, $alt_flank_ancestral_allele) = get_ancestral_allele_calls($alt_alignment);
-    print_report($ref_alignment, $alt_alignment, $ref_strict_ancestral_allele, $ref_flank_ancestral_allele, $alt_strict_ancestral_allele, $alt_flank_ancestral_allele, $allele_seq, $verbose) if ($verbose);
+    print_report($out_fh, $ref_alignment, $alt_alignment, $ref_strict_ancestral_allele, $ref_flank_ancestral_allele, $alt_strict_ancestral_allele, $alt_flank_ancestral_allele, $allele_seq, $verbose) if ($verbose);
 
     $event = check_ortheus_calls($indel_type, $event, $ref_alignment,$alt_alignment,$ref_flank_ancestral_allele,$alt_flank_ancestral_allele);
 
     if ($ref_alignment->{alignment}->[0]->{strict_center} !~ /^[$allele_seq\-]*$/ or
         ($alt_alignment->{alignment}->[0]->{strict_center} !~ /^[$allele_seq-]*$/)) {
-        print OUT "Error in indel: $indel_type $allele_seq -- ".$ref_alignment->{alignment}->[0]->{strict_center}, "\n" if ($verbose);
+        print $out_fh "Error in indel: $indel_type $allele_seq -- ".$ref_alignment->{alignment}->[0]->{strict_center}, "\n" if ($verbose);
         next;
     }
     
@@ -506,10 +514,10 @@ sub find_ancestral_alleles {
       $alt_alignment->{alignment}->[0]->{flank_center}."/".$alt_flank_ancestral_allele;
 
 #    if ($event =~ /unsure/) {
-#        resolve_unsure($event, $alt_alignment->{alignment}->[0]->{flank_center}, $alt_flank_ancestral_allele);
+#        resolve_unsure($out_fh, $event, $alt_alignment->{alignment}->[0]->{flank_center}, $alt_flank_ancestral_allele);
 #    }
 
-    print OUT $allele_string, "\n" if ($verbose);
+    print $out_fh $allele_string, "\n" if ($verbose);
 
     #output chr start end ref alt anc
 
@@ -550,7 +558,7 @@ sub find_ancestral_alleles {
         #Alt: alternative allele (with changes ie insertions, deletions)
         #RAnc:ancestral sequence on the reference alignment
         #AAnc: ancestral sequence on the alternative alignment (with changes)
-        print VEP "$seq_region\t$allele_end\t$allele_seq\t$event\t" . $ref_flank_allele . "\t" . $alt_flank_allele . "\t" . $ref_flank_ancestral_allele . "\t" . $alt_flank_ancestral_allele . "\n";
+        print $vep_fh "$seq_region\t$allele_end\t$allele_seq\t$event\t" . $ref_flank_allele . "\t" . $alt_flank_allele . "\t" . $ref_flank_ancestral_allele . "\t" . $alt_flank_ancestral_allele . "\n";
 
     } else {
 
@@ -562,9 +570,9 @@ sub find_ancestral_alleles {
 
     }
 
-    print OUT "$seq_region $allele_start $allele_end $allele_seq $event " . $ref_flank_allele . " " . $alt_flank_allele . " " . $ref_flank_ancestral_allele . " " . $alt_flank_ancestral_allele . "\n" if ($verbose);
-    print OUT "TYPE $event\n" if ($verbose);
-    print OUT "FINAL CALL: Type=$simple_event Ref=$ref_flank_allele Alt=$alt_flank_allele Anc=$ancestral_allele\n" if ($verbose);
+    print $out_fh "$seq_region $allele_start $allele_end $allele_seq $event " . $ref_flank_allele . " " . $alt_flank_allele . " " . $ref_flank_ancestral_allele . " " . $alt_flank_ancestral_allele . "\n" if ($verbose);
+    print $out_fh "TYPE $event\n" if ($verbose);
+    print $out_fh "FINAL CALL: Type=$simple_event Ref=$ref_flank_allele Alt=$alt_flank_allele Anc=$ancestral_allele\n" if ($verbose);
     
     $output->{sum_calls}->{$simple_event}++;
     $output->{sum_types}->{$event}++;
@@ -603,12 +611,12 @@ sub convert_gat_to_alignment {
 #Print out GenomicAlignTree object
 #
 sub print_gat {
-    my ($gat, $verbose) = @_;
+    my ($out_fh, $gat, $verbose) = @_;
     
     foreach my $this_node (@{$gat->get_all_sorted_genomic_align_nodes()}) {
 	foreach my $genomic_align (@{$this_node->get_all_genomic_aligns_for_node}) {
 	    next if ( $genomic_align->genome_db->name eq "ancestral_sequences");
-	    print OUT "   " . $genomic_align->aligned_sequence . " " . $genomic_align->genome_db->name . "\t" . $genomic_align->dnafrag->name . " " . $genomic_align->dnafrag_start . " " . $genomic_align->dnafrag_end . " " . $genomic_align->dnafrag_strand . " " . $genomic_align->cigar_line . "\n" if ($verbose);
+	    print $out_fh "   " . $genomic_align->aligned_sequence . " " . $genomic_align->genome_db->name . "\t" . $genomic_align->dnafrag->name . " " . $genomic_align->dnafrag_start . " " . $genomic_align->dnafrag_end . " " . $genomic_align->dnafrag_strand . " " . $genomic_align->cigar_line . "\n" if ($verbose);
 	}
     }
 }
@@ -727,7 +735,7 @@ sub dump_fasta {
 
     my $idx = 0;
     foreach my $this_leaf (@$all_leaves) {
-	#print OUT "  leaf_name " . $this_leaf->name . "\t";
+	#print $out_fh "  leaf_name " . $this_leaf->name . "\t";
 
 	my $seq_id = $this_leaf->name;
 	my $genomic_align = $ga_lookup->{$seq_id}{ga};
@@ -777,11 +785,12 @@ sub parse_results {
     my $score_file = $dump_dir . "/output.$$.score";
 
     my $score;
-    open (SCORE, '<', $score_file);
-    $score = (<SCORE>);
-    close SCORE;
+    open (my $fh, '<', $score_file);
+    $score = (<$fh>);
+    close $fh;
 
-    print OUT "score $score\n" if ($verbose);
+    my $out_fh = $self->param('out_fh');
+    print $out_fh "score $score\n" if ($verbose);
 
     my $tree_file;
     my $fasta_files;
@@ -789,9 +798,9 @@ sub parse_results {
     #if haven't provided ortheus with a tree_string, then read in the tree produced by ortheus
     if ($tree_file && -e $tree_file) {
 	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
-	open(F, '<', $tree_file) || throw("Could not open tree file <$tree_file>");
-	my ($newick, $files) = <F>;
-	close(F);
+	open($fh, '<', $tree_file) || throw("Could not open tree file <$tree_file>");
+	my ($newick, $files) = <$fh>;
+	close($fh);
 	$newick =~ s/[\r\n]+$//;
 	$tree_string = $newick;
 	$files =~ s/[\r\n]+$//;
@@ -808,7 +817,7 @@ sub parse_results {
 
     my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
-    open(F, '<', $alignment_file) || throw("Could not open $alignment_file");
+    open($fh, '<', $alignment_file) || throw("Could not open $alignment_file");
     my $seq = "";
     my $this_genomic_align;
 
@@ -834,7 +843,7 @@ sub parse_results {
         $tree_nodes{$node->name} = $node;
     }
 
-    while (<F>) {
+    while (<$fh>) {
 	next if (/^\s*$/);
 	chomp;
 	## FASTA headers correspond to the tree and the order of the leaves in the tree corresponds
@@ -921,7 +930,7 @@ sub parse_results {
 	    $seq .= $_;
 	}
     }
-    close F;
+    close $fh;
 
     #last genomic_align
     print "Last genomic align\n" if ($debug);
@@ -1057,15 +1066,15 @@ sub get_highlighter {
 sub check_for_low_complexity {
     my ($seq) = @_;
 
-    #print OUT "seq $seq\t" if ($verbose);
+    #print $out_fh "seq $seq\t" if ($verbose);
 
     my $num_diff_bases;
     my $num_base = count_bases($seq);
     foreach my $base (keys %$num_base) {
-	#print OUT "$base=" . $num_base->{$base} . "\t" if ($verbose);
+	#print $out_fh "$base=" . $num_base->{$base} . "\t" if ($verbose);
 	$num_diff_bases++ if ($num_base->{$base});
     }
-    #print OUT "\n" if ($verbose);
+    #print $out_fh "\n" if ($verbose);
     if ($num_diff_bases < 3) {
 	return 1;
     } else {
@@ -1117,10 +1126,10 @@ sub call_ancestral_allele {
    # print "sis " . substr($sister_sequence, ($start-1), $len_allele_seq) . "\n";
    # print "old " . substr($older_sequence, ($start-1), $len_allele_seq) . "\n";
 
-    #print OUT "refer $ref_aligned_sequence\n" if ($verbose);
-    #print OUT "ances $ancestral_sequence\n" if ($verbose);
-    #print OUT "siste $sister_sequence\n" if ($verbose);
-    #print OUT "older $older_sequence\n" if ($verbose);
+    #print $out_fh "refer $ref_aligned_sequence\n" if ($verbose);
+    #print $out_fh "ances $ancestral_sequence\n" if ($verbose);
+    #print $out_fh "siste $sister_sequence\n" if ($verbose);
+    #print $out_fh "older $older_sequence\n" if ($verbose);
 
     my $seq_len = length $ref_aligned_sequence;
 
@@ -1488,7 +1497,7 @@ sub annotate_alignments {
       $event .= "_unsure"; # OK (UNSURE/SHUFFLE_PAD)
     }
 
-    #print OUT "strict=$have_all_strict_sequences_changed nonref=$have_nonref_sequences_changed center=$is_strict_center_empty flank=$have_all_flank_sequences_changed novel=$is_a_novel_insertion\n";
+    #print $out_fh "strict=$have_all_strict_sequences_changed nonref=$have_nonref_sequences_changed center=$is_strict_center_empty flank=$have_all_flank_sequences_changed novel=$is_a_novel_insertion\n";
 
     if (!$have_all_strict_sequences_changed and !$have_nonref_sequences_changed and !$is_strict_center_empty) {
       # 'Strict' center after removing indel is not empty. This can happen for recovey insertions only.
@@ -1581,7 +1590,7 @@ sub get_sub_alignments {
   my $length_left = length($left);
   my $length_right = length($right);
 
-  #print OUT "flank=$left_flank $right_flank left=$left right=$right length_left=$length_left length_right-$length_right\n";
+  #print $out_fh "flank=$left_flank $right_flank left=$left right=$right length_left=$length_left length_right-$length_right\n";
 
   for (my $i = 0; $i < @{$alignment_array}; $i++) {
 #    print "1. $indel_nucleotide  ", $ref_alignment->[$i]->{aligned_sequence}, "\n";
@@ -1688,18 +1697,18 @@ sub get_ancestral_allele_calls {
 }
 
 sub resolve_unsure {
-    my ($event, $alt_allele, $anc_allele) = @_;
+    my ($out_fh, $event, $alt_allele, $anc_allele) = @_;
 
     #Check ancestral allele contains only high confidence bases (ie all capital letters or '-' and NOT any lower case or '_'
     #What about N?
     if ($anc_allele =~ /[Nacgt_]/) {
-        print OUT "found low confidence base $anc_allele\n";
+        print $out_fh "found low confidence base $anc_allele\n";
         return;
     }
     if (length($anc_allele) == length($alt_allele)) {
-        print OUT "Resolved $event to be recovery\n";
+        print $out_fh "Resolved $event to be recovery\n";
     } else {
-        print OUT "Resolved $event to be novel\n";
+        print $out_fh "Resolved $event to be novel\n";
     }
 
 }
@@ -1715,7 +1724,7 @@ sub resolve_unsure {
 #==================================================================================
 
 sub print_report {
-    my ($ref_alignment, $alt_alignment, $ref_strict_ancestral_allele, $ref_flank_ancestral_allele, $alt_strict_ancestral_allele, $alt_flank_ancestral_allele, $indel_nucleotide, $verbose) = @_;
+    my ($out_fh, $ref_alignment, $alt_alignment, $ref_strict_ancestral_allele, $ref_flank_ancestral_allele, $alt_strict_ancestral_allele, $alt_flank_ancestral_allele, $indel_nucleotide, $verbose) = @_;
 
     my $error = "\n";
 
@@ -1749,7 +1758,7 @@ sub print_report {
               $ref_alignment->{alignment}->[0]->{flank_center}."/".$ref_flank_ancestral_allele,
               $alt_alignment->{alignment}->[0]->{flank_center}."/".$alt_flank_ancestral_allele).">\n";
 
-      print OUT $error if ($verbose);
+      print $out_fh $error if ($verbose);
 
 }
 
@@ -1764,29 +1773,29 @@ sub print_report {
 #==================================================================================
 
 sub print_summary {
-    my ($output) = @_;
+    my ($out_fh, $output) = @_;
 
-    print OUT "SUMMARY\n";
-    print OUT "Total bases " . $output->{'total_bases'} . "\n";
+    print $out_fh "SUMMARY\n";
+    print $out_fh "Total bases " . $output->{'total_bases'} . "\n";
 
-    print OUT "Low complexity regions skipped " . $output->{'count_low_complexity'} . "\n";
-    print OUT "Multiple genomic_align_trees " . $output->{'multiple_gats'} . "\n";
-    print OUT "No coverage on genomic_align_tree " . $output->{'no_gat'} . "\n";
-    print OUT "Insufficient coverage on the genomic_align_tree " . $output->{'insufficient_gat'} . "\n";
-    print OUT "Alignment to only N " . $output->{'align_all_N'} . "\n";
-    print OUT "Long alignment " . $output->{'long_alignment'} . "\n";
-    print OUT "Number of bases analysed " . $output->{'num_bases_analysed'} . "\n";
-    print OUT "\n";
+    print $out_fh "Low complexity regions skipped " . $output->{'count_low_complexity'} . "\n";
+    print $out_fh "Multiple genomic_align_trees " . $output->{'multiple_gats'} . "\n";
+    print $out_fh "No coverage on genomic_align_tree " . $output->{'no_gat'} . "\n";
+    print $out_fh "Insufficient coverage on the genomic_align_tree " . $output->{'insufficient_gat'} . "\n";
+    print $out_fh "Alignment to only N " . $output->{'align_all_N'} . "\n";
+    print $out_fh "Long alignment " . $output->{'long_alignment'} . "\n";
+    print $out_fh "Number of bases analysed " . $output->{'num_bases_analysed'} . "\n";
+    print $out_fh "\n";
 
-    print OUT "Summary of types\n";
+    print $out_fh "Summary of types\n";
     foreach my $type (keys %{$output->{'sum_types'}}) {
-        print OUT "$type " . $output->{'sum_types'}{$type} . "\n";
+        print $out_fh "$type " . $output->{'sum_types'}{$type} . "\n";
     }
-    print OUT "\n";
+    print $out_fh "\n";
     
-    print OUT "Summary of calls\n";
+    print $out_fh "Summary of calls\n";
     foreach my $call (keys %{$output->{'sum_calls'}}) {
-        print OUT "$call " . $output->{'sum_calls'}{$call} . "\n";
+        print $out_fh "$call " . $output->{'sum_calls'}{$call} . "\n";
     }
     
 }
@@ -1802,19 +1811,19 @@ sub print_summary {
 sub parse_ancestor_file {
     my ($file, $seq_region_start, $seq_region_end) = @_;
 
-    open FILE, '<', $file or die "Unable to open $file";
+    open my $fh, '<', $file or die "Unable to open $file";
     
     #Skip first line
-    <FILE>;
+    <$fh>;
     
     #remember current position
-    my $cur_pos = tell(FILE);
+    my $cur_pos = tell($fh);
 
     #find out line length (without carriage return)
-    my $line_length = length(<FILE>) - 1;
+    my $line_length = length(<$fh>) - 1;
     
     #return to previous position
-    seek(FILE, $cur_pos, 0);
+    seek($fh, $cur_pos, 0);
     
     #Lines include carriage return so need to recalculate seek offset
     #first base is at position 1 therefore need to subtract 1 from seq_region_start
@@ -1826,11 +1835,11 @@ sub parse_ancestor_file {
     #Seek should start at line offset + offset into line
     my $seek_start = $line + $offset_in_line;
     
-    seek FILE, $seek_start, 1;
+    seek $fh, $seek_start, 1;
     my $start = $seq_region_start;
 
     my $anc_alleles;
-    while (my $line = <FILE>) {
+    while (my $line = <$fh>) {
         chomp $line;
 
         my @bases = split "", $line;
@@ -1855,7 +1864,7 @@ sub parse_ancestor_file {
         $cnt++;
     }
     
-    close FILE;
+    close $fh;
 
     return $anc_alleles;
 

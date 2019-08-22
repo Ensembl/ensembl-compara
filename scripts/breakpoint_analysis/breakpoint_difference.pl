@@ -34,27 +34,20 @@ $error_size ||= 100;
 $output_file ||= 'breakpoint_intersection.out';
 die("Please pass 2 files only") unless ( scalar(@files) == 2 );
 
-open( FH1, '<', $files[0] );
-open( FH2, '<', $files[1] );
-
-#my %breakpoints1;
-#while( my $line = <FH1> ) {
-#	my @spl = split(/\s+/, $line);
-#	my $id = $spl[0] . ":" . $spl[1];
-#	$breakpoints1{$spl[2]} = [ $spl[0], $spl[1], $spl[3] ];
-#}
-
 my %breakpoints2;
-while( my $line = <FH2> ) {
+open(my $in_fh2, '<', $files[1] );
+while( my $line = <$in_fh2> ) {
 	my @spl = split(/\s+/, $line);
 	my $id = $spl[0] . ":" . $spl[1];
 	$breakpoints2{$spl[2]} = [ $spl[0], $spl[1], $spl[3] ];
 }
+close($in_fh2);
 
-open( OUT, '>', $output_file );
+open(my $in_fh1, '<', $files[0] );
+open(my $out_fh, '>', $output_file );
 
 #foreach my $start1 ( keys %breakpoints1 ) {
- while( my $line = <FH1> ) {
+ while( my $line = <$in_fh1> ) {
     chomp $line;
     my @spl = split(/\s+/, $line);
 	my $start1 = $spl[2];
@@ -69,13 +62,12 @@ open( OUT, '>', $output_file );
 		}
 	}
 	if ( !$found ){
-		print OUT "$line\n";
+		print $out_fh "$line\n";
 	}
 }
 
-close(OUT);
-close(FH1);
-close(FH2);
+close($out_fh);
+close($in_fh1);
 
 sub _help_text {
 	return <<HELP;

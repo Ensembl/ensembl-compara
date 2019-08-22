@@ -285,15 +285,17 @@ foreach my $slice (@$slices) {
       $slice->coord_system_name eq $ARGV[0]);
   my $length = $slice->length;
 
+  my $fasta_fh;
+  my $bed_fh;
   if ( $karyo_slices{$slice->seq_region_name} ) { # one file per chr
-      open(FASTA, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
-      open(BED, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
+      open($fasta_fh, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".fa") or die;
+      open($bed_fh, '>', "$dir/${species_production_name}_ancestor_".$slice->seq_region_name.".bed") or die;
   } else { # one file per-coord_system for non-chromosomes
-      open(FASTA, '>>', "$dir/${species_production_name}_ancestor_".$slice->coord_system_name.".fa") or die;
-      open(BED, '>>', "$dir/${species_production_name}_ancestor_".$slice->coord_system_name.".bed") or die;
+      open($fasta_fh, '>>', "$dir/${species_production_name}_ancestor_".$slice->coord_system_name.".fa") or die;
+      open($bed_fh, '>>', "$dir/${species_production_name}_ancestor_".$slice->coord_system_name.".bed") or die;
   }
 
-  print FASTA ">ANCESTOR_for_", $slice->name, "\n";  
+  print $fasta_fh ">ANCESTOR_for_", $slice->name, "\n";  
   my $num_of_blocks = 0;
   for (my $start = 1; $start <= $length; $start += $step) {
     my $end = $start + $step - 1;
@@ -301,10 +303,10 @@ foreach my $slice (@$slices) {
       $end = $length;
     }
     my $sub_slice = $slice->sub_Slice($start, $end);
-    $num_of_blocks += dump_ancestral_sequence($sub_slice, $mlss);
+    $num_of_blocks += dump_ancestral_sequence($fasta_fh, $sub_slice, $mlss);
   }
-  close(FASTA);
-  close(BED);
+  close($fasta_fh);
+  close($bed_fh);
   if ($num_of_blocks == 0) {
     unlink("${species_production_name}_ancestor_".$slice->seq_region_name.".bed",
         "${species_production_name}_ancestor_".$slice->seq_region_name.".fa");
@@ -312,7 +314,7 @@ foreach my $slice (@$slices) {
 }
 
 sub dump_ancestral_sequence {
-  my ($slice, $mlss) = @_;
+  my ($fasta_fh, $bed_fh, $slice, $mlss) = @_;
   my $num_of_blocks = 0;
 
   # Fill in the ancestral sequence with dots ('.') - default character
@@ -349,7 +351,7 @@ sub dump_ancestral_sequence {
     $tree =~ s/\:[\d\.]+//g;
     $tree =~ s/_\w+//g;
     $tree =~ s/\[[\+\-]\]//g;
-    print BED join("\t", $ref_ga->dnafrag->name, $ref_ga->dnafrag_start,
+    print $bed_fh join("\t", $ref_ga->dnafrag->name, $ref_ga->dnafrag_start,
         $ref_ga->dnafrag_end, $tree), "\n";
     $num_of_blocks++;
 
@@ -411,10 +413,9 @@ sub dump_ancestral_sequence {
     deep_clean($this_genomic_align_tree);
     $this_genomic_align_tree->release_tree();
   }
-#     print FASTA $sequence, "\n";
   $sequence =~ s/(.{100})/$1\n/g;
   $sequence =~ s/\n$//;
-  print FASTA $sequence, "\n";
+  print $fasta_fh $sequence, "\n";
 
   return $num_of_blocks;
 }

@@ -652,8 +652,8 @@ sub get_Slices_from_BED_file {
   my ($regions_file, $slice_adaptor) = @_;
   my $slices = [];
 
-  open(REGIONS, '<', $regions_file) or die "Cannot open regions file <$regions_file>\n";
-  while (<REGIONS>) {
+  open(my $regions_fh, '<', $regions_file) or die "Cannot open regions file <$regions_file>\n";
+  while (<$regions_fh>) {
     next if (/^#/ or /^track/);
     chomp;
     my ($chr, $start0, $end) = split("\t", $_);
@@ -665,7 +665,7 @@ sub get_Slices_from_BED_file {
     die "Cannot get Slice for $chr - ".($start0//'NA')." - ".($end//'NA')."\n" if (!$slice);
     push(@$slices, $slice);
   }
-  close(REGIONS);
+  close($regions_fh);
 
   return $slices;
 }

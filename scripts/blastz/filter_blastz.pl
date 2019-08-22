@@ -68,13 +68,13 @@ $data=$outfile.".data";
 		my ($chr1, $seq_type1, $chr1_2, $offset1, $chr2,$seq_type2, $offset2);
 
 
-	open (FILE, '<', $file) or die  "can't open $file: $!";
+	open (my $in_fh, '<', $file) or die  "can't open $file: $!";
 print STDERR "opening $file\n";
-	open (DATA, '>', $data) or die "can't open $data: $!";
+	open (my $out_fh, '>', $data) or die "can't open $data: $!";
 	
 #	print OUT "track name=$track description=\"BLASTz of $sps1 with $sps2(GFF)\" useScore=1 color=333300\n";
 	my $c=0;
-	LINE:while (my $line=<FILE>)
+	LINE:while (my $line=<$in_fh>)
 		{
 		$c++;
 		chomp $line; 
@@ -461,7 +461,7 @@ if ($chr1 =~/Un/ ||$chr2=~/Un/)
 			}
 		}
 
-		print DATA "$no($array->{group})\t$array->{sps1}\t$array->{chr1}\t$method_link\tSIMILAR\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t.\t$array->{cigar}\n";
+		print $out_fh "$no($array->{group})\t$array->{sps1}\t$array->{chr1}\t$method_link\tSIMILAR\t$array->{Q_start}\t$array->{Q_end}\t$array->{Q_strand}\t$array->{sps2}\t$array->{chr2}\t$array->{T_start}\t$array->{T_end}\t$array->{T_strand}\t$array->{score}\t$array->{ident}\t.\t$array->{cigar}\n";
 		$no++;
 		
 }		
@@ -471,7 +471,7 @@ if ($chr1 =~/Un/ ||$chr2=~/Un/)
 		#$prev{T_strand}=$array->{T_strand};
 		
 		print STDERR "Finished\nLost $minus_count bad seqs\n";		 
-close FILE; #close OUT; 
-close DATA;
+close $in_fh; #close OUT; 
+close $out_fh;
 
 

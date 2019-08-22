@@ -613,8 +613,8 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
 while(1) {
   my $genomic_align_blocks = [];
   if ($file_of_genomic_align_block_ids) {
-    open(FILE, '<', $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
-    while (<FILE>) {
+    open(my $fh, '<', $file_of_genomic_align_block_ids) or die ("Cannot open $file_of_genomic_align_block_ids");
+    while (<$fh>) {
 	chomp;
 	my $gab;
 	if ($method_link_species_set->method->class =~ /GenomicAlignTree/) {
@@ -625,7 +625,7 @@ while(1) {
 	die "Cannot find the block with dbID=$_" unless $gab;
 	push @$genomic_align_blocks, $gab;
     }
-    close(FILE);
+    close($fh);
   } elsif (!@query_slices) {
     ## We are fetching all the alignments
     if ($skip_species) {

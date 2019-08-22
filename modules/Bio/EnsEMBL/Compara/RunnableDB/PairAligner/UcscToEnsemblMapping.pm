@@ -87,8 +87,8 @@ sub fetch_input {
   }
   
   #Open UCSC chromInfo file
-  open UCSC, '<', $self->param('chromInfo_file') or die ("Unable to open " . $self->param('chromInfo_file'));
-  while (<UCSC>) {
+  open my $ucsc_fh, '<', $self->param('chromInfo_file') or die ("Unable to open " . $self->param('chromInfo_file'));
+  while (<$ucsc_fh>) {
       my ($ucsc_chr, $size, $file) = split " ";
       my $chr = $ucsc_chr;
       $chr =~ s/chr//;
@@ -109,7 +109,7 @@ sub fetch_input {
       }
   }
   
-  close UCSC;
+  close $ucsc_fh;
   foreach my $chr (keys %$ensembl_names) {
       if ($ensembl_names->{$chr} != 2) {
 	  die ("Failed to find $chr in UCSC");
@@ -121,9 +121,9 @@ sub fetch_input {
 sub read_ucsc_map {
     my ($ucsc_map, $ensembl_names, $ucsc_to_ensembl_mapping) = @_;
 
-    open MAP, '<', $ucsc_map or die ("Unable to open " . $ucsc_map);
+    open my $map_fh, '<', $ucsc_map or die ("Unable to open " . $ucsc_map);
 
-    while (<MAP>) {
+    while (<$map_fh>) {
 	my ($contig, $size, $chrom, $chromStart, $chromEnd) = split " ";
 	if ($ensembl_names->{$contig}) {
 	    #print "FOUND $contig\n";
@@ -132,7 +132,7 @@ sub read_ucsc_map {
 	}
     }
 
-    close MAP;
+    close $map_fh;
 }
 
 

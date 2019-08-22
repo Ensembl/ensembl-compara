@@ -1465,13 +1465,13 @@ sub choose_matrix {
 
   if ($matrix_file) {
     my $matrix_string = "";
-    open M, '<', $matrix_file ||
+    open(my $fh, '<', $matrix_file) ||
       die "Can not open $matrix_file file\n";
-    while (<M>) {
+    while (<$fh>) {
       next if (/^\s*$/);
       $matrix_string .= $_;
     }
-    close M;
+    close $fh;
     $matrix_hash = get_matrix_hash($matrix_string);
     print STDERR "Using customed scoring matrix from $matrix_file file\n";
 #     print STDERR "\n$matrix_string\n";

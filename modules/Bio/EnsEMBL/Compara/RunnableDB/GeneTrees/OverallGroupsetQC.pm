@@ -235,7 +235,7 @@ sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   print STDERR "Number of common keys: $common_count\n" if ($self->debug);
 
   my $xtb_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.xtb';
-  open(OUT, '>', $xtb_filename) or die "Could not open '$xtb_filename' for writing : $!";
+  open(my $out_fh, '>', $xtb_filename) or die "Could not open '$xtb_filename' for writing : $!";
   foreach my $from_id (sort {$a <=> $b} keys %direct) {
     my $from_name = $from_clustername->{$from_id};
     my $subhash = $direct{$from_id};
@@ -244,7 +244,7 @@ sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
       my $to_name = $to_clustername->{$to_id};
       my $cnt = $direct{$from_id}{$to_id};
 
-      print OUT join("\t", $from_id, $from_name, $from_size{$from_id}, $to_id, $to_name, $to_size{$to_id}, $cnt)."\n";
+      print $out_fh join("\t", $from_id, $from_name, $from_size{$from_id}, $to_id, $to_name, $to_size{$to_id}, $cnt)."\n";
     }
   }
 
@@ -252,15 +252,15 @@ sub join_one_pair {         # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
     next if($reverse{$to_id}); # skip the ones that also have old members (i.e. iterate only through strictly-new families)
     my $to_name = $to_clustername->{$to_id};
 
-    print OUT join("\t", 0, '-', 0, $to_id, $to_name, $xto_size{$to_id}, $xto_size{$to_id})."\n";
+    print $out_fh join("\t", 0, '-', 0, $to_id, $to_name, $xto_size{$to_id}, $xto_size{$to_id})."\n";
   }
   foreach my $from_id (sort {$a <=> $b} keys %xfrom_size) { # iterate through families that lost some members
     next if($direct{$from_id}); # skip the families that retained some members (i.e. iterate only through strictly-disappearing families)
     my $from_name = $from_clustername->{$from_id};
 
-    print OUT join("\t", $from_id, $from_name, $xfrom_size{$from_id}, 0, '-', 0, $xfrom_size{$from_id})."\n";
+    print $out_fh join("\t", $from_id, $from_name, $xfrom_size{$from_id}, 0, '-', 0, $xfrom_size{$from_id})."\n";
   }
-  close OUT;
+  close $out_fh;
 
   return $xtb_filename;
 }
@@ -288,8 +288,8 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   my $from2name;
   my $to2name;
 
-  open(LINKFILE, '<', $link_filename) || die "Cannot open '$link_filename' file $@";
-  while (my ($from_id, $from_name, $from_size, $to_id, $to_name, $to_size, $contrib) = split(/\s/,<LINKFILE>)) {
+  open(my $link_fh, '<', $link_filename) || die "Cannot open '$link_filename' file $@";
+  while (my ($from_id, $from_name, $from_size, $to_id, $to_name, $to_size, $contrib) = split(/\s/,<$link_fh>)) {
 
     next unless($contrib=~/^\d+$/); # skip the header line if present
 
@@ -310,7 +310,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
       $xfrom2size->{$from_id}         = $from_size;
     }
   }
-  close LINKFILE;
+  close $link_fh;
 
   # Now we run through the hashes
   my %matchtype_counter = ();
@@ -321,7 +321,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
   my $to_dbname     = $self->generate_dbname( $to_dba );
 
   my $map_filename = $self->worker_temp_directory . "/" . $from_dbname . "-" . $to_dbname. '.map';
-  open(MAP, '>', $map_filename) or die "Could not open '$map_filename' for writing : $!";
+  open(my $map_fh, '>', $map_filename) or die "Could not open '$map_filename' for writing : $!";
 
  TOPAIR: foreach my $topair (sort { $b->[1] <=> $a->[1] } map { [$_,$to2size->{$_}] } keys %$to2size ) {
     my ($to_id, $to_size) = @$topair;
@@ -375,7 +375,7 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
     $matchtype  ||= 'NewName';
     $given_name ||= sprintf("%s%04d%010d.%d",$prefix, $to_rel, ++$stid_counter, $default_version);
 
-    print MAP (join("\t", $to_id, $to2name->{$to_id}, $given_name, $matchscore)."\n");
+    print $map_fh (join("\t", $to_id, $to2name->{$to_id}, $given_name, $matchscore)."\n");
     $postmap{$to_id} = $given_name;
 
     if ($to_size == 1) {
@@ -386,13 +386,13 @@ sub cluster_mapping {       # see Bio::EnsEMBL::Compara::StableId::NamedClusterS
 
   while (my ($to_id, $to_size) = each %$xto2size) {
     my $given_name = sprintf("%s%04d%010d.%d",$prefix, $to_rel, ++$stid_counter, $default_version);
-    print MAP join("\t", $to_id, $to2name->{$to_id}, $given_name, 0)."\n";
+    print $map_fh join("\t", $to_id, $to2name->{$to_id}, $given_name, 0)."\n";
     $postmap{$to_id} = $given_name;
 
     my $matchtype = ($to_size == 1) ? 'NewFam_o' : 'NewFam';
     $matchtype_counter{$matchtype}++;
   }
-  close MAP;
+  close $map_fh;
 
   return $map_filename;
 }
@@ -403,9 +403,9 @@ sub quantify_mapping {
 
   my %mapping_stats = ();
 
-  open(MAP, '<', $map_filename) or die "Could not open '$map_filename' for reading : $!";
+  open(my $map_fh, '<', $map_filename) or die "Could not open '$map_filename' for reading : $!";
   my $tag_count = 0;
-  while (<MAP>) {
+  while (<$map_fh>) {
     my ($cluster_id, $from_cluster_name, $to_cluster_name, $contribution) = split(" ",$_);
     if ($to_cluster_name =~ /ENSGT/) {
       $mapping_stats{novel}{$cluster_id} = 1;
@@ -417,7 +417,7 @@ sub quantify_mapping {
     }
     if ($self->debug && ($tag_count++ % 100 == 0)) { print STDERR "[$tag_count] mapped clusters\n"; }
   }
-  close MAP;
+  close $map_fh;
 
   my $current_gene_tree_adaptor = $self->compara_dba->get_GeneTreeAdaptor;
   my $reuse_gene_tree_adaptor = $reuse_compara_dba->get_GeneTreeAdaptor;

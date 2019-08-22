@@ -235,7 +235,7 @@ sub _writeMultiFastaAlignment {
 
     #write out the alignment file
     $self->param('mfa_file', $self->worker_temp_directory . "/" . $ALIGN_FILE);
-    open (ALIGN, '>', $self->param('mfa_file') ) or throw "error writing alignment (" . $self->param('mfa_file') . ") file\n";
+    open (my $align_fh, '>', $self->param('mfa_file') ) or throw "error writing alignment (" . $self->param('mfa_file') . ") file\n";
 
     
     #create mfa file of multiple alignment from genomic align block
@@ -280,12 +280,12 @@ sub _writeMultiFastaAlignment {
         $aligned_sequence =~ s/(.{80})/$1\n/g;
         $aligned_sequence =~ s/\./\-/g;
         chomp($aligned_sequence);
-        print ALIGN ">$seq_name\n$aligned_sequence\n";
+        print $align_fh ">$seq_name\n$aligned_sequence\n";
 	free_aligned_sequence($this_segment);
 
     }
 
-    close ALIGN;
+    close $align_fh;
 
     $self->param('num_genome_dbs', scalar(keys %genome_count));
 
@@ -401,9 +401,9 @@ sub _parse_cons_file {
 	throw("could not get a constrained_element_adaptor\n");
     }
 
-    open CONS, '<', $cons_file || throw("Could not open $cons_file");
+    open my $cons_fh, '<', $cons_file || throw("Could not open $cons_file");
     my @constrained_elements;
-    while (<CONS>) {
+    while (<$cons_fh>) {
 	unless (/^#/) {
                 chomp;
                 #extract info from constraints file
@@ -430,7 +430,7 @@ sub _parse_cons_file {
 		push(@constrained_elements, $constrained_element_block);
         }
     }
-    close(CONS);
+    close($cons_fh);
     #store in constrained_element table
     $constrained_element_adaptor->store($mlss, \@constrained_elements);	
 }
@@ -481,9 +481,9 @@ sub _parse_rates_file {
     my $max_called_dist = 1000;
 
     #read in rates file
-    open (RATES, '<', $rates_file) or throw "Could not open rates ($rates_file) file\n";
+    open (my $rates_fh, '<', $rates_file) or throw "Could not open rates ($rates_file) file\n";
 
-    while (<RATES>) {
+    while (<$rates_fh>) {
 	if (/^#/) {
 	    next;
 	}
@@ -630,6 +630,8 @@ sub _parse_rates_file {
 	    }
 	}
     }
+
+    close($rates_fh);
 
     #store last lot
     for ($j = 0; $j < scalar(@$win_sizes); $j++) {

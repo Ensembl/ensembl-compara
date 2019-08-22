@@ -61,16 +61,16 @@ sub fetch_input {
     my $schema_file = $self->param_required('schema_file');
     my $tmp_dir     = $self->worker_temp_directory;
     my $new_schema_file = "$tmp_dir/table.sql";
-    open(SF , '<', $schema_file) or die "Cannot open $schema_file for reading";
-    open(NSF, '>', $new_schema_file ) or die "Cannot open $new_schema_file for writing";
-    while ( my $line = <SF> ) {
+    open(my $sf_fh , '<', $schema_file) or die "Cannot open $schema_file for reading";
+    open(my $nsf_fh, '>', $new_schema_file ) or die "Cannot open $new_schema_file for writing";
+    while ( my $line = <$sf_fh> ) {
         if ( $line =~ /CREATE TABLE/ ) {
             $line =~ s/CREATE TABLE/CREATE TABLE IF NOT EXISTS/ unless ( $line =~ /CREATE TABLE IF NOT EXISTS/ );
         }
-        print NSF $line;
+        print $nsf_fh $line;
     }
-    close SF;
-    close NSF;
+    close $sf_fh;
+    close $nsf_fh;
 
     $self->param('new_schema_file', $new_schema_file);
 }

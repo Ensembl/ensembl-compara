@@ -22,6 +22,7 @@ use File::Spec;
 use Getopt::Long;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::IO qw (slurp);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
@@ -116,10 +117,8 @@ my $adaptor = $dba->get_GeneTreeAdaptor;
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {
-    open LIST, '<', $tree_id_file or die "couldnt open $tree_id_file: $!\n";
-    @tree_ids = <LIST>;
+    @tree_ids = @{ slurp($tree_id_file) };
     chomp @tree_ids;
-    close LIST;
 } else {
     @tree_ids = ($one_tree_id);
 }

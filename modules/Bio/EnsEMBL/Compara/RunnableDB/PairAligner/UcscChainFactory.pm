@@ -62,7 +62,7 @@ sub fetch_input {
   my $step = $self->param('step');
 
   #Open Ucsc chain file
-  open(FILE, '<', $self->param('chain_file')) or die ("Unable to open " . $self->param('chain_file'));
+  open(my $chain_fh, '<', $self->param('chain_file')) or die ("Unable to open " . $self->param('chain_file'));
 
   my $seek_positions;
   my $prev_pos = 0;
@@ -75,8 +75,8 @@ sub fetch_input {
   #(prev_pos) and read $step lines and store the number of lines until you
   #reach the next chain tag ($line_num-1)
   #
-  while (<FILE>) {
-      my $curr_pos = tell(FILE); #current position in file
+  while (<$chain_fh>) {
+      my $curr_pos = tell($chain_fh); #current position in file
       if (/chain /) {
 	  if ($first_chain || $line_num >= $step) {
 	      my $pos_line;
@@ -97,7 +97,7 @@ sub fetch_input {
 		'line' => $line_num-1);
   push @$seek_positions, $pos_line;
   
-  close FILE;
+  close $chain_fh;
 
   for (my $index = 0;  $index < (@$seek_positions-1); $index++) {
       my $seek_pos = $seek_positions->[$index]->{pos};

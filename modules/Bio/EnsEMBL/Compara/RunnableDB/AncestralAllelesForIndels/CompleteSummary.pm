@@ -53,7 +53,7 @@ sub run {
     my $outfile = $self->param('work_dir') . "/" . $self->param('seq_region') . "/" . $self->param('summary_file');
    print "Writing summary to $outfile\n";
 
-    open OUT, '>', $outfile or die "Unable to open $outfile for writing";
+    open my $out_fh, '>', $outfile or die "Unable to open $outfile for writing";
 
     my $sql = "SELECT * FROM statistics";
 
@@ -106,23 +106,23 @@ sub run {
     
     $sth->finish;
 
-    print OUT "SUMMARY for chr " . $self->param('seq_region') . "\n";
-    print OUT "Total number of bases " . $totals->{'num_bases'} . "\n";
+    print $out_fh "SUMMARY for chr " . $self->param('seq_region') . "\n";
+    print $out_fh "Total number of bases " . $totals->{'num_bases'} . "\n";
 
-    print OUT "Skipped bases\n";
-    printf OUT "  Sequence contains only N %d (%.2f%%)\n", $totals->{'all_N'}, ($totals->{'all_N'}/$totals->{'num_bases'}*100);
-    printf OUT "  Low complexity regions %d (%.2f%%)\n", $totals->{'low_complexity'}, ($totals->{'low_complexity'}/$totals->{'num_bases'}*100); 
+    print $out_fh "Skipped bases\n";
+    printf $out_fh "  Sequence contains only N %d (%.2f%%)\n", $totals->{'all_N'}, ($totals->{'all_N'}/$totals->{'num_bases'}*100);
+    printf $out_fh "  Low complexity regions %d (%.2f%%)\n", $totals->{'low_complexity'}, ($totals->{'low_complexity'}/$totals->{'num_bases'}*100); 
 
-    printf OUT "  Multiple GenomicAlignTrees %d (%.2f%%)\n", $totals->{multiple_gats}, ($totals->{multiple_gats}/$totals->{'num_bases'}*100);
-    printf OUT "  No GenomicAlignTrees %d (%.2f%%)\n", $totals->{no_gat}, ($totals->{no_gat}/$totals->{'num_bases'}*100);
-    printf OUT "  Insufficient GenomicAlignTree %d (%.2f%%)\n", $totals->{insufficient_gat}, ($totals->{insufficient_gat}/$totals->{'num_bases'}*100);
-    printf OUT "  Long alignment %d (%.2f%%)\n", $totals->{'long_alignment'}, ($totals->{'long_alignment'}/$totals->{'num_bases'}*100);
-    printf OUT "  Alignments all N %d (%.2f%%)\n", $totals->{'align_all_N'}, ($totals->{'align_all_N'}/$totals->{'num_bases'}*100);
+    printf $out_fh "  Multiple GenomicAlignTrees %d (%.2f%%)\n", $totals->{multiple_gats}, ($totals->{multiple_gats}/$totals->{'num_bases'}*100);
+    printf $out_fh "  No GenomicAlignTrees %d (%.2f%%)\n", $totals->{no_gat}, ($totals->{no_gat}/$totals->{'num_bases'}*100);
+    printf $out_fh "  Insufficient GenomicAlignTree %d (%.2f%%)\n", $totals->{insufficient_gat}, ($totals->{insufficient_gat}/$totals->{'num_bases'}*100);
+    printf $out_fh "  Long alignment %d (%.2f%%)\n", $totals->{'long_alignment'}, ($totals->{'long_alignment'}/$totals->{'num_bases'}*100);
+    printf $out_fh "  Alignments all N %d (%.2f%%)\n", $totals->{'align_all_N'}, ($totals->{'align_all_N'}/$totals->{'num_bases'}*100);
 
-    printf OUT "Number of bases analysed %d (%.2f%%)\n", $totals->{num_bases_analysed}, ($totals->{num_bases_analysed}/$totals->{'num_bases'}*100);
-    #print OUT "Number of microinversions " . $totals->{microinversion} . "\n";
+    printf $out_fh "Number of bases analysed %d (%.2f%%)\n", $totals->{num_bases_analysed}, ($totals->{num_bases_analysed}/$totals->{'num_bases'}*100);
+    #print $out_fh "Number of microinversions " . $totals->{microinversion} . "\n";
     
-    print OUT "\n";
+    print $out_fh "\n";
     my $this_analysed;
 
 
@@ -134,27 +134,27 @@ sub run {
         #my ($indel) = $event =~ /(insertion|deletion)_/;
             
             if ($indel =~ /insertion/) {
-                printf OUT "$event %d, of total %.2f%%, of analysed %.2f%%\n", $totals->{'indel'}{$indel}{$event}, (($totals->{'indel'}{$indel}{$event}/$totals->{'num_bases'})/3*100), (($totals->{'indel'}{$indel}{$event}/$totals->{num_bases_analysed}/3)*100);
+                printf $out_fh "$event %d, of total %.2f%%, of analysed %.2f%%\n", $totals->{'indel'}{$indel}{$event}, (($totals->{'indel'}{$indel}{$event}/$totals->{'num_bases'})/3*100), (($totals->{'indel'}{$indel}{$event}/$totals->{num_bases_analysed}/3)*100);
                 $this_analysed += (($totals->{'indel'}{$indel}/$totals->{num_bases_analysed}/3)*100);
             } else {
-                printf OUT "$event %d, of total %.2f%%, of analysed %.2f%\n", $totals->{'indel'}{$indel}{$event}, ($totals->{'indel'}{$indel}{$event}/$totals->{'num_bases'}*100), ($totals->{'indel'}{$indel}{$event}/$totals->{num_bases_analysed}*100);
+                printf $out_fh "$event %d, of total %.2f%%, of analysed %.2f%\n", $totals->{'indel'}{$indel}{$event}, ($totals->{'indel'}{$indel}{$event}/$totals->{'num_bases'}*100), ($totals->{'indel'}{$indel}{$event}/$totals->{num_bases_analysed}*100);
             }
         }
     }
 
-    print OUT "\n\nTotals of polymorphic insertions/deletions\n";
+    print $out_fh "\n\nTotals of polymorphic insertions/deletions\n";
     for my $indel (sort {$a cmp $b} keys %{$totals->{'detail2'}}) {
-        print OUT "$indel\n";
+        print $out_fh "$indel\n";
         for my $detail2 (sort {$totals->{'detail2'}{$indel}{$b} <=> $totals->{'detail2'}{$indel}{$a}} keys %{$totals->{'detail2'}->{$indel}}) {
             if ($indel eq "insertion") {
-                printf OUT "  $detail2 %d, of total %.2f%%, of analysed %.2f%%\n", $totals->{'detail2'}{$indel}{$detail2}, (($totals->{'detail2'}{$indel}{$detail2}/$totals->{'num_bases'})/3*100), (($totals->{'detail2'}{$indel}{$detail2}/$totals->{num_bases_analysed}/3)*100);
+                printf $out_fh "  $detail2 %d, of total %.2f%%, of analysed %.2f%%\n", $totals->{'detail2'}{$indel}{$detail2}, (($totals->{'detail2'}{$indel}{$detail2}/$totals->{'num_bases'})/3*100), (($totals->{'detail2'}{$indel}{$detail2}/$totals->{num_bases_analysed}/3)*100);
             } else {
-                printf OUT "  $detail2 %d, of total %.2f%%, of analysed %.2f%%\n", $totals->{'detail2'}{$indel}{$detail2}, ($totals->{'detail2'}{$indel}{$detail2}/$totals->{'num_bases'}*100), ($totals->{'detail2'}{$indel}{$detail2}/$totals->{num_bases_analysed}*100);
+                printf $out_fh "  $detail2 %d, of total %.2f%%, of analysed %.2f%%\n", $totals->{'detail2'}{$indel}{$detail2}, ($totals->{'detail2'}{$indel}{$detail2}/$totals->{'num_bases'}*100), ($totals->{'detail2'}{$indel}{$detail2}/$totals->{num_bases_analysed}*100);
             }
         }
     }
     
-    close OUT;
+    close $out_fh;
 }
 
 

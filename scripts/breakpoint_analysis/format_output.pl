@@ -52,10 +52,10 @@ my $sp2_gdb_id = $sp2_gdb->dbID;
 die( "Could not find genome_db_id for $species1\n" ) unless ( defined $sp1_gdb_id );
 die( "Could not find genome_db_id for $species2\n" ) unless ( defined $sp2_gdb_id );
 
-open( IN, '<', $input_file );
-open( OUT, '>', $output_file );
+open( my $in_fh, '<', $input_file );
+open( my $out_fh, '>', $output_file );
 
-while( my $line = <IN> ){
+while( my $line = <$in_fh> ){
 	chomp $line;
 	my @species_data = split( /\s+[*-]\s+/, $line );
 	my %reshuffled;
@@ -72,12 +72,12 @@ while( my $line = <IN> ){
 	}
 	if ( defined $reshuffled{$species1} && defined $reshuffled{$species2} ){
 		my $sep = _find_seperator( $reshuffled{$species1}, $reshuffled{$species2} );
-		print OUT join("\t", @{$reshuffled{$species1}}) . $sep . join("\t", @{$reshuffled{$species2}}) . "\n";
+		print $out_fh join("\t", @{$reshuffled{$species1}}) . $sep . join("\t", @{$reshuffled{$species2}}) . "\n";
 	}
 }
 
-close(IN);
-close(OUT);
+close($in_fh);
+close($out_fh);
 
 sub _find_seperator {
 	my ($s1, $s2) = @_;
