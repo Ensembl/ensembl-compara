@@ -191,21 +191,6 @@ CREATE TABLE recovered_member (
   UNIQUE KEY (stable_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-DROP TABLE IF EXISTS cmsearch_hit;
-CREATE TABLE cmsearch_hit (
-  hit_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-  recovered_id int(10) unsigned NOT NULL,
-  node_id int(10) unsigned NOT NULL,
-  target_start int(10) NOT NULL,
-  target_stop  int(10) NOT NULL,
-  query_start int(10) NOT NULL,
-  query_stop  int(10) NOT NULL,
-  bit_sc float(10,5) DEFAULT NULL,
-  evalue double DEFAULT NULL,
-  PRIMARY KEY (hit_id)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
-
 
 -- These tables are for passing CAFE species trees and CAFE tables between runnables for
 -- CAFE Analysis
