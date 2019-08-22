@@ -109,7 +109,7 @@ sub fetch_input {
 		foreach my $target_file (@$t_files) {
 			my $command = $self->_bl2seq_command( $query_file, $target_file );
 			$self->read_from_command($command, sub {
-				my $bl2seq_fh = shift;;
+				my $bl2seq_fh = shift;
 				# parse_bl2seq returns a hashref of the scores and the number of hits to each query strand
 				push(@$blastResults, $self->parse_bl2seq($bl2seq_fh));
 			} );

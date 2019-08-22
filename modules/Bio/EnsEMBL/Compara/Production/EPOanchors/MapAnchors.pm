@@ -134,7 +134,7 @@ sub run {
 	my $command = join(" ", $program, $option_st, $query_file, $target_file); 
         my $hits;
 	$self->read_from_command($command, sub {
-	my $out_fh = shift;;
+	my $out_fh = shift;
 
         while(my $mapping = <$out_fh>) {
 	next unless $mapping =~/^vulgar:/;
