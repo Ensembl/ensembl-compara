@@ -102,16 +102,15 @@ sub run {
 	$hmm_len=~s/^LENG  //;
 #	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file " . $self->param('target_genome')->{"genome_seq"};
 
-	my $nhmmer_command = $self->param('nhmmer') . " --cpu 1 --noali" ." $hmm_file $genome_seq_file";
-	print $nhmmer_command, " **\n";
-	my $nhmm_fh;
-	open( $nhmm_fh, "$nhmmer_command |" ) or throw("Error opening nhmmer command: $? $!"); 
-	{ local $/ = ">>";
+	my $nhmmer_command = [$self->param('nhmmer'), '--cpu', 1, '--noali', $hmm_file, $genome_seq_file];
+	$self->read_from_command($nhmmer_command, sub {
+		my $nhmm_fh = shift;
+		local $/ = ">>";
 		while(my $mapping = <$nhmm_fh>){
 			next unless $mapping=~/!/;
 			push(@hits, [$gab_id, $mapping]);
 		}
-	}
+	} );
 
 	my @anchor_align_records;
 	foreach my $hit(@hits){

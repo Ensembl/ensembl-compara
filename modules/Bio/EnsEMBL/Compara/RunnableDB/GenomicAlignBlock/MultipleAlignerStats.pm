@@ -225,7 +225,7 @@ sub calc_stats {
 
     #Run compare_beds.pl
     my $compare_beds = $self->param('compare_beds');
-    my $coverage_data = `$compare_beds $genome_bed $alignment_bed --stats`;
+    my $coverage_data = $self->get_command_output([$compare_beds, $genome_bed, $alignment_bed, '--stats']);
     my $coverage = parse_compare_bed_output($coverage_data);
     
     my $str = "*** $species ***\n";
@@ -239,7 +239,7 @@ sub calc_stats {
     ##################
     #coding exon stats
 
-    my $coding_exon_coverage_data = `$compare_beds $coding_exon_bed $alignment_bed --stats`;
+    my $coding_exon_coverage_data = $self->get_command_output([$compare_beds, $coding_exon_bed, $alignment_bed, '--stats']);
     my $coding_exon_coverage = parse_compare_bed_output($coding_exon_coverage_data);
     
     my $coding_exon_str = "*** $species ***\n";

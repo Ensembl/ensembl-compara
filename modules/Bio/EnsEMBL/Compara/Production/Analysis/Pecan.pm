@@ -66,8 +66,7 @@ sub run_pecan {
   unless (defined $tree_string) {
     # Use EstimateTree.py program to get a tree from the sequences
     my @est_command = ('python2', $self->param_required('estimate_tree_exe'), @fasta_files);
-    my $ret_cmd = $self->run_command(\@est_command, { 'die_on_failure' => 1} );
-    my @estimate = split "\n", $ret_cmd->out;
+    my @estimate = $self->get_command_output(\@est_command);
     if (($estimate[0] !~ /^FINAL_TREE: \(.+\);/) or ($estimate[2] !~ /^ORDERED_SEQUENCES: (.+)/)) {
       throw "Error while running EstimateTree program for Pecan";
     }

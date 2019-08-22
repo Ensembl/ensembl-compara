@@ -85,7 +85,7 @@ sub run {
 
     close FASTAFILE;
 
-    my $n_seq_in_file = `grep -c "^>" "$fasta_name"`;
+    my $n_seq_in_file = $self->run_command(['grep', '-c', '^>', $fasta_name])->out;
     chomp $n_seq_in_file;
     die "Found $n_seq_in_file sequences in the file instead of $n_seq. Please investigate.\n" if $n_seq ne $n_seq_in_file;
 }

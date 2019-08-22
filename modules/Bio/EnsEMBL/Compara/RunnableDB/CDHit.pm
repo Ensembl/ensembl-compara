@@ -61,7 +61,7 @@ sub run {
 
         my $tmp_dir = $self->param('tmp_dir') || $self->worker_temp_directory;
         my $fasta_db = "$tmp_dir/multispecies_db.fa";
-        system("cat $fasta_dir/*.fasta > $fasta_db") == 0 or die "Error concatenating fasta files from $fasta_dir to $fasta_db";
+        $self->run_command("cat $fasta_dir/*.fasta > $fasta_db", { die_on_failure => 1, description => "concatenate fasta files from $fasta_dir to $fasta_db", });
         my $cdhit_mem = $self->param_required('cdhit_memory_in_mb');
         my $cdhit_num_threads = $self->param_required('cdhit_num_threads');
         my $cmd = [$cdhit_exe, -i => $fasta_db, -o => "$tmp_dir/blastdb", -c => $cdhit_threshold, -M => $cdhit_mem, -T => $cdhit_num_threads];

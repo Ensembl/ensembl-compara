@@ -92,7 +92,7 @@ sub run {
       #Need to re-sort gff_file and rerun
       my $gff_file = $self->param('gff_file');
       my $gff_sort = $gff_file . ".sort";
-      `sort -n -k 6,6 $gff_file > $gff_sort`;
+      $self->run_command(['sort', '-n', '-k', '6,6', '-o', $gff_sort, $gff_file], {die_on_failure => 1});
 
       $self->warning("Needed to sort $gff_file");
       my $sort_cmd =  _create_cmd($self->param('program'), $gff_sort, $self->param('maxDist1'), $self->param('minSize1'), $self->param('maxDist2'), $self->param('minSize2'), $self->param('orient'), $self->param('output_file'));

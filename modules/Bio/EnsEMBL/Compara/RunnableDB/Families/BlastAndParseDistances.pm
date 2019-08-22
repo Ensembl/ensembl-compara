@@ -202,21 +202,10 @@ sub run {
     my $blastdb = ($blastdb_dir ? $blastdb_dir.'/' : '').$blastdb_name;
     my $cmd = "${blast_bin_dir}/blastp -db $blastdb $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
 
-    if($debug) {
-        warn "CMD:\t$cmd\n";
-    }
-
-    open( BLAST, "| $cmd") || die qq{could not execute "${cmd}", returned error code: $!};
-    print BLAST @$fasta_list;
-    my $peaceful_close = close BLAST;
-
-    unless($peaceful_close) {
-        # Possibly an ongoing MEMLIMIT
-        # Let's wait a bit to let LSF kill the worker as it should
-        sleep(30);
-        #
-        die "Error caught when closing the pipe to Blast, the child probably killed";
-    }
+    $self->write_to_command($cmd, sub {
+            my $blast_fh = shift;
+            print $blast_fh @$fasta_list;
+    } );
 
     my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile, -log($evalue_limit)/log(10) );
 

@@ -73,8 +73,7 @@ sub fetch_input {
 
 	# check there are no seq_region changes in the existing species
 	my $list_cmd = "perl $list_genomes_script $metadata_script_options";
-	my $list_run = $self->run_command($list_cmd);
-	my @release_genomes = split( /\s+/, $list_run->out );
+	my @release_genomes = $self->get_command_output($list_cmd);
 	chomp @release_genomes;
     die "No genomes reported for release" unless @release_genomes;
 
@@ -149,9 +148,9 @@ sub fetch_genome_report {
     my $report_genomes_script = $self->param_required('report_genomes_script');
     my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $division";
     my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json";
-	my $report_run = $self->run_command($report_cmd);
+    my $report_out = $self->get_command_output($report_cmd);
 
-    my $decoded_meta_report = decode_json( $report_run->out );
+    my $decoded_meta_report = decode_json( $report_out );
     $decoded_meta_report = $decoded_meta_report->{$division};
     # print Dumper $decoded_meta_report;
 

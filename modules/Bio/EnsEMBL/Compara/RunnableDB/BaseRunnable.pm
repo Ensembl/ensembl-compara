@@ -84,6 +84,24 @@ sub compara_dba {
 }
 
 
+=head2 _get_active_compara_dba
+
+  Example     : $self->_get_active_compara_dba();
+  Description : Private method to return the currently cached compara_dba. Note that
+                this method will not update the DBA based on the current job parameters
+                and may return the DBA of the previous job. It will return undef if
+                $self->compara_dba has never been called, even though the call would
+                return a DBA
+  Returntype  : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
+
+=cut
+
+sub _get_active_compara_dba {
+    my $self = shift;
+    return $self->{'_cached_dba'}->{'compara_db'};
+}
+
+
 =head2 get_cached_compara_dba
 
     Description: Getter/setter for arbitrary DBAs coming from other parameters.
@@ -181,7 +199,9 @@ sub load_registry {
 sub disconnect_from_databases {
     my $self = shift;
     $self->dbc->disconnect_if_idle() if ($self->dbc);
-    $self->compara_dba->dbc->disconnect_if_idle() if ($self->compara_dba and $self->compara_dba->dbc);
+    if (my $compara_dba = $self->_get_active_compara_dba) {
+        $compara_dba->dbc->disconnect_if_idle() if $compara_dba->dbc;
+    }
 }
 
 
@@ -193,7 +213,9 @@ sub disconnect_from_databases {
 
 sub disconnect_from_hive_database {
     my $self = shift;
-    return if ($self->dbc and $self->compara_dba and $self->compara_dba->dbc and ($self->dbc eq $self->compara_dba->dbc));
+    if (my $compara_dba = $self->_get_active_compara_dba) {
+        return if ($self->dbc and $compara_dba->dbc and ($self->dbc eq $compara_dba->dbc));
+    }
     $self->dbc->disconnect_if_idle() if ($self->dbc);
 }
 
@@ -330,8 +352,61 @@ sub run_command {
     $self->disconnect_from_databases;
 
     return Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd, $options);
-    #my @ret_vals = $self->run_system_command($cmd, $options);
-    #return Bio::EnsEMBL::Compara::Utils::RunCommand->new_object($self->debug, $options->{description}, @ret_vals);
+}
+
+
+=head2 get_command_output
+
+Wrapper around run_command that captures the standard output of the command and raises any failure
+
+=cut
+
+sub get_command_output {
+    my ($self, $cmd, $options) = @_;
+
+    $options //= {};
+    $options->{die_on_failure} //= 1;
+
+    my $run_cmd = $self->run_command($cmd, $options);
+    if (wantarray) {
+        return split /\n/, $run_cmd->out;
+    } else {
+        return $run_cmd->out;
+    }
+}
+
+
+=head2 read_from_command {
+
+Helper method to safely open a command as a pipe and read from it
+
+=cut
+
+sub read_from_command {
+    my ($self, $cmd, $read_sub, $options) = @_;
+
+    $options //= {};
+    $options->{pipe_stdout} = $read_sub;
+    $options->{die_on_failure} //= 1;
+
+    return $self->run_command($cmd, $options);
+}
+
+
+=head2 write_to_command {
+
+Helper method to safely open a command as a pipe and write to it
+
+=cut
+
+sub write_to_command {
+    my ($self, $cmd, $write_sub, $options) = @_;
+
+    $options //= {};
+    $options->{pipe_stdin} = $write_sub;
+    $options->{die_on_failure} //= 1;
+
+    return $self->run_command($cmd, $options);
 }
 
 

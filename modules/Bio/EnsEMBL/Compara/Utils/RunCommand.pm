@@ -54,21 +54,6 @@ use IPC::Open3;
 use Data::Dumper;
 use Time::HiRes qw(time);
 
-sub new_object {
-    my ($class, $debug, $description, $return_value, $stderr, $flat_cmd, $stdout, $runtime_msec) = @_;
-
-    print STDERR "OUTPUT: ", $stdout, "\n\n" if ($debug);
-    print STDERR "ERROR : ", $stderr, "\n\n" if ($debug);
-
-    my $self = $class->new();
-    $self->{_out} = $stdout;
-    $self->{_err} = $stderr;
-    $self->{_exit_code} = $return_value;
-    $self->{_runtime_msec} = $runtime_msec;
-    $self->{_purpose} = $description ? $description . " ($flat_cmd)" : "run '$flat_cmd'";
-    return $self;
-}
-
 
 sub new_and_exec {
     my ($class, $cmd, $options) = @_;
@@ -79,18 +64,25 @@ sub new_and_exec {
     my $flat_cmd = ref($cmd) ? join_command_args(@$cmd) : $cmd;
     die "'use_bash_pipefail' with array-ref commands are not supported !" if $options->{'use_bash_pipefail'} && ref($cmd);
     my $use_bash_errexit = $options->{'use_bash_errexit'} // ($flat_cmd =~ /;/);
-    my $cmd_to_run = $cmd;
+    my $cmd_to_run = ref($cmd) ? $cmd : [$cmd];
     if ($options->{'use_bash_pipefail'} or $use_bash_errexit) {
         $cmd_to_run = ['bash' => ('-o' => 'errexit', $options->{'use_bash_pipefail'} ? ('-o' => 'pipefail') : (), '-c' => $flat_cmd)];
     }
 
+    my $runCmd = {
+        _cmd        => $cmd_to_run,
+        _purpose    => $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'",
+    };
+    $runCmd->{_pipe_stdin}  = $options->{pipe_stdin}  if $options->{pipe_stdin};
+    $runCmd->{_pipe_stdout} = $options->{pipe_stdout} if $options->{pipe_stdout};
+    bless $runCmd, ref($class) || $class;
+
     print STDERR "COMMAND: $flat_cmd\n" if ($debug);
     print STDERR "TIMEOUT: $timeout\n" if ($timeout and $debug);
-    my $runCmd = $class->new($cmd_to_run, $timeout);
-    $runCmd->run();
+    $runCmd->run($timeout);
     print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($debug);
     print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($debug);
-    $runCmd->{_purpose} = $options->{description} ? $options->{description} . " ($flat_cmd)" : "run '$flat_cmd'";
+
     if (($runCmd->exit_code >= 256) or (($options->{'use_bash_pipefail'} or $use_bash_errexit) and ($runCmd->exit_code >= 128))) {
         # The process was killed. Perhaps a MEMLIMIT ? Wait a little bit to
         # allow LSF to kill this process too
@@ -119,23 +111,9 @@ sub join_command_args {
 }
 
 
-sub new {
-    my ($class, $cmd, $timeout) = @_;
-    my $self = {};
-    bless $self, ref($class) || $class;
-    $self->{_cmd} = $cmd;
-    $self->{_timeout} = $timeout;
-    return $self;
-}
-
 sub cmd {
     my ($self) = @_;
     return $self->{_cmd};
-}
-
-sub timeout {
-    my ($self) = @_;
-    return $self->{_timeout};
 }
 
 sub out {
@@ -158,36 +136,121 @@ sub exit_code {
     return $self->{_exit_code};
 }
 
+
+=head2 die_with_log
+
+  Example     : $run_command->die_with_log();
+  Description : Standard method to "die" with a message made of properties of this job. This ensures
+                consistency across runnables and pipelines
+  Returntype  : None
+
+=cut
+
 sub die_with_log {
     my ($self) = @_;
     die sprintf("Could not %s, got %s\nSTDOUT %s\nSTDERR %s\n", $self->{_purpose}, $self->exit_code, $self->out, $self->err);
 }
 
-sub _run {
-    my ($self) = @_;
-    my $cmd = $self->cmd;
 
-    my $starttime = time() * 1000;
+=head2 _run_with_stdin_pipe
+
+  Description : Run the command with open3, by connecting the "pipe_stdin"
+                function to the file handle of the child's standard input.
+  Returntype  : Integer (exit code)
+
+=cut
+
+sub _run_with_stdin_pipe {
+    my ($self) = @_;
+    local *CATCHOUT = IO::File->new_tmpfile;
     local *CATCHERR = IO::File->new_tmpfile;
-    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", ref($cmd) ? @$cmd : $cmd);
-    $self->{_out} = $self->_read_output(\*CATCHOUT);
+    my $pid = open3(\*CATCHIN, ">&CATCHOUT", ">&CATCHERR", @{$self->cmd});
+    $self->{_pipe_stdin}->(\*CATCHIN);
     waitpid($pid,0);
-    $self->{_exit_code} = $?>>8;
-    if ($? && !$self->{_exit_code}) {
-        $self->{_exit_code} = 256 + $?;
-    }
+    my $rc = $?;
+    $self->{_out} = $self->_read_output(\*CATCHOUT);
     $self->{_err} = $self->_read_output(\*CATCHERR);
-    $self->{_runtime_msec} = int(time()*1000-$starttime);
-    return;
+    return $rc;
 }
 
-sub run {
+
+=head2 _run_no_stdin
+
+  Description : Run the command with open3, by closing the child's standard
+                input. The standard output can be connected to the "pipe_stdout"
+                function or will be accumulated into a string (like the standard
+                error).
+  Returntype  : Integer (exit code)
+
+=cut
+
+sub _run_no_stdin {
     my ($self) = @_;
-    my $timeout = $self->timeout;
-    if (not $timeout) {
-        $self->_run();
-        return;
+    local *CATCHERR = IO::File->new_tmpfile;
+    my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", @{$self->cmd});
+    if ($self->{_pipe_stdout}) {
+        $self->{_pipe_stdout}->(\*CATCHOUT);
+        $self->{_out} = '<sent to '.$self->{_pipe_stdout}.'>';
+    } else {
+        $self->{_out} = $self->_read_output(\*CATCHOUT);
     }
+    waitpid($pid,0);
+    my $rc = $?;
+    $self->{_err} = $self->_read_output(\*CATCHERR);
+    return $rc;
+}
+
+
+=head2 _run_wrapper
+
+  Example     : $d->_run_wrapper();
+  Description : Wrapper around _run_with_stdin_pipe and _run_no_stdin that
+                also measures the runtime (in milliseconds) and processes
+                the return code.
+  Returntype  : None
+
+=cut
+
+sub _run_wrapper {
+    my ($self) = @_;
+
+    my $starttime = time() * 1000;
+    my $rc = $self->{_pipe_stdin} ? $self->_run_with_stdin_pipe : $self->_run_no_stdin;
+    $self->{_exit_code} = $rc >> 8;
+    if ($rc && !$self->{_exit_code}) {
+        $self->{_exit_code} = 256 + $rc;
+    }
+    $self->{_runtime_msec} = int(time()*1000-$starttime);
+}
+
+
+=head2 run
+
+  Description : High-level function to run the command
+  Returntype  : None
+
+=cut
+
+sub run {
+    my ($self, $timeout) = @_;
+    if (defined $timeout) {
+        $self->_run_with_timeout($timeout);
+    } else {
+        $self->_run_wrapper;
+    }
+}
+
+
+=head2 _run_with_timeout
+
+  Description : Runs the command with a maximum allowed runtime
+  Returntype  : None
+
+=cut
+
+sub _run_with_timeout {
+    my $self = shift;
+    my $timeout = shift;
 
     ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
     my $die_text = "_____RunCommandTimeLimit_____\n";
@@ -200,7 +263,7 @@ sub run {
             local $SIG{__DIE__};     # turn die handler off in eval block
             local $SIG{ALRM} = sub { die $die_text };
             alarm($timeout);         # set alarm
-            $self->_run();
+            $self->_run_wrapper();
         };
 
         # Note the alarm is still active here - however we assume that
@@ -216,9 +279,18 @@ sub run {
         # the eval returned an error
         die $@ if $@ ne $die_text;
         $self->{_exit_code} = -2;
-        $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $timeout);
+        $self->{_err} = "Command's runtime has exceeded the limit of $timeout seconds";
     }
 }
+
+
+=head2 _read_output
+
+  Argument[1] : $fh file handle
+  Description : Read the entire content of the file, by first rewinding back to its beginning
+  Returntype  : String
+
+=cut
 
 sub _read_output {
     my ($self, $fh) = @_;

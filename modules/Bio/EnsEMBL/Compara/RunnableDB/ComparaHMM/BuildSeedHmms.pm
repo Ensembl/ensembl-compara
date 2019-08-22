@@ -112,7 +112,7 @@ sub _fetch_all_tf_ids {
     $self->param( 'all_tf_sequences', \%all_tf_sequences );
 
     #Get PANTHER family names
-    my @panther_ids_list = `grep "^NAME  PTH" $panther_lib_file | cut -d " " -f 3 `;
+    my @panther_ids_list = $self->get_command_output(qq{grep "^NAME  PTH" $panther_lib_file | cut -d " " -f 3});
     $self->param( 'all_panther_ids_list', \@panther_ids_list );
 }
 

@@ -62,11 +62,12 @@ sub run {
 		$self->run_command($subset_repeats_cmd);
 		my $sth2 = $self_dba->dbc->prepare('UPDATE genomic_align_block SET score = -10000 WHERE genomic_align_block_id = ?');
 		my $cmd = $self->param('find_overlaps') . " $subset_rep_file $gab_file --filter | cut -f4 | sort | uniq";
-		my $filter_fh;
-		open( $filter_fh, "$cmd |" ) or throw("Error opening find_overlaps command: $? $!");
-		while(my $hit_gab = <$filter_fh>){
-			$sth2->execute($hit_gab);
-		}
+		$self->read_from_command($cmd, sub {
+			my $filter_fh = shift;
+			while(my $hit_gab = <$filter_fh>){
+				$sth2->execute($hit_gab);
+			}
+		} );
 	
 		unlink($gab_file);
 		unlink($subset_rep_file);

@@ -156,9 +156,7 @@ sub healthcheck_xml {
     my $orth_ml_id = $self->param_required('ortholog_method_link_id');
 
     # check for truncated line near EOF
-    my $tail_cmd = "tail -3 $xml_file";
-    my $tail_run = $self->run_command($tail_cmd);
-    my $tail_out = $tail_run->out;
+    my $tail_out = $self->get_command_output(['tail', '-3', $xml_file]);
     unless ( $tail_out =~ /<groups>\s+<\/groups>\s+<\/orthoXML>$/ ) { # allow for 'empty' XML
         die "Detected truncation at EOF in $xml_file:\n$tail_out\n\n" unless $tail_out =~ /<\/orthologGroup>\s+<\/groups>\s+<\/orthoXML>$/;
     }

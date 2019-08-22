@@ -103,7 +103,7 @@ sub _healthcheck {
     # $output_file =~ s/\.emf$/.maf/;
     my $cmd = "grep ^a $output_file | wc -l";
 
-    my $num_blocks = `$cmd`;
+    my $num_blocks = $self->get_command_output($cmd);
     chomp $num_blocks;
     if ($num_blocks != $self->param_required('num_blocks')) {
 	die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));

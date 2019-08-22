@@ -53,8 +53,7 @@ package Bio::EnsEMBL::Compara::Production::Analysis::Blat;
 use warnings ;
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(warning);
 use Bio::EnsEMBL::FeaturePair;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
@@ -70,30 +69,13 @@ sub run_blat {
             $query ." ".
 	    $self->param('method_link_species_set')->get_value_for_tag('param');
 
-  my $blat_output_pipe = undef;
-
   $cmd .=  " -out=pslx -noHead stdout";
 
-  info("Running blat to pipe...\n$cmd\n");
-  print("Running blat to pipe...\n$cmd\n");
-
-  open($blat_output_pipe, '-|', $cmd) ||
-    throw("Error opening Blat cmd <$cmd>." .
-	  " Returned error $? BLAT EXIT: '" .
-	  ($? >> 8) . "'," ." SIGNAL '" . ($? & 127) .
-	  "', There was " . ($? & 128 ? 'a' : 'no') .
-	  " core dump");
-
-  my $results = parse_results($blat_output_pipe);
-  unless(close $blat_output_pipe){
-      # checking for failures when closing.
-      # we should't get here but if we do then $? is translated 
-      #below see man perlvar
-      throw("Error running Blat cmd <$cmd>. Returned ".
-              "error $? BLAT EXIT: '" . ($? >> 8) . 
-              "', SIGNAL '" . ($? & 127) . "', There was " . 
-              ($? & 128 ? 'a' : 'no') . " core dump");
-  }
+  my $results;
+  $self->read_from_command($cmd, sub {
+          my $blat_output_pipe = shift;
+          $results = parse_results($blat_output_pipe);
+      } );
   return $results;
 }
 

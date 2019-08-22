@@ -132,12 +132,10 @@ sub run {
 		$option_st .= " --" . $opt . " " . $opt_value; 
 	}
 	my $command = join(" ", $program, $option_st, $query_file, $target_file); 
-	print $command, "\n";
-	my $out_fh;
-	open( $out_fh, '-|', $command ) or die("Error opening exonerate command: $? $!"); #run mapping program
-	$self->param('out_file', $out_fh);
-
         my $hits;
+	$self->read_from_command($command, sub {
+	my $out_fh = shift;
+
         while(my $mapping = <$out_fh>) {
 	next unless $mapping =~/^vulgar:/;
 	my($anchor_info, $targ_strand, $targ_dnafrag, $targ_from, $targ_to, $score) = (split(" ",$mapping))[1,8,5,6,7,9];
@@ -147,7 +145,8 @@ sub run {
 		my($anchor_name, $anc_org) = split(":", $anchor_info);
 		push(@{$hits->{$anchor_name}{$targ_dnafrag}}, [ $targ_from, $targ_to, $targ_strand, $score, $anc_org ]);
 	}
-        close($out_fh);
+
+	} );
 
         $self->stop_server if $self->param('with_server');
 
@@ -248,7 +247,7 @@ sub start_server {
     my $self = shift @_;
 
     # Get the list of ports that are in use
-    my $netstat_output = `netstat -nt4 | tail -n+3 | awk '{print \$4}' | cut -d: -f2 | sort -nu`;
+    my $netstat_output = $self->get_command_output("netstat -nt4 | tail -n+3 | awk '{print \$4}' | cut -d: -f2 | sort -nu", { use_bash_pipefail => 1 });
     my %bad_ports = map {$_ => 1} split(/\n/, $netstat_output);
     my @available_ports = grep {!$bad_ports{$_}} (shuffle 12886..42886);
 
@@ -296,7 +295,7 @@ sub start_server_on_port {
   while ($cycles < 50) {
       sleep 5;
       $cycles++;
-      my $started_message = `tail -1 $log_file`;
+      my $started_message = $self->get_command_output(['tail', '-1', $log_file]);
       if ($started_message =~ /listening on port/) {
           $self->say_with_header("Server started on port $port after $cycles cycles");
           return 1;

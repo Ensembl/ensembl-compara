@@ -250,12 +250,12 @@ sub store_infernalhmmprofile {
 sub get_consensus_from_HMMs {
     my ($self, $hmm_file) = @_;
 
-    my $hmmemit_exe = $self->param_required('hmmemit_exe');
-
-    warn "Getting a consensus sequence with: $hmmemit_exe -c $hmm_file\n";
-    open my $pipe, "-|", "$hmmemit_exe -c $hmm_file" or die $!;
-
     my %consensus;
+
+    my $cmd = [$self->param_required('hmmemit_exe'), '-c', $hmm_file];
+    $self->read_from_command($cmd, sub {
+            my $pipe = shift;
+
     my $header;
     my $count = 0;
     my $seq;
@@ -271,7 +271,9 @@ sub get_consensus_from_HMMs {
         $seq .= $_ if (defined $header);
     }
     $consensus{$header} = $seq;
-    close($pipe);
+
+    } );
+
     return \%consensus;
 }
 

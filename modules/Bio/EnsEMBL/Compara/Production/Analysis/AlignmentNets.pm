@@ -143,16 +143,7 @@ sub run_nets {
     my $filtered_net_file = "$work_dir/$query_name.query.synteny.net";
     
     $self->run_command([$self->param_required('netSyntenic_exe'), $query_net_file, $syntenic_net_file], { die_on_failure => 1 });
-
-    open(FILTER, $self->param_required('netFilter_exe') . " -syn $syntenic_net_file |") or
-        $self->throw("Could not run netFilter");
-    open(FILTERED, '>', $filtered_net_file)
-        or $self->throw("Could not open filtered net file for writing");
-    while(<FILTER>) {
-      print FILTERED $_;
-    }
-    close(FILTERED);
-    close(FILTER) or $self->throw("Something went wrong with netFilter");
+    $self->run_command($self->param_required('netFilter_exe') . " -syn $syntenic_net_file > $filtered_net_file", { die_on_failure => 1 });
 
     $query_net_file = $filtered_net_file;
   }

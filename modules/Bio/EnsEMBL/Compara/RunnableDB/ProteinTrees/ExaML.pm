@@ -76,13 +76,13 @@ sub fetch_input {
 	my $root_id = $self->param('gene_tree_id');
 	my $source_dir = $self->param('examl_dir');
 
-	my @dir = `find $source_dir -name $root_id.binary | xargs ls -t`;
+	my @dir = $self->get_command_output("find $source_dir -name $root_id.binary | xargs ls -t");
 	my @tok = split(/\//,$dir[0]);
 	my $worker_dir = $tok[-2];
-	my @list = `ls -t $source_dir/$worker_dir/ExaML_binaryCheckpoint*`;
-	if ((scalar(@list) > 0) && (!-z $list[0])){
-		chomp($list[0]);
-		$self->param('newest_checkPointFile',$list[0]);
+	my $newest_checkPointFile = $self->get_command_output("ls -t $source_dir/$worker_dir/ExaML_binaryCheckpoint* | head -n 1");
+	chomp $newest_checkPointFile;
+	if ($newest_checkPointFile && !(-z $newest_checkPointFile)) {
+		$self->param('newest_checkPointFile', $newest_checkPointFile);
 	}
 	$self->param('worker_dir',$worker_dir);
 

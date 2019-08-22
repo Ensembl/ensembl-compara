@@ -121,7 +121,7 @@ sub run {
     $member_set->print_sequences_to_file($fasta_file);
 
     my $n_seq_expected = scalar(@$members);
-    my $n_seq_in_file = `grep -c "^>" "$fasta_file"`;
+    my $n_seq_in_file = $self->run_command(['grep', '-c', '^>', $fasta_file])->out;
     chomp $n_seq_in_file;
     die "Found $n_seq_in_file sequences in the file instead of $n_seq_expected. Please investigate.\n" if $n_seq_expected ne $n_seq_in_file;
 }

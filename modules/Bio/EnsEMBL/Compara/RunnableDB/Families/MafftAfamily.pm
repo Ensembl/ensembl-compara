@@ -103,15 +103,9 @@ sub run {
         warn "About to execute: $cmd_line\n";
     }
 
-    $self->dbc->disconnect_if_idle();
+    $self->run_command($cmd_line, { die_on_failure => 1, });
 
-    if(system($cmd_line)) {
-        # Possibly an ongoing MEMLIMIT
-        # Let's wait a bit to let LSF kill the worker as it should
-        sleep(30);
-        #
-        die "running mafft on family $family_id failed, because: $! ";
-    } elsif(-z $mafft_file) {
+    if(-z $mafft_file) {
         die "running mafft on family $family_id produced zero-length output";
     }
 

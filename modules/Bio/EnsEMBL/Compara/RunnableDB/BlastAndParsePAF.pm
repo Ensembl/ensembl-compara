@@ -115,7 +115,7 @@ sub fetch_input {
         # Target species are all mixed
         print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
         # Loads the files into memory
-        system sprintf('cat %s* > /dev/null', $self->param('blast_db'));
+        $self->run_command(sprintf('cat %s* > /dev/null', $self->param('blast_db')), { die_on_failure => 1 });
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
 
         #Depending on the amount of sequences and blast version.
@@ -276,13 +276,12 @@ sub run {
 
         my $cig_cmd = $self->param('no_cigars') ? '' : 'qseq sseq';
         my $cmd = "$blast_bin_dir/blastp -db $blast_db $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue score nident pident qstart qend sstart send length positive ppos $cig_cmd'";
-        warn "CMD:\t$cmd\n" if $self->debug;
 
-        my $start_time = time();
-        open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
-        $self->param('query_set')->print_sequences_to_file(\*BLAST, -format => 'fasta');
-        close BLAST;
-        print "Time for blast " . (time() - $start_time) . "\n";
+        my $run_cmd = $self->write_to_command($cmd, sub {
+                my $blast_fh = shift;
+                $self->param('query_set')->print_sequences_to_file($blast_fh, -format => 'fasta');
+        } );
+        print "Time for blast " . $run_cmd->runtime_msec . " msec\n";
 
         my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
 

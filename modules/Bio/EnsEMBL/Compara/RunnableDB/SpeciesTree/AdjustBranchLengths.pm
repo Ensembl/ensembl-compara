@@ -93,9 +93,8 @@ sub run {
 	if ( $outgroup_id ) { 
 		my $unrooted_erable_treefile = "$working_dir/unroot.erable.nwk";
 		$self->_spurt($unrooted_erable_treefile, $tree);
-		my $reroot_cmd = $self->param_required('reroot_script') . " --tree $unrooted_erable_treefile --outgroup gdb$outgroup_id";
-		my $reroot_run = $self->run_command($reroot_cmd);
-		$tree = $reroot_run->out;
+		my $reroot_cmd = [$self->param_required('reroot_script'), '--tree', $unrooted_erable_treefile, '--outgroup', "gdb$outgroup_id"];
+		$tree = $self->get_command_output($reroot_cmd);
 		chomp $tree;
 	}
 

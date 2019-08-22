@@ -140,11 +140,10 @@ sub _run_cdhit {
     
         #Run CDHit:
         my $sequences_to_keep_file = $self->worker_temp_directory . "/new_fasta.fasta";
-        my $cmd = "$cdhit_exe -i $input_file -o $sequences_to_keep_file -c $cdhit_threshold -M $cdhit_mem -T $cdhit_num_threads";
-        print "CDHit COMMAND LINE:$cmd\n" if $self->debug;
+        my $cmd = [$cdhit_exe, -i => $input_file, -o => $sequences_to_keep_file, -c => $cdhit_threshold, -M => $cdhit_mem, -T => $cdhit_num_threads];
     
         #Die in case of any problems with CDHit.
-        system($cmd) == 0 or die "Error while running CDHit command: $cmd";
+        $self->run_command($cmd, { die_on_failure => 1 });
     
         my $cluster_file = $self->worker_temp_directory . "/new_fasta.fasta.clstr";
         $self->param( 'cluster_file',  $cluster_file  );
