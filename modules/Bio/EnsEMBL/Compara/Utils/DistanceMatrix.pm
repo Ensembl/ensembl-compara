@@ -34,6 +34,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 use File::Basename;
 
 use Data::Dumper;
@@ -360,9 +361,7 @@ sub phylip_from_matrix {
 	} else {
 		$reformatted_matrix = "    $species_count\n" . $reformatted_matrix;
 	}
-	open(OUT, '>', $phylip_file);
-	print OUT $reformatted_matrix;
-	close OUT;
+	spurt($phylip_file, $reformatted_matrix);
 }
 
 1;

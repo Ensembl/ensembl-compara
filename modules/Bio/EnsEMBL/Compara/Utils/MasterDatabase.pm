@@ -41,6 +41,7 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -487,9 +488,7 @@ sub load_assembly_patches {
     }
 
     if ( $report_file ) {
-        open( RF, '>', $report_file ) or die "Cannot open '$report_file'\n";
-        print RF $report;
-        close RF;
+        spurt($report_file, $report);
         print STDERR "Assembly patch report written to $report_file\n";
     } else {
         print $report;
