@@ -7,11 +7,13 @@ severity  = 5
 [Subroutines::ProhibitExplicitReturnUndef]
 severity=4
 
-# We can solve these ones but it may take time and some "## no critic" pragmas
+# We rely on eval in several places. It is not worth replacing them
+[BuiltinFunctions::ProhibitStringyEval]
+severity=4
+
+# Need to solve these ones
 [InputOutput::ProhibitBarewordFileHandles]
 severity=4
 [InputOutput::ProhibitTwoArgOpen]
-severity=4
-[BuiltinFunctions::ProhibitStringyEval]
 severity=4
 
