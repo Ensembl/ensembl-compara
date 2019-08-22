@@ -235,14 +235,14 @@ $tree->add_tag('pfam_domain_range_vector_string',$range_vector);
     warn ("error return value for program, $!\n");
   }
   print STDERR "Finished.\n";
-  open RES, '<', "result.txt" or die $!;
+  open my $res_fh, '<', "result.txt" or die $!;
   my $pos = 1;
   my $scores;
-  while (<RES>) {
+  while (<$res_fh>) {
     my ($score,$hash,$aln) = split(" ",$_);
     $scores->{$pos} = $score; $pos++;
   }
-  close RES;
+  close $res_fh;
 
   foreach my $i (0..((scalar @range_vector)-1)) {
     my ($start,$end) = split(":",$range_vector[$i]);

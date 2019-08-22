@@ -98,9 +98,9 @@ $jira_adaptor->link_tickets('Blocks', $hc_task_keys->[0], $blocked_ticket_key, $
 
 sub parse_healthchecks {
     my $hc_file = shift;
-    open(HC, '<', $hc_file) or die "Cannot open $hc_file for reading";
+    open(my $hc_fh, '<', $hc_file) or die "Cannot open $hc_file for reading";
     my ($results, $testcase, $hc_failures);
-    while ( my $line = <HC> ) {
+    while ( my $line = <$hc_fh> ) {
         $results = 1 if ($line =~ /RESULTS BY TEST CASE/);
         next unless $results;
         $line =~ s/\s+$//;
@@ -117,6 +117,7 @@ sub parse_healthchecks {
             $hc_failures->{$testcase} .= "$line\n";
         }
     }
+    close($hc_fh);
     
     foreach my $testcase ( keys %$hc_failures ) {
         $hc_failures->{$testcase} .= "{panel}\n";

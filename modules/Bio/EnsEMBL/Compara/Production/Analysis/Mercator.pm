@@ -62,21 +62,21 @@ sub run_mercator {
 
   my $map_file = $self->param('output_dir') . "/pre.map";
   my $genomes_file = $self->param('output_dir') . "/genomes";
-  open F, '<', $genomes_file ||
+  open my $fh, '<', $genomes_file ||
     throw("Can't open $genomes_file\n");
 
   my @species;
-  while (<F>) {
+  while (<$fh>) {
     @species = split;
     last;
   }
-  close F;
+  close $fh;
 
-  open F, '<', $map_file ||
+  open $fh, '<', $map_file ||
     throw("Can't open $map_file\n");
 
   my %hash;
-  while (<F>) {
+  while (<$fh>) {
     my @synteny_region = split;
     my $species_idx = 0;
     for (my $i = 1; $i < scalar @species*4 - 2; $i = $i + 4) {
@@ -86,7 +86,7 @@ sub run_mercator {
       $species_idx++;
     }
   }
-  close F;
+  close $fh;
   my $output = [ values %hash ];
 #  print "scalar output", scalar @{$output},"\n"  if($self->debug);
   print "No synteny regions found" if (scalar @{$output} == 0);

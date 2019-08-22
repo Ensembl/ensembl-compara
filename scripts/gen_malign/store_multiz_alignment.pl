@@ -279,16 +279,17 @@ foreach my $multiz_file (@multiz_files) {
 #     print "file $multiz_file\n";
 
   ## Open file, decompressing it on the fly if needed
+  my $multiz_fh;
   if ($multiz_file =~ /\.gz$/) {
-    open(MULTIZ, '-|', "gunzip -c $multiz_dir/$multiz_file") || die;
+    open($multiz_fh, '-|', "gunzip -c $multiz_dir/$multiz_file") || die;
   } elsif ($multiz_file =~ /\.bz2$/) {
-    open(MULTIZ, '-|', "bzcat $multiz_dir/$multiz_file");
+    open($multiz_fh, '-|', "bzcat $multiz_dir/$multiz_file");
   } else {
-    open(MULTIZ, '<', "$multiz_dir/$multiz_file");
+    open($multiz_fh, '<', "$multiz_dir/$multiz_file");
   }
 
   my @all_these_genomic_aligns; # array of Bio::EnsEMBL::Compara::GenomicAlign objects to store as a single multiple alignment
-  while (<MULTIZ>) {
+  while (<$multiz_fh>) {
     next if ($_ =~ /^$/ or $_ =~ /^#/);
     ## For all lines that are not "s" lines (parts of the multiple alignment)
     if (!/^s\s+([^\.]+)\.(\S+)\s+(\d+)\s+(\d+)\s+([\+\-])\s+(\d+)\s+(.+)$/) {
@@ -432,7 +433,7 @@ foreach my $multiz_file (@multiz_files) {
     $print_multiple_alignment = "";
     $score = undef;
   }
-  close(MULTIZ);
+  close($multiz_fh);
 }
 
 if (%all_warnings) {

@@ -77,13 +77,13 @@ sub run {
         my $tmp_file_name = $self->param('high_confidence') ? "tmp_groups.strict.xml" : "tmp_groups.xml";
         my $tmp_groups_file = $self->param('hash_dir') . "/$tmp_file_name";
         print "\n  !! TMP_GROUPS_FILE: $tmp_groups_file !!\n\n";
-        open(TMP_GROUPS, '>', $tmp_groups_file) or die "Cannot open tmp file '$tmp_groups_file' for writing\n";
+        open(my $tmp_groups_fh, '>', $tmp_groups_file) or die "Cannot open tmp file '$tmp_groups_file' for writing\n";
 
-        open( TSV,  '<', $tsv_file ) or die "Cannot open '$tsv_file'\n";
+        open( my $tsv_fh,  '<', $tsv_file ) or die "Cannot open '$tsv_file'\n";
 
         my %species_and_genes;
         my @ortholog_groups;
-        while( my $line = <TSV> ) {
+        while( my $line = <$tsv_fh> ) {
             # my @parts = split(/\s+/, $line);
             my ($gene_stable_id, $protein_stable_id, $species, $identity, $homology_type, $homology_gene_stable_id, $homology_protein_stable_id,
             $homology_species, $homology_identity, $dn, $ds, $goc_score, $wga_coverage, $is_high_confidence, $homology_id) = split(/\s+/, $line);
@@ -116,29 +116,29 @@ sub run {
             $group_str .= qq{ <score id=\"wga_coverage\" value=\"$wga_coverage\" />} if defined $wga_coverage and $wga_coverage ne 'NULL';
             $group_str .= qq{  </orthologGroup>\n};
             # push( @ortholog_groups, $str );
-            print TMP_GROUPS $group_str;
+            print $tmp_groups_fh $group_str;
         }
-        close TSV;
-        close TMP_GROUPS;
+        close $tsv_fh;
+        close $tmp_groups_fh;
 
         # write OrthoXML
-        open( XML,  '>', $xml_file ) or die "Cannot open '$xml_file'\n";
+        open( my $xml_fh,  '>', $xml_file ) or die "Cannot open '$xml_file'\n";
         my $version = software_version();
-        print XML "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-        print XML "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
+        print $xml_fh "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+        print $xml_fh "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
         foreach my $species_header ( keys %species_and_genes ) {
-            print XML "$species_header\n";
-            print XML "\t" . join("\n\t", values %{ $species_and_genes{$species_header} }) . "\n";
-            print XML "</genes></database></species>\n";
+            print $xml_fh "$species_header\n";
+            print $xml_fh "\t" . join("\n\t", values %{ $species_and_genes{$species_header} }) . "\n";
+            print $xml_fh "</genes></database></species>\n";
         }
-        print XML "<groups>\n";
-        open(TMP_GROUPS, '<', $tmp_groups_file);
-        while ( my $group_line = <TMP_GROUPS> ) {
-            print XML $group_line;
+        print $xml_fh "<groups>\n";
+        open($tmp_groups_fh, '<', $tmp_groups_file);
+        while ( my $group_line = <$tmp_groups_fh> ) {
+            print $xml_fh $group_line;
         }
-        close TMP_GROUPS;
-        print XML "</groups>\n</orthoXML>";
-        close XML;
+        close $tmp_groups_fh;
+        print $xml_fh "</groups>\n</orthoXML>";
+        close $xml_fh;
 
         unlink $tmp_groups_file;
     }

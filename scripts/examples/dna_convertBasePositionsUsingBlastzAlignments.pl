@@ -51,9 +51,9 @@ my $method_link_species_set =
 
 die "need a file with human SNP positions \"chr:pos\" eg 6:136365469\n" unless ( scalar(@ARGV) and (-r $ARGV[0]) );
 
-open(IN, '<', $ARGV[0]) or die;
+open(my $fh, '<', $ARGV[0]) or die;
 
-while(<IN>) {
+while(<$fh>) {
 	chomp;
 	my ($seq_region, $snp_pos) = split(":", $_);
 	my $query_slice = $slice_adaptor->fetch_by_region(undef, $seq_region, $snp_pos, $snp_pos);
@@ -67,4 +67,5 @@ while(<IN>) {
 
 	print "human ", join(":", $seq_region, $snp_pos), "\tchimp ", join (":", $original_slice->seq_region_name, $position), "\n";
 }
+close($fh);
 

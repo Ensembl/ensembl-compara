@@ -11,7 +11,3 @@ severity=4
 [BuiltinFunctions::ProhibitStringyEval]
 severity=4
 
-# Need to solve these ones
-[InputOutput::ProhibitBarewordFileHandles]
-severity=4
-

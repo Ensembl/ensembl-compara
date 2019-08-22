@@ -128,12 +128,13 @@ my $genomic_align_block_adaptor = Bio::EnsEMBL::Registry->get_adaptor($dbname, '
 # }
 
 ## Open and read MAP file
-if (!open(MAVID_MAP, '<', $mavid_dir."/map")) {
+my $mavid_map_fh;
+if (!open($mavid_map_fh, '<', $mavid_dir."/map")) {
   print "ERROR: Cannot open <$mavid_dir/map> file!\n", $usage;
   exit(1);
 }
-my $map_file = [<MAVID_MAP>];
-close(MAVID_MAP);
+my $map_file = [<$mavid_map_fh>];
+close($mavid_map_fh);
 
 ## Parse directory name in order to get species
 if ($mavid_dir =~ /((-?\w\w_[\d_]+)+)/) {

@@ -26,7 +26,7 @@ open F,"blastz_output_file";
 my $fh = \*F;
 
 my $BlastzParser = new Bio::EnsEMBL::Compara::Production::Analysis::Blastz(-fh => $fh);
- 
+
 or
 
 my $blastz_output_file = "blastz_output_file";
@@ -89,8 +89,8 @@ sub new {
     $self->{'_fh'} = $fh;
   } else {
     $self->file($file);
-    open F, '<', $self->file;
-    $self->{'_fh'} = \*F;
+    open my $fh, '<', $self->file;
+    $self->{'_fh'} = $fh;
   }
   return $self->_initialize ? $self : undef;
 }

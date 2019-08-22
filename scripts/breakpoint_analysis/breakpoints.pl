@@ -48,14 +48,14 @@ my $gblock_adap     = $registry->get_adaptor( 'mice_merged', 'compara', 'Genomic
 my $mlss = $mlss_adap->fetch_by_method_link_type_registry_aliases( "LASTZ_NET", [ $species1, $species2 ] );
 my @gblocks = @{ $gblock_adap->fetch_all_by_MethodLinkSpeciesSet( $mlss ) };
 
-open(OUT, '>', $output_file);
+open(my $out_fh, '>', $output_file);
 while ( my $gblock = shift @gblocks ) {
 	my @gas = @{ $gblock->get_all_GenomicAligns() };
 	while ( my $genomic_align = shift @gas ){
-		print OUT $genomic_align->genomic_align_block_id, "\t", $genomic_align->dnafrag_id, "\t", $genomic_align->dnafrag_start, "\t", $genomic_align->dnafrag_end, "\n";
+		print $out_fh $genomic_align->genomic_align_block_id, "\t", $genomic_align->dnafrag_id, "\t", $genomic_align->dnafrag_start, "\t", $genomic_align->dnafrag_end, "\n";
 	}
 }
-close(OUT);
+close($out_fh);
 
 sub _help_text {
 	return <<HELP;
