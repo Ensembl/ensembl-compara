@@ -124,6 +124,7 @@ sub default_options {
         		dump_dir    => '#dump_dir#/compara/species_trees',
         	},
         	DumpAncestralAlleles => {
+        		compara_db => '#compara_db#',
         	},
         },
 
