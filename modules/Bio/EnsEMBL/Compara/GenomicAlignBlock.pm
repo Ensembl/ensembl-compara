@@ -1400,7 +1400,7 @@ sub get_GenomicAlignTree {
     }
 
     # self-alignment
-    if (scalar(@{$self->method_link_species_set->species_set->genome_dbs}) == 1) {
+    if ($self->method_link_species_set->species_set->size == 1) {
         # Root node
         $genomic_align_tree = new Bio::EnsEMBL::Compara::GenomicAlignTree();
         my $ref_genomic_align = $self->reference_genomic_align;

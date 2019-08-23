@@ -145,7 +145,7 @@ sub _load_mlss_from_compara_db {
     foreach my $method_link_type (qw(LASTZ_NET BLASTZ_NET)) {
         my $some_mlsss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($method_link_type);
         foreach my $mlss (@$some_mlsss) {
-            next if scalar(@{$mlss->species_set->genome_dbs}) != 2;
+            next if $mlss->species_set->size != 2;
             my ($ref_gdb, $non_ref_gdb) = $mlss->find_pairwise_reference;
             $mlss_found{$non_ref_gdb->dbID}->{$ref_gdb->dbID} = {
                 mlss_id => $mlss->dbID,

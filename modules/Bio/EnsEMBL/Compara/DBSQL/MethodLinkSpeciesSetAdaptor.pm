@@ -678,7 +678,7 @@ sub make_object_current {
     # unique. As this object is made current, others may have to be retired
     my @mlsss_retired;
     # It can only happen for multiple sets
-    if (scalar(@{$mlss->species_set->genome_dbs}) >= 3) {
+    if ($mlss->species_set->size >= 3) {
         my $other_mlsss = $self->_id_cache->get_all_by_additional_lookup('method', $mlss->method->dbID);
         foreach my $other_mlss (@$other_mlsss) {
             if ($other_mlss->is_current and ($other_mlss->species_set->name eq $mlss->species_set->name) and ($other_mlss->dbID != $mlss->dbID)) {

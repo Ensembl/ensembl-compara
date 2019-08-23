@@ -378,7 +378,7 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
         my @good_gdbs = grep {$_->is_good_for_alignment} @{$species_set2->genome_dbs};
         if (scalar(@good_gdbs) < 3) {
             throw(sprintf('Only %d "good for alignment" genomes in the "%s" set. Need 3 or more for %s.', scalar(@good_gdbs), $species_set2->name, $method1->type));
-        } elsif (scalar(@good_gdbs) == scalar(@{$species_set2->genome_dbs})) {
+        } elsif (scalar(@good_gdbs) == $species_set2->size) {
             throw(sprintf('All the genomes of the "%s" set are "good for alignment". No need to require %s', $species_set2->name, $method2->type));
         }
         my $species_set1 = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set(\@good_gdbs, $species_set2->name);
@@ -450,7 +450,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if ($verbose) {
                 print "COLLECTION: ", $collection->name, "\n";
                 print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @{$collection->genome_dbs};
-                print "=", scalar(@{$collection->genome_dbs}), " genomes\n";
+                print "=", $collection->size, " genomes\n";
             }
             unless ($dry_run) {
                 $compara_dba->get_SpeciesSetAdaptor->store($collection);
@@ -478,7 +478,7 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             if ($verbose) {
                 print "\nMLSS: ", $mlss->name, "\n";
                 print "METHOD: ", $mlss->method->type, "\n";
-                print "SS: ", $mlss->species_set->name, "(", scalar(@{$mlss->species_set->genome_dbs}), ")\n";
+                print "SS: ", $mlss->species_set->name, "(", $mlss->species_set->size, ")\n";
                 print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @{$mlss->species_set->genome_dbs};
             }
             # Special case for syntenies: when the synteny has already been tried and failed (due to low coverage), we don't need to try again

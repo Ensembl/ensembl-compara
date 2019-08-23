@@ -741,7 +741,7 @@ sub create_mlss {
     {
         $ss_display_name ||= $species_set->name;
         $ss_display_name =~ s/collection-//;
-        my $ss_size = scalar(@{$species_set->genome_dbs});
+        my $ss_size = $species_set->size;
         my $is_aln = $method->class =~ /^(GenomicAlign|ConstrainedElement|ConservationScore|Synteny)/;
         $ss_display_name = "$ss_size $ss_display_name" if $is_aln && $ss_size > 2;
     }
