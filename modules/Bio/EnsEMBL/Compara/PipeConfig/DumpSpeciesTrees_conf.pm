@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_url <url_of_the_compara_db>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpSpeciesTrees_conf -compara_db <url_of_the_compara_db>
 
 =head1 DESCRIPTION  
 

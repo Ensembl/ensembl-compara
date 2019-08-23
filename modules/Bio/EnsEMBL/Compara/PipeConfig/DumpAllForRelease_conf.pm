@@ -110,17 +110,17 @@ sub default_options {
          		make_tar_archive => 0,
         	},
         	DumpConstrainedElements => {
-        		compara_url => '#compara_db#',
+        		compara_db => '#compara_db#',
         	},
         	DumpConservationScores  => {
-        		compara_url => '#compara_db#',
+        		compara_db => '#compara_db#',
         	},
         	DumpTrees               => {
         		rel_db               => '#compara_db#',
         		base_dir             => '#dump_root#',
         	},
         	DumpSpeciesTrees => {
-        		compara_url => '#compara_db#',
+        		compara_db  => '#compara_db#',
         		dump_dir    => '#dump_dir#/compara/species_trees',
         	},
         	DumpAncestralAlleles => {

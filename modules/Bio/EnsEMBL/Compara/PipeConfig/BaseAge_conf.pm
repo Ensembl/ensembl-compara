@@ -60,7 +60,7 @@ sub default_options {
             'name' => "name",
 
             #Location url of database to get EPO GenomicAlignTree objects from
-            #'compara_url' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
+            #'compara_db' => 'mysql://ensro@compara3:3306/cc21_mammals_epo_pt3_86',
 
             #Location url of database to get snps from
             #'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_86_38?group=variation',
