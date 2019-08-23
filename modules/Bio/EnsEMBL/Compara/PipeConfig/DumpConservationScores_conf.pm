@@ -58,7 +58,7 @@ sub pipeline_wide_parameters {
         'dump_cs_capacity'      => 100,
 
         'registry'      => $self->o('reg_conf'),
-        'compara_db'    => $self->o('compara_url'),
+        'compara_db'    => $self->o('compara_db'),
 
         'work_dir'      => $self->o('work_dir'),
         'chromsize_file'=> '#work_dir#/gerp_conservation_scores.#name#.chromsize',

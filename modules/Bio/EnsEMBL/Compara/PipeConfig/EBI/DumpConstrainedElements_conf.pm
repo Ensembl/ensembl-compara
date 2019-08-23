@@ -21,7 +21,7 @@ limitations under the License.
 
 Pipeline to dump conservation scores as bedGraph and bigWig files
 
-    $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::DumpConstrainedElements_conf -compara_url $(mysql-ens-compara-prod-4 details url mateus_epo_low_68_way_mammals_92) -mlss_id 1136 $(mysql-ens-compara-prod-2-ensadmin details hive)
+    $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::DumpConstrainedElements_conf -compara_db $(mysql-ens-compara-prod-4 details url mateus_epo_low_68_way_mammals_92) -mlss_id 1136 $(mysql-ens-compara-prod-2-ensadmin details hive)
 
 =cut
 
