@@ -36,6 +36,7 @@ use warnings;
 use Data::Dumper;
 use Storable 'dclone';
 use Exporter;
+use Bio::EnsEMBL::Compara::Utils::Preloader;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -53,6 +54,7 @@ sub fetch_input {
     my $genomic_align_block = $gab_adaptor->fetch_by_dbID($self->param('genomic_align_block_id'));
 
     $self->param('genomic_aligns', $genomic_align_block->genomic_align_array());
+    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $self->param('genomic_aligns'));
   
     print "$_->dbID \n" foreach $self->param('genomic_aligns');
 }
