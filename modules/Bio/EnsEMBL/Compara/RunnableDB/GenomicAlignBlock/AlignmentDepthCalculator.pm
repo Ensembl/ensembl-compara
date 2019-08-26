@@ -147,7 +147,7 @@ sub _get_alignment_depth {
     for ( my $member = 0; $member < $member_counter; $member++ ) {
         my $position_counter = 0; #the position we are currently checking in the alignment
         my @working_copy_cigar_lines_arrays = @{ dclone(\@cigar_lines_arrays)};
-        my $current_member_gid = $member_identifier[$member]->genome_db()->dbID; #gid stands for genome id
+        my $current_member_gid = $member_identifier[$member]->dnafrag->genome_db_id; #gid stands for genome id
 
         while (scalar(@{ $working_copy_cigar_lines_arrays[0] })) {
             my $query_match = 0;
@@ -159,7 +159,7 @@ sub _get_alignment_depth {
 
             for ( my $member1 = 0; $member1 < $member_counter; $member1++ ) {
                 #We always read the first element, No need to iterate in the position we always read from position 0
-                my $temp_member_gid = $member_identifier[$member1]->genome_db()->dbID;
+                my $temp_member_gid = $member_identifier[$member1]->dnafrag->genome_db_id;
                 if ($temp_member_gid != $current_member_gid && $query_match) { #deals with duplication and also matching against the same member as the query member.
 #                    print "\n passs 11111111";
                     if (! grep(/^$temp_member_gid/, @{$alignment_depth_hash{$current_member_gid}{$position_counter}} ) ){ #ensures we don't match the same genome twice, in case the other genomes are duplicated .
