@@ -215,7 +215,9 @@ div.ConfigTrackHubMatrixForm div#dx.filterMatrix-content { display: block; }
 div#dx.filterMatrix-content                             { display: none; }
 div.filterMatrix-content                                { clear: both; }
 div.config_wrapper div.config ul.filterMatrix-list      { max-height: 200px; overflow: auto; margin: 12px; clear: left; }
-div.config_wrapper div.config ul.filterMatrix-list li   { margin: 4px 8px; cursor: default; }
+div.config_wrapper div.config ul.filterMatrix-list li   { margin: 4px 8px; cursor: default; display: flex; }
+div.config_wrapper div.config ul.filterMatrix-list li div { padding-right: 4px; width: 50px; }
+
 div.filterMatrix-box div.sub-filterMatrix-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 12px; cursor: pointer; }
 div.filterMatrix-box div.count-container                { color: [[DARK_GREY]]; }
 div.filterMatrix-box span.current-count                 { color: [[BLACK]]; font-weight: bold; }
@@ -523,7 +525,8 @@ div.ConfigTrackHubMatrixForm .track-popup span.switch-label       { position: ab
 
 div.ConfigTrackHubMatrixForm .track-popup._filterMatrix { max-width: 200px; max-height: 200px; overflow: auto;}
 div.ConfigTrackHubMatrixForm .track-popup._filterMatrix ul li { display: flex; padding: 4px; border: none; }
-div.ConfigTrackHubMatrixForm .track-popup._filterMatrix ul li text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+div.ConfigTrackHubMatrixForm .track-popup._filterMatrix ul li span { pointer-events: none; }
+div.ConfigTrackHubMatrixForm .track-popup._filterMatrix ul li text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
 div.ConfigTrackHubMatrixForm .track-popup .renderers {
     /* Size and position */
