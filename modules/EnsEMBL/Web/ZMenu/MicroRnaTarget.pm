@@ -87,8 +87,7 @@ sub content {
                               id     => $feature->display_label,
                             });
 
-  # Temporarily disable TarBase links
-  if ($feature_view_link && $feature->get_FeatureType->name !~ /TarBase/){
+  if ($feature_view_link) {
     $self->add_entry({
       label_html => 'View all locations',
       link       => $feature_view_link,
