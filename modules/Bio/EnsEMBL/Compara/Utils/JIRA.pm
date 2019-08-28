@@ -238,7 +238,7 @@ sub fetch_tickets {
     # Add the restrictions to fetch only tickets for the given project, release
     # and division
     # NOTE: JQL queries require whitespaces to be in their Unicode equivalent
-    my $fixVersion = 'Release\u0020' . $self->{_release};
+    my $fixVersion = 'Ensembl\u0020' . $self->{_release};
     my $final_jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
     if ($self->{_division}) {
         $final_jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
@@ -394,8 +394,8 @@ sub _json_to_jira {
     $jira_hash{'summary'}     = $self->_replace_placeholders($json_hash->{'summary'});
     $jira_hash{'issuetype'}   = { 'name' => $json_hash->{'issuetype'} // $default_issue_type };
     $jira_hash{'priority'}    = { 'name' => $json_hash->{'priority'} // $default_priority };
-    $jira_hash{'fixVersions'} = [{ 'name' => 'Release ' . $self->{_release} }];
-    $jira_hash{'description'} = $self->_replace_placeholders($json_hash->{'description'});
+    $jira_hash{'fixVersions'} = [{ 'name' => 'Ensembl ' . $self->{_release} }];
+    $jira_hash{'description'} = $self->_replace_placeholders($json_hash->{'description'}) // "";
     # $jira_hash{'components'}
     $jira_hash{'components'} = [];
     if ($json_hash->{'component'}) {
@@ -499,7 +499,7 @@ sub _request_password {
   Example     : my $ticket = {
                     'priority'    => { 'name' => 'Minor' },
                     'project'     => { 'key' => 'ENSCOMPARASW' },
-                    'fixVersions' => [{ 'name' => 'Release 98' }],
+                    'fixVersions' => [{ 'name' => 'Ensembl 99' }],
                     'issuetype'   => { 'name' => 'Task' },
                     'description' => 'Example for Bio::EnsEMBL::Compara::Utils::JIRA',
                     'labels'      => ['Example'],
@@ -523,7 +523,7 @@ sub _create_new_ticket {
         $ticket_key = 'None [dry-run ON]';
     } else {
         my $new_ticket = $self->_post_request('issue', $ticket);
-        my $ticket_key = $new_ticket->{key};
+        $ticket_key = $new_ticket->{key};
     }
     $self->{_logger}->info(sprintf("Done. Key assigned: %s\n", $ticket_key));
     return $ticket_key;

@@ -13,7 +13,7 @@ String.prototype.capitalize = function() {
 }
 
 // fetch ticket status from REST API
-var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+issuetype=Task+AND+fixVersion="Release+__RELEASE__"+AND+component="Relco+tasks"+AND+cf[11130]=__DIVISION__+ORDER+BY+created+ASC,id+ASC&maxResults=500';
+var endpoint_ticket_list = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+issuetype=Task+AND+fixVersion="Ensembl+__RELEASE__"+AND+component="Relco+tasks"+AND+cf[11130]=__DIVISION__+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 var endpoint_ticket_subtasks = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/search/?jql=project=ENSCOMPARASW+AND+parent="__PARENT__"+ORDER+BY+created+ASC,id+ASC&maxResults=500';
 
 var endpoint_ticket_query = 'https://www.ebi.ac.uk/panda/jira/rest/api/2/issue';
