@@ -100,4 +100,3 @@ for(var j = 0; j < all_divisions.length; j++){
         crossDomain: true,
     })
 }
-

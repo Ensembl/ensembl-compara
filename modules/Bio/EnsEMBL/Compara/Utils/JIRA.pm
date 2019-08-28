@@ -348,19 +348,14 @@ sub _validate_username {
 
 sub _validate_division {
     my ( $self, $division ) = @_;
-    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants ensembl grch37 metazoa bacteria pan protists fungi);
+    my %compara_divisions = map { $_ => 1 } qw(vertebrates plants ensembl metazoa bacteria pan protists fungi);
     # RelCo tickets do not need a specific division
     if ($division eq '') {
         return $division;
     # Do a case insensitive division matching
     } elsif (exists $compara_divisions{lc $division}) {
-        my $lc_division = lc $division;
-        # Return the upper case equivalent of the division
-        if ($lc_division eq 'grch37') {
-            return 'GRCh37';
-        } else {
-            return ucfirst $lc_division;
-        }
+        # Return the division with the first character in uppercase
+        return ucfirst lc $division;
     } else {
         my $division_list = join("\n", sort keys %compara_divisions);
         $self->{_logger}->error("Unexpected division '$division'! Allowed divisions:\n$division_list");
