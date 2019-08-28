@@ -78,9 +78,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # names of species we don't want to reuse this time
-    'do_not_reuse_list'     => [ ],
-
     # where to find the list of Compara methods. Unlikely to be changed
     'method_link_dump_file' => $self->check_file_in_ensembl('ensembl-compara/sql/method_link.txt'),
 
@@ -537,22 +534,6 @@ sub core_pipeline_analyses {
             },
         },
 
-# ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
-
-        {   -logic_name => 'check_reusability',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckBlastReusability',
-            -parameters => {
-                'do_not_reuse_list' => $self->o('do_not_reuse_list'),
-            },
-            -batch_size => 5,
-            -hive_capacity => 30,
-            -rc_name => '8Gb_job',
-            -flow_into => {
-                2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
-                3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
-            },
-        },
-
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
@@ -666,7 +647,6 @@ sub core_pipeline_analyses {
                 allow_missing_cds_seqs      => $self->o('allow_missing_cds_seqs'),
                 only_canonical              => 1,
             },
-            -flow_into => [ 'check_reusability' ],
             %hc_analysis_params,
         },
 
