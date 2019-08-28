@@ -72,14 +72,21 @@ sub hash_all_exons_from_dba {
     my $dba = shift @_;
 
     my $sql = qq{
-        SELECT CONCAT(t.stable_id, ':', e.seq_region_start, ':', e.seq_region_end)
-          FROM transcript t, exon_transcript et, exon e, seq_region sr, coord_system cs
-         WHERE t.transcript_id=et.transcript_id
-           AND et.exon_id=e.exon_id
-           AND t.seq_region_id = sr.seq_region_id
-           AND sr.coord_system_id = cs.coord_system_id
-           AND t.canonical_translation_id IS NOT NULL
-           AND cs.species_id =?
+        SELECT CONCAT_WS(":", cs.name, sr.name,
+                         g.stable_id, g.seq_region_start, g.seq_region_end, g.seq_region_strand, b.biotype_group,
+                         t.stable_id, t.seq_region_start, t.seq_region_end, t.seq_region_strand,
+                         p.stable_id, IFNULL(p.seq_start, 'NA'), IFNULL(p.seq_end, 'NA'),
+                         e.stable_id, e.seq_region_start, e.seq_region_end
+                         )
+          FROM gene g
+          JOIN biotype b ON g.biotype = b.name
+          JOIN seq_region sr USING (seq_region_id)
+          JOIN coord_system cs USING (coord_system_id)
+          JOIN transcript t USING (gene_id)
+          JOIN exon_transcript et USING (transcript_id)
+          JOIN exon e USING (exon_id)
+          LEFT JOIN translation p ON canonical_translation_id = translation_id
+         WHERE cs.species_id =?
     };
 
     return $self->hash_rows_from_dba($dba, $sql, $dba->species_id());
