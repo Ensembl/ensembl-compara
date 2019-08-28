@@ -143,11 +143,6 @@ sub default_options {
         'treebest_threshold_n_genes'    => 400,
         'update_threshold_trees'    => 0.2,
 
-    # sequence type used on the phylogenetic inferences
-    # It has to be set to 1 for the strains
-        'use_dna_for_phylogeny'     => 0,
-        #'use_dna_for_phylogeny'     => 1,
-
     # alignment filtering options
         'threshold_n_genes'       => 20,
         'threshold_aln_len'       => 1000,
@@ -163,12 +158,6 @@ sub default_options {
         'use_timetree_times'        => 0,
         # you can define your own species_tree for 'notung'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
-
-    # mapping parameters:
-        'do_stable_id_mapping'      => 0,
-        'do_treefam_xref'           => 0,
-        # The TreeFam release to map to
-        'tf_release'                => undef,
 
     # executable locations:
         # HMM specific parameters
@@ -264,39 +253,8 @@ sub default_options {
         #'master_db' => 'mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master',
         'ncbi_db'   => $self->o('master_db'),
 
-        # Add the database location of the previous Compara release. Leave commented out if running the pipeline without reuse
-        # NOTE: This most certainly has to change every-time you run the pipeline. Only commit the change if it's the production run
-        'prev_rel_db' => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/muffato_protein_trees_90b',
-
-        # By default, the stable ID mapping is done on the previous release database
-        'mapping_db'  => $self->o('prev_rel_db'),
-
         # Where the members come from (as loaded by the LoadMembers pipeline)
         'member_db' => 'mysql://ensro@mysql-ens-compara-prod-4:4401/mateus_load_members_tf_90',
-
-    # Configuration of the pipeline worklow
-
-        # How will the pipeline create clusters (families) ?
-        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
-        #   'hmm' means that the pipeline will run an HMM classification
-        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
-        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-        'clustering_mode'           => 'hybrid',
-
-        # How much the pipeline will try to reuse from "prev_rel_db"
-        # Possible values: 'clusters' (default), 'blastp', 'members'
-        #   'members' means that only the members are copied over, and the rest will be re-computed
-        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
-        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
-        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
-        #   'ortholog' the orthologs will be copied from the reuse db
-        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
-        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
-        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
-        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
-        'reuse_level'               => 'members',
 
     };
 }
@@ -319,16 +277,12 @@ sub pipeline_checks_pre_init {
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
     die "The master dabase must be defined with a mlss_id" if $self->o('master_db') and not $self->o('mlss_id');
     die "mlss_id can not be defined in the absence of a master dabase" if $self->o('mlss_id') and not $self->o('master_db');
-    die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('master_db');
-    die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('master_db');
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
 
     my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
-    die "'reuse_level' must be set to one of: clusters, blastp, members" unless $self->o('reuse_level') and $reuse_modes{$self->o('reuse_level')};
     my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
-    die "'clustering_mode' must be set to one of: blastp, ortholog, hmm, hybrid or topup" unless $self->o('clustering_mode') and $clustering_modes{$self->o('clustering_mode')};
 }
 
 
@@ -355,8 +309,6 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'ncbi_db'       => $self->o('ncbi_db'),
         'member_db'     => $self->o('member_db'),
-        'reuse_db'      => $self->o('prev_rel_db'),
-        'mapping_db'    => $self->o('mapping_db'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
@@ -368,14 +320,10 @@ sub pipeline_wide_parameters {
         'seed_hmm_library_basedir'      => $self->o('seed_hmm_library_basedir'),
         'seed_hmm_library_name'         => $self->o('seed_hmm_library_name'),
 
-        'clustering_mode'   => $self->o('clustering_mode'),
-        'reuse_level'       => $self->o('reuse_level'),
         'binary_species_tree_input_file'   => $self->o('binary_species_tree_input_file'),
         'all_blast_params'          => $self->o('all_blast_params'),
 
         'use_quick_tree_break'   => $self->o('use_quick_tree_break'),
-        'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
-        'do_treefam_xref'   => $self->o('do_treefam_xref'),
     };
 }
 
