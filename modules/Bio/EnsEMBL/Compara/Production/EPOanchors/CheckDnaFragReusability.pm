@@ -49,9 +49,10 @@ sub hash_all_dnafrags_from_dba {
     my $dba = shift @_;
 
     my $sql = q{
-        SELECT CONCAT_WS(':', dnafrag_id, length, name, coord_system_name, is_reference)
+        SELECT CONCAT_WS(':', dnafrag_id, length, name, coord_system_name)
           FROM dnafrag
          WHERE genome_db_id = ?
+           AND is_reference = 1
     };
 
     return $self->hash_rows_from_dba($dba, $sql, $self->param('genome_db_id'));

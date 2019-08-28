@@ -114,7 +114,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'src_db_conn'   => '#master_db#',
                     'table'         => 'dnafrag',
-                    'where'         => 'genome_db_id = #genome_db_id#',
+                    'where'         => 'genome_db_id = #genome_db_id# AND is_reference = 1',
                     'mode'          => 'insertignore',
                 },
 		-hive_capacity => $self->o('low_capacity'),
