@@ -70,7 +70,7 @@ sub survey_box {
   my $hub  = $self->hub;
   ## Temporary ad for survey
   my $html = '';
-  my $show_survey = 1;
+  my $show_survey = 0;
   my $is_relevant_page = ($hub->type eq 'Gene' || $hub->type eq 'Transcript' || $hub->type eq 'Variation');
 
   ## Only show it to returning visitors who haven't clicked on the button
