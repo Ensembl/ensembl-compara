@@ -98,7 +98,7 @@ sub psychic {
   #if there is a species at the beginning of the query term then make a note in case we trying to jump to another location
   my ($query_species, $query_without_species);
   foreach my $sp (sort keys %sp_hash) {
-    if ( $query =~ /^\Q$sp\E\b/) {
+    if ( $query =~ /^\Q$sp\E\s/) {
       ($query_without_species = $query) =~ s/\Q$sp\E//;
       $query_without_species =~ s/^ //;
       $query_species = $sp;
