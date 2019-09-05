@@ -120,8 +120,8 @@ sub render {
     my $sp_dir    = $sp->{'dir'};
     my $sp_var    = $sp_dir. '_variation';
     my $databases = $hub->species_defs->get_config(ucfirst($sp_dir), 'databases');
-    my $variation_source_vcf  = $databases->{'DATABASE_VARIATION'}->{'meta_info'}->{0}->{'variation.source.vcf'}->[0];
-
+    my $variation_source_vcf  = $databases->{'DATABASE_VARIATION'}->{'meta_info'}->{0}->{'variation_source.vcf'}->[0];
+    
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
       species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp->{'common_name'}, $sp->{'sci_name'}),
