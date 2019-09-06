@@ -96,6 +96,7 @@ sub default_options {
 		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
         #'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release
+        'updated_mlss_ids' => [],
 		# define input options for DumpMultiAlign for each method_link_type
         'alignment_dump_options' => {
         	EPO              => {format => 'emf+maf'},
