@@ -48,7 +48,7 @@ unlink "$promote_to_path/globals/con.Fasta*";
 my $in_file = Bio::SeqIO->new( -file => "$promote_from_path/globals/con.Fasta", -format => 'fasta' );
 my $in_file_panther_9 = Bio::SeqIO->new( -file => "promote/con_PANTHER_9.Fasta", -format => 'fasta' );
 
-open my $out_fh, ">$promote_to_path/globals/con.Fasta";
+open my $out_fh, '>', "$promote_to_path/globals/con.Fasta";
 
 #Fetch all the sequences from PANTHER 9
 my %panther_9;
