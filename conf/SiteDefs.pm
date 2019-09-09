@@ -116,6 +116,7 @@ our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stac
 our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
 
 our $GENE_FAMILY_ACTION               = 'Family'; # Used to build the link to gene families page
+our $FAMILY_ALIGNMENTS_DOWNLOADABLE   = 1; # Indicates whether sequence alignments are available
 ###############################################################################
 
 
