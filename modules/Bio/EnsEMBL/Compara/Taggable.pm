@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Compara::Taggable;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_ref);
 
 =head2 add_tag

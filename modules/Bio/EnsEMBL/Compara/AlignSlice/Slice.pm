@@ -67,7 +67,7 @@ use Bio::EnsEMBL::Slice;
 use Bio::EnsEMBL::CoordSystem;
 use Bio::EnsEMBL::Compara::AlignSlice::Translation;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning info verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Scalar::Util qw(weaken);
 
 
