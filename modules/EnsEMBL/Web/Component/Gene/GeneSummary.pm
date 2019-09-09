@@ -81,7 +81,7 @@ sub content {
     my $template  = '<p>This gene is a member of the %s CCDS set: %s</p>';
     my $sp_name   = $species_defs->DISPLAY_NAME; 
     ## FIXME Hack for e86 mouse strains
-    if ($species_defs->STRAIN_COLLECTION && $species_defs->SPECIES_STRAIN !~ /reference/) {
+    if ($species_defs->STRAIN_GROUP && $species_defs->SPECIES_STRAIN !~ /reference/) {
       $template = 'This gene is similar to a CCDS gene on %s: %s';
       (my $bio_name = $species_defs->SPECIES_SCIENTIFIC_NAME) =~ s/ /_/;
       $sp_name  = sprintf '%s %s', $species_defs->get_config($bio_name, 'DISPLAY_NAME'), $species_defs->get_config($bio_name, 'ASSEMBLY_VERSION');

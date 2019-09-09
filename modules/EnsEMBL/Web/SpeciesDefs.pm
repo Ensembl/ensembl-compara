@@ -240,7 +240,7 @@ sub reference_species {
     for (@valid_species) {
       my $strain = $self->get_config($_, 'SPECIES_STRAIN');
 
-      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
+      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_GROUP')) {
         push @ref_species, $_;
       }
     }

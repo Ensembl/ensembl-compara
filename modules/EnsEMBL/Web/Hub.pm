@@ -345,9 +345,9 @@ sub get_species_info {
 
     for (@required_species) {
       my $strain            = $species_defs->get_config($_, 'SPECIES_STRAIN') || '';
-      my $strain_collection = $species_defs->get_config($_, 'STRAIN_COLLECTION') || '';
+      my $strain_group = $species_defs->get_config($_, 'STRAIN_GROUP') || '';
       my $is_reference      = !$strain || ($strain && $strain =~ /reference/)
-                                       || !$strain_collection;
+                                       || !$strain_group;
       $self->{'_species_info'}{$_} = {
         'key'               => $_,
         'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
@@ -358,7 +358,7 @@ sub get_species_info {
         'group'             => $species_defs->get_config($_, 'SPECIES_GROUP'),
         'strain'            => $strain,
         'is_reference'      => $is_reference,
-        'strain_collection' => $strain_collection,
+        'strain_group' => $strain_group,
       } unless exists $self->{'_species_info'}{$_};
     }
 

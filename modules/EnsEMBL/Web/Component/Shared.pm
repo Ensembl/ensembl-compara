@@ -919,7 +919,7 @@ sub check_for_missing_species {
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       my $sp_prod = $hub->species_defs->production_name_mapping($_);
 
-      my $key = ($species_info->{$sp_prod}->{strain_collection} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
+      my $key = ($species_info->{$sp_prod}->{strain_group} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
               'strains' : 'species';
       push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
       push @missing, $species_defs->production_name_mapping($_);
