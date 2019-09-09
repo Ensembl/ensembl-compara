@@ -629,26 +629,4 @@ sub check_cigar_line {
       if ($seq_pos != $length);
 }
 
-
-
-#If a gap has been found in a cig_elem of type M, need to split it into
-#firstM - I - lastM. This function adds firstM and I to new_cigar_line
-sub _add_match_elem {
-    my ($firstM, $gap_len, $new_cigar_line) = @_;
-
-    #add firstM
-    if ($firstM == 1) {
-	$new_cigar_line .= "M";
-    } elsif($firstM > 1) {
-	$new_cigar_line .= $firstM . "M";
-    } 
-    
-    if ($gap_len == 1) {
-	$new_cigar_line .= "I";
-    } elsif ($gap_len > 1) {
-	$new_cigar_line .= $gap_len . "I";
-    } 
-    return ($new_cigar_line);
-}
-
 1;
