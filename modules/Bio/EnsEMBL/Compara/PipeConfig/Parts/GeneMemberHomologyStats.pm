@@ -111,14 +111,7 @@ sub pipeline_analyses_hom_stats {
                      FROM gene_member',
                 ],
             },
-            -flow_into  => [ 
-                'stats_gene_trees',
-                # WHEN(
-                #     '#homology_dumps_dir#' => 'stats_homologies_flatfile',
-                #     ELSE 'gene_member_id_range_factory',
-                # ),
-                'stats_homologies'
-            ],
+            -flow_into  => [ 'stats_gene_trees', 'stats_homologies' ],
         },
 
         # Gene-tree statistics
@@ -148,50 +141,6 @@ sub pipeline_analyses_hom_stats {
                 ],
             },
         },
-
-        # # gene_member_id_chunks
-        # {   -logic_name => 'gene_member_id_range_factory',
-        #     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MemberIDRangeFactory',
-        #     -parameters => {
-        #         'table'         => 'gene_member',
-        #         'chunk_size'    => 100_000,
-        #     },
-        #     -flow_into  => {
-        #         2 => 'stats_homologies_sql',
-        #     },
-        # },
-        # 
-        # # Homology statistics
-        # {   -logic_name => 'stats_homologies_sql',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-        #     -hive_capacity  => 5,
-        #     -parameters => {
-        #         'sql'   => [
-        #             # Clean up partial runs
-        #             'DROP TABLE IF EXISTS temp_member_hom_counts',
-        #             # Temporary table with the counts
-        #             'CREATE TEMPORARY TABLE temp_member_hom_counts AS
-        #              SELECT gene_member_id,
-        #                     SUM(description in ("ortholog_one2one", "ortholog_one2many", "ortholog_many2many")) AS orthologues,
-        #                     SUM(description in ("within_species_paralog", "other_paralog", "gene_split")) AS paralogues,
-        #                     SUM(description in ("homoeolog_one2one", "homoeolog_one2many", "homoeolog_many2many")) AS homoeologues
-        #              FROM homology_member JOIN homology USING (homology_id)
-        #              WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#
-        #              GROUP BY gene_member_id',
-        #             # Add an index on gene_member_id
-        #             'ALTER TABLE temp_member_hom_counts ADD INDEX (gene_member_id)',
-        #             # Reset the counts (for reruns)
-        #             'UPDATE gene_member_hom_stats
-        #              SET orthologues = 0, paralogues = 0, homoeologues = 0
-        #              WHERE gene_member_id BETWEEN #min_gene_member_id# AND #max_gene_member_id#',
-        #             # And set them to its right values
-        #             'UPDATE gene_member_hom_stats g JOIN temp_member_hom_counts t USING (gene_member_id)
-        #              SET g.orthologues=t.orthologues, g.paralogues=t.paralogues, g.homoeologues=t.homoeologues',
-        #             # Clean up the temporary table
-        #             'DROP TABLE temp_member_hom_counts',
-        #         ],
-        #     },
-        # },
         
         {   -logic_name => 'stats_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats',
@@ -199,6 +148,7 @@ sub pipeline_analyses_hom_stats {
                 'member_type' => $self->o('member_type'),
                 'compara_db'  => $self->pipeline_url(),
             },
+            -rc_name => '4Gb_job',
         },
 
     ];

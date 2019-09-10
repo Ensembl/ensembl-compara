@@ -3249,19 +3249,28 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_homology_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => [
+                # '1->A' => [
+                #     WHEN('#do_homology_stats#' => 'homology_stats_factory'),
+                #     'set_default_values',
+                # ],
+                # 'A->1' => 'rib_fire_hmm_build',
+                1 => [
                     WHEN('#do_homology_stats#' => 'homology_stats_factory'),
                     'set_default_values',
+                    'rib_fire_hmm_build',
                 ],
-                'A->1' => 'rib_fire_hmm_build',
             },
         },
 
         {   -logic_name => 'rib_fire_hmm_build',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
-                'A->1' => 'rib_fire_rename_labels',
+                # '1->A' => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
+                # 'A->1' => 'rib_fire_rename_labels',
+                1 => [
+                    WHEN('#do_hmm_export#' => 'build_HMM_factory'),
+                    'rib_fire_rename_labels',
+                ],
             },
         },
 
@@ -3283,8 +3292,12 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 # FIXME this assumes that label_prefix is set iff the collection is not "default"
-                '1->A' => WHEN('#label_prefix#' => 'rename_labels'),
-                'A->1' => 'rib_fire_goc',
+                # '1->A' => WHEN('#label_prefix#' => 'rename_labels'),
+                # 'A->1' => 'rib_fire_goc',
+                1 => [
+                    WHEN('#label_prefix#' => 'rename_labels'),
+                    'rib_fire_goc',
+                ],
             },
         },
 

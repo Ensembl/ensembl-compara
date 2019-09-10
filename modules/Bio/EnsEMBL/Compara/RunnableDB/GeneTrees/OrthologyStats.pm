@@ -74,9 +74,9 @@ sub fetch_input {
     
     # this stats logic has been converted from an SQL query with 2 subqueries
     my %stats1; # innermost SQL subquery
-    open( HFH, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
-    my $header_line = <HFH>;
-    while ( my $line = <HFH> ) {
+    open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
+    my $header_line = <$hom_handle>;
+    while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header($line, $header_line);
         my ($homology_type, $gene_tree_node_id, $gene_member_id, $hom_gene_member_id, $genome_db_id, $hom_genome_db_id, 
         $identity, $hom_identity) = ($row->{homology_type}, $row->{gene_tree_node_id}, $row->{gene_member_id}, $row->{hom_gene_member_id}, 
@@ -86,7 +86,8 @@ sub fetch_input {
         $stats1{$homology_type}->{$gene_tree_node_id}->{$hom_gene_member_id}->{$hom_genome_db_id}->{"num_homologies"} += 1; # n2
         $stats1{$homology_type}->{$gene_tree_node_id}->{$gene_member_id}->{$genome_db_id}->{"sum_perc_id"} += $identity; # p1
         $stats1{$homology_type}->{$gene_tree_node_id}->{$hom_gene_member_id}->{$hom_genome_db_id}->{"sum_perc_id"} += $hom_identity; # p2
-    }    
+    }
+    close $hom_handle;   
     
     my %stats2; # middle SQL subquery
     foreach my $hom_type ( keys %stats1 ) {
