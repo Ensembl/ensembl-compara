@@ -190,6 +190,12 @@ subtest 'Column iterator' => sub {
         'A cigar-line is simply broken down into its characters',
     );
     test_iterator(
+        [[['M',3],['D',1]]],
+        undef,
+        [[0,['M'],1], [1,['M'],1], [2,['M'],1], [3,['D'],1]],
+        'The cigar-line can be passed as an array',
+    );
+    test_iterator(
         ['3M2DM', 'M2D3M'],
         undef,
         [[0,['M','M'],1], [1,['M','D'],1], [2,['M','D'],1], [3,['D','M'],1], [4,['D','M'],1], [5,['M','M'],1]],
@@ -200,6 +206,12 @@ subtest 'Column iterator' => sub {
         'group',
         [[0,['M'],3], [3,['D'],1]],
         'A cigar-line is simply broken down into its elements',
+    );
+    test_iterator(
+        [[['M',3],['D',1]]],
+        'group',
+        [[0,['M'],3], [3,['D'],1]],
+        'The cigar-line can be passed as an array',
     );
     test_iterator(
         ['3M2DM', 'M2D3M'],
