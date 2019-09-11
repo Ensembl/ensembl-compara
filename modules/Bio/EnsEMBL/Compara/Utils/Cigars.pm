@@ -245,34 +245,39 @@ sub alignment_length_from_cigar {
 
 sub consensus_cigar_line {
 
-   my @expanded_cigars = map {expand_cigar($_)} @_;
-   my $num_cigars = scalar(@expanded_cigars);
+   my @cigar_lines = @_;
+   my $num_cigars = scalar(@cigar_lines);
 
    my @chars = qw(M m D);
    my $n_chars = scalar(@chars);
    push @chars, $chars[$n_chars-1];
 
-   # Itterate through each character of the expanded cigars.
+   # Iterate through each character of the expanded cigars.
    # If there is a 'D' at a given location in any cigar,
    # set the consensus to 'D', otherwise assume an 'M'.
+   my $cons_cigar = '';
+   my $last_code  = '';
+   my $cur_length = 0;
+   my $cb = sub {
+       my ($pos, $codes, $length) = @_;
 
-   my %cigar_lens = ();
-   $cigar_lens{length($_)}++ for @expanded_cigars;
-   throw("Not all the cigars have the same length !\n") if scalar(keys %cigar_lens) > 1;
-   my $cigar_len = length( $expanded_cigars[0] );
-
-   my $cons_cigar;
-   for( my $i=0; $i<$cigar_len; $i++ ){
-       my $num_deletions = 0;
-       foreach my $cigar (@expanded_cigars) {
-           if ( substr($cigar,$i,1) eq 'D'){
-               $num_deletions++;
+       my $num_deletions = scalar(grep {$_ eq 'D'} @$codes);
+       my $this_code = $chars[int($num_deletions * $n_chars / $num_cigars)];
+       if ($this_code eq $last_code) {
+           $cur_length += $length;
+       } else {
+           if ($cur_length) {
+               $cons_cigar .= _cigar_element($last_code, $cur_length);
            }
+           $last_code = $this_code;
+           $cur_length = $length;
        }
-       $cons_cigar .= $chars[int($num_deletions * $n_chars / $num_cigars)];
+   };
+   column_iterator(\@cigar_lines, $cb, 'group');
+   if ($cur_length) {
+       $cons_cigar .= _cigar_element($last_code, $cur_length);
    }
-
-   return collapse_cigar($cons_cigar);
+   return $cons_cigar;
 }
 
 
@@ -749,7 +754,15 @@ sub column_iterator {
                 $curr_cigar_elem_index[$i] ++;
                 my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
                 unless ($e) {
-                    # the list has been exhausted, this is the end
+                    # This cigar-line has been exhausted. The other ones should be as well
+                    for (my $j = 0; $j < $n_cigars; $j++ ) {
+                        next if $j == $i;
+                        if ($curr_cigar_elem_lengths[$j] != $length) {
+                            throw("Not all the cigars have the same length\n");
+                        } elsif ($curr_cigar_elem_index[$j] != scalar(@{$cigar_lines_arrays[$j]})-1) {
+                            throw("Not all the cigars have the same length\n");
+                        }
+                    }
                     return;
                 }
                 $curr_cigar_elem_codes[$i]    = $e->[0];
