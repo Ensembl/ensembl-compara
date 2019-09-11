@@ -158,7 +158,7 @@ subtest 'Breakout counts' => sub {
 
     my $cig1 = 'M2D3MDX';
     my %count1 = ('M' => 4, 'D' => 3, 'X' => 1);
-    is_deeply( {Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($cig1)}, \%count1, $cig1);
+    is_deeply(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($cig1), \%count1, $cig1);
 };
 
 

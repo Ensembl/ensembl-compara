@@ -10,7 +10,7 @@
 
 # Deprecated methods scheduled for deletion
 
-(none)
+* `AlignedMember::get_cigar_breakout()` in Ensembl 102
 
 # Deprecated methods not yet scheduled for deletion
 
