@@ -110,24 +110,17 @@ sub pipeline_analyses_multiple_aligner_stats {
                         },
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                2 => ['alignment_depth_calculator','pw_aligned_base_calculator'],
+                2 => ['per_block_stats'],
                 },
         },
 
-        {   -logic_name =>  'alignment_depth_calculator',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::AlignmentDepthCalculator',
+        {   -logic_name =>  'per_block_stats',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculateBlockStats',
             -rc_name    => '2Gb_job',
             -flow_into  => {
                 2 => [ '?accu_name=aligned_positions_counter&accu_address={genome_db_id}[]&accu_input_variable=num_of_aligned_positions' ],
                 3 => [ '?accu_name=aligned_sequences_counter&accu_address={genome_db_id}[]&accu_input_variable=sum_aligned_seq'],
-            },
-        },
-
-        {   -logic_name =>  'pw_aligned_base_calculator',
-            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculatePwAlignedBases',
-            -rc_name    => '2Gb_job',
-            -flow_into  => {
-                2 => [ '?accu_name=aligned_bases_counter&accu_address={frm_genome_db_id}{to_genome_db_id}[]&accu_input_variable=no_of_aligned_bases' ]
+                4 => [ '?accu_name=aligned_bases_counter&accu_address={from_genome_db_id}{to_genome_db_id}[]&accu_input_variable=num_of_aligned_positions' ]
             },
         },
 
