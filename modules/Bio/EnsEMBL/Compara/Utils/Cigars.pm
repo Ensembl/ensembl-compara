@@ -72,6 +72,8 @@ use strict;
 use warnings;
 no warnings ('substr');
 
+use List::Util qw(min);
+
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
@@ -699,6 +701,64 @@ sub compute_alignment_depth {
         #print $id . ": " . $depth_sum{$id} . "/" . $n_total_pos{$id} . " = " . ($depth_sum{$id} / $n_total_pos{$id}) . "\n";
     }
     return \%depth_summary;
+}
+
+
+=head2 column_iterator
+
+  Arg [1]    : Array-ref of Strings $cigar_lines
+  Arg [2]    : Reference to the function $callback that is called when scanning the columns of the alignment
+  Arg [3]    : (optional) Boolean $group. If set, will group consecutive columns that have the same status in all sequences
+  Example    : column_iterator($cigar_lines, $callback);
+  Description: Scan the multiple alignment (cigar-lines) and calls back the function for every column with
+               its position and list of cigar codes (usually M or D) .
+               When $group is set, consecutive columns that share the same cigar codes are merged into a
+               single function call.
+               The callback method receives three arguments:
+                - start position: integer, 0-based. The first column of the alignment the call is about
+                - codes: array-ref of single-character strings. The list of CIGAR codes in the same order
+                  as in $cigar_lines
+                - length: integer. Always 1 if $group is not set.
+  Returntype : none
+  Exceptions : none
+
+=cut
+
+sub column_iterator {
+    my $cigar_lines = shift;
+    my $callback    = shift;
+    my $group       = shift;
+
+    my $n_cigars    = scalar(@$cigar_lines);
+
+    return unless $n_cigars;
+    return unless $cigar_lines->[0];
+
+    my @cigar_lines_arrays      = map {get_cigar_array($_)} @$cigar_lines;
+    my @curr_cigar_elem_index   = (0) x $n_cigars;
+    my @curr_cigar_elem_codes   = map {$_->[0]->[0]} @cigar_lines_arrays;
+    my @curr_cigar_elem_lengths = map {$_->[0]->[1]} @cigar_lines_arrays;
+
+    my $pos = 0;
+    while (1) { # The exit condition is inside
+        my $length = $group ? min(@curr_cigar_elem_lengths) : 1;
+        $callback->($pos, \@curr_cigar_elem_codes, $length);
+        $pos += $length;
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            if ($curr_cigar_elem_lengths[$i] == $length) {
+                $curr_cigar_elem_index[$i] ++;
+                my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
+                unless ($e) {
+                    # the list has been exhausted, this is the end
+                    return;
+                }
+                $curr_cigar_elem_codes[$i]    = $e->[0];
+                $curr_cigar_elem_lengths[$i]  = $e->[1];
+            } else {
+                $curr_cigar_elem_lengths[$i] -= $length;
+            }
+        }
+    }
 }
 
 

@@ -18,7 +18,7 @@
 use strict;
 use warnings;
  
-use Test::More tests => 10;
+use Test::More tests => 11;
 use Test::Exception;
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
@@ -161,6 +161,53 @@ subtest 'Breakout counts' => sub {
     is_deeply(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($cig1), \%count1, $cig1);
 };
 
+sub test_iterator {
+    my $input = shift;
+    my $group = shift;
+    # Aggregate the callback arguments into @data
+    my @data;
+    Bio::EnsEMBL::Compara::Utils::Cigars::column_iterator($input, sub {push @data, [$_[0], [@{$_[1]}], $_[2]]}, $group);
+    is_deeply(\@data, @_);
+}
+
+subtest 'Column iterator' => sub {
+    test_iterator(
+        [],
+        undef,
+        [],
+        'No input data results in an empty array',
+    );
+    test_iterator(
+        [''],
+        undef,
+        [],
+        'An empty cigar-line results in an empty array',
+    );
+    test_iterator(
+        ['3MD'],
+        undef,
+        [[0,['M'],1], [1,['M'],1], [2,['M'],1], [3,['D'],1]],
+        'A cigar-line is simply broken down into its characters',
+    );
+    test_iterator(
+        ['3M2DM', 'M2D3M'],
+        undef,
+        [[0,['M','M'],1], [1,['M','D'],1], [2,['M','D'],1], [3,['D','M'],1], [4,['D','M'],1], [5,['M','M'],1]],
+        'Intersection of two cigar-lines',
+    );
+    test_iterator(
+        ['3MD'],
+        'group',
+        [[0,['M'],3], [3,['D'],1]],
+        'A cigar-line is simply broken down into its elements',
+    );
+    test_iterator(
+        ['3M2DM', 'M2D3M'],
+        'group',
+        [[0,['M','M'],1], [1,['M','D'],2], [3,['D','M'],2], [5,['M','M'],1]],
+        'Intersection of two cigar-lines with grouping',
+    );
+};
 
 subtest 'Alignment depth' => sub {
     is_deeply(
