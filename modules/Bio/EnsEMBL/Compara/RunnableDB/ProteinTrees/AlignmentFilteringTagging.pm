@@ -61,7 +61,7 @@ sub run {
     my $shrinking_factor = $self->_get_shrinking_factor( $n_removed_columns );
     $self->param( 'shrinking_factor', $shrinking_factor );
 
-    my $gene_count = $self->_get_gene_count();
+    my $gene_count = scalar( @{$self->param('aligned_members')} );
     $self->param( 'gene_count', $gene_count );
 
     my $gappiness = $self->_get_gappiness();
@@ -89,11 +89,6 @@ sub write_output {
 # internal methods
 #
 ##########################################
-sub _get_gene_count {
-    my $self       = shift;
-    my $gene_count = $self->param('gene_tree')->get_all_Members() || die "Could not get_all_Members for genetree: " . $self->param_required('gene_tree_id');
-    return scalar(@{$gene_count});
-}
 
 sub _get_removed_columns {
     my $self = shift;
@@ -179,7 +174,7 @@ sub _get_alignment_depth {
 
         #get cigar line
         my $cigar_line          = $member->cigar_line;
-        $cigar_lines_arrays[$member_counter] = $member->get_cigar_array;
+        $cigar_lines_arrays[$member_counter] = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($member->cigar_line);
         $member_counter++;
     }
 

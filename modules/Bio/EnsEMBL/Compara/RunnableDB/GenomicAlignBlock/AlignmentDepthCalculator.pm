@@ -36,7 +36,10 @@ use warnings;
 use Data::Dumper;
 use Storable 'dclone';
 use Exporter;
+
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -73,7 +76,7 @@ sub run {
 sub _decompose_cigar {
     my ($self, $member) = @_;
     print "\n we are now in _decompose_cigar, incoming member : ", $member->dbID, "\n\n\n" if ( $self->debug >3 );
-    my $cigar_array = $member->get_cigar_arrayref;
+    my $cigar_array = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($member->cigar_line);
 #    print "\n this is the cigar_array  : \n";
 #    print Dumper($cigar_array);
     my @decomposed_cigar_array;
