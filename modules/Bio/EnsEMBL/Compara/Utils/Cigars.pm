@@ -633,4 +633,66 @@ sub check_cigar_line {
       if ($seq_pos != $length);
 }
 
+
+=head2 compute_alignment_depth
+
+  Arg [1]    : Array-ref of Strings $cigar_lines
+  Example    : compute_alignment_depth($cigar_lines);
+  Description: Computes the alignment depth, i.e. the number of other sequences aligned to a sequence.
+               The function returns a hash mapping each sequence index to the number of positions aligned
+               and the total number of sequences aligned to those.
+  Returntype : Hash-ref {id => { depth_sum => XXX, n_total_pos => YYY }}
+  Exceptions : none
+
+=cut
+
+sub compute_alignment_depth {
+    my $cigar_lines = shift;
+
+    my $n_cigars = scalar(@$cigar_lines);
+
+    my @cigar_lines_arrays = map {get_cigar_array($_)} @$cigar_lines;
+
+    #cigar_lines_arrays => [
+    #           member_1    [[D,3], [M,3], [D2]],
+    #           member_2    [[M,8]],
+    #           member_3    [[D,1], [M,5], [D,2]]
+    #                      ]
+
+    my %depth_sum;
+    my %n_total_pos;
+
+    while (scalar(@{ $cigar_lines_arrays[0] })) {
+
+        my %aligned_seqs;
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            #We always read the first element, No need to iterate in the position we always read from position 0
+            if ( $cigar_lines_arrays[$i]->[0]->[0] eq 'M' ) {
+                $aligned_seqs{$i} = 1;
+            }
+            $cigar_lines_arrays[$i]->[0]->[1]--;
+            if ( $cigar_lines_arrays[$i]->[0]->[1] == 0 ) {
+                shift @{ $cigar_lines_arrays[$i] };
+            }
+        }
+
+        my $this_depth = scalar(keys %aligned_seqs) - 1;
+        foreach my $i (keys %aligned_seqs) {
+            $depth_sum{$i} += $this_depth;
+            $n_total_pos{$i} ++;
+        }
+    }
+
+    my %depth_summary;
+    foreach my $i (keys %depth_sum) {
+        $depth_summary{$i} = {
+            'depth_sum'     => $depth_sum{$i},
+            'n_total_pos' => $n_total_pos{$i},
+        };
+        #print $i . ": " . $depth_sum{$i} . "/" . $n_total_pos{$i} . " = " . ($depth_sum{$i} / $n_total_pos{$i}) . "\n";
+    }
+    return \%depth_summary;
+}
+
+
 1;

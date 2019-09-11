@@ -18,7 +18,7 @@
 use strict;
 use warnings;
  
-use Test::More tests => 9;
+use Test::More tests => 10;
 use Test::Exception;
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
@@ -159,6 +159,21 @@ subtest 'Breakout counts' => sub {
     my $cig1 = 'M2D3MDX';
     my %count1 = ('M' => 4, 'D' => 3, 'X' => 1);
     is_deeply(Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($cig1), \%count1, $cig1);
+};
+
+
+subtest 'Alignment depth' => sub {
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M']),
+        {'0' => {'depth_sum' => 2, 'n_aligned_pos' => 4}, '1' => {'depth_sum' => 2, 'n_aligned_pos' => 4}},
+        'Alignment depth on two sequences',
+    );
+
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M']),
+        {'0' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, '1' => {'depth_sum' => 7, 'n_aligned_pos' => 4}, '2' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, '3' => {'depth_sum' => 9, 'n_aligned_pos' => 5}},
+        'Alignment depth on four sequences',
+    );
 };
 
 
