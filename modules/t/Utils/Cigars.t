@@ -174,6 +174,40 @@ subtest 'Alignment depth' => sub {
         {'0' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, '1' => {'depth_sum' => 7, 'n_aligned_pos' => 4}, '2' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, '3' => {'depth_sum' => 9, 'n_aligned_pos' => 5}},
         'Alignment depth on four sequences',
     );
+
+    # Since the IDs are different the computed depth is the same
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M'], ['a', 'b']),
+        {'a' => {'depth_sum' => 2, 'n_aligned_pos' => 4}, 'b' => {'depth_sum' => 2, 'n_aligned_pos' => 4}},
+        'Alignment depth on two sequences with different ids',
+    );
+
+    # Since the IDs are different the computed depth is the same
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M'], ['a', 'b', 'c', 'd']),
+        {'a' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, 'b' => {'depth_sum' => 7, 'n_aligned_pos' => 4}, 'c' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, 'd' => {'depth_sum' => 9, 'n_aligned_pos' => 5}},
+        'Alignment depth on four sequences with different ids',
+    );
+
+    # Since the two sequences share the same ID, they are not aligned to a different ID and their depth is 0
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M'], ['a', 'a']),
+        {'a' => {'depth_sum' => 0, 'n_aligned_pos' => 8}},
+        'Alignment depth on two sequences with the same id',
+    );
+
+    # Since the two sequences share the same ID, they are not aligned to a different ID and their depth is 0
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M'], ['a', 'a', 'a', 'a']),
+        {'a' => {'depth_sum' => 0, 'n_aligned_pos' => 17}},
+        'Alignment depth on four sequences with the same id',
+    );
+
+    is_deeply(
+        Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M'], ['a', 'b', 'c', 'a']),
+        {'a' => {'depth_sum' => 11, 'n_aligned_pos' => 9}, 'b' => {'depth_sum' => 6, 'n_aligned_pos' => 4}, 'c' => {'depth_sum' => 6, 'n_aligned_pos' => 4}},
+        'Alignment depth on four sequences with some shared ids',
+    );
 };
 
 
