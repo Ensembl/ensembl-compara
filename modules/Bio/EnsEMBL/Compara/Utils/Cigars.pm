@@ -499,7 +499,7 @@ sub get_cigar_array {
                   that are not found in the reference species which I removed during the
                   creation of the _create_mfa routine.
     Returntype  : String $cigar_line
-                  
+
 =cut
 
 sub create_2x_cigar_line {
