@@ -97,7 +97,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => ['Genomic_Align_Block_Job_Generator'],
-                'A->1' => ['backbone_summary_job_generator']
+                'A->1' => ['block_stats_aggregator']
                 },
         },
 
@@ -124,22 +124,8 @@ sub pipeline_analyses_multiple_aligner_stats {
             },
         },
 
-        {   -logic_name => 'backbone_summary_job_generator',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MWGAStatsSummarizer',
-            -rc_name    => '8Gb_job',
-            -flow_into  =>  {
-                2 => 'compute_genome_alignment_depth',
-                3 => 'compute_genomes_pw_aligned_bases',
-                },
-        },
-
-        {   -logic_name => 'compute_genome_alignment_depth',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomeAlignmentDepth',
-            -rc_name    => '8Gb_job',
-        },
-
-        {   -logic_name => 'compute_genomes_pw_aligned_bases',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::DetermineGenomePwAlignedBases',
+        {   -logic_name => 'block_stats_aggregator',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::BlockStatsAggregator',
             -rc_name    => '8Gb_job',
         },
 
