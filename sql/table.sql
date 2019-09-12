@@ -585,7 +585,7 @@ CREATE TABLE `species_tree_node_attr` (
 @colour #FF6666
 
 @example    This query shows the 4 first syntenic regions between the Human and Opossum genomes by linking with the @link method_link_species_set table 
-    @sql    SELECT synteny_region.* FROM synteny_region JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE species_set_header.name = "H.sap-M.dom" LIMIT 4;
+    @sql    SELECT synteny_region.* FROM synteny_region JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set_header USING (species_set_id) WHERE species_set_header.name = "Hsap-Mdom" LIMIT 4;
 
 @column synteny_region_id             Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -1898,7 +1898,7 @@ CREATE TABLE hmm_curated_annot (
 @colour   #1E90FF
 
 @example    The following query defines a pair of paralogous xenopous genes. See @link homology_member for more details
-    @sql    SELECT homology.* FROM homology JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 1;
+    @sql    SELECT homology.* FROM homology JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="Xtro paralogues" LIMIT 1;
 
 @column homology_id                    Unique internal ID
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -2085,7 +2085,7 @@ The alignment will be:<br />
 @colour   #1E90FF
 
 @example    The following query refers to the two homologue sequences from the first xenopus' paralogy object. Gene and peptide sequence of the second homologue can retrieved in the same way.
-    @sql    SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 2;
+    @sql    SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="Xtro paralogues" LIMIT 2;
 
 @column homology_id        External reference to homology_id in the @link homology table
 @column gene_member_id     External reference to gene_member_id in the @link gene_member table. Refers to the corresponding "ENSMBLGENE" entry
