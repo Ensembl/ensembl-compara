@@ -41,16 +41,12 @@ my $prev_release = $curr_release - 1;
 Bio::EnsEMBL::Registry->load_registry_from_url(
     "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
-
 # Add in extra cores from genebuild server
-# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#      -host => 'mysql-ens-vertannot-staging',
-#      -user => 'ensro',
-#      -port => 4573,
-#      -species => 'danio_rerio',
-#      -group => 'core',
-#      -dbname => 'danio_rerio_core_92_11',
-#  );
+# my $extra_core_dbs = {
+#     'ancestral_prev'    => [ 'mysql-ens-vertannot-staging', "danio_rerio_core_92_11" ],
+# };
+
+# Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $extra_core_dbs );
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
