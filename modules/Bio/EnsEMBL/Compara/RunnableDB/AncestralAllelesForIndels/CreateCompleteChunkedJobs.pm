@@ -81,7 +81,7 @@ sub write_output {
 
     my $length = $self->param('length');
 
-    my ($seq_region, $length, $min_dnafrag_start, $max_dnafrag_end);
+    my ($seq_region, $min_dnafrag_start, $max_dnafrag_end);
     $sth->bind_columns(\$seq_region,\$length,\$min_dnafrag_start,\$max_dnafrag_end);
 
     my $chunk_size = $self->param('chunk_size');
