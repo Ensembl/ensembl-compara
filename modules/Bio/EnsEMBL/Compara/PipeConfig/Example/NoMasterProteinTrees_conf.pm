@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::QfoBlastProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::NoMasterProteinTrees_conf
 
 =head1 DESCRIPTION  
 
@@ -67,13 +67,13 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::NoMasterProteinTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf');
 
 
 sub default_options {
     my ($self) = @_;
     return {
-        %{$self->SUPER::default_options},   # inherit the Ensembl ones
+        %{$self->SUPER::default_options},   # inherit the Vertebrates ones
 
         #Example of how to use Ensembl core databases:                        
         'homo_sapiens' => {

@@ -43,7 +43,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::TBlat_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::TBlat_conf');     # Default Ensembl configuration with a few tweaks for Plants
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf');     # Default Vertebrates configuration with a few tweaks for Plants
 
 
 sub default_options {

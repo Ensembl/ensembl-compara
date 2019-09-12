@@ -91,8 +91,8 @@ sub _get_species {
     #print ">>>>|$division|\n" if ($self->debug);
     my $http = HTTP::Tiny->new();
 
-    # -----------------------[ Ensembl ]-----------------------------
-    if ( $division eq "Ensembl" ) {
+    # -----------------------[ Vertebrates ]-----------------------------
+    if ( $division eq "Vertebrates" ) {
         my $server   = 'http://rest.ensembl.org';
         my $ext      = '/info/species?';
         my $response = $http->get( $server . $ext, { headers => { 'Content-type' => 'application/json' } } );
@@ -101,7 +101,7 @@ sub _get_species {
             my $hash = decode_json( $response->{content} );
 
             foreach my $genome_count ( keys %{$hash->{'species'}} ) {
-                $self->param('all_genomes')->{ $hash->{'species'}->[$genome_count]->{'name'} } = "production_reg_conf_ensembl.pl";
+                $self->param('all_genomes')->{ $hash->{'species'}->[$genome_count]->{'name'} } = "production_reg_vertebrates_conf.pl";
             }
         }
     }
@@ -120,7 +120,8 @@ sub _get_species {
 
             foreach my $genome_count ( keys %$hash ) {
                 if ( !$self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } ) {
-                    $self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } = "production_reg_conf_EG.pl";
+                    $self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } =
+                        sprintf('production_reg_%s_conf.pl', lc $division);
                 }
             }
         }

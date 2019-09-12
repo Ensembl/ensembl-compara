@@ -19,15 +19,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::TBlat_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::TBlat_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -division plants -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]"
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -mlss_id_list "[9769,9784,9754,9770,9785,9786,9771,9755,9767,9768,9782,9783,9756,9752,9753]"
 
 =head1 DESCRIPTION
 
-Version of the EBI TBlat pipeline used on Ensembl databases
+Version of the EBI TBlat pipeline used on Vertebrates databases
 
 =head1 CONTACT
 
@@ -39,7 +39,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::TBlat_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::TBlat_conf;
 
 use strict;
 use warnings;

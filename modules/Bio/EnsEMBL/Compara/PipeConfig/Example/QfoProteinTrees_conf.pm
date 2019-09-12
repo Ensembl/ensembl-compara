@@ -35,13 +35,13 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::QfoProteinTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf');
 
 
 sub default_options {
     my ($self) = @_;
     return {
-        %{$self->SUPER::default_options},   # inherit the Ensembl ones
+        %{$self->SUPER::default_options},   # inherit the Vertebrates ones
 
         # custom pipeline name, in case you don't like the default one
         'pipeline_name'         => 'qfo_2019_'.$self->o('rel_with_suffix'),

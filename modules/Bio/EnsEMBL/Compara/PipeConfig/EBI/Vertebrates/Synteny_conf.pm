@@ -19,15 +19,13 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf
-
-=head1 SYNOPSIS
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf -mlss_id <mlss_id> -species_name_mapping "{134 => 'C57B6J', 155 => 'rn6',160 => '129S1_SvImJ',161 => 'A_J',162 => 'BALB_cJ',163 => 'C3H_HeJ',164 => 'C57BL_6NJ',165 => 'CAST_EiJ',166 => 'CBA_J',167 => 'DBA_2J',168 => 'FVB_NJ',169 => 'LP_J',170 => 'NOD_ShiLtJ',171 => 'NZO_HlLtJ',172 => 'PWK_PhJ',173 => 'WSB_EiJ',174 => 'SPRET_EiJ', 178 => 'AKR_J'}"
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Synteny_conf
 
 =head1 DESCRIPTION
 
-Mini-pipeline to load the species-tree and the chromosome-name mapping from a HAL file
+This is a Vertebrates specific version of the general Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf
+
+Example: init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Synteny_conf  -pipeline_name <> -ptree_db/alignment_db <>
 
 =head1 CONTACT
 
@@ -39,23 +37,25 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::RegisterHALFile_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Synteny_conf;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf');
+use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Synteny_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
     my ($self) = @_;
     return {
-        %{$self->SUPER::default_options},
+        %{$self->SUPER::default_options},   # inherit the generic ones
+        'division'     => 'vertebrates',
 
-        'master_db'             => 'mysql://ensro@mysql-ens-compara-prod-1.ebi.ac.uk:4485/ensembl_compara_master',
-
-        'division'              => 'vertebrates',
+        'alignment_db'    => 'compara_curr',
+        'curr_release_db' => 'compara_curr',
     };
 }
-
 
 1;

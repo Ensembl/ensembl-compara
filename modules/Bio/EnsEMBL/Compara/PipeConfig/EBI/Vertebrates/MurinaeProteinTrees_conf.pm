@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -37,14 +37,13 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf \
-        -password <your_password> -mlss_id <your_current_PT_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeProteinTrees_conf --mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 =head1 DESCRIPTION
 
-The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
+The Murinae PipeConfig file for StrainsProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =head1 AUTHORSHIP
 
@@ -57,14 +56,14 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeProteinTrees_conf;
 
 use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsProteinTrees_conf');
 
 
 sub default_options {

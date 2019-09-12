@@ -28,15 +28,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::LoadMembers_conf
 
 =head1 DESCRIPTION
 
-Specialized version of the LoadMembers pipeline for Ensembl
+Specialized version of the LoadMembers pipeline for Vertebrates
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::LoadMembers_conf
 
 =head1 AUTHORSHIP
 
@@ -49,7 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::LoadMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::LoadMembers_conf;
 
 use strict;
 use warnings;

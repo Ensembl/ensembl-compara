@@ -22,14 +22,14 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MergeDBsIntoRelease_conf
 
 =head1 SYNOPSIS
 
     #1. update all databases' names and locations
 
     #2. initialize the pipeline:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MergeDBsIntoRelease_conf -host mysql-ens-compara-prod-X -port XXXX
 
     #3. run the beekeeper.pl
 
@@ -45,7 +45,7 @@ for alternative configurations.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MergeDBsIntoRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MergeDBsIntoRelease_conf;
 
 use strict;
 use warnings;

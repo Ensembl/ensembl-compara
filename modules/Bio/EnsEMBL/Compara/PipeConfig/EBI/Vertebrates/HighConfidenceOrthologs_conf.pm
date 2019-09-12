@@ -22,15 +22,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::HighConfidenceOrthologs_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::HighConfidenceOrthologs_conf
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on the Ensembl (vertebrates) database
+A simple pipeline to populate the high- and low- confidence levels on the Vertebrates database
 
 =head1 CONTACT
 
@@ -42,7 +42,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::HighConfidenceOrthologs_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::HighConfidenceOrthologs_conf;
 
 use strict;
 use warnings;

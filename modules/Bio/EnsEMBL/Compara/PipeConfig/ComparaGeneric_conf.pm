@@ -322,8 +322,6 @@ sub get_division_package_name {
     my ( $self, $division ) = @_;
     if (lc $division eq 'citest') {
         return 'CITest';
-    } elsif (lc $division eq 'vertebrates') {
-        return 'Ensembl';
     } else {
         return ucfirst $division;
     }

@@ -28,15 +28,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf -mlss_id <your_mlss_id> -member_type <protein|ncrna> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf -mlss_id <your_mlss_id> -member_type <protein|ncrna> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss>
 
 =head1 EXAMPLES
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf ...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf ...
 
 
 e98 protein-trees
@@ -61,7 +61,7 @@ e91 ncRNA-trees
 
 =head1 DESCRIPTION
 
-A specialized version of ReindexMembers_conf to use in Ensembl for
+A specialized version of ReindexMembers_conf to use in Vertebrates for
 the mouse-strains, although "murinae" is only used to set up the
 pipeline name.
 
@@ -76,7 +76,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::MurinaeReindexMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf;
 
 use strict;
 use warnings;

@@ -37,9 +37,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf \
-        -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf --mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -51,10 +49,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf
     within the Ensembl Genomes infrastructure but this file serves as
     an example of the type of configuration we perform.
 
-=head1 CONTACT
-
-  Please contact Compara or Ensembl Genomes with questions/suggestions
-
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::ProteinTrees_conf;
@@ -63,7 +57,7 @@ use strict;
 use warnings;
 
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf');
 
 
 sub default_options {
