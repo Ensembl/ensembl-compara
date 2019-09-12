@@ -241,9 +241,9 @@ sub parse_description {
                 } else {
                     while($data=~/(\w+)\=([^\[;]*?(?:\[[^\]]*?\])?[^\[;]*?);/g) {
                         my($subprefix,$subdata) = ($1,$2);
-                        if ($subdata =~ /({.*})/) {
+                        if ($subdata =~ /(\{.*\})/) {
                             if ($seen_evidences{$1}) {
-                                $subdata =~ s/ *{.*}//;
+                                $subdata =~ s/ *\{.*\}//;
                             } else {
                                 $seen_evidences{$1} = 1;
                             }
