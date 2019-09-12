@@ -75,6 +75,15 @@ sub pipeline_analyses {
       -logic_name      => 'SyntenyStats',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats',
       -max_retry_count => 0,
+      -flow_into       => {-1 => 'synteny_stats_himem'},
+      -rc_name         => '1Gb_job',
+    },
+
+    {
+      -logic_name      => 'synteny_stats_himem',
+      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::SyntenyStats',
+      -max_retry_count => 0,
+      -rc_name         => '4Gb_job',
     },
     
   ];
