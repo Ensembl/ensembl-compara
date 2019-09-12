@@ -391,7 +391,7 @@ sub fetch_all_by_GenomeDB {
 =head2 fetch_collection_by_name
 
   Arg [1]     : string $collection
-  Example     : my $collection = $species_set_adaptor->fetch_collection_by_name('ensembl');
+  Example     : my $collection = $species_set_adaptor->fetch_collection_by_name('vertebrates');
   Description : Fetches the "collection" SpeciesSet object with that name
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
   Exceptions  : thrown if $collection is missing
@@ -414,7 +414,7 @@ sub fetch_collection_by_name {
   Arg[1]      : string $collection_name
   Arg[2]      : arrayref of Bio::EnsEMBL::Compara::GenomeDB $new_genome_dbs: The list of GenomeDBs the new collection should contain
   Arg[3]      : boolean $release
-  Example     : my $new_collection_ensembl = $species_set_adaptor->update_collection($collection_ensembl, $new_genome_db]);
+  Example     : my $new_collection_vertebrates = $species_set_adaptor->update_collection($collection_vertebrates, $new_genome_db]);
   Description : Creates a new collection species-set that contains the new list of GenomeDBs
                 If requested ($release) the new object will be released and the previous versions retired.
   Returntype  : Bio::EnsEMBL::Compara::SpeciesSet

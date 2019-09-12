@@ -27,15 +27,15 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsOrthologQM_Alignment_conf;
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsOrthologQM_Alignment_conf;
 
 =head1 SYNOPSIS
 
- init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsOrthologQM_Alignment_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -member_type ncrna -collection murinae
+ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsOrthologQM_Alignment_conf $(mysql-ens-compara-prod-6-ensadmin details hive) -member_type ncrna -collection murinae
 
 =head1 DESCRIPTION
 
-See the parent class Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::OrthologQM_Alignment_conf
+See the parent class Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::OrthologQM_Alignment_conf
 
 =head1 CONTACT
 
@@ -47,12 +47,12 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsOrthologQM_Alignment_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsOrthologQM_Alignment_conf;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::OrthologQM_Alignment_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::OrthologQM_Alignment_conf');
 
 
 sub default_options {

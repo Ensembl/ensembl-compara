@@ -32,9 +32,7 @@ indexed for exonerate.
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::DumpGenomes_conf -division vertebrates
-
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::DumpGenomes_conf -division plants
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::DumpGenomes_conf -division $COMPARA_DIV
 
 =head1 CONTACT
 

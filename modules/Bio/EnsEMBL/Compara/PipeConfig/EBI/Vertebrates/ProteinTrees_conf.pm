@@ -28,20 +28,15 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf
 
 =head1 DESCRIPTION
 
-    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
-
-
-=head1 CONTACT
-
-  Please contact Compara or Ensembl Genomes with questions/suggestions
+    The Vertebrates PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ProteinTrees_conf;
 
 use strict;
 use warnings;

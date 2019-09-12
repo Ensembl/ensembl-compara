@@ -17,15 +17,18 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-Example1 : 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --pipeline_name LASTZ_hagfish_93 --collection hagfish --host mysql-ens-compara-prod-3 --port 4523 --non_ref_species eptatretus_burgeri
+Example 1: 
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf --mlss_id_list "[1596,1583,1570,1562]"
 
-Example2 : 
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf --pipeline_name LASTZ_human_fish_94 --collection collection-e94_new_species_human_lastz -ref_species homo_sapiens
+Example 2: 
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf --collection hagfish --non_ref_species eptatretus_burgeri
+
+Example 3: 
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf --collection collection-e94_new_species_human_lastz -ref_species homo_sapiens
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Lastz_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Lastz_conf;
 
 use strict;
 use warnings;

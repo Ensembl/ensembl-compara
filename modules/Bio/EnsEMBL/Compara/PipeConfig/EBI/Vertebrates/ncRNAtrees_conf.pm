@@ -29,11 +29,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -mlss_id <your_MLSS_id> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss> -epo_db <most_recent_epo_low_coverage_database>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ncRNAtrees_conf -mlss_id <your_MLSS_id> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss> -epo_db <most_recent_epo_low_coverage_database>
 
 -epo_db should ideally contain EPO-2X alignments of all the genomes used in the ncRNA-trees. However, due to release coordination considerations, this may not be possible. In this case, you can use the one from the previous release
 
@@ -41,7 +41,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
 
 e96
     # All the databases are defined in the production_reg_conf so the command-line is much simpler
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf -mlss_id 40130 $(mysql-ens-compara-prod-3-ensadmin details hive)
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ncRNAtrees_conf -mlss_id 40130 $(mysql-ens-compara-prod-3-ensadmin details hive)
 
 e94
     -mlss_id 40122 -member_db $(mysql-ens-compara-prod-2 details url waakanni_load_members_94) -prev_rel_db $(mysql-ens-compara-prod-1 details url ensembl_compara_93) -epo_db $(mysql-ens-compara-prod-1 details url ensembl_compara_93)
@@ -49,7 +49,7 @@ e94
 
 =head1 DESCRIPTION
 
-This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+This is the Vertebrates PipeConfig for the ncRNAtree pipeline.
 
 =head1 AUTHORSHIP
 
@@ -62,7 +62,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ncRNAtrees_conf;
 
 use strict;
 use warnings;

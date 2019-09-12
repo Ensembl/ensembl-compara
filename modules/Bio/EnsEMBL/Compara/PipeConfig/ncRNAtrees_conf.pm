@@ -32,11 +32,11 @@ Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf -password <your_password> -mlss_id <your_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf --mlss_id <your_mlss_id>
 
 =head1 DESCRIPTION  
 
-This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+This is the ncRNAtree pipeline.
 An example of use can be found in the Example folder.
 
 =head1 AUTHORSHIP

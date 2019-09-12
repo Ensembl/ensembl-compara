@@ -21,16 +21,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PostHomologyMerge_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::PostHomologyMerge_conf
 
 =head1 DESCRIPTION
 
-Specific version of PostHomologyMerge for Ensembl (vertebrates)
+Specific version of PostHomologyMerge for Vertebrates
 
 =cut
 
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::PostHomologyMerge_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::PostHomologyMerge_conf;
 
 use strict;
 use warnings;

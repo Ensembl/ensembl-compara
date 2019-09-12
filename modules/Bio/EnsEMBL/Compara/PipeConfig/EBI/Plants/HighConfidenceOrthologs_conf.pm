@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::HighConfidenceOrthologs_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::HighConfidenceOrthologs_conf -compara_db mysql://...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Plants::HighConfidenceOrthologs_conf
 
 =head1 DESCRIPTION
 

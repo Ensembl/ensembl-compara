@@ -29,15 +29,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsNcRNAtrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf --mlss_id <your_MLSS_id>
 
 =head1 DESCRIPTION
 
-This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+This is the Vertebrates PipeConfig for the ncRNAtree pipeline.
 
 =head1 AUTHORSHIP
 
@@ -50,11 +50,11 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::StrainsNcRNAtrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsNcRNAtrees_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::ncRNAtrees_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::ncRNAtrees_conf');
 
 sub default_options {
     my ($self) = @_;

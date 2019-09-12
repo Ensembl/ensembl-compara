@@ -28,19 +28,19 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblFamilies_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf
 
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. Ensure that LoadMembers pipeline have been run
+    #2. Ensure that LoadMembers pipeline has been run
 
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
 
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf $(mysql-ens-compara-prod-6-ensadmin details script) -mlss_id <your_current_Family_mlss_id>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf $(mysql-ens-compara-prod-6-ensadmin details script) -mlss_id <your_current_Family_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
@@ -59,7 +59,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Ensembl::Families_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::Families_conf;
 
 use strict;
 use warnings;

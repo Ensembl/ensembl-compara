@@ -29,15 +29,15 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRnaTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EnsemblNcRnaTrees_conf -password <your_password> -mlss_id <your_MLSS_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::ncRnaTrees_conf --mlss_id <your_MLSS_id>
 
 =head1 DESCRIPTION
 
-This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+This is the EBI PipeConfig for the ncRNAtree pipeline.
 
 =head1 AUTHORSHIP
 

@@ -25,7 +25,7 @@ use Getopt::Long;
 my $usage = "
 getsynteny.pl  --host ensembldb.ensembl.org
                --user anonymous
-               --dbname ensembl_compara_41
+               --dbname ensembl_compara_XX
                --chr_names \"22\"
                --species1 \"Homo sapiens\"
                [--assembly1 NCBI30]
@@ -36,7 +36,7 @@ getsynteny.pl  --host ensembldb.ensembl.org
 $0 [--help]
    --host               compara_db_host_server (default = 'ensembldb.ensembl.org')
    --user               username (default = 'anonymous')
-   --dbname             compara_database_name (default = 'ensembl_compara_41')
+   --dbname             compara_database_name
    --chr_names          \"20,21,22\" (default = \"all\")
    --species1           from which alignments are queried and chr_names
                         refer to (e.g. \"Homo sapiens\" is default) 
@@ -52,7 +52,7 @@ my $help = 0;
 my $host = 'ensembldb.ensembl.org';
 my $user = 'anonymous';
 my $pass;
-my $dbname = 'ensembl_compara_41';
+my $dbname;
 my $port = 3306;
 
 my $species1 = 'Homo sapiens';
@@ -82,6 +82,8 @@ if ($help) {
   print $usage;
   exit 0;
 }
+
+die "No database name provided" if (! $dbname);
 
 my $dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor (-host        => $host,
 						       -port        => $port,
