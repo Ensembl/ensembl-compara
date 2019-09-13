@@ -446,6 +446,7 @@ sub identify_removed_columns {
     return join(',', map {sprintf('[%d,%d]', @$_)} @filt_segments);
 }
 
+
 =head2 get_cigar_breakout
 
   Arg [1]    : String $cigar_line
@@ -468,6 +469,7 @@ sub get_cigar_breakout {
     return %breakout;
 }
 
+
 =head2 get_cigar_array
 
   Arg [1]    : String $cigar_line
@@ -486,6 +488,7 @@ sub get_cigar_array {
     }
     return \@cigar_array;
 }
+
 
 =head2 create_2x_cigar_line
 
@@ -570,6 +573,7 @@ sub create_2x_cigar_line {
     return $cigar_line;
 }
 
+
 #create cigar element from mode and length
 sub _cigar_element {
     my ($mode, $len) = @_;
@@ -581,6 +585,7 @@ sub _cigar_element {
     }
     return $elem;
 }
+
 
 =head2 check_cigar_line
 
