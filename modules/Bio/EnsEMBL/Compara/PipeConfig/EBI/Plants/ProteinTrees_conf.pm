@@ -82,7 +82,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->check_file_in_ensembl('ensembl-compara/conf/plants/species_tree.topology.nw'),
+        'species_tree_input_file'   => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/species_tree.topology.nw'),
         'binary_species_tree_input_file'    => undef,
 
     # homology_dnds parameters:

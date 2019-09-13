@@ -85,9 +85,9 @@ sub default_options {
         'compara_dir'   => $self->check_dir_in_ensembl('ensembl-compara/'),
         # NOTE: 'config_dir' is already in ENV but the check* method is not called on it
         #       Since it is essential for this pipeline, redefining it here with the checks
-        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/citest'),
-        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/citest/production_init_reg_conf.pl'),
-        'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/citest/production_reg_conf_tmpl.pl'),
+        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/' . $self->o('division')),
+        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_init_reg_conf.pl'),
+        'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_reg_conf_tmpl.pl'),
 
         # Change working directory
         'pipeline_name' => 'build_master',
