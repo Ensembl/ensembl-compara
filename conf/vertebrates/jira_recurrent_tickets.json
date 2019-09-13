@@ -391,7 +391,7 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
-            "summary": "Update ensembl-compara/conf/<division>/jira_recurrent_tickets.json"
+            "summary": "Update conf/<division>/jira_recurrent_tickets.json"
          }
       ],
       "summary": "<Division> Release <version> Post-handover"
