@@ -671,38 +671,25 @@ sub compute_alignment_depth {
         $group_ids = [0..($n_cigars-1)];
     }
 
-    my @cigar_lines_arrays = map {get_cigar_array($_)} @$cigar_lines;
-
-    #cigar_lines_arrays => [
-    #           member_1    [[D,3], [M,3], [D2]],
-    #           member_2    [[M,8]],
-    #           member_3    [[D,1], [M,5], [D,2]]
-    #                      ]
-
     my %depth_sum;
     my %n_total_pos;
 
-    while (scalar(@{ $cigar_lines_arrays[0] })) {
-
+    my $cb = sub {
+        my ($pos, $codes, $length) = @_;
         my %n_aligned_ids;
         for (my $i = 0; $i < $n_cigars; $i++ ) {
-            #We always read the first element, No need to iterate in the position we always read from position 0
-            if ( $cigar_lines_arrays[$i]->[0]->[0] eq 'M' ) {
+            if ( $codes->[$i] eq 'M' ) {
                 $n_aligned_ids{ $group_ids->[$i] } ++;
             }
-            $cigar_lines_arrays[$i]->[0]->[1]--;
-            if ( $cigar_lines_arrays[$i]->[0]->[1] == 0 ) {
-                shift @{ $cigar_lines_arrays[$i] };
-            }
         }
-
         my $this_depth = scalar(keys %n_aligned_ids) - 1;
         foreach my $id (keys %n_aligned_ids) {
-            my $n_pos = $n_aligned_ids{$id};
+            my $n_pos = $n_aligned_ids{$id} * $length;
             $depth_sum{$id} += $this_depth * $n_pos;
             $n_total_pos{$id} += $n_pos;
-        }
-    }
+
+    };
+    column_iterator($cigar_lines, $cb, 'group');
 
     my %depth_summary;
     foreach my $id (keys %depth_sum) {
