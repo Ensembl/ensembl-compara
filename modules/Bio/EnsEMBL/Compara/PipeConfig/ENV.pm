@@ -77,9 +77,10 @@ sub shared_default_options {
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'},
 
         # All the fixed parameters that depend on a "division" parameter
+        'config_dir'            => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/conf/'.$self->o('division'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division
-        'reg_conf'              => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-        'binary_species_tree'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.' . $self->o('division') . '.branch_len.nw',
+        'reg_conf'              => $self->o('config_dir').'/production_reg_conf.pl',
+        'binary_species_tree'   => $self->o('config_dir').'/species_tree.branch_len.nw',
         'genome_dumps_dir'      => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/genome_dumps/'.$self->o('division').'/',
 
         # HMM library

@@ -91,7 +91,6 @@ sub default_options {
 
         'init_reg_conf' => $self->o('reg_conf'), # needed to create the new master database
         # Parameters required for citest division only
-        'config_dir'    => undef,
         'reg_conf_tmpl' => undef,
         'dst_host'      => undef,
         'dst_port'      => undef,
@@ -102,7 +101,7 @@ sub default_options {
         'taxonomy_db'             => 'ncbi_taxonomy',
         'incl_components'         => 1, # let's default this to 1 - will have no real effect if there are no component genomes (e.g. in vertebrates)
         'create_all_mlss_exe'     => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_all_mlss.pl'),
-        'xml_file'                => $self->o('config_dir') . '/compara_' . $self->o('division') . '.xml',
+        'xml_file'                => $self->o('config_dir') . '/mlss_conf.xml',
         'report_file'             => $self->o('work_dir') . '/mlss_ids_' . $self->o('division') . '.list',
         'master_backup_file'      => $self->o('backups_dir') . '/new_master_' . $self->o('division') . '.sql',
         'patch_dir'               => $self->check_dir_in_ensembl('ensembl-compara/sql/'),
@@ -196,7 +195,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'config_dir' => $self->o('config_dir'),
-                'inputcmd'   => 'find #config_dir# -type f -name "*.json"',
+                'inputcmd'   => 'find #config_dir#/core -type f -name "*.json"',
             },
             -flow_into  => {
                 '2->A' => {'clone_core_regions' => {'json_file' => '#_0#'}},

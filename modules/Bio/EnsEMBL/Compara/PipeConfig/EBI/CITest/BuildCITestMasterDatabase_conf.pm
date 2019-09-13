@@ -36,7 +36,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
     (from core databases) that will be cloned before copying their information
     into the new master database. This pipeline requires a configuration
     directory (parameter 'config_dir') that contains:
-        - one JSON file per species (following the format described in
+        - a "core" subdirectory with one JSON file per species (following the format described in
           https://github.com/Ensembl/ensembl-test/blob/release/98/scripts/clone_core_database.pl),
           named with the species' scientific name with spaces replaced by
           underscores, e.g. 'homo_sapiens.json', 'mus_musculus.json'
@@ -44,7 +44,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
           location of the core databases from which to clone the regions, and
           the location where the new master database will be created
         - XML file with all the desired method_link_species_set entries, named
-          'compara_<division>.xml'
+          'mlss_conf.xml'
 
     WARNING: the previous reports and backups will be removed if the pipeline is
     initialised again for the same division
@@ -54,7 +54,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::CITest::BuildCITestMasterDatabase_conf -dst_host <host> -dst_port <port>
 
     #1. Create a new master database
-    #2. Clone data regions from JSON files located in 'config_dir'
+    #2. Clone data regions from JSON files located in 'config_dir'/core
     #3. Populate the new master database through PrepareMasterDatabaseForRelease pipeline
 
 =head1 AUTHORSHIP
@@ -83,9 +83,11 @@ sub default_options {
 
         'division'      => 'citest',
         'compara_dir'   => $self->check_dir_in_ensembl('ensembl-compara/'),
-        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/modules/t/citest_division'),
-        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/modules/t/citest_division/production_init_reg_citest_conf.pl'),
-        'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/production_reg_citest_conf_tmpl.pl'),
+        # NOTE: 'config_dir' is already in ENV but the check* method is not called on it
+        #       Since it is essential for this pipeline, redefining it here with the checks
+        'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/citest'),
+        'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/citest/production_init_reg_citest_conf.pl'),
+        'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/citest/production_reg_conf_tmpl.pl'),
 
         # Change working directory
         'pipeline_name' => 'build_master',

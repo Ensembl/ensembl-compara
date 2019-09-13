@@ -105,7 +105,7 @@ sub new {
   Arg[-DRY_RUN]      : (optional) boolean - in dry-run mode, the JIRA tickets
                        will not be submitted to the JIRA server. By default,
                        dry-run mode is off.
-  Example     : $jira_adaptor->create_tickets(-JSON_FILE => 'jira_recurrent_tickets.vertebrates.json');
+  Example     : $jira_adaptor->create_tickets(-JSON_FILE => 'conf/vertebrates/jira_recurrent_tickets.json');
   Description : Submits a post request to the JIRA server that creates the new
                 ticket(s). Returns an arrayref with the key of each ticket
                 created. If there is a ticket already in the JIRA server that

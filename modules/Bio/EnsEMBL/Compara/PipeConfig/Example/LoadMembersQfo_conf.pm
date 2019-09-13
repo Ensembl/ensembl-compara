@@ -79,8 +79,6 @@ sub default_options {
 
         'reuse_member_db' => undef,
 
-        'reg_conf'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/production_reg_'.$self->o('division').'_conf.pl',
-
         'curr_file_sources_locs'    => [ '/homes/mateus/qfo/2019/qfo_2019.json' ],    # It can be a list of JSON files defining an additionnal set of species
 
     # custom pipeline name, in case you don't like the default one

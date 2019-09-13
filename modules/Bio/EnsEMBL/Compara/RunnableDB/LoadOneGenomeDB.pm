@@ -44,7 +44,7 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
 
         # load a genome_db given a reg_conf and species_name as locator with a specific genome_db_id
     standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
-        -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+        -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/conf/vertebrates/production_reg_conf.pl \
         -locator 'homo_sapiens' -genome_db_id 90
 
 =head1 DESCRIPTION
