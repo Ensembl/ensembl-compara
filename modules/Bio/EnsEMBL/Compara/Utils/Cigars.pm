@@ -358,22 +358,29 @@ sub cigar_from_two_alignment_strings {
 
 sub minimize_cigars {
 
-    my @expanded_cigars = map {[split(//, expand_cigar($_))]} @_;
-    my $num_cigars = scalar(@expanded_cigars);
-    my $len = scalar(@{$expanded_cigars[0]});
+    my $n_cigars    = scalar(@_);
+    my @new_cigars  = map {''} 1..$n_cigars;
+    my @cig_codes   = @new_cigars;
+    my @cig_lengths = map {0} 1..$n_cigars;
 
-    my @good_i;
-    foreach my $i (0..($len-1)) {
-        if (grep {$_->[$i] eq 'M'} @expanded_cigars) {
-            push @good_i, $i;
+    my $cb = sub {
+        my ($pos, $codes, $length) = @_;
+        if (grep {$_ eq 'M'} @$codes) {
+            for (my $i = 0; $i < $n_cigars; $i++ ) {
+                if ($codes->[$i] eq $cig_codes[$i]) {
+                    $cig_lengths[$i] += $length;
+                } else {
+                    $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
+                    $cig_codes[$i]   = $codes->[$i];
+                    $cig_lengths[$i] = $length;
+                }
+            }
         }
+    };
+    column_iterator(\@_, $cb, 'group');
+    for (my $i = 0; $i < $n_cigars; $i++ ) {
+        $new_cigars[$i] .= _cigar_element($cig_codes[$i], $cig_lengths[$i]);
     }
-
-    my @new_cigars;
-    foreach my $exp_cig (@expanded_cigars) {
-        push @new_cigars, collapse_cigar(join('', map {$exp_cig->[$_]} @good_i));
-    }
-
     return @new_cigars;
 }
 
