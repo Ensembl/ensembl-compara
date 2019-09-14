@@ -70,7 +70,6 @@ use warnings;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOAlignment;
-use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
