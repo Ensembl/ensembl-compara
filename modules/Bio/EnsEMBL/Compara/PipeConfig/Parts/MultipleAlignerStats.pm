@@ -106,6 +106,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -parameters => {
                             'mlss_id'  => $self->o('mlss_id'),
                             'contiguous'  => 0,
+                            'step'        => 10,
                             'inputquery'  => 'SELECT DISTINCT genomic_align_block_id FROM genomic_align WHERE method_link_species_set_id = #mlss_id# AND dnafrag_id < 10000000000',
                         },
             -rc_name    => '4Gb_job',

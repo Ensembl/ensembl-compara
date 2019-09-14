@@ -37,23 +37,28 @@ use Bio::EnsEMBL::Compara::Utils::Preloader;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub fetch_input {
+sub run {
     my $self = shift @_;
 
-    my $genomic_align_block = $self->compara_dba->get_GenomicAlignBlockAdaptor->fetch_by_dbID($self->param_required('genomic_align_block_id'));
+    $self->param('depth_by_genome', {});
+    $self->param('total_pairwise_coverage', {});
+
+    foreach my $genomic_align_block_id (@{$self->param_required('_range_list')}) {
+        $self->process_one_block($genomic_align_block_id);
+    }
+}
+
+
+sub process_one_block {
+    my $self = shift @_;
+    my $genomic_align_block_id = shift @_;
+
+    my $genomic_align_block = $self->compara_dba->get_GenomicAlignBlockAdaptor->fetch_by_dbID($genomic_align_block_id);
     my $genomic_aligns      = $genomic_align_block->genomic_align_array();
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $genomic_aligns);
 
-    $self->param('genomic_aligns', $genomic_aligns);
-}
-
-sub run {
-    my $self = shift @_;
-
     $self->disconnect_from_databases;
-
-    my $genomic_aligns = $self->param('genomic_aligns');
 
     my @all_cigar_arrays;
     my @all_genome_db_ids;
@@ -67,20 +72,24 @@ sub run {
         push @{$cigar_lines_by_genome_db_id{$genome_db_id}}, $cigar_array;
     }
 
-    my $pairwise_coverage = {};
+    my $pairwise_coverage = $self->param('pairwise_coverage');
     my @gdbs = keys %cigar_lines_by_genome_db_id;
     while (my $gdb1 = shift @gdbs) {
         my $cigar_lines_1 = $cigar_lines_by_genome_db_id{$gdb1};
         foreach my $gdb2 (@gdbs) {
             my $cigar_lines_2 = $cigar_lines_by_genome_db_id{$gdb2};
-            $pairwise_coverage->{$gdb1}->{$gdb2} = $self->_calculate_pairwise_coverage($cigar_lines_1, $cigar_lines_2);
-            $pairwise_coverage->{$gdb2}->{$gdb1} = $self->_calculate_pairwise_coverage($cigar_lines_2, $cigar_lines_1);
+            $pairwise_coverage->{$gdb1}->{$gdb2} += $self->_calculate_pairwise_coverage($cigar_lines_1, $cigar_lines_2);
+            $pairwise_coverage->{$gdb2}->{$gdb1} += $self->_calculate_pairwise_coverage($cigar_lines_2, $cigar_lines_1);
         }
     }
-    $self->param('pairwise_coverage', $pairwise_coverage);
 
+    my $depth_by_genome = $self->param('depth_by_genome');
     my $depths = Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(\@all_cigar_arrays, \@all_genome_db_ids);
-    $self->param('depth_by_genome', $depths);
+    foreach my $genome_db_id ( keys %$depths ) {
+        foreach my $key (qw(n_total_pos depth_sum)) {
+            $depth_by_genome->{$genome_db_id}->{$key} += $depths->{$genome_db_id}->{$key};
+        }
+    }
 }
 
 sub write_output {
@@ -93,7 +102,8 @@ sub write_output {
         $self->dataflow_output_id({'genome_db_id' => $genome_db_id, 'num_of_aligned_positions' => $n_total_pos}, 2);
         $self->dataflow_output_id({'genome_db_id' => $genome_db_id, 'sum_aligned_seq' => $sum_aligned_bases}, 3);
     }
-    my $pairwise_coverage = $self->param('pairwise_coverage');
+
+    my $pairwise_coverage = $self->param('total_pairwise_coverage');
     foreach my $gdb1 ( keys %$pairwise_coverage ) {
         foreach my $gdb2 ( keys %{$pairwise_coverage->{$gdb1}} ) {
             $self->dataflow_output_id({
