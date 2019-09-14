@@ -96,7 +96,6 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'gab_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                            'mlss_id'  => $self->o('mlss_id'),
                             'contiguous'  => 0,
                             'step'        => 10,
                             'inputquery'  => 'SELECT DISTINCT genomic_align_block_id FROM genomic_align WHERE method_link_species_set_id = #mlss_id# AND dnafrag_id < 10000000000',
