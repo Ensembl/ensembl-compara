@@ -80,6 +80,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_create_commands {
     my ($self) = @_;
