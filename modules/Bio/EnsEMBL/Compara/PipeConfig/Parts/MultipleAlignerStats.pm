@@ -63,7 +63,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -flow_into  => {
                 '2->A' => [ 'multiplealigner_stats' ],
                 'A->1' => [ 'block_size_distribution' ],
-                    #1  => ['gab_stats_semaphore_holder'],
+                    1  => ['gab_stats_semaphore_holder'],
             },
         },
 
