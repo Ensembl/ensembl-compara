@@ -108,7 +108,7 @@ sub pipeline_wide_parameters {
 
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self);
