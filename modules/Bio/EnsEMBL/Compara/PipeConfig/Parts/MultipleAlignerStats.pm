@@ -63,7 +63,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -flow_into  => {
                 '2->A' => [ 'multiplealigner_stats' ],
                 'A->1' => [ 'block_size_distribution' ],
-                    1  => ['gab_stats_semaphore_holder'],
+                    1  => [ 'gab_factory' ],
             },
         },
 
@@ -93,15 +93,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             },
         },
 
-        {   -logic_name => 'gab_stats_semaphore_holder',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => ['Genomic_Align_Block_Job_Generator'],
-                'A->1' => ['block_stats_aggregator']
-                },
-        },
-
-        {   -logic_name => 'Genomic_Align_Block_Job_Generator',
+        {   -logic_name => 'gab_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'mlss_id'  => $self->o('mlss_id'),
@@ -111,7 +103,8 @@ sub pipeline_analyses_multiple_aligner_stats {
                         },
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                2 => ['per_block_stats'],
+                '2->A' => ['per_block_stats'],
+                'A->1' => ['block_stats_aggregator']
                 },
         },
 
