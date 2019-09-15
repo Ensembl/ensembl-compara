@@ -102,6 +102,7 @@ sub compose_sequence_with_cigar {
     throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^[0-9A-Z]*$/;
 
     while ($cigar_line =~ /(\d*)([A-Z])/g) {
+        next if $1 =~ /^0+$/;
 
         my $length = ($1 || 1) * $expansion_factor;
         my $char = $2;
@@ -184,6 +185,7 @@ sub expand_cigar {
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
     while ($cigar =~ /(\d*)([A-Za-z])/g) {
+        next if $1 =~ /^0+$/;
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
@@ -223,6 +225,7 @@ sub alignment_length_from_cigar {
     my $cigar = shift;
     my $length = 0;
     while ($cigar =~ /(\d*)([A-Za-z])/g) {
+        next if $1 =~ /^0+$/;
         $length += ($1 || 1);
     }
     return $length;
@@ -497,6 +500,7 @@ sub get_cigar_array {
     return $cigar if ref($cigar);   # pass-through in case the input already is an array
     my @cigar_array;
     while ($cigar =~ /(\d*)([A-Za-z])/g) {
+        next if $1 =~ /^0+$/;
         push(@cigar_array,[$2,$1||1]);
     }
     return \@cigar_array;
