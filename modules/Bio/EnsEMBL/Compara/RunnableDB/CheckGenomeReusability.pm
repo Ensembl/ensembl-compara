@@ -189,6 +189,7 @@ sub run {
 
     return if(defined($self->param('reuse_this')));  # bypass run() in case 'reuse_this' has either been passed or already computed
 
+    # run_comparison is to be implemented in a sub-class
     $self->param('reuse_this', $self->run_comparison());
 }
 
