@@ -114,7 +114,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'src_db_conn'   => '#master_db#',
                     'table'         => 'dnafrag',
-                    'where'         => 'genome_db_id = #genome_db_id#',
+                    'where'         => 'genome_db_id = #genome_db_id# AND is_reference = 1',
                     'mode'          => 'insertignore',
                 },
 		-hive_capacity => $self->o('low_capacity'),
@@ -122,10 +122,7 @@ sub pipeline_analyses_epo_anchor_mapping {
             },
 
             {   -logic_name => 'check_reusability',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
-                -parameters => {
-                    check_gene_content  => 0,
-                },
+                -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::CheckDnaFragReusability',
                 -rc_name   => '500Mb_job',
                 -flow_into => {
                     2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',

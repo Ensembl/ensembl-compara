@@ -684,7 +684,7 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
 
         {   -logic_name => 'check_reusability',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckBlastReusability',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckCanonMembersReusability',
             -parameters => {
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
