@@ -55,11 +55,13 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
     
-    # build gene neighbourhood map
-    print "Building gene neighbourhood...\n" if $self->debug;
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('goc_mlss_id'));
+    $self->_handle_polyploid_goc($mlss);
     my $genome_dbs = $mlss->species_set->genome_dbs;
+    
+    # build gene neighbourhood map
     my (%neighbourhood, %gene_member_strand);
+    print "Building gene neighbourhood...\n" if $self->debug;
     
     # identify paralogs in order to discard tandem paralogs later
     print "\tidentifying paralogs... " if $self->debug;
@@ -188,7 +190,14 @@ sub _get_all_gene_member_ids_in_homology_file {
     my $header = <$hom_handle>;
     while( my $line = <$hom_handle> ) {
         my $row = map_row_to_header( $line, $header );
-        my ( $gm_id_1, $gm_id_2 ) = ($row->{gene_member_id}, $row->{hom_gene_member_id});
+        my ( $gm_id_1, $gm_id_2, $gdb_id_1, $gdb_id_2 ) = ($row->{gene_member_id}, $row->{hom_gene_member_id}, $row->{genome_db_id}, $row->{hom_genome_db_id});
+        if ( $self->param('genome_db_ids') ) {
+            my ( $gdb_a, $gdb_b ) = @{ $self->param('genome_db_ids') };
+            next unless ( 
+                ($gdb_id_1 == $gdb_a && $gdb_id_2 == $gdb_b) ||
+                ($gdb_id_1 == $gdb_b && $gdb_id_2 == $gdb_a)
+            );
+        }
         $gm_ids{$gm_id_1} = 1;
         $gm_ids{$gm_id_2} = 1;
     }
@@ -337,6 +346,40 @@ sub _identify_paralogs {
     }
     
     return \%paralogs;
+}
+
+sub _handle_polyploid_goc {
+    my ( $self, $mlss ) = @_;
+    
+    # First, let's detect ENSEMBL_HOMOEOLOGUES and spawn 1 job per pair of components
+    if (($mlss->method->type eq 'ENSEMBL_HOMOEOLOGUES') && !$self->param('genome_db_ids')) {
+        my $genome_db = $mlss->species_set->genome_dbs->[0];
+        my @components = @{$genome_db->component_genome_dbs};
+        while (my $gdb1 = shift @components) {
+            foreach my $gdb2 (@components) {
+                $self->dataflow_output_id({'genome_db_ids' => [$gdb1->dbID, $gdb2->dbID]}, 3);
+            }
+        }
+        $self->complete_early('Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs');
+    }
+
+    # Then, let's find the ENSEMBL_ORTHOLOGUES that link polyploid genomes
+    # and spawn 1 job for each of their components
+    if (($mlss->method->type eq 'ENSEMBL_ORTHOLOGUES') && !$self->param('genome_db_ids')) {
+        my $gdb1 = $mlss->species_set->genome_dbs->[0];
+        my $gdb2 = $mlss->species_set->genome_dbs->[1];
+        if ($gdb1->is_polyploid || $gdb2->is_polyploid) {
+            # Note: both could be polyploid, e.g. T.aes vs T.dic
+            my $sub_gdb1s = $gdb1->is_polyploid ? $gdb1->component_genome_dbs : [$gdb1];
+            my $sub_gdb2s = $gdb2->is_polyploid ? $gdb2->component_genome_dbs : [$gdb2];
+            foreach my $sub_gdb1 (@$sub_gdb1s) {
+                foreach my $sub_gdb2 (@$sub_gdb2s) {
+                    $self->dataflow_output_id({'genome_db_ids' => [$sub_gdb1->dbID, $sub_gdb2->dbID]}, 3);
+                }
+            }
+            $self->complete_early('Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db');
+        }
+    }
 }
 
 1;
