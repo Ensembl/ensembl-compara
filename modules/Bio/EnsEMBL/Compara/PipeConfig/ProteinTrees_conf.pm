@@ -246,7 +246,7 @@ sub default_options {
         'quick_tree_break_capacity' => 100,
         'build_hmm_capacity'        => 200,
         'ktreedist_capacity'        => 150,
-        'goc_capacity'              => 30,
+        'goc_capacity'              => 300,
         'goc_stats_capacity'        => 5,
         'genesetQC_capacity'        => 100,
         'other_paralogs_capacity'   => 100,
@@ -264,7 +264,7 @@ sub default_options {
         'copy_alignments_capacity'  => 50,
         'mafft_update_capacity'     => 50,
         'raxml_update_capacity'     => 50,
-        'ortho_stats_capacity'      => 10,
+        'ortho_stats_capacity'      => 1000,
 
     # hive priority values for some analyses:
         'hc_priority'               => -10,
