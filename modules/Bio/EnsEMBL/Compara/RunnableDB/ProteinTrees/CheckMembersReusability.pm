@@ -53,12 +53,12 @@ sub run_comparison {
     my $self = shift @_;
 
     if (comes_from_core_database($self->param('genome_db'))) {
-        return $self->do_comparison('exons',
+        return $self->do_one_comparison('exons',
             $self->hash_all_exons_from_dba( $self->param('prev_core_dba') ),
             $self->hash_all_exons_from_dba( $self->param('curr_core_dba') ),
         );
     } else {
-        return $self->do_comparison('sequences',
+        return $self->do_one_comparison('sequences',
             hash_all_sequences_from_db( $self->param('reuse_genome_db') ),
             hash_all_sequences_from_file( $self->param('genome_db') ),
         );

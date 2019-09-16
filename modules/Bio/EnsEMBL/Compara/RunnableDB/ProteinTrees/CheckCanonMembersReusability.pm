@@ -37,7 +37,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::CheckGenomeReusability');
 sub run_comparison {
     my $self = shift @_;
 
-    return $self->do_comparison('members',
+    return $self->do_one_comparison('members',
         $self->hash_all_canonical_members( $self->param('reuse_dba') ),
         $self->hash_all_canonical_members( $self->compara_dba ),
     );
