@@ -144,20 +144,20 @@ sub _fetch_and_map_previous_homologies_from_file {
     my (%hash_previous_homologies, @homology_mapping);
 
     my $prev_homology_flatfile = $self->param_required('prev_homology_flatfile');
-    open(PFF, '<', $prev_homology_flatfile) or die "Cannot open $prev_homology_flatfile";
-    my $pff_header = <PFF>;
-    while ( my $line = <PFF> ) {
+    open(my $p_hom_handle, '<', $prev_homology_flatfile) or die "Cannot open $prev_homology_flatfile";
+    my $pff_header = <$p_hom_handle>;
+    while ( my $line = <$p_hom_handle> ) {
         my $row = map_row_to_header($line, $pff_header);
         my ( $homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{seq_member_stable_id}, $row->{hom_seq_member_stable_id} );
         $hash_previous_homologies{sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id)} = $homology_id;
         $hash_previous_homologies{sprintf('%s_%s', $sm2_stable_id, $sm1_stable_id)} = $homology_id;
     }
-    close PFF;
+    close $p_hom_handle;
     
     my $curr_homology_flatfile = $self->param_required('homology_flatfile');
-    open(HFF, '<', $curr_homology_flatfile) or die "Cannot open $curr_homology_flatfile";
-    my $hff_header = <HFF>;
-    while ( my $line = <HFF> ) {
+    open(my $hom_handle, '<', $curr_homology_flatfile) or die "Cannot open $curr_homology_flatfile";
+    my $hff_header = <$hom_handle>;
+    while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header($line, $hff_header);
         my ( $curr_homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{seq_member_stable_id}, $row->{hom_seq_member_stable_id} );        
         my $stable_id_key = sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id);
@@ -165,6 +165,7 @@ sub _fetch_and_map_previous_homologies_from_file {
         
         push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology_id] ) if $prev_homology_id;
     }
+    close $hom_handle;
         
     $self->param( 'homology_mapping', \@homology_mapping );
 }

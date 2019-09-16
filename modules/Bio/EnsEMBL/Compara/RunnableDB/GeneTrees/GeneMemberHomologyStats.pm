@@ -79,9 +79,9 @@ sub run {
     foreach my $hom_file ( @hom_files ) {
         $file_count++;
         # print "Scanning $hom_file\n" if $self->debug;
-        open(HOM, '<', $hom_file) or die "Cannot open $hom_file";
-        my $this_header = <HOM>;
-        while ( my $line = <HOM> ) {
+        open(my $hom_handle, '<', $hom_file) or die "Cannot open $hom_file";
+        my $this_header = <$hom_handle>;
+        while ( my $line = <$hom_handle> ) {
             my $row = map_row_to_header($line, $this_header);
             my ( $homology_type, $gm_id_1, $gm_id_2 ) = ($row->{homology_type}, $row->{gene_member_id}, $row->{hom_gene_member_id});
             

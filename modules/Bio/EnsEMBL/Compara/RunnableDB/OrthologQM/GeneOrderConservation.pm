@@ -128,7 +128,8 @@ sub run {
         # calculate goc score in each direction (A->B && B->A)
         # the max score becomes the final goc_score for this homology
         my $goc_score_1 = $self->_calculate_goc( $gm_id_1, $gm_id_2, $homology_id );
-        my $goc_score_2 = $self->_calculate_goc( $gm_id_2, $gm_id_1, $homology_id ) unless $goc_score_1 == 100; # no need to calculate the inverse if we've already got a max score
+        my $goc_score_2 = 0;
+        $goc_score_2 = $self->_calculate_goc( $gm_id_2, $gm_id_1, $homology_id ) unless $goc_score_1 == 100; # no need to calculate the inverse if we've already got a max score
         my $max_goc_score = ( $goc_score_1 >= ( $goc_score_2 || 0 ) ) ? $goc_score_1 : $goc_score_2;
         
         push @{ $goc_scores{$max_goc_score} }, $homology_id;

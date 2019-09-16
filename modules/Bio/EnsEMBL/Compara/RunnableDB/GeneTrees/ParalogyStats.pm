@@ -71,10 +71,10 @@ sub fetch_input {
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
 
     my $homology_flatfile = $self->param_required('homology_flatfile');
-    open( HFH, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
-    my $header_line = <HFH>;
+    open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
+    my $header_line = <$hom_handle>;
     my (%stats_raw, %stats_taxon_raw);
-    while ( my $line = <HFH> ) {
+    while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header($line, $header_line);
         my ( $homology_type, $gene_tree_root_id, $species_tree_node_id, $seq_member_id, $hom_seq_member_id, $identity,
         $hom_identity ) = ($row->{homology_type}, $row->{gene_tree_root_id}, $row->{species_tree_node_id}, $row->{seq_member_id},
