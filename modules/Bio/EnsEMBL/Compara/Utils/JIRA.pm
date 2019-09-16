@@ -185,6 +185,8 @@ sub create_tickets {
             push @$ticket_key_list, $self->_create_new_ticket($ticket, $dry_run);
         }
         if ($ticket->{subtasks}) {
+            # Save parent JIRA ticket key to link all the subtasks with it
+            my $parent_ticket_key = $ticket_key_list->[-1];
             foreach my $subtask ( @{$ticket->{subtasks}} ) {
                 my $summary = $subtask->{fields}->{summary};
                 if (exists $existing_tickets{$summary}) {
@@ -197,7 +199,7 @@ sub create_tickets {
                     push @$ticket_key_list, $ticket_key;
                 } else {
                     # Link the subtask with its parent ticket
-                    $subtask->{'fields'}->{'parent'} = { 'key' => $ticket_key_list->[-1] };
+                    $subtask->{'fields'}->{'parent'} = { 'key' => $parent_ticket_key };
                     # In dry-run mode, the message will be logged but the ticket
                     # will not be created
                     push @$ticket_key_list, $self->_create_new_ticket($subtask, $dry_run);
