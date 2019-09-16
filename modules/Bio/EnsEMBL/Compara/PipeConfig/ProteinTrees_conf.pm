@@ -351,7 +351,7 @@ sub default_options {
         'do_homology_stats'             => 0,
         # Do we need a mapping between homology_ids of this database to another database ?
         # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
-        'do_homology_id_mapping'   => 0,
+        'do_homology_id_mapping' => 0,
         
         # homology dumps options
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
@@ -571,10 +571,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
-                # 'A->1'  => [ 
-                #     'backbone_fire_posttree', 
-                #     WHEN( '#homology_dumps_dir#' => 'homology_dumps_mlss_id_factory' ),
-                # ],
             },
         },
         
@@ -3219,13 +3215,6 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('reuse_capacity'),
         },
 
-        # {   -logic_name => 'rib_fire_gene_qc',
-        #     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        #     -flow_into  => {
-        #         1 => WHEN('#do_gene_qc#' => 'get_species_set'),
-        #         # 'A->1' => 'rib_fire_homology_id_mapping',
-        #     },
-        # },
         {   -logic_name => 'snapshot_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
@@ -3249,11 +3238,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_homology_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                # '1->A' => [
-                #     WHEN('#do_homology_stats#' => 'homology_stats_factory'),
-                #     'set_default_values',
-                # ],
-                # 'A->1' => 'rib_fire_hmm_build',
                 1 => [
                     WHEN('#do_homology_stats#' => 'homology_stats_factory'),
                     'set_default_values',
@@ -3265,8 +3249,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_hmm_build',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                # '1->A' => WHEN('#do_hmm_export#' => 'build_HMM_factory'),
-                # 'A->1' => 'rib_fire_rename_labels',
                 1 => [
                     WHEN('#do_hmm_export#' => 'build_HMM_factory'),
                     'rib_fire_rename_labels',
@@ -3292,8 +3274,6 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 # FIXME this assumes that label_prefix is set iff the collection is not "default"
-                # '1->A' => WHEN('#label_prefix#' => 'rename_labels'),
-                # 'A->1' => 'rib_fire_goc',
                 1 => [
                     WHEN('#label_prefix#' => 'rename_labels'),
                     'rib_fire_goc',

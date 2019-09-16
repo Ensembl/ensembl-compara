@@ -19,8 +19,6 @@ use warnings;
 
 use Data::Dumper;
 
-# use Bio::EnsEMBL::ApiVersion;
-# use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);

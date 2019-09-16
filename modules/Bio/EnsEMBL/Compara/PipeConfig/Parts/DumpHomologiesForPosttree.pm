@@ -25,7 +25,8 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree
 
 =head1 DESCRIPTION
 
-The PipeConfig file for the pipeline that ...
+The PipeConfig file for the pipeline that dumps the homologies into TSV format for use
+in the post-tree analyses of the homology pipelines
 
 =cut
 

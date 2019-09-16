@@ -22,11 +22,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::DumpHomologiesByMLSS_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpPerMLSSHomologies_conf -host compara1 -member_type ncrna -clusterset_id murinae
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpPerMLSSHomologies_conf -member_type ncrna -clusterset_id murinae
 
     By default the pipeline dumps the database named "compara_curr" in the
     registry, but a different database can be selected with -rel_db

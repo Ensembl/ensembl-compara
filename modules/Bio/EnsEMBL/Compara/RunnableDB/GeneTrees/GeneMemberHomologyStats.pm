@@ -25,7 +25,8 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats
 
 =head1 SYNOPSIS
 
-
+Generate per-member homology stats to populate the gene_member_hom_stats table for ensembl
+compara release
 
 =cut
 
