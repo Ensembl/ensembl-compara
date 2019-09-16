@@ -52,28 +52,8 @@ sub pipeline_analyses_goc {
 
         {   -logic_name => 'goc_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A' => WHEN( '#goc_reuse_db#' => ['copy_prev_goc_score_table']),
-                'A->1' => WHEN( '#goc_mlss_id#' => 'compute_goc',
-                                ELSE 'goc_group_genomes_under_taxa' ),
-            },
-        },
-
-        {   -logic_name => 'copy_prev_goc_score_table',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
-            -parameters    => {
-                'src_db_conn'   => '#goc_reuse_db#',
-                'table'         => 'ortholog_goc_metric',
-                'renamed_table' => 'prev_ortholog_goc_metric',
-                'mode'          => 'overwrite',
-                # The first sed instruction adds the prefix 'prev_' to every
-                # 'gene_member_id' key. The second sed reverts this change in:
-                #     CONSTRAINT `prev_ortholog_goc_metric_ibfk_2` FOREIGN KEY (`prev_gene_member_id`)
-                #     REFERENCES `gene_member` (`prev_gene_member_id`),
-                # where the last key should be kept as 'gene_member_id' since it
-                # references table 'gene_member'.
-                'filter_cmd'    => 'sed "s/\`gene_member_id\`/\`prev_gene_member_id\`/g" | sed "/^  CONSTRAINT/s/\`prev_gene_member_id\`),$/\`gene_member_id\`),/"',
-            },
+            -flow_into  => WHEN( '#goc_mlss_id#' => 'compute_goc',
+                           ELSE 'goc_group_genomes_under_taxa' ),
         },
 
         {   -logic_name => 'goc_group_genomes_under_taxa',
@@ -104,33 +84,38 @@ sub pipeline_analyses_goc {
         },
 
         {   -logic_name => 'compute_goc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GOCAllInOne',
-            -flow_into => {
-                1 => WHEN(
-                    '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
-                    '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
-                ),
-                3 => { 'compute_goc' => INPUT_PLUS },
-                -1 => 'compute_goc_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation',
+            -parameters => {
+                'hashed_mlss_id'    => '#expr(dir_revhash(#goc_mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#goc_mlss_id#.#member_type#.homologies.tsv',
             },
-            -rc_name => '1Gb_job',
-            -hive_capacity  =>  $self->o('goc_capacity'),
-            # -flow_into => {
-
-            # },
+            -flow_into => {
+               1 => WHEN(
+                   '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
+                   '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
+               ),
+               3 => { 'compute_goc' => INPUT_PLUS },
+               -1 => 'compute_goc_himem',
+           },
+           -rc_name => '1Gb_job',
+           -hive_capacity  =>  $self->o('goc_capacity'),
         },
-
+        
         {   -logic_name => 'compute_goc_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GOCAllInOne',
-            -flow_into => {
-                1 => WHEN(
-                    '#goc_threshold# and #calculate_goc_distribution#' => [ 'get_perc_above_threshold' ] ,
-                    '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
-                ),
-                3 => { 'compute_goc_himem' => INPUT_PLUS },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation',
+            -parameters => {
+                'hashed_mlss_id'    => '#expr(dir_revhash(#goc_mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#goc_mlss_id#.#member_type#.homologies.tsv',
             },
-            -rc_name => '4Gb_job',
-            -hive_capacity  =>  $self->o('goc_capacity'),
+            -flow_into => {
+               1 => WHEN(
+                   '#goc_threshold# and #calculate_goc_distribution#' => { 'get_perc_above_threshold' => INPUT_PLUS } ,
+                   '!(#goc_threshold#) and #calculate_goc_distribution#' => [ 'get_genetic_distance' ],
+               ),
+               3 => { 'compute_goc_himem' => INPUT_PLUS },
+           },
+           -rc_name => '4Gb_job',
+           -hive_capacity  =>  $self->o('goc_capacity'),
         },
 
         {
@@ -165,7 +150,6 @@ sub pipeline_analyses_goc {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::StoreGocStatsAsMlssTags',
             -hive_capacity  =>  $self->o('goc_stats_capacity'),
         },
-
 
     ];
 }
