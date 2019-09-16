@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	98
+1	\N	schema_version	99
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -243,3 +243,5 @@
 1799	\N	patch	patch_96_97_c.sql|rnaproduct_tables
 1800	\N	patch	patch_96_97_d.sql|add_object_type_rnaproduct
 1801	\N	patch	patch_96_97_e.sql|add_stable_id_event_type_rnaproduct
+1802	\N	patch	patch_97_98_a.sql|schema_version
+1803	\N	patch	patch_98_99_a.sql|schema_version
