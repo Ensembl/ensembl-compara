@@ -59,6 +59,7 @@ use Bio::EnsEMBL::Hive::Version 2.4;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats;
+use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -84,6 +85,7 @@ sub default_options {
     # Parameters to allow merging different runs of the pipeline
         'dbID_range_index'      => 14,
         'label_prefix'          => undef,
+        'member_type'           => 'ncrna',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
             # tree break
@@ -112,6 +114,13 @@ sub default_options {
 
             # Analyses usually don't fail
             'hive_default_max_retry_count'  => 1,
+            
+            # homology dumps options
+            'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
+            'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
+            'prev_release'  => '#expr( #ensembl_release# - 1 )expr#', # for homology_id_mapping
+            'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
+            
            };
 }
 
@@ -134,10 +143,15 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_rel_db'   => $self->o('prev_rel_db'),
+        
+        'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
+        'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
+        'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
 
         'skip_epo'      => $self->o('skip_epo'),
         'epo_db'        => $self->o('epo_db'),
 
+        'member_type'       => $self->o('member_type'),
         'create_ss_picts'   => $self->o('create_ss_picts'),
         'initialise_cafe_pipeline'   => $self->o('initialise_cafe_pipeline'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
@@ -214,13 +228,24 @@ sub core_pipeline_analyses {
                                  },
                 -flow_into  => {
                                 '1->A'  => [ 'clusters_factory' ],
-                                'A->1'  => [ 'backbone_pipeline_finished' ],
+                                'A->1'  => [ 'backbone_fire_posttree' ],
                                },
+            },
+            
+            {   -logic_name => 'backbone_fire_posttree',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -flow_into  => {
+                    '1->A' => ['rib_fire_homology_dumps'],
+                    'A->1' => ['backbone_pipeline_finished'],
+                },
             },
 
             {   -logic_name => 'backbone_pipeline_finished',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -flow_into  => ['notify_pipeline_completed'],
+                -flow_into  => [ 
+                    'notify_pipeline_completed',
+                    WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
+                ],
                 -meadow_type=> 'LOCAL',
             },
 
@@ -418,7 +443,6 @@ sub core_pipeline_analyses {
             {   -logic_name    => 'create_additional_clustersets',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
                 -parameters    => {
-                                   'member_type'            => 'ncrna',
                                    'additional_clustersets' => [qw(pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f ft_it_ml ft_it_nj ftga_it_ml ftga_it_nj)],
                                   },
             },
@@ -490,7 +514,7 @@ sub core_pipeline_analyses {
                                       mode            => 'global_tree_set',
                                      },
               -flow_into          => [ 'write_stn_tags',
-                                        WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                                       # 'backbone_fire_homology_dumps',
                                         WHEN('#initialise_cafe_pipeline# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
                                         WHEN('#initialise_cafe_pipeline# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
                                     ],
@@ -1059,28 +1083,28 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 1 => [ 'set_default_values' ],
-                2 => {
-                    'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
-                },
-                3 => {
-                    'paralogy_stats' => { 'homo_mlss_id' => '#mlss_id#' },
-                },
+                2 => [ 'orthology_stats',   ],
+                3 => [ 'paralogy_stats',    ],
             },
         },
 
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
             -parameters => {
-                'member_type'           => 'ncrna',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
-
+        
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
             -parameters => {
-                'member_type'           => 'ncrna',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
             },
+            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -1104,6 +1128,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -parameters => {
+                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
+                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+            },
             -flow_into  => {
                 -1 => [ 'homology_id_mapping_himem' ],
             },
@@ -1112,12 +1141,33 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'homology_id_mapping_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping',
+            -parameters => {
+                'hashed_mlss_id'         => '#expr(dir_revhash(#homo_mlss_id#))expr#',
+                'homology_flatfile'      => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'prev_homology_flatfile' => '#prev_homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+            },
             -rc_name => '1Gb_job',
             -hive_capacity => $self->o('homology_id_mapping_capacity'),
+        },
+        
+        {   -logic_name => 'rib_fire_homology_dumps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => 'homology_dumps_mlss_id_factory',
+                'A->1' => WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+            },
+        },
+        
+        {   -logic_name => 'copy_dumps_to_shared_loc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'become #shared_user# && mkdir -p #homology_dumps_shared_dir# && rsync -rt #homology_dumps_dir#/ #homology_dumps_shared_dir#',
+            },
         },
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE::pipeline_analyses_cafe_with_full_species_tree($self) },
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats::pipeline_analyses_hom_stats($self) },
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpHomologiesForPosttree::pipeline_analyses_dump_homologies_posttree($self) },
     ];
 }
 

@@ -241,7 +241,10 @@ sub default_options {
         'do_gene_qc'                    => 0,
         # Do we extract overall statistics for each pair of species ?
         'do_homology_stats'             => 0,
-
+        
+        # homology dumps options
+        'prev_homology_dumps_dir'   => undef,
+        'homology_dumps_shared_dir' => undef,
     };
 }
 

@@ -688,3 +688,8 @@ CREATE TABLE `synteny_region` (
   KEY `method_link_species_set_id` (`method_link_species_set_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+CREATE TABLE homology_id_mapping (
+	curr_release_homology_id  INT UNSIGNED NOT NULL,
+	prev_release_homology_id  INT UNSIGNED NOT NULL,
+	mlss_id                   INT UNSIGNED NOT NULL
+);

@@ -88,6 +88,8 @@ sub shared_default_options {
         'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/treefam_hmms/2019-01-02',
         #'hmm_library_version'   => '3',
         #'hmm_library_basedir'   => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/compara_hmm_91/',
+        
+        'homology_dumps_shared_basedir' => '/hps/nobackup2/production/ensembl/' . $self->o('shared_user') . '/homology_dumps/'. $self->o('division'),
     }
 }
 
@@ -285,4 +287,3 @@ sub resource_classes_multi_thread {
 }
 
 1;
-

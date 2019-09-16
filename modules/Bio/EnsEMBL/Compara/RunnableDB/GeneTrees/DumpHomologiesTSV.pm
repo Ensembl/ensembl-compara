@@ -42,6 +42,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use File::Basename qw/dirname/;
 use File::Path qw/make_path/;
 
@@ -83,7 +84,7 @@ sub param_defaults {
                         JOIN (homology_member hm2 JOIN gene_member gm2 USING (gene_member_id) JOIN genome_db gdb2 USING (genome_db_id) JOIN seq_member sm2 USING (seq_member_id)) USING (homology_id)
                     WHERE
                         homology_id BETWEEN #min_hom_id# AND #max_hom_id#
-                        AND hm1.gene_member_id != hm2.gene_member_id
+                        AND hm1.gene_member_id > hm2.gene_member_id
                         #extra_filter#
                 |,
 
@@ -93,8 +94,9 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
 
+    my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->data_dbc );
+
     if (my $genome_db_id = $self->param('genome_db_id')) {
-        my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->data_dbc );
         my $genome_db   = $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
         my $name        = $genome_db->name;
 
@@ -103,10 +105,15 @@ sub fetch_input {
         }
         $self->param('species_name', $name);
         $self->param('extra_filter', 'AND gm1.genome_db_id = '.$genome_db_id);
-
-        make_path(dirname($self->param('output_file')));
-        $compara_dba->dbc->disconnect_if_idle; # hive code will open a new connection regardless
+    } elsif ( my $mlss_id = $self->param('mlss_id') ) {
+        my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        die "mlss_id $mlss_id does not exist" unless defined $mlss;
+        die "mlss_id $mlss_id is not a homology mlss_id" unless $mlss->method->class eq 'Homology.homology';
+        $self->param('extra_filter', "AND h.method_link_species_set_id = $mlss_id");
     }
+    
+    make_path(dirname($self->param('output_file')));
+    $compara_dba->dbc->disconnect_if_idle; # hive code will open a new connection regardless
 
     $self->SUPER::fetch_input();
 }
