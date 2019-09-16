@@ -194,19 +194,6 @@ sub write_output {
             $mlss->store_tag(sprintf("avg_%s_%d_perc_id", $homology_type, $gdb_id_2), ($orth_stats->{$c1}->{$c2}->{"${gdb_id_2}_sum_perc_id"} / $orth_stats->{$c1}->{$c2}->{"pairs"}));
         }
     }
-
-    # Don't run this on mlss_ids that don't have any data at all, e.g. the
-    # mlss_ids of the shared species in a strain gene-tree database
-    if ($has_data) {
-        # Add a default values for the types that are not seen
-        foreach my $c12 (keys %types) {
-            my $homology_type = sprintf('%s_%s', $member_type, $c12);
-            $mlss->store_tag(sprintf('n_%s_pairs', $homology_type), 0);
-            $mlss->store_tag(sprintf('n_%s_groups', $homology_type), 0);
-            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_1), 0);
-            $mlss->store_tag(sprintf('n_%s_%d_genes', $homology_type, $gdb_id_2), 0);
-        }
-    }
 }
 
 1;
