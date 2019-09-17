@@ -107,9 +107,13 @@ sub compose_sequence_with_cigar {
         my $length = ($1 || 1) * $expansion_factor;
         my $char = $2;
 
-        if ($char eq 'D') {
+        if ($char eq 'D' or $char eq 'G') {
 
             $alignment_string .= "-" x $length;
+
+        } elsif ($char eq 'X') {
+
+            $alignment_string .= "." x $length;
 
         } elsif ($char eq 'M' or $char eq 'I') {
 
