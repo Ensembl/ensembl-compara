@@ -23,9 +23,7 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-BEGIN {
-    use Test::Most;
-}
+use Test::Most;
 
 # check module can be seen and compiled
 use_ok('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats'); 
@@ -46,10 +44,10 @@ my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($test_ho
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats', # module
 	{ # input param hash
-		'mlss_id' => $test_homology_mlss_id,
-        'member_type' => 'test',
+	'mlss_id'           => $test_homology_mlss_id,
+        'member_type'       => 'test',
         'homology_flatfile' => $test_flatfile,
-        'compara_db' => $compara_dba->url,
+        'compara_db'        => $compara_dba->url,
 	}
 );
 

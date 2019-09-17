@@ -34,22 +34,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats;
 
 use warnings;
 use strict;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 use File::Find;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-        'param'   => undef,
-    }
-}
 
 sub fetch_input {
     my $self = shift;
