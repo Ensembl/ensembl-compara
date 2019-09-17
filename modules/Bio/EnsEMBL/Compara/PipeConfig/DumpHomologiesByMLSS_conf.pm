@@ -79,6 +79,7 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
     my ($self) = @_;
