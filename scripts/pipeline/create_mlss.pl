@@ -55,8 +55,8 @@ perl create_mlss.pl
     [--use_genomedb_ids] use GenomeDB IDs in MLSS name than truncated GenomeDB names
     [--species_set_name species_set_name] 
     [--taxon_id taxon_id]
-    [--only_with_karyotype 0/1]
-    [--only_good_for_alignment 0/1]
+    [--only_with_karyotype]
+    [--only_good_for_alignment]
     [--ref_for_taxon mus_musculus]
 
 =head1 OPTIONS
@@ -140,11 +140,11 @@ as "current", i.e. with a first_release and an undefined last_release
 The taxon ID or name of the clade to consider. Used to automatically create a species-set.
 This option can be repeated to form paraphyletic sets.
 
-=item B<[--only_with_karyotype 0/1]>
+=item B<[--only_with_karyotype]>
 
 The list of genomes will be restricted to those with a karyotype
 
-=item B<[--only_good_for_alignment 0/1]>
+=item B<[--only_good_for_alignment]>
 
 The list of genomes will be restricted to those that are marked as high-coverage
 
