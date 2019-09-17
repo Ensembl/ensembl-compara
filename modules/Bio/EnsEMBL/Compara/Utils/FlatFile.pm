@@ -56,7 +56,12 @@ sub map_row_to_header {
     chomp $line;
     chomp $header;
     my @cols      = split(/\s+/, $line);
-    my @head_cols = split(/\s+/, $header);
+    my @head_cols;
+    if ( ref $header eq 'ARRAY' ) {
+        @head_cols = @$header;
+    } else {
+        @head_cols = split(/\s+/, $header);
+    }
     
     die "Number of columns in header do not match row" unless scalar @cols == scalar @head_cols;
     

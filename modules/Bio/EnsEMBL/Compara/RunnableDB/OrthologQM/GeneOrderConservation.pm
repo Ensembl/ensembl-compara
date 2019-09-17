@@ -123,7 +123,7 @@ sub run {
     my $header = <$hom_handle>;
     my $c = 0;
     while ( my $line = <$hom_handle> ) {
-        my $row = map_row_to_header( $line, $header );
+        my $row = map_row_to_header( $line, $self->homology_header );
         my ( $homology_id, $gm_id_1, $gm_id_2 ) = ($row->{homology_id}, $row->{gene_member_id}, $row->{hom_gene_member_id});
 
         # calculate goc score in each direction (A->B && B->A)
@@ -177,7 +177,8 @@ sub homology_header {
     my $homology_flatfile = $self->param_required('homology_flatfile');
     open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot open $homology_flatfile";
     my $header = <$hom_handle>;
-    $self->param('homology_header', $header);
+    my @head_cols = split(/\s+/, $header);
+    $self->param('homology_header', \@head_cols);
     close $hom_handle;
     return $header;
 }
@@ -191,7 +192,7 @@ sub _get_all_gene_member_ids_in_homology_file {
     open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot read $homology_flatfile";
     my $header = <$hom_handle>;
     while( my $line = <$hom_handle> ) {
-        my $row = map_row_to_header( $line, $header );
+        my $row = map_row_to_header( $line, $self->homology_header );
         my ( $gm_id_1, $gm_id_2, $gdb_id_1, $gdb_id_2 ) = ($row->{gene_member_id}, $row->{hom_gene_member_id}, $row->{genome_db_id}, $row->{hom_genome_db_id});
         if ( $self->param('genome_db_ids') ) {
             my ( $gdb_a, $gdb_b ) = @{ $self->param('genome_db_ids') };
@@ -313,12 +314,13 @@ sub _identify_paralogs {
     my $homology_flatfile = $self->param_required('homology_flatfile');
     open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot read $homology_flatfile";
     my $header = <$hom_handle>;
-    $self->param('homology_header', $header);
+    my @head_cols = split(/\s+/, $header);
+    $self->param('homology_header', \@head_cols);
     
     # map gene_tree_node_ids to gene_members and genome_dbs
     my %gtn_ids;
     while( my $line = <$hom_handle> ) {
-        my $row = map_row_to_header( $line, $header );
+        my $row = map_row_to_header( $line, $self->homology_header );
         my ( $gene_tree_node_id, $gm_id_1, $gdb_id_1, $gm_id_2, $gdb_id_2 ) = (
             $row->{gene_tree_node_id}, 
             $row->{gene_member_id}, 

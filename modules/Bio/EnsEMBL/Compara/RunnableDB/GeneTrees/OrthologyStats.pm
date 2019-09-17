@@ -76,8 +76,9 @@ sub fetch_input {
     my %stats1; # innermost SQL subquery
     open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
     my $header_line = <$hom_handle>;
+    my @head_cols = split(/\s+/, $header_line);
     while ( my $line = <$hom_handle> ) {
-        my $row = map_row_to_header($line, $header_line);
+        my $row = map_row_to_header($line, \@head_cols);
         my ($homology_type, $gene_tree_node_id, $gene_member_id, $hom_gene_member_id, $genome_db_id, $hom_genome_db_id, 
         $identity, $hom_identity) = ($row->{homology_type}, $row->{gene_tree_node_id}, $row->{gene_member_id}, $row->{hom_gene_member_id}, 
         $row->{genome_db_id}, $row->{hom_genome_db_id}, $row->{identity}, $row->{hom_identity});

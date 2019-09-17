@@ -73,9 +73,10 @@ sub fetch_input {
     my $homology_flatfile = $self->param_required('homology_flatfile');
     open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot open file: $homology_flatfile";
     my $header_line = <$hom_handle>;
+    my @head_cols = split(/\s+/, $header_line);
     my (%stats_raw, %stats_taxon_raw);
     while ( my $line = <$hom_handle> ) {
-        my $row = map_row_to_header($line, $header_line);
+        my $row = map_row_to_header($line, \@head_cols);
         my ( $homology_type, $gene_tree_root_id, $species_tree_node_id, $seq_member_id, $hom_seq_member_id, $identity,
         $hom_identity ) = ($row->{homology_type}, $row->{gene_tree_root_id}, $row->{species_tree_node_id}, $row->{seq_member_id},
         $row->{hom_seq_member_id}, $row->{identity}, $row->{hom_identity});
