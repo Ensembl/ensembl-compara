@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::EPOanchors::DumpGenomeSequence
+Bio::EnsEMBL::Compara::RunnableDB::DumpMaskedGenomeSequence
 
 =head1 DESCRIPTION
 
-Module to dump the genome sequences (unmasked, soft-masked and hard-masked of a given genome.
+Module to dump the soft- and hard-masked genome sequences.
 The files are moved to a shared directory.
 
 Input parameters
@@ -68,7 +68,7 @@ sub param_defaults {
         # Parameters of Bio::EnsEMBL::Utils::IO::FASTASerializer
         # They have a default value in the serializer itself, but can be redefined here
         'seq_width'     => 60,      # Characters per line in the FASTA file. Defaults to 60
-        'chunk_factor'  => undef,   # Number of lines to be buffered by the serializer. Defauls to 1,000
+        'chunk_factor'  => undef,   # Number of lines to be buffered by the serializer. Defaults to 1,000
     }
 }
 

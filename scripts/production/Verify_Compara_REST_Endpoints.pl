@@ -32,7 +32,7 @@ use Try::Tiny;
 use Getopt::Long;
 
 my $browser = HTTP::Tiny->new('timeout' => 300);
-my $server = 'https://rest.ensembl.org';
+my $server = 'https://test.rest.ensembl.org';
 my $division;
 my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_families, $skip_homology );
 
