@@ -46,7 +46,7 @@ about setting up the API. Otherwise, do this:
 	
 	# We specifically need a more recent version of "hal"
 	cd submodules/hal/
-	git checkout release/98
+	git checkout master
 	git pull
 	cd ../..
 	
