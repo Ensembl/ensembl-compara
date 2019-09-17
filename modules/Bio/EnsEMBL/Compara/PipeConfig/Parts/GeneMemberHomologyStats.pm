@@ -146,7 +146,6 @@ sub pipeline_analyses_hom_stats {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats',
             -parameters => {
                 'member_type' => $self->o('member_type'),
-                'compara_db'  => $self->pipeline_url(),
             },
             -rc_name => '4Gb_job',
         },
