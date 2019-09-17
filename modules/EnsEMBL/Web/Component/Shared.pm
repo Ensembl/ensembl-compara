@@ -251,7 +251,7 @@ sub transcript_table {
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
     );
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
-      $extra_links{refseq} = { match => "^RefSeq", label => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap", class => '_ht'};
+      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
     my %any_extras;
  
@@ -363,7 +363,7 @@ sub transcript_table {
     foreach my $k (sort { $extra_links{$a}->{'order'} cmp
                           $extra_links{$b}->{'order'} } keys %any_extras) {
       my $x = $extra_links{$k};
-      push @columns, { key => $k, sort => 'html', label => $x->{'name'}, class => '_ht'};
+      push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
       push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
