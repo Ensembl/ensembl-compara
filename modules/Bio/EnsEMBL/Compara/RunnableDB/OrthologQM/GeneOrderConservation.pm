@@ -50,6 +50,12 @@ sub param_defaults {
         'number_neighbours' => 2,
         'allowed_gap'       => 1,
         'homology_header'   => 0,
+        'parsed_homologies' => 0,
+        'genome_db_ids'     => 0,
+        
+        # for debugging purposes - only score the first X homologies
+        # 0 for unlimited
+        'limit'             => 0,  
     }
 }
 
@@ -69,7 +75,7 @@ sub fetch_input {
     my $paralogs = $self->_identify_paralogs;
     print "done!\n" if $self->debug;
         
-        
+    print "\tfetching and sorting gene_members... " if $self->debug;
     my $all_gene_member_ids = $self->_get_all_gene_member_ids_in_homology_file;
     my $sql = 'SELECT gene_member_id, dnafrag_id, dnafrag_start, dnafrag_strand FROM gene_member WHERE gene_member_id = ?';
     my $sth = $self->compara_dba->dbc->prepare($sql);
@@ -80,7 +86,7 @@ sub fetch_input {
         push( @gene_members_unordered, $results->[0] );
     }
     my @gene_members_ordered = sort { $a->[1] <=> $b->[1] || $a->[2] <=> $b->[2] } @gene_members_unordered;
-    print "\tgene_members fetched and sorted\n" if $self->debug;
+    print "done!\n" if $self->debug;
     
     
     print "\tcreating index of dnafrag positions\n" if $self->debug;
@@ -135,13 +141,13 @@ sub run {
         
         push @{ $goc_scores{$max_goc_score} }, $homology_id;
         $c++;
-        last if $c == 1000;
+        last if $self->param('limit') && $c >= $self->param('limit');
     }
     print "GOC scores complete!\n\n" if $self->debug;
     
     # print Dumper \%goc_scores;
     foreach my $score ( keys %goc_scores ) {
-        printf( "%s : [%s]\n", $score, join(',', @{$goc_scores{$score}}) );
+        printf( "%s : [%s]\n", $score, join(',', sort @{$goc_scores{$score}}) );
     }
     die;
     
@@ -280,31 +286,41 @@ sub _get_gene_member_by_dnafrag_pos {
 
 sub _find_shared_homology {
     my ( $self, $gm_id_a, $gm_id_b, $strand_mismatch ) = @_;
-        
+    
     # first, check that they share directionality
     my $gene_member_strand = $self->param('gene_member_strand');
     return 0 if ( 
         $strand_mismatch && $gene_member_strand->{$gm_id_a} eq $gene_member_strand->{$gm_id_b} ||
        !$strand_mismatch && $gene_member_strand->{$gm_id_a} ne $gene_member_strand->{$gm_id_b}    
     );
-        
-    my $homology_flatfile = $self->param_required('homology_flatfile');
-    my $debug = $self->debug > 2 ? 1 : 0;
-    my @homology_rows = $self->get_command_output(qq{grep $gm_id_a $homology_flatfile | grep $gm_id_b}, {die_on_failure => 0, debug => $debug});
     
-    # there's a small chance that we could hit rows with non-gene_member_ids with the above search 
-    # let's double check that we're def hitting the gene_member_ids of interest
-    foreach my $hrow ( @homology_rows ) {
-        my $parsed_row = map_row_to_header($hrow, $self->homology_header);
-        my ( $homology_id, $gm_id_1, $gm_id_2 ) = ($parsed_row->{homology_id}, $parsed_row->{gene_member_id}, $parsed_row->{hom_gene_member_id});
-        
-        return $homology_id if ( 
-            ($gm_id_1 == $gm_id_a && $gm_id_2 == $gm_id_b) ||
-            ($gm_id_2 == $gm_id_a && $gm_id_1 == $gm_id_b)
-        );
+    # next, check the parsed flatfile
+    my $parsed_homologies = $self->parsed_homologies;
+    return $parsed_homologies->{$gm_id_a}->{$gm_id_b} if defined $parsed_homologies->{$gm_id_a}->{$gm_id_b};
+    return 0;
+}
+
+sub parsed_homologies {
+    my $self = shift;
+    
+    return $self->param('parsed_homologies') if $self->param('parsed_homologies');
+    
+    # open homology flatfile for reading
+    print "Parsing homologies from flatfile\n" if $self->debug;
+    my $homology_flatfile = $self->param_required('homology_flatfile');
+    open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot read $homology_flatfile";
+    my $header = <$hom_handle>;
+    
+    my %homologies;
+    while( my $line = <$hom_handle> ) {
+        my $row = map_row_to_header( $line, $self->homology_header );
+        my ( $homology_id, $gm_id_1, $gm_id_2 ) = ( $row->{homology_id}, $row->{gene_member_id}, $row->{hom_gene_member_id} );
+        $homologies{$gm_id_1}->{$gm_id_2} = $homology_id;
+        $homologies{$gm_id_2}->{$gm_id_1} = $homology_id;      
     }
     
-    return 0;
+    $self->param('parsed_homologies', \%homologies);
+    return \%homologies;
 }
 
 sub _identify_paralogs {
