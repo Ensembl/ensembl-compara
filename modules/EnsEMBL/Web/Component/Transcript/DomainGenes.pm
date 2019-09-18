@@ -109,9 +109,10 @@ sub content {
     $row->{'id'} = sprintf '<a data-order="%s" href="%s">%s</a>', $stable_id, $hub->url({ type => 'Gene', action => 'Summary', g => $stable_id }), $stable_id;
     $row->{'name'} = $xref_id;
     my $readable_location = sprintf(
-      '%s: %s',
+      '%s:%s-%s',
       $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name),
-      $gene->start
+      $gene->start,
+      $gene->end
     );
     
     my $url_for_gene_location = $hub->url({ type => 'Location', action => 'View', g => $stable_id, __clear => 1});
