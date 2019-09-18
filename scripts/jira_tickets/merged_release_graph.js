@@ -119,12 +119,12 @@ $.ajax({
             url: endpoint_ticket_list.replace('__RELEASE__', release),
             success: process_tickets,
             error: function(jqXHR, status, error) {
-                $('#progress').text("Error fetching the " + release + "tickets: " + error);
+                $('#progress').text("Error fetching the e" + release + " tickets: " + error);
             },
         });
     },
     error: function(jqXHR, status, error) {
-        $('#progress').text("Error fetching the " + release + ".dot file: " + error);
+        $('#progress').text("Error fetching the e" + release + " .dot file: " + error);
     }
 });
 
