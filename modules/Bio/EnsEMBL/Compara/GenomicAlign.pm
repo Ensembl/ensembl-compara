@@ -691,7 +691,7 @@ sub cigar_line {
     if (defined($self->{'aligned_sequence'})) {
         # ...from the aligned sequence
 	      print "from aligned_seq??\n" if ( $debug >= 2 );
-        my $cigar_line = _get_cigar_line_from_aligned_sequence($self->{'aligned_sequence'});
+        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($self->{'aligned_sequence'});
         $self->cigar_line($cigar_line);
     
     } elsif (defined($self->{'dbID'}) and defined($self->{'adaptor'})) {
@@ -911,42 +911,6 @@ sub original_dbID {
   }
 
   return $self->{_original_dbID};
-}
-
-=head2 _get_cigar_line_from_aligned_sequence
-
-  Arg [1]    : string $aligned_sequence
-  Example    : $cigar_line = _get_cigar_line_from_aligned_sequence("CGT-AACTGATG--TTA")
-  Description: get cigar line from gapped sequence
-  Returntype : string $cigar_line
-  Exceptions : 
-  Caller     : methodname
-  Status     : Stable
-
-=cut
-
-sub _get_cigar_line_from_aligned_sequence {
-  my ($aligned_sequence) = @_;
-  my $cigar_line = "";
-    
-  my @pieces = grep {$_} split(/(\-+)|(\.+)/, $aligned_sequence);
-  foreach my $piece (@pieces) {
-    my $mode;
-    if ($piece =~ /\-/) {
-      $mode = "D"; # D for gaps (deletions)
-    } elsif ($piece =~ /\./) {
-      $mode = "X"; # X for pads (in 2X genomes)
-    } else {
-      $mode = "M"; # M for matches/mismatches
-    }
-    if (CORE::length($piece) == 1) {
-      $cigar_line .= $mode;
-    } elsif (CORE::length($piece) > 1) { #length can be 0 if the sequence starts with a gap
-      $cigar_line .= CORE::length($piece).$mode;
-    }
-  }
-
-  return $cigar_line;
 }
 
 
