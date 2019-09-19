@@ -828,4 +828,67 @@ sub column_iterator {
 }
 
 
+=head2 calculate_pairwise_coverage
+
+  Arg [1]    : Array-ref of Strings $cigar_lines
+  Arg [2]    : (optional) Array-ref of names (identifiers) giving the group of each cigar-line
+  Example    : calculate_pairwise_coverage($cigar_lines, $genome_db_ids);
+  Description: Returns pairwise coverage statistics between all the sequences (or groups): total number of positions
+               in the sequences, and number of positions aligned.
+  Returntype : Hash-ref {id1 => { id2 => XXX, ...}, ...}
+  Exceptions : none
+
+=cut
+
+sub calculate_pairwise_coverage {
+    my $cigar_lines = shift;
+    my $group_ids = shift;
+
+    my $n_cigars = scalar(@$cigar_lines);
+    unless ($group_ids) {
+        $group_ids = [0..($n_cigars-1)];
+    }
+
+    my @cigar_lines_arrays = map {get_cigar_array($_)} @$cigar_lines;
+    my %cigar_lines_by_id;
+    for (my $i = 0; $i < $n_cigars; $i++ ) {
+        push @{$cigar_lines_by_id{ $group_ids->[$i] }}, $cigar_lines_arrays[$i];
+    }
+    my @ids = sort keys %cigar_lines_by_id;
+
+    my %pairwise_coverage;
+    foreach my $id (@ids) {
+        $pairwise_coverage{$id} = {};
+    }
+
+    while (@ids) {
+        my $id1 = shift @ids;
+        my $cigar_lines_1 = $cigar_lines_by_id{$id1};
+        foreach my $id2 (@ids) {
+            my $cigar_lines_2 = $cigar_lines_by_id{$id2};
+            $pairwise_coverage{$id1}->{$id2} += _calculate_pairwise_coverage($cigar_lines_1, $cigar_lines_2);
+            $pairwise_coverage{$id2}->{$id1} += _calculate_pairwise_coverage($cigar_lines_2, $cigar_lines_1);
+        }
+    }
+    return \%pairwise_coverage;
+}
+
+
+sub _calculate_pairwise_coverage {
+    my ($cigar_lines_1, $cigar_lines_2) = @_;
+
+    my $aligned_base_positions = 0;
+    my $cb = sub {
+        my ($pos, $codes, $length) = @_;
+        if (($codes->[0] eq 'M') && (scalar(grep {$_ eq 'M'} @$codes) >= 2)) {
+            $aligned_base_positions += $length;
+        }
+    };
+    foreach my $from_cigar_line (@$cigar_lines_1) {
+        column_iterator([$from_cigar_line, @$cigar_lines_2], $cb, 'group');
+    }
+    return $aligned_base_positions;
+}
+
+
 1;
