@@ -746,9 +746,17 @@ sub column_iterator {
     my @curr_cigar_elem_codes   = map {$_->[0]->[0]} @cigar_lines_arrays;
     my @curr_cigar_elem_lengths = map {$_->[0]->[1]} @cigar_lines_arrays;
 
+    unless ($group) {
+        my $ini_callback = $callback;
+        $callback = sub {
+            my ($pos, $codes, $length) = @_;
+            $ini_callback->($pos + $_, $codes, 1) for 0..($length-1);
+        };
+    }
+
     my $pos = 0;
     while (1) { # The exit condition is inside
-        my $length = $group ? min(@curr_cigar_elem_lengths) : 1;
+        my $length = min(@curr_cigar_elem_lengths);
         $callback->($pos, \@curr_cigar_elem_codes, $length);
         $pos += $length;
         for (my $i = 0; $i < $n_cigars; $i++ ) {
