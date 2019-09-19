@@ -114,6 +114,7 @@ sub send {
         'Content-type' => qq(multipart/mixed; boundary="$boundary"),
       });
       binmode($mailer,':utf8');
+      warn $self->log_message($time_string);
 
       print {$mailer} "This is a multi-part message in MIME format.
 
@@ -145,7 +146,7 @@ Content-Disposition: attachment; filename="$file_name"
       $mailer->close;
     } catch {
       $return = 0;
-      warn $_;
+      warn 'MAILER ERROR: '.$_;
     };
   }
   else {
@@ -161,15 +162,29 @@ Content-Disposition: attachment; filename="$file_name"
         'X-URL'    => $self->{'base_url'},
         'Date'     => $time_string
       });
+      warn $self->log_message($time_string);
 
       print $mailer $self->{'message'};
       $mailer->close;
     } catch {
       $return = 0;
-      warn $_;
+      warn 'MAILER ERROR: '.$_;
     };
   }
   return $return;
+}
+
+sub log_message {
+  my ($self, $time_string) = @_;
+
+  my $message = "MAILER ERROR: \n";
+  $message .= 'To: '.$self->{'to'}."\n";
+  $message .= 'From: '.$self->{'from'}."\n";
+  $message .= 'Reply-To: '.$self->{'reply'}."\n";
+  $message .= 'Subject: '.$self->{'subject'}."\n";
+  $message .= 'X-URL: '.$self->{'base_url'}."\n";
+  $message .= 'Date: '.$time_string."\n\n";
+  return $message;
 }
 
 1;
