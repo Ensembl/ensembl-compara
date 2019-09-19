@@ -742,6 +742,7 @@ sub column_iterator {
     return unless $cigar_lines->[0];
 
     my @cigar_lines_arrays      = map {get_cigar_array($_)} @$cigar_lines;
+    my @length_cigar_line_array = map {scalar(@$_)} @cigar_lines_arrays;
     my @curr_cigar_elem_index   = (0) x $n_cigars;
     my @curr_cigar_elem_codes   = map {$_->[0]->[0]} @cigar_lines_arrays;
     my @curr_cigar_elem_lengths = map {$_->[0]->[1]} @cigar_lines_arrays;
@@ -762,19 +763,19 @@ sub column_iterator {
         for (my $i = 0; $i < $n_cigars; $i++ ) {
             if ($curr_cigar_elem_lengths[$i] == $length) {
                 $curr_cigar_elem_index[$i] ++;
-                my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
-                unless ($e) {
+                if ($curr_cigar_elem_index[$i] == $length_cigar_line_array[$i]) {
                     # This cigar-line has been exhausted. The other ones should be as well
                     for (my $j = 0; $j < $n_cigars; $j++ ) {
                         next if $j == $i;
                         if ($curr_cigar_elem_lengths[$j] != $length) {
                             throw("Not all the cigars have the same length\n");
-                        } elsif ($curr_cigar_elem_index[$j] != scalar(@{$cigar_lines_arrays[$j]})-1) {
+                        } elsif ($curr_cigar_elem_index[$j] != $length_cigar_line_array[$j]-1) {
                             throw("Not all the cigars have the same length\n");
                         }
                     }
                     return;
                 }
+                my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
                 $curr_cigar_elem_codes[$i]    = $e->[0];
                 $curr_cigar_elem_lengths[$i]  = $e->[1];
             } else {
