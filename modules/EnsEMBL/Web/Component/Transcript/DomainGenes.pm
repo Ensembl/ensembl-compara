@@ -98,20 +98,26 @@ sub content {
     { key => 'desc', title => 'Description (if known)', width => '55%', align => 'left' }
   );
   
+  my $row_index = -1;
   foreach my $gene (sort { $object->seq_region_sort($a->seq_region_name, $b->seq_region_name) || $a->seq_region_start <=> $b->seq_region_start } @$genes) {
+    # the result of the sorting is the same as sorting by Genome Location column in the data table on the client; so we want to preserve this sorting order in a data attribute of the 'loc' column
+    $row_index += 1;
     my $row       = {};
     my $xref_id   = $gene->display_xref ? $gene->display_xref->display_id : '-';
     my $stable_id = $gene->stable_id;
     
-    $row->{'id'} = sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Gene', action => 'Summary', g => $stable_id }), $stable_id, $xref_id;
+    $row->{'id'} = sprintf '<a data-order="%s" href="%s">%s</a>', $stable_id, $hub->url({ type => 'Gene', action => 'Summary', g => $stable_id }), $stable_id;
     $row->{'name'} = $xref_id;
     my $readable_location = sprintf(
-      '%s: %s',
+      '%s:%s-%s',
       $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name),
-      $gene->start
+      $gene->start,
+      $gene->end
     );
     
-    $row->{'loc'}= sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', g => $stable_id, __clear => 1}), $readable_location;
+    my $url_for_gene_location = $hub->url({ type => 'Location', action => 'View', g => $stable_id, __clear => 1});
+    my $gene_location_order_number = sprintf("%05d", $row_index); # pad index with up to 4 zeros to enable correct ordering by DataTable based on string comparison
+    $row->{'loc'}= sprintf '<a data-order="%s" href="%s">%s</a>', $gene_location_order_number, $url_for_gene_location, $readable_location;
     
     my %description_by_type = ( bacterial_contaminant => 'Probable bacterial contaminant' );
     
