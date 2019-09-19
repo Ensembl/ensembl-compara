@@ -761,6 +761,7 @@ sub column_iterator {
     my @curr_cigar_elem_index   = (0) x $n_cigars;
     my @curr_cigar_elem_codes   = map {$_->[0]->[0]} @cigar_lines_arrays;
     my @curr_cigar_elem_lengths = map {$_->[0]->[1]} @cigar_lines_arrays;
+    my @d_codes                 = ('D') x $n_cigars;
 
     unless ($group) {
         my $ini_callback = $callback;
@@ -772,6 +773,32 @@ sub column_iterator {
 
     my $pos = 0;
     while (1) { # The exit condition is inside
+
+        # "I" elements are treated separately because they represent
+        # insertions (sequences) that are *not* aligned to the rest
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            while ($curr_cigar_elem_codes[$i] eq 'I') { # "while" instead of "if" in case there are consecutive (unmerged) I elements
+                # a I element is virtually a M amongst Ds
+                $d_codes[$i] = 'M';
+                $callback->($pos, \@d_codes, $curr_cigar_elem_lengths[$i]);
+                $pos += $curr_cigar_elem_lengths[$i];
+                $d_codes[$i] = 'D';
+
+                # Move on to the next element
+                $curr_cigar_elem_index[$i] ++;
+                if ($curr_cigar_elem_index[$i] == $length_cigar_line_array[$i]) {
+                    # Mark this element as depleted and break the while loop
+                    $curr_cigar_elem_lengths[$i]  = 0;
+                    last;
+                } else {
+                    my $e = $cigar_lines_arrays[$i]->[ $curr_cigar_elem_index[$i] ];
+                    $curr_cigar_elem_codes[$i]    = $e->[0];
+                    $curr_cigar_elem_lengths[$i]  = $e->[1];
+                }
+            }
+        }
+
+        # Standard elements
         my $length = min(@curr_cigar_elem_lengths);
         $callback->($pos, \@curr_cigar_elem_codes, $length);
         $pos += $length;
