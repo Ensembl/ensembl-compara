@@ -660,11 +660,13 @@ sub check_cigar_line {
 
   Arg [1]    : Array-ref of Strings $cigar_lines
   Arg [2]    : (optional) Array-ref of names (identifiers) giving the group of each cigar-line
-  Example    : compute_alignment_depth($cigar_lines);
-  Description: Computes the alignment depth, i.e. the number of other sequences aligned to a sequence.
-               The function returns a hash mapping each sequence index (or group name) to the number of
-               positions aligned and the total number of sequences (or number of groups) aligned to those.
-  Returntype : Hash-ref {id => { depth_sum => XXX, n_total_pos => YYY }}
+  Example    : compute_alignment_depth($cigar_lines, $genome_db_ids);
+  Description: Returns statistics about the alignment depth (number of aligned sequences) for each sequence. The
+               The function returns for each sequence its number of positions (total and aligned), how many positions
+               have each depth level, and the sum of all the depths.
+               Sequences can be grouped, in which case the statistics are returned by group (not by sequence) and the
+               depth represents the number of aligned groups.
+  Returntype : Hash-ref {id => { n_total_pos => XXX, n_aligned_pos => YYY, depth_sum => ZZZ, depth_breakdown => { 0 => aaa, 1 => bbb, ...}}}
   Exceptions : none
 
 =cut
@@ -680,7 +682,9 @@ sub compute_alignment_depth {
     }
 
     my %depth_sum;
+    my %depth_breakdown;
     my %n_total_pos;
+    my %n_aligned_pos;
 
     my $cb = sub {
         my ($pos, $codes, $length) = @_;
@@ -691,21 +695,32 @@ sub compute_alignment_depth {
             }
         }
         my $this_depth = scalar(keys %n_aligned_ids) - 1;
+
         foreach my $id (keys %n_aligned_ids) {
             my $n_pos = $n_aligned_ids{$id} * $length;
-            $depth_sum{$id} += $this_depth * $n_pos;
+            $depth_breakdown{$id}->{$this_depth} += $n_pos;
             $n_total_pos{$id} += $n_pos;
-
+            if ($this_depth) {
+                $n_aligned_pos{$id} += $n_pos;
+                $depth_sum{$id} += $this_depth * $n_pos;
+            }
+        }
     };
     column_iterator($cigar_lines, $cb, 'group');
 
     my %depth_summary;
-    foreach my $id (keys %depth_sum) {
+    foreach my $id (keys %n_total_pos) {
+
+        # In case no alignment was found
+        $n_aligned_pos{$id} //= 0;
+        $depth_sum{$id}     //= 0;
+
         $depth_summary{$id} = {
-            'depth_sum'     => $depth_sum{$id},
-            'n_total_pos' => $n_total_pos{$id},
+            'n_total_pos'       => $n_total_pos{$id},
+            'n_aligned_pos'     => $n_aligned_pos{$id},
+            'depth_sum'         => $depth_sum{$id},
+            'depth_breakdown'   => $depth_breakdown{$id},
         };
-        #print $id . ": " . $depth_sum{$id} . "/" . $n_total_pos{$id} . " = " . ($depth_sum{$id} / $n_total_pos{$id}) . "\n";
     }
     return \%depth_summary;
 }

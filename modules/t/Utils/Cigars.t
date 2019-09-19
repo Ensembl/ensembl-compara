@@ -221,50 +221,75 @@ subtest 'Column iterator' => sub {
     );
 };
 
+
 subtest 'Alignment depth' => sub {
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M']),
-        {'0' => {'depth_sum' => 2, 'n_aligned_pos' => 4}, '1' => {'depth_sum' => 2, 'n_aligned_pos' => 4}},
+        {
+            '0' => {'n_total_pos' => 4, 'n_aligned_pos' => 2, 'depth_sum' => 2, 'depth_breakdown' => {0 => 2, 1 => 2}},
+            '1' => {'n_total_pos' => 4, 'n_aligned_pos' => 2, 'depth_sum' => 2, 'depth_breakdown' => {0 => 2, 1 => 2}},
+        },
         'Alignment depth on two sequences',
     );
 
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M']),
-        {'0' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, '1' => {'depth_sum' => 7, 'n_aligned_pos' => 4}, '2' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, '3' => {'depth_sum' => 9, 'n_aligned_pos' => 5}},
+        {
+            '0' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 8, 'depth_breakdown' => {2 => 4}},
+            '1' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 7, 'depth_breakdown' => {1 => 1, 2 => 3}},
+            '2' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 8, 'depth_breakdown' => {2 => 4}},
+            '3' => {'n_total_pos' => 5, 'n_aligned_pos' => 5, 'depth_sum' => 9, 'depth_breakdown' => {1 => 1, 2 => 4}},
+        },
         'Alignment depth on four sequences',
     );
 
     # Since the IDs are different the computed depth is the same
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M'], ['a', 'b']),
-        {'a' => {'depth_sum' => 2, 'n_aligned_pos' => 4}, 'b' => {'depth_sum' => 2, 'n_aligned_pos' => 4}},
+        {
+            'a' => {'n_total_pos' => 4, 'n_aligned_pos' => 2, 'depth_sum' => 2, 'depth_breakdown' => {0 => 2, 1 => 2}},
+            'b' => {'n_total_pos' => 4, 'n_aligned_pos' => 2, 'depth_sum' => 2, 'depth_breakdown' => {0 => 2, 1 => 2}},
+        },
         'Alignment depth on two sequences with different ids',
     );
 
     # Since the IDs are different the computed depth is the same
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M'], ['a', 'b', 'c', 'd']),
-        {'a' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, 'b' => {'depth_sum' => 7, 'n_aligned_pos' => 4}, 'c' => {'depth_sum' => 8, 'n_aligned_pos' => 4}, 'd' => {'depth_sum' => 9, 'n_aligned_pos' => 5}},
+        {
+            'a' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 8, 'depth_breakdown' => {2 => 4}},
+            'b' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 7, 'depth_breakdown' => {1 => 1, 2 => 3}},
+            'c' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 8, 'depth_breakdown' => {2 => 4}},
+            'd' => {'n_total_pos' => 5, 'n_aligned_pos' => 5, 'depth_sum' => 9, 'depth_breakdown' => {1 => 1, 2 => 4}},
+        },
         'Alignment depth on four sequences with different ids',
     );
 
     # Since the two sequences share the same ID, they are not aligned to a different ID and their depth is 0
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M'], ['a', 'a']),
-        {'a' => {'depth_sum' => 0, 'n_aligned_pos' => 8}},
+        {
+            'a' => {'n_total_pos' => 8, 'n_aligned_pos' => 0, 'depth_sum' => 0, 'depth_breakdown' => {0 => 8}},
+        },
         'Alignment depth on two sequences with the same id',
     );
 
     # Since the two sequences share the same ID, they are not aligned to a different ID and their depth is 0
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M'], ['a', 'a', 'a', 'a']),
-        {'a' => {'depth_sum' => 0, 'n_aligned_pos' => 17}},
+        {
+            'a' => {'n_total_pos' => 17, 'n_aligned_pos' => 0, 'depth_sum' => 0, 'depth_breakdown' => {0 => 17}},
+        },
         'Alignment depth on four sequences with the same id',
     );
 
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(['3M2DM', 'M2D3M', '4M2D', 'D5M'], ['a', 'b', 'c', 'a']),
-        {'a' => {'depth_sum' => 11, 'n_aligned_pos' => 9}, 'b' => {'depth_sum' => 6, 'n_aligned_pos' => 4}, 'c' => {'depth_sum' => 6, 'n_aligned_pos' => 4}},
+        {
+            'a' => {'n_total_pos' => 9, 'n_aligned_pos' => 9, 'depth_sum' => 11, 'depth_breakdown' => {1 => 7, 2 => 2}},
+            'b' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 6,  'depth_breakdown' => {1 => 2, 2 => 2}},
+            'c' => {'n_total_pos' => 4, 'n_aligned_pos' => 4, 'depth_sum' => 6,  'depth_breakdown' => {1 => 2, 2 => 2}},
+        },
         'Alignment depth on four sequences with some shared ids',
     );
 
@@ -272,7 +297,10 @@ subtest 'Alignment depth' => sub {
     my $cig2 = '382D9MD5M8D12MD17M5D12M3D2M53D13M18D10M11D7M4D18M3D10M4D4M3D4M6D6M3DMD10M3D2M3DMD3M9D5MD6M2D15M2D8MD9M2D4MD8M6D14MD8MD5MD2M13D32M253D5MDM2D9M3D5M5D17M2D2M47DMD11M2D2M2D18M3D6M9D7MD13M3D4MDM23D9M2D15M2D4M2D8M3D2M7D10M75D3M3DM4D7M10D6M5D17M2D6M3D14M2DM8D7M2D3MD2M10DM2D4M3DM4D9MD12MD4M38DM2D8M182D13M310D10M3D12M2D25M1334D37MD3MD9M2D50MD12M2D2MD4M3D5M110D';
     is_deeply(
         Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth([$cig1, $cig2], ['a', 'b']),
-        {'a' => {'depth_sum' => 609, 'n_aligned_pos' => 778}, 'b' => {'depth_sum' => 609, 'n_aligned_pos' => 701}},
+        {
+            'a' => {'n_total_pos' => 778, 'n_aligned_pos' => 609, 'depth_sum' => 609, 'depth_breakdown' => {0 => 169, 1 => 609}},
+            'b' => {'n_total_pos' => 701, 'n_aligned_pos' => 609, 'depth_sum' => 609, 'depth_breakdown' => {0 => 92,  1 => 609}},
+        },
         'Alignment depth on two long sequences with different ids',
     );
 
