@@ -87,7 +87,7 @@ sub fetch_input {
     # that comes from files. This is because we would have to read the
     # files of the components, which shouldn't be done in this module (this
     # module only deals with *1* genome at a time)
-    } elsif ($genome_db->is_polyploid and not comes_from_core_database($genome_db)) {
+    } elsif ($genome_db->is_polyploid and not $self->comes_from_core_database($genome_db)) {
         $self->param('reuse_this', 0);
         return;
     }
@@ -133,7 +133,7 @@ sub fetch_input {
             return;
         }
 
-        if (not comes_from_core_database($reuse_genome_db) and comes_from_core_database($genome_db)) {
+        if (not $self->comes_from_core_database($reuse_genome_db) and $self->comes_from_core_database($genome_db)) {
             $self->warning("Cannot compare a 'core' species to a reused 'file' species ($species_name)");
             $self->param('reuse_this', 0);
             return;
@@ -146,7 +146,7 @@ sub fetch_input {
 
         my $prev_core_dba;
 
-        if (comes_from_core_database($genome_db)) {
+        if ($self->comes_from_core_database($genome_db)) {
             
             # now use the registry to find the previous release core database candidate:
             Bio::EnsEMBL::Registry->no_version_check(1);
@@ -218,6 +218,7 @@ sub write_output {      # store the genome_db and dataflow
 # ------------------------- non-interface subroutines -----------------------------------
 
 sub comes_from_core_database {
+    my $self = shift;
     my $genome_db = shift;
     return (($genome_db->locator and ($genome_db->locator =~ /^Bio::EnsEMBL::Compara::GenomeMF/)) ? 0 : 1);
 }
