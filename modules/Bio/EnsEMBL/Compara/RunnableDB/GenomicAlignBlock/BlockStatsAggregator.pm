@@ -44,10 +44,11 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
-    foreach my $gdb_id1 (keys %{$self->param('aligned_bases_counter')}) {
+    my $pairwise_coverage = $self->param_required('pairwise_coverage');
+    foreach my $gdb_id1 (keys %$pairwise_coverage) {
         my $node = $self->param('node_hash')->{$gdb_id1};
-        foreach my $gdb_id2 (keys %{$self->param('aligned_bases_counter')->{$gdb_id1}}) {
-            my $genome_coverage = sum( @{$self->param('aligned_bases_counter')->{$gdb_id1}->{$gdb_id2}} );
+        foreach my $gdb_id2 (keys %{$pairwise_coverage->{$gdb_id1}}) {
+            my $genome_coverage = sum( @{$pairwise_coverage->{$gdb_id1}->{$gdb_id2}} );
             $node->store_tag("genome_coverage_${gdb_id2}", $genome_coverage);
         }
     }
