@@ -111,8 +111,11 @@ sub pipeline_analyses_multiple_aligner_stats {
             -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculateBlockStats',
             -rc_name    => '2Gb_job',
             -flow_into  => {
-                2 => [ '?accu_name=aligned_positions_counter&accu_address={genome_db_id}[]&accu_input_variable=num_of_aligned_positions' ],
-                3 => [ '?accu_name=aligned_sequences_counter&accu_address={genome_db_id}[]&accu_input_variable=sum_aligned_seq'],
+                2 => [
+                    '?accu_name=num_of_positions&accu_address={genome_db_id}[]',
+                    '?accu_name=num_of_aligned_positions&accu_address={genome_db_id}[]',
+                    '?accu_name=num_of_other_seq_positions&accu_address={genome_db_id}[]',
+                ],
                 4 => [
                     '?accu_name=pairwise_coverage&accu_address={from_genome_db_id}{to_genome_db_id}[]&accu_input_variable=num_of_aligned_positions',
                 ],

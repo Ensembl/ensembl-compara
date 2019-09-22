@@ -53,13 +53,15 @@ sub run {
         }
     }
 
-    foreach my $gdb_id (keys %{$self->param('aligned_sequences_counter')} ) {
-        my $node                  = $self->param('node_hash')->{$gdb_id};
-        my $sum_aligned_seqs      = sum(@{$self->param('aligned_sequences_counter')->{$gdb_id}});
-        my $sum_aligned_positions = sum(@{$self->param('aligned_positions_counter')->{$gdb_id}});
-        $node->store_tag('num_of_aligned_positions', $sum_aligned_positions);
-        $node->store_tag('sum_aligned_seq',          $sum_aligned_seqs);
-        $node->store_tag('genome_alignment_depth',   $sum_aligned_seqs / $sum_aligned_positions);
+    foreach my $gdb_id (keys %{$self->param('num_of_positions')} ) {
+        my $node                        = $self->param('node_hash')->{$gdb_id};
+        my $num_of_positions            = sum(@{$self->param('num_of_positions')->{$gdb_id}});
+        my $num_of_aligned_positions    = sum(@{$self->param('num_of_aligned_positions')->{$gdb_id}});
+        my $num_of_other_seq_positions  = sum(@{$self->param('num_of_other_seq_positions')->{$gdb_id}});
+        $node->store_tag('num_of_positions',            $num_of_positions);
+        $node->store_tag('num_of_aligned_positions',    $num_of_aligned_positions);
+        $node->store_tag('num_of_other_seq_positions',  $num_of_other_seq_positions);
+        $node->store_tag('average_depth',               $num_of_other_seq_positions / $num_of_positions);
     }
 }
 

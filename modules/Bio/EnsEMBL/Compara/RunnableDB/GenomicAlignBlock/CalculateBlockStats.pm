@@ -78,7 +78,7 @@ sub process_one_block {
     my $depth_by_genome = $self->param('depth_by_genome');
     my $depths = Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(\@all_cigar_arrays, \@all_genome_db_ids);
     foreach my $genome_db_id ( keys %$depths ) {
-        foreach my $key (qw(n_total_pos depth_sum)) {
+        foreach my $key (qw(n_aligned_pos n_total_pos depth_sum)) {
             $depth_by_genome->{$genome_db_id}->{$key} += $depths->{$genome_db_id}->{$key};
         }
     }
@@ -89,10 +89,12 @@ sub write_output {
 
     my $depth_by_genome = $self->param('depth_by_genome');
     foreach my $genome_db_id ( keys %$depth_by_genome ) {
-        my $n_total_pos         = $depth_by_genome->{$genome_db_id}->{'n_total_pos'};
-        my $sum_aligned_bases   = $depth_by_genome->{$genome_db_id}->{'depth_sum'};
-        $self->dataflow_output_id({'genome_db_id' => $genome_db_id, 'num_of_aligned_positions' => $n_total_pos}, 2);
-        $self->dataflow_output_id({'genome_db_id' => $genome_db_id, 'sum_aligned_seq' => $sum_aligned_bases}, 3);
+        $self->dataflow_output_id({
+                'genome_db_id'                  => $genome_db_id,
+                'num_of_positions'              => $depth_by_genome->{$genome_db_id}->{'n_total_pos'},
+                'num_of_aligned_positions'      => $depth_by_genome->{$genome_db_id}->{'n_aligned_pos'},
+                'num_of_other_seq_positions'    => $depth_by_genome->{$genome_db_id}->{'depth_sum'},
+            }, 2);
     }
 
     my $pairwise_coverage = $self->param('total_pairwise_coverage');
