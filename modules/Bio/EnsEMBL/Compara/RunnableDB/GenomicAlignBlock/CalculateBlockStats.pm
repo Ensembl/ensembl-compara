@@ -62,24 +62,16 @@ sub process_one_block {
 
     my @all_cigar_arrays;
     my @all_genome_db_ids;
-    my %cigar_lines_by_genome_db_id;
     while(my $ga = shift @$genomic_aligns) {
-        my $genome_db_id    = $ga->dnafrag->genome_db_id;
-        my $cigar_array     = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($ga->cigar_line);
-
-        push @all_cigar_arrays, $cigar_array;
-        push @all_genome_db_ids, $genome_db_id;
-        push @{$cigar_lines_by_genome_db_id{$genome_db_id}}, $cigar_array;
+        push @all_cigar_arrays,  Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($ga->cigar_line);
+        push @all_genome_db_ids, $ga->dnafrag->genome_db_id;
     }
 
-    my $pairwise_coverage = $self->param('pairwise_coverage');
-    my @gdbs = keys %cigar_lines_by_genome_db_id;
-    while (my $gdb1 = shift @gdbs) {
-        my $cigar_lines_1 = $cigar_lines_by_genome_db_id{$gdb1};
-        foreach my $gdb2 (@gdbs) {
-            my $cigar_lines_2 = $cigar_lines_by_genome_db_id{$gdb2};
-            $pairwise_coverage->{$gdb1}->{$gdb2} += $self->_calculate_pairwise_coverage($cigar_lines_1, $cigar_lines_2);
-            $pairwise_coverage->{$gdb2}->{$gdb1} += $self->_calculate_pairwise_coverage($cigar_lines_2, $cigar_lines_1);
+    my $total_pairwise_coverage = $self->param('total_pairwise_coverage');
+    my $pairwise_coverage = Bio::EnsEMBL::Compara::Utils::Cigars::calculate_pairwise_coverage(\@all_cigar_arrays, \@all_genome_db_ids);
+    foreach my $gdb1 (keys %$pairwise_coverage) {
+        foreach my $gdb2 (keys %{$pairwise_coverage->{$gdb1}}) {
+            $total_pairwise_coverage->{$gdb1}->{$gdb2} += $pairwise_coverage->{$gdb1}->{$gdb2};
         }
     }
 
@@ -113,24 +105,6 @@ sub write_output {
                 }, 4);
         }
     }
-}
-
-
-sub _calculate_pairwise_coverage {
-    my ($self, $cigar_lines_1, $cigar_lines_2) = @_;
-
-    my $aligned_base_positions = 0;
-    foreach my $from_cigar_line (@$cigar_lines_1) {
-        #now we do the calculation of the aligned position. between the souce genomic align and the duplication genomic. A match for a single position can only be recorded once even if that position is matched in multiple duplicated genomic aligns
-        my $cb = sub {
-            my ($pos, $codes, $length) = @_;
-            if (($codes->[0] eq 'M') && (scalar(grep {$_ eq 'M'} @$codes) >= 2)) {
-                $aligned_base_positions += $length;
-            }
-        };
-        Bio::EnsEMBL::Compara::Utils::Cigars::column_iterator([$from_cigar_line, @$cigar_lines_2], $cb, 'group');
-    }
-    return $aligned_base_positions;
 }
 
 1;
