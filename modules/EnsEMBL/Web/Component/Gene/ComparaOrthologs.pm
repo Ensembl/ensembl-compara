@@ -90,11 +90,6 @@ sub content {
       delete $not_seen{lc $_};
     }
 
-    if($self->is_strain && $species_defs->get_config($_, 'RELATED_TAXON') != $species_defs->RELATED_TAXON) {
-      delete $not_seen{$_};
-      delete $not_seen{lc $_};
-    }
-
     #do not show strain species on main species view
     if (!$self->is_strain && $species_defs->get_config($_, 'IS_STRAIN_OF')) {
       delete $not_seen{$_};
