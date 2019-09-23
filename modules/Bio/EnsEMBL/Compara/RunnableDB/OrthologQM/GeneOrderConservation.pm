@@ -52,10 +52,15 @@ sub param_defaults {
         'homology_header'   => 0,
         'parsed_homologies' => 0,
         'genome_db_ids'     => 0,
+        'split_polyploids'  => 1,
         
-        # for debugging purposes - only score the first X homologies
-        # 0 for unlimited
-        'limit'             => 0,  
+        
+        # for debugging purposes
+        # only score the first X homologies
+        'limit'                 => 0, # 0 for unlimited
+        # print more verbose debugging for this homology id
+        'debug_for_homology_id' => 0, # 0 for off
+        'dry_run'               => 0,
     }
 }
 
@@ -63,11 +68,12 @@ sub fetch_input {
     my $self = shift;
     
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('goc_mlss_id'));
-    $self->_handle_polyploid_goc($mlss);
+    $self->_split_polyploid_goc($mlss) if $self->param('split_polyploids');
     my $genome_dbs = $mlss->species_set->genome_dbs;
-    
+        
     # build gene neighbourhood map
     my (%neighbourhood, %gene_member_strand);
+    $| = 1 if $self->debug; # turn on buffer flushing for debug messages
     print "Building gene neighbourhood...\n" if $self->debug;
     
     # identify paralogs in order to discard tandem paralogs later
@@ -91,7 +97,7 @@ sub fetch_input {
     
     print "\tcreating index of dnafrag positions\n" if $self->debug;
     my %positions;
-    my $tandem_paralogs;
+    my $tandem_paralogs = 0;
     foreach my $gm_info ( @gene_members_ordered ) {
         my ($this_gene_member_id, $this_dnafrag_id, $start, $strand) = @$gm_info;
         my $this_pos = $positions{$this_dnafrag_id} || 0;
@@ -122,6 +128,7 @@ sub run {
     my $self = shift;
 
     my %goc_scores;
+    my $gene_member_strand = $self->param('gene_member_strand');
 
     print "Reading homologies and calculating GOC scores\n" if $self->debug;
     my $homology_flatfile = $self->param_required('homology_flatfile');
@@ -131,6 +138,10 @@ sub run {
     while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header( $line, $self->homology_header );
         my ( $homology_id, $gm_id_1, $gm_id_2 ) = ($row->{homology_id}, $row->{gene_member_id}, $row->{hom_gene_member_id});
+
+        # if param('genome_db_ids') is set, we only want to score genes from those genomes
+        # only relevant genomes will be included in the strand map
+        next if $self->param('genome_db_ids') && !(defined $gene_member_strand->{$gm_id_1} && defined $gene_member_strand->{$gm_id_2});
 
         # calculate goc score in each direction (A->B && B->A)
         # the max score becomes the final goc_score for this homology
@@ -146,10 +157,13 @@ sub run {
     print "GOC scores complete!\n\n" if $self->debug;
     
     # print Dumper \%goc_scores;
-    foreach my $score ( keys %goc_scores ) {
-        printf( "%s : [%s]\n", $score, join(',', sort @{$goc_scores{$score}}) );
+    if ( $self->debug ) {
+        my @sorted_scores = sort {$a <=> $b} keys %goc_scores;
+        foreach my $score ( @sorted_scores ) {
+            printf( "%s : [%s] (count: %s)\n", $score, join(',', sort @{$goc_scores{$score}}), scalar @{$goc_scores{$score}} );
+        }
     }
-    die;
+    die if $self->param('dry_run');
     
     $self->param('goc_scores', \%goc_scores);
 }
@@ -159,10 +173,10 @@ sub write_output {
     
     my $goc_scores = $self->param('goc_scores');
     print "Writing GOC scores to the database\n" if $self->debug;
-    $self->dbc->sql_helper->transaction(
+    $self->compara_dba->dbc->sql_helper->transaction(
         -CALLBACK => sub {
             my $sql = 'UPDATE homology SET goc_score = ? WHERE homology_id = ?';
-            my $sth = $self->prepare($sql);
+            my $sth = $self->compara_dba->dbc->prepare($sql);
             foreach my $score ( keys %$goc_scores ) {
                 foreach my $homology_id ( @{ $goc_scores->{$score} } ) {
                     $sth->execute($score, $homology_id);
@@ -226,6 +240,25 @@ sub _calculate_goc {
     my @neighbours_b   = $self->_get_neighbours( $gm_id_b, $wanted_neighbours );
     
     my $gene_member_strand = $self->param('gene_member_strand');
+    if ( $self->param('debug_for_homology_id') && $self->param('debug_for_homology_id') == $hom_id ) {
+        # print Dumper \@neighbours_a;
+        # print Dumper \@neighbours_b;
+        
+        print "neighbours_a:\n";
+        foreach my $n_id_a ( @neighbours_a ) {
+            printf("\t%s, %s\n", $n_id_a, $gene_member_strand->{$n_id_a}) unless $n_id_a eq '*****';
+            printf("\t%s, %s\n", $n_id_a, $gene_member_strand->{$gm_id_a}) if $n_id_a eq '*****';
+        }
+        print "\n";
+        
+        print "neighbours_b:\n";
+        foreach my $n_id_b ( @neighbours_b ) {
+            printf("\t%s, %s\n", $n_id_b, $gene_member_strand->{$n_id_b}) unless $n_id_b eq '*****';
+            printf("\t%s, %s\n", $n_id_b, $gene_member_strand->{$gm_id_b}) if $n_id_b eq '*****';
+        }
+        print "\n\n";
+    }
+    
     my $strand_mismatch;
     unless ($gene_member_strand->{$gm_id_a} eq $gene_member_strand->{$gm_id_b}) {
         @neighbours_b = reverse @neighbours_b;
@@ -237,17 +270,29 @@ sub _calculate_goc {
     my $prev_match_pos = -1;
     for ( my $i = 0; $i < @neighbours_a; $i++ ) {
         my $neighbour_id_a = $neighbours_a[$i];
+        next if $neighbour_id_a eq '*****';
         for ( my $j = $prev_match_pos+1; $j < @neighbours_b; $j++ ) {
             my $neighbour_id_b = $neighbours_b[$j];
+            if ($neighbour_id_b eq '*****') {
+                $prev_match_pos = $j;
+                next;
+            }
             my $share_homology = $self->_find_shared_homology($neighbour_id_a, $neighbour_id_b, $strand_mismatch);
+            print "$neighbour_id_a v $neighbour_id_b : " . ($share_homology ? '1' : '0') . "\n" if ( $self->param('debug_for_homology_id') && $self->param('debug_for_homology_id') == $hom_id );
             if ( $share_homology ) {
-                $shared_homology++ unless ( $prev_match_pos >= 0 && abs($j - $prev_match_pos) > $allowed_gap + 1);
+                if ( $prev_match_pos >= 0 && abs($j - $prev_match_pos) > $allowed_gap + 1) {
+                    print "gap too big - ignoring match : $j - $prev_match_pos > $allowed_gap + 1\n" if ( $self->param('debug_for_homology_id') && $self->param('debug_for_homology_id') == $hom_id );
+                } else {
+                    $shared_homology++;
+                }
                 $prev_match_pos = $j;
                 last; # don't care about multiple matches, so let's move on here
             }
         }
     }
     my $perc_overlap = ($shared_homology / ($num_neighbours*2)) * 100;
+    print "perc_overlap : $perc_overlap\n\n" if ( $self->param('debug_for_homology_id') && $self->param('debug_for_homology_id') == $hom_id );
+
     return $perc_overlap;
 }
 
@@ -255,7 +300,7 @@ sub _get_neighbours {
     my ( $self, $gm_id, $num_neighbours) = @_;
 
     my ($dnafrag_id, $pos) = $self->_get_dnafrag_position($gm_id);
-    my @these_neighbours;
+    my @these_neighbours = ('*****');
     foreach my $x ( 1..$num_neighbours ) {
         my $gm_left = $self->_get_gene_member_by_dnafrag_pos($dnafrag_id, ($pos-$x));
         unshift @these_neighbours, $gm_left if defined $gm_left;
@@ -368,7 +413,7 @@ sub _identify_paralogs {
     return \%paralogs;
 }
 
-sub _handle_polyploid_goc {
+sub _split_polyploid_goc {
     my ( $self, $mlss ) = @_;
     
     # First, let's detect ENSEMBL_HOMOEOLOGUES and spawn 1 job per pair of components
@@ -380,7 +425,7 @@ sub _handle_polyploid_goc {
                 $self->dataflow_output_id({'genome_db_ids' => [$gdb1->dbID, $gdb2->dbID]}, 3);
             }
         }
-        $self->complete_early('Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs');
+        $self->complete_early("Got ENSEMBL_HOMOEOLOGUES, so dataflowed 1 job per pair of component genome_dbs\n");
     }
 
     # Then, let's find the ENSEMBL_ORTHOLOGUES that link polyploid genomes
@@ -397,7 +442,7 @@ sub _handle_polyploid_goc {
                     $self->dataflow_output_id({'genome_db_ids' => [$sub_gdb1->dbID, $sub_gdb2->dbID]}, 3);
                 }
             }
-            $self->complete_early('Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db');
+            $self->complete_early("Got ENSEMBL_ORTHOLOGUES on polyploids, so dataflowed 1 job per component genome_db\n");
         }
     }
 }
