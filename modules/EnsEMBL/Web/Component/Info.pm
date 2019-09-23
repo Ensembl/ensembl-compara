@@ -102,6 +102,12 @@ sub include_bioschema_datasets {
 
   my $common_name  = $species_defs->SPECIES_COMMON_NAME;
   my $sci_name     = $species_defs->SPECIES_SCIENTIFIC_NAME;
+  my $display_name = $species_defs->DISPLAY_NAME;
+  ## IMPORTANT: description must be at least 50 characters, so make species name as long as possible 
+  my $long_name = $display_name eq $sci_name ? $display_name : sprintf '%s (%s)', $display_name, $sci_name; 
+
+  ## License must be an object or URL
+  my $license = 'https://www.apache.org/licenses/LICENSE-2.0';
 
   ## Assembly
   my $annotation_url = sprintf '%s/%s/Info/Annotation', $server, $hub->species;
@@ -112,17 +118,17 @@ sub include_bioschema_datasets {
       'includedInDataCatalog' => $catalog_id,
       'version'               => $species_defs->ASSEMBLY_NAME,
       'identifier'            => $species_defs->ASSEMBLY_ACCESSION,
-      'description'           => "Current Ensembl genome assembly for ".$species_defs->DISPLAY_NAME,
+      'description'           => "Current Ensembl genome assembly for $long_name",
       'keywords'              => 'dna, sequence',
       'url'                   => $annotation_url,
       'distribution'          => [{
                                   '@type'       => 'DataDownload',
                                   'name'        => sprintf('%s %s FASTA files', $sci_name, $species_defs->ASSEMBLY_VERSION),
-                                  'description' => sprintf('Downloads of %s sequence in FASTA format', $species_defs->SPECIES_COMMON_NAME),
+                                  'description' => sprintf('Downloads of %s sequence in FASTA format', $long_name),
                                   'fileFormat'  => 'fasta',
                                   'contentURL'  => $ftp_url,
       }],
-      'license'               => 'Apache 2.0',
+      'license'               => $license, 
   };
   add_species_bioschema($species_defs, $assembly);
   push @$datasets, $assembly;
@@ -142,19 +148,19 @@ sub include_bioschema_datasets {
                                   {
                                   '@type'       => 'DataDownload',
                                   'name'        => sprintf ('%s %s Gene Set - GTF files', $sci_name, $species_defs->ASSEMBLY_VERSION),
-                                  'description' => sprintf('Downloads of %s gene annotation in GTF format', $species_defs->SPECIES_COMMON_NAME),
+                                  'description' => sprintf('Downloads of %s gene annotation in GTF format', $long_name),
                                   'fileFormat'  => 'gtf',
                                   'contentURL'  => $gtf_url,
                                   },
                                   {
                                   '@type'       => 'DataDownload',
                                   'name'        => sprintf ('%s %s Gene Set - GFF3 files', $sci_name, $species_defs->ASSEMBLY_VERSION),
-                                  'description' => sprintf('Downloads of %s gene annotation in GFF3 format', $species_defs->SPECIES_COMMON_NAME),
+                                  'description' => sprintf('Downloads of %s gene annotation in GFF3 format', $long_name),
                                   'fileFormat'  => 'gff3',
                                   'contentURL'  => $gff3_url,
                                   },
       ],
-      'license'               => 'Apache 2.0',
+      'license'               => $license, 
   };
 
   if ($species_defs->PROVIDER_NAME) {
@@ -179,11 +185,11 @@ sub include_bioschema_datasets {
         'distribution'          => [{
                                     '@type'       => 'DataDownload',
                                     'name'        => sprintf ('%s %s Variants - GVF files', $sci_name, $species_defs->ASSEMBLY_VERSION),
-                                    'description' => sprintf('Downloads of %s variation annotation in GVF format', $species_defs->SPECIES_COMMON_NAME),
+                                    'description' => sprintf('Downloads of %s variation annotation in GVF format', $long_name),
                                     'fileFormat'  => 'gvf',
                                     'contentURL'  => $gvf_url,
         }],
-        'license'               => 'Apache 2.0',
+        'license'               => $license, 
     };
     add_species_bioschema($species_defs, $variation);
     push @$datasets, $variation;
@@ -198,16 +204,16 @@ sub include_bioschema_datasets {
         'name'                  => sprintf('%s %s Regulatory Build', $sitename, $common_name),
         'includedInDataCatalog' => $catalog_id,
         'url'                   => sprintf('%s/info/genome/funcgen/accessing_regulation.html', $server),
-        'description'           => sprintf('Annotation of regulatory regions on the %s genome', $common_name),
+        'description'           => sprintf('Annotation of regulatory regions on the %s genome', $long_name),
         'keywords'              => 'expression, epigenomics, enhancer, promoter',
         'distribution'          => [{
                                     '@type'       => 'DataDownload',
                                     'name'        => sprintf ('%s %s Regulatory Features', $sci_name, $species_defs->ASSEMBLY_VERSION),
-                                    'description' => sprintf('Downloads of %s regulation annotation in GFF format', $species_defs->SPECIES_COMMON_NAME),
+                                    'description' => sprintf('Downloads of %s regulation annotation in GFF format', $long_name),
                                     'fileFormat'  => 'gff',
                                     'contentURL'  => $reg_url,
         }],
-        'license'               => 'Apache 2.0',
+        'license'               => $license, 
         'creator'               => {
                                     '@type' => 'Organization',
                                     'name'  => 'Ensembl',
