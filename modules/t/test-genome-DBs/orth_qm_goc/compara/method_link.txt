@@ -1,1 +1,2 @@
 201	ENSEMBL_ORTHOLOGUES	Homology.homology	Orthologues
+206	ENSEMBL_HOMOEOLOGUES	Homology.homology	homoeologues

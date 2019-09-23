@@ -1,2 +1,5 @@
-155	10116	rattus_norvegicus	Rnor_6.0	2014-09-Ensembl	1	1	\N	\N	\N	Bio::EnsEMBL::DBSQL::DBAdaptor/host=ens-staging2;port=3306;user=ensro;pass=;dbname=rattus_norvegicus_core_82_6;species=rattus_norvegicus;species_id=1;disconnect_when_inactive=1	80	\N
-31	9544	macaca_mulatta	MMUL_1	2006-01-Ensembl	1	1	\N	\N	\N	Bio::EnsEMBL::DBSQL::DBAdaptor/host=ens-staging;port=3306;user=ensro;pass=;dbname=macaca_mulatta_core_82_10;species=macaca_mulatta;species_id=1;disconnect_when_inactive=1	40	\N
+1	1	test_genome_1	T1		0	0	\N	\N	Test1	\N	99	\N
+2	2	test_genome_2	T2		0	0	\N	\N	Test2	\N	99	\N
+3	3	test_polyploid	TP		0	0	\N	\N	TestPoly	\N	99	\N
+4	3	test_polyploid	TP		0	0	A	\N	TestPolyA	\N	99	\N
+5	3	test_polyploid	TP		0	0	B	\N	TestPolyB	\N	99	\N
