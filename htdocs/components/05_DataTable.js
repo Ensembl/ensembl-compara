@@ -74,6 +74,7 @@ Ensembl.DataTable = {
   },
   
   getOptions: function (table, noToggle, exportable) {
+    var self = this;
     var length     = $('tbody tr', table).length;
     var noSort     = table.hasClass('no_sort');
     var menu       = [[], []];
@@ -93,7 +94,7 @@ Ensembl.DataTable = {
           sLast:     '&gt;&gt;'
         }
       },
-      fnInitComplete: function () {
+      fnInitComplete: function (oSettings) {
         var hidden = this.is(':hidden');
         var parent = this.closest('.toggleTable_wrapper, .dataTables_wrapper');
         var hide   = this.css('display') === 'none';
@@ -110,8 +111,9 @@ Ensembl.DataTable = {
           parent.hide(); // Hide the wrapper of already hidden table
           this.removeClass('hide');
         }
-        
+
         parent = null;
+        self.makeHeaderSticky(oSettings && oSettings.oInstance && oSettings.oInstance[0]);
       },
       fnDrawCallback: function (tableSettings) {
         this.togglewrap('redo');
@@ -512,5 +514,106 @@ Ensembl.DataTable = {
     });
 
     filters = null;
+  },
+
+  makeHeaderSticky(table) {
+    if (!table || this.headerIsSticky) {
+      return;
+    }
+
+    new StickyHeader(table);
+    this.headerIsSticky = true;
   }
 };
+
+
+
+function StickyHeader (table) {
+  this.table = table;
+  this.tableHead = table.querySelector('thead');
+  this.tableBody = table.querySelector('tbody');
+
+  this.observeBody();
+}
+
+StickyHeader.prototype.constructor = StickyHeader;
+
+StickyHeader.prototype.observeBody = function () {
+  window.addEventListener('scroll', function () {
+    window.requestAnimationFrame(function () {
+      if (this.shouldStickHead()) {
+        this.stickHead();
+      } else {
+        this.unstickHead();
+      }
+    }.bind(this));
+  }.bind(this));
+}
+
+StickyHeader.prototype.shouldStickHead = function () {
+  var tableBodyBoundingRect = this.tableBody.getBoundingClientRect();
+  var tableBodyTop = tableBodyBoundingRect.top;
+  var tableBodyBottom = tableBodyBoundingRect.bottom;
+  return tableBodyTop < 0 && tableBodyBottom - this.tableHead.offsetHeight > 0;
+}
+
+StickyHeader.prototype.stickHead = function () {
+  if (this.isHeaderStuck) return;
+
+  var initialHeaderWidth = this.tableHead.offsetWidth;
+  // before changing thead styles, create a duplicate of thead that will occupy its place
+  // while the original thead will be removed from normal layout flow into the fixed position
+  this.tweenTableHead = this.tableHead.cloneNode(true);
+
+  this.tableHead.style.position = 'fixed';
+  this.tableHead.style.top = '0';
+  this.tableHead.style.width = initialHeaderWidth + 'px';
+  this.tableHead.querySelector('tr').style.display = 'table';
+  this.tableHead.querySelector('tr').style.width = '100%';
+
+
+  this.table.insertBefore(this.tweenTableHead, this.tableHead);
+  this.setColumnWidths();
+
+  this.isHeaderStuck = true;
+}
+
+StickyHeader.prototype.setColumnWidths = function () {
+  var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
+  var referenceColumns = Array.prototype.slice.call(this.tweenTableHead.querySelectorAll('th'));
+  var shouldAddWidths = headColumns.every((element) => !element.style.width);
+  if (shouldAddWidths) {
+    headColumns.forEach((headColumn, index) => {
+      var column = referenceColumns[index];
+      var columnWidth = column.offsetWidth;
+      headColumn.style.boxSizing = 'border-box';
+      headColumn.style.display = 'inline-block';
+      headColumn.style.width = columnWidth + 'px';
+    });
+    this.areColumnWidthsSet = true;
+  }
+}
+
+StickyHeader.prototype.unsetColumnWidths = function () {
+  if (!this.areColumnWidthsSet) return;
+  var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
+  headColumns.forEach((headColumn) => {
+    headColumn.style.removeProperty('box-sizing');
+    headColumn.style.removeProperty('display');
+    headColumn.style.removeProperty('width');
+  });
+  this.areColumnWidthsSet = false;
+}
+
+
+StickyHeader.prototype.unstickHead = function () {
+  if (this.isHeaderStuck) {
+    this.tableHead.style.removeProperty('position');
+    this.tableHead.style.removeProperty('top');
+    this.tableHead.style.removeProperty('width');
+    this.tableHead.querySelector('tr').style.display = 'table-row';
+    this.table.removeChild(this.tweenTableHead);
+    this.unsetColumnWidths();
+    this.isHeaderStuck = false;
+  }
+}
