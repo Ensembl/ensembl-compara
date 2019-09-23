@@ -110,7 +110,12 @@ sub content {
       }
 
       $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
-      $skipped{$species}        += keys %{$homology_type->{$_}} if $self->param('species_' . lc $species) eq 'off';
+
+      # Skip strains that belongs to a different parent species
+      if($self->param('species_' . lc $species) eq 'off' || ($self->is_strain && $species_defs->get_config($species, 'RELATED_TAXON') ne $species_defs->RELATED_TAXON)) {
+        $skipped{$species}        += keys %{$homology_type->{$_}}
+      }
+
       delete $not_seen{$species};
       delete $not_seen{lc $species};
     }
