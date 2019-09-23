@@ -90,6 +90,11 @@ sub content {
       delete $not_seen{lc $_};
     }
 
+    if($self->is_strain && $species_defs->get_config($_, 'RELATED_TAXON') != $species_defs->RELATED_TAXON) {
+      delete $not_seen{$_};
+      delete $not_seen{lc $_};
+    }
+
     #do not show strain species on main species view
     if (!$self->is_strain && $species_defs->get_config($_, 'IS_STRAIN_OF')) {
       delete $not_seen{$_};
@@ -110,7 +115,12 @@ sub content {
       }
 
       $orthologue_list{$species} = {%{$orthologue_list{$species}||{}}, %{$homology_type->{$_}}};
-      $skipped{$species}        += keys %{$homology_type->{$_}} if $self->param('species_' . lc $species) eq 'off';
+
+      # Skip strains that belongs to a different parent species
+      if($self->param('species_' . lc $species) eq 'off' || ($self->is_strain && $species_defs->get_config($species, 'RELATED_TAXON') ne $species_defs->RELATED_TAXON)) {
+        $skipped{$species}        += keys %{$homology_type->{$_}}
+      }
+
       delete $not_seen{$species};
       delete $not_seen{lc $species};
     }
