@@ -533,6 +533,8 @@ function StickyHeader (table) {
   this.tableHead = table.querySelector('thead');
   this.tableBody = table.querySelector('tbody');
 
+  this.scrollHandler = this.syncHeadScroll.bind(this);
+
   this.observeBody();
 }
 
@@ -557,25 +559,54 @@ StickyHeader.prototype.shouldStickHead = function () {
   return tableBodyTop < 0 && tableBodyBottom - this.tableHead.offsetHeight > 0;
 }
 
+StickyHeader.prototype.buildStickyHeaderContainer = function () {
+  var container = document.createElement('div');
+  var wrapper = document.querySelector('.dataTables_wrapper');
+  var wrapperBoundingRect = wrapper.getBoundingClientRect();
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = wrapperBoundingRect.left + 'px';
+  container.style.width = wrapperBoundingRect.width + 'px';
+  container.style.overflow = 'hidden';
+  return container;
+}
+
 StickyHeader.prototype.stickHead = function () {
   if (this.isHeaderStuck) return;
 
-  var initialHeaderWidth = this.tableHead.offsetWidth;
   // before changing thead styles, create a duplicate of thead that will occupy its place
   // while the original thead will be removed from normal layout flow into the fixed position
   this.tweenTableHead = this.tableHead.cloneNode(true);
+  var initialHeaderWidth = this.tableHead.offsetWidth;
+  this.table.insertBefore(this.tweenTableHead, this.tableHead);
 
-  this.tableHead.style.position = 'fixed';
-  this.tableHead.style.top = '0';
+  this.container = this.container || this.buildStickyHeaderContainer();
+  // this.tableHead.style.position = 'fixed';
+  // this.tableHead.style.top = '0';
   this.tableHead.style.width = initialHeaderWidth + 'px';
+  this.tableHead.querySelector('tr').style.whiteSpace = 'nowrap';
   this.tableHead.querySelector('tr').style.display = 'table';
   this.tableHead.querySelector('tr').style.width = '100%';
-
-
-  this.table.insertBefore(this.tweenTableHead, this.tableHead);
+  this.table.removeChild(this.tableHead);
+  this.table.insertBefore(this.container, this.tableBody);
+  this.container.appendChild(this.tableHead);
+  
   this.setColumnWidths();
-
+  
+  this.handleTableScroll();
   this.isHeaderStuck = true;
+}
+
+StickyHeader.prototype.handleTableScroll = function () {
+  this.syncHeadScroll();
+  var tableParent = this.table.parentElement;
+  tableParent.addEventListener('scroll', this.scrollHandler);
+}
+
+StickyHeader.prototype.syncHeadScroll = function () {
+  var tableParent = this.table.parentElement;
+  var offsetLeft = tableParent.scrollLeft;
+  this.container.scrollLeft = offsetLeft;
 }
 
 StickyHeader.prototype.setColumnWidths = function () {
@@ -586,9 +617,11 @@ StickyHeader.prototype.setColumnWidths = function () {
     headColumns.forEach((headColumn, index) => {
       var column = referenceColumns[index];
       var columnWidth = column.offsetWidth;
+      var computedStyles = window.getComputedStyle(column);
       headColumn.style.boxSizing = 'border-box';
       headColumn.style.display = 'inline-block';
       headColumn.style.width = columnWidth + 'px';
+      headColumn.style.whiteSpace = computedStyles.getPropertyValue('white-space') === 'nowrap' ? 'nowrap' : 'normal';
     });
     this.areColumnWidthsSet = true;
   }
@@ -608,12 +641,18 @@ StickyHeader.prototype.unsetColumnWidths = function () {
 
 StickyHeader.prototype.unstickHead = function () {
   if (this.isHeaderStuck) {
-    this.tableHead.style.removeProperty('position');
-    this.tableHead.style.removeProperty('top');
+    this.table.removeChild(this.tweenTableHead);
+    this.table.insertBefore(this.tableHead, this.tableBody);
+    // this.tableHead.style.removeProperty('position');
+    // this.tableHead.style.removeProperty('top');
     this.tableHead.style.removeProperty('width');
     this.tableHead.querySelector('tr').style.display = 'table-row';
-    this.table.removeChild(this.tweenTableHead);
     this.unsetColumnWidths();
+    this.table.removeChild(this.container);
+    this.container = null;
     this.isHeaderStuck = false;
+
+    var tableParent = this.table.parentElement;
+    tableParent.removeEventListener('scroll', this.scrollHandler);
   }
 }
