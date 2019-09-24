@@ -36,7 +36,7 @@ sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
-        'species_priority'   => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
+        'species_priority'   => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes', 'sus_scrofa' ],
         'from_first_release' => 40, # dump method_link_species_sets with a first_release > this option
         'add_conservation_scores'   => 1,       # When set, will add the conservation scores to the EMF dumps
     }
@@ -78,7 +78,7 @@ sub _test_mlss {
         die "Cactus alignments cannot be dumped because they already exist as files\n";
     }
 
-    if (($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') or ($mlss->method->type eq 'EPO_LOW_COVERAGE')) {
+    if ($mlss->method->class eq 'GenomicAlignBlock.pairwise_alignment') {
         my $ref_species = $mlss->get_value_for_tag('reference_species');
         die "Reference species missing! Please check the 'reference species' tag in method_link_species_set_tag for mlss_id $mlss_id\n" unless $ref_species;
 
