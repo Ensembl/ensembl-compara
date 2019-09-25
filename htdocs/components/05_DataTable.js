@@ -521,8 +521,10 @@ Ensembl.DataTable = {
       return;
     }
 
-    new StickyHeader(table);
-    this.headerIsSticky = true;
+    if (table.offsetHeight > window.innerHeight) {
+      new StickyHeader(table);
+      this.headerIsSticky = true;
+    }
   }
 };
 
@@ -571,11 +573,27 @@ StickyHeader.prototype.buildStickyHeaderContainer = function () {
 }
 
 StickyHeader.prototype.getDimensionsForStickyHeaderContainer = function () {
-  var wrapper = $(this.table).parent('div')[0];
-  var wrapperBoundingRect = wrapper.getBoundingClientRect();
+  // sometimes a wide table can be placed inside a horizontally scrollable container,
+  // to whose width and scroll position the sticky header will have to adjust
+  var nearestScrollableWrapper = $(this.table)
+    .parents('div')
+    .filter(function (index, element) {
+      var computedStyles = window.getComputedStyle(element);
+      return computedStyles.getPropertyValue('overflow-x') === 'auto';
+    })[0];
+  var wrapperBoundingRect = nearestScrollableWrapper && nearestScrollableWrapper.getBoundingClientRect();
+  var tableBoundingRect = this.table.getBoundingClientRect();
+  var useScrollableWrapper = wrapperBoundingRect && wrapperBoundingRect.width < tableBoundingRect.width;
+
+  if (useScrollableWrapper) {
+    this.scrollableWrapper = nearestScrollableWrapper;
+  }
+
+  var refetenceRect = useScrollableWrapper ? wrapperBoundingRect : tableBoundingRect;
+
   return {
-    left: wrapperBoundingRect.left + 'px',
-    width: wrapperBoundingRect.width + 'px'
+    left: refetenceRect.left + 'px',
+    width: refetenceRect.width + 'px'
   }
 }
 
@@ -589,9 +607,8 @@ StickyHeader.prototype.stickHead = function () {
   this.table.insertBefore(this.tweenTableHead, this.tableHead);
 
   this.container = this.container || this.buildStickyHeaderContainer();
-  // this.tableHead.style.position = 'fixed';
-  // this.tableHead.style.top = '0';
   this.tableHead.style.width = initialHeaderWidth + 'px';
+  this.tableHead.style.display = 'table';
   this.tableHead.querySelector('tr').style.whiteSpace = 'nowrap';
   this.tableHead.querySelector('tr').style.display = 'table';
   this.tableHead.querySelector('tr').style.width = '100%';
@@ -606,9 +623,11 @@ StickyHeader.prototype.stickHead = function () {
 }
 
 StickyHeader.prototype.handleTableScroll = function () {
+  if (!this.scrollableWrapper) {
+    return;
+  }
   this.syncHeadScroll();
-  var tableParent = this.table.parentElement;
-  tableParent.addEventListener('scroll', this.scrollHandler);
+  this.scrollableWrapper.addEventListener('scroll', this.scrollHandler);
 }
 
 StickyHeader.prototype.syncHeadScroll = function () {
@@ -651,10 +670,9 @@ StickyHeader.prototype.unstickHead = function () {
   if (this.isHeaderStuck) {
     this.table.removeChild(this.tweenTableHead);
     this.table.insertBefore(this.tableHead, this.tableBody);
-    // this.tableHead.style.removeProperty('position');
-    // this.tableHead.style.removeProperty('top');
     this.tableHead.style.removeProperty('width');
-    this.tableHead.querySelector('tr').style.display = 'table-row';
+    this.tableHead.style.removeProperty('display');
+    this.tableHead.querySelector('tr').style.removeProperty('display');
     this.unsetColumnWidths();
     this.table.removeChild(this.container);
     this.container = null;
