@@ -516,7 +516,7 @@ Ensembl.DataTable = {
     filters = null;
   },
 
-  makeHeaderSticky(table) {
+  makeHeaderSticky: function (table) {
     if (!table || this.headerIsSticky) {
       return;
     }
@@ -561,14 +561,22 @@ StickyHeader.prototype.shouldStickHead = function () {
 
 StickyHeader.prototype.buildStickyHeaderContainer = function () {
   var container = document.createElement('div');
-  var wrapper = document.querySelector('.dataTables_wrapper');
-  var wrapperBoundingRect = wrapper.getBoundingClientRect();
+  var wrapperDimensions = this.getDimensionsForStickyHeaderContainer();
   container.style.position = 'fixed';
   container.style.top = '0';
-  container.style.left = wrapperBoundingRect.left + 'px';
-  container.style.width = wrapperBoundingRect.width + 'px';
+  container.style.left = wrapperDimensions.left;
+  container.style.width = wrapperDimensions.width;
   container.style.overflow = 'hidden';
   return container;
+}
+
+StickyHeader.prototype.getDimensionsForStickyHeaderContainer = function () {
+  var wrapper = $(this.table).parent('div')[0];
+  var wrapperBoundingRect = wrapper.getBoundingClientRect();
+  return {
+    left: wrapperBoundingRect.left + 'px',
+    width: wrapperBoundingRect.width + 'px'
+  }
 }
 
 StickyHeader.prototype.stickHead = function () {
@@ -612,9 +620,9 @@ StickyHeader.prototype.syncHeadScroll = function () {
 StickyHeader.prototype.setColumnWidths = function () {
   var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
   var referenceColumns = Array.prototype.slice.call(this.tweenTableHead.querySelectorAll('th'));
-  var shouldAddWidths = headColumns.every((element) => !element.style.width);
+  var shouldAddWidths = headColumns.every(function (element) { return !element.style.width });
   if (shouldAddWidths) {
-    headColumns.forEach((headColumn, index) => {
+    headColumns.forEach(function (headColumn, index) {
       var column = referenceColumns[index];
       var columnWidth = column.offsetWidth;
       var computedStyles = window.getComputedStyle(column);
@@ -630,7 +638,7 @@ StickyHeader.prototype.setColumnWidths = function () {
 StickyHeader.prototype.unsetColumnWidths = function () {
   if (!this.areColumnWidthsSet) return;
   var headColumns = Array.prototype.slice.call(this.tableHead.querySelectorAll('th'));
-  headColumns.forEach((headColumn) => {
+  headColumns.forEach(function (headColumn) {
     headColumn.style.removeProperty('box-sizing');
     headColumn.style.removeProperty('display');
     headColumn.style.removeProperty('width');
