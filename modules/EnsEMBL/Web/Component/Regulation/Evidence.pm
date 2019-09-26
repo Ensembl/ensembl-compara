@@ -44,49 +44,33 @@ sub content {
     { key => 'cell',     title => 'Cell type',     align => 'left', sort => 'string'   },
     { key => 'type',     title => 'Evidence type', align => 'left', sort => 'string'   },
     { key => 'feature',  title => 'Feature name',  align => 'left', sort => 'string'   },
-    { key => 'location', title => 'Location',      align => 'left', sort => 'position' },
     { key => 'source',   title => 'Source',        align => 'left', sort => 'position' },
   ); 
 
   my @rows;
 
   foreach my $cell_line (sort keys %$evidence_data) {
-#    next unless !defined($cells) or scalar(grep { $_ eq $cell_line } @$cells);
-    my $core_features     = $evidence_data->{$cell_line}{'core'}{'block_features'};
-    my $non_core_features = $evidence_data->{$cell_line}{'non_core'}{'block_features'};
+    my $experiments = $evidence_data->{$cell_line};
+    foreach my $experiment (sort keys %$experiments) {
+      my $peak_calling = $experiments->{$experiment};
+      next unless (ref($peak_calling) =~ /PeakCalling/);
+      my $feature_type = $peak_calling->fetch_FeatureType;
+      my $feature_name = $feature_type->name;
     
-    # Process core features first
-    foreach my $features ($core_features, $non_core_features) {
-      foreach my $f_set (sort { $features->{$a}[0]->start <=> $features->{$b}[0]->start } keys %$features) { 
-        
-        foreach my $peak (sort { $a->start <=> $b->start } @{$features->{$f_set}}) {
-          my $peak_start = $object_slice->start + $peak->start - 1;
-          my $peak_end   = $object_slice->start + $peak->end   - 1;
-
-          my $peak_calling = $peak->fetch_PeakCalling;
-          
-          my $source_link = $self->hub->url({
+      my $source_link = $self->hub->url({
             type => 'Experiment',
             action => 'Sources',
             ex => 'name-'.$peak_calling->name
-          });
+      });
        
-          my $feature_type = $peak_calling->fetch_FeatureType;
-          my $feature_name = $feature_type->name;
-          
-
-          push @rows, { 
-            type     => $feature_type->evidence_type_label,
-            location => $peak->slice->seq_region_name . ":$peak_start-$peak_end",
-            feature  => $feature_name,
-            cell     => $cell_line,
-            source   => sprintf(q(<a href="%s">%s</a>),
+      push @rows, { 
+        type     => $feature_type->evidence_type_label,
+        feature  => $feature_name,
+        cell     => $cell_line,
+        source   => sprintf(q(<a href="%s">%s</a>),
                   $source_link,
                   $peak_calling->fetch_source_label),
-          };
-          
-        }
-      }
+      };
     }
   }
   

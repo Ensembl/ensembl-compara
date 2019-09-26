@@ -17,38 +17,24 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::mirna_targets;
+package EnsEMBL::Web::Document::HTML::Biotypes;
+
+### This module outputs a list of biotypes
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Draw::GlyphSet::regulatory_regions);
+use EnsEMBL::Web::Component::Help::Biotypes;
 
-sub get_features {
-  my ($self, $fg_db, $slice) = @_;
-  my $mirna_adaptor  = $fg_db->get_MirnaTargetFeatureAdaptor;
-  return $mirna_adaptor->fetch_all_by_Slice($slice);
-}
+use base qw(EnsEMBL::Web::Document::HTML);
 
-sub href {
-  my ($self, $f) = @_;
-  my $id = $f->display_label;
-  my $dbid = $f->dbID;
-  my $analysis =  $f->analysis->logic_name;
+sub render {
+  my $self = shift;
 
-  my $href = $self->_url
-  ({'action'   => 'MicroRnaTarget',
-    'fid'      => $id,
-    'ftype'    => $analysis,
-    'dbid'     => $dbid, 
-    'species'  => $self->species, 
-  });
+  my $component = EnsEMBL::Web::Component::Help::Biotypes->new($self->hub);
 
-  return $href;
-}
-
-sub colour_key {
-  my ($self, $rf) = @_;
-  return lc($rf->evidence);
+  return $component->content;
 }
 
 1;
+

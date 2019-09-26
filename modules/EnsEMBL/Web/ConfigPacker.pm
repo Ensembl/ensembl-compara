@@ -28,6 +28,7 @@ use base qw(EnsEMBL::Web::ConfigPacker_base);
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 
 use JSON qw(from_json);
+use URI::Escape;
 
 sub munge {
   my ($self, $func) = @_;
@@ -1048,7 +1049,20 @@ sub _summarise_website_db {
                                                               };
       }
     }
-  }
+
+    ## Get biotype definitions
+    my $terms_endpoint = $ols.'/terms';
+    # NOTE: a term url passed as a parameter to the terms endpoint
+    # should use http, lack www, and be twice(!) url-encoded
+    my $biotype_url = 'http://ensembl.org/glossary/ENSGLOSSARY_0000025';
+    my $safe_biotype_url = uri_escape(uri_escape($biotype_url));
+    my $biotype_term_url = $terms_endpoint . '/' . $safe_biotype_url;
+ 
+    my $root_term = $self->_fetch_ols_term($biotype_term_url);
+
+    $self->db_tree->{'ENSEMBL_BIOTYPES'} = $root_term;
+ }
+
 
   ## Get attrib text lookup
   $t_aref = $dbh->selectall_arrayref(
@@ -1061,6 +1075,33 @@ sub _summarise_website_db {
 
 
   $dbh->disconnect();
+}
+ 
+sub _fetch_ols_term {
+  my ($self, $url) = @_;
+  my %result;
+  my $term = $self->_get_rest_data($url);
+  my $children_link = $term->{_links}->{children}->{href};
+
+  $result{label} = $term->{label};
+  $result{description} = $term->{description};
+  $result{synonyms} = $term->{synonyms};
+
+  if ($children_link) {
+    $result{'children'} = [ $self->_fetch_children_ols_terms($children_link) ];
+  }
+  return \%result;
+}
+
+sub _fetch_children_ols_terms {
+  my ($self, $url) = @_;
+
+  my $response = $self->_get_rest_data($url);
+  my $children = $response->{_embedded}->{terms};
+
+  return map {
+    $self->_fetch_ols_term($_->{_links}->{self}->{href})
+  } @{$children};
 }
 
 sub _get_rest_data {

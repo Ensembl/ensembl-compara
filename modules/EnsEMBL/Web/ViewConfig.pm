@@ -273,7 +273,7 @@ sub update_from_input {
 
 
   if ($params->{alignment_selector}) {
-    $self->receive_alignments_selector_settings(from_json $params->{alignment_selector});
+    $self->save_alignments_selector_settings(from_json $params->{alignment_selector});
     $self->altered(1);
   }
 
@@ -409,12 +409,15 @@ sub get_alignments_selector_settings {
   return $settings;
 }
 
-sub receive_alignments_selector_settings {
+sub save_alignments_selector_settings {
   my $self   = shift;
   my $params = shift;
-  $params->{code} ||= 'alignments_selector';
-  $params->{type} ||= $self->config_type;
-  $self->hub->session->set_record_data($params);
+
+  my $session_data = $self->get_alignments_selector_settings;
+  my %merged = (%$session_data, %$params);
+  $merged{code} ||= 'alignments_selector';
+  $merged{type} ||= $self->config_type;
+  $self->hub->session->set_record_data(\%merged);
 }
 
 1;

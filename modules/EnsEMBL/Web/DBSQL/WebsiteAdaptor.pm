@@ -30,14 +30,15 @@ no warnings 'uninitialized';
 use DBI;
 
 sub new {
-  my ($class, $hub) = @_;
-
+  my ($class, $hub, $settings) = @_;
+  $settings ||= {};
+  
     my $self = {
-    'NAME' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
-    'HOST' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
-    'PORT' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
-    'USER' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'},
-    'PASS' => $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'},
+    'NAME' => $settings->{'name'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'},
+    'HOST' => $settings->{'host'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'HOST'},
+    'PORT' => $settings->{'port'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PORT'},
+    'USER' => $settings->{'user'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'USER'},
+    'PASS' => $settings->{'pass'} || $hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'PASS'},
   };
   bless $self, $class;
   return $self;

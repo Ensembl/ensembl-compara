@@ -156,9 +156,10 @@ sub render_pairwise {
   my $nonref_assembly = $non_ref_results->{'assembly'};
   my $release         = $pair_aligner_config->{'ensembl_release'};
   my $type            = $pretty_method{$pair_aligner_config->{'method_link_type'}};
+  my $is_self_aln     = $mlss->species_set->size == 1;
 
   ## HEADER AND INTRO
-  if ($ref_common eq $nonref_common) {
+  if ($is_self_aln) {
       $html .= sprintf('<h1>%s self-%s results</h1>', $ref_common, $type);
   } else {
       $html .= sprintf('<h1>%s vs %s %s results</h1>', $ref_common, $nonref_common, $type,);
@@ -176,7 +177,7 @@ alignments were downloaded from <a href="$ucsc">UCSC</a> in $site release $relea
     In the second phase, the groups that are in synteny are linked provided that no more than 2 non-syntenic groups are found between them and they are less than 3Mbp apart.</p>',
               $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
               $site, $release;
-  } elsif ($ref_sp ne $nonref_sp) {
+  } elsif (!$is_self_aln) {
     $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm (%s)
 in %s release %s. %s was used as the reference species. After running %s, the raw %s alignment blocks
 were chained according to their location in both genomes. During the final netting process, the best
@@ -282,7 +283,7 @@ some being recent and almost identical, others being much older and indicators o
       $graph_defaults
   };
 
-  foreach my $sp ($ref_sp, (($nonref_sp eq $ref_sp) ? () : ($nonref_sp))) {
+  foreach my $sp ($ref_sp, ($is_self_aln ? () : ($nonref_sp))) {
     my $results = $i ? $non_ref_results : $ref_results; 
     my $sp_type = $i ? 'non_ref' : 'ref';
 
@@ -316,7 +317,7 @@ some being recent and almost identical, others being much older and indicators o
       $graph_defaults
   };
 
-  foreach my $sp ($ref_sp, (($nonref_sp eq $ref_sp) ? () : ($nonref_sp))) {
+  foreach my $sp ($ref_sp, ($is_self_aln ? () : ($nonref_sp))) {
     my $results = $i ? $non_ref_results : $ref_results; 
     my $sp_type = $i ? 'non_ref' : 'ref';
 

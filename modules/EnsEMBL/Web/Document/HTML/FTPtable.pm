@@ -63,7 +63,7 @@ sub render {
     ancestral => 'Ancestral Allele data in FASTA format',
     bam       => 'Alignments against the genome',
   );
-  
+
   $title{$_} = encode_entities($title{$_}) for keys %title;
   
   $columns = [
@@ -120,13 +120,14 @@ sub render {
     my $sp_dir    = $sp->{'dir'};
     my $sp_var    = $sp_dir. '_variation';
     my $databases = $hub->species_defs->get_config(ucfirst($sp_dir), 'databases');
-
+    my $variation_source_vcf  = $databases->{'DATABASE_VARIATION'}->{'meta_info'}->{0}->{'variation_source.vcf'}->[0];
+    
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
       species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_url, $sp->{'common_name'}, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
-      cds	  => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'},     $rel, $sp_dir),
+      cds	    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'},     $rel, $sp_dir),
       ncrna   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/ncrna/">FASTA</a>', $title{'rna'},     $rel, $sp_dir),
       protseq => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/pep/">FASTA</a>',   $title{'prot'},    $rel, $sp_dir),
       embl    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/embl/%s/">EMBL</a>',         $title{'embl'},    $rel, $sp_dir),
@@ -134,15 +135,17 @@ sub render {
       genes   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/%s">GTF</a> <a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gff3/%s">GFF3</a>', $title{'gtf'}, $rel, $sp_dir, $title{'gff3'}, $rel, $sp_dir),
       xrefs   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/tsv/%s">TSV</a> <a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/rdf/%s">RDF</a> <a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/json/%s">JSON</a>', $title{'tsv'}, $rel, $sp_dir, $title{'rdf'}, $rel, $sp_dir, $title{'json'}, $rel, $sp_dir),
       mysql   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>',          $title{'mysql'},   $rel),
-      var2    => $databases->{'DATABASE_VARIATION'} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>',                $title{'gvf'},     $rel, $sp_dir) : '-',
-      var4    => $databases->{'DATABASE_VARIATION'} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>',                $title{'vcf'},     $rel, $sp_dir) : '-',
-      var3    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/">VEP</a>',    $title{'vep'},     $rel),
+      var2    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>', $title{'gvf'},     $rel, $sp_dir) : '-',
+      var4    => $databases->{'DATABASE_VARIATION'} && $variation_source_vcf != '1' ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>', $title{'vcf'},     $rel, $sp_dir) : '-',
+      var3    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vep/">VEP</a>',    $title{'vep'},     $rel),
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir) : '-',
-      bam     => $databases->{'DATABASE_RNASEQ'}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bamcov/%s/genebuild/">BAM/BigWig</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
+      bam     => $databases->{'DATABASE_RNASEQ'}        ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bamcov/%s/genebuild/">BAM/BigWig</a>',      $title{'bam'},     $rel, $sp_dir) : '-',
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
     };
 
   }
+
+  
 
   my $main_table           = EnsEMBL::Web::Document::Table->new($columns, $rows, { data_table => 1, exportable => 0 });
   $main_table->code        = 'FTPtable::'.scalar(@$rows);

@@ -118,8 +118,9 @@ Ensembl.DataTable = {
         $('.dataTables_info, .dataTables_paginate, .dataTables_bottom', tableSettings.nTableWrapper)[tableSettings._iDisplayLength === -1 ? 'hide' : 'show']();
         
         var data          = this.data();
-        var defaultHidden = data.defaultHiddenColumns || [];
-        var hiddenCols    = $.map(tableSettings.aoColumns, function (c, j) { return c.bVisible ^ defaultHidden[j] ? null : j * (defaultHidden[j] ? -1 : 1); }).join(',');
+        var hiddenCols = tableSettings.aoColumns.reduce(function (accumulator, column, index) {
+          return !column.bVisible ? accumulator.concat(index) : accumulator;
+        }, []).join(','); // gets a string of comma-separated indices of hidden columns
         var sorting       = $.map(tableSettings.aaSorting, function (s) { return '"' + s.join(' ') + '"'; }).join(',');
         
         if (tableSettings._bInitComplete !== true) {

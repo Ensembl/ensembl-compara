@@ -26,6 +26,7 @@ use strict;
 
 use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::IOWrapper;
+use Scalar::Util qw(looks_like_number);
 
 use parent qw(EnsEMBL::Draw::GlyphSet::UserData);
 
@@ -77,8 +78,8 @@ sub get_data {
   my ($colour, $y_min, $y_max);
   if ($self->{'my_config'}{'data'}) {
     $colour = $self->{'my_config'}{'data'}{'colour'};
-    $y_min  = $self->{'my_config'}{'data'}{'y_min'};
-    $y_max  = $self->{'my_config'}{'data'}{'y_max'};
+    $y_min  = $self->{'my_config'}{'data'}{'y_min'} if looks_like_number($self->{'my_config'}{'data'}{'y_min'});
+    $y_max  = $self->{'my_config'}{'data'}{'y_max'} if looks_like_number($self->{'my_config'}{'data'}{'y_max'});
   }
 
   my $iow     = EnsEMBL::Web::IOWrapper::open($file, 

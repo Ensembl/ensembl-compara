@@ -60,7 +60,13 @@ sub init_non_cacheable {
   my $self        = shift;
   my $hub         = $self->hub;
   my $translation = $hub->core_object('transcript') ? $hub->core_object('transcript')->Obj->translation : undef;
-  my $id          = $translation ? $translation->stable_id : $hub->species_defs->ENSEMBL_SITETYPE.' Protein';
+  my $id;
+  if ($translation && $translation->stable_id) {
+    $id = $translation->version ? $translation->stable_id.'.'.$translation->version : $translation->stable_id;
+  } 
+  else {
+    $id = $hub->species_defs->ENSEMBL_SITETYPE.' Protein';
+  }
 
   $self->SUPER::init_non_cacheable(@_);
 

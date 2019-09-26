@@ -33,13 +33,14 @@ Ensembl.Panel.ComparaAlignSliceSelector = Ensembl.Panel.extend({
 
   updateMultipleAlignmentSpeciesSelection: function(node) {
     var selection = {};
+    selection[Ensembl.species] = {};
 
     // Update config first
     $.each(node.childList, function(i, child) {
-      selection[child.data.key] = child.bSelected ? 'yes' : 'off';
+      selection[Ensembl.species][child.data.key] = child.bSelected ? 'yes' : 'off';
     });
 
-    selection['align'] = node.data.value;
+    selection[Ensembl.species]['align'] = node.data.value;
 
     $.ajax({
       url:  this.configUrl,

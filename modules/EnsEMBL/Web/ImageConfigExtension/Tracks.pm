@@ -446,6 +446,11 @@ sub add_genes {
         }
       }
 
+      # this will separate all Long-Seq tracks into longreads submenu
+      if ($data->{$key2}{'name'} =~ /Long-Seq/) {
+        $t = 'longreads';
+      }
+
       my $menu = $self->get_node($t);
       next unless $menu;
 
@@ -454,7 +459,7 @@ sub add_genes {
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
         label_key => '[biotype]',
-        renderers => $t eq 'transcript' ? $renderers : $t eq 'rnaseq' ? [
+        renderers => ($t eq 'transcript' || $t eq 'longreads') ? $renderers : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
          'transcript_label',   'Expanded with labels',
@@ -1361,7 +1366,7 @@ sub add_oligo_probes {
     my $key_3 = $key_2;
     $key_2    =~ s/:/__/;
 
-    $menu->append_child($self->create_track_node("oligo_${key}_" . uc $key_2, $key_3, {
+    $menu->append_child($self->create_track_node("oligo_${key}_" . $key_2, $key_3, {
       glyphset    => '_oligo',
       db          => $key,
       sub_type    => 'oligo',

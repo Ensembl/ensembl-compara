@@ -61,6 +61,21 @@ sub get_data {
 
   my $out = $self->SUPER::get_data($file_path) || [];
 
+  ## Turn legend on if features are visible
+  # get_data returns an error code if there are too many features to display
+  if (ref($out) eq 'ARRAY') {
+    $self->{'legend'}{'fg_motif_features_legend'}{'entries'}= {
+                'entry_1' => {
+                              'legend' => 'Verified experimentally', 
+                              'colour' => '000000',
+                              },
+                'entry_2' => {
+                              'legend' => 'Not verified', 
+                              'colour' => '999999',
+                              },
+                };
+  }
+
   return $out;
 }
 

@@ -199,6 +199,11 @@ foreach (@indexes) {
   }
 }
 
+my %strain_parent_common_names = (
+  mus_musculus => 'Mouse',
+  sus_scrofa   => 'Pig',
+);
+
 # if the SPECIES is set to ALL grab them all from the config...
 my $input_c = @species;
 if( $species_list eq 'ALL' ) {
@@ -290,12 +295,12 @@ foreach my $index (@indexes) {
       $conf->{'species_sci_name'}    = $species;
       $conf->{'authority'}           = $PD->{$species}{'AUTHORITY'};
       $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
-      $conf->{'species_common_name'} = $PD->{$species}{'SPECIES_COMMON_NAME'};
-      $conf->{'strain_details'}{'parent_common_name'} = ucfirst($PD->{$species}{'STRAIN_COLLECTION'});
+      my $parent_common_name = $strain_parent_common_names{$PD->{$species}{'STRAIN_GROUP'}};
+      $conf->{'strain_details'}{'parent_common_name'} = $parent_common_name || '';
       $conf->{'strain_details'}{'parent_latin_name'}  = ucfirst($PD->{$species}{'SPECIES_SCIENTIFIC_NAME'});
-      $conf->{'strain_details'}{'strain_name'}        = ucfirst($PD->{$species}{'STRAIN_COLLECTION'}) . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
+      $conf->{'strain_details'}{'strain_name'}        = $conf->{'strain_details'}{'parent_common_name'} . ' ' . $PD->{$species}{'SPECIES_STRAIN'};
       $conf->{'strain_details'}{'reference_strain'} = 1;
-      if ( ucfirst($PD->{$species}{'STRAIN_COLLECTION'}) && ucfirst($PD->{$species}{'SPECIES_COMMON_NAME'}) ne  ucfirst($PD->{$species}{'STRAIN_COLLECTION'})) {
+      if ( $PD->{$species}{'STRAIN_GROUP'} && ($PD->{$species}{'STRAIN_GROUP'} ne $PD->{$species}{'SPECIES_PRODUCTION_NAME'})) {
         $conf->{'strain_details'}{'reference_strain'} = 0;
       }
     }
@@ -3137,12 +3142,11 @@ sub dumpRegulatoryFeature {
     group_concat(distinct mrf.accession), 
     count(distinct mrf.mirna_target_feature_id),
     ft.description, 
-    ft.class, 
-    fs.name
+    ft.class,
+    ft.name
   from 
     $dbname.mirna_target_feature mrf
     join $dbname.feature_type ft using (feature_type_id)
-    join $dbname.feature_set fs using (feature_set_id)
     join seq_region sr using (seq_region_id)
   group by 
     mrf.display_label
@@ -3155,7 +3159,7 @@ sub dumpRegulatoryFeature {
       push @syns unless $id eq 'display_label';
     }
     push @syns, split ',', $accs;
-    $params = { 'fs_name' => $fs_name, 'subtype' => 'TarBase miRNA' };
+    $params = { 'fs_name' => $fs_name, 'subtype' => $fs_name };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
     &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@syns,$ftype,$params,$db,$counter), $fh);
   }

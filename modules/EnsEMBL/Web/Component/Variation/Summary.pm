@@ -36,6 +36,9 @@ sub _init {
 
 sub content {
   my $self          = shift;
+
+  return if(!$self->object);
+
   my $hub           = $self->hub;
   my $object        = $self->object;
   my $variation     = $object->Obj;
@@ -106,7 +109,7 @@ sub feature_summary {
                       $phenotype_url, 
                       $avail->{has_ega}, 
                       $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
-                  ) if($avail->{has_ega});  
+                  ) if($avail->{has_ega} && $avail->{has_locations});
   push @str_array, sprintf('is mentioned in <a class="dynamic-link" href="%s">%s %s</a>', 
                       $citation_url, 
                       $avail->{has_citation}, 
@@ -460,7 +463,7 @@ sub alleles {
 
       my $ht =
         '<b>Highest population Minor Allele Frequency</b><br />Highest minor allele frequency observed in any population'.
-        ($species eq 'Homo_sapiens' ? ' from 1000 Genomes Phase 3, ESP and ExAC' : '');
+        ($species eq 'Homo_sapiens' ? ' including 1000 Genomes Phase 3, ESP and gnomAD' : '');
 
       my $allele_hover_text;
       if(scalar @$max_alleles > 1) {
@@ -1036,15 +1039,19 @@ sub allele_registry_synonyms_urls {
 
   return []  if (!$hgvsg);
 
+  my $allele_synonyms = $object->get_allele_synonyms();
+  return [] if (!$allele_synonyms);
+
+  my %ar_lu = map {$_->hgvs_genomic => $_->name } @$allele_synonyms;
+
   my $hgvs_ar;
 
   # For each allele, for each HGVSg, lookup caid
   foreach my $allele (keys %$hgvsg) {
     next if $hgvsg->{$allele} !~ /^NC_/;
-    my $ar_results = $object->get_allele_registry_data($hgvsg->{$allele});
-    next if (! %$ar_results);
+    next if (! defined $ar_lu{$hgvsg->{$allele}});
     $hgvs_ar->{$allele} = [$hgvsg->{$allele},
-                           $ar_results->{'caid'},
+                           $ar_lu{$hgvsg->{$allele}},
                           ];
   }
   return [] if (!$hgvs_ar);

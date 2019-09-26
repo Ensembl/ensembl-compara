@@ -1899,6 +1899,12 @@ sub get_allele_registry_data {
   return {'caid' => $caid, 'caid_uri' => $ref->{'@id'}};
 }
 
+# Get all the allele synonyms for a variation
+sub get_allele_synonyms {
+  my $self = shift;
+  return $self->vari->get_all_AlleleSynonyms();
+}
+
 sub get_hgvsg {
   my $self = shift;
 

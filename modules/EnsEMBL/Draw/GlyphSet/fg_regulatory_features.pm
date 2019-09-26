@@ -63,7 +63,7 @@ sub get_data {
   my $config      = $self->{'config'};
   if ($cell_line) {
     my $ega = $db->get_EpigenomeAdaptor;
-    my $epi = $ega->fetch_by_display_label($cell_line);
+    my $epi = $ega->fetch_by_short_name($cell_line);
     $self->{'my_config'}->set('epigenome', $epi);
   }
   my $reg_feats = $rfa->fetch_all_by_Slice($self->{'container'}); 

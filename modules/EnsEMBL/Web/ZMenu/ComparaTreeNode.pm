@@ -403,6 +403,7 @@ sub content {
               'URL' => uri_escape($rest_url)
             });
           }
+          
         }
         else {
           my $filegen_url = $hub->url('Json', {

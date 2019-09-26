@@ -114,7 +114,8 @@
             "Actinopterygii",
             "Amphibia",
             "Coelacanthimorpha",
-            "Cyclostomata"
+            "Cyclostomata",
+            "Chondrichthyes"
 
          ],
          "display_name": "Other Vertebrates",
@@ -130,19 +131,20 @@
                "is_internal_node": "true"
             },
             {
-               "key": "fish",
+               "key": "bony_fish",
                "taxa": [
                   "Actinopterygii",
                   "Coelacanthimorpha"
                ],
-               "display_name": "Fish",
+               "display_name": "Bony fishes",
                "is_internal_node": "true"
             },
             {
                "key": "others",
                "taxa": [
                   "Amphibia",
-                  "Cyclostomata"
+                  "Cyclostomata",
+                  "Chondrichthyes"
                ],
                "display_name": "Others",
                "is_internal_node": "true"

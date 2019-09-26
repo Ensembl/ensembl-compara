@@ -84,7 +84,8 @@ sub table_data {
   foreach my $pf (@$sv_pf) {
     my $phe = $pf->phenotype->description;
     if (!exists $phenotypes{$phe}) {
-      $phenotypes{$phe} = { disease => qq{<b>$phe</b>} };
+      my $phe_url = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $pf->phenotype->dbID, name => $phe });
+      $phenotypes{$phe} = { disease => qq{<a href="$phe_url" title="View associate loci"><b>$phe</b></a>} };
     }
 
     # Ontology data
@@ -127,8 +128,9 @@ sub table_data {
           $phenotypes{$phe}{s_evidence} .= ', '.$sva->object_id;
         } 
         else {
+          my $phe_url = $hub->url({ type => 'Phenotype', action => 'Locations', ph => $sva->phenotype->dbID, name => $phe });
           $phenotypes{$phe} = {
-            disease    => qq{<b>$phe</b>},
+            disease    => qq{<a href="$phe_url" title="View associate loci"><b>$phe</b></a>},
             s_evidence => $sva->object_id
           };
         }
