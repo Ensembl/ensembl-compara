@@ -412,10 +412,10 @@ sub _json_to_jira {
     my @label_list;
     $jira_hash{'labels'} = [];
     if ($json_hash->{'labels'}) {
-        push @label_list, $json_hash->{'labels'};
+        push @label_list, @{$json_hash->{'labels'}};
     }
     if ($extra_labels) {
-        push @label_list, $extra_labels;
+        push @label_list, @{$extra_labels};
     }
     if ($json_hash->{'name_on_graph'}) {
         push @label_list, 'Graph:' . $json_hash->{'name_on_graph'};
