@@ -30,7 +30,7 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = 98;
+my $curr_release = 99;
 my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
@@ -76,35 +76,36 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
     # homology dbs
-    'compara_members'       => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_load_members_98' ],
-    'compara_ptrees'        => [ 'mysql-ens-compara-prod-2', 'mateus_default_vertebrates_protein_trees_98' ],
-    'ptrees_prev'           => [ 'mysql-ens-compara-prod-1', 'carlac_default_vertebrates_protein_trees_97' ],
-    'compara_families'      => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_families_98' ],
-    'compara_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_98' ],
-    'nctrees_prev'           => [ 'mysql-ens-compara-prod-6', 'muffato_default_vertebrates_ncrna_trees_97' ],
-    'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-2', 'carlac_murinae_protein_reindexed_trees_97' ],
-    'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-4', 'carlac_murinae_ncrna_reindexed_trees_97' ],
-    'murinae_ptrees'        => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_protein_reindexed_trees_98' ],
-    'murinae_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_ncrna_reindexed_trees_98' ],
-    #'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
-    'sus_ptrees'            => [ 'mysql-ens-compara-prod-1', 'carlac_sus_vertebrates_protein_trees_98' ],
-    'sus_nctrees'           => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
+    'compara_members'       => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_load_members_99' ],
+    'compara_ptrees'        => [ 'mysql-ens-compara-prod-2', 'jalvarez_default_vertebrates_protein_trees_99' ],
+    'ptrees_prev'           => [ 'mysql-ens-compara-prod-2', 'mateus_default_vertebrates_protein_trees_98' ],
+    'compara_families'      => [ 'mysql-ens-compara-prod-6', 'mateus_vertebrates_families_99' ],
+    'compara_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_99' ],
+    'nctrees_prev'          => [ 'mysql-ens-compara-prod-7', 'muffato_default_vertebrates_ncrna_trees_98' ],
+    'murinae_ptrees_prev'   => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_protein_reindexed_trees_98' ],
+    'murinae_nctrees_prev'  => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_ncrna_reindexed_trees_98' ],
+    'murinae_ptrees'        => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_protein_reindexed_trees_99' ],
+    'murinae_nctrees'       => [ 'mysql-ens-compara-prod-7', 'muffato_murinae_ncrna_reindexed_trees_99' ],
+    'sus_ptrees'            => [ 'mysql-ens-compara-prod-1', 'carlac_sus_vertebrates_protein_trees_99' ],
+    'sus_nctrees'           => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_99' ],
+    'sus_ptrees_prev'       => [ 'mysql-ens-compara-prod-1', 'carlac_sus_vertebrates_protein_trees_98' ],
+    'sus_nctrees_prev'      => [ 'mysql-ens-compara-prod-5', 'muffato_sus_vertebrates_ncrna_trees_98' ],
 
     # LASTZ dbs
-    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_lastz_batch_1_98' ],
-    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch2_98' ],
-    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-1', 'mateus_vertebrates_lastz_batch_3_98' ],
-    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch_4_98' ],
-    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_5_98' ],
-    'lastz_batch_6'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch6_98' ],
-    'lastz_batch_7'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch7_98' ],
-    'lastz_batch_8'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch_8_98' ],
-    'lastz_batch_9'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_9_98' ],
+    'lastz_batch_1'    => [ 'mysql-ens-compara-prod-2', 'mateus_vertebrates_lastz_batch_1_99' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch2_99' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-1', 'mateus_vertebrates_lastz_batch_3_99' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-7', 'muffato_vertebrates_lastz_batch_4_99' ],
+    'lastz_batch_5'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_5_99' ],
+    'lastz_batch_6'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch6_99' ],
+    'lastz_batch_7'    => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_lastz_batch7_99' ],
+    'lastz_batch_8'    => [ 'mysql-ens-compara-prod-4', 'carlac_vertebrates_lastz_batch_8_99' ],
+    'lastz_batch_9'    => [ 'mysql-ens-compara-prod-5', 'muffato_vertebrates_lastz_batch_9_99' ],
 
     # EPO dbs
     ## mammals
-    'mammals_epo'         => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
-    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],
+    'mammals_epo'         => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_99' ],
+    'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
     'mammals_epo_low'     => [ 'mysql-ens-compara-prod-8', 'mateus_mammals_epo_low_coverage_98' ],
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
@@ -115,25 +116,25 @@ my $compara_dbs = {
     #'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
-    'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_98' ],
-    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'carlac_fish_epo_low_coverage_97' ],
+    'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_99' ],
+    'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_98' ],
     'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_low_coverage_98' ],
     'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_96' ],
 
     ## primates
-    'primates_epo'         => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],
-    'primates_epo_prev'    => [ 'mysql-ens-compara-prod-4', 'carlac_mammals_epo_97' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
+    'primates_epo'         => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_99' ],
+    'primates_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_low'     => [ 'mysql-ens-compara-prod-6', 'mateus_primates_epo_low_coverage_98' ],
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
-    'amniotes_pecan'      => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_98' ],
-    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-8', 'muffato_amniotes_mercator_pecan_97' ],
+    'amniotes_pecan'      => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_99' ],
+    'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-4', 'carlac_amniotes_mercator_pecan_98' ],
 
-    'compara_syntenies'   => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_synteny_98' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_synteny_99' ],
 
     # miscellaneous
-    'alt_allele_projection' => [ 'mysql-ens-compara-prod-8', 'muffato_vertebrates_alt_allele_import_98' ],
+    'alt_allele_projection' => [ 'mysql-ens-compara-prod-8', 'muffato_vertebrates_alt_allele_import_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
