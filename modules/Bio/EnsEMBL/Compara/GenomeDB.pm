@@ -187,6 +187,7 @@ sub db_adaptor {
             my $was_connected       = $dba->{_dbc}->connected;
             my $meta_container      = $dba->get_MetaContainer;
             my $genome_container    = $dba->get_GenomeContainer;
+            my $strain_name         = ($meta_container->single_value_by_key('strain.type') || 'strain') . ' ' . $meta_container->single_value_by_key('species.strain');
 
             $self->name( $meta_container->get_production_name );
             $self->assembly( $dba->assembly_name );
@@ -194,7 +195,7 @@ sub db_adaptor {
             $self->genebuild( $meta_container->get_genebuild );
             $self->has_karyotype( $genome_container->has_karyotype );
             $self->is_good_for_alignment( 0 );  # Cannot be inferred without the dnafrags
-            $self->strain_name( $meta_container->single_value_by_key('species.strain') );
+            $self->strain_name( $strain_name );
             $self->display_name( $meta_container->get_display_name );
             $dba->{_dbc}->disconnect_if_idle unless $was_connected;
         }
@@ -586,7 +587,8 @@ sub component_genome_dbs {
 
   Example     : my $strain_name = $genome_db->strain_name();
   Example     : $genome_db->strain_name($strain_name);
-  Description : The strain name of this genome
+  Description : The "strain" name of this genome. Includes the correct term for
+                the "type" of strain, e.g. "strain C3H/HeJ" or "breed berkshire"
   Returntype  : string
   Exceptions  : none
   Caller      : general
@@ -667,7 +669,8 @@ sub get_scientific_name {
 
     my $n = $self->taxon_id ? (($self->{'_taxon'} || $self->adaptor) ? $self->taxon->scientific_name : 'Taxon ' . $self->taxon_id) : $self->name;
     if (my $strain_name = $self->strain_name) {
-        $n .= " strain $strain_name" if $n !~ /\b$strain_name$/;
+        my ($foo, $unqualified_strain_name) = split(/  */, $strain_name, 2);
+        $n .= " $strain_name" if $n !~ /\b$unqualified_strain_name$/;
     }
     $n .= sprintf(' (component %s)', $self->genome_component) if $self->genome_component;
 
