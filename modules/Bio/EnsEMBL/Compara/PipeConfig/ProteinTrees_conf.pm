@@ -1792,7 +1792,7 @@ sub core_pipeline_analyses {
                 'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '16Gb_16c_job',
+            -rc_name    => '16Gb_8c_job',
             -priority   => $self->o('mafft_himem_priority'),
         },
 
