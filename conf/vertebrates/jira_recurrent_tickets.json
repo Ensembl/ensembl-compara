@@ -18,14 +18,14 @@
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division+Relco+setup",
-            "summary": "Registry Configuration file"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Coredatabasesmirror",
+            "summary": "Copy the core databases"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Coredatabasesmirror",
-            "summary": "Copy the core databases"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Registryconfigurationfile",
+            "summary": "Registry Configuration file"
          },
          {
             "assignee": "<RelCo>",
