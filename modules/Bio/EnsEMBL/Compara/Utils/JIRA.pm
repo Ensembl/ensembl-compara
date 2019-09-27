@@ -326,7 +326,7 @@ sub link_tickets {
 
 sub _validate_username {
     my ( $self, $user ) = @_;
-    my %compara_members = map { $_ => 1 } qw(carlac jalvarez mateus muffato);
+    my %compara_members = map { $_ => 1 } qw(carlac cristig dthybert jalvarez muffato);
     # Do a case insensitive user matching
     if (exists $compara_members{lc $user}) {
         return lc $user;
