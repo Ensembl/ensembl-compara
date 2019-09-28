@@ -254,7 +254,7 @@ sub loadMembersFromCoreSlices {
 
           if ($self->param('store_coding') && (($biotype_group eq 'coding') or ($biotype_group eq 'lrg'))) {
               $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
-              
+
           } elsif ( $self->param('store_ncrna') && ($biotype_group =~ /noncoding$/) ) {
               $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
 
