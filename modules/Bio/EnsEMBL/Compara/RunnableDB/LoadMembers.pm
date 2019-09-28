@@ -259,7 +259,7 @@ sub loadMembersFromCoreSlices {
               $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
 
           } elsif ( $self->param('store_others') ) {
-              # Catches pseudogenes, but also "undefined" and "no_group", and also non-current or non-dumped biotypes
+              # Catches pseudogenes, but also "undefined" and "no_group"
               $gene_member = $self->store_gene_generic($gene, $dnafrag);
           }
 
