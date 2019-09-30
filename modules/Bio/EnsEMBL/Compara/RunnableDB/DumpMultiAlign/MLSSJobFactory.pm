@@ -36,7 +36,7 @@ sub param_defaults {
     my ($self) = @_;
     return {
         %{$self->SUPER::param_defaults},
-        'species_priority'   => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes' ],
+        'species_priority'   => [ 'homo_sapiens', 'gallus_gallus', 'oryzias_latipes', 'sus_scrofa' ],
         'from_first_release' => 40, # dump method_link_species_sets with a first_release > this option
         'add_conservation_scores'   => 1,       # When set, will add the conservation scores to the EMF dumps
     }
