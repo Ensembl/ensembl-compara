@@ -43,14 +43,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-        'param'   => undef,
-    }
-}
-
 sub fetch_input {
 	my $self = shift;
 
@@ -144,12 +136,20 @@ sub write_output {
 
 sub fetch_genome_report {
     my ( $self, $release, $division ) = @_;
-
+    
+    my $work_dir = $self->param_required('work_dir');
     my $report_genomes_script = $self->param_required('report_genomes_script');
     my $metadata_script_options = "\$(mysql-ens-meta-prod-1 details script) --release $release --division $division";
-    my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json";
+    my $report_cmd = "perl $report_genomes_script $metadata_script_options -output_format json --dump_path $work_dir";
     my $report_out = $self->get_command_output($report_cmd);
+    
+    # add the division name output file
+    my $report_file = "$work_dir/report_updates.json";
+    my $report_file_with_div = $report_file;
+    $report_file_with_div =~ s/report_updates/report_updates.$division/;
+    $self->run_command("mv $report_file $report_file_with_div");
 
+    # read and parse report
     my $decoded_meta_report = decode_json( $report_out );
     $decoded_meta_report = $decoded_meta_report->{$division};
     # print Dumper $decoded_meta_report;

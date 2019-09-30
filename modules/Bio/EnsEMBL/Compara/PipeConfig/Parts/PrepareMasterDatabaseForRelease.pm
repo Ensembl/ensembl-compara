@@ -122,6 +122,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'list_genomes_script'   => $self->o('list_genomes_script'),
                 'report_genomes_script' => $self->o('report_genomes_script'),
                 'additional_species'    => $self->o('additional_species'),
+                'work_dir'              => $self->o('work_dir'),
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
