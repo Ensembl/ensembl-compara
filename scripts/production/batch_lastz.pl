@@ -176,7 +176,7 @@ my ( @cmd_list, $ticket_list );
 my $index = 1;
 foreach my $group ( @$mlss_groups ) {
 	my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -host mysql-ens-compara-prod-X -port XXXX";
+    my $cmd = "init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX";
     push @cmd_list, $cmd;
     # Copy the template and add the specific details for this group
     my $ticket = { %ticket_tmpl };
