@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMasterConf_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::Example::LastzNoMasterConf_conf;
 
 #
 #Test with no master and pairwise alignment configuration file (lastz.conf)

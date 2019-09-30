@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterCore_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Legacy::Example::LastzMasterCore_conf;
 
 #
 #Test with a master and method_link_species_set_id.
