@@ -58,10 +58,16 @@ sub run {
         my $num_of_positions            = sum(@{$self->param('num_of_positions')->{$gdb_id}});
         my $num_of_aligned_positions    = sum(@{$self->param('num_of_aligned_positions')->{$gdb_id}});
         my $num_of_other_seq_positions  = sum(@{$self->param('num_of_other_seq_positions')->{$gdb_id}});
+
         $node->store_tag('num_of_positions',            $num_of_positions);
         $node->store_tag('num_of_aligned_positions',    $num_of_aligned_positions);
         $node->store_tag('num_of_other_seq_positions',  $num_of_other_seq_positions);
         $node->store_tag('average_depth',               $num_of_other_seq_positions / $num_of_positions);
+        my $depth_breakdown = $self->param('depth_by_genome')->{$gdb_id};
+        foreach my $depth (keys %$depth_breakdown) {
+            my $s = sum(@{$depth_breakdown->{$depth}});
+            $node->store_tag('num_positions_depth_'.$depth, $s);
+        }
     }
 }
 

@@ -116,6 +116,9 @@ sub pipeline_analyses_multiple_aligner_stats {
                     '?accu_name=num_of_aligned_positions&accu_address={genome_db_id}[]',
                     '?accu_name=num_of_other_seq_positions&accu_address={genome_db_id}[]',
                 ],
+                3 => [
+                    '?accu_name=depth_by_genome&accu_address={genome_db_id}{depth}[]&accu_input_variable=num_of_positions',
+                ],
                 4 => [
                     '?accu_name=pairwise_coverage&accu_address={from_genome_db_id}{to_genome_db_id}[]&accu_input_variable=num_of_aligned_positions',
                 ],

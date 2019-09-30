@@ -81,6 +81,9 @@ sub process_one_block {
         foreach my $key (qw(n_aligned_pos n_total_pos depth_sum)) {
             $depth_by_genome->{$genome_db_id}->{$key} += $depths->{$genome_db_id}->{$key};
         }
+        foreach my $d (keys %{$depths->{$genome_db_id}->{'depth_breakdown'}}) {
+            $depth_by_genome->{$genome_db_id}->{'breakdown'}->{$d} += $depths->{$genome_db_id}->{'depth_breakdown'}->{$d};
+        }
     }
 }
 
@@ -95,6 +98,13 @@ sub write_output {
                 'num_of_aligned_positions'      => $depth_by_genome->{$genome_db_id}->{'n_aligned_pos'},
                 'num_of_other_seq_positions'    => $depth_by_genome->{$genome_db_id}->{'depth_sum'},
             }, 2);
+        foreach my $d (keys %{$depth_by_genome->{$genome_db_id}->{'breakdown'}}) {
+            $self->dataflow_output_id({
+                    'genome_db_id'      => $genome_db_id,
+                    'depth'             => $d,
+                    'num_of_positions'  => $depth_by_genome->{$genome_db_id}->{'breakdown'}->{$d},
+                }, 3);
+        }
     }
 
     my $pairwise_coverage = $self->param('total_pairwise_coverage');
