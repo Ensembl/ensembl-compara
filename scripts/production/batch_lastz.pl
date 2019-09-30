@@ -404,6 +404,8 @@ Options:
 	exclude_mlss_ids : list of MLSS IDs to ignore (if they've already been run).
 	                   list should be comma separated values.
 	method_link      : method used to select MLSSes (default: LASTZ_NET)
+	dry_run|dry-run  : in dry-run mode, the JIRA tickets will not be submitted to the JIRA
+	                   server (default: off)
 	v|verbose        : print out per-mlss job count estimates
 	vv|very_verbose  : print out per-analysis, per-mlss job count estimates
 
