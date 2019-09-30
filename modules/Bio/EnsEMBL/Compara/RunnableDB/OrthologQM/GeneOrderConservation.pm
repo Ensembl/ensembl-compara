@@ -418,7 +418,7 @@ sub _split_polyploid_goc {
     # First, let's detect ENSEMBL_HOMOEOLOGUES and spawn 1 job per pair of components
     if (($mlss->method->type eq 'ENSEMBL_HOMOEOLOGUES') && !$self->param('genome_db_ids')) {
         my $genome_db = $mlss->species_set->genome_dbs->[0];
-        my @components = @{$genome_db->component_genome_dbs};
+        my @components = sort {$a->dbID <=> $b->dbID} @{$genome_db->component_genome_dbs};
         while (my $gdb1 = shift @components) {
             foreach my $gdb2 (@components) {
                 $self->dataflow_output_id({'genome_db_ids' => [$gdb1->dbID, $gdb2->dbID]}, 3);
@@ -430,12 +430,11 @@ sub _split_polyploid_goc {
     # Then, let's find the ENSEMBL_ORTHOLOGUES that link polyploid genomes
     # and spawn 1 job for each of their components
     if (($mlss->method->type eq 'ENSEMBL_ORTHOLOGUES') && !$self->param('genome_db_ids')) {
-        my $gdb1 = $mlss->species_set->genome_dbs->[0];
-        my $gdb2 = $mlss->species_set->genome_dbs->[1];
+        my ($gdb1, $gdb2) = sort {$a->dbID <=> $b->dbID} @{$mlss->species_set->genome_dbs};
         if ($gdb1->is_polyploid || $gdb2->is_polyploid) {
             # Note: both could be polyploid, e.g. T.aes vs T.dic
-            my $sub_gdb1s = $gdb1->is_polyploid ? $gdb1->component_genome_dbs : [$gdb1];
-            my $sub_gdb2s = $gdb2->is_polyploid ? $gdb2->component_genome_dbs : [$gdb2];
+            my $sub_gdb1s = $gdb1->is_polyploid ? [sort {$a->dbID <=> $b->dbID} @{$gdb1->component_genome_dbs}] : [$gdb1];
+            my $sub_gdb2s = $gdb2->is_polyploid ? [sort {$a->dbID <=> $b->dbID} @{$gdb2->component_genome_dbs}] : [$gdb2];
             foreach my $sub_gdb1 (@$sub_gdb1s) {
                 foreach my $sub_gdb2 (@$sub_gdb2s) {
                     $self->dataflow_output_id({'genome_db_ids' => [$sub_gdb1->dbID, $sub_gdb2->dbID]}, 3);
