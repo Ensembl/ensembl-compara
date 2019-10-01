@@ -52,7 +52,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna;
 use strict;
 use warnings;
 
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Time::HiRes qw(time);
 
 use Bio::EnsEMBL::Utils::Exception qw( throw );
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
@@ -303,7 +303,7 @@ sub create_dnafrag_chunks {
   #print "  sequence length : ",$dnafrag->length,"\n";
   #print "chunk_size $chunk_size\n";
 
-  my $lasttime = time();
+  #my $lasttime = time();
 
   #initialise chunk_start and chunk_end to be the dnafrag start and end
   my $chunk_start = $region_start;
@@ -375,7 +375,7 @@ sub define_new_chunkset {
     return if $self->param('current_chunkset') and !$self->param('current_chunkset')->count;
 
     my $new_chunkset = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet(
-        -NAME => sprintf('collection_id:%d group:%d', $self->param('dna_collection')->dbID, $self->param('chunkset_counter')),
+        -NAME => sprintf('collection_id:%d group:%d', $self->param('collection_id'), $self->param('chunkset_counter')),
         -DNA_COLLECTION_ID => $self->param('collection_id')
     );
     $self->param('current_chunkset', $new_chunkset);
