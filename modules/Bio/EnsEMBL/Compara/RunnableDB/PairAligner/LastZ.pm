@@ -78,7 +78,7 @@ sub run {
   # get the sequences and create the runnable
   #
   my $query_DnaFragChunkSet = $self->param('query_DnaFragChunkSet');
-  my $qyChunkFile = $self->dumpChunkSetToWorkdir($query_DnaFragChunkSet);
+  my $qyChunkSetFile = $self->dumpChunkSetToWorkdir($query_DnaFragChunkSet);
 
   my @db_chunk_files;
   my $db_dna_collection = $self->param('db_DnaFragChunkSet')->dna_collection;
@@ -88,7 +88,7 @@ sub run {
   }
 
   if (@db_chunk_files > 1) {
-    $self->warning("you have given a chunkset for the database; dumping individual chunks and creating a runnable for each one");
+    $self->warning("you have given a chunkset for the database; dumped individual chunks and creating a runnable for each one");
   }
 
   if($self->debug) {
@@ -100,11 +100,11 @@ sub run {
   my $starttime = time();
   my @output;
   foreach my $dbChunkFile (@db_chunk_files) {
-      my $o = Bio::EnsEMBL::Compara::Production::Analysis::Lastz::run_lastz($self, $qyChunkFile, $dbChunkFile);
+      my $o = Bio::EnsEMBL::Compara::Production::Analysis::Lastz::run_lastz($self, $qyChunkSetFile, $dbChunkFile);
       push @output, @$o;
   }
 
-  if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
+  if($self->debug){printf("%1.3f secs to run %s pairwise alignment\n", (time()-$starttime), $self->param('method_link_type'));}
   $self->param('output', \@output);
 }
 
