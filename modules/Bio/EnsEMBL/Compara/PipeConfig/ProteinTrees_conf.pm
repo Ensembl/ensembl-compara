@@ -2614,6 +2614,54 @@ sub core_pipeline_analyses {
             -rc_name    => '1Gb_job',
         },
 
+        {   -logic_name => 'raxml_2_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                %raxml_parameters,
+                'raxml_number_of_cores'     => 2,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '4Gb_2c_job',
+            -flow_into  => {
+                -1 => [ 'raxml_2_cores_himem' ],
+                -2 => [ 'raxml_4_cores' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_2_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                %raxml_parameters,
+                'raxml_number_of_cores'     => 2,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '8Gb_2c_job',
+        },
+
+        {   -logic_name => 'raxml_4_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                %raxml_parameters,
+                'raxml_number_of_cores'     => 4,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '8Gb_4c_job',
+            -flow_into  => {
+                -1 => [ 'raxml_4_cores_himem' ],
+                -2 => [ 'raxml_8_cores' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_4_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                %raxml_parameters,
+                'raxml_number_of_cores'     => 4,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '16Gb_4c_job',
+        },
+
         {   -logic_name => 'raxml_8_cores',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
             -parameters => {
