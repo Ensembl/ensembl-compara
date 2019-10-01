@@ -71,8 +71,6 @@ sub store {
 
   assert_ref($dfc, 'Bio::EnsEMBL::Compara::Production::DnaFragChunk', 'dfc');
 
-  $dfc->sequence_id($self->db->get_SequenceAdaptor->store($dfc->sequence)) if $dfc->sequence;
-
   my $dbID;
 
   if (my $other_dfc = $self->_synchronise($dfc)) {
@@ -81,7 +79,7 @@ sub store {
   } else {
       $dbID = $self->generic_insert('dnafrag_chunk', {
               'dnafrag_id'            => $dfc->dnafrag_id,
-              'sequence_id'           => $dfc->sequence_id // 0,
+              'sequence_id'           => 0,
               'dnafrag_start'         => $dfc->dnafrag_start,
               'dnafrag_end'           => $dfc->dnafrag_end,
               'dnafrag_chunk_set_id'  => $dfc->dnafrag_chunk_set_id,
@@ -92,29 +90,6 @@ sub store {
   return $dfc;
 }
 
-
-sub update_sequence
-{
-  my $self = shift;
-  my $dfc  = shift;
-
-  return 0 unless($dfc);
-  return 0 unless($dfc->isa('Bio::EnsEMBL::Compara::Production::DnaFragChunk'));
-  return 0 unless($dfc->dbID);
-  return 0 unless(defined($dfc->sequence));
-  return 0 unless(length($dfc->sequence) <= ($self->_max_allowed_packed-500000));  #limited by myslwd max_allowed_packet=12M
-
-  my $seqDBA = $self->db->get_SequenceAdaptor;
-  my $newSeqID = $seqDBA->store($dfc->sequence);
-
-  return if($dfc->sequence_id == $newSeqID); #sequence unchanged
-
-  my $sth = $self->prepare("UPDATE dnafrag_chunk SET sequence_id=? where dnafrag_chunk_id=?");
-  $sth->execute($newSeqID, $dfc->dbID);
-  $sth->finish();
-  $dfc->sequence_id($newSeqID);
-  return $newSeqID;
-}
 
 # Should be in DBConnection, but not sure Core would like it
 sub _max_allowed_packed {

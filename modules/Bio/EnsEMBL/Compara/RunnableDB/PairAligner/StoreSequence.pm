@@ -50,7 +50,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence;
 use strict;
 use warnings;
 
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Time::HiRes qw(time);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -58,8 +58,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my( $self) = @_;
 
+    # Add the genome dumps directory to avoid as many connections to external core
+    # databases as possible
+    $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
+
     #Convert chunkSetID into DnaFragChunkSet object
-    my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param('chunkSetID'));
+    my $chunkset = $self->compara_dba->get_DnaFragChunkSetAdaptor->fetch_by_dbID($self->param_required('chunkSetID'));
     die "No ChunkSet with the id " . $self->param('chunkSetID') unless $chunkset;
     $self->param('dnaFragChunkSet', $chunkset);
     
@@ -78,31 +82,19 @@ sub write_output {
   my $dna_collection = $chunkSet->dna_collection;
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
 
-  my $core_dba = $chunk_array->[0]->dnafrag->genome_db->db_adaptor;
-  $core_dba->dbc->prevent_disconnect( sub {
-      
-      #Store sequence in Sequence table
-      foreach my $chunk (@$chunk_array) {
-          $chunk->masking($dna_collection->masking);
-          unless ($chunk->sequence) {
-              $chunk->fetch_masked_sequence;
-	      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
-	  }
-      }
-  } );
+  foreach my $chunk ( @{$chunk_array} ) {
+      $chunk->masking($dna_collection->masking);
+      $chunk->fetch_masked_sequence;
+  }
 
   if (my $dump_loc = $dna_collection->dump_loc) {
-      if ($chunkSet->total_basepairs >= $self->param_required('dump_min_chunkset_size')) {
           my $starttime = time();
           $chunkSet->dump_to_fasta_file($chunkSet->dump_loc_file);
           if($self->debug){printf("%1.3f secs to dump ChunkSet %d for \"%s\" collection\n", (time()-$starttime), $chunkSet->dbID, $dna_collection->description);}
-      }
       foreach my $chunk (@$chunk_array) {
-          if ($chunk->length >= $self->param_required('dump_min_chunk_size')) {
               my $starttime = time();
               $chunk->dump_to_fasta_file($chunk->dump_loc_file($dna_collection));
               if($self->debug){printf("%1.3f secs to dump Chunk %d for \"%s\" collection\n", (time()-$starttime), $chunk->dbID, $dna_collection->description);}
-          }
       }
   }
 

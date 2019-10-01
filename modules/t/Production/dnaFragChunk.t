@@ -42,7 +42,6 @@ my $dbid = 1;
 my $dnafrag_chunk_set_id = 2;
 my $seq_start = 1;
 my $seq_end = 100;
-my $sequence_id = 0; #after insertion of sequence
 
 my $dnafrag_id = 12179427;
 my $dnafrag_length = 51304566;
@@ -101,7 +100,6 @@ subtest "Test Bio::EnsEMBL::Compara::Production::DnaFragChunk new method", sub {
     is($dnafrag_chunk->dnafrag_id, $dnafrag_id, "dnafrag_id");
     is($dnafrag_chunk->dnafrag_start, $seq_start, "dnafrag_start");
     is($dnafrag_chunk->dnafrag_end, $seq_end, "dnafrag_end");
-    is($dnafrag_chunk->sequence_id, $sequence_id, "sequence_id");
     is($dnafrag_chunk->sequence, $sequence, "sequence");
     is($dnafrag_chunk->length, $sequence_length, "length");
     is($dnafrag_chunk->display_id, $display_id, "display_id");

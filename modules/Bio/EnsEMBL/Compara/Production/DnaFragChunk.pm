@@ -113,14 +113,13 @@ sub slice {
 
 =head2 fetch_masked_sequence
 
-  Description: Meta method which uses the slice associated with this chunk
-               and from the external core database associated with the slice
-               it extracts the masked DNA sequence.
-               Returns as Bio::Seq object.  does not cache sequence internally
-  Example    : $bioseq = $chunk->get_sequence(1);
-  Returntype : Bio::Seq or undef if a problem
+  Description: Return the sequence of this genomic location. If possible, the
+               sequence will be read from an indexed Fasta file; otherwise from
+               the core database. It will return an unmasked sequence unless
+               indicated otherwise previously with masking().
+  Example    : $seq = $chunk->fetch_masked_sequence();
+  Returntype : String
   Exceptions : none
-  Caller     : general
 
 =cut
 
@@ -182,15 +181,9 @@ sub display_id {
 
 sub bioseq {
   my $self = shift;
-
-  my $seq_str = $self->sequence();
-  if(not defined $seq_str) {
-    $seq_str = $self->fetch_masked_sequence;
-  }
   
-  return Bio::Seq->new(-seq        => $seq_str,
+  return Bio::Seq->new(-seq        => $self->sequence(),
                        -display_id => $self->display_id(),
-                       -primary_id => $self->sequence_id(),
                        );
 }
 
@@ -207,24 +200,14 @@ sub dnafrag_chunk_set_id {
   return $self->{'dnafrag_chunk_set_id'};
 }
 
-sub sequence_id {
-  my $self = shift;
-  return $self->{'sequence_id'} = shift if(@_);
-  return $self->{'sequence_id'};
-}
-
 sub sequence {
   my $self = shift;
   if(@_) {
     $self->{'_sequence'} = shift;
-    $self->sequence_id(0);
   }
 
-  return $self->{'_sequence'} if(defined($self->{'_sequence'}));
-
-  #lazy load the sequence if sequence_id is set
-  if(defined($self->sequence_id()) and defined($self->adaptor())) {
-    $self->{'_sequence'} = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbID($self->sequence_id);
+  if (! defined $self->{'_sequence'}) {
+      $self->fetch_masked_sequence();
   }
   return $self->{'_sequence'};
 }

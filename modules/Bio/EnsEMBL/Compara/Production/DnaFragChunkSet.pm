@@ -242,30 +242,9 @@ sub total_basepairs {
 sub load_all_sequences {
     my $self = shift;
 
-    if ($self->count == 1) {
-
-        my $chunk = $self->get_all_DnaFragChunks()->[0];
-        unless($chunk->sequence) {
-            $chunk->masking($self->dna_collection->masking);
-            # Will fetch the masked sequence from the core db and cache it in the object
-            $chunk->fetch_masked_sequence();
-        }
-
-    } else {
-
-        my $sequences = $self->adaptor->db->get_SequenceAdaptor->fetch_all_by_chunk_set_id($self->dbID);
-
-        foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
-
-            if (my $this_seq_id = $chunk->sequence_id) {
-                $chunk->sequence($sequences->{$this_seq_id}); #this sets $chunk->sequence_id=0
-                $chunk->sequence_id($this_seq_id); #reset seq_id
-            } else {
-                $chunk->masking($self->dna_collection->masking);
-                # Will fetch the masked sequence from the core db and cache it in the object
-                $chunk->fetch_masked_sequence();
-            }
-        }
+    foreach my $chunk (@{$self->get_all_DnaFragChunks}) {
+        $chunk->masking($self->dna_collection->masking);
+        $chunk->fetch_masked_sequence;
     }
 }
 
