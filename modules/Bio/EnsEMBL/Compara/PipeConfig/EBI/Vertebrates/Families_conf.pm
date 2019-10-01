@@ -87,7 +87,7 @@ sub default_options {
         'hmm_clustering'      => 1,
 
         # data directories:
-        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('release').'/Families_'.$self->o('rel_with_suffix'),
+        'warehouse_dir' => '/nfs/production/panda/ensembl/warehouse/compara/production/'.$self->o('ensembl_release').'/Families_'.$self->o('rel_with_suffix'),
 
         'blast_params' => '',    # By default C++ binary has composition stats on and -seg masking off
 
