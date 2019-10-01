@@ -297,7 +297,7 @@ sub nextAlignment {
 	$feature_pair->percent_id($average_pecent_id);
       }
 
-      my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@feature_pairs);
+      my $alignment = new Bio::EnsEMBL::DnaDnaAlignFeature(-features => \@feature_pairs, -align_type => 'ensembl');
       my $key = "";
       map {$key .= $alignment->$_ . "_"} qw(seqname start end strand hseqname hstart hend hstrand score cigar_string);
       if (defined $self->{'_alignment_reported_before'}{$key}) {
