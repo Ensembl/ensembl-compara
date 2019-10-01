@@ -30,7 +30,7 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = 99;
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
@@ -42,12 +42,12 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
     "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Add in extra cores from genebuild server
-my $extra_core_dbs = {
-    'cyprinus_carpio_german_mirror' => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_germanmirror_core_99_10" ],
-    'cyprinus_carpio_hebao_red' => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_hebaored_core_99_10" ],
-};
-
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $extra_core_dbs );
+# my $extra_core_dbs = {
+#     'cyprinus_carpio_german_mirror' => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_germanmirror_core_99_10" ],
+#     'cyprinus_carpio_hebao_red' => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_hebaored_core_99_10" ],
+# };
+#
+# Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $extra_core_dbs );
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
@@ -95,7 +95,7 @@ my $compara_dbs = {
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'carlac_vertebrates_lastz_batch_1_99' ],
     'lastz_batch_2'    => [ 'mysql-ens-compara-prod-6', 'jalvarez_vertebrates_lastz_batch2_99' ],
-    # 'lastz_batch_3'    => [ 'mysql-ens-compara-prod-', '' ],
+    'lastz_batch_3'    => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_lastz_batch3_99' ],
     # 'lastz_batch_4'    => [ 'mysql-ens-compara-prod-', '' ],
     # 'lastz_batch_5'    => [ 'mysql-ens-compara-prod-', '' ],
     # 'lastz_batch_6'    => [ 'mysql-ens-compara-prod-', '' ],
