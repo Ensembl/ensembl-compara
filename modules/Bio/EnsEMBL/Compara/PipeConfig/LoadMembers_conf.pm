@@ -80,6 +80,9 @@ sub default_options {
         'store_ncrna'               => 1,
         # Store other genes
         'store_others'              => 1,
+        # Temporary parameter to fix the ncrna that are out-of-sync with
+        # the core dbs due to a wrong detection of reusability before e99
+        'fix_ncrna_members'         => 0,
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 0,
@@ -289,10 +292,14 @@ sub pipeline_analyses {
             -parameters => {
                 'component_genomes' => 0,
                 'species_set_id'    => '#reuse_ss_id#',
+                'store_ncrna'       => $self->o('store_ncrna'),
+                'store_others'      => $self->o('store_others'),
+                'fix_ncrna_members' => $self->o('fix_ncrna_members'),
             },
             -flow_into => {
                 '2->A' => [ 'all_table_reuse' ],
-                'A->1' => [ 'polyploid_genome_reuse_factory' ],
+                'A->1' => WHEN( '#fix_ncrna_members# && (#store_ncrna# || #store_others#)' => [ 'reused_species_fix_ncrna_factory' ],
+                                ELSE 'polyploid_genome_reuse_factory' ),
             },
         },
 
@@ -372,6 +379,40 @@ sub pipeline_analyses {
             %hc_analysis_params,
         },
 
+# -----------------------------------------[fix the non-coding members]------------------------------------------------------------
+
+        {   -logic_name => 'reused_species_fix_ncrna_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'species_set_id'    => '#reuse_ss_id#',
+            },
+            -flow_into => {
+                '2->A' => [ 'fix_ncrna_members' ],
+                'A->1' => [ 'polyploid_genome_reuse_factory' ],
+            },
+        },
+
+        # Same parameters as "load_fresh_members_from_db", but excluding coding genes
+        {   -logic_name => 'fix_ncrna_members',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FixNonCodingMembers',
+            -parameters => {
+                'store_related_pep_sequences' => 1,
+                'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
+                'find_canonical_translations_for_polymorphic_pseudogene' => 1,
+                'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
+                'exclude_gene_analysis'         => $self->o('exclude_gene_analysis'),
+                'include_nonreference'          => $self->o('include_nonreference'),
+                'include_patches'               => $self->o('include_patches'),
+                'store_ncrna'                   => $self->o('store_ncrna'),
+                'store_others'                  => $self->o('store_others'),
+            },
+            -hive_capacity => $self->o('loadmembers_capacity'),
+            -rc_name => '4Gb_job',
+            -flow_into => { 1 => {
+                'hc_members_per_genome' => INPUT_PLUS({'after_fix' => 1}),  # there is already a job with the input_id {genome_db_id => XX} so we need to make a different input_id
+            } },
+        },
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
