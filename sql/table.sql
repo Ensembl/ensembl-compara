@@ -380,7 +380,6 @@ CREATE TABLE method_link_species_set_tag (
 @column threshold_on_ds                     the threshold_on_ds
 
 @see method_link_species_set
-@see ortholog_goc_metric
 @see homology
 */
 
