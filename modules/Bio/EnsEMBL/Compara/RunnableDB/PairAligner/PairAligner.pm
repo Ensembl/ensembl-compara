@@ -60,7 +60,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 use strict;
 use warnings;
 
-use Time::HiRes qw(time gettimeofday tv_interval);
+use Time::HiRes qw(time);
 use File::Basename;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::GenomicAlign;
@@ -173,27 +173,9 @@ sub dumpChunkSetToWorkdir
   my $self      = shift;
   my $chunkSet   = shift;
 
-  if ($chunkSet->dna_collection->dump_loc) {
-      my $fastafile = $chunkSet->dump_loc_file;
-      if (-s $fastafile) {
-          if($self->debug){print("dumpChunkSetToWorkdir : $fastafile already dumped\n");}
-          return $fastafile
-      }
-  }
-
-  my $starttime = time();
-
-  my $fastafile = $self->worker_temp_directory. "/chunk_set_". $chunkSet->dbID .".fasta";
-
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-
-  if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
-
-  $chunkSet->dump_to_fasta_file($fastafile);
-
-  if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
-  return $fastafile
+  my $fastafile = $chunkSet->dump_loc_file;
+  if($self->debug){print("dumpChunkSetToWorkdir : $fastafile already dumped\n");}
+  return $fastafile;
 }
 
 sub dumpChunkToWorkdir
@@ -202,27 +184,9 @@ sub dumpChunkToWorkdir
   my $chunk = shift;
   my $dna_collection = shift;
 
-  if ($dna_collection->dump_loc) {
-      my $fastafile = $chunk->dump_loc_file($dna_collection);
-      if (-s $fastafile) {
-          if($self->debug){print("dumpChunkToWorkdir : $fastafile already dumped\n");}
-          return $fastafile
-      }
-  }
-
-  my $starttime = time();
-
-  my $fastafile = $self->worker_temp_directory . "/chunk_" . $chunk->dbID . ".fasta";
-  $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-  return $fastafile if(-e $fastafile);
-
-  if($self->debug){print("dumpChunkToWorkdir : $fastafile\n");}
-
-  $chunk->dump_to_fasta_file($fastafile);
-
-  if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
-
-  return $fastafile
+  my $fastafile = $chunk->dump_loc_file($dna_collection);
+  if($self->debug){print("dumpChunkToWorkdir : $fastafile already dumped\n");}
+  return $fastafile;
 }
 
 sub store_featurePair_as_genomicAlignBlock
