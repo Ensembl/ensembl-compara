@@ -465,6 +465,36 @@ sub core_pipeline_analyses {
             -priority           => $self->o('hc_priority'),
             -batch_size         => 20,
     );
+
+
+    #-------------------------------------------------------------------------------
+    # This boundaries are based on RAxML and ExaML manuals.
+    # Which suggest the following number of cores:
+    #
+    #   ExaML:  DNA: 3.5K patterns/core
+    #           AAs: 1K   patterns/core
+    #
+    #   RAxML:  DNA: 500 patterns/core
+    #           AAs: 150 patterns/core
+    #
+    #-------------------------------------------------------------------------------
+    my %raxml_decision_params = (
+        # "factor_growth" and "factor" that the number of cores is
+        # increased in relation with the number of genes:
+        # Number of cores x2 if there are 1,000 genes,
+        # Number of cores x3 if there are 2,000 genes, etc
+        'factor_growth'            => 1_000,
+        'factor'                   => '#expr( 1 + #tree_gene_count# / #factor_growth# )expr#',
+        'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
+        'raxml_cores'              => '#expr( #factor# * #tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
+
+        'tags'  => {
+            #The default value matches the default dataflow we want: _8_cores analysis.
+            'aln_num_of_patterns' => 200,
+            'gene_count'          => 0,
+        },
+    );
+
     my %decision_analysis_params = (
             -analysis_capacity  => $self->o('decision_capacity'),
             -priority           => $self->o('hc_priority'),
@@ -2194,50 +2224,19 @@ sub core_pipeline_analyses {
         {   -logic_name => 'raxml_parsimony_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
-                'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
-                'raxml_cores'  => '#expr(#tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
-
-                'tags'  => {
-                    #The default value matches the default dataflow we want: _8_cores analysis.
-                    'aln_num_of_patterns' => 200,
-                    'gene_count'          => 0,
-                },
+                %raxml_decision_params,
             },
             %decision_analysis_params,
 
-            #-------------------------------------------------------------------------------
-            # This boundaries are based on RAxML and ExaML manuals.
-            # Which suggest the following number of cores:
-            #
-            #   ExaML:  DNA: 3.5K patterns/core
-            #           AAs: 1K   patterns/core
-            #
-            #   RAxML:  DNA: 500 patterns/core
-            #           AAs: 150 patterns/core
-            #
-            #-------------------------------------------------------------------------------
-
             -flow_into  => {
                 '1->A' => WHEN (
-                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# <= 500)'                          => 'raxml_parsimony',
-                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# > 500)'                           => 'raxml_parsimony',
-
-                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 2 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_2_cores',
-                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 2 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_2_cores',
-
-                    '( #raxml_cores# > 2 ) && ( #raxml_cores# <= 4 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_4_cores',
-                    '( #raxml_cores# > 2 ) && ( #raxml_cores# <= 4 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_4_cores',
-
-                    '( #raxml_cores# > 4 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_8_cores',
-                    '( #raxml_cores# > 4 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_8_cores',
-
-                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# <= 500)'  => 'raxml_parsimony_8_cores',
-                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# > 500)'   => 'raxml_parsimony_16_cores',
-
-                    '( #raxml_cores# > 16) && (#raxml_cores# <= 32 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_16_cores',
-                    '( #raxml_cores# > 16) && (#raxml_cores# <= 32 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_32_cores',
-
-                    '( #raxml_cores# > 32) ' => 'raxml_parsimony_64_cores',
+                    '(#raxml_cores# <= 1'                               => 'raxml_parsimony',
+                    '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_parsimony_2_cores',
+                    '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_parsimony_4_cores',
+                    '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_parsimony_8_cores',
+                    '(#raxml_cores# >  8)  && (#raxml_cores# <= 16)'    => 'raxml_parsimony_16_cores',
+                    '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'raxml_parsimony_32_cores',
+                    '(#raxml_cores# >  32)'                             => 'raxml_parsimony_64_cores',
                 ),
                 'A->1' => 'raxml_decision',
             },
@@ -2430,54 +2429,24 @@ sub core_pipeline_analyses {
         {   -logic_name => 'raxml_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
-                'examl_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '3500' : '1000',
-                'raxml_patterns_per_core'  => $self->o('use_dna_for_phylogeny') ? '500' : '150',
-
-                'examl_cores'  => '#expr(#tree_aln_num_of_patterns# / #examl_patterns_per_core# )expr#',
-                'raxml_cores'  => '#expr(#tree_aln_num_of_patterns# / #raxml_patterns_per_core# )expr#',
-
-                'tags'  => {
-                    #The default value matches the default dataflow we want: _8_cores analysis.
-                    'aln_num_of_patterns' => 200,
-                    'gene_count'          => 0,
-                },
+                %raxml_decision_params,
             },
             %decision_analysis_params,
 
-            #-------------------------------------------------------------------------------
-            # This boundaries are based on RAxML and ExaML manuals.
-            # Which suggest the following number of cores:
-            #
-            #   ExaML:  DNA: 3.5K patterns/core
-            #           AAs: 1K   patterns/core
-            #
-            #   RAxML:  DNA: 500 patterns/core
-            #           AAs: 150 patterns/core
-            #
-            #-------------------------------------------------------------------------------
-
             -flow_into  => {
-                1 => WHEN (
-                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# <= 500)'                                                      => 'raxml',
-                    '( #raxml_cores# <= 1 ) && (#tree_gene_count# > 500)'                                                       => 'raxml_8_cores',
-
-                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# <= 500)'                             => 'raxml_8_cores',
-                    '( #raxml_cores# > 1 ) && (  #raxml_cores# <= 8 ) && (#tree_gene_count# > 500)'                             => 'raxml_16_cores',
-
-                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# <= 500)'                              => 'raxml_16_cores',
-                    '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# > 500)'                               => 'examl_8_cores',
-
-                    '( #raxml_cores# > 16) && (#examl_cores# <= 8 ) && (#tree_gene_count# <= 500)'                              => 'examl_8_cores',
-                    '( #raxml_cores# > 16) && (#examl_cores# <= 8 ) && (#tree_gene_count# > 500)'                               => 'examl_16_cores',
-
-                    '( #raxml_cores# > 16) && ( #examl_cores# > 8 ) && (#examl_cores# <= 16 ) && (#tree_gene_count# <= 500)'    => 'examl_16_cores',
-                    '( #raxml_cores# > 16) && ( #examl_cores# > 8 ) && (#examl_cores# <= 16 ) && (#tree_gene_count# > 500)'     => 'examl_32_cores',
-
-                    '( #raxml_cores# > 16) && ( #examl_cores# > 16 ) && (#examl_cores# <= 32 ) && (#tree_gene_count# <= 500)'   => 'examl_32_cores',
-                    '( #raxml_cores# > 16) && ( #examl_cores# > 16 ) && (#examl_cores# <= 32 ) && (#tree_gene_count# > 500)'    => 'examl_64_cores',
-
-                    '( #examl_cores# > 32 )'    => 'examl_64_cores',
+                '1->A' => WHEN (
+                    '(#raxml_cores# <= 1'                               => 'raxml',
+                    '(#raxml_cores# >  1)  && (#raxml_cores# <= 2)'     => 'raxml_2_cores',
+                    '(#raxml_cores# >  2)  && (#raxml_cores# <= 4)'     => 'raxml_4_cores',
+                    '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_8_cores',
+                    '(#raxml_cores# >  8)  && (#raxml_cores# <= 16)'    => 'raxml_16_cores',
+                    # examl can handle ~4x more patterns
+                    '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'examl_8_cores',
+                    '(#raxml_cores# >  32) && (#raxml_cores# <= 64)'    => 'examl_16_cores',
+                    '(#raxml_cores# >  64) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
+                    '(#raxml_cores# >  128)'                            => 'examl_64_cores',
                 ),
+                'A->1' => 'raxml_decision',
             },
         },
 
