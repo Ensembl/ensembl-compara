@@ -230,6 +230,7 @@ sub resource_classes_multi_thread {
         '1Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M1000 -R"span[hosts=1] select[mem>1000] rusage[mem=1000]"', $reg_requirement] },
         '2Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"', $reg_requirement] },
         '4Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"', $reg_requirement] },
+        '8Gb_2c_job'   => { 'LSF' => ['-C0 -n 2 -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"', $reg_requirement] },
 
         '1Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]  span[hosts=1]"', $reg_requirement] },
         '2Gb_4c_job'   => {'LSF' => ['-n 4 -C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]  span[hosts=1]"', $reg_requirement] },

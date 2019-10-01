@@ -2222,8 +2222,14 @@ sub core_pipeline_analyses {
                     '( #raxml_cores# <= 1 ) && (#tree_gene_count# <= 500)'                          => 'raxml_parsimony',
                     '( #raxml_cores# <= 1 ) && (#tree_gene_count# > 500)'                           => 'raxml_parsimony',
 
-                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_8_cores',
-                    '( #raxml_cores# > 1 ) && (  #raxml_cores# <= 8 ) && (#tree_gene_count# > 500)' => 'raxml_parsimony_8_cores',
+                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 2 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_2_cores',
+                    '( #raxml_cores# > 1 ) && ( #raxml_cores# <= 2 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_2_cores',
+
+                    '( #raxml_cores# > 2 ) && ( #raxml_cores# <= 4 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_4_cores',
+                    '( #raxml_cores# > 2 ) && ( #raxml_cores# <= 4 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_4_cores',
+
+                    '( #raxml_cores# > 4 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# <= 500)' => 'raxml_parsimony_8_cores',
+                    '( #raxml_cores# > 4 ) && ( #raxml_cores# <= 8 ) && (#tree_gene_count# > 500)'  => 'raxml_parsimony_8_cores',
 
                     '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# <= 500)'  => 'raxml_parsimony_8_cores',
                     '( #raxml_cores# > 8) && (#raxml_cores# <= 16 ) && (#tree_gene_count# > 500)'   => 'raxml_parsimony_16_cores',
@@ -2257,6 +2263,54 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name        => '4Gb_job',
+        },
+
+        {   -logic_name => 'raxml_parsimony_2_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                %raxml_parsimony_parameters,
+                'raxml_number_of_cores'     => 2,
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '4Gb_2c_job',
+            -flow_into      => {
+                -1 => [ 'raxml_parsimony_2_cores_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_2_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                %raxml_parsimony_parameters,
+                'raxml_number_of_cores'     => 2,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '8Gb_2c_job',
+        },
+
+        {   -logic_name => 'raxml_parsimony_4_cores',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                %raxml_parsimony_parameters,
+                'raxml_number_of_cores'     => 4,
+                'escape_branch'             => -1,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '8Gb_4c_job',
+            -flow_into      => {
+                -1 => [ 'raxml_parsimony_4_cores_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_parsimony_4_cores_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
+            -parameters => {
+                %raxml_parsimony_parameters,
+                'raxml_number_of_cores'     => 4,
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '16Gb_4c_job',
         },
 
         {   -logic_name => 'raxml_parsimony_8_cores',
