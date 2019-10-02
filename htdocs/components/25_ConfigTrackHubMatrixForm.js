@@ -2226,7 +2226,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>\
             <div class="sub-result-link">' + dim + '</div>\
             <ul class="filterMatrix-list">';
-      html += '<li class="all" data-dim-val="'+ dim +'"><text>All</text></li>'+dim_html+'</ul></div>';
+      html += dim_html+'</ul></div>';
     });
 
     panel.elLk.filterTrackBox.find('.filter-content').html(html);
@@ -2748,7 +2748,11 @@ return;
     var li_html = '';
     var ul = panel.el.find('div.track-popup._filterMatrix ul');
     var all_selected = panel.localStoreObj.filterMatrix[key].state.on === panel.localStoreObj.filterMatrix[key].state.total ? "selected" : "";
-    li_html += '<li class="all"><span class="fancy-checkbox all '+all_selected+'" data-cell="'+key+'"></span><text>All</text></li>';
+    
+    //Make sense to only show All checkbox if there is more than 1 tracks to select
+    if(Object.keys(panel.localStoreObj.filterMatrix[key].data).length > 1) {
+      li_html += '<li class="all"><span class="fancy-checkbox all '+all_selected+'" data-cell="'+key+'"></span><text>All</text></li>';
+    }
 
     $.each(panel.localStoreObj.filterMatrix[key].data, function(id, hash){
       var selected = hash.state === "on" ? "selected" : "";
