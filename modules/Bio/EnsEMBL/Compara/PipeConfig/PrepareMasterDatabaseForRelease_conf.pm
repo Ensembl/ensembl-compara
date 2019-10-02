@@ -94,8 +94,10 @@ sub default_options {
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
-        'assembly_patch_species' => undef,
-        'additional_species'     => undef,
+        'assembly_patch_species' => [],
+        'additional_species'     => {},
+        # Example:
+        #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},
 
         'do_update_from_metadata' => 1,
         'do_load_lrg_dnafrags'    => 0,
