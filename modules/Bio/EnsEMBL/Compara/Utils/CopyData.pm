@@ -443,6 +443,8 @@ sub copy_data_in_binary_mode {
 
     my $start_time  = time();
 
+    $from_dbc->reconnect() unless $from_dbc->db_handle->ping;
+
     my $from_dbh = $from_dbc->db_handle;
 
     my $count = $from_dbh->selectrow_array("SELECT COUNT(*) FROM $table_name");
