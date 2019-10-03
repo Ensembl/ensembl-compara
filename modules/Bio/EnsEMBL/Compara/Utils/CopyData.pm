@@ -533,6 +533,7 @@ sub copy_table {
                 the query and builds multi-inserts statements. As everything remains
                 within the Perl DBI layers, this method is suitable when a transaction
                 on the target database is required.
+                Rows are inserted with INSERT IGNORE, or REPLACE if $replace is set.
   Return      : Integer - The number of rows copied over
 
 =cut
