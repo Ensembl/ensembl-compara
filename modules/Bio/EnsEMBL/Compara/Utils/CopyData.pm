@@ -445,28 +445,27 @@ sub copy_data_in_binary_mode {
 
     $from_dbc->reconnect() unless $from_dbc->db_handle->ping;
 
-    my $from_dbh = $from_dbc->db_handle;
-
-    my $count = $from_dbh->selectrow_array("SELECT COUNT(*) FROM $table_name");
+    my $count = $from_dbc->sql_helper->execute_single_result(
+        -SQL => "SELECT COUNT(*) FROM $table_name",
+    );
 
     ## EXIT CONDITION
     return unless !$count;
 
     ## Copy data into a aux. table
-    my $sth = $from_dbc->prepare("CREATE TABLE temp_$table_name $query");
-    $sth->execute();
+    $from_dbc->do("CREATE TABLE temp_$table_name $query");
 
     ## Change table names (mysqldump will keep the table name, hence we need to do this)
-    $from_dbh->do("ALTER TABLE $table_name RENAME original_$table_name");
-    $from_dbh->do("ALTER TABLE temp_$table_name RENAME $table_name");
+    $from_dbc->do("ALTER TABLE $table_name RENAME original_$table_name");
+    $from_dbc->do("ALTER TABLE temp_$table_name RENAME $table_name");
 
     ## mysqldump data
     ## disable/enable keys is managed in copy_data, so here we can just skip this
     copy_table($from_dbc, $to_dbc, $table_name, undef, $replace, 'skip_disable_keys', $debug);
 
     ## Undo table names change
-    $from_dbh->do("DROP TABLE $table_name");
-    $from_dbh->do("ALTER TABLE original_$table_name RENAME $table_name");
+    $from_dbc->do("DROP TABLE $table_name");
+    $from_dbc->do("ALTER TABLE original_$table_name RENAME $table_name");
 
     return $count;
 }
