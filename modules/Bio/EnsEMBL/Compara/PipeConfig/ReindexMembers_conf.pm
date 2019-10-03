@@ -263,8 +263,37 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => 'delete_tree',
+                'A->1' => 'cluster_factory',
+            },
+        },
+
+        {   -logic_name     => 'cluster_factory',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters     => {
+                'inputquery'    => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL',
+            },
+            -flow_into      => {
+                '2->A' => 'exon_boundaries_prep',
                 'A->1' => 'pipeline_entry',
             },
+            -rc_name        => '2Gb_job',
+        },
+
+        {   -logic_name     => 'exon_boundaries_prep',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -flow_into      => {
+                -1 => 'exon_boundaries_prep_himem',
+            },
+            -rc_name        => '500Mb_job',
+            -hive_capacity  => 100,
+            -batch_size     => 20,
+        },
+
+        {   -logic_name     => 'exon_boundaries_prep_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -rc_name        => '2Gb_job',
+            -hive_capacity  => 100,
+            -batch_size     => 20,
         },
 
         @$hc_analyses,
