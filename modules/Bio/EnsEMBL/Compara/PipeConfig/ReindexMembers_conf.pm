@@ -39,10 +39,6 @@ still valid.
 
 =over
 
-=item mlss_id
-
-The mlss_id of the gene-tree pipelines. Used to load the GenomeDBs and the MLSSs
-
 =item master_db
 
 The location of the master database, from which the NCBI taxonomy, the GenomeDBs
@@ -121,7 +117,6 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_tree_db'  => $self->o('prev_tree_db'),
@@ -153,7 +148,7 @@ sub pipeline_analyses {
             -input_ids  => [ {} ],
             -flow_into  => {
                 '2->A' => 'copy_table_from_master',
-                'A->1' => 'load_genomedb_factory',
+                'A->1' => 'find_mlss_id',
             },
         },
 
@@ -168,11 +163,21 @@ sub pipeline_analyses {
 
 # -------------------------------------------[load GenomeDB entries and copy the other tables]------------------------------------------
 
+        {   -logic_name => 'find_mlss_id',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'    => '#prev_tree_db#',
+                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id FROM gene_tree_root LIMIT 1',
+            },
+            -flow_into  => {
+                2 => 'load_genomedb_factory',
+            },
+        },
+
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'mlss_id'           => $self->o('mlss_id'),
                 'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
