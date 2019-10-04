@@ -236,21 +236,31 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => 'map_member_ids',
-                'A->1' => 'delete_flat_trees_factory',
+                'A->1' => 'reindex_member_ids',
             },
         },
 
         {   -logic_name        => 'map_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
-            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
             -flow_into         => {
                 2 => 'delete_tree',
+                3 => [
+                    '?accu_name=seq_member_id_pairs&accu_address=[]&accu_input_variable=seq_member_ids',
+                    '?accu_name=gene_member_id_pairs&accu_address=[]&accu_input_variable=gene_member_ids',
+                ],
             }
         },
 
         {   -logic_name        => 'delete_tree',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree',
             -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+        },
+
+        {   -logic_name        => 'reindex_member_ids',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexMemberIDs',
+            -flow_into         => {
+                1 => 'delete_flat_trees_factory',
+            },
         },
 
         {   -logic_name => 'delete_flat_trees_factory',
