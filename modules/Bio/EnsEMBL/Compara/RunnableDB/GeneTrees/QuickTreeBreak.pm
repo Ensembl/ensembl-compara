@@ -84,7 +84,7 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 sub param_defaults {
     my $self = shift;
@@ -253,9 +253,21 @@ sub post_cleanup {
 sub do_quicktree_loop {
     my $self = shift;
     my $supertree_root = shift;
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm');
-    my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
-    my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
+    
+    # create map for genome_db_id => species_tree_nodes
+    # {genome_db_id => SpeciesTreeNode}
+    my %stn_map;
+    foreach my $leaf ( @{$supertree_root->children->[0]->get_all_leaves} ) {
+        $stn_map{$leaf->genome_db_id} = $leaf->species_tree_node;
+    }
+    
+    # generate alignment file
+    my $input_aln_species = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm', {-APPEND_SPECIES_TREE_NODE_ID => \%stn_map});
+    my $quicktree_newick_string = $self->run_quicktreebreak($input_aln_species);
+    my $treebest_rooted_string = $self->run_treebest_sdi($quicktree_newick_string, 1);
+    my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treebest_rooted_string);
+        
+    # loop over trees/subtrees until they abide by the treebreak_gene_count size threshold
     my @todo = ();
     push @todo, [$newtree, $supertree_root];
     while (scalar(@todo)) {
@@ -350,7 +362,7 @@ sub generate_subtrees {
     my $max_subtree = $newtree;
     my $half_count = int(scalar(@{$members})/2);
     while ($keep_breaking) {
-        @children = @{$max_subtree->children};
+        @children = sort { $a->node_id <=> $b->node_id } @{$max_subtree->children};        
         my $max_num_leaves = 0;
         foreach my $child (@children) {
             my $num_leaves = scalar(@{$child->get_all_leaves});
