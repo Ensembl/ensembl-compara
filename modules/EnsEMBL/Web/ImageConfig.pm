@@ -667,7 +667,7 @@ sub menus {
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
     transcript          => [ 'Genes',                  'gene_transcript' ],
-    longreads           => [ 'Longreads',              'gene_transcript' ],
+    longreads           => [ 'Long reads',             'gene_transcript' ],
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG',                    'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
