@@ -56,7 +56,7 @@ The location of the freshest load of members
 
 Either "protein" or "ncrna". The type of members to pull from the memebr database
 
-=item prev_rel_db
+=item prev_tree_db
 
 The location of the gene-trees database. the pipeline will copy all the relevant
 tables from there, and reindex the member_ids to make them match the new members.
@@ -124,7 +124,7 @@ sub pipeline_wide_parameters {
         'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
-        'prev_rel_db'   => $self->o('prev_rel_db'),
+        'prev_tree_db'  => $self->o('prev_tree_db'),
         'member_type'   => $self->o('member_type'),
     }
 }
@@ -218,15 +218,15 @@ sub pipeline_analyses {
         {   -logic_name => 'gene_tree_tables_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::TableFactory',
             -flow_into  => {
-                '2->A' => 'copy_table_from_prev_rel_db',
+                '2->A' => 'copy_table_from_prev_db',
                 'A->1' => 'map_members_factory',
             },
         },
 
-        {   -logic_name    => 'copy_table_from_prev_rel_db',
+        {   -logic_name    => 'copy_table_from_prev_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => '#prev_rel_db#',
+                'src_db_conn'   => '#prev_tree_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
