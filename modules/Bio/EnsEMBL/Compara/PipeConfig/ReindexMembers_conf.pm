@@ -48,10 +48,6 @@ and the MLSSs are copied over.
 
 The location of the freshest load of members
 
-=item member_type
-
-Either "protein" or "ncrna". The type of members to pull from the memebr database
-
 =item prev_tree_db
 
 The location of the gene-trees database. the pipeline will copy all the relevant
@@ -88,10 +84,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name' => $self->o('collection') . '_' . $self->o('member_type') . '_reindexed_trees_' . $self->o('rel_with_suffix'),
-
-        # Must be "protein" or "ncrna"
-        #'member_type'   => undef,
+        'pipeline_name' => $self->o('prev_tree_db') . '_reindexed_' . $self->o('rel_with_suffix'),
 
         # Copy from master db
         'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
@@ -120,7 +113,6 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_tree_db'  => $self->o('prev_tree_db'),
-        'member_type'   => $self->o('member_type'),
     }
 }
 
@@ -167,7 +159,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'    => '#prev_tree_db#',
-                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id FROM gene_tree_root LIMIT 1',
+                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id, member_type FROM gene_tree_root LIMIT 1',
             },
             -flow_into  => {
                 2 => 'load_genomedb_factory',
@@ -206,7 +198,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '2->A' => 'genome_member_copy',
+                '2->A' => { 'genome_member_copy' => INPUT_PLUS },
                 'A->1' => 'gene_tree_tables_factory',
             },
         },
