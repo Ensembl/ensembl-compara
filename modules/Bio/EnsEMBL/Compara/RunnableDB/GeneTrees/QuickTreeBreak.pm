@@ -362,7 +362,7 @@ sub generate_subtrees {
     my $max_subtree = $newtree;
     my $half_count = int(scalar(@{$members})/2);
     while ($keep_breaking) {
-        @children = sort { $a->node_id <=> $b->node_id } @{$max_subtree->children};        
+        @children = sort { $a->node_id <=> $b->node_id } @{$max_subtree->children};
         my $max_num_leaves = 0;
         foreach my $child (@children) {
             my $num_leaves = scalar(@{$child->get_all_leaves});
