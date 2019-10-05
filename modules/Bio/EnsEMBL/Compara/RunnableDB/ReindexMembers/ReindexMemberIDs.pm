@@ -44,6 +44,10 @@ sub param_defaults {
 
         # Allows testing the code and making sure we don't break foreign keys
         'dry_run'   => 0,
+
+        # Default values in case no pairs are present in the accu
+        'seq_member_id_pairs'   => [],
+        'gene_member_id_pairs'  => [],
     }
 }
 
