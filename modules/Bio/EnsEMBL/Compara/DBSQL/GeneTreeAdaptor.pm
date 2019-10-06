@@ -445,6 +445,15 @@ sub delete_tree {
         }
     }
 
+    if (my $gene_count = $tree->get_value_for_tag('gene_count')) {
+        my $parent_tree = $self->fetch_parent_tree($tree);
+        if ($parent_tree) {
+            if (my $parent_gene_count = $parent_tree->get_value_for_tag('gene_count')) {
+                $parent_tree->store_tag('gene_count', $parent_gene_count-$gene_count);
+            }
+        }
+    }
+
     # Finally remove the root node
     $gene_tree_node_Adaptor->delete_node($tree->root) if $tree->root;
 
