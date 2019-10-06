@@ -172,6 +172,7 @@ sub pipeline_analyses {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
                 'extra_parameters'  => [ 'locator' ],
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
                 'A->1' => 'create_mlss_ss',
@@ -190,6 +191,7 @@ sub pipeline_analyses {
                 'singleton_method_links'    => [ 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES' ],
                 'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
+            -rc_name    => '500Mb_job',
             -flow_into  => {
                 1 => 'load_members_factory',
             },
@@ -283,7 +285,6 @@ sub pipeline_analyses {
                 '2->A' => 'exon_boundaries_prep',
                 'A->1' => 'pipeline_entry',
             },
-            -rc_name        => '2Gb_job',
         },
 
         {   -logic_name     => 'exon_boundaries_prep',
