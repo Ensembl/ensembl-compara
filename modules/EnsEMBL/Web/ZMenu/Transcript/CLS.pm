@@ -17,20 +17,19 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::ZMenu::CLS;
+package EnsEMBL::Web::ZMenu::Transcript::CLS;
 
 use strict;
 
 use Bio::EnsEMBL::SubSlicedFeature;
 use EnsEMBL::Web::Utils::FormatText qw(helptip);
 
-use base qw(EnsEMBL::Web::ZMenu);
+use base qw(EnsEMBL::Web::ZMenu::Transcript);
 
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
   my $object      = $self->object;
-  my @click = $self->click_location;
   my ($gene, $transcript);
 
   eval {
@@ -82,12 +81,12 @@ sub content {
     label => $self->thousandify($transcript->seq->length)
   }) if $transcript;
 
-  my $analysis = $object->analysis;
-  my $source = $object->source;
+  my $analysis = $transcript->analysis;
+  my $source = $transcript->source;
 
   $self->add_entry({
     type        => 'Source',
-    label_html  => $source eq 'havana_tagene' ? helptip('Havana tagene', 'Transcript which was created by the HAVANA-Ensembl manually supervised computational pipeline for long-read sequence data') : helptip($analysis->display_label, $analysis->description)
+    label_html  => helptip($analysis->display_label, $analysis->description)
   });
 }
 
