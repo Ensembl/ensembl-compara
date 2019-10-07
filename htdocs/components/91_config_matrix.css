@@ -194,15 +194,15 @@ span.error._ajax                      { top: 250px; position: absolute; width: 5
 div.result-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 300px; max-width: 300px;  min-height: 400px; overflow: auto; }
 div.result-box#filter-box                         { display: none; }
 div.result-box#config-result-box                  { display: none; }
-h5.result-header                                  { display: block; margin-top: 16px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
-div.ConfigTrackHubMatrixForm h5.result-header     { float: none; }
+h5.result-header                                  { display: block; margin-top: 30px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
+div.ConfigTrackHubMatrixForm h5.result-header     { float: none; font-weight: bold; font-size: 12px; }
 div.ConfigTrackHubMatrixForm div#dx.result-content { display: block; }
 div#dx.result-content                             { display: none; }
 div.result-content                                { clear: both; }
 div.config_wrapper div.config ul.result-list      { margin-left: 12px; clear: left; }
-div.config_wrapper div.ConfigTrackHubMatrixForm div.config ul.result-list { margin-left: 0px; }
+div.config_wrapper div.ConfigTrackHubMatrixForm ul.result-list { margin-left: 24px; font-size: 12px; list-style-type: square; max-height: 200px; overflow: auto;}
 div.config_wrapper div.config ul.result-list li   { margin: 4px 8px; cursor: default; }
-div.config_wrapper div.ConfigTrackHubMatrixForm  div.config ul.result-list li   { margin: 4px 2px; }
+div.config_wrapper div.ConfigTrackHubMatrixForm  ul.result-list li   { margin: 4px 2px; width: : 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 div.result-box div.sub-result-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 12px; cursor: pointer; }
 div.result-box div.count-container                { color: [[DARK_GREY]]; }
 div.result-box span.current-count                 { color: [[BLACK]]; font-weight: bold; }
@@ -216,7 +216,7 @@ div#dx.filterMatrix-content                             { display: none; }
 div.filterMatrix-content                                { clear: both; }
 div.config_wrapper div.config ul.filterMatrix-list      { max-height: 200px; overflow: auto; margin: 12px; clear: left; }
 div.config_wrapper div.config ul.filterMatrix-list li   { margin: 4px 8px; cursor: default; display: flex; }
-div.config_wrapper div.config ul.filterMatrix-list li div { padding-right: 4px; width: 50px; }
+div.config_wrapper div.config ul.filterMatrix-list li div.fm-count { padding-right: 4px; width: 50px; }
 
 div.filterMatrix-box div.sub-filterMatrix-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 12px; cursor: pointer; }
 div.filterMatrix-box div.count-container                { color: [[DARK_GREY]]; }
@@ -639,7 +639,7 @@ div.ConfigTrackHubMatrixForm .track-popup .renderers.active .dropdown {
 
 
 /* reg matrix track popup/zmenu */
-div.track-popup                         { display: none; font-size: 11px; max-width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; z-index: 1;}
+div.track-popup                         { display: none; font-size: 11px; max-width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; z-index: 4;}
 div.track-popup ul:last-child           { border-bottom: none; }
 
 div.ConfigRegMatrixForm div.track-popup ul li:not(:first-child) { margin-left: 75px; }

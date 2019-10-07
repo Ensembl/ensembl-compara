@@ -153,6 +153,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.breadcrumb.on("click", function (e) {
       panel.toggleBreadcrumb(this);
       e.preventDefault();
+      panel.resize();
     });
 
     this.clickSubResultLink();
@@ -745,20 +746,32 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
     if (Object.keys(panel.elLk).length <= 0) return;
 
-    panel.elLk.resultBox.outerHeight(this.getNewPanelHeight());
+    var panel_ht = panel.getNewPanelHeight();
+
+    panel.elLk.resultBox.outerHeight(panel_ht);
     if (panel.elLk[this.getActiveTab()].haveSubTabs) {
       $.each(panel.elLk[this.getActiveTab()].tabContentContainer, function(tabName, tabContent) {
         var ul = $('ul', tabContent);
-        ul.outerHeight(panel.getNewPanelHeight() - 170);
+        ul.outerHeight(panel_ht - 170);
       });
-      panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(panel.getNewPanelHeight() - 190);
+      panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(panel_ht - 190);
     }
     else {
-      panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(this.getNewPanelHeight() - 140);
+      panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(panel_ht - 140);
     }
-    panel.elLk.matrixContainer.outerHeight(this.getNewPanelHeight() - 102);
-    panel.elLk.filterMatrix.outerHeight(this.getNewPanelHeight() - 102);
-    panel.elLk.dx.container.find('ul.list-content').height(this.getNewPanelHeight() - 120);
+
+    panel.elLk.dx.container.find('ul.list-content').height(panel_ht - 120);
+
+    var rhs_height = $(this.el).find('div.result-box:visible').outerHeight();
+    var new_ht = panel_ht - 160;
+    if (rhs_height > panel_ht) {
+      new_ht = rhs_height;
+    }
+    panel.elLk.trackConfiguration.height(new_ht);
+    panel.elLk.matrixContainer.outerHeight(new_ht - 102);
+    panel.elLk.filterMatrix.outerHeight(new_ht - 102);
+
+
   },
 
   getActiveTabContainer: function() {
@@ -2217,14 +2230,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         } else {
           dimSelected = "";
         }
-        dim_html += '<li data-dim-val="'+ val +'" data-dim-key="'+dimKey+'"><div>('+ extraDimValToCellMap[dimKey].on + '/' + (extraDimValToCellMap[dimKey].off + extraDimValToCellMap[dimKey].on)  +')</div><text>' + val + '</text></li>';
+        dim_html += '<li data-dim-val="'+ val +'" data-dim-key="'+dimKey+'"><div class="fm-count">('+ extraDimValToCellMap[dimKey].on + '/' + (extraDimValToCellMap[dimKey].off + extraDimValToCellMap[dimKey].on)  +')</div><text>' + val + '</text></li>';
       });
 
       allSelected = selectedCount === total ? "selected" : "";
       html +='\
           <div class="filterMatrix-content">\
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>\
-            <div class="sub-result-link">' + dim + '</div>\
+            <h5 class="result-header">' + dim + '</h5>\
             <ul class="filterMatrix-list">';
       html += dim_html+'</ul></div>';
     });
@@ -2233,20 +2246,26 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.elLk.filterMatrixList= panel.elLk.filterTrackBox.find("ul.filterMatrix-list");
   },
 
-  createFilterRHSPopup: function(event, key) {
+  createFilterRHSPopup: function(event, dimKey) {
     var panel = this;
     var popup = '\
-      <div class="title">' + key.split('_sep_')[1] + '</div>\
+      <div class="title">' + dimKey + '</div>\
       <div><input type="radio" name="filter_popup_selection" value="all-on" id="filter_popup_selection1"><label for="filter_popup_selection1">All On</label></div>\
       <div><input type="radio" name="filter_popup_selection" value="all-off" id="filter_popup_selection2"><label for="filter_popup_selection2">All Off</label></div>\
       <div><input type="radio" name="filter_popup_selection" value="default" id="filter_popup_selection3"><label for="filter_popup_selection3">Default</label></div>';
 
     var pos = $(event.currentTarget).position();
-    panel.elLk.filterTrackBox.find('.filter-rhs-popup').html(popup).css({top: pos.top + 20, left: pos.left}).show();
+    var offset = $(event.currentTarget).offset();
+    panel.elLk.filterTrackBox.find('.filter-rhs-popup').html(popup).css({top: (pos.top + $('div.modal_content')[0].scrollTop) + 20, left: pos.left + $('div.modal_content')[0].scrollLeft}).show();
     panel.elLk.filterTrackBox.find('.filter-rhs-popup input').click(function(e) {
       // Do soemthing when clicked?
       var opt = $(this).val();
     });
+
+    // var popup = panel.elLk.filterTrackBox.find('.filter-rhs-popup').detach();
+    // popup.appendTo($(event.target));
+
+
     event.stopPropagation();
 
   },
@@ -2254,7 +2273,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   registerFilterListItemClickEvent: function() {
     var panel = this;
     $('text', panel.elLk.filterTrackBox).off().on('click', function(e) {
-      var dimKey       = $(this).data("dim-key") || "";
+      var dimKey       = $(this).text() || "";
 
       panel.createFilterRHSPopup(e, dimKey);
 
@@ -2852,6 +2871,7 @@ return;
 
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
+      var scrollEle = matrix === 'config' ? $('div.matrix-container')[0] : $('div.filterMatrix-container')[0];
       panel.TrackPopupType.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top': ($(this)[0].offsetTop - $('div.matrix-container')[0].scrollTop) + 15,'left': ($(this)[0].offsetLeft - $('div.matrix-container')[0].scrollLeft) + 15}).show();
 
       panel.popupFunctionality(matrix); //interaction inside popup

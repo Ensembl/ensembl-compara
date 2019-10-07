@@ -162,8 +162,8 @@ sub configuration_content {
           <h5 class="result-header">$dimY<span class="error _dy">Please select $dimY</span></h5>
           <div class="result-content" id="dy">
             <div class="sub-result-link">$dimY</div>
+            <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <div class="count-container"><span class="current-count">0</span> / <span class="total"></span> available</div>
-<div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <ul class="result-list hidden">
               <span class="hidden lhsection-id">dy-content</span>
             </ul>
