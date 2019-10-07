@@ -255,11 +255,7 @@ sub do_quicktree_loop {
     my $supertree_root = shift;
     
     # create map for genome_db_id => species_tree_nodes
-    # {genome_db_id => SpeciesTreeNode}
-    my %stn_map;
-    foreach my $leaf ( @{$supertree_root->children->[0]->get_all_leaves} ) {
-        $stn_map{$leaf->genome_db_id} = $leaf->species_tree_node;
-    }
+    my $stn_map = $supertree_root->species_tree->get_genome_db_id_2_node_hash;
     
     # generate alignment file
     my $input_aln_species = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm', {-APPEND_SPECIES_TREE_NODE_ID => \%stn_map});
