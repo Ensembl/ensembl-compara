@@ -446,11 +446,6 @@ sub add_genes {
         }
       }
 
-      # this will separate all Long-Seq tracks into longreads submenu
-      if ($data->{$key2}{'name'} =~ /Long-Seq/) {
-        $t = 'longreads';
-      }
-
       my $menu = $self->get_node($t);
       next unless $menu;
 
