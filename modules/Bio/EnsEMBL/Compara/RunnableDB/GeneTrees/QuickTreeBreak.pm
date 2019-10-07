@@ -258,7 +258,7 @@ sub do_quicktree_loop {
     my $stn_map = $supertree_root->species_tree->get_genome_db_id_2_node_hash;
     
     # generate alignment file
-    my $input_aln_species = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm', {-APPEND_SPECIES_TREE_NODE_ID => \%stn_map});
+    my $input_aln_species = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm', {-APPEND_SPECIES_TREE_NODE_ID => $stn_map});
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln_species);
     my $treebest_rooted_string = $self->run_treebest_sdi($quicktree_newick_string, 1);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($treebest_rooted_string);
