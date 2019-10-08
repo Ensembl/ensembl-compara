@@ -76,6 +76,10 @@ my $compara_dbs = {
     'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
+    # # release replicates - to speed up dumping
+    # 'compara_curr_2'   => [ 'mysql-ens-compara-prod-2', "ensembl_compara_$curr_release" ],
+    # 'compara_curr_3'   => [ 'mysql-ens-compara-prod-3', "ensembl_compara_$curr_release" ],
+
     # homology dbs
     'compara_members'       => [ 'mysql-ens-compara-prod-8', 'jalvarez_vertebrates_load_members_99' ],
     'compara_ptrees'        => [ 'mysql-ens-compara-prod-2', 'carlac_default_vertebrates_protein_trees_99' ],
@@ -109,6 +113,7 @@ my $compara_dbs = {
     'lastz_batch_14'   => [ 'mysql-ens-compara-prod-1', 'carlac_vertebrates_lastz_batch14_99' ],
     'lastz_batch_15'   => [ 'mysql-ens-compara-prod-2', 'carlac_vertebrates_lastz_batch15_99' ],
 
+
     # EPO dbs
     ## mammals
     'mammals_epo'         => [ 'mysql-ens-compara-prod-5', 'jalvarez_mammals_epo_99' ],
@@ -117,10 +122,10 @@ my $compara_dbs = {
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
-    #'sauropsids_epo'         => [ 'mysql-ens-compara-prod-', '' ],
+    'sauropsids_epo'         => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_99' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_96' ],
     #'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-', '' ],
-    #'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
+    'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_anchors_86' ],
 
     ## fish
     'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_99' ],
@@ -133,6 +138,13 @@ my $compara_dbs = {
     'primates_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_low'     => [ 'mysql-ens-compara-prod-6', 'mateus_primates_epo_low_coverage_98' ],
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    
+    ## pig strains
+    'pig_strains_epo'         => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_98' ],
+    'pig_strains_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
+    'pig_strains_epo_low'     => [ 'mysql-ens-compara-prod-8', 'carlac_pig_strains_epo_low_coverage_98' ],
+    'pig_strains_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
+    
 
     # other alignments
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-7', 'muffato_amniotes_mercator_pecan_99' ],
