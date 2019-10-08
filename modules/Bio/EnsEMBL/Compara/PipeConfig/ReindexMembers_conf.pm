@@ -79,12 +79,15 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLU
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
+sub default_pipeline_name {
+    my ($self) = @_;
+    return join('_', $self->o('collection'), $self->o('member_type'), 'reindexed_trees');
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-
-        'pipeline_name' => $self->o('prev_tree_db') . '_reindexed_' . $self->o('rel_with_suffix'),
 
         # Copy from master db
         'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],

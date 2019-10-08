@@ -28,16 +28,21 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf
+Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf -mlss_id <your_mlss_id> -member_type <protein|ncrna> -member_db <url_of_new_member_database> -prev_rel_db <last_production_database_of_this_mlss>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf -collection <collection> -member_type <protein|ncrna>
 
 =head1 EXAMPLES
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf ...
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf ...
 
+e99  # From now on the collection and member_type parameters are only used to name the database, mlss_id is not needed any more
+    -prev_tree_db murinae_ptrees_prev  -collection murinae -member_type protein
+    -prev_tree_db murinae_nctrees_prev -collection murinae -member_type ncrna
+    -prev_tree_db sus_ptrees_prev      -collection sus     -member_type protein
+    -prev_tree_db sus_nctrees_prev     -collection sus     -member_type ncrna
 
 e98 protein-trees
     -mlss_id 40128 -member_type ncrna   -prev_rel_db murinae_nctrees_prev $(mysql-ens-compara-prod-7-ensadmin details hive)
@@ -76,7 +81,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::MurinaeReindexMembers_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::EBI::Vertebrates::StrainsReindexMembers_conf;
 
 use strict;
 use warnings;
@@ -89,7 +94,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'      => 'vertebrates',
-        'collection'    => 'murinae',
 
         # Main capacity for the pipeline
         'copy_capacity'                 => 4,
