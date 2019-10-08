@@ -759,7 +759,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     else {
       panel.elLk.trackPanel.find('.ribbon-content ul').outerHeight(panel_ht - 140);
     }
-
     panel.elLk.dx.container.find('ul.list-content').height(panel_ht - 120);
 
     var rhs_height = $(this.el).find('div.result-box:visible').outerHeight();
@@ -767,10 +766,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     if (rhs_height > panel_ht) {
       new_ht = rhs_height;
     }
-    panel.elLk.trackConfiguration.height(new_ht);
     panel.elLk.matrixContainer.outerHeight(new_ht - 102);
     panel.elLk.filterMatrix.outerHeight(new_ht - 102);
-
 
   },
 
@@ -909,7 +906,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var panel = this;
 
     clearLink.on("click",function(e){
-      $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
+      $.each(panel.elLk.resultBox.find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
       });
     });
@@ -2210,6 +2207,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         });
       }
     });
+    panel.elLk.extraDimValToCellMap = extraDimValToCellMap;
 
     var html = '';
     $.each(Object.keys(availableFilters).sort(), function(i, dim) {
@@ -2229,7 +2227,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
         } else {
           dimSelected = "";
         }
-        dim_html += '<li data-dim-val="'+ val +'" data-dim-key="'+dimKey+'"><div class="fm-count">('+ extraDimValToCellMap[dimKey].on + '/' + (extraDimValToCellMap[dimKey].off + extraDimValToCellMap[dimKey].on)  +')</div><text>' + val + '</text></li>';
+        dim_html += '<li data-dim-val="'+ val +'" data-dim="'+dim+'" data-dim-key="'+dimKey+'"><div class="fm-count">('+ extraDimValToCellMap[dimKey].on + '/' + (extraDimValToCellMap[dimKey].off + extraDimValToCellMap[dimKey].on)  +')</div><text>' + val + '</text></li>';
       });
 
       allSelected = selectedCount === total ? "selected" : "";
@@ -2245,10 +2243,11 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.elLk.filterMatrixList= panel.elLk.filterTrackBox.find("ul.filterMatrix-list");
   },
 
-  createFilterRHSPopup: function(event, dimKey) {
+  createFilterRHSPopup: function(event) {
     var panel = this;
+    var data = $(event.currentTarget).data();
     var popup = '\
-      <div class="title">' + dimKey + '</div>\
+      <div class="title">' + data.dimVal + '</div>\
       <div><input type="radio" name="filter_popup_selection" value="all-on" id="filter_popup_selection1"><label for="filter_popup_selection1">All On</label></div>\
       <div><input type="radio" name="filter_popup_selection" value="all-off" id="filter_popup_selection2"><label for="filter_popup_selection2">All Off</label></div>\
       <div><input type="radio" name="filter_popup_selection" value="default" id="filter_popup_selection3"><label for="filter_popup_selection3">Default</label></div>';
@@ -2256,14 +2255,33 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var pos = $(event.currentTarget).position();
     var offset = $(event.currentTarget).offset();
     panel.elLk.filterTrackBox.find('.filter-rhs-popup').html(popup).css({top: (pos.top + $('div.modal_content')[0].scrollTop) + 20, left: pos.left + $('div.modal_content')[0].scrollLeft}).show();
-    panel.elLk.filterTrackBox.find('.filter-rhs-popup input').click(function(e) {
-      // Do soemthing when clicked?
-      var opt = $(this).val();
-    });
-
-    // var popup = panel.elLk.filterTrackBox.find('.filter-rhs-popup').detach();
-    // popup.appendTo($(event.target));
-
+    panel.elLk.filterTrackBox.find('.filter-rhs-popup input').click($.proxy(function(e) {
+      var opt = $(e.currentTarget).val();
+      $.each(Object.keys(panel.elLk.extraDimValToCellMap[data.dimKey]), function(i, v) {
+        if (panel.localStoreObj.filterMatrix[v]) {
+          var trackIds = Object.keys(panel.localStoreObj.filterMatrix[v].data);
+          $.each(trackIds, function(i, trackId) {
+            if (opt === "all-on") {
+              panel.localStoreObj.filterMatrix[v].data[trackId].state = 'on';
+              panel.localStoreObj.filterMatrix[v].state.on = panel.localStoreObj.filterMatrix[v].state.total;
+              panel.localStoreObj.filterMatrix[v].state.off = 0;
+            }
+            else if(opt ==="all-off") {
+              panel.localStoreObj.filterMatrix[v].data[trackId].state = 'off';
+              panel.localStoreObj.filterMatrix[v].state.off = panel.localStoreObj.filterMatrix[v].state.total;
+              panel.localStoreObj.filterMatrix[v].state.on = 0;
+            }
+            else {
+              panel.localStoreObj.filterMatrix[v].data[trackId].state = panel.localStoreObj.filterMatrix[v].data[trackId]["reset-state"];
+              panel.localStoreObj.filterMatrix[v].state.off = panel.localStoreObj.filterMatrix[v].state["reset-off"];
+              panel.localStoreObj.filterMatrix[v].state.on = panel.localStoreObj.filterMatrix[v].state["reset-on"];
+            }
+          });
+        }
+      });
+      panel.emptyMatrix();
+      panel.displayFilterMatrix();
+    }, data));
 
     event.stopPropagation();
 
@@ -2271,10 +2289,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
 
   registerFilterListItemClickEvent: function() {
     var panel = this;
-    $('text', panel.elLk.filterTrackBox).off().on('click', function(e) {
-      var dimKey       = $(this).text() || "";
-
-      panel.createFilterRHSPopup(e, dimKey);
+    $('li', panel.elLk.filterTrackBox).off().on('click', function(e) {
+      panel.createFilterRHSPopup(e);
 
 return;
 
@@ -2738,7 +2754,7 @@ return;
       panel.setLocalStorage();
       panel.emptyMatrix();
       panel.resetFilter("",true);
-      $.each(panel.el.find('div.result-box').find('li').not(".noremove"), function(i, ele){
+      $.each(panel.elLk.resultBox.find('li').not(".noremove"), function(i, ele){
         panel.selectBox(ele);
         panel.filterData($(ele).data('item'));
       });
