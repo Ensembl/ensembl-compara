@@ -37,6 +37,7 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+my $offset = 1_000_000_000;     # Must be higher than the max seq_member_id
 
 sub param_defaults {
     my $self = shift @_;
@@ -67,8 +68,14 @@ sub write_output {
     my $dbc = $self->compara_dba->dbc;
 
     $self->call_within_transaction( sub {
-        #$dbc->do('SET FOREIGN_KEY_CHECKS=0');
         foreach my $r (@{$self->param('sorted_seq_member_id_pairs')}) {
+            if ($r->[0] > $offset) {
+                # Insert a dummy seq_member to still honour the foreign key
+                $dbc->do('INSERT INTO seq_member (seq_member_id, stable_id, source_name, taxon_id) VALUES (?,?,?,?)', undef, $r->[0], 'dummy', 'EXTERNALPEP', 1);
+            } elsif ($r->[1] > $offset) {
+                # And now remove it
+                $dbc->do('DELETE FROM seq_member WHERE seq_member_id = ?', undef, $r->[1]);
+            }
             #printf("rename seq_member_id %s to %s\n", @$r);
             $dbc->do('UPDATE seq_member_projection SET source_seq_member_id = ? WHERE source_seq_member_id = ?', undef, @$r);
             $dbc->do('UPDATE seq_member_projection SET target_seq_member_id = ? WHERE target_seq_member_id = ?', undef, @$r);
@@ -76,12 +83,19 @@ sub write_output {
             $dbc->do('UPDATE gene_align_member     SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
             $dbc->do('UPDATE homology_member       SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
         }
+
         foreach my $r (@{$self->param('sorted_gene_member_id_pairs')}) {
+            if ($r->[0] > $offset) {
+                # Insert a dummy gene_member to still honour the foreign key
+                $dbc->do('INSERT INTO gene_member (gene_member_id, stable_id, source_name, taxon_id) VALUES (?,?,?,?)', undef, $r->[0], 'dummy', 'EXTERNALGENE', 1);
+            } elsif ($r->[1] > $offset) {
+                # And now remove it
+                $dbc->do('DELETE FROM gene_member WHERE gene_member_id = ?', undef, $r->[1]);
+            }
             #printf("rename gene_member_id %s to %s\n", @$r);
             $dbc->do('UPDATE gene_member_hom_stats SET gene_member_id = ?       WHERE gene_member_id = ?',       undef, @$r);
             $dbc->do('UPDATE homology_member       SET gene_member_id = ?       WHERE gene_member_id = ?',       undef, @$r);
         }
-        #$dbc->do('SET FOREIGN_KEY_CHECKS=1');
 
         die "Dry-run requested" if $self->param('dry_run');
     } );
@@ -121,7 +135,6 @@ sub sort_pairs {
     $self->warning(scalar(@sorted_pairs). " pairs in lines");
 
     # Now only "loops" remain in the graph
-    my $offset = 1_000_000_000;     # Must be higher than the max seq_member_id
     my $n_loops = 0;
     # As long as there is a loop left
     while (%successor) {
