@@ -24,8 +24,9 @@ Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexMemberIDs
 =head1 SYNOPSIS
 
 This runnable receives the list of index changes, and applies them in the right
-order to avoid cross hits. For instance a -> b -> c is done by changing b into c
-and then a into b. Loops are resolved too.
+order to avoid clashes. For instance, it may be asked to change a -> b and b -> c.
+In this case, it would first change b to c and then a to b.
+Loops are resolved too.
 
 =cut
 
@@ -87,14 +88,17 @@ sub write_output {
 }
 
 
-
+## Given a list of requested changes a -> b, find the order in which to
+## apply them in.
 sub sort_pairs {
     my $self = shift;
     my $pairs = shift;
 
-    # If we combine the pairs into a graph, the incoming and outgoing
-    # degrees of each node is either 0 or 1. This means that the graph is
-    # composed of disconnected "lines" and "loops"
+    # Since only identical members can be reindexed, a given source index
+    # can only be renamed once at most, and an index can only be targetted
+    # once. This means that if we combine the pairs into a graph, there is
+    # always at most 1 successor and at most 1 predecessor. The graph is
+    # thus a collection of disconnected "lines" and "loops".
     my %successor = ();
     my %predecessor = ();
     foreach my $pair (@$pairs) {
@@ -104,25 +108,30 @@ sub sort_pairs {
 
     my @sorted_pairs;
 
-    # First the "lines"
+    # First the "lines" can be identified by their final index
     my @final_ids = grep {not exists $successor{$_}} values %successor;
     foreach my $id (@final_ids) {
+        # Rewind the line and clear %successor
         while (my $prev_id = $predecessor{$id}) {
             push @sorted_pairs, [$id, $prev_id];
             $id = $prev_id;
             delete $successor{$id};
         }
     }
-    $self->warning(scalar(@sorted_pairs). " pairs");
+    $self->warning(scalar(@sorted_pairs). " pairs in lines");
 
-    # Only loops remain in the graph
+    # Now only "loops" remain in the graph
     my $offset = 1_000_000_000;     # Must be higher than the max seq_member_id
     my $n_loops = 0;
+    # As long as there is a loop left
     while (%successor) {
         $n_loops++;
+        # Pick one node
         my $id = (keys %successor)[0];
+        # Use a dummy, temporary, index
         push @sorted_pairs, [$successor{$id} + $offset, $successor{$id}];
         delete $successor{$id};
+        # And rewind the loop
         while (my $prev_id = $predecessor{$id}) {
             push @sorted_pairs, [$id, $prev_id];
             $id = $prev_id;
