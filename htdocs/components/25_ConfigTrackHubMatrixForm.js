@@ -2078,8 +2078,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                   boxState = "track-on";
                   boxCountHTML = '<span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["on"]+'</span>';
                 } else {
-                  boxState = "partial";
                   var partialCount = panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][storeKey]["state"]["off"];
+                  boxState = (partialCount === 0) ? "partzero" : "partial";
                   boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][storeKey]["state"]["total"]+'</span>';
                 }
                 dataClass = "_hasData";
@@ -2115,7 +2115,6 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                       return false;
                     });
                   });
-                  
                   if(onCount === totalCount) { 
                     boxState = "track-on";
                     boxCountHTML = '<span class="count">'+onCount+'</span>';
@@ -2123,8 +2122,8 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
                     boxState = "track-off";
                     boxCountHTML = '<span class="count">0</span>';
                   } else {
-                    boxState = "partial";
                     var partialCount = totalCount - onCount;
+                    boxState = (partialCount === 0) ? "partzero" : "partial";
                     boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+totalCount+'</span>';
                   }
 
@@ -2964,8 +2963,8 @@ return;
         boxState = "_hasData track-off";
         boxCountHTML = '<span class="count">0</span>';
       }else {
-        boxState = "_hasData partial";
         var partialCount = panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][cellKey]["state"]["off"];
+        boxState = partialCount === 0 ? "_hasData partzero" : "_hasData partial";
         boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]+'</span>';
       }
 

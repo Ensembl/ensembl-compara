@@ -365,6 +365,7 @@ span.track-key            { width: 15px; height: 15px;  display: inline-block; b
 span.track-key.on         { background-color: #0735ba; }
 span.track-key.off        { background-color: [[WHITE]]; }
 span.track-key.no-data    { background-color: [[LIGHT_GREY]]; }
+span.track-key.partzero   { background:linear-gradient(-45deg,#ffffff 49%,#aaa 49%, [[PALE_GREY]] 50%); }
 span.track-key.partial    { background:linear-gradient(-45deg,#ffffff 49%,#aaa 49%, #0735ba 50%); }
 span.track-key.peak       { border: none; margin-top: 2px; }
 span.track-key.signal     { border: none; margin-top: 2px; }
@@ -390,9 +391,11 @@ div#filter-box div.filter-rhs-popup .title { background-color: #ccc; border-bott
 /* filter-matrix specific styling */
 div.filterMatrix-container div.xBoxes            { text-align: center; }
 div.filterMatrix-container div.xBoxes.partial    { background:linear-gradient(-45deg,#ffffff 49%,#aaa 49%, #0735ba 50%); }
+div.filterMatrix-container div.xBoxes.partzero   { background:linear-gradient(-45deg,#ffffff 49%,#aaa 49%, [[PALE_GREY]] 50%); }
 div.filterMatrix-container div.xBoxes span.count { position: relative; top: 8px; color: #697ec9; cursor: default; }
 div.filterMatrix-container div.xBoxes.track-on span.count { color:[[WHITE]]; }
-div.filterMatrix-container div.xBoxes.partial span.count { top: 16px; left: 0px; cursor: default; position: relative; }
+div.filterMatrix-container div.xBoxes.partial span.count,
+div.filterMatrix-container div.xBoxes.partzero span.count { top: 16px; left: 0px; cursor: default; position: relative; }
 div.filterMatrix-container div.xBoxes span.partialCount { position: relative; color: [[WHITE]]; cursor: default; }
 
 div.renderers i.peak-signal            { background-image: url("/i/svg/peak_signal_blue.svg"); }

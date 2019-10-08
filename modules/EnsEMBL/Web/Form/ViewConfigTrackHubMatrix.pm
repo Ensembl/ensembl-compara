@@ -59,9 +59,9 @@ sub configuration_content {
       <div class="track-panel filter-track" id="filter-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
-          <div class="config-key"><span class="track-key on"></span>Tracks on(all)</div>
-          <div class="config-key"><span class="track-key partial"></span>Tracks on & off</div>
-          <div class="config-key"><span class="track-key off"></span>Tracks off(all)</div>
+          <div class="config-key"><span class="track-key on"></span>All tracks on</div>
+          <div class="config-key"><span class="track-key partial"></span>Some tracks on</div>
+          <div class="config-key"><span class="track-key partzero"></span>All tracks off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
@@ -91,8 +91,8 @@ sub configuration_content {
       <div class="track-panel track-configuration" id="configuration-content">
         <div class="vertical-sub-header">$dimX</div>
         <div class="configuration-legend">
-          <div class="config-key"><span class="track-key on"></span>Data track on</div>
-          <div class="config-key"><span class="track-key off"></span>Data track off</div>
+          <div class="config-key"><span class="track-key on"></span>Track(s) on</div>
+          <div class="config-key"><span class="track-key off"></span>Track(s) off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
         <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
