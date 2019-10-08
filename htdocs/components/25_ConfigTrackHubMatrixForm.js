@@ -2975,16 +2975,13 @@ return;
       } else if(panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"] === panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]) { 
         boxState = "_hasData track-on";
         boxCountHTML = '<span class="count">'+panel.localStoreObj["filterMatrix"][cellKey]["state"]["on"]+'</span>';
-      } else if(panel.localStoreObj["filterMatrix"][cellKey]["state"]["off"]  === panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] ){
-        boxState = "_hasData track-off";
-        boxCountHTML = '<span class="count">0</span>';
       }else {
         var partialCount = panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"] - panel.localStoreObj["filterMatrix"][cellKey]["state"]["off"];
         boxState = partialCount === 0 ? "_hasData partzero" : "_hasData partial";
         boxCountHTML = '<span class="partialCount">'+partialCount+'</span><span class="count">'+panel.localStoreObj["filterMatrix"][cellKey]["state"]["total"]+'</span>';
       }
 
-      panel.elLk.filterMatrix.find('div.'+cellKey).removeClass("track-on track-off partial _hasData").addClass(boxState).html(boxCountHTML);
+      panel.elLk.filterMatrix.find('div.'+cellKey).removeClass("track-on track-off partzero partial _hasData").addClass(boxState).html(boxCountHTML);
 
     });
   },
