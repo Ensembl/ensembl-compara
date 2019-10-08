@@ -196,6 +196,14 @@
                   </choice>
                 </attribute>
               </optional>
+              <optional>
+                <attribute name="no_release" blockly:blockName="No release">
+                  <choice>
+                    <value blockly:blockName="Yes">1</value>
+                    <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
             </element>
           </oneOrMore>
         </element>

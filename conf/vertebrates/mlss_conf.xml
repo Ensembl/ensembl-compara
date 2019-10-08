@@ -22,6 +22,7 @@
       <taxonomic_group taxon_name="Murinae"/>
     </collection>
 
+    <!-- Pig-breeds analyses, incl. closely related -->
     <collection name="sus">
       <taxonomic_group taxon_name="Sus"/>
       <genome name="ovis_aries"/>
@@ -125,11 +126,22 @@
     </multiple_alignment>
 
     <!-- Pigs -->
-    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
-      <species_set name="sus">
-        <taxonomic_group taxon_name="Sus"/>
+    <!-- Special case: base EPO should remain internal/unreleased, but should still be updated -->
+    <multiple_alignment method="EPO" no_release="1">
+      <species_set name="pig_breeds">
+        <genome name="sus_scrofa"/>
+        <genome name="sus_scrofa_usmarc"/>
+        <genome name="bos_taurus"/>
+        <genome name="ovis_aries"/>
+        <genome name="equus_caballus"/>
       </species_set>
     </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="sus" display_name="pig_breeds" in_collection="sus">
+        <taxonomic_group taxon_name="Eutheria"/> <!-- everything in the collection -->
+      </species_set>
+    </multiple_alignment>
+    
 
     <!-- Amniotes, excl. mouse strains -->
     <multiple_alignment method="PECAN" gerp="1">
