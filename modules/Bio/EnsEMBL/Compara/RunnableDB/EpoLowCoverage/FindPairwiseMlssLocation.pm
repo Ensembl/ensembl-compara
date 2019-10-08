@@ -44,6 +44,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils 'stringify';
+use Bio::EnsEMBL::Registry;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -53,7 +54,19 @@ sub fetch_input {
 
     # Transform into an array
     my $pairwise_location = $self->param_required('pairwise_location');
-    $self->param('pairwise_location', [$pairwise_location]) unless ref($pairwise_location);
+    $pairwise_location = [$pairwise_location] unless ref($pairwise_location);
+    # If any pairwise location is a pattern (includes "*"), find all compara db
+    # aliases that match that pattern and add them to 'pairwise_location'
+    my @reg_aliases = @{Bio::EnsEMBL::Registry->get_all_species('compara')};
+    my @db_array;
+    foreach my $compara_db (@{$pairwise_location}) {
+        if ($compara_db =~ s/\*/[a-zA-z0-9_]*/g) {
+            push @db_array, grep { /$compara_db/ } @reg_aliases;
+        } else {
+            push @db_array, $compara_db;
+        }
+    }
+    $self->param('pairwise_location', \@db_array);
 
     # Will hold the cache
     $self->param('dbs_loaded', {});

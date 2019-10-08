@@ -18,10 +18,10 @@ limitations under the License.
 =head1 EXAMPLES
 
     # Without GERP (primates)
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf $(mysql-ens-compara-prod-1-ensadmin details hive) -species_set_name primates -epo_db $(mysql-ens-compara-prod-1 details url muffato_primates_epo_94) -low_epo_mlss_id 1141 -high_epo_mlss_id 1134 -run_gerp 0 -ref_species homo_sapiens
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf $(mysql-ens-compara-prod-1-ensadmin details hive) -species_set_name primates -low_epo_mlss_id 1141 -high_epo_mlss_id 1134 -run_gerp 0
 
     # With GERP (mammals, sauropsids, fish)
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf $(mysql-ens-compara-prod-1-ensadmin details hive) -species_set_name fish -epo_db $(mysql-ens-compara-prod-3 details url carlac_fish_epo_94) -low_epo_mlss_id 1333 -high_epo_mlss_id 1332 -ref_species oryzias_latipes
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::EBI::EpoLowCoverage_conf $(mysql-ens-compara-prod-1-ensadmin details hive) -species_set_name fish -low_epo_mlss_id 1333 -high_epo_mlss_id 1332
 
 =cut
 
@@ -50,7 +50,7 @@ sub default_options {
     'master_db' => 'compara_master',
 
     #default location for pairwise alignments (can be a string or an array-ref)
-    'pairwise_location' => [ qw(compara_prev lastz_batch_1 lastz_batch_2 lastz_batch_3 lastz_batch_4 lastz_batch_5 lastz_batch_6 lastz_batch_7 lastz_batch_8 lastz_batch_9) ],
+    'pairwise_location' => [ qw(compara_prev lastz_batch_*) ],
     #'pairwise_location' => 'compara_curr',
 
 	#Location of compara db containing EPO/EPO_LOW_COVERAGE alignment to use as a base
