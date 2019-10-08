@@ -66,6 +66,8 @@ my ($sql, $sth, @args);
 my $release_id = $sd->ENSEMBL_VERSION;
 my $release = $adaptor->fetch_release($release_id);
 
+print "TMP DIR==== ".$tmp_dir;
+
 my $file = 'Update_ensembl_archive_for_release_'.$release_id.'.sql';
 open PATCH, ">$tmp_dir/$file" or die "ERROR: $!";
 
@@ -102,7 +104,7 @@ if ($release) {
 } else {
   my $archive = $sd->ARCHIVE_VERSION;
   my $date = $hub->pretty_date($archive);
-  $sql = "INSERT INTO ens_release (release_id, number, date, archive, online, mart) values($release_id, $release_id, \"$date\", \"$archive\", \"Y\", \"Y\")";
+  $sql = "INSERT INTO ens_release (release_id, number, date, archive, online, mart) values($release_id, $release_id, \"$date\", \"$archive\", \"Y\", \"Y\");";
   print "For inserting release $release_id, scheduled for $date.\n\n";
   print PATCH "$sql\n\n";
 }
