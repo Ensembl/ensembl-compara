@@ -815,20 +815,26 @@ sub create_multiple_wga_mlsss {
 
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, $source, $url);
-    $mlsss[-1]->{_no_release} = ($no_release || 0);
     if ($with_gerp) {
         my $ce_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSTRAINED_ELEMENT');
         push @mlsss, create_mlss($ce_method, $species_set, $source, $url);
-        $mlsss[-1]->{_no_release} = ($no_release || 0);
         my $cs_method = $compara_dba->get_MethodAdaptor->fetch_by_type('GERP_CONSERVATION_SCORE');
         push @mlsss, create_mlss($cs_method, $species_set, $source, $url);
-        $mlsss[-1]->{_no_release} = ($no_release || 0);
     }
     if ($method->type eq 'CACTUS_HAL') {
         my $pw_method = $compara_dba->get_MethodAdaptor->fetch_by_type('CACTUS_HAL_PW');
         push @mlsss, @{ create_mlsss_on_pairs($pw_method, $species_set->genome_dbs, $source, $url) };
-        $mlsss[-1]->{_no_release} = ($no_release || 0);
-    }    
+    } 
+    
+    if ( $no_release ) {
+        my @nr_mlsss;
+        foreach my $mlss ( @mlsss ) {
+            $mlss->{_no_release} = $no_release;
+            push @nr_mlsss, $mlss;
+        }
+        @mlsss = @nr_mlsss;
+    }
+       
     return \@mlsss;
 }
 
