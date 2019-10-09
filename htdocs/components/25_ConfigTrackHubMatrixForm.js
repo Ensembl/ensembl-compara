@@ -163,7 +163,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.clearSearch();
     this.resetTracks();
     this.resetMatrix();
-    this.resetFilterMatrix();
+    this.registerResetFilterMatrixClickEvent();
 
     panel.el.on("click", function(e){
       //if not switch for setting on/off column/row/cell in cell popup
@@ -2262,23 +2262,18 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
           var trackIds = Object.keys(panel.localStoreObj.filterMatrix[v].data);
           $.each(trackIds, function(i, trackId) {
             if (opt === "all-on") {
-              panel.localStoreObj.filterMatrix[v].data[trackId].state = 'on';
-              panel.localStoreObj.filterMatrix[v].state.on = panel.localStoreObj.filterMatrix[v].state.total;
-              panel.localStoreObj.filterMatrix[v].state.off = 0;
+              panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[v], v, "on", "off", 1)
             }
             else if(opt ==="all-off") {
-              panel.localStoreObj.filterMatrix[v].data[trackId].state = 'off';
-              panel.localStoreObj.filterMatrix[v].state.off = panel.localStoreObj.filterMatrix[v].state.total;
-              panel.localStoreObj.filterMatrix[v].state.on = 0;
+              panel.updateFilterMatrixStore(panel.localStoreObj.filterMatrix[v], v, "off", "on", 1)
             }
             else {
-              panel.localStoreObj.filterMatrix[v].data[trackId].state = panel.localStoreObj.filterMatrix[v].data[trackId]["reset-state"];
-              panel.localStoreObj.filterMatrix[v].state.off = panel.localStoreObj.filterMatrix[v].state["reset-off"];
-              panel.localStoreObj.filterMatrix[v].state.on = panel.localStoreObj.filterMatrix[v].state["reset-on"];
+              panel.resetFilterMatrixToDefaults(data.dimKey);
             }
           });
         }
       });
+      panel.setLocalStorage();
       panel.emptyMatrix();
       panel.displayFilterMatrix();
     }, data));
@@ -2649,14 +2644,41 @@ return;
     });
   },
 
-  resetFilterMatrix: function() {
+  registerResetFilterMatrixClickEvent: function() {
     var panel = this;
 
     this.elLk.resetFilterMatrixButton = panel.elLk.filterTrackPanel.find('button.reset-button._filterMatrix');
 
     this.elLk.resetFilterMatrixButton.click("on", function() {
+      panel.resetFilterMatrixToDefaults();
+    });
+  },
+
+  resetFilterMatrixToDefaults: function(dimKey) {
+      // e.g. dimKey = analysis_group_sep_CNAG
+      var panel = this;
       var cellArray = [];
-      $.each(panel.localStoreObj.filterMatrix, function(cellKey, cellHash) {
+      var cellHash;
+      if (dimKey) {
+        $.each(Object.keys(panel.elLk.extraDimValToCellMap[dimKey]), function(i, v) {
+          if (panel.localStoreObj.filterMatrix[v]) {
+            cellHash = panel.localStoreObj.filterMatrix[v];
+            update(v, cellHash);
+          }
+        });
+      }
+      else {
+        $.each(panel.localStoreObj.filterMatrix, function(cellKey, cellHash) {
+          update(cellKey, cellHash);
+        });
+      }
+
+      panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
+      panel.setLocalStorage();
+      panel.updateFilterMatrix(cellArray);
+      panel.updateFilterMatrixRHS();
+
+      function update(cellKey, cellHash) {
         $.each(cellHash.data, function(trackId, statusHash){
             if(statusHash.state != statusHash["reset-state"] || statusHash.show != statusHash["reset-show"]){
               cellArray.push(cellKey);
@@ -2679,15 +2701,10 @@ return;
           panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] -= 1;
           panel.localStoreObj.matrix.allSelection.total -= 1;
           panel.localStoreObj.matrix[cellKey].state = "";
-        }        
-      });
+        }
+      }
 
-      panel.localStoreObj.other_dimensions = $.extend({}, panel.localStoreObj.reset_other_dimensions);
-      panel.setLocalStorage();
-      panel.updateFilterMatrix(cellArray);
-      panel.updateFilterMatrixRHS();
-    });
-  },  
+  },
 
   resetFunctionality: function(stateOnly) {
     var panel = this;

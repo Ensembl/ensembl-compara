@@ -216,7 +216,7 @@ div#dx.filterMatrix-content                             { display: none; }
 div.filterMatrix-content                                { clear: both; }
 div.config_wrapper div.config ul.filterMatrix-list      { max-height: 200px; overflow: auto; margin: 12px; clear: left; }
 div.config_wrapper div.config ul.filterMatrix-list li   { margin: 4px 8px; cursor: default; display: flex; }
-div.config_wrapper div.config ul.filterMatrix-list li div.fm-count { padding-right: 4px; min-width: 50px; }
+div.config_wrapper div.config ul.filterMatrix-list li div.fm-count { padding-right: 4px; min-width: 50px; text-decoration: underline; color: [[LINK]]; cursor: pointer; }
 div.config_wrapper div.config ul.filterMatrix-list li text { text-decoration: underline; color: [[LINK]]; cursor: pointer; }
 
 div.filterMatrix-box div.sub-filterMatrix-link                { color: [[LINK]]; text-decoration: underline; float: left; margin: 0 6px 8px 12px; cursor: pointer; }
