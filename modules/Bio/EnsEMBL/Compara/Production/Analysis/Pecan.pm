@@ -121,10 +121,11 @@ sub run_pecan {
 
   sleep 30 unless -e $alignment_file; # give LSF time to die properly if MEMLIMIT is hit
 
-  if (-e $alignment_file) {
+  unless (-e $alignment_file) {
       # Note that this error message will be caught by RunnableDB::MercatorPecan::Pecan
       # and will trigger a dataflow on branch #2
-      die "No output at all and not a MEMLIMIT. Probably a Java heap space error\n";
+      warn "No output at all and not a MEMLIMIT\n";
+      die "Probably a Java heap space error\n";
   }
 
   open(my $fh, '<', $alignment_file) || throw("Could not open $alignment_file");
