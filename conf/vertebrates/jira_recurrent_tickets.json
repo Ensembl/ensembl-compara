@@ -173,13 +173,13 @@
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Pig breeds EPO",
-            "name_on_graph": "EPO:Pig breeds"
+            "name_on_graph": "EPO:PigBreeds"
          },
          {
             "component": "Production tasks",
             "description": "relco_doc#Releasecoordinationdocumentation-Mainsite",
             "summary": "Run Pig breeds EPO_low",
-            "name_on_graph": "EPO-2X:Pig breeds"
+            "name_on_graph": "EPO-2X:PigBreeds"
          },
          {
             "component": "Production tasks",
