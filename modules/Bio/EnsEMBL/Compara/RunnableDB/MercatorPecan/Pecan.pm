@@ -121,13 +121,19 @@ sub fetch_input {
 
   # Initialize the array
   $self->param('fasta_files', []);
+  
+  # grab synteny_region_id and create tmp_work_dir
+  my $synteny_region_id = $self->param_required('synteny_region_id');
+  my $tmp_work_dir = $self->worker_temp_directory . "/synteny_region_$synteny_region_id";
+  $self->run_command("mkdir -p $tmp_work_dir");
+  $self->param('tmp_work_dir', $tmp_work_dir);
 
   # Set the genome dump directory
   $self->compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
 
   ## Store DnaFragRegions corresponding to the SyntenyRegion in $self->dnafrag_regions(). At this point the
   ## DnaFragRegions are in random order
-  $self->_load_DnaFragRegions($self->param_required('synteny_region_id'));
+  $self->_load_DnaFragRegions($synteny_region_id);
   if ($self->param('dnafrag_regions')) {
     ## Get the tree string by taking into account duplications and deletions. Resort dnafrag_regions
     ## in order to match the name of the sequences in the tree string (seq1, seq2...)
@@ -515,6 +521,7 @@ sub _write_gerp_dataflow {
     my $output_id = { genomic_align_block_id => $gab->dbID };
 
     $self->dataflow_output_id($output_id,1);
+    $self->cleanup_worker_temp_directory; # this is important to avoid clashes between jobs run by the same worker
 }
 
 ##########################################
@@ -639,7 +646,7 @@ sub _dump_fasta {
   foreach my $seq_id (@seqs) {
 
     my $dfr = $all_dnafrag_regions->[$seq_id-1];
-    my $file = $self->worker_temp_directory . "/seq" . $seq_id . ".fa";
+    my $file = $self->param('tmp_work_dir') . "/seq" . $seq_id . ".fa";
 
     my $seq = $dfr->get_sequence('soft');
     if ($seq =~ /[^ACTGactgNnXx]/) {
@@ -791,7 +798,7 @@ sub _run_ortheus {
     my $ortheus_output = Bio::EnsEMBL::Compara::Production::Analysis::Ortheus::run_ortheus($self);
     print " --- ORTHEUS OUTPUT : $ortheus_output\n\n" if $self->debug;
 
-    my $tree_file = $self->worker_temp_directory . "/output.$$.tree";
+    my $tree_file = $self->param('tmp_work_dir') . "/output.$$.tree";
     if (-e $tree_file) {
 	## Ortheus estimated the tree. Overwrite the order of the fasta files and get the tree
 	open(my $fh, '<', $tree_file) || throw("Could not open tree file <$tree_file>");
