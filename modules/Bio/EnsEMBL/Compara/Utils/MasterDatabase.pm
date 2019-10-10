@@ -827,12 +827,9 @@ sub create_multiple_wga_mlsss {
     } 
     
     if ( $no_release ) {
-        my @nr_mlsss;
         foreach my $mlss ( @mlsss ) {
             $mlss->{_no_release} = $no_release;
-            push @nr_mlsss, $mlss;
         }
-        @mlsss = @nr_mlsss;
     }
        
     return \@mlsss;
