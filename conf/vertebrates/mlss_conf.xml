@@ -128,7 +128,7 @@
     <!-- Pigs -->
     <!-- Special case: base EPO should remain internal/unreleased, but should still be updated -->
     <multiple_alignment method="EPO" no_release="1">
-      <species_set name="livestock" display_name="livestock">
+      <species_set name="livestock">
         <genome name="sus_scrofa"/>
         <genome name="sus_scrofa_usmarc"/>
         <genome name="bos_taurus"/>
