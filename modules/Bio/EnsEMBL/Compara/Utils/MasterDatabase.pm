@@ -811,7 +811,7 @@ sub create_pairwise_wga_mlsss {
 }
 
 sub create_multiple_wga_mlsss {
-    my ($compara_dba, $method, $species_set, $with_gerp, $source, $url) = @_;
+    my ($compara_dba, $method, $species_set, $with_gerp, $no_release, $source, $url) = @_;
 
     my @mlsss;
     push @mlsss, create_mlss($method, $species_set, $source, $url);
@@ -824,7 +824,14 @@ sub create_multiple_wga_mlsss {
     if ($method->type eq 'CACTUS_HAL') {
         my $pw_method = $compara_dba->get_MethodAdaptor->fetch_by_type('CACTUS_HAL_PW');
         push @mlsss, @{ create_mlsss_on_pairs($pw_method, $species_set->genome_dbs, $source, $url) };
+    } 
+    
+    if ( $no_release ) {
+        foreach my $mlss ( @mlsss ) {
+            $mlss->{_no_release} = $no_release;
+        }
     }
+       
     return \@mlsss;
 }
 

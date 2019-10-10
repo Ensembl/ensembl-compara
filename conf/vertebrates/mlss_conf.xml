@@ -22,7 +22,8 @@
       <taxonomic_group taxon_name="Murinae"/>
     </collection>
 
-    <collection name="sus">
+    <!-- Pig-breeds analyses, incl. closely related outgroups -->
+    <collection name="pig_breeds">
       <taxonomic_group taxon_name="Sus"/>
       <genome name="ovis_aries"/>
       <genome name="bos_taurus"/>
@@ -125,11 +126,22 @@
     </multiple_alignment>
 
     <!-- Pigs -->
-    <multiple_alignment method="EPO+EPO_LOW_COVERAGE" gerp="1">
-      <species_set name="sus">
-        <taxonomic_group taxon_name="Sus"/>
+    <!-- Special case: base EPO should remain internal/unreleased, but should still be updated -->
+    <multiple_alignment method="EPO" no_release="1">
+      <species_set name="pig_breeds" display_name="pig breeds">
+        <genome name="sus_scrofa"/>
+        <genome name="sus_scrofa_usmarc"/>
+        <genome name="bos_taurus"/>
+        <genome name="ovis_aries"/>
+        <genome name="equus_caballus"/>
       </species_set>
     </multiple_alignment>
+    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+      <species_set name="pig_breeds" display_name="pig breeds" in_collection="pig_breeds">
+        <taxonomic_group taxon_name="Eutheria"/> <!-- everything in the collection -->
+      </species_set>
+    </multiple_alignment>
+    
 
     <!-- Amniotes, excl. mouse strains -->
     <multiple_alignment method="PECAN" gerp="1">
@@ -182,10 +194,10 @@
   <gene_trees>
     <protein_trees collection="default"/>
     <protein_trees collection="murinae"/>
-    <protein_trees collection="sus"/>
+    <protein_trees collection="pig_breeds"/>
     <nc_trees collection="default"/>
     <nc_trees collection="murinae"/>
-    <nc_trees collection="sus"/>
+    <nc_trees collection="pig_breeds"/>
   </gene_trees>
 
   <species_trees>
