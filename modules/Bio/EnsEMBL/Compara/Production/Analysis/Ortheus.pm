@@ -102,7 +102,8 @@ sub run_ortheus {
 
   #Capture output messages when running ortheus instead of throwing
   my $prev_dir = Cwd::getcwd;
-  chdir $self->worker_temp_directory;
+  my $tmp_dir = $self->param('tmp_work_dir') ? $self->param('tmp_work_dir') : $self->worker_temp_directory;
+  chdir $tmp_dir;
   my $output = tee_merged { system(@command) };
   chdir $prev_dir;
 
