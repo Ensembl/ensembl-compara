@@ -59,7 +59,8 @@ sub run_pecan {
   my $self = shift;
 
   my $prev_dir = Cwd::getcwd;
-  chdir $self->worker_temp_directory;
+  my $tmp_dir = $self->param('tmp_work_dir') ? $self->param('tmp_work_dir') : $self->worker_temp_directory;
+  chdir $tmp_dir;
 
   my @fasta_files = @{$self->param('fasta_files')};
   my $tree_string = $self->param('pecan_tree_string');
@@ -116,7 +117,7 @@ sub run_pecan {
       die ($java_error);
   }
 
-  my $alignment_file = $self->worker_temp_directory . "/pecan.mfa";
+  my $alignment_file = "$tmp_dir/pecan.mfa";
   my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
   sleep 30 unless -e $alignment_file; # give LSF time to die properly if MEMLIMIT is hit
