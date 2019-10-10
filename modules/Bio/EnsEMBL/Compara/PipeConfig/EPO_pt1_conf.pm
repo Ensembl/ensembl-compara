@@ -200,6 +200,7 @@ return [
   'ortheus_bin_dir'     => $self->o('ortheus_bin_dir'),
   'semphy_exe'          => $self->o('semphy_exe'),
    },
+ -rc_name => '4Gb_job',
  -flow_into      => {
 		2 => [ 'pecan_high_mem' ],  # Pecan complained
 		-1 => [ 'pecan_high_mem' ],  # LSF killed because of MEMLIMIT
