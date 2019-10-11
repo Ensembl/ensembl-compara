@@ -164,6 +164,7 @@ sub fetch_input {
           $self->param('query_slice', $query_slice);
           $query_slice->{'seq'} = $query_slice->seq;
           print STDERR length($query_slice->{'seq'}), " bp\n";
+          $self->param('query_nib_dir', undef);
       }
   } );
 
@@ -180,6 +181,7 @@ sub fetch_input {
           print STDERR "fetching the target sequence\n";
           $target_slice->{'seq'} = $target_slice->seq;
           print STDERR length($target_slice->{'seq'}), " bp\n";
+          $self->param('target_nib_dir', undef);
       }
   } );
 }
