@@ -1792,8 +1792,23 @@ sub core_pipeline_analyses {
                 'mafft_mode'                 => '--retree 1 --memsavetree --memsave',
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '16Gb_16c_job',
+            -rc_name    => '16Gb_8c_job',
             -priority   => $self->o('mafft_himem_priority'),
+            -flow_into  => {
+                -1 => [ 'mafft_mammoth' ],
+            },
+        },
+
+        {   -logic_name    => 'mafft_mammoth',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
+            -parameters    => {
+                'mafft_exe'     => $self->o('mafft_exe'),
+                'mafft_threads' => 16,
+                'mafft_mode'    => '--retree 1 --memsavetree --memsave',
+            },
+            -hive_capacity => $self->o('mafft_himem_capacity'),
+            -rc_name       => '128Gb_16c_job',
+            -priority      => $self->o('mafft_himem_priority'),
         },
 
         {   -logic_name     => 'exon_boundaries_prep',
