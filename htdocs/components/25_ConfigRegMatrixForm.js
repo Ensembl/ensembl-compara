@@ -47,6 +47,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.localStoreObj        = new Object();
     this.localStorageKey      = 'RegMatrix-' + Ensembl.species;
     this.elLk.lookup          = new Object();
+    this.menuCountSpan        = $(this.params.links).find('li.active a').siblings('.count').children('.on')[0];
 
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
     this.buttonOriginalHTML  = this.elLk.displayButton.html();
@@ -969,6 +970,7 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     var selectedElements = [];
     this.selectedTracksCount = {};
     this.totalSelected = 0;
+
     ['dx', 'dy'].forEach(function(key) {
       var selectedLIs, allLIs;
       if (panel.elLk[key].haveSubTabs) {
@@ -1896,6 +1898,12 @@ Ensembl.Panel.ConfigRegMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.cellClick(); //opens popup
     panel.cleanMatrixStore(); //deleting items that are not present anymore
     panel.setLocalStorage();
+
+    // set LH menu count
+    var menuTotal = panel.localStoreObj.matrix["allSelection"]["total"];
+    menuTotal += panel.localStoreObj.epigenomic_activity["epigenomic_activity"]["state"]["on"];
+    menuTotal += panel.localStoreObj.segmentation_features["segmentation_features"]["state"]["on"];
+    $(panel.menuCountSpan).text(menuTotal);
 
     // enable helptips
     this.elLk.matrixContainer.find('._ht').helptip();
