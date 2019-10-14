@@ -31,6 +31,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.node_id      = menu_match[0].split("=")[1];
     var species_match = $(this.params.links).find('li.active a').attr('href').match(/th_species=([^;&]+)/g);
     var species_name  = species_match[0].split("=")[1];
+    var menu_span_on  = $(this.params.links).find('li.active a').siblings('.count').children('.on')[0];
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
@@ -62,6 +63,7 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     this.elLk.lookup          = new Object();
     this.trackHub             = true;
     this.multiDimFlag         = 0;
+    this.menuCountSpan        = menu_span_on;
     this.rendererSelectDropdown = this.el.find('div.track-popup .renderer-selection .renderers')
 
     this.buttonOriginalWidth = this.elLk.displayButton.outerWidth();
@@ -2918,9 +2920,16 @@ return;
   //
   updateFilterMatrixStore: function(storeObj, cellKey, newState, currentState, all, showValue, allRHS) {
     var panel = this;
+    var trackTotal = parseInt(panel.menuCountSpan.innerHTML);
 
     if(all) { //clicking all in matrix popup
       $.each(storeObj.data, function(trackId, hash){
+        if (hash.state === 'on' && newState === 'off') {
+          trackTotal -= 1;
+        }
+        else if (hash.state === 'off' && newState === 'on') {
+          trackTotal += 1;
+        }
         hash.state = newState;
       });
       panel.localStoreObj.filterMatrix[cellKey].state[currentState] = 0;
@@ -2936,11 +2945,13 @@ return;
             if(storeObj.state != "on") {
               panel.localStoreObj.filterMatrix[cellKey].state.total += 1;
               panel.localStoreObj.filterMatrix[cellKey].state["on"] += 1;
+              trackTotal += 1;
             }
           } else { //not showing track and switch it off
             if(storeObj.show === 1) { 
               panel.localStoreObj.filterMatrix[cellKey].state.total -= 1;
               panel.localStoreObj.filterMatrix[cellKey].state[storeObj.state] -= 1;
+              trackTotal -= 1;
             }
           }
         }
@@ -2948,6 +2959,12 @@ return;
       } else { //clicking element in matrix popup
         panel.localStoreObj.filterMatrix[cellKey].state[currentState] -= 1;
         panel.localStoreObj.filterMatrix[cellKey].state[newState] += 1;
+        if (currentState === 'on' && newState === 'off') {
+          trackTotal -= 1;
+        }
+        else if (currentState === 'off' && newState === 'on') {
+          trackTotal += 1;
+        }
       }
       storeObj.state = newState; // This has to be the last thing to do
     }
@@ -2975,6 +2992,7 @@ return;
       panel.localStoreObj.matrix[cellKey].state = "track-on";
     }
     panel.setLocalStorage();
+    $(panel.menuCountSpan).text(trackTotal);
   },
 
   //function to update filte matrix cells (on/off/partial) and show the counts
