@@ -118,23 +118,23 @@ my $compara_dbs = {
     ## mammals
     'mammals_epo'         => [ 'mysql-ens-compara-prod-5', 'jalvarez_mammals_epo_99' ],
     'mammals_epo_prev'    => [ 'mysql-ens-compara-prod-2', 'mateus_mammals_epo_98' ],
-    'mammals_epo_low'     => [ 'mysql-ens-compara-prod-8', 'mateus_mammals_epo_low_coverage_98' ],
+    'mammals_epo_low'     => [ 'mysql-ens-compara-prod-6', 'jalvarez_mammals_epo_low_coverage_99' ],
     'mammals_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## sauropsids
     'sauropsids_epo'         => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_99' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_96' ],
     #'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-', '' ],
-    'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'muffato_sauropsids_anchors_86' ],
+    'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-8', 'dthybert_generate_anchors_sauropsids_99' ],
 
     ## fish
     'fish_epo'         => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_99' ],
     'fish_epo_prev'    => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_98' ],
-    'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'carlac_fish_epo_low_coverage_98' ],
+    'fish_epo_low'     => [ 'mysql-ens-compara-prod-1', 'cristig_fish_epo_low_coverage_99' ],
     'fish_epo_anchors' => [ 'mysql-ens-compara-prod-5', 'muffato_generate_anchors_fish_96' ],
 
     ## primates
-    # 'primates_epo'         => [ 'mysql-ens-compara-prod-', '' ],
+    'primates_epo'         => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],
     'primates_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'mateus_primates_epo_98' ],      # Primates are reused from mammals of the *same release* (same anchors and subset of species)
     'primates_epo_low'     => [ 'mysql-ens-compara-prod-6', 'mateus_primates_epo_low_coverage_98' ],
     'primates_epo_anchors' => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
