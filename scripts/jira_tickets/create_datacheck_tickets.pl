@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 =cut
 
-=head2 SUMMARY
+=head2 DESCRIPTION
 
-This script parses the output from Ensembl's Datachecks and creates JIRA tickets
-for each failure.
+This script parses the output from Ensembl's Datachecks and creates JIRA 
+tickets for each failure.
+
+=head1 SYNOPSIS
+
+perl create_datacheck_tickets.pl [options] <datacheck_TAP_file>
+
+=head1 OPTIONS
+
+=over
+
+=item B<-d[ivision]> <division>
+
+Optional. Compara division. If not given, uses environment variable
+$COMPARA_DIV as default.
+
+=item B<-r[elease]> <release>
+
+Optional. Ensembl release version. If not given, uses environment variable 
+$CURR_ENSEMBL_RELEASE as default.
+
+=item B<-dry_run>, B<-dry-run>
+
+In dry-run mode, the JIRA tickets will not be submitted to the JIRA 
+server. By default, dry-run mode is off.
+
+=item B<-h[elp]>
+
+Print usage information.
+
+=back
 
 =cut
 
@@ -28,52 +57,44 @@ for each failure.
 use warnings;
 use strict;
 
-use Getopt::Long;
-use POSIX;
 use Cwd 'abs_path';
 use File::Basename;
+use Getopt::Long;
+use Pod::Usage;
+use POSIX;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 
-my ( $help, $release, $division, $dry_run );
+my ( $release, $division, $dry_run, $help );
 $dry_run = 0;
+$help    = 0;
 GetOptions(
-    "help"             => \$help,
-    "r|release=s"      => \$release,
-    "d|division=s"     => \$division,
-    'dry_run|dry-run!' => \$dry_run,
+    "d|division=s"    => \$division,
+    "r|release=s"     => \$release,
+    'dry_run|dry-run' => \$dry_run,
+    "h|help"          => \$help,
 );
-die &helptext if $help;
+pod2usage(1) if $help;
 my $dc_file = $ARGV[0];
 die "Cannot find $dc_file - file does not exist" unless -e $dc_file;
+# Get file absolute path and basename
 my $dc_abs_path = abs_path($dc_file);
 my $dc_basename = fileparse($dc_abs_path, qr{\.[a-zA-Z0-9_]+$});
-
-die &helptext if ( !($release && $dc_file && $division) );
+# Get timestamp that will be included in the summary of each JIRA ticket
 my $timestamp = strftime("%d-%m-%Y %H:%M:%S", localtime time);
-
 # Get a new Utils::JIRA object to create the tickets for the given division and
 # release
-my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
-
-#----------------------------------#
-#       Fetch Datacheck info       #
-#----------------------------------#
+my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release);
+# Parse Datacheck information from input TAP file
 my $testcase_failures = parse_datachecks($dc_file, $timestamp);
-
-#----------------------------------#
-#      Create JIRA tickets         #
-#----------------------------------#
-
-# create initial ticket for datacheck run - failures will become subtasks of this
+# Create initial ticket for datacheck run - failures will become subtasks of this
 my $blocked_ticket_key = find_handover_ticket($jira_adaptor);
 my $dc_task_json_ticket = [{
     assignee    => $jira_adaptor->{_user},
     summary     => "$dc_basename ($timestamp)",
     description => "Datacheck failures raised on $timestamp\nFrom file: $dc_abs_path",
 }];
-
-# create subtask tickets for each datacheck failure
+# Create subtask tickets for each datacheck failure
 my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
@@ -139,13 +160,4 @@ sub find_handover_ticket {
     print "Found ticket key '" . $handover_ticket->{issues}->[0]->{key} . "'\n";
 
     return $handover_ticket->{issues}->[0]->{key};
-}
-
-sub helptext {
-    my $msg = <<HELPEND;
-
-Usage: perl $0 --release <integer> --division <string> [--dry_run] <Datacheck output file>
-
-HELPEND
-    return $msg;
 }
