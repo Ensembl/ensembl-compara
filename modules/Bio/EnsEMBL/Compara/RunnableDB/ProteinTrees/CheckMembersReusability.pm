@@ -52,7 +52,7 @@ sub param_defaults {
 sub run_comparison {
     my $self = shift @_;
 
-    if (comes_from_core_database($self->param('genome_db'))) {
+    if ($self->comes_from_core_database($self->param('genome_db'))) {
         return $self->do_one_comparison('exons',
             $self->hash_all_exons_from_dba( $self->param('prev_core_dba') ),
             $self->hash_all_exons_from_dba( $self->param('curr_core_dba') ),

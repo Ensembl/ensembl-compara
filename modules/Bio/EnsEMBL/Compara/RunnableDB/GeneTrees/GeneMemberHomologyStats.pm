@@ -34,22 +34,11 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneMemberHomologyStats;
 
 use warnings;
 use strict;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 use File::Find;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub param_defaults {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::param_defaults},
-        'param'   => undef,
-    }
-}
 
 sub fetch_input {
     my $self = shift;
@@ -82,8 +71,9 @@ sub run {
         # print "Scanning $hom_file\n" if $self->debug;
         open(my $hom_handle, '<', $hom_file) or die "Cannot open $hom_file";
         my $this_header = <$hom_handle>;
+        my @head_cols = split(/\s+/, $this_header);
         while ( my $line = <$hom_handle> ) {
-            my $row = map_row_to_header($line, $this_header);
+            my $row = map_row_to_header($line, \@head_cols);
             my ( $homology_type, $gm_id_1, $gm_id_2 ) = ($row->{homology_type}, $row->{gene_member_id}, $row->{hom_gene_member_id});
             
             $gm_hom_stats->{$gm_id_1}->{orthologues} += 1 if ( $homology_type =~ /^ortholog/ );

@@ -1,0 +1,9 @@
+homology_id	homology_type	gene_tree_node_id	gene_tree_root_id	species_tree_node_id	gene_member_id	seq_member_id	seq_member_stable_id	genome_db_id	identity	hom_gene_member_id	hom_seq_member_id	hom_seq_member_stable_id	hom_genome_db_id	hom_identity
+18	ortholog_one2one	18	18	1	21	21	ENSP0021	1	100	61	61	ENSP0061	4	100
+19	ortholog_one2one	19	19	1	22	22	ENSP0022	1	100	62	62	ENSP0062	4	100
+20	ortholog_one2one	20	20	1	23	23	ENSP0023	1	100	63	63	ENSP0063	4	100
+21	ortholog_one2one	21	21	1	25	25	ENSP0025	1	100	64	64	ENSP0064	4	100
+22	ortholog_one2one	22	22	1	26	26	ENSP0026	1	100	65	65	ENSP0065	4	100
+23	ortholog_one2one	23	23	1	24	24	ENSP0024	1	100	71	71	ENSP0071	5	100
+24	ortholog_one2one	24	24	1	29	29	ENSP0029	1	100	73	73	ENSP0073	5	100
+25	ortholog_one2one	25	25	1	27	27	ENSP0027	1	100	72	72	ENSP0072	5	100

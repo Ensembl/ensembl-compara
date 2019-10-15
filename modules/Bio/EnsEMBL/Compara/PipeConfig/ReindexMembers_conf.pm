@@ -39,10 +39,6 @@ still valid.
 
 =over
 
-=item mlss_id
-
-The mlss_id of the gene-tree pipelines. Used to load the GenomeDBs and the MLSSs
-
 =item master_db
 
 The location of the master database, from which the NCBI taxonomy, the GenomeDBs
@@ -52,11 +48,7 @@ and the MLSSs are copied over.
 
 The location of the freshest load of members
 
-=item member_type
-
-Either "protein" or "ncrna". The type of members to pull from the memebr database
-
-=item prev_rel_db
+=item prev_tree_db
 
 The location of the gene-trees database. the pipeline will copy all the relevant
 tables from there, and reindex the member_ids to make them match the new members.
@@ -87,15 +79,15 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLU
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
+sub default_pipeline_name {
+    my ($self) = @_;
+    return join('_', $self->o('collection'), $self->o('member_type'), 'reindexed_trees');
+}
+
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-
-        'pipeline_name' => $self->o('collection') . '_' . $self->o('member_type') . '_reindexed_trees_' . $self->o('rel_with_suffix'),
-
-        # Must be "protein" or "ncrna"
-        #'member_type'   => undef,
 
         # Copy from master db
         'tables_from_master'    => [ 'ncbi_taxa_node', 'ncbi_taxa_name' ],
@@ -121,11 +113,9 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'mlss_id'       => $self->o('mlss_id'),
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
-        'prev_rel_db'   => $self->o('prev_rel_db'),
-        'member_type'   => $self->o('member_type'),
+        'prev_tree_db'  => $self->o('prev_tree_db'),
     }
 }
 
@@ -153,7 +143,7 @@ sub pipeline_analyses {
             -input_ids  => [ {} ],
             -flow_into  => {
                 '2->A' => 'copy_table_from_master',
-                'A->1' => 'load_genomedb_factory',
+                'A->1' => 'find_mlss_id',
             },
         },
 
@@ -168,13 +158,24 @@ sub pipeline_analyses {
 
 # -------------------------------------------[load GenomeDB entries and copy the other tables]------------------------------------------
 
+        {   -logic_name => 'find_mlss_id',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'    => '#prev_tree_db#',
+                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id, member_type FROM gene_tree_root LIMIT 1',
+            },
+            -flow_into  => {
+                2 => 'load_genomedb_factory',
+            },
+        },
+
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'mlss_id'           => $self->o('mlss_id'),
                 'extra_parameters'  => [ 'locator' ],
             },
+            -rc_name   => '500Mb_job',
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
                 'A->1' => 'create_mlss_ss',
@@ -189,10 +190,11 @@ sub pipeline_analyses {
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
-                'whole_method_links'        => [ 'NC_TREES' ],
+                'whole_method_links'        => [ 'PROTEIN_TREES', 'NC_TREES' ],
                 'singleton_method_links'    => [ 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES' ],
                 'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
+            -rc_name    => '500Mb_job',
             -flow_into  => {
                 1 => 'load_members_factory',
             },
@@ -201,7 +203,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
-                '2->A' => 'genome_member_copy',
+                '2->A' => { 'genome_member_copy' => INPUT_PLUS },
                 'A->1' => 'gene_tree_tables_factory',
             },
         },
@@ -218,15 +220,15 @@ sub pipeline_analyses {
         {   -logic_name => 'gene_tree_tables_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::TableFactory',
             -flow_into  => {
-                '2->A' => 'copy_table_from_prev_rel_db',
+                '2->A' => 'copy_table_from_prev_db',
                 'A->1' => 'map_members_factory',
             },
         },
 
-        {   -logic_name    => 'copy_table_from_prev_rel_db',
+        {   -logic_name    => 'copy_table_from_prev_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => '#prev_rel_db#',
+                'src_db_conn'   => '#prev_tree_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
@@ -239,21 +241,31 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => 'map_member_ids',
-                'A->1' => 'delete_flat_trees_factory',
+                'A->1' => 'reindex_member_ids',
             },
         },
 
         {   -logic_name        => 'map_member_ids',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs',
-            -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
             -flow_into         => {
                 2 => 'delete_tree',
+                3 => [
+                    '?accu_name=seq_member_id_pairs&accu_address=[]&accu_input_variable=seq_member_ids',
+                    '?accu_name=gene_member_id_pairs&accu_address=[]&accu_input_variable=gene_member_ids',
+                ],
             }
         },
 
         {   -logic_name        => 'delete_tree',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree',
             -hive_capacity     => 1,    # Because of transactions, concurrent jobs will have deadlocks
+        },
+
+        {   -logic_name        => 'reindex_member_ids',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexMemberIDs',
+            -flow_into         => {
+                1 => 'delete_flat_trees_factory',
+            },
         },
 
         {   -logic_name => 'delete_flat_trees_factory',
@@ -263,8 +275,36 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => 'delete_tree',
+                'A->1' => 'cluster_factory',
+            },
+        },
+
+        {   -logic_name     => 'cluster_factory',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters     => {
+                'inputquery'    => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL',
+            },
+            -flow_into      => {
+                '2->A' => 'exon_boundaries_prep',
                 'A->1' => 'pipeline_entry',
             },
+        },
+
+        {   -logic_name     => 'exon_boundaries_prep',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -flow_into      => {
+                -1 => 'exon_boundaries_prep_himem',
+            },
+            -rc_name        => '500Mb_job',
+            -hive_capacity  => 100,
+            -batch_size     => 20,
+        },
+
+        {   -logic_name     => 'exon_boundaries_prep_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -rc_name        => '2Gb_job',
+            -hive_capacity  => 100,
+            -batch_size     => 20,
         },
 
         @$hc_analyses,

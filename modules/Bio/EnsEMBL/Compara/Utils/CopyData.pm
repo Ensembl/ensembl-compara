@@ -379,6 +379,9 @@ sub copy_data_in_text_mode {
     assert_ref($from_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'from_dbc');
     assert_ref($to_dbc, 'Bio::EnsEMBL::DBSQL::DBConnection', 'to_dbc');
 
+    $from_dbc->reconnect() unless $from_dbc->db_handle->ping;
+    $to_dbc->reconnect() unless $to_dbc->db_handle->ping;
+
     my $user = $to_dbc->username;
     my $pass = $to_dbc->password;
     my $host = $to_dbc->host;

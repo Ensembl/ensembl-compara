@@ -452,6 +452,20 @@ sub _set_member_as_canonical {
 }
 
 
+sub delete {
+    my ($self, $seq_member) = @_;
+    $self->dbc->do('DELETE FROM seq_member_projection_stable_id WHERE target_seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM seq_member_projection           WHERE source_seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM seq_member_projection           WHERE target_seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE homology FROM homology JOIN homology_member USING (homology_id) WHERE seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM homology_member         WHERE seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM gene_member_qc          WHERE seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM hmm_annot               WHERE seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM exon_boundaries         WHERE seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM other_member_sequence   WHERE seq_member_id = ?', undef, $seq_member->dbID);
+    $self->dbc->do('DELETE FROM seq_member              WHERE seq_member_id = ?', undef, $seq_member->dbID);
+}
+
 
 1;
 

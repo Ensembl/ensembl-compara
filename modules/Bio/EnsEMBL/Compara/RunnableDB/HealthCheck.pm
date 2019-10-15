@@ -294,13 +294,15 @@ sub _run_conservation_scores_test {
     }
 
     my ($values) = $self->compara_dba->dbc->db_handle->selectcol_arrayref(
-        "SELECT genomic_align_block.genomic_align_block_id FROM genomic_align_block LEFT JOIN genomic_align".
-        " ON (genomic_align_block.genomic_align_block_id = genomic_align.genomic_align_block_id)".
-        " LEFT JOIN conservation_score".
-        " ON (genomic_align_block.genomic_align_block_id = conservation_score.genomic_align_block_id)".
-        " WHERE genomic_align_block.method_link_species_set_id = $this_method_link_species_set_id".
-        " AND conservation_score.genomic_align_block_id IS NULL".
-        " GROUP BY genomic_align_block.genomic_align_block_id HAVING count(*) > 3");
+        "SELECT genomic_align_block.genomic_align_block_id ".
+        "FROM genomic_align_block LEFT JOIN conservation_score USING(genomic_align_block_id) JOIN ( ".
+        "SELECT genomic_align.genomic_align_block_id, COUNT(DISTINCT(dnafrag.genome_db_id)) AS gdb_count ".
+        "FROM genomic_align JOIN dnafrag USING(dnafrag_id) ".
+        "GROUP BY genomic_align.genomic_align_block_id ) t1 ".
+        "USING(genomic_align_block_id) WHERE conservation_score.genomic_align_block_id IS NULL ".
+        "AND genomic_align_block.method_link_species_set_id =$this_method_link_species_set_id ".
+        "AND t1.gdb_count > 3;"
+        );
 
     if (@$values) {
 	foreach my $value (@$values) {

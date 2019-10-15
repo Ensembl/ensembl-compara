@@ -326,7 +326,7 @@ sub link_tickets {
 
 sub _validate_username {
     my ( $self, $user ) = @_;
-    my %compara_members = map { $_ => 1 } qw(carlac jalvarez mateus muffato);
+    my %compara_members = map { $_ => 1 } qw(carlac cristig dthybert jalvarez muffato);
     # Do a case insensitive user matching
     if (exists $compara_members{lc $user}) {
         return lc $user;
@@ -412,10 +412,10 @@ sub _json_to_jira {
     my @label_list;
     $jira_hash{'labels'} = [];
     if ($json_hash->{'labels'}) {
-        push @label_list, $json_hash->{'labels'};
+        push @label_list, @{$json_hash->{'labels'}};
     }
     if ($extra_labels) {
-        push @label_list, $extra_labels;
+        push @label_list, @{$extra_labels};
     }
     if ($json_hash->{'name_on_graph'}) {
         push @label_list, 'Graph:' . $json_hash->{'name_on_graph'};
@@ -591,6 +591,7 @@ sub _post_request {
         undef $self->{_password};
     }
     # Return the response content
+    return "" unless $response->content();
     return decode_json($response->content());
 }
 

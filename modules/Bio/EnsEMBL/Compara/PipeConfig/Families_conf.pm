@@ -105,7 +105,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
         
-        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'blastdb_dir', 'uniprot_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['pipeline_dir', 'blastdb_dir', 'uniprot_dir', 'warehouse_dir']),
         $self->pipeline_create_commands_lfs_setstripe('blastdb_dir'),
     ];
 }
@@ -684,7 +684,7 @@ sub pipeline_analyses {
         {   -logic_name => 'warehouse_working_directory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd'   => 'become -- .' . $self->o('shared_user') . ' cp -r #work_dir# #warehouse_dir#',
+                'cmd'   => 'become -- ' . $self->o('shared_user') . ' cp -r #work_dir# #warehouse_dir#',
             },
             -flow_into => [ 'notify_pipeline_completed' ],
         },

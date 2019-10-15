@@ -30,8 +30,10 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = 98;
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
+my $curr_eg_release = $curr_release - 53;
+my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -42,7 +44,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
-# previous release core databases will be required by LoadMembers only
+# previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 # !!! COMMENT THIS SECTION OUT FOR ALL OTHER PIPELINES (for speed) !!!
 #my $suffix_separator = '__cut_here__';
 #Bio::EnsEMBL::Registry->load_registry_from_db(
@@ -68,22 +70,19 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_45_98' ],
-    'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_44_97' ],
-    'compara_old'    => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_43_96' ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'jalvarez_plants_load_members_98'  ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'jalvarez_default_plants_protein_trees_98' ],
-    'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'mateus_default_plants_protein_trees_97' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-5', 'cristig_plants_load_members_99'  ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-3', 'cristig_default_plants_protein_trees_99' ],
+    'ptrees_prev'      => [ 'mysql-ens-compara-prod-5', 'jalvarez_default_plants_protein_trees_98' ],
 
     # LASTZ dbs
-    'lastz' => [ 'mysql-ens-compara-prod-2', 'jalvarez_plants_lastz_98' ],
+    'lastz' => [ 'mysql-ens-compara-prod-5', 'cristig_plants_lastz_batch1_99' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'jalvarez_plants_synteny_98' ],
-    'compara_syntenies_9265' => [ 'mysql-ens-compara-prod-6', 'jalvarez_synteny_rerun_9265_98' ],
-    'compara_syntenies_9267' => [ 'mysql-ens-compara-prod-6', 'jalvarez_synteny_rerun_9267_98' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-1', 'cristig_plants_synteny_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

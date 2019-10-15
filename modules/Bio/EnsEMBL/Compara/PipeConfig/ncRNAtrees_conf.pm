@@ -328,6 +328,7 @@ sub core_pipeline_analyses {
                 'singleton_method_links'    => [ 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES' ],
                 'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
+            -rc_name   => '1Gb_job',
             -flow_into => {
                 1 => [ 'make_species_tree', 'load_members_factory' ],
             },
@@ -647,7 +648,7 @@ sub core_pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '4Gb_job',
+                -rc_name        => '8Gb_job',
                 -priority       => 50,
                 -flow_into      => [ 'other_paralogs' ],
             },

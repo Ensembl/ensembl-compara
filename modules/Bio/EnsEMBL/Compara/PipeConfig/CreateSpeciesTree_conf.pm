@@ -281,7 +281,7 @@ sub pipeline_analyses {
               'source_dir'      => $self->o('output_dir'),
               'file_list' => [
                 '#source_dir#/*.msh',
-                '#source_dir#/*.dists',
+                '#source_dir#/#collection#',
               ],
           },
         },

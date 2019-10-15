@@ -47,7 +47,9 @@
     <all_vs_all method="LASTZ_NET">
         <species_set>
           <taxonomic_group taxon_name="Triticeae"/>
+          <!-- Because not k-mer masked -->
           <genome name="triticum_urartu" exclude="1" />
+          <!-- Because polyploid and not k-mer masked-->
           <genome name="triticum_turgidum" exclude="1" />
         </species_set>
     </all_vs_all>

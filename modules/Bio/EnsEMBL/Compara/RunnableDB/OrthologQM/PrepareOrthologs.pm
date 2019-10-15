@@ -50,14 +50,15 @@ use warnings;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Utils::Preloader;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 =head2 fetch_input
 
-    Description: Pull orthologs for species 1 and 2 from given database. compara_db will be used unless 
-    alt_homology_db is defined. Homologies may be reused from previous releases by providing the URL in
+    Description: Pull orthologs for species 1 and 2 from given flatfile.
+    Homologies may be reused from previous releases by providing the URL in
     the previous_rel_db param
 
 =cut
@@ -70,14 +71,11 @@ sub fetch_input {
 
     my ($dba, $db_url);
     if ( $self->param('alt_homology_db') ) { 
-        #$db_url = $self->param('alt_homology_db');
         $dba = $self->get_cached_compara_dba('alt_homology_db');
     }
     else {
-        #$db_url = $self->param('compara_db');
         $dba = $self->compara_dba;
     }
-    #$self->param('current_db_url', $db_url);
     $self->param('current_dba', $dba);
 
     $self->dbc->disconnect_if_idle() if $self->dbc;
@@ -86,20 +84,29 @@ sub fetch_input {
     my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
     $self->param('mlss_id', $mlss->dbID);
 
-    my $current_homo_adaptor = $dba->get_HomologyAdaptor;
-    my $current_homologs = $current_homo_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
+    # set up flatfile for reading
+    my $homology_flatfile = $self->param_required('homology_flatfile');
+    open( my $hom_handle, '<', $homology_flatfile ) or die "Cannot read $homology_flatfile";
+    my $header = <$hom_handle>;
+    my @head_cols = split(/\s+/, $header);
+    my @current_homologs;
+    while( my $line = <$hom_handle> ) {
+        my $row = map_row_to_header( $line, \@head_cols );
+        push @current_homologs, $row;
+    }
     
     if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), $current_homologs, $mlss->dbID );
+        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), \@current_homologs, $mlss->dbID );
         $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
-        $self->param( 'orth_objects', $current_homologs );
+        $self->param( 'orth_objects', \@current_homologs );
     }
 
-    # Preload the members
-    my $sms = Bio::EnsEMBL::Compara::Utils::Preloader::expand_Homologies($dba->get_AlignedMemberAdaptor, $self->param('orth_objects'));
-    Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($dba->get_GeneMemberAdaptor, $sms);
+    # Load member info
+    # seq_member.has_transcript_edits
+    # gene_member.dnafrag_id, gene_member.dnafrag_start, gene_member.dnafrag_end
+    $self->_load_member_info;
 
     # Preload the exon boundaries for the whole genomes even though some of the members will be reused
     my $sql = 'SELECT gene_member_id, eb.dnafrag_start, eb.dnafrag_end FROM exon_boundaries eb JOIN gene_member USING (gene_member_id) WHERE genome_db_id IN (?,?)';
@@ -133,29 +140,39 @@ sub run {
     my $c = 0;
 
     my $exon_boundaries = $self->param('exon_boundaries');
+    my $member_info     = $self->param('member_info');
 
-    my @orth_objects = sort {$a->dbID <=> $b->dbID} @{ $self->param('orth_objects') };
+    my @orth_objects = sort {$a->{homology_id} <=> $b->{homology_id}} @{ $self->param('orth_objects') };
     while ( my $orth = shift( @orth_objects ) ) {
-        my @seq_members = @{ $orth->get_all_Members() };
+        my @seq_member_ids = ($orth->{seq_member_id}, $orth->{hom_seq_member_id});
         my (%orth_ranges, @orth_dnafrags, %orth_exons);
         my $has_transcript_edits = 0;
-        foreach my $sm ( @seq_members ){
-            $has_transcript_edits ||= $sm->has_transcript_edits;
-
-            my $gm = $sm->gene_member;
-            push( @orth_dnafrags, { id => $gm->dnafrag_id, start => $gm->dnafrag_start, end => $gm->dnafrag_end } );
-            $orth_ranges{$gm->genome_db_id} = [ $gm->dnafrag_start, $gm->dnafrag_end ];
-            
-            # get exon locations
-            $orth_exons{$gm->genome_db_id} = $exon_boundaries->{$gm->dbID};
+        foreach my $sm_id ( @seq_member_ids ){
+            # $has_transcript_edits ||= $sm->has_transcript_edits;
+            $has_transcript_edits ||= $member_info->{"seq_member_$sm_id"};
         }
-
         # When there are transcript edits, the coordinates cannot be
         # trusted, so it's better to skip the pair
         next if $has_transcript_edits;
+        
+        my @gene_member_ids = ([$orth->{gene_member_id}, $orth->{genome_db_id}], [$orth->{hom_gene_member_id}, $orth->{hom_genome_db_id}]);
+        foreach my $gm ( @gene_member_ids ) {
+            my ( $gm_id, $gdb_id ) = @$gm;
+            push( @orth_dnafrags, { 
+                id => $member_info->{"gene_member_$gm_id"}->{dnafrag_id}, 
+                start => $member_info->{"gene_member_$gm_id"}->{dnafrag_start}, 
+                end => $member_info->{"gene_member_$gm_id"}->{dnafrag_end} 
+            } );
+            $orth_ranges{$gdb_id} = [ $member_info->{"gene_member_$gm_id"}->{dnafrag_start}, $member_info->{"gene_member_$gm_id"}->{dnafrag_end} ];
+            
+            # get exon locations
+            $orth_exons{$gdb_id} = $exon_boundaries->{$gm_id};
+        }
+
+        
 
         push( @orth_info, { 
-            id       => $orth->dbID, 
+            id       => $orth->{homology_id}, 
             orth_ranges   => \%orth_ranges, 
             orth_dnafrags => [sort {$a->{id} <=> $b->{id}} @orth_dnafrags],
             exons         => \%orth_exons,
@@ -203,17 +220,6 @@ sub write_output {
 
         $self->dataflow_output_id( \@reuse_dataflow, 3 ); # to reuse_wga_score
     }
-
-    # flow reusable homologies to have their score copied
-    # if ( defined $self->param('reusable_homologies') ){
-    #     my $current_dba = $self->param('current_dba');
-    #     my $dataflow = {
-    #         previous_rel_db => $self->param('previous_rel_db'),
-    #         current_db      => $self->param('current_db_url'),
-    #         homology_ids    => $self->param('reusable_homologies'),
-    #     };
-    #     $self->dataflow_output_id( $dataflow, 1 ); # to copy_reusable_scores
-    # }
 }
 
 =head2 _reuse_homologies
@@ -238,12 +244,11 @@ sub _reusable_homologies {
     $sth->execute( $mlss_id );
     my $reuse_homologs = $sth->fetchall_hashref('curr_release_homology_id');
 
-    # next, split the homologies into reusable and non-reusable (new)
-    # copy score of reusable homs to new db
+    # now, we split the homologies into reusable and non-reusable (new)
     my ( @reusables, @dont_reuse );
     my %old_id_2_new_hom;
-    foreach my $h ( @{ $current_homologs } ) {
-        my $h_id = $h->dbID;
+    foreach my $h ( @$current_homologs ) {
+        my $h_id = $h->{homology_id};
         my $homolog_map = $reuse_homologs->{ $h_id };
         if ( defined $homolog_map ){
             $old_id_2_new_hom{ $homolog_map->{prev_release_homology_id} } = $h;
@@ -258,7 +263,7 @@ sub _reusable_homologies {
     # check if wga_coverage has already been calculated for these homologies
     foreach my $previous_homolog (@$previous_homologies) {
         next unless defined $previous_homolog->wga_coverage; # score doesn't exist
-        push( @reusables, { homology_id => $old_id_2_new_hom{$previous_homolog->dbID}->dbID, prev_wga_score => $previous_homolog->wga_coverage } );
+        push( @reusables, { homology_id => $old_id_2_new_hom{$previous_homolog->dbID}->{homology_id}, prev_wga_score => $previous_homolog->wga_coverage } );
         delete $old_id_2_new_hom{$previous_homolog->dbID};
     }
     # There is no score for these homologies
@@ -268,6 +273,43 @@ sub _reusable_homologies {
 
     # return nonreuable homologies to the pipeline
     return \@dont_reuse;
+}
+
+=head2 _load_member_info
+
+Load info for seq_members and gene_memmbers that are members of a homology
+- seq_member.has_transcript_edits
+- gene_member.dnafrag_id, gene_member.dnafrag_start, gene_member.dnafrag_end
+Store it in a param 'member_info'
+
+=cut
+
+sub _load_member_info {
+    my $self = shift;
+    
+    my $dba = $self->param('current_dba');
+    my $sm_sql = 'SELECT has_transcript_edits FROM seq_member WHERE seq_member_id = ?';
+    my $sm_sth = $dba->dbc->prepare($sm_sql);
+    my $gm_sql = 'SELECT dnafrag_id, dnafrag_start, dnafrag_end FROM gene_member WHERE gene_member_id = ?';
+    my $gm_sth = $dba->dbc->prepare($gm_sql);
+
+    my $homologies = $self->param('orth_objects');
+    my $member_info;
+    foreach my $hom ( @$homologies ) {
+        my ( $sm_id_1, $gm_id_1, $sm_id_2, $gm_id_2 ) = ( $hom->{seq_member_id}, $hom->{gene_member_id}, $hom->{hom_seq_member_id}, $hom->{hom_gene_member_id} );
+
+        $sm_sth->execute($sm_id_1);
+        $member_info->{"seq_member_$sm_id_1"} = $sm_sth->fetchrow_arrayref->[0];
+        $sm_sth->execute($sm_id_2);
+        $member_info->{"seq_member_$sm_id_2"} = $sm_sth->fetchrow_arrayref->[0];
+        
+        $gm_sth->execute($gm_id_1);
+        $member_info->{"gene_member_$gm_id_1"} = $gm_sth->fetchrow_hashref;
+        $gm_sth->execute($gm_id_2);
+        $member_info->{"gene_member_$gm_id_2"} = $gm_sth->fetchrow_hashref;
+    }
+    
+    $self->param('member_info', $member_info);
 }
 
 1;

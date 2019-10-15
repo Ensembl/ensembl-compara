@@ -53,10 +53,11 @@ sub fetch_input {
 
 	my $cmd;
 
-	$cmd .= "become - $become_user; "  if ( $become_user );
 	foreach my $f ( @filelist ) {
-		$cmd .= "$cp_cmd $f $dest_dir; ";
+        $cmd .= "become $become_user "  if ( $become_user );
+        $cmd .= "$cp_cmd $f $dest_dir && ";
 	}
+    $cmd =~ s/ \&\& $//;
 	$self->param('cmd', $cmd);
 }
 

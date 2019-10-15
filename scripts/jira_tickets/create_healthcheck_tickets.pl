@@ -59,7 +59,7 @@ my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division
 #----------------------------------#
 #          Fetch HC info           #
 #----------------------------------#
-my $testcase_failures = parse_healthchecks($hc_file);
+my $testcase_failures = parse_healthchecks($hc_file, $timestamp);
 
 #----------------------------------#
 #      Create JIRA tickets         #
@@ -97,7 +97,7 @@ my $hc_task_keys = $jira_adaptor->create_tickets(
 $jira_adaptor->link_tickets('Blocks', $hc_task_keys->[0], $blocked_ticket_key, $dry_run);
 
 sub parse_healthchecks {
-    my $hc_file = shift;
+    my ($hc_file, $timestamp) = @_;
     open(my $hc_fh, '<', $hc_file) or die "Cannot open $hc_file for reading";
     my ($results, $testcase, $hc_failures);
     while ( my $line = <$hc_fh> ) {
@@ -107,7 +107,7 @@ sub parse_healthchecks {
         
         my $header = 0;
         if ($line =~ /org\.ensembl\.healthcheck\.testcase\.(\S+)/) {
-            $testcase = $1;
+            $testcase = $1 . " ($timestamp)";
             $header = 1;
         }
         next unless $testcase;

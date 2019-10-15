@@ -161,14 +161,7 @@ sub store_ncrna_gene {
     my $gene_member;
     my $gene_member_stored = 0;
 
-    my $merged_short_and_long_ncRNA = 0;
-    my %biotypes = map{$_->get_Biotype->biotype_group => 1}@{$gene->get_all_Transcripts};
-    if ((scalar keys %biotypes > 1) and (defined $biotypes{'lnoncoding'})) {
-        $merged_short_and_long_ncRNA = 1;
-    }
-
     for my $transcript (@{$gene->get_all_Transcripts}) {
-        next if ($merged_short_and_long_ncRNA and ($transcript->get_Biotype->biotype_group eq 'lnoncoding'));
 
         if (defined $transcript->translation) {
             warn ("Translation exists for ncRNA transcript ", $transcript->stable_id, "(dbID=", $transcript->dbID. ")\n");
@@ -223,14 +216,13 @@ sub store_ncrna_gene {
 
         $self->_store_seq_member_projection($ncrna_member, $transcript);
 
-        ## Probably we will include here the hack to avoid merged lincRNAs and short ncRNAs
         if (length($transcript_spliced_seq) > $max_ncrna_length) {
             $max_ncrna_length = length($transcript_spliced_seq);
             $longest_ncrna_member = $ncrna_member;
         }
     }
     if (defined $longest_ncrna_member) {
-        $seq_member_adaptor->_set_member_as_canonical($longest_ncrna_member); ## Watchout merged genes!
+        $seq_member_adaptor->_set_member_as_canonical($longest_ncrna_member);
     }
 
     return $gene_member;

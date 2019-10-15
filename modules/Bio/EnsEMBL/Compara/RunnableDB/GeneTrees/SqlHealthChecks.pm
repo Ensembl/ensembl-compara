@@ -325,8 +325,8 @@ our $config = {
         params => [ 'gene_tree_id' ],
         tests => [
             {
-                description => 'Checks that the gene tree is binary (and minimized)',
-                query => 'SELECT gtn1.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn1 ON gtr.root_id=gtn1.root_id JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY clusterset_id, gtn1.root_id, gtn1.node_id HAVING COUNT(*) != IF(gtn1.node_id!=gtn1.root_id OR clusterset_id IN ("default","murinae") OR clusterset_id LIKE "nj-%" OR clusterset_id LIKE "mur\_nj-%" OR clusterset_id LIKE "phyml-%" OR clusterset_id LIKE "mur\_phyml-%" OR clusterset_id LIKE "rax%" OR clusterset_id LIKE "notung%" OR clusterset_id LIKE "treerecs%" OR clusterset_id LIKE "mur_rax%" OR clusterset_id LIKE "pg\_%" OR clusterset_id LIKE "mur\_pg\_%",2, IF(COUNT(*) = 2 AND COUNT(gtn2.seq_member_id) = 2, 2, 3) )',
+                description => 'Checks that the gene tree is binary (and minimized). Note: the root node is only checked for the default trees.',
+                query => 'SELECT gtn1.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn1 ON gtr.root_id=gtn1.root_id JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# AND (gtn1.node_id != gtn1.root_id OR gtr.ref_root_id IS NULL) GROUP BY clusterset_id, gtn1.root_id, gtn1.node_id HAVING COUNT(*) != 2',
             },
 
             {
@@ -376,7 +376,7 @@ our $config = {
         tests => [
             {
                 description => 'All the internal tree nodes should have a node_type and species tree information',
-                query => 'SELECT gtn.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn USING (root_id) LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type IS NULL OR (species_tree_node_id IS NULL AND clusterset_id NOT LIKE "ftga\_%" AND clusterset_id NOT LIKE "mur\_ftga\_%" AND clusterset_id NOT LIKE "ml\_it\_%" AND clusterset_id NOT LIKE "mur\_ml\_it\_%" AND clusterset_id NOT IN ("pg_it_phyml", "mur_pg_it_phyml", "ft_it_ml", "mur_ft_it_ml") AND clusterset_id NOT LIKE "ss\_it\_%" AND clusterset_id NOT LIKE "mur\_ss\_it\_%" ))',
+                query => 'SELECT gtn.node_id FROM gene_tree_root gtr JOIN gene_tree_node gtn USING (root_id) LEFT JOIN gene_tree_node_attr gtna USING (node_id) WHERE gtn.root_id = #gene_tree_id# AND seq_member_id IS NULL AND (node_type IS NULL OR (species_tree_node_id IS NULL AND (ref_root_id IS NULL OR clusterset_id LIKE "%nj-%" OR clusterset_id LIKE "%phyml-%" OR clusterset_id LIKE "%raxml%" OR clusterset_id LIKE "%pg\_it\_nj")))',
             },
             {
                 description => 'Leaves should not have attributes',
@@ -479,7 +479,7 @@ our $config = {
 
             {
                 description => 'The "gene_count" tags of sub-trees must sum-up to their super-tree\'s gene count',
-                query => 'SELECT gtr1.root_id, COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_attr gtra1 USING (root_id)) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE tree_type = "supertree" AND clusterset_id IN ("default","murinae") GROUP BY gtr1.root_id HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
+                query => 'SELECT gtr1.root_id, COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_attr gtra1 USING (root_id)) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE tree_type = "supertree" GROUP BY gtr1.root_id HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
         ],
     },

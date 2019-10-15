@@ -1,1 +1,3 @@
-36126	R.nor-M.mul	2	80	\N
+2	poly_only	1	99	\N
+1	test1-test2	2	99	\N
+3	test1-poly	2	99	\N

@@ -23,9 +23,7 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-BEGIN {
-    use Test::Most;
-}
+use Test::Most;
 
 # check module can be seen and compiled
 use_ok('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping'); 
@@ -47,11 +45,11 @@ my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($test_ho
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping', # module
 	{ # input param hash
-		'mlss_id' => $test_homology_mlss_id,
-        'previous_mlss_id' => $test_homology_mlss_id,
-        'homology_flatfile' => $curr_hom_flatfile,
+        'mlss_id'                => $test_homology_mlss_id,
+        'previous_mlss_id'       => $test_homology_mlss_id,
+        'homology_flatfile'      => $curr_hom_flatfile,
         'prev_homology_flatfile' => $prev_hom_flatfile,
-        'compara_db' => $compara_dba->url,
+        'compara_db'             => $compara_dba->url,
 	}
 );
 

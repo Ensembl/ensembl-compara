@@ -37,6 +37,13 @@ my $dba = $multi_db->get_DBAdaptor('cc21_prepare_orth');
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-dbconn => $dba->dbc);
 my $compara_db = $dbc->url;
 
+# find absolute path to the test output
+# important for travis-ci
+use Cwd 'abs_path';
+my $test_flatfile = abs_path($0);
+$test_flatfile    =~ s!PrepareOrthologs\.t!homology_flatfiles/wga.test.tsv!;
+print "\n --- test flatfile: $test_flatfile\n";
+
 # Test on pair of species without reuse #
 $exp_dataflow = [
 	{ orth_batch => [
@@ -74,10 +81,11 @@ $exp_dataflow = [
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
-		'species1_id'     => '150',
-		'species2_id'     => '134',
-		'compara_db'      => $compara_db,
-		'orth_batch_size' => 1,
+		'species1_id'       => '150',
+		'species2_id'       => '134',
+		'compara_db'        => $compara_db,
+		'orth_batch_size'   => 1,
+	        'homology_flatfile' => $test_flatfile,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event
@@ -115,12 +123,12 @@ my $exp_dataflow_2 = [  { orth_batch =>
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
-		'species1_id'     => '150',
-		'species2_id'     => '134',
-		'compara_db'      => $compara_db,
-		'previous_rel_db' => $prev_compara_db,
-		'orth_batch_size' => 1
-
+		'species1_id'       => '150',
+		'species2_id'       => '134',
+		'compara_db'        => $compara_db,
+		'previous_rel_db'   => $prev_compara_db,
+		'orth_batch_size'   => 1,
+        	'homology_flatfile' => $test_flatfile,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event
@@ -143,12 +151,12 @@ standaloneJob(
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs', # module
 	{ # input param hash
-		'species1_id'     => '150',
-		'species2_id'     => '134',
-		'compara_db'      => $compara_db,
-		'previous_rel_db' => $prev_compara_db,
-		'orth_batch_size' => 2
-
+		'species1_id'       => '150',
+		'species2_id'       => '134',
+		'compara_db'        => $compara_db,
+		'previous_rel_db'   => $prev_compara_db,
+		'orth_batch_size'   => 2,
+        	'homology_flatfile' => $test_flatfile,
 	},
 	[ # list of events to test for (just 1 event in this case)
 		[ # start event

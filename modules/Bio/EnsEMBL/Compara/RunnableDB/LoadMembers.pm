@@ -252,15 +252,23 @@ sub loadMembersFromCoreSlices {
 
           my $gene_member;
 
-          if ($self->param('store_coding') && (($biotype_group eq 'coding') or ($biotype_group eq 'lrg'))) {
-              $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
-              
-          } elsif ( $self->param('store_ncrna') && ($biotype_group =~ /noncoding$/) ) {
-              $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
+          if (($biotype_group eq 'coding') or ($biotype_group eq 'lrg')) {
 
-          } elsif ( $self->param('store_others') ) {
-              # Catches pseudogenes, but also "undefined" and "no_group", and also non-current or non-dumped biotypes
+            if ($self->param('store_coding')) {
+              $gene_member = $self->store_protein_coding_gene_and_all_transcripts($gene, $dnafrag);
+            }
+
+          } elsif ( $biotype_group =~ /noncoding$/) {
+
+            if ($self->param('store_ncrna')) {
+              $gene_member = $self->store_ncrna_gene($gene, $dnafrag);
+            }
+
+          } else {
+              # Catches pseudogenes, but also "undefined" and "no_group"
+            if ($self->param('store_others')) {
               $gene_member = $self->store_gene_generic($gene, $dnafrag);
+            }
           }
 
           unless ($gene_member) {

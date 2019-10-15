@@ -254,6 +254,16 @@ sub store {
 
 }
 
+sub delete {
+    my ($self, $gene_member) = @_;
+    foreach my $seq_member (@{$gene_member->get_all_SeqMembers}) {
+        $seq_member->adaptor->delete($seq_member);
+    }
+    $self->dbc->do('DELETE FROM gene_member_qc          WHERE gene_member_stable_id = ?', undef, $gene_member->stable_id);
+    $self->dbc->do('DELETE FROM member_xref             WHERE gene_member_id = ?', undef, $gene_member->dbID);
+    $self->dbc->do('DELETE FROM gene_member_hom_stats   WHERE gene_member_id = ?', undef, $gene_member->dbID);
+    $self->dbc->do('DELETE FROM gene_member             WHERE gene_member_id = ?', undef, $gene_member->dbID);
+}
 
 1;
 
