@@ -591,6 +591,7 @@ sub _post_request {
         undef $self->{_password};
     }
     # Return the response content
+    return "" unless $response->content();
     return decode_json($response->content());
 }
 
