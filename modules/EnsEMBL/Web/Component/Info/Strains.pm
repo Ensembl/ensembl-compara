@@ -46,13 +46,14 @@ sub content {
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, sprintf('/%s_strains.inc', $hub->species), 1);
 
   my $strains = $sd->ALL_STRAINS || [];
+  my $strain_type = $sd->STRAIN_TYPE;
   if (scalar @$strains) {
     my $columns = [
-        { key => 'strain',      title => 'Strain',          width => '30%', align => 'left', sort => 'html'   },
+        { key => 'strain',      title => ucfirst $strain_type, width => '30%', align => 'left', sort => 'html'   },
         { key => 'species',     title => 'Scientific name', width => '20%', align => 'left', sort => 'string' },
         { key => 'assembly',    title => 'Ensembl Assembly',width => '15%', align => 'left' },
         { key => 'accession',   title => 'Accession',       width => '15%', align => 'left' },
-        { key => 'more',   title => 'More information', width => '20%', align => 'left' },
+        { key => 'more',        title => 'More information', width => '20%', align => 'left' },
     ];
     my $table = EnsEMBL::Web::Document::Table->new($columns, [], { data_table => 1, exportable => 1 });
 
@@ -97,7 +98,7 @@ sub content {
     $html .= $table->render;
   }
   else {
-    $html = "<p>Sorry, couldn't find any strains for this species.</p>";
+    $html = "<p>Sorry, couldn't find any ${strain_type}s for this species.</p>";
   }
 
   return $html;
