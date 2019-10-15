@@ -87,8 +87,6 @@ sub default_options {
         'store_ncrna'               => 1,
         # Store other genes
         'store_others'              => 1,
-        # Only needed in e99
-        'fix_ncrna_members'         => 1,
 
     #load uniprot members for family pipeline
         'load_uniprot_members'      => 1,
