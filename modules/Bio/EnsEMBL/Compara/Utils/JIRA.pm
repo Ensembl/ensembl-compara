@@ -45,6 +45,8 @@ use Bio::EnsEMBL::Utils::Logger;
                    environment variable $CURR_ENSEMBL_RELEASE as default.
   Arg[-PROJECT]  : (optional) string - JIRA project name. By default,
                    'ENSCOMPARASW'.
+  Arg[-LOGLEVEL] : (optional) string - log verbosity (accepted values defined at
+                   Bio::EnsEMBL::Utils::Logger->level_defs). By default, 'info'.
   Example     : my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA('user', 'relco', 'metazoa', 97);
   Description : Creates a new JIRA object
   Return type : Bio::EnsEMBL::Compara::Utils::JIRA object
@@ -55,20 +57,18 @@ use Bio::EnsEMBL::Utils::Logger;
 sub new {
     my $caller = shift;
     my $class = ref($caller) || $caller;
-    my ( $user, $relco, $division, $release, $project ) = rearrange(
-        [qw(USER RELCO DIVISION RELEASE PROJECT)], @_);
+    my ( $user, $relco, $division, $release, $project, $loglevel ) = rearrange(
+        [qw(USER RELCO DIVISION RELEASE PROJECT LOGLEVEL)], @_);
     my $self = {};
     bless $self, $class;
     # Initialize logger
-    $self->{_logger} = Bio::EnsEMBL::Utils::Logger->new(-LOGLEVEL => 'info');
+    $self->{_logger} = Bio::EnsEMBL::Utils::Logger->new(-LOGLEVEL => $loglevel || 'info');
     # Set username that will be used to create the JIRA tickets
-    if ($user) {
-        $self->{_user} = $self->_validate_username($user);
-    } else {
-        $self->{_user} = $self->_validate_username($ENV{'USER'});
-    }
-    $self->{_relco} = ($relco) ? $self->_validate_username($relco) : $self->{_user};
+    $self->{_user} = $user || $ENV{'USER'};
+    $self->{_relco} = $relco || $self->{_user};
     $self->{_project} = $project || 'ENSCOMPARASW';
+    # Initialise user's password
+    $self->{_password} = $self->_request_password();
     # If any of the following parameters are missing, get them from Compara
     # production environment
     # (https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Environment)
@@ -139,11 +139,6 @@ sub create_tickets {
     $default_issue_type ||= 'Task';
     $default_priority   ||= 'Major';
     $dry_run            ||= 0;
-    # Request password (if not available already)
-    my $defined_password = defined $self->{_password};
-    if (! $defined_password) {
-        $self->{_password} = $self->_request_password();
-    }
     # Generate the list of JIRA tickets from each JSON hash
     my $jira_tickets = ();
     foreach my $json_ticket ( @$json_ticket_list ) {
@@ -207,10 +202,6 @@ sub create_tickets {
             }
         }
     }
-    # If the password was requested for this task, forget it before returning
-    if (! $defined_password) {
-        undef $self->{_password};
-    }
     return $ticket_key_list;
 }
 
@@ -232,11 +223,6 @@ sub fetch_tickets {
     my ( $jql, $max_results ) = rearrange([qw(JQL MAX_RESULTS)], @_);
     # Set default values for optional arguments
     $max_results ||= 300;
-    # Request password (if not available already)
-    my $defined_password = defined $self->{_password};
-    if (! $defined_password) {
-        $self->{_password} = $self->_request_password();
-    }
     # Add the restrictions to fetch only tickets for the given project, release
     # and division
     # NOTE: JQL queries require whitespaces to be in their Unicode equivalent
@@ -250,10 +236,6 @@ sub fetch_tickets {
     $final_jql .= " AND $jql" if ($jql);
     # Send a search POST request for the given JQL query
     my $tickets = $self->_post_request('search', {'jql' => $final_jql, 'maxResults' => $max_results});
-    # If the password was requested for this task, forget it before returning
-    if (! $defined_password) {
-        undef $self->{_password};
-    }
     return $tickets;
 }
 
@@ -280,11 +262,6 @@ sub link_tickets {
         [qw(LINK_TYPE INWARD_KEY OUTWARD_KEY DRY_RUN)], @_);
     # Set default values for optional arguments
     $dry_run ||= 0;
-    # Request password (if not available already)
-    my $defined_password = defined $self->{_password};
-    if (! $defined_password and ! $dry_run) {
-        $self->{_password} = $self->_request_password();
-    }
     # Check if the issue link type requested is correct
     my %jira_link_types = map { $_ => 1 } ('After', 'Before', 'Blocks', 'Cloners', 'Duplicate',
                                            'Issue split', 'Related', 'Relates', 'Required');
@@ -307,32 +284,6 @@ sub link_tickets {
     } else {
         my $type_list = join("\n", sort keys %jira_link_types);
         $self->{_logger}->error("Unexpected link type '$link_type'! Allowed link types:\n$type_list");
-    }
-    # If the password was requested for this task, forget it before returning
-    if (! $defined_password and ! $dry_run) {
-        undef $self->{_password};
-    }
-}
-
-=head2 _validate_username
-
-  Arg[1]      : string $user - a JIRA username
-  Example     : my $user = $jira_adaptor->_validate_username('username');
-  Description : Checks if the provided username is valid, and if so, returns it
-  Return type : string
-  Exceptions  : none
-
-=cut
-
-sub _validate_username {
-    my ( $self, $user ) = @_;
-    my %compara_members = map { $_ => 1 } qw(carlac cristig dthybert jalvarez muffato);
-    # Do a case insensitive user matching
-    if (exists $compara_members{lc $user}) {
-        return lc $user;
-    } else {
-        my $user_list = join("\n", sort keys %compara_members);
-        $self->{_logger}->error("Unexpected user '$user'! Allowed user names:\n$user_list");
     }
 }
 
@@ -432,7 +383,7 @@ sub _json_to_jira {
     # $jira_hash{'assignee'}
     if ($json_hash->{'assignee'}) {
         my $assignee = $self->_replace_placeholders($json_hash->{'assignee'});
-        $jira_hash{'assignee'} = { 'name' => $self->_validate_username($assignee) };
+        $jira_hash{'assignee'} = { 'name' => $assignee };
     }
     # $jira_hash{'parent'}
     if ($json_hash->{'parent'}) {
@@ -560,11 +511,6 @@ sub _post_request {
     my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action;
     $self->{_logger}->debug("POST Request on $url\n");
     my $request = HTTP::Request->new('POST', $url);
-    # Request password (if not available already)
-    my $defined_password = defined $self->{_password};
-    if (! $defined_password) {
-        $self->{_password} = $self->_request_password();
-    }
     $request->authorization_basic($self->{_user}, $self->{_password});
     # The content data will be sent in JSON format
     $request->header('Content-Type' => 'application/json');
@@ -585,10 +531,6 @@ sub _post_request {
     } elsif (! $response->is_success()) {
         my $error_message = $response->as_string();
         $self->{_logger}->error($error_message, 0, 0);
-    }
-    # If the password was requested for this task, forget it before returning
-    if (! $defined_password) {
-        undef $self->{_password};
     }
     # Return the response content
     return "" unless $response->content();
