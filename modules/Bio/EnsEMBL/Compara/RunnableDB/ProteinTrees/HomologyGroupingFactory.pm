@@ -103,18 +103,17 @@ sub fetch_input {
     return unless $self->param('reuse_db'); # no need to check mapping if no reuse_db is specified
 
     #Get homology id mapping
-    my $sql_2 = 'SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ?';
-    my %homology_map;
-    my $sth_2 = $self->compara_dba->dbc->prepare($sql_2);
-    $sth_2->execute($mlss_id);
-
-    while( my ($curr_release_homology_id, $prev_release_homology_id) = $sth_2->fetchrow() ) {
-        if($prev_release_homology_id){
-            $homology_map{$curr_release_homology_id} = $prev_release_homology_id;
-        }
+    my $hom_map_file = $self->param_required('homology_mapping_flatfile');
+    my $homology_map;
+    open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for writing";
+    my $header = <$hmfh>;
+    my @head_cols = split(/\s+/, $header);
+    while ( my $line = <$hmfh> ) {
+        my $row = map_row_to_header( $line, \@head_cols );
+        $homology_map->{$row->{curr_release_homology_id}} = $row->{prev_release_homology_id};
     }
 
-    $self->param('homology_map', \%homology_map);
+    $self->param('homology_map', $homology_map);
 }
 
 
