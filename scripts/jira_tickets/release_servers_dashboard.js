@@ -20,22 +20,29 @@ var release = $.urlParam("release");
 
 $('body').append('<h1>Release ' + release + ' - Server usage dashboard</h1>');
 
+function process_ticket(ticket) {
+    // The ticket information is as follows:
+    //     summary [for division] (assignee)
+    // NOTE: the part between brackets will be ommited if the field is null
+    var ticket_info = ticket.fields.summary;
+    if (ticket.fields.customfield_11130) {
+        ticket_info += ' for ' + ticket.fields.customfield_11130.value;
+    }
+    ticket_info += ' (<i>' + ticket.fields.assignee.name + '</i>)';
+    return ticket_info;
+}
+
 function process_server(server) { return function(json) {
     var n_tickets = json.issues.length;
     var table = $('<table class="server_dashboard"></table>').appendTo('#cp' + server);
     table.append('<tbody><tr id="usage_cp' + server + '"><th>mysql-ens-compara-prod-' + server + '</th></tr>');
     if (n_tickets) {
         $('#usage_cp' + server).append('<td><div class="status_bar"><div class="yellow_light" style="width:100%"><i>busy</i></div></div></td>');
-        var ticket =json.issues[0];
-        var summary = ticket.fields.summary;
-        var division = ticket.fields.customfield_11130.value;
-        var asignee = ticket.fields.assignee.name;
-        $('#usage_cp' + server).append('<td class="ticket_summary">' + summary + ' for ' + division + ' (<i>' + asignee + '</i>)</td>');
+        var ticket_info = process_ticket(json.issues[0]);
+        $('#usage_cp' + server).append('<td class="ticket_summary">' + ticket_info + '</td>');
         for (var i = 1; i < n_tickets; i++) {
-            var ticket =json.issues[i];
-            var summary = ticket.fields.summary;
-            var asignee = ticket.fields.assignee.name;
-            table.append('<tr><th></th><td></td><td class="ticket_summary">' + summary + ' for ' + division + ' (<i>' + asignee + '</i>)</td></tr>');
+            var ticket_info = process_ticket(json.issues[i]);
+            table.append('<tr><th></th><td></td><td class="ticket_summary">' + ticket_info + '</td></tr>');
         }
     } else {
         $('#usage_cp' + server).append('<td><div class="status_bar"><div class="green_light" style="width:100%"><i>free</i></div></div></td><td class="ticket_summary"></td>');
