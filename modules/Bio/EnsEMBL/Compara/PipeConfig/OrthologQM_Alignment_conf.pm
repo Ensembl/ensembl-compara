@@ -123,6 +123,10 @@ sub default_options {
         # 'alt_aln_dbs'      => undef,
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
+        
+        # this location should be changed if the homology pipelines are still in progress
+        # (the files only get copied to 'homology_dumps_shared_basedir' at the end of the pipelines)
+        'homology_dumps_dir' => $self->o('homology_dumps_shared_basedir'),
 
         'orth_batch_size'  => 10, # set how many orthologs should be flowed at a time
     };
@@ -256,8 +260,8 @@ sub pipeline_analyses {
             -analysis_capacity => 1,
         },
 
-        {   -logic_name => 'copy_funnel',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::CopyFunnel',
+        {   -logic_name => 'ortholog_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -flow_into  => {
                 2 => [ 'prepare_orthologs' ],
             }
@@ -265,6 +269,10 @@ sub pipeline_analyses {
 
         {   -logic_name => 'prepare_orthologs',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PrepareOrthologs',
+            -parameters => {
+                'hashed_mlss_id'            => '#expr(dir_revhash(#orth_mlss_id#))expr#',
+                'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.homology_id_map.tsv',
+            },
             -analysis_capacity  =>  50,  # use per-analysis limiter
             -flow_into => {
                 2 => [ 'calculate_wga_coverage' ],
