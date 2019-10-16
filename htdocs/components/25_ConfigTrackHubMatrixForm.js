@@ -27,11 +27,14 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     Ensembl.EventManager.register('modalOpen', this, this.modalOpen);
 
     //getting the node id from the panel url (menu=) to pass to ajax request to get imageconfig
-    var menu_match    = $(this.params.links).find('li.active a').attr('href').match(/menu=([^;&]+)/g);
+    var clickedLink   = this.params.clickedLink.find('a');
+    var clickedHref   = clickedLink.attr('href');
+
+    var menu_match    = clickedHref.match(/menu=([^;&]+)/g);
     this.node_id      = menu_match[0].split("=")[1];
-    var species_match = $(this.params.links).find('li.active a').attr('href').match(/th_species=([^;&]+)/g);
+    var species_match = clickedHref.match(/th_species=([^;&]+)/g);
     var species_name  = species_match[0].split("=")[1];
-    var menu_span_on  = $(this.params.links).find('li.active a').siblings('.count').children('.on')[0];
+    var menu_span_on  = clickedLink.siblings('.count').children('.on')[0];
 
     this.disableYdim = window.location.href.match("Regulation/Summary") ? 1 : 0;
 
