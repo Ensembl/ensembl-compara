@@ -10,7 +10,7 @@
 
 # Deprecated methods scheduled for deletion
 
-* `DBSQL::'*MemberAdaptor::get_source_taxon_count()` in Ensembl 99
+(none)
 
 # Deprecated methods not yet scheduled for deletion
 
@@ -18,6 +18,10 @@
 * `GenomicAlignTree::get_all_GenomicAligns()`
 
 # Methods removed in previous versions of Ensembl
+
+## Ensembl 100
+
+* `DBSQL::'*MemberAdaptor::get_source_taxon_count()`
 
 ## Ensembl 98
 

@@ -60,7 +60,7 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
@@ -353,12 +353,6 @@ sub count_all_by_source_taxon {
     $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
     $self->bind_param_generic_fetch($taxon_id, SQL_INTEGER);
     return $self->generic_count('source_name=? AND taxon_id=?');
-}
-
-sub get_source_taxon_count {
-    my $self = shift;
-    deprecate('*MemberAdaptor::get_source_taxon_count is deprecated and will be removed in e99. Use count_all_by_source_taxon instead');
-    return $self->count_all_by_source_taxon(@_);
 }
 
 
