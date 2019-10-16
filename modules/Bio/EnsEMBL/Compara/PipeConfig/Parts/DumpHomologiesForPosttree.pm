@@ -59,7 +59,6 @@ sub pipeline_analyses_dump_homologies_posttree {
         { -logic_name => 'dump_per_mlss_homologies_tsv',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpHomologiesTSV',
           -parameters => {
-              'db_conn'     => '#compara_db#',
               'hashed_id'   => '#expr(dir_revhash(#mlss_id#))expr#',
               'output_file' => '#homology_dumps_dir#/#hashed_id#/#mlss_id#.#member_type#.homologies.tsv',
               # WHERE hm1.gene_member_id < hm2.gene_member_id avoids duplication of data in different orientation
@@ -79,9 +78,8 @@ sub pipeline_analyses_dump_homologies_posttree {
               |,              
           },
           -hive_capacity => 10,
-        },
-        
-        
+          -rc_name => '500Mb_job',
+        },        
     ];
 }
 
