@@ -669,7 +669,7 @@ sub get_scientific_name {
 
     my $n = $self->taxon_id ? (($self->{'_taxon'} || $self->adaptor) ? $self->taxon->scientific_name : 'Taxon ' . $self->taxon_id) : $self->name;
     if (my $strain_name = $self->strain_name) {
-        my ($foo, $unqualified_strain_name) = split(/  */, $strain_name, 2);
+        my ($foo, $unqualified_strain_name) = split(/ +/, $strain_name, 2);
         $n .= " $strain_name" if $n !~ /\b$unqualified_strain_name$/;
     }
     $n .= sprintf(' (component %s)', $self->genome_component) if $self->genome_component;
