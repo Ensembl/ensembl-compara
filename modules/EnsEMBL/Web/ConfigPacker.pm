@@ -1716,7 +1716,7 @@ sub _munge_meta {
     $self->tree->{'SPECIES_META_ID'} = $species_id;
 
     ## fall back to 'strain' if no strain type set
-    if ($self->tree->{'STRAIN_GROUP'} && !$self->tree->{'STRAIN_TYPE'}) {
+    if (!$self->tree->{'STRAIN_TYPE'}) {
       $self->tree->{'STRAIN_TYPE'} = 'strain';
     }
 
