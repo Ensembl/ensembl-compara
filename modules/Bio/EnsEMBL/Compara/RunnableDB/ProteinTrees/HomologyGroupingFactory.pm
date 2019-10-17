@@ -68,6 +68,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory
 
 use strict;
 use warnings;
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -84,34 +85,48 @@ sub fetch_input {
 
     my $mlss_id = $self->param_required('homo_mlss_id');
 
-    my $sql_1;
-    if ( $self->param('do_gene_qc') ) {
-        $sql_1 = 'SELECT homology_id FROM homology JOIN homology_member USING (homology_id) LEFT JOIN gene_member_qc USING (seq_member_id) WHERE method_link_species_set_id = ? GROUP BY homology_id HAVING COUNT(status) = 0;';
-    }
-    else {
-        $sql_1 = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description != "gene_split" ORDER BY homology_id';
-    }
-    my $sth_1 = $self->compara_dba->dbc->prepare($sql_1);
 
-    my @homology_ids = ();
-    $sth_1->execute($mlss_id);
-    while( my ($homology_id) = $sth_1->fetchrow() ) {
+    my @homology_ids;
+    my $homology_flatfile = $self->param_required('homology_flatfile');
+    my $do_gene_qc = $self->param('do_gene_qc');
+    my $qc_status;
+    if ( $do_gene_qc ) {
+        my $sql = "SELECT seq_member_id, status FROM gene_member_qc";
+        my $sth = $self->compara_dba->dbc->prepare($sql);
+        $sth->execute();
+        while( my ($stable_id, $status) = $sth->fetchrow() ) {
+            $qc_status->{$stable_id} = $status;
+        }
+    }
+    
+    open( my $hffh, '<', $homology_flatfile ) or die "Cannot open $homology_flatfile for reading";
+    my $hheader = <$hffh>;
+    my @hhead_cols = split(/\s+/, $hheader);
+    while( my $line = <$hffh> ) {
+        my $row = map_row_to_header( $line, \@hhead_cols );
+        my ( $homology_id, $homology_type, $sm_id_1, $sm_id_2 ) = ($row->{homology_id}, $row->{homology_type}, $row->{seq_member_id}, $row->{hom_seq_member_id});
+        next if (!$do_gene_qc) && $homology_type eq 'gene_split';
+        next if $do_gene_qc && (defined $qc_status->{$sm_id_1} || defined $qc_status->{$sm_id_2});
         push @homology_ids, $homology_id;
     }
+    close $hffh;
 
     $self->param('inputlist', \@homology_ids);
-    return unless $self->param('reuse_db'); # no need to check mapping if no reuse_db is specified
+
+    # check if a homology id mapping exists
+    my $hom_map_file = $self->param('homology_mapping_flatfile');
+    return unless defined $hom_map_file && -e $hom_map_file;
 
     #Get homology id mapping
-    my $hom_map_file = $self->param_required('homology_mapping_flatfile');
     my $homology_map;
-    open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for writing";
-    my $header = <$hmfh>;
-    my @head_cols = split(/\s+/, $header);
+    open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for reading";
+    my $mheader = <$hmfh>;
+    my @mhead_cols = split(/\s+/, $mheader);
     while ( my $line = <$hmfh> ) {
-        my $row = map_row_to_header( $line, \@head_cols );
+        my $row = map_row_to_header( $line, \@mhead_cols );
         $homology_map->{$row->{curr_release_homology_id}} = $row->{prev_release_homology_id};
     }
+    close $hmfh;
 
     $self->param('homology_map', $homology_map);
 }
