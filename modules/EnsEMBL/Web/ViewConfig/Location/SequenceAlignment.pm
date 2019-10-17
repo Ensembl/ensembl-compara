@@ -78,10 +78,11 @@ sub form_fields {
 
   # Reference strain field
   if ($ref_strain) {
+    my $strain_type = $self->hub->species_defs->STRAIN_TYPE || 'strain';
     $markup->{'reference_sample'} = {
       'type'  => 'NoEdit',
       'name'  => 'reference_sample',
-      'label' => 'Reference strain',
+      'label' => "Reference $strain_type",
       'value' => $ref_strain
     };
   }
