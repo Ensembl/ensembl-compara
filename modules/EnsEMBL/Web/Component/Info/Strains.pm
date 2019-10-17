@@ -41,12 +41,12 @@ sub content {
   my $sd    = $hub->species_defs;
   my $html;
 
-  $html .= sprintf '<h1>%s strains</h1>', $sd->SPECIES_COMMON_NAME;
+  my $strain_type = $sd->STRAIN_TYPE;
+  $html .= sprintf '<h1>%s %ss</h1>', $sd->SPECIES_COMMON_NAME, $strain_type;
 
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, sprintf('/%s_strains.inc', $hub->species), 1);
 
   my $strains = $sd->ALL_STRAINS || [];
-  my $strain_type = $sd->STRAIN_TYPE;
   if (scalar @$strains) {
     my $columns = [
         { key => 'strain',      title => ucfirst $strain_type, width => '30%', align => 'left', sort => 'html'   },
