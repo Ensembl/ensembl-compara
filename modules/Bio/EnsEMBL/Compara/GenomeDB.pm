@@ -187,7 +187,17 @@ sub db_adaptor {
             my $was_connected       = $dba->{_dbc}->connected;
             my $meta_container      = $dba->get_MetaContainer;
             my $genome_container    = $dba->get_GenomeContainer;
-            my $strain_name         = ($meta_container->single_value_by_key('strain.type') || 'strain') . ' ' . $meta_container->single_value_by_key('species.strain');
+            my $strain_type         = $meta_container->single_value_by_key('strain.type');
+            my $strain_name         = $meta_container->single_value_by_key('species.strain');
+
+            if ($strain_name) {
+                $strain_type //= 'strain';
+                if ($strain_name =~ /\breference\b/i) {
+                    $strain_name = "$strain_name $strain_type";
+                } else {
+                    $strain_name = "$strain_type $strain_name";
+                }
+            }
 
             $self->name( $meta_container->get_production_name );
             $self->assembly( $dba->assembly_name );
