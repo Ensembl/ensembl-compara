@@ -68,6 +68,8 @@ sub fetch_input {
 
     my $species1_id = $self->param_required('species1_id');
     my $species2_id = $self->param_required('species2_id');
+    my $dba = $self->param('alt_homology_db') ? $self->get_cached_compara_dba('alt_homology_db') : $self->compara_dba;
+    $self->param('current_dba', $dba);
 
     # set up flatfile for reading
     my $homology_flatfile = $self->param_required('homology_flatfile');
@@ -225,7 +227,7 @@ sub _reusable_homologies {
     # first, find reusable homologies based on id mapping file
     my $hom_map_file = $self->param_required('homology_mapping_flatfile');
     my $reuse_homologs;
-    open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for writing";
+    open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for reading";
     my $header = <$hmfh>;
     my @head_cols = split(/\s+/, $header);
     while ( my $line = <$hmfh> ) {
@@ -246,7 +248,6 @@ sub _reusable_homologies {
             push( @dont_reuse, $h );
         }
     }
-    $sth->finish;
 
     my $previous_homologies = $previous_homo_adaptor->fetch_all_by_dbID_list([keys %old_id_2_new_hom]);
     # check if wga_coverage has already been calculated for these homologies
