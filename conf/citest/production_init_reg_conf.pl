@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,39 +16,35 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::ConfigRegistry;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
-my $curr_release = 98;
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::Utils::Registry;
 
-# ---------------------- CURRENT CORE DATABASE ---------------------------------
+my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
+my $prev_release = $curr_release - 1;
+
+# ---------------------CURRENT CORE DATABASES------------------------
 
 # The majority of core databases live on staging servers:
 # Bio::EnsEMBL::Registry->load_registry_from_url(
-#     "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
+#    "mysql://ensro\@mysql-ens-sta-1.ebi.ac.uk:4519/$curr_release");
 Bio::EnsEMBL::Registry->load_registry_from_url(
     "mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-# Wheat (tiritcum aestivum) is located in a different server between releases:
-# Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#     -host    => 'mysql-ens-sta-3',
-#     -user    => 'ensro',
-#     -pass    => '',
-#     -port    => 4160,
-#     -species => 'triticum_aestivum',
-#     -dbname  => 'triticum_aestivum_core_45_98_4',
-# );
 
-# ---------------------- COMPARA DATABASE LOCATION -----------------------------
+# Add in extra cores from genebuild server:
+# my $extra_core_dbs = {
+#     'cyprinus_carpio_german_mirror' => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_germanmirror_core_99_10" ],
+#     'cyprinus_carpio_hebao_red'     => [ 'mysql-ens-vertannot-staging', "cyprinus_carpio_hebaored_core_99_10" ],
+# };
+#
+# Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $extra_core_dbs );
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host    => 'mysql-ens-compara-prod-7',
-    -user    => 'ensadmin',
-    -pass    => $ENV{'ENSADMIN_PSW'},
-    -port    => 4617,
-    -species => 'compara_master',
-    -dbname  => $ENV{'USER'} . '_compara_master_citest',
-);
+#---------------------COMPARA DATABASE LOCATIONS---------------------
+
+Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas({
+    'compara_master' => [ 'mysql-ens-compara-prod-8', $ENV{'USER'} . '_compara_master_citest' ],
+});
+
+# -------------------------------------------------------------------
 
 1;
