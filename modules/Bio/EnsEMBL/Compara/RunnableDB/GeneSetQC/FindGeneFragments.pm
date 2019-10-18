@@ -144,27 +144,40 @@ sub run {
         my $split_genes         = $self->param_required('split_genes_hash');
     
         # first, fetch gene_member stable_ids
-        my $gm_sql = "SELECT gene_member_id, stable_id FROM gene_member";
+        print "Fetching gene_member stable_id info\n" if $self->debug;
+        my $gm_sql = "SELECT gene_member_id, stable_id FROM gene_member WHERE genome_db_id = ?";
         my $gm_sth = $self->compara_dba->dbc->prepare($gm_sql);
-        $gm_sth->execute();
+        $gm_sth->execute($genome_db_id);
         my $gm_stable_id_map = $gm_sth->fetchall_hashref('gene_member_id');
 
         my $coverage_stats;
+        print "Finding homology dump files\n" if $self->debug;
         my $homology_dump_files = $self->_get_homology_dumps_for_genome_db($genome_db_id);
         print Dumper $homology_dump_files if $self->debug;
         foreach my $hom_dump ( @$homology_dump_files ) {
             open( my $hdh, '<', $hom_dump ) or die "Cannot open $hom_dump for reading\n";
             my $header = <$hdh>;
             my @head_cols = split(/\s+/, $header);
-            while ( my $line = <$hdh> ) {
-                my $row = map_row_to_header( $line, \@head_cols );
+            
+            # grab the first line of the file to check whether the genome_db of interest
+            # is genome_db_id or hom_genome_db_id - we don't know which it will be.
+            # we'll either use genome_db_id, seq_member_id, etc *OR* hom_genome_db_id, hom_seq_member_id, etc
+            my $line = <$hdh>;
+            my $row = map_row_to_header( $line, \@head_cols );
+            my ( $this, $that ) = $row->{genome_db_id} == $genome_db_id ? ('', 'hom_') : ('hom_', '');
+            
+            while ( $line ) {
+                $row = map_row_to_header( $line, \@head_cols );
                 
-                $coverage_stats->{$row->{gene_member_id}}->{genome_db_id} = $row->{genome_db_id};
-                $coverage_stats->{$row->{gene_member_id}}->{seq_member_id} = $row->{seq_member_id};
-                $coverage_stats->{$row->{gene_member_id}}->{n_orth}++;
-                $coverage_stats->{$row->{gene_member_id}}->{genome_dbs}->{$row->{hom_genome_db_id}} = 1;
-                $coverage_stats->{$row->{gene_member_id}}->{total_cov} += $row->{coverage};
-                $coverage_stats->{$row->{gene_member_id}}->{total_hom_cov} += $row->{hom_coverage};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_db_id}  = $row->{$this . 'genome_db_id'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{seq_member_id} = $row->{$this . 'seq_member_id'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{n_orth}++;
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$that . 'genome_db_id'}} = 1;
+                # $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$this . 'genome_db_id'}} = 1;
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'coverage'};
+                $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'coverage'};
+                
+                $line = <$hdh>;
             }
             close $hdh;
         }
@@ -179,7 +192,10 @@ sub run {
             my ($gene_status, $this_avg_cov);
             my $avg_cov = $these_stats->{total_cov}/$these_stats->{n_orth};
             my $avg_hom_cov = $these_stats->{total_hom_cov}/$these_stats->{n_orth};
-            if ( $avg_cov <= $coverage_threshold ) {
+            if ( $avg_cov <= $coverage_threshold && $avg_hom_cov <= $coverage_threshold ) {
+                # if both coverages are low, it's probably just a distant homology
+                next; # do not report these
+            } elsif ( $avg_cov <= $coverage_threshold ) {
                 $gene_status = 'long-gene';
                 $this_avg_cov = $avg_cov;
             } elsif ( $avg_hom_cov <= $coverage_threshold ) {
@@ -198,7 +214,6 @@ sub run {
                 'status'                => $gene_status,
             };
             
-            print Dumper $dataflow if $self->debug;
             $self->dataflow_output_id($dataflow, 2);
         }
     }
@@ -279,10 +294,10 @@ sub _get_homology_dumps_for_genome_db {
     
     my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $mlsses = $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('ENSEMBL_ORTHOLOGUES', $gdb);
+    my @mlss_ids = map {$_->dbID} @{ $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('ENSEMBL_ORTHOLOGUES', $gdb) };
     
     my $homology_dumps_dir = $self->param_required('homology_dumps_dir');
-    my @homology_dump_files = map {"$homology_dumps_dir/" . dir_revhash($_->dbID) . "/$_.protein.homologies.tsv"} @$mlsses;
+    my @homology_dump_files = map {"$homology_dumps_dir/" . dir_revhash($_) . "/$_.protein.homologies.tsv"} @mlss_ids;
     return \@homology_dump_files;
 }
 
