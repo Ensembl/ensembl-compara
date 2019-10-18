@@ -254,7 +254,7 @@ sub pipeline_analyses {
                 2 => [ 'check_reuse_db', '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id' ],
                 3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
             },
-	    -rc_name => '1Gb_job',
+	    -rc_name => '2Gb_job',
         },
 
 	{   -logic_name => 'check_reuse_db',
@@ -315,7 +315,6 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'seq_member_table_reuse' ],    # n_reused_species
-	    -rc_name => '1Gb_job',
         },
 
         {   -logic_name => 'seq_member_table_reuse',
@@ -388,7 +387,7 @@ sub pipeline_analyses {
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20,
                 },
-	    -rc_name => '2Gb_job',
+	    -rc_name => '4Gb_job',
         },
 
 
@@ -418,7 +417,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-	    -rc_name => '1Gb_job',
+	    -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'make_blastdb',
@@ -479,7 +478,7 @@ sub pipeline_analyses {
 			      'input_dir'   => $self->o('input_dir'),
 			      'all_hits'    => $self->o('all_hits'),
 			    },
-	     -rc_name => '1Gb_job',
+	     -rc_name => '2Gb_job',
              -analysis_capacity => 8,
          },
 
@@ -489,7 +488,7 @@ sub pipeline_analyses {
 			     'input_dir' => $self->o('input_dir'),
                              'mercator_exe' => $self->o('mercator_exe'),
 			    },
-	     -rc_name => '16Gb_job',
+	     -rc_name => '32Gb_job',
              -flow_into => {
                  "2->A" => WHEN (
                     "(#total_residues_count# <= 3000000) || ( #dnafrag_count# <= 10 )"                          => "pecan",
@@ -616,7 +615,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 50,
-             -rc_name => '64Gb_job',
+             -rc_name => '96Gb_job',
              -flow_into => {
                  1 => [ 'gerp' ],
              },
