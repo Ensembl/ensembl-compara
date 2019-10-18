@@ -84,16 +84,17 @@ sub fetch_input {
     my $self = shift @_;
 
     my $mlss_id = $self->param_required('homo_mlss_id');
-
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $genome_dbs = $mlss->species_set->genome_dbs;
 
     my @homology_ids;
     my $homology_flatfile = $self->param_required('homology_flatfile');
     my $do_gene_qc = $self->param('do_gene_qc');
     my $qc_status;
     if ( $do_gene_qc ) {
-        my $sql = "SELECT seq_member_id, status FROM gene_member_qc";
+        my $sql = "SELECT seq_member_id, status FROM gene_member_qc WHERE genome_db_id IN (?, ?)";
         my $sth = $self->compara_dba->dbc->prepare($sql);
-        $sth->execute();
+        $sth->execute($genome_dbs->[0], $genome_dbs->[1]);
         while( my ($stable_id, $status) = $sth->fetchrow() ) {
             $qc_status->{$stable_id} = $status;
         }
