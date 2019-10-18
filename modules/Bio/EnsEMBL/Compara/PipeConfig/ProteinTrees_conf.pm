@@ -585,7 +585,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_posttree',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'rib_fire_homology_id_mapping' ],
+                '1->A'  => [ 'rib_fire_gene_qc' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -3222,9 +3222,6 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
-            -flow_into  => {
-                1 => WHEN('#do_gene_qc#' => 'get_species_set'),
-            },
             -hive_capacity => 9, # this prevents too many competing `dump_per_mlss_homologies_tsv` jobs being spawned
         },
 
@@ -3254,6 +3251,14 @@ sub core_pipeline_analyses {
                     WHEN('#do_hmm_export#' => 'build_HMM_factory'),
                     'rib_fire_rename_labels',
                 ],
+            },
+        },
+        
+        {   -logic_name => 'rib_fire_gene_qc',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => 'get_species_set',
+                'A->1' => 'rib_fire_homology_id_mapping',
             },
         },
 
