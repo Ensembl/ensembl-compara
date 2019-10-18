@@ -1,56 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compara_db division="citest">
 
-  <pairwise_alignments>
+    <pairwise_alignments>
+        <!-- Use human as reference species for all chordates -->
+        <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
+            <species_set>
+                <taxonomic_group taxon_name="Chordata"/>
+            </species_set>
+        </one_vs_all>
+    </pairwise_alignments>
 
-    <!-- First, our top four species, which are references for all chordates -->
-    <one_vs_all method="LASTZ_NET" ref_genome="homo_sapiens">
-      <species_set>
-        <taxonomic_group taxon_name="Chordata"/>
-      </species_set>
-    </one_vs_all>
-  </pairwise_alignments>
+    <multiple_alignments>
+        <!-- Mammals -->
+        <multiple_alignment method="EPO" gerp="1">
+            <species_set name="mammals" display_name="eutherian mammals">
+                <taxonomic_group taxon_name="Eutheria"/>
+            </species_set>
+        </multiple_alignment>
 
-  <multiple_alignments>
-    <!-- Mammals -->
-    <multiple_alignment method="EPO" gerp="1">
-      <species_set name="mammals" display_name="eutherian mammals">
-        <taxonomic_group taxon_name="Eutheria"/>
-      </species_set>
-    </multiple_alignment>
+        <!-- Mammals + Chicken -->
+        <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
+            <species_set name="mammals_with_feathers">
+                <taxonomic_group taxon_name="Eutheria"/>
+                <genome name="gallus_gallus"/>
+            </species_set>
+        </multiple_alignment>
 
-    <!-- Mammals + Chicken -->
-    <multiple_alignment method="EPO_LOW_COVERAGE" gerp="1">
-      <species_set name="mammals_with_feathers">
-          <taxonomic_group taxon_name="Eutheria"/>
-          <genome name="gallus_gallus"/>
-      </species_set>
-    </multiple_alignment>
+        <!-- Amniotes -->
+        <multiple_alignment method="PECAN" gerp="1">
+            <species_set name="amniotes" display_name="amniota vertebrates">
+                <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
+            </species_set>
+        </multiple_alignment>
 
-    <!-- Amniotes -->
-    <multiple_alignment method="PECAN" gerp="1">
-      <species_set name="amniotes" display_name="amniota vertebrates">
-        <taxonomic_group taxon_name="Amniota" only_good_for_alignment="1"/>
-      </species_set>
-    </multiple_alignment>
+    </multiple_alignments>
 
-  </multiple_alignments>
+    <self_alignments>
+        <!-- Self-alignment of a polyploid genome -->
+        <genome name="triticum_aestivum"/>
+    </self_alignments>
 
-  <self_alignments>
-    <genome name="triticum_aestivum"/>
-  </self_alignments>
+    <families>
+        <family collection="citest"/>
+    </families>
 
-  <families>
-    <family collection="citest"/>
-  </families>
+    <gene_trees>
+        <protein_trees collection="citest"/>
+        <nc_trees collection="citest"/>
+    </gene_trees>
 
-  <gene_trees>
-    <protein_trees collection="citest"/>
-    <nc_trees collection="citest"/>
-  </gene_trees>
-
-  <species_trees>
-    <species_tree collection="citest"/>
-  </species_trees>
+    <species_trees>
+        <species_tree collection="citest"/>
+    </species_trees>
 
 </compara_db>
