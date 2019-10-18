@@ -28,7 +28,17 @@ my $prev_eg_release = $curr_eg_release - 1;
 # ---------------------------- CORE DATABASES ----------------------------------
 
 # FORMAT: species/alias name => [ host, db_name ]
-my $core_dbs = {}; # TAG: <core_dbs_hash>
+my $core_dbs = {
+    'gallus_gallus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145045_gallus_gallus_core_99_6' ],
+    'anolis_carolinensis' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_anolis_carolinensis_core_99_2' ],
+    'danio_rerio' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_danio_rerio_core_99_11' ],
+    'pan_troglodytes' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145200_pan_troglodytes_core_99_3' ],
+    'homo_sapiens' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_homo_sapiens_core_99_38' ],
+    'mus_musculus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_144942_mus_musculus_core_99_38' ],
+    'canis_familiaris' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145000_canis_familiaris_core_99_31' ],
+    'triticum_aestivum' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145250_triticum_aestivum_core_46_99_4' ],
+    'lepisosteus_oculatus' => [ 'mysql-ens-compara-prod-8', 'jalvarez_20191018_145148_lepisosteus_oculatus_core_99_1' ],
+};
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
 
@@ -37,7 +47,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # General compara dbs
-    'compara_master' => [ '', '' ], # TAG: <master_db_info>
+    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
     # 'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     # 'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
