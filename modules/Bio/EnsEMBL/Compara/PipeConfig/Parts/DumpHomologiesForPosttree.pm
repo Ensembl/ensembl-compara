@@ -79,7 +79,7 @@ sub pipeline_analyses_dump_homologies_posttree {
           },
           -hive_capacity => 10,
           -rc_name => '500Mb_job',
-        },        
+        },  
     ];
 }
 
