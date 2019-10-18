@@ -94,7 +94,8 @@ sub fetch_input {
 
     # We don't have the MT chromosome, so we allow 1 missing DnaFrag
     if ($n_missing > 1) {
-        die "Too many DnaFrags could not be found !";
+        $self->input_job->transient_error(0);
+        die "Too many DnaFrags ($n_missing) could not be found !";
     }
 
     $self->dataflow_output_id(\@names, 2);
