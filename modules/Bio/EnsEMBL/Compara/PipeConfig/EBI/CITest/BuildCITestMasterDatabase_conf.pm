@@ -88,11 +88,6 @@ sub default_options {
         'config_dir'    => $self->check_dir_in_ensembl('ensembl-compara/conf/' . $self->o('division')),
         'init_reg_conf' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_init_reg_conf.pl'),
         'reg_conf_tmpl' => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/production_reg_conf_tmpl.pl'),
-
-        # Change working directory
-        'pipeline_name' => 'build_master',
-        'work_dir'      => '/hps/nobackup2/production/ensembl/' . $ENV{'USER'} . '/' . $self->o('division') . '_division/' . $self->o('pipeline_name'),
-        'backups_dir'   => $self->o('work_dir') . '/backups/',
         
         'do_clone_species' => 1,
 
@@ -114,8 +109,8 @@ sub pipeline_create_commands {
         'cp ' . $self->o('java_hc_db_prop') . ' ' . $self->o('backups_dir') . '/database.defaults.properties',
         # Replace the backed-up files by their default content to ensure a safe
         # setup to start of the pipeline
-        'pushd ' . $self->o('compara_dir') . '; git checkout -- ' . $self->o('reg_conf') . '; popd',
-        'pushd ' . $self->o('java_hc_dir') . '; git checkout -- ' . $self->o('java_hc_db_prop') . '; popd',
+        'pushd ' . $self->o('compara_dir') . ' > /dev/null; git checkout -- ' . $self->o('reg_conf') . '; popd > /dev/null',
+        'pushd ' . $self->o('java_hc_dir') . ' > /dev/null; git checkout -- ' . $self->o('java_hc_db_prop') . '; popd > /dev/null',
     ];
 }
 
