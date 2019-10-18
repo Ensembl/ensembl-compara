@@ -23,6 +23,9 @@ use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
+use File::Temp qw/tempfile/;
+
 use Test::Most;
 
 # check module can be seen and compiled
@@ -41,30 +44,32 @@ my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $compara_db_adaptor );
 
 my $test_homology_mlss_id = 21112;
+my ($mfh, $hom_map_flatfile) = tempfile();
 my $mlss = $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($test_homology_mlss_id);
 standaloneJob(
 	'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyIDMapping', # module
 	{ # input param hash
-        'mlss_id'                => $test_homology_mlss_id,
-        'previous_mlss_id'       => $test_homology_mlss_id,
-        'homology_flatfile'      => $curr_hom_flatfile,
-        'prev_homology_flatfile' => $prev_hom_flatfile,
-        'compara_db'             => $compara_dba->url,
+        'mlss_id'                   => $test_homology_mlss_id,
+        'previous_mlss_id'          => $test_homology_mlss_id,
+        'homology_flatfile'         => $curr_hom_flatfile,
+        'homology_mapping_flatfile' => $hom_map_flatfile,
+        'prev_homology_flatfile'    => $prev_hom_flatfile,
+        'compara_db'                => $compara_dba->url,
 	}
 );
 
 my $exp_output = [
-    ['13037',   '13036',   $test_homology_mlss_id],
-    ['13045',   '13044',   $test_homology_mlss_id],
-    ['974335',  '974334',  $test_homology_mlss_id],
-    ['2089891', '2089890', $test_homology_mlss_id],
-    ['2094923', '2094922', $test_homology_mlss_id],
+    "2089890\t2089891\n",
+    "2094922\t2094923\n",
+    "974334\t974335\n",
+    "13036\t13037\n",
+    "13044\t13045\n",
 ];
 
-my $sth = $compara_dba->dbc->prepare('SELECT * FROM homology_id_mapping ORDER BY prev_release_homology_id');
-$sth->execute();
-my $results = $sth->fetchall_arrayref;
+open( my $fh, '<', $hom_map_flatfile) or die "Cannot open $hom_map_flatfile for reading\n";
+my @got_output = <$fh>;
+shift @got_output; # remove header line
 
-is_deeply( $results, $exp_output, 'ids mapped correctly' );
+is_deeply( \@got_output, $exp_output, 'ids mapped correctly' );
 
 done_testing();

@@ -68,21 +68,8 @@ sub fetch_input {
 
     my $species1_id = $self->param_required('species1_id');
     my $species2_id = $self->param_required('species2_id');
-
-    my ($dba, $db_url);
-    if ( $self->param('alt_homology_db') ) { 
-        $dba = $self->get_cached_compara_dba('alt_homology_db');
-    }
-    else {
-        $dba = $self->compara_dba;
-    }
+    my $dba = $self->param('alt_homology_db') ? $self->get_cached_compara_dba('alt_homology_db') : $self->compara_dba;
     $self->param('current_dba', $dba);
-
-    $self->dbc->disconnect_if_idle() if $self->dbc;
-
-    my $mlss_adaptor = $dba->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$species1_id, $species2_id]);
-    $self->param('mlss_id', $mlss->dbID);
 
     # set up flatfile for reading
     my $homology_flatfile = $self->param_required('homology_flatfile');
@@ -96,7 +83,7 @@ sub fetch_input {
     }
     
     if ( defined $self->param('previous_rel_db') ){ # reuse is on
-        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), \@current_homologs, $mlss->dbID );
+        my $nonreuse_homologs = $self->_reusable_homologies( $dba, $self->get_cached_compara_dba('previous_rel_db'), \@current_homologs );
         $self->param( 'orth_objects', $nonreuse_homologs );
     }
     else {
@@ -233,31 +220,34 @@ sub write_output {
 =cut
 
 sub _reusable_homologies {
-    my ( $self, $dba, $previous_compara_dba, $current_homologs, $mlss_id ) = @_;
+    my ( $self, $dba, $previous_compara_dba, $current_homologs ) = @_;
 
     my $previous_homo_adaptor = $previous_compara_dba->get_HomologyAdaptor;
 
-    # first, find reusable homologies based on id mapping table
-    my $sql = "SELECT curr_release_homology_id, prev_release_homology_id FROM homology_id_mapping WHERE mlss_id = ?";
-
-    my $sth = $dba->dbc->prepare($sql);
-    $sth->execute( $mlss_id );
-    my $reuse_homologs = $sth->fetchall_hashref('curr_release_homology_id');
+    # first, find reusable homologies based on id mapping file
+    my $hom_map_file = $self->param_required('homology_mapping_flatfile');
+    my $reuse_homologs;
+    open( my $hmfh, '<', $hom_map_file ) or die "Cannot open $hom_map_file for reading";
+    my $header = <$hmfh>;
+    my @head_cols = split(/\s+/, $header);
+    while ( my $line = <$hmfh> ) {
+        my $row = map_row_to_header( $line, \@head_cols );
+        $reuse_homologs->{$row->{curr_release_homology_id}} = $row->{prev_release_homology_id};
+    }
 
     # now, we split the homologies into reusable and non-reusable (new)
     my ( @reusables, @dont_reuse );
     my %old_id_2_new_hom;
     foreach my $h ( @$current_homologs ) {
         my $h_id = $h->{homology_id};
-        my $homolog_map = $reuse_homologs->{ $h_id };
-        if ( defined $homolog_map ){
-            $old_id_2_new_hom{ $homolog_map->{prev_release_homology_id} } = $h;
+        my $prev_rel_id = $reuse_homologs->{ $h_id };
+        if ( defined $prev_rel_id ){
+            $old_id_2_new_hom{ $prev_rel_id } = $h;
         }
         else {
             push( @dont_reuse, $h );
         }
     }
-    $sth->finish;
 
     my $previous_homologies = $previous_homo_adaptor->fetch_all_by_dbID_list([keys %old_id_2_new_hom]);
     # check if wga_coverage has already been calculated for these homologies

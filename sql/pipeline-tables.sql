@@ -302,25 +302,3 @@ CREATE TABLE `seq_member_id_current_reused_map` (
   PRIMARY KEY (stable_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
-
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'homology_id_mapping'
---
--- overview: Mapping between homology_id in this database and the previous one
---
--- semantics:
---   curr_release_homology_id  - homology_id in this database
---   prev_release_homology_id  - homology_id in the previous database
---   mlss_id                   - method_link_species_set_id of this homology
-
-CREATE TABLE homology_id_mapping (
-	curr_release_homology_id  INT UNSIGNED NOT NULL,
-	prev_release_homology_id  INT UNSIGNED NOT NULL,
-	mlss_id                   INT UNSIGNED NOT NULL,
-	PRIMARY KEY (curr_release_homology_id),
-	UNIQUE KEY (prev_release_homology_id),
-	FOREIGN KEY (curr_release_homology_id) REFERENCES homology(homology_id),
-	FOREIGN KEY (mlss_id) REFERENCES method_link_species_set(method_link_species_set_id),
-	INDEX (mlss_id)
-) ENGINE=InnoDB;
