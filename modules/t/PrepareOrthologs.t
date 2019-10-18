@@ -88,7 +88,7 @@ standaloneJob(
 		'species2_id'       => '134',
 		'compara_db'        => $compara_db,
 		'orth_batch_size'   => 1,
-	    	'homology_flatfile' => $test_flatfile,
+		'homology_flatfile' => $test_flatfile,
         	'homology_mapping_flatfile' => $test_map_file,
 	},
 	[ # list of events to test for (just 1 event in this case)

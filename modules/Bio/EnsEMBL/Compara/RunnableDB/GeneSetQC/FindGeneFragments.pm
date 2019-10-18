@@ -62,7 +62,7 @@ use warnings;
 use Data::Dumper;
 use List::Util qw( min max );
 use Bio::EnsEMBL::Compara::Utils::FlatFile qw(map_row_to_header);
-use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
+use Bio::EnsEMBL::Hive::Utils qw(dir_revhash);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -95,7 +95,7 @@ sub fetch_input {
   # get the seq_member_id of the split_genes
   unless($self->param_required('gene_status') eq 'orphaned') { 
     my %split_genes = map{$_ => 1} @{$self->data_dbc->db_handle->selectcol_arrayref('SELECT seq_member_id from gene_member_qc where status = "split-gene" AND genome_db_id= ?', undef, $self->param_required('genome_db_id') )};
-    # print Dumper \%split_genes if $self->debug(); 
+    print Dumper \%split_genes if $self->debug(); 
     $self->param('split_genes_hash', \%split_genes);
     $self->compara_dba->dbc->disconnect_if_idle;
   }
@@ -173,7 +173,6 @@ sub run {
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{seq_member_id} = $row->{$this . 'seq_member_id'};
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{n_orth}++;
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$that . 'genome_db_id'}} = 1;
-                # $coverage_stats->{$row->{$this . 'gene_member_id'}}->{genome_dbs}->{$row->{$this . 'genome_db_id'}} = 1;
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_cov} += $row->{$this . 'coverage'};
                 $coverage_stats->{$row->{$this . 'gene_member_id'}}->{total_hom_cov} += $row->{$that . 'coverage'};
                 

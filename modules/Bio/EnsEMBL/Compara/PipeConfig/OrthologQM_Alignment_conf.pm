@@ -124,7 +124,7 @@ sub default_options {
         'alt_aln_dbs'      => [ ],
         'alt_homology_db'  => undef,
         
-        # this location should be changed if the homology pipelines are still in progress
+        # this location should be changed to the pipeline's 'workdir' if the homology pipelines are still in progress
         # (the files only get copied to 'homology_dumps_shared_basedir' at the end of the pipelines)
         'homology_dumps_dir' => $self->o('homology_dumps_shared_basedir'),
 

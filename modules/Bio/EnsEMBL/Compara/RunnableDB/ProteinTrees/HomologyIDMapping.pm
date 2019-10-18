@@ -179,9 +179,9 @@ sub _fetch_and_map_previous_homologies_from_file {
 
 
 sub write_output {
-	my $self = shift;
+    my $self = shift;
 
-    my $homology_mapping = $self->param( 'homology_mapping');
+    my $homology_mapping = $self->param('homology_mapping');
     my $homology_mapping_file = $self->param_required('homology_mapping_flatfile');
     print "Writing mapping to $homology_mapping_file" if $self->debug;
     open( my $hmfh, '>', $homology_mapping_file );
