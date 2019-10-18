@@ -803,7 +803,7 @@ sub _get_genome_dump_path {
     require Bio::EnsEMBL::Hive::Utils;
     my $subdir = $self->dbID ? Bio::EnsEMBL::Hive::Utils::dir_revhash($self->dbID) : '';
 
-    my $filename = $self->name . '.' . $self->assembly . ($mask ? '.' . $mask : '') . '.fa';
+    my $filename = $self->name . '.' . $self->assembly . ($self->genome_component ? '.comp' . $self->genome_component : '') . ($mask ? '.' . $mask : '') . '.fa';
     return "$dir/$subdir/$filename";
 }
 
