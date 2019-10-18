@@ -94,8 +94,8 @@ sub pipeline_create_commands {
         'cp ' . $self->o('java_hc_db_prop') . ' ' . $self->o('backups_dir') . '/database.defaults.properties',
         # Replace the backed-up files by their default content to ensure a safe
         # setup to start of the pipeline
-        'pushd ' . $self->o('compara_dir') . '; git checkout -- ' . $self->o('reg_conf') . '; popd',
-        'pushd ' . $self->o('java_hc_dir') . '; git checkout -- ' . $self->o('java_hc_db_prop') . '; popd',
+        'pushd ' . $self->o('compara_dir') . ' > /dev/null; git checkout -- ' . $self->o('reg_conf') . '; popd > /dev/null',
+        'pushd ' . $self->o('java_hc_dir') . ' > /dev/null; git checkout -- ' . $self->o('java_hc_db_prop') . '; popd > /dev/null',
     ];
 }
 
