@@ -1056,12 +1056,12 @@ sub core_pipeline_analyses {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
-            -rc_name => '1Gb_job',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
-            -rc_name        => '2Gb_job',
+            -rc_name        => '4Gb_job',
             -batch_size     => 20,
         },
 
