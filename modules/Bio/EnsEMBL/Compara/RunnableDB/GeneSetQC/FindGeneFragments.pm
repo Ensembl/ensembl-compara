@@ -130,12 +130,12 @@ sub run {
         }
     }
     elsif ($self->param_required('gene_status') eq 'orphaned') {
-      $sql = 'SELECT mg.stable_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
+      $sql = 'SELECT mg.stable_id, mg.canonical_member_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
       my $sth = $self->compara_dba->dbc->prepare($sql);
       $sth->execute($genome_db_id);
 
       while (my $row = $sth->fetchrow_hashref()) {
-        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'status' => "orphaned-gene" }, 2);
+        $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'gene_member_stable_id' => $row->{stable_id}, 'seq_member_id' => $row->{canonical_member_id}, 'status' => "orphaned-gene" }, 2);
       }
 
     } else {
