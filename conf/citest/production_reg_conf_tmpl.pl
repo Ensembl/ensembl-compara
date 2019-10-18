@@ -119,10 +119,6 @@ my $ancestral_dbs = {
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
-<<<<<<< HEAD
-=======
-# NCBI taxonomy database (also maintained by production team):
->>>>>>> bugfix: ncbi_taxonomy needs to be available
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
     'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
 });
