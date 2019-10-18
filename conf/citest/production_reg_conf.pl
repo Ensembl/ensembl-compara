@@ -37,7 +37,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $core_dbs );
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
     # General compara dbs
-    'compara_master' => [ '', '' ], # TAG: <master_db_info>
+    'compara_master' => [ 'mysql-ens-compara-prod-8', 'jalvarez_compara_master_citest' ],
     # 'compara_curr'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$curr_release" ],
     # 'compara_prev'   => [ 'mysql-ens-compara-prod-1', "ensembl_compara_$prev_release" ],
 
