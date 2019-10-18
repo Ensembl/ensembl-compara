@@ -62,8 +62,6 @@ package Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign;
 use strict;
 use warnings;
 
-use Data::Dumper;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
@@ -110,8 +108,8 @@ sub run {
   # }
   
   my @ortheus_cmd = ($self->param('ortheus_c_exe'));
-  push @ortheus_cmd, '-a', @{$self->param_required('fasta_files')};
-  push @ortheus_cmd, '-b', $self->param_required('tree_string');
+  push @ortheus_cmd, '-A', $self->param_required('fasta_files_hub');
+  push @ortheus_cmd, '-B', $self->param_required('tree_file');
   push @ortheus_cmd, '-h'; # output leaves only
 
   my $cmd = $self->run_command(\@ortheus_cmd, { 'use_bash_errexit' => 0 });
@@ -161,6 +159,8 @@ sub _dump_fasta {
       $self->complete_early( "Not enough sequences in current anchor - omitting" );
   }
 
+  my $fasta_files_hub = $self->worker_temp_directory . "/fasta_files_hub.txt";
+  open(my $hub_file, '>', $fasta_files_hub) or die "Cannot open '$fasta_files_hub': $!";
   foreach my $anchor_align (@$all_anchor_aligns) {
 
     my $anchor_align_id = $anchor_align->dbID;
@@ -181,12 +181,19 @@ sub _dump_fasta {
 
     $self->_spurt($file, "$header\n$seq\n");
 
-    push @{$self->param('fasta_files')}, $file;
+    print $hub_file "$file\n";
 
   }
+  close($hub_file);
+  $self->param('fasta_files_hub', $fasta_files_hub);
 
+  # Dump the tree string into a file
   substr($tree_str, -1, 1, ");");
-  $self->param('tree_string', $tree_str);
+  my $tree_file_path = $self->worker_temp_directory . "/newick_tree.nw";
+  open(my $tree_file, '>', $tree_file_path) or die "Cannot open '$tree_file_path': $!";
+  print $tree_file $tree_str;
+  close($tree_file);
+  $self->param('tree_file', $tree_file_path);
 
   return 1;
 }
