@@ -778,7 +778,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 2,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
@@ -795,7 +795,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 4,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
@@ -854,7 +854,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 2,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
@@ -870,7 +870,7 @@ sub core_pipeline_analyses {
                             %raxml_parameters,
                             'raxml_number_of_cores' => 4,
                             'more_cores_branch'     => 3,
-                            'cmd_max_runtime'       => '43200',
+                            'cmd_max_runtime'       => '86400',
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
