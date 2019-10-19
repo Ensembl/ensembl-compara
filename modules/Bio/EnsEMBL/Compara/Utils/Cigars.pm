@@ -259,9 +259,8 @@ sub consensus_cigar_line {
    my $n_chars = scalar(@chars);
    push @chars, $chars[$n_chars-1];
 
-   # Iterate through each character of the expanded cigars.
-   # If there is a 'D' at a given location in any cigar,
-   # set the consensus to 'D', otherwise assume an 'M'.
+   # Iterate through each group of columns of the alignment and decide the
+   # consensus based on the number of D
    my $cons_cigar = '';
    my $last_code  = '';
    my $cur_length = 0;
@@ -370,6 +369,8 @@ sub minimize_cigars {
     my @cig_codes   = @new_cigars;
     my @cig_lengths = map {0} 1..$n_cigars;
 
+    # Iterate over each group of columns of the alignment and only keep the
+    # columns that have at least 1 M.
     my $cb = sub {
         my ($pos, $codes, $length) = @_;
         if (grep {$_ eq 'M'} @$codes) {
@@ -662,7 +663,7 @@ sub check_cigar_line {
   Arg [2]    : (optional) Array-ref of names (identifiers) giving the group of each cigar-line
   Example    : compute_alignment_depth($cigar_lines, $genome_db_ids);
   Description: Returns statistics about the alignment depth (number of aligned sequences) for each sequence. The
-               The function returns for each sequence its number of positions (total and aligned), how many positions
+               function returns for each sequence its number of positions (total and aligned), how many positions
                have each depth level, and the sum of all the depths.
                Sequences can be grouped, in which case the statistics are returned by group (not by sequence) and the
                depth represents the number of aligned groups.
@@ -677,6 +678,7 @@ sub compute_alignment_depth {
 
     my $n_cigars = scalar(@$cigar_lines);
 
+    # If no groups are required, consider each sequence individually
     unless ($group_ids) {
         $group_ids = [0..($n_cigars-1)];
     }
@@ -688,14 +690,19 @@ sub compute_alignment_depth {
 
     my $cb = sub {
         my ($pos, $codes, $length) = @_;
+
+        # Will contain the group_ids that are present on these columns
+        # and the number of sequences they contain
         my %n_aligned_ids;
         for (my $i = 0; $i < $n_cigars; $i++ ) {
             if ( $codes->[$i] eq 'M' ) {
                 $n_aligned_ids{ $group_ids->[$i] } ++;
             }
         }
+        # "- 1" because the depth is the number of *other* sequences
         my $this_depth = scalar(keys %n_aligned_ids) - 1;
 
+        # Update the counters
         foreach my $id (keys %n_aligned_ids) {
             my $n_pos = $n_aligned_ids{$id} * $length;
             $depth_breakdown{$id}->{$this_depth} += $n_pos;
@@ -708,6 +715,7 @@ sub compute_alignment_depth {
     };
     column_iterator($cigar_lines, $cb, 'group');
 
+    # Combine everything into a hash
     my %depth_summary;
     foreach my $id (keys %n_total_pos) {
 
@@ -763,6 +771,9 @@ sub column_iterator {
     my @curr_cigar_elem_lengths = map {$_->[0]->[1]} @cigar_lines_arrays;
     my @d_codes                 = ('D') x $n_cigars;
 
+    # The while loop below identifies groups of identical, consecutive,
+    # columns. When $group is not set, we need to call the callback as many
+    # times as the length of the group.
     unless ($group) {
         my $ini_callback = $callback;
         $callback = sub {
@@ -798,9 +809,12 @@ sub column_iterator {
             }
         }
 
-        # Standard elements
+        # Standard elements: find how long the repetition is
         my $length = min(@curr_cigar_elem_lengths);
+        # Callback
         $callback->($pos, \@curr_cigar_elem_codes, $length);
+
+        # Move forward
         $pos += $length;
         for (my $i = 0; $i < $n_cigars; $i++ ) {
             if ($curr_cigar_elem_lengths[$i] == $length) {
@@ -844,12 +858,15 @@ sub calculate_pairwise_coverage {
     my $cigar_lines = shift;
     my $group_ids = shift;
 
+    # If no groups are required, consider each sequence individually
     my $n_cigars = scalar(@$cigar_lines);
     unless ($group_ids) {
         $group_ids = [0..($n_cigars-1)];
     }
 
     my @cigar_lines_arrays = map {get_cigar_array($_)} @$cigar_lines;
+
+    # Group the cigars by group_id
     my %cigar_lines_by_id;
     for (my $i = 0; $i < $n_cigars; $i++ ) {
         push @{$cigar_lines_by_id{ $group_ids->[$i] }}, $cigar_lines_arrays[$i];
@@ -861,11 +878,13 @@ sub calculate_pairwise_coverage {
         $pairwise_coverage{$id} = {};
     }
 
+    # Iterate over every pair of group_ids
     while (@ids) {
         my $id1 = shift @ids;
         my $cigar_lines_1 = $cigar_lines_by_id{$id1};
         foreach my $id2 (@ids) {
             my $cigar_lines_2 = $cigar_lines_by_id{$id2};
+            # Do the comparison both ways
             $pairwise_coverage{$id1}->{$id2} += _calculate_pairwise_coverage($cigar_lines_1, $cigar_lines_2);
             $pairwise_coverage{$id2}->{$id1} += _calculate_pairwise_coverage($cigar_lines_2, $cigar_lines_1);
         }
@@ -873,17 +892,21 @@ sub calculate_pairwise_coverage {
     return \%pairwise_coverage;
 }
 
-
+# Helper function for calculate_pairwise_coverage
 sub _calculate_pairwise_coverage {
     my ($cigar_lines_1, $cigar_lines_2) = @_;
 
     my $aligned_base_positions = 0;
     my $cb = sub {
         my ($pos, $codes, $length) = @_;
+        # We count when there is a match on the first species (first cigar)
+        # and on any of the other species' cigars
         if (($codes->[0] eq 'M') && (scalar(grep {$_ eq 'M'} @$codes) >= 2)) {
             $aligned_base_positions += $length;
         }
     };
+
+    # Test every cigar of the first species
     foreach my $from_cigar_line (@$cigar_lines_1) {
         column_iterator([$from_cigar_line, @$cigar_lines_2], $cb, 'group');
     }
