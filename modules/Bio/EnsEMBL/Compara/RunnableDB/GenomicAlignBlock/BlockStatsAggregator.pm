@@ -15,14 +15,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::BlockStatsAggregator
+
+=head1 DESCRIPTION
+
+This Runnable aggregates (sums up) statistics that come from many jobs
+(alignment blocks) and stores them as species-tree node tags.
 
 =cut
 
@@ -44,6 +44,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
+
     my $pairwise_coverage = $self->param_required('pairwise_coverage');
     foreach my $gdb_id1 (keys %$pairwise_coverage) {
         my $node = $self->param('node_hash')->{$gdb_id1};
@@ -63,6 +64,7 @@ sub run {
         $node->store_tag('num_of_aligned_positions',    $num_of_aligned_positions);
         $node->store_tag('num_of_other_seq_positions',  $num_of_other_seq_positions);
         $node->store_tag('average_depth',               $num_of_other_seq_positions / $num_of_positions);
+
         my $depth_breakdown = $self->param('depth_by_genome')->{$gdb_id};
         foreach my $depth (keys %$depth_breakdown) {
             my $s = sum(@{$depth_breakdown->{$depth}});

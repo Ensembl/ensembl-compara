@@ -15,14 +15,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=pod
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculateBlockStats
+
+=head1 DESCRIPTION
+
+Will generate statistics for a list of alignment blocks. The computation is
+offloaded to Utils::Cigars, and this Runnable only has to sum up the statistics.
+
+Two statistics are computed:
+1. The alignment depth, i.e. the number of sequences aligned to a given sequence,
+2. The pairwise coverage
+They are then dataflown to the branches 2 and 3 (alignment depth) and 4
+(pairwise coverage)
 
 =cut
 
@@ -43,6 +49,8 @@ sub run {
     $self->param('depth_by_genome', {});
     $self->param('total_pairwise_coverage', {});
 
+    # _range_list is the name used by eHive's JobFactory
+    # the list contains genomic_align_block_ids
     foreach my $genomic_align_block_id (@{$self->param_required('_range_list')}) {
         $self->process_one_block($genomic_align_block_id);
     }
@@ -53,6 +61,7 @@ sub process_one_block {
     my $self = shift @_;
     my $genomic_align_block_id = shift @_;
 
+    # Load from the database
     my $genomic_align_block = $self->compara_dba->get_GenomicAlignBlockAdaptor->fetch_by_dbID($genomic_align_block_id);
     my $genomic_aligns      = $genomic_align_block->genomic_align_array();
 
@@ -60,6 +69,7 @@ sub process_one_block {
 
     $self->disconnect_from_databases;
 
+    # Convert the cigar strings to arrays beforehand and just once
     my @all_cigar_arrays;
     my @all_genome_db_ids;
     while(my $ga = shift @$genomic_aligns) {
