@@ -99,14 +99,15 @@ sub write_output {
     my $self = shift @_;
 
     my $depth_by_genome = $self->param('depth_by_genome');
-    foreach my $genome_db_id ( keys %$depth_by_genome ) {
+    my @gdb_ids = sort {$a <=> $b} keys %$depth_by_genome;
+    foreach my $genome_db_id (@gdb_ids) {
         $self->dataflow_output_id({
                 'genome_db_id'                  => $genome_db_id,
                 'num_of_positions'              => $depth_by_genome->{$genome_db_id}->{'n_total_pos'},
                 'num_of_aligned_positions'      => $depth_by_genome->{$genome_db_id}->{'n_aligned_pos'},
                 'num_of_other_seq_positions'    => $depth_by_genome->{$genome_db_id}->{'depth_sum'},
             }, 2);
-        foreach my $d (keys %{$depth_by_genome->{$genome_db_id}->{'breakdown'}}) {
+        foreach my $d (sort {$a <=> $b} keys %{$depth_by_genome->{$genome_db_id}->{'breakdown'}}) {
             $self->dataflow_output_id({
                     'genome_db_id'      => $genome_db_id,
                     'depth'             => $d,
@@ -116,8 +117,9 @@ sub write_output {
     }
 
     my $pairwise_coverage = $self->param('total_pairwise_coverage');
-    foreach my $gdb1 ( keys %$pairwise_coverage ) {
-        foreach my $gdb2 ( keys %{$pairwise_coverage->{$gdb1}} ) {
+    foreach my $gdb1 (@gdb_ids) {
+        foreach my $gdb2 (@gdb_ids) {
+            next unless exists $pairwise_coverage->{$gdb1}->{$gdb2};
             $self->dataflow_output_id({
                     'from_genome_db_id'         => $gdb1,
                     'to_genome_db_id'           => $gdb2,
