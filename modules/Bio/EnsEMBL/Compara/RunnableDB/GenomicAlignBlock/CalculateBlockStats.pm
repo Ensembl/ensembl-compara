@@ -37,6 +37,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::CalculateBlockStat
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 
@@ -64,15 +66,24 @@ sub process_one_block {
     my $genomic_aligns      = $genomic_align_block->genomic_align_array();
 
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $genomic_aligns);
-
     $self->disconnect_from_databases;
+
+    my $depth_by_genome = $self->param('depth_by_genome');
 
     # Convert the cigar strings to arrays beforehand and just once
     my @all_cigar_arrays;
     my @all_genome_db_ids;
     while(my $ga = shift @$genomic_aligns) {
-        push @all_cigar_arrays,  Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($ga->cigar_line);
-        push @all_genome_db_ids, $ga->dnafrag->genome_db_id;
+        my $cigar_array  = Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($ga->cigar_line);
+        my $genome_db_id = $ga->dnafrag->genome_db_id;
+        my $i_length     = sum(map {$_->[1]} grep {$_->[0] eq 'I'} @$cigar_array);
+        if ($i_length) {
+            $depth_by_genome->{$genome_db_id}->{'n_total_pos'}    += $i_length;
+            $depth_by_genome->{$genome_db_id}->{'breakdown'}->{0} += $i_length;
+            $cigar_array = [grep {$_->[0] ne 'I'} @$cigar_array];
+        }
+        push @all_cigar_arrays,  $cigar_array;
+        push @all_genome_db_ids, $genome_db_id;
     }
 
     my $total_pairwise_coverage = $self->param('total_pairwise_coverage');
@@ -83,7 +94,6 @@ sub process_one_block {
         }
     }
 
-    my $depth_by_genome = $self->param('depth_by_genome');
     my $depths = Bio::EnsEMBL::Compara::Utils::Cigars::compute_alignment_depth(\@all_cigar_arrays, \@all_genome_db_ids);
     foreach my $genome_db_id ( keys %$depths ) {
         foreach my $key (qw(n_aligned_pos n_total_pos depth_sum)) {
