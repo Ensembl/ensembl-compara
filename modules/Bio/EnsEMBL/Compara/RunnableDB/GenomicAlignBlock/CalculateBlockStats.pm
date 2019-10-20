@@ -49,9 +49,7 @@ sub run {
     $self->param('depth_by_genome', {});
     $self->param('total_pairwise_coverage', {});
 
-    # _range_list is the name used by eHive's JobFactory
-    # the list contains genomic_align_block_ids
-    foreach my $genomic_align_block_id (@{$self->param_required('_range_list')}) {
+    foreach my $genomic_align_block_id (@{$self->param_required('genomic_align_block_ids')}) {
         $self->process_one_block($genomic_align_block_id);
     }
 }

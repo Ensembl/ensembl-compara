@@ -102,7 +102,7 @@ sub pipeline_analyses_multiple_aligner_stats {
                         },
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                '2->A' => ['per_block_stats'],
+                '2->A' => { 'per_block_stats' => { 'genomic_align_block_ids' => '#_range_list#' } },
                 'A->1' => ['block_stats_aggregator']
                 },
         },
