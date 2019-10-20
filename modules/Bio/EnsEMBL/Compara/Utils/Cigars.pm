@@ -864,53 +864,31 @@ sub calculate_pairwise_coverage {
         $group_ids = [0..($n_cigars-1)];
     }
 
-    my @cigar_lines_arrays = map {get_cigar_array($_)} @$cigar_lines;
-
-    # Group the cigars by group_id
-    my %cigar_lines_by_id;
-    for (my $i = 0; $i < $n_cigars; $i++ ) {
-        push @{$cigar_lines_by_id{ $group_ids->[$i] }}, $cigar_lines_arrays[$i];
-    }
-    my @ids = sort keys %cigar_lines_by_id;
-
     my %pairwise_coverage;
-    foreach my $id (@ids) {
-        $pairwise_coverage{$id} = {};
-    }
 
-    # Iterate over every pair of group_ids
-    while (@ids) {
-        my $id1 = shift @ids;
-        my $cigar_lines_1 = $cigar_lines_by_id{$id1};
-        foreach my $id2 (@ids) {
-            my $cigar_lines_2 = $cigar_lines_by_id{$id2};
-            # Do the comparison both ways
-            $pairwise_coverage{$id1}->{$id2} += _calculate_pairwise_coverage($cigar_lines_1, $cigar_lines_2);
-            $pairwise_coverage{$id2}->{$id1} += _calculate_pairwise_coverage($cigar_lines_2, $cigar_lines_1);
-        }
-    }
-    return \%pairwise_coverage;
-}
-
-# Helper function for calculate_pairwise_coverage
-sub _calculate_pairwise_coverage {
-    my ($cigar_lines_1, $cigar_lines_2) = @_;
-
-    my $aligned_base_positions = 0;
     my $cb = sub {
         my ($pos, $codes, $length) = @_;
-        # We count when there is a match on the first species (first cigar)
-        # and on any of the other species' cigars
-        if (($codes->[0] eq 'M') && (scalar(grep {$_ eq 'M'} @$codes) >= 2)) {
-            $aligned_base_positions += $length;
+
+        # Will contain the group_ids that are present on these columns
+        # and the number of sequences they contain
+        my %n_aligned_ids;
+        for (my $i = 0; $i < $n_cigars; $i++ ) {
+            if ( $codes->[$i] eq 'M' ) {
+                $n_aligned_ids{ $group_ids->[$i] } ++;
+            }
+        }
+        my @ids = keys %n_aligned_ids;
+        foreach my $id1 (@ids) {
+            $pairwise_coverage{$id1} //= {};
+            foreach my $id2 (@ids) {
+                if ($id1 ne $id2) {
+                    $pairwise_coverage{$id1}->{$id2} += $length * $n_aligned_ids{$id1};
+                }
+            }
         }
     };
-
-    # Test every cigar of the first species
-    foreach my $from_cigar_line (@$cigar_lines_1) {
-        column_iterator([$from_cigar_line, @$cigar_lines_2], $cb, 'group');
-    }
-    return $aligned_base_positions;
+    column_iterator($cigar_lines, $cb, 'group');
+    return \%pairwise_coverage;
 }
 
 
