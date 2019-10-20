@@ -40,12 +40,14 @@ sub fetch_input {
     my $self = shift @_;
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID( $self->param_required('mlss_id') );
     $self->param('node_hash', $mlss->species_tree->get_genome_db_id_2_node_hash());
+
+    $self->param_required($_) for qw(pairwise_coverage num_of_positions num_of_aligned_positions num_of_other_seq_positions depth_by_genome);
 }
 
 sub run {
     my $self = shift @_;
 
-    my $pairwise_coverage = $self->param_required('pairwise_coverage');
+    my $pairwise_coverage = $self->param('pairwise_coverage');
     foreach my $gdb_id1 (keys %$pairwise_coverage) {
         my $node = $self->param('node_hash')->{$gdb_id1};
         foreach my $gdb_id2 (keys %{$pairwise_coverage->{$gdb_id1}}) {
