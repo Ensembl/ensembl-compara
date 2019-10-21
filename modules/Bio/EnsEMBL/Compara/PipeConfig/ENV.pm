@@ -67,6 +67,9 @@ sub shared_default_options {
         # Shared user used for shared files across all of Compara
         'shared_user'           => 'compara_ensembl',
 
+        # Previous EnsEMBL release number
+        'prev_release'          => Bio::EnsEMBL::ApiVersion::software_version()-1,
+
         # EG release number
         'eg_release'            => Bio::EnsEMBL::ApiVersion::software_version()-53,
 
