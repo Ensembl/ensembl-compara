@@ -2978,21 +2978,30 @@ return;
     if(panel.localStoreObj.filterMatrix[cellKey].state.total === 0 || panel.localStoreObj.filterMatrix[cellKey].state.on === 0) {
       //update matrix store (in all selection: minus count for current state and total count; set cell state)
       panel.localStoreObj.matrix.allSelection.state[configCellState.replace("track-","")] -= 1;
+      panel.localStoreObj.matrix.allSelection.state["reset-"+ configCellState.replace("track-","")] -= 1;
       panel.localStoreObj.matrix.allSelection.format[configCellFormat] -= 1;
       panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] -= 1;
+      panel.localStoreObj.matrix.allSelection.renderer["reset-"+configCellRenderer] -= 1;
       panel.localStoreObj.matrix.allSelection.total -= 1;
+
       panel.localStoreObj.matrix[cellKey].state = "";
+      panel.localStoreObj.matrix[cellKey]["reset-state"] = "";
     } else { // cell will be on in final matrix
       if(configCellState) { // if current cell matrix is on/off, update count accordingly
         panel.localStoreObj.matrix.allSelection.state[configCellState.replace("track-","")] -= 1;
+        panel.localStoreObj.matrix.allSelection.state["reset-"+configCellState.replace("track-","")] -= 1;
         panel.localStoreObj.matrix.allSelection.state["on"] += 1;
+        panel.localStoreObj.matrix.allSelection.state["reset-on"] += 1;
       } else { //cell had no data, need to update all counts (on, total, format, renderer)
         panel.localStoreObj.matrix.allSelection.format[configCellFormat] += 1;
-        panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] += 1;          
+        panel.localStoreObj.matrix.allSelection.renderer[configCellRenderer] += 1;
+        panel.localStoreObj.matrix.allSelection.renderer["reset-"+configCellRenderer] += 1;
         panel.localStoreObj.matrix.allSelection.state["on"] += 1;
+        panel.localStoreObj.matrix.allSelection.state["reset-on"] += 1;
         panel.localStoreObj.matrix.allSelection["total"] += 1;
       }
       panel.localStoreObj.matrix[cellKey].state = "track-on";
+      panel.localStoreObj.matrix[cellKey]["reset-state"] = "track-on";
     }
     panel.setLocalStorage();
     $(panel.menuCountSpan).text(trackTotal);
