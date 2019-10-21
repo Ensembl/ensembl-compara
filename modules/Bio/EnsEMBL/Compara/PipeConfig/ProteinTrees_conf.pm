@@ -356,7 +356,7 @@ sub default_options {
         # homology dumps options
         'homology_dumps_dir'       => $self->o('dump_dir'). '/homology_dumps/',
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-        'prev_release'              => $self->o('ensembl_release') - 1, # for homology_id_mapping
+        'prev_release'  => '#expr( #ensembl_release# - 1 )expr#', # for homology_id_mapping
         'prev_homology_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
     };
 }
