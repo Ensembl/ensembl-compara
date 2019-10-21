@@ -63,8 +63,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'schema_file'  => $self->o('schema_file'),
                 'patch_dir'    => $self->o('patch_dir'),
-                'prev_release' => '#expr( #release# - 1 )expr#',
-                'patch_names'  => '#patch_dir#/patch_#prev_release#_#release#_*.sql',
+                'patch_names'  => '#patch_dir#/patch_' . $self->o('prev_release') . '_#release#_*.sql',
             },
             -flow_into  => ['load_ncbi_node'],
         },

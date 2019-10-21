@@ -43,7 +43,6 @@ sub default_options {
 
         #'species_set_name'  => 'primates',
     'division' => 'vertebrates',
-	'prev_release'  => '#expr( #ensembl_release# - 1 )expr#',
 
     'work_dir' => '/hps/nobackup2/production/ensembl/' . join('/', $self->o('dbowner'), 'EPO_2X', $self->o('species_set_name') . '_' . $self->o('rel_with_suffix')),
 
