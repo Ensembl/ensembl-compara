@@ -2909,7 +2909,7 @@ return;
       //center the popup on the box, get the x and y position of the box and then add half the length
       //populating the popup settings (on/off, peak, signals...) based on the data attribute value
       var scrollEle = matrix === 'config' ? $('div.matrix-container')[0] : $('div.filterMatrix-container')[0];
-      panel.TrackPopupType.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top': ($(this)[0].offsetTop - $('div.matrix-container')[0].scrollTop) + 15,'left': ($(this)[0].offsetLeft - $('div.matrix-container')[0].scrollLeft) + 15}).show();
+      panel.TrackPopupType.attr("data-track-x",$(this).data("track-x")).attr("data-track-y",$(this).data("track-y")).css({'top': ($(this)[0].offsetTop - $(scrollEle).scrollTop()) + 15, 'left': ($(this)[0].offsetLeft - $(scrollEle).scrollLeft()) + 15}).show();
 
       panel.popupFunctionality(matrix); //interaction inside popup
       e.stopPropagation();
