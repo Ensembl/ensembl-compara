@@ -90,6 +90,7 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
+    $self->compara_dba->dbc->disconnect_if_idle();
 
     my $homologies        = $self->param('homologies');
     my $codeml_parameters = $self->param_required('codeml_parameters');
@@ -182,8 +183,6 @@ sub calc_genetic_distance {
       15 => 10, # deprecated ?? Not listed on https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi but is on http://www.bioinformatics.org/jambw/2/3/TranslationTables.html#SG15
   );
   $codeml->set_parameter("icode", $genbank_to_codeml{$codon_table_id}) if exists $genbank_to_codeml{$codon_table_id};
-
-  $self->compara_dba->dbc->disconnect_if_idle();
 
   my ($rc,$parser) = $codeml->run();
   if($rc == 0) {

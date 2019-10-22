@@ -294,7 +294,10 @@ sub threshold_on_ds {
 sub dn {
   my ($self, $dn, $apply_threshold_on_ds) = @_;
 
-  $self->{'_dn'} = $dn if (defined $dn);
+  if (defined $dn) {
+      $self->{'_dn'} = $dn;
+      return;
+  }
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
 
   unless (defined $self->ds(undef, $apply_threshold_on_ds)) {
@@ -323,7 +326,10 @@ sub dn {
 sub ds {
   my ($self, $ds, $apply_threshold_on_ds) = @_;
 
-  $self->{'_ds'} = $ds if (defined $ds);
+  if (defined $ds) {
+      $self->{'_ds'} = $ds;
+      return;
+  }
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
 
   if (defined $self->{'_ds'} && 
