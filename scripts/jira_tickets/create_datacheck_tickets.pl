@@ -132,7 +132,7 @@ sub parse_datachecks {
         # Get the test case number and summary that has failed
         if ($line =~ /^[ ]{8}not ok (\d+) - (.+)$/) {
             $testcase = "${test} subtest $1 ($timestamp)";
-            $dc_failures->{$testcase} = "{panel:title=$2}\n";
+            $dc_failures->{$testcase} = "{code:title=$2}\n";
             next;
         }
         # Save all the information provided about the failure
@@ -141,9 +141,9 @@ sub parse_datachecks {
         }
     }
     close($dc_fh);
-    # Close all panels created
+    # Close all code blocks created
     foreach my $testcase ( keys %$dc_failures ) {
-        $dc_failures->{$testcase} .= "{panel}\n";
+        $dc_failures->{$testcase} .= "{code}\n";
     }
     return $dc_failures;
 }
