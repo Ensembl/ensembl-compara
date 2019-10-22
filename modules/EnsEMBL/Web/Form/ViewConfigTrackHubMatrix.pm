@@ -64,9 +64,9 @@ sub configuration_content {
           <div class="config-key"><span class="track-key partzero"></span>All tracks off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
-        <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _filterMatrix">Reset</button>
         <div class="matrix-container-wrapper">
+          <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
           <div class="hidebox"></div>
           <div class="filterMatrix-container"></div>
           <div class="track-popup _filterMatrix"><div class="title">Available tracks</div><ul></ul></div>
@@ -95,10 +95,10 @@ sub configuration_content {
           <div class="config-key"><span class="track-key off"></span>Track(s) off</div>
           <div class="config-key"><span class="track-key no-data"></span>No data</div>
         </div>
-        <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
         <button class="fade-button reset-button _matrix">Reset all</button>
 
         <div class="matrix-container-wrapper">
+          <div class="horizontal-sub-header _dyMatrixHeader">$dimY</div>
           <div class="hidebox"></div>
           <div class="matrix-container"></div>
           <div class="track-popup column-cell">

@@ -349,7 +349,7 @@ div.search-box input.configuration_search_text:focus:-ms-input-placeholder      
 div.search-box input.configuration_search_text:focus::placeholder               { opacity: 0; }
 
 /* track configuration/matrix display */
-button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; margin-top: -10px; }
+button.reset-button       { float: right; background-color: [[LIGHT_GREY]]; color: [[MEDIUM_GREY]]; width: 100px; }
 button.reset-button:hover { color: [[OK_DARK]]; border-color: [[OK_DARK]]; }
 div.reset_track           { color: [[LINK]]; text-decoration: underline; cursor: pointer; position: absolute; margin-left: 250px; display: none; }
 body.ie11 div.reset_track { margin-top: -30px; }
@@ -359,8 +359,8 @@ div.configuration-legend  { display: inline-block; padding: 8px; float: left; }
 div.matrix-container-wrapper { position: relative; clear: both; margin-left: 60px; height: calc(100% - 124px); }
 div.filterMatrix-container, div.matrix-container { width: 100%; height: 100%; overflow: auto; min-height: 280px;}
 
-div.horizontal-sub-header { width: 110px; margin: 0 auto; }
-div.vertical-sub-header   { transform: rotate(-90deg); position: absolute; top: 350px; margin-left: -40px; }
+div.horizontal-sub-header { width: 110px; margin: 0 auto; font-weight: bold; }
+div.vertical-sub-header   { transform: rotate(-90deg); position: absolute; top: 350px; margin-left: -40px; font-weight: bold; }
 div.config-key            { padding-bottom: 5px; }
 span.track-key            { width: 15px; height: 15px;  display: inline-block; border: #ccc 1px solid; margin-bottom:-2px; margin-right: 10px;}
 span.track-key.on         { background-color: #0735ba; }
@@ -383,7 +383,7 @@ div.yLabel span           { pointer-events: none; }
 div.xBoxes                { width: 30px; height: 30px; border: #ccc 1px solid; margin: 0 0 -1px -1px; }
 div.boxContainer          { display: flex; flex-direction: column; }
 div.rowContainer          { display: flex; }
-div.hidebox { width: 109px; height: 91px; background: #eee; z-index: 3; position: absolute; top: 0; }
+div.hidebox { width: 109px; height: 91px; background: #eee; z-index: 3; position: absolute; }
 /*div.ConfigRegMatrixForm div.hidebox { width: 110px; height: 100px; background: #eee; z-index: 3; top: -84px; position: relative; left: 119px; clear: both; }*/
 div#filter-box div.filter-rhs-popup { width: 150px; display: none; font-size: 11px; max-width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; box-shadow: 5px 5px 15px #666; z-index: 1; }
 div#filter-box div.filter-rhs-popup div { padding: 4px 8px; }
