@@ -1235,7 +1235,7 @@
 573	reference_species	homo_sapiens
 573	ref_coding_coverage	15467010
 573	ref_coding_length	35155918
-573	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch101/ensembl/kb3/pair_aligner/dna_files/release_67//homo_sapiens","group_set_size" => 100000000,"include_non_reference" => 0,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 10000}
+573	ref_dna_collection	{"chunk_size" => 1000000,"dump_loc" => "/lustre/scratch101/ensembl/kb3/pair_aligner/dna_files/release_67//homo_sapiens","group_set_size" => 100000000,"include_non_reference" => 0,"overlap" => 10000}
 573	ref_genome_coverage	21577475
 573	ref_genome_length	3098825702
 574	ensembl_release	67
@@ -1267,7 +1267,7 @@
 576	reference_species	homo_sapiens
 576	ref_coding_coverage	33856460
 576	ref_coding_length	35155918
-576	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 0,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+576	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 0,"overlap" => 0}
 576	ref_genome_coverage	1479659180
 576	ref_genome_length	3098825702
 577	ensembl_release	67
@@ -1283,7 +1283,7 @@
 577	reference_species	homo_sapiens
 577	ref_coding_coverage	32630150
 577	ref_coding_length	35284474
-577	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+577	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"overlap" => 0}
 577	ref_genome_coverage	1364428763
 577	ref_genome_length	3098825702
 579	ensembl_release	67
@@ -1493,7 +1493,7 @@
 601	reference_species	homo_sapiens
 601	ref_coding_coverage	33856240
 601	ref_coding_length	35155918
-601	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+601	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"overlap" => 0}
 601	ref_genome_coverage	980812175
 601	ref_genome_length	3098825702
 602	ensembl_release	68
@@ -1509,7 +1509,7 @@
 602	reference_species	homo_sapiens
 602	ref_coding_coverage	34022942
 602	ref_coding_length	35102739
-602	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+602	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 1,"overlap" => 0}
 602	ref_genome_coverage	1535531886
 602	ref_genome_length	3098825702
 603	ensembl_release	68
@@ -1525,7 +1525,7 @@
 603	reference_species	homo_sapiens
 603	ref_coding_coverage	26988211
 603	ref_coding_length	35155918
-603	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 0,"masking_options_file" => "$ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/human36.spec","overlap" => 0}
+603	ref_dna_collection	{"chunk_size" => 30000000,"include_non_reference" => 0,"overlap" => 0}
 603	ref_genome_coverage	97000644
 603	ref_genome_length	3098825702
 596	ensembl_release	68
