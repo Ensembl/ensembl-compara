@@ -143,7 +143,10 @@ sub calc_genetic_distance {
 
   # Temporary files
   $codeml->save_tempfiles(1) if $self->worker && !$self->worker->perform_cleanup;
-  $codeml->tempdir($self->worker_temp_directory);
+  # In codeml paths are encoded in char[96]. Since File::Temp::tempfile
+  # creates random names of 10 characters and strings in C must end with
+  # \0, the directory has to be 85 characters at most
+  $codeml->tempdir($self->worker_temp_directory) if length($self->worker_temp_directory) <= 85;
 
   my $possible_exe = $self->param('codeml_exe');
   if($possible_exe) {
