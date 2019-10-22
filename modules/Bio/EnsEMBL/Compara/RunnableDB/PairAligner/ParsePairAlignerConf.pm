@@ -711,11 +711,9 @@ sub parse_defaults {
             #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
             #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
 
-            my @chunk_keys_checks = ( "masking" );
-            foreach my $key (@chunk_keys_checks) {
-                if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
-                    throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
-                }
+            my $default_chunks = $self->param('default_chunks');
+            if ($default_chunks->{'reference'}{'masking'} ne $default_chunks->{'non_reference'}{'masking'}) {
+                throw "The 'default_chunks' parameters MUST be the same for 'reference' and 'non_reference'. Please edit your init_pipeline config file. masking: ref=" . $default_chunks->{'reference'}{'masking'} . " non_ref=" . $default_chunks->{'non_reference'}{'masking'} . "\n";
             }
 
             #Have a collection. Make triangular matrix, ordered by genome_db_id?
