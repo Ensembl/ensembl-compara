@@ -81,6 +81,11 @@ sub fetch_input {
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $sms);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, 'cds', $sms);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($self->compara_dba->get_DnaFragAdaptor, $sms);
+    if ($self->debug) {
+        $_->method_link_species_set->_load_tags() for @$homologies;
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_GeneMembers($self->compara_dba->get_GeneMemberAdaptor, $sms);
+        Bio::EnsEMBL::Compara::Utils::Preloader::load_all_SpeciesTreeNodes($self->compara_dba->get_SpeciesTreeNodeAdaptor, $homologies);
+    }
 
     $self->param('homologies', $homologies);
 }
