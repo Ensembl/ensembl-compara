@@ -222,7 +222,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '3->C' => [ 'copy_genomic_align_blocks', 'copy_mlss_tags' ],
-                'C->2' => [ 'copy_funnel' ]
+                'C->2' => [ 'ortholog_mlss_factory' ]
             },
             -analysis_capacity => 1,
             -rc_name => '1Gb_job'
