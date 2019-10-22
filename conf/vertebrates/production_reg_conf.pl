@@ -124,7 +124,7 @@ my $compara_dbs = {
     ## sauropsids
     'sauropsids_epo'         => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_99' ],
     'sauropsids_epo_prev'    => [ 'mysql-ens-compara-prod-3', 'carlac_sauropsids_epo_96' ],
-    'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_epo_low_coverage_99' ],
+    'sauropsids_epo_low'     => [ 'mysql-ens-compara-prod-6', 'dthybert_sauropsids_epo_low_coverage_99' ],
     'sauropsids_epo_anchors' => [ 'mysql-ens-compara-prod-1', 'mm14_4saur_gen_anchors_hacked_86' ],
 
     ## fish
@@ -161,16 +161,21 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 
 my $ancestral_dbs = {
-    'ancestral_prev'    => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
-    'ancestral_curr'    => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+    'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+
+    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-5', 'jalvarez_mammals_ancestral_core_99' ],
+    'primates_ancestral'   => [ 'mysql-ens-compara-prod-3', 'mateus_primates_ancestral_core_98' ],
+    'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-8', 'dthybert_sauropsids_ancestral_core_99' ],
+    'fish_ancestral'       => [ 'mysql-ens-compara-prod-1', 'cristig_fish_ancestral_core_99' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-        'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
-    });
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-1', 'ncbi_taxonomy' ],
+});
 
 # -------------------------------------------------------------------
 
