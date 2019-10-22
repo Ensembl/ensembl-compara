@@ -64,8 +64,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id = $self->param_required('mlss_id');
-
     if(my $codeml_parameters_file = $self->param('codeml_parameters_file')) {
         if(-r $codeml_parameters_file) {
             $self->param('codeml_parameters', do($codeml_parameters_file) );
