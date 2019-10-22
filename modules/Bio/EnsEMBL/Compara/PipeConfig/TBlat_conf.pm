@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
 
     #4. Check all default_options below, especially
         ref_species (if not homo_sapiens)
-        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        default_chunks
         pair_aligner_options
 
     #5. Run init_pipeline.pl script:

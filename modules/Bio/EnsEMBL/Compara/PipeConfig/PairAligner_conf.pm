@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
-        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        default_chunks
         pair_aligner_options (eg if doing primate-primate alignments)
         bed_dir if running pairaligner_stats module
 
