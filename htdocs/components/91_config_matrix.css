@@ -184,8 +184,9 @@ button.fade-button.view-track-button  { margin-left: 16px; min-width: 100px; wid
 button.fade-button.showMatrix         { height:auto; padding: 4px; }
 div.flex-row                          { display: flex; }
 .circle                               { border-radius: 20px; width: 10px; height: 16px; padding: 2px 5px 2px 7px; display: inline-block; }
-div.ConfigTrackHubMatrixForm span.error { float: right; margin-right: 8px; }
+div.ConfigTrackHubMatrixForm span.error{ margin-right: 8px; }
 span.error                            { color: [[HOVER]]; margin-left: 18px; font-weight: bold; }
+div.ConfigTrackHubMatrixForm .error, div.ConfigRegMatrixForm .error  { color: [[HOVER]]; }
 span.search-error                     { margin: 22px; position: absolute;}
 span.error._ajax                      { top: 250px; position: absolute; width: 500px; display: none; }
 .no-left-margin                       { margin-left: 0px; }
@@ -194,7 +195,7 @@ span.error._ajax                      { top: 250px; position: absolute; width: 5
 div.result-box                                    { display: flex; flex-direction: column; margin: 0 0 0 8px; border: #ccc 1px solid; padding: 8px 18px 16px 16px; min-width: 300px; max-width: 300px;  min-height: 400px; overflow: auto; }
 div.result-box#filter-box                         { display: none; }
 div.result-box#config-result-box                  { display: none; }
-h5.result-header                                  { display: block; margin-top: 30px; border-bottom:1px solid #CCC; float:left; width:100%; padding-bottom:3px; padding-left: 3px; font-weight: normal; margin-bottom: 16px; }
+h5.result-header                                  { display: block; margin-top: 30px; border-bottom:1px solid #CCC; width:100%; font-weight: normal; }
 div.ConfigTrackHubMatrixForm h5.result-header     { float: none; font-weight: bold; font-size: 12px; }
 div.ConfigTrackHubMatrixForm div#dx.result-content { display: block; }
 div#dx.result-content                             { display: none; }
@@ -645,7 +646,7 @@ div.ConfigTrackHubMatrixForm .track-popup .renderers.active .dropdown {
 /* reg matrix track popup/zmenu */
 div.track-popup                         { display: none; font-size: 11px; max-width: 190px; background-color: [[LIGHT_GREY]]; border: #b7b7b7 1px solid; position: absolute; float: left; padding: 0 8px 0 8px; box-shadow: 5px 5px 15px #666; z-index: 4;}
 div.track-popup ul:last-child           { border-bottom: none; }
-
+div.track-popup.peak-signal { width: 190px; }
 div.ConfigRegMatrixForm div.track-popup ul li:not(:first-child) { margin-left: 75px; }
 div.ConfigRegMatrixForm div.track-popup ul li                   { padding: 8px; margin-bottom: -15px; }
 div.ConfigRegMatrixForm div.track-popup ul li text              { position: relative; top: 0px; left: 2px; }

@@ -967,10 +967,12 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
     panel.el.find(containers).each(function(i, ele) {
       var error_class = "_" + $(ele).attr('id');
       if ($(ele).find('li').length && $(ele).find('span.fancy-checkbox.selected').length) {
-        panel.el.find("span." + error_class).hide();
+        var header = $(ele).prev(".result-header").data('header');
+        $(ele).prev(".result-header").html(header).removeClass('error');
       } else {
         error = 1;
-        panel.el.find("span." + error_class).show();
+        var header = $(ele).prev(".result-header").data('header');
+        $(ele).prev(".result-header").html('Please select ' + header).addClass('error');
       }
     });
     if(error) {

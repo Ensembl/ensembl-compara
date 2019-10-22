@@ -149,7 +149,7 @@ sub configuration_content {
 
         <div class="filter-content">
 
-          <h5 class="result-header">$dimX <span class="error _dx">Please select $dimX</span></h5>
+          <h5 class="result-header" data-header="$dimX">$dimX</h5>
           <div class="result-content" id="dx">
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
             <div class="sub-result-link">$dimX</div>
@@ -159,7 +159,7 @@ sub configuration_content {
             </ul>
           </div>
 
-          <h5 class="result-header">$dimY<span class="error _dy">Please select $dimY</span></h5>
+          <h5 class="result-header" data-header="$dimY">$dimY</h5>
           <div class="result-content" id="dy">
             <div class="sub-result-link">$dimY</div>
             <div class="_show show-hide hidden"><img src="/i/closed2.gif" class="nosprite" /></div><div class="_hide show-hide hidden"><img src="/i/open2.gif" class="nosprite" /></div>
