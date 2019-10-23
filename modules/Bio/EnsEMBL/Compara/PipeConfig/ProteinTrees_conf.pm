@@ -3483,8 +3483,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
             -parameters => {
-                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
             -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
@@ -3493,8 +3493,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
             -parameters => {
-                'hashed_mlss_id'    => '#expr(dir_revhash(#homo_mlss_id#))expr#',
-                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homologies.tsv',
+                'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
+                'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
             -rc_name       => '500Mb_job',
