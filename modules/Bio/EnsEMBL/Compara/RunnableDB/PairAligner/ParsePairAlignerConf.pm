@@ -517,7 +517,7 @@ sub get_chunking {
        $dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
    }
 
-   #set masking_option if maskinghas not been set
+   #set the masking if it has not been set
    unless (defined $dna_collection->{'masking'}) {
        $dna_collection->{'masking'} = $default_chunk->{'masking'};
    }
@@ -564,7 +564,7 @@ sub get_default_chunking {
 	$dna_collection->{'include_non_reference'} = $default_chunk->{'include_non_reference'};
     }
 
-    #masking_option
+    #masking
     unless (defined $dna_collection->{'masking'}) {
 	$dna_collection->{'masking'} = $default_chunk->{'masking'};
     }
