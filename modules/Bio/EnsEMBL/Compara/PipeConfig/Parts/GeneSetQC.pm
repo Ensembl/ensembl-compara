@@ -79,10 +79,26 @@ sub pipeline_analyses_GeneSetQC {
                 'species_threshold' => $self->o('species_threshold'),
                 },
             -flow_into  => {
+                '2'  => ['?table_name=gene_member_qc'],
+                '-1' => ['get_long_short_orth_genes_himem'],
+            },
+            -analysis_capacity  => 250,
+            -rc_name => '1Gb_job',
+        },
+        
+        {
+            -logic_name =>  'get_long_short_orth_genes_himem',
+            -module     =>  'Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments',
+            -parameters =>  {
+                'gene_status' => 'long-short',
+                'coverage_threshold' => $self->o('coverage_threshold'), 
+                'species_threshold' => $self->o('species_threshold'),
+                },
+            -flow_into  => {
                 2   => ['?table_name=gene_member_qc'],
             },
-            -analysis_capacity  => 2,
-            -hive_capacity      => 10,
+            -analysis_capacity  => 250,
+            -rc_name => '2Gb_job',
         },
 
         {
