@@ -80,16 +80,6 @@ sub store {
     
     assert_ref($collection, 'Bio::EnsEMBL::Compara::Production::DnaCollection', 'collection');
 
-    my $masking_options;
-    if ($collection->masking_options) {
-        if (ref($collection->masking_options)) {
-            #from masking_option_file
-            $masking_options = stringify($collection->masking_options);
-        } else {
-            $masking_options = $collection->masking_options;
-        }
-    }
-
     my $dbID;
 
     if (my $other_collection = $self->_synchronise($collection)) {
@@ -99,7 +89,7 @@ sub store {
         $dbID = $self->generic_insert('dna_collection', {
                 'description'       => $collection->description,
                 'dump_loc'          => $collection->dump_loc,
-                'masking_options'   => $masking_options,
+                'masking'           => $collection->masking,
             }, 'dna_collection_id');
     }
     $self->attach($collection, $dbID);
@@ -155,7 +145,7 @@ sub _columns {
   return qw (dc.dna_collection_id
              dc.description
              dc.dump_loc
-             dc.masking_options);
+             dc.masking);
 }
 
 sub _unique_attributes {
@@ -172,7 +162,7 @@ sub _objs_from_sth {
           'dbID',
           '_description',
           '_dump_loc',
-          '_masking_options',
+          '_masking',
       ] );
 }
 

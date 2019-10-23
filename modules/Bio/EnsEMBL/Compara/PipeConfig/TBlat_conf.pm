@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
 
     #4. Check all default_options below, especially
         ref_species (if not homo_sapiens)
-        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        default_chunks
         pair_aligner_options
 
     #5. Run init_pipeline.pl script:
@@ -76,15 +76,12 @@ sub default_options {
                     'dump_dir' => $self->o('dump_dir'),
                     #human
                     'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
-                    # if you have a specific selection of repeat elements for the masking
-                    #'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
-                    #non-human
-                    'masking_options' => '{default_soft_masking => 1}',
+                    'masking'         => 'soft',
                 },
                 'non_reference' => {'chunk_size'      => 25000,
                     'group_set_size'  => 10000000,
                     'overlap'         => 10000,
-                    'masking_options' => '{default_soft_masking => 1}'
+                    'masking'         => 'soft',
                 },
             },
 

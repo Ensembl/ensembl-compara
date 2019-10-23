@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
-        default_chunks (especially if the reference is not human, since the masking_option_file option will have to be changed)
+        default_chunks
         pair_aligner_options (eg if doing primate-primate alignments)
         bed_dir if running pairaligner_stats module
 
@@ -120,22 +120,20 @@ sub default_options {
     			                               #0  => do not include non_reference regions
     			                               #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
     			                               #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
-                'masking_options' => '{default_soft_masking => 1}',
-                # if you have a specific selection of repeat elements for the masking
-                #'masking_options_file' => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/human36.spec'),
+                'masking' => 'soft',
             },
     	     #non human example
     		'default' => {
                 'chunk_size'      => 10000000,
     				'overlap'         => 0,
-    				'masking_options' => '{default_soft_masking => 1}'
+    				'masking'         => 'soft',
             }
         },
     		'non_reference' => {
             'chunk_size'      => 10100000,
     			'group_set_size'  => 10100000,
     			'overlap'         => 100000,
-    			'masking_options' => '{default_soft_masking => 1}'
+    			'masking'         => 'soft',
         },
     	},
 	    

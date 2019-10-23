@@ -197,7 +197,7 @@ lastz_patch_mouse_81b.conf
      'chunk_size'            => 30000000,
      'overlap'               => 0,
      'include_non_reference' => 0,
-     'masking_options'       => "{default_soft_masking => 1}"
+     'masking'               => 'soft',
     },
     {TYPE => DNA_COLLECTION,
      'collection_name'       => 'homo_sapiens mammal',
@@ -206,7 +206,6 @@ lastz_patch_mouse_81b.conf
      'chunk_size'            => 30000000,
      'overlap'               => 0,
      'include_non_reference' => 0,
-     'masking_options_file'  => '/nfs/users/nfs_m/mm14/workspace/src/ensembl/ensembl-compara/scripts/pipeline/human36.spec'
     },
     { TYPE => DNA_COLLECTION,
      'collection_name'      => 'mus_musculus all',
@@ -216,7 +215,7 @@ lastz_patch_mouse_81b.conf
      'chunk_size'           => 10100000,
      'group_set_size'       => 10100000,
      'overlap'              => 100000,
-     'masking_options'      => "{default_soft_masking => 1}",
+     'masking'              => 'soft',
      'include_non_reference' => 1,
     },
     { TYPE => PAIR_ALIGNER,
@@ -322,7 +321,7 @@ lastz_patch_human_81.conf
      'chunk_size'            => 30000000,
      'overlap'               => 0,
      'include_non_reference' => 1,
-     'masking_options'       => "{default_soft_masking => 1}"
+     'masking'               => 'soft',
     },
     {TYPE => DNA_COLLECTION,
      'collection_name'       => 'homo_sapiens mammal',
@@ -332,7 +331,6 @@ lastz_patch_human_81.conf
      'chunk_size'            => 30000000,
      'overlap'               => 0,
      'include_non_reference' => 1,
-     'masking_options_file'  => '/nfs/users/nfs_m/mm14/workspace/src/ensembl/ensembl-compara/scripts/pipeline/human36.spec'
     },
     { TYPE => DNA_COLLECTION,
      'collection_name'      => 'macaca_mulatta all',
@@ -341,7 +339,7 @@ lastz_patch_human_81.conf
      'chunk_size'           => 10100000,
      'group_set_size'       => 10100000,
      'overlap'              => 100000,
-     'masking_options'      => "{default_soft_masking => 1}",
+     'masking'              => 'soft',
     },
     (... other exceptions ...)
     { TYPE => DNA_COLLECTION,
@@ -351,7 +349,7 @@ lastz_patch_human_81.conf
      'chunk_size'           => 10100000,
      'group_set_size'       => 10100000,
      'overlap'              => 100000,
-     'masking_options'      => "{default_soft_masking => 1}",
+     'masking'              => 'soft',
     },
     (... other non-exceptions ...)
     { TYPE => PAIR_ALIGNER,
