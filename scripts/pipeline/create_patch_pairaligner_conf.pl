@@ -210,7 +210,6 @@ my $dna_collection;
 %{$dna_collection->{homo_sapiens_mammal}} = ('chunk_size' => 30000000,
 					     'overlap'    => 0,
 					     'include_non_reference' => ($patched_species_is_alignment_reference ? 1 : 0), #include haplotypes
-                                             # if you have a specific selection of repeat elements for the masking
                                              );
 
 %{$dna_collection->{mus_musculus_exception}} = ('chunk_size' => 30000000,
