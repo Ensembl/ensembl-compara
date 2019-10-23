@@ -324,7 +324,7 @@ if ($print_dna_collection) {
     print " 'chunk_size'            => " . $dna_collection->{$ref_mammal}{'chunk_size'} . ",\n";
     print " 'overlap'               => " . $dna_collection->{$ref_mammal}{'overlap'} . ",\n";
     print " 'include_non_reference' => " . $dna_collection->{$ref_mammal}{'include_non_reference'} . ",\n";  
-    print " 'masking'               => " . $dna_collection->{$ref_exception}{'masking'} . "\n";
+    print " 'masking'               => " . $dna_collection->{$ref_mammal}{'masking'} . "\n";
     print "},\n";
 
     #Exceptions (primates)
