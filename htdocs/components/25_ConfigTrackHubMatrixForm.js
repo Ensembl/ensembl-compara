@@ -2891,13 +2891,10 @@ return;
       }
 
       //setting all switch on/off
-      if(allState === "track-on") {
-        panel.TrackPopupType.find('div input#on_all_cells').prop("checked",true);
-      } else if(allState === "track-off") {
-        panel.TrackPopupType.find('div input#off_all_cells').prop("checked",true);
+      if(allState === "track-on" || allState === "track-off") {
+        panel.TrackPopupType.find('div input#all-cells-stateBox').prop("checked",true);
       } else {
-        panel.TrackPopupType.find('div input#on_all_cells').prop("checked",false);
-        panel.TrackPopupType.find('div input#off_all_cells').prop("checked",false);
+        panel.TrackPopupType.find('div input#all-cells-stateBox').prop("checked",false);
       }
 
       //tick apply to all cells box
@@ -3231,33 +3228,36 @@ return;
             xNameData = panel.localStoreObj[panel.xName][panel.xName];
           }
 
-          // Checked All cells on radio button
-          var allOn = (panel.localStoreObj[panel.dyStateKey]["allSelection"] &&
-            panel.localStoreObj[panel.dyStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dyStateKey]["allSelection"].total);
-
-          panel.TrackPopupType.find('div input#on_all_cells').prop("checked",allOn);
-
-          // Checked All cells on radio button
-          var allOff = (panel.localStoreObj[panel.dyStateKey]["allSelection"] &&
-            panel.localStoreObj[panel.dyStateKey]["allSelection"].state.off === panel.localStoreObj[panel.dyStateKey]["allSelection"].total);
-
-          panel.TrackPopupType.find('div input#off_all_cells').prop("checked",allOff);            
+          //if all cells state checkbox is ticked, means apply the same state to all of the cells
+          if(panel.TrackPopupType.find('div.all-cells-state input[name=all-cells]').is(":checked")){
+            //update bg for all cells in the row belonging to matrix only and also switch cell off
+            panel.elLk.rowContainer.find('div.xBoxes.matrix._hasData.'+currentState).removeClass(currentState).addClass(trackState);
+    
+            //update localstore for whole matrix
+            panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey], "allSelection", trackState, currentState);   
+          } else {
+            // Checked if by switching this one cell all cells are on/off means tick all cell checkbox
+            if(panel.localStoreObj[panel.dyStateKey]["allSelection"] && (panel.localStoreObj[panel.dyStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dyStateKey]["allSelection"].total || panel.localStoreObj[panel.dyStateKey]["allSelection"].state.off === panel.localStoreObj[panel.dyStateKey]["allSelection"].total) ) {
+              panel.TrackPopupType.find('div input#all-cells-stateBox').prop("checked",true);
+            } else {
+              // not sure we want to do this, thats basically overwriting user selection
+              //panel.TrackPopupType.find('div input#all-cells-stateBox').prop("checked",false);
+            }
+          }          
         }
         e.stopPropagation();
       });
 
       // choosing all cells radio button (on/off)
-      panel.TrackPopupType.find('div input[name=all_cells]').off().on("click", function(e) {
-        var radioName    = $(this).attr("value");
-        var trackState   = "track-"+radioName;
-        var currentState = trackState === "track-on"  ? "track-off" : "track-on";
+      panel.TrackPopupType.find('div.all-cells-state input[name=all-cells]').off().on("click", function(e) {
+        if(!$(this).is(":checked")) { return ; } //dont do anything if it is unchecking box
+        
+        var cellSwitchVal = panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').is(":checked") ? "on" : "off";
+        var trackState    = "track-"+cellSwitchVal;
+        var currentState  = trackState === "track-on"  ? "track-off" : "track-on";
 
         //update bg for all cells in the row belonging to matrix only and also switch cell off
         panel.elLk.rowContainer.find('div.xBoxes.matrix._hasData.'+currentState).removeClass(currentState).addClass(trackState);
-        panel.TrackPopupType.find('div input#'+radioName+'_all_cells').prop("checked",true);
-
-        //switching off cell switch
-        panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked", radioName === "on" ? true : false);
 
         //update localstore for whole matrix
         panel.updateTrackStore(panel.localStoreObj[panel.dxStateKey], "allSelection", trackState, currentState);    
@@ -3272,16 +3272,11 @@ return;
         panel.TrackPopupType.find('ul li label.switch input[name="cell-switch"]').prop("checked", cellState === "on" ? true : false);
 
         // Checked All cells on radio button if after resetting all are on
-        var allOn = (panel.localStoreObj[panel.dyStateKey]["allSelection"] &&
-          panel.localStoreObj[panel.dyStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dyStateKey]["allSelection"].total);
-
-        panel.TrackPopupType.find('div input#on_all_cells').prop("checked",allOn);
-
-        // Checked All cells on radio button if after resetting all are off
-        var allOff = (panel.localStoreObj[panel.dyStateKey]["allSelection"] &&
-          panel.localStoreObj[panel.dyStateKey]["allSelection"].state.off === panel.localStoreObj[panel.dyStateKey]["allSelection"].total);
-
-        panel.TrackPopupType.find('div input#off_all_cells').prop("checked",allOff);
+        if(panel.localStoreObj[panel.dyStateKey]["allSelection"] && (panel.localStoreObj[panel.dyStateKey]["allSelection"].state.on === panel.localStoreObj[panel.dyStateKey]["allSelection"].total || panel.localStoreObj[panel.dyStateKey]["allSelection"].state.off === panel.localStoreObj[panel.dyStateKey]["allSelection"].total) ) {
+          panel.TrackPopupType.find('div input#all-cells-stateBox').prop("checked",true);
+        } else {
+          panel.TrackPopupType.find('div input#all-cells-stateBox').prop("checked",false);
+        }
       });      
 
     }

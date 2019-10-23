@@ -520,7 +520,10 @@ div.ConfigTrackHubMatrixForm .track-popup ul li:not(:first-child) { margin-left:
 div.ConfigTrackHubMatrixForm .track-popup ul li.renderer-selection{ display: flex; margin: none; }
 div.ConfigTrackHubMatrixForm .track-popup ul li .wide-label       { width: 60px; padding: 3px; }
 div.ConfigTrackHubMatrixForm .track-popup ul li .cell-style       {  }
-div.ConfigTrackHubMatrixForm .track-popup ul li .renderers-selection { width: auto; margin-bottom: 8px; }
+
+div.ConfigTrackHubMatrixForm .track-popup ul li div.all-cells-state       { margin-left: 100px; display: flex; margin-top: -15px; }
+div.ConfigTrackHubMatrixForm .track-popup ul li div.all-cells-state label { margin-top: 2px; margin-right: 4px; }
+div.ConfigTrackHubMatrixForm .track-popup ul li .renderers-selection      { width: auto; margin-bottom: 8px; }
 
 div.ConfigTrackHubMatrixForm .track-popup ul                      { padding-bottom: none; }
 div.ConfigTrackHubMatrixForm .track-popup ul li:last-child        { border-bottom: none; display: flex; }
