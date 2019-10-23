@@ -76,8 +76,6 @@ sub default_options {
                     'dump_dir' => $self->o('dump_dir'),
                     #human
                     'include_non_reference' => 0, #Do not use non_reference regions (eg human assembly patches) since these will not be kept up-to-date
-                    # if you have a specific selection of repeat elements for the masking
-                    #non-human
                     'masking'         => 'soft',
                 },
                 'non_reference' => {'chunk_size'      => 25000,
