@@ -84,16 +84,16 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
       'signal_feature' : 'Peaks & Signal',
       'as_alignment_nolabel' : 'Normal',
       'as_alignment_label' : 'Labels',
-      'as_transcript_label' : 'Transcript label',
-      'as_transcript_nolabel' : 'Transcript no label',
+      'as_transcript_label' : 'Structure with labels',
+      'as_transcript_nolabel' : 'Structure',
       'half_height' : 'Half height',
       'stack' : 'Stacked',
       'unlimited' : 'Stacked unlimited',
       'ungrouped' : 'Ungrouped',
       'coverage_with_reads' : 'Coverage',
       'histogram' : 'Histogram',
-      'as_collapsed_nolabel' : 'Collapsed no label',
-      'as_collapsed_label' : 'Collapsed label'
+      'as_collapsed_nolabel' : 'Collapsed',
+      'as_collapsed_label' : 'Collapsed with labels'
     };
 
     this.rendererConfig = {
