@@ -60,7 +60,8 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults},
         'min_group_size'  => 4,
-        'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
+        #'taxonomic_ranks' => ['order', 'class', 'phylum', 'kingdom'],
+        'taxonomic_ranks' => ['genus'],
         # 'custom_groups'   => ['Vertebrata', 'Sauropsida', 'Amniota', 'Tetrapoda'],
         # 'outgroup_id' => '127', # outgroup for everything
 
@@ -96,11 +97,13 @@ sub fetch_input {
 
 	my (@prev_group_ids, %all_groups, @matrices_dataflow, $this_outgroup);
 	foreach my $group_taxon_id ( @tax_groups_ids ) {
+    $group_taxon_id=4527;
 		my $current_group_taxon = $ncbi_adaptor->fetch_node_by_taxon_id($group_taxon_id);
 		print " -- Grouping " . $current_group_taxon->name . "...\n" if $self->debug;
 
 		# extract initial submatrix for the group
 		my @group_gdbs = @{$gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($group_taxon_id)};
+    #print Dumper @group_gdbs;
 		print "\t -- fetching submatrix for " . scalar @group_gdbs . " genomes\n" if $self->debug;
 		my $submatrix = $distance_matrix->prune_gdbs_from_matrix( \@group_gdbs );
 
@@ -120,6 +123,8 @@ sub fetch_input {
 			my $prev_group_gdbs = $gdb_adaptor->fetch_all_current_by_ancestral_taxon_id($prev_group);
 			$submatrix = $submatrix->collapse_group_in_matrix( $prev_group_gdbs, "mrg_$prev_group" );
 		}
+
+    next if $self->_empty_submatrix($submatrix);
 
 		# add to dataflow
 		my $mdf = { 
@@ -156,7 +161,7 @@ sub _add_outgroup {
 	foreach my $full_key ( $full_matrix->members ) {
 		next if ( defined $self->param('blacklisted_genome_db_ids') && grep { $full_key eq $_ } @{$self->param('blacklisted_genome_db_ids')} ); # skip any that are on the naughty list
 		next if (grep { $_ eq $full_key } @sub_gdb_ids); # skip any that exist in the submatrix
-
+    next unless defined $full_matrix->distance($rep_gdb_id, $full_key);
 		if ( $full_matrix->distance($rep_gdb_id, $full_key) < $min_distance ) {
 			$closest_gdb_id = $full_key;
 			$min_distance = $full_matrix->distance($rep_gdb_id, $full_key);
@@ -239,6 +244,16 @@ sub _taxonomic_groups {
 	push(@sorted_taxon_ids, $root_taxon->dbID); # usually 1, but fetch from db just incase
 
 	return @sorted_taxon_ids;
+}
+
+sub _empty_submatrix {
+  my ($self, $submatrix) = @_;
+
+  my @members = $submatrix->members;
+  foreach my $member ( @members ) {
+    return 0 unless $member =~ m/^mrg_/;
+  }
+  return 1;
 }
 
 1;
