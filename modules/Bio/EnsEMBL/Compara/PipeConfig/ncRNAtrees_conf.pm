@@ -1155,7 +1155,14 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => 'homology_dumps_mlss_id_factory',
-                'A->1' => WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
+                'A->1' => 'rib_fire_homology_processing',
+            },
+        },
+
+        {   -logic_name => 'rib_fire_homology_processing',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                1 => WHEN('#ref_ortholog_db#' => 'remove_overlapping_homologies', ELSE [ 'homology_stats_factory', 'id_map_mlss_factory' ]),
             },
         },
         
