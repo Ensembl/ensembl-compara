@@ -2205,11 +2205,15 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
             availableFilters[arr[0]] = availableFilters[arr[0]] || {};
             availableFilters[arr[0]][arr[1]] = 1;
             extraDimValToCellMap[dimVal] = extraDimValToCellMap[dimVal] || {};
-            extraDimValToCellMap[dimVal][key] = 1;
+            extraDimValToCellMap[dimVal]['cells'] = extraDimValToCellMap[dimVal]['cells'] || {};
+            // extraDimValToCellMap[dimVal]['cells'][key] = 1;
             extraDimValToCellMap[dimVal].on = extraDimValToCellMap[dimVal].on || 0;
             extraDimValToCellMap[dimVal].off = extraDimValToCellMap[dimVal].off || 0;
             // Get count of ONs and OFFs
             localStorage.filterMatrix[key].data[trackId].state === 'on' ? extraDimValToCellMap[dimVal].on++ : extraDimValToCellMap[dimVal].off++;
+            extraDimValToCellMap[dimVal].cells[key] = extraDimValToCellMap[dimVal].cells[key] || {};
+            extraDimValToCellMap[dimVal].cells[key]['availableTracks'] = extraDimValToCellMap[dimVal].cells[key]['availableTracks'] || {};
+            extraDimValToCellMap[dimVal].cells[key]['availableTracks'][trackId] = 1
           });
         });
       }
@@ -2253,18 +2257,53 @@ Ensembl.Panel.ConfigTrackHubMatrixForm = Ensembl.Panel.ConfigMatrixForm.extend({
   createFilterRHSPopup: function(event) {
     var panel = this;
     var data = $(event.currentTarget).data();
+    var selected = {};
+    var count = {
+      state: {on: [], off: []},
+      resetState: {on: [], off: []},
+      total: []
+    };
+    // Popup radio button selection functionality (selecting Default in case all_on/off is same as default_on/off)
+    $.each(Object.keys(panel.elLk.extraDimValToCellMap[data.dimKey].cells), function(i, cellKey) {
+        if (panel.localStoreObj.filterMatrix[cellKey]) {
+          $.each(panel.localStoreObj.filterMatrix[cellKey].data, function(trackId, onOffHash) {
+            if (panel.elLk.extraDimValToCellMap[data.dimKey].cells[cellKey].availableTracks[trackId]) {
+              (onOffHash.state === "on") && count.state.on.push(trackId);
+              (onOffHash["reset-state"] === "on") && count.resetState.on.push(trackId);
+              (onOffHash.state === "off") && count.state.off.push(trackId);
+              (onOffHash["reset-state"] === "off") && count.resetState.off.push(trackId);
+              count.total++;
+            }
+          })
+        }
+    });
+
+    if (count.state.on.length === count.resetState.on.length &&
+        count.state.off.length === count.resetState.off.length &&
+        JSON.stringify(count.state.on) === JSON.stringify(count.resetState.on) &&
+        JSON.stringify(count.state.off) === JSON.stringify(count.resetState.off)) {
+          selected['default'] = 'checked';
+    }
+    else if (count.state.on.length === count.total  && count.state.off.length === 0) {
+      selected['all_on'] = 'checked';
+    }
+    else if(count.state.off.length === count.total && count.state.on.length === 0) {
+      selected['all_off'] = 'checked';
+    }
+
+
     var popup = '\
       <div class="title">' + data.dimVal + '</div>\
-      <div><input type="radio" name="filter_popup_selection" value="all-on" id="filter_popup_selection1"><label for="filter_popup_selection1">All On</label></div>\
-      <div><input type="radio" name="filter_popup_selection" value="all-off" id="filter_popup_selection2"><label for="filter_popup_selection2">All Off</label></div>\
-      <div><input type="radio" name="filter_popup_selection" value="default" id="filter_popup_selection3"><label for="filter_popup_selection3">Default</label></div>';
+      <div><input type="radio" name="filter_popup_selection" value="all-on" id="filter_popup_selection1"'+selected['all_on']+'><label for="filter_popup_selection1">All On</label></div>\
+      <div><input type="radio" name="filter_popup_selection" value="all-off" id="filter_popup_selection2"'+selected['all_off']+'><label for="filter_popup_selection2">All Off</label></div>\
+      <div><input type="radio" name="filter_popup_selection" value="default" id="filter_popup_selection3"'+selected['default']+'><label for="filter_popup_selection3">Default</label></div>';
 
     var pos = $(event.currentTarget).position();
     var offset = $(event.currentTarget).offset();
     panel.elLk.filterTrackBox.find('.filter-rhs-popup').html(popup).css({top: (pos.top + $('div.modal_content')[0].scrollTop) + 20, left: pos.left + $('div.modal_content')[0].scrollLeft}).show();
     panel.elLk.filterTrackBox.find('.filter-rhs-popup input').click($.proxy(function(e) {
       var opt = $(e.currentTarget).val();
-      $.each(Object.keys(panel.elLk.extraDimValToCellMap[data.dimKey]), function(i, v) {
+      $.each(Object.keys(panel.elLk.extraDimValToCellMap[data.dimKey].cells), function(i, v) {
         if (panel.localStoreObj.filterMatrix[v]) {
           var trackIds = Object.keys(panel.localStoreObj.filterMatrix[v].data);
           $.each(trackIds, function(i, trackId) {
@@ -2667,7 +2706,7 @@ return;
       var cellArray = [];
       var cellHash;
       if (dimKey) {
-        $.each(Object.keys(panel.elLk.extraDimValToCellMap[dimKey]), function(i, v) {
+        $.each(Object.keys(panel.elLk.extraDimValToCellMap[dimKey].cells), function(i, v) {
           if (panel.localStoreObj.filterMatrix[v]) {
             cellHash = panel.localStoreObj.filterMatrix[v];
             update(v, cellHash);
