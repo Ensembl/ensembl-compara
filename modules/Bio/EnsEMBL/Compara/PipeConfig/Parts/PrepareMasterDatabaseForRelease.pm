@@ -127,6 +127,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
                 '4->A' => [ 'rename_genome' ],
+                '5->A' => [ 'load_assembly_patches' ],
                 'A->1' => [ 'sync_metadata' ],
             },
             -rc_name    => '16Gb_job',
@@ -170,7 +171,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             },
             -flow_into  => WHEN(
                 '#do_load_lrg_dnafrags#' => 'load_lrg_dnafrags',
-                ELSE 'assembly_patch_factory',
+                ELSE 'update_collection',
             ),
         },
 
@@ -179,19 +180,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'compara_db' => $self->o('master_db'),
             },
-            -flow_into  => [ 'assembly_patch_factory' ],
-        },
-
-         {  -logic_name => 'assembly_patch_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputlist'    => $self->o('assembly_patch_species'),
-                'column_names' => ['species_name'],
-            },
-            -flow_into  => {
-                '2->A' => [ 'load_assembly_patches' ],
-                'A->1' => [ 'update_collection' ],
-            },
+            -flow_into  => [ 'update_collection' ],
         },
 
         {   -logic_name => 'load_assembly_patches',

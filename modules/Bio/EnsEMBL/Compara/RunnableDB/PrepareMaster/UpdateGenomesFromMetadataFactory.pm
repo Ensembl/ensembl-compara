@@ -53,7 +53,7 @@ sub fetch_input {
 	my $genome_db_adaptor = $self->get_cached_compara_dba('master_db')->get_GenomeDBAdaptor;
 
 	# use metadata script to report genomes that need to be updated
-	my ($genomes_to_update, $renamed_genomes) = $self->fetch_genome_report($release, $division);
+	my ($genomes_to_update, $renamed_genomes, $genomes_with_assembly_patches) = $self->fetch_genome_report($release, $division);
 
     # prepare renaming SQL cmds
     my @rename_cmds;
@@ -79,9 +79,10 @@ sub fetch_input {
             push( @release_genomes, @add_species_for_div );
 
             # check if they've been updated this release too
-            my ($updated_add_species, $renamed_add_species) = $self->fetch_genome_report($release, $additional_div);
+            my ($updated_add_species, $renamed_add_species, $patched_add_species) = $self->fetch_genome_report($release, $additional_div);
             foreach my $add_species_name ( @add_species_for_div ) {
                 push( @$genomes_to_update, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_add_species;
+                push( @$genomes_with_assembly_patches, $add_species_name ) if grep { $add_species_name eq $_ } @$patched_add_species;
             }
         }
     }
@@ -90,7 +91,10 @@ sub fetch_input {
     print Dumper $genomes_to_update;
 
     print "GENOME_LIST!! ";
-    print Dumper @release_genomes;
+    print Dumper \@release_genomes;
+
+    print "GENOMES_WITH_ASSEMBLY_PATCHES!! ";
+    print Dumper $genomes_with_assembly_patches;
 
     # check that there have been no changes in dnafrags vs core slices
     my %g2update = map { $_ => 1 } @$genomes_to_update;
@@ -118,6 +122,7 @@ sub fetch_input {
     die "Percentage of genomes to retire seems too high ($perc_to_retire\%)" if $perc_to_retire >= 20;
 
     $self->param('genomes_to_update', $genomes_to_update);
+    $self->param('genomes_with_assembly_patches', $genomes_with_assembly_patches);
 	$self->param('genomes_to_retire', \@to_retire);
 }
 
@@ -132,6 +137,9 @@ sub write_output {
 
     my @rename_genomes_dataflow = map { {sql => [$_]} } @{ $self->param('rename_cmds') };
     $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
+
+    my @patched_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_with_assembly_patches') };
+    $self->dataflow_output_id( \@patched_genomes_dataflow, 5 );
 }
 
 sub fetch_genome_report {
@@ -155,10 +163,23 @@ sub fetch_genome_report {
     # print Dumper $decoded_meta_report;
 
     my @new_genomes = keys %{$decoded_meta_report->{new_genomes}};
-    my @updated_assemblies = keys %{$decoded_meta_report->{updated_assemblies}};
     my %renamed_genomes = map { $_->{name} => $_->{old_name} } values %{$decoded_meta_report->{renamed_genomes}};
 
-	return ([@new_genomes, @updated_assemblies], \%renamed_genomes);
+    my @genomes_with_assembly_patches;
+    my @updated_assemblies;
+    foreach my $genome (keys %{$decoded_meta_report->{updated_assemblies}}) {
+        my $genome_report = $decoded_meta_report->{updated_assemblies}->{$genome};
+        if ($genome_report->{old_assembly} =~ /^(GRC[^\.]*)/) {
+            if ($genome_report->{assembly} =~ /^$1\.p/) {
+                # e.g. GRCh38.p12 vs GRCh38.p13
+                push @genomes_with_assembly_patches, $genome;
+                next;
+            }
+        }
+        push @updated_assemblies, $genome;
+    }
+
+    return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@genomes_with_assembly_patches);
 }
 
 1;
