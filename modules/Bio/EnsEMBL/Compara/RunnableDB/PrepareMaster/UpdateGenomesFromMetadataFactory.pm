@@ -83,6 +83,16 @@ sub fetch_input {
             foreach my $add_species_name ( @add_species_for_div ) {
                 push( @$genomes_to_update, $add_species_name ) if grep { $add_species_name eq $_ } @$updated_add_species;
                 push( @$genomes_with_assembly_patches, $add_species_name ) if grep { $add_species_name eq $_ } @$patched_add_species;
+                if (my $old_name = $renamed_add_species->{$add_species_name}) {
+                    # We have the new name in the PipeConfig. Still need to update the database
+                    push @rename_cmds, "UPDATE genome_db SET name = '$add_species_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL";
+                } else {
+                    # We have the old name in the PipeConfig. Update it there first and rerun the pipeline
+                    my @new_name = grep {$renamed_add_species->{$_} eq $add_species_name} (keys %$renamed_add_species);
+                    if (@new_name) {
+                        die "'$add_species_name' has been renamed to ".$new_name[0].". Please update your PipeConfig(s) and rerun the pipeline !\n";
+                    }
+                }
             }
         }
     }
