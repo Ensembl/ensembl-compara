@@ -71,7 +71,7 @@ print "TMP DIR==== ".$tmp_dir;
 my $file = 'Update_ensembl_archive_for_release_'.$release_id.'.sql';
 open PATCH, ">$tmp_dir/$file" or die "ERROR: $!";
 
-print PATCH "use ensembl_archive_".$release_id.";\n\n";
+print PATCH "use ensembl_archive;\n\n";
 
 if ($release) {
   print "Release $release_id is currently scheduled for ". $release->{'date'} .".
@@ -170,11 +170,11 @@ SPECIES: foreach my $sp (sort @species) {
         if ($old_version) {
           my $is_different  = 0;
           if ($old_version ne $a_version) {
-            print "!!! Old assembly version was $old_version; new version is $a_version\n";
+            print "!!! $sp: Old assembly version was $old_version; new version is $a_version\n";
             $is_different = 1;
           }
           if ($old_name ne $a_name) {
-            print "!!! Old assembly name was $old_name; new name is $a_name\n";
+            print "!!! $sp:Old assembly name was $old_name; new name is $a_name\n";
             $is_different = 1;
           }
           if ($is_different) {
