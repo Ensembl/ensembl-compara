@@ -114,7 +114,7 @@ sub default_options {
         'master_db'  => 'compara_master',
 
         # location of homology data. note: wga_score will be written here
-        'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',,
+        'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
         # if alignments are not all present in compara_db, define alternative db locations
         'alt_aln_dbs' => [
             # list of databases with EPO or LASTZ data
