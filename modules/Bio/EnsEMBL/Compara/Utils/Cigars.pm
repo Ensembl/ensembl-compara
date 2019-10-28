@@ -609,6 +609,24 @@ sub _cigar_element {
 }
 
 
+=head2 pad_with_x
+
+  Arg [1]     : $cigar_line (string) The original cigar-line
+  Arg [2]     : $start_X (integer). The number of Xs to add before the cigar-line
+  Arg [3]     : $end_X (integer). The number of Xs to add after the cigar-line
+  Example     : my $padded_cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($cigar_line, 0, 5);
+  Description : Add some X-type cigar elements before and after the cigar-line
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub pad_with_x {
+    my ($cigar_line, $start_X, $end_X) = @_;
+    return _cigar_element('X', $start_X) . $cigar_line . _cigar_element('X', $end_X);
+}
+
+
 =head2 check_cigar_line
 
     Arg[1]      : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align

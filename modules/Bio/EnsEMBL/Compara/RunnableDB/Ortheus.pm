@@ -608,11 +608,7 @@ sub parse_results {
 
 			print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
 
-			$genomic_align->cigar_line(
-			    Bio::EnsEMBL::Compara::Utils::Cigars::_cigar_element('X', $start_X) .
-			    $genomic_align->cigar_line .
-			    Bio::EnsEMBL::Compara::Utils::Cigars::_cigar_element('X', $end_X)
-			) if $start_X || $end_X;
+			$genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
 
 			#my $aln_seq = "." x $start_X;
 			#$aln_seq .= $genomic_align->aligned_sequence();
@@ -785,11 +781,7 @@ sub parse_results {
 	    $end_X = length($seq) - ($start_X+length($subseq));
 	    print "start_X $start_X end_X $end_X subseq_length " . length($subseq) . "\n" if ($self->debug);
 	    
-	    $genomic_align->cigar_line(
-	        Bio::EnsEMBL::Compara::Utils::Cigars::_cigar_element('X', $start_X) .
-	        $genomic_align->cigar_line .
-	        Bio::EnsEMBL::Compara::Utils::Cigars::_cigar_element('X', $end_X)
-	    ) if $start_X || $end_X;
+	    $genomic_align->cigar_line( Bio::EnsEMBL::Compara::Utils::Cigars::pad_with_x($genomic_align->cigar_line, $start_X, $end_X) );
 	    my $aln_seq = "." x $start_X;
 	    $aln_seq .= $genomic_align->aligned_sequence();
 	    $aln_seq .= "." x $end_X;
