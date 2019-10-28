@@ -1637,6 +1637,7 @@ sub _munge_meta {
     provider.logo                 PROVIDER_LOGO
     species.strain                SPECIES_STRAIN
     species.strain_group          STRAIN_GROUP
+    strain.type                   STRAIN_TYPE
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
     gencode.version               GENCODE_VERSION
   );
@@ -1713,6 +1714,11 @@ sub _munge_meta {
     }
     
     $self->tree->{'SPECIES_META_ID'} = $species_id;
+
+    ## fall back to 'strain' if no strain type set
+    if (!$self->tree->{'STRAIN_TYPE'}) {
+      $self->tree->{'STRAIN_TYPE'} = 'strain';
+    }
 
     ## Munge genebuild info
     my @A = split '-', $meta_hash->{'genebuild.start_date'}[0];

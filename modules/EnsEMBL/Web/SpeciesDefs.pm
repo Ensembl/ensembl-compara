@@ -240,7 +240,7 @@ sub reference_species {
     for (@valid_species) {
       my $strain = $self->get_config($_, 'SPECIES_STRAIN');
 
-      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_COLLECTION')) {
+      if (!$strain || ($strain =~ /reference/) || !$self->get_config($_, 'STRAIN_GROUP')) {
         push @ref_species, $_;
       }
     }
@@ -613,7 +613,13 @@ sub _expand_database_templates {
                       };
     foreach (@db_types) {
       my $species_version = $tree->{'general'}{'SPECIES_RELEASE_VERSION'} || 1;
-      my $db_name = $tree->{'databases'}{'DATABASE_'.$_} || sprintf('%s_%s_%s_%s', $filename, lc($_), $SiteDefs::ENSEMBL_VERSION, $species_version);
+      my $db_name = $tree->{'databases'}{'DATABASE_'.$_};
+      unless ($db_name) {
+        my $non_vert_version = $SiteDefs::SITE_RELEASE_VERSION;
+        $db_name = sprintf('%s_%s', $filename, lc($_));
+        $db_name .= '_'.$non_vert_version if $non_vert_version;                                 
+        $db_name .= sprintf('_%s_%s', $SiteDefs::ENSEMBL_VERSION, $species_version);
+      }
       ## Does this database exist?
       $db_details->{'NAME'} = $db_name;
       my $db_exists = $config_packer->db_connect($_, $db_details, 1);
@@ -823,7 +829,7 @@ sub _parse {
         };
 
         if ($strain_group && $strain_name !~ /reference/) {
-          $child->{type} = $strain_group . ' strains';
+          $child->{type} = $strain_group . ' ' . $config_packer->tree->{'STRAIN_TYPE'}. 's';
         }
         elsif($strain_group && $strain_name =~ /reference/) {
           # Create display name for Reference species

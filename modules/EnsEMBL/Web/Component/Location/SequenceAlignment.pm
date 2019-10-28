@@ -42,7 +42,7 @@ sub content {
      $original_slice = $original_slice->invert if $hub->param('strand') == -1;
   my $ref_slice      = $self->new_object('Slice', $original_slice, $object->__data); # Get reference slice
   my $var_db         = $species_defs->databases->{'DATABASE_VARIATION'};
-  my $strain         = $species_defs->translate('strain') || 'strain';
+  my $strain         = $species_defs->STRAIN_TYPE || 'strain';
   my (@samples, $html);
 
   my $config = {

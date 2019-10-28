@@ -65,10 +65,13 @@ sub content {
   
   my $image_width     = $self->image_width;
   my $slice           = $object->slice;
+  my %export_params   = $hub->param('data_type') ? ('data_type' => $hub->param('data_type'), 'component' => $hub->param('data_action'))
+                                                 : ();
   my ($slices)        = $object->get_slices({
                                               'slice' => $slice, 
                                               'align' => $align_params, 
-                                              'species' => $primary_species
+                                              'species' => $primary_species,
+                                              %export_params
                         });
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   my $i               = 1;

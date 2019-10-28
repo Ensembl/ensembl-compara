@@ -251,7 +251,7 @@ sub transcript_table {
       uniprot => { match => "^UniProt/[SWISSPROT|SPTREMBL]", name => "UniProt", order => 0 },
     );
     if ($species eq 'Homo_sapiens' && $sub_type eq 'GRCh37' ) {
-      $extra_links{refseq} = { match => "^RefSeq", label => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap", class => '_ht'};
+      $extra_links{refseq} = { match => "^RefSeq", name => "RefSeq", order => 1, title => "RefSeq transcripts with sequence similarity and genomic overlap"};
     }
     my %any_extras;
  
@@ -363,7 +363,7 @@ sub transcript_table {
     foreach my $k (sort { $extra_links{$a}->{'order'} cmp
                           $extra_links{$b}->{'order'} } keys %any_extras) {
       my $x = $extra_links{$k};
-      push @columns, { key => $k, sort => 'html', label => $x->{'name'}, class => '_ht'};
+      push @columns, { key => $k, sort => 'html', title => $x->{'title'}, label => $x->{'name'}, class => '_ht'};
     }
     if ($species eq 'Homo_sapiens' && $sub_type ne 'GRCh37') {
       push @columns, { key => 'refseq_match', sort => 'html', label => 'RefSeq Match', title => 'RefSeq transcripts that match 100% across the sequence, intron/exon structure and UTRs', class => '_ht' };
@@ -405,6 +405,7 @@ sub transcript_table {
 
   if(@proj_attrib && $self->hub->species_defs->IS_STRAIN_OF) {
     (my $ref_gene = $proj_attrib[0]->value) =~ s/\.\d+$//;
+    my $strain_type = $hub->species_defs->STRAIN_TYPE;
     
     if($ref_gene) {
       #copied from apache/handler, just need this one line to get the matching species for the stable_id (use ensembl_stable_id database)
@@ -420,13 +421,13 @@ sub transcript_table {
           action  => 'Summary',
           g       => $ref_gene
         });
-        $table->add_row('Reference strain equivalent', qq{<a href="$ref_url">$ref_gene_name</a>});
+        $table->add_row("Reference $strain_type equivalent", qq{<a href="$ref_url">$ref_gene_name</a>});
       }
       else {
-        $table->add_row('Reference strain equivalent',"None");
+        $table->add_row("Reference $strain_type equivalent","None");
       }  
     } else {
-      $table->add_row('Reference strain equivalent',"None");
+      $table->add_row("Reference $strain_type equivalent","None");
     }
 
   }
@@ -498,7 +499,7 @@ sub about_feature {
     
     my $protein_url = $hub->url({
       type   => 'Gene',
-      action => 'Family',
+      action => $SiteDefs::GENE_FAMILY_ACTION,
       g      => $gene->stable_id
     });
 
@@ -919,9 +920,9 @@ sub check_for_missing_species {
     elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
       my $sp_prod = $hub->species_defs->production_name_mapping($_);
 
-      my $key = ($species_info->{$sp_prod}->{strain_collection} && $species_info->{$sp_prod}->{strain} !~ /reference/) ? 
-              'strains' : 'species';
-      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}->{common};
+      my $key = ($species_info->{$sp_prod}{strain_group} && $species_info->{$sp_prod}{strain} !~ /reference/) ? 
+              $species_info->{$sp_prod}{strain_type}.'s' : 'species';
+      push @{$missing_hash->{$key}}, $species_info->{$sp_prod}{common};
       push @missing, $species_defs->production_name_mapping($_);
     }
   }
@@ -954,7 +955,8 @@ sub check_for_missing_species {
 
       if ($missing_hash->{strains}) {
         $count = scalar @{$missing_hash->{strains}};
-        $str .= "$count strain";
+        my $strain_type = $hub->species_defs->STRAIN_TYPE || 'strain';
+        $str .= "$count $strain_type";
         $str .= 's' if $count > 1;
       }
 

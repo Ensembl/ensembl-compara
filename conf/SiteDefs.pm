@@ -34,9 +34,9 @@ use Sys::Hostname::Long;
 
 ###############################################################################
 ## Ensembl Version and release dates (these get updated every release)
-our $ENSEMBL_VERSION        = 98;            # Ensembl release number
-our $ARCHIVE_VERSION        = 'Sep2019';     # Archive site for this version
-our $ENSEMBL_RELEASE_DATE   = 'September 2019'; # As it would appear in the copyright/footer
+our $ENSEMBL_VERSION        = 99;            # Ensembl release number
+our $ARCHIVE_VERSION        = 'Dec2019';     # Archive site for this version
+our $ENSEMBL_RELEASE_DATE   = 'December 2019'; # As it would appear in the copyright/footer
 ###############################################################################
 
 
@@ -114,6 +114,9 @@ our $SYSLOG_COMMAND                   = sub { warn "$_[0]\n"; };  # command/subr
 our $TIDY_USERDB_CONNECTIONS          = 1;      # Clear user/session db connections after request is finished
 our $SERVER_ERRORS_TO_LOGS            = 1;      # Send all server exception stack traces to logs and send a unique error Id on the browser
 our $ENSEMBL_OOB_LIMITS               = {};     # Child process out-of-bounds limits for live server tweaking
+
+our $GENE_FAMILY_ACTION               = 'Family'; # Used to build the link to gene families page
+our $FAMILY_ALIGNMENTS_DOWNLOADABLE   = 1; # Indicates whether sequence alignments are available
 ###############################################################################
 
 

@@ -84,7 +84,7 @@ sub content {
     $table->add_row('Incomplete CDS', sprintf('<span class="ts_flag">%s</span>',$self->get_CDS_text($incomplete)));
   }
 
-  $table->add_row('Version', $object->stable_id.'.'.$object->version);
+  $table->add_row('Version', $object->stable_id_version);
 
   ## add some Vega info
   if ($db eq 'vega') {
@@ -118,16 +118,11 @@ sub content {
   my $text  = "No $label defined in database";
 
   eval {
-    if ($transcript->source eq 'havana_tagene' ){
-      $text = 'Transcript which was created by the HAVANA-Ensembl manually supervised computational pipeline for long-read sequence data';
-    }
-    elsif ($transcript && $transcript->can('analysis') && $transcript->analysis && $transcript->analysis->description) {
+    if ($transcript && $transcript->can('analysis') && $transcript->analysis && $transcript->analysis->description) {
       $text = $transcript->analysis->description;
-    }
-    elsif ($object->can('gene') && $object->gene->can('analysis') && $object->gene->analysis && $object->gene->analysis->description) {
+    } elsif ($object->can('gene') && $object->gene->can('analysis') && $object->gene->analysis && $object->gene->analysis->description) {
       $text = $object->gene->analysis->description;
-    }
-    else {
+    } else {
       my $logic_name = $transcript->can('analysis') && $transcript->analysis ? $transcript->analysis->logic_name : '';
 
       if ($logic_name) {

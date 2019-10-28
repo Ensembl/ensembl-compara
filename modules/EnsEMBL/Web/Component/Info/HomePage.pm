@@ -129,9 +129,13 @@ sub assembly_text {
 
   ## Insert link to strains page 
   if ($strains) {
-    $html .= sprintf '<h3 class="light top-margin">Other strains</h3><p>This species has data on %s additional strains. <a href="%s">View list of strains</a></p>', 
+    my $strain_text = $species_defs->STRAIN_TYPE.'s';
+    $html .= sprintf '<h3 class="light top-margin">Other %s</h3><p>This species has data on %s additional %s. <a href="%s">View list of %s</a></p>', 
+                            $strain_text,
                             scalar @$strains,
+                            $strain_text,
                             $hub->url({'action' => 'Strains'}), 
+                            $strain_text,
   }
   
   ## Also look for strains on closely-related species
@@ -140,6 +144,7 @@ sub assembly_text {
 
     ## Loop through all species, looking for others in this taxon
     my @related_species;
+    my %strain_types;
     foreach $_ ($species_defs->valid_species) {
       next if $_ eq $self->hub->species; ## Skip if current species
       next unless $species_defs->get_config($_, 'ALL_STRAINS'); ## Skip if it doesn't have strains
@@ -149,10 +154,24 @@ sub assembly_text {
       next unless ($taxonomy && ref $taxonomy eq 'ARRAY'); 
       next unless grep { $_ eq $related_taxon } @$taxonomy;
       push @related_species, $_;
+      $strain_types{$species_defs->get_config($_, 'STRAIN_TYPE').'s'} = 1;
     }
   
     if (scalar @related_species) {
-      $html .= '<h3 class="light top-margin">Related strains</h3><p>Strain data is now available on the following closely-related species:</p><ul>';
+      my $strain_string;
+      my @keys = scalar keys %strain_types;
+      if (scalar @keys == 1) {
+        $strain_string = $keys[0]; 
+      }
+      elsif (scalar @keys == 2) {
+        $strain_string = join(' and ', @keys);
+      }
+      else {
+        my $last = pop @keys;
+        $strain_string = join(', ', @keys);
+        $strain_string .= " and $last"; 
+      }
+      $html .= sprintf '<h3 class="light top-margin">Related %s</h3><p>Data is available on the following closely-related species:</p><ul>', $strain_string;
       foreach (@related_species) {
         $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
                   $hub->url({'species' => $_, 'action' => 'Strains'}), 

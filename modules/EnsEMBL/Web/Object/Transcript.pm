@@ -379,6 +379,7 @@ sub type_name {
 sub transcript             { return $_[0]->Obj; }
 sub source                 { return $_[0]->gene ? $_[0]->gene->source : undef; }
 sub stable_id              { return $_[0]->Obj->stable_id;  }
+sub stable_id_version      { return $_[0]->Obj->stable_id_version;  }
 sub feature_type           { return $_[0]->Obj->type;       }
 sub version                { return $_[0]->Obj->version;    }
 sub logic_name             { return $_[0]->gene ? $_[0]->gene->analysis->logic_name : $_[0]->Obj->analysis->logic_name; }

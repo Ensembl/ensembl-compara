@@ -613,9 +613,15 @@ sub render_as_alignment_nolabel {
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
 
+  my $text;
   if ($off_screen) {
     my $default = $depth == $default_depth ? 'by default' : '';
-    my $text = "Showing $on_screen of $total features, due to track being limited to $depth rows $default - click to show more";
+    $text = "Showing $on_screen of $total features, due to track being limited to $depth rows $default - click to show more";
+  } 
+  elsif ($total > 0) {
+    $text = "Showing all $total features - click to show fewer";
+  }
+  if ($text) {
     my $y = $track_height + $fontsize * 2 + 10;
     my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $on_screen+$off_screen, 'default' => $default_depth}); 
     $self->push($self->Text({
@@ -639,7 +645,7 @@ sub render_as_alignment_nolabel {
             height    => 8,
             absolutey => 1,
     }));
-  } 
+  }
   
   $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd') && !$depth; 
   

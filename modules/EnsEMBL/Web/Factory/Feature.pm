@@ -297,7 +297,7 @@ sub _create_RegulatoryFactor {
     }
     if ($self->param('fset') =~ /TarBase/) {
       my $mirna_adaptor = $fg_db->get_MirnaTargetFeatureAdaptor;
-      $features = $mirna_adaptor->fetch_all();
+      $features = $mirna_adaptor->fetch_all_by_display_label($id);
     }
     else {
       my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));

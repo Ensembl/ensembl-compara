@@ -34,7 +34,7 @@ sub _init {
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
-  my $strain_name = $hub->species_defs->translate('strain');
+  my $strain_name = $hub->species_defs->STRAIN_TYPE;
   my ($html, @samples, %tables);
   
   my $glossary = $hub->glossary_lookup;
@@ -83,7 +83,7 @@ sub content {
         my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc'], data_table_config => {iDisplayLength => 10} });    
         $tables{$sample} = $table->render;
       } else {
-        $tables{$sample} = sprintf($message, 'this strain');
+        $tables{$sample} = sprintf($message, 'this '.$strain_name);
       }
     }  
     $html .= "<h2>Variants in $_:</h2>$tables{$_}" for keys %tables;

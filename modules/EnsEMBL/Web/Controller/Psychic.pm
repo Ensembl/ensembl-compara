@@ -98,7 +98,7 @@ sub psychic {
   #if there is a species at the beginning of the query term then make a note in case we trying to jump to another location
   my ($query_species, $query_without_species);
   foreach my $sp (sort keys %sp_hash) {
-    if ( $query =~ /^\Q$sp\E/) {
+    if ( $query =~ /^\Q$sp\E\s/) {
       ($query_without_species = $query) =~ s/\Q$sp\E//;
       $query_without_species =~ s/^ //;
       $query_species = $sp;
@@ -262,12 +262,11 @@ sub psychic {
       # BLAST
       $url = $self->escaped_url('/Tools/Blast?query_sequence=%s', $1);
     } else {
-      my $coll = $species_defs->get_config($species,'STRAIN_COLLECTION');
+      my $coll = $species_defs->get_config($species,'STRAIN_GROUP');
       $species_path = "/$coll" if $coll;
 
       $url = $self->escaped_url(($species eq 'ALL' || !$species ? '/Multi' : $species_path) . "/$script?species=%s;idx=%s;q=%s", $species || 'all', $index, $query);
       my $common = $species_defs->get_config($species,'SPECIES_COMMON_NAME');
-      $url .= ";facet_strain=$common" if $coll and lc $coll ne lc $common;
     }
   }
 

@@ -39,7 +39,7 @@ sub content {
                 );
   
   $self->add_entry({
-    label_html => "Default ($default)",
+    label_html => "Default ($default rows)",
     link       => $hub->url({ %params, 'depth' => '' })
   });
   if ($count > 20) {
