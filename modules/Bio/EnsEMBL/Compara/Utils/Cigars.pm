@@ -260,7 +260,7 @@ sub consensus_cigar_line {
    push @chars, $chars[$n_chars-1];
 
    # Iterate through each group of columns of the alignment and decide the
-   # consensus based on the number of D
+   # consensus based on the number of 'D's
    my $cons_cigar = '';
    my $last_code  = '';
    my $cur_length = 0;
@@ -473,7 +473,7 @@ sub identify_removed_columns {
 
   Arg [1]    : String $cigar_line
   Example    : my $cigar_breakout = get_cigar_breakout($cigar_line)
-  Description: Return a hashref with the quantities of 'M', 'I' and 'D' of the cigar line (like '2M D 3M 2D I 2M')
+  Description: Return a hashref with the quantities of 'M', 'I' and 'D' of the cigar line. E.g. for '2M D 3M 2D I 2M' it will return:
                'M' => 7
                'I' => 1
                'D' => 3
