@@ -41,7 +41,7 @@ sub fetch_input {
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID( $self->param_required('mlss_id') );
     $self->param('node_hash', $mlss->species_tree->get_genome_db_id_2_node_hash());
 
-    $self->param_required($_) for qw(pairwise_coverage num_of_positions num_of_aligned_positions num_of_other_seq_positions depth_by_genome);
+    $self->param_required($_) for qw(genome_length pairwise_coverage num_of_positions num_of_aligned_positions num_of_other_seq_positions depth_by_genome);
 }
 
 sub run {
@@ -61,8 +61,10 @@ sub run {
         my $num_of_positions            = sum(@{$self->param('num_of_positions')->{$gdb_id}});
         my $num_of_aligned_positions    = sum(@{$self->param('num_of_aligned_positions')->{$gdb_id}});
         my $num_of_other_seq_positions  = sum(@{$self->param('num_of_other_seq_positions')->{$gdb_id}});
+        my $genome_length               = $self->param('genome_length')->{$gdb_id};
 
-        $node->store_tag('num_of_positions',            $num_of_positions);
+        $node->store_tag('genome_length',               $genome_length);
+        $node->store_tag('num_of_positions_in_blocks',  $num_of_positions);
         $node->store_tag('num_of_aligned_positions',    $num_of_aligned_positions);
         $node->store_tag('num_of_other_seq_positions',  $num_of_other_seq_positions);
         $node->store_tag('average_depth',               $num_of_other_seq_positions / $num_of_positions);

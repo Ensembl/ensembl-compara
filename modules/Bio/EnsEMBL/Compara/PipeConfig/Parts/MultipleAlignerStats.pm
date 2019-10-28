@@ -103,8 +103,29 @@ sub pipeline_analyses_multiple_aligner_stats {
             -rc_name    => '4Gb_job',
             -flow_into  => {
                 '2->A' => { 'per_block_stats' => { 'genomic_align_block_ids' => '#_range_list#' } },
+                '1->A' => ['genome_db_factory'],
                 'A->1' => ['block_stats_aggregator']
                 },
+        },
+
+        {   -logic_name => 'genome_db_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT genome_db_id FROM method_link_species_set JOIN species_set USING (species_set_id) WHERE method_link_species_set_id = #mlss_id#',
+            },
+            -flow_into  => {
+                2 => [ 'genome_length_fetcher' ],
+            },
+        },
+
+        {   -logic_name => 'genome_length_fetcher',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'    => 'SELECT SUM(length) AS genome_length FROM dnafrag WHERE genome_db_id = #genome_db_id#',
+            },
+            -flow_into  => {
+                2 => [ '?accu_name=genome_length&accu_address={genome_db_id}' ],
+            },
         },
 
         {   -logic_name =>  'per_block_stats',

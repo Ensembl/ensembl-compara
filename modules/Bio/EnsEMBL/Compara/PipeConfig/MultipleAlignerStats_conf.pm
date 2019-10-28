@@ -126,6 +126,8 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'gab_factory'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+    $analyses_by_name->{'genome_db_factory'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
+    $analyses_by_name->{'genome_length_fetcher'}->{'-parameters'}->{'db_conn'} = '#compara_db#';
 }
 
 

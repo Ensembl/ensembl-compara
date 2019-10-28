@@ -387,6 +387,10 @@ standaloneJob(
                 150 => [5, 6],
             },
         },
+        'genome_length'             => {
+            150 => 10,  # 2 more than seen in the blocks. Expect the Runnable to increase some stats by 2
+            151 => 13,  # Same as in the blocks
+        },
         'num_of_positions'          => {
             150 => [2, 6],
             151 => [9, 4],
@@ -420,10 +424,12 @@ my $stn_151 = $h_compara_db_adaptor->get_SpeciesTreeNodeAdaptor->fetch_by_dbID(4
 
 is($stn_150->get_value_for_tag('genome_coverage_151'),         7, 'Pairwise coverage 150 -> 151');
 is($stn_151->get_value_for_tag('genome_coverage_150'),        11, 'Pairwise coverage 151 -> 150');
-is($stn_150->get_value_for_tag('num_of_positions'),            8, 'num_of_positions 150');
+is($stn_150->get_value_for_tag('genome_length'),              10, 'num_of_positions 150');
+is($stn_150->get_value_for_tag('num_of_positions_in_blocks'),  8, 'num_of_positions 150');
 is($stn_150->get_value_for_tag('num_of_aligned_positions'),    7, 'num_of_aligned_positions 150');
 is($stn_150->get_value_for_tag('num_of_other_seq_positions'),  9, 'num_of_other_seq_positions 150');
-is($stn_151->get_value_for_tag('num_of_positions'),           13, 'num_of_positions 151');
+is($stn_151->get_value_for_tag('genome_length'),              13, 'num_of_positions 151');
+is($stn_151->get_value_for_tag('num_of_positions_in_blocks'), 13, 'num_of_positions 151');
 is($stn_151->get_value_for_tag('num_of_aligned_positions'),   12, 'num_of_aligned_positions 151');
 is($stn_151->get_value_for_tag('num_of_other_seq_positions'),  8, 'num_of_other_seq_positions 151');
 is($stn_150->get_value_for_tag('num_positions_depth_0'),       1, 'num_positions_depth_0 150');
