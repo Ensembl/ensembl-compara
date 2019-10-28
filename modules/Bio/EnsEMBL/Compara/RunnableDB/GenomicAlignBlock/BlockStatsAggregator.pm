@@ -67,9 +67,11 @@ sub run {
         $node->store_tag('num_of_positions_in_blocks',  $num_of_positions);
         $node->store_tag('num_of_aligned_positions',    $num_of_aligned_positions);
         $node->store_tag('num_of_other_seq_positions',  $num_of_other_seq_positions);
-        $node->store_tag('average_depth',               $num_of_other_seq_positions / $num_of_positions);
+        $node->store_tag('average_depth',               $num_of_other_seq_positions / $genome_length);
 
         my $depth_breakdown = $self->param('depth_by_genome')->{$gdb_id};
+        # Adjust the depth-0 counter with the positions not included in any block
+        push @{$depth_breakdown->{0}}, $genome_length - $num_of_positions;
         foreach my $depth (keys %$depth_breakdown) {
             my $s = sum(@{$depth_breakdown->{$depth}});
             $node->store_tag('num_positions_depth_'.$depth, $s);

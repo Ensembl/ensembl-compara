@@ -432,7 +432,7 @@ is($stn_151->get_value_for_tag('genome_length'),              13, 'num_of_positi
 is($stn_151->get_value_for_tag('num_of_positions_in_blocks'), 13, 'num_of_positions 151');
 is($stn_151->get_value_for_tag('num_of_aligned_positions'),   12, 'num_of_aligned_positions 151');
 is($stn_151->get_value_for_tag('num_of_other_seq_positions'),  8, 'num_of_other_seq_positions 151');
-is($stn_150->get_value_for_tag('num_positions_depth_0'),       1, 'num_positions_depth_0 150');
+is($stn_150->get_value_for_tag('num_positions_depth_0'),       3, 'num_positions_depth_0 150');
 is($stn_150->get_value_for_tag('num_positions_depth_1'),       4, 'num_positions_depth_1 150');
 is($stn_150->get_value_for_tag('num_positions_depth_2'),       4, 'num_positions_depth_2 150');
 is($stn_151->get_value_for_tag('num_positions_depth_0'),       1, 'num_positions_depth_0 151');
