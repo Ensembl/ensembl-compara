@@ -65,6 +65,11 @@ sub default_options {
     };
 }
 
+sub default_pipeline_name {         # Instead of ortholog_qm_alignment
+    my ($self) = @_;
+    return $self->o('collection') . '_' . $self->o('member_type') . '_high_conf';
+}
+
 sub no_compara_schema {}    # Tell the base class not to create the Compara tables in the database
 
 sub pipeline_analyses {
@@ -81,4 +86,3 @@ sub pipeline_analyses {
 }
 
 1;
-

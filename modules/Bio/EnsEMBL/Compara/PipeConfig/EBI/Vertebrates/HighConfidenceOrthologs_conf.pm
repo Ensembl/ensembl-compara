@@ -59,8 +59,7 @@ sub default_options {
 
         # This pipeline will faster if it's run against the production ProteinTree database:
         # In this case it needs to be run *before* the merge, otherwise the data will not be in the release database.
-        #'compara_db' => 'compara_ptrees',
-        'compara_db' => 'compara_curr',
+        'compara_db' => '#expr( (#member_type# eq "protein") ? "compara_ptrees" : "compara_nctrees" )expr#',
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
@@ -107,4 +106,3 @@ sub pipeline_analyses {
 }
 
 1;
-

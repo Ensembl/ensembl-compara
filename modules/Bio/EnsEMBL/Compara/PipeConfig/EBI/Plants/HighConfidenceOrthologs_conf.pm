@@ -55,8 +55,9 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'division'   => 'plants',
-        'compara_db' => 'compara_ptrees',
+        'division'    => 'plants',
+        'member_type' => 'protein',
+        'compara_db'  => 'compara_ptrees',
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
